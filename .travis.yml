@@ -8,7 +8,11 @@ node_js:
   - '8'
 env:
   - TASK=test
+before_install:
+  - npm install -g ethereumjs-testrpc
 before_script:
   - npm run bootstrap
   - npm prune
-script: "npm run $TASK"
+script:
+  - testrpc &
+  - npm run $TASK
