@@ -1,0 +1,8 @@
+{
+  "name": "Voting",
+  "description": "Create votes that execute actions on behalf of token holders.",
+  "icons": [{
+    "src": "images/icon.png",
+    "sizes": "192x192"
+  }]
+}

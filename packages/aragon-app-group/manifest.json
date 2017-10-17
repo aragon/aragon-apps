@@ -1,0 +1,8 @@
+{
+  "name": "Group",
+  "description": "Give a set of entities a shared entity that has its own permissions.",
+  "icons": [{
+    "src": "images/icon.png",
+    "sizes": "192x192"
+  }]
+}
