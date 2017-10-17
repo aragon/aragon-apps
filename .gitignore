@@ -1,0 +1,3 @@
+# Dependencies
+node_modules
+packages/*/node_modules

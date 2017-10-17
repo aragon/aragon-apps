@@ -1,0 +1,15 @@
+language: node_js
+cache:
+  directories:
+    - node_modules
+notifications:
+  email: false
+node_js:
+  - '8'
+env:
+  - TASK=test
+after_install:
+  - npm run bootstrap
+before_script:
+  - npm prune
+script: "npm run $TASK"
