@@ -14,5 +14,5 @@ before_script:
   - npm run bootstrap
   - npm prune
 script:
-  - testrpc &
+  - testrpc > /dev/null 2>&1 &
   - npm run $TASK
