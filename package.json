@@ -4,6 +4,7 @@
   },
   "scripts": {
     "bootstrap": "lerna bootstrap --nohoist=@aragon/core",
-    "test": "lerna run test"
+    "test": "lerna run test",
+    "lint": "lerna run lint"
   }
 }

@@ -6,6 +6,8 @@ import "@aragon/core/contracts/common/Initializable.sol";
 import "@aragon/core/contracts/common/IForwarder.sol";
 import "@aragon/core/contracts/common/EVMCallScript.sol";
 
+import "@aragon/core/contracts/misc/Migrations.sol";
+
 contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     string name;
     mapping (address => bool) members;
@@ -60,7 +62,6 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     }
 
     function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
-        _evmCallScript;
         return isGroupMember(_sender);
     }
 
