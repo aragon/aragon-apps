@@ -1,6 +1,9 @@
 # Dependencies
 node_modules
-packages/*/node_modules
+apps/*/node_modules
 
 # lerna
 lerna-debug.log
+
+# truffle build artifacts
+apps/*/build
