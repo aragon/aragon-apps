@@ -1,6 +1,7 @@
 pragma solidity 0.4.15;
 
 import "@aragon/core/contracts/common/MiniMeToken.sol";
+import "@aragon/core/contracts/common/EtherToken.sol";
 
 // You might think this file is a bit odd, but let me explain.
 // We only use the MiniMeToken contract in our tests, which
