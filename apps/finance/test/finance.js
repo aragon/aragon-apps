@@ -1,5 +1,5 @@
 const { assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
-const { getBalance } = require('@aragon/test-helpers/balance')(web3)
+const getBalance = require('@aragon/test-helpers/balance')(web3)
 
 const Vault = artifacts.require('Vault')
 const Finance = artifacts.require('FinanceMock')
