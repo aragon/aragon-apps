@@ -9,6 +9,8 @@ import "@aragon/core/contracts/common/IForwarder.sol";
 
 import "@aragon/core/contracts/zeppelin/math/SafeMath.sol";
 
+import "@aragon/core/contracts/misc/Migrations.sol";
+
 contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder, IForwarder {
     using SafeMath for uint256;
 
@@ -119,7 +121,6 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     }
 
     function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
-        _evmCallScript;
         return canPerform(_sender, CREATE_VOTES_ROLE);
     }
 

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "truffle test"
+    "test": "truffle test",
+    "lint": "solium --dir ./contracts"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +13,8 @@
   "devDependencies": {
     "ethereumjs-abi": "^0.6.4",
     "truffle": "^3.4.11",
-    "webpack": "^3.7.1"
+    "webpack": "^3.7.1",
+    "solium": "^0.5.5"
   },
   "dependencies": {
     "@aragon/core": "^1.0.0"

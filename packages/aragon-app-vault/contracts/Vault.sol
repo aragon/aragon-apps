@@ -4,6 +4,8 @@ import "@aragon/core/contracts/apps/App.sol";
 
 import "@aragon/core/contracts/zeppelin/token/ERC20.sol";
 
+import "@aragon/core/contracts/misc/Migrations.sol";
+
 contract Vault is App {
     event SetAllowance(address indexed token, address indexed spender, uint256 amount);
     event TokenTransfer(address indexed token, address indexed receiver, uint256 amount);
