@@ -1,0 +1,22 @@
+{
+  "name": "@aragon/apps-vault",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "truffle test",
+    "lint": "solium --dir ./contracts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "truffle": "^3.4.11",
+    "webpack": "^3.7.1",
+    "solium": "^0.5.5",
+    "@aragon/test-helpers": "^1.0.0"
+  },
+  "dependencies": {
+    "@aragon/core": "^1.0.0"
+  }
+}
