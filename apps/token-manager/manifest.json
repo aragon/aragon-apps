@@ -1,6 +1,6 @@
 {
-  "name": "Vault",
-  "description": "Securely owns and manages tokens on behalf of a DAO.",
+  "name": "Token Manager",
+  "description": "Controls an organization token allowing to mint new tokens, assign them and create vestings",
   "icons": [{
     "src": "images/icon.png",
     "sizes": "192x192"
