@@ -1,5 +1,5 @@
 {
-  "name": "@aragon/apps-vault",
+  "name": "@aragon/apps-token-manager",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0",
   "description": "",
   "devDependencies": {
     "truffle": "^3.4.11",
@@ -17,6 +17,6 @@
     "@aragon/test-helpers": "^1.0.0"
   },
   "dependencies": {
-    "@aragon/core": "^1.0.0"
+    "@aragon/core": "^1.0.1"
   }
 }

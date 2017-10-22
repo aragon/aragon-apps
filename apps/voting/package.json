@@ -8,10 +8,9 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0",
   "description": "",
   "devDependencies": {
-    "ethereumjs-abi": "^0.6.4",
     "solidity-sha3": "^0.4.1",
     "truffle": "^3.4.11",
     "webpack": "^3.7.1",
@@ -19,6 +18,6 @@
     "@aragon/test-helpers": "^1.0.0"
   },
   "dependencies": {
-    "@aragon/core": "^1.0.0"
+    "@aragon/core": "^1.0.1"
   }
 }
