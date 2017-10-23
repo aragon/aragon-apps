@@ -4,7 +4,7 @@ import "@aragon/core/contracts/apps/App.sol";
 import "@aragon/core/contracts/common/Initializable.sol";
 import "@aragon/core/contracts/common/erc677/ERC677Receiver.sol";
 
-import "../../token-manager/contracts/TokenManager.sol";
+import "@aragon/apps-token-manager/contracts/TokenManager.sol";
 
 import "@aragon/core/contracts/zeppelin/token/ERC20.sol";
 import "@aragon/core/contracts/zeppelin/math/SafeMath.sol";

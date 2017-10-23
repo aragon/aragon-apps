@@ -8,7 +8,7 @@ import "@aragon/core/contracts/common/erc677/ERC677Receiver.sol";
 import "@aragon/core/contracts/zeppelin/token/ERC20.sol";
 import "@aragon/core/contracts/zeppelin/math/SafeMath.sol";
 
-import "../../vault/contracts/Vault.sol"; // change to npm dep to @aragon/apps-vault?
+import "@aragon/apps-vault/contracts/Vault.sol";
 
 import "@aragon/core/contracts/misc/Migrations.sol";
 
