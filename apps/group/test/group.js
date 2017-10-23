@@ -15,6 +15,12 @@ contract('Group app', accounts => {
         await app.initialize(groupName)
     })
 
+    it('fails on reinitialization', async () => {
+        return assertInvalidOpcode(async () => {
+            await app.initialize(groupName)
+        })
+    })
+
     it('has correct name context', async () => {
         assert.equal(await app.getName(), groupName, 'should have correct group name')
     })
