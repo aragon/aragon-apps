@@ -7,6 +7,7 @@ apps/*/coverage
 apps/*/coverageEnv
 apps/*/coverage.json
 apps/*/allFiredEvents
+apps/*/scTopics
 
 # lerna
 lerna-debug.log
