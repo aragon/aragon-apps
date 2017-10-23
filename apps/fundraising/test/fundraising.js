@@ -29,6 +29,12 @@ contract('Fundraising', accounts => {
         await fundraising.mock_setTimestamp(5)
     })
 
+    it('fails on reinitialization', async () => {
+        return assertInvalidOpcode(async () => {
+            await fundraising.initialize(tokenManager.address, vault)
+        })
+    })
+
     it('fails if any price is 0', async () => {
         return assertInvalidOpcode(async () => {
             await fundraising.newSale(zeroAddress, raisedToken.address, 100, 150, 0, true, 1, [11], [0, 2])
