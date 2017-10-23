@@ -33,6 +33,12 @@ contract('Token Manager', accounts => {
             await tokenManager.initializeNative(token.address)
         })
 
+        it('fails on reinitialization', async () => {
+            return assertInvalidOpcode(async () => {
+                await tokenManager.initializeNative(token.address)
+            })
+        })
+
         it('can mint tokens', async () => {
             await tokenManager.mint(holder, 100)
 

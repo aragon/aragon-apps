@@ -40,6 +40,12 @@ contract('Voting App', accounts => {
             executionTarget = await ExecutionTarget.new()
         })
 
+        it('fails on reinitialization', async () => {
+            return assertInvalidOpcode(async () => {
+                await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            })
+        })
+
         it('deciding voting is automatically executed', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
