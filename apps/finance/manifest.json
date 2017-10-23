@@ -1,0 +1,8 @@
+{
+  "name": "Finance",
+  "description": "Manage organization assets: budget spending and record financial transactions",
+  "icons": [{
+    "src": "images/icon.png",
+    "sizes": "192x192"
+  }]
+}
