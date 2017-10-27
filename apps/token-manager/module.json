@@ -7,5 +7,5 @@
         { "name": "Assign tokens", "id": "ASSIGN_ROLE" },
         { "name": "Revoke vesting", "id": "REVOKE_VESTINGS_ROLE" }
     ],
-    "path": "apps/token-manager/TokenManager.sol"
+    "path": "contracts/TokenManager.sol"
 }

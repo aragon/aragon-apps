@@ -7,5 +7,5 @@
         { "name": "Execute payments", "id": "EXECUTE_PAYMENTS_ROLE" },
         { "name": "Disable payments", "id": "DISABLE_PAYMENTS_ROLE" }
     ],
-    "path": "apps/finance/Finance.sol"
+    "path": "contracts/Finance.sol"
 }
