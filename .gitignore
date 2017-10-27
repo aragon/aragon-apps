@@ -2,6 +2,13 @@
 node_modules
 apps/*/node_modules
 
+# coverage
+apps/*/coverage
+apps/*/coverageEnv
+apps/*/coverage.json
+apps/*/allFiredEvents
+apps/*/scTopics
+
 # lerna
 lerna-debug.log
 
