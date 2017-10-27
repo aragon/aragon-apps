@@ -8,6 +8,6 @@
     "bootstrap": "lerna bootstrap --nohoist=@aragon/core",
     "test": "lerna run --scope=@aragon/apps-* test",
     "lint": "lerna run --scope=@aragon/apps-* lint",
-    "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 coverage"
+    "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage"
   }
 }
