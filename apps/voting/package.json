@@ -5,7 +5,7 @@
   "scripts": {
     "test": "truffle test",
     "lint": "solium --dir ./contracts",
-    "coverage": "SOLIDITY_COVERAGE=true ./node_modules/@aragon/test-helpers/testrpc.sh && ./node_modules/.bin/solidity-coverage"
+    "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh"
   },
   "keywords": [],
   "author": "",
