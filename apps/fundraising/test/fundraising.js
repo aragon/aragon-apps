@@ -117,6 +117,15 @@ contract('Fundraising', accounts => {
         })
     })
 
+    it('supports increasing price sales', async () => {
+        await fundraising.newSale(zeroAddress, raisedToken.address, 10000, 10000, 0, false, 1, [11], [2, 4])
+        await fundraising.mock_setTimestamp(6)
+        const [price, inverse, precision] = await fundraising.getCurrentPrice(0)
+
+        assert.equal(price, 3 * precision, 'price and precision should be correct')
+        assert.isFalse(inverse, 'price should be inverse')
+    })
+
     context('ERC677 sales', () => {
         let etherToken, buyData = {}
 
@@ -126,6 +135,12 @@ contract('Fundraising', accounts => {
 
             const saleId = 0
             buyData = fundraising.contract.buyWithToken.getData(saleId)
+        })
+
+        it('fails when calling buy with token externally', async () => {
+            return assertInvalidOpcode(async () => {
+                console.log(await fundraising.buyWithToken(0))
+            })
         })
 
         it('buys tokens correctly', async () => {
