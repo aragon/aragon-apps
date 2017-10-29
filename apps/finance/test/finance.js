@@ -116,6 +116,15 @@ contract('Finance App', accounts => {
         assert.equal(await token2.balanceOf(recipient), 190, 'recipient should have received tokens')
     })
 
+    it('can change period duration', async () => {
+        await app.setPeriodDuration(50)
+        await app.mock_setTimestamp(160) // previous period time was 100, so in 160 must have transitioned 2
+
+        await app.tryTransitionAccountingPeriod()
+
+        assert.equal(await app.currentPeriodId(), 2, 'shpuld have transitioned 2 periods')
+    })
+
     context('setting budget', () => {
         const recipient = accounts[1]
         const time = 22
