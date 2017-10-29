@@ -25,6 +25,12 @@ contract('Token Manager', accounts => {
         })
     })
 
+    it('fails when sending ether to token', async () => {
+        return assertInvalidOpcode(async () => {
+            await token.send(1) // transfer 1 wei to token contract
+        })
+    })
+
     context('for native tokens', () => {
         const holder = accounts[1]
 
@@ -129,6 +135,14 @@ contract('Token Manager', accounts => {
             it('cannot transfer non-vested tokens', async () => {
                 return assertInvalidOpcode(async () => {
                     await token.transfer(accounts[2], 10, { from: holder })
+                })
+            })
+
+            it('can approve non-vested tokens but transferFrom fails', async () => {
+                await token.approve(accounts[2], 10, { from: holder })
+
+                return assertInvalidOpcode(async () => {
+                    await token.transferFrom(holder, accounts[2], 10, { from: accounts[2] })
                 })
             })
 
