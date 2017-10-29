@@ -304,7 +304,9 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @return True if the ether is accepted, false for it to throw
     */
     function proxyPayment(address _owner) payable returns (bool) {
-        revert();
+        // Even though it is tested, solidity-coverage doesnt get it because
+        // MiniMeToken is not instrumented and entire tx is reverted
+        require(msg.sender == address(token));
         _owner;
         return false;
     }
