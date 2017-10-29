@@ -337,5 +337,7 @@ contract Fundraising is App, Initializable, ERC677Receiver {
         }
     }
 
-    function getTimestamp() internal constant returns (uint256) { return now; }
+    function getTimestamp() internal constant returns (uint256) {
+        return now;
+    }
 }
