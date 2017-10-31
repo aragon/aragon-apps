@@ -170,6 +170,12 @@ contract('Fundraising', accounts => {
                 await etherToken.wrapAndCall(fundraising.address, fundraising.contract.buyWithToken.getData(100), { value: 15000 })
             })
         })
+
+        it('fails if not buying through token', async () => {
+            return assertInvalidOpcode(async () => {
+                await fundraising.tokenFallback(accounts[1], 100, buyData)
+            })
+        })
     })
 
     context('creating normal rate sale', () => {
@@ -220,6 +226,17 @@ contract('Fundraising', accounts => {
             })
         })
 
+        it('fails if buying with more tokens than owned', async () => {
+            await fundraising.mock_setTimestamp(11)
+
+            // transfers all its tokens away before buying
+            await raisedToken.transfer(accounts[7], 1000, { from: holder1000 })
+
+            return assertInvalidOpcode(async () => {
+                await fundraising.transferAndBuy(0, 110, { from: holder1000 })
+            })
+        })
+
         it('can only buy up-to max raised', async () => {
             await fundraising.mock_setTimestamp(11)
 
@@ -250,6 +267,21 @@ contract('Fundraising', accounts => {
             await fundraising.forceCloseSale(0)
             const [closed] = await fundraising.getSale(0)
             assert.isTrue(closed, 'sale should be closed')
+        })
+
+        it('fails if buying in closed sale', async () => {
+            await fundraising.forceCloseSale(0)
+
+            return assertInvalidOpcode(async () => {
+                await fundraising.transferAndBuy(0, 90, { from: holder1000 })
+            })
+        })
+
+        it('fails if closing closed sale', async () => {
+            await fundraising.forceCloseSale(0)
+            return assertInvalidOpcode(async () => {
+                await fundraising.forceCloseSale(0)
+            })
         })
 
         it('can close sale after all periods ended', async () => {
