@@ -97,7 +97,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _amount Number of tokens wrapped
     */
     function wrap(uint256 _amount) onlyWrapper external {
-        assert(wrappedToken.transferFrom(msg.sender, address(this), _amount));
+        require(wrappedToken.transferFrom(msg.sender, address(this), _amount));
         _mint(msg.sender, _amount);
     }
 
@@ -108,7 +108,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     function unwrap(uint256 _amount) onlyWrapper external {
         require(transferrableBalance(msg.sender, now) >= _amount);
         _burn(msg.sender, _amount);
-        assert(wrappedToken.transfer(msg.sender, _amount));
+        require(wrappedToken.transfer(msg.sender, _amount));
     }
 
     /**
@@ -180,7 +180,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
 
         // transferFrom always works as controller
         // onTransfer hook always allows if transfering to token controller
-        assert(token.transferFrom(_holder, address(this), nonVested));
+        require(token.transferFrom(_holder, address(this), nonVested));
 
         RevokeVesting(_holder, _vestingId);
     }
@@ -287,15 +287,15 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     function _assign(address _receiver, uint256 _amount) internal {
-        assert(token.transfer(_receiver, _amount));
+        require(token.transfer(_receiver, _amount));
     }
 
     function _burn(address _holder, uint256 _amount) internal {
-        assert(token.destroyTokens(_holder, _amount));
+        token.destroyTokens(_holder, _amount);  // minime.destroyTokens() never returns false
     }
 
     function _mint(address _receiver, uint256 _amount) internal {
-        assert(token.generateTokens(_receiver, _amount));
+        token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
     }
 
     /**
