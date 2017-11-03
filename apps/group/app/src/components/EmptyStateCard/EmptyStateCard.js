@@ -21,10 +21,7 @@ const StyledCard = styled(Card)`
   }
 `
 
-// AragonApp provides everything needed to start an Aragon App.
-
-console.log(theme.accent)
-const EmptyStateCard = () => (
+const EmptyStateCard = ({ onActivate }) => (
   <StyledCard>
     <section>
       <img src={icon} alt="" />
@@ -32,7 +29,9 @@ const EmptyStateCard = () => (
         Nothing here.
       </Text>
       <Text>Add Entity to the Group Core Devs.</Text>
-      <Button mode="strong">Add</Button>
+      <Button mode="strong" onClick={onActivate}>
+        Add
+      </Button>
     </section>
   </StyledCard>
 )
