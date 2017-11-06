@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { Motion, spring } from 'react-motion'
 import { lerp } from '../../math-utils'
 
-const PANEL_SPRING = { stiffness: 110, damping: 17, precision: 0.001 }
+const PANEL_SPRING = { stiffness: 150, damping: 18, precision: 0.001 }
 
 const PANEL_WIDTH = 400
 const PANEL_OVERFLOW = PANEL_WIDTH * 0.2
