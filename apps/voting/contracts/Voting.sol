@@ -45,6 +45,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     event StartVote(uint256 indexed voteId);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports);
     event ExecuteVote(uint256 indexed voteId);
+    event ChangeMinQuorum(uint256 minAcceptQuorumPct);
 
     /**
     * @notice Initializes Voting app (some parameters won't be modifiable after being set)
@@ -81,6 +82,8 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) auth(MODIFY_QUORUM_ROLE) external {
         require(supportRequiredPct >= _minAcceptQuorumPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
+
+        ChangeMinQuorum(_minAcceptQuorumPct);
     }
 
     /**
