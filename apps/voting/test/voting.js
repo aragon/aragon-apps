@@ -81,8 +81,10 @@ contract('Voting App', accounts => {
         })
 
         it('can change minimum acceptance quorum', async () => {
-            await app.changeMinAcceptQuorumPct(1)
+            const receipt = await app.changeMinAcceptQuorumPct(1)
+            const events = receipt.logs.filter(x => x.event == 'ChangeMinQuorum')
 
+            assert.equal(events.length, 1, 'should have emitted ChangeMinQuorum event')
             assert.equal(await app.minAcceptQuorumPct(), 1, 'should have change acceptance quorum')
         })
 
