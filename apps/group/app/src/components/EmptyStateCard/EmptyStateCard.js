@@ -21,14 +21,14 @@ const StyledCard = styled(Card)`
   }
 `
 
-const EmptyStateCard = ({ onActivate }) => (
+const EmptyStateCard = ({ groupName, onActivate }) => (
   <StyledCard>
     <section>
       <img src={icon} alt="" />
       <Text heading="1" color={theme.accent} weight="bold" size="large">
         Nothing here.
       </Text>
-      <Text>Add Entity to the Group Core Devs.</Text>
+      <Text>Add Entity to the Group {groupName}.</Text>
       <Button mode="strong" onClick={onActivate}>
         Add
       </Button>

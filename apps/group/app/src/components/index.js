@@ -1,2 +1,5 @@
 export { default as EmptyStateCard } from './EmptyStateCard/EmptyStateCard'
+export { default as EntityTable } from './EntityTable/EntityTable'
+export { default as FakeShell } from './FakeShell/FakeShell'
 export { default as OverlayPanel } from './OverlayPanel/OverlayPanel'
+export { default as Table } from './Table/Table'
