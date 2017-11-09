@@ -16,7 +16,7 @@ class AppPanel extends React.Component {
     this.setState({ selectedEntity: index })
   }
   render() {
-    const { entities, onAdd } = this.props
+    const { entities } = this.props
     const { selectedEntity } = this.state
     return (
       <div>

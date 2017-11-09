@@ -1,7 +1,7 @@
 import React from 'react'
 import update from 'immutability-helper'
 import styled from 'styled-components'
-import { AragonApp, Text, Button, DropDown, theme } from '@aragon/ui'
+import { AragonApp } from '@aragon/ui'
 import { EmptyStateCard, FakeShell, EntityTable } from './components'
 import AppPanel from './AppPanel'
 
