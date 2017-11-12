@@ -1,6 +1,6 @@
 const sha3 = require('solidity-sha3').default
 
-const { assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
 const { encodeScript } = require('@aragon/test-helpers/evmScript')
@@ -41,7 +41,7 @@ contract('Voting App', accounts => {
         })
 
         it('fails on reinitialization', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
             })
         })
@@ -68,7 +68,7 @@ contract('Voting App', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             let script = encodeScript([action])
             script = script.slice(0, -2) // remove one byte from calldata for it to fail
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await app.newVote(script, '', { from: holder50 })
             })
         })
@@ -164,14 +164,14 @@ contract('Voting App', accounts => {
             })
 
             it('throws when non-holder votes', async () => {
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await app.vote(voteId, true, { from: nonHolder })
                 })
             })
 
             it('throws when voting after voting closes', async () => {
                 await timeTravel(votingTime + 1)
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await app.vote(voteId, true, { from: holder31 })
                 })
             })
@@ -187,7 +187,7 @@ contract('Voting App', accounts => {
             it('cannot execute vote if not enough quorum met', async () => {
                 await app.vote(voteId, true, { from: holder19 })
                 await timeTravel(votingTime + 1)
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await app.executeVote(voteId)
                 })
             })
@@ -199,14 +199,14 @@ contract('Voting App', accounts => {
 
             it('cannot re-execute vote', async () => {
                 await app.vote(voteId, true, { from: holder50 }) // causes execution
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await app.executeVote(voteId)
                 })
             })
 
             it('cannot vote on executed vote', async () => {
                 await app.vote(voteId, true, { from: holder50 }) // causes execution
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await app.vote(voteId, true, { from: holder19 })
                 })
             })

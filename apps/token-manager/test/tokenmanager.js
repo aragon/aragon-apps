@@ -1,4 +1,4 @@
-const { assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
 const timetravel = require('@aragon/test-helpers/timeTravel')(web3)
 const getBlock = require('@aragon/test-helpers/block')(web3)
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
@@ -20,7 +20,7 @@ contract('Token Manager', accounts => {
     })
 
     it('fails when initializing without setting controller', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await tokenManager.initializeNative(token.address)
         })
     })
@@ -34,7 +34,7 @@ contract('Token Manager', accounts => {
         })
 
         it('fails on reinitialization', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await tokenManager.initializeNative(token.address)
             })
         })
@@ -60,7 +60,7 @@ contract('Token Manager', accounts => {
         })
 
         it('cannot wrap tokens', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await tokenManager.wrap(100, { from: holder })
             })
         })
@@ -75,13 +75,13 @@ contract('Token Manager', accounts => {
             await tokenManager.forward(script, { from: holder })
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
 
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await tokenManager.forward(script, { from: accounts[8] })
             })
         })
 
         it('fails when assigning invalid vesting schedule', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 const tokens = 10
                 // vesting < cliff
                 await tokenManager.assignVested(holder, tokens, 10, 20, 10, true)
@@ -127,14 +127,14 @@ contract('Token Manager', accounts => {
             })
 
             it('cannot transfer non-vested tokens', async () => {
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await token.transfer(accounts[2], 10, { from: holder })
                 })
             })
 
             it('cannot transfer all tokens right before vesting', async () => {
                 await timetravel(vesting - 10)
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await token.transfer(accounts[2], totalTokens, { from: holder })
                 })
             })
@@ -154,7 +154,7 @@ contract('Token Manager', accounts => {
                 await tokenManager.issue(1)
                 await tokenManager.assignVested(holder, 1, now + start, now + cliff, now + vesting, false)
 
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await tokenManager.revokeVesting(holder, 1)
                 })
             })
@@ -168,7 +168,7 @@ contract('Token Manager', accounts => {
                 }
                 await timetravel(vesting)
                 await token.transfer(accounts[3], 1) // can transfer
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await tokenManager.assignVested(holder, 1, now + start, now + cliff, now + vesting, false)
                 })
             })
@@ -196,13 +196,13 @@ contract('Token Manager', accounts => {
         })
 
         it('cannot mint', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await tokenManager.mint(holder100, 100)
             })
         })
 
         it('cannot issue', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await tokenManager.issue(100)
             })
         })
@@ -238,7 +238,7 @@ contract('Token Manager', accounts => {
                 await token.transfer(tokenManager.address, 100, { from: holder100 })
                 await tokenManager.assignVested(holder100, 100, 1e11, 1e11, 1e11, false)
 
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await tokenManager.unwrap(100, { from: holder100 })
                 })
             })
