@@ -1,4 +1,4 @@
-const { assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
 const Vault = artifacts.require('Vault')
 const MiniMeToken = artifacts.require('@aragon/core/contracts/common/MiniMeToken')
 
@@ -31,7 +31,7 @@ contract('Vault app', (accounts) => {
   })
 
   it('throws when wrong arguments count is passed to request allowances', async () => {
-    return assertInvalidOpcode(async () => {
+    return assertRevert(async () => {
         await vault.requestAllowances([token.address], [10, 20], {from: accounts[1]})
     })
   })
@@ -51,7 +51,7 @@ contract('Vault app', (accounts) => {
 
   it('can handle token failures', async () => {
     await token.enableTransfers(false)
-    return assertInvalidOpcode(async () => {
+    return assertRevert(async () => {
         await vault.requestAllowances([token.address], [10], {from: accounts[1]})
     })
   })

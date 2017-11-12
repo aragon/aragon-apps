@@ -1,4 +1,4 @@
-const { assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
 
 const Vault = artifacts.require('Vault')
@@ -40,7 +40,7 @@ contract('Finance App', accounts => {
     })
 
     it('fails on reinitialization', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await app.initialize(vault.address, '0x00', periodDuration)
         })
     })
@@ -241,7 +241,7 @@ contract('Finance App', accounts => {
             })
 
             it('fails when too many period transitions are needed', async () => {
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await app.newPayment(token1.address, recipient, 10, time, 1, 1, '')
                 })
             })
@@ -291,19 +291,19 @@ contract('Finance App', accounts => {
             it('fails when non-receiver attempts to execute a payment', async () => {
                 await app.mock_setTimestamp(time + 1)
 
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await app.receiverExecutePayment(1)
                 })
             })
 
             it('fails executing a payment before time', async () => {
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await app.executePayment(1, { from: recipient })
                 })
             })
 
             it('fails executing a payment by receiver before time', async () => {
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await app.receiverExecutePayment(1, { from: recipient })
                 })
             })
@@ -312,7 +312,7 @@ contract('Finance App', accounts => {
                 await app.setPaymentDisabled(1, true)
                 await app.mock_setTimestamp(time + 1)
 
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await app.executePayment(1, { from: recipient })
                 })
             })
