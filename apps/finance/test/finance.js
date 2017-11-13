@@ -118,11 +118,11 @@ contract('Finance App', accounts => {
 
     it('can change period duration', async () => {
         await app.setPeriodDuration(50)
-        await app.mock_setTimestamp(160) // previous period time was 100, so in 160 must have transitioned 2
+        await app.mock_setTimestamp(160) // previous period duration was 100, so at time 160 must have transitioned 2 periods
 
         await app.tryTransitionAccountingPeriod()
 
-        assert.equal(await app.currentPeriodId(), 2, 'shpuld have transitioned 2 periods')
+        assert.equal(await app.currentPeriodId(), 2, 'should have transitioned 2 periods')
     })
 
     context('setting budget', () => {
