@@ -1,4 +1,4 @@
-const { assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { encodeScript } = require('@aragon/test-helpers/evmScript')
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
@@ -16,7 +16,7 @@ contract('Group app', accounts => {
     })
 
     it('fails on reinitialization', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await app.initialize(groupName)
         })
     })
@@ -26,13 +26,13 @@ contract('Group app', accounts => {
     })
 
     it('fails when forwarding non-member', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await app.forward('0x00')
         })
     })
 
     it('fails when removing non-member', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await app.removeMember('0x00')
         })
     })
@@ -47,7 +47,7 @@ contract('Group app', accounts => {
         })
 
         it('fails if adding again', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await app.addMember(member)
             })
         })
