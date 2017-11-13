@@ -50,9 +50,9 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     /**
     * @notice Initializes Voting app (some parameters won't be modifiable after being set)
     * @param _token MiniMeToken address that will be used as governance token
-    * @param _supportRequiredPct Percentage of voters that must support a voting for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
-    * @param _minAcceptQuorumPct Percetage of total voting power that must support a voting  for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
-    * @param _voteTime Seconds that a voting will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
+    * @param _supportRequiredPct Percentage of voters that must support a vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _minAcceptQuorumPct Percetage of total voting power that must support a vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _voteTime Seconds that a vote will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
     */
     function initialize(
         MiniMeToken _token,
@@ -98,7 +98,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     /**
     * @notice Vote `_supports` in vote with id `_voteId`
     * @param _voteId Id for vote
-    * @param _supports Whether voter supports the voting
+    * @param _supports Whether voter supports the vote
     */
     function vote(uint256 _voteId, bool _supports) external {
         require(canVote(_voteId, msg.sender));
