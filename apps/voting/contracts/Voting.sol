@@ -43,7 +43,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     Vote[] votes;
 
     event StartVote(uint256 indexed voteId);
-    event CastVote(uint256 indexed voteId, address indexed voter, bool supports);
+    event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
     event ChangeMinQuorum(uint256 minAcceptQuorumPct);
 
@@ -214,7 +214,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
         vote.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
 
-        CastVote(_voteId, _voter, _supports);
+        CastVote(_voteId, _voter, _supports, voterStake);
 
         if (canExecute(_voteId))
             _executeVote(_voteId);
