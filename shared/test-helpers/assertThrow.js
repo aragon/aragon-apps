@@ -18,5 +18,9 @@ module.exports = {
 
   async assertInvalidOpcode(block, message = 'should have failed with invalid opcode') {
     return assertThrows(block, message, 'invalid opcode')
-  }
+  },
+
+  async assertRevert(block, message = 'should have failed by reverting') {
+    return assertThrows(block, message, 'revert')
+  },
 }
