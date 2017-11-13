@@ -99,10 +99,11 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     * @notice Vote `_supports` in vote with id `_voteId`
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
+    * @param _executesIfDecided Whether it should execute the vote if it becomes decided
     */
-    function vote(uint256 _voteId, bool _supports) external {
+    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external {
         require(canVote(_voteId, msg.sender));
-        _vote(_voteId, _supports, msg.sender);
+        _vote(_voteId, _supports, msg.sender, _executesIfDecided);
     }
 
     /**
@@ -191,10 +192,10 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         StartVote(voteId);
 
         if (canVote(voteId, msg.sender))
-            _vote(voteId, true, msg.sender);
+            _vote(voteId, true, msg.sender, true);
     }
 
-    function _vote(uint256 _voteId, bool _supports, address _voter) internal {
+    function _vote(uint256 _voteId, bool _supports, address _voter, bool _executesIfDecided) internal {
         Vote storage vote = votes[_voteId];
 
         // this could re-enter, though we can asume the governance token is not maliciuous
@@ -216,7 +217,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
         CastVote(_voteId, _voter, _supports, voterStake);
 
-        if (canExecute(_voteId))
+        if (_executesIfDecided && canExecute(_voteId))
             _executeVote(_voteId);
     }
 
