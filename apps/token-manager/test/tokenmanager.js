@@ -25,6 +25,12 @@ contract('Token Manager', accounts => {
         })
     })
 
+    it('fails when sending ether to token', async () => {
+        return assertInvalidOpcode(async () => {
+            await token.send(1) // transfer 1 wei to token contract
+        })
+    })
+
     context('for native tokens', () => {
         const holder = accounts[1]
 
@@ -57,6 +63,14 @@ contract('Token Manager', accounts => {
 
             assert.equal(await token.balanceOf(holder), 50, 'holder should have assigned tokens')
             assert.equal(await token.balanceOf(tokenManager.address), 0, 'token manager should have 0 tokens')
+        })
+
+        it('cannot assign more tokens than owned', async () => {
+            await tokenManager.issue(50)
+
+            return assertInvalidOpcode(async () => {
+                await tokenManager.assign(holder, 51)
+            })
         })
 
         it('cannot wrap tokens', async () => {
@@ -119,7 +133,7 @@ contract('Token Manager', accounts => {
             })
 
             it('can transfer half mid vesting', async () => {
-                await timetravel(3000)
+                await timetravel(start + (vesting - start) / 2)
 
                 await token.transfer(accounts[2], 20, { from: holder })
 
@@ -129,6 +143,14 @@ contract('Token Manager', accounts => {
             it('cannot transfer non-vested tokens', async () => {
                 return assertInvalidOpcode(async () => {
                     await token.transfer(accounts[2], 10, { from: holder })
+                })
+            })
+
+            it('can approve non-vested tokens but transferFrom fails', async () => {
+                await token.approve(accounts[2], 10, { from: holder })
+
+                return assertInvalidOpcode(async () => {
+                    await token.transferFrom(holder, accounts[2], 10, { from: accounts[2] })
                 })
             })
 
@@ -238,6 +260,16 @@ contract('Token Manager', accounts => {
                 await token.transfer(tokenManager.address, 100, { from: holder100 })
                 await tokenManager.assignVested(holder100, 100, 1e11, 1e11, 1e11, false)
 
+                return assertInvalidOpcode(async () => {
+                    await tokenManager.unwrap(100, { from: holder100 })
+                })
+            })
+
+            it('fails if unwrapping more tokens than token managers balance', async () => {
+                // after being wrapped, as token controller we can move tokens at our will
+                // this scenario shouldn't happen in reality, as wrapped tokens should be
+                // trustless tokens in which this operation is not allowed
+                await wrappedToken.transferFrom(tokenManager.address, accounts[7], 100)
                 return assertInvalidOpcode(async () => {
                     await tokenManager.unwrap(100, { from: holder100 })
                 })

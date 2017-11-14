@@ -134,7 +134,7 @@ contract Fundraising is App, Initializable, ERC677Receiver {
         uint256 returnTokens = _buy(_saleId, msg.sender, _payedTokens);
 
         // No need to return tokens as we never take them from sender's balance
-        assert(raisedToken.transferFrom(msg.sender, vault, _payedTokens.sub(returnTokens)));
+        require(raisedToken.transferFrom(msg.sender, vault, _payedTokens.sub(returnTokens)));
     }
 
     /**
@@ -149,9 +149,9 @@ contract Fundraising is App, Initializable, ERC677Receiver {
 
         uint256 returnTokens = _buy(saleId, _sender, _value);
 
-        assert(raisedToken.transfer(vault, _value.sub(returnTokens)));
+        require(raisedToken.transfer(vault, _value.sub(returnTokens)));
         if (returnTokens > 0)
-            assert(raisedToken.transfer(_sender, returnTokens));
+            require(raisedToken.transfer(_sender, returnTokens));
 
         return true;
     }
@@ -298,7 +298,7 @@ contract Fundraising is App, Initializable, ERC677Receiver {
         isInversePrice = sale.isInversePrice;
         price = period.initialPrice.mul(pricePrecision);
 
-        if (period.finalPrice != 0) { // interpolate price by period
+        if (period.initialPrice != period.finalPrice) { // interpolate price by period
             uint256 periodDelta = uint256(period.periodEnds).sub(uint256(sale.periodStartTime));
             uint256 periodState = getTimestamp().sub(uint256(sale.periodStartTime));
             if (period.finalPrice > period.initialPrice) {
@@ -341,5 +341,7 @@ contract Fundraising is App, Initializable, ERC677Receiver {
         }
     }
 
-    function getTimestamp() internal constant returns (uint256) { return now; }
+    function getTimestamp() internal constant returns (uint256) {
+        return now;
+    }
 }
