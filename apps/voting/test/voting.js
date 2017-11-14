@@ -128,7 +128,7 @@ contract('Voting App', accounts => {
                 // with new quorum at 50% it shouldn't have, but since min quorum is snapshotted
                 // it will succeed
 
-                await app.vote(voteId, true, { from: holder31 })
+                await app.vote(voteId, true, true, { from: holder31 })
                 await timeTravel(votingTime + 1)
 
                 const state = await app.getVote(voteId)
@@ -137,16 +137,16 @@ contract('Voting App', accounts => {
             })
 
             it('holder can vote', async () => {
-                await app.vote(voteId, false, { from: holder31 })
+                await app.vote(voteId, false, true, { from: holder31 })
                 const state = await app.getVote(voteId)
 
                 assert.equal(state[7], 31, 'nay vote should have been counted')
             })
 
             it('holder can modify vote', async () => {
-                await app.vote(voteId, true, { from: holder31 })
-                await app.vote(voteId, false, { from: holder31 })
-                await app.vote(voteId, true, { from: holder31 })
+                await app.vote(voteId, true, true, { from: holder31 })
+                await app.vote(voteId, false, true, { from: holder31 })
+                await app.vote(voteId, true, true, { from: holder31 })
                 const state = await app.getVote(voteId)
 
                 assert.equal(state[6], 31, 'yea vote should have been counted')
@@ -156,7 +156,7 @@ contract('Voting App', accounts => {
             it('token transfers dont affect voting', async () => {
                 await token.transfer(nonHolder, 31, { from: holder31 })
 
-                await app.vote(voteId, true, { from: holder31 })
+                await app.vote(voteId, true, true, { from: holder31 })
                 const state = await app.getVote(voteId)
 
                 assert.equal(state[6], 31, 'yea vote should have been counted')
@@ -165,49 +165,55 @@ contract('Voting App', accounts => {
 
             it('throws when non-holder votes', async () => {
                 return assertRevert(async () => {
-                    await app.vote(voteId, true, { from: nonHolder })
+                    await app.vote(voteId, true, true, { from: nonHolder })
                 })
             })
 
             it('throws when voting after voting closes', async () => {
                 await timeTravel(votingTime + 1)
                 return assertRevert(async () => {
-                    await app.vote(voteId, true, { from: holder31 })
+                    await app.vote(voteId, true, true, { from: holder31 })
                 })
             })
 
             it('can execute if vote is approved with support and quorum', async () => {
-                await app.vote(voteId, true, { from: holder31 })
-                await app.vote(voteId, false, { from: holder19 })
+                await app.vote(voteId, true, true, { from: holder31 })
+                await app.vote(voteId, false, true, { from: holder19 })
                 await timeTravel(votingTime + 1)
                 await app.executeVote(voteId)
                 assert.equal(await executionTarget.counter(), 2, 'should have executed result')
             })
 
             it('cannot execute vote if not enough quorum met', async () => {
-                await app.vote(voteId, true, { from: holder19 })
+                await app.vote(voteId, true, true, { from: holder19 })
                 await timeTravel(votingTime + 1)
                 return assertRevert(async () => {
                     await app.executeVote(voteId)
                 })
             })
 
-            it('vote is executed automatically if decided', async () => {
-                await app.vote(voteId, true, { from: holder50 }) // causes execution
+            it('vote can be executed automatically if decided', async () => {
+                await app.vote(voteId, true, true, { from: holder50 }) // causes execution
+                assert.equal(await executionTarget.counter(), 2, 'should have executed result')
+            })
+
+            it('vote can be not executed automatically if decided', async () => {
+                await app.vote(voteId, true, false, { from: holder50 }) // doesnt cause execution
+                await app.executeVote(voteId)
                 assert.equal(await executionTarget.counter(), 2, 'should have executed result')
             })
 
             it('cannot re-execute vote', async () => {
-                await app.vote(voteId, true, { from: holder50 }) // causes execution
+                await app.vote(voteId, true, true, { from: holder50 }) // causes execution
                 return assertRevert(async () => {
                     await app.executeVote(voteId)
                 })
             })
 
             it('cannot vote on executed vote', async () => {
-                await app.vote(voteId, true, { from: holder50 }) // causes execution
+                await app.vote(voteId, true, true, { from: holder50 }) // causes execution
                 return assertRevert(async () => {
-                    await app.vote(voteId, true, { from: holder19 })
+                    await app.vote(voteId, true, true, { from: holder19 })
                 })
             })
         })
@@ -234,7 +240,7 @@ contract('Voting App', accounts => {
 
             assert.isFalse(await app.canExecute(voteId), 'vote cannot be executed')
 
-            await app.vote(voteId, true, { from: holder })
+            await app.vote(voteId, true, true, { from: holder })
 
             const [isOpen, isExecuted] = await app.getVote(voteId)
 
@@ -275,8 +281,8 @@ contract('Voting App', accounts => {
 
             assert.isFalse(await app.canExecute(voteId), 'vote cannot be executed')
 
-            await app.vote(voteId, true, { from: holder1 })
-            await app.vote(voteId, true, { from: holder2 })
+            await app.vote(voteId, true, true, { from: holder1 })
+            await app.vote(voteId, true, true, { from: holder2 })
 
             const [isOpen, isExecuted] = await app.getVote(voteId)
 

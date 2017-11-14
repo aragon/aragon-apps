@@ -43,16 +43,16 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     Vote[] votes;
 
     event StartVote(uint256 indexed voteId);
-    event CastVote(uint256 indexed voteId, address indexed voter, bool supports);
+    event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
     event ChangeMinQuorum(uint256 minAcceptQuorumPct);
 
     /**
     * @notice Initializes Voting app (some parameters won't be modifiable after being set)
     * @param _token MiniMeToken address that will be used as governance token
-    * @param _supportRequiredPct Percentage of voters that must support a voting for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
-    * @param _minAcceptQuorumPct Percetage of total voting power that must support a voting  for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
-    * @param _voteTime Seconds that a voting will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
+    * @param _supportRequiredPct Percentage of voters that must support a vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _minAcceptQuorumPct Percetage of total voting power that must support a vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _voteTime Seconds that a vote will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
     */
     function initialize(
         MiniMeToken _token,
@@ -98,11 +98,12 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     /**
     * @notice Vote `_supports` in vote with id `_voteId`
     * @param _voteId Id for vote
-    * @param _supports Whether voter supports the voting
+    * @param _supports Whether voter supports the vote
+    * @param _executesIfDecided Whether it should execute the vote if it becomes decided
     */
-    function vote(uint256 _voteId, bool _supports) external {
+    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external {
         require(canVote(_voteId, msg.sender));
-        _vote(_voteId, _supports, msg.sender);
+        _vote(_voteId, _supports, msg.sender, _executesIfDecided);
     }
 
     /**
@@ -191,10 +192,10 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         StartVote(voteId);
 
         if (canVote(voteId, msg.sender))
-            _vote(voteId, true, msg.sender);
+            _vote(voteId, true, msg.sender, true);
     }
 
-    function _vote(uint256 _voteId, bool _supports, address _voter) internal {
+    function _vote(uint256 _voteId, bool _supports, address _voter, bool _executesIfDecided) internal {
         Vote storage vote = votes[_voteId];
 
         // this could re-enter, though we can asume the governance token is not maliciuous
@@ -214,9 +215,9 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
         vote.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
 
-        CastVote(_voteId, _voter, _supports);
+        CastVote(_voteId, _voter, _supports, voterStake);
 
-        if (canExecute(_voteId))
+        if (_executesIfDecided && canExecute(_voteId))
             _executeVote(_voteId);
     }
 

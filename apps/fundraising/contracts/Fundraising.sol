@@ -290,6 +290,10 @@ contract Fundraising is App, Initializable, ERC677Receiver {
 
         SalePeriod storage period = sale.periods[sale.currentPeriod];
 
+        // Make sure calculatePrice is executed running with the correct period set
+        // All entry points to this function should have performed the transition
+        assert(getTimestamp() < period.periodEnds);
+
         pricePrecision = 10 ** 8;  // given that exchangeRate is a uint, we need more precision for interpolating
         isInversePrice = sale.isInversePrice;
         price = period.initialPrice.mul(pricePrecision);

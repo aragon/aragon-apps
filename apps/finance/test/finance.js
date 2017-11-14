@@ -118,11 +118,11 @@ contract('Finance App', accounts => {
 
     it('can change period duration', async () => {
         await app.setPeriodDuration(50)
-        await app.mock_setTimestamp(160) // previous period time was 100, so in 160 must have transitioned 2
+        await app.mock_setTimestamp(160) // previous period duration was 100, so at time 160 must have transitioned 2 periods
 
-        await app.tryTransitionAccountingPeriod()
+        await app.tryTransitionAccountingPeriod(5) // transition a maximum of 5 accounting periods
 
-        assert.equal(await app.currentPeriodId(), 2, 'shpuld have transitioned 2 periods')
+        assert.equal(await app.currentPeriodId(), 2, 'should have transitioned 2 periods')
     })
 
     context('setting budget', () => {
@@ -163,6 +163,22 @@ contract('Finance App', accounts => {
             await app.newPayment(token1.address, recipient, amount, time, 0, 1, '')
 
             assert.equal(await token1.balanceOf(recipient), amount, 'recipient should have received tokens')
+        })
+
+        it('can decrease budget after spending', async () => {
+            const amount = 10
+
+            // interval 0, repeat 1 (single payment)
+            await app.newPayment(token1.address, recipient, amount, time, 0, 1, '')
+
+            const newBudgetAmount = 5
+            await app.setBudget(token1.address, newBudgetAmount)
+
+            const [budget, hasBudget, remainingBudget] = await app.getBudget(token1.address)
+
+            assert.equal(budget, newBudgetAmount, 'new budget should be correct')
+            assert.isTrue(hasBudget, 'should have budget')
+            assert.equal(remainingBudget, 0, 'remaining budget should be 0')
         })
 
         it('removing budget allows unlimited spending', async () => {
