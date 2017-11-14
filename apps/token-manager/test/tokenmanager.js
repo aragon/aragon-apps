@@ -1,4 +1,4 @@
-const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const timetravel = require('@aragon/test-helpers/timeTravel')(web3)
 const getBlock = require('@aragon/test-helpers/block')(web3)
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
@@ -26,7 +26,7 @@ contract('Token Manager', accounts => {
     })
 
     it('fails when sending ether to token', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await token.send(1) // transfer 1 wei to token contract
         })
     })
@@ -68,7 +68,7 @@ contract('Token Manager', accounts => {
         it('cannot assign more tokens than owned', async () => {
             await tokenManager.issue(50)
 
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await tokenManager.assign(holder, 51)
             })
         })
@@ -149,7 +149,7 @@ contract('Token Manager', accounts => {
             it('can approve non-vested tokens but transferFrom fails', async () => {
                 await token.approve(accounts[2], 10, { from: holder })
 
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await token.transferFrom(holder, accounts[2], 10, { from: accounts[2] })
                 })
             })
@@ -212,7 +212,7 @@ contract('Token Manager', accounts => {
 
         it('cannot wrap more than allowance', async () => {
             await wrappedToken.approve(tokenManager.address, 99, { from: holder100 })
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await tokenManager.wrap(100, { from: holder100 })
             })
         })
@@ -270,7 +270,7 @@ contract('Token Manager', accounts => {
                 // this scenario shouldn't happen in reality, as wrapped tokens should be
                 // trustless tokens in which this operation is not allowed
                 await wrappedToken.transferFrom(tokenManager.address, accounts[7], 100)
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await tokenManager.unwrap(100, { from: holder100 })
                 })
             })
