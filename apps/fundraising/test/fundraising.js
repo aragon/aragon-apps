@@ -1,4 +1,4 @@
-const { assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 
 const TokenManager = artifacts.require('TokenManager')
 const MiniMeToken = artifacts.require('MiniMeToken')
@@ -30,31 +30,31 @@ contract('Fundraising', accounts => {
     })
 
     it('fails on reinitialization', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await fundraising.initialize(tokenManager.address, vault)
         })
     })
 
     it('fails if any price is 0', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await fundraising.newSale(zeroAddress, raisedToken.address, 100, 150, 0, true, 1, [11], [0, 2])
         })
     })
 
     it('fails if period times overlap', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await fundraising.newSale(zeroAddress, raisedToken.address, 100, 150, 0, true, 11, [11], [2, 2])
         })
     })
 
     it('fails if any raised token is sold token', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await fundraising.newSale(zeroAddress, token.address, 100, 150, 0, true, 1, [11], [2, 2])
         })
     })
 
     it('fails if no periods are provided', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await fundraising.newSale(zeroAddress, token.address, 100, 150, 0, true, 1, [], [])
         })
     })
@@ -63,13 +63,13 @@ contract('Fundraising', accounts => {
         const maxPeriods = 51
         const periodsEndTime = [...Array(maxPeriods).keys()].map(x => 11 + x)
         const periodPrices = [...Array(maxPeriods * 2).keys()]
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await fundraising.newSale(zeroAddress, token.address, 100, 150, 0, true, 1, periodsEndTime, periodPrices)
         })
     })
 
     it('fails if on periods/prices argument number mismatch', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await fundraising.newSale(zeroAddress, token.address, 100, 150, 0, true, 1, [11], [10])
         })
     })
@@ -98,7 +98,7 @@ contract('Fundraising', accounts => {
         await fundraising.newSale(zeroAddress, raisedToken.address, 100, 150, minBuy, true, 1, [11], [1, 1])
         await raisedToken.approve(fundraising.address, 1, { from: holder1000 })
 
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await fundraising.transferAndBuy(0, 1, { from: holder1000 })
         })
     })
@@ -112,7 +112,7 @@ contract('Fundraising', accounts => {
 
         assert.equal(await token.balanceOf(holder10), 2, 'investor should have received tokens')
 
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await fundraising.transferAndBuy(0, 1, { from: holder1000 })
         })
     })
@@ -138,7 +138,7 @@ contract('Fundraising', accounts => {
         })
 
         it('fails when calling buy with token externally', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 console.log(await fundraising.buyWithToken(0))
             })
         })
@@ -160,19 +160,19 @@ contract('Fundraising', accounts => {
         })
 
         it('fails if data is not correctly specified', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await etherToken.wrapAndCall(fundraising.address, '0x00', { value: 15000 })
             })
         })
 
         it('fails if buying in non-existent sale', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await etherToken.wrapAndCall(fundraising.address, fundraising.contract.buyWithToken.getData(100), { value: 15000 })
             })
         })
 
         it('fails if not buying through token', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await fundraising.tokenFallback(accounts[1], 100, buyData)
             })
         })
@@ -221,7 +221,7 @@ contract('Fundraising', accounts => {
 
         it('fails if buying before sale starts', async () => {
             await fundraising.mock_setTimestamp(10)
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await fundraising.transferAndBuy(0, 30, { from: holder1000 })
             })
         })
@@ -232,7 +232,7 @@ contract('Fundraising', accounts => {
             // transfers all its tokens away before buying
             await raisedToken.transfer(accounts[7], 1000, { from: holder1000 })
 
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await fundraising.transferAndBuy(0, 110, { from: holder1000 })
             })
         })
@@ -272,14 +272,14 @@ contract('Fundraising', accounts => {
         it('fails if buying in closed sale', async () => {
             await fundraising.forceCloseSale(0)
 
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await fundraising.transferAndBuy(0, 90, { from: holder1000 })
             })
         })
 
         it('fails if closing closed sale', async () => {
             await fundraising.forceCloseSale(0)
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await fundraising.forceCloseSale(0)
             })
         })
@@ -294,7 +294,7 @@ contract('Fundraising', accounts => {
 
         it('fails when closing ongoing sale', async () => {
             await fundraising.mock_setTimestamp(21)
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await fundraising.closeSale(0)
             })
         })
