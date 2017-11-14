@@ -138,7 +138,7 @@ contract('Fundraising', accounts => {
         })
 
         it('fails when calling buy with token externally', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 console.log(await fundraising.buyWithToken(0))
             })
         })
@@ -172,7 +172,7 @@ contract('Fundraising', accounts => {
         })
 
         it('fails if not buying through token', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await fundraising.tokenFallback(accounts[1], 100, buyData)
             })
         })
@@ -232,7 +232,7 @@ contract('Fundraising', accounts => {
             // transfers all its tokens away before buying
             await raisedToken.transfer(accounts[7], 1000, { from: holder1000 })
 
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await fundraising.transferAndBuy(0, 110, { from: holder1000 })
             })
         })
@@ -272,14 +272,14 @@ contract('Fundraising', accounts => {
         it('fails if buying in closed sale', async () => {
             await fundraising.forceCloseSale(0)
 
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await fundraising.transferAndBuy(0, 90, { from: holder1000 })
             })
         })
 
         it('fails if closing closed sale', async () => {
             await fundraising.forceCloseSale(0)
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await fundraising.forceCloseSale(0)
             })
         })
