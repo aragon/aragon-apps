@@ -498,6 +498,12 @@ contract Finance is App, Initializable, ERC677Receiver {
             return MAX_UINT;
 
         uint256 spent = periods[currentPeriodId()].tokenStatement[_token].expenses;
+
+        // A budget decrease can cause the spent amount to be greater than period budget
+        // If so, return 0 to not allow more spending during period
+        if (spent >= settings.budgets[_token])
+            return 0;
+
         return settings.budgets[_token].sub(spent);
     }
 
