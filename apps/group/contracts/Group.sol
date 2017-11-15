@@ -8,6 +8,7 @@ import "@aragon/core/contracts/common/EVMCallScript.sol";
 
 import "@aragon/core/contracts/misc/Migrations.sol";
 
+
 contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     string name;
     mapping (address => bool) members;
@@ -22,7 +23,7 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @notice Initialize new `_name` group
     * @param _name Name for the group
     */
-    function initialize(string _name) onlyInit {
+    function initialize(string _name) onlyInit external {
         initialized();
 
         name = _name;
@@ -57,16 +58,16 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
         runScript(_evmCallScript);
     }
 
-    function isGroupMember(address _entity) constant returns (bool) {
+    function isGroupMember(address _entity) public constant returns (bool) {
         return members[_entity];
     }
 
-    function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
+    function canForward(address _sender, bytes _evmCallScript) public constant returns (bool) {
         _evmCallScript; // silence unusued variable warning
         return isGroupMember(_sender);
     }
 
-    function getName() constant returns (string) {
+    function getName() public constant returns (string) {
         return name;
     }
 }
