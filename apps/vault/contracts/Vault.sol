@@ -6,6 +6,7 @@ import "@aragon/core/contracts/zeppelin/token/ERC20.sol";
 
 import "@aragon/core/contracts/misc/Migrations.sol";
 
+
 contract Vault is App {
     event SetAllowance(address indexed token, address indexed spender, uint256 amount);
     event TokenTransfer(address indexed token, address indexed receiver, uint256 amount);
@@ -27,7 +28,7 @@ contract Vault is App {
         }
     }
 
-    function requestAllowance(ERC20 _token, uint256 _amount) auth(REQUEST_ALLOWANCES_ROLE) {
+    function requestAllowance(ERC20 _token, uint256 _amount) auth(REQUEST_ALLOWANCES_ROLE) public {
         address spender = msg.sender;
 
         // Some token implementations will throw when changing an allowance from non-zero to non-zero
