@@ -12,6 +12,7 @@ import "@aragon/core/contracts/zeppelin/math/Math.sol";
 
 import "@aragon/core/contracts/misc/Migrations.sol";
 
+
 contract Fundraising is App, Initializable, ERC677Receiver {
     using SafeMath for uint256;
 
@@ -60,7 +61,7 @@ contract Fundraising is App, Initializable, ERC677Receiver {
     * @param _tokenManager Reference to the token manager that will mint tokens on sales (Requires mint permission!)
     * @param _vault Address that will receive funds raised in sale
     */
-    function initialize(TokenManager _tokenManager, address _vault) onlyInit {
+    function initialize(TokenManager _tokenManager, address _vault) onlyInit external {
         initialized();
 
         tokenManager = _tokenManager;
@@ -186,7 +187,7 @@ contract Fundraising is App, Initializable, ERC677Receiver {
         _closeSale(_saleId);
     }
 
-    function getSale(uint256 _saleId) constant returns (bool closed, address investor, address raisedToken, uint256 maxRaised, uint256 maxSold, uint256 minBuy, bool isInversePrice, uint64 saleStartTime, uint256 periodsCount, uint256 currentPeriod, uint256 raisedAmount, uint256 soldAmount) {
+    function getSale(uint256 _saleId) public constant returns (bool closed, address investor, address raisedToken, uint256 maxRaised, uint256 maxSold, uint256 minBuy, bool isInversePrice, uint64 saleStartTime, uint256 periodsCount, uint256 currentPeriod, uint256 raisedAmount, uint256 soldAmount) {
         Sale storage sale = sales[_saleId];
 
         closed = sale.closed;
@@ -203,7 +204,7 @@ contract Fundraising is App, Initializable, ERC677Receiver {
         soldAmount = sale.soldAmount;
     }
 
-    function getPeriod(uint256 _saleId, uint256 _salePeriod) constant returns (uint64 periodStarts, uint64 periodEnds, uint256 initialPrice, uint256 finalPrice) {
+    function getPeriod(uint256 _saleId, uint256 _salePeriod) public constant returns (uint64 periodStarts, uint64 periodEnds, uint256 initialPrice, uint256 finalPrice) {
         Sale storage sale = sales[_saleId];
         SalePeriod storage period = sale.periods[_salePeriod];
 
@@ -219,7 +220,7 @@ contract Fundraising is App, Initializable, ERC677Receiver {
     * @return isInversePrice Whether price affects with multiplication or division
     * @return pricePrecision Factor by which price has been multiplied for precision
     */
-    function getCurrentPrice(uint256 _saleId) constant returns (uint256 price, bool isInversePrice, uint256 pricePrecision) {
+    function getCurrentPrice(uint256 _saleId) public constant returns (uint256 price, bool isInversePrice, uint256 pricePrecision) {
         transitionSalePeriodIfNeeded(sales[_saleId]); // if done with 'sendTransaction' this function can modify state
         return calculatePrice(_saleId);
     }

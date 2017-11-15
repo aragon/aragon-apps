@@ -12,6 +12,7 @@ import "@aragon/apps-vault/contracts/Vault.sol";
 
 import "@aragon/core/contracts/misc/Migrations.sol";
 
+
 contract Finance is App, Initializable, ERC677Receiver {
     using SafeMath for uint256;
 
@@ -101,7 +102,7 @@ contract Finance is App, Initializable, ERC677Receiver {
     * @param _etherToken Address of EtherToken for ether withdraws
     * @param _periodDuration Duration in seconds of each period
     */
-    function initialize(Vault _vault, EtherToken _etherToken, uint64 _periodDuration) onlyInit {
+    function initialize(Vault _vault, EtherToken _etherToken, uint64 _periodDuration) external onlyInit {
         initialized();
 
         require(_periodDuration > 1);
@@ -125,7 +126,7 @@ contract Finance is App, Initializable, ERC677Receiver {
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
     */
-    function deposit(ERC20 _token, uint256 _amount, string _reference) transitionsPeriod {
+    function deposit(ERC20 _token, uint256 _amount, string _reference) external transitionsPeriod {
         _recordIncomingTransaction(
             _token,
             msg.sender,
@@ -278,7 +279,7 @@ contract Finance is App, Initializable, ERC677Receiver {
     * @param _ttl Maximum periods that can be transitioned
     * @return success boolean indicating whether the accounting period is the correct one (if false, TTL was surpased and another call is needed)
     */
-    function tryTransitionAccountingPeriod(uint256 _ttl) returns (bool success) {
+    function tryTransitionAccountingPeriod(uint256 _ttl) public returns (bool success) {
         Period storage currentPeriod = periods[currentPeriodId()];
         if (getTimestamp() <= currentPeriod.endTime)
             return true; // transition not needed yet
@@ -305,7 +306,7 @@ contract Finance is App, Initializable, ERC677Receiver {
 
     // consts
 
-    function getPayment(uint256 _paymentId) constant returns (ERC20 token, address receiver, uint256 amount, uint64 initialPaymentTime, uint64 interval, uint64 maxRepeats, string reference, bool disabled, uint256 repeats, address createdBy) {
+    function getPayment(uint256 _paymentId) public constant returns (ERC20 token, address receiver, uint256 amount, uint64 initialPaymentTime, uint64 interval, uint64 maxRepeats, string reference, bool disabled, uint256 repeats, address createdBy) {
         Payment storage payment = payments[_paymentId];
 
         token = payment.token;
@@ -320,7 +321,7 @@ contract Finance is App, Initializable, ERC677Receiver {
         createdBy = payment.createdBy;
     }
 
-    function getTransaction(uint256 _transactionId) constant returns (uint256 periodId, uint256 amount, uint256 paymentId, ERC20 token, address entity, bool isIncoming, uint64 date, string reference) {
+    function getTransaction(uint256 _transactionId) public constant returns (uint256 periodId, uint256 amount, uint256 paymentId, ERC20 token, address entity, bool isIncoming, uint64 date, string reference) {
         Transaction storage transaction = transactions[_transactionId];
 
         token = transaction.token;
@@ -333,7 +334,7 @@ contract Finance is App, Initializable, ERC677Receiver {
         reference = transaction.reference;
     }
 
-    function getPeriod(uint256 _periodId) constant returns (bool isCurrent, uint64 startTime, uint64 endTime, uint256 firstTransactionId, uint256 lastTransactionId) {
+    function getPeriod(uint256 _periodId) public constant returns (bool isCurrent, uint64 startTime, uint64 endTime, uint256 firstTransactionId, uint256 lastTransactionId) {
         Period storage period = periods[_periodId];
 
         isCurrent = currentPeriodId() == _periodId;
@@ -344,12 +345,12 @@ contract Finance is App, Initializable, ERC677Receiver {
         lastTransactionId = period.lastTransactionId;
     }
 
-    function getPeriodTokenStatement(uint256 _periodId, address _token) constant returns (uint256 expenses, uint256 income) {
+    function getPeriodTokenStatement(uint256 _periodId, address _token) public constant returns (uint256 expenses, uint256 income) {
         TokenStatement storage tokenStatement = periods[_periodId].tokenStatement[_token];
         return (tokenStatement.expenses, tokenStatement.income);
     }
 
-    function nextPaymentTime(uint256 _paymentId) constant returns (uint64) {
+    function nextPaymentTime(uint256 _paymentId) public constant returns (uint64) {
         Payment memory payment = payments[_paymentId];
 
         if (payment.repeats >= payment.maxRepeats)
@@ -361,17 +362,17 @@ contract Finance is App, Initializable, ERC677Receiver {
         return uint64(nextPayment);
     }
 
-    function getPeriodDuration() constant returns (uint64 periodDuration) {
+    function getPeriodDuration() public constant returns (uint64 periodDuration) {
         return settings.periodDuration;
     }
 
-    function getBudget(address _token) transitionsPeriod constant returns (uint256 budget, bool hasBudget, uint256 remainingBudget) {
+    function getBudget(address _token) transitionsPeriod public constant returns (uint256 budget, bool hasBudget, uint256 remainingBudget) {
         budget = settings.budgets[_token];
         hasBudget = settings.hasBudget[_token];
         remainingBudget = _getRemainingBudget(_token);
     }
 
-    function currentPeriodId() constant returns (uint256) {
+    function currentPeriodId() public constant returns (uint256) {
         return periods.length - 1;
     }
 
