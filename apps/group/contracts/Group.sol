@@ -10,10 +10,17 @@ import "@aragon/core/contracts/misc/Migrations.sol";
 
 contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     string name;
-    mapping (address => bool) members;
+    address[] public members;
+    mapping (address => bool) isMembers;
+    mapping (address => bool) confirmations;
+
+    uint public required;
 
     event AddMember(address indexed entity);
     event RemoveMember(address indexed entity);
+    event Confirmation(address indexed entity);
+    event Revocation(address indexed entity);
+    event RequirementChanged(uint _required);
 
     bytes32 constant public ADD_MEMBER_ROLE = bytes32(1);
     bytes32 constant public REMOVE_MEMBER_ROLE = bytes32(2);
@@ -22,10 +29,18 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @notice Initialize new `_name` group
     * @param _name Name for the group
     */
-    function initialize(string _name) onlyInit {
+    function initialize(string _name, uint _required) onlyInit {
         initialized();
 
+        required = _required;
         name = _name;
+    }
+
+    function changeRequirement(uint _required) public {
+        require(isGroupMember(msg.sender));
+        require(_required > 0 && _required <= members.length);
+        required = _required;
+        RequirementChanged(_required);
     }
 
     /**
@@ -34,7 +49,8 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     */
     function addMember(address _entity) auth(ADD_MEMBER_ROLE) external {
         require(!isGroupMember(_entity));
-        members[_entity] = true;
+        isMembers[_entity] = true;
+        members.push(_entity);
         AddMember(_entity);
     }
 
@@ -44,8 +60,42 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     */
     function removeMember(address _entity) auth(REMOVE_MEMBER_ROLE) external {
         require(isGroupMember(_entity));
-        members[_entity] = false;
+        isMembers[_entity] = false;
+        for (uint i=0; i < members.length; i++) {
+            if (members[i] == _entity) {
+                members[i] = members[members.length - 1];
+                delete members[members.length - 1];
+                break;
+            }
+        }
+
+        if (required > members.length)
+            changeRequirement(members.length);
+
         RemoveMember(_entity);
+    }
+
+    function confirm() public {
+        require(isGroupMember(msg.sender));
+        confirmations[msg.sender] = true;
+        Confirmation(msg.sender);
+    }
+
+    function revoke() public {
+        require(isGroupMember(msg.sender));
+        confirmations[msg.sender] = false;
+        Revocation(msg.sender);
+    }
+
+    function isConfirmed() public constant returns (bool) {
+        uint count = 0;
+        for (uint i=0; i < members.length; i++) {
+            if (confirmations[members[i]]) {
+                count += 1;
+            }
+        }
+
+        return count >= required;
     }
 
     /**
@@ -53,12 +103,12 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @param _evmCallScript Script being forwarded
     */
     function forward(bytes _evmCallScript) external {
-        require(isGroupMember(msg.sender));
+        require(isGroupMember(msg.sender) && isConfirmed());
         runScript(_evmCallScript);
     }
 
     function isGroupMember(address _entity) constant returns (bool) {
-        return members[_entity];
+        return isMembers[_entity];
     }
 
     function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
