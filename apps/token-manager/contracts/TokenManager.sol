@@ -13,6 +13,7 @@ import "@aragon/core/contracts/zeppelin/math/SafeMath.sol";
 
 import "@aragon/core/contracts/misc/Migrations.sol";
 
+
 contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunner, IForwarder {
     using SafeMath for uint256;
 
@@ -53,7 +54,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @notice Initializes TokenManager in native mode (parameters won't be modifiable after being set)
     * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
     */
-    function initializeNative(MiniMeToken _token) onlyInit {
+    function initializeNative(MiniMeToken _token) onlyInit external {
         _initialize(_token, ERC20(0));
     }
 
@@ -62,7 +63,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
     * @param _wrappedToken Address of the token being wrapped (can get 1:1 token exchanged for managed token)
     */
-    function initializeWrapper(MiniMeToken _token, ERC20 _wrappedToken) onlyInit {
+    function initializeWrapper(MiniMeToken _token, ERC20 _wrappedToken) onlyInit external {
         _initialize(_token, _wrappedToken);
     }
 
@@ -194,20 +195,20 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         runScript(_evmCallScript);
     }
 
-    function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
+    function canForward(address _sender, bytes _evmCallScript) public constant returns (bool) {
         _evmCallScript;
         return token.balanceOf(_sender) > 0;
     }
 
-    function tokenGrantsCount(address _holder) constant returns (uint256) {
+    function tokenGrantsCount(address _holder) public constant returns (uint256) {
         return vestings[_holder].length;
     }
 
-    function spendableBalanceOf(address _holder) constant returns (uint256) {
+    function spendableBalanceOf(address _holder) public constant returns (uint256) {
         return transferrableBalance(_holder, now);
     }
 
-    function transferrableBalance(address _holder, uint256 _time) constant returns (uint256) {
+    function transferrableBalance(address _holder, uint256 _time) public constant returns (uint256) {
         uint256 vs = tokenGrantsCount(_holder);
         uint256 totalNonTransferable = 0;
 
@@ -303,7 +304,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _owner The address that sent the ether to create tokens
     * @return True if the ether is accepted, false for it to throw
     */
-    function proxyPayment(address _owner) payable returns (bool) {
+    function proxyPayment(address _owner) payable public returns (bool) {
         // Even though it is tested, solidity-coverage doesnt get it because
         // MiniMeToken is not instrumented and entire tx is reverted
         require(msg.sender == address(token));
@@ -319,7 +320,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _amount The amount of the transfer
     * @return False if the controller does not authorize the transfer
     */
-    function onTransfer(address _from, address _to, uint _amount) returns (bool) {
+    function onTransfer(address _from, address _to, uint _amount) public constant returns (bool) {
         return _from == address(this) || _to == address(this) || transferrableBalance(_from, now) >= _amount;
     }
 
@@ -331,7 +332,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _amount The amount in the `approve()` call
     * @return False if the controller does not authorize the approval
     */
-    function onApprove(address _owner, address _spender, uint _amount) returns (bool) {
+    function onApprove(address _owner, address _spender, uint _amount) public constant returns (bool) {
         _owner;
         _spender;
         _amount;

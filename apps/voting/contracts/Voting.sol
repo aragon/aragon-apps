@@ -11,6 +11,7 @@ import "@aragon/core/contracts/zeppelin/math/SafeMath.sol";
 
 import "@aragon/core/contracts/misc/Migrations.sol";
 
+
 contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder, IForwarder {
     using SafeMath for uint256;
 
@@ -59,7 +60,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         uint256 _supportRequiredPct,
         uint256 _minAcceptQuorumPct,
         uint64 _voteTime
-    ) onlyInit
+    ) onlyInit external
     {
         initialized();
 
@@ -103,7 +104,12 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     */
     function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external {
         require(canVote(_voteId, msg.sender));
-        _vote(_voteId, _supports, msg.sender, _executesIfDecided);
+        _vote(
+            _voteId,
+            _supports,
+            msg.sender,
+            _executesIfDecided
+        );
     }
 
     /**
@@ -125,17 +131,17 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         _newVote(_evmCallScript, "");
     }
 
-    function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
+    function canForward(address _sender, bytes _evmCallScript) public constant returns (bool) {
         return canPerform(_sender, CREATE_VOTES_ROLE);
     }
 
-    function canVote(uint256 _voteId, address _voter) constant returns (bool) {
+    function canVote(uint256 _voteId, address _voter) public constant returns (bool) {
         Vote storage vote = votes[_voteId];
 
         return _isVoteOpen(vote) && token.balanceOfAt(_voter, vote.snapshotBlock) > 0;
     }
 
-    function canExecute(uint256 _voteId) constant returns (bool) {
+    function canExecute(uint256 _voteId) public constant returns (bool) {
         Vote storage vote = votes[_voteId];
 
         if (vote.executed)
@@ -154,7 +160,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         return voteEnded && hasSupport && hasMinQuorum;
     }
 
-    function getVote(uint256 _voteId) constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script, uint256 scriptActionsCount) {
+    function getVote(uint256 _voteId) public constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script, uint256 scriptActionsCount) {
         Vote storage vote = votes[_voteId];
 
         open = _isVoteOpen(vote);
@@ -170,11 +176,11 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         scriptActionsCount = getScriptActionsCount(vote.executionScript);
     }
 
-    function getVoteMetadata(uint256 _voteId) constant returns (string metadata) {
+    function getVoteMetadata(uint256 _voteId) public constant returns (string metadata) {
         return votes[_voteId].metadata;
     }
 
-    function getVoteScriptAction(uint256 _voteId, uint256 _scriptAction) constant returns (address, bytes) {
+    function getVoteScriptAction(uint256 _voteId, uint256 _scriptAction) public constant returns (address, bytes) {
         return getScriptAction(votes[_voteId].executionScript, _scriptAction);
     }
 
@@ -191,11 +197,24 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
         StartVote(voteId);
 
-        if (canVote(voteId, msg.sender))
-            _vote(voteId, true, msg.sender, true);
+        if (canVote(voteId, msg.sender)) {
+            _vote(
+                voteId,
+                true,
+                msg.sender,
+                true
+            );
+        }
+
     }
 
-    function _vote(uint256 _voteId, bool _supports, address _voter, bool _executesIfDecided) internal {
+    function _vote(
+        uint256 _voteId,
+        bool _supports,
+        address _voter,
+        bool _executesIfDecided
+    ) internal
+    {
         Vote storage vote = votes[_voteId];
 
         // this could re-enter, though we can asume the governance token is not maliciuous
@@ -215,7 +234,12 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
         vote.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
 
-        CastVote(_voteId, _voter, _supports, voterStake);
+        CastVote(
+            _voteId,
+            _voter,
+            _supports,
+            voterStake
+        );
 
         if (_executesIfDecided && canExecute(_voteId))
             _executeVote(_voteId);
