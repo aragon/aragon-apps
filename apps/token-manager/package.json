@@ -8,7 +8,10 @@
     "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh"
   },
   "keywords": [],
-  "author": "",
+  "author": "Aragon Institution MTU <contact@aragon.one>",
+  "contributors": [
+    "Jorge Izquierdo <jorge@aragon.one>"
+  ],
   "license": "GPL-3.0",
   "description": "",
   "devDependencies": {
