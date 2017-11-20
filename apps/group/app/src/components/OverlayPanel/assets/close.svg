@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="10px" height="10px" viewBox="0 0 10 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch Beta 48 (47110) - http://www.bohemiancoding.com/sketch -->
+    <title>Close_Icon_dark</title>
+    <desc>Created with Sketch Beta.</desc>
+    <defs></defs>
+    <g id="WebApp-1366px---Groups---Add" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-1336.000000, -20.000000)" opacity="0.699999988">
+        <g id="Modal" transform="translate(890.000000, 0.000000)" fill="#6D777B">
+            <g id="Close" transform="translate(446.000000, 20.000000)">
+                <polygon id="Close_Icon_dark" points="10 1.0137457 6.0137457 5 10 8.9862543 8.9862543 10 5 6.0137457 1.0137457 10 0 8.9862543 3.9862543 5 0 1.0137457 1.0137457 0 5 3.9862543 8.9862543 0"></polygon>
+            </g>
+        </g>
+    </g>
+</svg>
