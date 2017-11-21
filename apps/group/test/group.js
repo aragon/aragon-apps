@@ -47,7 +47,7 @@ contract('Group app', accounts => {
 
         it('has been added', async () => {
             assert.isTrue(await app.isGroupMember(member), 'member should have been added')
-            assert.equal(app.members.length, 1, 'group should only have on member')
+            assert.equal(await app.members.length, 1, 'group should only have one member')
         })
 
         it('fails if adding again', async () => {
