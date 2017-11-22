@@ -20,7 +20,7 @@ contract('Group app', accounts => {
 
     it('fails on reinitialization', async () => {
         return assertRevert(async () => {
-            await app.initialize(groupName)
+            await app.initialize(groupName, required_confirmations)
         })
     })
 
@@ -47,7 +47,7 @@ contract('Group app', accounts => {
 
         it('has been added', async () => {
             assert.isTrue(await app.isGroupMember(member), 'member should have been added')
-            assert.equal(await app.members.length, 1, 'group should only have one member')
+            assert.equal(await app.numMembers(), 1, 'group should only have one member')
         })
 
         it('fails if adding again', async () => {
@@ -57,9 +57,9 @@ contract('Group app', accounts => {
         })
 
         it('set required signatures', async() => {
-            await app.changeRequirement(1)
+            await app.changeRequirement(1, {from: member})
 
-            assert.equal(app.required, 1, 'should only have one required signature')
+            assert.equal(await app.getRequired(), 1, 'should only have one required signature')
         })
 
         it('fails if requiring more signatures than members', async() => {
@@ -68,18 +68,21 @@ contract('Group app', accounts => {
             })
         })
 
+        it('cannot forward until confirmed', async () => {
+            const executionTarget = await ExecutionTarget.new()
+            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+            const script = encodeScript([action])
+
+            assert.isFalse(await app.canForward(member, script), 'member should not be able to forward')
+        })
+
         it('can forward', async () => {
             const executionTarget = await ExecutionTarget.new()
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
+            app.confirm({from: member})
             assert.isTrue(await app.canForward(member, script), 'member should be able to forward')
-        })
-
-        it('can be removed', async () => {
-            await app.removeMember(member)
-            assert.isFalse(await app.isGroupMember(member), 'member should have been removed')
-            assert.equal(app.members.length, 0, 'there should be no members in the group')
         })
 
         it('forwards transactions', async () => {
@@ -87,6 +90,7 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
+            await app.confirm({from: member})
             await app.forward(script, { from: member })
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
         })
@@ -100,20 +104,32 @@ contract('Group app', accounts => {
         })
 
         it('check that members have been added', async() => {
-            assert.equal(app.members.length, 3, 'group should have 3 members')
+            assert.equal(await app.numMembers(), 3, 'group should have 3 members')
         })
 
         it('required confirmations change when member is removed', async() => {
-            await app.changeRequirement(3)
-            assert.equal(app.required, 3, 'group should require 3 confirmations')
+            await app.changeRequirement(3, {from: member})
+            assert.equal(await app.getRequired(), 3, 'group should require 3 confirmations')
 
-            await app.removeMember(member2)
-            assert.equal(app.required, 2, 'group should now only require 2 confirmations')
+            await app.removeMember(member2, {from: member})
+            assert.equal(await app.getRequired(), 2, 'group should now only require 2 confirmations')
         })
 
-        it('require m out of n confirmations', async() => {
-            await app.changeRequirement(2)
-            assert.equal(app.required, 2, 'group should only require 2 confirmations')
+        it('members should be able to revoke confirmations', async() => {
+            await app.changeRequirement(3, {from: member})
+            await app.confirm({from: member})
+            await app.confirm({from: member2})
+            await app.confirm({from: member3})
+
+            assert.isTrue(await app.isConfirmed(), 'Group has all needed confirmations')
+
+            await(app.revoke({from: member}))
+            assert.isFalse(await app.isConfirmed(), 'Group should no longer have all confirmations')
+        })
+
+        it('require M out of N confirmations', async() => {
+            await app.changeRequirement(2, {from: member})
+            assert.equal(await app.getRequired(), 2, 'group should only require 2 confirmations')
 
             await app.confirm({from: member})
             await app.confirm({from: member2})
@@ -129,30 +145,32 @@ contract('Group app', accounts => {
         })
 
         it('fail if not enough confirmations', async() => {
-            await app.changeRequirement(3)
-            assert.equal(app.required, 3, 'group should require 3 confirmations')
+            await app.changeRequirement(3, {from: member})
+            assert.equal(await app.getRequired(), 3, 'group should require 3 confirmations')
 
             await app.confirm({from: member})
             await app.confirm({from: member2})
 
-            assert.equal(await app.isConfirmed(), false, 'should not have enough confirmations')
+            assert.isFalse(await app.isConfirmed(), 'should not have enough confirmations')
 
             const executionTarget = await ExecutionTarget.new()
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            assertRevert(await app.forward(script, { from: member }))
+            return assertRevert(async() => {
+                await app.forward(script, {from: member})
+            })
         })
 
-        it('require n of n confirmations', async() => {
-            await app.changeRequirement(3)
-            assert.equal(app.required, 3, 'group should require 3 confirmations')
+        it('require N of N confirmations', async() => {
+            await app.changeRequirement(3, {from: member})
+            assert.equal(await app.getRequired(), 3, 'group should require 3 confirmations')
 
             await app.confirm({from: member})
             await app.confirm({from: member2})
             await app.confirm({from: member3})
 
-            assert.equal(await app.isConfirmed(), true, 'should not have enough confirmations')
+            assert.isTrue(await app.isConfirmed(), 'should not have enough confirmations')
 
             const executionTarget = await ExecutionTarget.new()
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }

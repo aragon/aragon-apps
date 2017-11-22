@@ -37,6 +37,10 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
         name = _name;
     }
 
+    /**
+    * @notice Changes the number of members required to confirm before the group can perform actions
+    * @param _required New number of members required to confirm action
+    */
     function changeRequirement(uint _required) public {
         require(isGroupMember(msg.sender));
         require(_required > 0 && _required <= members.length);
@@ -66,6 +70,7 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
             if (members[i] == _entity) {
                 members[i] = members[members.length - 1];
                 delete members[members.length - 1];
+                members.length -= 1;
                 break;
             }
         }
@@ -74,6 +79,14 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
             changeRequirement(members.length);
 
         RemoveMember(_entity);
+    }
+
+    function numMembers() public constant returns (uint) {
+        return members.length;
+    }
+
+    function getRequired() public constant returns (uint) {
+        return required;
     }
 
     function confirm() public {
@@ -108,13 +121,22 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
         runScript(_evmCallScript);
     }
 
+    /**
+    * @notice Checks whether an address belongs to the group
+    * @param _entity address to be checked for group membership
+    */
     function isGroupMember(address _entity) public constant returns (bool) {
         return isMembers[_entity];
     }
 
+    /**
+    * @notice Checks whether an address can forward a actionable script
+    * @param _sender address of the sender MUST be a group member
+    * @param _evmCallScript script to be executed on the EVM
+    */
     function canForward(address _sender, bytes _evmCallScript) public constant returns (bool) {
         _evmCallScript; // silence unusued variable warning
-        return isGroupMember(_sender);
+        return isGroupMember(_sender) && isConfirmed();
     }
 
     function getName() public constant returns (string) {
