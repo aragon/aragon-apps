@@ -66,7 +66,7 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     function removeMember(address _entity) auth(REMOVE_MEMBER_ROLE) external {
         require(isGroupMember(_entity));
         isMembers[_entity] = false;
-        for (uint i=0; i < members.length; i++) {
+        for (uint i = 0; i < members.length; i++) {
             if (members[i] == _entity) {
                 members[i] = members[members.length - 1];
                 delete members[members.length - 1];
@@ -103,7 +103,7 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
 
     function isConfirmed() public constant returns (bool) {
         uint count = 0;
-        for (uint i=0; i < members.length; i++) {
+        for (uint i = 0; i < members.length; i++) {
             if (confirmations[members[i]]) {
                 count += 1;
             }
