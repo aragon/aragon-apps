@@ -98,6 +98,7 @@ class App extends React.Component {
         activeGroupIndex={activeGroupIndex}
         onChangeGroup={this.handleChangeGroup}
         onAdd={this.handleCreate}
+        publicUrl="/static/aragon-ui"
       >
         <StyledApp backgroundLogo={empty}>
           {empty ? (
