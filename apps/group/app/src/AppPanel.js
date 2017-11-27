@@ -1,8 +1,5 @@
 import React from 'react'
-import styled from 'styled-components'
-import { Text, Button, DropDown, theme } from '@aragon/ui'
-
-const Field = styled.div`margin-bottom: 20px;`
+import { Button, DropDown, Field } from '@aragon/ui'
 
 class AppPanel extends React.Component {
   state = {
@@ -20,17 +17,12 @@ class AppPanel extends React.Component {
     const { selectedEntity } = this.state
     return (
       <div>
-        <Field>
-          <label>
-            <Text color={theme.textSecondary} smallcaps>
-              Entity
-            </Text>
-            <DropDown
-              active={selectedEntity}
-              items={entities.map(({ name }) => name)}
-              onChange={this.handleEntityChange}
-            />
-          </label>
+        <Field label="Entity">
+          <DropDown
+            active={selectedEntity}
+            items={entities.map(({ name }) => name)}
+            onChange={this.handleEntityChange}
+          />
         </Field>
         <Button mode="strong" onClick={this.handleAdd} wide>
           Add

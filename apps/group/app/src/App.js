@@ -1,8 +1,8 @@
 import React from 'react'
 import update from 'immutability-helper'
 import styled from 'styled-components'
-import { AragonApp } from '@aragon/ui'
-import { EmptyStateCard, FakeShell, EntityTable } from './components'
+import { AppBar, Button, DefaultAragonApp, DropDown, SidePanel, publicUrlInjector } from '@aragon/ui'
+import { EmptyGroupCard, FakeShell, EntityTable } from './components'
 import AppPanel from './AppPanel'
 
 const ENTITIES_DEMO = [
@@ -23,16 +23,8 @@ const GROUPS_DEMO = [
   { name: 'Contributors', entities: [] },
 ]
 
-const StyledApp = styled(AragonApp)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`
-
-const AppContent = styled.div`
-  width: 100%;
-  padding: 30px;
-  align-self: flex-start;
+const AppBarEndButton = styled(Button)`
+  width: 150px;
 `
 
 class App extends React.Component {
@@ -42,7 +34,7 @@ class App extends React.Component {
     groups: GROUPS_DEMO,
     activeGroupIndex: 0,
   }
-  handleCreate = () => {
+  handlePanelOpen = () => {
     this.setState({ panelOpened: true })
   }
   handlePanelClose = () => {
@@ -85,39 +77,53 @@ class App extends React.Component {
     const entitiesToAdd = this.state.entities.filter(
       ({ id }) => !activeGroup.entities.includes(id)
     )
-    const panel = <AppPanel entities={entitiesToAdd} onAdd={this.handleAdd} />
     const empty = groupEntities.length === 0
+
+    const appBarEndButton = (
+      <AppBarEndButton mode="strong" onClick={this.handlePanelOpen}>
+        Add
+      </AppBarEndButton>
+    )
+    const appBar = (
+      <AppBar endContent={appBarEndButton} title="Groups">
+        <DropDown
+          items={groups.map(group => group.name)}
+          active={activeGroupIndex}
+          onChange={this.handleChangeGroup}
+        />
+      </AppBar>
+    )
+    const panel = <AppPanel entities={entitiesToAdd} onAdd={this.handleAdd} />
+    const placeholder = (
+      <EmptyGroupCard
+        onActivate={this.handlePanelOpen}
+        groupName={activeGroup.name}
+      />
+    )
+
     return (
-      <FakeShell
-        title="Groups"
-        panel={panel}
-        panelTitle="Add to group Core Devs"
-        panelOpened={panelOpened}
-        onPanelClose={this.handlePanelClose}
-        groups={groups}
-        activeGroupIndex={activeGroupIndex}
-        onChangeGroup={this.handleChangeGroup}
-        onAdd={this.handleCreate}
-        publicUrl="/static/aragon-ui"
-      >
-        <StyledApp backgroundLogo={empty}>
-          {empty ? (
-            <EmptyStateCard
-              onActivate={this.handleCreate}
-              groupName={activeGroup.name}
-            />
-          ) : (
-            <AppContent>
-              <EntityTable
-                entities={groupEntities}
-                onRemove={this.handleRemove}
-              />
-            </AppContent>
-          )}
-        </StyledApp>
+      <FakeShell>
+        <DefaultAragonApp
+          appBar={appBar}
+          backgroundLogo={empty}
+          empty={empty}
+          placeholder={placeholder}
+        >
+          <EntityTable
+            entities={groupEntities}
+            onRemove={this.handleRemove}
+          />
+        </DefaultAragonApp>
+        <SidePanel
+          title="Add to group Core Devs"
+          opened={panelOpened}
+          onClose={this.handlePanelClose}
+        >
+          {panel}
+        </SidePanel>
       </FakeShell>
     )
   }
 }
 
-export default App
+export default publicUrlInjector(App)
