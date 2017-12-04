@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { AragonApp, Button, DropDown, Text, publicUrlInjector, theme } from '@aragon/ui'
+import { AragonApp, Button, DropDown, Text, theme } from '@aragon/ui'
 import { OverlayPanel } from '..'
 
 import chevron from './assets/chevron.svg'
@@ -125,4 +125,4 @@ class FakeShell extends React.Component {
   }
 }
 
-export default publicUrlInjector(FakeShell)
+export default FakeShell
