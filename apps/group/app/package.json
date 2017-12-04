@@ -11,12 +11,14 @@
     "styled-components": "^2.2.3"
   },
   "devDependencies": {
-    "react-scripts": "1.0.16"
+    "react-scripts": "1.0.16",
+    "sync-files": "^1.0.3"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "start": "npm run sync-assets && react-scripts start",
+    "build": "npm run sync-assets && react-scripts build",
+    "test": "npm run sync-assetes && react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
+    "sync-assets": "scripts/sync-assets.js"
   }
 }
