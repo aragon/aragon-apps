@@ -14,6 +14,7 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     address[] public members;
     mapping (address => bool) isMember;
     mapping (uint => bytes) actions;
+    mapping (uint => bool) actionExecuted;
     mapping (uint => mapping (address => bool)) confirmations;
 
     uint public required;
@@ -24,6 +25,7 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     event Confirmation(uint actionId, address indexed entity);
     event Revocation(uint actionId, address indexed entity);
     event ActionAdded(uint actionId);
+    event ActionExecuted(uint actionId);
     event RequirementChanged(uint _required);
 
     bytes32 constant public ADD_MEMBER_ROLE = bytes32(1);
@@ -46,10 +48,7 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @param _required New number of members required to confirm action
     */
     function changeRequirement(uint _required) public auth(CHANGE_REQUIREMENTS_ROLE) {
-        require(isGroupMember(msg.sender));
-        require(_required > 0 && _required <= members.length);
-        required = _required;
-        RequirementChanged(_required);
+        changeRequirementInternal(_required);
     }
 
     /**
@@ -85,6 +84,12 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
         RemoveMember(_entity);
     }
 
+    function changeRequirementInternal(uint _required) internal {
+        require(_required > 0 && _required <= members.length);
+        required = _required;
+        RequirementChanged(_required);
+    }
+
     function numMembers() public constant returns (uint) {
         return members.length;
     }
@@ -97,6 +102,10 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
         require(isGroupMember(msg.sender));
         confirmations[_actionId][msg.sender] = true;
         Confirmation(_actionId, msg.sender);
+
+        if (isConfirmed(_actionId)) {
+            forwardAction(actions[_actionId]);
+        }
     }
 
     /**
@@ -144,10 +153,20 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @param _evmCallScript Script being forwarded
     */
     function addAction(bytes _evmCallScript) public constant returns (uint _actionId) {
+        require(isGroupMember(msg.sender));
         _actionId = actionCount;
         actions[_actionId] = _evmCallScript;
+        actionExecuted[_actionId] = false;
         actionCount += 1;
         ActionAdded(_actionId);
+    }
+
+    function forwardAction(bytes _evmCallScript) internal {
+        uint actionId = getActionId(_evmCallScript);
+        require(isGroupMember(msg.sender) && !actionExecuted[actionId] && isConfirmed(actionId));
+        runScript(_evmCallScript);
+        actionExecuted[actionId] = true;
+        ActionExecuted(actionId);
     }
 
     /**
@@ -155,9 +174,7 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @param _evmCallScript Script being forwarded
     */
     function forward(bytes _evmCallScript) external {
-        uint actionId = getActionId(_evmCallScript);
-        require(isGroupMember(msg.sender) && isConfirmed(actionId));
-        runScript(_evmCallScript);
+        forwardAction(_evmCallScript);
     }
 
     /**

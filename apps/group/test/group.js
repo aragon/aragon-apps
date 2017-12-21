@@ -74,7 +74,7 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script)
+            actionId = await app.addAction(script, {from: member})
 
             id = await app.getActionId(script)
             assert.equal(actionId.toNumber(), id.toNumber(), 'actionId should be 0')
@@ -87,22 +87,10 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script)
+            actionId = await app.addAction(script, {from: member})
 
             app.confirm(actionId.toNumber(), {from: member})
             assert.isTrue(await app.canForward(member, script), 'member should be able to forward')
-        })
-
-        it('forwards transactions', async () => {
-            const executionTarget = await ExecutionTarget.new()
-            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            const script = encodeScript([action])
-
-            actionId = await app.addAction(script)
-
-            await app.confirm(actionId.toNumber(), {from: member})
-            await app.forward(script, { from: member })
-            assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
         })
     })
 
@@ -138,7 +126,7 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script)
+            actionId = await app.addAction(script, {from: member})
 
             await app.confirm(actionId.toNumber(), {from: member})
             await app.confirm(actionId.toNumber(), {from: member2})
@@ -158,14 +146,13 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script)
+            actionId = await app.addAction(script, {from: member})
 
             await app.confirm(actionId.toNumber(), {from: member})
             await app.confirm(actionId.toNumber(), {from: member2})
 
             assert.equal(await app.isConfirmed(actionId.toNumber()), true, 'should have enough confirmations')
 
-            await app.forward(script, { from: member })
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
         })
 
@@ -177,7 +164,7 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script)
+            actionId = await app.addAction(script, {from: member})
 
             await app.confirm(actionId.toNumber(), {from: member})
             await app.confirm(actionId.toNumber(), {from: member2})
@@ -197,7 +184,7 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script)
+            actionId = await app.addAction(script, {from: member})
 
             await app.confirm(actionId.toNumber(), {from: member})
             await app.confirm(actionId.toNumber(), {from: member2})
@@ -205,7 +192,6 @@ contract('Group app', accounts => {
 
             assert.isTrue(await app.isConfirmed(actionId.toNumber()), 'should not have enough confirmations')
 
-            await app.forward(script, { from: member })
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
         })
     })
