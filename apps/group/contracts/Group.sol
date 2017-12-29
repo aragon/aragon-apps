@@ -152,13 +152,12 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @notice Adds an action for the group to take based on confimations
     * @param _evmCallScript Script being forwarded
     */
-    function addAction(bytes _evmCallScript) public constant returns (uint _actionId) {
+    function addAction(bytes _evmCallScript) public {
         require(isGroupMember(msg.sender));
-        _actionId = actionCount;
-        actions[_actionId] = _evmCallScript;
-        actionExecuted[_actionId] = false;
-        actionCount += 1;
-        ActionAdded(_actionId);
+        actions[actionCount] = _evmCallScript;
+        actionExecuted[actionCount] = false;
+        ActionAdded(actionCount);
+        actionCount++;
     }
 
     function forwardAction(bytes _evmCallScript) internal {

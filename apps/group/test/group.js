@@ -41,6 +41,22 @@ contract('Group app', accounts => {
         })
     })
 
+    it('add mulitple actions', async () => {
+        await app.addMember(member)
+
+        for (let i = 0; i < 3; i++) {
+            const executionTarget = await ExecutionTarget.new()
+            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+            const script = encodeScript([action])
+
+            await app.addAction(script, {from: member})
+            var actionCount = await app.actionCount.call()
+            var actionId = await app.getActionId(script)
+            assert.equal(actionCount, i+1, "app should have " + i+1 + " actions")
+            assert.equal(actionId, i, "script should have an index of " + i)
+        }
+    })
+
     context('single sig group actions', () => {
         beforeEach(async () => {
             await app.addMember(member)
@@ -74,10 +90,10 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script, {from: member})
+            await app.addAction(script, {from: member})
 
             id = await app.getActionId(script)
-            assert.equal(actionId.toNumber(), id.toNumber(), 'actionId should be 0')
+            assert.equal(id.toNumber(), 0, 'actionId should be 0')
 
             assert.isFalse(await app.canForward(member, script), 'member should not be able to forward')
         })
@@ -87,7 +103,9 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script, {from: member})
+            await app.addAction(script, {from: member})
+
+            var actionId = await app.getActionId(script)
 
             app.confirm(actionId.toNumber(), {from: member})
             assert.isTrue(await app.canForward(member, script), 'member should be able to forward')
@@ -126,7 +144,9 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script, {from: member})
+            await app.addAction(script, {from: member})
+
+            var actionId = await app.getActionId(script)
 
             await app.confirm(actionId.toNumber(), {from: member})
             await app.confirm(actionId.toNumber(), {from: member2})
@@ -146,7 +166,9 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script, {from: member})
+            await app.addAction(script, {from: member})
+
+            var actionId = await app.getActionId(script)
 
             await app.confirm(actionId.toNumber(), {from: member})
             await app.confirm(actionId.toNumber(), {from: member2})
@@ -164,7 +186,9 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script, {from: member})
+            await app.addAction(script, {from: member})
+
+            var actionId = await app.getActionId(script)
 
             await app.confirm(actionId.toNumber(), {from: member})
             await app.confirm(actionId.toNumber(), {from: member2})
@@ -184,7 +208,9 @@ contract('Group app', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])
 
-            actionId = await app.addAction(script, {from: member})
+            await app.addAction(script, {from: member})
+
+            var actionId = await app.getActionId(script)
 
             await app.confirm(actionId.toNumber(), {from: member})
             await app.confirm(actionId.toNumber(), {from: member2})
