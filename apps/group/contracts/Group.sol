@@ -79,7 +79,7 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
         }
 
         if (required > members.length)
-            changeRequirement(members.length);
+            changeRequirementInternal(members.length);
 
         RemoveMember(_entity);
     }
