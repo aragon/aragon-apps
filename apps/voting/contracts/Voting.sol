@@ -126,7 +126,6 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     * @param _evmCallScript Start vote with script
     */
     function forward(bytes _evmCallScript) external {
-        _evmCallScript; // silence unusued variable warning
         require(canForward(msg.sender, _evmCallScript));
         _newVote(_evmCallScript, "");
     }
