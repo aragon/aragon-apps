@@ -60,15 +60,16 @@ const TopBarStart = styled.div`
 `
 const TopBarEnd = styled.div`
   padding-right: 30px;
-  ${Button} {
-    width: 150px;
-  }
 `
 
 const TopBarTitle = styled.h1`
   padding-right: 20px;
   margin-right: 20px;
   background: url(${chevron}) no-repeat 100% 50%;
+`
+
+const TopBarEndButton = styled(Button)`
+  width: 150px;
 `
 
 class FakeShell extends React.Component {
@@ -104,9 +105,9 @@ class FakeShell extends React.Component {
                 </div>
               </TopBarStart>
               <TopBarEnd>
-                <Button mode="strong" onClick={onAdd}>
+                <TopBarEndButton mode="strong" onClick={onAdd}>
                   Add
-                </Button>
+                </TopBarEndButton>
               </TopBarEnd>
             </TopBar>
             <div>{children}</div>

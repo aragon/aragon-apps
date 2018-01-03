@@ -1,7 +1,7 @@
 import React from 'react'
 import update from 'immutability-helper'
 import styled from 'styled-components'
-import { AragonApp } from '@aragon/ui'
+import { AragonApp, publicUrlInjector } from '@aragon/ui'
 import { EmptyStateCard, FakeShell, EntityTable } from './components'
 import AppPanel from './AppPanel'
 
@@ -119,4 +119,4 @@ class App extends React.Component {
   }
 }
 
-export default App
+export default publicUrlInjector(App)
