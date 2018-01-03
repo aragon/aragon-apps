@@ -48,7 +48,7 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @param _required New number of members required to confirm action
     */
     function changeRequirement(uint _required) public auth(CHANGE_REQUIREMENTS_ROLE) {
-        changeRequirementInternal(_required);
+        _changeRequirement(_required);
     }
 
     /**
@@ -79,12 +79,12 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
         }
 
         if (required > members.length)
-            changeRequirementInternal(members.length);
+            _changeRequirement(members.length);
 
         RemoveMember(_entity);
     }
 
-    function changeRequirementInternal(uint _required) internal {
+    function _changeRequirement(uint _required) internal {
         require(_required > 0 && _required <= members.length);
         required = _required;
         RequirementChanged(_required);
