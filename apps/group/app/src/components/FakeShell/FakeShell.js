@@ -1,15 +1,9 @@
 import React from 'react'
 import styled from 'styled-components'
-import { AragonApp, Button, DropDown, Text, theme } from '@aragon/ui'
-import { OverlayPanel } from '..'
-
-import chevron from './assets/chevron.svg'
+import { theme } from '@aragon/ui'
 
 const StyledFakeShell = styled.div`
   min-height: 100vh;
-  ${AragonApp.Styled} {
-    min-height: calc(100vh - 64px);
-  }
 `
 
 const ShellContent = styled.div`
@@ -44,81 +38,16 @@ const AppContext = styled.div`
   background: #777;
 `
 
-const TopBar = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-  background: ${theme.contentBackground};
-  border-bottom: 1px solid ${theme.contentBorder};
-`
-
-const TopBarStart = styled.div`
-  display: flex;
-  align-items: center;
-  padding-left: 30px;
-`
-const TopBarEnd = styled.div`
-  padding-right: 30px;
-  ${Button} {
-    width: 150px;
-  }
-`
-
-const TopBarTitle = styled.h1`
-  padding-right: 20px;
-  margin-right: 20px;
-  background: url(${chevron}) no-repeat 100% 50%;
-`
-
 class FakeShell extends React.Component {
   render() {
-    const {
-      children,
-      title,
-      panel,
-      panelTitle,
-      panelOpened,
-      onPanelClose,
-      groups,
-      activeGroupIndex,
-      onChangeGroup,
-      onAdd,
-    } = this.props
     return (
       <StyledFakeShell>
         <ShellContent>
           <Menu>Menu</Menu>
           <AppContext>
-            <TopBar>
-              <TopBarStart>
-                <TopBarTitle>
-                  <Text size="xxlarge">{title}</Text>
-                </TopBarTitle>
-                <div>
-                  <DropDown
-                    items={groups.map(group => group.name)}
-                    active={activeGroupIndex}
-                    onChange={onChangeGroup}
-                  />
-                </div>
-              </TopBarStart>
-              <TopBarEnd>
-                <Button mode="strong" onClick={onAdd}>
-                  Add
-                </Button>
-              </TopBarEnd>
-            </TopBar>
-            <div>{children}</div>
+            {this.props.children}
           </AppContext>
         </ShellContent>
-        <OverlayPanel
-          title={panelTitle}
-          opened={panelOpened}
-          onClose={onPanelClose}
-        >
-          {panel}
-        </OverlayPanel>
       </StyledFakeShell>
     )
   }
