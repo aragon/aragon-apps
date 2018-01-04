@@ -21,6 +21,8 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     bool public transferable;
     uint256 public maxAccountTokens;
 
+
+
     bytes32 constant public MINT_ROLE = bytes32(1);
     bytes32 constant public ISSUE_ROLE = bytes32(2);
     bytes32 constant public ASSIGN_ROLE = bytes32(3);
@@ -64,6 +66,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _amount Number of tokens minted
     */
     function mint(address _receiver, uint256 _amount) auth(MINT_ROLE) external {
+        require(isBalanceIncreaseAllowed(_receiver));
         _mint(_receiver, _amount);
     }
 
@@ -184,10 +187,14 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     function onTransfer(address _from, address _to, uint _amount) public constant returns (bool) {
         bool canTransfer =
             transferable &&
-            token.balanceOf(_to) + _amount <= _maxAccountTokens &&
+            isBalanceIncreaseAllowed(_to, _amount) &&
             transferrableBalance(_from, now) >= _amount;
 
         return _from == address(this) || _to == address(this) || canTransfer;
+    }
+
+    function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal returns (bool) {
+        return _receiver != this && token.balanceOf(_receiver) + _inc <= _maxAccountTokens;
     }
 
     function tokenGrantsCount(address _holder) public constant returns (uint256) {
