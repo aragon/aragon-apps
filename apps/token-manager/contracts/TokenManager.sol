@@ -66,7 +66,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _amount Number of tokens minted
     */
     function mint(address _receiver, uint256 _amount) auth(MINT_ROLE) external {
-        require(isBalanceIncreaseAllowed(_receiver));
+        require(isBalanceIncreaseAllowed(_receiver, _amount));
         _mint(_receiver, _amount);
     }
 
@@ -166,7 +166,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @dev IForwarder interface conformance. Forwards any token holder action.
     * @param _evmCallScript script being executed
     */
-    function forward(bytes _evmCallScript) external {
+    function forward(bytes _evmCallScript) public {
         require(canForward(msg.sender, _evmCallScript));
         runScript(_evmCallScript);
     }
@@ -194,7 +194,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal returns (bool) {
-        return _receiver != this && token.balanceOf(_receiver) + _inc <= _maxAccountTokens;
+        return _receiver != address(this) && token.balanceOf(_receiver) + _inc <= maxAccountTokens;
     }
 
     function tokenGrantsCount(address _holder) public constant returns (uint256) {

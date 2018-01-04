@@ -21,7 +21,7 @@ contract('Token Manager', accounts => {
 
     it('fails when initializing without setting controller', async () => {
         return assertRevert(async () => {
-            await tokenManager.initializeNative(token.address)
+            await tokenManager.initialize(token.address, true, 0)
         })
     })
 
@@ -36,12 +36,12 @@ contract('Token Manager', accounts => {
 
         beforeEach(async () => {
             await token.changeController(tokenManager.address)
-            await tokenManager.initializeNative(token.address)
+            await tokenManager.initialize(token.address, true, 0)
         })
 
         it('fails on reinitialization', async () => {
             return assertRevert(async () => {
-                await tokenManager.initializeNative(token.address)
+                await tokenManager.initialize(token.address, true, 0)
             })
         })
 
@@ -70,12 +70,6 @@ contract('Token Manager', accounts => {
 
             return assertRevert(async () => {
                 await tokenManager.assign(holder, 51)
-            })
-        })
-
-        it('cannot wrap tokens', async () => {
-            return assertRevert(async () => {
-                await tokenManager.wrap(100, { from: holder })
             })
         })
 
