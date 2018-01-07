@@ -43,6 +43,7 @@ contract('Payroll', function(accounts) {
   let erc20Token1ExchangeRate = web3.toWei(5, 'ether');
   let erc20Token2ExchangeRate = web3.toWei(300, 'finney');
   let erc677Token1ExchangeRate = web3.toWei(7, 'ether');
+  const USD_DECIMALS = 10**6;
 
   const deployErc20Token = async (name="ERC20Token") => {
     let token = await MiniMeToken.new("0x0", "0x0", 0, name, 18, 'E20', true); // dummy parameters for minime
@@ -68,7 +69,7 @@ contract('Payroll', function(accounts) {
     payroll = await Payroll.new();
     usdToken = await deployErc20Token("USD");
     oracle = await OracleMockup.new();
-    await payroll.initialize(finance.address, etherToken.address, usdToken.address, oracle.address);
+    await payroll.initialize(finance.address, etherToken.address, usdToken.address);
     // transfer ETH to Payroll contract
     for (let i = 1; i < 9; i++)
       await payroll.addFunds.sendTransaction({ from: accounts[i], to: owner, value: web3.toWei(90, 'ether') });
@@ -76,7 +77,7 @@ contract('Payroll', function(accounts) {
 
   it('Fails on reinitialization', async () => {
     return assertRevert(async () => {
-      await payroll.initialize(finance.address, etherToken.address, usdToken.address, oracle.address);
+      await payroll.initialize(finance.address, etherToken.address, usdToken.address);
     });
   });
 
@@ -85,8 +86,6 @@ contract('Payroll', function(accounts) {
     assert.equal(tmpEther.valueOf(), etherToken.address, "USD Token address is wrong");
     let tmpUsd = await payroll.usdToken();
     assert.equal(tmpUsd.valueOf(), usdToken.address, "USD Token address is wrong");
-    let tmpOracle = await payroll.oracle();
-    assert.equal(tmpOracle.valueOf(), oracle.address, "Oracle address is wrong!");
     let numEmployees = await payroll.getEmployeeCount();
     assert.equal(numEmployees.valueOf(), 0, "Num Employees doesn't match!");
     let burnrate = await payroll.calculatePayrollBurnrate();
@@ -126,14 +125,17 @@ contract('Payroll', function(accounts) {
     erc677Token1 = await deployErc677Token();
     erc677Token2 = await deployErc677Token();
 
+    // add them to payroll allowed tokens
+    await payroll.addAllowedTokens([erc20Token1.address, erc20Token2.address, erc677Token1.address, erc677Token2.address]);
+
     // finally set exchange rates
     await oracle.setRate(payroll.address, etherToken.address, etherExchangeRate);
     let tmpEthExchange = await payroll.getExchangeRate(etherToken.address);
     assert.equal(tmpEthExchange.toString(), etherExchangeRate.toString(), "Exchange rate for Ether doesn't match!");
     await oracle.setRate(payroll.address, usdToken.address, 999);
     let tmpUsdExchange = await payroll.getExchangeRate(usdToken.address);
-    // USD Token rate should be always 100
-    assert.equal(tmpUsdExchange.valueOf(), 100, "Exchange rate for USD Token doesn't match!");
+    // USD Token rate should be always 10**6 (4 cent decimals)
+    assert.equal(tmpUsdExchange.valueOf(), USD_DECIMALS, "Exchange rate for USD Token doesn't match!");
     await setAndCheckRate(payroll, erc20Token1, erc20Token1ExchangeRate, "ERC20 Token 1");
     await setAndCheckRate(payroll, erc20Token2, erc20Token2ExchangeRate, "ERC 20 Token 2");
     await setAndCheckRate(payroll, erc677Token1, erc677Token1ExchangeRate, "ERC 677 Token 1");
@@ -144,7 +146,7 @@ contract('Payroll', function(accounts) {
   it("Add employee", async () => {
     let name = '';
     let employeeId = 1;
-    await payroll.addEmployee(employee1_1, [etherToken.address, usdToken.address, erc20Token1.address, erc20Token2.address, erc677Token1.address, erc677Token2.address], salary1_1);
+    await payroll.addEmployee(employee1_1, salary1_1);
     salary1 = salary1_1;
     let numEmployees = await payroll.getEmployeeCount();
     assert.equal(numEmployees.valueOf(), employeeId, "Num Employees doesn't match!");
@@ -157,7 +159,7 @@ contract('Payroll', function(accounts) {
   it("Add employee with name", async () => {
     let name = 'Joe';
     let employeeId = 2;
-    await payroll.addEmployeeWithName(employee2, [etherToken.address, usdToken.address, erc20Token1.address, erc677Token1.address], salary2_1, name);
+    await payroll.addEmployeeWithName(employee2, salary2_1, name);
     salary2 = salary2_1;
     let numEmployees = await payroll.getEmployeeCount();
     assert.equal(numEmployees.valueOf(), employeeId, "Num Employees doesn't match!");
@@ -178,7 +180,7 @@ contract('Payroll', function(accounts) {
   it("Add it again and check global payroll", async () => {
     let name = 'John';
     let employeeId = 3;
-    let transaction = await payroll.addEmployeeWithName(employee2, [etherToken.address, usdToken.address, erc20Token1.address, erc677Token1.address], salary2_2, name);
+    let transaction = await payroll.addEmployeeWithNameAndStartDate(employee2, salary2_2, name, Math.floor((new Date()).getTime() / 1000) - 2628600);
     let numEmployees = await payroll.getEmployeeCount();
     assert.equal(numEmployees.valueOf(), 2, "Num Employees doesn't match!");
     let employee = await payroll.getEmployee(employeeId);
@@ -222,96 +224,6 @@ contract('Payroll', function(accounts) {
     assert.equal(employee[0], account_new, "Employee account doesn't match");
     employee1 = employee1_3;
   });
-
-  // Owner permissions
-  /* TODO
-  it('Fails on non-owner-write calling setOracle', async () => {
-    assertRevert(async () => {
-      await payroll.setOracle(oracle.address, {from: owner_read});
-    });
-  });
-
-  it('Fails on non-owner-write calling addEmployee', async () => {
-    assertRevert(async () => {
-      await payroll.addEmployee(unused_account, [etherToken], 100000, {from: owner_read});
-    });
-  });
-
-  it('Fails on non-owner-write-write calling addEmployeeWithName', async () => {
-    assertRevert(async () => {
-      await payroll.addEmployeeWithName(unused_account, [etherToken], 100000, "test", {from: owner_read});
-    });
-  });
-
-  it('Fails on non-owner-write calling setEmployeeSalary', async () => {
-    assertRevert(async () => {
-      await payroll.setEmployeeSalary(1, 120000, {from: owner_read});
-    });
-  });
-
-  it('Fails on non-owner-write calling removeEmployee', async () => {
-    assertRevert(async () => {
-      await payroll.removeEmployee(1, {from: owner_read});
-    });
-  });
-
-  it('Fails on non-owner-write calling escapeHatch', async () => {
-    assertRevert(async () => {
-      await payroll.escapeHatch({from: owner_read});
-    });
-  });
-
-  // owner read
-  it('Fails on non-owner-read calling getEmployeeCount', async () => {
-    assertRevert(async () => {
-      await payroll.getEmployeeCount({from: unused_account});
-    });
-  });
-
-  it('Fails on non-owner-read calling getEmployee', async () => {
-    assertRevert(async () => {
-      await payroll.getEmployee(1, {from: unused_account});
-    });
-  });
-
-  it('Fails on non-owner-read calling calculatePayrollBurnrate', async () => {
-    assertRevert(async () => {
-      await payroll.calculatePayrollBurnrate({from: unused_account});
-    });
-  });
-
-  it('Fails on non-owner-read calling calculatePayrollRunway', async () => {
-    assertRevert(async () => {
-      await payroll.calculatePayrollRunway({from: unused_account});
-    });
-  });
-
-  // Employee permissions
-  it('Fails on non-employee calling determineAllocation', async () => {
-    assertRevert(async () => {
-      await payroll.determineAllocation([etherToken.address], [100], {from: owner});
-    });
-  });
-
-  it('Fails on non-employee calling payday', async () => {
-    assertRevert(async () => {
-      await payroll.payday({from: owner});
-    });
-  });
-
-  it('Fails on non-employee calling change Address', async () => {
-    assertRevert(async () => {
-      await payroll.changeAddressByEmployee(unused_account, {from: owner});
-    });
-  });
-
-  // Oracle permission
-  it('Fails on non-oracle calling setExchangeRate', async () => {
-    assertRevert(async () => {
-      await payroll.setExchangeRate(erc20Token1.address, {from: owner});
-    });
-  });
-   */
 
   it("Test approveAndCall and transferAndCall", async () => {
     // ERC20
@@ -359,10 +271,12 @@ contract('Payroll', function(accounts) {
 
   it("Test payday no token allocation", async () => {
     payroll2 = await Payroll.new();
-    await payroll2.initialize(finance.address, etherToken.address, usdToken.address, oracle.address);
+    await payroll2.initialize(finance.address, etherToken.address, usdToken.address);
+    // add allowed tokens
+    await payroll2.addAllowedTokens([erc20Token1.address, erc677Token1.address]);
     // make sure this payroll has enough funds
     let etherTokenFunds = new web3.BigNumber(90).times(10**18);
-    let usdTokenFunds = new web3.BigNumber(10**9).times(10**2);
+    let usdTokenFunds = new web3.BigNumber(10**9).times(USD_DECIMALS);
     let erc20Token1Funds = new web3.BigNumber(10**9).times(10**18);
     let erc677Token1Funds = new web3.BigNumber(10**9).times(10**18);
     await usdToken.generateTokens(owner, usdTokenFunds);
@@ -375,8 +289,8 @@ contract('Payroll', function(accounts) {
     await erc20Token1.approve(finance.address, erc20Token1Funds, {from: owner});
     await finance.deposit(erc20Token1.address, erc20Token1Funds, "ERC20 1 payroll", {from: owner});
     await erc677Token1.transferAndCall(finance.address, erc677Token1Funds, "ERC677 1 payroll", {from: owner});
-     // Add employee
-    await payroll2.addEmployee(employee1_1, [etherToken.address, usdToken.address, erc20Token1.address, erc20Token2.address, erc677Token1.address, erc677Token2.address], salary1_1);
+    // Add employee
+    await payroll2.addEmployeeWithNameAndStartDate(employee1_1, salary1_1, "", Math.floor((new Date()).getTime() / 1000) - 2628005); // now minus 1/12 year
     // No Token allocation
     return assertRevert(async () => {
       await payroll2.payday({from: employee1_1});
@@ -387,7 +301,6 @@ contract('Payroll', function(accounts) {
     let oracleFail = await OracleFailMockup.new();
     // Allocation
     await payroll2.determineAllocation([etherToken.address, usdToken.address, erc20Token1.address, erc677Token1.address], [10, 20, 30, 40], {from: employee1_1});
-    await payroll2.setOracle(oracleFail.address);
     await oracleFail.setRate(payroll2.address, etherToken.address, 0);
     // Zero exchange rate
     return assertRevert(async () => {
@@ -396,11 +309,9 @@ contract('Payroll', function(accounts) {
   });
 
   it("Test payday, time condition", async () => {
-    // correct oracle
-    await payroll2.setOracle(oracle.address);
-    // make sure rates are correct
+    // correct oracle, make sure rates are correct
     await oracle.setRate(payroll2.address, etherToken.address, etherExchangeRate);
-    await oracle.setRate(payroll2.address, usdToken.address, 100);
+    await oracle.setRate(payroll2.address, usdToken.address, USD_DECIMALS);
     await oracle.setRate(payroll2.address, erc20Token1.address, erc20Token1ExchangeRate);
     await oracle.setRate(payroll2.address, erc677Token1.address, erc677Token1ExchangeRate);
     // correct payday
@@ -411,9 +322,9 @@ contract('Payroll', function(accounts) {
     });
   });
 
-  it("Test EscapeHatch", async () => {
+  it("Test depositToFinance", async () => {
     let totalTxFee = new web3.BigNumber(0);;
-    let employerTokenBalances = {};
+    let vaultTokenBalances = {};
     let payrollTokenBalances = {};
 
     const getTxFee = async (transaction) => {
@@ -434,17 +345,17 @@ contract('Payroll', function(accounts) {
         txFee = txFee.plus(await getTxFee(transaction2));
       }
 
-      let employerBalance = await token.balanceOf(owner);
+      let vaultBalance = await token.balanceOf(vault.address);
       let payrollBalance = await token.balanceOf(payroll2.address);
-      employerTokenBalances[token.address] = [employerBalance];
-      payrollTokenBalances[token.address] = [payrollBalance];
+      vaultTokenBalances[token.address] = vaultBalance;
+      payrollTokenBalances[token.address] = payrollBalance;
 
       return new Promise(resolve => {resolve(txFee);});
     };
     const checkFinalBalance = async (token, name="") => {
-      let employerBalance = await token.balanceOf(owner);
+      let vaultBalance = await token.balanceOf(vault.address);
       let payrollBalance = await token.balanceOf(payroll2.address);
-      assert.equal(employerBalance.toString(), payrollTokenBalances[token.address].toString(), "Funds not recovered for " + name + " (Employer)!");
+      assert.equal(vaultBalance.toString(), vaultTokenBalances[token.address].add(payrollTokenBalances[token.address]).toString(), "Funds not recovered for " + name + " (Vault)!");
       assert.equal(payrollBalance.valueOf(), 0, "Funds not recovered for " + name + " (Payroll)!");
     };
 
@@ -452,34 +363,36 @@ contract('Payroll', function(accounts) {
     let ethSpent = web3.toWei(2, 'ether');
     let transaction;
     await payroll2.addFunds({from: owner, to: payroll.address, value: ethSpent});
-    let employerInitialBalance = await getBalance(owner);
+    let vaultInitialBalance = await getBalance(vault.address);
     let payrollInitialBalance = await getBalance(payroll2.address);
     totalTxFee = totalTxFee.plus(await addInitialBalance(etherToken, "Ether Token", false));
     totalTxFee = totalTxFee.plus(await addInitialBalance(usdToken, "USD Token"));
     totalTxFee = totalTxFee.plus(await addInitialBalance(erc20Token1, "ERC20 Token 1"));
-    totalTxFee = totalTxFee.plus(await addInitialBalance(erc20Token2, "ERC20 Token 2"));
     totalTxFee = totalTxFee.plus(await addInitialBalance(erc677Token1, "ERC677 Token 1"));
-    totalTxFee = totalTxFee.plus(await addInitialBalance(erc677Token2, "ERC677 Token 2"));
     // Escape Hatch
-    transaction = await payroll2.escapeHatch();
+    transaction = await payroll2.depositToFinance(etherToken.address);
+    totalTxFee = totalTxFee.plus(await getTxFee(transaction));
+    transaction = await payroll2.depositToFinance(usdToken.address);
+    totalTxFee = totalTxFee.plus(await getTxFee(transaction));
+    transaction = await payroll2.depositToFinance(erc20Token1.address);
+    totalTxFee = totalTxFee.plus(await getTxFee(transaction));
+    transaction = await payroll2.depositToFinance(erc677Token1.address);
     totalTxFee = totalTxFee.plus(await getTxFee(transaction));
     // Final check
     // ETH
-    let employerDestructedBalance = await getBalance(owner);
+    let vaultDestructedBalance = await getBalance(vault.address);
     let payrollDestructedBalance = await getBalance(payroll2.address);
-    assert.equal(employerInitialBalance.sub(totalTxFee).add(payrollTokenBalances[etherToken.address]).toString(), employerDestructedBalance.toString(), "Funds not recovered (Employer)!");
+    assert.equal(vaultInitialBalance.add(payrollTokenBalances[etherToken.address]).toString(), vaultDestructedBalance.toString(), "Funds not recovered (Vault)!");
     assert.equal(payrollDestructedBalance.valueOf(), 0, "Funds not recovered (Payroll)!");
     // Ether Token
-    let employerEtherTokenBalance = await etherToken.balanceOf(owner);
+    let vaultEtherTokenBalance = await etherToken.balanceOf(vault.address);
     let payrollEtherTokenBalance = await etherToken.balanceOf(payroll2.address);
-    assert.equal(employerTokenBalances[etherToken.address].toString(), employerEtherTokenBalance.toString(), "Funds not recovered for Ether Token (Employer)!");
+    assert.equal(vaultTokenBalances[etherToken.address].toString(), vaultEtherTokenBalance.toString(), "Funds not recovered for Ether Token (Vault)!");
     assert.equal(payrollEtherTokenBalance.valueOf(), 0, "Funds not recovered for Ether Token (Payroll)!");
     // Other Tokens
     await checkFinalBalance(usdToken, "USD Token");
     await checkFinalBalance(erc20Token1, "ERC20 Token 1");
-    await checkFinalBalance(erc20Token2, "ERC20 Token 2");
     await checkFinalBalance(erc677Token1, "ERC677 Token 1");
-    await checkFinalBalance(erc677Token2, "ERC677 Token 2");
   });
 
   it("Test Token allocation, greater than 100", async () => {
@@ -579,7 +492,7 @@ contract('Payroll', function(accounts) {
       assert.equal(newEthPayroll.toString(), expectedPayroll.toString(), "Payroll Eth Balance doesn't match");
       assert.equal(newEthEmployee2.toString(), expectedEmployee2.toString(), "Employee Eth Balance doesn't match");
       // Check Tokens
-      await checkTokenBalances(usdToken, salary2, initialUsdTokenPayroll, initialUsdTokenEmployee2, 100, usdTokenAllocation, "USD");
+      await checkTokenBalances(usdToken, salary2, initialUsdTokenPayroll, initialUsdTokenEmployee2, USD_DECIMALS, usdTokenAllocation, "USD");
       await checkTokenBalances(erc20Token1, salary2, initialErc20Token1Payroll, initialErc20Token1Employee2, erc20Token1ExchangeRate, erc20Token1Allocation, "ERC20 1");
       await checkTokenBalances(erc677Token1, salary2, initialErc677Token1Payroll, initialErc677Token1Employee2, erc677Token1ExchangeRate, erc677Token1Allocation, "ERC 677 1");
     };
