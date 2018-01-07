@@ -106,6 +106,28 @@ contract('Finance App', accounts => {
         assert.equal(ref, 'reference', 'ref should be correct')
     })
 
+    it('sends locked tokens to Vault', async () => {
+        let initialBalance = await token1.balanceOf(vault.address)
+        // 'lock' tokens
+        await token1.transfer(app.address, 5)
+
+        await app.depositToVault(token1.address)
+
+        const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
+
+        let finalBalance = await token1.balanceOf(vault.address)
+        assert.equal(finalBalance.toString(), initialBalance.plus(5).toString(), 'deposited tokens must be in vault')
+        assert.equal(await token1.balanceOf(app.address), 0, 'finance shouldn\'t have tokens')
+        assert.equal(periodId, 0, 'period id should be correct')
+        assert.equal(amount, 5, 'amount should be correct')
+        assert.equal(paymentId, 0, 'payment id should be 0')
+        assert.equal(token, token1.address, 'token should be correct')
+        assert.equal(entity, app.address, 'entity should be correct')
+        assert.isTrue(incoming, 'tx should be incoming')
+        assert.equal(date, 1, 'date should be correct')
+        assert.equal(ref, 'Transfer from Finance', 'ref should be correct')
+    })
+
     it('before setting budget allows unlimited spending', async () => {
         const recipient = accounts[1]
         const time = 22
