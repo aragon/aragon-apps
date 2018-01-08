@@ -39,7 +39,11 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
 
     mapping (address => TokenVesting[]) vestings;
     mapping (address => bool) everHeld;
+
+    // Returns all holders the token had (since managing it).
+    // Some of them can have a balance of 0.
     address[] public holders;
+
 
     // Other token specific events can be watched on the token address directly (avoid duplication)
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
@@ -79,8 +83,6 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     function mint(address _receiver, uint256 _amount) auth(MINT_ROLE) external {
         require(isBalanceIncreaseAllowed(_receiver, _amount));
         _mint(_receiver, _amount);
-        if (logHolders)
-            _logHolderIfNeeded(_receiver);
     }
 
     /**
@@ -189,6 +191,8 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         return token.balanceOf(_sender) > 0;
     }
 
+    function allHolders() public constant returns (address[]) { return holders; }
+
     /*
     * @dev Notifies the controller about a token transfer allowing the
     *      controller to decide whether to allow it or react if desired
@@ -216,7 +220,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal returns (bool) {
-        return _receiver != address(this) && token.balanceOf(_receiver) + _inc <= maxAccountTokens;
+        return token.balanceOf(_receiver) + _inc <= maxAccountTokens;
     }
 
     function tokenGrantsCount(address _holder) public constant returns (uint256) {
@@ -307,11 +311,14 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     function _assign(address _receiver, uint256 _amount) internal {
+        require(isBalanceIncreaseAllowed(_receiver, _amount));
         require(token.transfer(_receiver, _amount));
     }
 
     function _mint(address _receiver, uint256 _amount) internal {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
+        if (logHolders)
+            _logHolderIfNeeded(_receiver);
     }
 
     function _logHolderIfNeeded(address _newHolder) internal {
