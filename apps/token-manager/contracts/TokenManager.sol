@@ -185,12 +185,13 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @return False if the controller does not authorize the transfer
     */
     function onTransfer(address _from, address _to, uint _amount) public constant returns (bool) {
-        bool canTransfer =
-            transferable &&
-            isBalanceIncreaseAllowed(_to, _amount) &&
-            transferrableBalance(_from, now) >= _amount;
+        bool allowInc = isBalanceIncreaseAllowed(_to, _amount);
+        bool checkVesting = transferrableBalance(_from, now) >= _amount;
 
-        return _from == address(this) || _to == address(this) || canTransfer;
+        bool canTransfer = transferable && allowInc && checkVesting;
+        bool isTokenManager = _from == address(this) || _to == address(this);
+
+        return isTokenManager || canTransfer;
     }
 
     function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal returns (bool) {
@@ -287,7 +288,6 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     function _assign(address _receiver, uint256 _amount) internal {
         require(token.transfer(_receiver, _amount));
     }
-
 
     function _mint(address _receiver, uint256 _amount) internal {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
