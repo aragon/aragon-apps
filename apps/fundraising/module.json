@@ -5,5 +5,12 @@
         { "name": "Create fundraising", "id": "CREATOR_ROLE" },
         { "name": "Close fundraising", "id": "CLOSER_ROLE" }
     ],
+    "permissions": [
+        {
+            "appName": "token-manager.aragonpm.test",
+            "role": "MINT_ROLE",
+            "entity": { "type": "INIT_VALUE", "value": "_tokenManager" }
+        }
+    ],
     "path": "contracts/FundraisingApp.sol"
 }
