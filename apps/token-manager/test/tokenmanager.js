@@ -87,8 +87,17 @@ contract('Token Manager', accounts => {
             await tokenManager.issue(10)
 
             const holders = await tokenManager.allHolders()
-            assert.equal(holders.length, 1, 'should be 1 holder')
             assert.deepEqual(holders, [tokenManager.address], 'holder list should be correct')
+            assert.equal(await tokenManager.holders(0), tokenManager.address, 'should be first holder')
+        })
+
+        it('logs on mints and transfers', async () => {
+            await tokenManager.mint(holder, 10)
+            await token.transfer(accounts[8], 5, { from: holder })
+            await token.transfer(accounts[9], 5, { from: accounts[8] })
+
+            const holders = await tokenManager.allHolders()
+            assert.deepEqual(holders, [holder, accounts[8], accounts[9]], 'holder list should be correct')
         })
     })
 
