@@ -21,7 +21,7 @@ contract('Token Manager', accounts => {
 
     it('fails when initializing without setting controller', async () => {
         return assertRevert(async () => {
-            await tokenManager.initialize(token.address, true, 0)
+            await tokenManager.initialize(token.address, true, 0, false)
         })
     })
 
@@ -36,12 +36,12 @@ contract('Token Manager', accounts => {
 
         beforeEach(async () => {
             await token.changeController(tokenManager.address)
-            await tokenManager.initialize(token.address, true, 0)
+            await tokenManager.initialize(token.address, true, 0, false)
         })
 
         it('fails on reinitialization', async () => {
             return assertRevert(async () => {
-                await tokenManager.initialize(token.address, true, 0)
+                await tokenManager.initialize(token.address, true, 0, false)
             })
         })
 
