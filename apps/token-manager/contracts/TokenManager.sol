@@ -20,8 +20,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     MiniMeToken public token;
     bool public transferable;
     uint256 public maxAccountTokens;
-
-
+    bool public logHolders;
 
     bytes32 constant public MINT_ROLE = bytes32(1);
     bytes32 constant public ISSUE_ROLE = bytes32(2);
@@ -39,6 +38,8 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     mapping (address => TokenVesting[]) vestings;
+    mapping (address => bool) everHeld;
+    address[] public holders;
 
     // Other token specific events can be watched on the token address directly (avoid duplication)
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
@@ -49,8 +50,17 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
     * @param _transferable whether the token can be transferred by holders
     * @param _maxAccountTokens maximum amount of tokens an account can have (0 for infinite tokens)
+    * @param _logHolders Whether the token manager will store all token holders (makes token transfers more expensive!)
     */
-    function initialize(MiniMeToken _token, bool _transferable, uint256 _maxAccountTokens) onlyInit external {
+    function initialize(
+        MiniMeToken _token,
+        bool _transferable,
+        uint256 _maxAccountTokens,
+        bool _logHolders
+        )
+        onlyInit external
+    {
+
         initialized();
 
         require(_token.controller() == address(this));
@@ -58,6 +68,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         token = _token;
         transferable = _transferable;
         maxAccountTokens = _maxAccountTokens == 0 ? uint256(-1) : _maxAccountTokens;
+        logHolders = _logHolders;
     }
 
     /**
@@ -68,6 +79,8 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     function mint(address _receiver, uint256 _amount) auth(MINT_ROLE) external {
         require(isBalanceIncreaseAllowed(_receiver, _amount));
         _mint(_receiver, _amount);
+        if (logHolders)
+            _logHolderIfNeeded(_receiver);
     }
 
     /**
@@ -191,7 +204,15 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         bool canTransfer = transferable && allowInc && checkVesting;
         bool isTokenManager = _from == address(this) || _to == address(this);
 
-        return isTokenManager || canTransfer;
+        bool allowTransfer = isTokenManager || canTransfer;
+
+        if (!allowTransfer)
+            return false;
+
+        if (logHolders)
+            _logHolderIfNeeded(_to);
+
+        return true;
     }
 
     function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal returns (bool) {
@@ -291,6 +312,15 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
 
     function _mint(address _receiver, uint256 _amount) internal {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
+    }
+
+    function _logHolderIfNeeded(address _newHolder) internal {
+        // costs 3 sstores (2 full (20k fas) and 1 increase (5k fas)), but makes frontend easier
+        if (everHeld[_newHolder])
+            return;
+
+        everHeld[_newHolder] = true;
+        holders.push(_newHolder);
     }
 
     /**
