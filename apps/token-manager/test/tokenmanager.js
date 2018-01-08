@@ -14,6 +14,8 @@ const n = '0x00'
 contract('Token Manager', accounts => {
     let tokenManager, token = {}
 
+    const holder = accounts[1]
+
     beforeEach(async () => {
         token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
         tokenManager = await TokenManager.new()
@@ -31,9 +33,108 @@ contract('Token Manager', accounts => {
         })
     })
 
-    context('for native tokens', () => {
-        const holder = accounts[1]
+    context('non-transferable token', async () => {
+        beforeEach(async () => {
+            await token.changeController(tokenManager.address)
+            await tokenManager.initialize(token.address, false, 0, false)
+        })
 
+        it('holders cannot transfer non-transferable tokens', async () => {
+            await tokenManager.mint(holder, 2000)
+
+            return assertRevert(async () => {
+                await token.transfer(accounts[2], 10, { from: holder })
+            })
+        })
+
+        it('can transfer to token manager', async () => {
+            await tokenManager.mint(holder, 2000)
+            await token.transfer(tokenManager.address, 10, { from: holder })
+
+            assert.equal(await token.balanceOf(tokenManager.address), 10, 'should have tokens')
+        })
+
+        it('token manager can transfer', async () => {
+            await tokenManager.issue(100)
+            await tokenManager.assign(holder, 10)
+
+            assert.equal(await token.balanceOf(holder), 10, 'should have tokens')
+        })
+
+        it('forwards actions to holder', async () => {
+            const executionTarget = await ExecutionTarget.new()
+            await tokenManager.mint(holder, 100)
+
+            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+            const script = encodeScript([action])
+
+            await tokenManager.forward(script, { from: holder })
+            assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
+
+            return assertRevert(async () => {
+                await tokenManager.forward(script, { from: accounts[8] })
+            })
+        })
+    })
+
+    context('holder logging', async () => {
+        beforeEach(async () => {
+            await token.changeController(tokenManager.address)
+            await tokenManager.initialize(token.address, true, 0, true)
+        })
+
+        it('logs token manager on issue', async () => {
+            await tokenManager.issue(10)
+
+            const holders = await tokenManager.allHolders()
+            assert.equal(holders.length, 1, 'should be 1 holder')
+            assert.deepEqual(holders, [tokenManager.address], 'holder list should be correct')
+        })
+    })
+
+    context('maximum tokens per address limit', async () => {
+        const limit = 100
+
+        beforeEach(async () => {
+            await token.changeController(tokenManager.address)
+            await tokenManager.initialize(token.address, true, limit, false)
+        })
+
+        it('can mint up to than limit', async () => {
+            await tokenManager.mint(holder, limit)
+
+            assert.equal(await token.balanceOf(holder), limit, 'should have tokens')
+        })
+
+        it('fails to mint more than limit', async () => {
+            return assertRevert(async () => {
+                await tokenManager.mint(holder, limit + 1)
+            })
+        })
+
+        it('can issue unlimited tokens for manager', async () => {
+            await tokenManager.issue(limit + 100000)
+
+            assert.equal(await token.balanceOf(tokenManager.address), limit + 100000, 'should have tokens')
+        })
+
+        it('can assign up to limit', async () => {
+            await tokenManager.issue(limit)
+            await tokenManager.assign(holder, limit)
+
+            assert.equal(await token.balanceOf(holder), limit, 'should have tokens')
+        })
+
+        it('cannot assing more than limit', async () => {
+            await tokenManager.issue(limit + 2)
+
+            return assertRevert(async () => {
+                await tokenManager.assign(holder, limit + 1)
+            })
+        })
+    })
+
+    context('for normal native tokens', () => {
         beforeEach(async () => {
             await token.changeController(tokenManager.address)
             await tokenManager.initialize(token.address, true, 0, false)
