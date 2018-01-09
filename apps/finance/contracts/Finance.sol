@@ -272,6 +272,28 @@ contract Finance is App, Initializable, ERC677Receiver {
     }
 
     /**
+     * @dev Allows make a simple payment from this contract to Vault,
+            to avoid locked tokens in contract forever.
+            This contract should never receive tokens with a simple transfer call,
+            but in case it happens, this function allows to recover them.
+     * @notice Send tokens to Vault
+     * @param _token Token whose balance is going to be transferred.
+     */
+    function depositToVault(address _token) public {
+        ERC20 token = ERC20(_token);
+        uint256 value = token.balanceOf(this);
+        require(value > 0);
+
+        _recordIncomingTransaction(
+            token,
+            this,
+            value,
+            "Deposit to Vault"
+        );
+        require(token.transfer(address(vault), value));
+    }
+
+    /**
     * @dev Transitions accounting periods if needed. For preventing OOG attacks,
            a TTL param is provided. If more that TTL periods need to be transitioned,
            it will return false.
