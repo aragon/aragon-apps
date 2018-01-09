@@ -278,21 +278,19 @@ contract Finance is App, Initializable, ERC677Receiver {
             but in case it happens, this function allows to recover them.
      * @notice Send tokens to Vault
      * @param _token Token whose balance is going to be transferred.
-     * @return success boolean indicating whether transaction suceeded
      */
-    function depositToVault(address _token) public returns (bool success) {
+    function depositToVault(address _token) public {
         ERC20 token = ERC20(_token);
         uint256 value = token.balanceOf(this);
-        require(value >= 0);
+        require(value > 0);
 
         _recordIncomingTransaction(
             token,
             this,
             value,
-            "Transfer from Finance"
+            "Deposit to Vault"
         );
         require(token.transfer(address(vault), value));
-        return true;
     }
 
     /**

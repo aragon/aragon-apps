@@ -125,7 +125,15 @@ contract('Finance App', accounts => {
         assert.equal(entity, app.address, 'entity should be correct')
         assert.isTrue(incoming, 'tx should be incoming')
         assert.equal(date, 1, 'date should be correct')
-        assert.equal(ref, 'Transfer from Finance', 'ref should be correct')
+        assert.equal(ref, 'Deposit to Vault', 'ref should be correct')
+
+    })
+
+    it('try to send locked tokens to Vault, but balance is 0', async () => {
+        // if current balance is zero, it just fails
+        return assertRevert(async () => {
+            await app.depositToVault(token1.address)
+        })
     })
 
     it('before setting budget allows unlimited spending', async () => {
