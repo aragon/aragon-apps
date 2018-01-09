@@ -151,7 +151,6 @@ contract Finance is App, Initializable, ERC677Receiver {
     )
         transitionsPeriod
         external
-        returns (bool success)
     {
         ERC20 token = ERC20(_token);
         _recordIncomingTransaction(
@@ -161,7 +160,6 @@ contract Finance is App, Initializable, ERC677Receiver {
             string(_data)
         );
         require(token.transferFrom(_from, address(vault), _amount));
-        return true;
     }
 
     /**
