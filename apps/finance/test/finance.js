@@ -72,6 +72,24 @@ contract('Finance App', accounts => {
         assert.equal(ref, 'ref', 'ref should be correct')
     })
 
+    it('records ERC20 approveAndCall deposits', async () => {
+        let initialBalance = await token1.balanceOf(vault.address)
+        await token1.approveAndCall(app.address, 5, 'ref')
+
+        const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
+
+        let finalBalance = await token1.balanceOf(vault.address)
+        assert.equal(finalBalance.toString(), initialBalance.plus(5).toString(), 'deposited tokens must be in vault')
+        assert.equal(periodId, 0, 'period id should be correct')
+        assert.equal(amount, 5, 'amount should be correct')
+        assert.equal(paymentId, 0, 'payment id should be 0')
+        assert.equal(token, token1.address, 'token should be correct')
+        assert.equal(entity, accounts[0], 'entity should be correct')
+        assert.isTrue(incoming, 'tx should be incoming')
+        assert.equal(date, 1, 'date should be correct')
+        assert.equal(ref, 'ref', 'ref should be correct')
+    })
+
     it('records ERC677 deposits', async () => {
         await etherToken.transferAndCall(app.address, 50, 'reference')
 
