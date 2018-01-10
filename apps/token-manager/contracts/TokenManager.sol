@@ -181,7 +181,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @dev IForwarder interface conformance. Forwards any token holder action.
     * @param _evmCallScript script being executed
     */
-    function forward(bytes _evmCallScript) public {
+    function forward(bytes _evmCallScript) external {
         require(canForward(msg.sender, _evmCallScript));
         runScript(_evmCallScript);
     }
@@ -202,19 +202,18 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @return False if the controller does not authorize the transfer
     */
     function onTransfer(address _from, address _to, uint _amount) public constant returns (bool) {
-        bool allowInc = isBalanceIncreaseAllowed(_to, _amount);
-        bool checkVesting = transferableBalance(_from, now) >= _amount;
+        bool includesTokenManager = _from == address(this) || _to == address(this);
 
-        bool canTransfer = transferable && allowInc && checkVesting;
-        bool isTokenManager = _from == address(this) || _to == address(this);
+        if (!includesTokenManager) {
+            bool toCanReceive = isBalanceIncreaseAllowed(_to, _amount);
+            if (!(transferable && toCanReceive && (transferableBalance(_from, now) >= _amount))) {
+                return false;
+            }
+        }
 
-        bool allowTransfer = isTokenManager || canTransfer;
-
-        if (!allowTransfer)
-            return false;
-
-        if (logHolders)
+        if (logHolders) {
             _logHolderIfNeeded(_to);
+        }
 
         return true;
     }
