@@ -14,3 +14,7 @@ lerna-debug.log
 
 # truffle build artifacts
 apps/*/build
+
+# parity/geth specific files
+password
+genesis.json

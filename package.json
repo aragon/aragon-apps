@@ -8,6 +8,8 @@
     "bootstrap": "lerna bootstrap --nohoist=@aragon/core",
     "test": "lerna run --scope=@aragon/apps-* test",
     "lint": "lerna run --scope=@aragon/apps-* lint",
-    "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage"
+    "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",
+    "coverage:parity": "GETH_CLIENT=parity lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",
+    "coverage:geth": "GETH_CLIENT=geth lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage"
   }
 }

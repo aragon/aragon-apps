@@ -4,29 +4,70 @@
 set -o errexit
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
-  testrpc_port=8555
+    geth_port=8555
 else
-  testrpc_port=8545
+    geth_port=8545
 fi
 
-testrpc_running() {
-  nc -z localhost "$testrpc_port"
+client_running() {
+    nc -z localhost "$geth_port"
 }
 
 start_testrpc() {
-  if [ "$SOLIDITY_COVERAGE" = true ]; then
-    node_modules/.bin/testrpc-sc -i 16 --gasLimit 0xfffffffffff --port "$testrpc_port"  > /dev/null &
-  else
-    node_modules/.bin/testrpc -i 15 --gasLimit 7000000 --port "$testrpc_port" > /dev/null &
-  fi
+    if [ "$SOLIDITY_COVERAGE" = true ]; then
+    node_modules/.bin/testrpc-sc -i 16 --gasLimit 0xfffffffffff --port "$geth_port"  > /dev/null &
+    else
+    node_modules/.bin/ganache-cli -i 15 --gasLimit 7000000 > /dev/null &
+    fi
 
-  testrpc_pid=$!
+    rpc_pid=$!
 }
 
-if testrpc_running; then
-  echo "Killing testrpc instance at port $testrpc_port"
-  kill -9 $(lsof -i:$testrpc_port -t)
-fi
+start_geth() {
+    # initialize our network with the genesis block and start our network
+    # node with unlocked accounts and has mining enabled
+    geth init ./genesis.json && \
+    geth --networkid 19191919191 --rpc --password ./password \
+    --unlock "0,1,2" --rpccorsdomain "*" --rpcaddr "127.0.0.1" \
+    --rpcport "$geth_port" --mine --targetgaslimit 0x47E7C4 --etherbase "2"
 
-echo "Starting our own testrpc instance at port $testrpc_port"
-start_testrpc
+    rpc_pid=$!
+}
+
+start_parity() {
+    # extract current accounts on the dev chain network
+    IFS=$'\n' addresses=($(parity account list --chain dev))
+
+    if [ ${#addresses[@]} -lt 1 ]; then
+        # bail out if we have no accounts to work with
+        echo "No parity accounts found, please create at least one account (parity account new --chain dev)"
+    else
+        echo "Using parity account ${addresses[0]}"
+        # start our parity client
+        parity --chain dev \
+        --author ${addresses[0]} \
+        --unlock ${addresses[0]} \
+        --password ./node_modules/@aragon/test-helpers/password --geth --no-dapps \
+        --tx-gas-limit 0x47E7C4 --gasprice 0x0 --gas-floor-target 0x47E7C4 \
+        --reseal-on-txs all --reseal-min-period 0 \
+        --jsonrpc-interface all --jsonrpc-hosts all --jsonrpc-cors="http://localhost:$geth_port"
+    fi
+}
+
+if client_running; then
+    echo "Using existing geth instance at port $geth_port"
+else
+    echo "Starting our own ethereum client at port $geth_port"
+    case $GETH_CLIENT in
+        geth )
+            start_geth
+            ;;
+        parity )
+            start_parity
+            ;;
+        * )
+            echo "No ethereum client specified, using testrpc..."
+            start_testrpc
+            ;;
+    esac
+fi
