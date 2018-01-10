@@ -279,11 +279,12 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         uint256 vesting) private constant returns (uint256)
     {
         // Shortcuts for before cliff and after vesting cases.
-        if (time >= vesting)
+        if (time >= vesting) {
             return 0;
-
-        if (time < cliff)
+        }
+        if (time < cliff) {
             return tokens;
+        }
 
         // Interpolate all vested tokens.
         // As before cliff the shortcut returns 0, we can use just calculate a value
@@ -319,7 +320,9 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
 
     function _logHolderIfNeeded(address _newHolder) internal {
         // costs 3 sstores (2 full (20k fas) and 1 increase (5k fas)), but makes frontend easier
-        if (!logHolders || everHeld[_newHolder]) return;
+        if (!logHolders || everHeld[_newHolder]) {
+            return;
+        }
 
         everHeld[_newHolder] = true;
         holders.push(_newHolder);
