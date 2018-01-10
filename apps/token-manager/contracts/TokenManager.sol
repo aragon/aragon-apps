@@ -211,9 +211,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
             }
         }
 
-        if (logHolders) {
-            _logHolderIfNeeded(_to);
-        }
+        _logHolderIfNeeded(_to);
 
         return true;
     }
@@ -316,14 +314,12 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
 
     function _mint(address _receiver, uint256 _amount) internal {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
-        if (logHolders)
-            _logHolderIfNeeded(_receiver);
+        _logHolderIfNeeded(_receiver);
     }
 
     function _logHolderIfNeeded(address _newHolder) internal {
         // costs 3 sstores (2 full (20k fas) and 1 increase (5k fas)), but makes frontend easier
-        if (everHeld[_newHolder])
-            return;
+        if (!logHolders || everHeld[_newHolder]) return;
 
         everHeld[_newHolder] = true;
         holders.push(_newHolder);
