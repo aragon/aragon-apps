@@ -134,7 +134,7 @@ contract('Token Manager', accounts => {
             assert.equal(await token.balanceOf(holder), limit, 'should have tokens')
         })
 
-        it('cannot assing more than limit', async () => {
+        it('cannot assign more than limit', async () => {
             await tokenManager.issue(limit + 2)
 
             return assertRevert(async () => {
