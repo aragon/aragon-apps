@@ -26,10 +26,10 @@ start_testrpc() {
 start_geth() {
     # initialize our network with the genesis block and start our network
     # node with unlocked accounts and has mining enabled
-    geth init ./genesis.json && \
-    geth --networkid 19191919191 --rpc --password ./password \
-    --unlock "0,1,2" --rpccorsdomain "*" --rpcaddr "127.0.0.1" \
-    --rpcport "$geth_port" --mine --targetgaslimit 0x47E7C4 --etherbase "2"
+    geth --dev init ./genesis.json && \
+    geth --dev --rpc --password ./password \
+    --unlock "0" --rpccorsdomain "*" --rpcaddr "127.0.0.1" \
+    --rpcport "$geth_port" --targetgaslimit 0x47E7C4 --etherbase "0"
 
     rpc_pid=$!
 }
