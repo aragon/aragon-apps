@@ -203,7 +203,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     */
     function onTransfer(address _from, address _to, uint _amount) public constant returns (bool) {
         bool allowInc = isBalanceIncreaseAllowed(_to, _amount);
-        bool checkVesting = transferrableBalance(_from, now) >= _amount;
+        bool checkVesting = transferableBalance(_from, now) >= _amount;
 
         bool canTransfer = transferable && allowInc && checkVesting;
         bool isTokenManager = _from == address(this) || _to == address(this);
@@ -228,10 +228,10 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     function spendableBalanceOf(address _holder) public constant returns (uint256) {
-        return transferrableBalance(_holder, now);
+        return transferableBalance(_holder, now);
     }
 
-    function transferrableBalance(address _holder, uint256 _time) public constant returns (uint256) {
+    function transferableBalance(address _holder, uint256 _time) public constant returns (uint256) {
         uint256 vs = tokenGrantsCount(_holder);
         uint256 totalNonTransferable = 0;
 
