@@ -137,6 +137,32 @@ contract Finance is App, Initializable, ERC677Receiver {
     }
 
     /**
+     * @dev Deposit for ERC20 tokens using approveAndCall
+     * @param _from Address sending the tokens
+     * @param _amount Amount of tokens sent
+     * @param _token Token being deposited
+     * @param _data Data payload being executed (payment reference)
+     */
+    function receiveApproval(
+        address _from,
+        uint256 _amount,
+        address _token,
+        bytes _data
+    )
+        transitionsPeriod
+        external
+    {
+        ERC20 token = ERC20(_token);
+        _recordIncomingTransaction(
+            token,
+            _from,
+            _amount,
+            string(_data)
+        );
+        require(token.transferFrom(_from, address(vault), _amount));
+    }
+
+    /**
     * @dev Deposit for ERC677 tokens
     * @param from Address sending the tokens
     * @param amount Amount of tokens sent
