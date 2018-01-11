@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
 
 import "@aragon/core/contracts/apps/App.sol";
 
@@ -195,20 +195,20 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         runScript(_evmCallScript);
     }
 
-    function canForward(address _sender, bytes _evmCallScript) public constant returns (bool) {
+    function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
         _evmCallScript;
         return token.balanceOf(_sender) > 0;
     }
 
-    function tokenGrantsCount(address _holder) public constant returns (uint256) {
+    function tokenGrantsCount(address _holder) public view returns (uint256) {
         return vestings[_holder].length;
     }
 
-    function spendableBalanceOf(address _holder) public constant returns (uint256) {
+    function spendableBalanceOf(address _holder) public view returns (uint256) {
         return transferrableBalance(_holder, now);
     }
 
-    function transferrableBalance(address _holder, uint256 _time) public constant returns (uint256) {
+    function transferrableBalance(address _holder, uint256 _time) public view returns (uint256) {
         uint256 vs = tokenGrantsCount(_holder);
         uint256 totalNonTransferable = 0;
 
@@ -256,7 +256,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         uint256 time,
         uint256 start,
         uint256 cliff,
-        uint256 vesting) private constant returns (uint256)
+        uint256 vesting) private pure returns (uint256)
     {
         // Shortcuts for before cliff and after vesting cases.
         if (time >= vesting)
@@ -320,7 +320,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _amount The amount of the transfer
     * @return False if the controller does not authorize the transfer
     */
-    function onTransfer(address _from, address _to, uint _amount) public constant returns (bool) {
+    function onTransfer(address _from, address _to, uint _amount) public view returns (bool) {
         return _from == address(this) || _to == address(this) || transferrableBalance(_from, now) >= _amount;
     }
 
@@ -332,7 +332,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _amount The amount in the `approve()` call
     * @return False if the controller does not authorize the approval
     */
-    function onApprove(address _owner, address _spender, uint _amount) public constant returns (bool) {
+    function onApprove(address _owner, address _spender, uint _amount) public view returns (bool) {
         _owner;
         _spender;
         _amount;
