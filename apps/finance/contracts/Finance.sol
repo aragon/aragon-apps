@@ -137,6 +137,32 @@ contract Finance is App, Initializable, ERC677Receiver {
     }
 
     /**
+     * @dev Deposit for ERC20 tokens using approveAndCall
+     * @param _from Address sending the tokens
+     * @param _amount Amount of tokens sent
+     * @param _token Token being deposited
+     * @param _data Data payload being executed (payment reference)
+     */
+    function receiveApproval(
+        address _from,
+        uint256 _amount,
+        address _token,
+        bytes _data
+    )
+        transitionsPeriod
+        external
+    {
+        ERC20 token = ERC20(_token);
+        _recordIncomingTransaction(
+            token,
+            _from,
+            _amount,
+            string(_data)
+        );
+        require(token.transferFrom(_from, address(vault), _amount));
+    }
+
+    /**
     * @dev Deposit for ERC677 tokens
     * @param from Address sending the tokens
     * @param amount Amount of tokens sent
@@ -269,6 +295,28 @@ contract Finance is App, Initializable, ERC677Receiver {
     function setPaymentDisabled(uint256 _paymentId, bool _disabled) auth(DISABLE_PAYMENTS_ROLE) external {
         payments[_paymentId].disabled = _disabled;
         ChangePaymentState(_paymentId, _disabled);
+    }
+
+    /**
+     * @dev Allows make a simple payment from this contract to Vault,
+            to avoid locked tokens in contract forever.
+            This contract should never receive tokens with a simple transfer call,
+            but in case it happens, this function allows to recover them.
+     * @notice Send tokens to Vault
+     * @param _token Token whose balance is going to be transferred.
+     */
+    function depositToVault(address _token) public {
+        ERC20 token = ERC20(_token);
+        uint256 value = token.balanceOf(this);
+        require(value > 0);
+
+        _recordIncomingTransaction(
+            token,
+            this,
+            value,
+            "Deposit to Vault"
+        );
+        require(token.transfer(address(vault), value));
     }
 
     /**
