@@ -58,16 +58,16 @@ contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
         runScript(_evmCallScript);
     }
 
-    function isGroupMember(address _entity) public constant returns (bool) {
+    function isGroupMember(address _entity) public view returns (bool) {
         return members[_entity];
     }
 
-    function canForward(address _sender, bytes _evmCallScript) public constant returns (bool) {
+    function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
         _evmCallScript; // silence unusued variable warning
         return isGroupMember(_sender);
     }
 
-    function getName() public constant returns (string) {
+    function getName() public view returns (string) {
         return name;
     }
 }
