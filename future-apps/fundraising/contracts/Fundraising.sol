@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity 0.4.18;
 
 import "@aragon/core/contracts/apps/App.sol";
 import "@aragon/core/contracts/common/Initializable.sol";

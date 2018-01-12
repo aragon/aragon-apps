@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity 0.4.18;
 
 import "@aragon/core/contracts/apps/App.sol";
 
@@ -256,7 +256,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         uint256 time,
         uint256 start,
         uint256 cliff,
-        uint256 vesting) private pure returns (uint256)
+        uint256 vesting) private view returns (uint256)
     {
         // Shortcuts for before cliff and after vesting cases.
         if (time >= vesting)
@@ -332,7 +332,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _amount The amount in the `approve()` call
     * @return False if the controller does not authorize the approval
     */
-    function onApprove(address _owner, address _spender, uint _amount) public pure returns (bool) {
+    function onApprove(address _owner, address _spender, uint _amount) public view returns (bool) {
         _owner;
         _spender;
         _amount;
