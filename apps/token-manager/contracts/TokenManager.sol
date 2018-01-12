@@ -18,12 +18,15 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     using SafeMath for uint256;
 
     MiniMeToken public token;
-    ERC20 public wrappedToken;
+    bool public transferable;
+    uint256 public maxAccountTokens;
+    bool public logHolders;
 
     bytes32 constant public MINT_ROLE = bytes32(1);
     bytes32 constant public ISSUE_ROLE = bytes32(2);
     bytes32 constant public ASSIGN_ROLE = bytes32(3);
     bytes32 constant public REVOKE_VESTINGS_ROLE = bytes32(4);
+    bytes32 constant public BURN_ROLE = bytes32(5);
 
     uint256 constant MAX_VESTINGS_PER_ADDRESS = 50;
     struct TokenVesting {
@@ -35,81 +38,59 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     mapping (address => TokenVesting[]) vestings;
+    mapping (address => bool) everHeld;
 
-    modifier onlyNative {
-        require(address(wrappedToken) == 0);
-        _;
-    }
+    // Returns all holders the token had (since managing it).
+    // Some of them can have a balance of 0.
+    address[] public holders;
 
-    modifier onlyWrapper {
-        require(address(wrappedToken) > 0);
-        _;
-    }
 
     // Other token specific events can be watched on the token address directly (avoid duplication)
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
     event RevokeVesting(address indexed receiver, uint256 vestingId);
 
     /**
-    * @notice Initializes TokenManager in native mode (parameters won't be modifiable after being set)
+    * @notice Initializes TokenManager
     * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
+    * @param _transferable whether the token can be transferred by holders
+    * @param _maxAccountTokens maximum amount of tokens an account can have (0 for infinite tokens)
+    * @param _logHolders Whether the token manager will store all token holders (makes token transfers more expensive!)
     */
-    function initializeNative(MiniMeToken _token) onlyInit external {
-        _initialize(_token, ERC20(0));
-    }
+    function initialize(
+        MiniMeToken _token,
+        bool _transferable,
+        uint256 _maxAccountTokens,
+        bool _logHolders
+        )
+        onlyInit external
+    {
 
-    /**
-    * @notice Initializes TokenManager in wrapper mode (parameters won't be modifiable after being set)
-    * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
-    * @param _wrappedToken Address of the token being wrapped (can get 1:1 token exchanged for managed token)
-    */
-    function initializeWrapper(MiniMeToken _token, ERC20 _wrappedToken) onlyInit external {
-        _initialize(_token, _wrappedToken);
-    }
-
-    function _initialize(MiniMeToken _token, ERC20 _wrappedToken) internal {
         initialized();
 
         require(_token.controller() == address(this));
 
         token = _token;
-        wrappedToken = _wrappedToken;
+        transferable = _transferable;
+        maxAccountTokens = _maxAccountTokens == 0 ? uint256(-1) : _maxAccountTokens;
+        logHolders = _logHolders;
     }
 
     /**
-    * @notice Mint `_amount` of tokens for `_receiver` (Can only be called on native token manager)
+    * @notice Mint `_amount` of tokens for `_receiver`
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens minted
     */
-    function mint(address _receiver, uint256 _amount) auth(MINT_ROLE) onlyNative external {
+    function mint(address _receiver, uint256 _amount) auth(MINT_ROLE) external {
+        require(isBalanceIncreaseAllowed(_receiver, _amount));
         _mint(_receiver, _amount);
     }
 
     /**
-    * @notice Mint `_amount` of tokens for the token manager (Can only be called on native token manager)
+    * @notice Mint `_amount` of tokens for the token manager
     * @param _amount Number of tokens minted
     */
-    function issue(uint256 _amount) auth(ISSUE_ROLE) onlyNative external {
+    function issue(uint256 _amount) auth(ISSUE_ROLE) external {
         _mint(address(this), _amount);
-    }
-
-    /**
-    * @notice Exchange `_amount` of wrappedToken for tokens (Can only be called on wrapped token manager)
-    * @param _amount Number of tokens wrapped
-    */
-    function wrap(uint256 _amount) onlyWrapper external {
-        require(wrappedToken.transferFrom(msg.sender, address(this), _amount));
-        _mint(msg.sender, _amount);
-    }
-
-    /**
-    * @notice Exchange `_amount` of tokens for the wrapped token (Can only be called on wrapped token manager)
-    * @param _amount Number of tokens unwrapped
-    */
-    function unwrap(uint256 _amount) onlyWrapper external {
-        require(transferrableBalance(msg.sender, now) >= _amount);
-        _burn(msg.sender, _amount);
-        require(wrappedToken.transfer(msg.sender, _amount));
     }
 
     /**
@@ -119,6 +100,16 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     */
     function assign(address _receiver, uint256 _amount) auth(ASSIGN_ROLE) external {
         _assign(_receiver, _amount);
+    }
+
+    /**
+    * @notice Burn `_amount` tokens from `_holder`
+    * @param _holder Holder being removed tokens
+    * @param _amount Number of tokens being burned
+    */
+    function burn(address _holder, uint256 _amount) auth(BURN_ROLE) external {
+        // minime.destroyTokens() never returns false, only reverts on failure
+        token.destroyTokens(_holder, _amount);
     }
 
     /**
@@ -200,15 +191,44 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         return token.balanceOf(_sender) > 0;
     }
 
+    function allHolders() public view returns (address[]) { return holders; }
+
+    /*
+    * @dev Notifies the controller about a token transfer allowing the
+    *      controller to decide whether to allow it or react if desired
+    * @param _from The origin of the transfer
+    * @param _to The destination of the transfer
+    * @param _amount The amount of the transfer
+    * @return False if the controller does not authorize the transfer
+    */
+    function onTransfer(address _from, address _to, uint _amount) public view returns (bool) {
+        bool includesTokenManager = _from == address(this) || _to == address(this);
+
+        if (!includesTokenManager) {
+            bool toCanReceive = isBalanceIncreaseAllowed(_to, _amount);
+            if (!(transferable && toCanReceive && (transferableBalance(_from, now) >= _amount))) {
+                return false;
+            }
+        }
+
+        _logHolderIfNeeded(_to);
+
+        return true;
+    }
+
+    function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal returns (bool) {
+        return token.balanceOf(_receiver) + _inc <= maxAccountTokens;
+    }
+
     function tokenGrantsCount(address _holder) public view returns (uint256) {
         return vestings[_holder].length;
     }
 
     function spendableBalanceOf(address _holder) public view returns (uint256) {
-        return transferrableBalance(_holder, now);
+        return transferableBalance(_holder, now);
     }
 
-    function transferrableBalance(address _holder, uint256 _time) public view returns (uint256) {
+    function transferableBalance(address _holder, uint256 _time) public view returns (uint256) {
         uint256 vs = tokenGrantsCount(_holder);
         uint256 totalNonTransferable = 0;
 
@@ -259,11 +279,12 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         uint256 vesting) private view returns (uint256)
     {
         // Shortcuts for before cliff and after vesting cases.
-        if (time >= vesting)
+        if (time >= vesting) {
             return 0;
-
-        if (time < cliff)
+        }
+        if (time < cliff) {
             return tokens;
+        }
 
         // Interpolate all vested tokens.
         // As before cliff the shortcut returns 0, we can use just calculate a value
@@ -288,15 +309,23 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     function _assign(address _receiver, uint256 _amount) internal {
+        require(isBalanceIncreaseAllowed(_receiver, _amount));
         require(token.transfer(_receiver, _amount));
-    }
-
-    function _burn(address _holder, uint256 _amount) internal {
-        token.destroyTokens(_holder, _amount);  // minime.destroyTokens() never returns false
     }
 
     function _mint(address _receiver, uint256 _amount) internal {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
+        _logHolderIfNeeded(_receiver);
+    }
+
+    function _logHolderIfNeeded(address _newHolder) internal {
+        // costs 3 sstores (2 full (20k fas) and 1 increase (5k fas)), but makes frontend easier
+        if (!logHolders || everHeld[_newHolder]) {
+            return;
+        }
+
+        everHeld[_newHolder] = true;
+        holders.push(_newHolder);
     }
 
     /**
@@ -310,18 +339,6 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         require(msg.sender == address(token));
         _owner;
         return false;
-    }
-
-    /*
-    * @dev Notifies the controller about a token transfer allowing the
-    *      controller to decide whether to allow it or react if desired
-    * @param _from The origin of the transfer
-    * @param _to The destination of the transfer
-    * @param _amount The amount of the transfer
-    * @return False if the controller does not authorize the transfer
-    */
-    function onTransfer(address _from, address _to, uint _amount) public view returns (bool) {
-        return _from == address(this) || _to == address(this) || transferrableBalance(_from, now) >= _amount;
     }
 
     /**
