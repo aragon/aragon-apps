@@ -14,6 +14,8 @@ const n = '0x00'
 contract('Token Manager', accounts => {
     let tokenManager, token = {}
 
+    const holder = accounts[1]
+
     beforeEach(async () => {
         token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
         tokenManager = await TokenManager.new()
@@ -21,7 +23,7 @@ contract('Token Manager', accounts => {
 
     it('fails when initializing without setting controller', async () => {
         return assertRevert(async () => {
-            await tokenManager.initializeNative(token.address)
+            await tokenManager.initialize(token.address, true, 0, false)
         })
     })
 
@@ -31,17 +33,125 @@ contract('Token Manager', accounts => {
         })
     })
 
-    context('for native tokens', () => {
-        const holder = accounts[1]
+    context('non-transferable token', async () => {
+        beforeEach(async () => {
+            await token.changeController(tokenManager.address)
+            await tokenManager.initialize(token.address, false, 0, false)
+        })
+
+        it('holders cannot transfer non-transferable tokens', async () => {
+            await tokenManager.mint(holder, 2000)
+
+            return assertRevert(async () => {
+                await token.transfer(accounts[2], 10, { from: holder })
+            })
+        })
+
+        it('can transfer to token manager', async () => {
+            await tokenManager.mint(holder, 2000)
+            await token.transfer(tokenManager.address, 10, { from: holder })
+
+            assert.equal(await token.balanceOf(tokenManager.address), 10, 'should have tokens')
+        })
+
+        it('token manager can transfer', async () => {
+            await tokenManager.issue(100)
+            await tokenManager.assign(holder, 10)
+
+            assert.equal(await token.balanceOf(holder), 10, 'should have tokens')
+        })
+
+        it('forwards actions to holder', async () => {
+            const executionTarget = await ExecutionTarget.new()
+            await tokenManager.mint(holder, 100)
+
+            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+            const script = encodeScript([action])
+
+            await tokenManager.forward(script, { from: holder })
+            assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
+
+            return assertRevert(async () => {
+                await tokenManager.forward(script, { from: accounts[8] })
+            })
+        })
+    })
+
+    context('holder logging', async () => {
+        beforeEach(async () => {
+            await token.changeController(tokenManager.address)
+            await tokenManager.initialize(token.address, true, 0, true)
+        })
+
+        it('logs token manager on issue', async () => {
+            await tokenManager.issue(10)
+
+            const holders = await tokenManager.allHolders()
+            assert.deepEqual(holders, [tokenManager.address], 'holder list should be correct')
+            assert.equal(await tokenManager.holders(0), tokenManager.address, 'should be first holder')
+        })
+
+        it('logs on mints and transfers', async () => {
+            await tokenManager.mint(holder, 10)
+            await token.transfer(accounts[8], 5, { from: holder })
+            await token.transfer(accounts[9], 5, { from: accounts[8] })
+
+            const holders = await tokenManager.allHolders()
+            assert.deepEqual(holders, [holder, accounts[8], accounts[9]], 'holder list should be correct')
+        })
+    })
+
+    context('maximum tokens per address limit', async () => {
+        const limit = 100
 
         beforeEach(async () => {
             await token.changeController(tokenManager.address)
-            await tokenManager.initializeNative(token.address)
+            await tokenManager.initialize(token.address, true, limit, false)
+        })
+
+        it('can mint up to than limit', async () => {
+            await tokenManager.mint(holder, limit)
+
+            assert.equal(await token.balanceOf(holder), limit, 'should have tokens')
+        })
+
+        it('fails to mint more than limit', async () => {
+            return assertRevert(async () => {
+                await tokenManager.mint(holder, limit + 1)
+            })
+        })
+
+        it('can issue unlimited tokens for manager', async () => {
+            await tokenManager.issue(limit + 100000)
+
+            assert.equal(await token.balanceOf(tokenManager.address), limit + 100000, 'should have tokens')
+        })
+
+        it('can assign up to limit', async () => {
+            await tokenManager.issue(limit)
+            await tokenManager.assign(holder, limit)
+
+            assert.equal(await token.balanceOf(holder), limit, 'should have tokens')
+        })
+
+        it('cannot assign more than limit', async () => {
+            await tokenManager.issue(limit + 2)
+
+            return assertRevert(async () => {
+                await tokenManager.assign(holder, limit + 1)
+            })
+        })
+    })
+
+    context('for normal native tokens', () => {
+        beforeEach(async () => {
+            await token.changeController(tokenManager.address)
+            await tokenManager.initialize(token.address, true, 0, false)
         })
 
         it('fails on reinitialization', async () => {
             return assertRevert(async () => {
-                await tokenManager.initializeNative(token.address)
+                await tokenManager.initialize(token.address, true, 0, false)
             })
         })
 
@@ -70,12 +180,6 @@ contract('Token Manager', accounts => {
 
             return assertRevert(async () => {
                 await tokenManager.assign(holder, 51)
-            })
-        })
-
-        it('cannot wrap tokens', async () => {
-            return assertRevert(async () => {
-                await tokenManager.wrap(100, { from: holder })
             })
         })
 
@@ -192,86 +296,6 @@ contract('Token Manager', accounts => {
                 await token.transfer(accounts[3], 1) // can transfer
                 return assertRevert(async () => {
                     await tokenManager.assignVested(holder, 1, now + start, now + cliff, now + vesting, false)
-                })
-            })
-        })
-    })
-
-    context('for wrapped tokens', () => {
-        let wrappedToken = {}
-
-        const holder100 = accounts[1]
-
-        beforeEach(async () => {
-            wrappedToken = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
-            await wrappedToken.generateTokens(holder100, 100)
-
-            await token.changeController(tokenManager.address)
-            await tokenManager.initializeWrapper(token.address, wrappedToken.address)
-        })
-
-        it('cannot wrap more than allowance', async () => {
-            await wrappedToken.approve(tokenManager.address, 99, { from: holder100 })
-            return assertRevert(async () => {
-                await tokenManager.wrap(100, { from: holder100 })
-            })
-        })
-
-        it('cannot mint', async () => {
-            return assertRevert(async () => {
-                await tokenManager.mint(holder100, 100)
-            })
-        })
-
-        it('cannot issue', async () => {
-            return assertRevert(async () => {
-                await tokenManager.issue(100)
-            })
-        })
-
-        context('wrapping tokens', () => {
-            beforeEach(async () => {
-                await wrappedToken.approve(tokenManager.address, 100, { from: holder100 })
-                await tokenManager.wrap(100, { from: holder100 })
-            })
-
-            it('balances are correct', async () => {
-                assert.equal(await token.balanceOf(holder100), 100, 'tokens should have been wrapped 1:1')
-                assert.equal(await wrappedToken.balanceOf(holder100), 0, 'balance should be 0 on wrapped token')
-                assert.equal(await wrappedToken.balanceOf(tokenManager.address), 100, 'tokenManager should hold wrapped tokens')
-            })
-
-            it('can unwrap', async () => {
-                await tokenManager.unwrap(50, { from: holder100 }) // unwrap half of wrapped tokens
-
-                assert.equal(await token.balanceOf(holder100), 50, 'tokens should have been unwrapped 1:1')
-                assert.equal(await wrappedToken.balanceOf(holder100), 50, 'balance should be 50 on wrapped token')
-                assert.equal(await wrappedToken.balanceOf(tokenManager.address), 50, 'tokenManager should hold wrapped tokens')
-            })
-
-            it('can transfer', async () => {
-                await token.transfer(accounts[2], 10, { from: holder100 })
-
-                assert.equal(await token.balanceOf(holder100), 90, 'balance should be correct')
-                assert.equal(await token.balanceOf(accounts[2]), 10, 'balance should be correct')
-            })
-
-            it('cannot unwrap tokens with vesting', async () => {
-                await token.transfer(tokenManager.address, 100, { from: holder100 })
-                await tokenManager.assignVested(holder100, 100, 1e11, 1e11, 1e11, false)
-
-                return assertRevert(async () => {
-                    await tokenManager.unwrap(100, { from: holder100 })
-                })
-            })
-
-            it('fails if unwrapping more tokens than token managers balance', async () => {
-                // after being wrapped, as token controller we can move tokens at our will
-                // this scenario shouldn't happen in reality, as wrapped tokens should be
-                // trustless tokens in which this operation is not allowed
-                await wrappedToken.transferFrom(tokenManager.address, accounts[7], 100)
-                return assertRevert(async () => {
-                    await tokenManager.unwrap(100, { from: holder100 })
                 })
             })
         })

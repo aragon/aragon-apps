@@ -16,6 +16,7 @@
     "whitespace": ["error"],
     "deprecated-suicide": ["error"],
     "pragma-on-top": ["error"],
-    "security/enforce-explicit-visibility": ["error"]
+    "security/enforce-explicit-visibility": ["error"],
+    "consequent": 0
   }
 }
