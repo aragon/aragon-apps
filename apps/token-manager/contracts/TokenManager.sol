@@ -332,7 +332,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _amount The amount in the `approve()` call
     * @return False if the controller does not authorize the approval
     */
-    function onApprove(address _owner, address _spender, uint _amount) public view returns (bool) {
+    function onApprove(address _owner, address _spender, uint _amount) public pure returns (bool) {
         _owner;
         _spender;
         _amount;
