@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "truffle test --network development",
+    "test": "truffle test",
     "test:parity": "GETH_CLIENT=parity ./node_modules/@aragon/test-helpers/run-docker-test.sh",
     "test:geth": "GETH_CLIENT=geth ./node_modules/@aragon/test-helpers/run-docker-test.sh",
     "lint": "solium --dir ./contracts",

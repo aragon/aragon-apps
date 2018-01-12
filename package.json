@@ -7,8 +7,8 @@
   "scripts": {
     "bootstrap": "lerna bootstrap --nohoist=@aragon/core",
     "test": "lerna run --scope=@aragon/apps-* test",
-    "test:parity": "lerna run --scope=@aragon/apps-* test:parity",
-    "test:geth": "lerna run --scope=@aragon/apps-* test:geth",
+    "test:parity": "lerna run --scope=@aragon/apps-* --concurrency=1 test:parity",
+    "test:geth": "lerna run --scope=@aragon/apps-* --concurrency=1 test:geth",
     "lint": "lerna run --scope=@aragon/apps-* lint",
     "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",
     "coverage:parity": "GETH_CLIENT=parity lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",

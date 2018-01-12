@@ -13,6 +13,9 @@ fi
 DEFAULT_ACCOUNTS=5
 DEFAULT_PASSWORD=""
 
+PARITY_VERSION=v1.8.6
+GETH_VERSION=latest
+
 client_running() {
     nc -z localhost "$geth_port"
 }
@@ -28,12 +31,20 @@ start_testrpc() {
 }
 
 start_geth() {
-    # initialize our network with the genesis block
-    geth --dev init ./genesis.json
-    # get accounts in dev network
-    geth --dev --rpc --password ./password \
-    --unlock "0" --rpccorsdomain "*" --rpcaddr "127.0.0.1" \
-    --rpcport "$geth_port" --mine --targetgaslimit 9000000 --etherbase "0" &
+    # Generate and store a wallet password
+    if [ ! -f ~/.accountpassword ]; then
+        echo `$DEFAULT_PASSWORD` > ~/.accountpassword
+    fi
+    # create a primary account
+    if [ ! -f ~/.primaryaccount ]; then
+        geth --datadir $DATADIR --password ~/.accountpassword account new > ~/.primaryaccount
+    fi
+
+    # init genesis block for private network
+    geth --datadir $DATADIR init genesis.json
+    geth --datadir $DATADIR --rpc --password ~/.accountpassword \
+    --rpccorsdomain "*" --rpcaddr "0.0.0.0" --mine --minerthreads 1 \
+    --rpcport "$geth_port" --targetgaslimit 9000000 &
 
     rpc_pid=$!
 }
@@ -48,7 +59,7 @@ start_parity() {
         echo "(default password: \"$DEFAULT_PASSWORD\")"
 
         for (( i = 0; i < $DEFAULT_ACCOUNTS; i++ )); do
-            parity account new --chain dev < $DEFAULT_PASSWORD\n $DEFAULT_PASSWORD\n
+            echo "$DEFAULT_PASSWORD\n$DEFAULT_PASSWORD\n" | parity account new --chain dev
         done
 
         echo "Creating password file for default accounts..."
@@ -64,7 +75,7 @@ start_parity() {
         --author ${addresses[2]} \
         --unlock ${addresses[0]},${addresses[1]},${addresses[2]} \
         --password ./password --geth --no-dapps \
-        --tx-gas-limit 0x47E7C4 --gasprice 0x0 --gas-floor-target 0x47E7C4 \
+        --tx-gas-limit 0x5F5E100 --gasprice 0x0 --gas-floor-target 0x47E7C4 \
         --reseal-on-txs all --reseal-min-period 0 \
         --jsonrpc-interface all --jsonrpc-hosts all --jsonrpc-cors="http://localhost:$geth_port" &
 
@@ -82,17 +93,19 @@ check_docker() {
 docker_start_parity() {
     check_docker
     # pull the most stable release of parity
-    docker pull parity/parity:stable-release --chain dev
+    docker pull parity/parity:$PARITY_VERSION
     # run the container in detached mode
-    docker run -d parity/parity:stable-release --chain dev
+    docker run -d -p 8545:8545 --name parity parity/parity:$PARITY_VERSION \
+    --chain dev --jsonrpc-interface all --jsonrpc-hosts all --geth \
+    --tx-gas-limit 0x5F5E100
 }
 
 docker_start_geth() {
     check_docker
     # pull the latest image using the dev test network
-    docker pull kunstmaan/ethereum-geth-devnet:latest
+    docker pull kunstmaan/ethereum-geth-devnet:$GETH_VERSION
     # run the geth dev network container
-    docker run -d kunstmaan/ethereum-geth-devnet:latest
+    docker run -d -p 8545:8545 kunstmaan/ethereum-geth-devnet:$GETH_VERSION
 }
 
 if client_running; then

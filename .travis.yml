@@ -6,8 +6,12 @@ notifications:
   email: false
 node_js:
   - '8'
+sudo: required
+services:
+  - docker
 env:
   - TASK=lint
+  - TASK=test:geth
   - TASK=coverage
 before_script:
   - npm run bootstrap
