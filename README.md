@@ -22,11 +22,10 @@ You can read more about the individual apps in [their specifications](https://wi
 
 ```
 npm install
-npm run bootstrap
 ```
 
-This installs global package dependencies and also bootstraps lerna packages. 
+This installs global package dependencies and also bootstraps lerna packages.
 
-Running tests on all apps can be done running `npm run test` at the root directory. Running tests of an individual app can be done by running `npm run test` inside the app directory. 
+Running tests on all apps can be done running `npm run test` at the root directory. Running tests of an individual app can be done by running `npm run test` inside the app directory.
 
 By default tests are run in a in-memory instance of testrpc.
