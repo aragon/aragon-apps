@@ -11,8 +11,6 @@ This repository contains the following apps:
 
 - **[Vault](apps/vault)**: Securely owns and manages tokens on behalf of a DAO.
 - **[Finance](apps/finance)**: Send payments and manage expenses with budgeting.
-- **[Fundraising](apps/fundraising)**: Create token sales.
-- **[Group](apps/group)**: Give a set of entities a shared entity that has its own permissions.
 - **[Voting](apps/voting)**: Create votes that execute actions on behalf of token holders.
 - **[Token Manager](apps/token-manager)**: Manages organization tokens.
 
