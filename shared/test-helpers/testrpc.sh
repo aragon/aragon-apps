@@ -35,6 +35,11 @@ start_geth() {
     if [ ! -f ~/.accountpassword ]; then
         echo `$DEFAULT_PASSWORD` > ~/.accountpassword
     fi
+
+    # enforce datadir and networkid parameters to run geth locally using private network
+    if [ -z "$DATADIR" || -z $GETH_NETWORKID ]; then
+        echo "Error: missing DATADIR or GETH_NETWORKID environment variable(s)"
+    fi
     # create a primary account
     if [ ! -f ~/.primaryaccount ]; then
         geth --datadir $DATADIR --password ~/.accountpassword account new > ~/.primaryaccount
@@ -42,9 +47,9 @@ start_geth() {
 
     # init genesis block for private network
     geth --datadir $DATADIR init genesis.json
-    geth --datadir $DATADIR --rpc --password ~/.accountpassword \
+    geth --datadir $DATADIR --rpc --unlock "0" --password ~/.accountpassword \
     --rpccorsdomain "*" --rpcaddr "0.0.0.0" --mine --minerthreads 1 \
-    --rpcport "$geth_port" --targetgaslimit 9000000 &
+    --rpcport "$geth_port" --targetgaslimit 9000000 --nodiscover --networkid $GETH_NETWORKID &
 
     rpc_pid=$!
 }

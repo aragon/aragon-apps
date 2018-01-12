@@ -5,6 +5,7 @@
     "lerna": "^2.4.0"
   },
   "scripts": {
+    "install": "npm run bootstrap",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/core",
     "test": "lerna run --scope=@aragon/apps-* test",
     "test:parity": "lerna run --scope=@aragon/apps-* --concurrency=1 test:parity",
