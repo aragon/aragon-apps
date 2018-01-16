@@ -1,4 +1,4 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 
@@ -128,17 +128,17 @@ contract Voting is AragonApp, EVMScript, IForwarder {
         _newVote(_evmScript, "");
     }
 
-    function canForward(address _sender, bytes _evmScript) public constant returns (bool) {
+    function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
         return canPerform(_sender, CREATE_VOTES_ROLE);
     }
 
-    function canVote(uint256 _voteId, address _voter) public constant returns (bool) {
+    function canVote(uint256 _voteId, address _voter) public view returns (bool) {
         Vote storage vote = votes[_voteId];
 
         return _isVoteOpen(vote) && token.balanceOfAt(_voter, vote.snapshotBlock) > 0;
     }
 
-    function canExecute(uint256 _voteId) public constant returns (bool) {
+    function canExecute(uint256 _voteId) public view returns (bool) {
         Vote storage vote = votes[_voteId];
 
         if (vote.executed)
@@ -157,7 +157,7 @@ contract Voting is AragonApp, EVMScript, IForwarder {
         return voteEnded && hasSupport && hasMinQuorum;
     }
 
-    function getVote(uint256 _voteId) public constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script, uint256 scriptActionsCount) {
+    function getVote(uint256 _voteId) public view returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script, uint256 scriptActionsCount) {
         Vote storage vote = votes[_voteId];
 
         open = _isVoteOpen(vote);
@@ -173,11 +173,11 @@ contract Voting is AragonApp, EVMScript, IForwarder {
         scriptActionsCount = getScriptActionsCount(vote.executionScript);
     }
 
-    function getVoteMetadata(uint256 _voteId) public constant returns (string metadata) {
+    function getVoteMetadata(uint256 _voteId) public view returns (string metadata) {
         return votes[_voteId].metadata;
     }
 
-    function getVoteScriptAction(uint256 _voteId, uint256 _scriptAction) public constant returns (address, bytes) {
+    function getVoteScriptAction(uint256 _voteId, uint256 _scriptAction) public view returns (address, bytes) {
         return getScriptAction(votes[_voteId].executionScript, _scriptAction);
     }
 

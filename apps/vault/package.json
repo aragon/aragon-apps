@@ -28,7 +28,7 @@
     "ethereumjs-testrpc": "^6.0.2",
     "solidity-coverage": "0.3.5",
     "solium": "^1.0.4",
-    "truffle": "^3.4.11",
+    "truffle": "^4.0.4",
     "truffle-hdwallet-provider": "0.0.3",
     "webpack": "^3.7.1"
   },
