@@ -8,6 +8,7 @@
     "install": "npm run bootstrap",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/core",
     "test": "lerna run --scope=@aragon/apps-* test",
+    "test:gas": "lerna run --scope=@aragon/apps-* test:gas",
     "lint": "lerna run --scope=@aragon/apps-* lint",
     "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage"
   }
