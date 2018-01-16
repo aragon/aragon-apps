@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "truffle test",
+    "test:gas": "GAS_REPORTER=true npm test",
     "lint": "solium --dir ./contracts",
     "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh"
   },
