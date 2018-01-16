@@ -1,13 +1,12 @@
 pragma solidity 0.4.18;
 
-import "@aragon/core/contracts/apps/App.sol";
+import "@aragon/os/contracts/apps/AragonApp.sol";
 
-import "@aragon/core/contracts/zeppelin/token/ERC20.sol";
+import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
+import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
-import "@aragon/core/contracts/misc/Migrations.sol";
 
-
-contract Vault is App {
+contract Vault is AragonApp {
     event SetAllowance(address indexed token, address indexed spender, uint256 amount);
     event TokenTransfer(address indexed token, address indexed receiver, uint256 amount);
 
