@@ -1,18 +1,16 @@
 pragma solidity 0.4.15;
 
-import "@aragon/core/contracts/apps/App.sol";
+import "@aragon/os/contracts/apps/AragonApp.sol";
 
-import "@aragon/core/contracts/common/EVMCallScript.sol";
-import "@aragon/core/contracts/common/Initializable.sol";
-import "@aragon/core/contracts/common/MiniMeToken.sol";
-import "@aragon/core/contracts/common/IForwarder.sol";
+import "@aragon/os/contracts/evmscript/EVMScript.sol";
+import "@aragon/os/contracts/common/IForwarder.sol";
 
-import "@aragon/core/contracts/zeppelin/math/SafeMath.sol";
-
-import "@aragon/core/contracts/misc/Migrations.sol";
+import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder, IForwarder {
+contract Voting is AragonApp, EVMScript, IForwarder {
     using SafeMath for uint256;
 
     MiniMeToken public token;
@@ -123,14 +121,14 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
     /**
     * @dev IForwarder interface conformance
-    * @param _evmCallScript Start vote with script
+    * @param _evmScript Start vote with script
     */
-    function forward(bytes _evmCallScript) external {
-        require(canForward(msg.sender, _evmCallScript));
-        _newVote(_evmCallScript, "");
+    function forward(bytes _evmScript) external {
+        require(canForward(msg.sender, _evmScript));
+        _newVote(_evmScript, "");
     }
 
-    function canForward(address _sender, bytes _evmCallScript) public constant returns (bool) {
+    function canForward(address _sender, bytes _evmScript) public constant returns (bool) {
         return canPerform(_sender, CREATE_VOTES_ROLE);
     }
 
@@ -204,7 +202,6 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
                 true
             );
         }
-
     }
 
     function _vote(
@@ -249,7 +246,8 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
         vote.executed = true;
 
-        runScript(vote.executionScript);
+        bytes memory input = new bytes(0); // TODO: Consider input for voting scripts
+        execScript(vote.executionScript, input, new address[](0));
 
         ExecuteVote(_voteId);
     }
