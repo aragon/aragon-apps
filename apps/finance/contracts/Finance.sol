@@ -1,4 +1,4 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
 import "@aragon/core/contracts/apps/App.sol";
 import "@aragon/core/contracts/common/Initializable.sol";
@@ -354,7 +354,7 @@ contract Finance is App, Initializable, ERC677Receiver {
 
     // consts
 
-    function getPayment(uint256 _paymentId) public constant returns (ERC20 token, address receiver, uint256 amount, uint64 initialPaymentTime, uint64 interval, uint64 maxRepeats, string reference, bool disabled, uint256 repeats, address createdBy) {
+    function getPayment(uint256 _paymentId) public view returns (ERC20 token, address receiver, uint256 amount, uint64 initialPaymentTime, uint64 interval, uint64 maxRepeats, string reference, bool disabled, uint256 repeats, address createdBy) {
         Payment storage payment = payments[_paymentId];
 
         token = payment.token;
@@ -369,7 +369,7 @@ contract Finance is App, Initializable, ERC677Receiver {
         createdBy = payment.createdBy;
     }
 
-    function getTransaction(uint256 _transactionId) public constant returns (uint256 periodId, uint256 amount, uint256 paymentId, ERC20 token, address entity, bool isIncoming, uint64 date, string reference) {
+    function getTransaction(uint256 _transactionId) public view returns (uint256 periodId, uint256 amount, uint256 paymentId, ERC20 token, address entity, bool isIncoming, uint64 date, string reference) {
         Transaction storage transaction = transactions[_transactionId];
 
         token = transaction.token;
@@ -382,7 +382,7 @@ contract Finance is App, Initializable, ERC677Receiver {
         reference = transaction.reference;
     }
 
-    function getPeriod(uint256 _periodId) public constant returns (bool isCurrent, uint64 startTime, uint64 endTime, uint256 firstTransactionId, uint256 lastTransactionId) {
+    function getPeriod(uint256 _periodId) public view returns (bool isCurrent, uint64 startTime, uint64 endTime, uint256 firstTransactionId, uint256 lastTransactionId) {
         Period storage period = periods[_periodId];
 
         isCurrent = currentPeriodId() == _periodId;
@@ -393,12 +393,12 @@ contract Finance is App, Initializable, ERC677Receiver {
         lastTransactionId = period.lastTransactionId;
     }
 
-    function getPeriodTokenStatement(uint256 _periodId, address _token) public constant returns (uint256 expenses, uint256 income) {
+    function getPeriodTokenStatement(uint256 _periodId, address _token) public view returns (uint256 expenses, uint256 income) {
         TokenStatement storage tokenStatement = periods[_periodId].tokenStatement[_token];
         return (tokenStatement.expenses, tokenStatement.income);
     }
 
-    function nextPaymentTime(uint256 _paymentId) public constant returns (uint64) {
+    function nextPaymentTime(uint256 _paymentId) public view returns (uint64) {
         Payment memory payment = payments[_paymentId];
 
         if (payment.repeats >= payment.maxRepeats)
@@ -410,17 +410,17 @@ contract Finance is App, Initializable, ERC677Receiver {
         return uint64(nextPayment);
     }
 
-    function getPeriodDuration() public constant returns (uint64 periodDuration) {
+    function getPeriodDuration() public view returns (uint64 periodDuration) {
         return settings.periodDuration;
     }
 
-    function getBudget(address _token) transitionsPeriod public constant returns (uint256 budget, bool hasBudget, uint256 remainingBudget) {
+    function getBudget(address _token) transitionsPeriod public view returns (uint256 budget, bool hasBudget, uint256 remainingBudget) {
         budget = settings.budgets[_token];
         hasBudget = settings.hasBudget[_token];
         remainingBudget = _getRemainingBudget(_token);
     }
 
-    function currentPeriodId() public constant returns (uint256) {
+    function currentPeriodId() public view returns (uint256) {
         return periods.length - 1;
     }
 
@@ -542,7 +542,7 @@ contract Finance is App, Initializable, ERC677Receiver {
         return _getRemainingBudget(_token) >= _amount && _token.balanceOf(address(vault)) >= _amount;
     }
 
-    function _getRemainingBudget(address _token) internal constant returns (uint256) {
+    function _getRemainingBudget(address _token) internal view returns (uint256) {
         if (!settings.hasBudget[_token])
             return MAX_UINT;
 
@@ -556,5 +556,5 @@ contract Finance is App, Initializable, ERC677Receiver {
         return settings.budgets[_token].sub(spent);
     }
 
-    function getTimestamp() internal constant returns (uint256) { return now; }
+    function getTimestamp() internal view returns (uint256) { return now; }
 }
