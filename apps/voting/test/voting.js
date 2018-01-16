@@ -3,7 +3,7 @@ const sha3 = require('solidity-sha3').default
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
-const { encodeScript } = require('@aragon/test-helpers/evmScript')
+const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const Voting = artifacts.require('Voting')
@@ -48,25 +48,25 @@ contract('Voting App', accounts => {
 
         it('deciding voting is automatically executed', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            const script = encodeScript([action])
+            const script = encodeCallScript([action])
             const voteId = createdVoteId(await app.newVote(script, '', { from: holder50 }))
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
         })
 
         it('execution scripts can execute multiple actions', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            const script = encodeScript([action, action, action])
+            const script = encodeCallScript([action, action, action])
             const voteId = createdVoteId(await app.newVote(script, '', { from: holder50 }))
             assert.equal(await executionTarget.counter(), 3, 'should have executed multiple times')
         })
 
         it('execution script can be empty', async () => {
-            const voteId = createdVoteId(await app.newVote(encodeScript([]), '', { from: holder50 }))
+            const voteId = createdVoteId(await app.newVote(encodeCallScript([]), '', { from: holder50 }))
         })
 
         it('execution throws if any action on script throws', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            let script = encodeScript([action])
+            let script = encodeCallScript([action])
             script = script.slice(0, -2) // remove one byte from calldata for it to fail
             return assertRevert(async () => {
                 await app.newVote(script, '', { from: holder50 })
@@ -75,7 +75,7 @@ contract('Voting App', accounts => {
 
         it('forwarding creates vote', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            const script = encodeScript([action])
+            const script = encodeCallScript([action])
             const voteId = createdVoteId(await app.forward(script, { from: holder50 }))
             assert.equal(voteId, 1, 'voting should have been created')
         })
@@ -94,7 +94,7 @@ contract('Voting App', accounts => {
 
             beforeEach(async () => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-                script = encodeScript([action, action])
+                script = encodeCallScript([action, action])
                 voteId = createdVoteId(await app.newVote(script, 'metadata', { from: nonHolder }))
             })
 
@@ -127,6 +127,7 @@ contract('Voting App', accounts => {
                 // With previous min acceptance quorum at 20%, vote should be approved
                 // with new quorum at 50% it shouldn't have, but since min quorum is snapshotted
                 // it will succeed
+
 
                 await app.vote(voteId, true, true, { from: holder31 })
                 await timeTravel(votingTime + 1)
@@ -236,7 +237,7 @@ contract('Voting App', accounts => {
         })
 
         it('new vote cannot be executed before voting', async () => {
-            const voteId = createdVoteId(await app.newVote('0x', 'metadata'))
+            const voteId = createdVoteId(await app.newVote(EMPTY_SCRIPT, 'metadata'))
 
             assert.isFalse(await app.canExecute(voteId), 'vote cannot be executed')
 
@@ -250,7 +251,7 @@ contract('Voting App', accounts => {
         })
 
         it('creating vote as holder executes vote', async () => {
-            const voteId = createdVoteId(await app.newVote('0x', 'metadata', { from: holder }))
+            const voteId = createdVoteId(await app.newVote(EMPTY_SCRIPT, 'metadata', { from: holder }))
             const [isOpen, isExecuted] = await app.getVote(voteId)
 
             assert.isFalse(isOpen, 'vote should be closed')
@@ -277,7 +278,7 @@ contract('Voting App', accounts => {
         })
 
         it('new vote cannot be executed before holder2 voting', async () => {
-            const voteId = createdVoteId(await app.newVote('0x', 'metadata'))
+            const voteId = createdVoteId(await app.newVote(EMPTY_SCRIPT, 'metadata'))
 
             assert.isFalse(await app.canExecute(voteId), 'vote cannot be executed')
 
@@ -291,7 +292,7 @@ contract('Voting App', accounts => {
         })
 
         it('creating vote as holder2 executes vote', async () => {
-            const voteId = createdVoteId(await app.newVote('0x', 'metadata', { from: holder2 }))
+            const voteId = createdVoteId(await app.newVote(EMPTY_SCRIPT, 'metadata', { from: holder2 }))
             const [isOpen, isExecuted] = await app.getVote(voteId)
 
             assert.isFalse(isOpen, 'vote should be closed')

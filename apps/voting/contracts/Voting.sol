@@ -10,7 +10,7 @@ import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract Voting is AragonApp, EVMScript, IForwarder {
+contract Voting is AragonApp, EVMScript, IForwarder, CallsScriptDecoder {
     using SafeMath for uint256;
 
     MiniMeToken public token;
@@ -119,11 +119,15 @@ contract Voting is AragonApp, EVMScript, IForwarder {
         _executeVote(_voteId);
     }
 
+    function isForwarder() public pure returns (bool) {
+        return true;
+    }
+
     /**
     * @dev IForwarder interface conformance
     * @param _evmScript Start vote with script
     */
-    function forward(bytes _evmScript) external {
+    function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript));
         _newVote(_evmScript, "");
     }
@@ -170,7 +174,7 @@ contract Voting is AragonApp, EVMScript, IForwarder {
         nay = vote.nay;
         totalVoters = vote.totalVoters;
         script = vote.executionScript;
-        scriptActionsCount = getScriptActionsCount(vote.executionScript);
+        scriptActionsCount = CallsScriptDecoder.getScriptActionsCount(vote.executionScript);
     }
 
     function getVoteMetadata(uint256 _voteId) public view returns (string metadata) {
@@ -178,7 +182,7 @@ contract Voting is AragonApp, EVMScript, IForwarder {
     }
 
     function getVoteScriptAction(uint256 _voteId, uint256 _scriptAction) public view returns (address, bytes) {
-        return getScriptAction(votes[_voteId].executionScript, _scriptAction);
+        return CallsScriptDecoder.getScriptAction(votes[_voteId].executionScript, _scriptAction);
     }
 
     function _newVote(bytes _executionScript, string _metadata) internal returns (uint256 voteId) {
