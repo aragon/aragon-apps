@@ -3,7 +3,7 @@ const timetravel = require('@aragon/test-helpers/timeTravel')(web3)
 const getBlock = require('@aragon/test-helpers/block')(web3)
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 
-const { encodeScript } = require('@aragon/test-helpers/evmScript')
+const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const TokenManager = artifacts.require('TokenManager')
@@ -66,7 +66,7 @@ contract('Token Manager', accounts => {
             await tokenManager.mint(holder, 100)
 
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            const script = encodeScript([action])
+            const script = encodeCallScript([action])
 
             await tokenManager.forward(script, { from: holder })
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
@@ -188,7 +188,7 @@ contract('Token Manager', accounts => {
             await tokenManager.mint(holder, 100)
 
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            const script = encodeScript([action])
+            const script = encodeCallScript([action])
 
             await tokenManager.forward(script, { from: holder })
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
