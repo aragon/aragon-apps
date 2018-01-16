@@ -1,4 +1,13 @@
 {
+  "name": "@aragon/monorepo-apps",
+  "version": "1.0.0",
+  "author": "Aragon Institution MTU <contact@aragon.one>",
+  "contributors": [
+    "Jorge Izquierdo <jorge@aragon.one>",
+    "Pierre Bertet <pierre@aragon.one>",
+    "Oliver Nordbjerg <oliver@aragon.one>",
+    "Brett Sun <brett@aragon.one>"
+  ],
   "devDependencies": {
     "coveralls": "^2.13.1",
     "lcov-result-merger": "^1.2.0",
@@ -9,6 +18,7 @@
     "bootstrap": "lerna bootstrap --nohoist=@aragon/core",
     "test": "lerna run --scope=@aragon/apps-* test",
     "lint": "lerna run --scope=@aragon/apps-* lint",
-    "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage"
+    "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",
+    "link:os": "lerna exec --scope '@aragon/apps-*' 'npm link @aragon/os'"
   }
 }

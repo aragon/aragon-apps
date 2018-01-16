@@ -12,7 +12,8 @@
   "contributors": [
     "Jorge Izquierdo <jorge@aragon.one>",
     "Pierre Bertet <pierre@aragon.one>",
-    "Oliver Nordbjerg <oliver@aragon.one>"
+    "Oliver Nordbjerg <oliver@aragon.one>",
+    "Brett Sun <brett@aragon.one>"
   ],
   "license": "GPL-3.0",
   "description": "",
@@ -35,6 +36,6 @@
   },
   "dependencies": {
     "@aragon/apps-vault": "^1.0.0",
-    "@aragon/core": "^1.1.0"
+    "@aragon/os": "^3.0.0"
   }
 }
