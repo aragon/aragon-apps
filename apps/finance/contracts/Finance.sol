@@ -1,19 +1,18 @@
 pragma solidity 0.4.18;
 
-import "@aragon/core/contracts/apps/App.sol";
-import "@aragon/core/contracts/common/Initializable.sol";
-import "@aragon/core/contracts/common/EtherToken.sol";
-import "@aragon/core/contracts/common/erc677/ERC677Receiver.sol";
+import "@aragon/os/contracts/apps/AragonApp.sol";
+import "@aragon/os/contracts/common/EtherToken.sol";
+import "@aragon/os/contracts/lib/erc677/ERC677Receiver.sol";
 
-import "@aragon/core/contracts/zeppelin/token/ERC20.sol";
-import "@aragon/core/contracts/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 
 import "@aragon/apps-vault/contracts/Vault.sol";
 
-import "@aragon/core/contracts/misc/Migrations.sol";
+import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract Finance is App, Initializable, ERC677Receiver {
+contract Finance is AragonApp, ERC677Receiver {
     using SafeMath for uint256;
 
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
