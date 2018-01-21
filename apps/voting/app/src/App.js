@@ -16,8 +16,7 @@ class App extends React.Component {
   state = {
     votes,
     createVotingVisible: false,
-    // currentVote: null,
-    currentVote: votes[0],
+    currentVote: null,
   }
   handleCreateVoting = () => {
     this.setState({ createVotingVisible: true })
