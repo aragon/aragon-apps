@@ -57,13 +57,6 @@ class VotingRow extends React.Component {
         <QuestionCell>
           <QuestionWrapper>
             <div>{question}</div>
-            {opened && (
-              <div>
-                <Button mode="outline" compact onClick={this.handleVoteClick}>
-                  Vote
-                </Button>
-              </div>
-            )}
           </QuestionWrapper>
         </QuestionCell>
         <Cell align="right">{totalVotes}</Cell>
@@ -81,21 +74,19 @@ class VotingRow extends React.Component {
                 progress={totalVotes > 0 ? votesNo / totalVotes : 0}
               />
             </Bar>
+            {opened && (
+              <ButtonWrapper>
+                <Button
+                  mode="outline"
+                  compact
+                  wide
+                  onClick={this.handleVoteClick}
+                >
+                  Vote
+                </Button>
+              </ButtonWrapper>
+            )}
           </BarsGroup>
-          {false && (
-            <ButtonsGroup>
-              <ButtonWrapper>
-                <Button mode="outline" emphasis="positive" compact wide>
-                  Yes
-                </Button>
-              </ButtonWrapper>
-              <ButtonWrapper>
-                <Button mode="outline" emphasis="negative" compact wide>
-                  No
-                </Button>
-              </ButtonWrapper>
-            </ButtonsGroup>
-          )}
         </LastCell>
       </TableRow>
     )
@@ -126,7 +117,9 @@ const QuestionCell = styled(Cell)`
 `
 
 const LastCell = styled(Cell)`
-  min-width: 25%;
+  flex-shrink: 0;
+  width: 25%;
+  min-width: 200px;
 `
 
 const QuestionWrapper = styled.div`
@@ -150,15 +143,10 @@ const Bar = styled.div`
   }
 `
 
-const ButtonsGroup = styled.div`
-  display: flex;
-  min-width: 200px;
-`
 const ButtonWrapper = styled.div`
-  width: 50%;
-  &:first-child {
-    margin-right: 10px;
-  }
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
 `
 
 const Status = styled.span`
