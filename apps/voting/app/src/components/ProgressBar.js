@@ -4,7 +4,7 @@ import { Motion, spring } from 'react-motion'
 import { IconCross, IconCheck, theme } from '@aragon/ui'
 
 const ProgressBar = ({ progress, positive }) => (
-  <Motion style={{ progress: spring(progress) }}>
+  <Motion defaultStyle={{ progress: 0 }} style={{ progress: spring(progress) }}>
     {({ progress }) => (
       <Main>
         <IconWrapper>{positive ? <IconCheck /> : <IconCross />}</IconWrapper>
