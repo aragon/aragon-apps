@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "truffle test --network development",
+    "test": "truffle test --network rpc",
     "test:parity": "GETH_CLIENT=parity ./node_modules/@aragon/test-helpers/run-docker-test.sh",
     "test:geth": "GETH_CLIENT=geth ./node_modules/@aragon/test-helpers/run-docker-test.sh",
+    "test:gas": "GAS_REPORTER=true npm test",
     "lint": "solium --dir ./contracts",
     "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh"
   },
@@ -26,6 +27,7 @@
     "babel-preset-stage-2": "^6.24.1",
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
+    "eth-gas-reporter": "^0.1.1",
     "ethereumjs-testrpc": "^6.0.2",
     "solidity-coverage": "0.3.5",
     "solidity-sha3": "^0.4.1",
