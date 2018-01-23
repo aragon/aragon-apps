@@ -120,7 +120,7 @@ contract Finance is App, Initializable, ERC677Receiver {
     }
 
     /**
-    * @dev Deposit for ERC20 approved tokens
+    * @dev Deposit for approved ERC20 tokens
     * @notice Send `_amount` `_token`
     * @param _token Address of deposited token
     * @param _amount Amount of tokens sent
@@ -183,12 +183,12 @@ contract Finance is App, Initializable, ERC677Receiver {
     /**
     * @notice New payment
     * @param _token Address of token for payment
-    * @param _receiver Address that will receive payment.
-    * @param _amount units of token that are payed every time the payment is due.
-    * @param _initialPaymentTime timestamp for when the first payment is done.
-    * @param _interval number of seconds that need to pass between payment transactions.
-    * @param _maxRepeats maximum instances a payment can be executed.
-    * @param _reference string detailing payment reason
+    * @param _receiver Address that will receive payment
+    * @param _amount Tokens that are payed every time the payment is due
+    * @param _initialPaymentTime Timestamp for when the first payment is done
+    * @param _interval Number of seconds that need to pass between payment transactions
+    * @param _maxRepeats Maximum instances a payment can be executed
+    * @param _reference String detailing payment reason
     */
     function newPayment(
         ERC20 _token,
@@ -298,11 +298,10 @@ contract Finance is App, Initializable, ERC677Receiver {
     }
 
     /**
-     * @dev Allows make a simple payment from this contract to Vault,
-            to avoid locked tokens in contract forever.
-            This contract should never receive tokens with a simple transfer call,
-            but in case it happens, this function allows to recover them.
-     * @notice Send tokens to Vault
+     * @dev Allows making a simple payment from this contract to the Vault, to avoid locked tokens.
+     *      This contract should never receive tokens with a simple transfer call, but in case it
+     *      happens, this function allows for their recovery.
+     * @notice Send tokens held in this contract to the Vault
      * @param _token Token whose balance is going to be transferred.
      */
     function depositToVault(address _token) public {
@@ -321,11 +320,11 @@ contract Finance is App, Initializable, ERC677Receiver {
 
     /**
     * @dev Transitions accounting periods if needed. For preventing OOG attacks,
-           a TTL param is provided. If more that TTL periods need to be transitioned,
-           it will return false.
+    *      a TTL param is provided. If more than the TTL periods need to be transitioned,
+    *      it will return false.
     * @notice Transition accounting period if needed
     * @param _ttl Maximum periods that can be transitioned
-    * @return success boolean indicating whether the accounting period is the correct one (if false, TTL was surpased and another call is needed)
+    * @return Boolean indicating whether the accounting period was transitioned to the correct one (if false, TTL was surpased and another call is needed)
     */
     function tryTransitionAccountingPeriod(uint256 _ttl) public returns (bool success) {
         Period storage currentPeriod = periods[currentPeriodId()];

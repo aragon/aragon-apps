@@ -50,11 +50,11 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     event RevokeVesting(address indexed receiver, uint256 vestingId);
 
     /**
-    * @notice Initializes TokenManager
-    * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
-    * @param _transferable whether the token can be transferred by holders
-    * @param _maxAccountTokens maximum amount of tokens an account can have (0 for infinite tokens)
-    * @param _logHolders Whether the token manager will store all token holders (makes token transfers more expensive!)
+    * @notice Initializes TokenManager app
+    * @param _token MiniMeToken address for the managed token (Token Manager instance must be already set as the token controller)
+    * @param _transferable Whether the token can be transferred by holders (entities may still be assigned tokens by the Token Manager)
+    * @param _maxAccountTokens Maximum amount of tokens an account can have (0 for infinite tokens)
+    * @param _logHolders Whether the Token Manager will store all token holders (makes token transfers more expensive!)
     */
     function initialize(
         MiniMeToken _token,
@@ -86,7 +86,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     /**
-    * @notice Mint `_amount` of tokens for the token manager
+    * @notice Mint `_amount` of tokens for the Token Manager
     * @param _amount Number of tokens minted
     */
     function issue(uint256 _amount) auth(ISSUE_ROLE) external {
@@ -96,7 +96,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     /**
     * @notice Assign `_amount` of tokens for `_receiver` from Token Manager's holdings
     * @param _receiver The address receiving the tokens
-    * @param _amount Number of tokens transfered
+    * @param _amount Number of tokens transferred
     */
     function assign(address _receiver, uint256 _amount) auth(ASSIGN_ROLE) external {
         _assign(_receiver, _amount);
@@ -113,13 +113,13 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     /**
-    * @notice Assign `_amount` of tokens for `_receiver` from Token Manager's holdings with a `_revokable` revokable vesting starting `_start`, cliff on `_cliff` (first portion of tokens transferable) and vesting on `_vesting` (all tokens transferable)
+    * @notice Assign `_amount` of tokens for `_receiver` from the Token Manager's holdings with a `_revokable` revokable vesting starting from `_start`, cliff at `_cliff` (first portion of tokens transferable), and completed vesting at `_vested` (all tokens transferable)
     * @param _receiver The address receiving the tokens
-    * @param _amount Number of tokens transfered
+    * @param _amount Number of tokens vested
     * @param _start Date the vesting calculations start
-    * @param _cliff Date when the initial proportional amount of tokens are transferable
-    * @param _vesting Date when all tokens are transferable
-    * @param _revokable Whether the vesting can be revoked by the token manager
+    * @param _cliff Date when the initial proportion of tokens are transferable
+    * @param _vested Date when all tokens are transferable
+    * @param _revokable Whether the vesting can be revoked by the Token Manager
     */
     function assignVested(
         address _receiver,
@@ -179,7 +179,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
 
     /**
     * @dev IForwarder interface conformance. Forwards any token holder action.
-    * @param _evmCallScript script being executed
+    * @param _evmCallScript Script being executed
     */
     function forward(bytes _evmCallScript) external {
         require(canForward(msg.sender, _evmCallScript));
@@ -194,8 +194,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     function allHolders() public view returns (address[]) { return holders; }
 
     /*
-    * @dev Notifies the controller about a token transfer allowing the
-    *      controller to decide whether to allow it or react if desired
+    * @dev Notifies the controller about a token transfer allowing the controller to decide whether to allow it or react if desired
     * @param _from The origin of the transfer
     * @param _to The destination of the transfer
     * @param _amount The amount of the transfer
@@ -248,13 +247,13 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     /**
-    * @dev Calculate amount of non-vested tokens at a specifc time.
-    * @param tokens uint256 The amount of tokens grantted.
-    * @param time uint64 The time to be checked
-    * @param start uint64 A time representing the begining of the grant
-    * @param cliff uint64 The cliff period.
-    * @param vesting uint64 The vesting period.
-    * @return An uint256 representing the amount of non-vested tokensof a specif grant.
+    * @dev Calculate amount of non-vested tokens at a specifc time
+    * @param tokens The total amount of tokens vested
+    * @param time The time at which to check
+    * @param start The the vesting started
+    * @param cliff The cliff period
+    * @param vested The fully vested date
+    * @return The amount of non-vested tokens of a specific grant
     *  transferableTokens
     *   |                         _/--------   vestedTokens rect
     *   |                       _/
@@ -269,7 +268,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     *   |      .        |
     *   |    .          |
     *   +===+===========+---------+----------> time
-    *      Start       Clift    Vesting
+    *      Start       Clift    Vested
     */
     function calculateNonVestedTokens(
         uint256 tokens,
@@ -319,7 +318,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     function _logHolderIfNeeded(address _newHolder) internal {
-        // costs 3 sstores (2 full (20k fas) and 1 increase (5k fas)), but makes frontend easier
+        // costs 3 sstores (2 full (20k gas) and 1 increase (5k gas)), but makes frontend easier
         if (!logHolders || everHeld[_newHolder]) {
             return;
         }

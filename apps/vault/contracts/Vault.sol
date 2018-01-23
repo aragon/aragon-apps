@@ -16,9 +16,9 @@ contract Vault is App {
 
     /**
     * @notice Request for `_spender` to spend up to `_amounts` in `_tokens`
-    * @dev This action creates an ERC20 and will allow the spender to transferFrom the Vault address until the allowance is completely spent or it is overiden
+    * @dev This action creates an ERC20 allowance for each token in `_tokens` and will allow the spender to transferFrom the Vault address until the allowance is completely spent or is overidden
     * @param _tokens Array of token addresses
-    * @param _amounts Array of token amounts
+    * @param _amounts Array of token allowances
     */
     function requestAllowances(ERC20[] _tokens, uint256[] _amounts) auth(REQUEST_ALLOWANCES_ROLE) external {
         require(_tokens.length == _amounts.length);
@@ -28,6 +28,12 @@ contract Vault is App {
         }
     }
 
+    /**
+    * @notice Request for `_spender` to spend up to `_amount` in `_token`
+    * @dev This action creates an ERC20 allowance for each `_token` and will allow the spender to transferFrom the Vault address until the allowance is completely spent or is overidden
+    * @param _token Token address
+    * @param _amount Token allowance
+    */
     function requestAllowance(ERC20 _token, uint256 _amount) auth(REQUEST_ALLOWANCES_ROLE) public {
         address spender = msg.sender;
 

@@ -50,10 +50,10 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
     /**
     * @notice Initializes Voting app (some parameters won't be modifiable after being set)
-    * @param _token MiniMeToken address that will be used as governance token
-    * @param _supportRequiredPct Percentage of voters that must support a vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
-    * @param _minAcceptQuorumPct Percetage of total voting power that must support a vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
-    * @param _voteTime Seconds that a vote will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
+    * @param _token MiniMeToken Address that will be used as governance token
+    * @param _supportRequiredPct Percentage of yeas in casted votes for a vote to succeed (expressed as a percentage of 10^18 (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _minAcceptQuorumPct Percentage of yeas in total possible votes for a vote to succeed (expressed as a percentage of 10^18 (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _voteTime Seconds that a vote will be open for token holders to vote (unless enough yeas or nays have been cast to make an early decision)
     */
     function initialize(
         MiniMeToken _token,
@@ -77,7 +77,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     }
 
     /**
-    * @notice Change minimum acceptance quorum to `_minAcceptQuorumPct`
+    * @notice Change minimum acceptance quorum to `_minAcceptQuorumPct`.
     * @param _minAcceptQuorumPct New acceptance quorum
     */
     function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) auth(MODIFY_QUORUM_ROLE) external {
@@ -90,7 +90,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     /**
     * @notice Create new vote to execute `_executionScript`
     * @param _executionScript EVM script to be executed on approval
-    * @return voteId id for newly created vote
+    * @return voteId Id for newly created vote
     */
     function newVote(bytes _executionScript, string _metadata) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
         return _newVote(_executionScript, _metadata);
@@ -100,7 +100,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     * @notice Vote `_supports` in vote with id `_voteId`
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
-    * @param _executesIfDecided Whether it should execute the vote if it becomes decided
+    * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
     */
     function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external {
         require(canVote(_voteId, msg.sender));
@@ -216,7 +216,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     {
         Vote storage vote = votes[_voteId];
 
-        // this could re-enter, though we can asume the governance token is not maliciuous
+        // this could re-enter, though we can assume the governance token is not malicious
         uint256 voterStake = token.balanceOfAt(_voter, vote.snapshotBlock);
         VoterState state = vote.voters[_voter];
 
@@ -259,7 +259,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     }
 
     /**
-    * @dev Calculates whether `_value` is at least a percent `_pct` over `_total`
+    * @dev Calculates whether `_value` is at least a percentage `_pct` of `_total`
     */
     function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal returns (bool) {
         if (_value == 0 && _total > 0)
