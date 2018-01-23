@@ -200,7 +200,6 @@ contract Finance is App, Initializable, ERC677Receiver {
         string _reference
     ) auth(CREATE_PAYMENTS_ROLE) transitionsPeriod external returns (uint256 paymentId)
     {
-
         require(settings.budgets[_token] > 0 || !settings.hasBudget[_token]); // Token must have been added to budget
 
         // Avoid saving payment data for 1 time immediate payments
@@ -394,7 +393,8 @@ contract Finance is App, Initializable, ERC677Receiver {
 
     function getPeriodTokenStatement(uint256 _periodId, address _token) public view returns (uint256 expenses, uint256 income) {
         TokenStatement storage tokenStatement = periods[_periodId].tokenStatement[_token];
-        return (tokenStatement.expenses, tokenStatement.income);
+        expenses = tokenStatement.expenses;
+        income = tokenStatement.income;
     }
 
     function nextPaymentTime(uint256 _paymentId) public view returns (uint64) {
@@ -409,7 +409,7 @@ contract Finance is App, Initializable, ERC677Receiver {
         return uint64(nextPayment);
     }
 
-    function getPeriodDuration() public view returns (uint64 periodDuration) {
+    function getPeriodDuration() public view returns (uint64) {
         return settings.periodDuration;
     }
 

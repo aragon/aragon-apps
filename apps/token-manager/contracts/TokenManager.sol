@@ -126,19 +126,19 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         uint256 _amount,
         uint64 _start,
         uint64 _cliff,
-        uint64 _vesting,
+        uint64 _vested,
         bool _revokable
     ) auth(ASSIGN_ROLE) external returns (uint256)
     {
         require(tokenGrantsCount(_receiver) < MAX_VESTINGS_PER_ADDRESS);
 
-        require(_start <= _cliff && _cliff <= _vesting);
+        require(_start <= _cliff && _cliff <= _vested);
 
         TokenVesting memory tokenVesting = TokenVesting(
             _amount,
             _start,
             _cliff,
-            _vesting,
+            _vested,
             _revokable
         );
         uint256 vestingId = vestings[_receiver].push(tokenVesting) - 1;
@@ -187,7 +187,6 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
-        _evmCallScript;
         return token.balanceOf(_sender) > 0;
     }
 
@@ -275,10 +274,10 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         uint256 time,
         uint256 start,
         uint256 cliff,
-        uint256 vesting) private view returns (uint256)
+        uint256 vested) private view returns (uint256)
     {
-        // Shortcuts for before cliff and after vesting cases.
-        if (time >= vesting) {
+        // Shortcuts for before cliff and after vested cases.
+        if (time >= vested) {
             return 0;
         }
         if (time < cliff) {
@@ -289,7 +288,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         // As before cliff the shortcut returns 0, we can use just calculate a value
         // in the vesting rect (as shown in above's figure)
 
-        // vestedTokens = tokens * (time - start) / (vesting - start)
+        // vestedTokens = tokens * (time - start) / (vested - start)
         uint256 vestedTokens = SafeMath.div(
             SafeMath.mul(
                 tokens,
@@ -299,7 +298,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
                 )
             ),
             SafeMath.sub(
-                vesting,
+                vested,
                 start
             )
         );
@@ -336,22 +335,17 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         // Even though it is tested, solidity-coverage doesnt get it because
         // MiniMeToken is not instrumented and entire tx is reverted
         require(msg.sender == address(token));
-        _owner;
         return false;
     }
 
     /**
-    * @dev Notifies the controller about an approval allowing the
-    * controller to react if desired
+    * @dev Notifies the controller about an approval allowing the controller to react if desired
     * @param _owner The address that calls `approve()`
     * @param _spender The spender in the `approve()` call
     * @param _amount The amount in the `approve()` call
     * @return False if the controller does not authorize the approval
     */
     function onApprove(address _owner, address _spender, uint _amount) public view returns (bool) {
-        _owner;
-        _spender;
-        _amount;
         return true;
     }
 }

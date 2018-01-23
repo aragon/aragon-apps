@@ -204,7 +204,6 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
                 true
             );
         }
-
     }
 
     function _vote(
