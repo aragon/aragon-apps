@@ -2,7 +2,7 @@ import React from 'react'
 import { Table, TableHeader, TableRow } from '@aragon/ui'
 import VotingRow from './VotingRow'
 
-const VotingsTable = ({ title, votes, opened, onSelectVote }) => (
+const VotingsTable = ({ title, votes, tokensCount, opened, onSelectVote }) => (
   <Table
     header={
       <TableRow>
@@ -18,6 +18,7 @@ const VotingsTable = ({ title, votes, opened, onSelectVote }) => (
       <VotingRow
         key={vote.id}
         {...vote}
+        tokensCount={tokensCount}
         opened={opened}
         onSelectVote={onSelectVote}
       />

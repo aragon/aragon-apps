@@ -6,7 +6,7 @@ import VotingsTable from '../components/VotingsTable'
 
 class Votings extends React.Component {
   render() {
-    const { votes, onSelectVote } = this.props
+    const { votes, onSelectVote, tokensCount } = this.props
     const now = Date.now()
     const openedVotes = votes.filter(vote => vote.endDate > now)
     const closedVotes = votes.filter(vote => !openedVotes.includes(vote))
@@ -18,13 +18,14 @@ class Votings extends React.Component {
             <BadgeNumber
               background={colors.Rain['Rain Sky']}
               color={colors.Rain.Slate}
-              number={votes.length}
+              number={openedVotes.length}
               inline
             />
           </Title>
           <VotingsTable
             votes={openedVotes}
             opened={true}
+            tokensCount={tokensCount}
             onSelectVote={onSelectVote}
           />
         </VotingsTableWrapper>
@@ -33,7 +34,12 @@ class Votings extends React.Component {
           <Title>
             <span>Past Votings</span>
           </Title>
-          <VotingsTable title="" votes={closedVotes} opened={false} />
+          <VotingsTable
+            title=""
+            votes={closedVotes}
+            tokensCount={tokensCount}
+            opened={false}
+          />
         </VotingsTableWrapper>
 
         <SeeMoreWrapper>

@@ -7,7 +7,7 @@ import {
   SidePanel,
   SidePanelSeparator,
 } from '@aragon/ui'
-import { votes } from './demo-state'
+import { votes, tokensCount } from './demo-state'
 import EmptyState from './screens/EmptyState'
 import Votings from './screens/Votings'
 import VotePanelContent from './components/VotePanelContent'
@@ -16,7 +16,9 @@ class App extends React.Component {
   state = {
     votes,
     createVotingVisible: false,
-    currentVote: null,
+    currentVoting: null,
+    votingVisible: false,
+    votingSidebarOpened: false,
   }
   handleCreateVoting = () => {
     this.setState({ createVotingVisible: true })
@@ -26,16 +28,31 @@ class App extends React.Component {
   }
   handleSelectVote = id => {
     const vote = votes.find(vote => id === vote.id)
-    if (vote) {
-      this.setState({ currentVote: vote })
-    }
+    if (!vote) return
+    this.setState({
+      currentVoting: vote,
+      votingVisible: true,
+      votingSidebarOpened: false,
+    })
   }
   handleDeselectVote = () => {
-    this.setState({ currentVote: null })
+    this.setState({ votingVisible: false })
+  }
+  handleVotingTransitionEnd = opened => {
+    if (!opened) {
+      this.setState({ currentVoting: null })
+      return
+    }
+    this.setState({ votingSidebarOpened: true })
   }
   render() {
-    const { votes, createVotingVisible, currentVote } = this.state
-    console.log(currentVote)
+    const {
+      votes,
+      votingVisible,
+      currentVoting,
+      createVotingVisible,
+      votingSidebarOpened,
+    } = this.state
     return (
       <AragonApp publicUrl="/aragon-ui/">
         <AppBar
@@ -48,7 +65,11 @@ class App extends React.Component {
         />
         <Main>
           {votes.length ? (
-            <Votings votes={votes} onSelectVote={this.handleSelectVote} />
+            <Votings
+              votes={votes}
+              tokensCount={tokensCount}
+              onSelectVote={this.handleSelectVote}
+            />
           ) : (
             <EmptyState onActivate={this.handleCreateVoting} />
           )}
@@ -56,10 +77,15 @@ class App extends React.Component {
 
         <SidePanel
           title="Open Voting"
-          opened={Boolean(!createVotingVisible && currentVote)}
+          opened={Boolean(!createVotingVisible && votingVisible)}
           onClose={this.handleDeselectVote}
+          onTransitionEnd={this.handleVotingTransitionEnd}
         >
-          <VotePanelContent vote={currentVote} />
+          <VotePanelContent
+            vote={currentVoting}
+            tokensCount={tokensCount}
+            ready={votingSidebarOpened}
+          />
         </SidePanel>
 
         <SidePanel

@@ -3,18 +3,32 @@ import styled from 'styled-components'
 import Blockies from 'react-blockies'
 import {
   Button,
+  Info,
   SidePanelSplit,
   SidePanelSeparator,
   Countdown,
   Text,
   theme,
 } from '@aragon/ui'
+import { VOTE_UNKNOWN } from '../vote-types'
+import VotingSummary from './VotingSummary'
 
-const VotePanelContent = ({ vote }) => {
+const VotePanelContent = ({ vote, tokensCount, ready }) => {
   if (!vote) {
     return null
   }
-  const { endDate, question, quorum, creatorAddress, creatorName } = vote
+
+  const {
+    endDate,
+    question,
+    quorum,
+    creatorAddress,
+    creatorName,
+    votesYes,
+    votesNo,
+    userVote,
+  } = vote
+
   return (
     <div>
       <SidePanelSplit>
@@ -51,7 +65,7 @@ const VotePanelContent = ({ vote }) => {
       <SidePanelSeparator />
       <Part>
         <h2>
-          <Label>Created By</Label>
+          <Label>Created By:</Label>
         </h2>
         <Creator>
           <CreatorImg>
@@ -73,16 +87,31 @@ const VotePanelContent = ({ vote }) => {
         </Creator>
       </Part>
       <SidePanelSeparator />
-      <VotingButtons>
-        <Button mode="strong" emphasis="positive" wide>
-          Yes
-        </Button>
-        <Button mode="strong" emphasis="negative" wide>
-          No
-        </Button>
-      </VotingButtons>
+      {userVote === VOTE_UNKNOWN ? (
+        <div>
+          <VotingButtons>
+            <Button mode="strong" emphasis="positive" wide>
+              Yes
+            </Button>
+            <Button mode="strong" emphasis="negative" wide>
+              No
+            </Button>
+          </VotingButtons>
+          <Info title="You will cast 389273724 votes" />
+        </div>
+      ) : (
+        <VotingSummary
+          votesNo={ready ? votesNo / tokensCount : 0}
+          votesYes={ready ? votesYes / tokensCount : 0}
+          quorum={ready ? quorum : 0}
+        />
+      )}
     </div>
   )
+}
+
+VotePanelContent.defaultProps = {
+  tokensCount: 0,
 }
 
 const Label = styled(Text).attrs({
@@ -123,7 +152,7 @@ const CreatorImg = styled.div`
 
 const VotingButtons = styled.div`
   display: flex;
-  padding-top: 30px;
+  padding: 30px 0 20px;
   & > * {
     width: 50%;
     &:first-child {

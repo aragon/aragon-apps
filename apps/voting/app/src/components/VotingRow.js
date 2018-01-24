@@ -1,29 +1,9 @@
 import React from 'react'
 import styled from 'styled-components'
-import {
-  Button,
-  Countdown,
-  TableCell,
-  TableRow,
-  theme,
-  IconTime,
-  IconCross,
-  IconCheck,
-} from '@aragon/ui'
+import { Button, Countdown, TableCell, TableRow } from '@aragon/ui'
 import { VOTE_UNKNOWN } from '../vote-types'
 import ProgressBar from './ProgressBar'
-
-const STATUSES = {
-  timeout: { label: 'Time out', Icon: IconTime, color: theme.textSecondary },
-  approved: { label: 'Approved', Icon: IconCheck, color: theme.positive },
-  rejected: { label: 'Rejected', Icon: IconCross, color: theme.negative },
-}
-
-const getStatus = (votesYes, votesNo) => {
-  if (votesYes === 0 && votesNo === 0) return STATUSES.timeout
-  if (votesYes >= votesNo) return STATUSES.approved
-  return STATUSES.rejected
-}
+import VotingStatus from './VotingStatus'
 
 class VotingRow extends React.Component {
   handleVoteClick = () => {
@@ -38,9 +18,9 @@ class VotingRow extends React.Component {
       votesNo,
       pending,
       userVote,
+      tokensCount,
       opened,
     } = this.props
-    const status = getStatus(votesYes, votesNo)
     const totalVotes = votesYes + votesNo
     return (
       <TableRow>
@@ -48,10 +28,11 @@ class VotingRow extends React.Component {
           {opened ? (
             <Countdown end={endDate} />
           ) : (
-            <Status color={status.color}>
-              <status.Icon />
-              <StatusLabel>{status.label}</StatusLabel>
-            </Status>
+            <VotingStatus
+              votesYes={votesYes}
+              votesNo={votesNo}
+              opened={opened}
+            />
           )}
         </StatusCell>
         <QuestionCell>
@@ -65,13 +46,13 @@ class VotingRow extends React.Component {
           <BarsGroup>
             <Bar>
               <ProgressBar
-                progress={totalVotes > 0 ? votesYes / totalVotes : 0}
+                progress={totalVotes > 0 ? votesYes / tokensCount : 0}
               />
             </Bar>
             <Bar>
               <ProgressBar
                 positive={false}
-                progress={totalVotes > 0 ? votesNo / totalVotes : 0}
+                progress={totalVotes > 0 ? votesNo / tokensCount : 0}
               />
             </Bar>
             {opened && (
@@ -147,16 +128,6 @@ const ButtonWrapper = styled.div`
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
-`
-
-const Status = styled.span`
-  font-weight: 600;
-  white-space: nowrap;
-  color: ${({ color }) => color};
-`
-
-const StatusLabel = styled.span`
-  margin-left: 10px;
 `
 
 export default VotingRow
