@@ -27,7 +27,7 @@ contract Vault is AragonApp {
         }
     }
 
-    function requestAllowance(ERC20 _token, uint256 _amount) auth(REQUEST_ALLOWANCES_ROLE) public {
+    function requestAllowance(ERC20 _token, uint256 _amount) authP(REQUEST_ALLOWANCES_ROLE, arr(address(_token), _amount)) public {
         address spender = msg.sender;
 
         // Some token implementations will throw when changing an allowance from non-zero to non-zero
@@ -48,7 +48,7 @@ contract Vault is AragonApp {
     * @param _receiver Address of the recipient of tokens
     * @param _amount Amount of tokens being transferred
     */
-    function transferTokens(ERC20 _token, address _receiver, uint256 _amount) auth(TRANSFER_ROLE) external {
+    function transferTokens(ERC20 _token, address _receiver, uint256 _amount) authP(TRANSFER_ROLE, arr(address(_token), _receiver, _amount)) external {
         assert(_token.transfer(_receiver, _amount));
         TokenTransfer(_token, _receiver, _amount);
     }
