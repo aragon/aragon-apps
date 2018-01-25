@@ -78,7 +78,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens minted
     */
-    function mint(address _receiver, uint256 _amount) auth(MINT_ROLE) external {
+    function mint(address _receiver, uint256 _amount) authP(MINT_ROLE, arr(_receiver, _amount)) external {
         require(isBalanceIncreaseAllowed(_receiver, _amount));
         _mint(_receiver, _amount);
     }
@@ -87,7 +87,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @notice Mint `_amount` of tokens for the token manager
     * @param _amount Number of tokens minted
     */
-    function issue(uint256 _amount) auth(ISSUE_ROLE) external {
+    function issue(uint256 _amount) authP(ISSUE_ROLE, arr(_amount)) external {
         _mint(address(this), _amount);
     }
 
@@ -96,7 +96,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transfered
     */
-    function assign(address _receiver, uint256 _amount) auth(ASSIGN_ROLE) external {
+    function assign(address _receiver, uint256 _amount) authP(ASSIGN_ROLE, arr(_receiver, _amount)) external {
         _assign(_receiver, _amount);
     }
 

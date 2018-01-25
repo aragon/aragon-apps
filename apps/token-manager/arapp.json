@@ -1,0 +1,11 @@
+{
+    "appName": "token-manager.aragonpm.eth",
+    "version": "1.0.0",
+    "roles": [
+        { "name": "Mint tokens", "id": "MINT_ROLE", "params": ["Receiver", "Token amount"]},
+        { "name": "Issue tokens", "id": "ISSUE_ROLE", "params": ["Token amount"]},
+        { "name": "Assign tokens", "id": "ASSIGN_ROLE", "params": ["Receiver", "Token amount"]},
+        { "name": "Revoke vesting", "id": "REVOKE_VESTINGS_ROLE", "params": ["Holder"] }
+    ],
+    "path": "contracts/TokenManager.sol"
+}
