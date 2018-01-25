@@ -5,7 +5,6 @@ import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/lib/minime/ITokenController.sol";
 import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
-import "@aragon/os/contracts/evmscript/EVMScript.sol";
 
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
@@ -13,7 +12,7 @@ import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract TokenManager is AragonApp, EVMScript, ITokenController, IForwarder {
+contract TokenManager is ITokenController, IForwarder, AragonApp {
     using SafeMath for uint256;
 
     MiniMeToken public token;
@@ -185,7 +184,7 @@ contract TokenManager is AragonApp, EVMScript, ITokenController, IForwarder {
         bytes memory input = new bytes(0); // TODO: Consider input for this
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(token);
-        execScript(_evmScript, input, blacklist);
+        runScript(_evmScript, input, blacklist);
     }
 
     function isForwarder() public pure returns (bool) {
