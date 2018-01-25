@@ -8,14 +8,41 @@ const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const Voting = artifacts.require('Voting')
 const MiniMeToken = artifacts.require('@aragon/core/contracts/common/MiniMeToken')
+const DAOFactory = artifacts.require('@aragon/core/contracts/factory/DAOFactory')
+const EVMScriptRegistryFactory = artifacts.require('@aragon/core/contracts/factory/EVMScriptRegistryFactory')
+const ACL = artifacts.require('@aragon/core/contracts/acl/ACL')
+const Kernel = artifacts.require('@aragon/core/contracts/kernel/Kernel')
+
 
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
 const createdVoteId = receipt => receipt.logs.filter(x => x.event == 'StartVote')[0].args.voteId
 
+const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
+
 contract('Voting App', accounts => {
-    let app, token, executionTarget = {}
+    let daoFact, app, token, executionTarget = {}
 
     const votingTime = 1000
+    const root = accounts[0]
+
+    before(async () => {
+        const regFact = await EVMScriptRegistryFactory.new()
+        daoFact = await DAOFactory.new(regFact.address)
+    })
+
+    beforeEach(async () => {
+        const r = await daoFact.newDAO(root)
+        const dao = Kernel.at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
+        const acl = ACL.at(await dao.acl())
+
+        await acl.createPermission(root, dao.address, await dao.APP_MANAGER_ROLE(), root, { from: root })
+
+        const receipt = await dao.newAppInstance('0x1234', (await Voting.new()).address, { from: root })
+        app = Voting.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+
+        await acl.createPermission(ANY_ADDR, app.address, await app.CREATE_VOTES_ROLE(), root, { from: root })
+        await acl.createPermission(ANY_ADDR, app.address, await app.MODIFY_QUORUM_ROLE(), root, { from: root })
+    })
 
     context('normal token supply', () => {
         const holder19 = accounts[0]
@@ -34,7 +61,6 @@ contract('Voting App', accounts => {
             await token.generateTokens(holder31, 31)
             await token.generateTokens(holder50, 50)
 
-            app = await Voting.new()
             await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
 
             executionTarget = await ExecutionTarget.new()
@@ -99,7 +125,7 @@ contract('Voting App', accounts => {
             })
 
             it('has correct state', async () => {
-                const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript, scriptActionsCount] = await app.getVote(voteId)
+                const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await app.getVote(voteId)
 
                 assert.isTrue(isOpen, 'vote should be open')
                 assert.isFalse(isExecuted, 'vote should be executed')
@@ -110,15 +136,7 @@ contract('Voting App', accounts => {
                 assert.equal(n, 0, 'initial nay should be 0')
                 assert.equal(totalVoters, 100, 'total voters should be 100')
                 assert.equal(execScript, script, 'script should be correct')
-                assert.equal(scriptActionsCount, 2)
                 assert.equal(await app.getVoteMetadata(voteId), 'metadata', 'should have returned correct metadata')
-            })
-
-            it('has correct script actions', async () => {
-                const [addr, calldata] = await app.getVoteScriptAction(voteId, 1)
-
-                assert.equal(addr, executionTarget.address, 'execution addr should match')
-                assert.equal(calldata, executionTarget.contract.execute.getData(), 'calldata should match')
             })
 
             it('changing min quorum doesnt affect vote min quorum', async () => {
@@ -232,7 +250,6 @@ contract('Voting App', accounts => {
 
             await token.generateTokens(holder, 1)
 
-            app = await Voting.new()
             await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
         })
 
@@ -273,7 +290,6 @@ contract('Voting App', accounts => {
             await token.generateTokens(holder1, 1)
             await token.generateTokens(holder2, 2)
 
-            app = await Voting.new()
             await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
         })
 
