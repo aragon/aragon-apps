@@ -1,6 +1,9 @@
 pragma solidity 0.4.18;
 
 import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
+import "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol";
+import "@aragon/os/contracts/factory/DAOFactory.sol";
+import "@aragon/os/contracts/acl/ACL.sol";
 
 // You might think this file is a bit odd, but let me explain.
 // We only use the MiniMeToken contract in our tests, which

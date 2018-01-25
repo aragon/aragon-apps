@@ -8,17 +8,42 @@ const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const TokenManager = artifacts.require('TokenManager')
 const MiniMeToken = artifacts.require('MiniMeToken')
+const DAOFactory = artifacts.require('@aragon/core/contracts/factory/DAOFactory')
+const EVMScriptRegistryFactory = artifacts.require('@aragon/core/contracts/factory/EVMScriptRegistryFactory')
+const ACL = artifacts.require('@aragon/core/contracts/acl/ACL')
+const Kernel = artifacts.require('@aragon/core/contracts/kernel/Kernel')
 
 const n = '0x00'
+const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 
 contract('Token Manager', accounts => {
     let tokenManager, token = {}
 
+    const root = accounts[0]
     const holder = accounts[1]
 
+    before(async () => {
+        const regFact = await EVMScriptRegistryFactory.new()
+        daoFact = await DAOFactory.new(regFact.address)
+    })
+
     beforeEach(async () => {
+        const r = await daoFact.newDAO(root)
+        const dao = Kernel.at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
+        const acl = ACL.at(await dao.acl())
+
+        await acl.createPermission(root, dao.address, await dao.APP_MANAGER_ROLE(), root, { from: root })
+
+        const receipt = await dao.newAppInstance('0x1234', (await TokenManager.new()).address, { from: root })
+        tokenManager = TokenManager.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+
+        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.MINT_ROLE(), root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.ISSUE_ROLE(), root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.ASSIGN_ROLE(), root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.REVOKE_VESTINGS_ROLE(), root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.BURN_ROLE(), root, { from: root })
+
         token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
-        tokenManager = await TokenManager.new()
     })
 
     it('fails when initializing without setting controller', async () => {
