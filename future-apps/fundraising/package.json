@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "truffle test --network rpc",
-    "test:parity": "GETH_CLIENT=parity ./node_modules/@aragon/test-helpers/run-docker-test.sh",
-    "test:geth": "GETH_CLIENT=geth ./node_modules/@aragon/test-helpers/run-docker-test.sh",
+    "test": "truffle test",
     "test:gas": "GAS_REPORTER=true npm test",
     "lint": "solium --dir ./contracts",
     "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh"
