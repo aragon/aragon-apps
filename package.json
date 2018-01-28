@@ -15,7 +15,7 @@
   },
   "scripts": {
     "install": "npm run bootstrap",
-    "bootstrap": "lerna bootstrap --nohoist=@aragon/core",
+    "bootstrap": "lerna bootstrap --nohoist=@aragon/os",
     "test": "lerna run --scope=@aragon/apps-* test",
     "lint": "lerna run --scope=@aragon/apps-* lint",
     "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",
