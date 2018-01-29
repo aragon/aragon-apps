@@ -10,7 +10,6 @@ env:
   - TASK=lint
   - TASK=coverage
 before_script:
-  - npm run bootstrap
   - npm prune
 script:
   - npm run $TASK
