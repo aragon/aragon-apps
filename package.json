@@ -18,6 +18,7 @@
     "install": "npm run bootstrap",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/os",
     "test": "npm run ganache-cli:dev && lerna run --scope=@aragon/apps-* --concurrency=1 --stream test",
+    "test:gas": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream test:gas",
     "lint": "lerna run --scope=@aragon/apps-* lint",
     "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",
     "link:os": "lerna exec --scope '@aragon/apps-*' 'npm link @aragon/os'",
