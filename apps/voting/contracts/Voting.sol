@@ -77,7 +77,7 @@ contract Voting is IForwarder, AragonApp {
     * @notice Change minimum acceptance quorum to `_minAcceptQuorumPct`
     * @param _minAcceptQuorumPct New acceptance quorum
     */
-    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) auth(MODIFY_QUORUM_ROLE) external {
+    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) external {
         require(supportRequiredPct >= _minAcceptQuorumPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
 
@@ -132,7 +132,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
-        return canPerform(_sender, CREATE_VOTES_ROLE, new uint256[](0));
+        return canPerform(_sender, CREATE_VOTES_ROLE, arr());
     }
 
     function canVote(uint256 _voteId, address _voter) public view returns (bool) {

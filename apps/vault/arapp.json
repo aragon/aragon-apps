@@ -1,0 +1,9 @@
+{
+  "appName": "vault.aragonpm.eth",
+  "version": "1.0.0",
+  "roles": [
+      { "name": "Request token allowances from Vault", "id": "REQUEST_ALLOWANCES_ROLE", "params": ["Token address", "Token amount"]},
+      { "name": "Transfer Vault's tokens", "id": "TRANSFER_ROLE", "params": ["Token address", "Receiver address", "Token amount"]}
+  ],
+  "path": "contracts/Vault.sol"
+}

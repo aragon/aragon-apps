@@ -21,9 +21,10 @@ contract Finance is AragonApp, ERC677Receiver {
     uint256 constant public MAX_UINT = uint256(-1);
 
     bytes32 constant public CREATE_PAYMENTS_ROLE = bytes32(1);
-    bytes32 constant public CHANGE_SETTINGS_ROLE = bytes32(2);
-    bytes32 constant public EXECUTE_PAYMENTS_ROLE = bytes32(3);
-    bytes32 constant public DISABLE_PAYMENTS_ROLE = bytes32(4);
+    bytes32 constant public CHANGE_PERIOD_ROLE = bytes32(2);
+    bytes32 constant public CHANGE_BUDGETS_ROLE = bytes32(3);
+    bytes32 constant public EXECUTE_PAYMENTS_ROLE = bytes32(4);
+    bytes32 constant public DISABLE_PAYMENTS_ROLE = bytes32(5);
 
     // order optimized for storage
     struct Payment {
@@ -197,7 +198,7 @@ contract Finance is AragonApp, ERC677Receiver {
         uint64 _interval,
         uint64 _maxRepeats,
         string _reference
-    ) auth(CREATE_PAYMENTS_ROLE) transitionsPeriod external returns (uint256 paymentId)
+    ) authP(CREATE_PAYMENTS_ROLE, arr(address(_token), _receiver, _amount, _interval, _maxRepeats)) transitionsPeriod external returns (uint256 paymentId)
     {
 
         require(settings.budgets[_token] > 0 || !settings.hasBudget[_token]); // Token must have been added to budget
@@ -235,7 +236,7 @@ contract Finance is AragonApp, ERC677Receiver {
     * @notice Change period duration to `_duration`. Will be effective for next accounting period.
     * @param _periodDuration Duration in seconds for accounting periods
     */
-    function setPeriodDuration(uint64 _periodDuration) auth(CHANGE_SETTINGS_ROLE) transitionsPeriod external {
+    function setPeriodDuration(uint64 _periodDuration) authP(CHANGE_PERIOD_ROLE, arr(uint256(_periodDuration), uint256(settings.periodDuration))) transitionsPeriod external {
         require(_periodDuration > 1);
         settings.periodDuration = _periodDuration;
         ChangePeriodDuration(_periodDuration);
@@ -246,7 +247,7 @@ contract Finance is AragonApp, ERC677Receiver {
     * @param _token Address for token
     * @param _amount New budget amount
     */
-    function setBudget(ERC20 _token, uint256 _amount) auth(CHANGE_SETTINGS_ROLE) transitionsPeriod external {
+    function setBudget(ERC20 _token, uint256 _amount) authP(CHANGE_BUDGETS_ROLE, arr(address(_token), _amount, settings.budgets[_token])) transitionsPeriod external {
         settings.budgets[_token] = _amount;
         if (!settings.hasBudget[_token]) {
             settings.hasBudget[_token] = true;
@@ -258,7 +259,7 @@ contract Finance is AragonApp, ERC677Receiver {
     * @notice Remove budget for `_token`. Will be able to spend entire balance.
     * @param _token Address for token
     */
-    function removeBudget(ERC20 _token) auth(CHANGE_SETTINGS_ROLE) transitionsPeriod external {
+    function removeBudget(ERC20 _token) authP(CHANGE_BUDGETS_ROLE, arr(address(_token), uint256(0), settings.budgets[_token])) transitionsPeriod external {
         settings.hasBudget[_token] = false;
         SetBudget(_token, 0, false);
     }
@@ -268,7 +269,7 @@ contract Finance is AragonApp, ERC677Receiver {
     * @notice Trigger pending withdraw for `_paymentId`
     * @param _paymentId Identifier for payment
     */
-    function executePayment(uint256 _paymentId) auth(EXECUTE_PAYMENTS_ROLE) external {
+    function executePayment(uint256 _paymentId) authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId)) external {
         require(nextPaymentTime(_paymentId) <= getTimestamp());
 
         _executePayment(_paymentId);
@@ -291,7 +292,7 @@ contract Finance is AragonApp, ERC677Receiver {
     * @param _paymentId Identifier for payment
     * @param _disabled Whether it will be disabled or enabled
     */
-    function setPaymentDisabled(uint256 _paymentId, bool _disabled) auth(DISABLE_PAYMENTS_ROLE) external {
+    function setPaymentDisabled(uint256 _paymentId, bool _disabled) authP(DISABLE_PAYMENTS_ROLE, arr(_paymentId)) external {
         payments[_paymentId].disabled = _disabled;
         ChangePaymentState(_paymentId, _disabled);
     }
