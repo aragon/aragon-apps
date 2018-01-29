@@ -10,15 +10,17 @@
   ],
   "devDependencies": {
     "coveralls": "^2.13.1",
+    "ganache-cli": "^6.0.3",
     "lcov-result-merger": "^1.2.0",
     "lerna": "^2.4.0"
   },
   "scripts": {
     "install": "npm run bootstrap",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/os",
-    "test": "lerna run --scope=@aragon/apps-* test",
+    "test": "npm run ganache-cli:dev && lerna run --scope=@aragon/apps-* --concurrency=1 --stream test",
     "lint": "lerna run --scope=@aragon/apps-* lint",
     "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",
-    "link:os": "lerna exec --scope '@aragon/apps-*' 'npm link @aragon/os'"
+    "link:os": "lerna exec --scope '@aragon/apps-*' 'npm link @aragon/os'",
+    "ganache-cli:dev": "shared/test-helpers/ganache-cli.sh"
   }
 }

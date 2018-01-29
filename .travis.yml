@@ -9,8 +9,8 @@ node_js:
 env:
   - TASK=lint
   - TASK=coverage
+  - TASK=test
 before_script:
-  - npm run bootstrap
   - npm prune
 script:
   - npm run $TASK
