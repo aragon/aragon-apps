@@ -4,9 +4,9 @@
   "main": "index.js",
   "scripts": {
     "lint": "solium --dir ./contracts",
-    "test": "npm run ganache-cli:dev && truffle test --network rpc",
+    "test": "truffle test --network rpc",
     "test:gas": "GAS_REPORTER=true npm test",
-    "coverage": "npm run ganache-cli:coverage && node_modules/.bin/solidity-coverage",
+    "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh",
     "console": "node_modules/.bin/truffle console",
     "ganache-cli:dev": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
     "ganache-cli:coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:dev"
@@ -29,6 +29,7 @@
     "babel-preset-stage-2": "^6.24.1",
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
+    "eth-gas-reporter": "^0.1.1",
     "ethereumjs-testrpc": "^6.0.2",
     "solidity-coverage": "0.3.5",
     "solium": "^1.0.4",
@@ -37,6 +38,6 @@
     "webpack": "^3.7.1"
   },
   "dependencies": {
-    "@aragon/os": "^3.0.0"
+    "@aragon/os": "^3.0.1"
   }
 }

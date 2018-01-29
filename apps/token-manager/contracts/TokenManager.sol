@@ -12,7 +12,7 @@ import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract TokenManager is ITokenController, IForwarder, AragonApp {
+contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes coverage crash (removes pure and interface doesnt match)
     using SafeMath for uint256;
 
     MiniMeToken public token;
