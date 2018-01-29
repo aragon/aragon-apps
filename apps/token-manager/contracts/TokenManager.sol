@@ -78,7 +78,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens minted
     */
-    function mint(address _receiver, uint256 _amount) auth(MINT_ROLE) external {
+    function mint(address _receiver, uint256 _amount) authP(MINT_ROLE, arr(_receiver, _amount)) external {
         require(isBalanceIncreaseAllowed(_receiver, _amount));
         _mint(_receiver, _amount);
     }
@@ -87,7 +87,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @notice Mint `_amount` of tokens for the token manager
     * @param _amount Number of tokens minted
     */
-    function issue(uint256 _amount) auth(ISSUE_ROLE) external {
+    function issue(uint256 _amount) authP(ISSUE_ROLE, arr(_amount)) external {
         _mint(address(this), _amount);
     }
 
@@ -96,7 +96,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transfered
     */
-    function assign(address _receiver, uint256 _amount) auth(ASSIGN_ROLE) external {
+    function assign(address _receiver, uint256 _amount) authP(ASSIGN_ROLE, arr(_receiver, _amount)) external {
         _assign(_receiver, _amount);
     }
 
@@ -105,7 +105,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _holder Holder being removed tokens
     * @param _amount Number of tokens being burned
     */
-    function burn(address _holder, uint256 _amount) auth(BURN_ROLE) external {
+    function burn(address _holder, uint256 _amount) authP(BURN_ROLE, arr(_holder, _amount)) external {
         // minime.destroyTokens() never returns false, only reverts on failure
         token.destroyTokens(_holder, _amount);
     }
@@ -126,7 +126,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
         uint64 _cliff,
         uint64 _vesting,
         bool _revokable
-    ) auth(ASSIGN_ROLE) external returns (uint256)
+    ) authP(ASSIGN_ROLE, arr(_receiver, _amount)) external returns (uint256)
     {
         require(tokenGrantsCount(_receiver) < MAX_VESTINGS_PER_ADDRESS);
 
@@ -153,7 +153,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _holder Address getting vesting revoked
     * @param _vestingId Numeric id of the vesting
     */
-    function revokeVesting(address _holder, uint256 _vestingId) auth(REVOKE_VESTINGS_ROLE) external {
+    function revokeVesting(address _holder, uint256 _vestingId) authP(REVOKE_VESTINGS_ROLE, arr(_holder)) external {
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 
