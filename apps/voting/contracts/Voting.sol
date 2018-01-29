@@ -1,18 +1,15 @@
 pragma solidity 0.4.18;
 
-import "@aragon/core/contracts/apps/App.sol";
+import "@aragon/os/contracts/apps/AragonApp.sol";
 
-import "@aragon/core/contracts/common/EVMCallScript.sol";
-import "@aragon/core/contracts/common/Initializable.sol";
-import "@aragon/core/contracts/common/MiniMeToken.sol";
-import "@aragon/core/contracts/common/IForwarder.sol";
+import "@aragon/os/contracts/common/IForwarder.sol";
 
-import "@aragon/core/contracts/zeppelin/math/SafeMath.sol";
-
-import "@aragon/core/contracts/misc/Migrations.sol";
+import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder, IForwarder {
+contract Voting is IForwarder, AragonApp {
     using SafeMath for uint256;
 
     MiniMeToken public token;
@@ -121,17 +118,21 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         _executeVote(_voteId);
     }
 
+    function isForwarder() public pure returns (bool) {
+        return true;
+    }
+
     /**
     * @dev IForwarder interface conformance
-    * @param _evmCallScript Start vote with script
+    * @param _evmScript Start vote with script
     */
-    function forward(bytes _evmCallScript) external {
-        require(canForward(msg.sender, _evmCallScript));
-        _newVote(_evmCallScript, "");
+    function forward(bytes _evmScript) public {
+        require(canForward(msg.sender, _evmScript));
+        _newVote(_evmScript, "");
     }
 
     function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
-        return canPerform(_sender, CREATE_VOTES_ROLE);
+        return canPerform(_sender, CREATE_VOTES_ROLE, new uint256[](0));
     }
 
     function canVote(uint256 _voteId, address _voter) public view returns (bool) {
@@ -159,7 +160,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         return voteEnded && hasSupport && hasMinQuorum;
     }
 
-    function getVote(uint256 _voteId) public view returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script, uint256 scriptActionsCount) {
+    function getVote(uint256 _voteId) public view returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script) {
         Vote storage vote = votes[_voteId];
 
         open = _isVoteOpen(vote);
@@ -172,15 +173,10 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         nay = vote.nay;
         totalVoters = vote.totalVoters;
         script = vote.executionScript;
-        scriptActionsCount = getScriptActionsCount(vote.executionScript);
     }
 
     function getVoteMetadata(uint256 _voteId) public view returns (string metadata) {
         return votes[_voteId].metadata;
-    }
-
-    function getVoteScriptAction(uint256 _voteId, uint256 _scriptAction) public view returns (address, bytes) {
-        return getScriptAction(votes[_voteId].executionScript, _scriptAction);
     }
 
     function _newVote(bytes _executionScript, string _metadata) internal returns (uint256 voteId) {
@@ -204,7 +200,6 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
                 true
             );
         }
-
     }
 
     function _vote(
@@ -249,7 +244,8 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
         vote.executed = true;
 
-        runScript(vote.executionScript);
+        bytes memory input = new bytes(0); // TODO: Consider input for voting scripts
+        runScript(vote.executionScript, input, new address[](0));
 
         ExecuteVote(_voteId);
     }
