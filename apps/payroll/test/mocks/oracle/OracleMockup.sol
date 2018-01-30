@@ -1,4 +1,4 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
 import "./OracleInterface.sol";
 
@@ -26,7 +26,7 @@ contract OracleMockup is OracleInterface {
     }
 
     /// Gets the first byte of an address as an integer
-    function toInt(address x) public constant returns(uint256 i) {
+    function toInt(address x) public pure returns(uint256 i) {
         i = uint(x);
         i = i >> 152;
         if (i == 0)

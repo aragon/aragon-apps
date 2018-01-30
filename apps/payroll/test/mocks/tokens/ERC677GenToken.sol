@@ -1,6 +1,6 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
-import "@aragon/core/contracts/common/erc677/ERC677Token.sol";
+import "@aragon/os/contracts/lib/erc677/ERC677Token.sol";
 
 
 contract ERC677GenToken is ERC677Token {
