@@ -1,0 +1,1772 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for contracts/Payroll.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> Payroll.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">99.09% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>109/110</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">91.07% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>51/56</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">96.3% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>26/27</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>124/124</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line high'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465
+466
+467
+468
+469
+470
+471
+472
+473
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484
+485
+486
+487
+488
+489
+490
+491
+492
+493
+494
+495
+496
+497
+498
+499
+500
+501
+502
+503
+504
+505
+506
+507
+508
+509
+510
+511
+512
+513
+514
+515
+516
+517
+518
+519
+520
+521
+522
+523
+524
+525
+526
+527
+528
+529
+530
+531
+532
+533
+534
+535
+536
+537
+538
+539
+540
+541
+542
+543
+544
+545
+546
+547
+548
+549
+550
+551
+552
+553
+554
+555
+556
+557
+558
+559
+560
+561
+562
+563
+564
+565
+566
+567
+568
+569
+570</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9×</span>
+<span class="cline-any cline-yes">9×</span>
+<span class="cline-any cline-yes">9×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">24×</span>
+<span class="cline-any cline-yes">24×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">21×</span>
+<span class="cline-any cline-yes">21×</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-yes">13×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">pragma solidity 0.4.18;
+&nbsp;
+import "@aragon/os/contracts/apps/AragonApp.sol";
+import "@aragon/os/contracts/common/Initializable.sol";
+import "@aragon/os/contracts/common/EtherToken.sol";
+&nbsp;
+import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
+&nbsp;
+import "@aragon/apps-finance/contracts/Finance.sol";
+&nbsp;
+&nbsp;
+/**
+ * @title Payroll in multiple currencies
+ */
+contract Payroll is AragonApp {
+    using SafeMath for uint;
+    using DenominationToken for uint;
+&nbsp;
+    uint256 constant public MAX_UINT = uint256(-1);
+    // kernel roles
+    bytes32 constant public EMPLOYER_ROLE = bytes32(1);
+    bytes32 constant public ORACLE_ROLE = bytes32(2);
+&nbsp;
+    struct Employee {
+        address accountAddress; // unique, but can be changed over time
+        mapping(address =&gt; uint256) allocation;
+        uint256 denominationTokenSalary; // per second
+        uint lastAllocation;
+        uint lastPayroll;
+        string name;
+    }
+&nbsp;
+    uint private numEmployees;
+    uint private nextEmployee; // starts at 1
+    mapping(uint =&gt; Employee) private employees;
+    mapping(address =&gt; uint) private employeeIds;
+    uint256 private yearlyTotalPayroll;
+&nbsp;
+    Finance public finance;
+    address public denominationToken;
+    EtherToken public etherToken;
+    mapping(address =&gt; uint256) private exchangeRates;
+    mapping(address =&gt; bool) allowedTokens;
+    address[] allowedTokensArray;
+&nbsp;
+    event LogFund (address sender, address token, uint amount, uint balance, bytes data);
+    event LogSendPayroll (address sender, address token, uint amount);
+    event LogSetExchangeRate (address token, uint rate);
+&nbsp;
+    /**
+     * @notice Initialize Payroll app for `_finance`. Set ETH and Denomination tokens
+     * @param _finance Address of the finance Payroll will rely on (non changeable)
+     * @param _etherToken Address of EtherToken
+     * @param _denominationToken Address of Denomination Token
+     */
+    function initialize(
+        Finance _finance,
+        EtherToken _etherToken,
+        address _denominationToken
+    ) external
+        onlyInit
+    {
+        initialized();
+&nbsp;
+        numEmployees = 0;
+        nextEmployee = 1; // leave 0 to check null address mapping
+        finance = _finance;
+        etherToken = _etherToken;
+        denominationToken = _denominationToken;
+        exchangeRates[denominationToken] = 1;
+        // add ETH and Denomination to allowed tokens by default
+        allowedTokens[etherToken] = true;
+        allowedTokensArray.push(etherToken);
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (address(etherToken) != denominationToken) {
+            allowedTokens[denominationToken] = true;
+            allowedTokensArray.push(denominationToken);
+        }
+    }
+&nbsp;
+    /**
+     * @dev Set the Denomination exchange rate for a token. Uses decimals from token
+     * @notice Sets the Denomination exchange rate for a token
+     * @param token The token address
+     * @param denominationExchangeRate The exchange rate
+     */
+    function setExchangeRate(address token, uint256 denominationExchangeRate) external auth(ORACLE_ROLE) {
+        // Denomination Token is a special one, so we can not allow its exchange rate to be changed
+        if (token != denominationToken) {
+            exchangeRates[token] = denominationExchangeRate;
+            LogSetExchangeRate(token, denominationExchangeRate);
+        }
+    }
+&nbsp;
+    /**
+     * @dev Add tokens to the allowed set
+     * @notice Add tokens to the allowed set
+     * @param _allowedTokens Array of new tokens allowed for payment
+     */
+    function addAllowedTokens(address[] _allowedTokens) public auth(EMPLOYER_ROLE) {
+        for (uint i = 0; i &lt; _allowedTokens.length; i++) {
+            <span class="missing-if-branch" title="else path not taken" >E</span>if (!allowedTokens[_allowedTokens[i]]) {
+                allowedTokens[_allowedTokens[i]] = true;
+                allowedTokensArray.push(_allowedTokens[i]);
+            }
+        }
+    }
+&nbsp;
+    /*
+     * TODO: removeFromAllowedTokens. It wouldn't be trivial, as employees
+     * should modifiy their allocation. They should be notified and their
+     * last allocation date should be reset.
+     */
+&nbsp;
+    /**
+     * @dev Add employee to Payroll
+     * @notice Add employee to Payroll. See addEmployeeWithNameAndStartDate
+     * @param accountAddress Employee's address to receive Payroll
+     * @param initialYearlyDenominationSalary Employee's salary
+     */
+    function addEmployee(
+        address accountAddress,
+        uint256 initialYearlyDenominationSalary
+    )
+        public
+        auth(EMPLOYER_ROLE)
+    {
+        _addEmployee(
+            accountAddress,
+            initialYearlyDenominationSalary,
+            "",
+            getTimestamp()
+        );
+    }
+&nbsp;
+    /**
+     * @dev Add employee to Payroll
+     * @notice Add employee to Payroll. See addEmployeeWithNameAndStartDate
+     * @param accountAddress Employee's address to receive Payroll
+     * @param initialYearlyDenominationSalary Employee's salary
+     * @param name Employee's name
+     */
+    function addEmployeeWithName(
+        address accountAddress,
+        uint256 initialYearlyDenominationSalary,
+        string name
+    )
+        public
+        auth(EMPLOYER_ROLE)
+    {
+        _addEmployee(
+            accountAddress,
+            initialYearlyDenominationSalary,
+            name,
+            getTimestamp()
+        );
+    }
+&nbsp;
+    /**
+     * @dev Add employee to Payroll
+     * @notice Creates employee, adds it to mappings, initializes values.
+               Updates also global Payroll salary sum.
+     * @param accountAddress Employee's address to receive Payroll
+     * @param initialYearlyDenominationSalary Employee's salary
+     * @param name Employee's name
+     * @param startDate It will actually set initial lastPayroll value
+     */
+    function addEmployeeWithNameAndStartDate(
+        address accountAddress,
+        uint256 initialYearlyDenominationSalary,
+        string name,
+        uint256 startDate
+    )
+        public
+        auth(EMPLOYER_ROLE)
+    {
+        _addEmployee(
+            accountAddress,
+            initialYearlyDenominationSalary,
+            name,
+            startDate
+        );
+    }
+&nbsp;
+    /**
+     * @dev Set employee's annual salary
+     * @notice Updates also global Payroll salary sum
+     * @param employeeId Employee's identifier
+     * @param yearlyDenominationSalary Employee's new salary
+     */
+    function setEmployeeSalary(uint256 employeeId, uint256 yearlyDenominationSalary) public auth(EMPLOYER_ROLE) {
+        /* check that employee exists */
+        require(employeeIds[employees[employeeId].accountAddress] != 0);
+&nbsp;
+        yearlyTotalPayroll = yearlyTotalPayroll.sub(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
+        employees[employeeId].denominationTokenSalary = yearlyDenominationSalary.toSecondDenominationToken();
+        yearlyTotalPayroll = yearlyTotalPayroll.add(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
+    }
+&nbsp;
+    /**
+     * @dev Remove employee from Payroll
+     * @notice Updates also global Payroll salary sum
+     * @param employeeId Employee's identifier
+     */
+    function removeEmployee(uint256 employeeId) public auth(EMPLOYER_ROLE) {
+        /* check that employee exists */
+        require(employeeIds[employees[employeeId].accountAddress] != 0);
+&nbsp;
+        yearlyTotalPayroll = yearlyTotalPayroll.sub(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
+        delete employeeIds[employees[employeeId].accountAddress];
+        delete employees[employeeId];
+        numEmployees--;
+    }
+&nbsp;
+    /**
+     * @dev Payable function to receive ETH
+     * @notice Payable function to receive ETH
+     */
+    function addFunds() public payable {
+        // convert ETH to EtherToken
+        etherToken.wrapAndCall.value(this.balance)(address(finance), "Adding Funds");
+        <span class="missing-if-branch" title="else path not taken" >E</span>assert(this.balance == 0);
+        LogFund(
+            msg.sender,
+            address(etherToken),
+            msg.value,
+            etherToken.balanceOf(this),
+            ""
+        );
+    }
+&nbsp;
+    /**
+     * @dev Allows make a simple payment from this contract to Finance,
+            to avoid locked tokens in contract forever.
+            This contract should never receive tokens with a simple transfer call,
+            but in case it happens, this function allows to recover them.
+     * @notice Allows to send tokens from this contract to Finance, to avoid locked tokens in contract forever
+     */
+    function depositToFinance(address token) public {
+        ERC20 tokenContract = ERC20(token);
+        uint256 value = tokenContract.balanceOf(this);
+        if (value == 0)
+            return;
+&nbsp;
+        // make an aprovement for the same value to Finance
+        tokenContract.approve(address(finance), value);
+        // finally deposit those tokens to Finance
+        finance.deposit(tokenContract, value, "Adding Funds");
+        LogFund(
+            finance,
+            token,
+            value,
+            tokenContract.balanceOf(this),
+            ""
+        );
+    }
+&nbsp;
+    /**
+     * @dev To be able to receive ERC20 Token transfers, using approveAndCall
+     *      See, e.g: https://www.ethereum.org/token
+     * @notice To be able to receive ERC20 Token transfers, using approveAndCall
+     * @param from  Token sender address.
+     * @param value Amount of tokens.
+     * @param token Token to be received.
+     * @param data  Transaction metadata.
+     */
+    function receiveApproval(
+        address from,
+        uint256 value,
+        address token,
+        bytes data
+    )
+        public
+        returns(bool success)
+    {
+        ERC20 tokenContract = ERC20(token);
+&nbsp;
+        // first send tokens to this contract
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(tokenContract.transferFrom(from, this, value));
+        // then make an aprrovement for the same value to Finance
+        tokenContract.approve(address(finance), value);
+        // finally deposit those tokens to Finance
+        finance.deposit(tokenContract, value, "Adding Funds");
+&nbsp;
+        LogFund(
+            from,
+            token,
+            value,
+            tokenContract.balanceOf(this),
+            data
+        );
+&nbsp;
+        return true;
+    }
+&nbsp;
+    /**
+     * @dev Get number of employees in Payroll
+     * @notice Get number of employees in Payroll
+     * @return Number of employees
+     */
+    function getEmployeeCount() public view returns(uint256 count) {
+        count = numEmployees;
+    }
+&nbsp;
+    /**
+     * @dev Return all important info too through employees mapping
+     * @notice Return all Employee's important info
+     * @param employeeId Employee's identifier
+     * @return Employee's address to receive payments
+     * @return Employee's annual salary
+     * @return Employee's name
+     * @return Employee's last call to payment distribution date
+     * @return Employee's last payment received date
+     */
+    function getEmployee(uint256 employeeId)
+        public
+        view
+        returns(
+            address accountAddress,
+            uint256 yearlyDenominationSalary,
+            string name,
+            uint lastAllocation,
+            uint lastPayroll
+        )
+    {
+        var employee = employees[employeeId];
+&nbsp;
+        accountAddress = employee.accountAddress;
+        yearlyDenominationSalary = employee.denominationTokenSalary.toYearlyDenomination();
+        name = employee.name;
+        lastAllocation = employee.lastAllocation;
+        lastPayroll = employee.lastPayroll;
+    }
+&nbsp;
+    /**
+     * @dev Get total amount of salaries in Payroll
+     * @notice Get total amount of salaries in Payroll
+     * @return Integer with the amount
+     */
+    function getYearlyTotalPayroll() public view returns(uint256 total) {
+        total = yearlyTotalPayroll;
+    }
+&nbsp;
+    /**
+     * @dev Monthly Denomination amount spent in salaries
+     * @notice Monthly Denomination amount spent in salaries
+     * @return Integer with the monthly amount
+     */
+    function calculatePayrollBurnrate() public view returns(uint256 payrollBurnrate) {
+        payrollBurnrate = yearlyTotalPayroll / 12;
+    }
+&nbsp;
+    /**
+     * @dev Days until the contract can run out of funds
+     * @notice Days until the contract can run out of funds
+     * @return Integer with the number of days
+     */
+    function calculatePayrollRunway() public view returns(uint256 payrollRunway) {
+        if (yearlyTotalPayroll == 0)
+            return MAX_UINT;
+&nbsp;
+        uint256 balance = 0;
+        // for each token, get finance balance and convert it to Denomination
+        for (uint i = 0; i &lt; allowedTokensArray.length; i ++) {
+            var token = allowedTokensArray[i];
+            var tokenContract = ERC20(token);
+            if (exchangeRates[token] == 0)
+                continue;
+            balance = balance.add(tokenContract.balanceOf(finance).div(exchangeRates[token]));
+        }
+        payrollRunway = balance.mul(365) / yearlyTotalPayroll;
+    }
+&nbsp;
+    /**
+     * @dev Set token distribution for payments to an employee (the caller)
+     * @notice Set token distribution for payments to an employee (the caller).
+     *         Only callable once every 6 months
+     * @param tokens Array with the tokens to receive, they must belong to allowed tokens for employee
+     * @param distribution Array (correlated to tokens) with the proportions (integers over 100)
+     */
+    function determineAllocation(address[] tokens, uint256[] distribution) public {
+        var employee = employees[employeeIds[msg.sender]];
+        // check that employee exists (and matches)
+        require(employee.accountAddress == msg.sender);
+        // check that enough time has gone by
+        require(getTimestamp() &gt; employee.lastAllocation &amp;&amp; getTimestamp() - employee.lastAllocation &gt; 15768000); // half a year in seconds
+&nbsp;
+        // check arrays match
+        require(tokens.length == distribution.length);
+&nbsp;
+        // check distribution is right
+        uint256 sum = 0;
+        uint256 i;
+        for (i = 0; i &lt; distribution.length; i++) {
+            // check token is allowed
+            require(allowedTokens[tokens[i]]);
+            // set distribution
+            employee.allocation[tokens[i]] = distribution[i];
+            sum = sum.add(distribution[i]);
+        }
+        require(sum == 100);
+&nbsp;
+        employee.lastAllocation = getTimestamp();
+    }
+&nbsp;
+    /**
+     * @dev Get payment proportion for a token and an employee (the caller)
+     * @notice Get payment proportion for a token and an employee (the caller)
+     * @param token The token address
+     */
+    function getAllocation(address token) public view returns(uint256 allocation) {
+        var employee = employees[employeeIds[msg.sender]];
+        // check that employee exists (and matches)
+        require(employee.accountAddress == msg.sender);
+&nbsp;
+        allocation = employee.allocation[token];
+    }
+&nbsp;
+    /**
+     * @dev payday To withdraw monthly payment by employee (the caller)
+     * @notice Only callable once a month. Assumed token has these standard checks implemented:
+     *         https://theethereum.wiki/w/index.php/ERC20_Token_Standard#How_Does_A_Token_Contract_Work.3F
+     */
+    function payday() public {
+        var employee = employees[employeeIds[msg.sender]];
+        // check that employee exists (and matches)
+        require(employee.accountAddress == msg.sender);
+        // get time that has gone by (seconds)
+        uint256 time = getTimestamp().sub(employee.lastPayroll);
+        require(time &gt; 0);
+&nbsp;
+        // loop over allowed tokens
+        bool somethingPaid = false;
+        for (uint i = 0; i &lt; allowedTokensArray.length; i++) {
+            var token = allowedTokensArray[i];
+            if (employee.allocation[token] == 0)
+                continue;
+            require(checkExchangeRate(token));
+            // salary converted to token and applied allocation percentage
+            uint256 tokenAmount = employee.denominationTokenSalary
+                .mul(exchangeRates[token]).mul(employee.allocation[token]) / 100;
+            tokenAmount = tokenAmount.mul(time);
+            ERC20 tokenContract = ERC20(token);
+            finance.newPayment(
+                tokenContract,
+                msg.sender,
+                tokenAmount,
+                0,
+                0,
+                1,
+                ""
+            );
+            LogSendPayroll(msg.sender, token, tokenAmount);
+            somethingPaid = true;
+        }
+        require(somethingPaid);
+        // finally update last payroll date
+        employee.lastPayroll = getTimestamp();
+    }
+&nbsp;
+    /**
+     * @dev Change employee account address. To be called by Employer.
+     * @notice Change employee account address
+     * @param employeeId Employee's identifier
+     * @param newAddress New address to receive payments
+     */
+    function changeAddressByOwner(uint256 employeeId, address newAddress) public auth(EMPLOYER_ROLE) {
+        // check that account doesn't exist
+        require(employeeIds[newAddress] == 0);
+        // check it's non-null address
+        require (newAddress != address(0));
+&nbsp;
+        var employee = employees[employeeId];
+        employeeIds[employee.accountAddress] = 0;
+        employee.accountAddress = newAddress;
+        employeeIds[newAddress] = employeeId;
+    }
+&nbsp;
+    /**
+     * @dev Change employee account address. To be called by Employee
+     * @notice Change employee account address
+     * @param newAddress New address to receive payments
+     */
+    function changeAddressByEmployee(address newAddress) public {
+        // check that account doesn't exist
+        require(employeeIds[newAddress] == 0);
+        // check it's non-null address
+        require (newAddress != address(0));
+        // check that employee exists (and matches)
+        var employeeId = employeeIds[msg.sender];
+        var employee = employees[employeeId];
+        // check that employee exists (and matches)
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(employee.accountAddress == msg.sender);
+&nbsp;
+        employee.accountAddress = newAddress;
+        employeeIds[newAddress] = employeeId;
+        employeeIds[msg.sender] = 0;
+    }
+&nbsp;
+    /* Aux functions */
+    /**
+     * @dev Get the Denomination exchange rate of a Token
+     * @notice Get the Denomination exchange rate of a Token
+     * @param token The token address
+     * @return denominationExchangeRate The exchange rate
+     */
+    function getExchangeRate(address token) public view returns(uint256 rate) {
+        rate = exchangeRates[token];
+    }
+&nbsp;
+    /**
+     * @dev Check that a token has the exchange rate already set
+     *      Internal function, needed to ensure that we have the rate before making a payment.
+     * @param token The token address
+     * @return True if we have the exchange rate, false otherwise
+     */
+    function checkExchangeRate(address token) internal view returns(bool) {
+        if (exchangeRates[token] == 0) {
+            return false;
+        }
+        return true;
+    }
+&nbsp;
+    function _addEmployee(
+        address accountAddress,
+        uint256 initialYearlyDenominationSalary,
+        string name,
+        uint256 startDate
+    )
+        internal
+    {
+        // check that account doesn't exist
+        require(employeeIds[accountAddress] == 0);
+&nbsp;
+        var employeeId = nextEmployee;
+        employees[employeeId] = Employee({
+            accountAddress: accountAddress,
+            denominationTokenSalary: initialYearlyDenominationSalary.toSecondDenominationToken(),
+            lastAllocation: 0,
+            lastPayroll: startDate,
+            name: name
+        });
+        // Ids mapping
+        employeeIds[accountAddress] = employeeId;
+        // update global variables
+        yearlyTotalPayroll = yearlyTotalPayroll.add(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
+        numEmployees++;
+        nextEmployee++;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function getTimestamp() internal view returns (uint256</span>) { <span class="cstat-no" title="statement not covered" >return now;</span> }
+&nbsp;
+}
+&nbsp;
+&nbsp;
+library DenominationToken {
+    using SafeMath for uint;
+&nbsp;
+    uint256 constant public DENOMINATION_DECIMALS = 10**9; // for sub-cent precision
+    uint256 constant public SECONDS_IN_A_YEAR = 31557600; // 365.25 days
+&nbsp;
+    function toYearlyDenomination(uint256 a) internal pure returns (uint256) {
+        return a.mul(SECONDS_IN_A_YEAR) / DENOMINATION_DECIMALS;
+    }
+&nbsp;
+    function toSecondDenominationToken(uint256 a) internal pure returns (uint256) {
+        return a.mul(DENOMINATION_DECIMALS) / SECONDS_IN_A_YEAR;
+    }
+}
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jan 30 2018 19:15:06 GMT+0100 (CET)
+</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>

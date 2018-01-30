@@ -489,6 +489,7 @@ contract Payroll is AragonApp {
         // check that employee exists (and matches)
         var employeeId = employeeIds[msg.sender];
         var employee = employees[employeeId];
+        // check that employee exists (and matches)
         require(employee.accountAddress == msg.sender);
 
         employee.accountAddress = newAddress;
