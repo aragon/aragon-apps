@@ -1,23 +1,21 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
-import "@aragon/core/contracts/apps/App.sol";
-import "@aragon/core/contracts/common/Initializable.sol";
-import "@aragon/core/contracts/common/EtherToken.sol";
-import "@aragon/core/contracts/common/erc677/ERC677Receiver.sol";
+import "@aragon/os/contracts/apps/AragonApp.sol";
+import "@aragon/os/contracts/common/Initializable.sol";
+import "@aragon/os/contracts/common/EtherToken.sol";
 
-import "@aragon/core/contracts/zeppelin/token/ERC20.sol";
-import "@aragon/core/contracts/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 
 import "@aragon/apps-finance/contracts/Finance.sol";
 
 
 /**
  * @title Payroll in multiple currencies
- * @notice For the sake of simplicity lets asume USD is a ERC20 token
- * Also lets asume we can 100% trust the exchange rate oracle
  */
-contract Payroll is App, Initializable, ERC677Receiver {
+contract Payroll is AragonApp {
     using SafeMath for uint;
+    using DenominationToken for uint;
 
     uint256 constant public MAX_UINT = uint256(-1);
     // kernel roles
@@ -27,7 +25,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
     struct Employee {
         address accountAddress; // unique, but can be changed over time
         mapping(address => uint256) allocation;
-        uint256 yearlyUSDSalary;
+        uint256 denominationTokenSalary; // per second
         uint lastAllocation;
         uint lastPayroll;
         string name;
@@ -40,7 +38,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
     uint256 private yearlyTotalPayroll;
 
     Finance public finance;
-    address public usdToken;
+    address public denominationToken;
     EtherToken public etherToken;
     mapping(address => uint256) private exchangeRates;
     mapping(address => bool) allowedTokens;
@@ -51,15 +49,15 @@ contract Payroll is App, Initializable, ERC677Receiver {
     event LogSetExchangeRate (address token, uint rate);
 
     /**
-     * @notice Initialize Payroll app for `_finance`. Set ETH and USD tokens
+     * @notice Initialize Payroll app for `_finance`. Set ETH and Denomination tokens
      * @param _finance Address of the finance Payroll will rely on (non changeable)
      * @param _etherToken Address of EtherToken
-     * @param _usdToken Address of USD Token
+     * @param _denominationToken Address of Denomination Token
      */
     function initialize(
         Finance _finance,
         EtherToken _etherToken,
-        address _usdToken
+        address _denominationToken
     ) external
         onlyInit
     {
@@ -69,46 +67,28 @@ contract Payroll is App, Initializable, ERC677Receiver {
         nextEmployee = 1; // leave 0 to check null address mapping
         finance = _finance;
         etherToken = _etherToken;
-        usdToken = _usdToken;
-        exchangeRates[usdToken] = 10**6; // 6 decimals for sub-cent precision
-        // add ETH and USD to allowed tokens by default
+        denominationToken = _denominationToken;
+        exchangeRates[denominationToken] = 1;
+        // add ETH and Denomination to allowed tokens by default
         allowedTokens[etherToken] = true;
         allowedTokensArray.push(etherToken);
-        allowedTokens[usdToken] = true;
-        allowedTokensArray.push(usdToken);
+        if (address(etherToken) != denominationToken) {
+            allowedTokens[denominationToken] = true;
+            allowedTokensArray.push(denominationToken);
+        }
     }
 
     /**
-     * @dev To be able to receive ERC677 Token transfers, using transfer
-     *      See: https://github.com/ethereum/EIPs/issues/677
-     * @notice To be able to receive ERC677 Token transfers, using transfer
-     * @param from  Token sender address.
-     * @param value Amount of tokens.
-     * @param data  Transaction metadata.
-     */
-    function tokenFallback(address from, uint256 value, bytes data) external returns(bool success) {
-        ERC677Token tokenContract = ERC677Token(msg.sender);
-        LogFund(
-            from,
-            msg.sender,
-            value,
-            tokenContract.balanceOf(this),
-            data
-        );
-        return tokenContract.transferAndCall(address(finance), value, "Adding funds");
-    }
-
-    /**
-     * @dev Set the USD exchange rate for a token. Uses decimals from token
-     * @notice Sets the USD exchange rate for a token
+     * @dev Set the Denomination exchange rate for a token. Uses decimals from token
+     * @notice Sets the Denomination exchange rate for a token
      * @param token The token address
-     * @param usdExchangeRate The exchange rate
+     * @param denominationExchangeRate The exchange rate
      */
-    function setExchangeRate(address token, uint256 usdExchangeRate) external auth(ORACLE_ROLE) {
-        // USD Token is a special one, so we can not allow its exchange rate to be changed
-        if (token != usdToken) {
-            exchangeRates[token] = usdExchangeRate;
-            LogSetExchangeRate(token, usdExchangeRate);
+    function setExchangeRate(address token, uint256 denominationExchangeRate) external auth(ORACLE_ROLE) {
+        // Denomination Token is a special one, so we can not allow its exchange rate to be changed
+        if (token != denominationToken) {
+            exchangeRates[token] = denominationExchangeRate;
+            LogSetExchangeRate(token, denominationExchangeRate);
         }
     }
 
@@ -136,18 +116,18 @@ contract Payroll is App, Initializable, ERC677Receiver {
      * @dev Add employee to Payroll
      * @notice Add employee to Payroll. See addEmployeeWithNameAndStartDate
      * @param accountAddress Employee's address to receive Payroll
-     * @param initialYearlyUSDSalary Employee's salary
+     * @param initialYearlyDenominationSalary Employee's salary
      */
     function addEmployee(
         address accountAddress,
-        uint256 initialYearlyUSDSalary
+        uint256 initialYearlyDenominationSalary
     )
         public
         auth(EMPLOYER_ROLE)
     {
         _addEmployee(
             accountAddress,
-            initialYearlyUSDSalary,
+            initialYearlyDenominationSalary,
             "",
             getTimestamp()
         );
@@ -157,12 +137,12 @@ contract Payroll is App, Initializable, ERC677Receiver {
      * @dev Add employee to Payroll
      * @notice Add employee to Payroll. See addEmployeeWithNameAndStartDate
      * @param accountAddress Employee's address to receive Payroll
-     * @param initialYearlyUSDSalary Employee's salary
+     * @param initialYearlyDenominationSalary Employee's salary
      * @param name Employee's name
      */
     function addEmployeeWithName(
         address accountAddress,
-        uint256 initialYearlyUSDSalary,
+        uint256 initialYearlyDenominationSalary,
         string name
     )
         public
@@ -170,7 +150,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
     {
         _addEmployee(
             accountAddress,
-            initialYearlyUSDSalary,
+            initialYearlyDenominationSalary,
             name,
             getTimestamp()
         );
@@ -181,13 +161,13 @@ contract Payroll is App, Initializable, ERC677Receiver {
      * @notice Creates employee, adds it to mappings, initializes values.
                Updates also global Payroll salary sum.
      * @param accountAddress Employee's address to receive Payroll
-     * @param initialYearlyUSDSalary Employee's salary
+     * @param initialYearlyDenominationSalary Employee's salary
      * @param name Employee's name
      * @param startDate It will actually set initial lastPayroll value
      */
     function addEmployeeWithNameAndStartDate(
         address accountAddress,
-        uint256 initialYearlyUSDSalary,
+        uint256 initialYearlyDenominationSalary,
         string name,
         uint256 startDate
     )
@@ -196,7 +176,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
     {
         _addEmployee(
             accountAddress,
-            initialYearlyUSDSalary,
+            initialYearlyDenominationSalary,
             name,
             startDate
         );
@@ -206,15 +186,15 @@ contract Payroll is App, Initializable, ERC677Receiver {
      * @dev Set employee's annual salary
      * @notice Updates also global Payroll salary sum
      * @param employeeId Employee's identifier
-     * @param yearlyUSDSalary Employee's new salary
+     * @param yearlyDenominationSalary Employee's new salary
      */
-    function setEmployeeSalary(uint256 employeeId, uint256 yearlyUSDSalary) public auth(EMPLOYER_ROLE) {
+    function setEmployeeSalary(uint256 employeeId, uint256 yearlyDenominationSalary) public auth(EMPLOYER_ROLE) {
         /* check that employee exists */
         require(employeeIds[employees[employeeId].accountAddress] != 0);
 
-        yearlyTotalPayroll = yearlyTotalPayroll.sub(employees[employeeId].yearlyUSDSalary);
-        employees[employeeId].yearlyUSDSalary = yearlyUSDSalary;
-        yearlyTotalPayroll = yearlyTotalPayroll.add(yearlyUSDSalary);
+        yearlyTotalPayroll = yearlyTotalPayroll.sub(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
+        employees[employeeId].denominationTokenSalary = yearlyDenominationSalary.toSecondDenominationToken();
+        yearlyTotalPayroll = yearlyTotalPayroll.add(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
     }
 
     /**
@@ -226,7 +206,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
         /* check that employee exists */
         require(employeeIds[employees[employeeId].accountAddress] != 0);
 
-        yearlyTotalPayroll = yearlyTotalPayroll.sub(employees[employeeId].yearlyUSDSalary);
+        yearlyTotalPayroll = yearlyTotalPayroll.sub(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
         delete employeeIds[employees[employeeId].accountAddress];
         delete employees[employeeId];
         numEmployees--;
@@ -318,7 +298,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
      * @notice Get number of employees in Payroll
      * @return Number of employees
      */
-    function getEmployeeCount() public constant returns(uint256 count) {
+    function getEmployeeCount() public view returns(uint256 count) {
         count = numEmployees;
     }
 
@@ -334,10 +314,10 @@ contract Payroll is App, Initializable, ERC677Receiver {
      */
     function getEmployee(uint256 employeeId)
         public
-        constant
+        view
         returns(
             address accountAddress,
-            uint256 yearlyUSDSalary,
+            uint256 yearlyDenominationSalary,
             string name,
             uint lastAllocation,
             uint lastPayroll
@@ -346,7 +326,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
         var employee = employees[employeeId];
 
         accountAddress = employee.accountAddress;
-        yearlyUSDSalary = employee.yearlyUSDSalary;
+        yearlyDenominationSalary = employee.denominationTokenSalary.toYearlyDenomination();
         name = employee.name;
         lastAllocation = employee.lastAllocation;
         lastPayroll = employee.lastPayroll;
@@ -357,16 +337,16 @@ contract Payroll is App, Initializable, ERC677Receiver {
      * @notice Get total amount of salaries in Payroll
      * @return Integer with the amount
      */
-    function getYearlyTotalPayroll() public constant returns(uint256 total) {
+    function getYearlyTotalPayroll() public view returns(uint256 total) {
         total = yearlyTotalPayroll;
     }
 
     /**
-     * @dev Monthly USD amount spent in salaries
-     * @notice Monthly USD amount spent in salaries
+     * @dev Monthly Denomination amount spent in salaries
+     * @notice Monthly Denomination amount spent in salaries
      * @return Integer with the monthly amount
      */
-    function calculatePayrollBurnrate() public constant returns(uint256 payrollBurnrate) {
+    function calculatePayrollBurnrate() public view returns(uint256 payrollBurnrate) {
         payrollBurnrate = yearlyTotalPayroll / 12;
     }
 
@@ -375,12 +355,12 @@ contract Payroll is App, Initializable, ERC677Receiver {
      * @notice Days until the contract can run out of funds
      * @return Integer with the number of days
      */
-    function calculatePayrollRunway() public constant returns(uint256 payrollRunway) {
+    function calculatePayrollRunway() public view returns(uint256 payrollRunway) {
         if (yearlyTotalPayroll == 0)
             return MAX_UINT;
 
         uint256 balance = 0;
-        // for each token, get finance balance and convert it to USD
+        // for each token, get finance balance and convert it to Denomination
         for (uint i = 0; i < allowedTokensArray.length; i ++) {
             var token = allowedTokensArray[i];
             var tokenContract = ERC20(token);
@@ -428,7 +408,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
      * @notice Get payment proportion for a token and an employee (the caller)
      * @param token The token address
      */
-    function getAllocation(address token) public constant returns(uint256 allocation) {
+    function getAllocation(address token) public view returns(uint256 allocation) {
         var employee = employees[employeeIds[msg.sender]];
         // check that employee exists (and matches)
         require(employee.accountAddress == msg.sender);
@@ -445,8 +425,9 @@ contract Payroll is App, Initializable, ERC677Receiver {
         var employee = employees[employeeIds[msg.sender]];
         // check that employee exists (and matches)
         require(employee.accountAddress == msg.sender);
-        // check that enough time has gone by
-        require(getTimestamp() > employee.lastPayroll && getTimestamp() - employee.lastPayroll > 2628000); // 1/12 year in seconds
+        // get time that has gone by (seconds)
+        uint256 time = getTimestamp().sub(employee.lastPayroll);
+        require(time > 0);
 
         // loop over allowed tokens
         bool somethingPaid = false;
@@ -456,9 +437,9 @@ contract Payroll is App, Initializable, ERC677Receiver {
                 continue;
             require(checkExchangeRate(token));
             // salary converted to token and applied allocation percentage
-            uint256 tokenAmount = employee.yearlyUSDSalary
+            uint256 tokenAmount = employee.denominationTokenSalary
                 .mul(exchangeRates[token]).mul(employee.allocation[token]) / 100;
-            tokenAmount = tokenAmount / 12; // yearly to monthly
+            tokenAmount = tokenAmount.mul(time);
             ERC20 tokenContract = ERC20(token);
             finance.newPayment(
                 tokenContract,
@@ -474,7 +455,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
         }
         require(somethingPaid);
         // finally update last payroll date
-        employee.lastPayroll += 1 years / 12;
+        employee.lastPayroll = getTimestamp();
     }
 
     /**
@@ -517,12 +498,12 @@ contract Payroll is App, Initializable, ERC677Receiver {
 
     /* Aux functions */
     /**
-     * @dev Get the USD exchange rate of a Token
-     * @notice Get the USD exchange rate of a Token
+     * @dev Get the Denomination exchange rate of a Token
+     * @notice Get the Denomination exchange rate of a Token
      * @param token The token address
-     * @return usdExchangeRate The exchange rate
+     * @return denominationExchangeRate The exchange rate
      */
-    function getExchangeRate(address token) public constant returns(uint256 rate) {
+    function getExchangeRate(address token) public view returns(uint256 rate) {
         rate = exchangeRates[token];
     }
 
@@ -532,7 +513,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
      * @param token The token address
      * @return True if we have the exchange rate, false otherwise
      */
-    function checkExchangeRate(address token) internal returns(bool) {
+    function checkExchangeRate(address token) internal view returns(bool) {
         if (exchangeRates[token] == 0) {
             return false;
         }
@@ -541,7 +522,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
 
     function _addEmployee(
         address accountAddress,
-        uint256 initialYearlyUSDSalary,
+        uint256 initialYearlyDenominationSalary,
         string name,
         uint256 startDate
     )
@@ -553,7 +534,7 @@ contract Payroll is App, Initializable, ERC677Receiver {
         var employeeId = nextEmployee;
         employees[employeeId] = Employee({
             accountAddress: accountAddress,
-            yearlyUSDSalary: initialYearlyUSDSalary,
+            denominationTokenSalary: initialYearlyDenominationSalary.toSecondDenominationToken(),
             lastAllocation: 0,
             lastPayroll: startDate,
             name: name
@@ -561,11 +542,27 @@ contract Payroll is App, Initializable, ERC677Receiver {
         // Ids mapping
         employeeIds[accountAddress] = employeeId;
         // update global variables
-        yearlyTotalPayroll = yearlyTotalPayroll.add(initialYearlyUSDSalary);
+        yearlyTotalPayroll = yearlyTotalPayroll.add(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
         numEmployees++;
         nextEmployee++;
     }
 
-    function getTimestamp() internal constant returns (uint256) { return now; }
+    function getTimestamp() internal view returns (uint256) { return now; }
 
+}
+
+
+library DenominationToken {
+    using SafeMath for uint;
+
+    uint256 constant public DENOMINATION_DECIMALS = 10**9; // for sub-cent precision
+    uint256 constant public SECONDS_IN_A_YEAR = 31557600; // 365.25 days
+
+    function toYearlyDenomination(uint256 a) internal pure returns (uint256) {
+        return a.mul(SECONDS_IN_A_YEAR) / DENOMINATION_DECIMALS;
+    }
+
+    function toSecondDenominationToken(uint256 a) internal pure returns (uint256) {
+        return a.mul(DENOMINATION_DECIMALS) / SECONDS_IN_A_YEAR;
+    }
 }

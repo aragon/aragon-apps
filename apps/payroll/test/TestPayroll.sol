@@ -1,6 +1,6 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
-import "@aragon/core/contracts/common/MiniMeToken.sol";
+import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
 
 
 contract TestPayroll {
