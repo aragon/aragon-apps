@@ -1,0 +1,24 @@
+{
+  "name": "aragon-finance",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@aragon/ui": "^0.3.0",
+    "date-fns": "^1.29.0",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-motion": "^0.5.2",
+    "styled-components": "^3.1.4"
+  },
+  "devDependencies": {
+    "react-scripts": "1.0.17"
+  },
+  "scripts": {
+    "sync-assets": "rsync -rtu \"$(dirname $(node -p 'require.resolve(\"@aragon/ui\")'))/\" public/aragon-ui",
+    "start": "npm run sync-assets && PORT=3002 react-scripts start",
+    "build": "npm run sync-assets && react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "proxy": "http://localhost:3002"
+}
