@@ -1,9 +1,9 @@
 import seedRandom from 'seed-random'
-import { subDays } from 'date-fns'
+import { subSeconds, subDays } from 'date-fns'
 import { randomInt, randomEntry } from './lib/utils'
 
 const TODAY = new Date()
-const RANDOM = seedRandom('seed')
+const RANDOM = seedRandom('seed 12345')
 
 const CURRENCIES = ['ANT', 'ETH']
 
@@ -26,6 +26,7 @@ const REFS_IN = [
   'Invoice IN19733',
   'Invoice IN23898',
 ]
+
 const REFS_OUT = [
   'Payment to service providers',
   'Payment for PR services',
@@ -58,12 +59,12 @@ export const transfers = [...new Array(43)]
       (randomInt(0, 2, RANDOM) || -1)
     const refs = amount > 0 ? REFS_IN : REFS_OUT
     return transfer(
-      subDays(TODAY, randomInt(0, 30, RANDOM)),
+      subSeconds(subDays(TODAY, randomInt(0, 30, RANDOM)), i),
       randomEntry(refs, RANDOM),
       amount,
       randomEntry(CURRENCIES, RANDOM),
       createApprovedBy(),
-      randomHash(),
+      randomHash()
     )
   })
-  .sort(({ dateA, dateB }) => dateA - dateB)
+  .sort((transferA, transferB) => transferB.date - transferA.date)
