@@ -1,0 +1,35 @@
+{
+  "contract_name": "AppStorage",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "appId",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "kernel",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "unlinked_binary": "0x6060604052341561000f57600080fd5b5b60ef8061001e6000396000f300606060405263ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166380afdea881146046578063d4aae0c4146068575b600080fd5b3415605057600080fd5b605660a1565b60405190815260200160405180910390f35b3415607257600080fd5b607860a7565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200160405180910390f35b60015481565b60005473ffffffffffffffffffffffffffffffffffffffff16815600a165627a7a723058203ca0a022fe0e2625b76a0a70d0fcaf743c486e05b4698d6c1a0f67a59d52e2e30029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1515090408054
+}

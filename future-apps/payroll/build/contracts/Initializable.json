@@ -1,0 +1,22 @@
+{
+  "contract_name": "Initializable",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getInitializationBlock",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "unlinked_binary": "0x60606040523415600e57600080fd5b5b60918061001d6000396000f300606060405263ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416638b3dd7498114603c575b600080fd5b3415604657600080fd5b604c605e565b60405190815260200160405180910390f35b6000545b905600a165627a7a72305820e1b76e1f97cad45c35da21d75824c3ff6ec2d49fb5b030b5bcfe314fd9b56db60029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1515090408054
+}

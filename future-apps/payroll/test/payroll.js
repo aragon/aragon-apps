@@ -161,6 +161,12 @@ contract('Payroll', function(accounts) {
     assert.equal(employee[2], name, "Employee name doesn't match");
   });
 
+  it("Try to add again same employee", async () => {
+    return assertRevert(async () => {
+      await payroll.addEmployee(employee1_1, salary1_1);
+    });
+  });
+
   it("Add employee with name", async () => {
     let name = 'Joe';
     let employeeId = 2;
@@ -226,12 +232,44 @@ contract('Payroll', function(accounts) {
     });
   });
 
+  it("Modify employee account address by Employer, but for already existent account ", async () => {
+    let employeeId = 1;
+    return assertRevert(async () => {
+      await payroll.changeAddressByOwner(employeeId, employee2);
+    });
+  });
+
+  it("Modify employee account address by Employer, but for null account ", async () => {
+    let employeeId = 1;
+    return assertRevert(async () => {
+      await payroll.changeAddressByOwner(employeeId, "0x0");
+    });
+  });
+
   it("Modify employee account address by Employer ", async () => {
     let employeeId = 1;
     await payroll.changeAddressByOwner(employeeId, employee1_2);
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee1_2, "Employee employee doesn't match");
     employee1 = employee1_2;
+  });
+
+  it("Modify employee account address by Employee, for already existent account ", async () => {
+    let account_old = employee1_2;
+    let account_new = employee2;
+    let employeeId = 1;
+    return assertRevert(async () => {
+      await payroll.changeAddressByEmployee(account_new, {from: account_old});
+    });
+  });
+
+  it("Modify employee account address by Employee, for null account ", async () => {
+    let account_old = employee1_2;
+    let account_new = "0x0";
+    let employeeId = 1;
+    return assertRevert(async () => {
+      await payroll.changeAddressByEmployee(account_new, {from: account_old});
+    });
   });
 
   it("Modify employee account address by Employee ", async () => {

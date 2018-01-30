@@ -1,0 +1,153 @@
+{
+  "contract_name": "OracleMockup",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "setRate",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "payroll",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "pr",
+          "type": "address"
+        }
+      ],
+      "name": "setPayroll",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "x",
+          "type": "address"
+        }
+      ],
+      "name": "toInt",
+      "outputs": [
+        {
+          "name": "i",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "name": "callback",
+          "type": "function"
+        }
+      ],
+      "name": "query",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "payable": false,
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "OracleLogQuery",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "pr",
+          "type": "address"
+        }
+      ],
+      "name": "OracleLogSetPayroll",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "OracleLogSetRate",
+      "type": "event"
+    }
+  ],
+  "unlinked_binary": "0x6060604052341561000f57600080fd5b5b5b5b6103ae806100216000396000f300606060405263ffffffff60e060020a6000350416632bdb70978114610050578063562a5d06146100745780638139d2ca146100a3578063b771c3bb146100c4578063e150d834146100f5575b600080fd5b341561005b57600080fd5b610072600160a060020a036004351660243561014f565b005b341561007f57600080fd5b61008761020e565b604051600160a060020a03909116815260200160405180910390f35b34156100ae57600080fd5b610072600160a060020a036004351661021d565b005b34156100cf57600080fd5b6100e3600160a060020a036004351661028f565b60405190815260200160405180910390f35b341561010057600080fd5b61013b600435600160a060020a03166c010000000000000000000000006024359081049068010000000000000000900463ffffffff166102c6565b604051901515815260200160405180910390f35b600054600160a060020a031663bd5c5420838360405160e060020a63ffffffff8516028152600160a060020a0390921660048301526024820152604401600060405180830381600087803b15156101a557600080fd5b6102c65a03f115156101b657600080fd5b5050507f2ed75c32debc3e73897fe5aa08fa51cd2d7a3391afd4fee6cde0aa147107e4d9338383604051600160a060020a039384168152919092166020820152604080820192909252606001905180910390a15b5050565b600054600160a060020a031681565b6000805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0383161790557fcba8cb3761d48047bf15568fb2f7bec9f5d87468eaa5eea57aef0de7339388983382604051600160a060020a039283168152911660208201526040908101905180910390a15b50565b730100000000000000000000000000000000000000600160a060020a038216048015156102ba575060015b6305f5e100025b919050565b6000806102d28561028f565b90508383868360405160e060020a63ffffffff8516028152600160a060020a0390921660048301526024820152604401600060405180830381600087803b151561031b57600080fd5b6102c65a03f1151561032c57600080fd5b5050507f6993b4fae6295e544af897f16efebde4ca78581d3750837f4c27ce5644654db03386604051600160a060020a039283168152911660208201526040908101905180910390a1600191505b5093925050505600a165627a7a72305820b9b53d4cfec0189cae459e4b3157804c27e67ebe88e5dcf9f09546f45ad2ebfc0029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1515090408052
+}
