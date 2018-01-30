@@ -86,12 +86,14 @@ const TextOverflow = styled.div`
 `
 
 const DateHeader = styled(TableHeader)`
-  width: 0;
+  width: 12%;
 `
 const SourceRecipientHeader = styled(TableHeader)`
-  width: 0;
+  width: 40%;
 `
-const ReferenceHeader = styled(TableHeader)``
+const ReferenceHeader = styled(TableHeader)`
+  width: 100%;
+`
 const AmountHeader = styled(TableHeader)`
   width: 0;
 `
