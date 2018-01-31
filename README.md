@@ -13,9 +13,15 @@ This repository contains the following apps:
 - **[Finance](apps/finance)**: Send payments and manage expenses with budgeting.
 - **[Voting](apps/voting)**: Create votes that execute actions on behalf of token holders.
 - **[Token Manager](apps/token-manager)**: Manages organization tokens.
-- **[Payroll](apps/payroll)**: Manages employees' payrolls.
 
 You can read more about the individual apps in [their specifications](https://wiki.aragon.one/dev/apps/) on the Aragon Wiki.
+
+## Coming soon apps
+
+The following apps are still under development, not ready for production deployment yet:
+
+- **[Payroll](future-apps/payroll)**: Manages employees' payrolls.
+- **[Fundraising](future-apps/fundraising)**: Manages fundraising campaings.
 
 ## Developing
 

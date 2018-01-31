@@ -8,7 +8,7 @@ contract PayrollInterface {
 }
 
 
-contract OracleFailMockup is OracleInterface {
+contract OracleFailMock is OracleInterface {
     uint256 public exchangeRate;
 
     event OracleFailLogSetPayroll (address sender, address pr);

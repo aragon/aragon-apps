@@ -8,7 +8,7 @@ contract PayrollInterface {
 }
 
 
-contract OracleMockup is OracleInterface {
+contract OracleMock is OracleInterface {
 
     event OracleLogSetPayroll(address sender, address pr);
     event OracleLogSetRate(address sender, address token, uint256 value);
