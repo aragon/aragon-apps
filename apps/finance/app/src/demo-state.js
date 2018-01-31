@@ -48,9 +48,11 @@ const createApprovedBy = () =>
     ? randomHash()
     : `${randomEntry(ARAGON_IDS, RANDOM)}.aragonid.eth`
 
-const randomAmount = max =>
+const randomAmount = (max, digits = 3) =>
   (randomInt(1, max, RANDOM) +
-    (randomInt(0, 2, RANDOM) ? 0 : randomInt(0, 1000, RANDOM) / 1000)) *
+    (randomInt(0, 2, RANDOM)
+      ? 0
+      : randomInt(0, Math.pow(10, digits), RANDOM) / Math.pow(10, digits))) *
   (randomInt(0, 2, RANDOM) || -1)
 
 const randomHash = () =>
@@ -73,5 +75,5 @@ export const transfers = [...new Array(43)]
 
 export const balances = TOKENS.map(token => ({
   token,
-  amount: randomAmount(2000),
+  amount: randomAmount(2000, 10),
 }))

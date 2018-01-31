@@ -10,9 +10,11 @@ import {
   ContextMenu,
   ContextMenuItem,
   IconShare,
+  IconTokens,
   theme,
   unselectable,
 } from '@aragon/ui'
+import { formatTokenAmount } from '../lib/utils'
 
 class Transfers extends React.Component {
   state = {
@@ -58,18 +60,18 @@ class Transfers extends React.Component {
                 <NoWrapCell>{ref}</NoWrapCell>
                 <NoWrapCell align="right">
                   <Amount positive={amount > 0}>
-                    {amount} {token}
+                    {formatTokenAmount(amount, true)} {token}
                   </Amount>
                 </NoWrapCell>
                 <NoWrapCell>
                   <ContextMenu>
                     <ContextMenuItem>
                       <IconShare />
-                      Copy URL to share
+                      Copy transfer URL
                     </ContextMenuItem>
                     <ContextMenuItem>
-                      <IconShare />
-                      See transaction
+                      <IconTokens />
+                      View approval
                     </ContextMenuItem>
                   </ContextMenu>
                 </NoWrapCell>
