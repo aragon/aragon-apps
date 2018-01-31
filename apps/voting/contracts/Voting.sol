@@ -19,8 +19,8 @@ contract Voting is IForwarder, AragonApp {
 
     uint256 constant public PCT_BASE = 10 ** 18;
 
-    bytes32 constant public CREATE_VOTES_ROLE = bytes32(1);
-    bytes32 constant public MODIFY_QUORUM_ROLE = bytes32(2);
+    bytes32 constant public CREATE_VOTES_ROLE = keccak256('CREATE_VOTES_ROLE');
+    bytes32 constant public MODIFY_QUORUM_ROLE = keccak256('MODIFY_QUORUM_ROLE');
 
     enum VoterState { Absent, Yea, Nay }
 
