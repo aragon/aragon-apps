@@ -3,6 +3,7 @@ pragma solidity 0.4.18;
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/Initializable.sol";
 import "@aragon/os/contracts/common/EtherToken.sol";
+import "@aragon/os/contracts/common/IForwarder.sol";
 
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
@@ -424,6 +425,27 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
      */
     function getExchangeRate(address token) external view returns (uint256 rate) {
         rate = exchangeRates[token];
+    }
+
+    /**
+     * @dev IForwarder interface conformance. Forwards any token holder action.
+     * @param _evmScript script being executed
+     */
+    function forward(bytes _evmScript) public {
+        require(canForward(msg.sender, _evmScript));
+        bytes memory input = new bytes(0); // TODO: Consider input for this
+        address[] memory blacklist = new address[](1);
+        blacklist[0] = address(finance);
+        runScript(_evmScript, input, blacklist);
+    }
+
+    function isForwarder() public pure returns (bool) {
+        return true;
+    }
+
+    function canForward(address _sender, bytes) public view returns (bool) {
+        // check that employee exists (and matches)
+        return (employees[employeeIds[_sender]].accountAddress == msg.sender);
     }
 
     /**
