@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { AragonApp, AppBar, Button } from '@aragon/ui'
-import { transfers } from './demo-state'
+import { transfers, balances } from './demo-state'
 import Transfers from './components/Transfers'
 
 class App extends React.Component {

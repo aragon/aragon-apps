@@ -5,7 +5,7 @@ import { randomInt, randomEntry } from './lib/utils'
 const TODAY = new Date()
 const RANDOM = seedRandom('seed 12345')
 
-const CURRENCIES = ['ANT', 'ETH']
+const TOKENS = ['ANT', 'ETH', 'DNT', 'SNT', 'MANA', 'ZRX']
 
 const HASH_BASE = '0998B61aE8eD80f9370B579ee8085e4e05ff7451'
 
@@ -34,11 +34,11 @@ const REFS_OUT = [
   'Payroll',
 ]
 
-const transfer = (date, ref, amount, currency, approvedBy, transaction) => ({
+const transfer = (date, ref, amount, token, approvedBy, transaction) => ({
   date,
   ref,
   amount,
-  currency,
+  token,
   approvedBy,
   transaction,
 })
@@ -48,23 +48,30 @@ const createApprovedBy = () =>
     ? randomHash()
     : `${randomEntry(ARAGON_IDS, RANDOM)}.aragonid.eth`
 
+const randomAmount = max =>
+  (randomInt(1, max, RANDOM) +
+    (randomInt(0, 2, RANDOM) ? 0 : randomInt(0, 1000, RANDOM) / 1000)) *
+  (randomInt(0, 2, RANDOM) || -1)
+
 const randomHash = () =>
   `0x${[...HASH_BASE].sort(() => RANDOM() - 0.5).join('')}`
 
 export const transfers = [...new Array(43)]
   .map((_, i) => {
-    const amount =
-      (randomInt(1, 15000, RANDOM) +
-        (randomInt(0, 2, RANDOM) ? 0 : randomInt(0, 1000, RANDOM) / 1000)) *
-      (randomInt(0, 2, RANDOM) || -1)
+    const amount = randomAmount(15000)
     const refs = amount > 0 ? REFS_IN : REFS_OUT
     return transfer(
       subSeconds(subDays(TODAY, randomInt(0, 30, RANDOM)), i),
       randomEntry(refs, RANDOM),
       amount,
-      randomEntry(CURRENCIES, RANDOM),
+      randomEntry(TOKENS, RANDOM),
       createApprovedBy(),
       randomHash()
     )
   })
   .sort((transferA, transferB) => transferB.date - transferA.date)
+
+export const balances = TOKENS.map(token => ({
+  token,
+  amount: randomAmount(2000),
+}))

@@ -7,7 +7,11 @@ import {
   TableHeader,
   TableRow,
   TableCell,
+  ContextMenu,
+  ContextMenuItem,
+  IconShare,
   theme,
+  unselectable,
 } from '@aragon/ui'
 
 class Transfers extends React.Component {
@@ -32,22 +36,42 @@ class Transfers extends React.Component {
               <SourceRecipientHeader title="Source / Recipient" />
               <ReferenceHeader title="Reference" />
               <AmountHeader title="Amount" align="right" />
+              <TableHeader />
             </TableRow>
           }
         >
           {transfers
             .slice(0, displayedTransfers)
-            .map(({ date, ref, amount, currency, approvedBy, transaction }) => (
+            .map(({ date, ref, amount, token, approvedBy, transaction }) => (
               <TableRow key={transaction}>
                 <NoWrapCell>{format(date, 'DD/MM/YY')}</NoWrapCell>
                 <NoWrapCell>
-                  <TextOverflow>{approvedBy}</TextOverflow>
+                  <TextOverflow>
+                    <a
+                      target="_blank"
+                      href={`https://etherscan.io/address/${approvedBy}`}
+                    >
+                      {approvedBy}
+                    </a>
+                  </TextOverflow>
                 </NoWrapCell>
                 <NoWrapCell>{ref}</NoWrapCell>
                 <NoWrapCell align="right">
                   <Amount positive={amount > 0}>
-                    {amount} {currency}
+                    {amount} {token}
                   </Amount>
+                </NoWrapCell>
+                <NoWrapCell>
+                  <ContextMenu>
+                    <ContextMenuItem>
+                      <IconShare />
+                      Copy URL to share
+                    </ContextMenuItem>
+                    <ContextMenuItem>
+                      <IconShare />
+                      See transaction
+                    </ContextMenuItem>
+                  </ContextMenu>
                 </NoWrapCell>
               </TableRow>
             ))}
