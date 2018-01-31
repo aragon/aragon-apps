@@ -1,7 +1,7 @@
 const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow');
 const getBalance = require('@aragon/test-helpers/balance')(web3);
 const getTransaction = require('@aragon/test-helpers/transaction')(web3);
-const MiniMeToken = artifacts.require('@aragon/core/contracts/common/MiniMeToken');
+const MiniMeToken = artifacts.require('@aragon/os/contracts/common/MiniMeToken');
 const EtherToken = artifacts.require('EtherToken');
 const Vault = artifacts.require('Vault');
 const Finance = artifacts.require('Finance');
@@ -9,9 +9,6 @@ const Payroll = artifacts.require("PayrollMock");
 const ERC677Token = artifacts.require("./tokens/ERC677GenToken.sol");
 const OracleMock = artifacts.require("./oracle/OracleMock.sol");
 const OracleFailMock = artifacts.require("./oracle/OracleFailMock.sol");
-
-const { encodeCallScript } = require('@aragon/test-helpers/evmScript');
-const ExecutionTarget = artifacts.require('ExecutionTarget');
 
 
 contract('Payroll', function(accounts) {
@@ -457,7 +454,7 @@ contract('Payroll', function(accounts) {
 
   it("fails on sending ETH funds to Payroll", async () => {
     return assertRevert(async () => {
-      await payroll2.sendTransaction({ from: owner, value: web3.toWei(2, 'ether') });
+      await payroll2.sendTransaction({ from: owner, value: web3.toWei(200, 'wei') });
     });
   });
 
