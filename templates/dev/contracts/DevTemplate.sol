@@ -17,6 +17,8 @@ contract DevTemplate {
 
     address constant ANY_ENTITY = address(-1);
 
+    event DeployInstance(address dao);
+
     function DevTemplate(DAOFactory _fac, APMRegistry _apm, address votingBase, bytes votingContentURI) {
         apm = _apm;
         fac = _fac;
@@ -28,10 +30,23 @@ contract DevTemplate {
         Kernel dao = fac.newDAO(ANY_ENTITY);
         ACL acl = ACL(dao.acl());
 
-        acl.createPermission(ANY_ENTITY, dao, dao.APP_MANAGER_ROLE(), this);
+        acl.createPermission(ANY_ENTITY, dao, dao.APP_MANAGER_ROLE(), msg.sender);
 
         bytes32 appId = votingAppId();
         Voting voting = Voting(dao.newAppInstance(appId, latestVersionAppBase(appId)));
+        MiniMeToken token = new MiniMeToken(address(0), address(0), 0, 'DevToken', 18, 'XDT', true);
+
+        token.changeController(msg.sender); // sender has to create tokens
+
+        uint256 pct = 10 ** 16;
+        // 50% support, 15% accept quorum, 1 hour vote duration
+        voting.initialize(token, 50 * pct, 15 * pct, 1 hours);
+
+        // voting app permissions
+        acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), msg.sender);
+        acl.createPermission(ANY_ENTITY, voting, voting.MODIFY_QUORUM_ROLE(), msg.sender);
+
+        DeployInstance(dao);
     }
 
     function createVotingRepo(address votingBase, bytes votingContentURI) internal {
