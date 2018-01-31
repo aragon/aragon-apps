@@ -15,14 +15,16 @@ import "./DenominationToken.sol";
 /**
  * @title Payroll in multiple currencies
  */
-contract Payroll is AragonApp {
+contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes pure and interface doesnt match)
     using SafeMath for uint;
     using DenominationToken for uint;
 
     uint256 constant public MAX_UINT = uint256(-1);
     // kernel roles
-    bytes32 constant public EMPLOYER_ROLE = bytes32(1);
-    bytes32 constant public ORACLE_ROLE = bytes32(2);
+    bytes32 constant public ADD_EMPLOYEE_ROLE = bytes32(1);
+    bytes32 constant public REMOVE_EMPLOYEE_ROLE = bytes32(2);
+    bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = bytes32(3);
+    bytes32 constant public ORACLE_ROLE = bytes32(4);
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
@@ -33,11 +35,9 @@ contract Payroll is AragonApp {
         string name;
     }
 
-    uint private numEmployees;
-    uint private nextEmployee; // starts at 1
+    uint128 private nextEmployee; // starts at 1
     mapping(uint => Employee) private employees;
     mapping(address => uint) private employeeIds;
-    uint256 private yearlyTotalPayroll;
 
     Finance public finance;
     ERC20 public denominationToken;
@@ -47,7 +47,7 @@ contract Payroll is AragonApp {
     address[] private allowedTokensArray;
 
     event Fund (address sender, address token, uint amount, uint balance, bytes data);
-    event SendPayroll (address sender, address token, uint amount);
+    event SendPayroll (address employee, address token, uint amount);
     event ExchangeRateSet (address token, uint rate);
 
     /**
@@ -65,7 +65,6 @@ contract Payroll is AragonApp {
     {
         initialized();
 
-        numEmployees = 0;
         nextEmployee = 1; // leave 0 to check null address mapping
         finance = _finance;
         etherToken = _etherToken;
@@ -79,7 +78,13 @@ contract Payroll is AragonApp {
      * @param token The token address
      * @param denominationExchangeRate The exchange rate
      */
-    function setExchangeRate(address token, uint256 denominationExchangeRate) external auth(ORACLE_ROLE) {
+    function setExchangeRate(
+        address token,
+        uint256 denominationExchangeRate
+    )
+        external
+        authP(ORACLE_ROLE, arr(token, denominationExchangeRate, exchangeRates[token]))
+    {
         // Denomination Token is a special one, so we can not allow its exchange rate to be changed
         require(token != address(denominationToken));
         exchangeRates[token] = denominationExchangeRate;
@@ -87,17 +92,14 @@ contract Payroll is AragonApp {
     }
 
     /**
-     * @dev Add tokens to the allowed set
-     * @notice Add tokens to the allowed set
-     * @param _allowedTokens Array of new tokens allowed for payment
+     * @dev Add token to the allowed set
+     * @notice Add token to the allowed set
+     * @param _allowedToken New token allowed for payment
      */
-    function addAllowedTokens(address[] _allowedTokens) external auth(EMPLOYER_ROLE) {
-        for (uint i = 0; i < _allowedTokens.length; i++) {
-            if (!allowedTokens[_allowedTokens[i]]) {
-                allowedTokens[_allowedTokens[i]] = true;
-                allowedTokensArray.push(_allowedTokens[i]);
-            }
-        }
+    function addAllowedToken(address _allowedToken) external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
+        require(!allowedTokens[_allowedToken]);
+        allowedTokens[_allowedToken] = true;
+        allowedTokensArray.push(_allowedToken);
     }
 
     /*
@@ -117,7 +119,7 @@ contract Payroll is AragonApp {
         uint256 initialYearlyDenominationSalary
     )
         external
-        auth(EMPLOYER_ROLE)
+        authP(ADD_EMPLOYEE_ROLE, arr(initialYearlyDenominationSalary, getTimestamp()))
     {
         _addEmployee(
             accountAddress,
@@ -140,7 +142,7 @@ contract Payroll is AragonApp {
         string name
     )
         external
-        auth(EMPLOYER_ROLE)
+        authP(ADD_EMPLOYEE_ROLE, arr(initialYearlyDenominationSalary, getTimestamp()))
     {
         _addEmployee(
             accountAddress,
@@ -166,7 +168,7 @@ contract Payroll is AragonApp {
         uint256 startDate
     )
         external
-        auth(EMPLOYER_ROLE)
+        authP(ADD_EMPLOYEE_ROLE, arr(initialYearlyDenominationSalary, startDate))
     {
         _addEmployee(
             accountAddress,
@@ -182,15 +184,17 @@ contract Payroll is AragonApp {
      * @param employeeId Employee's identifier
      * @param yearlyDenominationSalary Employee's new salary
      */
-    function setEmployeeSalary(uint256 employeeId, uint256 yearlyDenominationSalary) external auth(EMPLOYER_ROLE) {
+    function setEmployeeSalary(
+        uint256 employeeId,
+        uint256 yearlyDenominationSalary
+    )
+        external
+        authP(ADD_EMPLOYEE_ROLE, arr(yearlyDenominationSalary, 0))
+    {
         /* check that employee exists */
         require(employeeIds[employees[employeeId].accountAddress] != 0);
 
-        yearlyTotalPayroll = yearlyTotalPayroll
-            .sub(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
         employees[employeeId].denominationTokenSalary = yearlyDenominationSalary.toSecondDenominationToken();
-        yearlyTotalPayroll = yearlyTotalPayroll
-            .add(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
     }
 
     /**
@@ -198,15 +202,18 @@ contract Payroll is AragonApp {
      * @notice Updates also global Payroll salary sum
      * @param employeeId Employee's identifier
      */
-    function removeEmployee(uint256 employeeId) external auth(EMPLOYER_ROLE) {
+    function removeEmployee(uint256 employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
         /* check that employee exists */
         require(employeeIds[employees[employeeId].accountAddress] != 0);
 
-        yearlyTotalPayroll = yearlyTotalPayroll
-            .sub(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
+        // Pay owed salary to employee
+        // get time that has gone by (seconds)
+        uint256 time = getTimestamp().sub(employees[employeeId].lastPayroll);
+        if (time > 0)
+            _payTokens(employeeId, time);
+
         delete employeeIds[employees[employeeId].accountAddress];
         delete employees[employeeId];
-        numEmployees--;
     }
 
     /**
@@ -301,7 +308,7 @@ contract Payroll is AragonApp {
      * @param distribution Array (correlated to tokens) with the proportions (integers over 100)
      */
     function determineAllocation(address[] tokens, uint256[] distribution) external {
-        Employee employee = employees[employeeIds[msg.sender]];
+        Employee storage employee = employees[employeeIds[msg.sender]];
         // check that employee exists (and matches)
         require(employee.accountAddress == msg.sender);
         // check that enough time has gone by
@@ -331,58 +338,18 @@ contract Payroll is AragonApp {
      * @notice To withdraw payment by employee (the caller). The amount owed since last call will be transferred.
      */
     function payday() external {
-        Employee employee = employees[employeeIds[msg.sender]];
+        Employee storage employee = employees[employeeIds[msg.sender]];
         // check that employee exists (and matches)
-        require(employee.accountAddress == msg.sender);
+        require(employees[employeeIds[msg.sender]].accountAddress == msg.sender);
         // get time that has gone by (seconds)
-        uint256 time = getTimestamp().sub(employee.lastPayroll);
+        uint256 time = getTimestamp().sub(employees[employeeIds[msg.sender]].lastPayroll);
         require(time > 0);
 
-        // loop over allowed tokens
-        bool somethingPaid = false;
-        for (uint i = 0; i < allowedTokensArray.length; i++) {
-            address token = allowedTokensArray[i];
-            if (employee.allocation[token] == 0)
-                continue;
-            require(checkExchangeRate(token));
-            // salary converted to token and applied allocation percentage
-            uint256 tokenAmount = employee.denominationTokenSalary
-                .mul(exchangeRates[token]).mul(employee.allocation[token]) / 100;
-            tokenAmount = tokenAmount.mul(time);
-            ERC20 tokenContract = ERC20(token);
-            finance.newPayment(
-                tokenContract,
-                msg.sender,
-                tokenAmount,
-                0,
-                0,
-                1,
-                ""
-            );
-            SendPayroll(msg.sender, token, tokenAmount);
-            somethingPaid = true;
-        }
+        bool somethingPaid = _payTokens(employeeIds[msg.sender], time);
         require(somethingPaid);
+
         // finally update last payroll date
         employee.lastPayroll = getTimestamp();
-    }
-
-    /**
-     * @dev Change employee account address. To be called by Employer.
-     * @notice Change employee account address
-     * @param employeeId Employee's identifier
-     * @param newAddress New address to receive payments
-     */
-    function changeAddressByOwner(uint256 employeeId, address newAddress) external auth(EMPLOYER_ROLE) {
-        // check that account doesn't exist
-        require(employeeIds[newAddress] == 0);
-        // check it's non-null address
-        require(newAddress != address(0));
-
-        Employee employee = employees[employeeId];
-        employeeIds[employee.accountAddress] = 0;
-        employee.accountAddress = newAddress;
-        employeeIds[newAddress] = employeeId;
     }
 
     /**
@@ -397,22 +364,13 @@ contract Payroll is AragonApp {
         require(newAddress != address(0));
         // check that employee exists (and matches)
         uint256 employeeId = employeeIds[msg.sender];
-        Employee employee = employees[employeeId];
+        Employee storage employee = employees[employeeId];
         // check that employee exists (and matches)
         require(employee.accountAddress == msg.sender);
 
         employee.accountAddress = newAddress;
         employeeIds[newAddress] = employeeId;
         employeeIds[msg.sender] = 0;
-    }
-
-    /**
-     * @dev Get number of employees in Payroll
-     * @notice Get number of employees in Payroll
-     * @return Number of employees
-     */
-    function getEmployeeCount() external view returns (uint256 count) {
-        return numEmployees;
     }
 
     /**
@@ -436,7 +394,7 @@ contract Payroll is AragonApp {
             uint lastPayroll
         )
     {
-        Employee employee = employees[employeeId];
+        Employee storage employee = employees[employeeId];
 
         accountAddress = employee.accountAddress;
         yearlyDenominationSalary = employee.denominationTokenSalary.toYearlyDenomination();
@@ -446,51 +404,12 @@ contract Payroll is AragonApp {
     }
 
     /**
-     * @dev Get total amount of salaries in Payroll
-     * @notice Get total amount of salaries in Payroll
-     * @return Integer with the amount
-     */
-    function getYearlyTotalPayroll() external view returns (uint256 total) {
-        total = yearlyTotalPayroll;
-    }
-
-    /**
-     * @dev Monthly Denomination amount spent in salaries
-     * @notice Monthly Denomination amount spent in salaries
-     * @return Integer with the monthly amount
-     */
-    function calculatePayrollBurnrate() external view returns (uint256 payrollBurnrate) {
-        payrollBurnrate = yearlyTotalPayroll / 12;
-    }
-
-    /**
-     * @dev Days until the contract can run out of funds
-     * @notice Days until the contract can run out of funds
-     * @return Integer with the number of days
-     */
-    function calculatePayrollRunway() external view returns (uint256 payrollRunway) {
-        if (yearlyTotalPayroll == 0)
-            return MAX_UINT;
-
-        uint256 balance = 0;
-        // for each token, get finance balance and convert it to Denomination
-        for (uint i = 0; i < allowedTokensArray.length; i ++) {
-            address token = allowedTokensArray[i];
-            ERC20 tokenContract = ERC20(token);
-            if (exchangeRates[token] == 0)
-                continue;
-            balance = balance.add(tokenContract.balanceOf(finance).div(exchangeRates[token]));
-        }
-        payrollRunway = balance.mul(365) / yearlyTotalPayroll;
-    }
-
-    /**
      * @dev Get payment proportion for a token and an employee (the caller)
      * @notice Get payment proportion for a token and an employee (the caller)
      * @param token The token address
      */
     function getAllocation(address token) external view returns (uint256 allocation) {
-        Employee employee = employees[employeeIds[msg.sender]];
+        Employee storage employee = employees[employeeIds[msg.sender]];
         // check that employee exists (and matches)
         require(employee.accountAddress == msg.sender);
 
@@ -505,6 +424,40 @@ contract Payroll is AragonApp {
      */
     function getExchangeRate(address token) external view returns (uint256 rate) {
         rate = exchangeRates[token];
+    }
+
+    /**
+     * @dev Loop over tokens and send Payroll to employee
+     * @param employeeId Id of employee receiving payroll
+     * @param time Time owed to employee (since last payroll)
+     * @return True if something has been paid
+     */
+    function _payTokens(uint256 employeeId, uint256 time) internal returns (bool somethingPaid) {
+        Employee storage employee = employees[employeeId];
+        // loop over allowed tokens
+        somethingPaid = false;
+        for (uint i = 0; i < allowedTokensArray.length; i++) {
+            address token = allowedTokensArray[i];
+            if (employee.allocation[token] == 0)
+                continue;
+            require(checkExchangeRate(token));
+            // salary converted to token and applied allocation percentage
+            uint256 tokenAmount = employee.denominationTokenSalary
+                .mul(exchangeRates[token]).mul(employee.allocation[token]) / 100;
+            tokenAmount = tokenAmount.mul(time);
+            ERC20 tokenContract = ERC20(token);
+            finance.newPayment(
+                tokenContract,
+                employee.accountAddress,
+                tokenAmount,
+                0,
+                0,
+                1,
+                ""
+            );
+            SendPayroll(employee.accountAddress, token, tokenAmount);
+            somethingPaid = true;
+        }
     }
 
     /**
@@ -542,9 +495,6 @@ contract Payroll is AragonApp {
         // Ids mapping
         employeeIds[accountAddress] = employeeId;
         // update global variables
-        yearlyTotalPayroll = yearlyTotalPayroll
-            .add(employees[employeeId].denominationTokenSalary.toYearlyDenomination());
-        numEmployees++;
         nextEmployee++;
     }
 
