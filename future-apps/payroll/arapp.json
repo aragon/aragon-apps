@@ -16,8 +16,10 @@
         }
     ],
     "roles": [
-        { "name": "Owner write", "id": "EMPLOYER_ROLE" },
-        { "name": "Oracle", "id": "ORACLE_ROLE" }
+        { "name": "Add employees", "id": "ADD_EMPLOYEE_ROLE", "params": ["Initial yearly payroll", "Start date"] },
+        { "name": "Remove employees", "id": "REMOVE_EMPLOYEE_ROLE" },
+        { "name": "Allowed Tokens Manager", "id": "ALLOWED_TOKENS_MANAGER_ROLE", "params": "Token" },
+        { "name": "Oracle", "id": "ORACLE_ROLE", "params": ["Token", "Exchange rate", "Old exchange rate"] }
     ],
     "path": "contracts/Payroll.sol"
 }
