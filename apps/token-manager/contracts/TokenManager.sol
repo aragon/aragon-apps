@@ -20,11 +20,11 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     uint256 public maxAccountTokens;
     bool public logHolders;
 
-    bytes32 constant public MINT_ROLE = bytes32(1);
-    bytes32 constant public ISSUE_ROLE = bytes32(2);
-    bytes32 constant public ASSIGN_ROLE = bytes32(3);
-    bytes32 constant public REVOKE_VESTINGS_ROLE = bytes32(4);
-    bytes32 constant public BURN_ROLE = bytes32(5);
+    bytes32 constant public MINT_ROLE = keccak256('MINT_ROLE');
+    bytes32 constant public ISSUE_ROLE = keccak256('ISSUE_ROLE');
+    bytes32 constant public ASSIGN_ROLE = keccak256('ASSIGN_ROLE');
+    bytes32 constant public REVOKE_VESTINGS_ROLE = keccak256('REVOKE_VESTINGS_ROLE');
+    bytes32 constant public BURN_ROLE = keccak256('BURN_ROLE');
 
     uint256 constant MAX_VESTINGS_PER_ADDRESS = 50;
     struct TokenVesting {

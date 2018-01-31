@@ -9,6 +9,7 @@ apps/*/node_modules
 */**/allFiredEvents
 */**/scTopics
 */**/build
+*/**/artifact.json
 
 # lerna
 lerna-debug.log
