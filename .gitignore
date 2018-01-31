@@ -3,11 +3,12 @@ node_modules
 apps/*/node_modules
 
 # coverage
-apps/*/coverage
-apps/*/coverageEnv
-apps/*/coverage.json
-apps/*/allFiredEvents
-apps/*/scTopics
+*/**/coverage
+*/**/coverageEnv
+*/**/coverage.json
+*/**/allFiredEvents
+*/**/scTopics
+*/**/build
 
 # lerna
 lerna-debug.log
