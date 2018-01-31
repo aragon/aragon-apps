@@ -1,0 +1,23 @@
+{
+    "appName": "payroll.aragonpm.eth",
+    "version": "1.0.0",
+    "dependencies": [
+        {
+            "appName": "finance.aragonpm.eth",
+            "version": "^1.0.0",
+            "initParam": "_finance",
+            "state": "finance",
+            "requiredPermissions": [
+                {
+                    "name": "TRANSFER_ROLE",
+                    "params": "*"
+                }
+            ]
+        }
+    ],
+    "roles": [
+        { "name": "Owner write", "id": "EMPLOYER_ROLE" },
+        { "name": "Oracle", "id": "ORACLE_ROLE" }
+    ],
+    "path": "contracts/Payroll.sol"
+}
