@@ -22,10 +22,10 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
 
     uint256 constant public MAX_UINT = uint256(-1);
     // kernel roles
-    bytes32 constant public ADD_EMPLOYEE_ROLE = bytes32(1);
-    bytes32 constant public REMOVE_EMPLOYEE_ROLE = bytes32(2);
-    bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = bytes32(3);
-    bytes32 constant public ORACLE_ROLE = bytes32(4);
+    bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
+    bytes32 constant public REMOVE_EMPLOYEE_ROLE = keccak256("REMOVE_EMPLOYEE_ROLE");
+    bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
+    bytes32 constant public ORACLE_ROLE = keccak256("ORACLE_ROLE");
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
