@@ -221,7 +221,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
      *      but in case it happens, this function allows to recover them.
      * @notice Allows to send ETH from this contract to Finance, to avoid locking them in contract forever.
      */
-    /*
     function escapeHatch() external {
         // convert ETH to EtherToken
         etherToken.wrapAndCall.value(this.balance)(address(finance), "Adding Funds");
@@ -234,7 +233,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
             ""
         );
     }
-    */
 
     /**
      * @dev Allows to make a simple payment from this contract to Finance,
