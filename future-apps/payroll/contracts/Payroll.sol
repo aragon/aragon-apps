@@ -34,7 +34,7 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         string name;
     }
 
-    uint128 private nextEmployee; // starts at 1
+    uint128 public nextEmployee; // starts at 1
     mapping(uint128 => Employee) private employees;
     mapping(address => uint128) private employeeIds;
 
