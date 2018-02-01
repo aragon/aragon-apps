@@ -37,19 +37,19 @@ Add employee to the organization. Start date is used as the initial payment day.
 
 #### Modify employee salary
 ```
-payroll.setEmployeeSalary(uint256 employeeId, uint256 yearlyDenominationSalary)
+payroll.setEmployeeSalary(uint128 employeeId, uint256 yearlyDenominationSalary)
 ```
 It needs `ADD_EMPLOYEE_ROLE`.
 
 #### Remove employee
 ```
-payroll.removeEmployee(uint256 employeeId)
+payroll.removeEmployee(uint128 employeeId)
 ```
 Remove employee from organization. The owed up to current date salary will be transferred to the employee. It needs `REMOVE_EMPLOYEE_ROLE`.
 
 #### Determine allocation
 ```
-payroll.determineAllocation(address[] tokens, uint256[] distribution)
+payroll.determineAllocation(address[] tokens, uint8[] distribution)
 ```
 Employees can set the proportion of every allowed token that want to be used for their salary payment. Distribution values are expressed as a ratio to 100.
 

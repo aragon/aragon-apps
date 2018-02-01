@@ -17,10 +17,9 @@ import "./DenominationToken.sol";
  * @title Payroll in multiple currencies
  */
 contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes pure and interface doesnt match)
-    using SafeMath for uint;
-    using DenominationToken for uint;
+    using SafeMath for uint256;
+    using DenominationToken for uint256;
 
-    uint256 constant public MAX_UINT = uint256(-1);
     // kernel roles
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
     bytes32 constant public REMOVE_EMPLOYEE_ROLE = keccak256("REMOVE_EMPLOYEE_ROLE");
@@ -29,15 +28,15 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
-        mapping(address => uint256) allocation;
+        mapping(address => uint8) allocation;
         uint256 denominationTokenSalary; // per second
-        uint lastPayroll;
+        uint256 lastPayroll;
         string name;
     }
 
     uint128 private nextEmployee; // starts at 1
-    mapping(uint => Employee) private employees;
-    mapping(address => uint) private employeeIds;
+    mapping(uint128 => Employee) private employees;
+    mapping(address => uint128) private employeeIds;
 
     Finance public finance;
     ERC20 public denominationToken;
@@ -45,6 +44,14 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
     mapping(address => uint256) private exchangeRates;
     mapping(address => bool) private allowedTokens;
     address[] private allowedTokensArray;
+
+    event EmployeeAdded(
+        uint128 employeeId,
+        address accountAddress,
+        uint256 initialYearlyDenominationSalary,
+        string name,
+        uint256 startDate
+    );
 
     event Fund (address sender, address token, uint amount, uint balance, bytes data);
     event SendPayroll (address employee, address token, uint amount);
@@ -185,7 +192,7 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
      * @param yearlyDenominationSalary Employee's new salary
      */
     function setEmployeeSalary(
-        uint256 employeeId,
+        uint128 employeeId,
         uint256 yearlyDenominationSalary
     )
         external
@@ -202,7 +209,7 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
      * @notice Updates also global Payroll salary sum
      * @param employeeId Employee's identifier
      */
-    function removeEmployee(uint256 employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
+    function removeEmployee(uint128 employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
         /* check that employee exists */
         require(employeeIds[employees[employeeId].accountAddress] != 0);
 
@@ -225,13 +232,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         // convert ETH to EtherToken
         etherToken.wrapAndCall.value(this.balance)(address(finance), "Adding Funds");
         assert(this.balance == 0);
-        Fund(
-            msg.sender,
-            address(etherToken),
-            msg.value,
-            etherToken.balanceOf(this),
-            ""
-        );
     }
 
     /**
@@ -251,13 +251,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         tokenContract.approve(address(finance), value);
         // finally deposit those tokens to Finance
         finance.deposit(tokenContract, value, "Adding Funds");
-        Fund(
-            finance,
-            token,
-            value,
-            tokenContract.balanceOf(this),
-            ""
-        );
     }
 
     /**
@@ -305,7 +298,7 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
      * @param tokens Array with the tokens to receive, they must belong to allowed tokens for employee
      * @param distribution Array (correlated to tokens) with the proportions (integers over 100)
      */
-    function determineAllocation(address[] tokens, uint256[] distribution) external {
+    function determineAllocation(address[] tokens, uint8[] distribution) external {
         Employee storage employee = employees[employeeIds[msg.sender]];
         // check that employee exists (and matches)
         require(employee.accountAddress == msg.sender);
@@ -314,14 +307,15 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         require(tokens.length == distribution.length);
 
         // check distribution is right
-        uint256 sum = 0;
-        uint256 i;
+        uint8 sum = 0;
+        uint32 i;
         for (i = 0; i < distribution.length; i++) {
             // check token is allowed
             require(allowedTokens[tokens[i]]);
             // set distribution
             employee.allocation[tokens[i]] = distribution[i];
-            sum = sum.add(distribution[i]);
+            sum += distribution[i];
+            require(sum >= distribution[i]);
         }
         require(sum == 100);
     }
@@ -356,7 +350,7 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         // check it's non-null address
         require(newAddress != address(0));
         // check that employee exists (and matches)
-        uint256 employeeId = employeeIds[msg.sender];
+        uint128 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
         // check that employee exists (and matches)
         require(employee.accountAddress == msg.sender);
@@ -376,14 +370,14 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
      * @return Employee's last call to payment distribution date
      * @return Employee's last payment received date
      */
-    function getEmployee(uint256 employeeId)
+    function getEmployee(uint128 employeeId)
         external
         view
         returns (
             address accountAddress,
             uint256 yearlyDenominationSalary,
             string name,
-            uint lastPayroll
+            uint256 lastPayroll
         )
     {
         Employee storage employee = employees[employeeId];
@@ -399,7 +393,7 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
      * @notice Get payment proportion for a token and an employee (the caller)
      * @param token The token address
      */
-    function getAllocation(address token) external view returns (uint256 allocation) {
+    function getAllocation(address token) external view returns (uint8 allocation) {
         Employee storage employee = employees[employeeIds[msg.sender]];
         // check that employee exists (and matches)
         require(employee.accountAddress == msg.sender);
@@ -449,7 +443,7 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         // check that account doesn't exist
         require(employeeIds[accountAddress] == 0);
 
-        uint256 employeeId = nextEmployee;
+        uint128 employeeId = nextEmployee;
         employees[employeeId] = Employee({
             accountAddress: accountAddress,
             denominationTokenSalary: initialYearlyDenominationSalary.toSecondDenominationToken(),
@@ -458,6 +452,7 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         });
         // Ids mapping
         employeeIds[accountAddress] = employeeId;
+        EmployeeAdded(employeeId, accountAddress, initialYearlyDenominationSalary, name, startDate);
         // update global variables
         nextEmployee++;
     }
@@ -468,11 +463,11 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
      * @param time Time owed to employee (since last payroll)
      * @return True if something has been paid
      */
-    function _payTokens(uint256 employeeId, uint256 time) internal returns (bool somethingPaid) {
+    function _payTokens(uint128 employeeId, uint256 time) internal returns (bool somethingPaid) {
         Employee storage employee = employees[employeeId];
         // loop over allowed tokens
         somethingPaid = false;
-        for (uint i = 0; i < allowedTokensArray.length; i++) {
+        for (uint32 i = 0; i < allowedTokensArray.length; i++) {
             address token = allowedTokensArray[i];
             if (employee.allocation[token] == 0)
                 continue;
