@@ -105,10 +105,10 @@ class Transfers extends React.Component {
         {filteredTransfers.length === 0 ? (
           <NoTransfers>
             <p>
-              No transfers.{' '}
+              No transfers found.{' '}
               {filtersActive && (
                 <a role="button" onClick={this.handleResetFilters}>
-                  Reset filters?
+                  reset filters
                 </a>
               )}
             </p>
@@ -132,7 +132,7 @@ class Transfers extends React.Component {
                   ({ date, ref, amount, token, approvedBy, transaction }) => (
                     <TableRow key={transaction}>
                       <NoWrapCell>
-                        <time datetime={format(date)} title={format(date)}>
+                        <time dateTime={format(date)} title={format(date)}>
                           {format(date, 'DD/MM/YY')}
                         </time>
                       </NoWrapCell>
