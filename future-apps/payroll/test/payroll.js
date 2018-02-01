@@ -9,7 +9,7 @@ const Payroll = artifacts.require("PayrollMock");
 const ERC677Token = artifacts.require("./tokens/ERC677GenToken.sol");
 const OracleMock = artifacts.require("./oracle/OracleMock.sol");
 const OracleFailMock = artifacts.require("./oracle/OracleFailMock.sol");
-
+const Zombie = artifacts.require("Zombie.sol");
 
 contract('Payroll', function(accounts) {
   let payroll;
@@ -458,20 +458,26 @@ contract('Payroll', function(accounts) {
     });
   });
 
-  /*
-  it("tests escape hatch function", async () => {
-    // Payroll doesn't accept ETH funds, so this doesn't make much sense, but just in case
+  it("escapes hatch, recovers ETH", async () => {
+    // Payroll doesn't accept ETH funds, so we use a self destructing contract
+    // as a trick to be able to send ETH to it.
+    let zombie = await Zombie.new(payroll2.address);
+    await zombie.sendTransaction({ from: owner, value: web3.toWei(200, 'wei') });
+    await zombie.escapeHatch();
     let vaultInitialBalance = await getBalance(vault.address);
+    let vaultTokenInitialBalance = await etherToken.balanceOf(vault.address);
     let payrollInitialBalance = await getBalance(payroll2.address);
-    console.log(payrollInitialBalance)
+    let payrollTokenInitialBalance = await etherToken.balanceOf(payroll2.address);
     await payroll2.escapeHatch();
     let vaultFinalBalance = await getBalance(vault.address);
+    let vaultTokenFinalBalance = await etherToken.balanceOf(vault.address);
     let payrollFinalBalance = await getBalance(payroll2.address);
-    console.log(payrollFinalBalance)
-    assert.equal(vaultInitialBalance.add(payrollInitialBalance).toString(), vaultFinalBalance.toString(), "Funds not recovered (Vault)!");
+    let payrollTokenFinalBalance = await etherToken.balanceOf(payroll2.address);
     assert.equal(payrollFinalBalance.valueOf(), 0, "Funds not recovered (Payroll)!");
+    assert.equal(payrollTokenFinalBalance.valueOf(), 0, "Funds not recovered (Payroll)!");
+    assert.equal(vaultFinalBalance.toString(), 0, "Funds not recovered (Vault)!");
+    assert.equal(vaultTokenFinalBalance.toString(), vaultTokenInitialBalance.add(payrollInitialBalance).toString(), "Funds not recovered (Vault)!");
   });
-   */
 
   it("fails on Token allocation if greater than 100", async () => {
     // should throw as total allocation is greater than 100
