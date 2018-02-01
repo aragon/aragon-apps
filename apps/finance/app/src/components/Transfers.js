@@ -37,10 +37,33 @@ class Transfers extends React.Component {
   handleTransferTypeChange = index => {
     this.setState({ selectedTransferType: index, displayedTransfers: 10 })
   }
+  handleResetFilters = () => {
+    this.setState({
+      selectedTransferType: 0,
+      selectedToken: 0,
+      displayedTransfers: 10,
+    })
+  }
   showMoreTransfers = () => {
     this.setState(prevState => ({
       displayedTransfers: prevState.displayedTransfers + 10,
     }))
+  }
+
+  // Filter transfer based on the selected filters
+  getFilteredTransfers({
+    tokens,
+    transfers,
+    selectedToken,
+    selectedTransferType,
+  }) {
+    return transfers.filter(
+      ({ token, amount }) =>
+        (selectedToken === 0 || token === tokens[selectedToken - 1]) &&
+        (selectedTransferType === 0 ||
+          (selectedTransferType === 1 && amount > 0) ||
+          (selectedTransferType === 2 && amount < 0))
+    )
   }
   render() {
     const {
@@ -49,13 +72,13 @@ class Transfers extends React.Component {
       selectedTransferType,
     } = this.state
     const { transfers, tokens } = this.props
-    const filteredTransfers = transfers.filter(
-      ({ token, amount }) =>
-        (selectedToken === 0 || token === tokens[selectedToken - 1]) &&
-        (selectedTransferType === 0 ||
-          (selectedTransferType === 1 && amount > 0) ||
-          (selectedTransferType === 2 && amount < 0))
-    )
+    const filteredTransfers = this.getFilteredTransfers({
+      tokens,
+      transfers,
+      selectedToken,
+      selectedTransferType,
+    })
+    const filtersActive = selectedToken !== 0 || selectedTransferType !== 0
     return (
       <section>
         <Header>
@@ -79,63 +102,80 @@ class Transfers extends React.Component {
             </label>
           </div>
         </Header>
-        <FixedTable
-          header={
-            <TableRow>
-              <DateHeader title="Date" />
-              <SourceRecipientHeader title="Source / Recipient" />
-              <ReferenceHeader title="Reference" />
-              <AmountHeader title="Amount" align="right" />
-              <TableHeader />
-            </TableRow>
-          }
-        >
-          {filteredTransfers
-            .slice(0, displayedTransfers)
-            .map(({ date, ref, amount, token, approvedBy, transaction }) => (
-              <TableRow key={transaction}>
-                <NoWrapCell>
-                  <time datetime={format(date)} title={format(date)}>
-                    {format(date, 'DD/MM/YY')}
-                  </time>
-                </NoWrapCell>
-                <NoWrapCell>
-                  <TextOverflow>
-                    <a
-                      target="_blank"
-                      href={`https://etherscan.io/address/${approvedBy}`}
-                    >
-                      {approvedBy}
-                    </a>
-                  </TextOverflow>
-                </NoWrapCell>
-                <NoWrapCell>{ref}</NoWrapCell>
-                <NoWrapCell align="right">
-                  <Amount positive={amount > 0}>
-                    {formatTokenAmount(amount, true)} {token}
-                  </Amount>
-                </NoWrapCell>
-                <NoWrapCell>
-                  <ContextMenu>
-                    <ContextMenuItem>
-                      <IconShare />
-                      Copy transfer URL
-                    </ContextMenuItem>
-                    <ContextMenuItem>
-                      <IconTokens />
-                      View approval
-                    </ContextMenuItem>
-                  </ContextMenu>
-                </NoWrapCell>
-              </TableRow>
-            ))}
-        </FixedTable>
-        {displayedTransfers < filteredTransfers.length && (
-          <Footer>
-            <Button mode="secondary" onClick={this.showMoreTransfers}>
-              Show Older Transfers
-            </Button>
-          </Footer>
+        {filteredTransfers.length === 0 ? (
+          <NoTransfers>
+            <p>
+              No transfers.{' '}
+              {filtersActive && (
+                <a role="button" onClick={this.handleResetFilters}>
+                  Reset filters?
+                </a>
+              )}
+            </p>
+          </NoTransfers>
+        ) : (
+          <div>
+            <FixedTable
+              header={
+                <TableRow>
+                  <DateHeader title="Date" />
+                  <SourceRecipientHeader title="Source / Recipient" />
+                  <ReferenceHeader title="Reference" />
+                  <AmountHeader title="Amount" align="right" />
+                  <TableHeader />
+                </TableRow>
+              }
+            >
+              {filteredTransfers
+                .slice(0, displayedTransfers)
+                .map(
+                  ({ date, ref, amount, token, approvedBy, transaction }) => (
+                    <TableRow key={transaction}>
+                      <NoWrapCell>
+                        <time datetime={format(date)} title={format(date)}>
+                          {format(date, 'DD/MM/YY')}
+                        </time>
+                      </NoWrapCell>
+                      <NoWrapCell>
+                        <TextOverflow>
+                          <a
+                            target="_blank"
+                            href={`https://etherscan.io/address/${approvedBy}`}
+                          >
+                            {approvedBy}
+                          </a>
+                        </TextOverflow>
+                      </NoWrapCell>
+                      <NoWrapCell>{ref}</NoWrapCell>
+                      <NoWrapCell align="right">
+                        <Amount positive={amount > 0}>
+                          {formatTokenAmount(amount, true)} {token}
+                        </Amount>
+                      </NoWrapCell>
+                      <NoWrapCell>
+                        <ContextMenu>
+                          <ContextMenuItem>
+                            <IconShare />
+                            Copy transfer URL
+                          </ContextMenuItem>
+                          <ContextMenuItem>
+                            <IconTokens />
+                            View approval
+                          </ContextMenuItem>
+                        </ContextMenu>
+                      </NoWrapCell>
+                    </TableRow>
+                  )
+                )}
+            </FixedTable>
+            {displayedTransfers < filteredTransfers.length && (
+              <Footer>
+                <Button mode="secondary" onClick={this.showMoreTransfers}>
+                  Show Older Transfers
+                </Button>
+              </Footer>
+            )}
+          </div>
         )}
       </section>
     )
@@ -161,6 +201,21 @@ const Label = styled.span`
   text-transform: lowercase;
   color: ${theme.textSecondary};
   font-weight: 600;
+`
+
+const NoTransfers = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background: ${theme.contentBackground};
+  border: 1px solid ${theme.contentBorder};
+  border-radius: 3px;
+  a {
+    text-decoration: underline;
+    color: ${theme.accent};
+    cursor: pointer;
+  }
 `
 
 const FixedTable = styled(Table)`
