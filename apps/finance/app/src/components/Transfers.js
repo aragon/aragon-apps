@@ -11,14 +11,31 @@ import {
   ContextMenuItem,
   IconShare,
   IconTokens,
+  DropDown,
   theme,
   unselectable,
 } from '@aragon/ui'
 import { formatTokenAmount } from '../lib/utils'
 
+const TRANSFER_TYPES = ['All', 'Incoming', 'Outgoing']
+
 class Transfers extends React.Component {
   state = {
+    selectedToken: 0,
+    selectedTransferType: 0,
     displayedTransfers: 10,
+  }
+  componentDidMount() {
+    this.setState({ selectedToken: 0 })
+  }
+  componentWillReceiveProps() {
+    this.setState({ selectedToken: 0 })
+  }
+  handleTokenChange = index => {
+    this.setState({ selectedToken: index, displayedTransfers: 10 })
+  }
+  handleTransferTypeChange = index => {
+    this.setState({ selectedTransferType: index, displayedTransfers: 10 })
   }
   showMoreTransfers = () => {
     this.setState(prevState => ({
@@ -26,11 +43,42 @@ class Transfers extends React.Component {
     }))
   }
   render() {
-    const { displayedTransfers } = this.state
-    const { transfers } = this.props
+    const {
+      displayedTransfers,
+      selectedToken,
+      selectedTransferType,
+    } = this.state
+    const { transfers, tokens } = this.props
+    const filteredTransfers = transfers.filter(
+      ({ token, amount }) =>
+        (selectedToken === 0 || token === tokens[selectedToken - 1]) &&
+        (selectedTransferType === 0 ||
+          (selectedTransferType === 1 && amount > 0) ||
+          (selectedTransferType === 2 && amount < 0))
+    )
     return (
-      <div>
-        <Title>Transfers</Title>
+      <section>
+        <Header>
+          <Title>Transfers</Title>
+          <div>
+            <label>
+              <Label>Token:</Label>
+              <DropDown
+                items={['All', ...tokens]}
+                active={selectedToken}
+                onChange={this.handleTokenChange}
+              />
+            </label>
+            <label>
+              <Label>Transfer type:</Label>
+              <DropDown
+                items={TRANSFER_TYPES}
+                active={selectedTransferType}
+                onChange={this.handleTransferTypeChange}
+              />
+            </label>
+          </div>
+        </Header>
         <FixedTable
           header={
             <TableRow>
@@ -42,11 +90,15 @@ class Transfers extends React.Component {
             </TableRow>
           }
         >
-          {transfers
+          {filteredTransfers
             .slice(0, displayedTransfers)
             .map(({ date, ref, amount, token, approvedBy, transaction }) => (
               <TableRow key={transaction}>
-                <NoWrapCell>{format(date, 'DD/MM/YY')}</NoWrapCell>
+                <NoWrapCell>
+                  <time datetime={format(date)} title={format(date)}>
+                    {format(date, 'DD/MM/YY')}
+                  </time>
+                </NoWrapCell>
                 <NoWrapCell>
                   <TextOverflow>
                     <a
@@ -78,21 +130,36 @@ class Transfers extends React.Component {
               </TableRow>
             ))}
         </FixedTable>
-        {displayedTransfers < transfers.length && (
+        {displayedTransfers < filteredTransfers.length && (
           <Footer>
             <Button mode="secondary" onClick={this.showMoreTransfers}>
               Show Older Transfers
             </Button>
           </Footer>
         )}
-      </div>
+      </section>
     )
   }
 }
 
+const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+`
+
 const Title = styled.h1`
   margin-top: 10px;
   margin-bottom: 20px;
+  font-weight: 600;
+`
+
+const Label = styled.span`
+  margin-right: 15px;
+  margin-left: 20px;
+  font-variant: small-caps;
+  text-transform: lowercase;
+  color: ${theme.textSecondary};
   font-weight: 600;
 `
 
