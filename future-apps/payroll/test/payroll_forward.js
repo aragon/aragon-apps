@@ -48,6 +48,7 @@ contract('PayrollForward', function(accounts) {
     await payroll3.forward(script, { from: employee1 });
     assert.equal((await executionTarget.counter()).toString(), 1, 'should have received execution call');
 
+    // can not forward call
     return assertRevert(async () => {
       await payroll3.forward(script, { from: unused_account });
     });

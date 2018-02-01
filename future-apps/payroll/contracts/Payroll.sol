@@ -254,44 +254,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
     }
 
     /**
-     * @dev To be able to receive ERC20 Token transfers, using approveAndCall
-     *      See, e.g: https://www.ethereum.org/token
-     * @notice To be able to receive ERC20 Token transfers, using approveAndCall
-     * @param from  Token sender address.
-     * @param value Amount of tokens.
-     * @param token Token to be received.
-     * @param data  Transaction metadata.
-     */
-    function receiveApproval(
-        address from,
-        uint256 value,
-        address token,
-        bytes data
-    )
-        external
-        returns (bool success)
-    {
-        ERC20 tokenContract = ERC20(token);
-
-        // first send tokens to this contract
-        require(tokenContract.transferFrom(from, this, value));
-        // then make an aprrovement for the same value to Finance
-        tokenContract.approve(address(finance), value);
-        // finally deposit those tokens to Finance
-        finance.deposit(tokenContract, value, "Adding Funds");
-
-        Fund(
-            from,
-            token,
-            value,
-            tokenContract.balanceOf(this),
-            data
-        );
-
-        return true;
-    }
-
-    /**
      * @dev Set token distribution for payments to an employee (the caller)
      * @notice Set token distribution for payments to an employee (the caller).
      *         Only callable once every 6 months
@@ -394,11 +356,7 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
      * @param token The token address
      */
     function getAllocation(address token) external view returns (uint8 allocation) {
-        Employee storage employee = employees[employeeIds[msg.sender]];
-        // check that employee exists (and matches)
-        require(employee.accountAddress == msg.sender);
-
-        allocation = employee.allocation[token];
+        return employees[employeeIds[msg.sender]].allocation[token];
     }
 
     /**
@@ -452,7 +410,13 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         });
         // Ids mapping
         employeeIds[accountAddress] = employeeId;
-        EmployeeAdded(employeeId, accountAddress, initialYearlyDenominationSalary, name, startDate);
+        EmployeeAdded(
+            employeeId,
+            accountAddress,
+            initialYearlyDenominationSalary,
+            name,
+            startDate
+        );
         // update global variables
         nextEmployee++;
     }
