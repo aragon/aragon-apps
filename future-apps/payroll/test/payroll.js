@@ -189,10 +189,15 @@ contract('Payroll', function(accounts) {
     assert.equal(employee[2], name, "Employee name doesn't match");
   });
 
-  it("removes employee", async () => {
+  it("removes employee (no time passed since 'last allocation')", async () => {
+    // therefore, no salary owed
     let employeeId = 2;
+    await payroll.determineAllocation([usdToken.address], [100], {from: employee2});
+    let initialBalance = await usdToken.balanceOf(employee2);
     await payroll.removeEmployee(employeeId);
     salary2 = 0;
+    let finalBalance = await usdToken.balanceOf(employee2);
+    assert.equal(finalBalance.toString(), initialBalance.toString());
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(parseInt(employee[0], 16), 0, "Employee not properly removed");
   });
@@ -256,7 +261,6 @@ contract('Payroll', function(accounts) {
   it("fails modifying employee account address by Employee, for already existent account", async () => {
     let account_old = employee1;
     let account_new = employee2;
-    let employeeId = 1;
     return assertRevert(async () => {
       await payroll.changeAddressByEmployee(account_new, {from: account_old});
     });
@@ -265,9 +269,15 @@ contract('Payroll', function(accounts) {
   it("fails modifying employee account address by Employee, for null account", async () => {
     let account_old = employee1;
     let account_new = "0x0";
-    let employeeId = 1;
     return assertRevert(async () => {
       await payroll.changeAddressByEmployee(account_new, {from: account_old});
+    });
+  });
+
+  it("fails modifying employee account address by non Employee", async () => {
+    let account_new = employee1_2;
+    return assertRevert(async () => {
+      await payroll.changeAddressByEmployee(account_new, {from: unused_account});
     });
   });
 
@@ -304,12 +314,6 @@ contract('Payroll', function(accounts) {
     await erc20Token1.generateTokens(sender, amount);
     await erc20Token1.transfer(receiver, amount, {from: sender});
     await payroll.depositToFinance(erc20Token1.address);
-    await checkFinal(erc20Token1);
-
-    // Send ERC20 Tokens to Payroll
-    await setInitial(erc20Token1, payroll.address);
-    await erc20Token1.generateTokens(sender, amount);
-    await erc20Token1.approveAndCall(receiver, amount, "", {from: sender});
     await checkFinal(erc20Token1);
 
     // Send ERC677 Tokens to Payroll
@@ -456,6 +460,8 @@ contract('Payroll', function(accounts) {
     await checkFinalBalance(usdToken, "USD Token");
     await checkFinalBalance(erc20Token1, "ERC20 Token 1");
     await checkFinalBalance(erc677Token1, "ERC677 Token 1");
+    // call again to make sure we test value == 0 condition
+    await payroll2.depositToFinance(usdToken.address);
   });
 
   it("fails on sending ETH funds to Payroll", async () => {
@@ -627,13 +633,6 @@ contract('Payroll', function(accounts) {
     assert.equal((await payroll.getAllocation(usdToken.address, {from: employee2})).valueOf(), 60, "USD allocation doesn't match");
     assert.equal((await payroll.getAllocation(erc20Token1.address, {from: employee2})).valueOf(), 15, "ERC 20 Token 1 allocation doesn't match");
     assert.equal((await payroll.getAllocation(erc677Token1.address, {from: employee2})).valueOf(), 10, "ERC 677 Token 1 allocation doesn't match");
-  });
-
-  it("fails on get allocation by non-employee", async () => {
-    // should throw as caller is not an employee
-    return assertRevert(async () => {
-      await payroll.getAllocation(erc20Token1.address, {from: unused_account});
-    });
   });
 
 });
