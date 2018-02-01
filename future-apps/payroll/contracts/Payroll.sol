@@ -31,7 +31,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         address accountAddress; // unique, but can be changed over time
         mapping(address => uint256) allocation;
         uint256 denominationTokenSalary; // per second
-        uint lastAllocation;
         uint lastPayroll;
         string name;
     }
@@ -312,9 +311,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         Employee storage employee = employees[employeeIds[msg.sender]];
         // check that employee exists (and matches)
         require(employee.accountAddress == msg.sender);
-        // check that enough time has gone by
-        require(getTimestamp() > employee.lastAllocation &&
-                getTimestamp() - employee.lastAllocation > 15768000); // half a year in seconds
 
         // check arrays match
         require(tokens.length == distribution.length);
@@ -330,8 +326,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
             sum = sum.add(distribution[i]);
         }
         require(sum == 100);
-
-        employee.lastAllocation = getTimestamp();
     }
 
     /**
@@ -391,7 +385,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
             address accountAddress,
             uint256 yearlyDenominationSalary,
             string name,
-            uint lastAllocation,
             uint lastPayroll
         )
     {
@@ -400,7 +393,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         accountAddress = employee.accountAddress;
         yearlyDenominationSalary = employee.denominationTokenSalary.toYearlyDenomination();
         name = employee.name;
-        lastAllocation = employee.lastAllocation;
         lastPayroll = employee.lastPayroll;
     }
 
@@ -448,6 +440,30 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         return (employees[employeeIds[_sender]].accountAddress == msg.sender);
     }
 
+    function _addEmployee(
+                          address accountAddress,
+                          uint256 initialYearlyDenominationSalary,
+                          string name,
+                          uint256 startDate
+                          )
+        internal
+    {
+        // check that account doesn't exist
+        require(employeeIds[accountAddress] == 0);
+
+        uint256 employeeId = nextEmployee;
+        employees[employeeId] = Employee({
+            accountAddress: accountAddress,
+                    denominationTokenSalary: initialYearlyDenominationSalary.toSecondDenominationToken(),
+                    lastPayroll: startDate,
+                    name: name
+                    });
+        // Ids mapping
+        employeeIds[accountAddress] = employeeId;
+        // update global variables
+        nextEmployee++;
+    }
+
     /**
      * @dev Loop over tokens and send Payroll to employee
      * @param employeeId Id of employee receiving payroll
@@ -493,31 +509,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
             return false;
         }
         return true;
-    }
-
-    function _addEmployee(
-        address accountAddress,
-        uint256 initialYearlyDenominationSalary,
-        string name,
-        uint256 startDate
-    )
-        internal
-    {
-        // check that account doesn't exist
-        require(employeeIds[accountAddress] == 0);
-
-        uint256 employeeId = nextEmployee;
-        employees[employeeId] = Employee({
-            accountAddress: accountAddress,
-            denominationTokenSalary: initialYearlyDenominationSalary.toSecondDenominationToken(),
-            lastAllocation: 0,
-            lastPayroll: startDate,
-            name: name
-        });
-        // Ids mapping
-        employeeIds[accountAddress] = employeeId;
-        // update global variables
-        nextEmployee++;
     }
 
     function getTimestamp() internal view returns (uint256) { return now; }
