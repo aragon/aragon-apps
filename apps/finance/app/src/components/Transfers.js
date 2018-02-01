@@ -13,7 +13,6 @@ import {
   IconTokens,
   DropDown,
   theme,
-  unselectable,
 } from '@aragon/ui'
 import { formatTokenAmount } from '../lib/utils'
 
