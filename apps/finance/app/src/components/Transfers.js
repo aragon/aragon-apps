@@ -1,20 +1,14 @@
 import React from 'react'
 import styled from 'styled-components'
-import { format } from 'date-fns'
 import {
   Button,
   Table,
   TableHeader,
   TableRow,
-  TableCell,
-  ContextMenu,
-  ContextMenuItem,
-  IconShare,
-  IconTokens,
   DropDown,
   theme,
 } from '@aragon/ui'
-import { formatTokenAmount } from '../lib/utils'
+import TransferRow from './TransferRow'
 
 const TRANSFER_TYPES = ['All', 'Incoming', 'Outgoing']
 
@@ -129,41 +123,15 @@ class Transfers extends React.Component {
                 .slice(0, displayedTransfers)
                 .map(
                   ({ date, ref, amount, token, approvedBy, transaction }) => (
-                    <TableRow key={transaction}>
-                      <NoWrapCell>
-                        <time dateTime={format(date)} title={format(date)}>
-                          {format(date, 'DD/MM/YY')}
-                        </time>
-                      </NoWrapCell>
-                      <NoWrapCell>
-                        <TextOverflow>
-                          <a
-                            target="_blank"
-                            href={`https://etherscan.io/address/${approvedBy}`}
-                          >
-                            {approvedBy}
-                          </a>
-                        </TextOverflow>
-                      </NoWrapCell>
-                      <NoWrapCell>{ref}</NoWrapCell>
-                      <NoWrapCell align="right">
-                        <Amount positive={amount > 0}>
-                          {formatTokenAmount(amount, true)} {token}
-                        </Amount>
-                      </NoWrapCell>
-                      <NoWrapCell>
-                        <ContextMenu>
-                          <ContextMenuItem>
-                            <IconShare />
-                            Copy transfer URL
-                          </ContextMenuItem>
-                          <ContextMenuItem>
-                            <IconTokens />
-                            View approval
-                          </ContextMenuItem>
-                        </ContextMenu>
-                      </NoWrapCell>
-                    </TableRow>
+                    <TransferRow
+                      date={date}
+                      reference={ref}
+                      amount={amount}
+                      token={token}
+                      approvedBy={approvedBy}
+                      transaction={transaction}
+                      key={transaction}
+                    />
                   )
                 )}
             </FixedTable>
@@ -221,16 +189,6 @@ const FixedTable = styled(Table)`
   color: rgba(0, 0, 0, 0.75);
 `
 
-const NoWrapCell = styled(TableCell)`
-  white-space: nowrap;
-`
-
-const TextOverflow = styled.div`
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`
-
 const DateHeader = styled(TableHeader)`
   width: 12%;
 `
@@ -242,11 +200,6 @@ const ReferenceHeader = styled(TableHeader)`
 `
 const AmountHeader = styled(TableHeader)`
   width: 0;
-`
-
-const Amount = styled.span`
-  font-weight: 600;
-  color: ${({ positive }) => (positive ? theme.positive : theme.negative)};
 `
 
 const Footer = styled.div`
