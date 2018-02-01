@@ -1,19 +1,35 @@
 import React from 'react'
 import styled from 'styled-components'
-import { AragonApp, AppBar, Button } from '@aragon/ui'
+import { SidePanel, AragonApp, AppBar, Button } from '@aragon/ui'
 import { transfers, balances } from './demo-state'
 import Transfers from './components/Transfers'
 import Balances from './components/Balances'
+import NewTransfer from './components/NewTransfer'
 
 class App extends React.Component {
+  state = {
+    newTransferOpened: false,
+  }
+  handleNewTransferOpen = () => {
+    this.setState({ newTransferOpened: true })
+  }
+  handleNewTransferClose = () => {
+    this.setState({ newTransferOpened: false })
+  }
   render() {
+    const { newTransferOpened } = this.state
+    const tokens = balances.map(({ token }) => token)
     return (
       <AragonApp publicUrl="/aragon-ui/">
         <Layout>
           <Layout.FixedHeader>
             <AppBar
               title="Finance"
-              endContent={<Button mode="strong">New Transfer</Button>}
+              endContent={
+                <Button mode="strong" onClick={this.handleNewTransferOpen}>
+                  New Transfer
+                </Button>
+              }
             />
           </Layout.FixedHeader>
           <Layout.ScrollWrapper>
@@ -22,14 +38,18 @@ class App extends React.Component {
                 <Balances balances={balances} />
               </SpacedBlock>
               <SpacedBlock>
-                <Transfers
-                  transfers={transfers}
-                  tokens={balances.map(({ token }) => token)}
-                />
+                <Transfers transfers={transfers} tokens={tokens} />
               </SpacedBlock>
             </Content>
           </Layout.ScrollWrapper>
         </Layout>
+        <SidePanel
+          opened={newTransferOpened}
+          onClose={this.handleNewTransferClose}
+          title="New Transfer"
+        >
+          <NewTransfer tokens={tokens} />
+        </SidePanel>
       </AragonApp>
     )
   }
