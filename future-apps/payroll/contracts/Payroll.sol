@@ -441,11 +441,11 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
     }
 
     function _addEmployee(
-                          address accountAddress,
-                          uint256 initialYearlyDenominationSalary,
-                          string name,
-                          uint256 startDate
-                          )
+        address accountAddress,
+        uint256 initialYearlyDenominationSalary,
+        string name,
+        uint256 startDate
+    )
         internal
     {
         // check that account doesn't exist
@@ -454,10 +454,10 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         uint256 employeeId = nextEmployee;
         employees[employeeId] = Employee({
             accountAddress: accountAddress,
-                    denominationTokenSalary: initialYearlyDenominationSalary.toSecondDenominationToken(),
-                    lastPayroll: startDate,
-                    name: name
-                    });
+            denominationTokenSalary: initialYearlyDenominationSalary.toSecondDenominationToken(),
+            lastPayroll: startDate,
+            name: name
+        });
         // Ids mapping
         employeeIds[accountAddress] = employeeId;
         // update global variables
