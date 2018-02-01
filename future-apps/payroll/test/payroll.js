@@ -62,7 +62,7 @@ contract('Payroll', function(accounts) {
   const getTimePassed = async (employeeId) => {
     let employee = await payroll.getEmployee(employeeId);
     let currentTime = await payroll.getTimestampPublic();
-    let timePassed = currentTime - employee[4];
+    let timePassed = currentTime - employee[3];
     return new Promise(resolve => {resolve(timePassed);});
   };
 
@@ -505,15 +505,6 @@ contract('Payroll', function(accounts) {
     // should throw as arrays sizes are different
     return assertRevert(async () => {
       await payroll.determineAllocation([etherToken.address, usdToken.address, erc20Token1.address, erc677Token1.address], [10, 20, 70], {from: employee1});
-    });
-  });
-
-  it("fails on Token allocation, time condition", async () => {
-    // correct allocation
-    await payroll.determineAllocation([etherToken.address, usdToken.address, erc20Token1.address, erc677Token1.address], [10, 20, 30, 40], {from: employee1});
-    // should throw because of time condition
-    return assertRevert(async () => {
-      await payroll.determineAllocation([etherToken.address, usdToken.address, erc20Token1.address, erc677Token1.address], [20, 10, 30, 40], {from: employee1});
     });
   });
 
