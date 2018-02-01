@@ -1,3 +1,5 @@
+// TODO: move these utilities to Aragon UI
+
 export const randomInt = (min, max, random = Math.random) => {
   min = Math.ceil(min)
   max = Math.floor(max)

@@ -5,7 +5,17 @@ import { randomInt, randomEntry } from './lib/utils'
 const TODAY = new Date()
 const RANDOM = seedRandom('seed 12345')
 
-const TOKENS = ['ANT', 'ETH', 'DNT', 'SNT', 'MANA', 'ZRX']
+const TOKENS = [
+  'ANT',
+  'ETH',
+  'DNT',
+  'SNT',
+  'MANA',
+  'ZRX',
+  'MKR',
+  'BAT',
+  'REP',
+]
 
 const HASH_BASE = '0998B61aE8eD80f9370B579ee8085e4e05ff7451'
 
@@ -48,12 +58,12 @@ const createApprovedBy = () =>
     ? randomHash()
     : `${randomEntry(ARAGON_IDS, RANDOM)}.aragonid.eth`
 
-const randomAmount = (max, digits = 3) =>
+const randomAmount = (max, negative = true, digits = 3) =>
   (randomInt(1, max, RANDOM) +
     (randomInt(0, 2, RANDOM)
       ? 0
       : randomInt(0, Math.pow(10, digits), RANDOM) / Math.pow(10, digits))) *
-  (randomInt(0, 2, RANDOM) || -1)
+  (negative ? randomInt(0, 2, RANDOM) || -1 : 1)
 
 const randomHash = () =>
   `0x${[...HASH_BASE].sort(() => RANDOM() - 0.5).join('')}`
@@ -75,5 +85,5 @@ export const transfers = [...new Array(43)]
 
 export const balances = TOKENS.map(token => ({
   token,
-  amount: randomAmount(2000, 10),
+  amount: randomAmount(2000, false, 10),
 }))
