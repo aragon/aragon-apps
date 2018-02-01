@@ -20,11 +20,11 @@ contract Finance is AragonApp, ERC677Receiver {
     uint64 constant public MAX_UINT64 = uint64(-1);
     uint256 constant public MAX_UINT = uint256(-1);
 
-    bytes32 constant public CREATE_PAYMENTS_ROLE = keccak256('CREATE_PAYMENTS_ROLE');
-    bytes32 constant public CHANGE_PERIOD_ROLE = keccak256('CHANGE_PERIOD_ROLE');
-    bytes32 constant public CHANGE_BUDGETS_ROLE = keccak256('CHANGE_BUDGETS_ROLE');
-    bytes32 constant public EXECUTE_PAYMENTS_ROLE = keccak256('EXECUTE_PAYMENTS_ROLE');
-    bytes32 constant public DISABLE_PAYMENTS_ROLE = keccak256('DISABLE_PAYMENTS_ROLE');
+    bytes32 constant public CREATE_PAYMENTS_ROLE = keccak256("CREATE_PAYMENTS_ROLE");
+    bytes32 constant public CHANGE_PERIOD_ROLE = keccak256("CHANGE_PERIOD_ROLE");
+    bytes32 constant public CHANGE_BUDGETS_ROLE = keccak256("CHANGE_BUDGETS_ROLE");
+    bytes32 constant public EXECUTE_PAYMENTS_ROLE = keccak256("EXECUTE_PAYMENTS_ROLE");
+    bytes32 constant public DISABLE_PAYMENTS_ROLE = keccak256("DISABLE_PAYMENTS_ROLE");
 
     // order optimized for storage
     struct Payment {
