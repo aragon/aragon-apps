@@ -22,7 +22,10 @@ class App extends React.Component {
                 <Balances balances={balances} />
               </SpacedBlock>
               <SpacedBlock>
-                <Transfers transfers={transfers} />
+                <Transfers
+                  transfers={transfers}
+                  tokens={balances.map(({ token }) => token)}
+                />
               </SpacedBlock>
             </Content>
           </Layout.ScrollWrapper>
