@@ -1,8 +1,9 @@
 {
   "lerna": "2.4.0",
   "packages": [
-    "apps/*",
     "future-apps/*",
+    "apps/*",
+    "templates/*",
     "shared/test-helpers"
   ],
   "version": "independent"
