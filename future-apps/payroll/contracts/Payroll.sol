@@ -231,7 +231,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
     function escapeHatch() external {
         // convert ETH to EtherToken
         etherToken.wrapAndCall.value(this.balance)(address(finance), "Adding Funds");
-        assert(this.balance == 0);
     }
 
     /**
