@@ -94,7 +94,6 @@ const Title = styled.h1`
   margin-top: 10px;
   margin-bottom: 20px;
   font-weight: 600;
-  font-size: 15px;
 `
 
 const FixedTable = styled(Table)`
