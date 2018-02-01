@@ -145,6 +145,12 @@ contract('Payroll', function(accounts) {
     assert.equal(tmpErc677Exchange2.valueOf(), 0, "Exchange rate for ERC 677 Token 2 doesn't match!");
   });
 
+  it("fails trying to add an already allowed token", async () => {
+    return assertRevert(async () => {
+      await payroll.addAllowedToken(etherToken.address);
+    });
+  });
+
   it("fails trying to set rate of denomination token", async () => {
     return assertRevert(async () => {
       await oracle.setRate(payroll.address, usdToken.address, 999);
@@ -483,6 +489,13 @@ contract('Payroll', function(accounts) {
     // should throw as total allocation is greater than 100
     return assertRevert(async () => {
       await payroll.determineAllocation([etherToken.address, usdToken.address, erc20Token1.address, erc677Token1.address], [20, 30, 40, 50], {from: employee1});
+    });
+  });
+
+  it("fails on Token allocation because of overflow", async () => {
+    // should throw as total allocation is greater than 100
+    return assertRevert(async () => {
+      await payroll.determineAllocation([etherToken.address, usdToken.address, erc20Token1.address, erc677Token1.address], [120, 100, 40, 50], {from: employee1});
     });
   });
 
