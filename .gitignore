@@ -1,23 +1,18 @@
 # Dependencies
 node_modules
 apps/*/node_modules
-future-apps/*/node_modules
 
 # coverage
-apps/*/coverage
-apps/*/coverageEnv
-apps/*/coverage.json
-apps/*/allFiredEvents
-apps/*/scTopics
-future-apps/*/coverage
-future-apps/*/coverageEnv
-future-apps/*/coverage.json
-future-apps/*/allFiredEvents
-future-apps/*/scTopics
+*/**/coverage
+*/**/coverageEnv
+*/**/coverage.json
+*/**/allFiredEvents
+*/**/scTopics
+*/**/build
+*/**/artifact.json
 
 # lerna
 lerna-debug.log
 
 # truffle build artifacts
 apps/*/build
-future-apps/*/build
