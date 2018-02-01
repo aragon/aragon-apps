@@ -31,7 +31,10 @@ class TransferRow extends React.Component {
       showCopyTransferMessage: true,
     })
   }
-  handleViewApproval = () => {}
+  handleViewTransaction = () => {
+    const { transaction } = this.props
+    window.open(`https://etherscan.io/address/${transaction}`, '_blank')
+  }
   handleConfirmMessageDone = () => {
     this.setState({
       showCopyTransferMessage: false,
@@ -77,7 +80,7 @@ class TransferRow extends React.Component {
                 <IconShare />
                 Copy Transfer URL
               </ContextMenuItem>
-              <ContextMenuItem onClick={this.handleViewApproval}>
+              <ContextMenuItem onClick={this.handleViewTransaction}>
                 <IconTokens />
                 View Transaction
               </ContextMenuItem>
