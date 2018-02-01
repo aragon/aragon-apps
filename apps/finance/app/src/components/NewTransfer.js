@@ -41,7 +41,11 @@ class NewTransfer extends React.Component {
             </Text.Block>
           </label>
           <CombinedInput>
-            <TextInput onChange={this.handleAmountUpdate} value={amount === -1 ? '' : amount} wide />
+            <TextInput
+              onChange={this.handleAmountUpdate}
+              value={amount === -1 ? '' : amount}
+              wide
+            />
             <DropDown
               items={tokens}
               active={selectedToken}
