@@ -78,11 +78,11 @@ class TransferRow extends React.Component {
             <ContextMenu>
               <ContextMenuItem onClick={this.handleCopyTransferUrl}>
                 <IconShare />
-                Copy Transfer URL
+                <ActionLabel>Copy Transfer URL</ActionLabel>
               </ContextMenuItem>
               <ContextMenuItem onClick={this.handleViewTransaction}>
                 <IconTokens />
-                View Transaction
+                <ActionLabel>View Transaction</ActionLabel>
               </ContextMenuItem>
             </ContextMenu>
             {showCopyTransferMessage && (
@@ -116,6 +116,10 @@ const Amount = styled.span`
 
 const ActionsWrapper = styled.div`
   position: relative;
+`
+
+const ActionLabel = styled.span`
+  margin-left: 15px;
 `
 
 const ConfirmMessageWrapper = styled.div`
