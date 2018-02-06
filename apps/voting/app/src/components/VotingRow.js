@@ -11,13 +11,11 @@ class VotingRow extends React.Component {
   }
   render() {
     const {
-      id,
       endDate,
       question,
       votesYes,
       votesNo,
       pending,
-      userVote,
       tokensCount,
       opened,
     } = this.props

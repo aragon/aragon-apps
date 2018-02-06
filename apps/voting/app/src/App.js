@@ -5,7 +5,6 @@ import {
   AppBar,
   Button,
   SidePanel,
-  SidePanelSeparator,
 } from '@aragon/ui'
 import { votes, tokensCount } from './demo-state'
 import EmptyState from './screens/EmptyState'
