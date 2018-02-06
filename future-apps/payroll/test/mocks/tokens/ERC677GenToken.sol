@@ -8,10 +8,6 @@ contract ERC677GenToken is ERC677Token {
     uint8 public decimals;             //Number of decimals of the smallest unit
     string public symbol;              //An identifier: e.g. REP
 
-////////////////
-// Constructor
-////////////////
-
     /// @notice Constructor to create a ERC677GenToken
     /// @param _tokenName Name of the new token
     /// @param _decimalUnits Number of decimals of the new token

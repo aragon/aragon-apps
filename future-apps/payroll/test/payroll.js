@@ -619,7 +619,7 @@ contract('Payroll', function(accounts) {
     // payday
     // set time forward, 1 month
     let newTime = parseInt(await payroll.getTimestampPublic()) + 2678400; // 31 * 24 * 3600
-    await payroll.mock_setTimestamp(newTime); // 31 * 24 * 3600
+    await payroll.mockSetTimestamp(newTime); // 31 * 24 * 3600
     await setInitialBalances();
     timePassed = await getTimePassed(employeeId); // get employee 2
     // call payday again
@@ -628,7 +628,7 @@ contract('Payroll', function(accounts) {
 
     // determineAllocation
     // set time forward, 5 more months
-    await payroll.mock_setTimestamp(parseInt(await payroll.getTimestampPublic()) + 13392000); // 5 * 31 * 24 * 3600
+    await payroll.mockSetTimestamp(parseInt(await payroll.getTimestampPublic()) + 13392000); // 5 * 31 * 24 * 3600
     await payroll.determineAllocation([etherToken.address, usdToken.address, erc20Token1.address, erc677Token1.address], [15, 60, 15, 10], {from: employee2});
     assert.equal((await payroll.getAllocation(usdToken.address, {from: employee2})).valueOf(), 60, "USD allocation doesn't match");
     assert.equal((await payroll.getAllocation(erc20Token1.address, {from: employee2})).valueOf(), 15, "ERC 20 Token 1 allocation doesn't match");

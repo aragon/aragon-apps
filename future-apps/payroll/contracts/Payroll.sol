@@ -15,7 +15,7 @@ import "./DenominationToken.sol";
 /**
  * @title Payroll in multiple currencies
  */
-contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes pure and interface doesnt match)
+contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (removes pure and interface doesnt match)
     using SafeMath for uint256;
     using DenominationToken for uint256;
 
@@ -51,9 +51,9 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
         uint256 startDate
     );
 
-    event Fund (address sender, address token, uint amount, uint balance, bytes data);
-    event SendPayroll (address employee, address token, uint amount);
-    event ExchangeRateSet (address token, uint rate);
+    event Fund(address sender, address token, uint amount, uint balance, bytes data);
+    event SendPayroll(address employee, address token, uint amount);
+    event ExchangeRateSet(address token, uint rate);
 
     /**
      * @notice Initialize Payroll app for `_finance`. Set ETH and Denomination tokens
@@ -380,7 +380,7 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
 
     function canForward(address _sender, bytes) public view returns (bool) {
         // check that employee exists (and matches)
-        return (employees[employeeIds[_sender]].accountAddress == msg.sender);
+        return (employees[employeeIds[_sender]].accountAddress == _sender);
     }
 
     function _addEmployee(

@@ -8,9 +8,10 @@ contract Zombie {
         owner = _owner;
     }
 
+    function() public payable {}
+
     function escapeHatch() public {
         selfdestruct(owner);
     }
 
-    function() payable {}
 }
