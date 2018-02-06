@@ -173,6 +173,23 @@ contract('Finance App', accounts => {
         assert.equal(await app.currentPeriodId(), 2, 'should have transitioned 2 periods')
     })
 
+    it("escapes hatch, recovers ETH", async () => {
+        let vaultInitialBalance = await getBalance(vault.address)
+        let vaultTokenInitialBalance = await etherToken.balanceOf(vault.address)
+        let financeInitialBalance = await getBalance(app.address)
+        let financeTokenInitialBalance = await etherToken.balanceOf(app.address)
+        let amount = web3.toWei(1, 'ether')
+        await app.escapeHatch({value: amount})
+        let vaultFinalBalance = await getBalance(vault.address)
+        let vaultTokenFinalBalance = await etherToken.balanceOf(vault.address)
+        let financeFinalBalance = await getBalance(app.address)
+        let financeTokenFinalBalance = await etherToken.balanceOf(app.address)
+        assert.equal(financeFinalBalance.valueOf(), 0, "Funds not recovered (Finance)!")
+        assert.equal(financeTokenFinalBalance.valueOf(), 0, "Funds not recovered (Finance)!")
+        assert.equal(vaultFinalBalance.toString(), 0, "Funds not recovered (Vault)!")
+        assert.equal(vaultTokenFinalBalance.toString(), vaultTokenInitialBalance.add(amount).toString(), "Funds not recovered (Vault)!")
+    })
+
     context('setting budget', () => {
         const recipient = accounts[1]
         const time = 22

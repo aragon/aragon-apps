@@ -75,7 +75,7 @@ contract('Payroll', function(accounts) {
     payroll = await Payroll.new();
     usdToken = await deployErc20Token("USD");
     oracle = await OracleMock.new();
-    await payroll.initialize(finance.address, etherToken.address, usdToken.address);
+    await payroll.initialize(finance.address, usdToken.address);
     // transfer ETH to Payroll contract
     for (let i = 1; i < 9; i++)
       await etherToken.wrapAndCall(finance.address, "Initial funds from account " + i, { from: accounts[i], value: web3.toWei(90, 'ether') });
@@ -83,13 +83,13 @@ contract('Payroll', function(accounts) {
 
   it('fails on reinitialization', async () => {
     return assertRevert(async () => {
-      await payroll.initialize(finance.address, etherToken.address, usdToken.address);
+      await payroll.initialize(finance.address, usdToken.address);
     });
   });
 
   it("checks that initial values match", async () => {
-    let tmpEther = await payroll.etherToken();
-    assert.equal(tmpEther.valueOf(), etherToken.address, "USD Token address is wrong");
+    let tmpFinance = await payroll.finance();
+    assert.equal(tmpFinance.valueOf(), finance.address, "Finance address is wrong");
     let tmpUsd = await payroll.denominationToken();
     assert.equal(tmpUsd.valueOf(), usdToken.address, "USD Token address is wrong");
   });
@@ -334,7 +334,7 @@ contract('Payroll', function(accounts) {
 
   it("fails on payday with no token allocation", async () => {
     payroll2 = await Payroll.new();
-    await payroll2.initialize(finance.address, etherToken.address, usdToken.address);
+    await payroll2.initialize(finance.address, usdToken.address);
     // add allowed tokens
     let tokens = [etherToken, usdToken, erc20Token1, erc677Token1];
     for (let i in tokens) {

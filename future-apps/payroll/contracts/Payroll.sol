@@ -2,7 +2,6 @@ pragma solidity 0.4.18;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/Initializable.sol";
-import "@aragon/os/contracts/common/EtherToken.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
 
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
@@ -40,7 +39,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
 
     Finance public finance;
     ERC20 public denominationToken;
-    EtherToken public etherToken;
     mapping(address => uint256) private exchangeRates;
     mapping(address => bool) private allowedTokens;
     address[] private allowedTokensArray;
@@ -60,12 +58,10 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
     /**
      * @notice Initialize Payroll app for `_finance`. Set ETH and Denomination tokens
      * @param _finance Address of the finance Payroll will rely on (non changeable)
-     * @param _etherToken Address of EtherToken
      * @param _denominationToken Address of Denomination Token
      */
     function initialize(
         Finance _finance,
-        EtherToken _etherToken,
         ERC20 _denominationToken
     ) external
         onlyInit
@@ -74,7 +70,6 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
 
         nextEmployee = 1; // leave 0 to check null address mapping
         finance = _finance;
-        etherToken = _etherToken;
         denominationToken = _denominationToken;
         exchangeRates[address(denominationToken)] = 1;
     }
@@ -229,8 +224,7 @@ contract Payroll is AragonApp { // , IForwarder { makes coverage crash (removes 
      * @notice Allows to send ETH from this contract to Finance, to avoid locking them in contract forever.
      */
     function escapeHatch() external {
-        // convert ETH to EtherToken
-        etherToken.wrapAndCall.value(this.balance)(address(finance), "Adding Funds");
+        finance.escapeHatch.value(this.balance)();
     }
 
     /**
