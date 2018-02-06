@@ -10,8 +10,8 @@ contract Vault is AragonApp {
     event SetAllowance(address indexed token, address indexed spender, uint256 amount);
     event TokenTransfer(address indexed token, address indexed receiver, uint256 amount);
 
-    bytes32 constant public REQUEST_ALLOWANCES_ROLE = bytes32(1);
-    bytes32 constant public TRANSFER_ROLE = bytes32(2);
+    bytes32 constant public REQUEST_ALLOWANCES_ROLE = keccak256("REQUEST_ALLOWANCES_ROLE");
+    bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
 
     /**
     * @notice Request for `_spender` to spend up to `_amounts` in `_tokens`
