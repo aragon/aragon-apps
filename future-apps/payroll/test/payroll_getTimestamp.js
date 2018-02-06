@@ -47,7 +47,7 @@ contract('Payroll', function(accounts) {
     payroll = await Payroll.new();
     usdToken = await deployErc20Token("USD");
     oracle = await OracleMock.new();
-    await payroll.initialize(finance.address, etherToken.address, usdToken.address);
+    await payroll.initialize(finance.address, usdToken.address);
   });
 
   const convertAndRoundSalary = function (a) {
