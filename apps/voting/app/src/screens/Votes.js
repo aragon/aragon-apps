@@ -2,9 +2,9 @@ import React from 'react'
 import styled from 'styled-components'
 import { BadgeNumber, Button, colors } from '@aragon/ui'
 
-import VotingsTable from '../components/VotingsTable'
+import VotesTable from '../components/VotesTable'
 
-class Votings extends React.Component {
+class Votes extends React.Component {
   render() {
     const { votes, onSelectVote, tokensCount } = this.props
     const now = Date.now()
@@ -12,9 +12,9 @@ class Votings extends React.Component {
     const closedVotes = votes.filter(vote => !openedVotes.includes(vote))
     return (
       <Main>
-        <VotingsTableWrapper>
+        <VotesTableWrapper>
           <Title>
-            <span>Open Votings</span>
+            <span>Open Votes</span>
             <BadgeNumber
               background={colors.Rain['Rain Sky']}
               color={colors.Rain.Slate}
@@ -22,28 +22,28 @@ class Votings extends React.Component {
               inline
             />
           </Title>
-          <VotingsTable
+          <VotesTable
             votes={openedVotes}
             opened={true}
             tokensCount={tokensCount}
             onSelectVote={onSelectVote}
           />
-        </VotingsTableWrapper>
+        </VotesTableWrapper>
 
-        <VotingsTableWrapper>
+        <VotesTableWrapper>
           <Title>
-            <span>Past Votings</span>
+            <span>Past Votes</span>
           </Title>
-          <VotingsTable
+          <VotesTable
             title=""
             votes={closedVotes}
             tokensCount={tokensCount}
             opened={false}
           />
-        </VotingsTableWrapper>
+        </VotesTableWrapper>
 
         <SeeMoreWrapper>
-          <Button mode="secondary">Show Older Votings</Button>
+          <Button mode="secondary">Show Older Votes</Button>
         </SeeMoreWrapper>
       </Main>
     )
@@ -65,7 +65,7 @@ const Title = styled.h1`
   }
 `
 
-const VotingsTableWrapper = styled.div`
+const VotesTableWrapper = styled.div`
   margin-bottom: 30px;
 `
 
@@ -74,4 +74,4 @@ const SeeMoreWrapper = styled.div`
   justify-content: center;
 `
 
-export default Votings
+export default Votes

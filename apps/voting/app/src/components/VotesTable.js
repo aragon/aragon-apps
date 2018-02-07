@@ -1,8 +1,8 @@
 import React from 'react'
 import { Table, TableHeader, TableRow } from '@aragon/ui'
-import VotingRow from './VotingRow'
+import VoteRow from './VoteRow'
 
-const VotingsTable = ({ title, votes, tokensCount, opened, onSelectVote }) => (
+const VotesTable = ({ title, votes, tokensCount, opened, onSelectVote }) => (
   <Table
     header={
       <TableRow>
@@ -15,7 +15,7 @@ const VotingsTable = ({ title, votes, tokensCount, opened, onSelectVote }) => (
     }
   >
     {votes.map(vote => (
-      <VotingRow
+      <VoteRow
         key={vote.id}
         {...vote}
         tokensCount={tokensCount}
@@ -26,4 +26,4 @@ const VotingsTable = ({ title, votes, tokensCount, opened, onSelectVote }) => (
   </Table>
 )
 
-export default VotingsTable
+export default VotesTable

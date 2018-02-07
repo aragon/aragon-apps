@@ -3,9 +3,9 @@ import styled from 'styled-components'
 import { Button, Countdown, TableCell, TableRow } from '@aragon/ui'
 import { VOTE_UNKNOWN } from '../vote-types'
 import ProgressBar from './ProgressBar'
-import VotingStatus from './VotingStatus'
+import VoteStatus from './VoteStatus'
 
-class VotingRow extends React.Component {
+class VoteRow extends React.Component {
   handleVoteClick = () => {
     this.props.onSelectVote(this.props.id)
   }
@@ -26,7 +26,7 @@ class VotingRow extends React.Component {
           {opened ? (
             <Countdown end={endDate} />
           ) : (
-            <VotingStatus
+            <VoteStatus
               votesYes={votesYes}
               votesNo={votesNo}
               opened={opened}
@@ -72,7 +72,7 @@ class VotingRow extends React.Component {
   }
 }
 
-VotingRow.defaultProps = {
+VoteRow.defaultProps = {
   question: '',
   votesYes: 0,
   votesNo: 0,
@@ -128,4 +128,4 @@ const ButtonWrapper = styled.div`
   margin-top: 20px;
 `
 
-export default VotingRow
+export default VoteRow

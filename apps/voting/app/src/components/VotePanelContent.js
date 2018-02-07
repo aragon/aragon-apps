@@ -11,7 +11,7 @@ import {
   theme,
 } from '@aragon/ui'
 import { VOTE_UNKNOWN } from '../vote-types'
-import VotingSummary from './VotingSummary'
+import VoteSummary from './VoteSummary'
 
 const VotePanelContent = ({ vote, tokensCount, ready }) => {
   if (!vote) {
@@ -100,7 +100,7 @@ const VotePanelContent = ({ vote, tokensCount, ready }) => {
           <Info title="You will cast 389273724 votes" />
         </div>
       ) : (
-        <VotingSummary
+        <VoteSummary
           votesNo={ready ? votesNo / tokensCount : 0}
           votesYes={ready ? votesYes / tokensCount : 0}
           quorum={ready ? quorum : 0}

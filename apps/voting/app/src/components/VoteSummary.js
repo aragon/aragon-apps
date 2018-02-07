@@ -2,13 +2,13 @@ import React from 'react'
 import styled from 'styled-components'
 import { Motion, spring } from 'react-motion'
 import { SidePanel, Text, theme, spring as springConf } from '@aragon/ui'
-import VotingStatus from './VotingStatus'
+import VoteStatus from './VoteStatus'
 
 const { PANEL_INNER_WIDTH } = SidePanel
 
 const fast = springConf('fast')
 
-const VotingBar = ({ votesYes, votesNo, quorum }) => (
+const VoteSummary = ({ votesYes, votesNo, quorum }) => (
   <Motion
     defaultStyle={{
       votesYesProgress: 0,
@@ -29,7 +29,7 @@ const VotingBar = ({ votesYes, votesNo, quorum }) => (
               Quorum: <strong>{Math.round(quorumProgress * 100)}%</strong>
             </Label>
           </h2>
-          <VotingStatus votesYes={votesYes} votesNo={votesNo} opened={true} />
+          <VoteStatus votesYes={votesYes} votesNo={votesNo} opened={true} />
         </Header>
         <BarWrapper>
           <QuorumBar
@@ -147,4 +147,4 @@ const YesNoItem = styled.div`
   }
 `
 
-export default VotingBar
+export default VoteSummary

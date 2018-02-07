@@ -1,98 +1,91 @@
 import React from 'react'
 import styled from 'styled-components'
-import {
-  AragonApp,
-  AppBar,
-  Button,
-  SidePanel,
-} from '@aragon/ui'
+import { AragonApp, AppBar, Button, SidePanel } from '@aragon/ui'
 import { votes, tokensCount } from './demo-state'
 import EmptyState from './screens/EmptyState'
-import Votings from './screens/Votings'
+import Votes from './screens/Votes'
 import VotePanelContent from './components/VotePanelContent'
 
 class App extends React.Component {
   state = {
     votes,
-    createVotingVisible: false,
-    currentVoting: null,
-    votingVisible: false,
-    votingSidebarOpened: false,
+    createVoteVisible: false,
+    currentVote: null,
+    voteVisible: false,
+    voteSidebarOpened: false,
   }
-  handleCreateVoting = () => {
-    this.setState({ createVotingVisible: true })
+  handleCreateVote = () => {
+    this.setState({ createVoteVisible: true })
   }
-  handleCreateVotingClose = () => {
-    this.setState({ createVotingVisible: false })
+  handleCreateVoteClose = () => {
+    this.setState({ createVoteVisible: false })
   }
   handleSelectVote = id => {
     const vote = votes.find(vote => id === vote.id)
     if (!vote) return
     this.setState({
-      currentVoting: vote,
-      votingVisible: true,
-      votingSidebarOpened: false,
+      currentVote: vote,
+      voteVisible: true,
+      voteSidebarOpened: false,
     })
   }
   handleDeselectVote = () => {
-    this.setState({ votingVisible: false })
+    this.setState({ voteVisible: false })
   }
-  handleVotingTransitionEnd = opened => {
-    if (!opened) {
-      this.setState({ currentVoting: null })
-      return
-    }
-    this.setState({ votingSidebarOpened: true })
+  handleVoteTransitionEnd = opened => {
+    this.setState(
+      opened ? { voteSidebarOpened: true } : { currentVote: null }
+    )
   }
   render() {
     const {
       votes,
-      votingVisible,
-      currentVoting,
-      createVotingVisible,
-      votingSidebarOpened,
+      voteVisible,
+      currentVote,
+      createVoteVisible,
+      voteSidebarOpened,
     } = this.state
     return (
       <AragonApp publicUrl="/aragon-ui/">
         <AppBar
-          title="Voting"
+          title="Vote"
           endContent={
-            <Button mode="strong" onClick={this.handleCreateVoting}>
-              New Voting
+            <Button mode="strong" onClick={this.handleCreateVote}>
+              New Vote
             </Button>
           }
         />
         <Main>
           {votes.length ? (
-            <Votings
+            <Votes
               votes={votes}
               tokensCount={tokensCount}
               onSelectVote={this.handleSelectVote}
             />
           ) : (
-            <EmptyState onActivate={this.handleCreateVoting} />
+            <EmptyState onActivate={this.handleCreateVote} />
           )}
         </Main>
 
         <SidePanel
-          title="Open Voting"
-          opened={Boolean(!createVotingVisible && votingVisible)}
+          title="Open Vote"
+          opened={Boolean(!createVoteVisible && voteVisible)}
           onClose={this.handleDeselectVote}
-          onTransitionEnd={this.handleVotingTransitionEnd}
+          onTransitionEnd={this.handleVoteTransitionEnd}
         >
           <VotePanelContent
-            vote={currentVoting}
+            vote={currentVote}
             tokensCount={tokensCount}
-            ready={votingSidebarOpened}
+            ready={voteSidebarOpened}
           />
         </SidePanel>
 
         <SidePanel
-          title="New Poll"
-          opened={createVotingVisible}
-          onClose={this.handleCreateVotingClose}
+          title="New Vote"
+          opened={createVoteVisible}
+          onClose={this.handleCreateVoteClose}
         >
-          <div>Create New Poll</div>
+          <div>Create New Vote</div>
         </SidePanel>
       </AragonApp>
     )
