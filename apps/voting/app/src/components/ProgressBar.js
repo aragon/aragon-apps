@@ -1,16 +1,19 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Motion, spring } from 'react-motion'
 import { IconCross, IconCheck, theme } from '@aragon/ui'
 
-const ProgressBar = ({ progress, positive }) => (
+const ProgressBar = ({ progress, type }) => (
   <Motion defaultStyle={{ progress: 0 }} style={{ progress: spring(progress) }}>
     {({ progress }) => (
       <Main>
-        <IconWrapper>{positive ? <IconCheck /> : <IconCross />}</IconWrapper>
+        <IconWrapper>
+          {type === 'positive' ? <IconCheck /> : <IconCross />}
+        </IconWrapper>
         <Base>
           <Progress
-            color={positive ? theme.positive : theme.negative}
+            color={type === 'positive' ? theme.positive : theme.negative}
             style={{ width: `${progress * 100}%` }}
           />
         </Base>
@@ -21,7 +24,11 @@ const ProgressBar = ({ progress, positive }) => (
 
 ProgressBar.defaultProps = {
   progress: 0,
-  positive: true,
+}
+
+ProgressBar.propTypes = {
+  type: PropTypes.oneOf(['positive', 'negative']).isRequired,
+  progress: PropTypes.number,
 }
 
 const Main = styled.div`

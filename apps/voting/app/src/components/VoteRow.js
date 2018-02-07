@@ -44,12 +44,13 @@ class VoteRow extends React.Component {
           <BarsGroup>
             <Bar>
               <ProgressBar
+                type='positive'
                 progress={totalVotes > 0 ? votesYes / tokensCount : 0}
               />
             </Bar>
             <Bar>
               <ProgressBar
-                positive={false}
+                type='negative'
                 progress={totalVotes > 0 ? votesNo / tokensCount : 0}
               />
             </Bar>
