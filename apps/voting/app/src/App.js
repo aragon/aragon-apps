@@ -8,10 +8,11 @@ import {
   TOKEN_SUPPLY,
   SUPPORT_REQUIRED_PCT,
 } from './demo-state'
+import { isVoteOpen } from './vote-utils'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
 import VotePanelContent from './components/VotePanelContent'
-import { isVoteOpen } from './vote-utils'
+import AppLayout from './components/AppLayout'
 
 class App extends React.Component {
   state = {
@@ -52,27 +53,33 @@ class App extends React.Component {
     } = this.state
     return (
       <AragonApp publicUrl="/aragon-ui/">
-        <AppBar
-          title="Vote"
-          endContent={
-            <Button mode="strong" onClick={this.handleCreateVote}>
-              New Vote
-            </Button>
-          }
-        />
-        <Main>
-          {votes.length ? (
-            <Votes
-              votes={votes}
-              voteTime={VOTE_TIME}
-              tokenSupply={TOKEN_SUPPLY}
-              support={SUPPORT_REQUIRED_PCT}
-              onSelectVote={this.handleSelectVote}
+        <AppLayout>
+          <AppLayout.Header>
+            <AppBar
+              title="Vote"
+              endContent={
+                <Button mode="strong" onClick={this.handleCreateVote}>
+                  New Vote
+                </Button>
+              }
             />
-          ) : (
-            <EmptyState onActivate={this.handleCreateVote} />
-          )}
-        </Main>
+          </AppLayout.Header>
+          <AppLayout.ScrollWrapper>
+            <AppLayout.Content>
+              {votes.length ? (
+                <Votes
+                  votes={votes}
+                  voteTime={VOTE_TIME}
+                  tokenSupply={TOKEN_SUPPLY}
+                  support={SUPPORT_REQUIRED_PCT}
+                  onSelectVote={this.handleSelectVote}
+                />
+              ) : (
+                <EmptyState onActivate={this.handleCreateVote} />
+              )}
+            </AppLayout.Content>
+          </AppLayout.ScrollWrapper>
+        </AppLayout>
 
         <SidePanel
           title={
@@ -107,9 +114,5 @@ class App extends React.Component {
     )
   }
 }
-
-const Main = styled.div`
-  padding: 30px;
-`
 
 export default App
