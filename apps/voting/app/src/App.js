@@ -1,5 +1,4 @@
 import React from 'react'
-import styled from 'styled-components'
 import { AragonApp, AppBar, Button, SidePanel } from '@aragon/ui'
 import {
   VOTES,
