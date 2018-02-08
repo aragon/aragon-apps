@@ -19,7 +19,7 @@ const NewVotePanelContent = ({}) => {
         </Info>
       </Field>
 
-      <Field label="Vote Question">
+      <Field label="Question">
         <TextInput wide required />
       </Field>
 
