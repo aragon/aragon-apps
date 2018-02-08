@@ -11,6 +11,7 @@ import { isVoteOpen } from './vote-utils'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
 import VotePanelContent from './components/VotePanelContent'
+import NewVotePanelContent from './components/NewVotePanelContent'
 import AppLayout from './components/AppLayout'
 
 class App extends React.Component {
@@ -107,7 +108,7 @@ class App extends React.Component {
           opened={createVoteVisible}
           onClose={this.handleCreateVoteClose}
         >
-          <div>Create New Vote</div>
+          <NewVotePanelContent />
         </SidePanel>
       </AragonApp>
     )
