@@ -28,7 +28,7 @@ const NewVotePanelContent = ({}) => {
       </Field>
 
       <Button mode="strong" wide>
-        Begin Voting
+        Begin Vote
       </Button>
     </div>
   )
