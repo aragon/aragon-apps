@@ -11,12 +11,12 @@ export const isVoteOpen = ({ startDate, executed }, voteTime) =>
 export const getAccountVote = (account, voters) =>
   voters[account] || VOTE_ABSENT
 
-export const getVoteStatus = (vote, supportRequired, tokenSupply) => {
+export const getVoteStatus = (vote, supportRequired, tokenSupply, voteTime) => {
   if (vote.executed) {
     return VOTE_STATUS_ACCEPTED
   }
 
-  const voteEnded = !isVoteOpen(vote)
+  const voteEnded = !isVoteOpen(vote, voteTime)
   const totalVotes = vote.yea + vote.nay
   const hasSupport = vote.yea / totalVotes >= supportRequired
   const hasMinQuorum = vote.yea / tokenSupply >= vote.minAcceptQuorumPct

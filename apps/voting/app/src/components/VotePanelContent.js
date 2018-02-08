@@ -18,9 +18,9 @@ import VoteStatus from './VoteStatus'
 const VotePanelContent = ({
   vote: { id, vote, endDate, creatorName, metas: { question } },
   user,
-  voteTime,
   tokenSupply,
   support,
+  voteTime,
   ready,
 }) => {
   if (!vote) {
@@ -42,7 +42,12 @@ const VotePanelContent = ({
             {opened ? (
               <Countdown end={endDate} />
             ) : (
-              <VoteStatus votesYea={yea} votesNay={nay} opened={opened} />
+              <VoteStatus
+                vote={userVote}
+                support={support}
+                tokenSupply={tokenSupply}
+                voteTime={voteTime}
+              />
             )}
           </div>
         </div>

@@ -135,4 +135,8 @@ export const VOTES = [
   metas: { question },
   creatorName,
   endDate: new Date(startDate + VOTE_TIME),
+  voteTime: VOTE_TIME,
+  tokenSupply: TOKEN_SUPPLY,
+  supportRequired: SUPPORT_REQUIRED_PCT,
+  quorumRequired: MIN_ACCEPT_QUORUM_PCT,
 }))

@@ -4,6 +4,7 @@ import { Button, Countdown, TableCell, TableRow } from '@aragon/ui'
 import { VOTE_ABSENT } from '../vote-types'
 import ProgressBar from './ProgressBar'
 import VoteStatus from './VoteStatus'
+import { isVoteOpen } from '../vote-utils'
 
 class VoteRow extends React.Component {
   handleVoteClick = () => {
@@ -13,12 +14,13 @@ class VoteRow extends React.Component {
     const {
       endDate,
       question,
-      votesYea,
-      votesNay,
+      vote,
       tokenSupply,
-      opened,
+      voteTime,
+      support,
     } = this.props
-    const totalVotes = votesYea + votesNay
+    const totalVotes = vote.yea + vote.nay
+    const opened = isVoteOpen(vote, voteTime)
     return (
       <TableRow>
         <StatusCell>
@@ -26,9 +28,10 @@ class VoteRow extends React.Component {
             <Countdown end={endDate} />
           ) : (
             <VoteStatus
-              votesYea={votesYea}
-              votesNay={votesNay}
-              opened={opened}
+              vote={vote}
+              voteTime={voteTime}
+              tokenSupply={tokenSupply}
+              support={support}
             />
           )}
         </StatusCell>
@@ -43,13 +46,13 @@ class VoteRow extends React.Component {
             <Bar>
               <ProgressBar
                 type="positive"
-                progress={totalVotes > 0 ? votesYea / tokenSupply : 0}
+                progress={totalVotes > 0 ? vote.yea / tokenSupply : 0}
               />
             </Bar>
             <Bar>
               <ProgressBar
                 type="negative"
-                progress={totalVotes > 0 ? votesNay / tokenSupply : 0}
+                progress={totalVotes > 0 ? vote.nay / tokenSupply : 0}
               />
             </Bar>
           </BarsGroup>

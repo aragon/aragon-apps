@@ -1,28 +1,35 @@
 import React from 'react'
 import styled from 'styled-components'
 import { theme, IconTime, IconCross, IconCheck } from '@aragon/ui'
+import {
+  VOTE_STATUS_ONGOING,
+  VOTE_STATUS_REJECTED,
+  VOTE_STATUS_ACCEPTED,
+} from '../vote-types'
+import { getVoteStatus } from '../vote-utils'
 
-const STATUSES = {
-  ongoing: { label: 'Ongoing', Icon: IconTime, color: theme.textSecondary },
-  approved: { label: 'Approved', Icon: IconCheck, color: theme.positive },
-  rejected: { label: 'Rejected', Icon: IconCross, color: theme.negative },
+const ATTRIBUTES = {
+  [VOTE_STATUS_ONGOING]: {
+    label: 'Ongoing',
+    Icon: IconTime,
+    color: theme.textSecondary,
+  },
+  [VOTE_STATUS_ACCEPTED]: {
+    label: 'Approved',
+    Icon: IconCheck,
+    color: theme.positive,
+  },
+  [VOTE_STATUS_REJECTED]: {
+    label: 'Rejected',
+    Icon: IconCross,
+    color: theme.negative,
+  },
 }
 
-const getStatus = (votesYea, votesNay, support, quorum, opened) => {
-  if (!opened && votesYea === 0 && votesNay === 0) {
-    return STATUSES.rejected
-  }
-
-  if (opened) return STATUSES.timeout
-  if (votesYea === 0 && votesNay === 0) return STATUSES.timeout
-  if (votesYea >= votesNay) return STATUSES.approved
-  return STATUSES.rejected
-}
-
-const Status = ({ votesYea, votesNay, quorum, opened }) => {
-  const status = getStatus(votesYea, votesNay, quorum, opened)
-  const { color, label, Icon } = status
-  return opened && status === STATUSES.timeout ? null : (
+const VoteStatus = ({ vote, support, tokenSupply, voteTime }) => {
+  const status = getVoteStatus(vote, support, tokenSupply, voteTime)
+  const { color, label, Icon } = ATTRIBUTES[status]
+  return (
     <Main color={color}>
       <Icon />
       <StatusLabel>{label}</StatusLabel>
@@ -30,11 +37,9 @@ const Status = ({ votesYea, votesNay, quorum, opened }) => {
   )
 }
 
-Status.defaultProps = {
-  votesYea: 0,
-  votesNay: 0,
-  opened: true,
-  quorum: 0,
+VoteStatus.defaultProps = {
+  support: true,
+  tokenSupply: 0,
 }
 
 const Main = styled.span`
@@ -47,4 +52,4 @@ const StatusLabel = styled.span`
   margin-left: 10px;
 `
 
-export default Status
+export default VoteStatus

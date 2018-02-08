@@ -3,9 +3,9 @@ import styled from 'styled-components'
 import { AragonApp, AppBar, Button, SidePanel } from '@aragon/ui'
 import {
   VOTES,
-  TOKEN_SUPPLY,
   VOTE_TIME,
   USER_ACCOUNT,
+  TOKEN_SUPPLY,
   SUPPORT_REQUIRED_PCT,
 } from './demo-state'
 import EmptyState from './screens/EmptyState'
@@ -66,6 +66,7 @@ class App extends React.Component {
               votes={votes}
               voteTime={VOTE_TIME}
               tokenSupply={TOKEN_SUPPLY}
+              support={SUPPORT_REQUIRED_PCT}
               onSelectVote={this.handleSelectVote}
             />
           ) : (

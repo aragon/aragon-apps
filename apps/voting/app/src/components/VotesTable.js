@@ -3,11 +3,11 @@ import { Table, TableHeader, TableRow } from '@aragon/ui'
 import VoteRow from './VoteRow'
 
 const VotesTable = ({
-  title,
   votes,
   voteTime,
-  tokenSupply,
   opened,
+  tokenSupply,
+  support,
   onSelectVote,
 }) => (
   <Table
@@ -21,19 +21,27 @@ const VotesTable = ({
       </TableRow>
     }
   >
-    {votes.map(({ id, vote, endDate, metas }) => (
-      <VoteRow
-        key={id}
-        id={id}
-        endDate={endDate}
-        question={metas.question}
-        votesYea={vote.yea}
-        votesNay={vote.nay}
-        tokenSupply={tokenSupply}
-        opened={opened}
-        onSelectVote={onSelectVote}
-      />
-    ))}
+    {votes.map(
+      ({
+        id,
+        vote,
+        voteTime,
+        endDate,
+        metas,
+      }) => (
+        <VoteRow
+          key={id}
+          id={id}
+          vote={vote}
+          endDate={endDate}
+          question={metas.question}
+          tokenSupply={tokenSupply}
+          voteTime={voteTime}
+          support={support}
+          onSelectVote={onSelectVote}
+        />
+      )
+    )}
   </Table>
 )
 

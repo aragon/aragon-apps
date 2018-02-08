@@ -6,7 +6,7 @@ import { isVoteOpen } from '../vote-utils'
 
 class Votes extends React.Component {
   render() {
-    const { votes, onSelectVote, tokenSupply, voteTime } = this.props
+    const { votes, onSelectVote, voteTime, tokenSupply, support } = this.props
     const openedVotes = votes.filter(({ vote }) => isVoteOpen(vote, voteTime))
     const closedVotes = votes.filter(vote => !openedVotes.includes(vote))
     return (
@@ -22,10 +22,11 @@ class Votes extends React.Component {
             />
           </Title>
           <VotesTable
+            opened={true}
             votes={openedVotes}
             voteTime={voteTime}
-            opened={true}
             tokenSupply={tokenSupply}
+            support={support}
             onSelectVote={onSelectVote}
           />
         </VotesTableWrapper>
@@ -35,11 +36,11 @@ class Votes extends React.Component {
             <span>Closed Votes</span>
           </Title>
           <VotesTable
-            title=""
+            opened={false}
             votes={closedVotes}
             voteTime={voteTime}
-            opened={false}
             tokenSupply={tokenSupply}
+            support={support}
             onSelectVote={onSelectVote}
           />
         </VotesTableWrapper>
