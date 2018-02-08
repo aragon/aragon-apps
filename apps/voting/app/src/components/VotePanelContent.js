@@ -43,7 +43,7 @@ const VotePanelContent = ({
               <Countdown end={endDate} />
             ) : (
               <VoteStatus
-                vote={userVote}
+                vote={vote}
                 support={support}
                 tokenSupply={tokenSupply}
                 voteTime={voteTime}
