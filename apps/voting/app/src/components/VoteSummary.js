@@ -2,79 +2,92 @@ import React from 'react'
 import styled from 'styled-components'
 import { Motion, spring } from 'react-motion'
 import { SidePanel, Text, theme, spring as springConf } from '@aragon/ui'
-import VoteStatus from './VoteStatus'
 
 const { PANEL_INNER_WIDTH } = SidePanel
 
 const fast = springConf('fast')
 
-const VoteSummary = ({ votesYes, votesNo, quorum }) => (
-  <Motion
-    defaultStyle={{
-      votesYesProgress: 0,
-      votesNoProgress: 0,
-      quorumProgress: 0,
-    }}
-    style={{
-      votesYesProgress: spring(votesYes, fast),
-      votesNoProgress: spring(votesNo, fast),
-      quorumProgress: spring(quorum, fast),
-    }}
-  >
-    {({ votesYesProgress, votesNoProgress, quorumProgress }) => (
-      <Main>
-        <Header>
-          <h2>
-            <Label>
-              Quorum: <strong>{Math.round(quorumProgress * 100)}%</strong>
-            </Label>
-          </h2>
-          <VoteStatus votesYes={votesYes} votesNo={votesNo} opened={true} />
-        </Header>
-        <BarWrapper>
-          <QuorumBar
-            style={{
-              transform: `
-                translateX(${PANEL_INNER_WIDTH * quorumProgress}px)
-                scaleY(${quorum ? quorumProgress / quorum : 0})
-              `,
-            }}
-          />
-          <Bar>
-            <Votes
-              color={theme.positive}
-              style={{
-                transform: `scaleX(${votesYesProgress})`,
-              }}
-            />
-            <Votes
-              color={theme.negative}
-              style={{
-                transform: `scaleX(${votesNoProgress})`,
-                left: `${PANEL_INNER_WIDTH * votesYesProgress}px`,
-              }}
-            />
-          </Bar>
-        </BarWrapper>
+const VoteSummary = ({
+  votesYea,
+  votesNay,
+  tokenSupply,
+  quorum,
+  support,
+  ready,
+}) => {
+  const totalVotes = votesYea + votesNay
+  const votesYeaPct = votesYea / tokenSupply
+  const votesNayPct = votesNay / tokenSupply
 
-        <YesNoItem color={theme.positive}>
-          <span>Yes</span>
-          <strong>{Math.round(votesYesProgress * 100)}%</strong>
-        </YesNoItem>
-        <YesNoItem color={theme.negative}>
-          <span>No</span>
-          <strong>{Math.round(votesNoProgress * 100)}%</strong>
-        </YesNoItem>
-      </Main>
-    )}
-  </Motion>
-)
+  const votesYeaVotersPct = votesYea / totalVotes
+  const votesNayVotersPct = votesNay / totalVotes
+
+  const votingPowerSupport = totalVotes / tokenSupply
+  return (
+    <Motion
+      defaultStyle={{ progress: 0 }}
+      style={{ progress: spring(Number(ready), fast) }}
+    >
+      {({ progress }) => (
+        <Main>
+          <Header>
+            <span>
+              <Label>
+                Quorum: <strong>{Math.round(votingPowerSupport * 100)}%</strong>{' '}
+              </Label>
+              <Text size="xsmall" color={theme.textSecondary}>
+                ({Math.round(quorum * 100)}% needed)
+              </Text>
+            </span>
+          </Header>
+          <BarWrapper>
+            <QuorumBar
+              style={{
+                transform: `
+                translateX(${PANEL_INNER_WIDTH * quorum * progress}px)
+                scaleY(${quorum ? quorum * progress / quorum : 0})
+              `,
+              }}
+            />
+            <Bar>
+              <Votes
+                color={theme.positive}
+                style={{
+                  transform: `scaleX(${votesYeaPct * progress})`,
+                }}
+              />
+              <Votes
+                color={theme.negative}
+                style={{
+                  transform: `scaleX(${votesNayPct * progress})`,
+                  left: `${PANEL_INNER_WIDTH * votesYeaPct * progress}px`,
+                }}
+              />
+            </Bar>
+          </BarWrapper>
+
+          <YesNoItem color={theme.positive}>
+            <span>Yes</span>
+            <strong>{Math.round(votesYeaVotersPct * progress * 100)}%</strong>
+              <Text size="xsmall" color={theme.textSecondary}>
+                ({Math.round(support * 100)}% needed)
+              </Text>
+          </YesNoItem>
+          <YesNoItem color={theme.negative}>
+            <span>No</span>
+            <strong>{Math.round(votesNayVotersPct * progress * 100)}%</strong>
+          </YesNoItem>
+        </Main>
+      )}
+    </Motion>
+  )
+}
 
 const Main = styled.div`
   padding: 20px 0;
 `
 
-const Header = styled.div`
+const Header = styled.h2`
   display: flex;
   justify-content: space-between;
 `
@@ -83,7 +96,6 @@ const Label = styled(Text).attrs({
   smallcaps: true,
   color: theme.textSecondary,
 })`
-  display: block;
   strong {
     color: #000;
   }
@@ -129,6 +141,7 @@ const QuorumBar = styled.div`
 const YesNoItem = styled.div`
   display: flex;
   align-items: center;
+  white-space: nowrap;
   &:first-child {
     margin-bottom: 10px;
   }
@@ -141,9 +154,12 @@ const YesNoItem = styled.div`
     border-radius: 5px;
     background: ${({ color }) => color};
   }
-  span {
+  span:first-child {
     width: 35px;
     color: ${theme.textSecondary};
+  }
+  span:last-child {
+    margin-left: 10px;
   }
 `
 

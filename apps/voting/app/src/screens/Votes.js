@@ -1,20 +1,19 @@
 import React from 'react'
 import styled from 'styled-components'
 import { BadgeNumber, Button, colors } from '@aragon/ui'
-
 import VotesTable from '../components/VotesTable'
+import { isVoteOpen } from '../vote-utils'
 
 class Votes extends React.Component {
   render() {
-    const { votes, onSelectVote, tokensCount } = this.props
-    const now = Date.now()
-    const openedVotes = votes.filter(vote => vote.endDate > now)
+    const { votes, onSelectVote, tokenSupply, voteTime } = this.props
+    const openedVotes = votes.filter(({ vote }) => isVoteOpen(vote, voteTime))
     const closedVotes = votes.filter(vote => !openedVotes.includes(vote))
     return (
       <Main>
         <VotesTableWrapper>
           <Title>
-            <span>Open Votes</span>
+            <span>Opened Votes</span>
             <BadgeNumber
               background={colors.Rain['Rain Sky']}
               color={colors.Rain.Slate}
@@ -24,26 +23,29 @@ class Votes extends React.Component {
           </Title>
           <VotesTable
             votes={openedVotes}
+            voteTime={voteTime}
             opened={true}
-            tokensCount={tokensCount}
+            tokenSupply={tokenSupply}
             onSelectVote={onSelectVote}
           />
         </VotesTableWrapper>
 
         <VotesTableWrapper>
           <Title>
-            <span>Past Votes</span>
+            <span>Closed Votes</span>
           </Title>
           <VotesTable
             title=""
             votes={closedVotes}
-            tokensCount={tokensCount}
+            voteTime={voteTime}
             opened={false}
+            tokenSupply={tokenSupply}
+            onSelectVote={onSelectVote}
           />
         </VotesTableWrapper>
 
         <SeeMoreWrapper>
-          <Button mode="secondary">Show Older Votes</Button>
+          <Button mode="secondary">Show Previous Votes</Button>
         </SeeMoreWrapper>
       </Main>
     )

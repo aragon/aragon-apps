@@ -3,19 +3,24 @@ import styled from 'styled-components'
 import { theme, IconTime, IconCross, IconCheck } from '@aragon/ui'
 
 const STATUSES = {
-  timeout: { label: 'Time out', Icon: IconTime, color: theme.textSecondary },
+  ongoing: { label: 'Ongoing', Icon: IconTime, color: theme.textSecondary },
   approved: { label: 'Approved', Icon: IconCheck, color: theme.positive },
   rejected: { label: 'Rejected', Icon: IconCross, color: theme.negative },
 }
 
-const getStatus = (votesYes, votesNo) => {
-  if (votesYes === 0 && votesNo === 0) return STATUSES.timeout
-  if (votesYes >= votesNo) return STATUSES.approved
+const getStatus = (votesYea, votesNay, support, quorum, opened) => {
+  if (!opened && votesYea === 0 && votesNay === 0) {
+    return STATUSES.rejected
+  }
+
+  if (opened) return STATUSES.timeout
+  if (votesYea === 0 && votesNay === 0) return STATUSES.timeout
+  if (votesYea >= votesNay) return STATUSES.approved
   return STATUSES.rejected
 }
 
-const Status = ({ votesYes, votesNo, opened }) => {
-  const status = getStatus(votesYes, votesNo)
+const Status = ({ votesYea, votesNay, quorum, opened }) => {
+  const status = getStatus(votesYea, votesNay, quorum, opened)
   const { color, label, Icon } = status
   return opened && status === STATUSES.timeout ? null : (
     <Main color={color}>
@@ -26,9 +31,10 @@ const Status = ({ votesYes, votesNo, opened }) => {
 }
 
 Status.defaultProps = {
-  votesYes: 0,
-  votesNo: 0,
+  votesYea: 0,
+  votesNay: 0,
   opened: true,
+  quorum: 0,
 }
 
 const Main = styled.span`

@@ -1,14 +1,21 @@
 import React from 'react'
 import styled from 'styled-components'
 import { AragonApp, AppBar, Button, SidePanel } from '@aragon/ui'
-import { votes, tokensCount } from './demo-state'
+import {
+  VOTES,
+  TOKEN_SUPPLY,
+  VOTE_TIME,
+  USER_ACCOUNT,
+  SUPPORT_REQUIRED_PCT,
+} from './demo-state'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
 import VotePanelContent from './components/VotePanelContent'
+import { isVoteOpen } from './vote-utils'
 
 class App extends React.Component {
   state = {
-    votes,
+    votes: VOTES,
     createVoteVisible: false,
     currentVote: null,
     voteVisible: false,
@@ -21,7 +28,7 @@ class App extends React.Component {
     this.setState({ createVoteVisible: false })
   }
   handleSelectVote = id => {
-    const vote = votes.find(vote => id === vote.id)
+    const vote = this.state.votes.find(vote => id === vote.id)
     if (!vote) return
     this.setState({
       currentVote: vote,
@@ -33,9 +40,7 @@ class App extends React.Component {
     this.setState({ voteVisible: false })
   }
   handleVoteTransitionEnd = opened => {
-    this.setState(
-      opened ? { voteSidebarOpened: true } : { currentVote: null }
-    )
+    this.setState(opened ? { voteSidebarOpened: true } : { currentVote: null })
   }
   render() {
     const {
@@ -59,7 +64,8 @@ class App extends React.Component {
           {votes.length ? (
             <Votes
               votes={votes}
-              tokensCount={tokensCount}
+              voteTime={VOTE_TIME}
+              tokenSupply={TOKEN_SUPPLY}
               onSelectVote={this.handleSelectVote}
             />
           ) : (
@@ -68,16 +74,25 @@ class App extends React.Component {
         </Main>
 
         <SidePanel
-          title="Open Vote"
+          title={
+            currentVote && isVoteOpen(currentVote.vote, VOTE_TIME)
+              ? 'Opened Vote'
+              : 'Closed Vote'
+          }
           opened={Boolean(!createVoteVisible && voteVisible)}
           onClose={this.handleDeselectVote}
           onTransitionEnd={this.handleVoteTransitionEnd}
         >
-          <VotePanelContent
-            vote={currentVote}
-            tokensCount={tokensCount}
-            ready={voteSidebarOpened}
-          />
+          {currentVote && (
+            <VotePanelContent
+              vote={currentVote}
+              voteTime={VOTE_TIME}
+              user={USER_ACCOUNT}
+              tokenSupply={TOKEN_SUPPLY}
+              support={SUPPORT_REQUIRED_PCT}
+              ready={voteSidebarOpened}
+            />
+          )}
         </SidePanel>
 
         <SidePanel

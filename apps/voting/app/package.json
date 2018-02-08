@@ -10,6 +10,7 @@
     "react-blockies": "^1.2.2",
     "react-dom": "^16.2.0",
     "react-motion": "^0.5.2",
+    "seed-random": "^2.2.0",
     "styled-components": "^2.4.0"
   },
   "devDependencies": {

@@ -10,34 +10,40 @@ import {
   Text,
   theme,
 } from '@aragon/ui'
-import { VOTE_UNKNOWN } from '../vote-types'
+import { VOTE_ABSENT } from '../vote-types'
+import { isVoteOpen, getAccountVote } from '../vote-utils'
 import VoteSummary from './VoteSummary'
+import VoteStatus from './VoteStatus'
 
-const VotePanelContent = ({ vote, tokensCount, ready }) => {
+const VotePanelContent = ({
+  vote: { id, vote, endDate, creatorName, metas: { question } },
+  user,
+  voteTime,
+  tokenSupply,
+  support,
+  ready,
+}) => {
   if (!vote) {
     return null
   }
 
-  const {
-    endDate,
-    question,
-    quorum,
-    creatorAddress,
-    creatorName,
-    votesYes,
-    votesNo,
-    userVote,
-  } = vote
+  const { minAcceptQuorumPct: quorum, creator, yea, nay, voters } = vote
+  const userVote = getAccountVote(user.address, voters)
+  const opened = isVoteOpen(vote, voteTime)
 
   return (
     <div>
       <SidePanelSplit>
         <div>
           <h2>
-            <Label>Time Remaining:</Label>
+            <Label>{opened ? 'Time Remaining:' : 'Status'}</Label>
           </h2>
           <div>
-            <Countdown end={endDate} />
+            {opened ? (
+              <Countdown end={endDate} />
+            ) : (
+              <VoteStatus votesYea={yea} votesNay={nay} opened={opened} />
+            )}
           </div>
         </div>
         <div>
@@ -69,7 +75,7 @@ const VotePanelContent = ({ vote, tokensCount, ready }) => {
         </h2>
         <Creator>
           <CreatorImg>
-            <Blockies seed={creatorAddress} size={8} />
+            <Blockies seed={creator} size={8} />
           </CreatorImg>
           <div>
             <p>
@@ -77,18 +83,29 @@ const VotePanelContent = ({ vote, tokensCount, ready }) => {
             </p>
             <p>
               <a
-                href={`https://etherscan.io/address/${creatorAddress}`}
+                href={`https://etherscan.io/address/${creator}`}
                 target="_blank"
               >
-                {creatorAddress}
+                {creator}
               </a>
             </p>
           </div>
         </Creator>
       </Part>
       <SidePanelSeparator />
-      {userVote === VOTE_UNKNOWN ? (
+
+      <VoteSummary
+        votesYea={yea}
+        votesNay={nay}
+        tokenSupply={tokenSupply}
+        quorum={quorum}
+        support={support}
+        ready={ready}
+      />
+
+      {userVote === VOTE_ABSENT && (
         <div>
+          <SidePanelSeparator />
           <VotingButtons>
             <Button mode="strong" emphasis="positive" wide>
               Yes
@@ -97,21 +114,15 @@ const VotePanelContent = ({ vote, tokensCount, ready }) => {
               No
             </Button>
           </VotingButtons>
-          <Info title="You will cast 389273724 votes" />
+          <Info title={`You will cast ${user.balance} votes`} />
         </div>
-      ) : (
-        <VoteSummary
-          votesNo={ready ? votesNo / tokensCount : 0}
-          votesYes={ready ? votesYes / tokensCount : 0}
-          quorum={ready ? quorum : 0}
-        />
       )}
     </div>
   )
 }
 
 VotePanelContent.defaultProps = {
-  tokensCount: 0,
+  tokenSupply: 0,
 }
 
 const Label = styled(Text).attrs({

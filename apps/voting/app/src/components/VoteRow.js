@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Button, Countdown, TableCell, TableRow } from '@aragon/ui'
-import { VOTE_UNKNOWN } from '../vote-types'
+import { VOTE_ABSENT } from '../vote-types'
 import ProgressBar from './ProgressBar'
 import VoteStatus from './VoteStatus'
 
@@ -13,13 +13,12 @@ class VoteRow extends React.Component {
     const {
       endDate,
       question,
-      votesYes,
-      votesNo,
-      pending,
-      tokensCount,
+      votesYea,
+      votesNay,
+      tokenSupply,
       opened,
     } = this.props
-    const totalVotes = votesYes + votesNo
+    const totalVotes = votesYea + votesNay
     return (
       <TableRow>
         <StatusCell>
@@ -27,8 +26,8 @@ class VoteRow extends React.Component {
             <Countdown end={endDate} />
           ) : (
             <VoteStatus
-              votesYes={votesYes}
-              votesNo={votesNo}
+              votesYea={votesYea}
+              votesNay={votesNay}
               opened={opened}
             />
           )}
@@ -39,35 +38,27 @@ class VoteRow extends React.Component {
           </QuestionWrapper>
         </QuestionCell>
         <Cell align="right">{totalVotes}</Cell>
-        {opened && <Cell align="right">{pending}</Cell>}
-        <LastCell>
+        <BarsCell>
           <BarsGroup>
             <Bar>
               <ProgressBar
-                type='positive'
-                progress={totalVotes > 0 ? votesYes / tokensCount : 0}
+                type="positive"
+                progress={totalVotes > 0 ? votesYea / tokenSupply : 0}
               />
             </Bar>
             <Bar>
               <ProgressBar
-                type='negative'
-                progress={totalVotes > 0 ? votesNo / tokensCount : 0}
+                type="negative"
+                progress={totalVotes > 0 ? votesNay / tokenSupply : 0}
               />
             </Bar>
-            {opened && (
-              <ButtonWrapper>
-                <Button
-                  mode="outline"
-                  compact
-                  wide
-                  onClick={this.handleVoteClick}
-                >
-                  Vote
-                </Button>
-              </ButtonWrapper>
-            )}
           </BarsGroup>
-        </LastCell>
+        </BarsCell>
+        <ActionsCell>
+          <Button mode="outline" onClick={this.handleVoteClick}>
+            Open Vote
+          </Button>
+        </ActionsCell>
       </TableRow>
     )
   }
@@ -75,10 +66,9 @@ class VoteRow extends React.Component {
 
 VoteRow.defaultProps = {
   question: '',
-  votesYes: 0,
-  votesNo: 0,
-  pending: 0,
-  userVote: VOTE_UNKNOWN,
+  votesYea: 0,
+  votesNay: 0,
+  userVote: VOTE_ABSENT,
   opened: false,
   onSelectVote: () => {},
 }
@@ -96,10 +86,14 @@ const QuestionCell = styled(Cell)`
   width: 40%;
 `
 
-const LastCell = styled(Cell)`
+const BarsCell = styled(Cell)`
   flex-shrink: 0;
   width: 25%;
   min-width: 200px;
+`
+
+const ActionsCell = styled(Cell)`
+  width: 0;
 `
 
 const QuestionWrapper = styled.div`
@@ -117,16 +111,9 @@ const BarsGroup = styled.div`
 `
 
 const Bar = styled.div`
-  margin-top: 20px;
-  &:first-child {
-    margin-top: 0;
+  &:not(:first-child) {
+    margin-top: 20px;
   }
-`
-
-const ButtonWrapper = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
 `
 
 export default VoteRow
