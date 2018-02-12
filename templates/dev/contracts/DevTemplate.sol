@@ -9,21 +9,27 @@ import "@aragon/os/contracts/lib/ens/ENS.sol";
 import "@aragon/os/contracts/lib/ens/PublicResolver.sol";
 
 import "@aragon/apps-voting/contracts/Voting.sol";
+import "@aragon/apps-vault/contracts/Vault.sol";
 
 
 contract DevTemplate {
     APMRegistry apm;
     DAOFactory fac;
+    MiniMeTokenFactory minimeFac;
 
     address constant ANY_ENTITY = address(-1);
 
     event DeployInstance(address dao);
 
-    function DevTemplate(DAOFactory _fac, APMRegistry _apm, address votingBase, bytes votingContentURI) {
+    function DevTemplate(DAOFactory _fac, MiniMeTokenFactory _minimeFac, APMRegistry _apm) {
         apm = _apm;
         fac = _fac;
+        minimeFac = _minimeFac;
+    }
 
-        createVotingRepo(votingBase, votingContentURI);
+    function apmInit(address votingBase, bytes votingContentURI, address vaultBase, bytes vaultContentURI) {
+        createRepo("voting", votingBase, votingContentURI);
+        createRepo("vault", vaultBase, vaultContentURI);
     }
 
     function createInstance() {
@@ -32,9 +38,9 @@ contract DevTemplate {
 
         acl.createPermission(ANY_ENTITY, dao, dao.APP_MANAGER_ROLE(), msg.sender);
 
-        bytes32 appId = votingAppId();
-        Voting voting = Voting(dao.newAppInstance(appId, latestVersionAppBase(appId)));
-        MiniMeToken token = new MiniMeToken(address(0), address(0), 0, 'DevToken', 18, 'XDT', true);
+        Voting voting = Voting(dao.newAppInstance(votingAppId(), latestVersionAppBase(votingAppId())));
+        Vault vault = Vault(dao.newAppInstance(vaultAppId(), latestVersionAppBase(vaultAppId())));
+        MiniMeToken token = minimeFac.createCloneToken(address(0), 0, "DevToken", 18, "XDT", true);
 
         token.changeController(msg.sender); // sender has to create tokens
 
@@ -46,18 +52,24 @@ contract DevTemplate {
         acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), msg.sender);
         acl.createPermission(ANY_ENTITY, voting, voting.MODIFY_QUORUM_ROLE(), msg.sender);
 
+        acl.createPermission(voting, vault, vault.TRANSFER_ROLE(), msg.sender);
+
         DeployInstance(dao);
     }
 
-    function createVotingRepo(address votingBase, bytes votingContentURI) internal {
+    function createRepo(string name, address votingBase, bytes votingContentURI) internal {
         uint16[3] memory firstVersion;
         firstVersion[0] = 1;
 
-        apm.newRepoWithVersion('voting', ANY_ENTITY, firstVersion, votingBase, votingContentURI);
+        apm.newRepoWithVersion(name, ANY_ENTITY, firstVersion, votingBase, votingContentURI);
     }
 
     function votingAppId() internal view returns (bytes32) {
-        return keccak256(apm.registrar().rootNode(), keccak256('voting'));
+        return keccak256(apm.registrar().rootNode(), keccak256("voting"));
+    }
+
+    function vaultAppId() internal view returns (bytes32) {
+        return keccak256(apm.registrar().rootNode(), keccak256("vault"));
     }
 
     function ens() internal view returns (AbstractENS) {
