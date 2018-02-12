@@ -90,6 +90,14 @@ contract('Finance App', accounts => {
         assert.equal(ref, 'ref', 'ref should be correct')
     })
 
+    it('fails calling receiveApproval from other than token', async () => {
+        let amount = 5
+        await token1.approve(app.address, amount)
+        return assertRevert(async () => {
+            await app.receiveApproval(accounts[0], amount, token1.address, '', {from: accounts[1]})
+        })
+    })
+
     it('records ERC677 deposits', async () => {
         await etherToken.transferAndCall(app.address, 50, 'reference')
 
