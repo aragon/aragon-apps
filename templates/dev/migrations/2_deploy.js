@@ -16,7 +16,8 @@ module.exports = async (deployer, network, accounts) => {
 
   const votingBase = await Voting.new()
   const vaultBase = await Vault.new()
-  const template = await DevTemplate.new(daoFact.address, apm.address, votingBase.address, votingIpfs, vaultBase.address, vaultIpfs)
+  const template = await DevTemplate.new(daoFact.address, apm.address)
+  await template.apmInit(votingBase.address, votingIpfs, vaultBase.address, vaultIpfs)
   const receipt = await template.createInstance()
   const daoAddr = receipt.logs.filter(l => l.event == 'DeployInstance')[0].args.dao
 

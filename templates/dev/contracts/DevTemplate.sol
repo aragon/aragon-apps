@@ -20,10 +20,12 @@ contract DevTemplate {
 
     event DeployInstance(address dao);
 
-    function DevTemplate(DAOFactory _fac, APMRegistry _apm, address votingBase, bytes votingContentURI, address vaultBase, bytes vaultContentURI) {
+    function DevTemplate(DAOFactory _fac, APMRegistry _apm) {
         apm = _apm;
         fac = _fac;
+    }
 
+    function apmInit(address votingBase, bytes votingContentURI, address vaultBase, bytes vaultContentURI) {
         createRepo("voting", votingBase, votingContentURI);
         createRepo("vault", vaultBase, vaultContentURI);
     }
