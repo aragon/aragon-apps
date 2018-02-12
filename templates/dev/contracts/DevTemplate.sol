@@ -15,14 +15,16 @@ import "@aragon/apps-vault/contracts/Vault.sol";
 contract DevTemplate {
     APMRegistry apm;
     DAOFactory fac;
+    MiniMeTokenFactory minimeFac;
 
     address constant ANY_ENTITY = address(-1);
 
     event DeployInstance(address dao);
 
-    function DevTemplate(DAOFactory _fac, APMRegistry _apm, address votingBase, bytes votingContentURI, address vaultBase, bytes vaultContentURI) {
+    function DevTemplate(DAOFactory _fac, MiniMeTokenFactory _minimeFac, APMRegistry _apm, address votingBase, bytes votingContentURI, address vaultBase, bytes vaultContentURI) {
         apm = _apm;
         fac = _fac;
+        minimeFac = _minimeFac;
 
         createRepo("voting", votingBase, votingContentURI);
         createRepo("vault", vaultBase, vaultContentURI);
@@ -36,7 +38,7 @@ contract DevTemplate {
 
         Voting voting = Voting(dao.newAppInstance(votingAppId(), latestVersionAppBase(votingAppId())));
         Vault vault = Vault(dao.newAppInstance(vaultAppId(), latestVersionAppBase(vaultAppId())));
-        MiniMeToken token = new MiniMeToken(address(0), address(0), 0, "DevToken", 18, "XDT", true);
+        MiniMeToken token = minimeFac.createCloneToken(address(0), 0, "DevToken", 18, "XDT", true);
 
         token.changeController(msg.sender); // sender has to create tokens
 
