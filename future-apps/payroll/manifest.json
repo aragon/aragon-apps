@@ -1,0 +1,8 @@
+{
+  "name": "Payroll",
+  "description": "Manage organization employees payroll",
+  "icons": [{
+    "src": "images/icon.png",
+    "sizes": "192x192"
+  }]
+}
