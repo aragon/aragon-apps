@@ -1,0 +1,23 @@
+{
+  "name": "@aragon/templates-beta",
+  "version": "1.0.0",
+  "description": "Beta template for v0.5 Aragon orgs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Aragon Institution MTU <contact@aragon.one>",
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "truffle": "^4.0.5",
+    "truffle-hdwallet-provider": "0.0.3",
+    "eth-ens-namehash": "^2.0.8"
+  },
+  "dependencies": {
+    "@aragon/os": "^3.0.3",
+    "@aragon/apps-voting": "^1.0.0",
+    "@aragon/apps-vault": "^1.0.0",
+    "@aragon/apps-finance": "^1.0.0",
+    "@aragon/apps-token-manager": "^1.0.0"
+  }
+}
