@@ -97,6 +97,17 @@ contract Finance is AragonApp, ERC677Receiver {
     }
 
     /**
+     * @dev Sends ETH to Vault. This contract should never receive funds,
+     *      but in case it happens, this function recovers them sending them
+     *      to Vault.
+     * @notice Allows to send ETH from this contract to Vault, to avoid locking them in contract forever.
+     */
+    function escapeHatch() public payable {
+        // convert ETH to EtherToken
+        etherToken.wrapAndCall.value(this.balance)(address(this), "Adding Funds");
+    }
+
+    /**
     * @notice Initialize Finance app for `_vault` with duration `_periodDuration`
     * @param _vault Address of the vault Finance will rely on (non changeable)
     * @param _etherToken Address of EtherToken for ether withdraws
