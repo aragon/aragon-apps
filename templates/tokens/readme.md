@@ -21,7 +21,7 @@ const tickers = Promise.all(promisedTickers)
 
 ```
 
-## Minting tokens
+## Minting tokens
 
 ```
 const testTokens = require('@aragon/templates-tokens')
