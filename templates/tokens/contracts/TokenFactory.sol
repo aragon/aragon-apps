@@ -1,6 +1,6 @@
 pragma solidity 0.4.18;
 
-import "@aragon/os/contracts/lib/zeppelin/token/MintableToken.sol";
+import "./MintableToken.sol";
 
 contract Token is MintableToken {
     string public name;
