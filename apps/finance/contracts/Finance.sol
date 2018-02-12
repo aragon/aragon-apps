@@ -152,6 +152,7 @@ contract Finance is AragonApp, ERC677Receiver {
         transitionsPeriod
         external
     {
+        require(msg.sender == _token);
         ERC20 token = ERC20(msg.sender);
         _recordIncomingTransaction(
             token,
