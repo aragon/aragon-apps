@@ -9,18 +9,18 @@ import "@aragon/os/contracts/lib/ens/ENS.sol";
 import "@aragon/os/contracts/lib/ens/PublicResolver.sol";
 import "@aragon/os/contracts/common/EtherToken.sol";
 
-
 import "@aragon/apps-voting/contracts/Voting.sol";
 import "@aragon/apps-vault/contracts/Vault.sol";
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
 import "@aragon/apps-finance/contracts/Finance.sol";
 
 
-contract BetaTemplateDev {
+contract BetaTemplateBase {
     APMRegistry apm;
-    DAOFactory fac;
-    MiniMeTokenFactory minimeFac;
+    DAOFactory public fac;
+    MiniMeTokenFactory public minimeFac;
     EtherToken etherToken;
+    bytes32[4] appIds;
 
     // ensure alphabetic order
     enum Apps { Finance, TokenManager, Vault, Voting }
@@ -29,14 +29,16 @@ contract BetaTemplateDev {
 
     address constant ANY_ENTITY = address(-1);
 
-    function BetaTemplateDev(DAOFactory _fac, MiniMeTokenFactory _minimeFac, APMRegistry _apm, EtherToken _etherToken) {
+    function BetaTemplateBase(DAOFactory _fac, MiniMeTokenFactory _minimeFac, APMRegistry _apm, EtherToken _etherToken, bytes32[4] _appIds) {
         apm = _apm;
         fac = _fac;
         minimeFac = _minimeFac;
         etherToken = _etherToken;
+
+        appIds = _appIds;
     }
 
-    function createInstance(bytes32[4] appIds, string tokenName, string tokenSymbol, uint8 tokenDecimals) {
+    function create(MiniMeToken token, address[] holders, uint256[] stakes, uint256 _maxTokens) internal returns (Voting) {
         Kernel dao = fac.newDAO(this);
         ACL acl = ACL(dao.acl());
 
@@ -47,7 +49,6 @@ contract BetaTemplateDev {
         Finance finance = Finance(dao.newAppInstance(appIds[uint8(Apps.Finance)], latestVersionAppBase(appIds[uint8(Apps.Finance)])));
         TokenManager tokenManager = TokenManager(dao.newAppInstance(appIds[uint8(Apps.TokenManager)], latestVersionAppBase(appIds[uint8(Apps.TokenManager)])));
 
-        MiniMeToken token = minimeFac.createCloneToken(address(0), 0, tokenName, tokenDecimals, tokenSymbol, true);
         token.changeController(tokenManager); // sender has to create tokens
 
         // permissions
@@ -58,29 +59,35 @@ contract BetaTemplateDev {
         acl.createPermission(voting, finance, finance.CREATE_PAYMENTS_ROLE(), voting);
         acl.createPermission(voting, finance, finance.EXECUTE_PAYMENTS_ROLE(), voting);
         acl.createPermission(voting, finance, finance.DISABLE_PAYMENTS_ROLE(), voting);
+        acl.createPermission(voting, tokenManager, tokenManager.ASSIGN_ROLE(), voting);
+        acl.createPermission(voting, tokenManager, tokenManager.REVOKE_VESTINGS_ROLE(), voting);
+
+        require(holders.length == stakes.length);
+
         acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
 
-        initVoting(voting, token);
-        initTokenManager(tokenManager);
+        tokenManager.initialize(token, _maxTokens > 1, _maxTokens, true);
+
+        for (uint256 i = 0; i < holders.length; i++) {
+            tokenManager.mint(holders[i], stakes[i]);
+        }
+
+        // inits
         finance.initialize(vault, etherToken, uint64(-1)); // yuge period
 
-        // permission clean up, in favor of voting
-        acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
-        acl.setPermissionManager(voting, tokenManager, tokenManager.MINT_ROLE());
+        // clean-up
         acl.grantPermission(voting, dao, dao.APP_MANAGER_ROLE());
         acl.setPermissionManager(voting, dao, dao.APP_MANAGER_ROLE());
         acl.grantPermission(voting, acl, acl.CREATE_PERMISSIONS_ROLE());
         acl.setPermissionManager(voting, acl, acl.CREATE_PERMISSIONS_ROLE());
+        acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
+        acl.setPermissionManager(voting, tokenManager, tokenManager.MINT_ROLE());
+        // no revokes to save gas as factory can't do anything to orgs
 
         DeployInstance(dao, token);
-    }
 
-    function initVoting(Voting voting, MiniMeToken token) internal {}
-
-    function initTokenManager(TokenManager tokenManager) internal {}
-
-    function ens() internal view returns (AbstractENS) {
-        return apm.registrar().ens();
+        // voting is returned so init can happen later
+        return voting;
     }
 
     function latestVersionAppBase(bytes32 appId) internal view returns (address base) {
@@ -88,5 +95,9 @@ contract BetaTemplateDev {
         (,base,) = repo.getLatest();
 
         return base;
+    }
+
+    function ens() internal view returns (AbstractENS) {
+        return apm.registrar().ens();
     }
 }

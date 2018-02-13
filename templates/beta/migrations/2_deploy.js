@@ -23,6 +23,6 @@ module.exports = async (deployer, network, accounts) => {
   const receipt = await template.createInstance()
 
   const daoAddr = receipt.logs.filter(l => l.event == 'DeployInstance')[0].args.dao
+
   console.log('DAO:', daoAddr)
-  console.log('ENS:', ensAddr)
 }
