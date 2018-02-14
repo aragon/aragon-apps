@@ -1,19 +1,19 @@
 pragma solidity 0.4.18;
 
-import "@aragon/core/contracts/apps/App.sol";
-import "@aragon/core/contracts/common/Initializable.sol";
-import "@aragon/core/contracts/common/erc677/ERC677Receiver.sol";
+import "@aragon/os/contracts/apps/AragonApp.sol";
+import "@aragon/os/contracts/common/Initializable.sol";
+import "@aragon/os/contracts/lib/erc677/ERC677Receiver.sol";
 
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
 
-import "@aragon/core/contracts/zeppelin/token/ERC20.sol";
-import "@aragon/core/contracts/zeppelin/math/SafeMath.sol";
-import "@aragon/core/contracts/zeppelin/math/Math.sol";
+import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/Math.sol";
 
-import "@aragon/core/contracts/misc/Migrations.sol";
+import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract Fundraising is App, Initializable, ERC677Receiver {
+contract Fundraising is AragonApp, ERC677Receiver {
     using SafeMath for uint256;
 
     uint256 constant MAX_PERIODS = 50;

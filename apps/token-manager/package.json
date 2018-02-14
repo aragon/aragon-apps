@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "solium --dir ./contracts",
-    "test": "truffle test --network rpc",
+    "test": "TRUFFLE_TEST=true npm run ganache-cli:dev",
     "test:gas": "GAS_REPORTER=true npm test",
     "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh",
     "console": "node_modules/.bin/truffle console",
@@ -31,6 +31,7 @@
     "babel-register": "^6.26.0",
     "eth-gas-reporter": "^0.1.1",
     "ethereumjs-testrpc": "^6.0.2",
+    "ganache-cli": "^6.0.3",
     "solidity-coverage": "0.3.5",
     "solium": "^1.0.4",
     "truffle": "^4.0.4",

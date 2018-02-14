@@ -22,7 +22,7 @@ contract('Fundraising', accounts => {
         token = await MiniMeToken.new(zeroAddress, zeroAddress, 0, 'n', 0, 'n', true)
         tokenManager = await TokenManager.new()
         await token.changeController(tokenManager.address)
-        await tokenManager.initializeNative(token.address)
+        await tokenManager.initialize(token.address, true, 0, false)
 
         fundraising = await Fundraising.new()
         await fundraising.initialize(tokenManager.address, vault)

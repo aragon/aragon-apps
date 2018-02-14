@@ -20,11 +20,11 @@ contract Finance is AragonApp, ERC677Receiver {
     uint64 constant public MAX_UINT64 = uint64(-1);
     uint256 constant public MAX_UINT = uint256(-1);
 
-    bytes32 constant public CREATE_PAYMENTS_ROLE = bytes32(1);
-    bytes32 constant public CHANGE_PERIOD_ROLE = bytes32(2);
-    bytes32 constant public CHANGE_BUDGETS_ROLE = bytes32(3);
-    bytes32 constant public EXECUTE_PAYMENTS_ROLE = bytes32(4);
-    bytes32 constant public DISABLE_PAYMENTS_ROLE = bytes32(5);
+    bytes32 constant public CREATE_PAYMENTS_ROLE = keccak256("CREATE_PAYMENTS_ROLE");
+    bytes32 constant public CHANGE_PERIOD_ROLE = keccak256("CHANGE_PERIOD_ROLE");
+    bytes32 constant public CHANGE_BUDGETS_ROLE = keccak256("CHANGE_BUDGETS_ROLE");
+    bytes32 constant public EXECUTE_PAYMENTS_ROLE = keccak256("EXECUTE_PAYMENTS_ROLE");
+    bytes32 constant public DISABLE_PAYMENTS_ROLE = keccak256("DISABLE_PAYMENTS_ROLE");
 
     // order optimized for storage
     struct Payment {
@@ -97,6 +97,17 @@ contract Finance is AragonApp, ERC677Receiver {
     }
 
     /**
+     * @dev Sends ETH to Vault. This contract should never receive funds,
+     *      but in case it happens, this function recovers them sending them
+     *      to Vault.
+     * @notice Allows to send ETH from this contract to Vault, to avoid locking them in contract forever.
+     */
+    function escapeHatch() public payable {
+        // convert ETH to EtherToken
+        etherToken.wrapAndCall.value(this.balance)(address(this), "Adding Funds");
+    }
+
+    /**
     * @notice Initialize Finance app for `_vault` with duration `_periodDuration`
     * @param _vault Address of the vault Finance will rely on (non changeable)
     * @param _etherToken Address of EtherToken for ether withdraws
@@ -152,7 +163,8 @@ contract Finance is AragonApp, ERC677Receiver {
         transitionsPeriod
         external
     {
-        ERC20 token = ERC20(_token);
+        require(msg.sender == _token);
+        ERC20 token = ERC20(msg.sender);
         _recordIncomingTransaction(
             token,
             _from,

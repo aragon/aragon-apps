@@ -90,6 +90,14 @@ contract('Finance App', accounts => {
         assert.equal(ref, 'ref', 'ref should be correct')
     })
 
+    it('fails calling receiveApproval from other than token', async () => {
+        let amount = 5
+        await token1.approve(app.address, amount)
+        return assertRevert(async () => {
+            await app.receiveApproval(accounts[0], amount, token1.address, '', {from: accounts[1]})
+        })
+    })
+
     it('records ERC677 deposits', async () => {
         await etherToken.transferAndCall(app.address, 50, 'reference')
 
@@ -171,6 +179,23 @@ contract('Finance App', accounts => {
         await app.tryTransitionAccountingPeriod(5) // transition a maximum of 5 accounting periods
 
         assert.equal(await app.currentPeriodId(), 2, 'should have transitioned 2 periods')
+    })
+
+    it("escapes hatch, recovers ETH", async () => {
+        let vaultInitialBalance = await getBalance(vault.address)
+        let vaultTokenInitialBalance = await etherToken.balanceOf(vault.address)
+        let financeInitialBalance = await getBalance(app.address)
+        let financeTokenInitialBalance = await etherToken.balanceOf(app.address)
+        let amount = web3.toWei(1, 'ether')
+        await app.escapeHatch({value: amount})
+        let vaultFinalBalance = await getBalance(vault.address)
+        let vaultTokenFinalBalance = await etherToken.balanceOf(vault.address)
+        let financeFinalBalance = await getBalance(app.address)
+        let financeTokenFinalBalance = await etherToken.balanceOf(app.address)
+        assert.equal(financeFinalBalance.valueOf(), 0, "Funds not recovered (Finance)!")
+        assert.equal(financeTokenFinalBalance.valueOf(), 0, "Funds not recovered (Finance)!")
+        assert.equal(vaultFinalBalance.toString(), 0, "Funds not recovered (Vault)!")
+        assert.equal(vaultTokenFinalBalance.toString(), vaultTokenInitialBalance.add(amount).toString(), "Funds not recovered (Vault)!")
     })
 
     context('setting budget', () => {
