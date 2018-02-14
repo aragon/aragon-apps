@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "deploy:rinkeby": "truffle migrate --network rinkeby --reset",
-    "deploy:rpc": "truffle migrate --network rpc --reset",
+    "deploy:rpc": "truffle migrate --network rpc --reset"
   },
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "license": "GPL-3.0",
