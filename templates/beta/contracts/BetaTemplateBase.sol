@@ -5,9 +5,9 @@ import "@aragon/os/contracts/factory/DAOFactory.sol";
 import "@aragon/os/contracts/kernel/Kernel.sol";
 import "@aragon/os/contracts/acl/ACL.sol";
 import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
-import "@aragon/os/contracts/lib/ens/ENS.sol";
-import "@aragon/os/contracts/lib/ens/PublicResolver.sol";
 import "@aragon/os/contracts/common/EtherToken.sol";
+
+import "@aragon/id/contracts/IFIFSResolvingRegistrar.sol";
 
 import "@aragon/apps-voting/contracts/Voting.sol";
 import "@aragon/apps-vault/contracts/Vault.sol";
@@ -16,30 +16,35 @@ import "@aragon/apps-finance/contracts/Finance.sol";
 
 
 contract BetaTemplateBase {
-    APMRegistry apm;
+    APMRegistry public apm;
     DAOFactory public fac;
     MiniMeTokenFactory public minimeFac;
-    EtherToken etherToken;
-    bytes32[4] appIds;
+    EtherToken public etherToken;
+    IFIFSResolvingRegistrar public aragonID;
+    bytes32[4] public appIds;
+
+    mapping (address => address) tokenCache;
 
     // ensure alphabetic order
     enum Apps { Finance, TokenManager, Vault, Voting }
 
-    event DeployInstance(address dao, address token);
+    event DeployToken(address token, address indexed cacheOwner);
+    event DeployInstance(address dao, address indexed token);
 
     address constant ANY_ENTITY = address(-1);
 
-    function BetaTemplateBase(DAOFactory _fac, MiniMeTokenFactory _minimeFac, APMRegistry _apm, EtherToken _etherToken, bytes32[4] _appIds) {
+    function BetaTemplateBase(DAOFactory _fac, MiniMeTokenFactory _minimeFac, APMRegistry _apm, EtherToken _etherToken, IFIFSResolvingRegistrar _aragonID, bytes32[4] _appIds) public {
         apm = _apm;
         fac = _fac;
         minimeFac = _minimeFac;
         etherToken = _etherToken;
-
+        aragonID = _aragonID;
         appIds = _appIds;
     }
 
-    function create(MiniMeToken token, address[] holders, uint256[] stakes, uint256 _maxTokens) internal returns (Voting) {
+    function createDAO(string name, MiniMeToken token, address[] holders, uint256[] stakes, uint256 _maxTokens) internal returns (Voting) {
         Kernel dao = fac.newDAO(this);
+
         ACL acl = ACL(dao.acl());
 
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
@@ -82,15 +87,33 @@ contract BetaTemplateBase {
         acl.setPermissionManager(voting, acl, acl.CREATE_PERMISSIONS_ROLE());
         acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
         acl.setPermissionManager(voting, tokenManager, tokenManager.MINT_ROLE());
-        // no revokes to save gas as factory can't do anything to orgs
+        // no revokes to save gas as factory can't do anything to orgs (clutters acl representation)
 
+        registerAragonID(name, dao);
         DeployInstance(dao, token);
 
         // voting is returned so init can happen later
         return voting;
     }
 
-    function latestVersionAppBase(bytes32 appId) internal view returns (address base) {
+    function cacheToken(MiniMeToken token, address owner) internal {
+        tokenCache[owner] = token;
+        DeployToken(token, owner);
+    }
+
+    function popTokenCache(address owner) internal returns (MiniMeToken) {
+        require(tokenCache[owner] != address(0));
+        MiniMeToken token = MiniMeToken(tokenCache[owner]);
+        delete tokenCache[owner];
+
+        return token;
+    }
+
+    function registerAragonID(string name, address owner) internal {
+        aragonID.register(keccak256(name), owner);
+    }
+
+    function latestVersionAppBase(bytes32 appId) public view returns (address base) {
         Repo repo = Repo(PublicResolver(ens().resolver(appId)).addr(appId));
         (,base,) = repo.getLatest();
 

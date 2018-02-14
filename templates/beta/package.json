@@ -4,14 +4,16 @@
   "description": "Beta template for v0.5 Aragon orgs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "deploy:rinkeby": "truffle migrate --network rinkeby --reset",
+    "deploy:rpc": "truffle migrate --network rpc --reset",
   },
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "license": "GPL-3.0",
   "devDependencies": {
+    "@aragon/id": "^1.0.0",
+    "eth-ens-namehash": "^2.0.8",
     "truffle": "^4.0.5",
-    "truffle-hdwallet-provider": "0.0.3",
-    "eth-ens-namehash": "^2.0.8"
+    "truffle-hdwallet-provider": "0.0.3"
   },
   "dependencies": {
     "@aragon/os": "^3.0.3",
