@@ -23,7 +23,7 @@ because they don't know better (they don't calculate the state as if the first
 transaction was already mined).
 - Addresses for deployed templates can be found in `index.js`.
 
-### 1. Token creation
+### 1. Token creation
 
 - `demTemp.newToken(name, symbol)`
 - `msTemp.newToken(name)`
