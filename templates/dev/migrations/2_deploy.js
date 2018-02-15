@@ -5,7 +5,7 @@ const daoFactoryMigration = require('@aragon/os/migrations/3_factory')
 
 const DevTemplate = artifacts.require('DevTemplate')
 const Voting = artifacts.require('@aragon/apps-voting/contracts/Voting')
-const Vault = artifacts.require('@aragon/apps-voting/contracts/Vault')
+const Vault = artifacts.require('@aragon/apps-vault/contracts/Vault')
 const MiniMeTokenFactory = artifacts.require('@aragon/os/lib/minime/MiniMeTokenFactory')
 
 const votingIpfs = 'ipfs:QmV5sEjshcZ6mu6uFUhJkWM5nTa53wbHfRFDD4Qy2Yx88m'
@@ -22,7 +22,7 @@ module.exports = async (deployer, network, accounts) => {
   await template.apmInit(votingBase.address, votingIpfs, vaultBase.address, vaultIpfs)
 
   const receipt = await template.createInstance()
-  
+
   const daoAddr = receipt.logs.filter(l => l.event == 'DeployInstance')[0].args.dao
   console.log('DAO:', daoAddr)
   console.log('ENS:', ensAddr)
