@@ -1,16 +1,16 @@
 pragma solidity 0.4.18;
 
 contract ExecutionTarget {
-    uint public counter;
+  uint public counter;
 
-    function execute() external {
-        counter += 1;
-        Executed(counter);
-    }
+  function execute() external {
+    counter += 1;
+    Executed(counter);
+  }
 
-    function setCounter(uint x) external {
-        counter = x;
-    }
+  function setCounter(uint x) external {
+    counter = x;
+  }
 
-    event Executed(uint x);
+  event Executed(uint x);
 }

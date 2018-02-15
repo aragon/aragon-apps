@@ -1,25 +1,25 @@
 {
-    "appName": "payroll.aragonpm.eth",
-    "version": "1.0.0",
-    "dependencies": [
+  "appName": "payroll.aragonpm.eth",
+  "version": "1.0.0",
+  "dependencies": [
+    {
+      "appName": "finance.aragonpm.eth",
+      "version": "^1.0.0",
+      "initParam": "_finance",
+      "state": "finance",
+      "requiredPermissions": [
         {
-            "appName": "finance.aragonpm.eth",
-            "version": "^1.0.0",
-            "initParam": "_finance",
-            "state": "finance",
-            "requiredPermissions": [
-                {
-                    "name": "TRANSFER_ROLE",
-                    "params": "*"
-                }
-            ]
+          "name": "TRANSFER_ROLE",
+          "params": "*"
         }
-    ],
-    "roles": [
-        { "name": "Add employees", "id": "ADD_EMPLOYEE_ROLE", "params": ["Initial yearly payroll", "Start date"] },
-        { "name": "Remove employees", "id": "REMOVE_EMPLOYEE_ROLE" },
-        { "name": "Allowed Tokens Manager", "id": "ALLOWED_TOKENS_MANAGER_ROLE", "params": "Token" },
-        { "name": "Oracle", "id": "ORACLE_ROLE", "params": ["Token", "Exchange rate", "Old exchange rate"] }
-    ],
-    "path": "contracts/Payroll.sol"
+      ]
+    }
+  ],
+  "roles": [
+    { "name": "Add employees", "id": "ADD_EMPLOYEE_ROLE", "params": ["Initial yearly payroll", "Start date"] },
+    { "name": "Remove employees", "id": "REMOVE_EMPLOYEE_ROLE" },
+    { "name": "Allowed Tokens Manager", "id": "ALLOWED_TOKENS_MANAGER_ROLE", "params": "Token" },
+    { "name": "Oracle", "id": "ORACLE_ROLE", "params": ["Token", "Exchange rate", "Old exchange rate"] }
+  ],
+  "path": "contracts/Payroll.sol"
 }
