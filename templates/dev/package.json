@@ -12,12 +12,13 @@
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "license": "GPL-3.0",
   "devDependencies": {
-    "truffle": "^4.0.5",
+    "truffle": "4.0.5",
     "truffle-hdwallet-provider": "0.0.3"
   },
   "dependencies": {
-    "@aragon/os": "^3.0.2",
+    "@aragon/apps-vault": "^1.0.0",
     "@aragon/apps-voting": "^1.0.0",
-    "@aragon/apps-vault": "^1.0.0"
+    "@aragon/os": "^3.0.4",
+    "eth-ens-namehash": "^2.0.8"
   }
 }
