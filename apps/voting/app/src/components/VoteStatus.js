@@ -26,8 +26,8 @@ const ATTRIBUTES = {
   },
 }
 
-const VoteStatus = ({ vote, support, tokenSupply, voteTime }) => {
-  const status = getVoteStatus(vote, support, tokenSupply, voteTime)
+const VoteStatus = ({ vote: { vote, support, quorum } }) => {
+  const status = getVoteStatus(vote, support, quorum)
   const { color, label, Icon } = ATTRIBUTES[status]
   return (
     <Main color={color}>
@@ -35,11 +35,6 @@ const VoteStatus = ({ vote, support, tokenSupply, voteTime }) => {
       <StatusLabel>{label}</StatusLabel>
     </Main>
   )
-}
-
-VoteStatus.defaultProps = {
-  support: true,
-  tokenSupply: 0,
 }
 
 const Main = styled.span`

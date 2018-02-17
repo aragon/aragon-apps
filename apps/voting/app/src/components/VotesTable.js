@@ -2,14 +2,7 @@ import React from 'react'
 import { Table, TableHeader, TableRow } from '@aragon/ui'
 import VoteRow from './VoteRow'
 
-const VotesTable = ({
-  votes,
-  voteTime,
-  opened,
-  tokenSupply,
-  support,
-  onSelectVote,
-}) => (
+const VotesTable = ({ votes, opened, onSelectVote }) => (
   <Table
     header={
       <TableRow>
@@ -21,27 +14,13 @@ const VotesTable = ({
       </TableRow>
     }
   >
-    {votes.map(
-      ({
-        id,
-        vote,
-        voteTime,
-        endDate,
-        metas,
-      }) => (
-        <VoteRow
-          key={id}
-          id={id}
-          vote={vote}
-          endDate={endDate}
-          question={metas.question}
-          tokenSupply={tokenSupply}
-          voteTime={voteTime}
-          support={support}
-          onSelectVote={onSelectVote}
-        />
-      )
-    )}
+    {votes.map(vote => (
+      <VoteRow
+        key={vote.voteId}
+        vote={vote}
+        onSelectVote={onSelectVote}
+      />
+    ))}
   </Table>
 )
 

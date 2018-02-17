@@ -1,53 +1,54 @@
 import React from 'react'
 import styled from 'styled-components'
-import { BadgeNumber, Button, colors } from '@aragon/ui'
+import {
+  BadgeNumber,
+  // Button,
+  colors,
+} from '@aragon/ui'
 import VotesTable from '../components/VotesTable'
-import { isVoteOpen } from '../vote-utils'
 
 class Votes extends React.Component {
   render() {
-    const { votes, onSelectVote, voteTime, tokenSupply, support } = this.props
-    const openedVotes = votes.filter(({ vote }) => isVoteOpen(vote, voteTime))
+    const { votes, onSelectVote } = this.props
+    const openedVotes = votes.filter(({ vote }) => vote.open)
     const closedVotes = votes.filter(vote => !openedVotes.includes(vote))
     return (
       <Main>
-        <VotesTableWrapper>
-          <Title>
-            <span>Opened Votes</span>
-            <BadgeNumber
-              background={colors.Rain['Rain Sky']}
-              color={colors.Rain.Slate}
-              number={openedVotes.length}
-              inline
+        {openedVotes.length > 0 && (
+          <VotesTableWrapper>
+            <Title>
+              <span>Opened Votes</span>
+              <BadgeNumber
+                background={colors.Rain['Rain Sky']}
+                color={colors.Rain.Slate}
+                number={openedVotes.length}
+                inline
+              />
+            </Title>
+            <VotesTable
+              opened={true}
+              votes={openedVotes}
+              onSelectVote={onSelectVote}
             />
-          </Title>
-          <VotesTable
-            opened={true}
-            votes={openedVotes}
-            voteTime={voteTime}
-            tokenSupply={tokenSupply}
-            support={support}
-            onSelectVote={onSelectVote}
-          />
-        </VotesTableWrapper>
+          </VotesTableWrapper>
+        )}
 
-        <VotesTableWrapper>
-          <Title>
-            <span>Closed Votes</span>
-          </Title>
-          <VotesTable
-            opened={false}
-            votes={closedVotes}
-            voteTime={voteTime}
-            tokenSupply={tokenSupply}
-            support={support}
-            onSelectVote={onSelectVote}
-          />
-        </VotesTableWrapper>
+        {closedVotes.length > 0 && (
+          <VotesTableWrapper>
+            <Title>
+              <span>Closed Votes</span>
+            </Title>
+            <VotesTable
+              opened={false}
+              votes={closedVotes}
+              onSelectVote={onSelectVote}
+            />
+          </VotesTableWrapper>
+        )}
 
-        <SeeMoreWrapper>
+        {/*<SeeMoreWrapper>
           <Button mode="secondary">Show Previous Votes</Button>
-        </SeeMoreWrapper>
+        </SeeMoreWrapper>*/}
       </Main>
     )
   }
@@ -72,9 +73,9 @@ const VotesTableWrapper = styled.div`
   margin-bottom: 30px;
 `
 
-const SeeMoreWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-`
+// const SeeMoreWrapper = styled.div`
+//   display: flex;
+//   justify-content: center;
+// `
 
 export default Votes

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@aragon/client": "^1.0.0-beta.1",
     "@aragon/ui": "^0.4.0",
     "date-fns": "^1.29.0",
     "prop-types": "^15.6.0",

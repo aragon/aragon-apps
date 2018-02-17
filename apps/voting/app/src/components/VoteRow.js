@@ -4,55 +4,40 @@ import { Button, Countdown, TableCell, TableRow } from '@aragon/ui'
 import { VOTE_ABSENT } from '../vote-types'
 import ProgressBar from './ProgressBar'
 import VoteStatus from './VoteStatus'
-import { isVoteOpen } from '../vote-utils'
 
 class VoteRow extends React.Component {
   handleVoteClick = () => {
-    this.props.onSelectVote(this.props.id)
+    this.props.onSelectVote(this.props.vote.voteId)
   }
   render() {
-    const {
-      endDate,
-      question,
-      vote,
-      tokenSupply,
-      voteTime,
-      support,
-    } = this.props
-    const totalVotes = vote.yea + vote.nay
-    const opened = isVoteOpen(vote, voteTime)
+    const { vote } = this.props
+    const { question, endDate } = vote
+    const { yea, nay, totalVoters } = vote.vote
+    const totalVotes = (yea + nay) / totalVoters
+
     return (
       <TableRow>
         <StatusCell>
-          {opened ? (
-            <Countdown end={endDate} />
-          ) : (
-            <VoteStatus
-              vote={vote}
-              voteTime={voteTime}
-              tokenSupply={tokenSupply}
-              support={support}
-            />
-          )}
+          {vote.open ? <Countdown end={endDate} /> : <VoteStatus vote={vote} />}
         </StatusCell>
         <QuestionCell>
           <QuestionWrapper>
             <div>{question}</div>
           </QuestionWrapper>
         </QuestionCell>
-        <Cell align="right">{totalVotes}</Cell>
+        <Cell align="right">{Math.round(totalVotes * 10000) / 100}%</Cell>
         <BarsCell>
           <BarsGroup>
             <Bar>
               <ProgressBar
                 type="positive"
-                progress={totalVotes > 0 ? vote.yea / tokenSupply : 0}
+                progress={totalVotes > 0 ? yea / totalVoters : 0}
               />
             </Bar>
             <Bar>
               <ProgressBar
                 type="negative"
-                progress={totalVotes > 0 ? vote.nay / tokenSupply : 0}
+                progress={totalVotes > 0 ? nay / totalVoters : 0}
               />
             </Bar>
           </BarsGroup>
@@ -72,7 +57,6 @@ VoteRow.defaultProps = {
   votesYea: 0,
   votesNay: 0,
   userVote: VOTE_ABSENT,
-  opened: false,
   onSelectVote: () => {},
 }
 

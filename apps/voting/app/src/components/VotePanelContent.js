@@ -11,42 +11,35 @@ import {
   theme,
 } from '@aragon/ui'
 import { VOTE_ABSENT } from '../vote-types'
-import { isVoteOpen, getAccountVote } from '../vote-utils'
 import VoteSummary from './VoteSummary'
 import VoteStatus from './VoteStatus'
 
-const VotePanelContent = ({
-  vote: { id, vote, endDate, creatorName, metas: { question } },
-  user,
-  tokenSupply,
-  support,
-  voteTime,
-  ready,
-}) => {
+const VotePanelContent = ({ vote, user, ready }) => {
   if (!vote) {
     return null
   }
 
-  const { minAcceptQuorumPct: quorum, creator, yea, nay, voters } = vote
-  const userVote = getAccountVote(user.address, voters)
-  const opened = isVoteOpen(vote, voteTime)
+  const { question, quorum, support, endDate } = vote
+  const { creator, yea, nay, totalVoters } = vote.vote
+
+  const creatorName = 'Robert Johnson' // TODO: get creator name
+  const accountVote = VOTE_ABSENT // TODO: detect if the current account voted
 
   return (
     <div>
       <SidePanelSplit>
         <div>
           <h2>
-            <Label>{opened ? 'Time Remaining:' : 'Status'}</Label>
+            <Label>{vote.open ? 'Time Remaining:' : 'Status'}</Label>
           </h2>
           <div>
-            {opened ? (
+            {vote.open ? (
               <Countdown end={endDate} />
             ) : (
               <VoteStatus
                 vote={vote}
                 support={support}
-                tokenSupply={tokenSupply}
-                voteTime={voteTime}
+                tokenSupply={totalVoters}
               />
             )}
           </div>
@@ -102,13 +95,13 @@ const VotePanelContent = ({
       <VoteSummary
         votesYea={yea}
         votesNay={nay}
-        tokenSupply={tokenSupply}
+        tokenSupply={totalVoters}
         quorum={quorum}
         support={support}
         ready={ready}
       />
 
-      {userVote === VOTE_ABSENT && (
+      {accountVote === VOTE_ABSENT && (
         <div>
           <SidePanelSeparator />
           <VotingButtons>
@@ -124,10 +117,6 @@ const VotePanelContent = ({
       )}
     </div>
   )
-}
-
-VotePanelContent.defaultProps = {
-  tokenSupply: 0,
 }
 
 const Label = styled(Text).attrs({

@@ -5,23 +5,19 @@ import {
   VOTE_STATUS_ACCEPTED,
 } from './vote-types'
 
-export const isVoteOpen = ({ startDate, executed }, voteTime) =>
-  Date.now() < startDate + voteTime && !executed
-
 export const getAccountVote = (account, voters) =>
   voters[account] || VOTE_ABSENT
 
-export const getVoteStatus = (vote, supportRequired, tokenSupply, voteTime) => {
+export const getVoteStatus = (vote, support, quorum) => {
   if (vote.executed) {
     return VOTE_STATUS_ACCEPTED
   }
 
-  const voteEnded = !isVoteOpen(vote, voteTime)
   const totalVotes = vote.yea + vote.nay
-  const hasSupport = vote.yea / totalVotes >= supportRequired
-  const hasMinQuorum = vote.yea / tokenSupply >= vote.minAcceptQuorumPct
+  const hasSupport = vote.yea / totalVotes >= support
+  const hasMinQuorum = vote.yea / vote.totalVoters >= quorum
 
-  if (!voteEnded) {
+  if (vote.open) {
     return VOTE_STATUS_ONGOING
   }
 
