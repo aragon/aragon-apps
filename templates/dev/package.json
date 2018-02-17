@@ -12,7 +12,7 @@
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "license": "GPL-3.0",
   "devDependencies": {
-    "truffle": "^4.0.5",
+    "truffle": "4.0.5",
     "truffle-hdwallet-provider": "0.0.3"
   },
   "dependencies": {
