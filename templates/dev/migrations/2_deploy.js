@@ -5,7 +5,7 @@ const daoFactoryMigration = require('@aragon/os/migrations/3_factory')
 
 const DevTemplate = artifacts.require('DevTemplate')
 const Voting = artifacts.require('@aragon/apps-voting/contracts/Voting')
-const Vault = artifacts.require('@aragon/apps-voting/contracts/Vault')
+const Vault = artifacts.require('@aragon/apps-vault/contracts/Vault')
 const MiniMeTokenFactory = artifacts.require('@aragon/os/lib/minime/MiniMeTokenFactory')
 
 const votingIpfs = 'ipfs:QmV5sEjshcZ6mu6uFUhJkWM5nTa53wbHfRFDD4Qy2Yx88m'
