@@ -1,0 +1,24 @@
+{
+  "name": "@aragon/templates-demo",
+  "version": "1.0.0",
+  "description": "Demo template for Aragon orgs",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "migrate": "truffle migrate --network rpc --reset"
+  },
+  "author": "Aragon Institution MTU <contact@aragon.one>",
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "truffle": "4.0.5",
+    "truffle-hdwallet-provider": "0.0.3"
+  },
+  "dependencies": {
+    "@aragon/apps-vault": "^1.0.0",
+    "@aragon/apps-voting": "^1.0.0",
+    "@aragon/os": "^3.0.4",
+    "eth-ens-namehash": "^2.0.8"
+  }
+}
