@@ -20,6 +20,7 @@ contract DevTemplate {
   address constant ANY_ENTITY = address(-1);
 
   event DeployInstance(address dao);
+  event InstalledApp(address appProxy, bytes32 appId);
 
   function DevTemplate(DAOFactory _fac, MiniMeTokenFactory _minimeFac, APMRegistry _apm) {
     apm = _apm;
@@ -48,11 +49,14 @@ contract DevTemplate {
     // 50% support, 15% accept quorum, 1 hour vote duration
     voting.initialize(token, 50 * pct, 15 * pct, 1 hours);
 
-    // voting app permissions
-    acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), msg.sender);
-    acl.createPermission(ANY_ENTITY, voting, voting.MODIFY_QUORUM_ROLE(), msg.sender);
 
-    acl.createPermission(voting, vault, vault.TRANSFER_ROLE(), msg.sender);
+      // voting app permissions
+      acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), msg.sender);
+      acl.createPermission(ANY_ENTITY, voting, voting.MODIFY_QUORUM_ROLE(), msg.sender);
+      InstalledApp(voting, votingAppId());
+
+      acl.createPermission(voting, vault, vault.TRANSFER_ROLE(), msg.sender);
+      InstalledApp(vault, vaultAppId());
 
     DeployInstance(dao);
   }
@@ -64,12 +68,12 @@ contract DevTemplate {
     apm.newRepoWithVersion(name, ANY_ENTITY, firstVersion, votingBase, votingContentURI);
   }
 
-  function votingAppId() internal view returns (bytes32) {
-    return keccak256(apm.registrar().rootNode(), keccak256("voting"));
+  function votingAppId() public view returns (bytes32) {
+      return keccak256(apm.registrar().rootNode(), keccak256("voting"));
   }
 
-  function vaultAppId() internal view returns (bytes32) {
-    return keccak256(apm.registrar().rootNode(), keccak256("vault"));
+  function vaultAppId() public view returns (bytes32) {
+      return keccak256(apm.registrar().rootNode(), keccak256("vault"));
   }
 
   function ens() internal view returns (AbstractENS) {
