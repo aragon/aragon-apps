@@ -2,6 +2,7 @@ const sha3 = require('solidity-sha3').default
 
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
+const getBlock = require('@aragon/test-helpers/block')(web3)
 const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
 const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
@@ -237,25 +238,30 @@ contract('Voting App', accounts => {
                 })
             })
         })
-        context('creating vote with custom duration', () => {
+        context('creating vote with custom time and duration', () => {
             let voteId = {}
             let script = ''
 
             let newVotingTime
-            let endTime
+            let startDelay
+            let newStartDate
             beforeEach(async () => {
+                let currentTime = (await getBlock(await getBlockNumber())).timestamp
+                startDelay = 5000
+                newStartDate = currentTime + startDelay
                 newVotingTime = 500
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 script = encodeCallScript([action, action])
-                voteId = createdVoteId(await app.newVoteWithTime(script, 'metadata', newVotingTime, { from: nonHolder }))
+                voteId = createdVoteId(await app.newVoteWithTime(script, 'metadata', newStartDate, newVotingTime, { from: nonHolder }))
             })
 
             it('has correct state', async () => {
                 const [isOpen, isExecuted, creator, startDate, endDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await app.getVote(voteId)
 
-                assert.isTrue(isOpen, 'vote should be open')
+                assert.isFalse(isOpen, 'vote should be open')
                 assert.isFalse(isExecuted, 'vote should be executed')
                 assert.equal(creator, nonHolder, 'creator should be correct')
+                assert.equal(startDate, newStartDate)
                 assert.equal(endDate - startDate, newVotingTime)
                 assert.equal(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
                 assert.deepEqual(minQuorum, minimumAcceptanceQuorum, 'min quorum should be app min quorum')
@@ -266,13 +272,18 @@ contract('Voting App', accounts => {
                 assert.equal(await app.getVoteMetadata(voteId), 'metadata', 'should have returned correct metadata')
             })
 
-            it('throws when voting after voting closes', async () => {
-                await timeTravel(newVotingTime + 1)
+            it('throws when voting before voting opens', async () => {
                 return assertRevert(async () => {
                     await app.vote(voteId, true, true, { from: holder31 })
                 })
             })
 
+            it('throws when voting after voting closes', async () => {
+                await timeTravel(startDelay + newVotingTime + 1)
+                return assertRevert(async () => {
+                    await app.vote(voteId, true, true, { from: holder31 })
+                })
+            })
         })
     })
 

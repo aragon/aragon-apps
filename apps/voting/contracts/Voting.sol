@@ -49,8 +49,8 @@ contract Voting is IForwarder, AragonApp {
     /**
     * @notice Initializes Voting app (some parameters won't be modifiable after being set)
     * @param _token MiniMeToken address that will be used as governance token
-    * @param _supportRequiredPct Percentage of voters that must support a vote for it to succeed (expressed as a 10^18 percentage, (eg 10^16 = 1%, 10^18 = 100%)
-    * @param _minAcceptQuorumPct Percentage of total voting power that must support a vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _supportRequiredPct Percentage of voters that must support a vote for it to succeed (expressed as a 10^18 percentage, eg 10^16 = 1%, 10^18 = 100%)
+    * @param _minAcceptQuorumPct Percentage of total voting power that must support a vote for it to succeed (expressed as a 10^18 percetage, eg 10^16 = 1%, 10^18 = 100%)
     * @param _voteTime Seconds that a vote will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
     */
     function initialize(
@@ -92,18 +92,19 @@ contract Voting is IForwarder, AragonApp {
     * @return voteId id for newly created vote
     */
     function newVote(bytes _executionScript, string _metadata) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
-        return _newVote(_executionScript, _metadata, voteTime);
+        return _newVote(_executionScript, _metadata, uint64(now), voteTime);
     }
 
     /**
      * @notice Create new vote to execute `_executionScript` with custom end date
      * @param _executionScript EVM script to be executed on approval
      * @param _metadata Additional info
+     * @param _startDate Start of voting period
      * @param _voteTime Duration of the voting period
      * @return voteId id for newly created vote
      */
-    function newVoteWithTime(bytes _executionScript, string _metadata, uint64 _voteTime) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
-        return _newVote(_executionScript, _metadata, _voteTime);
+    function newVoteWithTime(bytes _executionScript, string _metadata, uint64 _startDate, uint64 _voteTime) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
+        return _newVote(_executionScript, _metadata, _startDate, _voteTime);
     }
 
     /**
@@ -141,7 +142,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript));
-        _newVote(_evmScript, "", voteTime);
+        _newVote(_evmScript, "", uint64(now), voteTime);
     }
 
     function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
@@ -193,13 +194,13 @@ contract Voting is IForwarder, AragonApp {
         return votes[_voteId].metadata;
     }
 
-    function _newVote(bytes _executionScript, string _metadata, uint64 _voteTime) internal returns (uint256 voteId) {
+    function _newVote(bytes _executionScript, string _metadata, uint64 _startDate, uint64 _voteTime) internal returns (uint256 voteId) {
         voteId = votes.length++;
         Vote storage vote = votes[voteId];
         vote.executionScript = _executionScript;
         vote.creator = msg.sender;
-        vote.startDate = uint64(now);
-        vote.endDate = uint64(now) + _voteTime;
+        vote.startDate = _startDate;
+        vote.endDate = _startDate + _voteTime;
         vote.metadata = _metadata;
         vote.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote.totalVoters = token.totalSupplyAt(vote.snapshotBlock);
@@ -266,7 +267,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     function _isVoteOpen(Vote storage vote) internal returns (bool) {
-        return uint64(now) < vote.endDate && !vote.executed;
+        return uint64(now) >= vote.startDate && uint64(now) < vote.endDate && !vote.executed;
     }
 
     /**
