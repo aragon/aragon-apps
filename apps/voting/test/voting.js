@@ -2,6 +2,7 @@ const sha3 = require('solidity-sha3').default
 
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
+const getBlock = require('@aragon/test-helpers/block')(web3)
 const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
 const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
@@ -125,11 +126,12 @@ contract('Voting App', accounts => {
             })
 
             it('has correct state', async () => {
-                const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await app.getVote(voteId)
+                const [isOpen, isExecuted, creator, startDate, endDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await app.getVote(voteId)
 
                 assert.isTrue(isOpen, 'vote should be open')
                 assert.isFalse(isExecuted, 'vote should be executed')
                 assert.equal(creator, nonHolder, 'creator should be correct')
+                assert.equal(endDate - startDate, votingTime)
                 assert.equal(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
                 assert.deepEqual(minQuorum, minimumAcceptanceQuorum, 'min quorum should be app min quorum')
                 assert.equal(y, 0, 'initial yea should be 0')
@@ -151,7 +153,7 @@ contract('Voting App', accounts => {
                 await timeTravel(votingTime + 1)
 
                 const state = await app.getVote(voteId)
-                assert.deepEqual(state[5], minimumAcceptanceQuorum, 'acceptance quorum in vote should stay equal')
+                assert.deepEqual(state[6], minimumAcceptanceQuorum, 'acceptance quorum in vote should stay equal')
                 await app.executeVote(voteId) // exec doesn't fail
             })
 
@@ -159,7 +161,7 @@ contract('Voting App', accounts => {
                 await app.vote(voteId, false, true, { from: holder31 })
                 const state = await app.getVote(voteId)
 
-                assert.equal(state[7], 31, 'nay vote should have been counted')
+                assert.equal(state[8], 31, 'nay vote should have been counted')
             })
 
             it('holder can modify vote', async () => {
@@ -168,8 +170,8 @@ contract('Voting App', accounts => {
                 await app.vote(voteId, true, true, { from: holder31 })
                 const state = await app.getVote(voteId)
 
-                assert.equal(state[6], 31, 'yea vote should have been counted')
-                assert.equal(state[7], 0, 'nay vote should have been removed')
+                assert.equal(state[7], 31, 'yea vote should have been counted')
+                assert.equal(state[8], 0, 'nay vote should have been removed')
             })
 
             it('token transfers dont affect voting', async () => {
@@ -178,7 +180,7 @@ contract('Voting App', accounts => {
                 await app.vote(voteId, true, true, { from: holder31 })
                 const state = await app.getVote(voteId)
 
-                assert.equal(state[6], 31, 'yea vote should have been counted')
+                assert.equal(state[7], 31, 'yea vote should have been counted')
                 assert.equal(await token.balanceOf(holder31), 0, 'balance should be 0 at current block')
             })
 
@@ -242,6 +244,53 @@ contract('Voting App', accounts => {
                 await app.vote(voteId, true, true, { from: holder50 }) // causes execution
                 return assertRevert(async () => {
                     await app.vote(voteId, true, true, { from: holder19 })
+                })
+            })
+        })
+        context('creating vote with custom time and duration', () => {
+            let voteId = {}
+            let script = ''
+
+            let newVotingTime
+            let startDelay
+            let newStartDate
+            beforeEach(async () => {
+                let currentTime = (await getBlock(await getBlockNumber())).timestamp
+                startDelay = 5000
+                newStartDate = currentTime + startDelay
+                newVotingTime = 500
+                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                script = encodeCallScript([action, action])
+                voteId = createdVoteId(await app.newVoteWithTime(script, 'metadata', newStartDate, newVotingTime, { from: nonHolder }))
+            })
+
+            it('has correct state', async () => {
+                const [isOpen, isExecuted, creator, startDate, endDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await app.getVote(voteId)
+
+                assert.isFalse(isOpen, 'vote should be open')
+                assert.isFalse(isExecuted, 'vote should be executed')
+                assert.equal(creator, nonHolder, 'creator should be correct')
+                assert.equal(startDate, newStartDate)
+                assert.equal(endDate - startDate, newVotingTime)
+                assert.equal(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
+                assert.deepEqual(minQuorum, minimumAcceptanceQuorum, 'min quorum should be app min quorum')
+                assert.equal(y, 0, 'initial yea should be 0')
+                assert.equal(n, 0, 'initial nay should be 0')
+                assert.equal(totalVoters, 100, 'total voters should be 100')
+                assert.equal(execScript, script, 'script should be correct')
+                assert.equal(await app.getVoteMetadata(voteId), 'metadata', 'should have returned correct metadata')
+            })
+
+            it('throws when voting before voting opens', async () => {
+                return assertRevert(async () => {
+                    await app.vote(voteId, true, true, { from: holder31 })
+                })
+            })
+
+            it('throws when voting after voting closes', async () => {
+                await timeTravel(startDelay + newVotingTime + 1)
+                return assertRevert(async () => {
+                    await app.vote(voteId, true, true, { from: holder31 })
                 })
             })
         })
