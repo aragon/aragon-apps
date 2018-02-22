@@ -252,7 +252,7 @@ contract('Voting App', accounts => {
             })
         })
 
-        it('fails if min support is greater than 100', () => {
+        it('fails if min acceptance quorum is greater than min support', () => {
             const neededSupport = pct16(20)
             const minimumAcceptanceQuorum = pct16(50)
             return assertRevert(async() => {
@@ -260,7 +260,7 @@ contract('Voting App', accounts => {
             })
         })
 
-        it('fails if min acceptance quorum is greater than min support', () => {
+        it('fails if min support is greater than 100', () => {
             const neededSupport = pct16(101)
             const minimumAcceptanceQuorum = pct16(20)
             return assertRevert(async() => {
