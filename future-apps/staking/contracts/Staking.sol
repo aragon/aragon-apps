@@ -25,6 +25,10 @@ contract Staking is AragonApp {
   enum TimeUnit { Blocks, Seconds }
 
   ERC20 public token;
+  bytes public stakeScript;
+  bytes public unstakeScript;
+  bytes public lockScript;
+
   mapping (address => Account) accounts;
 
   event Stake(address indexed account, uint256 amount);
@@ -38,14 +42,27 @@ contract Staking is AragonApp {
     _;
   }
 
-  function stake(uint256 amount) external {
-    stakeFor(msg.sender, amount, new bytes(0));
+  function initialize(ERC20 _token, bytes _stakeScript, bytes _unstakeScript, bytes _lockScript) onlyInit external {
+    token = _token;
+    stakeScript = _stakeScript;
+    unstakeScript = _unstakeScript;
+    lockScript = _lockScript;
+
+    initialized();
+  }
+
+  function stake(uint256 amount, bytes data) public {
+    stakeFor(msg.sender, amount, data);
   }
 
   function stakeFor(address acct, uint256 amount, bytes data) public {
     // From needs to be msg.sender to avoid token stealing by front-running
     require(token.transferFrom(msg.sender, this, amount));
     processStake(acct, amount, data);
+
+    if (stakeScript.length > 0) {
+      runScript(stakeScript, data, new address[](0));
+    }
   }
 
   function processStake(address acct, uint256 amount, bytes data) internal {
@@ -55,24 +72,33 @@ contract Staking is AragonApp {
     Stake(acct, amount);
   }
 
-  function unstake(uint256 amount) external {
-    unstakeFor(amount, new bytes(0));
-  }
-
-  function unstakeFor(uint256 amount, bytes data) checkUnlocked(amount) public {
+  function unstake(uint256 amount, bytes data) checkUnlocked(amount) public {
+    require(accounts[msg.sender].amount >= amount);
     accounts[msg.sender].amount -= amount;
-    assert(accounts[msg.sender].amount <= amount); // check underflows
 
     require(token.transfer(msg.sender, amount));
 
     Unstake(msg.sender, amount);
+
+    if (unstakeScript.length > 0) {
+      runScript(unstakeScript, data, new address[](0));
+    }
   }
 
-  function lock(uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker) checkUnlocked(amount) external {
+  function lock(uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker, bytes data) checkUnlocked(amount) public {
     Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker);
     uint256 lockId = accounts[msg.sender].locks.push(newLock) - 1;
 
     NewLock(msg.sender, lockId);
+
+    if (lockScript.length > 0) {
+      runScript(lockScript, data, new address[](0));
+    }
+  }
+
+  function stakeAndLock(uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker, bytes stakeData, bytes lockData) public {
+    stake(amount, stakeData);
+    lock(amount, lockUnit, lockEnds, unlocker, lockData);
   }
 
   function removeLocks(address acct) external {
@@ -117,10 +143,14 @@ contract Staking is AragonApp {
     return accounts[acct].locks[lockId];
   }
 
-  function canRemoveLock(address acct, uint256 lockId) public view returns (bool) {
-    Lock memory lock = accounts[acct].locks[lockId];
+  function lastLock(address acct) public view returns (Lock) {
+    return accounts[acct].locks[locksCount(acct) - 1];
+  }
 
-    return timespanEnded(lock.timespan) || msg.sender == lock.unlocker;
+  function canRemoveLock(address acct, uint256 lockId) public view returns (bool) {
+    Lock memory l = accounts[acct].locks[lockId];
+
+    return timespanEnded(l.timespan) || msg.sender == l.unlocker;
   }
 
   function timespanEnded(Timespan memory timespan) internal view returns (bool) {
