@@ -1,7 +1,7 @@
 pragma solidity 0.4.18;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
-import "@aragon/os/contracts/lib/zeppelin/ERC20.sol";
+import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 
 
 contract Staking is AragonApp {
@@ -68,15 +68,15 @@ contract Staking is AragonApp {
     Unstake(msg.sender, amount);
   }
 
-  function lock(uint256 amount, Timespan timespan, address unlocker) checkUnlocked(amount) external {
-    Lock newLock = Lock(amount, timespan, unlocker);
+  function lock(uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker) checkUnlocked(amount) external {
+    Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker);
     uint256 lockId = accounts[msg.sender].locks.push(newLock) - 1;
 
     NewLock(msg.sender, lockId);
   }
 
   function removeLocks(address acct) external {
-    while (accounts[acct].length > 0) {
+    while (accounts[acct].locks.length > 0) {
       if (canRemoveLock(acct, 0)) {
         removeLock(acct, 0);
       }
@@ -99,7 +99,7 @@ contract Staking is AragonApp {
   function unlockedBalanceOf(address acct) public view returns (uint256) {
     uint256 unlockedTokens = accounts[acct].amount;
 
-    Lock[] locks = account[acct].locks;
+    Lock[] storage locks = accounts[acct].locks;
     for (uint256 i = 0; i < locks.length; i++) {
       if (!canRemoveLock(acct, i)) {
         unlockedTokens -= locks[i].amount;
@@ -118,14 +118,14 @@ contract Staking is AragonApp {
   }
 
   function canRemoveLock(address acct, uint256 lockId) public view returns (bool) {
-    Lock lock = accounts[acct].locks[lockId];
+    Lock memory lock = accounts[acct].locks[lockId];
 
     return timespanEnded(lock.timespan) || msg.sender == lock.unlocker;
   }
 
-  function timespanEnded(Timespan memory timespan) internal pure returns (bool) {
-    uint64 comparingValue = timespan.unit == TimeUnit.Blocks ? block.number : block.timestamp;
+  function timespanEnded(Timespan memory timespan) internal view returns (bool) {
+    uint256 comparingValue = timespan.unit == TimeUnit.Blocks ? block.number : block.timestamp;
 
-    return comparingValue > timespan.end;
+    return uint64(comparingValue) > timespan.end;
   }
 }
