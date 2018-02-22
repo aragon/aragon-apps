@@ -37,6 +37,13 @@ contract Staking is AragonApp {
   event NewLock(address indexed account, uint256 lockId);
   event RemoveLock(address indexed account, address indexed unlocker, uint256 oldLockId);
 
+  event MoveTokens(address indexed from, address indexed to, uint256 amount);
+
+  bytes32 constant STAKE_ROLE = keccak256("STAKE_ROLE");
+  bytes32 constant UNSTAKE_ROLE = keccak256("UNSTAKE_ROLE");
+  bytes32 constant LOCK_ROLE = keccak256("LOCK_ROLE");
+  bytes32 constant GOD_ROLE = keccak256("GOD_ROLE");
+
   modifier checkUnlocked(uint256 amount) {
     require(unlockedBalanceOf(msg.sender) >= amount);
     _;
@@ -51,11 +58,11 @@ contract Staking is AragonApp {
     initialized();
   }
 
-  function stake(uint256 amount, bytes data) public {
+  function stake(uint256 amount, bytes data) authP(STAKE_ROLE, arr(amount)) public {
     stakeFor(msg.sender, amount, data);
   }
 
-  function stakeFor(address acct, uint256 amount, bytes data) public {
+  function stakeFor(address acct, uint256 amount, bytes data) authP(STAKE_ROLE, arr(amount)) public {
     // From needs to be msg.sender to avoid token stealing by front-running
     require(token.transferFrom(msg.sender, this, amount));
     processStake(acct, amount, data);
@@ -72,7 +79,7 @@ contract Staking is AragonApp {
     Stake(acct, amount);
   }
 
-  function unstake(uint256 amount, bytes data) checkUnlocked(amount) public {
+  function unstake(uint256 amount, bytes data) authP(UNSTAKE_ROLE, arr(amount)) checkUnlocked(amount) public {
     require(accounts[msg.sender].amount >= amount);
     accounts[msg.sender].amount -= amount;
 
@@ -85,7 +92,17 @@ contract Staking is AragonApp {
     }
   }
 
-  function lock(uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker, bytes data) checkUnlocked(amount) public {
+  function lock(
+    uint256 amount,
+    uint8 lockUnit,
+    uint64 lockEnds,
+    address unlocker,
+    bytes data
+  )
+    authP(LOCK_ROLE, arr(amount, uint256(lockUnit), uint256(lockEnds)))
+    checkUnlocked(amount)
+    public
+  {
     Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker);
     uint256 lockId = accounts[msg.sender].locks.push(newLock) - 1;
 
@@ -96,9 +113,31 @@ contract Staking is AragonApp {
     }
   }
 
-  function stakeAndLock(uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker, bytes stakeData, bytes lockData) public {
+  function stakeAndLock(
+    uint256 amount,
+    uint8 lockUnit,
+    uint64 lockEnds,
+    address unlocker,
+    bytes stakeData,
+    bytes lockData
+  )
+    authP(STAKE_ROLE, arr(amount))
+    authP(LOCK_ROLE, arr(amount, uint256(lockUnit), uint256(lockEnds)))
+    public
+  {
     stake(amount, stakeData);
     lock(amount, lockUnit, lockEnds, unlocker, lockData);
+  }
+
+  function moveTokens(address from, address to, uint256 amount) authP(GOD_ROLE, arr(from, to, amount)) external {
+    require(accounts[from].amount >= amount);
+
+    accounts[from].amount -= amount;
+    accounts[to].amount += amount;
+
+    assert(accounts[to].amount >= amount);
+
+    MoveTokens(from, to, amount);
   }
 
   function removeLocks(address acct) external {
