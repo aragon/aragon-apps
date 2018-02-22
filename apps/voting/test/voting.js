@@ -211,6 +211,15 @@ contract('Voting App', accounts => {
                 })
             })
 
+            it('cannot execute vote if not support met', async () => {
+                await app.vote(voteId, false, true, { from: holder31 })
+                await app.vote(voteId, false, true, { from: holder19 })
+                await timeTravel(votingTime + 1)
+                return assertRevert(async () => {
+                    await app.executeVote(voteId)
+                })
+            })
+
             it('vote can be executed automatically if decided', async () => {
                 await app.vote(voteId, true, true, { from: holder50 }) // causes execution
                 assert.equal(await executionTarget.counter(), 2, 'should have executed result')
