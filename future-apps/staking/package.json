@@ -1,0 +1,16 @@
+{
+  "name": "@aragon/apps-staking",
+  "version": "1.0.0",
+  "description": "Generic staking primitive",
+  "main": "truffle-config.js",
+  "scripts": {},
+  "author": "Aragon Institution MTU",
+  "license": "GPLv3",
+  "devDependencies": {
+    "truffle": "^4.0.5",
+    "truffle-hdwallet-provider": "0.0.3"
+  },
+  "dependencies": {
+    "@aragon/os": "^3.0.3"
+  }
+}
