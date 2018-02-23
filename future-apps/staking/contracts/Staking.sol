@@ -14,6 +14,7 @@ contract Staking is AragonApp {
     uint256 amount;
     Timespan timespan;
     address unlocker;
+    bytes32 metadata;
   }
 
   struct Timespan {
@@ -31,11 +32,14 @@ contract Staking is AragonApp {
 
   mapping (address => Account) accounts;
 
+  // TODO: figure out a way to get lock from metadata, given changing lock ids
+  // mapping (bytes32 => LockLocation) lockByMetadata;
+
   event Stake(address indexed account, uint256 amount);
   event Unstake(address indexed account, uint256 amount);
 
-  event NewLock(address indexed account, uint256 lockId);
-  event RemoveLock(address indexed account, address indexed unlocker, uint256 oldLockId);
+  event Lock(address indexed account, uint256 lockId, bytes32 metadata);
+  event Unlock(address indexed account, address indexed unlocker, uint256 oldLockId);
 
   event MoveTokens(address indexed from, address indexed to, uint256 amount);
 
@@ -48,6 +52,8 @@ contract Staking is AragonApp {
     require(unlockedBalanceOf(msg.sender) >= amount);
     _;
   }
+
+  // TODO: Implement forwarder interface
 
   function initialize(ERC20 _token, bytes _stakeScript, bytes _unstakeScript, bytes _lockScript) onlyInit external {
     token = _token;
@@ -97,16 +103,17 @@ contract Staking is AragonApp {
     uint8 lockUnit,
     uint64 lockEnds,
     address unlocker,
+    bytes32 metadata,
     bytes data
   )
     authP(LOCK_ROLE, arr(amount, uint256(lockUnit), uint256(lockEnds)))
     checkUnlocked(amount)
     public
   {
-    Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker);
+    Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker, metadata);
     uint256 lockId = accounts[msg.sender].locks.push(newLock) - 1;
 
-    NewLock(msg.sender, lockId);
+    Lock(msg.sender, lockId);
 
     if (lockScript.length > 0) {
       runScript(lockScript, data, new address[](0));
@@ -118,6 +125,7 @@ contract Staking is AragonApp {
     uint8 lockUnit,
     uint64 lockEnds,
     address unlocker,
+    bytes32 metadata,
     bytes stakeData,
     bytes lockData
   )
@@ -126,7 +134,28 @@ contract Staking is AragonApp {
     public
   {
     stake(amount, stakeData);
-    lock(amount, lockUnit, lockEnds, unlocker, lockData);
+    lock(amount, lockUnit, lockEnds, unlocker, metadata, lockData);
+  }
+
+  function unlockAll(address acct) external {
+    while (accounts[acct].locks.length > 0) {
+      if (canUnlock(acct, 0)) {
+        unlock(acct, 0);
+      }
+    }
+  }
+
+  function unlock(address acct, uint256 lockId) public {
+    require(canUnlock(acct, lockId));
+
+    uint256 lastAccountLock = accounts[acct].locks.length - 1;
+    if (lockId < lastAccountLock) {
+      accounts[acct].locks[lockId] = accounts[acct].locks[lastAccountLock];
+    }
+
+    accounts[acct].locks.length -= 1;
+
+    Unlock(acct, msg.sender, lockId);
   }
 
   function moveTokens(address from, address to, uint256 amount) authP(GOD_ROLE, arr(from, to, amount)) external {
@@ -140,33 +169,12 @@ contract Staking is AragonApp {
     MoveTokens(from, to, amount);
   }
 
-  function removeLocks(address acct) external {
-    while (accounts[acct].locks.length > 0) {
-      if (canRemoveLock(acct, 0)) {
-        removeLock(acct, 0);
-      }
-    }
-  }
-
-  function removeLock(address acct, uint256 lockId) public {
-    require(canRemoveLock(acct, lockId));
-
-    uint256 lastAccountLock = accounts[acct].locks.length - 1;
-    if (lockId < lastAccountLock) {
-      accounts[acct].locks[lockId] = accounts[acct].locks[lastAccountLock];
-    }
-
-    accounts[acct].locks.length -= 1;
-
-    RemoveLock(acct, msg.sender, lockId);
-  }
-
   function unlockedBalanceOf(address acct) public view returns (uint256) {
     uint256 unlockedTokens = accounts[acct].amount;
 
     Lock[] storage locks = accounts[acct].locks;
     for (uint256 i = 0; i < locks.length; i++) {
-      if (!canRemoveLock(acct, i)) {
+      if (!canUnlock(acct, i)) {
         unlockedTokens -= locks[i].amount;
       }
     }
@@ -186,7 +194,7 @@ contract Staking is AragonApp {
     return accounts[acct].locks[locksCount(acct) - 1];
   }
 
-  function canRemoveLock(address acct, uint256 lockId) public view returns (bool) {
+  function canUnlock(address acct, uint256 lockId) public view returns (bool) {
     Lock memory l = accounts[acct].locks[lockId];
 
     return timespanEnded(l.timespan) || msg.sender == l.unlocker;
