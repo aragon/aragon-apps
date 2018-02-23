@@ -19,6 +19,12 @@ const createdVoteId = receipt => receipt.logs.filter(x => x.event == 'StartVote'
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 
+const VOTER_STATE = ['ABSENT', 'YEA', 'NAY'].reduce((state, key, index) => {
+    state[key] = index;
+    return state;
+}, {})
+
+
 contract('Voting App', accounts => {
     let daoFact, app, token, executionTarget = {}
 
@@ -137,6 +143,7 @@ contract('Voting App', accounts => {
                 assert.equal(totalVoters, 100, 'total voters should be 100')
                 assert.equal(execScript, script, 'script should be correct')
                 assert.equal(await app.getVoteMetadata(voteId), 'metadata', 'should have returned correct metadata')
+                assert.equal(await app.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')
             })
 
             it('changing min quorum doesnt affect vote min quorum', async () => {
@@ -158,8 +165,10 @@ contract('Voting App', accounts => {
             it('holder can vote', async () => {
                 await app.vote(voteId, false, true, { from: holder31 })
                 const state = await app.getVote(voteId)
+                const voterState = await app.getVoterState(voteId, holder31)
 
                 assert.equal(state[7], 31, 'nay vote should have been counted')
+                assert.equal(voterState, VOTER_STATE.NAY, 'holder31 should have nay voter status')
             })
 
             it('holder can modify vote', async () => {
