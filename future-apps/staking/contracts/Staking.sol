@@ -1,10 +1,12 @@
 pragma solidity 0.4.18;
 
+import "./ERCStaking.sol";
+
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 
 
-contract Staking is AragonApp {
+contract Staking is ERCStaking, AragonApp {
   struct Account {
     uint256 amount;
     Lock[] locks;
@@ -25,7 +27,7 @@ contract Staking is AragonApp {
 
   enum TimeUnit { Blocks, Seconds }
 
-  ERC20 public token;
+  ERC20 public stakingToken;
   bytes public stakeScript;
   bytes public unstakeScript;
   bytes public lockScript;
@@ -35,13 +37,10 @@ contract Staking is AragonApp {
   // TODO: figure out a way to get lock from metadata, given changing lock ids
   // mapping (bytes32 => LockLocation) lockByMetadata;
 
-  event Stake(address indexed account, uint256 amount);
-  event Unstake(address indexed account, uint256 amount);
+  event Locked(address indexed account, uint256 lockId, bytes32 metadata);
+  event Unlocked(address indexed account, address indexed unlocker, uint256 oldLockId);
 
-  event Lock(address indexed account, uint256 lockId, bytes32 metadata);
-  event Unlock(address indexed account, address indexed unlocker, uint256 oldLockId);
-
-  event MoveTokens(address indexed from, address indexed to, uint256 amount);
+  event MovedTokens(address indexed from, address indexed to, uint256 amount);
 
   bytes32 constant STAKE_ROLE = keccak256("STAKE_ROLE");
   bytes32 constant UNSTAKE_ROLE = keccak256("UNSTAKE_ROLE");
@@ -55,8 +54,8 @@ contract Staking is AragonApp {
 
   // TODO: Implement forwarder interface
 
-  function initialize(ERC20 _token, bytes _stakeScript, bytes _unstakeScript, bytes _lockScript) onlyInit external {
-    token = _token;
+  function initialize(ERC20 _stakingToken, bytes _stakeScript, bytes _unstakeScript, bytes _lockScript) onlyInit external {
+    stakingToken = _stakingToken;
     stakeScript = _stakeScript;
     unstakeScript = _unstakeScript;
     lockScript = _lockScript;
@@ -70,7 +69,7 @@ contract Staking is AragonApp {
 
   function stakeFor(address acct, uint256 amount, bytes data) authP(STAKE_ROLE, arr(amount)) public {
     // From needs to be msg.sender to avoid token stealing by front-running
-    require(token.transferFrom(msg.sender, this, amount));
+    require(stakingToken.transferFrom(msg.sender, this, amount));
     processStake(acct, amount, data);
 
     if (stakeScript.length > 0) {
@@ -82,16 +81,16 @@ contract Staking is AragonApp {
     accounts[acct].amount += amount; // overflow check in token contract
     assert(accounts[acct].amount >= amount);
 
-    Stake(acct, amount);
+    Staked(acct, amount, totalStakedFor(acct), data);
   }
 
   function unstake(uint256 amount, bytes data) authP(UNSTAKE_ROLE, arr(amount)) checkUnlocked(amount) public {
     require(accounts[msg.sender].amount >= amount);
     accounts[msg.sender].amount -= amount;
 
-    require(token.transfer(msg.sender, amount));
+    require(stakingToken.transfer(msg.sender, amount));
 
-    Unstake(msg.sender, amount);
+    Unstaked(msg.sender, amount, totalStakedFor(msg.sender), data);
 
     if (unstakeScript.length > 0) {
       runScript(unstakeScript, data, new address[](0));
@@ -113,7 +112,7 @@ contract Staking is AragonApp {
     Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker, metadata);
     uint256 lockId = accounts[msg.sender].locks.push(newLock) - 1;
 
-    Lock(msg.sender, lockId);
+    Locked(msg.sender, lockId, metadata);
 
     if (lockScript.length > 0) {
       runScript(lockScript, data, new address[](0));
@@ -155,7 +154,7 @@ contract Staking is AragonApp {
 
     accounts[acct].locks.length -= 1;
 
-    Unlock(acct, msg.sender, lockId);
+    Unlocked(acct, msg.sender, lockId);
   }
 
   function moveTokens(address from, address to, uint256 amount) authP(GOD_ROLE, arr(from, to, amount)) external {
@@ -166,7 +165,21 @@ contract Staking is AragonApp {
 
     assert(accounts[to].amount >= amount);
 
-    MoveTokens(from, to, amount);
+    MovedTokens(from, to, amount);
+  }
+
+  // ERCStaking
+
+  function token() public view returns (address) {
+    return stakingToken;
+  }
+
+  function supportsHistory() public pure returns (bool) {
+    return false;
+  }
+
+  function totalStakedFor(address addr) public view returns (uint256) {
+    return accounts[addr].amount;
   }
 
   function unlockedBalanceOf(address acct) public view returns (uint256) {
