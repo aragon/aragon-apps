@@ -15,6 +15,7 @@ contract Voting is IForwarder, AragonApp {
     MiniMeToken public token;
     uint256 public supportRequiredPct;
     uint256 public minAcceptQuorumPct;
+    uint256 public minVotingQuorumPct;
     uint64 public voteTime;
 
     uint256 constant public PCT_BASE = 10 ** 18;
@@ -29,6 +30,7 @@ contract Voting is IForwarder, AragonApp {
         uint64 startDate;
         uint256 snapshotBlock;
         uint256 minAcceptQuorumPct;
+        uint256 minVotingQuorumPct;
         uint256 yea;
         uint256 nay;
         uint256 totalVoters;
@@ -43,31 +45,35 @@ contract Voting is IForwarder, AragonApp {
     event StartVote(uint256 indexed voteId);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
-    event ChangeMinQuorum(uint256 minAcceptQuorumPct);
+    event ChangeMinAcceptQuorum(uint256 minAcceptQuorumPct);
+    event ChangeMinVotingQuorum(uint256 minVotingQuorumPct);
 
     /**
     * @notice Initializes Voting app (some parameters won't be modifiable after being set)
     * @param _token MiniMeToken address that will be used as governance token
     * @param _supportRequiredPct Percentage of voters that must support a vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
     * @param _minAcceptQuorumPct Percetage of total voting power that must support a vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _minVotingQuorumPct Percetage of total voting power that must vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
     * @param _voteTime Seconds that a vote will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
     */
     function initialize(
         MiniMeToken _token,
         uint256 _supportRequiredPct,
         uint256 _minAcceptQuorumPct,
+        uint256 _minVotingQuorumPct,
         uint64 _voteTime
     ) onlyInit external
     {
         initialized();
 
-        require(_minAcceptQuorumPct > 0);
+        require(_minAcceptQuorumPct > 0 || _minVotingQuorumPct > 0);
         require(_supportRequiredPct <= PCT_BASE);
         require(_supportRequiredPct >= _minAcceptQuorumPct);
 
         token = _token;
         supportRequiredPct = _supportRequiredPct;
         minAcceptQuorumPct = _minAcceptQuorumPct;
+        minVotingQuorumPct = _minVotingQuorumPct;
         voteTime = _voteTime;
 
         votes.length += 1;
@@ -78,11 +84,22 @@ contract Voting is IForwarder, AragonApp {
     * @param _minAcceptQuorumPct New acceptance quorum
     */
     function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) external {
-        require(_minAcceptQuorumPct > 0);
+        require(_minAcceptQuorumPct > 0 || minVotingQuorumPct > 0);
         require(supportRequiredPct >= _minAcceptQuorumPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
 
-        ChangeMinQuorum(_minAcceptQuorumPct);
+        ChangeMinAcceptQuorum(_minAcceptQuorumPct);
+    }
+
+    /**
+    * @notice Change minimum acceptance quorum to `_minVotingQuorumPct`
+    * @param _minVotingQuorumPct New acceptance quorum
+    */
+    function changeMinVotingQuorumPct(uint256 _minVotingQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minVotingQuorumPct, minVotingQuorumPct)) external {
+        require(_minVotingQuorumPct > 0 || minAcceptQuorumPct > 0);
+        minVotingQuorumPct = _minVotingQuorumPct;
+
+        ChangeMinVotingQuorum(_minVotingQuorumPct);
     }
 
     /**
@@ -160,14 +177,17 @@ contract Voting is IForwarder, AragonApp {
         // has Support?
         if (!_isValuePct(vote.yea, totalVotes, supportRequiredPct))
             return false;
-        // has Min Quorum?
+        // has Min Accept Quorum?
         if (!_isValuePct(vote.yea, vote.totalVoters, vote.minAcceptQuorumPct))
+            return false;
+        // has Min Voting Quorum?
+        if (!_isValuePct(totalVotes, vote.totalVoters, vote.minVotingQuorumPct))
             return false;
 
         return true;
     }
 
-    function getVote(uint256 _voteId) public view returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script) {
+    function getVote(uint256 _voteId) public view returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 minVotingQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script) {
         Vote storage vote = votes[_voteId];
 
         open = _isVoteOpen(vote);
@@ -176,6 +196,7 @@ contract Voting is IForwarder, AragonApp {
         startDate = vote.startDate;
         snapshotBlock = vote.snapshotBlock;
         minAcceptQuorum = vote.minAcceptQuorumPct;
+        minVotingQuorum = vote.minVotingQuorumPct;
         yea = vote.yea;
         nay = vote.nay;
         totalVoters = vote.totalVoters;
@@ -196,6 +217,7 @@ contract Voting is IForwarder, AragonApp {
         vote.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote.totalVoters = token.totalSupplyAt(vote.snapshotBlock);
         vote.minAcceptQuorumPct = minAcceptQuorumPct;
+        vote.minVotingQuorumPct = minVotingQuorumPct;
 
         StartVote(voteId);
 
