@@ -53,7 +53,7 @@ contract('Voting App', accounts => {
 
         const neededSupport = pct16(50)
         const minimumAcceptanceQuorum = pct16(20)
-        const minimumVotingQuorum = pct16(30)
+        const minimumVotingQuorum = pct16(25)
 
         beforeEach(async () => {
             const n = '0x00'
@@ -218,6 +218,15 @@ contract('Voting App', accounts => {
 
             it('cannot execute vote if not enough accept quorum met', async () => {
                 await app.vote(voteId, true, true, { from: holder18 })
+                await app.vote(voteId, false, true, { from: holder10 })
+                await timeTravel(votingTime + 1)
+                return assertRevert(async () => {
+                    await app.executeVote(voteId)
+                })
+            })
+
+            it('cannot execute vote if not enough voting quorum met', async () => {
+                await app.vote(voteId, true, true, { from: holder22 })
                 await timeTravel(votingTime + 1)
                 return assertRevert(async () => {
                     await app.executeVote(voteId)
