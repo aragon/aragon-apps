@@ -7,6 +7,7 @@ import Votes from './screens/Votes'
 import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
 import AppLayout from './components/AppLayout'
+import { VOTE_YEA } from './vote-types'
 
 class App extends React.Component {
   state = {
@@ -16,12 +17,14 @@ class App extends React.Component {
     voteVisible: false,
     voteSidebarOpened: false,
 
+    settingsReady: false,
     supportRequiredPct: -1,
     voteTime: -1,
     pctBase: -1,
+    userAccount: '',
   }
   componentDidMount() {
-    const app = new Aragon()
+    const app = (this.app = new Aragon())
     const events$ = app.events()
 
     events$
@@ -42,18 +45,31 @@ class App extends React.Component {
         })
       })
 
-    const members = [
-      ['supportRequiredPct'],
-      ['voteTime'],
+    const voteSettings = [
+      ['voteTime', 'voteTime'],
       ['PCT_BASE', 'pctBase'],
+      ['supportRequiredPct', 'supportRequiredPct'],
     ]
-    members.forEach(([name, stateKey]) => {
+    voteSettings.forEach(([name, key], i) => {
       app.call(name).subscribe(val => {
-        const key = stateKey || name
         const value = parseInt(val, 10)
-        this.setState({ [key]: value })
+        const settingsReady = voteSettings.every(
+          ([name, key], j) => (i === j ? value : this.state[key]) > -1
+        )
+        this.setState({ [key]: value, settingsReady })
       })
     })
+
+    window.addEventListener('message', ({ data }) => {
+      if (data.from !== 'wrapper') {
+        return
+      }
+      if (data.name === 'account') {
+        this.setState({ userAccount: data.value })
+      }
+    })
+
+    window.parent.postMessage({ from: 'app', name: 'ready', value: true }, '*')
   }
 
   // Get a vote using its ID, or create it if needed
@@ -87,13 +103,17 @@ class App extends React.Component {
     }
   }
 
-  handleCreateVote = () => {
+  handleCreateVote = question => {
+    this.app.newVote('0x00000001', question)
+    this.handleCreateVoteClose()
+  }
+  handleCreateVoteOpen = () => {
     this.setState({ createVoteVisible: true })
   }
   handleCreateVoteClose = () => {
     this.setState({ createVoteVisible: false })
   }
-  handleSelectVote = voteId => {
+  handleVoteOpen = voteId => {
     const exists = this.state.votes.some(vote => voteId === vote.voteId)
     if (!exists) return
     this.setState({
@@ -102,7 +122,11 @@ class App extends React.Component {
       voteSidebarOpened: false,
     })
   }
-  handleDeselectVote = () => {
+  handleVote = (voteId, voteType) => {
+    this.app.vote(voteId, voteType === VOTE_YEA, false)
+    this.handleVoteClose()
+  }
+  handleVoteClose = () => {
     this.setState({ voteVisible: false })
   }
   handleVoteTransitionEnd = opened => {
@@ -116,18 +140,14 @@ class App extends React.Component {
       createVoteVisible,
       voteSidebarOpened,
 
+      settingsReady,
       voteTime,
       supportRequiredPct,
       pctBase,
     } = this.state
 
-    const displayVotes =
-      voteTime > -1 &&
-      supportRequiredPct > -1 &&
-      pctBase > -1 &&
-      votes.length > 0
-
-    const supportRequired = displayVotes ? supportRequiredPct / pctBase : -1
+    const displayVotes = settingsReady && votes.length > 0
+    const supportRequired = settingsReady ? supportRequiredPct / pctBase : -1
 
     // Add useful properties to the votes
     const preparedVotes = displayVotes
@@ -151,7 +171,7 @@ class App extends React.Component {
             <AppBar
               title="Vote"
               endContent={
-                <Button mode="strong" onClick={this.handleCreateVote}>
+                <Button mode="strong" onClick={this.handleCreateVoteOpen}>
                   New Vote
                 </Button>
               }
@@ -162,10 +182,10 @@ class App extends React.Component {
               {displayVotes ? (
                 <Votes
                   votes={preparedVotes}
-                  onSelectVote={this.handleSelectVote}
+                  onSelectVote={this.handleVoteOpen}
                 />
               ) : (
-                <EmptyState onActivate={this.handleCreateVote} />
+                <EmptyState onActivate={this.handleCreateVoteOpen} />
               )}
             </AppLayout.Content>
           </AppLayout.ScrollWrapper>
@@ -179,7 +199,7 @@ class App extends React.Component {
                 : 'Closed Vote'
             }
             opened={Boolean(!createVoteVisible && voteVisible)}
-            onClose={this.handleDeselectVote}
+            onClose={this.handleVoteClose}
             onTransitionEnd={this.handleVoteTransitionEnd}
           >
             {currentVote && (
@@ -187,6 +207,7 @@ class App extends React.Component {
                 vote={currentVote}
                 user={USER_ACCOUNT}
                 ready={voteSidebarOpened}
+                onVote={this.handleVote}
               />
             )}
           </SidePanel>
@@ -197,7 +218,10 @@ class App extends React.Component {
           opened={createVoteVisible}
           onClose={this.handleCreateVoteClose}
         >
-          <NewVotePanelContent />
+          <NewVotePanelContent
+            opened={createVoteVisible}
+            onCreateVote={this.handleCreateVote}
+          />
         </SidePanel>
       </AragonApp>
     )

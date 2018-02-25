@@ -1,57 +1,52 @@
 import React from 'react'
-import styled from 'styled-components'
-import { Button, Info, Text, TextInput, Field, theme } from '@aragon/ui'
+import { Button, Info, TextInput, Field } from '@aragon/ui'
 
-const NewVotePanelContent = ({}) => {
-  return (
-    <div>
-      <Field>
-        <Info
-          title={
-            <Text weight="bold" color={theme.textSecondary}>
-              Votes are informative
-            </Text>
-          }
-        >
-          <p style={{ marginTop: '10px' }}>
-            Votes don’t have any direct repercussion on the organization
-          </p>
-        </Info>
-      </Field>
-
-      <Field label="Question">
-        <TextInput wide required />
-      </Field>
-
-      <Field label="Description">
-        <TextInput wide required />
-      </Field>
-
-      <Button mode="strong" wide>
-        Begin Vote
-      </Button>
-    </div>
-  )
-}
-
-NewVotePanelContent.defaultProps = {}
-
-const Label = styled(Text).attrs({
-  smallcaps: true,
-  color: theme.textSecondary,
-})`
-  display: block;
-  margin-bottom: 10px;
-`
-
-const Part = styled.div`
-  padding: 20px 0;
-  h2 {
-    margin-top: 20px;
-    &:first-child {
-      margin-top: 0;
+class NewVotePanelContent extends React.Component {
+  state = {
+    question: '',
+  }
+  componentWillReceiveProps({ opened }) {
+    if (opened && !this.props.opened) {
+      this.setState({ question: '' })
     }
   }
-`
+  handleQuestionChange = event => {
+    this.setState({ question: event.target.value })
+  }
+  handleSubmit = (event) => {
+    event.preventDefault()
+    this.props.onCreateVote(this.state.question.trim())
+  }
+  render() {
+    const { question } = this.state
+    return (
+      <div>
+        <Field>
+          <Info.Action title="Votes are informative">
+            They don’t have any direct repercussion on the organization.
+          </Info.Action>
+        </Field>
+
+        <form onSubmit={this.handleSubmit}>
+          <Field label="Question">
+            <TextInput
+              value={question}
+              onChange={this.handleQuestionChange}
+              required
+              wide
+            />
+          </Field>
+          <Button mode="strong" type="submit" wide>
+            Begin Vote
+          </Button>
+        </form>
+      </div>
+    )
+  }
+}
+
+NewVotePanelContent.defaultProps = {
+  onCreateVote: () => {},
+}
 
 export default NewVotePanelContent

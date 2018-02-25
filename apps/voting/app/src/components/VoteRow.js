@@ -12,13 +12,13 @@ class VoteRow extends React.Component {
   render() {
     const { vote } = this.props
     const { question, endDate } = vote
-    const { yea, nay, totalVoters } = vote.vote
+    const { yea, nay, totalVoters, open } = vote.vote
     const totalVotes = (yea + nay) / totalVoters
 
     return (
       <TableRow>
         <StatusCell>
-          {vote.open ? <Countdown end={endDate} /> : <VoteStatus vote={vote} />}
+          {open ? <Countdown end={endDate} /> : <VoteStatus vote={vote} />}
         </StatusCell>
         <QuestionCell>
           <QuestionWrapper>
