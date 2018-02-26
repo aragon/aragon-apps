@@ -22,7 +22,7 @@ class VotePanelContent extends React.Component {
     this.props.onVote(this.props.vote.voteId, VOTE_YEA)
   }
   render() {
-    const { vote, user, ready, onVote } = this.props
+    const { vote, user, ready } = this.props
     if (!vote) {
       return null
     }
