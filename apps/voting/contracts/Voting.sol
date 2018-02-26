@@ -182,8 +182,12 @@ contract Voting is IForwarder, AragonApp {
         script = vote.executionScript;
     }
 
-    function getVoteMetadata(uint256 _voteId) public view returns (string metadata) {
+    function getVoteMetadata(uint256 _voteId) public view returns (string) {
         return votes[_voteId].metadata;
+    }
+
+    function getVoterState(uint256 _voteId, address _voter) public view returns (VoterState) {
+        return votes[_voteId].voters[_voter];
     }
 
     function _newVote(bytes _executionScript, string _metadata) internal returns (uint256 voteId) {

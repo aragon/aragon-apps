@@ -8,8 +8,12 @@ apps/*/node_modules
 */**/coverage.json
 */**/allFiredEvents
 */**/scTopics
-*/**/build
-*/**/artifact.json
+
+
+apps/**/build
+apps/**/artifact.json
+future-apps/**/build
+future-apps/**/artifact.json
 
 # lerna
 lerna-debug.log
