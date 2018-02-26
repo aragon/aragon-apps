@@ -61,7 +61,7 @@ contract Voting is IForwarder, AragonApp {
     {
         initialized();
 
-        require(_supportRequiredPct > 1);
+        require(_minAcceptQuorumPct > 0);
         require(_supportRequiredPct <= PCT_BASE);
         require(_supportRequiredPct >= _minAcceptQuorumPct);
 
@@ -78,6 +78,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _minAcceptQuorumPct New acceptance quorum
     */
     function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) external {
+        require(_minAcceptQuorumPct > 0);
         require(supportRequiredPct >= _minAcceptQuorumPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
 
@@ -153,11 +154,17 @@ contract Voting is IForwarder, AragonApp {
 
         uint256 totalVotes = vote.yea + vote.nay;
 
-        bool voteEnded = !_isVoteOpen(vote);
-        bool hasSupport = _isValuePct(vote.yea, totalVotes, supportRequiredPct);
-        bool hasMinQuorum = _isValuePct(vote.yea, vote.totalVoters, vote.minAcceptQuorumPct);
+        // vote ended?
+        if (_isVoteOpen(vote))
+            return false;
+        // has Support?
+        if (!_isValuePct(vote.yea, totalVotes, supportRequiredPct))
+            return false;
+        // has Min Quorum?
+        if (!_isValuePct(vote.yea, vote.totalVoters, vote.minAcceptQuorumPct))
+            return false;
 
-        return voteEnded && hasSupport && hasMinQuorum;
+        return true;
     }
 
     function getVote(uint256 _voteId) public view returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script) {

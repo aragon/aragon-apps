@@ -211,6 +211,15 @@ contract('Voting App', accounts => {
                 })
             })
 
+            it('cannot execute vote if not support met', async () => {
+                await app.vote(voteId, false, true, { from: holder31 })
+                await app.vote(voteId, false, true, { from: holder19 })
+                await timeTravel(votingTime + 1)
+                return assertRevert(async () => {
+                    await app.executeVote(voteId)
+                })
+            })
+
             it('vote can be executed automatically if decided', async () => {
                 await app.vote(voteId, true, true, { from: holder50 }) // causes execution
                 assert.equal(await executionTarget.counter(), 2, 'should have executed result')
@@ -238,6 +247,36 @@ contract('Voting App', accounts => {
         })
     })
 
+    context('wrong initializations', () => {
+        beforeEach(async() => {
+            const n = '0x00'
+            token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // empty parameters minime
+        })
+
+        it('fails if min acceptance quorum is 0', () => {
+            const neededSupport = pct16(20)
+            const minimumAcceptanceQuorum = pct16(0)
+            return assertRevert(async() => {
+                await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            })
+        })
+
+        it('fails if min acceptance quorum is greater than min support', () => {
+            const neededSupport = pct16(20)
+            const minimumAcceptanceQuorum = pct16(50)
+            return assertRevert(async() => {
+                await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            })
+        })
+
+        it('fails if min support is greater than 100', () => {
+            const neededSupport = pct16(101)
+            const minimumAcceptanceQuorum = pct16(20)
+            return assertRevert(async() => {
+                await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            })
+        })
+    })
     context('token supply = 1', () => {
         const holder = accounts[1]
 
