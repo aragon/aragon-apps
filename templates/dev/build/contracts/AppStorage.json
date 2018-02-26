@@ -1,0 +1,297 @@
+{
+  "contractName": "AppStorage",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "appId",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "kernel",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6060604052341561000f57600080fd5b6101258061001e6000396000f3006060604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806380afdea814604e578063d4aae0c414607c575b600080fd5b3415605857600080fd5b605e60ce565b60405180826000191660001916815260200191505060405180910390f35b3415608657600080fd5b608c60d4565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b60015481565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff16815600a165627a7a723058202f8908a5d312db86bae07c0db79759078bb71d3edbd3b9162f5088718acd50d40029",
+  "deployedBytecode": "0x6060604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806380afdea814604e578063d4aae0c414607c575b600080fd5b3415605857600080fd5b605e60ce565b60405180826000191660001916815260200191505060405180910390f35b3415608657600080fd5b608c60d4565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b60015481565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff16815600a165627a7a723058202f8908a5d312db86bae07c0db79759078bb71d3edbd3b9162f5088718acd50d40029",
+  "sourceMap": "60:317:13:-;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "60:317:13:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;113:20;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;86:21;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;113:20;;;;:::o;86:21::-;;;;;;;;;;;;;:::o",
+  "source": "pragma solidity ^0.4.18;\n\nimport \"../kernel/IKernel.sol\";\n\n\ncontract AppStorage {\n    IKernel public kernel;\n    bytes32 public appId;\n    address internal pinnedCode; // used by Proxy Pinned\n    uint256 internal initializationBlock; // used by Initializable\n    uint256[95] private storageOffset; // forces App storage to start at after 100 slots\n    uint256 private offset;\n}\n",
+  "sourcePath": "@aragon/os/contracts/apps/AppStorage.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "@aragon/os/contracts/apps/AppStorage.sol",
+      "exportedSymbols": {
+        "AppStorage": [
+          3841
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "^",
+            "0.4",
+            ".18"
+          ]
+        },
+        "id": 3825,
+        "name": "PragmaDirective",
+        "src": "0:24:13"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 6342,
+          "absolutePath": "@aragon/os/contracts/kernel/IKernel.sol",
+          "file": "../kernel/IKernel.sol",
+          "scope": 3842,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 3826,
+        "name": "ImportDirective",
+        "src": "26:31:13"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            3841
+          ],
+          "name": "AppStorage",
+          "scope": 3842
+        },
+        "children": [
+          {
+            "attributes": {
+              "constant": false,
+              "name": "kernel",
+              "scope": 3841,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "contract IKernel",
+              "value": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "IKernel",
+                  "referencedDeclaration": 6341,
+                  "type": "contract IKernel"
+                },
+                "id": 3827,
+                "name": "UserDefinedTypeName",
+                "src": "86:7:13"
+              }
+            ],
+            "id": 3828,
+            "name": "VariableDeclaration",
+            "src": "86:21:13"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "appId",
+              "scope": 3841,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "bytes32",
+              "value": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "bytes32",
+                  "type": "bytes32"
+                },
+                "id": 3829,
+                "name": "ElementaryTypeName",
+                "src": "113:7:13"
+              }
+            ],
+            "id": 3830,
+            "name": "VariableDeclaration",
+            "src": "113:20:13"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "pinnedCode",
+              "scope": 3841,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "address",
+              "value": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "address",
+                  "type": "address"
+                },
+                "id": 3831,
+                "name": "ElementaryTypeName",
+                "src": "139:7:13"
+              }
+            ],
+            "id": 3832,
+            "name": "VariableDeclaration",
+            "src": "139:27:13"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "initializationBlock",
+              "scope": 3841,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "uint256",
+              "value": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "uint256",
+                  "type": "uint256"
+                },
+                "id": 3833,
+                "name": "ElementaryTypeName",
+                "src": "196:7:13"
+              }
+            ],
+            "id": 3834,
+            "name": "VariableDeclaration",
+            "src": "196:36:13"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "storageOffset",
+              "scope": 3841,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "uint256[95] storage ref",
+              "value": null,
+              "visibility": "private"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "uint256[95] storage pointer"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint256",
+                      "type": "uint256"
+                    },
+                    "id": 3835,
+                    "name": "ElementaryTypeName",
+                    "src": "263:7:13"
+                  },
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "hexvalue": "3935",
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "subdenomination": null,
+                      "token": "number",
+                      "type": "int_const 95",
+                      "value": "95"
+                    },
+                    "id": 3836,
+                    "name": "Literal",
+                    "src": "271:2:13"
+                  }
+                ],
+                "id": 3837,
+                "name": "ArrayTypeName",
+                "src": "263:11:13"
+              }
+            ],
+            "id": 3838,
+            "name": "VariableDeclaration",
+            "src": "263:33:13"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "offset",
+              "scope": 3841,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "uint256",
+              "value": null,
+              "visibility": "private"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "uint256",
+                  "type": "uint256"
+                },
+                "id": 3839,
+                "name": "ElementaryTypeName",
+                "src": "352:7:13"
+              }
+            ],
+            "id": 3840,
+            "name": "VariableDeclaration",
+            "src": "352:22:13"
+          }
+        ],
+        "id": 3841,
+        "name": "ContractDefinition",
+        "src": "60:317:13"
+      }
+    ],
+    "id": 3842,
+    "name": "SourceUnit",
+    "src": "0:378:13"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.18+commit.9cf6e910.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2018-02-26T13:03:29.090Z"
+}

@@ -1,0 +1,235 @@
+{
+  "contractName": "ERC677Receiver",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "tokenFallback",
+      "outputs": [
+        {
+          "name": "success",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "pragma solidity 0.4.18;\n\n\ncontract ERC677Receiver {\n    function tokenFallback(address from, uint256 amount, bytes data) external returns (bool success);\n}\n",
+  "sourcePath": "@aragon/os/contracts/lib/erc677/ERC677Receiver.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "@aragon/os/contracts/lib/erc677/ERC677Receiver.sol",
+      "exportedSymbols": {
+        "ERC677Receiver": [
+          10624
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.4",
+            ".18"
+          ]
+        },
+        "id": 10612,
+        "name": "PragmaDirective",
+        "src": "0:23:48"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": false,
+          "linearizedBaseContracts": [
+            10624
+          ],
+          "name": "ERC677Receiver",
+          "scope": 10625
+        },
+        "children": [
+          {
+            "attributes": {
+              "body": null,
+              "constant": false,
+              "implemented": false,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "tokenFallback",
+              "payable": false,
+              "scope": 10624,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "external"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "from",
+                      "scope": 10623,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "type": "address"
+                        },
+                        "id": 10613,
+                        "name": "ElementaryTypeName",
+                        "src": "79:7:48"
+                      }
+                    ],
+                    "id": 10614,
+                    "name": "VariableDeclaration",
+                    "src": "79:12:48"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "amount",
+                      "scope": 10623,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 10615,
+                        "name": "ElementaryTypeName",
+                        "src": "93:7:48"
+                      }
+                    ],
+                    "id": 10616,
+                    "name": "VariableDeclaration",
+                    "src": "93:14:48"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "data",
+                      "scope": 10623,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bytes calldata",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bytes",
+                          "type": "bytes storage pointer"
+                        },
+                        "id": 10617,
+                        "name": "ElementaryTypeName",
+                        "src": "109:5:48"
+                      }
+                    ],
+                    "id": 10618,
+                    "name": "VariableDeclaration",
+                    "src": "109:10:48"
+                  }
+                ],
+                "id": 10619,
+                "name": "ParameterList",
+                "src": "78:42:48"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "success",
+                      "scope": 10623,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bool",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bool",
+                          "type": "bool"
+                        },
+                        "id": 10620,
+                        "name": "ElementaryTypeName",
+                        "src": "139:4:48"
+                      }
+                    ],
+                    "id": 10621,
+                    "name": "VariableDeclaration",
+                    "src": "139:12:48"
+                  }
+                ],
+                "id": 10622,
+                "name": "ParameterList",
+                "src": "138:14:48"
+              }
+            ],
+            "id": 10623,
+            "name": "FunctionDefinition",
+            "src": "56:97:48"
+          }
+        ],
+        "id": 10624,
+        "name": "ContractDefinition",
+        "src": "26:129:48"
+      }
+    ],
+    "id": 10625,
+    "name": "SourceUnit",
+    "src": "0:156:48"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.18+commit.9cf6e910.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2018-02-26T13:03:38.157Z"
+}

@@ -1,0 +1,574 @@
+{
+  "contractName": "ENSConstants",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "PUBLIC_RESOLVER_NODE",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "ETH_TLD_LABEL",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "ENS_ROOT",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "PUBLIC_RESOLVER_LABEL",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "ETH_TLD_NODE",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6060604052341561000f57600080fd5b6103438061001e6000396000f30060606040526004361061006d576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633f82e2c6146100725780639b227a97146100a3578063a9bf1c9f146100d4578063c84b1ce714610105578063fdee38a914610136575b600080fd5b341561007d57600080fd5b610085610167565b60405180826000191660001916815260200191505060405180910390f35b34156100ae57600080fd5b6100b6610233565b60405180826000191660001916815260200191505060405180910390f35b34156100df57600080fd5b6100e761026c565b60405180826000191660001916815260200191505060405180910390f35b341561011057600080fd5b610118610274565b60405180826000191660001916815260200191505060405180910390f35b341561014157600080fd5b6101496102ad565b60405180826000191660001916815260200191505060405180910390f35b600060010260405180807f657468000000000000000000000000000000000000000000000000000000000081525060030190506040518091039020604051808360001916600019168152602001826000191660001916815260200192505050604051809103902060405180807f7265736f6c76657200000000000000000000000000000000000000000000000081525060080190506040518091039020604051808360001916600019168152602001826000191660001916815260200192505050604051809103902081565b60405180807f65746800000000000000000000000000000000000000000000000000000000008152506003019050604051809103902081565b600060010281565b60405180807f7265736f6c7665720000000000000000000000000000000000000000000000008152506008019050604051809103902081565b600060010260405180807f6574680000000000000000000000000000000000000000000000000000000000815250600301905060405180910390206040518083600019166000191681526020018260001916600019168152602001925050506040518091039020815600a165627a7a723058207cc290025ba8d605c72ff08f2a42dd6817065aa3432b43a627f80a14d8852ee80029",
+  "deployedBytecode": "0x60606040526004361061006d576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633f82e2c6146100725780639b227a97146100a3578063a9bf1c9f146100d4578063c84b1ce714610105578063fdee38a914610136575b600080fd5b341561007d57600080fd5b610085610167565b60405180826000191660001916815260200191505060405180910390f35b34156100ae57600080fd5b6100b6610233565b60405180826000191660001916815260200191505060405180910390f35b34156100df57600080fd5b6100e761026c565b60405180826000191660001916815260200191505060405180910390f35b341561011057600080fd5b610118610274565b60405180826000191660001916815260200191505060405180910390f35b341561014157600080fd5b6101496102ad565b60405180826000191660001916815260200191505060405180910390f35b600060010260405180807f657468000000000000000000000000000000000000000000000000000000000081525060030190506040518091039020604051808360001916600019168152602001826000191660001916815260200192505050604051809103902060405180807f7265736f6c76657200000000000000000000000000000000000000000000000081525060080190506040518091039020604051808360001916600019168152602001826000191660001916815260200192505050604051809103902081565b60405180807f65746800000000000000000000000000000000000000000000000000000000008152506003019050604051809103902081565b600060010281565b60405180807f7265736f6c7665720000000000000000000000000000000000000000000000008152506008019050604051809103902081565b600060010260405180807f6574680000000000000000000000000000000000000000000000000000000000815250600301905060405180910390206040518083600019166000191681526020018260001916600019168152602001925050506040518091039020815600a165627a7a723058207cc290025ba8d605c72ff08f2a42dd6817065aa3432b43a627f80a14d8852ee80029",
+  "sourceMap": "27:391:26:-;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "27:391:26:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;322:93;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;106:56;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;55:45;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;247:69;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;168:73;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;322:93;98:1;90:10;;146:16;;;;;;;;;;;;;;;;;;;207:34;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;295:21;;;;;;;;;;;;;;;;;;;369:46;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;322:93;:::o;106:56::-;146:16;;;;;;;;;;;;;;;;;;;106:56;:::o;55:45::-;98:1;90:10;;55:45;:::o;247:69::-;295:21;;;;;;;;;;;;;;;;;;;247:69;:::o;168:73::-;98:1;90:10;;146:16;;;;;;;;;;;;;;;;;;;207:34;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;168:73;:::o",
+  "source": "pragma solidity ^0.4.18;\n\n\ncontract ENSConstants {\n    bytes32 constant public ENS_ROOT = bytes32(0);\n    bytes32 constant public ETH_TLD_LABEL = keccak256(\"eth\");\n    bytes32 constant public ETH_TLD_NODE = keccak256(ENS_ROOT, ETH_TLD_LABEL);\n    bytes32 constant public PUBLIC_RESOLVER_LABEL = keccak256(\"resolver\");\n    bytes32 constant public PUBLIC_RESOLVER_NODE = keccak256(ETH_TLD_NODE, PUBLIC_RESOLVER_LABEL);\n}\n",
+  "sourcePath": "@aragon/os/contracts/ens/ENSConstants.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "@aragon/os/contracts/ens/ENSConstants.sol",
+      "exportedSymbols": {
+        "ENSConstants": [
+          7201
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "^",
+            "0.4",
+            ".18"
+          ]
+        },
+        "id": 7173,
+        "name": "PragmaDirective",
+        "src": "0:24:26"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            7201
+          ],
+          "name": "ENSConstants",
+          "scope": 7202
+        },
+        "children": [
+          {
+            "attributes": {
+              "constant": true,
+              "name": "ENS_ROOT",
+              "scope": 7201,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "bytes32",
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "bytes32",
+                  "type": "bytes32"
+                },
+                "id": 7174,
+                "name": "ElementaryTypeName",
+                "src": "55:7:26"
+              },
+              {
+                "attributes": {
+                  "argumentTypes": null,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "isStructConstructorCall": false,
+                  "lValueRequested": false,
+                  "names": [
+                    null
+                  ],
+                  "type": "bytes32",
+                  "type_conversion": true
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_rational_0_by_1",
+                          "typeString": "int_const 0"
+                        }
+                      ],
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "type": "type(bytes32)",
+                      "value": "bytes32"
+                    },
+                    "id": 7175,
+                    "name": "ElementaryTypeNameExpression",
+                    "src": "90:7:26"
+                  },
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "hexvalue": "30",
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "subdenomination": null,
+                      "token": "number",
+                      "type": "int_const 0",
+                      "value": "0"
+                    },
+                    "id": 7176,
+                    "name": "Literal",
+                    "src": "98:1:26"
+                  }
+                ],
+                "id": 7177,
+                "name": "FunctionCall",
+                "src": "90:10:26"
+              }
+            ],
+            "id": 7178,
+            "name": "VariableDeclaration",
+            "src": "55:45:26"
+          },
+          {
+            "attributes": {
+              "constant": true,
+              "name": "ETH_TLD_LABEL",
+              "scope": 7201,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "bytes32",
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "bytes32",
+                  "type": "bytes32"
+                },
+                "id": 7179,
+                "name": "ElementaryTypeName",
+                "src": "106:7:26"
+              },
+              {
+                "attributes": {
+                  "argumentTypes": null,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "isStructConstructorCall": false,
+                  "lValueRequested": false,
+                  "names": [
+                    null
+                  ],
+                  "type": "bytes32",
+                  "type_conversion": false
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_stringliteral_4f5b812789fc606be1b3b16908db13fc7a9adf7ca72641f84d75b47069d3d7f0",
+                          "typeString": "literal_string \"eth\""
+                        }
+                      ],
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 12399,
+                      "type": "function () pure returns (bytes32)",
+                      "value": "keccak256"
+                    },
+                    "id": 7180,
+                    "name": "Identifier",
+                    "src": "146:9:26"
+                  },
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "hexvalue": "657468",
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "subdenomination": null,
+                      "token": "string",
+                      "type": "literal_string \"eth\"",
+                      "value": "eth"
+                    },
+                    "id": 7181,
+                    "name": "Literal",
+                    "src": "156:5:26"
+                  }
+                ],
+                "id": 7182,
+                "name": "FunctionCall",
+                "src": "146:16:26"
+              }
+            ],
+            "id": 7183,
+            "name": "VariableDeclaration",
+            "src": "106:56:26"
+          },
+          {
+            "attributes": {
+              "constant": true,
+              "name": "ETH_TLD_NODE",
+              "scope": 7201,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "bytes32",
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "bytes32",
+                  "type": "bytes32"
+                },
+                "id": 7184,
+                "name": "ElementaryTypeName",
+                "src": "168:7:26"
+              },
+              {
+                "attributes": {
+                  "argumentTypes": null,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "isStructConstructorCall": false,
+                  "lValueRequested": false,
+                  "names": [
+                    null
+                  ],
+                  "type": "bytes32",
+                  "type_conversion": false
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      ],
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 12399,
+                      "type": "function () pure returns (bytes32)",
+                      "value": "keccak256"
+                    },
+                    "id": 7185,
+                    "name": "Identifier",
+                    "src": "207:9:26"
+                  },
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 7178,
+                      "type": "bytes32",
+                      "value": "ENS_ROOT"
+                    },
+                    "id": 7186,
+                    "name": "Identifier",
+                    "src": "217:8:26"
+                  },
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 7183,
+                      "type": "bytes32",
+                      "value": "ETH_TLD_LABEL"
+                    },
+                    "id": 7187,
+                    "name": "Identifier",
+                    "src": "227:13:26"
+                  }
+                ],
+                "id": 7188,
+                "name": "FunctionCall",
+                "src": "207:34:26"
+              }
+            ],
+            "id": 7189,
+            "name": "VariableDeclaration",
+            "src": "168:73:26"
+          },
+          {
+            "attributes": {
+              "constant": true,
+              "name": "PUBLIC_RESOLVER_LABEL",
+              "scope": 7201,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "bytes32",
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "bytes32",
+                  "type": "bytes32"
+                },
+                "id": 7190,
+                "name": "ElementaryTypeName",
+                "src": "247:7:26"
+              },
+              {
+                "attributes": {
+                  "argumentTypes": null,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "isStructConstructorCall": false,
+                  "lValueRequested": false,
+                  "names": [
+                    null
+                  ],
+                  "type": "bytes32",
+                  "type_conversion": false
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_stringliteral_329539a1d23af1810c48a07fe7fc66a3b34fbc8b37e9b3cdb97bb88ceab7e4bf",
+                          "typeString": "literal_string \"resolver\""
+                        }
+                      ],
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 12399,
+                      "type": "function () pure returns (bytes32)",
+                      "value": "keccak256"
+                    },
+                    "id": 7191,
+                    "name": "Identifier",
+                    "src": "295:9:26"
+                  },
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "hexvalue": "7265736f6c766572",
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "subdenomination": null,
+                      "token": "string",
+                      "type": "literal_string \"resolver\"",
+                      "value": "resolver"
+                    },
+                    "id": 7192,
+                    "name": "Literal",
+                    "src": "305:10:26"
+                  }
+                ],
+                "id": 7193,
+                "name": "FunctionCall",
+                "src": "295:21:26"
+              }
+            ],
+            "id": 7194,
+            "name": "VariableDeclaration",
+            "src": "247:69:26"
+          },
+          {
+            "attributes": {
+              "constant": true,
+              "name": "PUBLIC_RESOLVER_NODE",
+              "scope": 7201,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "bytes32",
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "bytes32",
+                  "type": "bytes32"
+                },
+                "id": 7195,
+                "name": "ElementaryTypeName",
+                "src": "322:7:26"
+              },
+              {
+                "attributes": {
+                  "argumentTypes": null,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "isStructConstructorCall": false,
+                  "lValueRequested": false,
+                  "names": [
+                    null
+                  ],
+                  "type": "bytes32",
+                  "type_conversion": false
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      ],
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 12399,
+                      "type": "function () pure returns (bytes32)",
+                      "value": "keccak256"
+                    },
+                    "id": 7196,
+                    "name": "Identifier",
+                    "src": "369:9:26"
+                  },
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 7189,
+                      "type": "bytes32",
+                      "value": "ETH_TLD_NODE"
+                    },
+                    "id": 7197,
+                    "name": "Identifier",
+                    "src": "379:12:26"
+                  },
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 7194,
+                      "type": "bytes32",
+                      "value": "PUBLIC_RESOLVER_LABEL"
+                    },
+                    "id": 7198,
+                    "name": "Identifier",
+                    "src": "393:21:26"
+                  }
+                ],
+                "id": 7199,
+                "name": "FunctionCall",
+                "src": "369:46:26"
+              }
+            ],
+            "id": 7200,
+            "name": "VariableDeclaration",
+            "src": "322:93:26"
+          }
+        ],
+        "id": 7201,
+        "name": "ContractDefinition",
+        "src": "27:391:26"
+      }
+    ],
+    "id": 7202,
+    "name": "SourceUnit",
+    "src": "0:419:26"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.18+commit.9cf6e910.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2018-02-26T13:03:38.143Z"
+}

@@ -1,0 +1,128 @@
+{
+  "contractName": "Imports",
+  "abi": [],
+  "bytecode": "0x60606040523415600e57600080fd5b603580601b6000396000f3006060604052600080fd00a165627a7a72305820317027fd6e036c8abaabc65b3a6e0e31f32d1790da8454b1f82957b843d104830029",
+  "deployedBytecode": "0x6060604052600080fd00a165627a7a72305820317027fd6e036c8abaabc65b3a6e0e31f32d1790da8454b1f82957b843d104830029",
+  "sourceMap": "327:19:2:-;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "327:19:2:-;;;;;",
+  "source": "pragma solidity 0.4.18;\n\n// HACK to workaround truffle artifact loading on dependencies\n\nimport \"@aragon/os/contracts/factory/ENSFactory.sol\";\nimport \"@aragon/os/contracts/factory/APMRegistryFactory.sol\";\nimport \"@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol\";\nimport \"@aragon/os/contracts/common/EtherToken.sol\";\n\ncontract Imports {}\n",
+  "sourcePath": "/Users/jorge/provident/aragon-apps/templates/beta/contracts/Imports.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "/Users/jorge/provident/aragon-apps/templates/beta/contracts/Imports.sol",
+      "exportedSymbols": {
+        "Imports": [
+          688
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.4",
+            ".18"
+          ]
+        },
+        "id": 683,
+        "name": "PragmaDirective",
+        "src": "0:23:2"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 9259,
+          "absolutePath": "@aragon/os/contracts/factory/ENSFactory.sol",
+          "file": "@aragon/os/contracts/factory/ENSFactory.sol",
+          "scope": 689,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 684,
+        "name": "ImportDirective",
+        "src": "89:53:2"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 8886,
+          "absolutePath": "@aragon/os/contracts/factory/APMRegistryFactory.sol",
+          "file": "@aragon/os/contracts/factory/APMRegistryFactory.sol",
+          "scope": 689,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 685,
+        "name": "ImportDirective",
+        "src": "143:61:2"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 9411,
+          "absolutePath": "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol",
+          "file": "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol",
+          "scope": 689,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 686,
+        "name": "ImportDirective",
+        "src": "205:67:2"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 7106,
+          "absolutePath": "@aragon/os/contracts/common/EtherToken.sol",
+          "file": "@aragon/os/contracts/common/EtherToken.sol",
+          "scope": 689,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 687,
+        "name": "ImportDirective",
+        "src": "273:52:2"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            688
+          ],
+          "name": "Imports",
+          "nodes": [
+            null
+          ],
+          "scope": 689
+        },
+        "id": 688,
+        "name": "ContractDefinition",
+        "src": "327:19:2"
+      }
+    ],
+    "id": 689,
+    "name": "SourceUnit",
+    "src": "0:347:2"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.18+commit.9cf6e910.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2018-02-26T13:03:38.123Z"
+}
