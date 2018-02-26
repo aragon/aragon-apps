@@ -35,10 +35,10 @@ module.exports = async (deployer, network, accounts) => {
   const vaultAddr = installedApps.filter(e => e.args.appId == vaultId)[0].args.appProxy
 
   // Create a new vote
-  const newVote = question => Voting.at(votingAddr).newVote(
+  const newVote = (question, from) => Voting.at(votingAddr).newVote(
     EMPTY_SCRIPT,
     question,
-    { from: accounts[0] }
+    { from }
   )
 
   // Vote with an account
@@ -52,24 +52,25 @@ module.exports = async (deployer, network, accounts) => {
     token.generateTokens(accounts[1], 1e19 * 1.4)
     token.generateTokens(accounts[2], 1e19 * 2)
     token.generateTokens(accounts[3], 1e19 * 5)
-    token.generateTokens(accounts[4], 1e19 * 9)
+    token.generateTokens(accounts[4], 1e19 * 8)
     return token
   })
 
   const votesIds = await Promise.all([
-    newVote('Do you agree to share lorem ipsum?'),
-    newVote('Fusce vehicula dolor arcu, sit amet blandit dolor mollis nec?'),
-    newVote('Sed sollicitudin ipsum quis nunc sollicitudin ultrices?'),
+    newVote('Messaging Platform: shall we move to Rocket.Chat?', accounts[1] ),
+    newVote('Do you agree to share lorem ipsum?', accounts[1]),
+    newVote('Fusce vehicula dolor arcu, sit amet blandit dolor mollis nec?', accounts[0]),
+    newVote('Sed sollicitudin ipsum quis nunc sollicitudin ultrices?', accounts[1]),
   ]).then(receipts => receipts.map(({logs}) => logs[0].args.voteId))
 
   const votingReceipts = await Promise.all([
-    vote(votesIds[0], accounts[0], true),
-    vote(votesIds[0], accounts[1], true),
+    vote(votesIds[0], accounts[2], false),
+    vote(votesIds[0], accounts[3], false),
+    vote(votesIds[0], accounts[4], true),
 
-    vote(votesIds[1], accounts[0], true),
-    vote(votesIds[1], accounts[1], true),
+    vote(votesIds[2], accounts[0], true),
 
-    vote(votesIds[2], accounts[0], false),
+    vote(votesIds[3], accounts[0], false),
   ])
 
   console.log('')
