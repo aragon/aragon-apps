@@ -1,0 +1,98 @@
+{
+  "contractName": "DemoImports",
+  "abi": [],
+  "bytecode": "0x60606040523415600e57600080fd5b603580601b6000396000f3006060604052600080fd00a165627a7a72305820e6c444468272136f24df4c326ec99f2ca376221eb5d35d651f54bd152869805b0029",
+  "deployedBytecode": "0x6060604052600080fd00a165627a7a72305820e6c444468272136f24df4c326ec99f2ca376221eb5d35d651f54bd152869805b0029",
+  "sourceMap": "114:23:0:-;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "114:23:0:-;;;;;",
+  "source": "pragma solidity 0.4.18;\n\nimport \"../../dev/contracts/Imports.sol\";\nimport \"../../dev/contracts/DevTemplate.sol\";\n\ncontract DemoImports {}\n",
+  "sourcePath": "/Users/jorge/provident/aragon-apps/templates/demo/contracts/DemoImports.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "/Users/jorge/provident/aragon-apps/templates/demo/contracts/DemoImports.sol",
+      "exportedSymbols": {
+        "DemoImports": [
+          4
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.4",
+            ".18"
+          ]
+        },
+        "id": 1,
+        "name": "PragmaDirective",
+        "src": "0:23:0"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 409,
+          "absolutePath": "/Users/jorge/provident/aragon-apps/templates/dev/contracts/Imports.sol",
+          "file": "../../dev/contracts/Imports.sol",
+          "scope": 5,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 2,
+        "name": "ImportDirective",
+        "src": "25:41:0"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 403,
+          "absolutePath": "/Users/jorge/provident/aragon-apps/templates/dev/contracts/DevTemplate.sol",
+          "file": "../../dev/contracts/DevTemplate.sol",
+          "scope": 5,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 3,
+        "name": "ImportDirective",
+        "src": "67:45:0"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            4
+          ],
+          "name": "DemoImports",
+          "nodes": [
+            null
+          ],
+          "scope": 5
+        },
+        "id": 4,
+        "name": "ContractDefinition",
+        "src": "114:23:0"
+      }
+    ],
+    "id": 5,
+    "name": "SourceUnit",
+    "src": "0:138:0"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.18+commit.9cf6e910.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2018-02-26T13:03:29.214Z"
+}

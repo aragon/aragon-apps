@@ -1,0 +1,607 @@
+{
+  "contractName": "IEVMScriptRegistry",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "script",
+          "type": "bytes"
+        }
+      ],
+      "name": "getScriptExecutor",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "executorId",
+          "type": "uint256"
+        }
+      ],
+      "name": "disableScriptExecutor",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "executor",
+          "type": "address"
+        }
+      ],
+      "name": "addScriptExecutor",
+      "outputs": [
+        {
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "pragma solidity 0.4.18;\n\n\ncontract EVMScriptRegistryConstants {\n    bytes32 constant public EVMSCRIPT_REGISTRY_APP_ID = keccak256(\"evmreg.aragonpm.eth\");\n    bytes32 constant public EVMSCRIPT_REGISTRY_APP = keccak256(keccak256(\"app\"), EVMSCRIPT_REGISTRY_APP_ID);\n}\n\n\ninterface IEVMScriptRegistry {\n    function addScriptExecutor(address executor) external returns (uint id);\n    function disableScriptExecutor(uint256 executorId) external;\n\n    function getScriptExecutor(bytes script) public view returns (address);\n}",
+  "sourcePath": "@aragon/os/contracts/evmscript/IEVMScriptRegistry.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "@aragon/os/contracts/evmscript/IEVMScriptRegistry.sol",
+      "exportedSymbols": {
+        "EVMScriptRegistryConstants": [
+          7787
+        ],
+        "IEVMScriptRegistry": [
+          7807
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.4",
+            ".18"
+          ]
+        },
+        "id": 7773,
+        "name": "PragmaDirective",
+        "src": "0:23:31"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            7787
+          ],
+          "name": "EVMScriptRegistryConstants",
+          "scope": 7808
+        },
+        "children": [
+          {
+            "attributes": {
+              "constant": true,
+              "name": "EVMSCRIPT_REGISTRY_APP_ID",
+              "scope": 7787,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "bytes32",
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "bytes32",
+                  "type": "bytes32"
+                },
+                "id": 7774,
+                "name": "ElementaryTypeName",
+                "src": "68:7:31"
+              },
+              {
+                "attributes": {
+                  "argumentTypes": null,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "isStructConstructorCall": false,
+                  "lValueRequested": false,
+                  "names": [
+                    null
+                  ],
+                  "type": "bytes32",
+                  "type_conversion": false
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_stringliteral_d8ab59c8daa1d3c1a68e4443151e4a34f969b490ad6eec66457988114d1e0794",
+                          "typeString": "literal_string \"evmreg.aragonpm.eth\""
+                        }
+                      ],
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 12399,
+                      "type": "function () pure returns (bytes32)",
+                      "value": "keccak256"
+                    },
+                    "id": 7775,
+                    "name": "Identifier",
+                    "src": "120:9:31"
+                  },
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "hexvalue": "65766d7265672e617261676f6e706d2e657468",
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "subdenomination": null,
+                      "token": "string",
+                      "type": "literal_string \"evmreg.aragonpm.eth\"",
+                      "value": "evmreg.aragonpm.eth"
+                    },
+                    "id": 7776,
+                    "name": "Literal",
+                    "src": "130:21:31"
+                  }
+                ],
+                "id": 7777,
+                "name": "FunctionCall",
+                "src": "120:32:31"
+              }
+            ],
+            "id": 7778,
+            "name": "VariableDeclaration",
+            "src": "68:84:31"
+          },
+          {
+            "attributes": {
+              "constant": true,
+              "name": "EVMSCRIPT_REGISTRY_APP",
+              "scope": 7787,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "bytes32",
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "bytes32",
+                  "type": "bytes32"
+                },
+                "id": 7779,
+                "name": "ElementaryTypeName",
+                "src": "158:7:31"
+              },
+              {
+                "attributes": {
+                  "argumentTypes": null,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "isStructConstructorCall": false,
+                  "lValueRequested": false,
+                  "names": [
+                    null
+                  ],
+                  "type": "bytes32",
+                  "type_conversion": false
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      ],
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 12399,
+                      "type": "function () pure returns (bytes32)",
+                      "value": "keccak256"
+                    },
+                    "id": 7780,
+                    "name": "Identifier",
+                    "src": "207:9:31"
+                  },
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "isStructConstructorCall": false,
+                      "lValueRequested": false,
+                      "names": [
+                        null
+                      ],
+                      "type": "bytes32",
+                      "type_conversion": false
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_stringliteral_d6f028ca0e8edb4a8c9757ca4fdccab25fa1e0317da1188108f7d2dee14902fb",
+                              "typeString": "literal_string \"app\""
+                            }
+                          ],
+                          "overloadedDeclarations": [
+                            null
+                          ],
+                          "referencedDeclaration": 12399,
+                          "type": "function () pure returns (bytes32)",
+                          "value": "keccak256"
+                        },
+                        "id": 7781,
+                        "name": "Identifier",
+                        "src": "217:9:31"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "hexvalue": "617070",
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "subdenomination": null,
+                          "token": "string",
+                          "type": "literal_string \"app\"",
+                          "value": "app"
+                        },
+                        "id": 7782,
+                        "name": "Literal",
+                        "src": "227:5:31"
+                      }
+                    ],
+                    "id": 7783,
+                    "name": "FunctionCall",
+                    "src": "217:16:31"
+                  },
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 7778,
+                      "type": "bytes32",
+                      "value": "EVMSCRIPT_REGISTRY_APP_ID"
+                    },
+                    "id": 7784,
+                    "name": "Identifier",
+                    "src": "235:25:31"
+                  }
+                ],
+                "id": 7785,
+                "name": "FunctionCall",
+                "src": "207:54:31"
+              }
+            ],
+            "id": 7786,
+            "name": "VariableDeclaration",
+            "src": "158:103:31"
+          }
+        ],
+        "id": 7787,
+        "name": "ContractDefinition",
+        "src": "26:238:31"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "interface",
+          "documentation": null,
+          "fullyImplemented": false,
+          "linearizedBaseContracts": [
+            7807
+          ],
+          "name": "IEVMScriptRegistry",
+          "scope": 7808
+        },
+        "children": [
+          {
+            "attributes": {
+              "body": null,
+              "constant": false,
+              "implemented": false,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "addScriptExecutor",
+              "payable": false,
+              "scope": 7807,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "external"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "executor",
+                      "scope": 7794,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "type": "address"
+                        },
+                        "id": 7788,
+                        "name": "ElementaryTypeName",
+                        "src": "329:7:31"
+                      }
+                    ],
+                    "id": 7789,
+                    "name": "VariableDeclaration",
+                    "src": "329:16:31"
+                  }
+                ],
+                "id": 7790,
+                "name": "ParameterList",
+                "src": "328:18:31"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "id",
+                      "scope": 7794,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint",
+                          "type": "uint256"
+                        },
+                        "id": 7791,
+                        "name": "ElementaryTypeName",
+                        "src": "365:4:31"
+                      }
+                    ],
+                    "id": 7792,
+                    "name": "VariableDeclaration",
+                    "src": "365:7:31"
+                  }
+                ],
+                "id": 7793,
+                "name": "ParameterList",
+                "src": "364:9:31"
+              }
+            ],
+            "id": 7794,
+            "name": "FunctionDefinition",
+            "src": "302:72:31"
+          },
+          {
+            "attributes": {
+              "body": null,
+              "constant": false,
+              "implemented": false,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "disableScriptExecutor",
+              "payable": false,
+              "scope": 7807,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "external"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "executorId",
+                      "scope": 7799,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 7795,
+                        "name": "ElementaryTypeName",
+                        "src": "410:7:31"
+                      }
+                    ],
+                    "id": 7796,
+                    "name": "VariableDeclaration",
+                    "src": "410:18:31"
+                  }
+                ],
+                "id": 7797,
+                "name": "ParameterList",
+                "src": "409:20:31"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 7798,
+                "name": "ParameterList",
+                "src": "438:0:31"
+              }
+            ],
+            "id": 7799,
+            "name": "FunctionDefinition",
+            "src": "379:60:31"
+          },
+          {
+            "attributes": {
+              "body": null,
+              "constant": true,
+              "implemented": false,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "getScriptExecutor",
+              "payable": false,
+              "scope": 7807,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "script",
+                      "scope": 7806,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bytes memory",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bytes",
+                          "type": "bytes storage pointer"
+                        },
+                        "id": 7800,
+                        "name": "ElementaryTypeName",
+                        "src": "472:5:31"
+                      }
+                    ],
+                    "id": 7801,
+                    "name": "VariableDeclaration",
+                    "src": "472:12:31"
+                  }
+                ],
+                "id": 7802,
+                "name": "ParameterList",
+                "src": "471:14:31"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 7806,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "type": "address"
+                        },
+                        "id": 7803,
+                        "name": "ElementaryTypeName",
+                        "src": "507:7:31"
+                      }
+                    ],
+                    "id": 7804,
+                    "name": "VariableDeclaration",
+                    "src": "507:7:31"
+                  }
+                ],
+                "id": 7805,
+                "name": "ParameterList",
+                "src": "506:9:31"
+              }
+            ],
+            "id": 7806,
+            "name": "FunctionDefinition",
+            "src": "445:71:31"
+          }
+        ],
+        "id": 7807,
+        "name": "ContractDefinition",
+        "src": "267:251:31"
+      }
+    ],
+    "id": 7808,
+    "name": "SourceUnit",
+    "src": "0:518:31"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.18+commit.9cf6e910.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2018-02-26T13:03:38.146Z"
+}

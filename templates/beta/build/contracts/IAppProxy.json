@@ -1,0 +1,228 @@
+{
+  "contractName": "IAppProxy",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "isUpgradeable",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getCode",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "pragma solidity 0.4.18;\n\ninterface IAppProxy {\n    function isUpgradeable() public pure returns (bool);\n    function getCode() public view returns (address);\n}\n",
+  "sourcePath": "@aragon/os/contracts/apps/IAppProxy.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "@aragon/os/contracts/apps/IAppProxy.sol",
+      "exportedSymbols": {
+        "IAppProxy": [
+          6891
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.4",
+            ".18"
+          ]
+        },
+        "id": 6880,
+        "name": "PragmaDirective",
+        "src": "0:23:21"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "interface",
+          "documentation": null,
+          "fullyImplemented": false,
+          "linearizedBaseContracts": [
+            6891
+          ],
+          "name": "IAppProxy",
+          "scope": 6892
+        },
+        "children": [
+          {
+            "attributes": {
+              "body": null,
+              "constant": true,
+              "implemented": false,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "isUpgradeable",
+              "payable": false,
+              "scope": 6891,
+              "stateMutability": "pure",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 6881,
+                "name": "ParameterList",
+                "src": "73:2:21"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 6885,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bool",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bool",
+                          "type": "bool"
+                        },
+                        "id": 6882,
+                        "name": "ElementaryTypeName",
+                        "src": "97:4:21"
+                      }
+                    ],
+                    "id": 6883,
+                    "name": "VariableDeclaration",
+                    "src": "97:4:21"
+                  }
+                ],
+                "id": 6884,
+                "name": "ParameterList",
+                "src": "96:6:21"
+              }
+            ],
+            "id": 6885,
+            "name": "FunctionDefinition",
+            "src": "51:52:21"
+          },
+          {
+            "attributes": {
+              "body": null,
+              "constant": true,
+              "implemented": false,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "getCode",
+              "payable": false,
+              "scope": 6891,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 6886,
+                "name": "ParameterList",
+                "src": "124:2:21"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 6890,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "type": "address"
+                        },
+                        "id": 6887,
+                        "name": "ElementaryTypeName",
+                        "src": "148:7:21"
+                      }
+                    ],
+                    "id": 6888,
+                    "name": "VariableDeclaration",
+                    "src": "148:7:21"
+                  }
+                ],
+                "id": 6889,
+                "name": "ParameterList",
+                "src": "147:9:21"
+              }
+            ],
+            "id": 6890,
+            "name": "FunctionDefinition",
+            "src": "108:49:21"
+          }
+        ],
+        "id": 6891,
+        "name": "ContractDefinition",
+        "src": "25:134:21"
+      }
+    ],
+    "id": 6892,
+    "name": "SourceUnit",
+    "src": "0:160:21"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.18+commit.9cf6e910.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2018-02-26T13:03:38.142Z"
+}
