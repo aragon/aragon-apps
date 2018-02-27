@@ -33,7 +33,16 @@ contract BetaTemplateBase {
 
     address constant ANY_ENTITY = address(-1);
 
-    function BetaTemplateBase(DAOFactory _fac, MiniMeTokenFactory _minimeFac, APMRegistry _apm, EtherToken _etherToken, IFIFSResolvingRegistrar _aragonID, bytes32[4] _appIds) public {
+    function BetaTemplateBase(
+        DAOFactory _fac,
+        MiniMeTokenFactory _minimeFac,
+        APMRegistry _apm,
+        EtherToken _etherToken,
+        IFIFSResolvingRegistrar _aragonID,
+        bytes32[4] _appIds
+    )
+        public
+    {
         apm = _apm;
         fac = _fac;
         minimeFac = _minimeFac;
@@ -42,12 +51,33 @@ contract BetaTemplateBase {
         appIds = _appIds;
     }
 
-    function createDAO(string name, MiniMeToken token, address[] holders, uint256[] stakes, uint256 _maxTokens) internal returns (Voting) {
+    function latestVersionAppBase(bytes32 appId) public view returns (address base) {
+        Repo repo = Repo(PublicResolver(ens().resolver(appId)).addr(appId));
+        (,base,) = repo.getLatest();
+
+        return base;
+    }
+
+    function createDAO(
+        string name,
+        MiniMeToken token,
+        address[] holders,
+        uint256[] stakes,
+        uint256 _maxTokens
+    )
+        internal
+        returns (Voting)
+    {
         Kernel dao = fac.newDAO(this);
 
         ACL acl = ACL(dao.acl());
 
-        acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
+        acl.createPermission(
+            this,
+            dao,
+            dao.APP_MANAGER_ROLE(),
+            this
+        );
 
         Voting voting = Voting(dao.newAppInstance(appIds[uint8(Apps.Voting)], latestVersionAppBase(appIds[uint8(Apps.Voting)])));
         Vault vault = Vault(dao.newAppInstance(appIds[uint8(Apps.Vault)], latestVersionAppBase(appIds[uint8(Apps.Vault)])));
@@ -57,21 +87,71 @@ contract BetaTemplateBase {
         token.changeController(tokenManager); // sender has to create tokens
 
         // permissions
-        acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), voting);
-        acl.createPermission(voting, voting, voting.MODIFY_QUORUM_ROLE(), voting);
+        acl.createPermission(
+            ANY_ENTITY,
+            voting,
+            voting.CREATE_VOTES_ROLE(),
+            voting
+        );
+        acl.createPermission(
+            voting,
+            voting,
+            voting.MODIFY_QUORUM_ROLE(),
+            voting
+        );
 
-        acl.createPermission(finance, vault, vault.TRANSFER_ROLE(), voting);
-        acl.createPermission(voting, finance, finance.CREATE_PAYMENTS_ROLE(), voting);
-        acl.createPermission(voting, finance, finance.EXECUTE_PAYMENTS_ROLE(), voting);
-        acl.createPermission(voting, finance, finance.DISABLE_PAYMENTS_ROLE(), voting);
-        acl.createPermission(voting, tokenManager, tokenManager.ASSIGN_ROLE(), voting);
-        acl.createPermission(voting, tokenManager, tokenManager.REVOKE_VESTINGS_ROLE(), voting);
+        acl.createPermission(
+            finance,
+            vault,
+            vault.TRANSFER_ROLE(),
+            voting
+        );
+        acl.createPermission(
+            voting,
+            finance,
+            finance.CREATE_PAYMENTS_ROLE(),
+            voting
+        );
+        acl.createPermission(
+            voting,
+            finance,
+            finance.EXECUTE_PAYMENTS_ROLE(),
+            voting
+        );
+        acl.createPermission(
+            voting,
+            finance,
+            finance.DISABLE_PAYMENTS_ROLE(),
+            voting
+        );
+        acl.createPermission(
+            voting,
+            tokenManager,
+            tokenManager.ASSIGN_ROLE(),
+            voting
+        );
+        acl.createPermission(
+            voting,
+            tokenManager,
+            tokenManager.REVOKE_VESTINGS_ROLE(),
+            voting
+        );
 
         require(holders.length == stakes.length);
 
-        acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
+        acl.createPermission(
+            this,
+            tokenManager,
+            tokenManager.MINT_ROLE(),
+            this
+        );
 
-        tokenManager.initialize(token, _maxTokens > 1, _maxTokens, true);
+        tokenManager.initialize(
+            token,
+            _maxTokens > 1,
+            _maxTokens,
+            true
+        );
 
         for (uint256 i = 0; i < holders.length; i++) {
             tokenManager.mint(holders[i], stakes[i]);
@@ -111,13 +191,6 @@ contract BetaTemplateBase {
 
     function registerAragonID(string name, address owner) internal {
         aragonID.register(keccak256(name), owner);
-    }
-
-    function latestVersionAppBase(bytes32 appId) public view returns (address base) {
-        Repo repo = Repo(PublicResolver(ens().resolver(appId)).addr(appId));
-        (,base,) = repo.getLatest();
-
-        return base;
     }
 
     function ens() internal view returns (AbstractENS) {
