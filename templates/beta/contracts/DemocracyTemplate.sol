@@ -22,7 +22,7 @@ contract DemocracyTemplate is BetaTemplateBase {
              0,
              name,
              18,
-             name,
+             symbol,
              true
          );
          cacheToken(token, msg.sender);

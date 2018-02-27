@@ -15,13 +15,13 @@ contract MultisigTemplate is BetaTemplateBase {
         BetaTemplateBase(_fac, _minimeFac, _apm, _etherToken, _aragonID, _appIds) public
     {}
 
-    function newToken(string name) external returns (MiniMeToken token) {
+    function newToken(string name, string symbol) external returns (MiniMeToken token) {
         token = minimeFac.createCloneToken(
             address(0),
             0,
             name,
-            0,
-            "Multisig",
+            18,
+            symbol,
             true
         );
         cacheToken(token, msg.sender);
@@ -31,7 +31,7 @@ contract MultisigTemplate is BetaTemplateBase {
         uint256[] memory stakes = new uint256[](signers.length);
 
         for (uint256 i = 0; i < signers.length; i++) {
-            stakes[i] = 1;
+            stakes[i] = 10**18;
         }
 
         MiniMeToken token = popTokenCache(msg.sender);
@@ -40,7 +40,7 @@ contract MultisigTemplate is BetaTemplateBase {
             token,
             signers,
             stakes,
-            1
+            10**18
         );
 
         uint256 multisigSupport = neededSignatures * 10 ** 18 / signers.length;
@@ -48,7 +48,7 @@ contract MultisigTemplate is BetaTemplateBase {
             token,
             multisigSupport,
             multisigSupport,
-            uint64(-1)
+            uint64(157680000) // 5 years
         );
     }
 }
