@@ -27,6 +27,10 @@ const newRepo = async (apm, name, acc, contract) => {
 }
 
 module.exports = async (deployer, network, accounts) => {
+  if (network == 'rpc') { // TODO!!
+    console.log("Local testing network, exiting...")
+    return;
+  }
   let indexObj = require('../index.js')
   const ens = ENS.at(indexObj[network].ens)
 
