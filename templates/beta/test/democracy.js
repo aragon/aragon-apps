@@ -6,14 +6,13 @@ const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
 
 const ENS = artifacts.require('@aragon/os/contracts/lib/ens/ENS')
-//const ENSConstants = artifacts.require('ENSConstants').new()
 const Repo = artifacts.require('Repo')
 const APMRegistry = artifacts.require('APMRegistry')
 const PublicResolver = artifacts.require('PublicResolver')
 const FIFSResolvingRegistrar = artifacts.require('@aragon/id/contracts/FIFSResolvingRegistrar')
 const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory/EVMScriptRegistryFactory')
 const Kernel = artifacts.require('Kernel')
-const APP_BASE_NAMESPACE = '0x'+keccak256('base')
+//const APP_BASE_NAMESPACE = '0x'+keccak256('base')
 const ACL = artifacts.require('ACL')
 const MiniMeTokenFactory = artifacts.require('@aragon/os/contracts/lib/minime/MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('@aragon/os/contracts/lib/minime/MiniMeToken')
@@ -43,10 +42,11 @@ const createdVoteId = receipt => getEventResult(receipt, 'StartVote', 'voteId')
 const getAppProxy = (receipt, id) => receipt.logs.filter(l => l.event == 'InstalledApp' && l.args.appId == id)[0].args.appProxy
 
 //TODO
-const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
+//const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 
 contract('Beta Base Template', accounts => {
     let ensFactory, ens, apmFactory, registry, baseDeployed, baseAddrs, dao, acl, daoFactory = {}, etherToken, minimeFac, template, voting, executionTarget = {}
+    let aragonId, daoAddress, tokenAddress
     const ensOwner = accounts[0]
     const apmOwner = accounts[1]
     const repoDev  = accounts[2]
@@ -59,11 +59,6 @@ contract('Beta Base Template', accounts => {
     const minimumAcceptanceQuorum = pct16(20)
     const votingTime = 5000
 
-    const rootNode = namehash('aragonpm.eth')
-    const testNode = namehash('test.aragonpm.eth')
-    let aragonId
-    let daoAddress, tokenAddress
-
     before(async () => {
         const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
         baseDeployed = await Promise.all(bases.map(c => getContract(c).new()))
@@ -73,7 +68,7 @@ contract('Beta Base Template', accounts => {
 
         const regFact = await EVMScriptRegistryFactory.new()
         const regFactAddress = regFact.address
-        //const regFactAddress = "0x00"
+        //const regFactAddress = '0x0'
         console.log("Registry Factory: " + regFactAddress)
 
         const kernelBase = await getContract('Kernel').new()
@@ -86,25 +81,10 @@ contract('Beta Base Template', accounts => {
         const receiptEns = await ensFactory.newENS(ensOwner)
         ens = ENS.at(getEnsDeployResult(receiptEns))
         console.log("2, ENS address: " + ens.address)
-        /*
-        console.log("3")
-        const publicResolver = PublicResolver.new(ens.address, { from: ensOwner })
-        console.log("4")
-        ens.setSubnodeOwner(ENSConstants.ETH_TLD_NODE(), ENSConstants.PUBLIC_RESOLVER_LABEL(), { from: ensOwner })
-        console.log("5")
-        ens.setResolver(ENSConstants.PUBLIC_RESOLVER_NODE(), publicResolver.address, { from: ensOwner })
-        console.log("6")
-        publicResolver.setAddr(ENSConstants.PUBLIC_RESOLVER_NODE(), publicResolver.address, { from: ensOwner })
-        console.log("7")
-        ens.setOwner(ENSConstants.ETH_TLD_NODE(), ensOwner, { from: ensOwner })
-        console.log("8")
-        ens.setOwner(ENSConstants.ETH_ROOT(), ensOwner, { from: ensOwner })
-        console.log("9")
-         */
         apmFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, ens.address, '0x0')
         //console.log(await getBalance(accounts[0]))
         ens.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonpm'), apmFactory.address, { from: ensOwner })
-        console.log("3, creating APM")
+        console.log("3, APM Factory address: " + apmFactory.address)
         //console.log(await getBalance(accounts[0]))
 
         const receiptApm = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
@@ -126,7 +106,7 @@ contract('Beta Base Template', accounts => {
         console.log('deploying AragonID')
         aragonId = await FIFSResolvingRegistrar.new(ens.address, publicResolver.address, namehash('aragonid.eth'))
         console.log('assigning ENS name to AragonID: ' + aragonId.address)
-        await ENS.at(ens.address).setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonid'), aragonId.address, { from: ensOwner })
+        await ens.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonid'), aragonId.address, { from: ensOwner })
         console.log('assigning owner name')
         await aragonId.register('0x'+keccak256('owner'), ensOwner)
         console.log('before section done')
@@ -150,17 +130,21 @@ contract('Beta Base Template', accounts => {
         console.log("DAO Address: " + daoAddress)
         dao = Kernel.at(daoAddress)
         // generated Voting app
+        /*
         const appSetId = web3.sha3(APP_BASE_NAMESPACE + appIds[3].substring(2), { encoding: 'hex' })
         console.log("Dao Voting app: " + await dao.getApp(appSetId))
+         */
         //voting = Voting.at(await dao.getApp(appSetId))
         console.log("Voting app id: " + appIds[3])
         const votingProxyAddress = getAppProxy(receiptInstance, appIds[3])
         console.log("Voting proxy address: " + votingProxyAddress)
         voting = Voting.at(votingProxyAddress)
+        /*
         const proxy = AppProxyUpgradeable.at(votingProxyAddress)
         //console.log(proxy)
         console.log("Proxy kernel: " + await proxy.kernel())
         console.log("Proxy code: " + await proxy.getCode())
+         */
         //console.log(voting)
         //console.log("support: " + await voting.supportRequiredPct())
         //console.log("quorum: " + await voting.minAcceptQuorumPct())
@@ -305,100 +289,6 @@ contract('Beta Base Template', accounts => {
             const script = encodeCallScript([action, action])
             //const voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: holder50 }))
         })
-    })
-     */
-
-    /*
-    it('aragonpm.eth should resolve to registry', async () => {
-        const resolver = PublicResolver.at(await ens.resolver(rootNode))
-        assert.equal(await resolver.addr(rootNode), registry.address, 'rootnode should be resolve')
-    })
-
-    it('aragonpm.eth should be owned by ENSSubdomainRegistrar', async () => {
-        assert.equal(await ens.owner(rootNode), await registry.registrar(), 'rootnode should be owned correctly')
-    })
-
-    it('inits with existing ENS deployment', async () => {
-        const receipt = await ensFactory.newENS(accounts[0])
-        const ens2 = ENS.at(getEnsDeployResult(receipt))
-        const newFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, ens2.address, '0x00')
-
-        await ens2.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonpm'), newFactory.address)
-        const receipt2 = await newFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
-        const apmAddr = getApmDeployResult(receipt2)
-        const resolver = PublicResolver.at(await ens2.resolver(rootNode))
-
-        assert.equal(await resolver.addr(rootNode), apmAddr, 'rootnode should be resolve')
-    })
-     */
-
-    /*
-    context('creating test.aragonpm.eth repo', () => {
-        let repo = {}
-
-        beforeEach(async () => {
-            const receipt = await registry.newRepo('test', repoDev, { from: apmOwner })
-            repo = Repo.at(getRepoFromLog(receipt))
-        })
-
-        it('resolver is setup correctly', async () => {
-            const resolverNode = namehash('resolver.eth')
-            const publicResolver = PublicResolver.at(await ens.resolver(resolverNode))
-
-            assert.equal(await ens.resolver(testNode), await publicResolver.addr(resolverNode), 'resolver should be set to public resolver')
-            assert.equal(await publicResolver.addr(testNode), repo.address, 'resolver should resolve to repo address')
-        })
-
-        it('repo should have 0 versions', async () => {
-            assert.equal(await repo.getVersionsCount(), 0, 'shouldnt have created version')
-        })
-
-        it('repo dev can create versions', async () => {
-            await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
-            await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })
-
-            assert.equal(await repo.getVersionsCount(), 2, 'should have created versions')
-        })
-
-        it('repo dev can authorize someone to interact with repo', async () => {
-            await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
-            const newOwner = accounts[8]
-
-            await acl.grantPermission(newOwner, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
-
-            await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: newOwner })
-            await repo.newVersion([2, 1, 0], '0x00', '0x00', { from: repoDev }) // repoDev can still create them
-
-            assert.equal(await repo.getVersionsCount(), 3, 'should have created versions')
-        })
-
-        it('repo dev can no longer create versions if permission is removed', async () => {
-            await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
-            await acl.revokePermission(repoDev, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
-
-            return assertRevert(async () => {
-                await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })
-            })
-        })
-
-        it('cannot create versions if not in ACL', async () => {
-            return assertRevert(async () => {
-                await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: notOwner })
-            })
-        })
-    })
-    */
-
-    /*
-    it('can create repo with version and dev can create new versions', async () => {
-        const receipt = await registry.newRepoWithVersion('test', repoDev, [1, 0, 0], '0x00', '0x00', { from: apmOwner })
-        const repo = Repo.at(getRepoFromLog(receipt))
-
-        assert.equal(await repo.getVersionsCount(), 1, 'should have created version')
-
-        await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })
-
-        assert.equal(await repo.getVersionsCount(), 2, 'should have created version')
     })
      */
 
