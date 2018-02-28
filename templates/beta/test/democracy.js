@@ -5,12 +5,13 @@ const getBalance = require('@aragon/test-helpers/balance')(web3);
 const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
 
-const ENS = artifacts.require('ENS')
-const ENSConstants = artifacts.require('ENSConstants').new()
+const ENS = artifacts.require('@aragon/os/contracts/lib/ens/ENS')
+//const ENSConstants = artifacts.require('ENSConstants').new()
 const Repo = artifacts.require('Repo')
 const APMRegistry = artifacts.require('APMRegistry')
 const PublicResolver = artifacts.require('PublicResolver')
 const FIFSResolvingRegistrar = artifacts.require('@aragon/id/contracts/FIFSResolvingRegistrar')
+const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory/EVMScriptRegistryFactory')
 const Kernel = artifacts.require('Kernel')
 const APP_BASE_NAMESPACE = '0x'+keccak256('base')
 const ACL = artifacts.require('ACL')
@@ -39,7 +40,10 @@ const getEnsDeployResult = receipt => getEventResult(receipt, 'DeployENS', 'ens'
 const getApmDeployResult = receipt => getEventResult(receipt, 'DeployAPM', 'apm')
 const getRepoFromLog = receipt => getEventResult(receipt, 'NewRepo', 'repo')
 const createdVoteId = receipt => getEventResult(receipt, 'StartVote', 'voteId')
+const getAppProxy = (receipt, id) => receipt.logs.filter(l => l.event == 'InstalledApp' && l.args.appId == id)[0].args.appProxy
 
+//TODO
+const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 
 contract('Beta Base Template', accounts => {
     let ensFactory, ens, apmFactory, registry, baseDeployed, baseAddrs, dao, acl, daoFactory = {}, etherToken, minimeFac, template, voting, executionTarget = {}
@@ -58,6 +62,7 @@ contract('Beta Base Template', accounts => {
     const rootNode = namehash('aragonpm.eth')
     const testNode = namehash('test.aragonpm.eth')
     let aragonId
+    let daoAddress, tokenAddress
 
     before(async () => {
         const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
@@ -66,16 +71,21 @@ contract('Beta Base Template', accounts => {
 
         ensFactory = await getContract('ENSFactory').new()
 
+        const regFact = await EVMScriptRegistryFactory.new()
+        const regFactAddress = regFact.address
+        //const regFactAddress = "0x00"
+        console.log("Registry Factory: " + regFactAddress)
+
         const kernelBase = await getContract('Kernel').new()
         const aclBase = await getContract('ACL').new()
-        daoFactory = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, '0x00')
+        daoFactory = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, regFact.address)
         //apmFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
         //ens = ENS.at(await apmFactory.ens())
-        console.log("1")
+        console.log("1, creating ENS")
         //ens = await ENS.new({ from: ensOwner })
         const receiptEns = await ensFactory.newENS(ensOwner)
         ens = ENS.at(getEnsDeployResult(receiptEns))
-        console.log("2: " + ens.address)
+        console.log("2, ENS address: " + ens.address)
         /*
         console.log("3")
         const publicResolver = PublicResolver.new(ens.address, { from: ensOwner })
@@ -92,17 +102,17 @@ contract('Beta Base Template', accounts => {
         console.log("9")
          */
         apmFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, ens.address, '0x0')
-        console.log(await getBalance(accounts[0]))
+        //console.log(await getBalance(accounts[0]))
         ens.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonpm'), apmFactory.address, { from: ensOwner })
-        console.log("3")
-        console.log(await getBalance(accounts[0]))
+        console.log("3, creating APM")
+        //console.log(await getBalance(accounts[0]))
 
         const receiptApm = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
         console.log("4")
         const apmAddr = getApmDeployResult(receiptApm)
-        console.log("5: " + apmAddr)
+        console.log("5, APM address: " + apmAddr)
         registry = APMRegistry.at(apmAddr)
-        console.log("6")
+        console.log("6, creating Repos")
 
         await newRepo(registry, 'voting', repoDev, 'Voting', apmOwner)
         await newRepo(registry, 'finance', repoDev, 'Finance', apmOwner)
@@ -120,43 +130,53 @@ contract('Beta Base Template', accounts => {
         console.log('assigning owner name')
         await aragonId.register('0x'+keccak256('owner'), ensOwner)
         console.log('before section done')
-        console.log(await getBalance(accounts[0]))
-    })
+        //console.log(await getBalance(accounts[0]))
+    //})
 
-    beforeEach(async () => {
+    //beforeEach(async () => {
+        // create Democracy Template
         template = await DemocracyTemplate.new(daoFactory.address, minimeFac.address, registry.address, etherToken.address, aragonId.address, appIds)
-    })
-
-    it('creates a DAO', async() => {
+        console.log(template.logs)
         const holders = [holder19, holder31, holder50]
         const stakes = [19*10**18, 31*10**18, 50*10**18]
         // create Token
         const receiptToken = await template.newToken('DemocracyToken', 'DTT')
-        const tokenAddress = getEventResult(receiptToken, 'DeployToken', 'token')
+        tokenAddress = getEventResult(receiptToken, 'DeployToken', 'token')
         console.log("Token: " + tokenAddress)
-        assert.notEqual(tokenAddress, '0x0', 'Token not generated')
         // create Instance
         const receiptInstance = await template.newInstance('DemocracyDao', holders, stakes, neededSupport, minimumAcceptanceQuorum, votingTime)
-        const daoAddress = getEventResult(receiptInstance, 'DeployInstance', 'dao')
-        console.log("DAO: " + daoAddress)
+        //console.log(receiptInstance.logs)
+        daoAddress = getEventResult(receiptInstance, 'DeployInstance', 'dao')
+        console.log("DAO Address: " + daoAddress)
         dao = Kernel.at(daoAddress)
-        assert.notEqual(daoAddress, '0x0', 'Instance not generated')
+        // generated Voting app
         const appSetId = web3.sha3(APP_BASE_NAMESPACE + appIds[3].substring(2), { encoding: 'hex' })
-        voting = Voting.at(await dao.getApp(appSetId))
+        console.log("Dao Voting app: " + await dao.getApp(appSetId))
+        //voting = Voting.at(await dao.getApp(appSetId))
+        console.log("Voting app id: " + appIds[3])
+        const votingProxyAddress = getAppProxy(receiptInstance, appIds[3])
+        console.log("Voting proxy address: " + votingProxyAddress)
+        voting = Voting.at(votingProxyAddress)
+        const proxy = AppProxyUpgradeable.at(votingProxyAddress)
+        //console.log(proxy)
+        console.log("Proxy kernel: " + await proxy.kernel())
+        console.log("Proxy code: " + await proxy.getCode())
         //console.log(voting)
-        console.log("support: " + await voting.supportRequiredPct())
-        console.log("quorum: " + await voting.minAcceptQuorumPct())
-        console.log("Vote time: " + await voting.voteTime())
-        // check that it's initialized
-        /* TODO!!!!
+        //console.log("support: " + await voting.supportRequiredPct())
+        //console.log("quorum: " + await voting.minAcceptQuorumPct())
+        //console.log("Vote time: " + await voting.voteTime())
+    })
+
+    it('creates and initializes a DAO with its Token', async() => {
+        assert.notEqual(tokenAddress, '0x0', 'Token not generated')
+        assert.notEqual(daoAddress, '0x0', 'Instance not generated')
+        assert.equal((await voting.supportRequiredPct()).toString(), neededSupport.toString())
+        assert.equal((await voting.minAcceptQuorumPct()).toString(), minimumAcceptanceQuorum.toString())
+        assert.equal((await voting.voteTime()).toString(), votingTime.toString())
+        // check that it's initialized and cant not be initialized again
         return assertRevert(async () => {
             await voting.initialize(tokenAddress, neededSupport, minimumAcceptanceQuorum, votingTime)
         })
-         */
-        await voting.initialize(tokenAddress, neededSupport, minimumAcceptanceQuorum, votingTime)
-        console.log("support: " + await voting.supportRequiredPct())
-        console.log("quorum: " + await voting.minAcceptQuorumPct())
-        console.log("Vote time: " + await voting.voteTime())
     })
 
     context('creating vote', () => {
@@ -176,13 +196,13 @@ contract('Beta Base Template', accounts => {
             console.log("Vote time: " + await voting.voteTime())
              */
             voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: nonHolder }))
+            //console.log("Vote Id: " + voteId)
             //console.log(await getBalance(accounts[0]))
         })
 
         it('has correct state', async() => {
-            console.log("Vote Id: " + voteId)
             const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await voting.getVote(voteId)
-            console.log([isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript])
+            //console.log([isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript])
 
             assert.isTrue(isOpen, 'vote should be open')
             assert.isFalse(isExecuted, 'vote should be executed')
@@ -227,20 +247,21 @@ contract('Beta Base Template', accounts => {
         })
 
         it('can execute if vote is approved with support and quorum', async () => {
+            console.log("Execution Target: " + executionTarget.address)
             await voting.vote(voteId, true, true, { from: holder31 })
             await voting.vote(voteId, false, true, { from: holder19 })
             //let [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await voting.getVote(voteId)
             //console.log([isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript])
             //console.log("Time: " + (await voting.getTime()).toString())
             await timeTravel(votingTime + 1)
-            /*
+            /**/
             await voting.getTime2()
             console.log("+ Voting Time: " + votingTime)
             console.log("Time: " + (await voting.getTime()).toString())
             const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await voting.getVote(voteId)
-            console.log([isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript])
+            //console.log([isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript])
+            /**/
             console.log("Can execute?: " + await voting.canExecute(voteId))
-             */
             console.log("Counter: " + await executionTarget.counter())
             await voting.executeVote(voteId)
             console.log('Executed')
