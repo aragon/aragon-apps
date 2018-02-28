@@ -426,7 +426,7 @@ contract Finance is AragonApp, ERC677Receiver {
         return settings.periodDuration;
     }
 
-    function getBudget(address _token) transitionsPeriod public view returns (uint256 budget, bool hasBudget, uint256 remainingBudget) {
+    function getBudget(address _token) transitionsPeriod public returns (uint256 budget, bool hasBudget, uint256 remainingBudget) {
         budget = settings.budgets[_token];
         hasBudget = settings.hasBudget[_token];
         remainingBudget = _getRemainingBudget(_token);
@@ -550,7 +550,7 @@ contract Finance is AragonApp, ERC677Receiver {
         NewTransaction(transactionId, _incoming, _entity);
     }
 
-    function _canMakePayment(ERC20 _token, uint256 _amount) internal returns (bool) {
+    function _canMakePayment(ERC20 _token, uint256 _amount) internal view returns (bool) {
         return _getRemainingBudget(_token) >= _amount && _token.balanceOf(address(vault)) >= _amount;
     }
 
