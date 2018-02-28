@@ -39,6 +39,6 @@
     "webpack": "^3.7.1"
   },
   "dependencies": {
-    "@aragon/os": "^3.0.1"
+    "@aragon/os": "^3.0.5"
   }
 }
