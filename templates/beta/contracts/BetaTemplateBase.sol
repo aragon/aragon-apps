@@ -30,6 +30,7 @@ contract BetaTemplateBase {
 
     event DeployToken(address token, address indexed cacheOwner);
     event DeployInstance(address dao, address indexed token);
+    event InstalledApp(address appProxy, bytes32 appId);
 
     address constant ANY_ENTITY = address(-1);
 
@@ -80,9 +81,13 @@ contract BetaTemplateBase {
         );
 
         Voting voting = Voting(dao.newAppInstance(appIds[uint8(Apps.Voting)], latestVersionAppBase(appIds[uint8(Apps.Voting)])));
+        InstalledApp(voting, appIds[uint8(Apps.Voting)]);
         Vault vault = Vault(dao.newAppInstance(appIds[uint8(Apps.Vault)], latestVersionAppBase(appIds[uint8(Apps.Vault)])));
+        InstalledApp(vault, appIds[uint8(Apps.Vault)]);
         Finance finance = Finance(dao.newAppInstance(appIds[uint8(Apps.Finance)], latestVersionAppBase(appIds[uint8(Apps.Finance)])));
+        InstalledApp(finance, appIds[uint8(Apps.Finance)]);
         TokenManager tokenManager = TokenManager(dao.newAppInstance(appIds[uint8(Apps.TokenManager)], latestVersionAppBase(appIds[uint8(Apps.TokenManager)])));
+        InstalledApp(tokenManager, appIds[uint8(Apps.TokenManager)]);
 
         token.changeController(tokenManager); // sender has to create tokens
 
