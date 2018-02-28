@@ -1,10 +1,9 @@
 import seedRandom from 'seed-random'
 
-const GROUP_MODE = true
+const GROUP_MODE = false
 const TOTAL_ACCOUNTS = 7
 const TOKEN_SYMBOL = 'FOO'
 const TOKEN_SUPPLY = GROUP_MODE ? TOTAL_ACCOUNTS : 1000000
-const MIN_BALANCE = TOKEN_SUPPLY / TOTAL_ACCOUNTS / 10
 
 const random = seedRandom('')
 let supplyLeft = TOKEN_SUPPLY
