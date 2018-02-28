@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
-import { AragonApp, AppBar, Button, SidePanel, Badge } from '@aragon/ui'
-import Aragon from '@aragon/client'
+import { AragonApp, AppBar, Button, Badge } from '@aragon/ui'
+// import Aragon from '@aragon/client'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import AppLayout from './components/AppLayout'
@@ -14,8 +14,8 @@ class App extends React.Component {
     holders: HOLDERS,
   }
   componentDidMount() {
-    const app = (this.app = new Aragon())
-    window.parent.postMessage({ from: 'app', name: 'ready', value: true }, '*')
+    // const app = (this.app = new Aragon())
+    // window.parent.postMessage({ from: 'app', name: 'ready', value: true }, '*')
   }
   render() {
     const { tokenSymbol, tokenSupply, holders } = this.state
