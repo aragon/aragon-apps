@@ -205,7 +205,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _amount The amount of the transfer
     * @return False if the controller does not authorize the transfer
     */
-    function onTransfer(address _from, address _to, uint _amount) public view returns (bool) {
+    function onTransfer(address _from, address _to, uint _amount) public returns (bool) {
         bool includesTokenManager = _from == address(this) || _to == address(this);
 
         if (!includesTokenManager) {
@@ -220,7 +220,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
         return true;
     }
 
-    function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal returns (bool) {
+    function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
         return token.balanceOf(_receiver) + _inc <= maxAccountTokens;
     }
 
@@ -280,7 +280,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
         uint256 time,
         uint256 start,
         uint256 cliff,
-        uint256 vesting) private view returns (uint256)
+        uint256 vesting) private pure returns (uint256)
     {
         // Shortcuts for before cliff and after vesting cases.
         if (time >= vesting) {
@@ -323,7 +323,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     function _logHolderIfNeeded(address _newHolder) internal {
-        // costs 3 sstores (2 full (20k fas) and 1 increase (5k fas)), but makes frontend easier
+        // costs 3 sstores (2 full (20k gas) and 1 increase (5k gas)), but makes frontend easier
         if (!logHolders || everHeld[_newHolder]) {
             return;
         }
@@ -353,7 +353,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _amount The amount in the `approve()` call
     * @return False if the controller does not authorize the approval
     */
-    function onApprove(address _owner, address _spender, uint _amount) public view returns (bool) {
+    function onApprove(address _owner, address _spender, uint _amount) public returns (bool) {
         _owner;
         _spender;
         _amount;

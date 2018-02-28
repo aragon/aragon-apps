@@ -261,14 +261,14 @@ contract Voting is IForwarder, AragonApp {
         ExecuteVote(_voteId);
     }
 
-    function _isVoteOpen(Vote storage vote) internal returns (bool) {
+    function _isVoteOpen(Vote storage vote) internal view returns (bool) {
         return uint64(now) < (vote.startDate + voteTime) && !vote.executed;
     }
 
     /**
     * @dev Calculates whether `_value` is at least a percent `_pct` over `_total`
     */
-    function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal returns (bool) {
+    function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal pure returns (bool) {
         if (_value == 0 && _total > 0)
             return false;
 
