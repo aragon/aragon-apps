@@ -163,7 +163,7 @@ contract BetaTemplateBase {
         }
 
         // inits
-        finance.initialize(vault, etherToken, uint64(-1)); // yuge period
+        finance.initialize(vault, etherToken, uint64(-1) - uint64(now)); // yuge period
 
         // clean-up
         acl.grantPermission(voting, dao, dao.APP_MANAGER_ROLE());
