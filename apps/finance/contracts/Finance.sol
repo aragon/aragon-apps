@@ -6,6 +6,7 @@ import "@aragon/os/contracts/lib/erc677/ERC677Receiver.sol";
 
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
 
 import "@aragon/apps-vault/contracts/Vault.sol";
 
@@ -14,6 +15,7 @@ import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 contract Finance is AragonApp, ERC677Receiver {
     using SafeMath for uint256;
+    using SafeMath64 for uint64;
 
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
     uint64 constant public MAX_PERIOD_TRANSITIONS_PER_TX = 10;
@@ -351,7 +353,8 @@ contract Finance is AragonApp, ERC677Receiver {
         if (currentPeriod.firstTransactionId != 0)
             currentPeriod.lastTransactionId = transactions.length - 1;
 
-        Period storage newPeriod = _newPeriod(currentPeriod.endTime + 1);
+        // new period starts at end time + 1
+        Period storage newPeriod = _newPeriod(currentPeriod.endTime.add(1));
 
         // In case multiple periods have to be transitioned at once
         if (getTimestamp() > newPeriod.endTime) {
@@ -443,7 +446,8 @@ contract Finance is AragonApp, ERC677Receiver {
 
         Period storage period = periods[newPeriodId];
         period.startTime = _startTime;
-        period.endTime = _startTime + settings.periodDuration - 1;
+        // endTime = startTime + periodDuration - 1
+        period.endTime = _startTime.add(settings.periodDuration).sub(1);
 
         NewPeriod(newPeriodId, period.startTime, period.endTime);
 
