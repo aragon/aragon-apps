@@ -17,11 +17,11 @@
   "scripts": {
     "install": "npm run bootstrap",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/os",
-    "test": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream test",
-    "test:gas": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream test:gas",
-    "lint": "lerna run --scope=@aragon/apps-* lint",
-    "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",
-    "link:os": "lerna exec --scope '@aragon/apps-*' 'npm link @aragon/os'",
+    "test": "lerna run --scope=@aragon/apps-* --scope=@aragon/templates-beta --concurrency=1 --stream test",
+    "test:gas": "lerna run --scope=@aragon/apps-* --scope=@aragon/templates-beta --concurrency=1 --stream test:gas",
+    "lint": "lerna run --scope=@aragon/apps-* --scope=@aragon/templates-beta lint",
+    "coverage": "lerna run --scope=@aragon/apps-* --scope=@aragon/templates-beta --concurrency=1 --stream coverage",
+    "link:os": "lerna exec --scope '@aragon/apps-*' --scope=@aragon/templates-beta 'npm link @aragon/os'",
     "ganache-cli:dev": "shared/test-helpers/ganache-cli.sh"
   }
 }
