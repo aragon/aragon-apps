@@ -6,11 +6,13 @@ import "@aragon/os/contracts/common/IForwarder.sol";
 
 import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
 contract Voting is IForwarder, AragonApp {
     using SafeMath for uint256;
+    using SafeMath64 for uint64;
 
     MiniMeToken public token;
     uint256 public supportRequiredPct;
@@ -152,7 +154,7 @@ contract Voting is IForwarder, AragonApp {
         if (_isValuePct(vote.yea, vote.totalVoters, supportRequiredPct))
             return true;
 
-        uint256 totalVotes = vote.yea + vote.nay;
+        uint256 totalVotes = vote.yea.add(vote.nay);
 
         // vote ended?
         if (_isVoteOpen(vote))
@@ -182,8 +184,12 @@ contract Voting is IForwarder, AragonApp {
         script = vote.executionScript;
     }
 
-    function getVoteMetadata(uint256 _voteId) public view returns (string metadata) {
+    function getVoteMetadata(uint256 _voteId) public view returns (string) {
         return votes[_voteId].metadata;
+    }
+
+    function getVoterState(uint256 _voteId, address _voter) public view returns (VoterState) {
+        return votes[_voteId].voters[_voter];
     }
 
     function _newVote(bytes _executionScript, string _metadata) internal returns (uint256 voteId) {
@@ -257,18 +263,18 @@ contract Voting is IForwarder, AragonApp {
         ExecuteVote(_voteId);
     }
 
-    function _isVoteOpen(Vote storage vote) internal returns (bool) {
-        return uint64(now) < (vote.startDate + voteTime) && !vote.executed;
+    function _isVoteOpen(Vote storage vote) internal view returns (bool) {
+        return uint64(now) < (vote.startDate.add(voteTime)) && !vote.executed;
     }
 
     /**
     * @dev Calculates whether `_value` is at least a percent `_pct` over `_total`
     */
-    function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal returns (bool) {
+    function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal pure returns (bool) {
         if (_value == 0 && _total > 0)
             return false;
 
-        uint256 m = _total * _pct;
+        uint256 m = _total.mul(_pct);
         uint256 v = m / PCT_BASE;
 
         // If division is exact, allow same value, otherwise require value to be greater
