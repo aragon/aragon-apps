@@ -52,13 +52,6 @@ contract BetaTemplateBase {
         appIds = _appIds;
     }
 
-    function latestVersionAppBase(bytes32 appId) public view returns (address base) {
-        Repo repo = Repo(PublicResolver(ens().resolver(appId)).addr(appId));
-        (,base,) = repo.getLatest();
-
-        return base;
-    }
-
     function createDAO(
         string name,
         MiniMeToken token,
@@ -92,71 +85,21 @@ contract BetaTemplateBase {
         token.changeController(tokenManager); // sender has to create tokens
 
         // permissions
-        acl.createPermission(
-            ANY_ENTITY,
-            voting,
-            voting.CREATE_VOTES_ROLE(),
-            voting
-        );
-        acl.createPermission(
-            voting,
-            voting,
-            voting.MODIFY_QUORUM_ROLE(),
-            voting
-        );
+        acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), voting);
+        acl.createPermission(voting, voting, voting.MODIFY_QUORUM_ROLE(), voting);
 
-        acl.createPermission(
-            finance,
-            vault,
-            vault.TRANSFER_ROLE(),
-            voting
-        );
-        acl.createPermission(
-            voting,
-            finance,
-            finance.CREATE_PAYMENTS_ROLE(),
-            voting
-        );
-        acl.createPermission(
-            voting,
-            finance,
-            finance.EXECUTE_PAYMENTS_ROLE(),
-            voting
-        );
-        acl.createPermission(
-            voting,
-            finance,
-            finance.DISABLE_PAYMENTS_ROLE(),
-            voting
-        );
-        acl.createPermission(
-            voting,
-            tokenManager,
-            tokenManager.ASSIGN_ROLE(),
-            voting
-        );
-        acl.createPermission(
-            voting,
-            tokenManager,
-            tokenManager.REVOKE_VESTINGS_ROLE(),
-            voting
-        );
+        acl.createPermission(finance, vault, vault.TRANSFER_ROLE(), voting);
+        acl.createPermission(voting, finance, finance.CREATE_PAYMENTS_ROLE(), voting);
+        acl.createPermission(voting, finance, finance.EXECUTE_PAYMENTS_ROLE(), voting);
+        acl.createPermission(voting, finance, finance.DISABLE_PAYMENTS_ROLE(), voting);
+        acl.createPermission(voting, tokenManager, tokenManager.ASSIGN_ROLE(), voting);
+        acl.createPermission(voting, tokenManager, tokenManager.REVOKE_VESTINGS_ROLE(), voting);
 
         require(holders.length == stakes.length);
 
-        acl.createPermission(
-            this,
-            tokenManager,
-            tokenManager.MINT_ROLE(),
-            this
-        );
+        acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
 
-        tokenManager.initialize(
-            token,
-            _maxTokens > 1,
-            _maxTokens,
-            true
-        );
+        tokenManager.initialize(token, _maxTokens > 1, _maxTokens, true);
 
         for (uint256 i = 0; i < holders.length; i++) {
             tokenManager.mint(holders[i], stakes[i]);
@@ -196,6 +139,13 @@ contract BetaTemplateBase {
 
     function registerAragonID(string name, address owner) internal {
         aragonID.register(keccak256(name), owner);
+    }
+
+    function latestVersionAppBase(bytes32 appId) public view returns (address base) {
+        Repo repo = Repo(PublicResolver(ens().resolver(appId)).addr(appId));
+        (,base,) = repo.getLatest();
+
+        return base;
     }
 
     function ens() internal view returns (AbstractENS) {
