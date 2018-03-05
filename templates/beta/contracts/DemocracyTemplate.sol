@@ -17,9 +17,6 @@ contract DemocracyTemplate is BetaTemplateBase {
     {}
 
      function newToken(string name, string symbol) external returns (MiniMeToken token) {
-<<<<<<< HEAD
-         token = minimeFac.createCloneToken(address(0), 0, name, 18, symbol, true);
-=======
          token = minimeFac.createCloneToken(
              address(0),
              0,
@@ -28,7 +25,6 @@ contract DemocracyTemplate is BetaTemplateBase {
              symbol,
              true
          );
->>>>>>> 33c16d8833801582fbefcc1e421d6b182e84b87e
          cacheToken(token, msg.sender);
      }
 
