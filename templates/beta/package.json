@@ -9,7 +9,7 @@
     "deploy:devnet": "truffle migrate --network devnet --reset",
     "prepublish": "truffle compile",
     "docker:wait-gas": "truffle exec scripts/sleep-until-gaslimit.js --network devnet 6900000",
-    "docker:deploy": "docker-compose up deploy",
+    "docker:run": "docker-compose up deploy",
     "docker:build": "docker build -t aragon/templates-beta -f Dockerfile ../..",
     "docker:build:no": "docker build --no-cache -t aragon/templates-beta -f Dockerfile ../.."
   },
