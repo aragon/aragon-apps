@@ -141,6 +141,7 @@ contract BetaTemplateBase {
         aragonID.register(keccak256(name), owner);
     }
 
+    /* solium-disable-next-line */
     function latestVersionAppBase(bytes32 appId) public view returns (address base) {
         Repo repo = Repo(PublicResolver(ens().resolver(appId)).addr(appId));
         (,base,) = repo.getLatest();
