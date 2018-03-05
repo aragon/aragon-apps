@@ -22,7 +22,7 @@
     "truffle-hdwallet-provider": "0.0.3"
   },
   "dependencies": {
-    "@aragon/os": "https://github.com/aragon/aragonOS.git#docker-deploy",
+    "@aragon/os": "^3.0.7",
     "@aragon/apps-voting": "^1.0.0",
     "@aragon/apps-vault": "^1.0.0",
     "@aragon/apps-finance": "^1.0.0",

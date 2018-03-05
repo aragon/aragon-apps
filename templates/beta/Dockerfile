@@ -1,9 +1,7 @@
 FROM node:8
 
-# TODO: master branch
 RUN git clone https://github.com/aragon/aragonOS.git
-# TODO: remove docker-deplpy branch on merge
-RUN cd aragonOS && git checkout docker-deploy && npm install && npm run compile
+RUN cd aragonOS && npm install && npm run compile
 
 RUN git clone https://github.com/aragon/aragon-id.git
 RUN cd aragon-id && npm install && npm run compile
