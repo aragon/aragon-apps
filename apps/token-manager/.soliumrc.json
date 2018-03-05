@@ -15,6 +15,7 @@
     "indentation": 0,
     "whitespace": ["error"],
     "deprecated-suicide": ["error"],
+    "arg-overflow": ["error", 8],
     "pragma-on-top": ["error"],
     "security/enforce-explicit-visibility": ["error"],
     "consequent": 0

@@ -30,10 +30,20 @@ contract BetaTemplateBase {
 
     event DeployToken(address token, address indexed cacheOwner);
     event DeployInstance(address dao, address indexed token);
+    event InstalledApp(address appProxy, bytes32 appId);
 
     address constant ANY_ENTITY = address(-1);
 
-    function BetaTemplateBase(DAOFactory _fac, MiniMeTokenFactory _minimeFac, APMRegistry _apm, EtherToken _etherToken, IFIFSResolvingRegistrar _aragonID, bytes32[4] _appIds) public {
+    function BetaTemplateBase(
+        DAOFactory _fac,
+        MiniMeTokenFactory _minimeFac,
+        APMRegistry _apm,
+        EtherToken _etherToken,
+        IFIFSResolvingRegistrar _aragonID,
+        bytes32[4] _appIds
+    )
+        public
+    {
         apm = _apm;
         fac = _fac;
         minimeFac = _minimeFac;
@@ -42,17 +52,35 @@ contract BetaTemplateBase {
         appIds = _appIds;
     }
 
-    function createDAO(string name, MiniMeToken token, address[] holders, uint256[] stakes, uint256 _maxTokens) internal returns (Voting) {
+    function createDAO(
+        string name,
+        MiniMeToken token,
+        address[] holders,
+        uint256[] stakes,
+        uint256 _maxTokens
+    )
+        internal
+        returns (Voting)
+    {
         Kernel dao = fac.newDAO(this);
 
         ACL acl = ACL(dao.acl());
 
-        acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
+        acl.createPermission(
+            this,
+            dao,
+            dao.APP_MANAGER_ROLE(),
+            this
+        );
 
         Voting voting = Voting(dao.newAppInstance(appIds[uint8(Apps.Voting)], latestVersionAppBase(appIds[uint8(Apps.Voting)])));
+        InstalledApp(voting, appIds[uint8(Apps.Voting)]);
         Vault vault = Vault(dao.newAppInstance(appIds[uint8(Apps.Vault)], latestVersionAppBase(appIds[uint8(Apps.Vault)])));
+        InstalledApp(vault, appIds[uint8(Apps.Vault)]);
         Finance finance = Finance(dao.newAppInstance(appIds[uint8(Apps.Finance)], latestVersionAppBase(appIds[uint8(Apps.Finance)])));
+        InstalledApp(finance, appIds[uint8(Apps.Finance)]);
         TokenManager tokenManager = TokenManager(dao.newAppInstance(appIds[uint8(Apps.TokenManager)], latestVersionAppBase(appIds[uint8(Apps.TokenManager)])));
+        InstalledApp(tokenManager, appIds[uint8(Apps.TokenManager)]);
 
         token.changeController(tokenManager); // sender has to create tokens
 
@@ -78,7 +106,7 @@ contract BetaTemplateBase {
         }
 
         // inits
-        finance.initialize(vault, etherToken, uint64(-1)); // yuge period
+        finance.initialize(vault, etherToken, uint64(-1) - uint64(now)); // yuge period
 
         // clean-up
         acl.grantPermission(voting, dao, dao.APP_MANAGER_ROLE());
@@ -113,6 +141,7 @@ contract BetaTemplateBase {
         aragonID.register(keccak256(name), owner);
     }
 
+    /* solium-disable-next-line */
     function latestVersionAppBase(bytes32 appId) public view returns (address base) {
         Repo repo = Repo(PublicResolver(ens().resolver(appId)).addr(appId));
         (,base,) = repo.getLatest();
