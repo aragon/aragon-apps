@@ -1,12 +1,6 @@
+const abis = require('./.abis')
+
 module.exports = {
-  templates: {
-    DemocracyTemplate: {
-      abi: require('./build/contracts/DemocracyTemplate').abi
-    },
-    MultisigTemplate: {
-      abi: require('./build/contracts/MultisigTemplate').abi
-    }
-  },
   networks: {
     rinkeby: {
       ens: '0xaa0ccb537289d226941745c4dd7a819a750897d0',
@@ -15,5 +9,13 @@ module.exports = {
         MultisigTemplate: '0xce16339814b0c2e825a077ada6f08e4b4fc4e21f',
       },
     },
+  },
+  templates: {
+    DemocracyTemplate: {
+      abi: abis.DemocracyTemplate
+    },
+    MultisigTemplate: {
+      abi: abis.MultisigTemplate
+    }
   },
 }
