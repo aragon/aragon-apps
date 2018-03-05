@@ -32,6 +32,7 @@ module.exports = async (deployer, network, accounts) => {
 
   const apmAddr = await artifacts.require('PublicResolver').at(await ens.resolver(namehash('aragonpm.eth'))).addr(namehash('aragonpm.eth'))
 
+  console.log('1')
   if (network == 'rpc' || network == 'devnet') { // Useful for testing to avoid manual deploys with aragon-dev-cli
     if (await ens.owner(appIds[0]) == '0x0000000000000000000000000000000000000000') {
       const apm = artifacts.require('APMRegistry').at(apmAddr)
