@@ -28,11 +28,11 @@ const newRepo = async (apm, name, acc, contract) => {
 
 module.exports = async (deployer, network, accounts) => {
   let indexObj = require('../index.js')
-  const ens = ENS.at(indexObj[network].ens)
+  const ens = ENS.at(process.env.ENS || indexObj[network].ens)
 
   const apmAddr = await artifacts.require('PublicResolver').at(await ens.resolver(namehash('aragonpm.eth'))).addr(namehash('aragonpm.eth'))
 
-  if (network == 'rpc') { // Useful for testing to avoid manual deploys with aragon-dev-cli
+  if (network == 'rpc' || network == 'devnet') { // Useful for testing to avoid manual deploys with aragon-dev-cli
     if (await ens.owner(appIds[0]) == '0x0000000000000000000000000000000000000000') {
       const apm = artifacts.require('APMRegistry').at(apmAddr)
 
@@ -53,11 +53,14 @@ module.exports = async (deployer, network, accounts) => {
 
   const ts = tmpls.map((address, i) => ({ name: templates[i], address }) )
 
-  indexObj[network].templates = ts
+  if (network == 'devnet') {
+    console.log(ts)
+  } else {
+    indexObj[network].templates = ts
+    const indexFile = 'module.exports = ' + JSON.stringify(indexObj, null, 2)
+    // could also use https://github.com/yeoman/stringify-object if you wanted single quotes
+    fs.writeFileSync('index.js', indexFile)
 
-  const indexFile = 'module.exports = ' + JSON.stringify(indexObj, null, 2)
-  // could also use https://github.com/yeoman/stringify-object if you wanted single quotes
-  fs.writeFileSync('index.js', indexFile)
-
-  console.log('Template addresses saved to index.js')
+    console.log('Template addresses saved to index.js')
+  }
 }

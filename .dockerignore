@@ -10,14 +10,10 @@ node_modules
 */**/scTopics
 
 
-apps/**/build
 apps/**/artifact.json
-future-apps/**/build
 future-apps/**/artifact.json
 
 # lerna
 lerna-debug.log
 
 # truffle build artifacts
-apps/*/build
-future-apps/*/build

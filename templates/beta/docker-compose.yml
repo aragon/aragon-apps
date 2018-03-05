@@ -1,0 +1,24 @@
+version: "2"
+services:
+  deploy:
+    image: aragon/templates-beta
+    depends_on:
+      - "devnet"
+    command: >
+      bash -c "sleep 3
+      && npm run docker:wait-gas
+      && scripts/deploy.sh"
+    environment:
+      - OWNER=${OWNER}
+    networks:
+      - devnet
+  devnet:
+    image: aragon/geth-devnet
+    ports:
+      - "8545:8545"
+    environment:
+      - DEV_CHAIN_ENABLED=true
+    networks:
+      - devnet
+networks:
+  devnet:
