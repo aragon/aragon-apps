@@ -21,7 +21,7 @@ contract MultisigTemplate is BetaTemplateBase {
             address(0),
             0,
             name,
-            18,
+            0,
             symbol,
             true
         );
@@ -32,7 +32,7 @@ contract MultisigTemplate is BetaTemplateBase {
         uint256[] memory stakes = new uint256[](signers.length);
 
         for (uint256 i = 0; i < signers.length; i++) {
-            stakes[i] = 10**18;
+            stakes[i] = 1;
         }
 
         MiniMeToken token = popTokenCache(msg.sender);
@@ -41,7 +41,7 @@ contract MultisigTemplate is BetaTemplateBase {
             token,
             signers,
             stakes,
-            10**18
+            1
         );
 
         uint256 multisigSupport = neededSignatures * 10 ** 18 / signers.length;
