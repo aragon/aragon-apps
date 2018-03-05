@@ -4,7 +4,6 @@ import "./BetaTemplateBase.sol";
 
 
 contract MultisigTemplate is BetaTemplateBase {
-    uint64 constant public VOTING_TIME = 157680000; // 5 years
 
     function MultisigTemplate(
         DAOFactory _fac,
@@ -50,7 +49,7 @@ contract MultisigTemplate is BetaTemplateBase {
             token,
             multisigSupport,
             multisigSupport,
-            VOTING_TIME
+            5 years
         );
     }
 }
