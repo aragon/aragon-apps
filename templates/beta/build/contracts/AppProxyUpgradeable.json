@@ -205,7 +205,7 @@
       "absolutePath": "@aragon/os/contracts/apps/AppProxyUpgradeable.sol",
       "exportedSymbols": {
         "AppProxyUpgradeable": [
-          6762
+          6803
         ]
       }
     },
@@ -218,47 +218,47 @@
             ".18"
           ]
         },
-        "id": 6723,
+        "id": 6764,
         "name": "PragmaDirective",
         "src": "0:23:18"
       },
       {
         "attributes": {
-          "SourceUnit": 6660,
+          "SourceUnit": 6701,
           "absolutePath": "@aragon/os/contracts/apps/AppProxyBase.sol",
           "file": "./AppProxyBase.sol",
-          "scope": 6763,
+          "scope": 6804,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 6724,
+        "id": 6765,
         "name": "ImportDirective",
         "src": "25:28:18"
       },
       {
         "attributes": {
           "contractDependencies": [
-            6659,
-            6780,
-            6891,
-            6925,
-            9877
+            6700,
+            6821,
+            6932,
+            6966,
+            9918
           ],
           "contractKind": "contract",
           "documentation": null,
           "fullyImplemented": true,
           "linearizedBaseContracts": [
-            6762,
-            6659,
-            9877,
-            6925,
-            6780,
-            6891
+            6803,
+            6700,
+            9918,
+            6966,
+            6821,
+            6932
           ],
           "name": "AppProxyUpgradeable",
-          "scope": 6763
+          "scope": 6804
         },
         "children": [
           {
@@ -272,15 +272,15 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "AppProxyBase",
-                  "referencedDeclaration": 6659,
+                  "referencedDeclaration": 6700,
                   "type": "contract AppProxyBase"
                 },
-                "id": 6725,
+                "id": 6766,
                 "name": "UserDefinedTypeName",
                 "src": "88:12:18"
               }
             ],
-            "id": 6726,
+            "id": 6767,
             "name": "InheritanceSpecifier",
             "src": "88:12:18"
           },
@@ -288,7 +288,7 @@
             "attributes": {
               "constant": false,
               "name": "pinnedCode",
-              "scope": 6762,
+              "scope": 6803,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "address",
@@ -301,12 +301,12 @@
                   "name": "address",
                   "type": "address"
                 },
-                "id": 6727,
+                "id": 6768,
                 "name": "ElementaryTypeName",
                 "src": "107:7:18"
               }
             ],
-            "id": 6728,
+            "id": 6769,
             "name": "VariableDeclaration",
             "src": "107:25:18"
           },
@@ -317,7 +317,7 @@
               "isConstructor": true,
               "name": "AppProxyUpgradeable",
               "payable": false,
-              "scope": 6762,
+              "scope": 6803,
               "stateMutability": "nonpayable",
               "superFunction": null,
               "visibility": "public"
@@ -329,7 +329,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_kernel",
-                      "scope": 6743,
+                      "scope": 6784,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "contract IKernel",
@@ -341,15 +341,15 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "IKernel",
-                          "referencedDeclaration": 9460,
+                          "referencedDeclaration": 9501,
                           "type": "contract IKernel"
                         },
-                        "id": 6729,
+                        "id": 6770,
                         "name": "UserDefinedTypeName",
                         "src": "453:7:18"
                       }
                     ],
-                    "id": 6730,
+                    "id": 6771,
                     "name": "VariableDeclaration",
                     "src": "453:15:18"
                   },
@@ -357,7 +357,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_appId",
-                      "scope": 6743,
+                      "scope": 6784,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes32",
@@ -370,12 +370,12 @@
                           "name": "bytes32",
                           "type": "bytes32"
                         },
-                        "id": 6731,
+                        "id": 6772,
                         "name": "ElementaryTypeName",
                         "src": "470:7:18"
                       }
                     ],
-                    "id": 6732,
+                    "id": 6773,
                     "name": "VariableDeclaration",
                     "src": "470:14:18"
                   },
@@ -383,7 +383,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_initializePayload",
-                      "scope": 6743,
+                      "scope": 6784,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes memory",
@@ -396,17 +396,17 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 6733,
+                        "id": 6774,
                         "name": "ElementaryTypeName",
                         "src": "486:5:18"
                       }
                     ],
-                    "id": 6734,
+                    "id": 6775,
                     "name": "VariableDeclaration",
                     "src": "486:24:18"
                   }
                 ],
-                "id": 6735,
+                "id": 6776,
                 "name": "ParameterList",
                 "src": "452:59:18"
               },
@@ -417,7 +417,7 @@
                   ]
                 },
                 "children": [],
-                "id": 6741,
+                "id": 6782,
                 "name": "ParameterList",
                 "src": "586:0:18"
               },
@@ -429,11 +429,11 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 6659,
+                      "referencedDeclaration": 6700,
                       "type": "type(contract AppProxyBase)",
                       "value": "AppProxyBase"
                     },
-                    "id": 6736,
+                    "id": 6777,
                     "name": "Identifier",
                     "src": "525:12:18"
                   },
@@ -443,11 +443,11 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 6730,
+                      "referencedDeclaration": 6771,
                       "type": "contract IKernel",
                       "value": "_kernel"
                     },
-                    "id": 6737,
+                    "id": 6778,
                     "name": "Identifier",
                     "src": "538:7:18"
                   },
@@ -457,11 +457,11 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 6732,
+                      "referencedDeclaration": 6773,
                       "type": "bytes32",
                       "value": "_appId"
                     },
-                    "id": 6738,
+                    "id": 6779,
                     "name": "Identifier",
                     "src": "547:6:18"
                   },
@@ -471,16 +471,16 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 6734,
+                      "referencedDeclaration": 6775,
                       "type": "bytes memory",
                       "value": "_initializePayload"
                     },
-                    "id": 6739,
+                    "id": 6780,
                     "name": "Identifier",
                     "src": "555:18:18"
                   }
                 ],
-                "id": 6740,
+                "id": 6781,
                 "name": "ModifierInvocation",
                 "src": "525:49:18"
               },
@@ -491,12 +491,12 @@
                   ]
                 },
                 "children": [],
-                "id": 6742,
+                "id": 6783,
                 "name": "Block",
                 "src": "586:8:18"
               }
             ],
-            "id": 6743,
+            "id": 6784,
             "name": "FunctionDefinition",
             "src": "424:170:18"
           },
@@ -510,9 +510,9 @@
               ],
               "name": "getCode",
               "payable": false,
-              "scope": 6762,
+              "scope": 6803,
               "stateMutability": "view",
-              "superFunction": 6890,
+              "superFunction": 6931,
               "visibility": "public"
             },
             "children": [
@@ -523,7 +523,7 @@
                   ]
                 },
                 "children": [],
-                "id": 6744,
+                "id": 6785,
                 "name": "ParameterList",
                 "src": "616:2:18"
               },
@@ -533,7 +533,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "",
-                      "scope": 6753,
+                      "scope": 6794,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -546,17 +546,17 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 6745,
+                        "id": 6786,
                         "name": "ElementaryTypeName",
                         "src": "640:7:18"
                       }
                     ],
-                    "id": 6746,
+                    "id": 6787,
                     "name": "VariableDeclaration",
                     "src": "640:7:18"
                   }
                 ],
-                "id": 6747,
+                "id": 6788,
                 "name": "ParameterList",
                 "src": "639:9:18"
               },
@@ -564,7 +564,7 @@
                 "children": [
                   {
                     "attributes": {
-                      "functionReturnParameters": 6747
+                      "functionReturnParameters": 6788
                     },
                     "children": [
                       {
@@ -593,11 +593,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 6637,
+                              "referencedDeclaration": 6678,
                               "type": "function (bytes32) view returns (address)",
                               "value": "getAppBase"
                             },
-                            "id": 6748,
+                            "id": 6789,
                             "name": "Identifier",
                             "src": "666:10:18"
                           },
@@ -607,31 +607,31 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 6769,
+                              "referencedDeclaration": 6810,
                               "type": "bytes32",
                               "value": "appId"
                             },
-                            "id": 6749,
+                            "id": 6790,
                             "name": "Identifier",
                             "src": "677:5:18"
                           }
                         ],
-                        "id": 6750,
+                        "id": 6791,
                         "name": "FunctionCall",
                         "src": "666:17:18"
                       }
                     ],
-                    "id": 6751,
+                    "id": 6792,
                     "name": "Return",
                     "src": "659:24:18"
                   }
                 ],
-                "id": 6752,
+                "id": 6793,
                 "name": "Block",
                 "src": "649:41:18"
               }
             ],
-            "id": 6753,
+            "id": 6794,
             "name": "FunctionDefinition",
             "src": "600:90:18"
           },
@@ -645,9 +645,9 @@
               ],
               "name": "isUpgradeable",
               "payable": false,
-              "scope": 6762,
+              "scope": 6803,
               "stateMutability": "pure",
-              "superFunction": 6885,
+              "superFunction": 6926,
               "visibility": "public"
             },
             "children": [
@@ -658,7 +658,7 @@
                   ]
                 },
                 "children": [],
-                "id": 6754,
+                "id": 6795,
                 "name": "ParameterList",
                 "src": "718:2:18"
               },
@@ -668,7 +668,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "",
-                      "scope": 6761,
+                      "scope": 6802,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bool",
@@ -681,17 +681,17 @@
                           "name": "bool",
                           "type": "bool"
                         },
-                        "id": 6755,
+                        "id": 6796,
                         "name": "ElementaryTypeName",
                         "src": "742:4:18"
                       }
                     ],
-                    "id": 6756,
+                    "id": 6797,
                     "name": "VariableDeclaration",
                     "src": "742:4:18"
                   }
                 ],
-                "id": 6757,
+                "id": 6798,
                 "name": "ParameterList",
                 "src": "741:6:18"
               },
@@ -699,7 +699,7 @@
                 "children": [
                   {
                     "attributes": {
-                      "functionReturnParameters": 6757
+                      "functionReturnParameters": 6798
                     },
                     "children": [
                       {
@@ -715,32 +715,32 @@
                           "type": "bool",
                           "value": "true"
                         },
-                        "id": 6758,
+                        "id": 6799,
                         "name": "Literal",
                         "src": "765:4:18"
                       }
                     ],
-                    "id": 6759,
+                    "id": 6800,
                     "name": "Return",
                     "src": "758:11:18"
                   }
                 ],
-                "id": 6760,
+                "id": 6801,
                 "name": "Block",
                 "src": "748:28:18"
               }
             ],
-            "id": 6761,
+            "id": 6802,
             "name": "FunctionDefinition",
             "src": "696:80:18"
           }
         ],
-        "id": 6762,
+        "id": 6803,
         "name": "ContractDefinition",
         "src": "56:722:18"
       }
     ],
-    "id": 6763,
+    "id": 6804,
     "name": "SourceUnit",
     "src": "0:779:18"
   },
@@ -750,5 +750,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.141Z"
+  "updatedAt": "2018-03-05T17:18:03.433Z"
 }

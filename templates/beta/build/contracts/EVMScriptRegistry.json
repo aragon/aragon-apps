@@ -227,7 +227,7 @@
       "absolutePath": "@aragon/os/contracts/evmscript/EVMScriptRegistry.sol",
       "exportedSymbols": {
         "EVMScriptRegistry": [
-          7620
+          7661
         ]
       }
     },
@@ -240,96 +240,96 @@
             ".18"
           ]
         },
-        "id": 7495,
+        "id": 7536,
         "name": "PragmaDirective",
         "src": "0:23:28"
       },
       {
         "attributes": {
-          "SourceUnit": 8179,
+          "SourceUnit": 8220,
           "absolutePath": "@aragon/os/contracts/evmscript/ScriptHelpers.sol",
           "file": "./ScriptHelpers.sol",
-          "scope": 7621,
+          "scope": 7662,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 7496,
+        "id": 7537,
         "name": "ImportDirective",
         "src": "25:29:28"
       },
       {
         "attributes": {
-          "SourceUnit": 7772,
+          "SourceUnit": 7813,
           "absolutePath": "@aragon/os/contracts/evmscript/IEVMScriptExecutor.sol",
           "file": "./IEVMScriptExecutor.sol",
-          "scope": 7621,
+          "scope": 7662,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 7497,
+        "id": 7538,
         "name": "ImportDirective",
         "src": "55:34:28"
       },
       {
         "attributes": {
-          "SourceUnit": 7808,
+          "SourceUnit": 7849,
           "absolutePath": "@aragon/os/contracts/evmscript/IEVMScriptRegistry.sol",
           "file": "./IEVMScriptRegistry.sol",
-          "scope": 7621,
+          "scope": 7662,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 7498,
+        "id": 7539,
         "name": "ImportDirective",
         "src": "90:34:28"
       },
       {
         "attributes": {
-          "SourceUnit": 6879,
+          "SourceUnit": 6920,
           "absolutePath": "@aragon/os/contracts/apps/AragonApp.sol",
           "file": "../apps/AragonApp.sol",
-          "scope": 7621,
+          "scope": 7662,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 7499,
+        "id": 7540,
         "name": "ImportDirective",
         "src": "126:31:28"
       },
       {
         "attributes": {
           "contractDependencies": [
-            5825,
-            6780,
-            6878,
-            7171,
-            7756,
-            7787,
-            7807
+            5856,
+            6821,
+            6919,
+            7212,
+            7797,
+            7828,
+            7848
           ],
           "contractKind": "contract",
           "documentation": null,
           "fullyImplemented": true,
           "linearizedBaseContracts": [
-            7620,
-            6878,
-            7756,
-            7787,
-            5825,
-            7171,
-            6780,
-            7807
+            7661,
+            6919,
+            7797,
+            7828,
+            5856,
+            7212,
+            6821,
+            7848
           ],
           "name": "EVMScriptRegistry",
-          "scope": 7621
+          "scope": 7662
         },
         "children": [
           {
@@ -343,15 +343,15 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "IEVMScriptRegistry",
-                  "referencedDeclaration": 7807,
+                  "referencedDeclaration": 7848,
                   "type": "contract IEVMScriptRegistry"
                 },
-                "id": 7500,
+                "id": 7541,
                 "name": "UserDefinedTypeName",
                 "src": "190:18:28"
               }
             ],
-            "id": 7501,
+            "id": 7542,
             "name": "InheritanceSpecifier",
             "src": "190:18:28"
           },
@@ -366,15 +366,15 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "EVMScriptRegistryConstants",
-                  "referencedDeclaration": 7787,
+                  "referencedDeclaration": 7828,
                   "type": "contract EVMScriptRegistryConstants"
                 },
-                "id": 7502,
+                "id": 7543,
                 "name": "UserDefinedTypeName",
                 "src": "210:26:28"
               }
             ],
-            "id": 7503,
+            "id": 7544,
             "name": "InheritanceSpecifier",
             "src": "210:26:28"
           },
@@ -389,15 +389,15 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "AragonApp",
-                  "referencedDeclaration": 6878,
+                  "referencedDeclaration": 6919,
                   "type": "contract AragonApp"
                 },
-                "id": 7504,
+                "id": 7545,
                 "name": "UserDefinedTypeName",
                 "src": "238:9:28"
               }
             ],
-            "id": 7505,
+            "id": 7546,
             "name": "InheritanceSpecifier",
             "src": "238:9:28"
           },
@@ -407,10 +407,10 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "ScriptHelpers",
-                  "referencedDeclaration": 8178,
+                  "referencedDeclaration": 8219,
                   "type": "library ScriptHelpers"
                 },
-                "id": 7506,
+                "id": 7547,
                 "name": "UserDefinedTypeName",
                 "src": "260:13:28"
               },
@@ -419,12 +419,12 @@
                   "name": "bytes",
                   "type": "bytes storage pointer"
                 },
-                "id": 7507,
+                "id": 7548,
                 "name": "ElementaryTypeName",
                 "src": "278:5:28"
               }
             ],
-            "id": 7508,
+            "id": 7549,
             "name": "UsingForDirective",
             "src": "254:30:28"
           },
@@ -432,7 +432,7 @@
             "attributes": {
               "constant": true,
               "name": "REGISTRY_MANAGER_ROLE",
-              "scope": 7620,
+              "scope": 7661,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "bytes32",
@@ -444,7 +444,7 @@
                   "name": "bytes32",
                   "type": "bytes32"
                 },
-                "id": 7509,
+                "id": 7550,
                 "name": "ElementaryTypeName",
                 "src": "365:7:28"
               },
@@ -478,7 +478,7 @@
                       "type": "type(bytes32)",
                       "value": "bytes32"
                     },
-                    "id": 7510,
+                    "id": 7551,
                     "name": "ElementaryTypeNameExpression",
                     "src": "413:7:28"
                   },
@@ -495,17 +495,17 @@
                       "type": "int_const 1",
                       "value": "1"
                     },
-                    "id": 7511,
+                    "id": 7552,
                     "name": "Literal",
                     "src": "421:1:28"
                   }
                 ],
-                "id": 7512,
+                "id": 7553,
                 "name": "FunctionCall",
                 "src": "413:10:28"
               }
             ],
-            "id": 7513,
+            "id": 7554,
             "name": "VariableDeclaration",
             "src": "365:58:28"
           },
@@ -513,7 +513,7 @@
             "attributes": {
               "canonicalName": "EVMScriptRegistry.ExecutorEntry",
               "name": "ExecutorEntry",
-              "scope": 7620,
+              "scope": 7661,
               "visibility": "public"
             },
             "children": [
@@ -521,7 +521,7 @@
                 "attributes": {
                   "constant": false,
                   "name": "executor",
-                  "scope": 7518,
+                  "scope": 7559,
                   "stateVariable": false,
                   "storageLocation": "default",
                   "type": "address",
@@ -534,12 +534,12 @@
                       "name": "address",
                       "type": "address"
                     },
-                    "id": 7514,
+                    "id": 7555,
                     "name": "ElementaryTypeName",
                     "src": "461:7:28"
                   }
                 ],
-                "id": 7515,
+                "id": 7556,
                 "name": "VariableDeclaration",
                 "src": "461:16:28"
               },
@@ -547,7 +547,7 @@
                 "attributes": {
                   "constant": false,
                   "name": "enabled",
-                  "scope": 7518,
+                  "scope": 7559,
                   "stateVariable": false,
                   "storageLocation": "default",
                   "type": "bool",
@@ -560,17 +560,17 @@
                       "name": "bool",
                       "type": "bool"
                     },
-                    "id": 7516,
+                    "id": 7557,
                     "name": "ElementaryTypeName",
                     "src": "487:4:28"
                   }
                 ],
-                "id": 7517,
+                "id": 7558,
                 "name": "VariableDeclaration",
                 "src": "487:12:28"
               }
             ],
-            "id": 7518,
+            "id": 7559,
             "name": "StructDefinition",
             "src": "430:76:28"
           },
@@ -578,7 +578,7 @@
             "attributes": {
               "constant": false,
               "name": "executors",
-              "scope": 7620,
+              "scope": 7661,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "struct EVMScriptRegistry.ExecutorEntry storage ref[] storage ref",
@@ -596,20 +596,20 @@
                     "attributes": {
                       "contractScope": null,
                       "name": "ExecutorEntry",
-                      "referencedDeclaration": 7518,
+                      "referencedDeclaration": 7559,
                       "type": "struct EVMScriptRegistry.ExecutorEntry storage pointer"
                     },
-                    "id": 7519,
+                    "id": 7560,
                     "name": "UserDefinedTypeName",
                     "src": "512:13:28"
                   }
                 ],
-                "id": 7520,
+                "id": 7561,
                 "name": "ArrayTypeName",
                 "src": "512:15:28"
               }
             ],
-            "id": 7521,
+            "id": 7562,
             "name": "VariableDeclaration",
             "src": "512:32:28"
           },
@@ -620,7 +620,7 @@
               "isConstructor": false,
               "name": "initialize",
               "payable": false,
-              "scope": 7620,
+              "scope": 7661,
               "stateMutability": "nonpayable",
               "superFunction": null,
               "visibility": "public"
@@ -633,7 +633,7 @@
                   ]
                 },
                 "children": [],
-                "id": 7522,
+                "id": 7563,
                 "name": "ParameterList",
                 "src": "570:2:28"
               },
@@ -644,7 +644,7 @@
                   ]
                 },
                 "children": [],
-                "id": 7525,
+                "id": 7566,
                 "name": "ParameterList",
                 "src": "589:0:28"
               },
@@ -661,16 +661,16 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 7142,
+                      "referencedDeclaration": 7183,
                       "type": "modifier ()",
                       "value": "onlyInit"
                     },
-                    "id": 7523,
+                    "id": 7564,
                     "name": "Identifier",
                     "src": "573:8:28"
                   }
                 ],
-                "id": 7524,
+                "id": 7565,
                 "name": "ModifierInvocation",
                 "src": "573:8:28"
               },
@@ -704,21 +704,21 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 7161,
+                              "referencedDeclaration": 7202,
                               "type": "function ()",
                               "value": "initialized"
                             },
-                            "id": 7526,
+                            "id": 7567,
                             "name": "Identifier",
                             "src": "599:11:28"
                           }
                         ],
-                        "id": 7527,
+                        "id": 7568,
                         "name": "FunctionCall",
                         "src": "599:13:28"
                       }
                     ],
-                    "id": 7528,
+                    "id": 7569,
                     "name": "ExpressionStatement",
                     "src": "599:13:28"
                   },
@@ -743,7 +743,7 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_struct$_ExecutorEntry_$7518_memory",
+                                  "typeIdentifier": "t_struct$_ExecutorEntry_$7559_memory",
                                   "typeString": "struct EVMScriptRegistry.ExecutorEntry memory"
                                 }
                               ],
@@ -762,16 +762,16 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 7521,
+                                  "referencedDeclaration": 7562,
                                   "type": "struct EVMScriptRegistry.ExecutorEntry storage ref[] storage ref",
                                   "value": "executors"
                                 },
-                                "id": 7529,
+                                "id": 7570,
                                 "name": "Identifier",
                                 "src": "680:9:28"
                               }
                             ],
-                            "id": 7531,
+                            "id": 7572,
                             "name": "MemberAccess",
                             "src": "680:14:28"
                           },
@@ -805,11 +805,11 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 7518,
+                                  "referencedDeclaration": 7559,
                                   "type": "type(struct EVMScriptRegistry.ExecutorEntry storage pointer)",
                                   "value": "ExecutorEntry"
                                 },
-                                "id": 7532,
+                                "id": 7573,
                                 "name": "Identifier",
                                 "src": "695:13:28"
                               },
@@ -843,7 +843,7 @@
                                       "type": "type(address)",
                                       "value": "address"
                                     },
-                                    "id": 7533,
+                                    "id": 7574,
                                     "name": "ElementaryTypeNameExpression",
                                     "src": "709:7:28"
                                   },
@@ -860,12 +860,12 @@
                                       "type": "int_const 0",
                                       "value": "0"
                                     },
-                                    "id": 7534,
+                                    "id": 7575,
                                     "name": "Literal",
                                     "src": "717:1:28"
                                   }
                                 ],
-                                "id": 7535,
+                                "id": 7576,
                                 "name": "FunctionCall",
                                 "src": "709:10:28"
                               },
@@ -882,32 +882,32 @@
                                   "type": "bool",
                                   "value": "false"
                                 },
-                                "id": 7536,
+                                "id": 7577,
                                 "name": "Literal",
                                 "src": "721:5:28"
                               }
                             ],
-                            "id": 7537,
+                            "id": 7578,
                             "name": "FunctionCall",
                             "src": "695:32:28"
                           }
                         ],
-                        "id": 7538,
+                        "id": 7579,
                         "name": "FunctionCall",
                         "src": "680:48:28"
                       }
                     ],
-                    "id": 7539,
+                    "id": 7580,
                     "name": "ExpressionStatement",
                     "src": "680:48:28"
                   }
                 ],
-                "id": 7540,
+                "id": 7581,
                 "name": "Block",
                 "src": "589:146:28"
               }
             ],
-            "id": 7541,
+            "id": 7582,
             "name": "FunctionDefinition",
             "src": "551:184:28"
           },
@@ -918,9 +918,9 @@
               "isConstructor": false,
               "name": "addScriptExecutor",
               "payable": false,
-              "scope": 7620,
+              "scope": 7661,
               "stateMutability": "nonpayable",
-              "superFunction": 7794,
+              "superFunction": 7835,
               "visibility": "external"
             },
             "children": [
@@ -930,7 +930,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_executor",
-                      "scope": 7560,
+                      "scope": 7601,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -943,17 +943,17 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 7542,
+                        "id": 7583,
                         "name": "ElementaryTypeName",
                         "src": "768:7:28"
                       }
                     ],
-                    "id": 7543,
+                    "id": 7584,
                     "name": "VariableDeclaration",
                     "src": "768:17:28"
                   }
                 ],
-                "id": 7544,
+                "id": 7585,
                 "name": "ParameterList",
                 "src": "767:19:28"
               },
@@ -963,7 +963,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "id",
-                      "scope": 7560,
+                      "scope": 7601,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint256",
@@ -976,17 +976,17 @@
                           "name": "uint",
                           "type": "uint256"
                         },
-                        "id": 7548,
+                        "id": 7589,
                         "name": "ElementaryTypeName",
                         "src": "833:4:28"
                       }
                     ],
-                    "id": 7549,
+                    "id": 7590,
                     "name": "VariableDeclaration",
                     "src": "833:7:28"
                   }
                 ],
-                "id": 7550,
+                "id": 7591,
                 "name": "ParameterList",
                 "src": "832:9:28"
               },
@@ -998,11 +998,11 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 6813,
+                      "referencedDeclaration": 6854,
                       "type": "modifier (bytes32)",
                       "value": "auth"
                     },
-                    "id": 7545,
+                    "id": 7586,
                     "name": "Identifier",
                     "src": "796:4:28"
                   },
@@ -1012,16 +1012,16 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 7513,
+                      "referencedDeclaration": 7554,
                       "type": "bytes32",
                       "value": "REGISTRY_MANAGER_ROLE"
                     },
-                    "id": 7546,
+                    "id": 7587,
                     "name": "Identifier",
                     "src": "801:21:28"
                   }
                 ],
-                "id": 7547,
+                "id": 7588,
                 "name": "ModifierInvocation",
                 "src": "796:27:28"
               },
@@ -1029,7 +1029,7 @@
                 "children": [
                   {
                     "attributes": {
-                      "functionReturnParameters": 7550
+                      "functionReturnParameters": 7591
                     },
                     "children": [
                       {
@@ -1051,7 +1051,7 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_struct$_ExecutorEntry_$7518_memory",
+                                  "typeIdentifier": "t_struct$_ExecutorEntry_$7559_memory",
                                   "typeString": "struct EVMScriptRegistry.ExecutorEntry memory"
                                 }
                               ],
@@ -1070,16 +1070,16 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 7521,
+                                  "referencedDeclaration": 7562,
                                   "type": "struct EVMScriptRegistry.ExecutorEntry storage ref[] storage ref",
                                   "value": "executors"
                                 },
-                                "id": 7551,
+                                "id": 7592,
                                 "name": "Identifier",
                                 "src": "859:9:28"
                               }
                             ],
-                            "id": 7552,
+                            "id": 7593,
                             "name": "MemberAccess",
                             "src": "859:14:28"
                           },
@@ -1113,11 +1113,11 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 7518,
+                                  "referencedDeclaration": 7559,
                                   "type": "type(struct EVMScriptRegistry.ExecutorEntry storage pointer)",
                                   "value": "ExecutorEntry"
                                 },
-                                "id": 7553,
+                                "id": 7594,
                                 "name": "Identifier",
                                 "src": "874:13:28"
                               },
@@ -1127,11 +1127,11 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 7543,
+                                  "referencedDeclaration": 7584,
                                   "type": "address",
                                   "value": "_executor"
                                 },
-                                "id": 7554,
+                                "id": 7595,
                                 "name": "Identifier",
                                 "src": "888:9:28"
                               },
@@ -1148,32 +1148,32 @@
                                   "type": "bool",
                                   "value": "true"
                                 },
-                                "id": 7555,
+                                "id": 7596,
                                 "name": "Literal",
                                 "src": "899:4:28"
                               }
                             ],
-                            "id": 7556,
+                            "id": 7597,
                             "name": "FunctionCall",
                             "src": "874:30:28"
                           }
                         ],
-                        "id": 7557,
+                        "id": 7598,
                         "name": "FunctionCall",
                         "src": "859:46:28"
                       }
                     ],
-                    "id": 7558,
+                    "id": 7599,
                     "name": "Return",
                     "src": "852:53:28"
                   }
                 ],
-                "id": 7559,
+                "id": 7600,
                 "name": "Block",
                 "src": "842:70:28"
               }
             ],
-            "id": 7560,
+            "id": 7601,
             "name": "FunctionDefinition",
             "src": "741:171:28"
           },
@@ -1184,9 +1184,9 @@
               "isConstructor": false,
               "name": "disableScriptExecutor",
               "payable": false,
-              "scope": 7620,
+              "scope": 7661,
               "stateMutability": "nonpayable",
-              "superFunction": 7799,
+              "superFunction": 7840,
               "visibility": "external"
             },
             "children": [
@@ -1196,7 +1196,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_executorId",
-                      "scope": 7576,
+                      "scope": 7617,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint256",
@@ -1209,17 +1209,17 @@
                           "name": "uint256",
                           "type": "uint256"
                         },
-                        "id": 7561,
+                        "id": 7602,
                         "name": "ElementaryTypeName",
                         "src": "949:7:28"
                       }
                     ],
-                    "id": 7562,
+                    "id": 7603,
                     "name": "VariableDeclaration",
                     "src": "949:19:28"
                   }
                 ],
-                "id": 7563,
+                "id": 7604,
                 "name": "ParameterList",
                 "src": "948:21:28"
               },
@@ -1230,7 +1230,7 @@
                   ]
                 },
                 "children": [],
-                "id": 7567,
+                "id": 7608,
                 "name": "ParameterList",
                 "src": "1007:0:28"
               },
@@ -1242,11 +1242,11 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 6813,
+                      "referencedDeclaration": 6854,
                       "type": "modifier (bytes32)",
                       "value": "auth"
                     },
-                    "id": 7564,
+                    "id": 7605,
                     "name": "Identifier",
                     "src": "979:4:28"
                   },
@@ -1256,16 +1256,16 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 7513,
+                      "referencedDeclaration": 7554,
                       "type": "bytes32",
                       "value": "REGISTRY_MANAGER_ROLE"
                     },
-                    "id": 7565,
+                    "id": 7606,
                     "name": "Identifier",
                     "src": "984:21:28"
                   }
                 ],
-                "id": 7566,
+                "id": 7607,
                 "name": "ModifierInvocation",
                 "src": "979:27:28"
               },
@@ -1292,7 +1292,7 @@
                               "isPure": false,
                               "lValueRequested": true,
                               "member_name": "enabled",
-                              "referencedDeclaration": 7517,
+                              "referencedDeclaration": 7558,
                               "type": "bool"
                             },
                             "children": [
@@ -1312,11 +1312,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 7521,
+                                      "referencedDeclaration": 7562,
                                       "type": "struct EVMScriptRegistry.ExecutorEntry storage ref[] storage ref",
                                       "value": "executors"
                                     },
-                                    "id": 7568,
+                                    "id": 7609,
                                     "name": "Identifier",
                                     "src": "1017:9:28"
                                   },
@@ -1326,21 +1326,21 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 7562,
+                                      "referencedDeclaration": 7603,
                                       "type": "uint256",
                                       "value": "_executorId"
                                     },
-                                    "id": 7569,
+                                    "id": 7610,
                                     "name": "Identifier",
                                     "src": "1027:11:28"
                                   }
                                 ],
-                                "id": 7570,
+                                "id": 7611,
                                 "name": "IndexAccess",
                                 "src": "1017:22:28"
                               }
                             ],
-                            "id": 7571,
+                            "id": 7612,
                             "name": "MemberAccess",
                             "src": "1017:30:28"
                           },
@@ -1357,27 +1357,27 @@
                               "type": "bool",
                               "value": "false"
                             },
-                            "id": 7572,
+                            "id": 7613,
                             "name": "Literal",
                             "src": "1050:5:28"
                           }
                         ],
-                        "id": 7573,
+                        "id": 7614,
                         "name": "Assignment",
                         "src": "1017:38:28"
                       }
                     ],
-                    "id": 7574,
+                    "id": 7615,
                     "name": "ExpressionStatement",
                     "src": "1017:38:28"
                   }
                 ],
-                "id": 7575,
+                "id": 7616,
                 "name": "Block",
                 "src": "1007:55:28"
               }
             ],
-            "id": 7576,
+            "id": 7617,
             "name": "FunctionDefinition",
             "src": "918:144:28"
           },
@@ -1391,9 +1391,9 @@
               ],
               "name": "getScriptExecutor",
               "payable": false,
-              "scope": 7620,
+              "scope": 7661,
               "stateMutability": "view",
-              "superFunction": 7806,
+              "superFunction": 7847,
               "visibility": "public"
             },
             "children": [
@@ -1403,7 +1403,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_script",
-                      "scope": 7619,
+                      "scope": 7660,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes memory",
@@ -1416,17 +1416,17 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 7577,
+                        "id": 7618,
                         "name": "ElementaryTypeName",
                         "src": "1095:5:28"
                       }
                     ],
-                    "id": 7578,
+                    "id": 7619,
                     "name": "VariableDeclaration",
                     "src": "1095:13:28"
                   }
                 ],
-                "id": 7579,
+                "id": 7620,
                 "name": "ParameterList",
                 "src": "1094:15:28"
               },
@@ -1436,7 +1436,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "",
-                      "scope": 7619,
+                      "scope": 7660,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -1449,17 +1449,17 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 7580,
+                        "id": 7621,
                         "name": "ElementaryTypeName",
                         "src": "1131:7:28"
                       }
                     ],
-                    "id": 7581,
+                    "id": 7622,
                     "name": "VariableDeclaration",
                     "src": "1131:7:28"
                   }
                 ],
-                "id": 7582,
+                "id": 7623,
                 "name": "ParameterList",
                 "src": "1130:9:28"
               },
@@ -1468,7 +1468,7 @@
                   {
                     "attributes": {
                       "assignments": [
-                        7584
+                        7625
                       ]
                     },
                     "children": [
@@ -1476,7 +1476,7 @@
                         "attributes": {
                           "constant": false,
                           "name": "id",
-                          "scope": 7619,
+                          "scope": 7660,
                           "stateVariable": false,
                           "storageLocation": "default",
                           "type": "uint256",
@@ -1489,12 +1489,12 @@
                               "name": "uint256",
                               "type": "uint256"
                             },
-                            "id": 7583,
+                            "id": 7624,
                             "name": "ElementaryTypeName",
                             "src": "1150:7:28"
                           }
                         ],
-                        "id": 7584,
+                        "id": 7625,
                         "name": "VariableDeclaration",
                         "src": "1150:10:28"
                       },
@@ -1526,7 +1526,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "getSpecId",
-                              "referencedDeclaration": 8012,
+                              "referencedDeclaration": 8053,
                               "type": "function (bytes memory) pure returns (uint32)"
                             },
                             "children": [
@@ -1536,26 +1536,26 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 7578,
+                                  "referencedDeclaration": 7619,
                                   "type": "bytes memory",
                                   "value": "_script"
                                 },
-                                "id": 7585,
+                                "id": 7626,
                                 "name": "Identifier",
                                 "src": "1163:7:28"
                               }
                             ],
-                            "id": 7586,
+                            "id": 7627,
                             "name": "MemberAccess",
                             "src": "1163:17:28"
                           }
                         ],
-                        "id": 7587,
+                        "id": 7628,
                         "name": "FunctionCall",
                         "src": "1163:19:28"
                       }
                     ],
-                    "id": 7588,
+                    "id": 7629,
                     "name": "VariableDeclarationStatement",
                     "src": "1150:32:28"
                   },
@@ -1600,11 +1600,11 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 7584,
+                                  "referencedDeclaration": 7625,
                                   "type": "uint256",
                                   "value": "id"
                                 },
-                                "id": 7589,
+                                "id": 7630,
                                 "name": "Identifier",
                                 "src": "1197:2:28"
                               },
@@ -1621,12 +1621,12 @@
                                   "type": "int_const 0",
                                   "value": "0"
                                 },
-                                "id": 7590,
+                                "id": 7631,
                                 "name": "Literal",
                                 "src": "1203:1:28"
                               }
                             ],
-                            "id": 7591,
+                            "id": 7632,
                             "name": "BinaryOperation",
                             "src": "1197:7:28"
                           },
@@ -1651,11 +1651,11 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 7584,
+                                  "referencedDeclaration": 7625,
                                   "type": "uint256",
                                   "value": "id"
                                 },
-                                "id": 7592,
+                                "id": 7633,
                                 "name": "Identifier",
                                 "src": "1208:2:28"
                               },
@@ -1677,26 +1677,26 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 7521,
+                                      "referencedDeclaration": 7562,
                                       "type": "struct EVMScriptRegistry.ExecutorEntry storage ref[] storage ref",
                                       "value": "executors"
                                     },
-                                    "id": 7593,
+                                    "id": 7634,
                                     "name": "Identifier",
                                     "src": "1214:9:28"
                                   }
                                 ],
-                                "id": 7594,
+                                "id": 7635,
                                 "name": "MemberAccess",
                                 "src": "1214:16:28"
                               }
                             ],
-                            "id": 7595,
+                            "id": 7636,
                             "name": "BinaryOperation",
                             "src": "1208:22:28"
                           }
                         ],
-                        "id": 7596,
+                        "id": 7637,
                         "name": "BinaryOperation",
                         "src": "1197:33:28"
                       },
@@ -1704,7 +1704,7 @@
                         "children": [
                           {
                             "attributes": {
-                              "functionReturnParameters": 7582
+                              "functionReturnParameters": 7623
                             },
                             "children": [
                               {
@@ -1737,7 +1737,7 @@
                                       "type": "type(address)",
                                       "value": "address"
                                     },
-                                    "id": 7597,
+                                    "id": 7638,
                                     "name": "ElementaryTypeNameExpression",
                                     "src": "1253:7:28"
                                   },
@@ -1754,34 +1754,34 @@
                                       "type": "int_const 0",
                                       "value": "0"
                                     },
-                                    "id": 7598,
+                                    "id": 7639,
                                     "name": "Literal",
                                     "src": "1261:1:28"
                                   }
                                 ],
-                                "id": 7599,
+                                "id": 7640,
                                 "name": "FunctionCall",
                                 "src": "1253:10:28"
                               }
                             ],
-                            "id": 7600,
+                            "id": 7641,
                             "name": "Return",
                             "src": "1246:17:28"
                           }
                         ],
-                        "id": 7601,
+                        "id": 7642,
                         "name": "Block",
                         "src": "1232:42:28"
                       }
                     ],
-                    "id": 7602,
+                    "id": 7643,
                     "name": "IfStatement",
                     "src": "1193:81:28"
                   },
                   {
                     "attributes": {
                       "assignments": [
-                        7604
+                        7645
                       ]
                     },
                     "children": [
@@ -1789,7 +1789,7 @@
                         "attributes": {
                           "constant": false,
                           "name": "entry",
-                          "scope": 7619,
+                          "scope": 7660,
                           "stateVariable": false,
                           "storageLocation": "storage",
                           "type": "struct EVMScriptRegistry.ExecutorEntry storage pointer",
@@ -1801,15 +1801,15 @@
                             "attributes": {
                               "contractScope": null,
                               "name": "ExecutorEntry",
-                              "referencedDeclaration": 7518,
+                              "referencedDeclaration": 7559,
                               "type": "struct EVMScriptRegistry.ExecutorEntry storage pointer"
                             },
-                            "id": 7603,
+                            "id": 7644,
                             "name": "UserDefinedTypeName",
                             "src": "1284:13:28"
                           }
                         ],
-                        "id": 7604,
+                        "id": 7645,
                         "name": "VariableDeclaration",
                         "src": "1284:27:28"
                       },
@@ -1829,11 +1829,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 7521,
+                              "referencedDeclaration": 7562,
                               "type": "struct EVMScriptRegistry.ExecutorEntry storage ref[] storage ref",
                               "value": "executors"
                             },
-                            "id": 7605,
+                            "id": 7646,
                             "name": "Identifier",
                             "src": "1314:9:28"
                           },
@@ -1843,27 +1843,27 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 7584,
+                              "referencedDeclaration": 7625,
                               "type": "uint256",
                               "value": "id"
                             },
-                            "id": 7606,
+                            "id": 7647,
                             "name": "Identifier",
                             "src": "1324:2:28"
                           }
                         ],
-                        "id": 7607,
+                        "id": 7648,
                         "name": "IndexAccess",
                         "src": "1314:13:28"
                       }
                     ],
-                    "id": 7608,
+                    "id": 7649,
                     "name": "VariableDeclarationStatement",
                     "src": "1284:43:28"
                   },
                   {
                     "attributes": {
-                      "functionReturnParameters": 7582
+                      "functionReturnParameters": 7623
                     },
                     "children": [
                       {
@@ -1884,7 +1884,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "enabled",
-                              "referencedDeclaration": 7517,
+                              "referencedDeclaration": 7558,
                               "type": "bool"
                             },
                             "children": [
@@ -1894,16 +1894,16 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 7604,
+                                  "referencedDeclaration": 7645,
                                   "type": "struct EVMScriptRegistry.ExecutorEntry storage pointer",
                                   "value": "entry"
                                 },
-                                "id": 7609,
+                                "id": 7650,
                                 "name": "Identifier",
                                 "src": "1344:5:28"
                               }
                             ],
-                            "id": 7610,
+                            "id": 7651,
                             "name": "MemberAccess",
                             "src": "1344:13:28"
                           },
@@ -1915,7 +1915,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "executor",
-                              "referencedDeclaration": 7515,
+                              "referencedDeclaration": 7556,
                               "type": "address"
                             },
                             "children": [
@@ -1925,16 +1925,16 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 7604,
+                                  "referencedDeclaration": 7645,
                                   "type": "struct EVMScriptRegistry.ExecutorEntry storage pointer",
                                   "value": "entry"
                                 },
-                                "id": 7611,
+                                "id": 7652,
                                 "name": "Identifier",
                                 "src": "1360:5:28"
                               }
                             ],
-                            "id": 7612,
+                            "id": 7653,
                             "name": "MemberAccess",
                             "src": "1360:14:28"
                           },
@@ -1968,7 +1968,7 @@
                                   "type": "type(address)",
                                   "value": "address"
                                 },
-                                "id": 7613,
+                                "id": 7654,
                                 "name": "ElementaryTypeNameExpression",
                                 "src": "1377:7:28"
                               },
@@ -1985,42 +1985,42 @@
                                   "type": "int_const 0",
                                   "value": "0"
                                 },
-                                "id": 7614,
+                                "id": 7655,
                                 "name": "Literal",
                                 "src": "1385:1:28"
                               }
                             ],
-                            "id": 7615,
+                            "id": 7656,
                             "name": "FunctionCall",
                             "src": "1377:10:28"
                           }
                         ],
-                        "id": 7616,
+                        "id": 7657,
                         "name": "Conditional",
                         "src": "1344:43:28"
                       }
                     ],
-                    "id": 7617,
+                    "id": 7658,
                     "name": "Return",
                     "src": "1337:50:28"
                   }
                 ],
-                "id": 7618,
+                "id": 7659,
                 "name": "Block",
                 "src": "1140:254:28"
               }
             ],
-            "id": 7619,
+            "id": 7660,
             "name": "FunctionDefinition",
             "src": "1068:326:28"
           }
         ],
-        "id": 7620,
+        "id": 7661,
         "name": "ContractDefinition",
         "src": "160:1236:28"
       }
     ],
-    "id": 7621,
+    "id": 7662,
     "name": "SourceUnit",
     "src": "0:1397:28"
   },
@@ -2030,5 +2030,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.144Z"
+  "updatedAt": "2018-03-05T17:18:03.435Z"
 }

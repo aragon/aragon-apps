@@ -40,7 +40,7 @@
       "absolutePath": "@aragon/os/contracts/lib/erc677/ERC677Receiver.sol",
       "exportedSymbols": {
         "ERC677Receiver": [
-          10624
+          10665
         ]
       }
     },
@@ -53,7 +53,7 @@
             ".18"
           ]
         },
-        "id": 10612,
+        "id": 10653,
         "name": "PragmaDirective",
         "src": "0:23:48"
       },
@@ -69,10 +69,10 @@
           "documentation": null,
           "fullyImplemented": false,
           "linearizedBaseContracts": [
-            10624
+            10665
           ],
           "name": "ERC677Receiver",
-          "scope": 10625
+          "scope": 10666
         },
         "children": [
           {
@@ -86,7 +86,7 @@
               ],
               "name": "tokenFallback",
               "payable": false,
-              "scope": 10624,
+              "scope": 10665,
               "stateMutability": "nonpayable",
               "superFunction": null,
               "visibility": "external"
@@ -98,7 +98,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "from",
-                      "scope": 10623,
+                      "scope": 10664,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -111,12 +111,12 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 10613,
+                        "id": 10654,
                         "name": "ElementaryTypeName",
                         "src": "79:7:48"
                       }
                     ],
-                    "id": 10614,
+                    "id": 10655,
                     "name": "VariableDeclaration",
                     "src": "79:12:48"
                   },
@@ -124,7 +124,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "amount",
-                      "scope": 10623,
+                      "scope": 10664,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint256",
@@ -137,12 +137,12 @@
                           "name": "uint256",
                           "type": "uint256"
                         },
-                        "id": 10615,
+                        "id": 10656,
                         "name": "ElementaryTypeName",
                         "src": "93:7:48"
                       }
                     ],
-                    "id": 10616,
+                    "id": 10657,
                     "name": "VariableDeclaration",
                     "src": "93:14:48"
                   },
@@ -150,7 +150,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "data",
-                      "scope": 10623,
+                      "scope": 10664,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes calldata",
@@ -163,17 +163,17 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 10617,
+                        "id": 10658,
                         "name": "ElementaryTypeName",
                         "src": "109:5:48"
                       }
                     ],
-                    "id": 10618,
+                    "id": 10659,
                     "name": "VariableDeclaration",
                     "src": "109:10:48"
                   }
                 ],
-                "id": 10619,
+                "id": 10660,
                 "name": "ParameterList",
                 "src": "78:42:48"
               },
@@ -183,7 +183,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "success",
-                      "scope": 10623,
+                      "scope": 10664,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bool",
@@ -196,32 +196,32 @@
                           "name": "bool",
                           "type": "bool"
                         },
-                        "id": 10620,
+                        "id": 10661,
                         "name": "ElementaryTypeName",
                         "src": "139:4:48"
                       }
                     ],
-                    "id": 10621,
+                    "id": 10662,
                     "name": "VariableDeclaration",
                     "src": "139:12:48"
                   }
                 ],
-                "id": 10622,
+                "id": 10663,
                 "name": "ParameterList",
                 "src": "138:14:48"
               }
             ],
-            "id": 10623,
+            "id": 10664,
             "name": "FunctionDefinition",
             "src": "56:97:48"
           }
         ],
-        "id": 10624,
+        "id": 10665,
         "name": "ContractDefinition",
         "src": "26:129:48"
       }
     ],
-    "id": 10625,
+    "id": 10666,
     "name": "SourceUnit",
     "src": "0:156:48"
   },
@@ -231,5 +231,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.157Z"
+  "updatedAt": "2018-03-05T17:18:03.444Z"
 }

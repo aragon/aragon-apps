@@ -146,7 +146,7 @@
       "absolutePath": "@aragon/os/contracts/kernel/KernelProxy.sol",
       "exportedSymbols": {
         "KernelProxy": [
-          9837
+          9878
         ]
       }
     },
@@ -159,58 +159,58 @@
             ".18"
           ]
         },
-        "id": 9803,
+        "id": 9844,
         "name": "PragmaDirective",
         "src": "0:23:43"
       },
       {
         "attributes": {
-          "SourceUnit": 9885,
+          "SourceUnit": 9926,
           "absolutePath": "@aragon/os/contracts/kernel/KernelStorage.sol",
           "file": "./KernelStorage.sol",
-          "scope": 9838,
+          "scope": 9879,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 9804,
+        "id": 9845,
         "name": "ImportDirective",
         "src": "25:29:43"
       },
       {
         "attributes": {
-          "SourceUnit": 6926,
+          "SourceUnit": 6967,
           "absolutePath": "@aragon/os/contracts/common/DelegateProxy.sol",
           "file": "../common/DelegateProxy.sol",
-          "scope": 9838,
+          "scope": 9879,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 9805,
+        "id": 9846,
         "name": "ImportDirective",
         "src": "55:37:43"
       },
       {
         "attributes": {
           "contractDependencies": [
-            6925,
-            9877,
-            9884
+            6966,
+            9918,
+            9925
           ],
           "contractKind": "contract",
           "documentation": null,
           "fullyImplemented": true,
           "linearizedBaseContracts": [
-            9837,
-            6925,
-            9884,
-            9877
+            9878,
+            6966,
+            9925,
+            9918
           ],
           "name": "KernelProxy",
-          "scope": 9838
+          "scope": 9879
         },
         "children": [
           {
@@ -224,15 +224,15 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "KernelStorage",
-                  "referencedDeclaration": 9884,
+                  "referencedDeclaration": 9925,
                   "type": "contract KernelStorage"
                 },
-                "id": 9806,
+                "id": 9847,
                 "name": "UserDefinedTypeName",
                 "src": "119:13:43"
               }
             ],
-            "id": 9807,
+            "id": 9848,
             "name": "InheritanceSpecifier",
             "src": "119:13:43"
           },
@@ -247,15 +247,15 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "DelegateProxy",
-                  "referencedDeclaration": 6925,
+                  "referencedDeclaration": 6966,
                   "type": "contract DelegateProxy"
                 },
-                "id": 9808,
+                "id": 9849,
                 "name": "UserDefinedTypeName",
                 "src": "134:13:43"
               }
             ],
-            "id": 9809,
+            "id": 9850,
             "name": "InheritanceSpecifier",
             "src": "134:13:43"
           },
@@ -269,7 +269,7 @@
               ],
               "name": "KernelProxy",
               "payable": false,
-              "scope": 9837,
+              "scope": 9878,
               "stateMutability": "nonpayable",
               "superFunction": null,
               "visibility": "public"
@@ -281,7 +281,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_kernelImpl",
-                      "scope": 9824,
+                      "scope": 9865,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -294,17 +294,17 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 9810,
+                        "id": 9851,
                         "name": "ElementaryTypeName",
                         "src": "440:7:43"
                       }
                     ],
-                    "id": 9811,
+                    "id": 9852,
                     "name": "VariableDeclaration",
                     "src": "440:19:43"
                   }
                 ],
-                "id": 9812,
+                "id": 9853,
                 "name": "ParameterList",
                 "src": "439:21:43"
               },
@@ -315,7 +315,7 @@
                   ]
                 },
                 "children": [],
-                "id": 9813,
+                "id": 9854,
                 "name": "ParameterList",
                 "src": "468:0:43"
               },
@@ -350,11 +350,11 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 9883,
+                                  "referencedDeclaration": 9924,
                                   "type": "mapping(bytes32 => address)",
                                   "value": "apps"
                                 },
-                                "id": 9814,
+                                "id": 9855,
                                 "name": "Identifier",
                                 "src": "478:4:43"
                               },
@@ -388,11 +388,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 12399,
+                                      "referencedDeclaration": 12535,
                                       "type": "function () pure returns (bytes32)",
                                       "value": "keccak256"
                                     },
-                                    "id": 9815,
+                                    "id": 9856,
                                     "name": "Identifier",
                                     "src": "483:9:43"
                                   },
@@ -402,11 +402,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9844,
+                                      "referencedDeclaration": 9885,
                                       "type": "bytes32",
                                       "value": "CORE_NAMESPACE"
                                     },
-                                    "id": 9816,
+                                    "id": 9857,
                                     "name": "Identifier",
                                     "src": "493:14:43"
                                   },
@@ -416,21 +416,21 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9859,
+                                      "referencedDeclaration": 9900,
                                       "type": "bytes32",
                                       "value": "KERNEL_APP_ID"
                                     },
-                                    "id": 9817,
+                                    "id": 9858,
                                     "name": "Identifier",
                                     "src": "509:13:43"
                                   }
                                 ],
-                                "id": 9818,
+                                "id": 9859,
                                 "name": "FunctionCall",
                                 "src": "483:40:43"
                               }
                             ],
-                            "id": 9819,
+                            "id": 9860,
                             "name": "IndexAccess",
                             "src": "478:46:43"
                           },
@@ -440,31 +440,31 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 9811,
+                              "referencedDeclaration": 9852,
                               "type": "address",
                               "value": "_kernelImpl"
                             },
-                            "id": 9820,
+                            "id": 9861,
                             "name": "Identifier",
                             "src": "527:11:43"
                           }
                         ],
-                        "id": 9821,
+                        "id": 9862,
                         "name": "Assignment",
                         "src": "478:60:43"
                       }
                     ],
-                    "id": 9822,
+                    "id": 9863,
                     "name": "ExpressionStatement",
                     "src": "478:60:43"
                   }
                 ],
-                "id": 9823,
+                "id": 9864,
                 "name": "Block",
                 "src": "468:77:43"
               }
             ],
-            "id": 9824,
+            "id": 9865,
             "name": "FunctionDefinition",
             "src": "419:126:43"
           },
@@ -478,7 +478,7 @@
               ],
               "name": "",
               "payable": true,
-              "scope": 9837,
+              "scope": 9878,
               "stateMutability": "payable",
               "superFunction": null,
               "visibility": "public"
@@ -491,7 +491,7 @@
                   ]
                 },
                 "children": [],
-                "id": 9825,
+                "id": 9866,
                 "name": "ParameterList",
                 "src": "735:2:43"
               },
@@ -502,7 +502,7 @@
                   ]
                 },
                 "children": [],
-                "id": 9826,
+                "id": 9867,
                 "name": "ParameterList",
                 "src": "753:0:43"
               },
@@ -540,11 +540,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 6908,
+                              "referencedDeclaration": 6949,
                               "type": "function (address,bytes memory)",
                               "value": "delegatedFwd"
                             },
-                            "id": 9827,
+                            "id": 9868,
                             "name": "Identifier",
                             "src": "763:12:43"
                           },
@@ -564,11 +564,11 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 9883,
+                                  "referencedDeclaration": 9924,
                                   "type": "mapping(bytes32 => address)",
                                   "value": "apps"
                                 },
-                                "id": 9828,
+                                "id": 9869,
                                 "name": "Identifier",
                                 "src": "776:4:43"
                               },
@@ -578,16 +578,16 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 9865,
+                                  "referencedDeclaration": 9906,
                                   "type": "bytes32",
                                   "value": "KERNEL_APP"
                                 },
-                                "id": 9829,
+                                "id": 9870,
                                 "name": "Identifier",
                                 "src": "781:10:43"
                               }
                             ],
-                            "id": 9830,
+                            "id": 9871,
                             "name": "IndexAccess",
                             "src": "776:16:43"
                           },
@@ -609,46 +609,46 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 12405,
+                                  "referencedDeclaration": 12541,
                                   "type": "msg",
                                   "value": "msg"
                                 },
-                                "id": 9831,
+                                "id": 9872,
                                 "name": "Identifier",
                                 "src": "794:3:43"
                               }
                             ],
-                            "id": 9832,
+                            "id": 9873,
                             "name": "MemberAccess",
                             "src": "794:8:43"
                           }
                         ],
-                        "id": 9833,
+                        "id": 9874,
                         "name": "FunctionCall",
                         "src": "763:40:43"
                       }
                     ],
-                    "id": 9834,
+                    "id": 9875,
                     "name": "ExpressionStatement",
                     "src": "763:40:43"
                   }
                 ],
-                "id": 9835,
+                "id": 9876,
                 "name": "Block",
                 "src": "753:57:43"
               }
             ],
-            "id": 9836,
+            "id": 9877,
             "name": "FunctionDefinition",
             "src": "726:84:43"
           }
         ],
-        "id": 9837,
+        "id": 9878,
         "name": "ContractDefinition",
         "src": "95:717:43"
       }
     ],
-    "id": 9838,
+    "id": 9879,
     "name": "SourceUnit",
     "src": "0:812:43"
   },
@@ -658,5 +658,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.154Z"
+  "updatedAt": "2018-03-05T17:18:03.442Z"
 }

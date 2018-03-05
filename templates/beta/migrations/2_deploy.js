@@ -32,7 +32,6 @@ module.exports = async (deployer, network, accounts) => {
 
   const apmAddr = await artifacts.require('PublicResolver').at(await ens.resolver(namehash('aragonpm.eth'))).addr(namehash('aragonpm.eth'))
 
-  console.log('1')
   if (network == 'rpc' || network == 'devnet') { // Useful for testing to avoid manual deploys with aragon-dev-cli
     if (await ens.owner(appIds[0]) == '0x0000000000000000000000000000000000000000') {
       const apm = artifacts.require('APMRegistry').at(apmAddr)
@@ -55,6 +54,13 @@ module.exports = async (deployer, network, accounts) => {
   const ts = tmpls.map((address, i) => ({ name: templates[i], address }) )
 
   if (network == 'devnet') {
+    console.log('creating APM packages for templates')
+
+    const apm = artifacts.require('APMRegistry').at(apmAddr)
+
+    await apm.newRepoWithVersion('democracy-template', accounts[0], [1, 0, 0], tmpls[0], '0x1245')
+    await apm.newRepoWithVersion('multisig-template', accounts[0], [1, 0, 0], tmpls[1], '0x1245')
+
     console.log(ts)
   } else {
     indexObj[network].templates = ts

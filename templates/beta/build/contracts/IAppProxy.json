@@ -41,7 +41,7 @@
       "absolutePath": "@aragon/os/contracts/apps/IAppProxy.sol",
       "exportedSymbols": {
         "IAppProxy": [
-          6891
+          6932
         ]
       }
     },
@@ -54,7 +54,7 @@
             ".18"
           ]
         },
-        "id": 6880,
+        "id": 6921,
         "name": "PragmaDirective",
         "src": "0:23:21"
       },
@@ -70,10 +70,10 @@
           "documentation": null,
           "fullyImplemented": false,
           "linearizedBaseContracts": [
-            6891
+            6932
           ],
           "name": "IAppProxy",
-          "scope": 6892
+          "scope": 6933
         },
         "children": [
           {
@@ -87,7 +87,7 @@
               ],
               "name": "isUpgradeable",
               "payable": false,
-              "scope": 6891,
+              "scope": 6932,
               "stateMutability": "pure",
               "superFunction": null,
               "visibility": "public"
@@ -100,7 +100,7 @@
                   ]
                 },
                 "children": [],
-                "id": 6881,
+                "id": 6922,
                 "name": "ParameterList",
                 "src": "73:2:21"
               },
@@ -110,7 +110,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "",
-                      "scope": 6885,
+                      "scope": 6926,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bool",
@@ -123,22 +123,22 @@
                           "name": "bool",
                           "type": "bool"
                         },
-                        "id": 6882,
+                        "id": 6923,
                         "name": "ElementaryTypeName",
                         "src": "97:4:21"
                       }
                     ],
-                    "id": 6883,
+                    "id": 6924,
                     "name": "VariableDeclaration",
                     "src": "97:4:21"
                   }
                 ],
-                "id": 6884,
+                "id": 6925,
                 "name": "ParameterList",
                 "src": "96:6:21"
               }
             ],
-            "id": 6885,
+            "id": 6926,
             "name": "FunctionDefinition",
             "src": "51:52:21"
           },
@@ -153,7 +153,7 @@
               ],
               "name": "getCode",
               "payable": false,
-              "scope": 6891,
+              "scope": 6932,
               "stateMutability": "view",
               "superFunction": null,
               "visibility": "public"
@@ -166,7 +166,7 @@
                   ]
                 },
                 "children": [],
-                "id": 6886,
+                "id": 6927,
                 "name": "ParameterList",
                 "src": "124:2:21"
               },
@@ -176,7 +176,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "",
-                      "scope": 6890,
+                      "scope": 6931,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -189,32 +189,32 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 6887,
+                        "id": 6928,
                         "name": "ElementaryTypeName",
                         "src": "148:7:21"
                       }
                     ],
-                    "id": 6888,
+                    "id": 6929,
                     "name": "VariableDeclaration",
                     "src": "148:7:21"
                   }
                 ],
-                "id": 6889,
+                "id": 6930,
                 "name": "ParameterList",
                 "src": "147:9:21"
               }
             ],
-            "id": 6890,
+            "id": 6931,
             "name": "FunctionDefinition",
             "src": "108:49:21"
           }
         ],
-        "id": 6891,
+        "id": 6932,
         "name": "ContractDefinition",
         "src": "25:134:21"
       }
     ],
-    "id": 6892,
+    "id": 6933,
     "name": "SourceUnit",
     "src": "0:160:21"
   },
@@ -224,5 +224,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.142Z"
+  "updatedAt": "2018-03-05T17:18:03.433Z"
 }

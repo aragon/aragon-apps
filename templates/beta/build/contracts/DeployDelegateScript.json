@@ -40,7 +40,7 @@
       "absolutePath": "@aragon/os/contracts/evmscript/executors/DeployDelegateScript.sol",
       "exportedSymbols": {
         "DeployDelegateScript": [
-          8495
+          8536
         ]
       }
     },
@@ -53,41 +53,41 @@
             ".18"
           ]
         },
-        "id": 8418,
+        "id": 8459,
         "name": "PragmaDirective",
         "src": "0:23:35"
       },
       {
         "attributes": {
-          "SourceUnit": 8417,
+          "SourceUnit": 8458,
           "absolutePath": "@aragon/os/contracts/evmscript/executors/DelegateScript.sol",
           "file": "./DelegateScript.sol",
-          "scope": 8496,
+          "scope": 8537,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 8419,
+        "id": 8460,
         "name": "ImportDirective",
         "src": "25:30:35"
       },
       {
         "attributes": {
           "contractDependencies": [
-            7771,
-            8416
+            7812,
+            8457
           ],
           "contractKind": "contract",
           "documentation": null,
           "fullyImplemented": true,
           "linearizedBaseContracts": [
-            8495,
-            8416,
-            7771
+            8536,
+            8457,
+            7812
           ],
           "name": "DeployDelegateScript",
-          "scope": 8496
+          "scope": 8537
         },
         "children": [
           {
@@ -101,15 +101,15 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "DelegateScript",
-                  "referencedDeclaration": 8416,
+                  "referencedDeclaration": 8457,
                   "type": "contract DelegateScript"
                 },
-                "id": 8420,
+                "id": 8461,
                 "name": "UserDefinedTypeName",
                 "src": "170:14:35"
               }
             ],
-            "id": 8421,
+            "id": 8462,
             "name": "InheritanceSpecifier",
             "src": "170:14:35"
           },
@@ -117,7 +117,7 @@
             "attributes": {
               "constant": true,
               "name": "SCRIPT_START_LOCATION",
-              "scope": 8495,
+              "scope": 8536,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "uint256",
@@ -129,7 +129,7 @@
                   "name": "uint256",
                   "type": "uint256"
                 },
-                "id": 8422,
+                "id": 8463,
                 "name": "ElementaryTypeName",
                 "src": "191:7:35"
               },
@@ -146,12 +146,12 @@
                   "type": "int_const 4",
                   "value": "4"
                 },
-                "id": 8423,
+                "id": 8464,
                 "name": "Literal",
                 "src": "241:1:35"
               }
             ],
-            "id": 8424,
+            "id": 8465,
             "name": "VariableDeclaration",
             "src": "191:51:35"
           },
@@ -159,7 +159,7 @@
             "attributes": {
               "constant": false,
               "name": "cache",
-              "scope": 8495,
+              "scope": 8536,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "mapping(bytes32 => address)",
@@ -177,7 +177,7 @@
                       "name": "bytes32",
                       "type": "bytes32"
                     },
-                    "id": 8425,
+                    "id": 8466,
                     "name": "ElementaryTypeName",
                     "src": "258:7:35"
                   },
@@ -186,17 +186,17 @@
                       "name": "address",
                       "type": "address"
                     },
-                    "id": 8426,
+                    "id": 8467,
                     "name": "ElementaryTypeName",
                     "src": "269:7:35"
                   }
                 ],
-                "id": 8427,
+                "id": 8468,
                 "name": "Mapping",
                 "src": "249:28:35"
               }
             ],
-            "id": 8428,
+            "id": 8469,
             "name": "VariableDeclaration",
             "src": "249:34:35"
           },
@@ -210,9 +210,9 @@
               ],
               "name": "execScript",
               "payable": false,
-              "scope": 8495,
+              "scope": 8536,
               "stateMutability": "nonpayable",
-              "superFunction": 8343,
+              "superFunction": 8384,
               "visibility": "external"
             },
             "children": [
@@ -222,7 +222,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_script",
-                      "scope": 8485,
+                      "scope": 8526,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes calldata",
@@ -235,12 +235,12 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 8429,
+                        "id": 8470,
                         "name": "ElementaryTypeName",
                         "src": "684:5:35"
                       }
                     ],
-                    "id": 8430,
+                    "id": 8471,
                     "name": "VariableDeclaration",
                     "src": "684:13:35"
                   },
@@ -248,7 +248,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_input",
-                      "scope": 8485,
+                      "scope": 8526,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes calldata",
@@ -261,12 +261,12 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 8431,
+                        "id": 8472,
                         "name": "ElementaryTypeName",
                         "src": "699:5:35"
                       }
                     ],
-                    "id": 8432,
+                    "id": 8473,
                     "name": "VariableDeclaration",
                     "src": "699:12:35"
                   },
@@ -274,7 +274,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_blacklist",
-                      "scope": 8485,
+                      "scope": 8526,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address[] calldata",
@@ -293,22 +293,22 @@
                               "name": "address",
                               "type": "address"
                             },
-                            "id": 8433,
+                            "id": 8474,
                             "name": "ElementaryTypeName",
                             "src": "713:7:35"
                           }
                         ],
-                        "id": 8434,
+                        "id": 8475,
                         "name": "ArrayTypeName",
                         "src": "713:9:35"
                       }
                     ],
-                    "id": 8435,
+                    "id": 8476,
                     "name": "VariableDeclaration",
                     "src": "713:20:35"
                   }
                 ],
-                "id": 8436,
+                "id": 8477,
                 "name": "ParameterList",
                 "src": "683:51:35"
               },
@@ -318,7 +318,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "",
-                      "scope": 8485,
+                      "scope": 8526,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes memory",
@@ -331,17 +331,17 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 8437,
+                        "id": 8478,
                         "name": "ElementaryTypeName",
                         "src": "753:5:35"
                       }
                     ],
-                    "id": 8438,
+                    "id": 8479,
                     "name": "VariableDeclaration",
                     "src": "753:5:35"
                   }
                 ],
-                "id": 8439,
+                "id": 8480,
                 "name": "ParameterList",
                 "src": "752:7:35"
               },
@@ -375,11 +375,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 12408,
+                              "referencedDeclaration": 12544,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
-                            "id": 8440,
+                            "id": 8481,
                             "name": "Identifier",
                             "src": "770:7:35"
                           },
@@ -416,16 +416,16 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 8435,
+                                      "referencedDeclaration": 8476,
                                       "type": "address[] calldata",
                                       "value": "_blacklist"
                                     },
-                                    "id": 8441,
+                                    "id": 8482,
                                     "name": "Identifier",
                                     "src": "778:10:35"
                                   }
                                 ],
-                                "id": 8442,
+                                "id": 8483,
                                 "name": "MemberAccess",
                                 "src": "778:17:35"
                               },
@@ -442,29 +442,29 @@
                                   "type": "int_const 0",
                                   "value": "0"
                                 },
-                                "id": 8443,
+                                "id": 8484,
                                 "name": "Literal",
                                 "src": "799:1:35"
                               }
                             ],
-                            "id": 8444,
+                            "id": 8485,
                             "name": "BinaryOperation",
                             "src": "778:22:35"
                           }
                         ],
-                        "id": 8445,
+                        "id": 8486,
                         "name": "FunctionCall",
                         "src": "770:31:35"
                       }
                     ],
-                    "id": 8446,
+                    "id": 8487,
                     "name": "ExpressionStatement",
                     "src": "770:31:35"
                   },
                   {
                     "attributes": {
                       "assignments": [
-                        8448
+                        8489
                       ]
                     },
                     "children": [
@@ -472,7 +472,7 @@
                         "attributes": {
                           "constant": false,
                           "name": "id",
-                          "scope": 8485,
+                          "scope": 8526,
                           "stateVariable": false,
                           "storageLocation": "default",
                           "type": "bytes32",
@@ -485,12 +485,12 @@
                               "name": "bytes32",
                               "type": "bytes32"
                             },
-                            "id": 8447,
+                            "id": 8488,
                             "name": "ElementaryTypeName",
                             "src": "859:7:35"
                           }
                         ],
-                        "id": 8448,
+                        "id": 8489,
                         "name": "VariableDeclaration",
                         "src": "859:10:35"
                       },
@@ -520,11 +520,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 12399,
+                              "referencedDeclaration": 12535,
                               "type": "function () pure returns (bytes32)",
                               "value": "keccak256"
                             },
-                            "id": 8449,
+                            "id": 8490,
                             "name": "Identifier",
                             "src": "872:9:35"
                           },
@@ -534,28 +534,28 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 8430,
+                              "referencedDeclaration": 8471,
                               "type": "bytes calldata",
                               "value": "_script"
                             },
-                            "id": 8450,
+                            "id": 8491,
                             "name": "Identifier",
                             "src": "882:7:35"
                           }
                         ],
-                        "id": 8451,
+                        "id": 8492,
                         "name": "FunctionCall",
                         "src": "872:18:35"
                       }
                     ],
-                    "id": 8452,
+                    "id": 8493,
                     "name": "VariableDeclarationStatement",
                     "src": "859:31:35"
                   },
                   {
                     "attributes": {
                       "assignments": [
-                        8454
+                        8495
                       ]
                     },
                     "children": [
@@ -563,7 +563,7 @@
                         "attributes": {
                           "constant": false,
                           "name": "deployed",
-                          "scope": 8485,
+                          "scope": 8526,
                           "stateVariable": false,
                           "storageLocation": "default",
                           "type": "address",
@@ -576,12 +576,12 @@
                               "name": "address",
                               "type": "address"
                             },
-                            "id": 8453,
+                            "id": 8494,
                             "name": "ElementaryTypeName",
                             "src": "900:7:35"
                           }
                         ],
-                        "id": 8454,
+                        "id": 8495,
                         "name": "VariableDeclaration",
                         "src": "900:16:35"
                       },
@@ -601,11 +601,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 8428,
+                              "referencedDeclaration": 8469,
                               "type": "mapping(bytes32 => address)",
                               "value": "cache"
                             },
-                            "id": 8455,
+                            "id": 8496,
                             "name": "Identifier",
                             "src": "919:5:35"
                           },
@@ -615,21 +615,21 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 8448,
+                              "referencedDeclaration": 8489,
                               "type": "bytes32",
                               "value": "id"
                             },
-                            "id": 8456,
+                            "id": 8497,
                             "name": "Identifier",
                             "src": "925:2:35"
                           }
                         ],
-                        "id": 8457,
+                        "id": 8498,
                         "name": "IndexAccess",
                         "src": "919:9:35"
                       }
                     ],
-                    "id": 8458,
+                    "id": 8499,
                     "name": "VariableDeclarationStatement",
                     "src": "900:28:35"
                   },
@@ -659,11 +659,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 8454,
+                              "referencedDeclaration": 8495,
                               "type": "address",
                               "value": "deployed"
                             },
-                            "id": 8459,
+                            "id": 8500,
                             "name": "Identifier",
                             "src": "942:8:35"
                           },
@@ -697,7 +697,7 @@
                                   "type": "type(address)",
                                   "value": "address"
                                 },
-                                "id": 8460,
+                                "id": 8501,
                                 "name": "ElementaryTypeNameExpression",
                                 "src": "954:7:35"
                               },
@@ -714,17 +714,17 @@
                                   "type": "int_const 0",
                                   "value": "0"
                                 },
-                                "id": 8461,
+                                "id": 8502,
                                 "name": "Literal",
                                 "src": "962:1:35"
                               }
                             ],
-                            "id": 8462,
+                            "id": 8503,
                             "name": "FunctionCall",
                             "src": "954:10:35"
                           }
                         ],
-                        "id": 8463,
+                        "id": 8504,
                         "name": "BinaryOperation",
                         "src": "942:22:35"
                       },
@@ -749,11 +749,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 8454,
+                                      "referencedDeclaration": 8495,
                                       "type": "address",
                                       "value": "deployed"
                                     },
-                                    "id": 8464,
+                                    "id": 8505,
                                     "name": "Identifier",
                                     "src": "980:8:35"
                                   },
@@ -783,11 +783,11 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 8494,
+                                          "referencedDeclaration": 8535,
                                           "type": "function (bytes memory) returns (address)",
                                           "value": "deploy"
                                         },
-                                        "id": 8465,
+                                        "id": 8506,
                                         "name": "Identifier",
                                         "src": "991:6:35"
                                       },
@@ -797,26 +797,26 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 8430,
+                                          "referencedDeclaration": 8471,
                                           "type": "bytes calldata",
                                           "value": "_script"
                                         },
-                                        "id": 8466,
+                                        "id": 8507,
                                         "name": "Identifier",
                                         "src": "998:7:35"
                                       }
                                     ],
-                                    "id": 8467,
+                                    "id": 8508,
                                     "name": "FunctionCall",
                                     "src": "991:15:35"
                                   }
                                 ],
-                                "id": 8468,
+                                "id": 8509,
                                 "name": "Assignment",
                                 "src": "980:26:35"
                               }
                             ],
-                            "id": 8469,
+                            "id": 8510,
                             "name": "ExpressionStatement",
                             "src": "980:26:35"
                           },
@@ -849,11 +849,11 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 8428,
+                                          "referencedDeclaration": 8469,
                                           "type": "mapping(bytes32 => address)",
                                           "value": "cache"
                                         },
-                                        "id": 8470,
+                                        "id": 8511,
                                         "name": "Identifier",
                                         "src": "1020:5:35"
                                       },
@@ -863,16 +863,16 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 8448,
+                                          "referencedDeclaration": 8489,
                                           "type": "bytes32",
                                           "value": "id"
                                         },
-                                        "id": 8471,
+                                        "id": 8512,
                                         "name": "Identifier",
                                         "src": "1026:2:35"
                                       }
                                     ],
-                                    "id": 8472,
+                                    "id": 8513,
                                     "name": "IndexAccess",
                                     "src": "1020:9:35"
                                   },
@@ -882,37 +882,37 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 8454,
+                                      "referencedDeclaration": 8495,
                                       "type": "address",
                                       "value": "deployed"
                                     },
-                                    "id": 8473,
+                                    "id": 8514,
                                     "name": "Identifier",
                                     "src": "1032:8:35"
                                   }
                                 ],
-                                "id": 8474,
+                                "id": 8515,
                                 "name": "Assignment",
                                 "src": "1020:20:35"
                               }
                             ],
-                            "id": 8475,
+                            "id": 8516,
                             "name": "ExpressionStatement",
                             "src": "1020:20:35"
                           }
                         ],
-                        "id": 8476,
+                        "id": 8517,
                         "name": "Block",
                         "src": "966:85:35"
                       }
                     ],
-                    "id": 8477,
+                    "id": 8518,
                     "name": "IfStatement",
                     "src": "938:113:35"
                   },
                   {
                     "attributes": {
-                      "functionReturnParameters": 8439
+                      "functionReturnParameters": 8480
                     },
                     "children": [
                       {
@@ -947,7 +947,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "delegate",
-                              "referencedDeclaration": 8376,
+                              "referencedDeclaration": 8417,
                               "type": "function (address,bytes memory) returns (bytes memory)"
                             },
                             "children": [
@@ -957,16 +957,16 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 8416,
+                                  "referencedDeclaration": 8457,
                                   "type": "type(contract DelegateScript)",
                                   "value": "DelegateScript"
                                 },
-                                "id": 8478,
+                                "id": 8519,
                                 "name": "Identifier",
                                 "src": "1068:14:35"
                               }
                             ],
-                            "id": 8479,
+                            "id": 8520,
                             "name": "MemberAccess",
                             "src": "1068:23:35"
                           },
@@ -976,11 +976,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 8454,
+                              "referencedDeclaration": 8495,
                               "type": "address",
                               "value": "deployed"
                             },
-                            "id": 8480,
+                            "id": 8521,
                             "name": "Identifier",
                             "src": "1092:8:35"
                           },
@@ -990,31 +990,31 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 8432,
+                              "referencedDeclaration": 8473,
                               "type": "bytes calldata",
                               "value": "_input"
                             },
-                            "id": 8481,
+                            "id": 8522,
                             "name": "Identifier",
                             "src": "1102:6:35"
                           }
                         ],
-                        "id": 8482,
+                        "id": 8523,
                         "name": "FunctionCall",
                         "src": "1068:41:35"
                       }
                     ],
-                    "id": 8483,
+                    "id": 8524,
                     "name": "Return",
                     "src": "1061:48:35"
                   }
                 ],
-                "id": 8484,
+                "id": 8525,
                 "name": "Block",
                 "src": "760:356:35"
               }
             ],
-            "id": 8485,
+            "id": 8526,
             "name": "FunctionDefinition",
             "src": "664:452:35"
           },
@@ -1028,7 +1028,7 @@
               ],
               "name": "deploy",
               "payable": false,
-              "scope": 8495,
+              "scope": 8536,
               "stateMutability": "nonpayable",
               "superFunction": null,
               "visibility": "internal"
@@ -1040,7 +1040,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_script",
-                      "scope": 8494,
+                      "scope": 8535,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes memory",
@@ -1053,17 +1053,17 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 8486,
+                        "id": 8527,
                         "name": "ElementaryTypeName",
                         "src": "1202:5:35"
                       }
                     ],
-                    "id": 8487,
+                    "id": 8528,
                     "name": "VariableDeclaration",
                     "src": "1202:13:35"
                   }
                 ],
-                "id": 8488,
+                "id": 8529,
                 "name": "ParameterList",
                 "src": "1201:15:35"
               },
@@ -1073,7 +1073,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "addr",
-                      "scope": 8494,
+                      "scope": 8535,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -1086,17 +1086,17 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 8489,
+                        "id": 8530,
                         "name": "ElementaryTypeName",
                         "src": "1235:7:35"
                       }
                     ],
-                    "id": 8490,
+                    "id": 8531,
                     "name": "VariableDeclaration",
                     "src": "1235:12:35"
                   }
                 ],
-                "id": 8491,
+                "id": 8532,
                 "name": "ParameterList",
                 "src": "1234:14:35"
               },
@@ -1107,7 +1107,7 @@
                       "externalReferences": [
                         {
                           "addr": {
-                            "declaration": 8490,
+                            "declaration": 8531,
                             "isOffset": false,
                             "isSlot": false,
                             "src": "1411:4:35",
@@ -1116,7 +1116,7 @@
                         },
                         {
                           "_script": {
-                            "declaration": 8487,
+                            "declaration": 8528,
                             "isOffset": false,
                             "isSlot": false,
                             "src": "1433:7:35",
@@ -1125,7 +1125,7 @@
                         },
                         {
                           "addr": {
-                            "declaration": 8490,
+                            "declaration": 8531,
                             "isOffset": false,
                             "isSlot": false,
                             "src": "1514:4:35",
@@ -1134,7 +1134,7 @@
                         },
                         {
                           "_script": {
-                            "declaration": 8487,
+                            "declaration": 8528,
                             "isOffset": false,
                             "isSlot": false,
                             "src": "1459:7:35",
@@ -1145,27 +1145,27 @@
                       "operations": "{\n    addr := create(0, add(_script, 0x24), sub(mload(_script), 0x04))\n    switch iszero(extcodesize(addr))\n    case 1 {\n        revert(0, 0)\n    }\n}"
                     },
                     "children": [],
-                    "id": 8492,
+                    "id": 8533,
                     "name": "InlineAssembly",
                     "src": "1259:351:35"
                   }
                 ],
-                "id": 8493,
+                "id": 8534,
                 "name": "Block",
                 "src": "1249:361:35"
               }
             ],
-            "id": 8494,
+            "id": 8535,
             "name": "FunctionDefinition",
             "src": "1186:424:35"
           }
         ],
-        "id": 8495,
+        "id": 8536,
         "name": "ContractDefinition",
         "src": "137:1475:35"
       }
     ],
-    "id": 8496,
+    "id": 8537,
     "name": "SourceUnit",
     "src": "0:1612:35"
   },
@@ -1175,5 +1175,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.148Z"
+  "updatedAt": "2018-03-05T17:18:03.438Z"
 }

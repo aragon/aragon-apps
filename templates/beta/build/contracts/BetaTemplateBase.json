@@ -175,8 +175,8 @@
       "type": "event"
     }
   ],
-  "bytecode": "0x6060604052341561000f57600080fd5b6040516101208061091e8339810160405280805190602001909190805190602001909190805190602001909190805190602001909190805190602001909150836000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555085600160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555084600260006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555082600360006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555081600460006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508060059060046101a39291906101af565b5050505050505061021a565b82600481019282156101e4579160200282015b828111156101e35782518290600019169055916020019190600101906101c2565b5b5090506101f191906101f5565b5090565b61021791905b808211156102135760008160009055506001016101fb565b5090565b90565b6106f5806102296000396000f300606060405260043610610083576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063039fa76014610088578063b8066bcb146100dd578063bc8c35f214610132578063c3b3147214610187578063c6d2c717146101dc578063d165603f14610243578063ef41afcd14610298575b600080fd5b341561009357600080fd5b61009b6102d7565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156100e857600080fd5b6100f06102fd565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561013d57600080fd5b610145610323565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561019257600080fd5b61019a610348565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156101e757600080fd5b61020160048080356000191690602001909190505061036e565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561024e57600080fd5b610256610554565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156102a357600080fd5b6102b9600480803590602001909190505061057a565b60405180826000191660001916815260200191505060405180910390f35b600260009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600360009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600080610379610594565b73ffffffffffffffffffffffffffffffffffffffff16630178b8bf846000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808260001916600019168152602001915050602060405180830381600087803b15156103f757600080fd5b6102c65a03f1151561040857600080fd5b5050506040518051905073ffffffffffffffffffffffffffffffffffffffff16633b3b57de846000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808260001916600019168152602001915050602060405180830381600087803b151561049057600080fd5b6102c65a03f115156104a157600080fd5b5050506040518051905090508073ffffffffffffffffffffffffffffffffffffffff1663c36af460600060405160a001526040518163ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040160a060405180830381600087803b151561051957600080fd5b6102c65a03f1151561052a57600080fd5b50505060405180606001805190602001805190602001604052909150508092505081915050919050565b600460009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b60058160048110151561058957fe5b016000915090505481565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16632b20e3976000604051602001526040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401602060405180830381600087803b151561062357600080fd5b6102c65a03f1151561063457600080fd5b5050506040518051905073ffffffffffffffffffffffffffffffffffffffff16633f15457f6000604051602001526040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401602060405180830381600087803b15156106a957600080fd5b6102c65a03f115156106ba57600080fd5b505050604051805190509050905600a165627a7a723058206772c14bc72874f20a3512214dc6368b2ea4f7715fe11e0c485a034e8fd92b8a0029",
-  "deployedBytecode": "0x606060405260043610610083576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063039fa76014610088578063b8066bcb146100dd578063bc8c35f214610132578063c3b3147214610187578063c6d2c717146101dc578063d165603f14610243578063ef41afcd14610298575b600080fd5b341561009357600080fd5b61009b6102d7565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156100e857600080fd5b6100f06102fd565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561013d57600080fd5b610145610323565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561019257600080fd5b61019a610348565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156101e757600080fd5b61020160048080356000191690602001909190505061036e565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561024e57600080fd5b610256610554565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156102a357600080fd5b6102b9600480803590602001909190505061057a565b60405180826000191660001916815260200191505060405180910390f35b600260009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600360009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600080610379610594565b73ffffffffffffffffffffffffffffffffffffffff16630178b8bf846000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808260001916600019168152602001915050602060405180830381600087803b15156103f757600080fd5b6102c65a03f1151561040857600080fd5b5050506040518051905073ffffffffffffffffffffffffffffffffffffffff16633b3b57de846000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808260001916600019168152602001915050602060405180830381600087803b151561049057600080fd5b6102c65a03f115156104a157600080fd5b5050506040518051905090508073ffffffffffffffffffffffffffffffffffffffff1663c36af460600060405160a001526040518163ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040160a060405180830381600087803b151561051957600080fd5b6102c65a03f1151561052a57600080fd5b50505060405180606001805190602001805190602001604052909150508092505081915050919050565b600460009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b60058160048110151561058957fe5b016000915090505481565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16632b20e3976000604051602001526040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401602060405180830381600087803b151561062357600080fd5b6102c65a03f1151561063457600080fd5b5050506040518051905073ffffffffffffffffffffffffffffffffffffffff16633f15457f6000604051602001526040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401602060405180830381600087803b15156106a957600080fd5b6102c65a03f115156106ba57600080fd5b505050604051805190509050905600a165627a7a723058206772c14bc72874f20a3512214dc6368b2ea4f7715fe11e0c485a034e8fd92b8a0029",
+  "bytecode": "0x6060604052341561000f57600080fd5b6040516101208061091e8339810160405280805190602001909190805190602001909190805190602001909190805190602001909190805190602001909150836000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555085600160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555084600260006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555082600360006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555081600460006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508060059060046101a39291906101af565b5050505050505061021a565b82600481019282156101e4579160200282015b828111156101e35782518290600019169055916020019190600101906101c2565b5b5090506101f191906101f5565b5090565b61021791905b808211156102135760008160009055506001016101fb565b5090565b90565b6106f5806102296000396000f300606060405260043610610083576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063039fa76014610088578063b8066bcb146100dd578063bc8c35f214610132578063c3b3147214610187578063c6d2c717146101dc578063d165603f14610243578063ef41afcd14610298575b600080fd5b341561009357600080fd5b61009b6102d7565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156100e857600080fd5b6100f06102fd565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561013d57600080fd5b610145610323565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561019257600080fd5b61019a610348565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156101e757600080fd5b61020160048080356000191690602001909190505061036e565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561024e57600080fd5b610256610554565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156102a357600080fd5b6102b9600480803590602001909190505061057a565b60405180826000191660001916815260200191505060405180910390f35b600260009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600360009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600080610379610594565b73ffffffffffffffffffffffffffffffffffffffff16630178b8bf846000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808260001916600019168152602001915050602060405180830381600087803b15156103f757600080fd5b6102c65a03f1151561040857600080fd5b5050506040518051905073ffffffffffffffffffffffffffffffffffffffff16633b3b57de846000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808260001916600019168152602001915050602060405180830381600087803b151561049057600080fd5b6102c65a03f115156104a157600080fd5b5050506040518051905090508073ffffffffffffffffffffffffffffffffffffffff1663c36af460600060405160a001526040518163ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040160a060405180830381600087803b151561051957600080fd5b6102c65a03f1151561052a57600080fd5b50505060405180606001805190602001805190602001604052909150508092505081915050919050565b600460009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b60058160048110151561058957fe5b016000915090505481565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16632b20e3976000604051602001526040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401602060405180830381600087803b151561062357600080fd5b6102c65a03f1151561063457600080fd5b5050506040518051905073ffffffffffffffffffffffffffffffffffffffff16633f15457f6000604051602001526040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401602060405180830381600087803b15156106a957600080fd5b6102c65a03f115156106ba57600080fd5b505050604051805190509050905600a165627a7a7230582017f376ed52380584bd8fa2ece34661e215f63ec74402a7d003aa95054398f76c0029",
+  "deployedBytecode": "0x606060405260043610610083576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063039fa76014610088578063b8066bcb146100dd578063bc8c35f214610132578063c3b3147214610187578063c6d2c717146101dc578063d165603f14610243578063ef41afcd14610298575b600080fd5b341561009357600080fd5b61009b6102d7565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156100e857600080fd5b6100f06102fd565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561013d57600080fd5b610145610323565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561019257600080fd5b61019a610348565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156101e757600080fd5b61020160048080356000191690602001909190505061036e565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b341561024e57600080fd5b610256610554565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156102a357600080fd5b6102b9600480803590602001909190505061057a565b60405180826000191660001916815260200191505060405180910390f35b600260009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600360009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600080610379610594565b73ffffffffffffffffffffffffffffffffffffffff16630178b8bf846000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808260001916600019168152602001915050602060405180830381600087803b15156103f757600080fd5b6102c65a03f1151561040857600080fd5b5050506040518051905073ffffffffffffffffffffffffffffffffffffffff16633b3b57de846000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808260001916600019168152602001915050602060405180830381600087803b151561049057600080fd5b6102c65a03f115156104a157600080fd5b5050506040518051905090508073ffffffffffffffffffffffffffffffffffffffff1663c36af460600060405160a001526040518163ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040160a060405180830381600087803b151561051957600080fd5b6102c65a03f1151561052a57600080fd5b50505060405180606001805190602001805190602001604052909150508092505081915050919050565b600460009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b60058160048110151561058957fe5b016000915090505481565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16632b20e3976000604051602001526040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401602060405180830381600087803b151561062357600080fd5b6102c65a03f1151561063457600080fd5b5050506040518051905073ffffffffffffffffffffffffffffffffffffffff16633f15457f6000604051602001526040518163ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401602060405180830381600087803b15156106a957600080fd5b6102c65a03f115156106ba57600080fd5b505050604051805190509050905600a165627a7a7230582017f376ed52380584bd8fa2ece34661e215f63ec74402a7d003aa95054398f76c0029",
   "sourceMap": "613:4534:0:-;;;1161:347;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1355:4;1349:3;;:10;;;;;;;;;;;;;;;;;;1375:4;1369:3;;:10;;;;;;;;;;;;;;;;;;1401;1389:9;;:22;;;;;;;;;;;;;;;;;;1434:11;1421:10;;:24;;;;;;;;;;;;;;;;;;1466:9;1455:8;;:20;;;;;;;;;;;;;;;;;;1494:7;1485:6;:16;;;;;;;:::i;:::-;;1161:347;;;;;;613:4534;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;",
   "deployedSourceMap": "613:4534:0:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;700:35;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;741:28;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;645:22;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;673:21;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;4820:223;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;775:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;820:24;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;700:35;;;;;;;;;;;;;:::o;741:28::-;;;;;;;;;;;;;:::o;645:22::-;;;;;;;;;;;;;:::o;673:21::-;;;;;;;;;;;;;:::o;4820:223::-;4886:12;4910:9;4942:5;:3;:5::i;:::-;:14;;;4957:5;4942:21;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;4927:42;;;4970:5;4927:49;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;4910:67;;4998:4;:14;;;:16;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;4987:27;;;;;;;;5032:4;5025:11;;4820:223;;;;:::o;775:39::-;;;;;;;;;;;;;:::o;820:24::-;;;;;;;;;;;;;;;;;;;;:::o;5049:96::-;5087:11;5117:3;;;;;;;;;;;:13;;;:15;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:19;;;:21;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;5110:28;;5049:96;:::o",
   "source": "pragma solidity 0.4.18;\n\nimport \"@aragon/os/contracts/apm/APMRegistry.sol\";\nimport \"@aragon/os/contracts/factory/DAOFactory.sol\";\nimport \"@aragon/os/contracts/kernel/Kernel.sol\";\nimport \"@aragon/os/contracts/acl/ACL.sol\";\nimport \"@aragon/os/contracts/lib/minime/MiniMeToken.sol\";\nimport \"@aragon/os/contracts/common/EtherToken.sol\";\n\nimport \"@aragon/id/contracts/IFIFSResolvingRegistrar.sol\";\n\nimport \"@aragon/apps-voting/contracts/Voting.sol\";\nimport \"@aragon/apps-vault/contracts/Vault.sol\";\nimport \"@aragon/apps-token-manager/contracts/TokenManager.sol\";\nimport \"@aragon/apps-finance/contracts/Finance.sol\";\n\n\ncontract BetaTemplateBase {\n    APMRegistry public apm;\n    DAOFactory public fac;\n    MiniMeTokenFactory public minimeFac;\n    EtherToken public etherToken;\n    IFIFSResolvingRegistrar public aragonID;\n    bytes32[4] public appIds;\n\n    mapping (address => address) tokenCache;\n\n    // ensure alphabetic order\n    enum Apps { Finance, TokenManager, Vault, Voting }\n\n    event DeployToken(address token, address indexed cacheOwner);\n    event DeployInstance(address dao, address indexed token);\n\n    address constant ANY_ENTITY = address(-1);\n\n    function BetaTemplateBase(DAOFactory _fac, MiniMeTokenFactory _minimeFac, APMRegistry _apm, EtherToken _etherToken, IFIFSResolvingRegistrar _aragonID, bytes32[4] _appIds) public {\n        apm = _apm;\n        fac = _fac;\n        minimeFac = _minimeFac;\n        etherToken = _etherToken;\n        aragonID = _aragonID;\n        appIds = _appIds;\n    }\n\n    function createDAO(string name, MiniMeToken token, address[] holders, uint256[] stakes, uint256 _maxTokens) internal returns (Voting) {\n        Kernel dao = fac.newDAO(this);\n\n        ACL acl = ACL(dao.acl());\n\n        acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);\n\n        Voting voting = Voting(dao.newAppInstance(appIds[uint8(Apps.Voting)], latestVersionAppBase(appIds[uint8(Apps.Voting)])));\n        Vault vault = Vault(dao.newAppInstance(appIds[uint8(Apps.Vault)], latestVersionAppBase(appIds[uint8(Apps.Vault)])));\n        Finance finance = Finance(dao.newAppInstance(appIds[uint8(Apps.Finance)], latestVersionAppBase(appIds[uint8(Apps.Finance)])));\n        TokenManager tokenManager = TokenManager(dao.newAppInstance(appIds[uint8(Apps.TokenManager)], latestVersionAppBase(appIds[uint8(Apps.TokenManager)])));\n\n        token.changeController(tokenManager); // sender has to create tokens\n\n        // permissions\n        acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), voting);\n        acl.createPermission(voting, voting, voting.MODIFY_QUORUM_ROLE(), voting);\n\n        acl.createPermission(finance, vault, vault.TRANSFER_ROLE(), voting);\n        acl.createPermission(voting, finance, finance.CREATE_PAYMENTS_ROLE(), voting);\n        acl.createPermission(voting, finance, finance.EXECUTE_PAYMENTS_ROLE(), voting);\n        acl.createPermission(voting, finance, finance.DISABLE_PAYMENTS_ROLE(), voting);\n        acl.createPermission(voting, tokenManager, tokenManager.ASSIGN_ROLE(), voting);\n        acl.createPermission(voting, tokenManager, tokenManager.REVOKE_VESTINGS_ROLE(), voting);\n\n        require(holders.length == stakes.length);\n\n        acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);\n\n        tokenManager.initialize(token, _maxTokens > 1, _maxTokens, true);\n\n        for (uint256 i = 0; i < holders.length; i++) {\n            tokenManager.mint(holders[i], stakes[i]);\n        }\n\n        // inits\n        finance.initialize(vault, etherToken, uint64(-1)); // yuge period\n\n        // clean-up\n        acl.grantPermission(voting, dao, dao.APP_MANAGER_ROLE());\n        acl.setPermissionManager(voting, dao, dao.APP_MANAGER_ROLE());\n        acl.grantPermission(voting, acl, acl.CREATE_PERMISSIONS_ROLE());\n        acl.setPermissionManager(voting, acl, acl.CREATE_PERMISSIONS_ROLE());\n        acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());\n        acl.setPermissionManager(voting, tokenManager, tokenManager.MINT_ROLE());\n        // no revokes to save gas as factory can't do anything to orgs (clutters acl representation)\n\n        registerAragonID(name, dao);\n        DeployInstance(dao, token);\n\n        // voting is returned so init can happen later\n        return voting;\n    }\n\n    function cacheToken(MiniMeToken token, address owner) internal {\n        tokenCache[owner] = token;\n        DeployToken(token, owner);\n    }\n\n    function popTokenCache(address owner) internal returns (MiniMeToken) {\n        require(tokenCache[owner] != address(0));\n        MiniMeToken token = MiniMeToken(tokenCache[owner]);\n        delete tokenCache[owner];\n\n        return token;\n    }\n\n    function registerAragonID(string name, address owner) internal {\n        aragonID.register(keccak256(name), owner);\n    }\n\n    function latestVersionAppBase(bytes32 appId) public view returns (address base) {\n        Repo repo = Repo(PublicResolver(ens().resolver(appId)).addr(appId));\n        (,base,) = repo.getLatest();\n\n        return base;\n    }\n\n    function ens() internal view returns (AbstractENS) {\n        return apm.registrar().ens();\n    }\n}\n",
@@ -205,7 +205,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 6190,
+          "SourceUnit": 6231,
           "absolutePath": "@aragon/os/contracts/apm/APMRegistry.sol",
           "file": "@aragon/os/contracts/apm/APMRegistry.sol",
           "scope": 573,
@@ -220,7 +220,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 9178,
+          "SourceUnit": 9219,
           "absolutePath": "@aragon/os/contracts/factory/DAOFactory.sol",
           "file": "@aragon/os/contracts/factory/DAOFactory.sol",
           "scope": 573,
@@ -235,7 +235,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 9802,
+          "SourceUnit": 9843,
           "absolutePath": "@aragon/os/contracts/kernel/Kernel.sol",
           "file": "@aragon/os/contracts/kernel/Kernel.sol",
           "scope": 573,
@@ -250,7 +250,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 5431,
+          "SourceUnit": 5462,
           "absolutePath": "@aragon/os/contracts/acl/ACL.sol",
           "file": "@aragon/os/contracts/acl/ACL.sol",
           "scope": 573,
@@ -265,7 +265,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 11825,
+          "SourceUnit": 11866,
           "absolutePath": "@aragon/os/contracts/lib/minime/MiniMeToken.sol",
           "file": "@aragon/os/contracts/lib/minime/MiniMeToken.sol",
           "scope": 573,
@@ -280,7 +280,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 7106,
+          "SourceUnit": 7147,
           "absolutePath": "@aragon/os/contracts/common/EtherToken.sol",
           "file": "@aragon/os/contracts/common/EtherToken.sol",
           "scope": 573,
@@ -295,7 +295,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 4280,
+          "SourceUnit": 4311,
           "absolutePath": "@aragon/id/contracts/IFIFSResolvingRegistrar.sol",
           "file": "@aragon/id/contracts/IFIFSResolvingRegistrar.sol",
           "scope": 573,
@@ -310,7 +310,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 4260,
+          "SourceUnit": 4291,
           "absolutePath": "@aragon/apps-voting/contracts/Voting.sol",
           "file": "@aragon/apps-voting/contracts/Voting.sol",
           "scope": 573,
@@ -325,7 +325,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 3464,
+          "SourceUnit": 3471,
           "absolutePath": "@aragon/apps-vault/contracts/Vault.sol",
           "file": "@aragon/apps-vault/contracts/Vault.sol",
           "scope": 573,
@@ -340,7 +340,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 3295,
+          "SourceUnit": 3302,
           "absolutePath": "@aragon/apps-token-manager/contracts/TokenManager.sol",
           "file": "@aragon/apps-token-manager/contracts/TokenManager.sol",
           "scope": 573,
@@ -355,7 +355,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 2500,
+          "SourceUnit": 2507,
           "absolutePath": "@aragon/apps-finance/contracts/Finance.sol",
           "file": "@aragon/apps-finance/contracts/Finance.sol",
           "scope": 573,
@@ -402,7 +402,7 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "APMRegistry",
-                  "referencedDeclaration": 6189,
+                  "referencedDeclaration": 6230,
                   "type": "contract APMRegistry"
                 },
                 "id": 13,
@@ -430,7 +430,7 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "DAOFactory",
-                  "referencedDeclaration": 9177,
+                  "referencedDeclaration": 9218,
                   "type": "contract DAOFactory"
                 },
                 "id": 15,
@@ -458,7 +458,7 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "MiniMeTokenFactory",
-                  "referencedDeclaration": 11824,
+                  "referencedDeclaration": 11865,
                   "type": "contract MiniMeTokenFactory"
                 },
                 "id": 17,
@@ -486,7 +486,7 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "EtherToken",
-                  "referencedDeclaration": 7105,
+                  "referencedDeclaration": 7146,
                   "type": "contract EtherToken"
                 },
                 "id": 19,
@@ -514,7 +514,7 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "IFIFSResolvingRegistrar",
-                  "referencedDeclaration": 4279,
+                  "referencedDeclaration": 4310,
                   "type": "contract IFIFSResolvingRegistrar"
                 },
                 "id": 21,
@@ -943,7 +943,7 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "DAOFactory",
-                          "referencedDeclaration": 9177,
+                          "referencedDeclaration": 9218,
                           "type": "contract DAOFactory"
                         },
                         "id": 54,
@@ -971,7 +971,7 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "MiniMeTokenFactory",
-                          "referencedDeclaration": 11824,
+                          "referencedDeclaration": 11865,
                           "type": "contract MiniMeTokenFactory"
                         },
                         "id": 56,
@@ -999,7 +999,7 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "APMRegistry",
-                          "referencedDeclaration": 6189,
+                          "referencedDeclaration": 6230,
                           "type": "contract APMRegistry"
                         },
                         "id": 58,
@@ -1027,7 +1027,7 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "EtherToken",
-                          "referencedDeclaration": 7105,
+                          "referencedDeclaration": 7146,
                           "type": "contract EtherToken"
                         },
                         "id": 60,
@@ -1055,7 +1055,7 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "IFIFSResolvingRegistrar",
-                          "referencedDeclaration": 4279,
+                          "referencedDeclaration": 4310,
                           "type": "contract IFIFSResolvingRegistrar"
                         },
                         "id": 62,
@@ -1514,7 +1514,7 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "MiniMeToken",
-                          "referencedDeclaration": 11783,
+                          "referencedDeclaration": 11824,
                           "type": "contract MiniMeToken"
                         },
                         "id": 98,
@@ -1649,7 +1649,7 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "Voting",
-                          "referencedDeclaration": 4259,
+                          "referencedDeclaration": 4290,
                           "type": "contract Voting"
                         },
                         "id": 109,
@@ -1691,7 +1691,7 @@
                             "attributes": {
                               "contractScope": null,
                               "name": "Kernel",
-                              "referencedDeclaration": 9801,
+                              "referencedDeclaration": 9842,
                               "type": "contract Kernel"
                             },
                             "id": 112,
@@ -1731,7 +1731,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "newDAO",
-                              "referencedDeclaration": 9176,
+                              "referencedDeclaration": 9217,
                               "type": "function (address) external returns (contract Kernel)"
                             },
                             "children": [
@@ -1760,7 +1760,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 12534,
+                              "referencedDeclaration": 12672,
                               "type": "contract BetaTemplateBase",
                               "value": "this"
                             },
@@ -1801,7 +1801,7 @@
                             "attributes": {
                               "contractScope": null,
                               "name": "ACL",
-                              "referencedDeclaration": 5430,
+                              "referencedDeclaration": 5461,
                               "type": "contract ACL"
                             },
                             "id": 119,
@@ -1832,14 +1832,14 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_IACL_$5921",
+                                  "typeIdentifier": "t_contract$_IACL_$5952",
                                   "typeString": "contract IACL"
                                 }
                               ],
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 5430,
+                              "referencedDeclaration": 5461,
                               "type": "type(contract ACL)",
                               "value": "ACL"
                             },
@@ -1875,7 +1875,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "acl",
-                                  "referencedDeclaration": 9634,
+                                  "referencedDeclaration": 9675,
                                   "type": "function () view external returns (contract IACL)"
                                 },
                                 "children": [
@@ -1938,7 +1938,7 @@
                                   "typeString": "contract BetaTemplateBase"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Kernel_$9801",
+                                  "typeIdentifier": "t_contract$_Kernel_$9842",
                                   "typeString": "contract Kernel"
                                 },
                                 {
@@ -1955,7 +1955,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "createPermission",
-                              "referencedDeclaration": 4503,
+                              "referencedDeclaration": 4534,
                               "type": "function (address,address,bytes32,address) external"
                             },
                             "children": [
@@ -1984,7 +1984,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 12534,
+                              "referencedDeclaration": 12672,
                               "type": "contract BetaTemplateBase",
                               "value": "this"
                             },
@@ -2034,7 +2034,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "APP_MANAGER_ROLE",
-                                  "referencedDeclaration": 9483,
+                                  "referencedDeclaration": 9524,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -2068,7 +2068,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 12534,
+                              "referencedDeclaration": 12672,
                               "type": "contract BetaTemplateBase",
                               "value": "this"
                             },
@@ -2109,7 +2109,7 @@
                             "attributes": {
                               "contractScope": null,
                               "name": "Voting",
-                              "referencedDeclaration": 4259,
+                              "referencedDeclaration": 4290,
                               "type": "contract Voting"
                             },
                             "id": 138,
@@ -2140,14 +2140,14 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_IAppProxy_$6891",
+                                  "typeIdentifier": "t_contract$_IAppProxy_$6932",
                                   "typeString": "contract IAppProxy"
                                 }
                               ],
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 4259,
+                              "referencedDeclaration": 4290,
                               "type": "type(contract Voting)",
                               "value": "Voting"
                             },
@@ -2187,7 +2187,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "newAppInstance",
-                                  "referencedDeclaration": 9553,
+                                  "referencedDeclaration": 9594,
                                   "type": "function (bytes32,address) external returns (contract IAppProxy)"
                                 },
                                 "children": [
@@ -2485,7 +2485,7 @@
                             "attributes": {
                               "contractScope": null,
                               "name": "Vault",
-                              "referencedDeclaration": 3463,
+                              "referencedDeclaration": 3470,
                               "type": "contract Vault"
                             },
                             "id": 160,
@@ -2516,14 +2516,14 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_IAppProxy_$6891",
+                                  "typeIdentifier": "t_contract$_IAppProxy_$6932",
                                   "typeString": "contract IAppProxy"
                                 }
                               ],
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 3463,
+                              "referencedDeclaration": 3470,
                               "type": "type(contract Vault)",
                               "value": "Vault"
                             },
@@ -2563,7 +2563,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "newAppInstance",
-                                  "referencedDeclaration": 9553,
+                                  "referencedDeclaration": 9594,
                                   "type": "function (bytes32,address) external returns (contract IAppProxy)"
                                 },
                                 "children": [
@@ -2861,7 +2861,7 @@
                             "attributes": {
                               "contractScope": null,
                               "name": "Finance",
-                              "referencedDeclaration": 2499,
+                              "referencedDeclaration": 2506,
                               "type": "contract Finance"
                             },
                             "id": 182,
@@ -2892,14 +2892,14 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_IAppProxy_$6891",
+                                  "typeIdentifier": "t_contract$_IAppProxy_$6932",
                                   "typeString": "contract IAppProxy"
                                 }
                               ],
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2499,
+                              "referencedDeclaration": 2506,
                               "type": "type(contract Finance)",
                               "value": "Finance"
                             },
@@ -2939,7 +2939,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "newAppInstance",
-                                  "referencedDeclaration": 9553,
+                                  "referencedDeclaration": 9594,
                                   "type": "function (bytes32,address) external returns (contract IAppProxy)"
                                 },
                                 "children": [
@@ -3237,7 +3237,7 @@
                             "attributes": {
                               "contractScope": null,
                               "name": "TokenManager",
-                              "referencedDeclaration": 3294,
+                              "referencedDeclaration": 3301,
                               "type": "contract TokenManager"
                             },
                             "id": 204,
@@ -3268,14 +3268,14 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_IAppProxy_$6891",
+                                  "typeIdentifier": "t_contract$_IAppProxy_$6932",
                                   "typeString": "contract IAppProxy"
                                 }
                               ],
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 3294,
+                              "referencedDeclaration": 3301,
                               "type": "type(contract TokenManager)",
                               "value": "TokenManager"
                             },
@@ -3315,7 +3315,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "newAppInstance",
-                                  "referencedDeclaration": 9553,
+                                  "referencedDeclaration": 9594,
                                   "type": "function (bytes32,address) external returns (contract IAppProxy)"
                                 },
                                 "children": [
@@ -3611,7 +3611,7 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_TokenManager_$3294",
+                                  "typeIdentifier": "t_contract$_TokenManager_$3301",
                                   "typeString": "contract TokenManager"
                                 }
                               ],
@@ -3620,7 +3620,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "changeController",
-                              "referencedDeclaration": 10747,
+                              "referencedDeclaration": 10788,
                               "type": "function (address) external"
                             },
                             "children": [
@@ -3692,7 +3692,7 @@
                                   "typeString": "address"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
@@ -3700,7 +3700,7 @@
                                   "typeString": "bytes32"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 }
                               ],
@@ -3709,7 +3709,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "createPermission",
-                              "referencedDeclaration": 4503,
+                              "referencedDeclaration": 4534,
                               "type": "function (address,address,bytes32,address) external"
                             },
                             "children": [
@@ -3788,7 +3788,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "CREATE_VOTES_ROLE",
-                                  "referencedDeclaration": 3495,
+                                  "referencedDeclaration": 3506,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -3861,11 +3861,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
@@ -3873,7 +3873,7 @@
                                   "typeString": "bytes32"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 }
                               ],
@@ -3882,7 +3882,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "createPermission",
-                              "referencedDeclaration": 4503,
+                              "referencedDeclaration": 4534,
                               "type": "function (address,address,bytes32,address) external"
                             },
                             "children": [
@@ -3961,7 +3961,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "MODIFY_QUORUM_ROLE",
-                                  "referencedDeclaration": 3500,
+                                  "referencedDeclaration": 3511,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -4034,11 +4034,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Finance_$2499",
+                                  "typeIdentifier": "t_contract$_Finance_$2506",
                                   "typeString": "contract Finance"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Vault_$3463",
+                                  "typeIdentifier": "t_contract$_Vault_$3470",
                                   "typeString": "contract Vault"
                                 },
                                 {
@@ -4046,7 +4046,7 @@
                                   "typeString": "bytes32"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 }
                               ],
@@ -4055,7 +4055,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "createPermission",
-                              "referencedDeclaration": 4503,
+                              "referencedDeclaration": 4534,
                               "type": "function (address,address,bytes32,address) external"
                             },
                             "children": [
@@ -4134,7 +4134,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "TRANSFER_ROLE",
-                                  "referencedDeclaration": 3327,
+                                  "referencedDeclaration": 3334,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -4207,11 +4207,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Finance_$2499",
+                                  "typeIdentifier": "t_contract$_Finance_$2506",
                                   "typeString": "contract Finance"
                                 },
                                 {
@@ -4219,7 +4219,7 @@
                                   "typeString": "bytes32"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 }
                               ],
@@ -4228,7 +4228,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "createPermission",
-                              "referencedDeclaration": 4503,
+                              "referencedDeclaration": 4534,
                               "type": "function (address,address,bytes32,address) external"
                             },
                             "children": [
@@ -4307,7 +4307,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "CREATE_PAYMENTS_ROLE",
-                                  "referencedDeclaration": 925,
+                                  "referencedDeclaration": 929,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -4380,11 +4380,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Finance_$2499",
+                                  "typeIdentifier": "t_contract$_Finance_$2506",
                                   "typeString": "contract Finance"
                                 },
                                 {
@@ -4392,7 +4392,7 @@
                                   "typeString": "bytes32"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 }
                               ],
@@ -4401,7 +4401,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "createPermission",
-                              "referencedDeclaration": 4503,
+                              "referencedDeclaration": 4534,
                               "type": "function (address,address,bytes32,address) external"
                             },
                             "children": [
@@ -4480,7 +4480,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "EXECUTE_PAYMENTS_ROLE",
-                                  "referencedDeclaration": 940,
+                                  "referencedDeclaration": 944,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -4553,11 +4553,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Finance_$2499",
+                                  "typeIdentifier": "t_contract$_Finance_$2506",
                                   "typeString": "contract Finance"
                                 },
                                 {
@@ -4565,7 +4565,7 @@
                                   "typeString": "bytes32"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 }
                               ],
@@ -4574,7 +4574,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "createPermission",
-                              "referencedDeclaration": 4503,
+                              "referencedDeclaration": 4534,
                               "type": "function (address,address,bytes32,address) external"
                             },
                             "children": [
@@ -4653,7 +4653,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "DISABLE_PAYMENTS_ROLE",
-                                  "referencedDeclaration": 945,
+                                  "referencedDeclaration": 949,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -4726,11 +4726,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_TokenManager_$3294",
+                                  "typeIdentifier": "t_contract$_TokenManager_$3301",
                                   "typeString": "contract TokenManager"
                                 },
                                 {
@@ -4738,7 +4738,7 @@
                                   "typeString": "bytes32"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 }
                               ],
@@ -4747,7 +4747,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "createPermission",
-                              "referencedDeclaration": 4503,
+                              "referencedDeclaration": 4534,
                               "type": "function (address,address,bytes32,address) external"
                             },
                             "children": [
@@ -4826,7 +4826,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "ASSIGN_ROLE",
-                                  "referencedDeclaration": 2538,
+                                  "referencedDeclaration": 2545,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -4899,11 +4899,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_TokenManager_$3294",
+                                  "typeIdentifier": "t_contract$_TokenManager_$3301",
                                   "typeString": "contract TokenManager"
                                 },
                                 {
@@ -4911,7 +4911,7 @@
                                   "typeString": "bytes32"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 }
                               ],
@@ -4920,7 +4920,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "createPermission",
-                              "referencedDeclaration": 4503,
+                              "referencedDeclaration": 4534,
                               "type": "function (address,address,bytes32,address) external"
                             },
                             "children": [
@@ -4999,7 +4999,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "REVOKE_VESTINGS_ROLE",
-                                  "referencedDeclaration": 2543,
+                                  "referencedDeclaration": 2550,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -5079,7 +5079,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 12408,
+                              "referencedDeclaration": 12544,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -5204,7 +5204,7 @@
                                   "typeString": "contract BetaTemplateBase"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_TokenManager_$3294",
+                                  "typeIdentifier": "t_contract$_TokenManager_$3301",
                                   "typeString": "contract TokenManager"
                                 },
                                 {
@@ -5221,7 +5221,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "createPermission",
-                              "referencedDeclaration": 4503,
+                              "referencedDeclaration": 4534,
                               "type": "function (address,address,bytes32,address) external"
                             },
                             "children": [
@@ -5250,7 +5250,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 12534,
+                              "referencedDeclaration": 12672,
                               "type": "contract BetaTemplateBase",
                               "value": "this"
                             },
@@ -5300,7 +5300,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "MINT_ROLE",
-                                  "referencedDeclaration": 2528,
+                                  "referencedDeclaration": 2535,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -5334,7 +5334,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 12534,
+                              "referencedDeclaration": 12672,
                               "type": "contract BetaTemplateBase",
                               "value": "this"
                             },
@@ -5373,7 +5373,7 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_MiniMeToken_$11783",
+                                  "typeIdentifier": "t_contract$_MiniMeToken_$11824",
                                   "typeString": "contract MiniMeToken"
                                 },
                                 {
@@ -5394,7 +5394,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "initialize",
-                              "referencedDeclaration": 2639,
+                              "referencedDeclaration": 2646,
                               "type": "function (contract MiniMeToken,bool,uint256,bool) external"
                             },
                             "children": [
@@ -5719,7 +5719,7 @@
                                       "isPure": false,
                                       "lValueRequested": false,
                                       "member_name": "mint",
-                                      "referencedDeclaration": 2666,
+                                      "referencedDeclaration": 2673,
                                       "type": "function (address,uint256) external"
                                     },
                                     "children": [
@@ -5869,11 +5869,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Vault_$3463",
+                                  "typeIdentifier": "t_contract$_Vault_$3470",
                                   "typeString": "contract Vault"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_EtherToken_$7105",
+                                  "typeIdentifier": "t_contract$_EtherToken_$7146",
                                   "typeString": "contract EtherToken"
                                 },
                                 {
@@ -5886,7 +5886,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "initialize",
-                              "referencedDeclaration": 1166,
+                              "referencedDeclaration": 1170,
                               "type": "function (contract Vault,contract EtherToken,uint64) external"
                             },
                             "children": [
@@ -6041,11 +6041,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Kernel_$9801",
+                                  "typeIdentifier": "t_contract$_Kernel_$9842",
                                   "typeString": "contract Kernel"
                                 },
                                 {
@@ -6058,7 +6058,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "grantPermission",
-                              "referencedDeclaration": 4524,
+                              "referencedDeclaration": 4555,
                               "type": "function (address,address,bytes32) external"
                             },
                             "children": [
@@ -6137,7 +6137,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "APP_MANAGER_ROLE",
-                                  "referencedDeclaration": 9483,
+                                  "referencedDeclaration": 9524,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -6196,11 +6196,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Kernel_$9801",
+                                  "typeIdentifier": "t_contract$_Kernel_$9842",
                                   "typeString": "contract Kernel"
                                 },
                                 {
@@ -6213,7 +6213,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "setPermissionManager",
-                              "referencedDeclaration": 4620,
+                              "referencedDeclaration": 4651,
                               "type": "function (address,address,bytes32) external"
                             },
                             "children": [
@@ -6292,7 +6292,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "APP_MANAGER_ROLE",
-                                  "referencedDeclaration": 9483,
+                                  "referencedDeclaration": 9524,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -6351,11 +6351,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_ACL_$5430",
+                                  "typeIdentifier": "t_contract$_ACL_$5461",
                                   "typeString": "contract ACL"
                                 },
                                 {
@@ -6368,7 +6368,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "grantPermission",
-                              "referencedDeclaration": 4524,
+                              "referencedDeclaration": 4555,
                               "type": "function (address,address,bytes32) external"
                             },
                             "children": [
@@ -6447,7 +6447,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "CREATE_PERMISSIONS_ROLE",
-                                  "referencedDeclaration": 4345,
+                                  "referencedDeclaration": 4376,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -6506,11 +6506,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_ACL_$5430",
+                                  "typeIdentifier": "t_contract$_ACL_$5461",
                                   "typeString": "contract ACL"
                                 },
                                 {
@@ -6523,7 +6523,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "setPermissionManager",
-                              "referencedDeclaration": 4620,
+                              "referencedDeclaration": 4651,
                               "type": "function (address,address,bytes32) external"
                             },
                             "children": [
@@ -6602,7 +6602,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "CREATE_PERMISSIONS_ROLE",
-                                  "referencedDeclaration": 4345,
+                                  "referencedDeclaration": 4376,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -6661,11 +6661,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_TokenManager_$3294",
+                                  "typeIdentifier": "t_contract$_TokenManager_$3301",
                                   "typeString": "contract TokenManager"
                                 },
                                 {
@@ -6678,7 +6678,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "grantPermission",
-                              "referencedDeclaration": 4524,
+                              "referencedDeclaration": 4555,
                               "type": "function (address,address,bytes32) external"
                             },
                             "children": [
@@ -6757,7 +6757,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "MINT_ROLE",
-                                  "referencedDeclaration": 2528,
+                                  "referencedDeclaration": 2535,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -6816,11 +6816,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Voting_$4259",
+                                  "typeIdentifier": "t_contract$_Voting_$4290",
                                   "typeString": "contract Voting"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_TokenManager_$3294",
+                                  "typeIdentifier": "t_contract$_TokenManager_$3301",
                                   "typeString": "contract TokenManager"
                                 },
                                 {
@@ -6833,7 +6833,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "setPermissionManager",
-                              "referencedDeclaration": 4620,
+                              "referencedDeclaration": 4651,
                               "type": "function (address,address,bytes32) external"
                             },
                             "children": [
@@ -6912,7 +6912,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "MINT_ROLE",
-                                  "referencedDeclaration": 2528,
+                                  "referencedDeclaration": 2535,
                                   "type": "function () view external returns (bytes32)"
                                 },
                                 "children": [
@@ -6975,7 +6975,7 @@
                                   "typeString": "string memory"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_Kernel_$9801",
+                                  "typeIdentifier": "t_contract$_Kernel_$9842",
                                   "typeString": "contract Kernel"
                                 }
                               ],
@@ -7049,11 +7049,11 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Kernel_$9801",
+                                  "typeIdentifier": "t_contract$_Kernel_$9842",
                                   "typeString": "contract Kernel"
                                 },
                                 {
-                                  "typeIdentifier": "t_contract$_MiniMeToken_$11783",
+                                  "typeIdentifier": "t_contract$_MiniMeToken_$11824",
                                   "typeString": "contract MiniMeToken"
                                 }
                               ],
@@ -7174,7 +7174,7 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "MiniMeToken",
-                          "referencedDeclaration": 11783,
+                          "referencedDeclaration": 11824,
                           "type": "contract MiniMeToken"
                         },
                         "id": 459,
@@ -7331,7 +7331,7 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_MiniMeToken_$11783",
+                                  "typeIdentifier": "t_contract$_MiniMeToken_$11824",
                                   "typeString": "contract MiniMeToken"
                                 },
                                 {
@@ -7465,7 +7465,7 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "MiniMeToken",
-                          "referencedDeclaration": 11783,
+                          "referencedDeclaration": 11824,
                           "type": "contract MiniMeToken"
                         },
                         "id": 481,
@@ -7512,7 +7512,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 12408,
+                              "referencedDeclaration": 12544,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -7672,7 +7672,7 @@
                             "attributes": {
                               "contractScope": null,
                               "name": "MiniMeToken",
-                              "referencedDeclaration": 11783,
+                              "referencedDeclaration": 11824,
                               "type": "contract MiniMeToken"
                             },
                             "id": 494,
@@ -7710,7 +7710,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 11783,
+                              "referencedDeclaration": 11824,
                               "type": "type(contract MiniMeToken)",
                               "value": "MiniMeToken"
                             },
@@ -7994,7 +7994,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "register",
-                              "referencedDeclaration": 4269,
+                              "referencedDeclaration": 4300,
                               "type": "function (bytes32,address) external"
                             },
                             "children": [
@@ -8043,7 +8043,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 12399,
+                                  "referencedDeclaration": 12535,
                                   "type": "function () pure returns (bytes32)",
                                   "value": "keccak256"
                                 },
@@ -8211,7 +8211,7 @@
                             "attributes": {
                               "contractScope": null,
                               "name": "Repo",
-                              "referencedDeclaration": 6564,
+                              "referencedDeclaration": 6605,
                               "type": "contract Repo"
                             },
                             "id": 534,
@@ -8249,7 +8249,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 6564,
+                              "referencedDeclaration": 6605,
                               "type": "type(contract Repo)",
                               "value": "Repo"
                             },
@@ -8285,7 +8285,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "addr",
-                                  "referencedDeclaration": 10316,
+                                  "referencedDeclaration": 10357,
                                   "type": "function (bytes32) view external returns (address)"
                                 },
                                 "children": [
@@ -8315,7 +8315,7 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 10610,
+                                          "referencedDeclaration": 10651,
                                           "type": "type(contract PublicResolver)",
                                           "value": "PublicResolver"
                                         },
@@ -8351,7 +8351,7 @@
                                               "isPure": false,
                                               "lValueRequested": false,
                                               "member_name": "resolver",
-                                              "referencedDeclaration": 9900,
+                                              "referencedDeclaration": 9941,
                                               "type": "function (bytes32) view external returns (address)"
                                             },
                                             "children": [
@@ -8530,7 +8530,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "getLatest",
-                                  "referencedDeclaration": 6366,
+                                  "referencedDeclaration": 6407,
                                   "type": "function () view external returns (uint16[3] memory,address,inaccessible dynamic type)"
                                 },
                                 "children": [
@@ -8647,7 +8647,7 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "AbstractENS",
-                          "referencedDeclaration": 9964,
+                          "referencedDeclaration": 10005,
                           "type": "contract AbstractENS"
                         },
                         "id": 561,
@@ -8699,7 +8699,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "ens",
-                              "referencedDeclaration": 7228,
+                              "referencedDeclaration": 7269,
                               "type": "function () view external returns (contract AbstractENS)"
                             },
                             "children": [
@@ -8731,7 +8731,7 @@
                                       "isPure": false,
                                       "lValueRequested": false,
                                       "member_name": "registrar",
-                                      "referencedDeclaration": 5949,
+                                      "referencedDeclaration": 5980,
                                       "type": "function () view external returns (contract ENSSubdomainRegistrar)"
                                     },
                                     "children": [
@@ -8800,5 +8800,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.121Z"
+  "updatedAt": "2018-03-05T17:18:03.409Z"
 }

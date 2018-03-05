@@ -1,8 +1,8 @@
 {
   "contractName": "Imports",
   "abi": [],
-  "bytecode": "0x60606040523415600e57600080fd5b603580601b6000396000f3006060604052600080fd00a165627a7a72305820317027fd6e036c8abaabc65b3a6e0e31f32d1790da8454b1f82957b843d104830029",
-  "deployedBytecode": "0x6060604052600080fd00a165627a7a72305820317027fd6e036c8abaabc65b3a6e0e31f32d1790da8454b1f82957b843d104830029",
+  "bytecode": "0x60606040523415600e57600080fd5b603580601b6000396000f3006060604052600080fd00a165627a7a72305820f308e530fc35426404b7eab30fe13b04833605802c933d1da70549fa2f7c95f40029",
+  "deployedBytecode": "0x6060604052600080fd00a165627a7a72305820f308e530fc35426404b7eab30fe13b04833605802c933d1da70549fa2f7c95f40029",
   "sourceMap": "327:19:2:-;;;;;;;;;;;;;;;;;",
   "deployedSourceMap": "327:19:2:-;;;;;",
   "source": "pragma solidity 0.4.18;\n\n// HACK to workaround truffle artifact loading on dependencies\n\nimport \"@aragon/os/contracts/factory/ENSFactory.sol\";\nimport \"@aragon/os/contracts/factory/APMRegistryFactory.sol\";\nimport \"@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol\";\nimport \"@aragon/os/contracts/common/EtherToken.sol\";\n\ncontract Imports {}\n",
@@ -31,7 +31,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 9259,
+          "SourceUnit": 9300,
           "absolutePath": "@aragon/os/contracts/factory/ENSFactory.sol",
           "file": "@aragon/os/contracts/factory/ENSFactory.sol",
           "scope": 689,
@@ -46,7 +46,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 8886,
+          "SourceUnit": 8927,
           "absolutePath": "@aragon/os/contracts/factory/APMRegistryFactory.sol",
           "file": "@aragon/os/contracts/factory/APMRegistryFactory.sol",
           "scope": 689,
@@ -61,7 +61,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 9411,
+          "SourceUnit": 9452,
           "absolutePath": "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol",
           "file": "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol",
           "scope": 689,
@@ -76,7 +76,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 7106,
+          "SourceUnit": 7147,
           "absolutePath": "@aragon/os/contracts/common/EtherToken.sol",
           "file": "@aragon/os/contracts/common/EtherToken.sol",
           "scope": 689,
@@ -124,5 +124,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.123Z"
+  "updatedAt": "2018-03-05T17:18:03.411Z"
 }

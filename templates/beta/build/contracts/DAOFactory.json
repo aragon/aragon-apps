@@ -117,7 +117,7 @@
       "absolutePath": "@aragon/os/contracts/factory/DAOFactory.sol",
       "exportedSymbols": {
         "DAOFactory": [
-          9177
+          9218
         ]
       }
     },
@@ -130,67 +130,67 @@
             ".18"
           ]
         },
-        "id": 8992,
+        "id": 9033,
         "name": "PragmaDirective",
         "src": "0:23:38"
       },
       {
         "attributes": {
-          "SourceUnit": 9802,
+          "SourceUnit": 9843,
           "absolutePath": "@aragon/os/contracts/kernel/Kernel.sol",
           "file": "../kernel/Kernel.sol",
-          "scope": 9178,
+          "scope": 9219,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 8993,
+        "id": 9034,
         "name": "ImportDirective",
         "src": "25:30:38"
       },
       {
         "attributes": {
-          "SourceUnit": 9838,
+          "SourceUnit": 9879,
           "absolutePath": "@aragon/os/contracts/kernel/KernelProxy.sol",
           "file": "../kernel/KernelProxy.sol",
-          "scope": 9178,
+          "scope": 9219,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 8994,
+        "id": 9035,
         "name": "ImportDirective",
         "src": "56:35:38"
       },
       {
         "attributes": {
-          "SourceUnit": 5431,
+          "SourceUnit": 5462,
           "absolutePath": "@aragon/os/contracts/acl/ACL.sol",
           "file": "../acl/ACL.sol",
-          "scope": 9178,
+          "scope": 9219,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 8995,
+        "id": 9036,
         "name": "ImportDirective",
         "src": "93:24:38"
       },
       {
         "attributes": {
-          "SourceUnit": 9411,
+          "SourceUnit": 9452,
           "absolutePath": "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol",
           "file": "./EVMScriptRegistryFactory.sol",
-          "scope": 9178,
+          "scope": 9219,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 8996,
+        "id": 9037,
         "name": "ImportDirective",
         "src": "119:40:38"
       },
@@ -200,23 +200,23 @@
             null
           ],
           "contractDependencies": [
-            9837
+            9878
           ],
           "contractKind": "contract",
           "documentation": null,
           "fullyImplemented": true,
           "linearizedBaseContracts": [
-            9177
+            9218
           ],
           "name": "DAOFactory",
-          "scope": 9178
+          "scope": 9219
         },
         "children": [
           {
             "attributes": {
               "constant": false,
               "name": "baseKernel",
-              "scope": 9177,
+              "scope": 9218,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "address",
@@ -229,12 +229,12 @@
                   "name": "address",
                   "type": "address"
                 },
-                "id": 8997,
+                "id": 9038,
                 "name": "ElementaryTypeName",
                 "src": "188:7:38"
               }
             ],
-            "id": 8998,
+            "id": 9039,
             "name": "VariableDeclaration",
             "src": "188:25:38"
           },
@@ -242,7 +242,7 @@
             "attributes": {
               "constant": false,
               "name": "baseACL",
-              "scope": 9177,
+              "scope": 9218,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "address",
@@ -255,12 +255,12 @@
                   "name": "address",
                   "type": "address"
                 },
-                "id": 8999,
+                "id": 9040,
                 "name": "ElementaryTypeName",
                 "src": "219:7:38"
               }
             ],
-            "id": 9000,
+            "id": 9041,
             "name": "VariableDeclaration",
             "src": "219:22:38"
           },
@@ -268,7 +268,7 @@
             "attributes": {
               "constant": false,
               "name": "regFactory",
-              "scope": 9177,
+              "scope": 9218,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "contract EVMScriptRegistryFactory",
@@ -280,15 +280,15 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "EVMScriptRegistryFactory",
-                  "referencedDeclaration": 9410,
+                  "referencedDeclaration": 9451,
                   "type": "contract EVMScriptRegistryFactory"
                 },
-                "id": 9001,
+                "id": 9042,
                 "name": "UserDefinedTypeName",
                 "src": "247:24:38"
               }
             ],
-            "id": 9002,
+            "id": 9043,
             "name": "VariableDeclaration",
             "src": "247:42:38"
           },
@@ -305,7 +305,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "dao",
-                      "scope": 9006,
+                      "scope": 9047,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -318,22 +318,22 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 9003,
+                        "id": 9044,
                         "name": "ElementaryTypeName",
                         "src": "312:7:38"
                       }
                     ],
-                    "id": 9004,
+                    "id": 9045,
                     "name": "VariableDeclaration",
                     "src": "312:11:38"
                   }
                 ],
-                "id": 9005,
+                "id": 9046,
                 "name": "ParameterList",
                 "src": "311:13:38"
               }
             ],
-            "id": 9006,
+            "id": 9047,
             "name": "EventDefinition",
             "src": "296:29:38"
           },
@@ -350,7 +350,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "reg",
-                      "scope": 9010,
+                      "scope": 9051,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -363,22 +363,22 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 9007,
+                        "id": 9048,
                         "name": "ElementaryTypeName",
                         "src": "360:7:38"
                       }
                     ],
-                    "id": 9008,
+                    "id": 9049,
                     "name": "VariableDeclaration",
                     "src": "360:11:38"
                   }
                 ],
-                "id": 9009,
+                "id": 9050,
                 "name": "ParameterList",
                 "src": "359:13:38"
               }
             ],
-            "id": 9010,
+            "id": 9051,
             "name": "EventDefinition",
             "src": "330:43:38"
           },
@@ -392,7 +392,7 @@
               ],
               "name": "DAOFactory",
               "payable": false,
-              "scope": 9177,
+              "scope": 9218,
               "stateMutability": "nonpayable",
               "superFunction": null,
               "visibility": "public"
@@ -404,7 +404,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_baseKernel",
-                      "scope": 9041,
+                      "scope": 9082,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -417,12 +417,12 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 9011,
+                        "id": 9052,
                         "name": "ElementaryTypeName",
                         "src": "399:7:38"
                       }
                     ],
-                    "id": 9012,
+                    "id": 9053,
                     "name": "VariableDeclaration",
                     "src": "399:19:38"
                   },
@@ -430,7 +430,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_baseACL",
-                      "scope": 9041,
+                      "scope": 9082,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -443,12 +443,12 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 9013,
+                        "id": 9054,
                         "name": "ElementaryTypeName",
                         "src": "420:7:38"
                       }
                     ],
-                    "id": 9014,
+                    "id": 9055,
                     "name": "VariableDeclaration",
                     "src": "420:16:38"
                   },
@@ -456,7 +456,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_regFactory",
-                      "scope": 9041,
+                      "scope": 9082,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -469,17 +469,17 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 9015,
+                        "id": 9056,
                         "name": "ElementaryTypeName",
                         "src": "438:7:38"
                       }
                     ],
-                    "id": 9016,
+                    "id": 9057,
                     "name": "VariableDeclaration",
                     "src": "438:19:38"
                   }
                 ],
-                "id": 9017,
+                "id": 9058,
                 "name": "ParameterList",
                 "src": "398:60:38"
               },
@@ -490,7 +490,7 @@
                   ]
                 },
                 "children": [],
-                "id": 9018,
+                "id": 9059,
                 "name": "ParameterList",
                 "src": "466:0:38"
               },
@@ -522,11 +522,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 9016,
+                              "referencedDeclaration": 9057,
                               "type": "address",
                               "value": "_regFactory"
                             },
-                            "id": 9019,
+                            "id": 9060,
                             "name": "Identifier",
                             "src": "543:11:38"
                           },
@@ -560,7 +560,7 @@
                                   "type": "type(address)",
                                   "value": "address"
                                 },
-                                "id": 9020,
+                                "id": 9061,
                                 "name": "ElementaryTypeNameExpression",
                                 "src": "558:7:38"
                               },
@@ -577,17 +577,17 @@
                                   "type": "int_const 0",
                                   "value": "0"
                                 },
-                                "id": 9021,
+                                "id": 9062,
                                 "name": "Literal",
                                 "src": "566:1:38"
                               }
                             ],
-                            "id": 9022,
+                            "id": 9063,
                             "name": "FunctionCall",
                             "src": "558:10:38"
                           }
                         ],
-                        "id": 9023,
+                        "id": 9064,
                         "name": "BinaryOperation",
                         "src": "543:25:38"
                       },
@@ -612,11 +612,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9002,
+                                      "referencedDeclaration": 9043,
                                       "type": "contract EVMScriptRegistryFactory",
                                       "value": "regFactory"
                                     },
-                                    "id": 9024,
+                                    "id": 9065,
                                     "name": "Identifier",
                                     "src": "584:10:38"
                                   },
@@ -646,11 +646,11 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9410,
+                                          "referencedDeclaration": 9451,
                                           "type": "type(contract EVMScriptRegistryFactory)",
                                           "value": "EVMScriptRegistryFactory"
                                         },
-                                        "id": 9025,
+                                        "id": 9066,
                                         "name": "Identifier",
                                         "src": "597:24:38"
                                       },
@@ -660,36 +660,36 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9016,
+                                          "referencedDeclaration": 9057,
                                           "type": "address",
                                           "value": "_regFactory"
                                         },
-                                        "id": 9026,
+                                        "id": 9067,
                                         "name": "Identifier",
                                         "src": "622:11:38"
                                       }
                                     ],
-                                    "id": 9027,
+                                    "id": 9068,
                                     "name": "FunctionCall",
                                     "src": "597:37:38"
                                   }
                                 ],
-                                "id": 9028,
+                                "id": 9069,
                                 "name": "Assignment",
                                 "src": "584:50:38"
                               }
                             ],
-                            "id": 9029,
+                            "id": 9070,
                             "name": "ExpressionStatement",
                             "src": "584:50:38"
                           }
                         ],
-                        "id": 9030,
+                        "id": 9071,
                         "name": "Block",
                         "src": "570:75:38"
                       }
                     ],
-                    "id": 9031,
+                    "id": 9072,
                     "name": "IfStatement",
                     "src": "539:106:38"
                   },
@@ -712,11 +712,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 8998,
+                              "referencedDeclaration": 9039,
                               "type": "address",
                               "value": "baseKernel"
                             },
-                            "id": 9032,
+                            "id": 9073,
                             "name": "Identifier",
                             "src": "655:10:38"
                           },
@@ -726,21 +726,21 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 9012,
+                              "referencedDeclaration": 9053,
                               "type": "address",
                               "value": "_baseKernel"
                             },
-                            "id": 9033,
+                            "id": 9074,
                             "name": "Identifier",
                             "src": "668:11:38"
                           }
                         ],
-                        "id": 9034,
+                        "id": 9075,
                         "name": "Assignment",
                         "src": "655:24:38"
                       }
                     ],
-                    "id": 9035,
+                    "id": 9076,
                     "name": "ExpressionStatement",
                     "src": "655:24:38"
                   },
@@ -763,11 +763,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 9000,
+                              "referencedDeclaration": 9041,
                               "type": "address",
                               "value": "baseACL"
                             },
-                            "id": 9036,
+                            "id": 9077,
                             "name": "Identifier",
                             "src": "689:7:38"
                           },
@@ -777,31 +777,31 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 9014,
+                              "referencedDeclaration": 9055,
                               "type": "address",
                               "value": "_baseACL"
                             },
-                            "id": 9037,
+                            "id": 9078,
                             "name": "Identifier",
                             "src": "699:8:38"
                           }
                         ],
-                        "id": 9038,
+                        "id": 9079,
                         "name": "Assignment",
                         "src": "689:18:38"
                       }
                     ],
-                    "id": 9039,
+                    "id": 9080,
                     "name": "ExpressionStatement",
                     "src": "689:18:38"
                   }
                 ],
-                "id": 9040,
+                "id": 9081,
                 "name": "Block",
                 "src": "466:248:38"
               }
             ],
-            "id": 9041,
+            "id": 9082,
             "name": "FunctionDefinition",
             "src": "379:335:38"
           },
@@ -815,7 +815,7 @@
               ],
               "name": "newDAO",
               "payable": false,
-              "scope": 9177,
+              "scope": 9218,
               "stateMutability": "nonpayable",
               "superFunction": null,
               "visibility": "public"
@@ -827,7 +827,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_root",
-                      "scope": 9176,
+                      "scope": 9217,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -840,17 +840,17 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 9042,
+                        "id": 9083,
                         "name": "ElementaryTypeName",
                         "src": "832:7:38"
                       }
                     ],
-                    "id": 9043,
+                    "id": 9084,
                     "name": "VariableDeclaration",
                     "src": "832:13:38"
                   }
                 ],
-                "id": 9044,
+                "id": 9085,
                 "name": "ParameterList",
                 "src": "831:15:38"
               },
@@ -860,7 +860,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "dao",
-                      "scope": 9176,
+                      "scope": 9217,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "contract Kernel",
@@ -872,20 +872,20 @@
                         "attributes": {
                           "contractScope": null,
                           "name": "Kernel",
-                          "referencedDeclaration": 9801,
+                          "referencedDeclaration": 9842,
                           "type": "contract Kernel"
                         },
-                        "id": 9045,
+                        "id": 9086,
                         "name": "UserDefinedTypeName",
                         "src": "863:6:38"
                       }
                     ],
-                    "id": 9046,
+                    "id": 9087,
                     "name": "VariableDeclaration",
                     "src": "863:10:38"
                   }
                 ],
-                "id": 9047,
+                "id": 9088,
                 "name": "ParameterList",
                 "src": "862:12:38"
               },
@@ -910,11 +910,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 9046,
+                              "referencedDeclaration": 9087,
                               "type": "contract Kernel",
                               "value": "dao"
                             },
-                            "id": 9048,
+                            "id": 9089,
                             "name": "Identifier",
                             "src": "885:3:38"
                           },
@@ -937,18 +937,18 @@
                                 "attributes": {
                                   "argumentTypes": [
                                     {
-                                      "typeIdentifier": "t_contract$_KernelProxy_$9837",
+                                      "typeIdentifier": "t_contract$_KernelProxy_$9878",
                                       "typeString": "contract KernelProxy"
                                     }
                                   ],
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 9801,
+                                  "referencedDeclaration": 9842,
                                   "type": "type(contract Kernel)",
                                   "value": "Kernel"
                                 },
-                                "id": 9049,
+                                "id": 9090,
                                 "name": "Identifier",
                                 "src": "891:6:38"
                               },
@@ -986,15 +986,15 @@
                                         "attributes": {
                                           "contractScope": null,
                                           "name": "KernelProxy",
-                                          "referencedDeclaration": 9837,
+                                          "referencedDeclaration": 9878,
                                           "type": "contract KernelProxy"
                                         },
-                                        "id": 9050,
+                                        "id": 9091,
                                         "name": "UserDefinedTypeName",
                                         "src": "902:11:38"
                                       }
                                     ],
-                                    "id": 9051,
+                                    "id": 9092,
                                     "name": "NewExpression",
                                     "src": "898:15:38"
                                   },
@@ -1004,38 +1004,38 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 8998,
+                                      "referencedDeclaration": 9039,
                                       "type": "address",
                                       "value": "baseKernel"
                                     },
-                                    "id": 9052,
+                                    "id": 9093,
                                     "name": "Identifier",
                                     "src": "914:10:38"
                                   }
                                 ],
-                                "id": 9053,
+                                "id": 9094,
                                 "name": "FunctionCall",
                                 "src": "898:27:38"
                               }
                             ],
-                            "id": 9054,
+                            "id": 9095,
                             "name": "FunctionCall",
                             "src": "891:35:38"
                           }
                         ],
-                        "id": 9055,
+                        "id": 9096,
                         "name": "Assignment",
                         "src": "885:41:38"
                       }
                     ],
-                    "id": 9056,
+                    "id": 9097,
                     "name": "ExpressionStatement",
                     "src": "885:41:38"
                   },
                   {
                     "attributes": {
                       "assignments": [
-                        9058
+                        9099
                       ]
                     },
                     "children": [
@@ -1043,7 +1043,7 @@
                         "attributes": {
                           "constant": false,
                           "name": "initialRoot",
-                          "scope": 9176,
+                          "scope": 9217,
                           "stateVariable": false,
                           "storageLocation": "default",
                           "type": "address",
@@ -1056,12 +1056,12 @@
                               "name": "address",
                               "type": "address"
                             },
-                            "id": 9057,
+                            "id": 9098,
                             "name": "ElementaryTypeName",
                             "src": "937:7:38"
                           }
                         ],
-                        "id": 9058,
+                        "id": 9099,
                         "name": "VariableDeclaration",
                         "src": "937:19:38"
                       },
@@ -1109,7 +1109,7 @@
                                     "attributes": {
                                       "argumentTypes": [
                                         {
-                                          "typeIdentifier": "t_contract$_EVMScriptRegistryFactory_$9410",
+                                          "typeIdentifier": "t_contract$_EVMScriptRegistryFactory_$9451",
                                           "typeString": "contract EVMScriptRegistryFactory"
                                         }
                                       ],
@@ -1120,7 +1120,7 @@
                                       "type": "type(address)",
                                       "value": "address"
                                     },
-                                    "id": 9059,
+                                    "id": 9100,
                                     "name": "ElementaryTypeNameExpression",
                                     "src": "959:7:38"
                                   },
@@ -1130,16 +1130,16 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9002,
+                                      "referencedDeclaration": 9043,
                                       "type": "contract EVMScriptRegistryFactory",
                                       "value": "regFactory"
                                     },
-                                    "id": 9060,
+                                    "id": 9101,
                                     "name": "Identifier",
                                     "src": "967:10:38"
                                   }
                                 ],
-                                "id": 9061,
+                                "id": 9102,
                                 "name": "FunctionCall",
                                 "src": "959:19:38"
                               },
@@ -1173,7 +1173,7 @@
                                       "type": "type(address)",
                                       "value": "address"
                                     },
-                                    "id": 9062,
+                                    "id": 9103,
                                     "name": "ElementaryTypeNameExpression",
                                     "src": "982:7:38"
                                   },
@@ -1190,17 +1190,17 @@
                                       "type": "int_const 0",
                                       "value": "0"
                                     },
-                                    "id": 9063,
+                                    "id": 9104,
                                     "name": "Literal",
                                     "src": "990:1:38"
                                   }
                                 ],
-                                "id": 9064,
+                                "id": 9105,
                                 "name": "FunctionCall",
                                 "src": "982:10:38"
                               }
                             ],
-                            "id": 9065,
+                            "id": 9106,
                             "name": "BinaryOperation",
                             "src": "959:33:38"
                           },
@@ -1210,11 +1210,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 12490,
+                              "referencedDeclaration": 12626,
                               "type": "contract DAOFactory",
                               "value": "this"
                             },
-                            "id": 9066,
+                            "id": 9107,
                             "name": "Identifier",
                             "src": "995:4:38"
                           },
@@ -1224,21 +1224,21 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 9043,
+                              "referencedDeclaration": 9084,
                               "type": "address",
                               "value": "_root"
                             },
-                            "id": 9067,
+                            "id": 9108,
                             "name": "Identifier",
                             "src": "1002:5:38"
                           }
                         ],
-                        "id": 9068,
+                        "id": 9109,
                         "name": "Conditional",
                         "src": "959:48:38"
                       }
                     ],
-                    "id": 9069,
+                    "id": 9110,
                     "name": "VariableDeclarationStatement",
                     "src": "937:70:38"
                   },
@@ -1276,7 +1276,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "initialize",
-                              "referencedDeclaration": 9523,
+                              "referencedDeclaration": 9564,
                               "type": "function (address,address) external"
                             },
                             "children": [
@@ -1286,16 +1286,16 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 9046,
+                                  "referencedDeclaration": 9087,
                                   "type": "contract Kernel",
                                   "value": "dao"
                                 },
-                                "id": 9070,
+                                "id": 9111,
                                 "name": "Identifier",
                                 "src": "1017:3:38"
                               }
                             ],
-                            "id": 9072,
+                            "id": 9113,
                             "name": "MemberAccess",
                             "src": "1017:14:38"
                           },
@@ -1305,11 +1305,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 9000,
+                              "referencedDeclaration": 9041,
                               "type": "address",
                               "value": "baseACL"
                             },
-                            "id": 9073,
+                            "id": 9114,
                             "name": "Identifier",
                             "src": "1032:7:38"
                           },
@@ -1319,28 +1319,28 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 9058,
+                              "referencedDeclaration": 9099,
                               "type": "address",
                               "value": "initialRoot"
                             },
-                            "id": 9074,
+                            "id": 9115,
                             "name": "Identifier",
                             "src": "1041:11:38"
                           }
                         ],
-                        "id": 9075,
+                        "id": 9116,
                         "name": "FunctionCall",
                         "src": "1017:36:38"
                       }
                     ],
-                    "id": 9076,
+                    "id": 9117,
                     "name": "ExpressionStatement",
                     "src": "1017:36:38"
                   },
                   {
                     "attributes": {
                       "assignments": [
-                        9078
+                        9119
                       ]
                     },
                     "children": [
@@ -1348,7 +1348,7 @@
                         "attributes": {
                           "constant": false,
                           "name": "acl",
-                          "scope": 9176,
+                          "scope": 9217,
                           "stateVariable": false,
                           "storageLocation": "default",
                           "type": "contract ACL",
@@ -1360,15 +1360,15 @@
                             "attributes": {
                               "contractScope": null,
                               "name": "ACL",
-                              "referencedDeclaration": 5430,
+                              "referencedDeclaration": 5461,
                               "type": "contract ACL"
                             },
-                            "id": 9077,
+                            "id": 9118,
                             "name": "UserDefinedTypeName",
                             "src": "1064:3:38"
                           }
                         ],
-                        "id": 9078,
+                        "id": 9119,
                         "name": "VariableDeclaration",
                         "src": "1064:7:38"
                       },
@@ -1391,18 +1391,18 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_IACL_$5921",
+                                  "typeIdentifier": "t_contract$_IACL_$5952",
                                   "typeString": "contract IACL"
                                 }
                               ],
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 5430,
+                              "referencedDeclaration": 5461,
                               "type": "type(contract ACL)",
                               "value": "ACL"
                             },
-                            "id": 9079,
+                            "id": 9120,
                             "name": "Identifier",
                             "src": "1074:3:38"
                           },
@@ -1434,7 +1434,7 @@
                                   "isPure": false,
                                   "lValueRequested": false,
                                   "member_name": "acl",
-                                  "referencedDeclaration": 9634,
+                                  "referencedDeclaration": 9675,
                                   "type": "function () view external returns (contract IACL)"
                                 },
                                 "children": [
@@ -1444,31 +1444,31 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9046,
+                                      "referencedDeclaration": 9087,
                                       "type": "contract Kernel",
                                       "value": "dao"
                                     },
-                                    "id": 9080,
+                                    "id": 9121,
                                     "name": "Identifier",
                                     "src": "1078:3:38"
                                   }
                                 ],
-                                "id": 9081,
+                                "id": 9122,
                                 "name": "MemberAccess",
                                 "src": "1078:7:38"
                               }
                             ],
-                            "id": 9082,
+                            "id": 9123,
                             "name": "FunctionCall",
                             "src": "1078:9:38"
                           }
                         ],
-                        "id": 9083,
+                        "id": 9124,
                         "name": "FunctionCall",
                         "src": "1074:14:38"
                       }
                     ],
-                    "id": 9084,
+                    "id": 9125,
                     "name": "VariableDeclarationStatement",
                     "src": "1064:24:38"
                   },
@@ -1511,7 +1511,7 @@
                                 "attributes": {
                                   "argumentTypes": [
                                     {
-                                      "typeIdentifier": "t_contract$_EVMScriptRegistryFactory_$9410",
+                                      "typeIdentifier": "t_contract$_EVMScriptRegistryFactory_$9451",
                                       "typeString": "contract EVMScriptRegistryFactory"
                                     }
                                   ],
@@ -1522,7 +1522,7 @@
                                   "type": "type(address)",
                                   "value": "address"
                                 },
-                                "id": 9085,
+                                "id": 9126,
                                 "name": "ElementaryTypeNameExpression",
                                 "src": "1103:7:38"
                               },
@@ -1532,16 +1532,16 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 9002,
+                                  "referencedDeclaration": 9043,
                                   "type": "contract EVMScriptRegistryFactory",
                                   "value": "regFactory"
                                 },
-                                "id": 9086,
+                                "id": 9127,
                                 "name": "Identifier",
                                 "src": "1111:10:38"
                               }
                             ],
-                            "id": 9087,
+                            "id": 9128,
                             "name": "FunctionCall",
                             "src": "1103:19:38"
                           },
@@ -1575,7 +1575,7 @@
                                   "type": "type(address)",
                                   "value": "address"
                                 },
-                                "id": 9088,
+                                "id": 9129,
                                 "name": "ElementaryTypeNameExpression",
                                 "src": "1126:7:38"
                               },
@@ -1592,17 +1592,17 @@
                                   "type": "int_const 0",
                                   "value": "0"
                                 },
-                                "id": 9089,
+                                "id": 9130,
                                 "name": "Literal",
                                 "src": "1134:1:38"
                               }
                             ],
-                            "id": 9090,
+                            "id": 9131,
                             "name": "FunctionCall",
                             "src": "1126:10:38"
                           }
                         ],
-                        "id": 9091,
+                        "id": 9132,
                         "name": "BinaryOperation",
                         "src": "1103:33:38"
                       },
@@ -1611,7 +1611,7 @@
                           {
                             "attributes": {
                               "assignments": [
-                                9093
+                                9134
                               ]
                             },
                             "children": [
@@ -1619,7 +1619,7 @@
                                 "attributes": {
                                   "constant": false,
                                   "name": "permRole",
-                                  "scope": 9176,
+                                  "scope": 9217,
                                   "stateVariable": false,
                                   "storageLocation": "default",
                                   "type": "bytes32",
@@ -1632,12 +1632,12 @@
                                       "name": "bytes32",
                                       "type": "bytes32"
                                     },
-                                    "id": 9092,
+                                    "id": 9133,
                                     "name": "ElementaryTypeName",
                                     "src": "1152:7:38"
                                   }
                                 ],
-                                "id": 9093,
+                                "id": 9134,
                                 "name": "VariableDeclaration",
                                 "src": "1152:16:38"
                               },
@@ -1669,7 +1669,7 @@
                                       "isPure": false,
                                       "lValueRequested": false,
                                       "member_name": "CREATE_PERMISSIONS_ROLE",
-                                      "referencedDeclaration": 4345,
+                                      "referencedDeclaration": 4376,
                                       "type": "function () view external returns (bytes32)"
                                     },
                                     "children": [
@@ -1679,33 +1679,33 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9078,
+                                          "referencedDeclaration": 9119,
                                           "type": "contract ACL",
                                           "value": "acl"
                                         },
-                                        "id": 9094,
+                                        "id": 9135,
                                         "name": "Identifier",
                                         "src": "1171:3:38"
                                       }
                                     ],
-                                    "id": 9095,
+                                    "id": 9136,
                                     "name": "MemberAccess",
                                     "src": "1171:27:38"
                                   }
                                 ],
-                                "id": 9096,
+                                "id": 9137,
                                 "name": "FunctionCall",
                                 "src": "1171:29:38"
                               }
                             ],
-                            "id": 9097,
+                            "id": 9138,
                             "name": "VariableDeclarationStatement",
                             "src": "1152:48:38"
                           },
                           {
                             "attributes": {
                               "assignments": [
-                                9099
+                                9140
                               ]
                             },
                             "children": [
@@ -1713,7 +1713,7 @@
                                 "attributes": {
                                   "constant": false,
                                   "name": "appManagerRole",
-                                  "scope": 9176,
+                                  "scope": 9217,
                                   "stateVariable": false,
                                   "storageLocation": "default",
                                   "type": "bytes32",
@@ -1726,12 +1726,12 @@
                                       "name": "bytes32",
                                       "type": "bytes32"
                                     },
-                                    "id": 9098,
+                                    "id": 9139,
                                     "name": "ElementaryTypeName",
                                     "src": "1214:7:38"
                                   }
                                 ],
-                                "id": 9099,
+                                "id": 9140,
                                 "name": "VariableDeclaration",
                                 "src": "1214:22:38"
                               },
@@ -1763,7 +1763,7 @@
                                       "isPure": false,
                                       "lValueRequested": false,
                                       "member_name": "APP_MANAGER_ROLE",
-                                      "referencedDeclaration": 9483,
+                                      "referencedDeclaration": 9524,
                                       "type": "function () view external returns (bytes32)"
                                     },
                                     "children": [
@@ -1773,26 +1773,26 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9046,
+                                          "referencedDeclaration": 9087,
                                           "type": "contract Kernel",
                                           "value": "dao"
                                         },
-                                        "id": 9100,
+                                        "id": 9141,
                                         "name": "Identifier",
                                         "src": "1239:3:38"
                                       }
                                     ],
-                                    "id": 9101,
+                                    "id": 9142,
                                     "name": "MemberAccess",
                                     "src": "1239:20:38"
                                   }
                                 ],
-                                "id": 9102,
+                                "id": 9143,
                                 "name": "FunctionCall",
                                 "src": "1239:22:38"
                               }
                             ],
-                            "id": 9103,
+                            "id": 9144,
                             "name": "VariableDeclarationStatement",
                             "src": "1214:47:38"
                           },
@@ -1817,11 +1817,11 @@
                                     "attributes": {
                                       "argumentTypes": [
                                         {
-                                          "typeIdentifier": "t_contract$_EVMScriptRegistryFactory_$9410",
+                                          "typeIdentifier": "t_contract$_EVMScriptRegistryFactory_$9451",
                                           "typeString": "contract EVMScriptRegistryFactory"
                                         },
                                         {
-                                          "typeIdentifier": "t_contract$_ACL_$5430",
+                                          "typeIdentifier": "t_contract$_ACL_$5461",
                                           "typeString": "contract ACL"
                                         },
                                         {
@@ -1834,7 +1834,7 @@
                                       "isPure": false,
                                       "lValueRequested": false,
                                       "member_name": "grantPermission",
-                                      "referencedDeclaration": 4524,
+                                      "referencedDeclaration": 4555,
                                       "type": "function (address,address,bytes32) external"
                                     },
                                     "children": [
@@ -1844,16 +1844,16 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9078,
+                                          "referencedDeclaration": 9119,
                                           "type": "contract ACL",
                                           "value": "acl"
                                         },
-                                        "id": 9104,
+                                        "id": 9145,
                                         "name": "Identifier",
                                         "src": "1276:3:38"
                                       }
                                     ],
-                                    "id": 9106,
+                                    "id": 9147,
                                     "name": "MemberAccess",
                                     "src": "1276:19:38"
                                   },
@@ -1863,11 +1863,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9002,
+                                      "referencedDeclaration": 9043,
                                       "type": "contract EVMScriptRegistryFactory",
                                       "value": "regFactory"
                                     },
-                                    "id": 9107,
+                                    "id": 9148,
                                     "name": "Identifier",
                                     "src": "1296:10:38"
                                   },
@@ -1877,11 +1877,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9078,
+                                      "referencedDeclaration": 9119,
                                       "type": "contract ACL",
                                       "value": "acl"
                                     },
-                                    "id": 9108,
+                                    "id": 9149,
                                     "name": "Identifier",
                                     "src": "1308:3:38"
                                   },
@@ -1891,21 +1891,21 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9093,
+                                      "referencedDeclaration": 9134,
                                       "type": "bytes32",
                                       "value": "permRole"
                                     },
-                                    "id": 9109,
+                                    "id": 9150,
                                     "name": "Identifier",
                                     "src": "1313:8:38"
                                   }
                                 ],
-                                "id": 9110,
+                                "id": 9151,
                                 "name": "FunctionCall",
                                 "src": "1276:46:38"
                               }
                             ],
-                            "id": 9111,
+                            "id": 9152,
                             "name": "ExpressionStatement",
                             "src": "1276:46:38"
                           },
@@ -1930,11 +1930,11 @@
                                     "attributes": {
                                       "argumentTypes": [
                                         {
-                                          "typeIdentifier": "t_contract$_EVMScriptRegistryFactory_$9410",
+                                          "typeIdentifier": "t_contract$_EVMScriptRegistryFactory_$9451",
                                           "typeString": "contract EVMScriptRegistryFactory"
                                         },
                                         {
-                                          "typeIdentifier": "t_contract$_Kernel_$9801",
+                                          "typeIdentifier": "t_contract$_Kernel_$9842",
                                           "typeString": "contract Kernel"
                                         },
                                         {
@@ -1942,7 +1942,7 @@
                                           "typeString": "bytes32"
                                         },
                                         {
-                                          "typeIdentifier": "t_contract$_DAOFactory_$9177",
+                                          "typeIdentifier": "t_contract$_DAOFactory_$9218",
                                           "typeString": "contract DAOFactory"
                                         }
                                       ],
@@ -1951,7 +1951,7 @@
                                       "isPure": false,
                                       "lValueRequested": false,
                                       "member_name": "createPermission",
-                                      "referencedDeclaration": 4503,
+                                      "referencedDeclaration": 4534,
                                       "type": "function (address,address,bytes32,address) external"
                                     },
                                     "children": [
@@ -1961,16 +1961,16 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9078,
+                                          "referencedDeclaration": 9119,
                                           "type": "contract ACL",
                                           "value": "acl"
                                         },
-                                        "id": 9112,
+                                        "id": 9153,
                                         "name": "Identifier",
                                         "src": "1337:3:38"
                                       }
                                     ],
-                                    "id": 9114,
+                                    "id": 9155,
                                     "name": "MemberAccess",
                                     "src": "1337:20:38"
                                   },
@@ -1980,11 +1980,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9002,
+                                      "referencedDeclaration": 9043,
                                       "type": "contract EVMScriptRegistryFactory",
                                       "value": "regFactory"
                                     },
-                                    "id": 9115,
+                                    "id": 9156,
                                     "name": "Identifier",
                                     "src": "1358:10:38"
                                   },
@@ -1994,11 +1994,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9046,
+                                      "referencedDeclaration": 9087,
                                       "type": "contract Kernel",
                                       "value": "dao"
                                     },
-                                    "id": 9116,
+                                    "id": 9157,
                                     "name": "Identifier",
                                     "src": "1370:3:38"
                                   },
@@ -2008,11 +2008,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9099,
+                                      "referencedDeclaration": 9140,
                                       "type": "bytes32",
                                       "value": "appManagerRole"
                                     },
-                                    "id": 9117,
+                                    "id": 9158,
                                     "name": "Identifier",
                                     "src": "1375:14:38"
                                   },
@@ -2022,28 +2022,28 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 12490,
+                                      "referencedDeclaration": 12626,
                                       "type": "contract DAOFactory",
                                       "value": "this"
                                     },
-                                    "id": 9118,
+                                    "id": 9159,
                                     "name": "Identifier",
                                     "src": "1391:4:38"
                                   }
                                 ],
-                                "id": 9119,
+                                "id": 9160,
                                 "name": "FunctionCall",
                                 "src": "1337:59:38"
                               }
                             ],
-                            "id": 9120,
+                            "id": 9161,
                             "name": "ExpressionStatement",
                             "src": "1337:59:38"
                           },
                           {
                             "attributes": {
                               "assignments": [
-                                9122
+                                9163
                               ]
                             },
                             "children": [
@@ -2051,7 +2051,7 @@
                                 "attributes": {
                                   "constant": false,
                                   "name": "reg",
-                                  "scope": 9176,
+                                  "scope": 9217,
                                   "stateVariable": false,
                                   "storageLocation": "default",
                                   "type": "contract EVMScriptRegistry",
@@ -2063,15 +2063,15 @@
                                     "attributes": {
                                       "contractScope": null,
                                       "name": "EVMScriptRegistry",
-                                      "referencedDeclaration": 7620,
+                                      "referencedDeclaration": 7661,
                                       "type": "contract EVMScriptRegistry"
                                     },
-                                    "id": 9121,
+                                    "id": 9162,
                                     "name": "UserDefinedTypeName",
                                     "src": "1411:17:38"
                                   }
                                 ],
-                                "id": 9122,
+                                "id": 9163,
                                 "name": "VariableDeclaration",
                                 "src": "1411:21:38"
                               },
@@ -2094,7 +2094,7 @@
                                     "attributes": {
                                       "argumentTypes": [
                                         {
-                                          "typeIdentifier": "t_contract$_Kernel_$9801",
+                                          "typeIdentifier": "t_contract$_Kernel_$9842",
                                           "typeString": "contract Kernel"
                                         },
                                         {
@@ -2107,7 +2107,7 @@
                                       "isPure": false,
                                       "lValueRequested": false,
                                       "member_name": "newEVMScriptRegistry",
-                                      "referencedDeclaration": 9409,
+                                      "referencedDeclaration": 9450,
                                       "type": "function (contract Kernel,address) external returns (contract EVMScriptRegistry)"
                                     },
                                     "children": [
@@ -2117,16 +2117,16 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9002,
+                                          "referencedDeclaration": 9043,
                                           "type": "contract EVMScriptRegistryFactory",
                                           "value": "regFactory"
                                         },
-                                        "id": 9123,
+                                        "id": 9164,
                                         "name": "Identifier",
                                         "src": "1435:10:38"
                                       }
                                     ],
-                                    "id": 9124,
+                                    "id": 9165,
                                     "name": "MemberAccess",
                                     "src": "1435:31:38"
                                   },
@@ -2136,11 +2136,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9046,
+                                      "referencedDeclaration": 9087,
                                       "type": "contract Kernel",
                                       "value": "dao"
                                     },
-                                    "id": 9125,
+                                    "id": 9166,
                                     "name": "Identifier",
                                     "src": "1467:3:38"
                                   },
@@ -2150,21 +2150,21 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9043,
+                                      "referencedDeclaration": 9084,
                                       "type": "address",
                                       "value": "_root"
                                     },
-                                    "id": 9126,
+                                    "id": 9167,
                                     "name": "Identifier",
                                     "src": "1472:5:38"
                                   }
                                 ],
-                                "id": 9127,
+                                "id": 9168,
                                 "name": "FunctionCall",
                                 "src": "1435:43:38"
                               }
                             ],
-                            "id": 9128,
+                            "id": 9169,
                             "name": "VariableDeclarationStatement",
                             "src": "1411:67:38"
                           },
@@ -2196,11 +2196,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9010,
+                                      "referencedDeclaration": 9051,
                                       "type": "function (address)",
                                       "value": "DeployEVMScriptRegistry"
                                     },
-                                    "id": 9129,
+                                    "id": 9170,
                                     "name": "Identifier",
                                     "src": "1492:23:38"
                                   },
@@ -2223,7 +2223,7 @@
                                         "attributes": {
                                           "argumentTypes": [
                                             {
-                                              "typeIdentifier": "t_contract$_EVMScriptRegistry_$7620",
+                                              "typeIdentifier": "t_contract$_EVMScriptRegistry_$7661",
                                               "typeString": "contract EVMScriptRegistry"
                                             }
                                           ],
@@ -2234,7 +2234,7 @@
                                           "type": "type(address)",
                                           "value": "address"
                                         },
-                                        "id": 9130,
+                                        "id": 9171,
                                         "name": "ElementaryTypeNameExpression",
                                         "src": "1516:7:38"
                                       },
@@ -2244,26 +2244,26 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9122,
+                                          "referencedDeclaration": 9163,
                                           "type": "contract EVMScriptRegistry",
                                           "value": "reg"
                                         },
-                                        "id": 9131,
+                                        "id": 9172,
                                         "name": "Identifier",
                                         "src": "1524:3:38"
                                       }
                                     ],
-                                    "id": 9132,
+                                    "id": 9173,
                                     "name": "FunctionCall",
                                     "src": "1516:12:38"
                                   }
                                 ],
-                                "id": 9133,
+                                "id": 9174,
                                 "name": "FunctionCall",
                                 "src": "1492:37:38"
                               }
                             ],
-                            "id": 9134,
+                            "id": 9175,
                             "name": "ExpressionStatement",
                             "src": "1492:37:38"
                           },
@@ -2288,11 +2288,11 @@
                                     "attributes": {
                                       "argumentTypes": [
                                         {
-                                          "typeIdentifier": "t_contract$_EVMScriptRegistryFactory_$9410",
+                                          "typeIdentifier": "t_contract$_EVMScriptRegistryFactory_$9451",
                                           "typeString": "contract EVMScriptRegistryFactory"
                                         },
                                         {
-                                          "typeIdentifier": "t_contract$_Kernel_$9801",
+                                          "typeIdentifier": "t_contract$_Kernel_$9842",
                                           "typeString": "contract Kernel"
                                         },
                                         {
@@ -2305,7 +2305,7 @@
                                       "isPure": false,
                                       "lValueRequested": false,
                                       "member_name": "revokePermission",
-                                      "referencedDeclaration": 4600,
+                                      "referencedDeclaration": 4631,
                                       "type": "function (address,address,bytes32) external"
                                     },
                                     "children": [
@@ -2315,16 +2315,16 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9078,
+                                          "referencedDeclaration": 9119,
                                           "type": "contract ACL",
                                           "value": "acl"
                                         },
-                                        "id": 9135,
+                                        "id": 9176,
                                         "name": "Identifier",
                                         "src": "1544:3:38"
                                       }
                                     ],
-                                    "id": 9137,
+                                    "id": 9178,
                                     "name": "MemberAccess",
                                     "src": "1544:20:38"
                                   },
@@ -2334,11 +2334,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9002,
+                                      "referencedDeclaration": 9043,
                                       "type": "contract EVMScriptRegistryFactory",
                                       "value": "regFactory"
                                     },
-                                    "id": 9138,
+                                    "id": 9179,
                                     "name": "Identifier",
                                     "src": "1565:10:38"
                                   },
@@ -2348,11 +2348,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9046,
+                                      "referencedDeclaration": 9087,
                                       "type": "contract Kernel",
                                       "value": "dao"
                                     },
-                                    "id": 9139,
+                                    "id": 9180,
                                     "name": "Identifier",
                                     "src": "1577:3:38"
                                   },
@@ -2362,21 +2362,21 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9099,
+                                      "referencedDeclaration": 9140,
                                       "type": "bytes32",
                                       "value": "appManagerRole"
                                     },
-                                    "id": 9140,
+                                    "id": 9181,
                                     "name": "Identifier",
                                     "src": "1582:14:38"
                                   }
                                 ],
-                                "id": 9141,
+                                "id": 9182,
                                 "name": "FunctionCall",
                                 "src": "1544:53:38"
                               }
                             ],
-                            "id": 9142,
+                            "id": 9183,
                             "name": "ExpressionStatement",
                             "src": "1544:53:38"
                           },
@@ -2405,7 +2405,7 @@
                                           "typeString": "address"
                                         },
                                         {
-                                          "typeIdentifier": "t_contract$_ACL_$5430",
+                                          "typeIdentifier": "t_contract$_ACL_$5461",
                                           "typeString": "contract ACL"
                                         },
                                         {
@@ -2418,7 +2418,7 @@
                                       "isPure": false,
                                       "lValueRequested": false,
                                       "member_name": "grantPermission",
-                                      "referencedDeclaration": 4524,
+                                      "referencedDeclaration": 4555,
                                       "type": "function (address,address,bytes32) external"
                                     },
                                     "children": [
@@ -2428,16 +2428,16 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9078,
+                                          "referencedDeclaration": 9119,
                                           "type": "contract ACL",
                                           "value": "acl"
                                         },
-                                        "id": 9143,
+                                        "id": 9184,
                                         "name": "Identifier",
                                         "src": "1611:3:38"
                                       }
                                     ],
-                                    "id": 9145,
+                                    "id": 9186,
                                     "name": "MemberAccess",
                                     "src": "1611:19:38"
                                   },
@@ -2447,11 +2447,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9043,
+                                      "referencedDeclaration": 9084,
                                       "type": "address",
                                       "value": "_root"
                                     },
-                                    "id": 9146,
+                                    "id": 9187,
                                     "name": "Identifier",
                                     "src": "1631:5:38"
                                   },
@@ -2461,11 +2461,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9078,
+                                      "referencedDeclaration": 9119,
                                       "type": "contract ACL",
                                       "value": "acl"
                                     },
-                                    "id": 9147,
+                                    "id": 9188,
                                     "name": "Identifier",
                                     "src": "1638:3:38"
                                   },
@@ -2475,21 +2475,21 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9093,
+                                      "referencedDeclaration": 9134,
                                       "type": "bytes32",
                                       "value": "permRole"
                                     },
-                                    "id": 9148,
+                                    "id": 9189,
                                     "name": "Identifier",
                                     "src": "1643:8:38"
                                   }
                                 ],
-                                "id": 9149,
+                                "id": 9190,
                                 "name": "FunctionCall",
                                 "src": "1611:41:38"
                               }
                             ],
-                            "id": 9150,
+                            "id": 9191,
                             "name": "ExpressionStatement",
                             "src": "1611:41:38"
                           },
@@ -2518,7 +2518,7 @@
                                           "typeString": "address"
                                         },
                                         {
-                                          "typeIdentifier": "t_contract$_Kernel_$9801",
+                                          "typeIdentifier": "t_contract$_Kernel_$9842",
                                           "typeString": "contract Kernel"
                                         },
                                         {
@@ -2531,7 +2531,7 @@
                                       "isPure": false,
                                       "lValueRequested": false,
                                       "member_name": "setPermissionManager",
-                                      "referencedDeclaration": 4620,
+                                      "referencedDeclaration": 4651,
                                       "type": "function (address,address,bytes32) external"
                                     },
                                     "children": [
@@ -2541,16 +2541,16 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9078,
+                                          "referencedDeclaration": 9119,
                                           "type": "contract ACL",
                                           "value": "acl"
                                         },
-                                        "id": 9151,
+                                        "id": 9192,
                                         "name": "Identifier",
                                         "src": "1667:3:38"
                                       }
                                     ],
-                                    "id": 9153,
+                                    "id": 9194,
                                     "name": "MemberAccess",
                                     "src": "1667:24:38"
                                   },
@@ -2584,7 +2584,7 @@
                                           "type": "type(address)",
                                           "value": "address"
                                         },
-                                        "id": 9154,
+                                        "id": 9195,
                                         "name": "ElementaryTypeNameExpression",
                                         "src": "1692:7:38"
                                       },
@@ -2601,12 +2601,12 @@
                                           "type": "int_const 0",
                                           "value": "0"
                                         },
-                                        "id": 9155,
+                                        "id": 9196,
                                         "name": "Literal",
                                         "src": "1700:1:38"
                                       }
                                     ],
-                                    "id": 9156,
+                                    "id": 9197,
                                     "name": "FunctionCall",
                                     "src": "1692:10:38"
                                   },
@@ -2616,11 +2616,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9046,
+                                      "referencedDeclaration": 9087,
                                       "type": "contract Kernel",
                                       "value": "dao"
                                     },
-                                    "id": 9157,
+                                    "id": 9198,
                                     "name": "Identifier",
                                     "src": "1704:3:38"
                                   },
@@ -2630,21 +2630,21 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9099,
+                                      "referencedDeclaration": 9140,
                                       "type": "bytes32",
                                       "value": "appManagerRole"
                                     },
-                                    "id": 9158,
+                                    "id": 9199,
                                     "name": "Identifier",
                                     "src": "1709:14:38"
                                   }
                                 ],
-                                "id": 9159,
+                                "id": 9200,
                                 "name": "FunctionCall",
                                 "src": "1667:57:38"
                               }
                             ],
-                            "id": 9160,
+                            "id": 9201,
                             "name": "ExpressionStatement",
                             "src": "1667:57:38"
                           },
@@ -2673,7 +2673,7 @@
                                           "typeString": "address"
                                         },
                                         {
-                                          "typeIdentifier": "t_contract$_ACL_$5430",
+                                          "typeIdentifier": "t_contract$_ACL_$5461",
                                           "typeString": "contract ACL"
                                         },
                                         {
@@ -2686,7 +2686,7 @@
                                       "isPure": false,
                                       "lValueRequested": false,
                                       "member_name": "setPermissionManager",
-                                      "referencedDeclaration": 4620,
+                                      "referencedDeclaration": 4651,
                                       "type": "function (address,address,bytes32) external"
                                     },
                                     "children": [
@@ -2696,16 +2696,16 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 9078,
+                                          "referencedDeclaration": 9119,
                                           "type": "contract ACL",
                                           "value": "acl"
                                         },
-                                        "id": 9161,
+                                        "id": 9202,
                                         "name": "Identifier",
                                         "src": "1738:3:38"
                                       }
                                     ],
-                                    "id": 9163,
+                                    "id": 9204,
                                     "name": "MemberAccess",
                                     "src": "1738:24:38"
                                   },
@@ -2715,11 +2715,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9043,
+                                      "referencedDeclaration": 9084,
                                       "type": "address",
                                       "value": "_root"
                                     },
-                                    "id": 9164,
+                                    "id": 9205,
                                     "name": "Identifier",
                                     "src": "1763:5:38"
                                   },
@@ -2729,11 +2729,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9078,
+                                      "referencedDeclaration": 9119,
                                       "type": "contract ACL",
                                       "value": "acl"
                                     },
-                                    "id": 9165,
+                                    "id": 9206,
                                     "name": "Identifier",
                                     "src": "1770:3:38"
                                   },
@@ -2743,31 +2743,31 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 9093,
+                                      "referencedDeclaration": 9134,
                                       "type": "bytes32",
                                       "value": "permRole"
                                     },
-                                    "id": 9166,
+                                    "id": 9207,
                                     "name": "Identifier",
                                     "src": "1775:8:38"
                                   }
                                 ],
-                                "id": 9167,
+                                "id": 9208,
                                 "name": "FunctionCall",
                                 "src": "1738:46:38"
                               }
                             ],
-                            "id": 9168,
+                            "id": 9209,
                             "name": "ExpressionStatement",
                             "src": "1738:46:38"
                           }
                         ],
-                        "id": 9169,
+                        "id": 9210,
                         "name": "Block",
                         "src": "1138:657:38"
                       }
                     ],
-                    "id": 9170,
+                    "id": 9211,
                     "name": "IfStatement",
                     "src": "1099:696:38"
                   },
@@ -2792,18 +2792,18 @@
                             "attributes": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_Kernel_$9801",
+                                  "typeIdentifier": "t_contract$_Kernel_$9842",
                                   "typeString": "contract Kernel"
                                 }
                               ],
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 9006,
+                              "referencedDeclaration": 9047,
                               "type": "function (address)",
                               "value": "DeployDAO"
                             },
-                            "id": 9171,
+                            "id": 9212,
                             "name": "Identifier",
                             "src": "1805:9:38"
                           },
@@ -2813,41 +2813,41 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 9046,
+                              "referencedDeclaration": 9087,
                               "type": "contract Kernel",
                               "value": "dao"
                             },
-                            "id": 9172,
+                            "id": 9213,
                             "name": "Identifier",
                             "src": "1815:3:38"
                           }
                         ],
-                        "id": 9173,
+                        "id": 9214,
                         "name": "FunctionCall",
                         "src": "1805:14:38"
                       }
                     ],
-                    "id": 9174,
+                    "id": 9215,
                     "name": "ExpressionStatement",
                     "src": "1805:14:38"
                   }
                 ],
-                "id": 9175,
+                "id": 9216,
                 "name": "Block",
                 "src": "875:951:38"
               }
             ],
-            "id": 9176,
+            "id": 9217,
             "name": "FunctionDefinition",
             "src": "816:1010:38"
           }
         ],
-        "id": 9177,
+        "id": 9218,
         "name": "ContractDefinition",
         "src": "162:1666:38"
       }
     ],
-    "id": 9178,
+    "id": 9219,
     "name": "SourceUnit",
     "src": "0:1829:38"
   },
@@ -2857,5 +2857,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.151Z"
+  "updatedAt": "2018-03-05T17:18:03.440Z"
 }

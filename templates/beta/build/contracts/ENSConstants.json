@@ -83,7 +83,7 @@
       "absolutePath": "@aragon/os/contracts/ens/ENSConstants.sol",
       "exportedSymbols": {
         "ENSConstants": [
-          7201
+          7242
         ]
       }
     },
@@ -97,7 +97,7 @@
             ".18"
           ]
         },
-        "id": 7173,
+        "id": 7214,
         "name": "PragmaDirective",
         "src": "0:24:26"
       },
@@ -113,17 +113,17 @@
           "documentation": null,
           "fullyImplemented": true,
           "linearizedBaseContracts": [
-            7201
+            7242
           ],
           "name": "ENSConstants",
-          "scope": 7202
+          "scope": 7243
         },
         "children": [
           {
             "attributes": {
               "constant": true,
               "name": "ENS_ROOT",
-              "scope": 7201,
+              "scope": 7242,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "bytes32",
@@ -135,7 +135,7 @@
                   "name": "bytes32",
                   "type": "bytes32"
                 },
-                "id": 7174,
+                "id": 7215,
                 "name": "ElementaryTypeName",
                 "src": "55:7:26"
               },
@@ -169,7 +169,7 @@
                       "type": "type(bytes32)",
                       "value": "bytes32"
                     },
-                    "id": 7175,
+                    "id": 7216,
                     "name": "ElementaryTypeNameExpression",
                     "src": "90:7:26"
                   },
@@ -186,17 +186,17 @@
                       "type": "int_const 0",
                       "value": "0"
                     },
-                    "id": 7176,
+                    "id": 7217,
                     "name": "Literal",
                     "src": "98:1:26"
                   }
                 ],
-                "id": 7177,
+                "id": 7218,
                 "name": "FunctionCall",
                 "src": "90:10:26"
               }
             ],
-            "id": 7178,
+            "id": 7219,
             "name": "VariableDeclaration",
             "src": "55:45:26"
           },
@@ -204,7 +204,7 @@
             "attributes": {
               "constant": true,
               "name": "ETH_TLD_LABEL",
-              "scope": 7201,
+              "scope": 7242,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "bytes32",
@@ -216,7 +216,7 @@
                   "name": "bytes32",
                   "type": "bytes32"
                 },
-                "id": 7179,
+                "id": 7220,
                 "name": "ElementaryTypeName",
                 "src": "106:7:26"
               },
@@ -246,11 +246,11 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 12399,
+                      "referencedDeclaration": 12535,
                       "type": "function () pure returns (bytes32)",
                       "value": "keccak256"
                     },
-                    "id": 7180,
+                    "id": 7221,
                     "name": "Identifier",
                     "src": "146:9:26"
                   },
@@ -267,17 +267,17 @@
                       "type": "literal_string \"eth\"",
                       "value": "eth"
                     },
-                    "id": 7181,
+                    "id": 7222,
                     "name": "Literal",
                     "src": "156:5:26"
                   }
                 ],
-                "id": 7182,
+                "id": 7223,
                 "name": "FunctionCall",
                 "src": "146:16:26"
               }
             ],
-            "id": 7183,
+            "id": 7224,
             "name": "VariableDeclaration",
             "src": "106:56:26"
           },
@@ -285,7 +285,7 @@
             "attributes": {
               "constant": true,
               "name": "ETH_TLD_NODE",
-              "scope": 7201,
+              "scope": 7242,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "bytes32",
@@ -297,7 +297,7 @@
                   "name": "bytes32",
                   "type": "bytes32"
                 },
-                "id": 7184,
+                "id": 7225,
                 "name": "ElementaryTypeName",
                 "src": "168:7:26"
               },
@@ -331,11 +331,11 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 12399,
+                      "referencedDeclaration": 12535,
                       "type": "function () pure returns (bytes32)",
                       "value": "keccak256"
                     },
-                    "id": 7185,
+                    "id": 7226,
                     "name": "Identifier",
                     "src": "207:9:26"
                   },
@@ -345,11 +345,11 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 7178,
+                      "referencedDeclaration": 7219,
                       "type": "bytes32",
                       "value": "ENS_ROOT"
                     },
-                    "id": 7186,
+                    "id": 7227,
                     "name": "Identifier",
                     "src": "217:8:26"
                   },
@@ -359,21 +359,21 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 7183,
+                      "referencedDeclaration": 7224,
                       "type": "bytes32",
                       "value": "ETH_TLD_LABEL"
                     },
-                    "id": 7187,
+                    "id": 7228,
                     "name": "Identifier",
                     "src": "227:13:26"
                   }
                 ],
-                "id": 7188,
+                "id": 7229,
                 "name": "FunctionCall",
                 "src": "207:34:26"
               }
             ],
-            "id": 7189,
+            "id": 7230,
             "name": "VariableDeclaration",
             "src": "168:73:26"
           },
@@ -381,7 +381,7 @@
             "attributes": {
               "constant": true,
               "name": "PUBLIC_RESOLVER_LABEL",
-              "scope": 7201,
+              "scope": 7242,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "bytes32",
@@ -393,7 +393,7 @@
                   "name": "bytes32",
                   "type": "bytes32"
                 },
-                "id": 7190,
+                "id": 7231,
                 "name": "ElementaryTypeName",
                 "src": "247:7:26"
               },
@@ -423,11 +423,11 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 12399,
+                      "referencedDeclaration": 12535,
                       "type": "function () pure returns (bytes32)",
                       "value": "keccak256"
                     },
-                    "id": 7191,
+                    "id": 7232,
                     "name": "Identifier",
                     "src": "295:9:26"
                   },
@@ -444,17 +444,17 @@
                       "type": "literal_string \"resolver\"",
                       "value": "resolver"
                     },
-                    "id": 7192,
+                    "id": 7233,
                     "name": "Literal",
                     "src": "305:10:26"
                   }
                 ],
-                "id": 7193,
+                "id": 7234,
                 "name": "FunctionCall",
                 "src": "295:21:26"
               }
             ],
-            "id": 7194,
+            "id": 7235,
             "name": "VariableDeclaration",
             "src": "247:69:26"
           },
@@ -462,7 +462,7 @@
             "attributes": {
               "constant": true,
               "name": "PUBLIC_RESOLVER_NODE",
-              "scope": 7201,
+              "scope": 7242,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "bytes32",
@@ -474,7 +474,7 @@
                   "name": "bytes32",
                   "type": "bytes32"
                 },
-                "id": 7195,
+                "id": 7236,
                 "name": "ElementaryTypeName",
                 "src": "322:7:26"
               },
@@ -508,11 +508,11 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 12399,
+                      "referencedDeclaration": 12535,
                       "type": "function () pure returns (bytes32)",
                       "value": "keccak256"
                     },
-                    "id": 7196,
+                    "id": 7237,
                     "name": "Identifier",
                     "src": "369:9:26"
                   },
@@ -522,11 +522,11 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 7189,
+                      "referencedDeclaration": 7230,
                       "type": "bytes32",
                       "value": "ETH_TLD_NODE"
                     },
-                    "id": 7197,
+                    "id": 7238,
                     "name": "Identifier",
                     "src": "379:12:26"
                   },
@@ -536,31 +536,31 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 7194,
+                      "referencedDeclaration": 7235,
                       "type": "bytes32",
                       "value": "PUBLIC_RESOLVER_LABEL"
                     },
-                    "id": 7198,
+                    "id": 7239,
                     "name": "Identifier",
                     "src": "393:21:26"
                   }
                 ],
-                "id": 7199,
+                "id": 7240,
                 "name": "FunctionCall",
                 "src": "369:46:26"
               }
             ],
-            "id": 7200,
+            "id": 7241,
             "name": "VariableDeclaration",
             "src": "322:93:26"
           }
         ],
-        "id": 7201,
+        "id": 7242,
         "name": "ContractDefinition",
         "src": "27:391:26"
       }
     ],
-    "id": 7202,
+    "id": 7243,
     "name": "SourceUnit",
     "src": "0:419:26"
   },
@@ -570,5 +570,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.143Z"
+  "updatedAt": "2018-03-05T17:18:03.434Z"
 }

@@ -64,7 +64,7 @@
       "absolutePath": "@aragon/os/contracts/common/IForwarder.sol",
       "exportedSymbols": {
         "IForwarder": [
-          7127
+          7168
         ]
       }
     },
@@ -78,7 +78,7 @@
             ".18"
           ]
         },
-        "id": 7107,
+        "id": 7148,
         "name": "PragmaDirective",
         "src": "0:24:24"
       },
@@ -94,10 +94,10 @@
           "documentation": null,
           "fullyImplemented": false,
           "linearizedBaseContracts": [
-            7127
+            7168
           ],
           "name": "IForwarder",
-          "scope": 7128
+          "scope": 7169
         },
         "children": [
           {
@@ -111,7 +111,7 @@
               ],
               "name": "isForwarder",
               "payable": false,
-              "scope": 7127,
+              "scope": 7168,
               "stateMutability": "pure",
               "superFunction": null,
               "visibility": "public"
@@ -124,7 +124,7 @@
                   ]
                 },
                 "children": [],
-                "id": 7108,
+                "id": 7149,
                 "name": "ParameterList",
                 "src": "74:2:24"
               },
@@ -134,7 +134,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "",
-                      "scope": 7112,
+                      "scope": 7153,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bool",
@@ -147,22 +147,22 @@
                           "name": "bool",
                           "type": "bool"
                         },
-                        "id": 7109,
+                        "id": 7150,
                         "name": "ElementaryTypeName",
                         "src": "98:4:24"
                       }
                     ],
-                    "id": 7110,
+                    "id": 7151,
                     "name": "VariableDeclaration",
                     "src": "98:4:24"
                   }
                 ],
-                "id": 7111,
+                "id": 7152,
                 "name": "ParameterList",
                 "src": "97:6:24"
               }
             ],
-            "id": 7112,
+            "id": 7153,
             "name": "FunctionDefinition",
             "src": "54:50:24"
           },
@@ -177,7 +177,7 @@
               ],
               "name": "canForward",
               "payable": false,
-              "scope": 7127,
+              "scope": 7168,
               "stateMutability": "view",
               "superFunction": null,
               "visibility": "public"
@@ -189,7 +189,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "sender",
-                      "scope": 7121,
+                      "scope": 7162,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address",
@@ -202,12 +202,12 @@
                           "name": "address",
                           "type": "address"
                         },
-                        "id": 7113,
+                        "id": 7154,
                         "name": "ElementaryTypeName",
                         "src": "129:7:24"
                       }
                     ],
-                    "id": 7114,
+                    "id": 7155,
                     "name": "VariableDeclaration",
                     "src": "129:14:24"
                   },
@@ -215,7 +215,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "evmCallScript",
-                      "scope": 7121,
+                      "scope": 7162,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes memory",
@@ -228,17 +228,17 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 7115,
+                        "id": 7156,
                         "name": "ElementaryTypeName",
                         "src": "145:5:24"
                       }
                     ],
-                    "id": 7116,
+                    "id": 7157,
                     "name": "VariableDeclaration",
                     "src": "145:19:24"
                   }
                 ],
-                "id": 7117,
+                "id": 7158,
                 "name": "ParameterList",
                 "src": "128:37:24"
               },
@@ -248,7 +248,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "",
-                      "scope": 7121,
+                      "scope": 7162,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bool",
@@ -261,22 +261,22 @@
                           "name": "bool",
                           "type": "bool"
                         },
-                        "id": 7118,
+                        "id": 7159,
                         "name": "ElementaryTypeName",
                         "src": "187:4:24"
                       }
                     ],
-                    "id": 7119,
+                    "id": 7160,
                     "name": "VariableDeclaration",
                     "src": "187:4:24"
                   }
                 ],
-                "id": 7120,
+                "id": 7161,
                 "name": "ParameterList",
                 "src": "186:6:24"
               }
             ],
-            "id": 7121,
+            "id": 7162,
             "name": "FunctionDefinition",
             "src": "109:84:24"
           },
@@ -291,7 +291,7 @@
               ],
               "name": "forward",
               "payable": false,
-              "scope": 7127,
+              "scope": 7168,
               "stateMutability": "nonpayable",
               "superFunction": null,
               "visibility": "public"
@@ -303,7 +303,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "evmCallScript",
-                      "scope": 7126,
+                      "scope": 7167,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes memory",
@@ -316,17 +316,17 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 7122,
+                        "id": 7163,
                         "name": "ElementaryTypeName",
                         "src": "215:5:24"
                       }
                     ],
-                    "id": 7123,
+                    "id": 7164,
                     "name": "VariableDeclaration",
                     "src": "215:19:24"
                   }
                 ],
-                "id": 7124,
+                "id": 7165,
                 "name": "ParameterList",
                 "src": "214:21:24"
               },
@@ -337,22 +337,22 @@
                   ]
                 },
                 "children": [],
-                "id": 7125,
+                "id": 7166,
                 "name": "ParameterList",
                 "src": "242:0:24"
               }
             ],
-            "id": 7126,
+            "id": 7167,
             "name": "FunctionDefinition",
             "src": "198:45:24"
           }
         ],
-        "id": 7127,
+        "id": 7168,
         "name": "ContractDefinition",
         "src": "27:218:24"
       }
     ],
-    "id": 7128,
+    "id": 7169,
     "name": "SourceUnit",
     "src": "0:246:24"
   },
@@ -362,5 +362,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.143Z"
+  "updatedAt": "2018-03-05T17:18:03.434Z"
 }

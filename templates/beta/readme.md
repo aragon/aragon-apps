@@ -8,6 +8,13 @@ functionality in the organization.
 The difference between them is how the Voting app is configured and the token
 distribution.
 
+## Install local environment
+
+- Install [Docker CE](https://docs.docker.com/install/)
+- `cd templates/beta && npm run docker:run`
+- Outputted ENS address has to be provided to the client
+- That's really it 🦅🚀
+
 ## Usage
 
 Both templates require 2 transactions to completely set up an organization.

@@ -40,7 +40,7 @@
       "absolutePath": "@aragon/os/contracts/evmscript/IEVMScriptExecutor.sol",
       "exportedSymbols": {
         "IEVMScriptExecutor": [
-          7771
+          7812
         ]
       }
     },
@@ -54,7 +54,7 @@
             ".18"
           ]
         },
-        "id": 7758,
+        "id": 7799,
         "name": "PragmaDirective",
         "src": "0:24:30"
       },
@@ -70,10 +70,10 @@
           "documentation": null,
           "fullyImplemented": false,
           "linearizedBaseContracts": [
-            7771
+            7812
           ],
           "name": "IEVMScriptExecutor",
-          "scope": 7772
+          "scope": 7813
         },
         "children": [
           {
@@ -87,7 +87,7 @@
               ],
               "name": "execScript",
               "payable": false,
-              "scope": 7771,
+              "scope": 7812,
               "stateMutability": "nonpayable",
               "superFunction": null,
               "visibility": "external"
@@ -99,7 +99,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "script",
-                      "scope": 7770,
+                      "scope": 7811,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes calldata",
@@ -112,12 +112,12 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 7759,
+                        "id": 7800,
                         "name": "ElementaryTypeName",
                         "src": "82:5:30"
                       }
                     ],
-                    "id": 7760,
+                    "id": 7801,
                     "name": "VariableDeclaration",
                     "src": "82:12:30"
                   },
@@ -125,7 +125,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "input",
-                      "scope": 7770,
+                      "scope": 7811,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes calldata",
@@ -138,12 +138,12 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 7761,
+                        "id": 7802,
                         "name": "ElementaryTypeName",
                         "src": "96:5:30"
                       }
                     ],
-                    "id": 7762,
+                    "id": 7803,
                     "name": "VariableDeclaration",
                     "src": "96:11:30"
                   },
@@ -151,7 +151,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "blacklist",
-                      "scope": 7770,
+                      "scope": 7811,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "address[] calldata",
@@ -170,22 +170,22 @@
                               "name": "address",
                               "type": "address"
                             },
-                            "id": 7763,
+                            "id": 7804,
                             "name": "ElementaryTypeName",
                             "src": "109:7:30"
                           }
                         ],
-                        "id": 7764,
+                        "id": 7805,
                         "name": "ArrayTypeName",
                         "src": "109:9:30"
                       }
                     ],
-                    "id": 7765,
+                    "id": 7806,
                     "name": "VariableDeclaration",
                     "src": "109:19:30"
                   }
                 ],
-                "id": 7766,
+                "id": 7807,
                 "name": "ParameterList",
                 "src": "81:48:30"
               },
@@ -195,7 +195,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "",
-                      "scope": 7770,
+                      "scope": 7811,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "bytes memory",
@@ -208,32 +208,32 @@
                           "name": "bytes",
                           "type": "bytes storage pointer"
                         },
-                        "id": 7767,
+                        "id": 7808,
                         "name": "ElementaryTypeName",
                         "src": "148:5:30"
                       }
                     ],
-                    "id": 7768,
+                    "id": 7809,
                     "name": "VariableDeclaration",
                     "src": "148:5:30"
                   }
                 ],
-                "id": 7769,
+                "id": 7810,
                 "name": "ParameterList",
                 "src": "147:7:30"
               }
             ],
-            "id": 7770,
+            "id": 7811,
             "name": "FunctionDefinition",
             "src": "62:93:30"
           }
         ],
-        "id": 7771,
+        "id": 7812,
         "name": "ContractDefinition",
         "src": "27:130:30"
       }
     ],
-    "id": 7772,
+    "id": 7813,
     "name": "SourceUnit",
     "src": "0:158:30"
   },
@@ -243,5 +243,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.146Z"
+  "updatedAt": "2018-03-05T17:18:03.436Z"
 }

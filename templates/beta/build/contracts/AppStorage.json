@@ -41,7 +41,7 @@
       "absolutePath": "@aragon/os/contracts/apps/AppStorage.sol",
       "exportedSymbols": {
         "AppStorage": [
-          6780
+          6821
         ]
       }
     },
@@ -55,22 +55,22 @@
             ".18"
           ]
         },
-        "id": 6764,
+        "id": 6805,
         "name": "PragmaDirective",
         "src": "0:24:19"
       },
       {
         "attributes": {
-          "SourceUnit": 9461,
+          "SourceUnit": 9502,
           "absolutePath": "@aragon/os/contracts/kernel/IKernel.sol",
           "file": "../kernel/IKernel.sol",
-          "scope": 6781,
+          "scope": 6822,
           "symbolAliases": [
             null
           ],
           "unitAlias": ""
         },
-        "id": 6765,
+        "id": 6806,
         "name": "ImportDirective",
         "src": "26:31:19"
       },
@@ -86,17 +86,17 @@
           "documentation": null,
           "fullyImplemented": true,
           "linearizedBaseContracts": [
-            6780
+            6821
           ],
           "name": "AppStorage",
-          "scope": 6781
+          "scope": 6822
         },
         "children": [
           {
             "attributes": {
               "constant": false,
               "name": "kernel",
-              "scope": 6780,
+              "scope": 6821,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "contract IKernel",
@@ -108,15 +108,15 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "IKernel",
-                  "referencedDeclaration": 9460,
+                  "referencedDeclaration": 9501,
                   "type": "contract IKernel"
                 },
-                "id": 6766,
+                "id": 6807,
                 "name": "UserDefinedTypeName",
                 "src": "86:7:19"
               }
             ],
-            "id": 6767,
+            "id": 6808,
             "name": "VariableDeclaration",
             "src": "86:21:19"
           },
@@ -124,7 +124,7 @@
             "attributes": {
               "constant": false,
               "name": "appId",
-              "scope": 6780,
+              "scope": 6821,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "bytes32",
@@ -137,12 +137,12 @@
                   "name": "bytes32",
                   "type": "bytes32"
                 },
-                "id": 6768,
+                "id": 6809,
                 "name": "ElementaryTypeName",
                 "src": "113:7:19"
               }
             ],
-            "id": 6769,
+            "id": 6810,
             "name": "VariableDeclaration",
             "src": "113:20:19"
           },
@@ -150,7 +150,7 @@
             "attributes": {
               "constant": false,
               "name": "pinnedCode",
-              "scope": 6780,
+              "scope": 6821,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "address",
@@ -163,12 +163,12 @@
                   "name": "address",
                   "type": "address"
                 },
-                "id": 6770,
+                "id": 6811,
                 "name": "ElementaryTypeName",
                 "src": "139:7:19"
               }
             ],
-            "id": 6771,
+            "id": 6812,
             "name": "VariableDeclaration",
             "src": "139:27:19"
           },
@@ -176,7 +176,7 @@
             "attributes": {
               "constant": false,
               "name": "initializationBlock",
-              "scope": 6780,
+              "scope": 6821,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "uint256",
@@ -189,12 +189,12 @@
                   "name": "uint256",
                   "type": "uint256"
                 },
-                "id": 6772,
+                "id": 6813,
                 "name": "ElementaryTypeName",
                 "src": "196:7:19"
               }
             ],
-            "id": 6773,
+            "id": 6814,
             "name": "VariableDeclaration",
             "src": "196:36:19"
           },
@@ -202,7 +202,7 @@
             "attributes": {
               "constant": false,
               "name": "storageOffset",
-              "scope": 6780,
+              "scope": 6821,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "uint256[95] storage ref",
@@ -220,7 +220,7 @@
                       "name": "uint256",
                       "type": "uint256"
                     },
-                    "id": 6774,
+                    "id": 6815,
                     "name": "ElementaryTypeName",
                     "src": "263:7:19"
                   },
@@ -237,17 +237,17 @@
                       "type": "int_const 95",
                       "value": "95"
                     },
-                    "id": 6775,
+                    "id": 6816,
                     "name": "Literal",
                     "src": "271:2:19"
                   }
                 ],
-                "id": 6776,
+                "id": 6817,
                 "name": "ArrayTypeName",
                 "src": "263:11:19"
               }
             ],
-            "id": 6777,
+            "id": 6818,
             "name": "VariableDeclaration",
             "src": "263:33:19"
           },
@@ -255,7 +255,7 @@
             "attributes": {
               "constant": false,
               "name": "offset",
-              "scope": 6780,
+              "scope": 6821,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "uint256",
@@ -268,22 +268,22 @@
                   "name": "uint256",
                   "type": "uint256"
                 },
-                "id": 6778,
+                "id": 6819,
                 "name": "ElementaryTypeName",
                 "src": "352:7:19"
               }
             ],
-            "id": 6779,
+            "id": 6820,
             "name": "VariableDeclaration",
             "src": "352:22:19"
           }
         ],
-        "id": 6780,
+        "id": 6821,
         "name": "ContractDefinition",
         "src": "60:317:19"
       }
     ],
-    "id": 6781,
+    "id": 6822,
     "name": "SourceUnit",
     "src": "0:378:19"
   },
@@ -293,5 +293,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-26T13:03:38.142Z"
+  "updatedAt": "2018-03-05T17:18:03.433Z"
 }
