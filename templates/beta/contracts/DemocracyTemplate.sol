@@ -8,7 +8,7 @@ contract DemocracyTemplate is BetaTemplateBase {
              BetaTemplateBase(_fac, _minimeFac, _apm, _etherToken, _aragonID, _appIds) public {}
 
      function newToken(string name, string symbol) external returns (MiniMeToken token) {
-         token = minimeFac.createCloneToken(address(0), 0, name, 18, name, true);
+         token = minimeFac.createCloneToken(address(0), 0, name, 18, symbol, true);
          cacheToken(token, msg.sender);
      }
 
