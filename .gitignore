@@ -14,6 +14,7 @@ apps/**/build
 apps/**/artifact.json
 future-apps/**/build
 future-apps/**/artifact.json
+templates/**/build
 
 # lerna
 lerna-debug.log
