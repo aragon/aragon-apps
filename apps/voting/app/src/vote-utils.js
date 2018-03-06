@@ -15,7 +15,7 @@ export const getVoteStatus = (vote, support, quorum) => {
 
   const totalVotes = vote.yea + vote.nay
   const hasSupport = vote.yea / totalVotes >= support
-  const hasMinQuorum = vote.yea / vote.totalVoters >= quorum
+  const hasMinQuorum = getQuorumProgress(vote) >= quorum
 
   if (vote.open) {
     return VOTE_STATUS_ONGOING
@@ -25,3 +25,5 @@ export const getVoteStatus = (vote, support, quorum) => {
     ? VOTE_STATUS_ACCEPTED
     : VOTE_STATUS_REJECTED
 }
+
+export const getQuorumProgress = ({ yea, totalVoters }) => yea / totalVoters

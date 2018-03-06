@@ -9,6 +9,7 @@ import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
 import AppLayout from './components/AppLayout'
 import { VOTE_YEA } from './vote-types'
+import { getQuorumProgress } from './vote-utils'
 
 class App extends React.Component {
   state = {
@@ -182,6 +183,7 @@ class App extends React.Component {
           support: supportRequired,
           quorum: vote.vote.minAcceptQuorumPct / pctBase,
           endDate: new Date(vote.vote.startDate * 1000 + voteTime * 1000),
+          quorumProgress: getQuorumProgress(vote.vote),
         }))
       : votes
 

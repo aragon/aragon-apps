@@ -27,7 +27,7 @@ class VotePanelContent extends React.Component {
       return null
     }
 
-    const { question, quorum, support, endDate } = vote
+    const { question, quorum, support, endDate, quorumProgress } = vote
     const { creator, yea, nay, totalVoters } = vote.vote
 
     const creatorName = 'Robert Johnson' // TODO: get creator name
@@ -105,6 +105,7 @@ class VotePanelContent extends React.Component {
           votesNay={nay}
           tokenSupply={totalVoters}
           quorum={quorum}
+          quorumProgress={quorumProgress}
           support={support}
           ready={ready}
         />

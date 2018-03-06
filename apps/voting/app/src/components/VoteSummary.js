@@ -12,6 +12,7 @@ const VoteSummary = ({
   votesNay,
   tokenSupply,
   quorum,
+  quorumProgress,
   support,
   ready,
 }) => {
@@ -22,7 +23,6 @@ const VoteSummary = ({
   const votesYeaVotersPct = votesYea / totalVotes
   const votesNayVotersPct = votesNay / totalVotes
 
-  const votingPowerSupport = totalVotes / tokenSupply
   return (
     <Motion
       defaultStyle={{ progress: 0 }}
@@ -33,7 +33,7 @@ const VoteSummary = ({
           <Header>
             <span>
               <Label>
-                Quorum: <strong>{Math.round(votingPowerSupport * 100)}%</strong>{' '}
+                Quorum: <strong>{Math.round(quorumProgress * 100)}%</strong>{' '}
               </Label>
               <Text size="xsmall" color={theme.textSecondary}>
                 ({Math.round(quorum * 100)}% needed)
@@ -69,9 +69,9 @@ const VoteSummary = ({
           <YesNoItem color={theme.positive}>
             <span>Yes</span>
             <strong>{Math.round(votesYeaVotersPct * progress * 100)}%</strong>
-              <Text size="xsmall" color={theme.textSecondary}>
-                ({Math.round(support * 100)}% needed)
-              </Text>
+            <Text size="xsmall" color={theme.textSecondary}>
+              ({Math.round(support * 100)}% needed)
+            </Text>
           </YesNoItem>
           <YesNoItem color={theme.negative}>
             <span>No</span>
