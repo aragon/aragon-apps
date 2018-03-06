@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "compile": "truffle compile",
+    "deploy:rpc": "truffle exec scripts/deploy.js --network rpc",
+    "deploy:rinkeby": "truffle exec scripts/deploy.js --network rinkeby",
+    "publish:rpc": "npm run compile && aragon publish \"$(npm run deploy:rpc | tail -n 1)\"",
+    "publish:rpc:content": "aragon publish",
+    "publish:rinkeby": "npm run compile && aragon publish --keyfile ~/.rinkebykey.json \"$(npm run deploy:rinkeby | tail -n 1)\"",
+    "publish:rinkeby:content": "aragon publish --keyfile ~/.rinkebykey.json",
     "lint": "solium --dir ./contracts",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:dev",
     "test:gas": "GAS_REPORTER=true npm test",
@@ -22,6 +29,7 @@
   "license": "GPL-3.0",
   "description": "",
   "devDependencies": {
+    "@aragon/cli": "^2.0.1",
     "@aragon/test-helpers": "^1.0.0",
     "babel-helpers": "^6.24.1",
     "babel-polyfill": "^6.26.0",
