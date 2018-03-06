@@ -1,6 +1,7 @@
+import Aragon from '@aragon/client'
+import Messenger, { providers } from '@aragon/messenger'
 import React from 'react'
 import { AragonApp, AppBar, Button, SidePanel } from '@aragon/ui'
-import Aragon from '@aragon/client'
 import { USER_ACCOUNT } from './demo-state'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
@@ -24,20 +25,54 @@ class App extends React.Component {
     userAccount: '',
   }
   componentDidMount() {
-    const app = (this.app = new Aragon())
-    const events$ = app.events()
+    window.addEventListener('load', this.handleWindowLoad)
+    window.addEventListener('message', this.handleWrapperMessage)
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('load', this.handleWindowLoad)
+    window.removeEventListener('message', this.handleWrapperMessage)
+  }
+
+  handleWrapperMessage = ({ data }) => {
+    if (data.from !== 'wrapper') {
+      return
+    }
+    if (data.name === 'account') {
+      this.setState({ userAccount: data.value })
+    }
+    if (data.name === 'ready') {
+      this.connectApp()
+    }
+  }
+
+  sendMessageToWrapper = (name, value) => {
+    window.parent.postMessage({ from: 'app', name, value }, '*')
+  }
+
+  connectApp = () => {
+    // Only connect once
+    if (this.app) {
+      return
+    }
+
+    this.app = new Aragon(
+      new Messenger(new providers.WindowMessage(window.parent))
+    )
+
+    const events$ = this.app.events()
 
     events$
       .filter(({ event }) => event === 'StartVote')
       .map(({ returnValues: { voteId } }) => voteId)
       .subscribe(voteId => {
-        app.call('getVote', voteId).subscribe(vote => {
+        this.app.call('getVote', voteId).subscribe(vote => {
           this.updateVote({
             ...this.getVote(voteId),
             vote: this.transformVote(vote),
           })
         })
-        app.call('getVoteMetadata', voteId).subscribe(meta => {
+        this.app.call('getVoteMetadata', voteId).subscribe(meta => {
           this.updateVote({
             ...this.getVote(voteId),
             question: meta,
@@ -51,7 +86,7 @@ class App extends React.Component {
       ['supportRequiredPct', 'supportRequiredPct'],
     ]
     voteSettings.forEach(([name, key], i) => {
-      app.call(name).subscribe(val => {
+      this.app.call(name).subscribe(val => {
         const value = parseInt(val, 10)
         const settingsReady = voteSettings.every(
           ([name, key], j) => (i === j ? value : this.state[key]) > -1
@@ -60,16 +95,7 @@ class App extends React.Component {
       })
     })
 
-    window.addEventListener('message', ({ data }) => {
-      if (data.from !== 'wrapper') {
-        return
-      }
-      if (data.name === 'account') {
-        this.setState({ userAccount: data.value })
-      }
-    })
-
-    window.parent.postMessage({ from: 'app', name: 'ready', value: true }, '*')
+    this.sendMessageToWrapper('ready', true)
   }
 
   // Get a vote using its ID, or create it if needed
