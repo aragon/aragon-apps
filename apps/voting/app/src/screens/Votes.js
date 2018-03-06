@@ -26,7 +26,7 @@ class Votes extends React.Component {
               />
             </Title>
             <VotesTable
-              opened={true}
+              opened
               votes={openedVotes}
               onSelectVote={onSelectVote}
             />
@@ -46,9 +46,9 @@ class Votes extends React.Component {
           </VotesTableWrapper>
         )}
 
-        {/*<SeeMoreWrapper>
+        {/* <SeeMoreWrapper>
           <Button mode="secondary">Show Previous Votes</Button>
-        </SeeMoreWrapper>*/}
+        </SeeMoreWrapper> */}
       </Main>
     )
   }

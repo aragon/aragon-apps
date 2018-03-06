@@ -15,11 +15,7 @@ const VotesTable = ({ votes, opened, onSelectVote }) => (
     }
   >
     {votes.map(vote => (
-      <VoteRow
-        key={vote.voteId}
-        vote={vote}
-        onSelectVote={onSelectVote}
-      />
+      <VoteRow key={vote.voteId} vote={vote} onSelectVote={onSelectVote} />
     ))}
   </Table>
 )
