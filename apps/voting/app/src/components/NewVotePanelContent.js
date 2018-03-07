@@ -2,6 +2,9 @@ import React from 'react'
 import { Button, Info, TextInput, Field } from '@aragon/ui'
 
 class NewVotePanelContent extends React.Component {
+  static defaultProps = {
+    onCreateVote: () => {},
+  }
   state = {
     question: '',
   }
@@ -43,10 +46,6 @@ class NewVotePanelContent extends React.Component {
       </div>
     )
   }
-}
-
-NewVotePanelContent.defaultProps = {
-  onCreateVote: () => {},
 }
 
 export default NewVotePanelContent
