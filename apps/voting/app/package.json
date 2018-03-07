@@ -40,7 +40,7 @@
   "scripts": {
     "lint": "eslint ./src",
     "sync-assets": "rsync -rtu \"$(dirname $(node -p 'require.resolve(\"@aragon/ui\")'))/\" public/aragon-ui",
-    "start": "npm run sync-assets && npm run build:script && PORT=3001 react-scripts start",
+    "start": "npm run sync-assets && npm run build:script -- --no-minify && PORT=3001 react-scripts start",
     "build": "npm run sync-assets && npm run build:script && react-scripts build",
     "build:script": "parcel build src/script.js -d public/ -o script.js",
     "test": "react-scripts test --env=jsdom",
