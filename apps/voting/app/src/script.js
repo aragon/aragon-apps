@@ -17,7 +17,7 @@ app.store(async (state, { event, returnValues }) => {
       nextState = await castVote(nextState, returnValues)
       break
     case 'ExecuteVote':
-      nextState = executeVote(nextState, returnValues)
+      nextState = await executeVote(nextState, returnValues)
       break
     case 'StartVote':
       nextState = await startVote(nextState, returnValues)
@@ -42,24 +42,16 @@ async function castVote(state, { voteId }) {
     ...vote,
     data: await loadVoteData(voteId),
   })
-  return updateVotesState(state, voteId, transform)
+  return updateState(state, voteId, transform)
 }
 
 async function executeVote(state, { voteId }) {
-  const transform = vote => Promise.resolve({ ...vote, executed: true })
-  return updateVotesState(state, voteId, transform)
+  const transform = vote => ({ ...vote, executed: true })
+  return updateState(state, voteId, transform)
 }
 
 async function startVote(state, { voteId }) {
-  const { votes = [] } = state
-  const vote = {
-    voteId,
-    data: await loadVoteData(voteId),
-  }
-  return {
-    ...state,
-    votes: votes.concat(vote),
-  }
+  return updateState(state, voteId, vote => vote)
 }
 
 /***********************
@@ -84,23 +76,32 @@ function loadVoteData(voteId) {
   })
 }
 
-async function updateVotes(votes, index, transform) {
-  const nextVotes = Array.from(votes)
-  nextVotes[index] = await transform(nextVotes[index])
-  return nextVotes
+async function updateVotes(votes, voteId, transform) {
+  const voteIndex = votes.findIndex(vote => vote.voteId === voteId)
+
+  console.log(`vote index for ${voteId}`, voteIndex)
+  if (voteIndex === -1) {
+    // If we can't find it, load its data, perform the transformation, and concat
+    return votes.concat(
+      await transform({
+        voteId,
+        data: await loadVoteData(voteId),
+      })
+    )
+  } else {
+    const nextVotes = Array.from(votes)
+    nextVotes[voteIndex] = await transform(nextVotes[voteIndex])
+    return nextVotes
+  }
 }
 
-async function updateVotesState(state, voteId, transform) {
+async function updateState(state, voteId, transform) {
   const { votes = [] } = state
-  const voteIndex = votes.findIndex(vote => vote.id === voteId)
 
-  // If we can't find it... let's just ignore it :)
-  return voteIndex === -1
-    ? state
-    : {
-        ...state,
-        vote: await updateVotes(votes, voteIndex, transform),
-      }
+  return {
+    ...state,
+    votes: await updateVotes(votes, voteId, transform),
+  }
 }
 
 function loadVoteSettings() {
