@@ -1,6 +1,5 @@
-import Aragon from '@aragon/client'
-import Messenger, { providers } from '@aragon/messenger'
 import React from 'react'
+import PropTypes from 'prop-types'
 import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
@@ -11,27 +10,23 @@ import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
 import { getQuorumProgress } from './vote-utils'
 
-const app = new Aragon(
-  new Messenger(new providers.WindowMessage(window.parent))
-)
-
 class App extends React.Component {
-  state = {
+  static propTypes = {
+    app: PropTypes.object.isRequired,
+  }
+  static defaultProps = {
+    pctBase: -1,
+    supportRequiredPct: -1,
+    userAccount: '',
     votes: [],
+    voteTime: -1,
+  }
+  state = {
     createVoteVisible: false,
     currentVoteId: -1,
+    settingsLoaded: false,
     voteVisible: false,
     voteSidebarOpened: false,
-
-    settingsLoaded: false,
-    supportRequiredPct: -1,
-    voteTime: -1,
-    pctBase: -1,
-    userAccount: '',
-  }
-
-  componentDidMount() {
-    window.addEventListener('message', this.handleWrapperMessage)
   }
 
   componentWillReceiveProps(nextProps) {
@@ -41,31 +36,12 @@ class App extends React.Component {
       this.setState({
         settingsLoaded: true,
       })
+      console.log(nextProps)
     }
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('message', this.handleWrapperMessage)
-  }
-
-  handleWrapperMessage = ({ data }) => {
-    if (data.from !== 'wrapper') {
-      return
-    }
-    if (data.name === 'account') {
-      this.setState({ userAccount: data.value })
-    }
-    if (data.name === 'ready') {
-      this.sendMessageToWrapper('ready', true)
-    }
-  }
-
-  sendMessageToWrapper = (name, value) => {
-    window.parent.postMessage({ from: 'app', name, value }, '*')
   }
 
   handleCreateVote = question => {
-    app.newVote('0x00000001', question)
+    this.props.app.newVote('0x00000001', question)
     this.handleCreateVoteClose()
   }
   handleCreateVoteOpen = () => {
@@ -84,7 +60,7 @@ class App extends React.Component {
     })
   }
   handleVote = (voteId, voteType) => {
-    app.vote(voteId, voteType === VOTE_YEA, false)
+    this.props.app.vote(voteId, voteType === VOTE_YEA, false)
     this.handleVoteClose()
   }
   handleVoteClose = () => {
@@ -94,12 +70,17 @@ class App extends React.Component {
     this.setState(opened ? { voteSidebarOpened: true } : { currentVoteId: -1 })
   }
   render() {
-    const { votes, voteTime, supportRequiredPct, pctBase } = this.props
+    const {
+      pctBase,
+      supportRequiredPct,
+      userAccount,
+      votes,
+      voteTime,
+    } = this.props
     const {
       createVoteVisible,
       currentVoteId,
       settingsLoaded,
-      userAccount,
       voteSidebarOpened,
       voteVisible,
     } = this.state
@@ -187,12 +168,7 @@ class App extends React.Component {
   }
 }
 
-const Enhanced = observe(
+export default observe(
   observable => observable.map(state => ({ ...state })),
   {}
 )(App)
-
-const state$ = app.state()
-const ConnectedApp = props => <Enhanced observable={state$} />
-
-export default ConnectedApp
