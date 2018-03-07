@@ -28,7 +28,7 @@ const newRepo = async (apm, name, acc, contract) => {
 
 module.exports = async (deployer, network, accounts) => {
   let indexObj = require('../index.js')
-  const ens = ENS.at(process.env.ENS || indexObj[network].ens)
+  const ens = ENS.at(process.env.ENS || indexObj.networks[network].ens)
 
   const apmAddr = await artifacts.require('PublicResolver').at(await ens.resolver(namehash('aragonpm.eth'))).addr(namehash('aragonpm.eth'))
 
@@ -53,16 +53,16 @@ module.exports = async (deployer, network, accounts) => {
 
   const ts = tmpls.map((address, i) => ({ name: templates[i], address }) )
 
-  if (network == 'rpc' || network == 'devnet') {
-    console.log('creating APM packages for templates')
+  console.log('creating APM packages for templates')
 
-    const apm = artifacts.require('APMRegistry').at(apmAddr)
+  const apm = artifacts.require('APMRegistry').at(apmAddr)
 
-    await apm.newRepoWithVersion('democracy-template', accounts[0], [1, 0, 0], tmpls[0], 'ipfs:')
-    await apm.newRepoWithVersion('multisig-template', accounts[0], [1, 0, 0], tmpls[1], 'ipfs:')
+  await apm.newRepoWithVersion('democracy-template', accounts[0], [1, 0, 0], tmpls[0], 'ipfs:')
+  await apm.newRepoWithVersion('multisig-template', accounts[0], [1, 0, 0], tmpls[1], 'ipfs:')
 
-    console.log(ts)
-  } else {
+  console.log(ts)
+
+  if (!network == 'rpc' || !network == 'devnet') {
     indexObj[network].templates = ts
     const indexFile = 'module.exports = ' + JSON.stringify(indexObj, null, 2)
     // could also use https://github.com/yeoman/stringify-object if you wanted single quotes
