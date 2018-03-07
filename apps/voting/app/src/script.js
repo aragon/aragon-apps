@@ -1,6 +1,5 @@
 import Aragon from '@aragon/client'
-import { combineLatest } from 'rxjs/operators/combineLatest'
-import { Subject } from 'rxjs/Subject'
+import { combineLatest } from 'rxjs/observable/combineLatest'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
 
 const app = new Aragon()
@@ -105,27 +104,32 @@ async function updateVotesState(state, voteId, transform) {
 }
 
 function loadVoteSettings() {
-  return new Promise(resolve => {
-    // app.call() creates a hot observable, so it's hard to merge.
-    // Instead, we use a Subject
-    const settings$ = new Subject().scan(
-      (settings, setting) => ({ ...settings, ...setting }),
-      {}
+  return Promise.all(
+    voteSettings.map(
+      ([name, key]) =>
+        new Promise((resolve, reject) =>
+          app
+            .call(name)
+            .first()
+            .map(val => parseInt(val, 10))
+            .subscribe(value => {
+              resolve({ [key]: value })
+            }, reject)
+        )
     )
-    settings$.connect()
-
-    voteSettings.forEach(([name, key]) => {
-      app
-        .call(name)
-        .first()
-        .map(val => parseInt(val, 10))
-        .subscribe(value => {
-          settings$.next({ [key]: value })
-        })
+  )
+    .then(settings =>
+      settings.reduce((acc, setting) => ({ ...acc, ...setting }))
+    )
+    .catch(err => {
+      console.error('Failed to load Vote settings', err)
+      // Return an empty object to try again later
+      return {}
     })
-
-    settings$.first(hasLoadedVoteSettings).subscribe(resolve)
-  })
+    .then(settings => {
+      console.log('loaded settings!', settings)
+      return settings
+    })
 }
 
 // Apply transmations to a vote received from web3
