@@ -73,7 +73,7 @@ function loadVoteData(voteId) {
   return new Promise(resolve => {
     combineLatest(
       app.call('getVote', voteId),
-      app.call('getVoteMetaData', voteId)
+      app.call('getVoteMetadata', voteId)
     )
       .first()
       .subscribe(([vote, metadata]) => {
