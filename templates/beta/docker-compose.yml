@@ -11,8 +11,11 @@ services:
       && scripts/deploy.sh"
     environment:
       - OWNER=${OWNER}
+    links:
+      - ipfs
     networks:
       - devnet
+      - ipfs
   devnet:
     image: aragon/geth-devnet
     ports:
@@ -24,11 +27,14 @@ services:
     networks:
       - devnet
   ipfs:
-    image: jbenet/go-ipfs
+    image: aragon/ipfs
     ports:
       - "5001:5001"
       - "4001:4001"
+    expose:
+      - 5001
     networks:
-      - devnet
+      - ipfs
 networks:
   devnet:
+  ipfs:

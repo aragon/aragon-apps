@@ -13,6 +13,6 @@ RUN npm install
 
 # TODO: Split here into another template specific image and use above as base
 
-RUN node_modules/.bin/lerna bootstrap --nohoist=@aragon/os --scope @aragon/templates-beta
+RUN node_modules/.bin/lerna bootstrap --nohoist=@aragon/os --scope @aragon/templates-beta --scope @aragon/apps-*
 
 WORKDIR templates/beta

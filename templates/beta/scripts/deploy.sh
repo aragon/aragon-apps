@@ -11,5 +11,8 @@ npm run deploy:devnet:apm
 cd ../aragon-id
 npm run deploy:devnet
 
-cd ../aragon-apps/templates/beta
+cd ../aragon-apps
+env DEBUG=true npm run publish:devnet
+
+cd templates/beta
 npm run deploy:devnet
