@@ -1,6 +1,6 @@
 # Dependencies
 node_modules
-apps/*/node_modules
+**/*/node_modules
 
 # coverage
 */**/coverage
@@ -9,14 +9,10 @@ apps/*/node_modules
 */**/allFiredEvents
 */**/scTopics
 
-
-apps/**/build
-apps/**/artifact.json
-future-apps/**/build
-future-apps/**/artifact.json
+**/**/artifact.json
 
 # lerna
 lerna-debug.log
 
 # truffle build artifacts
-apps/*/build
+**/*/build
