@@ -1,7 +1,7 @@
 pragma solidity 0.4.18;
 
-import "@aragon/os/contracts/factory/APMRegistryFactory.sol";
-import "@aragon/os/contracts/factory/ENSFactory.sol";
+//import "@aragon/os/contracts/factory/APMRegistryFactory.sol";
+//import "@aragon/os/contracts/factory/ENSFactory.sol";
 import "@aragon/id/contracts/FIFSResolvingRegistrar.sol";
 
 // You might think this file is a bit odd, but let me explain.
