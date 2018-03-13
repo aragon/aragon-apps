@@ -134,7 +134,7 @@ contract('Voting App', accounts => {
                 const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await app.getVote(voteId)
 
                 assert.isTrue(isOpen, 'vote should be open')
-                assert.isFalse(isExecuted, 'vote should be executed')
+                assert.isFalse(isExecuted, 'vote should not be executed')
                 assert.equal(creator, nonHolder, 'creator should be correct')
                 assert.equal(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
                 assert.deepEqual(minQuorum, minimumAcceptanceQuorum, 'min quorum should be app min quorum')
