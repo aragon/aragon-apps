@@ -18,6 +18,8 @@ services:
       - ipfs
   devnet:
     image: aragon/geth-devnet
+    volumes:
+      - "./ethereum-data/:/root/.ethdata"
     ports:
       - "8545:8545"
     expose:
