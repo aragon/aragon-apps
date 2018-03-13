@@ -4,7 +4,8 @@ const voteSettings = [
   ['supportRequiredPct', 'supportRequiredPct'],
 ]
 
-export function hasLoadedVoteSettings(state = {}) {
+export function hasLoadedVoteSettings(state) {
+  state = state || {}
   return voteSettings.reduce((loaded, [_, key]) => loaded && !!state[key], true)
 }
 
