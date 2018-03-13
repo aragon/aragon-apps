@@ -1,7 +1,10 @@
+.git
+
 # Dependencies
 node_modules
-**/*/node_modules
+*/**/node_modules
 
+*/**/build
 # coverage
 */**/coverage
 */**/coverageEnv
@@ -9,10 +12,11 @@ node_modules
 */**/allFiredEvents
 */**/scTopics
 
-**/**/artifact.json
+
+apps/**/artifact.json
+future-apps/**/artifact.json
 
 # lerna
 lerna-debug.log
 
 # truffle build artifacts
-**/*/build

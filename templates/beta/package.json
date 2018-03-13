@@ -1,18 +1,24 @@
 {
   "name": "@aragon/templates-beta",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Beta template for v0.5 Aragon orgs",
   "main": "index.js",
   "scripts": {
+    "prepublish": "truffle compile && node scripts/extract-abis.js",
     "deploy:rinkeby": "truffle migrate --network rinkeby --reset",
-    "deploy:rpc": "truffle migrate --network rpc --reset"
+    "deploy:rpc": "truffle migrate --network rpc --reset",
+    "deploy:devnet": "truffle migrate --network devnet --reset",
+    "docker:wait-gas": "truffle exec scripts/sleep-until-gaslimit.js --network devnet 6900000",
+    "docker:run": "docker-compose up deploy",
+    "docker:build": "docker build -t aragon/templates-beta -f Dockerfile ../..",
+    "docker:build:no": "docker build --no-cache -t aragon/templates-beta -f Dockerfile ../.."
   },
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@aragon/id": "^1.2.0",
+    "@aragon/id": "^1.2.1",
     "eth-ens-namehash": "^2.0.8",
-    "truffle": "^4.0.5",
+    "truffle": "4.0.5",
     "truffle-hdwallet-provider": "0.0.3"
   },
   "dependencies": {
