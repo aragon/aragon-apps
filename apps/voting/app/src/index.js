@@ -24,7 +24,6 @@ class ConnectedApp extends React.Component {
       this.setState({ userAccount: data.value })
     }
     if (data.name === 'ready') {
-      console.log('voting ready!')
       this.sendMessageToWrapper('ready', true)
       this.setState({
         observable: this.state.app.state(),

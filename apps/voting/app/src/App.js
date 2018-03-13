@@ -36,7 +36,6 @@ class App extends React.Component {
       this.setState({
         settingsLoaded: true,
       })
-      console.log(nextProps)
     }
   }
 

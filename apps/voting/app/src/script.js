@@ -80,7 +80,6 @@ function loadVoteData(voteId) {
 async function updateVotes(votes, voteId, transform) {
   const voteIndex = votes.findIndex(vote => vote.voteId === voteId)
 
-  console.log(`vote index for ${voteId}`, voteIndex)
   if (voteIndex === -1) {
     // If we can't find it, load its data, perform the transformation, and concat
     return votes.concat(
@@ -129,7 +128,6 @@ function loadVoteSettings() {
       return {}
     })
     .then(settings => {
-      console.log('loaded settings!', settings)
       return settings
     })
 }
