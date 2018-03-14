@@ -127,9 +127,6 @@ const Main = styled.aside`
   width: 260px;
   margin-left: 30px;
   min-height: 100%;
-  li {
-    list-style: none;
-  }
 `
 
 const Part = styled.div`
@@ -150,6 +147,8 @@ const InfoRow = styled.li`
   display: flex;
   justify-content: space-between;
   margin-bottom: 15px;
+  list-style: none;
+
   > span:nth-child(1) {
     font-weight: 400;
     color: ${theme.textSecondary};
@@ -175,6 +174,8 @@ const StakesListItem = styled.li`
   align-items: center;
   justify-content: space-between;
   margin-top: 10px;
+  list-style: none;
+
   > span:first-child {
     display: flex;
     align-items: center;
