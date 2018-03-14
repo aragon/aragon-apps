@@ -3,6 +3,8 @@ pragma solidity 0.4.18;
 import "@aragon/os/contracts/common/DelegateProxy.sol";
 import "@aragon/os/contracts/apps/AragonApp.sol";
 
+import "@aragon/os/contracts/lib/misc/Migrations.sol";
+
 import "./IConnector.sol";
 
 
@@ -17,6 +19,17 @@ contract Vault is AragonApp, DelegateProxy {
     bytes32 constant erc777Identifier = keccak256('erc777');
     bytes32 constant erc20Identifier = keccak256('erc20');
 
+    struct TokenStandard {
+        uint8 eip;
+        uint8 interfaceDetectionEIP;
+        bytes32 data;
+        address connector;
+    }
+
+    TokenStandard[] standards;
+
+    event NewTokenStandard(uint8 indexed eip, uint8 indexed interfaceDetectionEIP, bytes32 indexed data, address connector);
+
     function initialize(address erc20Connector, address erc777connector, address ethConnector) onlyInit {
         initialized();
 
@@ -24,6 +37,12 @@ contract Vault is AragonApp, DelegateProxy {
         standardConnectors[erc777Identifier] = erc777connector;
 
         connectors[ETH] = ethConnector;
+    }
+
+    function registerStandard(uint8 eip, uint8 interfaceDetectionEIP, bytes32 data, address connector) public /*role here*/{
+        standards.push(TokenStandard(eip, interfaceDetectionEIP, data, connector));
+
+        NewTokenStandard(eip, interfaceDetectionEIP, data, connector);
     }
 
     function () payable {
@@ -39,6 +58,6 @@ contract Vault is AragonApp, DelegateProxy {
         }
 
         address connector = connectors[token] != 0 ? connectors[token] : standardConnectors[erc20Identifier];
-        delegatedFwd(connector, msg.data);
+        delegatedFwd(connector, msg.data, 32);
     }
 }
