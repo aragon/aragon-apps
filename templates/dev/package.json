@@ -10,6 +10,12 @@
     "migrate": "truffle migrate --network rpc --reset"
   },
   "author": "Aragon Institution MTU <contact@aragon.one>",
+  "files": [
+    "ipfs.js",
+    "build/",
+    "contracts/",
+    "migrations/"
+  ],
   "license": "GPL-3.0",
   "devDependencies": {
     "truffle": "4.0.5",

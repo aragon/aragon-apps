@@ -1,20 +1,21 @@
-const path = require('path')
-
 const apmMigration = require('@aragon/os/migrations/2_apm')
 const daoFactoryMigration = require('@aragon/os/migrations/3_factory')
 
-const DevTemplate = artifacts.require('DevTemplate')
-const Voting = artifacts.require('@aragon/apps-voting/contracts/Voting')
-const Vault = artifacts.require('@aragon/apps-vault/contracts/Vault')
-const TokenManager = artifacts.require('@aragon/apps-token-manager/contracts/TokenManager')
+const ipfsHashes = require('../ipfs.js')
+const tokenManagerIpfs = ipfsHashes.tokenManager
+const vaultIpfs = ipfsHashes.vault
+const votingIpfs = ipfsHashes.voting
 
-const MiniMeTokenFactory = artifacts.require('@aragon/os/lib/minime/MiniMeTokenFactory')
+module.exports = async (deployer, network, accounts, arts = null) => {
+  if (arts != null) artifacts = arts // allow running outside
 
-const votingIpfs = 'ipfs:QmV5sEjshcZ6mu6uFUhJkWM5nTa53wbHfRFDD4Qy2Yx88m'
-const vaultIpfs = 'ipfs:QmPhd9aQGGoHJNcVVAmbzudShvhpYmyKxLWgqLoqSGD81G'
-const tokenManagerIpfs = 'ipfs:QmV5sEjshcZ6mu6uFUhJkWM5nTa53wbHfRFDD4Qy2Yx88m' // TODO: not be a copy of voting
+  const DevTemplate = artifacts.require('DevTemplate')
+  const Voting = artifacts.require('@aragon/apps-voting/contracts/Voting')
+  const Vault = artifacts.require('@aragon/apps-vault/contracts/Vault')
+  const TokenManager = artifacts.require('@aragon/apps-token-manager/contracts/TokenManager')
 
-module.exports = async (deployer, network, accounts) => {
+  const MiniMeTokenFactory = artifacts.require('@aragon/os/lib/minime/MiniMeTokenFactory')
+
   const { apm, ensAddr } = await apmMigration(deployer, network, accounts, artifacts)
   const { daoFact } = await daoFactoryMigration(deployer, network, accounts, artifacts)
   const votingBase = await Voting.new()
@@ -42,4 +43,12 @@ module.exports = async (deployer, network, accounts) => {
   console.log("DAO's vault app:", vaultAddr)
   console.log("DAO's token manager app:", tokenManagerAddr)
   console.log('ENS:', ensAddr)
+
+  return {
+    daoAddr,
+    ensAddr,
+    tokenManagerAddr,
+    vaultAddr,
+    votingAddr,
+  }
 }
