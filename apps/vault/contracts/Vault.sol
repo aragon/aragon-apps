@@ -12,6 +12,7 @@ import "./detectors/ERC165Detector.sol";
 
 contract Vault is AragonApp, DelegateProxy, ERC165Detector {
     mapping (address => address) connectors;
+    address public erc20Connector;
 
     bytes32 constant public REQUEST_ALLOWANCES_ROLE = keccak256("REQUEST_ALLOWANCES_ROLE");
     bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
@@ -35,12 +36,12 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
 
     event NewTokenStandard(uint8 indexed erc, uint8 indexed interfaceDetectionERC, bytes32 indexed data, address connector);
 
-    function initialize(address erc20Connector, address erc777connector, address ethConnector) onlyInit external {
+    function initialize(address erc20Connector, address ethConnector) onlyInit external {
         initialized();
 
-        standardConnectors[erc20Identifier] = erc20Connector;
-        standardConnectors[erc777Identifier] = erc777connector;
-
+        // register erc20 as the first standard
+        registerStandard(TokenStandard(20, uint8(-1), bytes32(0), erc20Connector));
+        // directly manage ETH with the ethConnector
         connectors[ETH] = ethConnector;
     }
 
@@ -57,14 +58,10 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
         }
 
         if (connectors[token] == address(0)) {
-            TokenStandard standard = detectTokenStandard(token);
-            if (standard.eip == 0) {
-                connectors[token] = standardConnectors[erc20Identifier];
-            } else {
-                connectors[token] = standard.connector;
-            }
+            connectors[token] = detectTokenStandard(token).connector;
         }
 
+        // if return data size is less than 32 bytes, it will revert
         delegatedFwd(connectors[token], msg.data, 32);
     }
 
@@ -81,11 +78,15 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
     }
 
     function detectTokenStandard(address token) public view returns (TokenStandard memory) {
-        for (uint256 i = 0; i < standards.length; i++) {
+        // skip index 0 which is erc20 and it is not conformant to any
+        for (uint256 i = 1; i < standards.length; i++) {
             if (conformsToStandard(token, standards[i])) {
                 return standards[i];
             }
         }
+
+        // no definition, return ERC20 standard
+        return standards[0];
     }
 
     function conformsToStandard(address token, TokenStandard memory standard) public view returns (bool) {
