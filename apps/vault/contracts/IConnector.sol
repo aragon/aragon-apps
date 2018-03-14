@@ -3,7 +3,7 @@ pragma solidity ^0.4.18;
 
 // Connectors can define additional functions, but these are required
 interface IConnector {
-    function deposit(address token, address who, uint256 value, bytes how) external returns (bool);
+    function deposit(address token, address who, uint256 value, bytes how) external payable returns (bool);
     function transfer(address token, address to, uint256 value, bytes how) external returns (bool);
     function balance(address token) public view returns (uint256);
 
