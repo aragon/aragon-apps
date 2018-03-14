@@ -12,14 +12,11 @@ import "./detectors/ERC165Detector.sol";
 
 contract Vault is AragonApp, DelegateProxy, ERC165Detector {
     mapping (address => address) connectors;
-    mapping (bytes32 => address) standardConnectors;
 
     bytes32 constant public REQUEST_ALLOWANCES_ROLE = keccak256("REQUEST_ALLOWANCES_ROLE");
     bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
 
-    address constant ETH = 0x0;
-    bytes32 constant erc777Identifier = keccak256('erc777');
-    bytes32 constant erc20Identifier = keccak256('erc20');
+    address constant ETH = address(0);
 
     uint8[2] constant supportedInterfaceDetection = [165, uint8(-1)];
 
