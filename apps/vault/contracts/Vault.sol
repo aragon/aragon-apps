@@ -6,11 +6,9 @@ import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
-contract Vault is AragonApp {
-    event Transfer(address indexed token, address indexed receiver, uint256 amount);
-    event Deposit(address indexed token, address indexed sender, uint256 amount);
-
+contract Vault is AragonApp, DelegateProxy {
     mapping (address => address) connectors;
+    mapping (bytes32 => address) standardConnectors;
 
     bytes32 constant public REQUEST_ALLOWANCES_ROLE = keccak256("REQUEST_ALLOWANCES_ROLE");
     bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
@@ -19,35 +17,28 @@ contract Vault is AragonApp {
     bytes32 constant erc777Identifier = keccak256('erc777');
     bytes32 constant erc20Identifier = keccak256('erc20');
 
-    function initialize(address defaultConnector, address erc777connector, address ethConnector) onlyInit {
-      initialized();
+    function initialize(address erc20Connector, address erc777connector, address ethConnector) onlyInit {
+        initialized();
 
-    }
+        standardConnectors[erc20Identifier] = erc20Connector;
+        standardConnectors[erc777Identifier] = erc777connector;
 
-    /**
-    * @notice Transfer `_amount` `_token` from the Vault to `_receiver`
-    * @dev This function should be used as little as possible, in favor of using allowances
-    * @param _token Address of the token being transferred
-    * @param _receiver Address of the recipient of tokens
-    * @param _amount Amount of tokens being transferred
-    */
-    function transfer(ERC20 _token, address _receiver, uint256 _amount) authP(TRANSFER_ROLE, arr(address(_token), _receiver, _amount)) external {
-        assert(_token.transfer(_receiver, _amount));
-        TokenTransfer(_token, _receiver, _amount);
+        connectors[ETH] = ethConnector;
     }
 
     function () payable {
-        require(msg.value > 0);
-        Deposit(ETH, msg.sender, msg.value);
-    }
-      /*
-        if (msg.value > 0) {
+        address token;
 
+        // 4 (sig) + 32 (at least the token address to locate connector)
+        if (msg.data.length < 36) {
+            // token address is always the first argument to any Vault calls
+            assembly { token := calldataload(4) }
         } else {
-            address connector = connectors[msg.sender];
-            require(connector != address(0) && msg.data.length > 0);
-
-            delegatedFwd(msg.data);
+          require(msg.value > 0); // if no data, only call ETH connector when ETH
+          token = ETH;
         }
-    */
+
+        address connector = connectors[token] != 0 ? connectors[token] : standardConnectors[erc20Identifier];
+        delegatedFwd(connector, msg.data);
+    }
 }
