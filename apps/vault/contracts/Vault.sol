@@ -6,6 +6,9 @@ import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
+import "./IConnector.sol"; 
+
+
 contract Vault is AragonApp, DelegateProxy {
     mapping (address => address) connectors;
     mapping (bytes32 => address) standardConnectors;
@@ -30,7 +33,7 @@ contract Vault is AragonApp, DelegateProxy {
         address token;
 
         // 4 (sig) + 32 (at least the token address to locate connector)
-        if (msg.data.length < 36) {
+        if (msg.data.length >= 36) {
             // token address is always the first argument to any Vault calls
             assembly { token := calldataload(4) }
         } else {
