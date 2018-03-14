@@ -1,4 +1,4 @@
-const abis = require('./.abis')
+const abis = require('./abis')
 
 module.exports = {
   networks: {
