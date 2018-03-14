@@ -5,7 +5,7 @@ import "../Vault.sol";
 
 contract ETHConnector is Vault, IConnector {
     function () payable {
-        Deposit(ETH, who, value);
+        Deposit(ETH, msg.sender, msg.value);
     }
 
     function deposit(address token, address who, uint256 value, bytes how) payable external returns (bool){

@@ -11,50 +11,40 @@ import "./detectors/ERC165Detector.sol";
 
 
 contract Vault is AragonApp, DelegateProxy, ERC165Detector {
-    mapping (address => address) connectors;
-    address public erc20Connector;
-
-    bytes32 constant public REQUEST_ALLOWANCES_ROLE = keccak256("REQUEST_ALLOWANCES_ROLE");
-    bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
-
     address constant ETH = address(0);
 
-    uint8[2] constant supportedInterfaceDetection = [165, uint8(-1)];
-
     struct TokenStandard {
-        uint8 erc;
-        uint8 interfaceDetectionERC;
-        bytes32 data;
+        uint32 erc;
+        uint32 interfaceDetectionERC;
+        bytes4 interfaceID;
         address connector;
     }
 
-    TokenStandard[] standards;
-
-    event NewTokenStandard(uint8 indexed erc, uint8 indexed interfaceDetectionERC, bytes32 indexed data, address connector);
-
     TokenStandard[] public standards;
+    mapping (address => address) public connectors;
+    uint32[] public supportedInterfaceDetectionERCs;
 
-    event NewTokenStandard(uint8 indexed erc, uint8 indexed interfaceDetectionERC, bytes32 indexed data, address connector);
+    event NewTokenStandard(uint32 indexed erc, uint32 indexed interfaceDetectionERC, bytes4 indexed interfaceID, address connector);
 
     function initialize(address erc20Connector, address ethConnector) onlyInit external {
         initialized();
 
+        supportedInterfaceDetectionERCs.push(165);
+
         // register erc20 as the first standard
-        registerStandard(TokenStandard(20, uint8(-1), bytes32(0), erc20Connector));
+        _registerStandard(20, uint32(-1), bytes4(0), erc20Connector);
         // directly manage ETH with the ethConnector
         connectors[ETH] = ethConnector;
     }
 
     function () payable {
-        address token;
+        address token = ETH;
 
         // 4 (sig) + 32 (at least the token address to locate connector)
-        if (msg.data.length >= 36) {
-            // token address is always the first argument to any Vault calls
-            assembly { token := calldataload(4) }
+        if (msg.data.length < 36) {
+            require(msg.value > 0); // if no data, only call ETH connector when ETH
         } else {
-          require(msg.value > 0); // if no data, only call ETH connector when ETH
-          token = ETH;
+            assembly { token := calldataload(4) } // token address MUST be the first argument to any Vault calls
         }
 
         if (connectors[token] == address(0)) {
@@ -65,16 +55,8 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
         delegatedFwd(connectors[token], msg.data, 32);
     }
 
-    function registerStandard(uint8 erc, uint8 interfaceDetectionERC, bytes32 data, address connector) public /*role here*/{
-        require(isInterfaceDetectionERCSupported(interfaceDetectionERC));
-
-        for (uint256 i = 0; i < standards.length; i++) {
-            require(standards[i].erc != erc);
-        }
-
-        standards.push(TokenStandard(erc, interfaceDetectionERC, data, connector));
-
-        NewTokenStandard(erc, interfaceDetectionERC, data, connector);
+    function registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector) public /*role here*/{
+        _registerStandard(erc, interfaceDetectionERC, interfaceID, connector);
     }
 
     function detectTokenStandard(address token) public view returns (TokenStandard memory) {
@@ -91,19 +73,31 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
 
     function conformsToStandard(address token, TokenStandard memory standard) public view returns (bool) {
         if (standard.interfaceDetectionERC == 165) {
-            return conformsToERC165(token, bytes4(standard.data));
+            return conformsToERC165(token, bytes4(standard.interfaceID));
         }
 
         return false;
     }
 
-    function isInterfaceDetectionERCSupported(uint8 interfaceDetectionERC) public pure returns (bool) {
-      for (uint j = 0; j < supportedInterfaceDetection.length; j++) {
-          if (supportedInterfaceDetection[j] == interfaceDetectionERC) {
+    function isInterfaceDetectionERCSupported(uint32 interfaceDetectionERC) public view returns (bool) {
+      for (uint j = 0; j < supportedInterfaceDetectionERCs.length; j++) {
+          if (supportedInterfaceDetectionERCs[j] == interfaceDetectionERC) {
               return true;
           }
       }
 
       return false;
+    }
+
+    function _registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector) internal {
+        require(isInterfaceDetectionERCSupported(interfaceDetectionERC));
+
+        for (uint256 i = 0; i < standards.length; i++) {
+            require(standards[i].erc != erc);
+        }
+
+        standards.push(TokenStandard(erc, interfaceDetectionERC, interfaceID, connector));
+
+        NewTokenStandard(erc, interfaceDetectionERC, interfaceID, connector);
     }
 }
