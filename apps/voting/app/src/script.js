@@ -1,9 +1,8 @@
 import Aragon from '@aragon/client'
-import Messenger, { providers } from '@aragon/messenger'
 import { combineLatest } from 'rxjs/observable/combineLatest'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
 
-const app = new Aragon(new Messenger(new providers.MessagePortMessage()))
+const app = new Aragon()
 
 // Hook up the script as an aragon.js store
 app.store(async (state, { event, returnValues }) => {

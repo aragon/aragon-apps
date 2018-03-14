@@ -1,12 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import Aragon from '@aragon/client'
-import Messenger, { providers } from '@aragon/messenger'
+import Aragon, { providers } from '@aragon/client'
 import App from './App'
 
 class ConnectedApp extends React.Component {
   state = {
-    app: new Aragon(new Messenger(new providers.WindowMessage(window.parent))),
+    app: new Aragon(new providers.WindowMessage(window.parent)),
     observable: null,
     userAccount: '',
   }
