@@ -48,7 +48,7 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
         }
 
         if (connectors[token] == address(0)) {
-            connectors[token] = detectTokenStandard(token).connector;
+            connectors[token] = standards[detectTokenStandard(token)].connector;
         }
 
         // if return data size is less than 32 bytes, it will revert
@@ -59,21 +59,21 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
         _registerStandard(erc, interfaceDetectionERC, interfaceID, connector);
     }
 
-    function detectTokenStandard(address token) public view returns (TokenStandard memory) {
+    function detectTokenStandard(address token) public view returns (uint256 standardId) {
         // skip index 0 which is erc20 and it is not conformant to any
         for (uint256 i = 1; i < standards.length; i++) {
-            if (conformsToStandard(token, standards[i])) {
-                return standards[i];
+            if (conformsToStandard(token, i)) {
+                return i;
             }
         }
 
         // no definition, return ERC20 standard
-        return standards[0];
+        return 0;
     }
 
-    function conformsToStandard(address token, TokenStandard memory standard) public view returns (bool) {
-        if (standard.interfaceDetectionERC == 165) {
-            return conformsToERC165(token, bytes4(standard.interfaceID));
+    function conformsToStandard(address token, uint256 standardId) public view returns (bool) {
+        if (standards[standardId].interfaceDetectionERC == 165) {
+            return conformsToERC165(token, bytes4(standards[standardId].interfaceID));
         }
 
         return false;
