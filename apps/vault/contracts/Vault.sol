@@ -13,6 +13,7 @@ import "./detectors/ERC165Detector.sol";
 contract Vault is AragonApp, DelegateProxy, ERC165Detector {
     address constant ETH = address(0);
     uint32 constant ERC165 = 165;
+    uint32 constant NO_DETECTION = uint32(-1);
 
     // connectors can define their own extra roles, challenge for discoverability
     bytes32 constant REGISTER_TOKEN_STANDARD = keccak256("REGISTER_TOKEN_STANDARD");
@@ -35,10 +36,11 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
     function initialize(address erc20Connector, address ethConnector) onlyInit external {
         initialized();
 
+        supportedInterfaceDetectionERCs.push(NO_DETECTION);
         supportedInterfaceDetectionERCs.push(ERC165);
 
         // register erc20 as the first standard
-        _registerStandard(20, uint32(-1), bytes4(0), erc20Connector);
+        _registerStandard(20, NO_DETECTION, bytes4(0), erc20Connector);
         // directly manage ETH with the ethConnector
         connectors[ETH] = ethConnector;
     }

@@ -1,19 +1,45 @@
 pragma solidity 0.4.18;
 
-import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
+import "../contracts/Vault.sol";
+import "../contracts/IConnector.sol";
 
-// You might think this file is a bit odd, but let me explain.
-// We only use the MiniMeToken contract in our tests, which
-// means Truffle will not compile it for us, because it is
-// from an external dependency.
-//
-// We are now left with three options:
-// - Copy/paste the MiniMeToken contract
-// - Run the tests with `truffle compile --all` on
-// - Or trick Truffle by claiming we use it in a Solidity test
-//
-// You know which one I went for.
+import "../contracts/connectors/ETHConnector.sol";
+import "../contracts/connectors/ERC20Connector.sol";
+
+import "@aragon/os/test/mocks/StandardTokenMock.sol";
+import "truffle/Assert.sol";
 
 contract TestVault {
-  // ...
+    StandardTokenMock token;
+
+    address ethConnector;
+    address erc20Connector;
+
+    Vault vault;
+
+    uint public initialBalance = 200 wei;
+
+    function beforeAll() {
+        ethConnector = new ETHConnector();
+        erc20Connector = new ERC20Connector();
+
+        //token = new StandardTokenMock(this, 200);
+    }
+
+    function beforeEach() {
+        vault = new Vault();
+        vault.initialize(erc20Connector, ethConnector);
+    }
+
+    function testETHDeposit() {
+        ETHConnector(vault).deposit.value(1)(address(0), this, 1, new bytes(0));
+
+        Assert.equal(address(vault).balance, 1, "should hold 1 wei");
+    }
+
+    function testETHFallback() {
+        require(vault.call.value(1).gas(100000)(new bytes(0)));
+
+        Assert.equal(address(vault).balance, 1, "should hold 1 wei");
+    }
 }
