@@ -12,14 +12,21 @@ contract ERC20Connector is Vault, IConnector {
         require(ERC20(token).transferFrom(who, this, value));
 
         Deposit(token, who, value);
+
+        return true;
     }
 
-    function transfer(address token, address to, uint256 value, bytes how) external returns (bool) {
+    function transfer(address token, address to, uint256 value, bytes how)
+             authP(TRANSFER_ROLE, arr(token, to, value))
+             external returns (bool) {
+
         require(how.length == 0); // sending data is not supported in ERC20
 
         require(ERC20(token).transfer(to, value));
 
         Transfer(token, to, value);
+
+        return true;
     }
 
     function balance(address token) public view returns (uint256) {

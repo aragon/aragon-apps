@@ -12,6 +12,12 @@ import "./detectors/ERC165Detector.sol";
 
 contract Vault is AragonApp, DelegateProxy, ERC165Detector {
     address constant ETH = address(0);
+    uint32 constant ERC165 = 165;
+
+    // connectors can define their own extra roles, challenge for discoverability
+    bytes32 constant REGISTER_TOKEN_STANDARD = keccak256("REGISTER_TOKEN_STANDARD");
+    bytes32 constant TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
+    // TODO: Abstract over different APPROVAL and have just one role?
 
     struct TokenStandard {
         uint32 erc;
@@ -29,7 +35,7 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
     function initialize(address erc20Connector, address ethConnector) onlyInit external {
         initialized();
 
-        supportedInterfaceDetectionERCs.push(165);
+        supportedInterfaceDetectionERCs.push(ERC165);
 
         // register erc20 as the first standard
         _registerStandard(20, uint32(-1), bytes4(0), erc20Connector);
@@ -55,7 +61,10 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
         delegatedFwd(connectors[token], msg.data, 32);
     }
 
-    function registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector) public /*role here*/{
+    function registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector)
+             authP(REGISTER_TOKEN_STANDARD, arr(uint256(erc), interfaceDetectionERC))
+             public {
+
         _registerStandard(erc, interfaceDetectionERC, interfaceID, connector);
     }
 
@@ -72,7 +81,7 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
     }
 
     function conformsToStandard(address token, uint256 standardId) public view returns (bool) {
-        if (standards[standardId].interfaceDetectionERC == 165) {
+        if (standards[standardId].interfaceDetectionERC == ERC165) {
             return conformsToERC165(token, bytes4(standards[standardId].interfaceID));
         }
 
