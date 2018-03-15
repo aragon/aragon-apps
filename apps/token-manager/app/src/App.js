@@ -20,8 +20,8 @@ class App extends React.Component {
     app: PropTypes.object.isRequired,
   }
   static defaultProps = {
-    tokenSupply: -1,
-    tokenSymbol: '',
+    tokenSupply: null,
+    tokenSymbol: null,
     holders: [],
   }
   state = {

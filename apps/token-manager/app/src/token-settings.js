@@ -1,12 +1,13 @@
 const tokenSettings = [
   ['symbol', 'tokenSymbol'],
-  ['totalSupply', 'tokenSupply'],
+  ['totalSupply', 'tokenSupply', 'number'],
 ]
 
 export function hasLoadedTokenSettings(state) {
   state = state || {}
   return tokenSettings.reduce(
-    (loaded, [_, key]) => loaded && !!state[key],
+    // Use null check as totalSupply may be 0
+    (loaded, [_, key]) => loaded && state[key] != null,
     true
   )
 }
