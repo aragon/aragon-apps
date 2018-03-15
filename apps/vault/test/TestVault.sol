@@ -6,14 +6,13 @@ import "../contracts/IConnector.sol";
 import "../contracts/connectors/ETHConnector.sol";
 import "../contracts/connectors/ERC20Connector.sol";
 
-import "@aragon/os/test/mocks/StandardTokenMock.sol";
 import "truffle/Assert.sol";
 
 contract TestVault {
-    StandardTokenMock token;
+    MiniMeToken token;
 
-    address ethConnector;
-    address erc20Connector;
+    address ethConnector = new ETHConnector();
+    address erc20Connector = new ERC20Connector();
 
     IConnector vault;
 
@@ -21,10 +20,9 @@ contract TestVault {
     address constant ETH = address(0);
 
     function beforeAll() {
-        ethConnector = new ETHConnector();
-        erc20Connector = new ERC20Connector();
-
-        //
+        token = new MiniMeToken(address(0), address(0), 0, "CARLOS", 2, "MATOS", true);
+        token.generateTokens(this, 200);
+        token.changeController(msg.sender);
     }
 
     function beforeEach() {
@@ -39,13 +37,32 @@ contract TestVault {
         Assert.equal(vault.balance(ETH), 1, "should return 1 wei balance");
     }
 
-    function testTokenDeposit() {
-        // token = new StandardTokenMock(this, 200);
-    }
-
-    function testETHFallback() {
-        require(vault.call.value(1).gas(100000)(new bytes(0)));
+    function testETHDepositFallback() {
+        require(vault.call.value(1)(new bytes(0)));
 
         Assert.equal(address(vault).balance, 1, "should hold 1 wei");
+    }
+
+    function testTransferETH() {
+        vault.call.value(1)(new bytes(0));
+
+        vault.deposit(ETH, address(10), 1, new bytes(0));
+        Assert.equal(address(10).balance, 1, "should hold 1 wei");
+    }
+
+    function testTokenDeposit() {
+        token.approve(vault, 1);
+        vault.deposit(token, this, 1, new bytes(0));
+
+        Assert.equal(token.balanceOf(vault), 1, "should hold 1 token");
+        Assert.equal(vault.balance(token), 1, "should return 1 token balance");
+    }
+
+    function testTransferTokens() {
+        address to = address(1);
+        token.transfer(vault, 1);
+        vault.transfer(token, to, 1, new bytes(0));
+
+        Assert.equal(token.balanceOf(to), 1, "should return 1 token balance after transfer");
     }
 }
