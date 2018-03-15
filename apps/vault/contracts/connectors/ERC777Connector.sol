@@ -14,12 +14,19 @@ contract ERC777Connector is Vault, IConnector, ERC777TokensRecipient {
 
         ERC777(token).operatorSend(who, this, value, how, how);
         // Deposit(token, who, value); will be called in the tokensReceived method
+
+        return true;
     }
 
-    function transfer(address token, address to, uint256 value, bytes how) external returns (bool) {
+    function transfer(address token, address to, uint256 value, bytes how)
+             authP(TRANSFER_ROLE, arr(token, to, value))
+             external returns (bool) {
+
         ERC777(token).send(to, value, how);
 
         Transfer(token, to, value);
+
+        return true;
     }
 
     function tokensReceived(address operator, address from, address to, uint amount, bytes userData, bytes operatorData) public {

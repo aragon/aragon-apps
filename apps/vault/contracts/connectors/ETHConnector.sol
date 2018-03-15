@@ -14,14 +14,21 @@ contract ETHConnector is Vault, IConnector {
         // require(who == msg.sender); // maybe actual sender wants to signal who sent it
 
         Deposit(ETH, who, value);
+
+        return true;
     }
 
-    function transfer(address token, address to, uint256 value, bytes how) external returns (bool) {
+    function transfer(address token, address to, uint256 value, bytes how)
+             authP(TRANSFER_ROLE, arr(ETH, to, value))
+             external returns (bool) {
+
         require(token == ETH);
 
         require(to.call.value(value)(how));
 
         Transfer(ETH, to, value);
+
+        return true;
     }
 
     function balance(address token) public view returns (uint256) {

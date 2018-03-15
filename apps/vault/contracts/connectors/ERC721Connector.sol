@@ -8,12 +8,19 @@ contract ERC721Connector is Vault, IConnector, ERC721TokenReceiver {
     function deposit(address token, address who, uint256 tokenId, bytes how) payable external returns (bool){
         // require(who == msg.sender); // maybe actual sender wants to signal who sent it
         ERC721(token).safeTransferFrom(who, this, tokenId, how);
+
+        return true;
     }
 
-    function transfer(address token, address to, uint256 tokenId, bytes how) external returns (bool) {
+    function transfer(address token, address to, uint256 tokenId, bytes how)
+             authP(TRANSFER_ROLE, arr(token, to, tokenId))
+             external returns (bool) {
+
         ERC721(token).safeTransferFrom(this, to, tokenId, how);
 
         Transfer(token, to, tokenId);
+
+        return true;
     }
 
     function balance(address token) public view returns (uint256) {
