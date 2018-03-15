@@ -3,7 +3,7 @@ pragma solidity 0.4.18;
 import "../Vault.sol";
 
 
-contract ETHConnector is Vault, IConnector {
+contract ETHConnector is Vault, IVaultConnector {
     function () payable {
         Deposit(ETH, msg.sender, msg.value);
         exitContextReturningTrue();
