@@ -119,15 +119,12 @@ function loadVoteSettings() {
     )
   )
     .then(settings =>
-      settings.reduce((acc, setting) => ({ ...acc, ...setting }))
+      settings.reduce((acc, setting) => ({ ...acc, ...setting }), {})
     )
     .catch(err => {
       console.error('Failed to load Vote settings', err)
       // Return an empty object to try again later
       return {}
-    })
-    .then(settings => {
-      return settings
     })
 }
 
