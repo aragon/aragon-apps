@@ -1,24 +1,36 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { AragonApp, AppBar, Button, Badge } from '@aragon/ui'
-// import Aragon from '@aragon/client'
+import { AragonApp, AppBar, Button, Badge, observe } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import AppLayout from './components/AppLayout'
-import { HOLDERS, TOKEN_SYMBOL, TOKEN_SUPPLY } from './demo-state'
+import { hasLoadedTokenSettings } from './token-settings'
 
 class App extends React.Component {
-  state = {
-    tokenSupply: TOKEN_SUPPLY,
-    tokenSymbol: TOKEN_SYMBOL,
-    holders: HOLDERS,
+  static propTypes = {
+    app: PropTypes.object.isRequired,
   }
-  componentDidMount() {
-    // const app = (this.app = new Aragon())
-    // window.parent.postMessage({ from: 'app', name: 'ready', value: true }, '*')
+  static defaultProps = {
+    tokenSupply: -1,
+    tokenSymbol: '',
+    holders: [],
+  }
+  state = {
+    tokenSettingsLoaded: false,
+  }
+  componentWillReceiveProps(nextProps) {
+    const { tokenSettingsLoaded } = this.state
+    // Is this the first time we've loaded the token settings?
+    if (!tokenSettingsLoaded && hasLoadedTokenSettings(nextProps)) {
+      this.setState({
+        tokenSettingsLoaded: true,
+      })
+    }
   }
   render() {
-    const { tokenSymbol, tokenSupply, holders } = this.state
+    const { tokenSymbol, tokenSupply, holders } = this.props
+    const { tokenSettingsLoaded } = this.state
     return (
       <AragonApp publicUrl="/aragon-ui/">
         <AppLayout>
@@ -27,7 +39,7 @@ class App extends React.Component {
               title={
                 <Title>
                   <span>Token</span>
-                  <Badge.App>{tokenSymbol}</Badge.App>
+                  {tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
                 </Title>
               }
               endContent={<Button mode="strong">Issue Tokens</Button>}
@@ -35,7 +47,7 @@ class App extends React.Component {
           </AppLayout.Header>
           <AppLayout.ScrollWrapper>
             <AppLayout.Content>
-              {holders.length > 0 ? (
+              {tokenSettingsLoaded && holders.length > 0 ? (
                 <Holders holders={holders} tokenSupply={tokenSupply} />
               ) : (
                 <EmptyState />
@@ -56,4 +68,7 @@ const Title = styled.span`
   }
 `
 
-export default App
+export default observe(
+  observable => observable.map(state => ({ ...state })),
+  {}
+)(App)
