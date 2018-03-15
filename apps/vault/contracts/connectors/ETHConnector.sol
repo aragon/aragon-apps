@@ -6,6 +6,7 @@ import "../Vault.sol";
 contract ETHConnector is Vault, IConnector {
     function () payable {
         Deposit(ETH, msg.sender, msg.value);
+        exitContextReturningTrue();
     }
 
     function deposit(address token, address who, uint256 value, bytes how) payable external returns (bool){
@@ -33,5 +34,13 @@ contract ETHConnector is Vault, IConnector {
 
     function balance(address token) public view returns (uint256) {
         return address(this).balance;
+    }
+
+    function exitContextReturningTrue() internal {
+      assembly {
+          let p := mload(0x40)
+          mstore(p, 1)
+          return(p, 32)
+      }
     }
 }
