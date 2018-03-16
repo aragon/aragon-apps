@@ -13,7 +13,7 @@ contract VaultBase is AragonApp, DelegateProxy, ERC165Detector {
     uint32 constant NO_DETECTION = uint32(-1);
 
     // connectors can define their own extra roles, challenge for discoverability
-    bytes32 constant REGISTER_TOKEN_STANDARD = keccak256("REGISTER_TOKEN_STANDARD");
-    bytes32 constant TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
+    bytes32 constant public REGISTER_TOKEN_STANDARD = keccak256("REGISTER_TOKEN_STANDARD");
+    bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
     // TODO: Abstract over different APPROVAL and have just one role?
 }

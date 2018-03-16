@@ -5,7 +5,6 @@ import "@aragon/os/contracts/factory/DAOFactory.sol";
 import "@aragon/os/contracts/kernel/Kernel.sol";
 import "@aragon/os/contracts/acl/ACL.sol";
 import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
-import "@aragon/os/contracts/common/EtherToken.sol";
 
 import "@aragon/id/contracts/IFIFSResolvingRegistrar.sol";
 
@@ -19,7 +18,6 @@ contract BetaTemplateBase {
     APMRegistry public apm;
     DAOFactory public fac;
     MiniMeTokenFactory public minimeFac;
-    EtherToken public etherToken;
     IFIFSResolvingRegistrar public aragonID;
     bytes32[4] public appIds;
 
@@ -38,7 +36,6 @@ contract BetaTemplateBase {
         DAOFactory _fac,
         MiniMeTokenFactory _minimeFac,
         APMRegistry _apm,
-        EtherToken _etherToken,
         IFIFSResolvingRegistrar _aragonID,
         bytes32[4] _appIds
     )
@@ -47,7 +44,6 @@ contract BetaTemplateBase {
         apm = _apm;
         fac = _fac;
         minimeFac = _minimeFac;
-        etherToken = _etherToken;
         aragonID = _aragonID;
         appIds = _appIds;
     }
@@ -106,7 +102,8 @@ contract BetaTemplateBase {
         }
 
         // inits
-        finance.initialize(vault, etherToken, uint64(-1) - uint64(now)); // yuge period
+        vault.initialize(vault.erc20ConnectorBase(), vault.ethConnectorBase()); // init with trusted connectors
+        finance.initialize(IVaultConnector(vault), uint64(-1) - uint64(now)); // yuge period
 
         // clean-up
         acl.grantPermission(voting, dao, dao.APP_MANAGER_ROLE());
