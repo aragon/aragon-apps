@@ -85,9 +85,13 @@ class App extends React.Component {
           <AppLayout.ScrollWrapper>
             <AppLayout.Content>
               {tokenSettingsLoaded && holders.length > 0 ? (
-                <Holders holders={holders} tokenSupply={tokenSupply} />
+                <Holders
+                  holders={holders}
+                  onAssignTokens={this.handleLaunchAssignTokens}
+                  tokenSupply={tokenSupply}
+                />
               ) : (
-                <EmptyState />
+                <EmptyState onActivate={this.handleLaunchAssignTokens} />
               )}
             </AppLayout.Content>
           </AppLayout.ScrollWrapper>

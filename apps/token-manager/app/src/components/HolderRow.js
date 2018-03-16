@@ -13,6 +13,11 @@ class HolderRow extends React.Component {
     name: '',
     balance: 0,
     groupMode: false,
+    onAssignTokens: () => {},
+  }
+  handleAssignTokens = () => {
+    const { name, onAssignTokens } = this.props
+    onAssignTokens(name)
   }
   render() {
     const { name, balance, groupMode } = this.props
@@ -22,9 +27,9 @@ class HolderRow extends React.Component {
         {!groupMode && <TableCell align="right">{balance}</TableCell>}
         <TableCell align="right">
           <ContextMenu>
-            <ContextMenuItem>
+            <ContextMenuItem onClick={this.handleAssignTokens}>
               <IconAdd />
-              <ActionLabel>Issue Tokens</ActionLabel>
+              <ActionLabel>Assign Tokens</ActionLabel>
             </ContextMenuItem>
           </ContextMenu>
         </TableCell>
