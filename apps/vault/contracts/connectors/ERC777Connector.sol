@@ -9,7 +9,7 @@ contract ERC777Connector is VaultBase, IVaultConnector, ERC777TokensRecipient {
         // TODO: Use EIP780 register the vault as conformant to ERC777
     }
 
-    function deposit(address token, address who, uint256 value, bytes how) payable external returns (bool){
+    function deposit(address token, address who, uint256 value, bytes how) payable external returns (bool) {
         // require(who == msg.sender); // maybe actual sender wants to signal who sent it
 
         ERC777(token).operatorSend(who, this, value, how, how);
@@ -20,7 +20,8 @@ contract ERC777Connector is VaultBase, IVaultConnector, ERC777TokensRecipient {
 
     function transfer(address token, address to, uint256 value, bytes how)
              authP(TRANSFER_ROLE, arr(token, to, value))
-             external returns (bool) {
+             external returns (bool)
+    {
 
         ERC777(token).send(to, value, how);
 

@@ -14,7 +14,7 @@ interface ERC777 {
     function authorizeOperator(address operator) public;
     function revokeOperator(address operator) public;
     function isOperatorFor(address operator, address tokenHolder) public constant returns (bool);
-    function operatorSend(address from, address to, uint256 amount, bytes userData, bytes operatorData);
+    function operatorSend(address from, address to, uint256 amount, bytes userData, bytes operatorData) public;
 }
 
 interface ERC777TokensSender {

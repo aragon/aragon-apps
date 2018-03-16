@@ -5,7 +5,7 @@ import "./standards/ERC20.sol";
 
 
 contract ERC20Connector is VaultBase, IVaultConnector {
-    function deposit(address token, address who, uint256 value, bytes how) payable external returns (bool){
+    function deposit(address token, address who, uint256 value, bytes how) payable external returns (bool) {
         require(how.length == 0); // sending data is not supported in ERC20
         // require(who == msg.sender); // maybe actual sender wants to signal who sent it
 
@@ -18,7 +18,8 @@ contract ERC20Connector is VaultBase, IVaultConnector {
 
     function transfer(address token, address to, uint256 value, bytes how)
              authP(TRANSFER_ROLE, arr(token, to, value))
-             external returns (bool) {
+             external returns (bool)
+    {
 
         require(how.length == 0); // sending data is not supported in ERC20
 
