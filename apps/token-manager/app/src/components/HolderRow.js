@@ -7,6 +7,7 @@ import {
   ContextMenuItem,
   IconAdd,
 } from '@aragon/ui'
+import { round } from '../math-utils'
 
 class HolderRow extends React.Component {
   static defaultProps = {
@@ -20,11 +21,13 @@ class HolderRow extends React.Component {
     onAssignTokens(name)
   }
   render() {
-    const { name, balance, groupMode } = this.props
+    const { name, balance, groupMode, tokenDecimalsBase } = this.props
+    // Rounding their balance to 5 decimals should be enough... right?
+    const adjustedBalance = round(balance / tokenDecimalsBase, 5)
     return (
       <TableRow>
         <TableCell>{name}</TableCell>
-        {!groupMode && <TableCell align="right">{balance}</TableCell>}
+        {!groupMode && <TableCell align="right">{adjustedBalance}</TableCell>}
         <TableCell align="right">
           <ContextMenu>
             <ContextMenuItem onClick={this.handleAssignTokens}>

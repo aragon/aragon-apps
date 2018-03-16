@@ -1,4 +1,5 @@
 const tokenSettings = [
+  ['decimals', 'tokenDecimals', 'number'],
   ['symbol', 'tokenSymbol'],
   ['totalSupply', 'tokenSupply', 'number'],
 ]

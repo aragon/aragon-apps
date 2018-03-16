@@ -9,7 +9,12 @@ class Holders extends React.Component {
     holders: [],
   }
   render() {
-    const { holders, onAssignTokens, tokenSupply } = this.props
+    const {
+      holders,
+      onAssignTokens,
+      tokenDecimalsBase,
+      tokenSupply,
+    } = this.props
     const groupMode =
       holders.length > 0 &&
       holders[0].balance > 0 &&
@@ -33,14 +38,16 @@ class Holders extends React.Component {
                 balance={balance}
                 groupMode={groupMode}
                 onAssignTokens={onAssignTokens}
+                tokenDecimalsBase={tokenDecimalsBase}
               />
             ))}
           </Table>
         </Main>
         <SideBar
-          holders={holders}
-          tokenSupply={tokenSupply}
           groupMode={groupMode}
+          holders={holders}
+          tokenDecimalsBase={tokenDecimalsBase}
+          tokenSupply={tokenSupply}
         />
       </TwoPanels>
     )

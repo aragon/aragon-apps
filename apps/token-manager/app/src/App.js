@@ -20,6 +20,7 @@ class App extends React.Component {
     app: PropTypes.object.isRequired,
   }
   static defaultProps = {
+    tokenDecimals: null,
     tokenSupply: null,
     tokenSymbol: null,
     holders: [],
@@ -34,12 +35,15 @@ class App extends React.Component {
     // Is this the first time we've loaded the token settings?
     if (!tokenSettingsLoaded && hasLoadedTokenSettings(nextProps)) {
       this.setState({
+        tokenDecimalsBase: Math.pow(10, nextProps.tokenDecimals),
         tokenSettingsLoaded: true,
       })
     }
   }
   handleAssignTokens = ({ amount, recipient }) => {
-    this.props.app.assign(recipient, amount)
+    const { app } = this.props
+    const { tokenDecimalsBase } = this.state
+    app.assign(recipient, amount * tokenDecimalsBase)
   }
   handleAppBarLaunchAssignTokens = () => this.handleLaunchAssignTokens()
   handleLaunchAssignTokens = recipient => {
@@ -56,6 +60,7 @@ class App extends React.Component {
   }
   render() {
     const { tokenSymbol, tokenSupply, holders } = this.props
+    const { tokenDecimalsBase } = this.state
     const {
       assignTokensConfig,
       sidepanelOpened,
@@ -88,6 +93,7 @@ class App extends React.Component {
                 <Holders
                   holders={holders}
                   onAssignTokens={this.handleLaunchAssignTokens}
+                  tokenDecimalsBase={tokenDecimalsBase}
                   tokenSupply={tokenSupply}
                 />
               ) : (
