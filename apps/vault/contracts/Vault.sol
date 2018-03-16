@@ -1,6 +1,7 @@
 pragma solidity 0.4.18;
 
 import "./VaultBase.sol"; // split made to avoid circular import
+import "./IVaultConnector.sol";
 
 import "./connectors/ERC20Connector.sol";
 import "./connectors/ETHConnector.sol";
