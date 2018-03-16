@@ -5,7 +5,7 @@ import "@aragon/os/contracts/apps/AragonApp.sol";
 
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
-import "./IConnector.sol";
+import "./IVaultConnector.sol";
 
 import "./detectors/ERC165Detector.sol";
 
