@@ -4,7 +4,6 @@ const getBalance = require('@aragon/test-helpers/balance')(web3)
 const Vault = artifacts.require('Vault')
 const ETHConnector = artifacts.require('ETHConnector')
 const ERC20Connector = artifacts.require('ERC20Connector')
-//const IVaultConnector = artifacts.require('IVaultConnector')
 const Finance = artifacts.require('FinanceMock')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const EtherToken = artifacts.require('EtherToken')
@@ -16,7 +15,7 @@ contract('Finance App', accounts => {
     const periodDuration = 100
     const withdrawAddr = '0x0000000000000000000000000000000000001234'
 
-    const ETH='0x0'
+    const ETH = '0x0'
 
     beforeEach(async () => {
         vault = await Vault.new()
@@ -53,7 +52,7 @@ contract('Finance App', accounts => {
     it('adds new token to budget', async () => {
         await app.setBudget(token1.address, 10)
 
-        const [budget, hasBudget, remainingBudget] = await app.getBudget(token1.address)
+        const [budget, hasBudget, remainingBudget] = await app.getBudget.call(token1.address)
         assert.equal(budget, 10, 'should have correct budget')
         assert.isTrue(hasBudget, 'has budget should be true')
         assert.equal(remainingBudget, 10, 'all budget is remaining')
@@ -188,7 +187,7 @@ contract('Finance App', accounts => {
             const newBudgetAmount = 5
             await app.setBudget(token1.address, newBudgetAmount)
 
-            const [budget, hasBudget, remainingBudget] = await app.getBudget(token1.address)
+            const [budget, hasBudget, remainingBudget] = await app.getBudget.call(token1.address)
 
             assert.equal(budget, newBudgetAmount, 'new budget should be correct')
             assert.isTrue(hasBudget, 'should have budget')

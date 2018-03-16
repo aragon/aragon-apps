@@ -15,7 +15,7 @@ contract Finance is AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
-    address constant ETH = address(0);
+    address constant public ETH = address(0);
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
     uint64 constant public MAX_PERIOD_TRANSITIONS_PER_TX = 10;
     uint64 constant public MAX_UINT64 = uint64(-1);
@@ -147,7 +147,6 @@ contract Finance is AragonApp {
         ERC20(_token).approve(address(vault), _amount);
         // finally we can deposit them
         vault.deposit(_token, this, _amount, new bytes(0));
-        //vault.deposit(_token, msg.sender, _amount, new bytes(0));
     }
 
     /**
@@ -409,7 +408,7 @@ contract Finance is AragonApp {
         return settings.periodDuration;
     }
 
-    function getBudget(address _token) transitionsPeriod public view returns (uint256 budget, bool hasBudget, uint256 remainingBudget) {
+    function getBudget(address _token) transitionsPeriod public returns (uint256 budget, bool hasBudget, uint256 remainingBudget) {
         budget = settings.budgets[_token];
         hasBudget = settings.hasBudget[_token];
         remainingBudget = _getRemainingBudget(_token);
