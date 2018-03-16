@@ -48,11 +48,10 @@ class SideBar extends React.Component {
   static defaultProps = {
     holders: [],
     tokenSupply: -1,
-    tokenWrapped: false,
     groupMode: false,
   }
   render() {
-    const { holders, tokenSupply, tokenWrapped, groupMode } = this.props
+    const { holders, tokenSupply, groupMode } = this.props
     const stakes = calculateStakes(holders, tokenSupply).map((stake, i) => ({
       ...stake,
       color: DISTRIBUTION_COLORS[i] || '#000000',
@@ -70,11 +69,6 @@ class SideBar extends React.Component {
               <span>Total Supply</span>
               <span>:</span>
               <strong>{tokenSupply}</strong>
-            </InfoRow>
-            <InfoRow>
-              <span>Wrapped Token</span>
-              <span>:</span>
-              <strong>{tokenWrapped ? 'Yes' : 'No'}</strong>
             </InfoRow>
           </ul>
         </Part>
