@@ -60,7 +60,7 @@ contract('Finance App', accounts => {
     })
 
     it('records ERC20 deposits', async () => {
-        await token1.approve(vault.address, 5)
+        await token1.approve(app.address, 5)
         await app.deposit(token1.address, 5, 'ref')
 
         const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
@@ -77,50 +77,7 @@ contract('Finance App', accounts => {
         assert.equal(ref, 'ref', 'ref should be correct')
     })
 
-    it('records ERC20 approveAndCall deposits', async () => {
-        let initialBalance = await token1.balanceOf(vault.address)
-        await token1.approveAndCall(app.address, 5, 'ref')
-
-        const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
-
-        let finalBalance = await token1.balanceOf(vault.address)
-        assert.equal(finalBalance.toString(), initialBalance.plus(5).toString(), 'deposited tokens must be in vault')
-        assert.equal(periodId, 0, 'period id should be correct')
-        assert.equal(amount, 5, 'amount should be correct')
-        assert.equal(paymentId, 0, 'payment id should be 0')
-        assert.equal(token, token1.address, 'token should be correct')
-        assert.equal(entity, accounts[0], 'entity should be correct')
-        assert.isTrue(incoming, 'tx should be incoming')
-        assert.equal(date, 1, 'date should be correct')
-        assert.equal(ref, 'ref', 'ref should be correct')
-    })
-
-    it('fails calling receiveApproval from other than token', async () => {
-        let amount = 5
-        await token1.approve(app.address, amount)
-        return assertRevert(async () => {
-            await app.receiveApproval(accounts[0], amount, token1.address, '', {from: accounts[1]})
-        })
-    })
-
-    /* TODO: ERC777
-    it('records ERC677 deposits', async () => {
-        await etherToken.transferAndCall(app.address, 50, 'reference')
-
-        const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
-
-        // vault has 400 ether tokens initially
-        assert.equal(await etherToken.balanceOf(vault.address), 400 + 50, 'deposited tokens must be in vault')
-        assert.equal(periodId, 0, 'period id should be correct')
-        assert.equal(amount, 50, 'amount should be correct')
-        assert.equal(paymentId, 0, 'payment id should be 0')
-        assert.equal(token, etherToken.address, 'token should be correct')
-        assert.equal(entity, accounts[0], 'entity should be correct')
-        assert.isTrue(incoming, 'tx should be incoming')
-        assert.equal(date, 1, 'date should be correct')
-        assert.equal(ref, 'reference', 'ref should be correct')
-    })
-     */
+    /* TODO: ERC777 */
 
     it('sends locked tokens to Vault', async () => {
         let initialBalance = await token1.balanceOf(vault.address)
@@ -175,7 +132,7 @@ contract('Finance App', accounts => {
         let vaultInitialBalance = await getBalance(vault.address)
         let financeInitialBalance = await getBalance(app.address)
         let amount = web3.toWei(1, 'ether')
-        await app.escapeHatch({value: amount})
+        await app.sendTransaction({value: amount})
         let vaultFinalBalance = await getBalance(vault.address)
         let financeFinalBalance = await getBalance(app.address)
         assert.equal(financeFinalBalance.valueOf(), 0, "Funds not recovered (Finance)!")
