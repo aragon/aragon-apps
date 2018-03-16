@@ -1,22 +1,21 @@
 pragma solidity 0.4.18;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
-import "@aragon/os/contracts/common/EtherToken.sol";
-import "@aragon/os/contracts/lib/erc677/ERC677Receiver.sol";
 
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
 
-import "@aragon/apps-vault/contracts/Vault.sol";
+import "@aragon/apps-vault/contracts/IVaultConnector.sol";
 
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract Finance is AragonApp, ERC677Receiver {
+contract Finance is AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
+    address constant public ETH = address(0);
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
     uint64 constant public MAX_PERIOD_TRANSITIONS_PER_TX = 10;
     uint64 constant public MAX_UINT64 = uint64(-1);
@@ -30,7 +29,7 @@ contract Finance is AragonApp, ERC677Receiver {
 
     // order optimized for storage
     struct Payment {
-        ERC20 token;
+        address token;
         address receiver;
         address createdBy;
         bool disabled;
@@ -44,7 +43,7 @@ contract Finance is AragonApp, ERC677Receiver {
 
     // order optimized for storage
     struct Transaction {
-        ERC20 token;
+        address token;
         address entity;
         bool isIncoming;
         uint64 date;
@@ -74,8 +73,7 @@ contract Finance is AragonApp, ERC677Receiver {
         mapping (address => bool) hasBudget;
     }
 
-    Vault public vault;
-    EtherToken public etherToken;
+    IVaultConnector public vault;
 
     Payment[] payments; // first index is 1
     Transaction[] transactions; // first index is 1
@@ -104,24 +102,21 @@ contract Finance is AragonApp, ERC677Receiver {
      *      to Vault.
      * @notice Allows to send ETH from this contract to Vault, to avoid locking them in contract forever.
      */
-    function escapeHatch() public payable {
-        // convert ETH to EtherToken
-        etherToken.wrapAndCall.value(this.balance)(address(this), "Adding Funds");
+    function () public payable {
+        vault.deposit.value(this.balance)(ETH, msg.sender, this.balance, new bytes(0));
     }
 
     /**
     * @notice Initialize Finance app for `_vault` with duration `_periodDuration`
     * @param _vault Address of the vault Finance will rely on (non changeable)
-    * @param _etherToken Address of EtherToken for ether withdraws
     * @param _periodDuration Duration in seconds of each period
     */
-    function initialize(Vault _vault, EtherToken _etherToken, uint64 _periodDuration) external onlyInit {
+    function initialize(IVaultConnector _vault, uint64 _periodDuration) external onlyInit {
         initialized();
 
         require(_periodDuration > 1);
 
         vault = _vault;
-        etherToken = _etherToken;
 
         payments.length += 1;
         payments[0].disabled = true;
@@ -139,60 +134,42 @@ contract Finance is AragonApp, ERC677Receiver {
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
     */
-    function deposit(ERC20 _token, uint256 _amount, string _reference) external transitionsPeriod {
+    function deposit(address _token, uint256 _amount, string _reference) external transitionsPeriod {
         _recordIncomingTransaction(
             _token,
             msg.sender,
             _amount,
             _reference
         );
-        require(_token.transferFrom(msg.sender, address(vault), _amount));
+        // first we need to get the tokens to Finance
+        ERC20(_token).transferFrom(msg.sender, this, _amount);
+        // and then approve them to vault
+        ERC20(_token).approve(address(vault), _amount);
+        // finally we can deposit them
+        vault.deposit(_token, this, _amount, new bytes(0));
     }
 
     /**
-     * @dev Deposit for ERC20 tokens using approveAndCall
-     * @param _from Address sending the tokens
-     * @param _amount Amount of tokens sent
-     * @param _token Token being deposited
-     * @param _data Data payload being executed (payment reference)
-     */
-    function receiveApproval(
-        address _from,
-        uint256 _amount,
-        address _token,
-        bytes _data
-    )
-        transitionsPeriod
-        external
-    {
-        require(msg.sender == _token);
-        ERC20 token = ERC20(msg.sender);
+    * @dev Deposit for ERC777 tokens
+    * @param _operator Address who triggered the transfer, either sender for a direct send or an authorized operator for operatorSend
+    * @param _from Token holder (sender or 0x for minting)
+    * @param _to Tokens recipient (or 0x for burning)
+    * @param _amount Number of tokens transferred, minted or burned
+    * @param _userData Information attached to the transaction by the sender
+    * @param _operatorData Information attached to the transaction by the operator
+    */
+    /*
+    function tokensReceived(address _operator, address _from, address _to, uint _amount, bytes _userData, bytes _operatorData) transitionsPeriod external {
         _recordIncomingTransaction(
-            token,
+            msg.sender,
             _from,
             _amount,
-            string(_data)
+            string(_userData)
         );
-        require(token.transferFrom(_from, address(vault), _amount));
+        //ERC777(msg.sender).send(adress(vault), _amount, _userData);
+        //vault.deposit(msg.sender, this, _amount, _userData);
     }
-
-    /**
-    * @dev Deposit for ERC677 tokens
-    * @param from Address sending the tokens
-    * @param amount Amount of tokens sent
-    * @param data Data payload being executed (payment reference)
     */
-    function tokenFallback(address from, uint256 amount, bytes data) transitionsPeriod external returns (bool success) {
-        ERC20 token = ERC20(msg.sender);
-        _recordIncomingTransaction(
-            token,
-            from,
-            amount,
-            string(data)
-        );
-        require(token.transfer(address(vault), amount));
-        return true;
-    }
 
     /**
     * @notice New payment
@@ -205,14 +182,14 @@ contract Finance is AragonApp, ERC677Receiver {
     * @param _reference string detailing payment reason
     */
     function newPayment(
-        ERC20 _token,
+        address _token,
         address _receiver,
         uint256 _amount,
         uint64 _initialPaymentTime,
         uint64 _interval,
         uint64 _maxRepeats,
         string _reference
-    ) authP(CREATE_PAYMENTS_ROLE, arr(address(_token), _receiver, _amount, _interval, _maxRepeats)) transitionsPeriod external returns (uint256 paymentId)
+    ) authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, _interval, _maxRepeats)) transitionsPeriod external returns (uint256 paymentId)
     {
 
         require(settings.budgets[_token] > 0 || !settings.hasBudget[_token]); // Token must have been added to budget
@@ -261,7 +238,7 @@ contract Finance is AragonApp, ERC677Receiver {
     * @param _token Address for token
     * @param _amount New budget amount
     */
-    function setBudget(ERC20 _token, uint256 _amount) authP(CHANGE_BUDGETS_ROLE, arr(address(_token), _amount, settings.budgets[_token])) transitionsPeriod external {
+    function setBudget(address _token, uint256 _amount) authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token])) transitionsPeriod external {
         settings.budgets[_token] = _amount;
         if (!settings.hasBudget[_token]) {
             settings.hasBudget[_token] = true;
@@ -273,7 +250,7 @@ contract Finance is AragonApp, ERC677Receiver {
     * @notice Remove budget for `_token`. Will be able to spend entire balance.
     * @param _token Address for token
     */
-    function removeBudget(ERC20 _token) authP(CHANGE_BUDGETS_ROLE, arr(address(_token), uint256(0), settings.budgets[_token])) transitionsPeriod external {
+    function removeBudget(address _token) authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token])) transitionsPeriod external {
         settings.hasBudget[_token] = false;
         SetBudget(_token, 0, false);
     }
@@ -320,17 +297,19 @@ contract Finance is AragonApp, ERC677Receiver {
      * @param _token Token whose balance is going to be transferred.
      */
     function depositToVault(address _token) public {
-        ERC20 token = ERC20(_token);
-        uint256 value = token.balanceOf(this);
+        uint256 value = ERC20(_token).balanceOf(this);
         require(value > 0);
 
         _recordIncomingTransaction(
-            token,
+            _token,
             this,
             value,
             "Deposit to Vault"
         );
-        require(token.transfer(address(vault), value));
+        // First we approve tokens to vault
+        ERC20(_token).approve(address(vault), value);
+        // then we can deposit them
+        vault.deposit(_token, this, value, new bytes(0));
     }
 
     /**
@@ -369,7 +348,7 @@ contract Finance is AragonApp, ERC677Receiver {
 
     // consts
 
-    function getPayment(uint256 _paymentId) public view returns (ERC20 token, address receiver, uint256 amount, uint64 initialPaymentTime, uint64 interval, uint64 maxRepeats, string reference, bool disabled, uint256 repeats, address createdBy) {
+    function getPayment(uint256 _paymentId) public view returns (address token, address receiver, uint256 amount, uint64 initialPaymentTime, uint64 interval, uint64 maxRepeats, string reference, bool disabled, uint256 repeats, address createdBy) {
         Payment storage payment = payments[_paymentId];
 
         token = payment.token;
@@ -384,7 +363,7 @@ contract Finance is AragonApp, ERC677Receiver {
         createdBy = payment.createdBy;
     }
 
-    function getTransaction(uint256 _transactionId) public view returns (uint256 periodId, uint256 amount, uint256 paymentId, ERC20 token, address entity, bool isIncoming, uint64 date, string reference) {
+    function getTransaction(uint256 _transactionId) public view returns (uint256 periodId, uint256 amount, uint256 paymentId, address token, address entity, bool isIncoming, uint64 date, string reference) {
         Transaction storage transaction = transactions[_transactionId];
 
         token = transaction.token;
@@ -478,7 +457,7 @@ contract Finance is AragonApp, ERC677Receiver {
     }
 
     function _makePaymentTransaction(
-        ERC20 _token,
+        address _token,
         address _receiver,
         uint256 _amount,
         uint256 _paymentId
@@ -494,12 +473,7 @@ contract Finance is AragonApp, ERC677Receiver {
             ""
         );
 
-        if (address(_token) != address(etherToken)) {
-            vault.transferTokens(_token, _receiver, _amount);
-        } else {
-            vault.transferTokens(_token, address(this), _amount); // transfer to finance app
-            etherToken.withdraw(_receiver, _amount); // withdraw ether to receiver
-        }
+        vault.transfer(_token, _receiver, _amount, new bytes(0));
     }
 
     function _recordIncomingTransaction(
@@ -511,7 +485,7 @@ contract Finance is AragonApp, ERC677Receiver {
     {
         _recordTransaction(
             true, // incoming transaction
-            ERC20(_token),
+            _token,
             _sender,
             _amount,
             0, // unrelated to any existing payment
@@ -521,7 +495,7 @@ contract Finance is AragonApp, ERC677Receiver {
 
     function _recordTransaction(
         bool _incoming,
-        ERC20 _token,
+        address _token,
         address _entity,
         uint256 _amount,
         uint256 _paymentId,
@@ -554,8 +528,8 @@ contract Finance is AragonApp, ERC677Receiver {
         NewTransaction(transactionId, _incoming, _entity);
     }
 
-    function _canMakePayment(ERC20 _token, uint256 _amount) internal view returns (bool) {
-        return _getRemainingBudget(_token) >= _amount && _token.balanceOf(address(vault)) >= _amount;
+    function _canMakePayment(address _token, uint256 _amount) internal view returns (bool) {
+        return _getRemainingBudget(_token) >= _amount && vault.balance(_token) >= _amount;
     }
 
     function _getRemainingBudget(address _token) internal view returns (uint256) {

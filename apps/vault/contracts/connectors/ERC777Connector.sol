@@ -4,7 +4,7 @@ import "../Vault.sol";
 import "./standards/ERC777.sol";
 
 
-contract ERC777Connector is Vault, IConnector, ERC777TokensRecipient {
+contract ERC777Connector is Vault, IVaultConnector, ERC777TokensRecipient {
     function register(address token) external {
         // TODO: Use EIP780 register the vault as conformant to ERC777
     }
