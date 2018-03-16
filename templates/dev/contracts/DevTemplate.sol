@@ -59,7 +59,8 @@ contract DevTemplate {
         MiniMeToken token = minimeFac.createCloneToken(address(0), 0, "DevToken", 18, "XDT", true);
 
         // finance initialization
-        finance.initialize(vault, uint64(-1) - uint64(now));
+        vault.initialize(vault.erc20ConnectorBase(), vault.ethConnectorBase());
+        finance.initialize(IVaultConnector(vault), uint64(-1) - uint64(now));
 
         // token manager initialization
         token.changeController(tokenManager); // token manager has to create tokens
@@ -69,7 +70,6 @@ contract DevTemplate {
         uint256 pct = 10 ** 16;
         // 50% support, 15% accept quorum, 1 hour vote duration
         voting.initialize(token, 50 * pct, 15 * pct, 1 hours);
-        vault.initialize(vault.erc20ConnectorBase(), vault.ethConnectorBase());
 
         // finance permissions
         acl.createPermission(ANY_ENTITY, finance, finance.CREATE_PAYMENTS_ROLE(), msg.sender);
