@@ -1,16 +1,14 @@
 pragma solidity 0.4.18;
 
-import "@aragon/os/contracts/common/DelegateProxy.sol";
-import "@aragon/os/contracts/apps/AragonApp.sol";
+import "./VaultBase.sol"; // split made to avoid circular import
+
+import "./connectors/ERC20Connector.sol";
+import "./connectors/ETHConnector.sol";
 
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
-import "./IVaultConnector.sol";
 
-import "./detectors/ERC165Detector.sol";
-
-
-contract Vault is AragonApp, DelegateProxy, ERC165Detector {
+contract Vault is VaultBase {
     address constant ETH = address(0);
     uint32 constant ERC165 = 165;
     uint32 constant NO_DETECTION = uint32(-1);
@@ -31,9 +29,20 @@ contract Vault is AragonApp, DelegateProxy, ERC165Detector {
     mapping (address => address) public connectors;
     uint32[] public supportedInterfaceDetectionERCs;
 
+    ERC20Connector public erc20ConnectorBase;
+    ETHConnector public ethConnectorBase;
+
     event NewTokenStandard(uint32 indexed erc, uint32 indexed interfaceDetectionERC, bytes4 indexed interfaceID, address connector);
 
-    function initialize(address erc20Connector, address ethConnector) onlyInit external {
+    function Vault() {
+        // this allows to simplify template logic, as they don't have to deploy this
+        erc20ConnectorBase = new ERC20Connector();
+        ethConnectorBase = new ETHConnector();
+
+        initialize(erc20ConnectorBase, ethConnectorBase);
+    }
+
+    function initialize(ERC20Connector erc20Connector, ETHConnector ethConnector) onlyInit public {
         initialized();
 
         supportedInterfaceDetectionERCs.push(NO_DETECTION);
