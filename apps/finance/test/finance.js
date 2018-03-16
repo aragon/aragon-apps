@@ -6,7 +6,6 @@ const ETHConnector = artifacts.require('ETHConnector')
 const ERC20Connector = artifacts.require('ERC20Connector')
 const Finance = artifacts.require('FinanceMock')
 const MiniMeToken = artifacts.require('MiniMeToken')
-const EtherToken = artifacts.require('EtherToken')
 
 contract('Finance App', accounts => {
     let app, vault, token1, token2, executionTarget, etherToken = {}
