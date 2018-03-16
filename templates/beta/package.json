@@ -13,7 +13,7 @@
     "docker:build": "docker build -t aragon/templates-beta -f Dockerfile ../..",
     "docker:build:no": "docker build --no-cache -t aragon/templates-beta -f Dockerfile ../..",
     "lint": "solium --dir ./contracts",
-    "test": "npm run docker:run && test `docker-compose ps -q | xargs docker inspect -f '{{ .Name }} {{ .State.ExitCode }}' | grep deploy | cut -d' ' -f 2` = 0",
+    "test": "npm run docker:build && npm run docker:run && test `docker-compose ps -q | xargs docker inspect -f '{{ .Name }} {{ .State.ExitCode }}' | grep deploy | cut -d' ' -f 2` = 0",
     "test:local": "TRUFFLE_TEST=true npm run ganache-cli:dev test/TestTemplates.sol test/beta.js",
     "test:gas": "GAS_REPORTER=true npm test:local",
     "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh",
