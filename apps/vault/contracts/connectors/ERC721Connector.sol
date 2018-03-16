@@ -4,7 +4,7 @@ import "../Vault.sol";
 import "./standards/ERC721.sol";
 
 
-contract ERC721Connector is Vault, IConnector, ERC721TokenReceiver {
+contract ERC721Connector is Vault, IVaultConnector, ERC721TokenReceiver {
     function deposit(address token, address who, uint256 tokenId, bytes how) payable external returns (bool){
         // require(who == msg.sender); // maybe actual sender wants to signal who sent it
         ERC721(token).safeTransferFrom(who, this, tokenId, how);
