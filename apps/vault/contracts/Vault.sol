@@ -35,7 +35,7 @@ contract Vault is VaultBase {
 
     event NewTokenStandard(uint32 indexed erc, uint32 indexed interfaceDetectionERC, bytes4 indexed interfaceID, address connector);
 
-    function Vault() {
+    function Vault() public {
         // this allows to simplify template logic, as they don't have to deploy this
         erc20ConnectorBase = new ERC20Connector();
         ethConnectorBase = new ETHConnector();
@@ -55,7 +55,7 @@ contract Vault is VaultBase {
         connectors[ETH] = ethConnector;
     }
 
-    function () payable {
+    function () payable public {
         address token = ETH;
 
         // 4 (sig) + 32 (at least the token address to locate connector)
@@ -75,7 +75,8 @@ contract Vault is VaultBase {
 
     function registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector)
              authP(REGISTER_TOKEN_STANDARD, arr(uint256(erc), interfaceDetectionERC))
-             public {
+             public
+    {
 
         _registerStandard(erc, interfaceDetectionERC, interfaceID, connector);
     }

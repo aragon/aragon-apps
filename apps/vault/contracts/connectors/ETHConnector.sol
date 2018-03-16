@@ -4,12 +4,12 @@ import "../VaultBase.sol";
 
 
 contract ETHConnector is VaultBase, IVaultConnector {
-    function () payable {
+    function () payable public {
         Deposit(ETH, msg.sender, msg.value);
         exitContextReturningTrue();
     }
 
-    function deposit(address token, address who, uint256 value, bytes how) payable external returns (bool){
+    function deposit(address token, address who, uint256 value, bytes how) payable external returns (bool) {
         require(token == ETH);
         require(value == msg.value);
         // require(who == msg.sender); // maybe actual sender wants to signal who sent it
@@ -21,7 +21,8 @@ contract ETHConnector is VaultBase, IVaultConnector {
 
     function transfer(address token, address to, uint256 value, bytes how)
              authP(TRANSFER_ROLE, arr(ETH, to, value))
-             external returns (bool) {
+             external returns (bool)
+    {
 
         require(token == ETH);
 
