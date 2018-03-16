@@ -8,8 +8,6 @@ import "@aragon/os/contracts/lib/misc/Migrations.sol";
 import "./IConnector.sol";
 
 import "./detectors/ERC165Detector.sol";
-import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
-
 
 
 contract Vault is AragonApp, DelegateProxy, ERC165Detector {
