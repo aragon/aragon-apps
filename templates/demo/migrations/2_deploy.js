@@ -1,8 +1,11 @@
 const devMigration = require('@aragon/templates-dev/migrations/2_deploy')
 
-const Voting = artifacts.require('@aragon/apps-voting/contracts/Voting')
-const Vault = artifacts.require('@aragon/apps-vault/contracts/Vault')
+const Finance = artifacts.require('@aragon/apps-finance/contracts/Finance')
 const TokenManager = artifacts.require('@aragon/apps-token-manager/contracts/TokenManager')
+const Vault = artifacts.require('@aragon/apps-vault/contracts/Vault')
+const Voting = artifacts.require('@aragon/apps-voting/contracts/Voting')
+
+const MinimeToken = artifacts.require('@aragon/os/contracts/lib/minime/MinimeToken')
 
 const EMPTY_SCRIPT = '0x00000001'
 
@@ -10,13 +13,18 @@ module.exports = async (deployer, network, accounts) => {
   const {
     daoAddr,
     ensAddr,
+    financeAddr,
     tokenManagerAddr,
     vaultAddr,
     votingAddr,
   } = await devMigration(deployer, network, accounts, artifacts)
 
-  const voting = Voting.at(votingAddr)
+  const finance = Finance.at(financeAddr)
   const tokenManager = TokenManager.at(tokenManagerAddr)
+  const voting = Voting.at(votingAddr)
+
+  const tokenAddr = await tokenManager.token()
+  const token = MinimeToken.at(tokenAddr)
 
   // Create a new vote
   const newVote = (question, from) => voting.newVote(
@@ -29,12 +37,24 @@ module.exports = async (deployer, network, accounts) => {
   const vote = (voteId, account, supports) =>
     voting.vote(voteId, supports, false, { from: account })
 
-  // Assign some tokens so accounts can vote
+  // Create a deposit
+  const newDeposit = async (from, amount, ref) => {
+    await token.approve(financeAddr, amount, { from })
+    return finance.deposit(tokenAddr, amount, ref, { from })
+  }
+
+  // Create a new payment
+  const newPayment = (to, amount, ref) =>
+    // Immediate, no interval, one-time payment
+    finance.newPayment(tokenAddr, to, amount, 0, 0, 1, ref, { from })
+
+  // Assign some tokens to accounts for voting and transferring
+  const tokenAssignments = [1e19 * 1, 1e19 * 1.4, 1e19 * 2, 1e19 * 5, 1e19 * 8]
   await Promise.all(
-    [1e19 * 1, 1e19 * 1.4, 1e19 * 2, 1e19 * 5, 1e19 * 8].map((amount, i) => {
+    tokenAssignments.map((amount, i) => {
       const account = accounts[i]
-      tokenManager.mint(account, amount)
       console.log(`Assigned ${account} ${amount} tokens`)
+      return tokenManager.mint(account, amount)
     })
   )
 
@@ -56,4 +76,21 @@ module.exports = async (deployer, network, accounts) => {
     vote(votesIds[3], accounts[0], false),
   ])
   console.log('Voted on demo votes')
+
+  const tokenDeposits = tokenAssignments.map(amount => Math.floor(amount * Math.random() / 2))
+  await Promise.all(
+    tokenDeposits.map((amount, i) => {
+      const account = accounts[i]
+      const invoiceRef = `Invoice IN${i}`
+      console.log(`${invoiceRef}: ${account} deposited ${amount}`)
+      return newDeposit(account, amount, invoiceRef)
+    })
+  )
+  await Promise.all(
+    [0, 1].map(i => {
+      const amount = Math.floor(tokenDeposits[i] * Math.random() / 3)
+      const paymentRef = `Payment ${i}`
+      console.log(`${paymentRef}: payment of ${amount} to ${accounts[1]}`)
+    })
+  )
 }
