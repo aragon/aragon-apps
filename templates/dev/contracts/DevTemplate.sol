@@ -4,7 +4,6 @@ import "@aragon/os/contracts/apm/APMRegistry.sol";
 import "@aragon/os/contracts/factory/DAOFactory.sol";
 import "@aragon/os/contracts/kernel/Kernel.sol";
 import "@aragon/os/contracts/acl/ACL.sol";
-import "@aragon/os/contracts/common/EtherToken.sol";
 import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
 import "@aragon/os/contracts/lib/ens/ENS.sol";
 import "@aragon/os/contracts/lib/ens/PublicResolver.sol";
@@ -60,7 +59,7 @@ contract DevTemplate {
         MiniMeToken token = minimeFac.createCloneToken(address(0), 0, "DevToken", 18, "XDT", true);
 
         // finance initialization
-        finance.initialize(vault, EtherToken(0), uint64(-1) - uint64(now));
+        finance.initialize(vault, uint64(-1) - uint64(now));
 
         // token manager initialization
         token.changeController(tokenManager); // token manager has to create tokens
