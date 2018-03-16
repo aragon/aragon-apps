@@ -4,12 +4,15 @@ import "@aragon/os/contracts/apm/APMRegistry.sol";
 import "@aragon/os/contracts/factory/DAOFactory.sol";
 import "@aragon/os/contracts/kernel/Kernel.sol";
 import "@aragon/os/contracts/acl/ACL.sol";
+import "@aragon/os/contracts/common/EtherToken.sol";
 import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
 import "@aragon/os/contracts/lib/ens/ENS.sol";
 import "@aragon/os/contracts/lib/ens/PublicResolver.sol";
 
-import "@aragon/apps-voting/contracts/Voting.sol";
+import "@aragon/apps-finance/contracts/Finance.sol";
+import "@aragon/apps-token-manager/contracts/TokenManager.sol";
 import "@aragon/apps-vault/contracts/Vault.sol";
+import "@aragon/apps-voting/contracts/Voting.sol";
 
 
 contract DevTemplate {
@@ -28,9 +31,20 @@ contract DevTemplate {
         minimeFac = _minimeFac;
     }
 
-    function apmInit(address votingBase, bytes votingContentURI, address vaultBase, bytes vaultContentURI) {
-        createRepo("voting", votingBase, votingContentURI);
+    function apmInit(
+        address financeBase,
+        bytes financeContentURI,
+        address tokenManagerBase,
+        bytes tokenManagerContentURI,
+        address vaultBase,
+        bytes vaultContentURI,
+        address votingBase,
+        bytes votingContentURI
+    ) {
+        createRepo("finance", financeBase, financeContentURI);
+        createRepo("token-manager", tokenManagerBase, tokenManagerContentURI);
         createRepo("vault", vaultBase, vaultContentURI);
+        createRepo("voting", votingBase, votingContentURI);
     }
 
     function createInstance() {
@@ -39,24 +53,48 @@ contract DevTemplate {
 
         acl.createPermission(ANY_ENTITY, dao, dao.APP_MANAGER_ROLE(), msg.sender);
 
-        Voting voting = Voting(dao.newAppInstance(votingAppId(), latestVersionAppBase(votingAppId())));
+        Finance finance = Finance(dao.newAppInstance(financeAppId(), latestVersionAppBase(financeAppId())));
+        TokenManager tokenManager = TokenManager(dao.newAppInstance(tokenManagerAppId(), latestVersionAppBase(tokenManagerAppId())));
         Vault vault = Vault(dao.newAppInstance(vaultAppId(), latestVersionAppBase(vaultAppId())));
+        Voting voting = Voting(dao.newAppInstance(votingAppId(), latestVersionAppBase(votingAppId())));
         MiniMeToken token = minimeFac.createCloneToken(address(0), 0, "DevToken", 18, "XDT", true);
 
-        token.changeController(msg.sender); // sender has to create tokens
+        // finance initialization
+        finance.initialize(vault, EtherToken(0), uint64(-1) - uint64(now));
 
+        // token manager initialization
+        token.changeController(tokenManager); // token manager has to create tokens
+        tokenManager.initialize(token, true, 0, true);
+
+        // voting initialization
         uint256 pct = 10 ** 16;
         // 50% support, 15% accept quorum, 1 hour vote duration
         voting.initialize(token, 50 * pct, 15 * pct, 1 hours);
         vault.initialize(vault.erc20ConnectorBase(), vault.ethConnectorBase());
 
-        // voting app permissions
+        // finance permissions
+        acl.createPermission(ANY_ENTITY, finance, finance.CREATE_PAYMENTS_ROLE(), msg.sender);
+        acl.createPermission(ANY_ENTITY, finance, finance.CHANGE_PERIOD_ROLE(), msg.sender);
+        acl.createPermission(ANY_ENTITY, finance, finance.CHANGE_BUDGETS_ROLE(), msg.sender);
+        acl.createPermission(ANY_ENTITY, finance, finance.EXECUTE_PAYMENTS_ROLE(), msg.sender);
+        acl.createPermission(ANY_ENTITY, finance, finance.DISABLE_PAYMENTS_ROLE(), msg.sender);
+        InstalledApp(finance, financeAppId());
+
+        // token manager permissions
+        acl.createPermission(ANY_ENTITY, tokenManager, tokenManager.MINT_ROLE(), msg.sender);
+        acl.createPermission(ANY_ENTITY, tokenManager, tokenManager.ISSUE_ROLE(), msg.sender);
+        acl.createPermission(ANY_ENTITY, tokenManager, tokenManager.ASSIGN_ROLE(), msg.sender);
+        acl.createPermission(ANY_ENTITY, tokenManager, tokenManager.REVOKE_VESTINGS_ROLE(), msg.sender);
+        InstalledApp(tokenManager, tokenManagerAppId());
+
+        // vault permissions
+        acl.createPermission(voting, vault, vault.TRANSFER_ROLE(), msg.sender);
+        InstalledApp(vault, vaultAppId());
+
+        // voting permissions
         acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), msg.sender);
         acl.createPermission(ANY_ENTITY, voting, voting.MODIFY_QUORUM_ROLE(), msg.sender);
         InstalledApp(voting, votingAppId());
-
-        acl.createPermission(voting, vault, vault.TRANSFER_ROLE(), msg.sender);
-        InstalledApp(vault, vaultAppId());
 
         DeployInstance(dao);
     }
@@ -68,12 +106,20 @@ contract DevTemplate {
         apm.newRepoWithVersion(name, ANY_ENTITY, firstVersion, votingBase, votingContentURI);
     }
 
-    function votingAppId() public view returns (bytes32) {
-        return keccak256(apm.registrar().rootNode(), keccak256("voting"));
+    function financeAppId() public view returns (bytes32) {
+        return keccak256(apm.registrar().rootNode(), keccak256("finance"));
+    }
+
+    function tokenManagerAppId() public view returns (bytes32) {
+        return keccak256(apm.registrar().rootNode(), keccak256("token-manager"));
     }
 
     function vaultAppId() public view returns (bytes32) {
         return keccak256(apm.registrar().rootNode(), keccak256("vault"));
+    }
+
+    function votingAppId() public view returns (bytes32) {
+        return keccak256(apm.registrar().rootNode(), keccak256("voting"));
     }
 
     function ens() internal view returns (AbstractENS) {
