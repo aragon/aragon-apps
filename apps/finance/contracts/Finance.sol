@@ -15,6 +15,7 @@ contract Finance is AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
+    address constant public ETH = address(0);
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
     uint64 constant public MAX_PERIOD_TRANSITIONS_PER_TX = 10;
     uint64 constant public MAX_UINT64 = uint64(-1);
@@ -101,8 +102,8 @@ contract Finance is AragonApp {
      *      to Vault.
      * @notice Allows to send ETH from this contract to Vault, to avoid locking them in contract forever.
      */
-    function escapeHatch() public payable {
-        vault.deposit.value(msg.value)(address(0), msg.sender, 0, new bytes(0));
+    function () public payable {
+        vault.deposit.value(this.balance)(ETH, msg.sender, this.balance, new bytes(0));
     }
 
     /**
@@ -140,34 +141,8 @@ contract Finance is AragonApp {
             _amount,
             _reference
         );
-        vault.deposit(_token, msg.sender, _amount, new bytes(0));
-    }
-
-    /**
-     * @dev Deposit for ERC20 tokens using approveAndCall
-     * @param _from Address sending the tokens
-     * @param _amount Amount of tokens sent
-     * @param _token Token being deposited
-     * @param _data Data payload being executed (payment reference)
-     */
-    function receiveApproval(
-        address _from,
-        uint256 _amount,
-        address _token,
-        bytes _data
-    )
-        transitionsPeriod
-        external
-    {
-        require(msg.sender == _token);
-        _recordIncomingTransaction(
-            _token,
-            _from,
-            _amount,
-            string(_data)
-        );
         // first we need to get the tokens to Finance
-        ERC20(_token).transferFrom(_from, this, _amount);
+        ERC20(_token).transferFrom(msg.sender, this, _amount);
         // and then approve them to vault
         ERC20(_token).approve(address(vault), _amount);
         // finally we can deposit them
@@ -176,20 +151,25 @@ contract Finance is AragonApp {
 
     /**
     * @dev Deposit for ERC777 tokens
-    * @param _from Address sending the tokens
-    * @param _amount Amount of tokens sent
-    * @param _userData Data payload being executed (payment reference)
-    * @param _operatorData Data payload
+    * @param _operator Address who triggered the transfer, either sender for a direct send or an authorized operator for operatorSend
+    * @param _from Token holder (sender or 0x for minting)
+    * @param _to Tokens recipient (or 0x for burning)
+    * @param _amount Number of tokens transferred, minted or burned
+    * @param _userData Information attached to the transaction by the sender
+    * @param _operatorData Information attached to the transaction by the operator
     */
-    function tokenReceived(address _from, uint256 _amount, bytes _userData, bytes _operatorData) transitionsPeriod external {
+    /*
+    function tokensReceived(address _operator, address _from, address _to, uint _amount, bytes _userData, bytes _operatorData) transitionsPeriod external {
         _recordIncomingTransaction(
             msg.sender,
             _from,
             _amount,
             string(_userData)
         );
-        vault.deposit(msg.sender, _from, _amount, _userData);
+        //ERC777(msg.sender).send(adress(vault), _amount, _userData);
+        //vault.deposit(msg.sender, this, _amount, _userData);
     }
+    */
 
     /**
     * @notice New payment
@@ -317,8 +297,7 @@ contract Finance is AragonApp {
      * @param _token Token whose balance is going to be transferred.
      */
     function depositToVault(address _token) public {
-        ERC20 token = ERC20(_token);
-        uint256 value = token.balanceOf(this);
+        uint256 value = ERC20(_token).balanceOf(this);
         require(value > 0);
 
         _recordIncomingTransaction(
