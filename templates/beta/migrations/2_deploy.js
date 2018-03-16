@@ -6,7 +6,6 @@ const namehash = require('eth-ens-namehash').hash
 const daoFactoryMigration = require('@aragon/os/migrations/3_factory')
 const MiniMeTokenFactory = artifacts.require('@aragon/os/contracts/lib/minime/MiniMeTokenFactory')
 const ENS = artifacts.require('@aragon/os/contracts/lib/ens/ENS.sol')
-const EtherToken = artifacts.require('@aragon/os/contracts/common/EtherToken.sol')
 
 const templates = ['DemocracyTemplate', 'MultisigTemplate']
 
@@ -46,10 +45,9 @@ module.exports = async (deployer, network, accounts) => {
   const { daoFact } = await daoFactoryMigration(deployer, network, accounts, artifacts)
 
   const minimeFac = await MiniMeTokenFactory.new()
-  const etherToken = await EtherToken.new()
 
   const aragonid = await ens.owner(namehash('aragonid.eth'))
-  const tmpls = await deployMany(templates, [daoFact.address, minimeFac.address, apmAddr, etherToken.address, aragonid, appIds])
+  const tmpls = await deployMany(templates, [daoFact.address, minimeFac.address, apmAddr, aragonid, appIds])
 
   const ts = tmpls.map((address, i) => ({ name: templates[i], address }) )
 

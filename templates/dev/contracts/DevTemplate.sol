@@ -48,6 +48,7 @@ contract DevTemplate {
         uint256 pct = 10 ** 16;
         // 50% support, 15% accept quorum, 1 hour vote duration
         voting.initialize(token, 50 * pct, 15 * pct, 1 hours);
+        vault.initialize(vault.erc20ConnectorBase(), vault.ethConnectorBase());
 
         // voting app permissions
         acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), msg.sender);
