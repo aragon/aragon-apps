@@ -1,8 +1,7 @@
 pragma solidity 0.4.18;
 
 import "../VaultBase.sol";
-import "./standards/ERC20.sol";
-
+import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 
 contract ERC20Connector is VaultBase, IVaultConnector {
     function deposit(address token, address who, uint256 value, bytes how) payable external returns (bool) {

@@ -32,3 +32,9 @@ interface ERC777TokensSender {
 interface ERC777TokensRecipient {
     function tokensReceived(address operator, address from, address to, uint amount, bytes userData, bytes operatorData) public;
 }
+
+contract ERC777Fake {
+    function ERC777Fake() public {
+        // work around coverage weird error
+    }
+}

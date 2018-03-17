@@ -10,3 +10,9 @@ interface IVaultConnector {
     event Transfer(address indexed token, address indexed receiver, uint256 amount);
     event Deposit(address indexed token, address indexed sender, uint256 amount);
 }
+
+contract IVaultFake {
+    function IVaultFake() public {
+        // work around coverage weird error
+    }
+}
