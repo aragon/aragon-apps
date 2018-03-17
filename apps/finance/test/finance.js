@@ -2,6 +2,7 @@ const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/asse
 const getBalance = require('@aragon/test-helpers/balance')(web3)
 
 const Vault = artifacts.require('Vault')
+const ERC20Connector = artifacts.require('ERC20Connector')
 const ETHConnector = artifacts.require('ETHConnector')
 const Finance = artifacts.require('FinanceMock')
 const MiniMeToken = artifacts.require('MiniMeToken')
@@ -17,6 +18,10 @@ contract('Finance App', accounts => {
 
     beforeEach(async () => {
         vault = await Vault.new()
+        const ethConnector = await ETHConnector.new()
+        const erc20Connector = await ERC20Connector.new()
+        await vault.initialize(erc20Connector.address, ethConnector.address)
+
 
         token1 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token1.generateTokens(vault.address, 100)

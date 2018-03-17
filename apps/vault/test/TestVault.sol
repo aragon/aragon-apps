@@ -10,6 +10,9 @@ import "truffle/Assert.sol";
 contract TestVault {
     MiniMeToken token;
 
+    ERC20Connector erc20Connector = new ERC20Connector();
+    ETHConnector ethConnector = new ETHConnector();
+
     IVaultConnector vault;
 
     uint constant public initialBalance = 200 wei;
@@ -23,6 +26,7 @@ contract TestVault {
 
     function beforeEach() {
         vault = IVaultConnector(new Vault());
+        Vault(vault).initialize(erc20Connector, ethConnector);
     }
 
     function testETHDeposit() {

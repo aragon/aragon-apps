@@ -18,31 +18,37 @@ contract Vault is VaultBase {
 
     TokenStandard[] public standards;
     mapping (address => address) public connectors;
-    uint32[] public supportedInterfaceDetectionERCs;
-
-    ERC20Connector public erc20ConnectorBase;
-    ETHConnector public ethConnectorBase;
+    mapping(uint32 => bool) public supportedInterfaceDetectionERCs;
 
     event NewTokenStandard(uint32 indexed erc, uint32 indexed interfaceDetectionERC, bytes4 indexed interfaceID, address connector);
 
-    function Vault() public {
+    // TODO Role??
+    function initializeConnectors() public {
         // this allows to simplify template logic, as they don't have to deploy this
-        erc20ConnectorBase = new ERC20Connector();
-        ethConnectorBase = new ETHConnector();
+        _setConnectors(new ERC20Connector(), new ETHConnector());
+    }
 
-        initialize(erc20ConnectorBase, ethConnectorBase);
+    function initializeEmpty() onlyInit public {
+        initialized();
+
+        supportedInterfaceDetectionERCs[NO_DETECTION] = true;
+        supportedInterfaceDetectionERCs[ERC165] = true;
     }
 
     function initialize(ERC20Connector erc20Connector, ETHConnector ethConnector) onlyInit public {
-        initialized();
+        initializeEmpty();
 
-        supportedInterfaceDetectionERCs.push(NO_DETECTION);
-        supportedInterfaceDetectionERCs.push(ERC165);
+        _setConnectors(erc20Connector, ethConnector);
+    }
 
+    function _setConnectors(ERC20Connector erc20Connector, ETHConnector ethConnector) internal {
         // register erc20 as the first standard
-        _registerStandard(20, NO_DETECTION, bytes4(0), erc20Connector);
+        if (erc20Connector != address(0))
+            _registerStandard(20, NO_DETECTION, bytes4(0), erc20Connector);
         // directly manage ETH with the ethConnector
-        connectors[ETH] = ethConnector;
+        if (ethConnector != address(0))
+            connectors[ETH] = ethConnector;
+
     }
 
     function () payable public {
@@ -92,13 +98,7 @@ contract Vault is VaultBase {
     }
 
     function isInterfaceDetectionERCSupported(uint32 interfaceDetectionERC) public view returns (bool) {
-      for (uint j = 0; j < supportedInterfaceDetectionERCs.length; j++) {
-          if (supportedInterfaceDetectionERCs[j] == interfaceDetectionERC) {
-              return true;
-          }
-      }
-
-      return false;
+        return supportedInterfaceDetectionERCs[interfaceDetectionERC];
     }
 
     function _registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector) internal {
