@@ -11,6 +11,7 @@ interface ERC165 {
     function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
+
 contract ERC165Fake {
     function ERC165Fake() public {
         // work around coverage weird error
