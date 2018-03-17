@@ -1,10 +1,7 @@
 pragma solidity 0.4.18;
 
 import "../contracts/Vault.sol";
-import "../contracts/IConnector.sol";
-
-import "../contracts/connectors/ETHConnector.sol";
-import "../contracts/connectors/ERC20Connector.sol";
+import "../contracts/IVaultConnector.sol";
 
 import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
 
@@ -13,10 +10,7 @@ import "truffle/Assert.sol";
 contract TestVault {
     MiniMeToken token;
 
-    address ethConnector = new ETHConnector();
-    address erc20Connector = new ERC20Connector();
-
-    IConnector vault;
+    IVaultConnector vault;
 
     uint constant public initialBalance = 200 wei;
     address constant ETH = address(0);
@@ -28,8 +22,7 @@ contract TestVault {
     }
 
     function beforeEach() {
-        vault = IConnector(new Vault());
-        Vault(vault).initialize(erc20Connector, ethConnector);
+        vault = IVaultConnector(new Vault());
     }
 
     function testETHDeposit() {
