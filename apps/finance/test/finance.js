@@ -3,7 +3,6 @@ const getBalance = require('@aragon/test-helpers/balance')(web3)
 
 const Vault = artifacts.require('Vault')
 const ETHConnector = artifacts.require('ETHConnector')
-const ERC20Connector = artifacts.require('ERC20Connector')
 const Finance = artifacts.require('FinanceMock')
 const MiniMeToken = artifacts.require('MiniMeToken')
 
@@ -18,9 +17,6 @@ contract('Finance App', accounts => {
 
     beforeEach(async () => {
         vault = await Vault.new()
-        const ethConnector = await ETHConnector.new()
-        const erc20Connector = await ERC20Connector.new()
-        await vault.initialize(erc20Connector.address, ethConnector.address)
 
         token1 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token1.generateTokens(vault.address, 100)
@@ -58,7 +54,7 @@ contract('Finance App', accounts => {
     })
 
     it('records ERC20 deposits', async () => {
-        await token1.approve(vault.address, 5)
+        await token1.approve(app.address, 5)
         await app.deposit(token1.address, 5, 'ref')
 
         const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
@@ -240,7 +236,7 @@ contract('Finance App', accounts => {
 
                 await app.executePayment(1) // first create payment doesn't get an id because it is simple immediate tx
 
-                await token1.approve(vault.address, 5)
+                await token1.approve(app.address, 5)
                 await app.deposit(token1.address, 5, '')
             })
 
