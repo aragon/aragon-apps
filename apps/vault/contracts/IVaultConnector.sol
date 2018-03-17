@@ -11,6 +11,7 @@ interface IVaultConnector {
     event Deposit(address indexed token, address indexed sender, uint256 amount);
 }
 
+
 contract IVaultFake {
     function IVaultFake() public {
         // work around coverage weird error
