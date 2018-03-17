@@ -48,7 +48,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     event RevokeVesting(address indexed receiver, uint256 vestingId);
 
     /**
-    * @notice Initializes Token Manager for `_token.symbol()`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''` and with`_logHolders ? '' : 'out'` storage of token holders.
+    * @notice Initializes Token Manager for `_token.symbol() : string`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''` and with`_logHolders ? '' : 'out'` storage of token holders.
     * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
     * @param _transferable whether the token can be transferred by holders
     * @param _maxAccountTokens maximum amount of tokens an account can have (0 for infinite tokens)

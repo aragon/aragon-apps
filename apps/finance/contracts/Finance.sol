@@ -134,7 +134,7 @@ contract Finance is AragonApp, ERC677Receiver {
 
     /**
     * @dev Deposit for ERC20 approved tokens
-    * @notice Send `_amount` `_token.symbol()`
+    * @notice Send `_amount` `_token.symbol() : string`
     * @param _token Address of deposited token
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
@@ -195,7 +195,7 @@ contract Finance is AragonApp, ERC677Receiver {
     }
 
     /**
-    * @notice Create a new payment of `_amount` `_token.symbol()`. `_maxRepeats > 0 ? 'It will be executed ' _maxRepeats ' times at intervals of ' (_interval - _interval % 86400) / 86400 ' days' : ''`
+    * @notice Create a new payment of `_amount` `_token.symbol() : string`. `_maxRepeats > 0 ? 'It will be executed ' _maxRepeats ' times at intervals of ' (_interval - _interval % 86400) / 86400 ' days' : ''`
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment.
     * @param _amount units of token that are payed every time the payment is due.
@@ -257,7 +257,7 @@ contract Finance is AragonApp, ERC677Receiver {
     }
 
     /**
-    * @notice Set budget for `_token.symbol()` to `_amount`, effective immediately.
+    * @notice Set budget for `_token.symbol() : string` to `_amount`, effective immediately.
     * @param _token Address for token
     * @param _amount New budget amount
     */
@@ -270,7 +270,7 @@ contract Finance is AragonApp, ERC677Receiver {
     }
 
     /**
-    * @notice Remove spending limit for `_token.symbol()`.
+    * @notice Remove spending limit for `_token.symbol() : string`.
     * @param _token Address for token
     */
     function removeBudget(ERC20 _token) authP(CHANGE_BUDGETS_ROLE, arr(address(_token), uint256(0), settings.budgets[_token])) transitionsPeriod external {
