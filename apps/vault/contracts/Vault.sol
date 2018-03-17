@@ -1,7 +1,6 @@
 pragma solidity 0.4.18;
 
 import "./VaultBase.sol"; // split made to avoid circular import
-import "./IVaultConnector.sol";
 
 import "./connectors/ERC20Connector.sol";
 import "./connectors/ETHConnector.sol";
@@ -10,15 +9,6 @@ import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
 contract Vault is VaultBase {
-    address constant ETH = address(0);
-    uint32 constant ERC165 = 165;
-    uint32 constant NO_DETECTION = uint32(-1);
-
-    // connectors can define their own extra roles, challenge for discoverability
-    bytes32 constant REGISTER_TOKEN_STANDARD = keccak256("REGISTER_TOKEN_STANDARD");
-    bytes32 constant TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
-    // TODO: Abstract over different APPROVAL and have just one role?
-
     struct TokenStandard {
         uint32 erc;
         uint32 interfaceDetectionERC;
