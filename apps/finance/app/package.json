@@ -6,6 +6,7 @@
     "@aragon/ui": "^0.4.0",
     "copy-to-clipboard": "^3.0.8",
     "date-fns": "^1.29.0",
+    "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-motion": "^0.5.2",

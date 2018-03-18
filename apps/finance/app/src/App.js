@@ -1,12 +1,16 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { SidePanel, AragonApp, AppBar, Button } from '@aragon/ui'
+import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
 import { transfers, balances } from './demo-state'
-import Transfers from './components/Transfers'
 import Balances from './components/Balances'
 import NewTransfer from './components/NewTransfer'
+import Transfers from './components/Transfers'
 
 class App extends React.Component {
+  static propTypes = {
+    app: PropTypes.object.isRequired,
+  }
   state = {
     newTransferOpened: false,
   }
@@ -15,6 +19,10 @@ class App extends React.Component {
   }
   handleNewTransferClose = () => {
     this.setState({ newTransferOpened: false })
+  }
+  handleSubmitTransfer = (token, recipient, amount) => {
+    // Immediate, one-time payment
+    this.props.app.newPayment(token, recipient, amount, 0, 1, '')
   }
   render() {
     const { newTransferOpened } = this.state
@@ -86,4 +94,7 @@ Layout.ScrollWrapper = styled.div`
   flex-grow: 1;
 `
 
-export default App
+export default observe(
+  observable => observable.map(state => ({ ...state })),
+  {}
+)(App)
