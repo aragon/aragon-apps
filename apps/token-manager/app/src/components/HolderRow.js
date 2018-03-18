@@ -14,12 +14,8 @@ class HolderRow extends React.Component {
     balance: 0,
     groupMode: false,
   }
-  static ActionLabel = styled.span`
-    margin-left: 15px;
-  `
   render() {
     const { name, balance, groupMode } = this.props
-    const Self = this.constructor
     return (
       <TableRow>
         <TableCell>{name}</TableCell>
@@ -28,7 +24,7 @@ class HolderRow extends React.Component {
           <ContextMenu>
             <ContextMenuItem>
               <IconAdd />
-              <Self.ActionLabel>Issue Tokens</Self.ActionLabel>
+              <ActionLabel>Issue Tokens</ActionLabel>
             </ContextMenuItem>
           </ContextMenu>
         </TableCell>
@@ -36,5 +32,9 @@ class HolderRow extends React.Component {
     )
   }
 }
+
+const ActionLabel = styled.span`
+  margin-left: 15px;
+`
 
 export default HolderRow

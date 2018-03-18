@@ -8,24 +8,15 @@ class Holders extends React.Component {
   static defaultProps = {
     holders: [],
   }
-  static TwoPanels = styled.div`
-    display: flex;
-    width: 100%;
-    min-width: 800px;
-  `
-  static Main = styled.div`
-    width: 100%;
-  `
   render() {
     const { holders, tokenSupply } = this.props
-    const Self = this.constructor
     const groupMode =
       holders.length > 0 &&
       holders[0].balance > 0 &&
       holders.every(({ balance }) => balance === holders[0].balance)
     return (
-      <Self.TwoPanels>
-        <Self.Main>
+      <TwoPanels>
+        <Main>
           <Table
             header={
               <TableRow>
@@ -44,15 +35,24 @@ class Holders extends React.Component {
               />
             ))}
           </Table>
-        </Self.Main>
+        </Main>
         <SideBar
           holders={holders}
           tokenSupply={tokenSupply}
           groupMode={groupMode}
         />
-      </Self.TwoPanels>
+      </TwoPanels>
     )
   }
 }
+
+const Main = styled.div`
+  width: 100%;
+`
+const TwoPanels = styled.div`
+  display: flex;
+  width: 100%;
+  min-width: 800px;
+`
 
 export default Holders
