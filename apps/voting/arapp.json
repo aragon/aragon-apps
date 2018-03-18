@@ -1,6 +1,6 @@
 {
   "appName": "voting.aragonpm.eth",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "roles": [
     {
       "name": "Create new votes",

@@ -1,6 +1,6 @@
 {
   "appName": "token-manager.aragonpm.eth",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "roles": [
     {
       "name": "Mint tokens",
