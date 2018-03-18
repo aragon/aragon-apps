@@ -78,10 +78,10 @@ class TransferRow extends React.Component {
         <NoWrapCell>
           <ActionsWrapper>
             <ContextMenu>
-              <ContextMenuItem onClick={this.handleCopyTransferUrl}>
+              {/* <ContextMenuItem onClick={this.handleCopyTransferUrl}>
                 <IconShare />
                 <ActionLabel>Copy Transfer URL</ActionLabel>
-              </ContextMenuItem>
+              </ContextMenuItem> */}
               <ContextMenuItem onClick={this.handleViewTransaction}>
                 <IconTokens />
                 <ActionLabel>View Transaction</ActionLabel>
