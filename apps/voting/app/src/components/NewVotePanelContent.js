@@ -13,7 +13,7 @@ class NewVotePanelContent extends React.Component {
   handleQuestionChange = event => {
     this.setState({ question: event.target.value })
   }
-  handleSubmit = (event) => {
+  handleSubmit = event => {
     event.preventDefault()
     this.props.onCreateVote(this.state.question.trim())
   }
