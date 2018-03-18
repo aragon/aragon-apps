@@ -182,10 +182,9 @@ contract('Beta Base Template', accounts => {
                 // generated Vault app
                 vaultProxyAddress = getAppProxy(receiptInstance, appIds[2])
                 vault = getContract('Vault').at(vaultProxyAddress)
+                await vault.initializeConnectors()
                 // Fund Finance
-                let r = await web3.eth.sendTransaction({ from: owner, to: financeProxyAddress, value: payment })
-                console.log("Status: " + r.receipt.status)
-                //await finance.sendTransaction({ value: payment, from: owner })
+                await finance.sendTransaction({ value: payment, from: owner })
                 const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(ETH, nonHolder, payment, 0, 0, 1, "voting payment") }
                 script = encodeCallScript([action])
                 voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: owner }))
@@ -198,14 +197,13 @@ contract('Beta Base Template', accounts => {
 
             it('transfers funds if vote is approved', async () => {
                 const receiverInitialBalance = await getBalance(nonHolder)
-                await logBalances(financeProxyAddress, vaultProxyAddress)
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
                 await voting.vote(voteId, true, true, { from: holder31 })
                 await voting.vote(voteId, false, true, { from: holder19 })
                 //await timeTravel(votingTime + 1)
                 await sleep(votingTime+1)
-                let r = await voting.executeVote(voteId, {from: owner})
-                console.log("Status: " + r.receipt.status)
-                await logBalances(financeProxyAddress, vaultProxyAddress)
+                await voting.executeVote(voteId, {from: owner})
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
                 assert.equal((await getBalance(nonHolder)).toString(), receiverInitialBalance.plus(payment).toString(), 'Receiver didn\'t get the payment')
             })
         })
@@ -324,12 +322,11 @@ contract('Beta Base Template', accounts => {
                 // generated Vault app
                 vaultProxyAddress = getAppProxy(receiptInstance, appIds[2])
                 vault = getContract('Vault').at(vaultProxyAddress)
+                await vault.initializeConnectors()
                 // Fund Finance
-                await logBalances(financeProxyAddress, vaultProxyAddress)
-                let r = await web3.eth.sendTransaction({ from: owner, to: financeProxyAddress, value: payment })
-                console.log("Status: " + r.receipt.status)
-                //await finance.sendTransaction({ value: payment, from: owner })
-                await logBalances(financeProxyAddress, vaultProxyAddress)
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
+                await finance.sendTransaction({ value: payment, from: owner })
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
                 const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(ETH, nonHolder, payment, 0, 0, 1, "voting payment") }
                 script = encodeCallScript([action])
                 voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: owner }))
@@ -342,11 +339,10 @@ contract('Beta Base Template', accounts => {
 
             it('transfers funds if vote is approved', async () => {
                 const receiverInitialBalance = await getBalance(nonHolder)
-                await logBalances(financeProxyAddress, vaultProxyAddress)
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
                 await voting.vote(voteId, true, true, { from: holder31 })
-                let r = await voting.vote(voteId, true, true, { from: holder19 })
-                console.log("Status: " + r.receipt.status)
-                await logBalances(financeProxyAddress, vaultProxyAddress)
+                await voting.vote(voteId, true, true, { from: holder19 })
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
                 assert.equal((await getBalance(nonHolder)).toString(), receiverInitialBalance.plus(payment).toString(), 'Receiver didn\'t get the payment')
             })
         })

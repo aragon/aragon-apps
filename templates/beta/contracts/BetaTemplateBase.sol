@@ -10,6 +10,8 @@ import "@aragon/id/contracts/IFIFSResolvingRegistrar.sol";
 
 import "@aragon/apps-voting/contracts/Voting.sol";
 import "@aragon/apps-vault/contracts/Vault.sol";
+//import "@aragon/apps-vault/contracts/connectors/ETHConnector.sol";
+//import "@aragon/apps-vault/contracts/connectors/ERC20Connector.sol";
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
 import "@aragon/apps-finance/contracts/Finance.sol";
 
@@ -102,7 +104,9 @@ contract BetaTemplateBase {
         }
 
         // inits
-        vault.initialize(vault.erc20ConnectorBase(), vault.ethConnectorBase()); // init with trusted connectors
+        //vault.initialize(vault.erc20ConnectorBase(), vault.ethConnectorBase()); // init with trusted connectors
+        vault.initializeEmpty();
+        //vault.initializeConnectors(); // TODO: it doesn't work... out of gas?
         finance.initialize(IVaultConnector(vault), uint64(-1) - uint64(now)); // yuge period
 
         // clean-up

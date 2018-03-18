@@ -1,7 +1,6 @@
 pragma solidity 0.4.18;
 
 import "./VaultBase.sol"; // split made to avoid circular import
-import "./IVaultConnector.sol";
 
 import "./connectors/ERC20Connector.sol";
 import "./connectors/ETHConnector.sol";
@@ -10,15 +9,6 @@ import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
 contract Vault is VaultBase {
-    address constant ETH = address(0);
-    uint32 constant ERC165 = 165;
-    uint32 constant NO_DETECTION = uint32(-1);
-
-    // connectors can define their own extra roles, challenge for discoverability
-    bytes32 constant REGISTER_TOKEN_STANDARD = keccak256("REGISTER_TOKEN_STANDARD");
-    bytes32 constant TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
-    // TODO: Abstract over different APPROVAL and have just one role?
-
     struct TokenStandard {
         uint32 erc;
         uint32 interfaceDetectionERC;
@@ -28,31 +18,37 @@ contract Vault is VaultBase {
 
     TokenStandard[] public standards;
     mapping (address => address) public connectors;
-    uint32[] public supportedInterfaceDetectionERCs;
-
-    ERC20Connector public erc20ConnectorBase;
-    ETHConnector public ethConnectorBase;
+    mapping(uint32 => bool) public supportedInterfaceDetectionERCs;
 
     event NewTokenStandard(uint32 indexed erc, uint32 indexed interfaceDetectionERC, bytes4 indexed interfaceID, address connector);
 
-    function Vault() public {
+    // TODO Role??
+    function initializeConnectors() public {
         // this allows to simplify template logic, as they don't have to deploy this
-        erc20ConnectorBase = new ERC20Connector();
-        ethConnectorBase = new ETHConnector();
+        _setConnectors(new ERC20Connector(), new ETHConnector());
+    }
 
-        initialize(erc20ConnectorBase, ethConnectorBase);
+    function initializeEmpty() onlyInit public {
+        initialized();
+
+        supportedInterfaceDetectionERCs[NO_DETECTION] = true;
+        supportedInterfaceDetectionERCs[ERC165] = true;
     }
 
     function initialize(ERC20Connector erc20Connector, ETHConnector ethConnector) onlyInit public {
-        initialized();
+        initializeEmpty();
 
-        supportedInterfaceDetectionERCs.push(NO_DETECTION);
-        supportedInterfaceDetectionERCs.push(ERC165);
+        _setConnectors(erc20Connector, ethConnector);
+    }
 
+    function _setConnectors(ERC20Connector erc20Connector, ETHConnector ethConnector) internal {
         // register erc20 as the first standard
-        _registerStandard(20, NO_DETECTION, bytes4(0), erc20Connector);
+        if (erc20Connector != address(0))
+            _registerStandard(20, NO_DETECTION, bytes4(0), erc20Connector);
         // directly manage ETH with the ethConnector
-        connectors[ETH] = ethConnector;
+        if (ethConnector != address(0))
+            connectors[ETH] = ethConnector;
+
     }
 
     function () payable public {
@@ -102,13 +98,7 @@ contract Vault is VaultBase {
     }
 
     function isInterfaceDetectionERCSupported(uint32 interfaceDetectionERC) public view returns (bool) {
-      for (uint j = 0; j < supportedInterfaceDetectionERCs.length; j++) {
-          if (supportedInterfaceDetectionERCs[j] == interfaceDetectionERC) {
-              return true;
-          }
-      }
-
-      return false;
+        return supportedInterfaceDetectionERCs[interfaceDetectionERC];
     }
 
     function _registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector) internal {

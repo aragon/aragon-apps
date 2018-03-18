@@ -10,6 +10,9 @@ import "truffle/Assert.sol";
 contract TestVault {
     MiniMeToken token;
 
+    ERC20Connector erc20Connector = new ERC20Connector();
+    ETHConnector ethConnector = new ETHConnector();
+
     IVaultConnector vault;
 
     uint constant public initialBalance = 200 wei;
@@ -23,6 +26,7 @@ contract TestVault {
 
     function beforeEach() {
         vault = IVaultConnector(new Vault());
+        Vault(vault).initialize(erc20Connector, ethConnector);
     }
 
     function testETHDeposit() {
@@ -45,7 +49,6 @@ contract TestVault {
         Assert.equal(address(10).balance, 1, "should hold 1 wei");
     }
 
-    /*
     // For some reason uncommenting this code makes truffle OOG...
     function testTokenDeposit() {
         token.approve(vault, 1);
@@ -54,7 +57,6 @@ contract TestVault {
         Assert.equal(token.balanceOf(vault), 1, "should hold 1 token");
         Assert.equal(vault.balance(token), 1, "should return 1 token balance");
     }
-    */
 
     function testTransferTokens() {
         address to = address(1);
