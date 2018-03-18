@@ -8,6 +8,7 @@
     "date-fns": "^1.29.0",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
+    "react-display-name": "^0.2.3",
     "react-dom": "^16.2.0",
     "react-motion": "^0.5.2",
     "seed-random": "^2.2.0",

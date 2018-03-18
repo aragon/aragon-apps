@@ -7,10 +7,11 @@ import {
   TableCell,
   ContextMenu,
   ContextMenuItem,
-  IconShare,
   IconTokens,
+  SafeLink,
   theme,
 } from '@aragon/ui'
+import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
 import ConfirmMessage from './ConfirmMessage'
 
@@ -32,8 +33,8 @@ class TransferRow extends React.Component {
     })
   }
   handleViewTransaction = () => {
-    const { transaction } = this.props
-    window.open(`https://etherscan.io/address/${transaction}`, '_blank')
+    const { network: { etherscanBaseUrl }, transaction } = this.props
+    window.open(`${etherscanBaseUrl}/address/${transaction}`, '_blank')
   }
   handleConfirmMessageDone = () => {
     this.setState({
@@ -44,6 +45,7 @@ class TransferRow extends React.Component {
     const { showCopyTransferMessage } = this.state
     const {
       date,
+      network: { etherscanBaseUrl },
       reference,
       amount,
       token,
@@ -59,12 +61,12 @@ class TransferRow extends React.Component {
         </NoWrapCell>
         <NoWrapCell>
           <TextOverflow>
-            <a
+            <SafeLink
+              href={`${etherscanBaseUrl}/address/${approvedBy}`}
               target="_blank"
-              href={`https://etherscan.io/address/${approvedBy}`}
             >
               {approvedBy}
-            </a>
+            </SafeLink>
           </TextOverflow>
         </NoWrapCell>
         <NoWrapCell>{reference}</NoWrapCell>
@@ -129,4 +131,4 @@ const ConfirmMessageWrapper = styled.div`
   z-index: 2;
 `
 
-export default TransferRow
+export default provideNetwork(TransferRow)

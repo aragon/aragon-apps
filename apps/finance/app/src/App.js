@@ -6,13 +6,26 @@ import { transfers, balances } from './demo-state'
 import Balances from './components/Balances'
 import NewTransfer from './components/NewTransfer'
 import Transfers from './components/Transfers'
+import { networkContextType } from './lib/provideNetwork'
 
 class App extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
   }
+  static defaultProps = {
+    network: {
+      etherscanBaseUrl: 'https://rinkeby.etherscan.io',
+      name: 'rinkeby',
+    },
+  }
+  static childContextTypes = {
+    network: networkContextType,
+  }
   state = {
     newTransferOpened: false,
+  }
+  getChildContext() {
+    return { network: this.props.network }
   }
   handleNewTransferOpen = () => {
     this.setState({ newTransferOpened: true })
