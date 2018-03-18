@@ -1,6 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Text, theme } from '@aragon/ui'
+import { sciNot } from '../math-utils'
+
+// Number of digits before "Total Supply" gets wrapped into two lines
+const TOTAL_SUPPLY_CUTOFF_LENGTH = 18
 
 const DISTRIBUTION_ITEMS_MAX = 7
 const DISTRIBUTION_COLORS = [
@@ -46,16 +50,22 @@ const calculateStakes = (accounts, total) => {
 
 class SideBar extends React.Component {
   static defaultProps = {
-    holders: [],
-    tokenSupply: -1,
     groupMode: false,
+    holders: [],
   }
   render() {
-    const { holders, tokenSupply, groupMode } = this.props
+    const { groupMode, holders, tokenDecimalsBase, tokenSupply } = this.props
     const stakes = calculateStakes(holders, tokenSupply).map((stake, i) => ({
       ...stake,
       color: DISTRIBUTION_COLORS[i] || '#000000',
     }))
+
+    const adjustedTokenSupply = sciNot(
+      tokenSupply / tokenDecimalsBase,
+      TOTAL_SUPPLY_CUTOFF_LENGTH,
+      { rounding: 5 }
+    )
+
     return (
       <Main>
         <Part>
@@ -68,7 +78,7 @@ class SideBar extends React.Component {
             <InfoRow>
               <span>Total Supply</span>
               <span>:</span>
-              <strong>{tokenSupply}</strong>
+              <strong>{adjustedTokenSupply}</strong>
             </InfoRow>
           </ul>
         </Part>

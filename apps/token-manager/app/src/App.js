@@ -1,24 +1,71 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { AragonApp, AppBar, Button, Badge } from '@aragon/ui'
-// import Aragon from '@aragon/client'
+import {
+  AragonApp,
+  AppBar,
+  Button,
+  Badge,
+  SidePanel,
+  observe,
+} from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import AppLayout from './components/AppLayout'
-import { HOLDERS, TOKEN_SYMBOL, TOKEN_SUPPLY } from './demo-state'
+import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
+import { hasLoadedTokenSettings } from './token-settings'
 
 class App extends React.Component {
-  state = {
-    tokenSupply: TOKEN_SUPPLY,
-    tokenSymbol: TOKEN_SYMBOL,
-    holders: HOLDERS,
+  static propTypes = {
+    app: PropTypes.object.isRequired,
   }
-  componentDidMount() {
-    // const app = (this.app = new Aragon())
-    // window.parent.postMessage({ from: 'app', name: 'ready', value: true }, '*')
+  static defaultProps = {
+    tokenDecimals: null,
+    tokenSupply: null,
+    tokenSymbol: null,
+    holders: [],
+  }
+  state = {
+    assignTokensConfig: {},
+    sidepanelOpened: false,
+    tokenSettingsLoaded: false,
+  }
+  componentWillReceiveProps(nextProps) {
+    const { tokenSettingsLoaded } = this.state
+    // Is this the first time we've loaded the token settings?
+    if (!tokenSettingsLoaded && hasLoadedTokenSettings(nextProps)) {
+      this.setState({
+        tokenDecimalsBase: Math.pow(10, nextProps.tokenDecimals),
+        tokenSettingsLoaded: true,
+      })
+    }
+  }
+  handleAssignTokens = ({ amount, recipient }) => {
+    const { app } = this.props
+    const { tokenDecimalsBase } = this.state
+    app.assign(recipient, amount * tokenDecimalsBase)
+  }
+  handleAppBarLaunchAssignTokens = () => this.handleLaunchAssignTokens()
+  handleLaunchAssignTokens = recipient => {
+    this.setState({
+      assignTokensConfig: { recipient },
+      sidepanelOpened: true,
+    })
+  }
+  handleSidepanelClose = () => {
+    this.setState({
+      assignTokensConfig: {},
+      sidepanelOpened: false,
+    })
   }
   render() {
-    const { tokenSymbol, tokenSupply, holders } = this.state
+    const { tokenSymbol, tokenSupply, holders } = this.props
+    const { tokenDecimalsBase } = this.state
+    const {
+      assignTokensConfig,
+      sidepanelOpened,
+      tokenSettingsLoaded,
+    } = this.state
     return (
       <AragonApp publicUrl="/aragon-ui/">
         <AppLayout>
@@ -27,22 +74,45 @@ class App extends React.Component {
               title={
                 <Title>
                   <span>Token</span>
-                  <Badge.App>{tokenSymbol}</Badge.App>
+                  {tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
                 </Title>
               }
-              endContent={<Button mode="strong">Issue Tokens</Button>}
+              endContent={
+                <Button
+                  mode="strong"
+                  onClick={this.handleAppBarLaunchAssignTokens}
+                >
+                  Assign Tokens
+                </Button>
+              }
             />
           </AppLayout.Header>
           <AppLayout.ScrollWrapper>
             <AppLayout.Content>
-              {holders.length > 0 ? (
-                <Holders holders={holders} tokenSupply={tokenSupply} />
+              {tokenSettingsLoaded && holders.length > 0 ? (
+                <Holders
+                  holders={holders}
+                  onAssignTokens={this.handleLaunchAssignTokens}
+                  tokenDecimalsBase={tokenDecimalsBase}
+                  tokenSupply={tokenSupply}
+                />
               ) : (
-                <EmptyState />
+                <EmptyState onActivate={this.handleLaunchAssignTokens} />
               )}
             </AppLayout.Content>
           </AppLayout.ScrollWrapper>
         </AppLayout>
+        <SidePanel
+          title="Assign Tokens"
+          opened={sidepanelOpened}
+          onClose={this.handleSidepanelClose}
+        >
+          <AssignVotePanelContent
+            onAssignTokens={this.handleAssignTokens}
+            opened={sidepanelOpened}
+            {...assignTokensConfig}
+          />
+        </SidePanel>
       </AragonApp>
     )
   }
@@ -56,4 +126,7 @@ const Title = styled.span`
   }
 `
 
-export default App
+export default observe(
+  observable => observable.map(state => ({ ...state })),
+  {}
+)(App)
