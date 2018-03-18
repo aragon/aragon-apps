@@ -8,15 +8,24 @@ import {
   DropDown,
   theme,
 } from '@aragon/ui'
+import * as TransferTypes from '../transfer-types'
 import TransferRow from './TransferRow'
 
-const TRANSFER_TYPES = ['All', 'Incoming', 'Outgoing']
+const TRANSFER_TYPES = [
+  TransferTypes.All,
+  TransferTypes.Incoming,
+  TransferTypes.Outgoing,
+]
+
+const initialState = {
+  selectedToken: 0,
+  selectedTransferType: TransferTypes.All,
+  displayedTransfers: 10,
+}
 
 class Transfers extends React.Component {
   state = {
-    selectedToken: 0,
-    selectedTransferType: 0,
-    displayedTransfers: 10,
+    ...initialState,
   }
   componentDidMount() {
     this.setState({ selectedToken: 0 })
@@ -28,13 +37,14 @@ class Transfers extends React.Component {
     this.setState({ selectedToken: index, displayedTransfers: 10 })
   }
   handleTransferTypeChange = index => {
-    this.setState({ selectedTransferType: index, displayedTransfers: 10 })
+    this.setState({
+      selectedTransferType: TRANSFER_TYPES[index],
+      displayedTransfers: 10,
+    })
   }
   handleResetFilters = () => {
     this.setState({
-      selectedTransferType: 0,
-      selectedToken: 0,
-      displayedTransfers: 10,
+      ...initialState,
     })
   }
   showMoreTransfers = () => {
@@ -46,16 +56,16 @@ class Transfers extends React.Component {
   // Filter transfer based on the selected filters
   getFilteredTransfers({
     tokens,
-    transfers,
+    transactions,
     selectedToken,
     selectedTransferType,
   }) {
-    return transfers.filter(
-      ({ token, amount }) =>
-        (selectedToken === 0 || token === tokens[selectedToken - 1]) &&
-        (selectedTransferType === 0 ||
-          (selectedTransferType === 1 && amount > 0) ||
-          (selectedTransferType === 2 && amount < 0))
+    return transactions.filter(
+      ({ token, isIncoming }) =>
+        (selectedToken === 0 || token === tokens[selectedToken - 1].address) &&
+        (selectedTransferType === TransferTypes.All ||
+          (selectedTransferType === TransferTypes.Incoming && isIncoming) ||
+          (selectedTransferType === TransferTypes.Outgoing && !isIncoming))
     )
   }
   render() {
@@ -64,14 +74,16 @@ class Transfers extends React.Component {
       selectedToken,
       selectedTransferType,
     } = this.state
-    const { transfers, tokens } = this.props
+    const { transactions, tokens } = this.props
     const filteredTransfers = this.getFilteredTransfers({
       tokens,
-      transfers,
+      transactions,
       selectedToken,
       selectedTransferType,
     })
-    const filtersActive = selectedToken !== 0 || selectedTransferType !== 0
+    const symbols = tokens.map(({ symbol }) => symbol)
+    const filtersActive =
+      selectedToken !== 0 || selectedTransferType !== TransferTypes.All
     return (
       <section>
         <Header>
@@ -80,7 +92,7 @@ class Transfers extends React.Component {
             <label>
               <Label>Token:</Label>
               <DropDown
-                items={['All', ...tokens]}
+                items={['All', ...symbols]}
                 active={selectedToken}
                 onChange={this.handleTokenChange}
               />
@@ -121,19 +133,9 @@ class Transfers extends React.Component {
             >
               {filteredTransfers
                 .slice(0, displayedTransfers)
-                .map(
-                  ({ date, ref, amount, token, approvedBy, transaction }) => (
-                    <TransferRow
-                      date={date}
-                      reference={ref}
-                      amount={amount}
-                      token={token}
-                      approvedBy={approvedBy}
-                      transaction={transaction}
-                      key={transaction}
-                    />
-                  )
-                )}
+                .map(transfer => (
+                  <TransferRow key={transfer.transactionHash} {...transfer} />
+                ))}
             </FixedTable>
             {displayedTransfers < filteredTransfers.length && (
               <Footer>
