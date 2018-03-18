@@ -3,6 +3,7 @@ pragma solidity 0.4.18;
 import "../VaultBase.sol";
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 
+
 contract ERC20Connector is VaultBase, IVaultConnector {
     function deposit(address token, address who, uint256 value, bytes how) payable external returns (bool) {
         require(how.length == 0); // sending data is not supported in ERC20
