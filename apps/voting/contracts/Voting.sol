@@ -48,10 +48,10 @@ contract Voting is IForwarder, AragonApp {
     event ChangeMinQuorum(uint256 minAcceptQuorumPct);
 
     /**
-    * @notice Initializes Voting app (some parameters won't be modifiable after being set)
+    * @notice Initializes Voting app with `_token.symbol(): string` for governance, minimum support of `(_supportRequiredPct - _supportRequiredPct % 10^14) / 10^16`, minimum acceptance quorum of `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^14) / 10^16` and vote duations of `(_voteTime - _voteTime % 86400) / 86400` day `_voteTime >= 172800 ? 's' : ''`
     * @param _token MiniMeToken address that will be used as governance token
-    * @param _supportRequiredPct Percentage of voters that must support a vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
-    * @param _minAcceptQuorumPct Percetage of total voting power that must support a vote for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _supportRequiredPct Percentage of voters that must support a vote for it to succeed (expressed as a 10^18 percentage, (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _minAcceptQuorumPct Percentage of total voting power that must support a vote for it to succeed (expressed as a 10^18 percentage, (eg 10^16 = 1%, 10^18 = 100%)
     * @param _voteTime Seconds that a vote will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
     */
     function initialize(
@@ -76,7 +76,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Change minimum acceptance quorum to `_minAcceptQuorumPct`
+     * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^14) / 10^16`
     * @param _minAcceptQuorumPct New acceptance quorum
     */
     function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) external {
@@ -88,7 +88,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Create new vote to execute `_executionScript`
+    * @notice Create new vote
     * @param _executionScript EVM script to be executed on approval
     * @return voteId id for newly created vote
     */
@@ -97,7 +97,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Vote `_supports` in vote with id `_voteId`
+    * @notice Vote `_supports ? 'yay' : 'nay'` in vote with #`_voteId`
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether it should execute the vote if it becomes decided
@@ -126,6 +126,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
+    * @notice Forward script
     * @dev IForwarder interface conformance
     * @param _evmScript Start vote with script
     */
