@@ -12,7 +12,8 @@
     "styled-components": "^3.1.6"
   },
   "devDependencies": {
-    "react-scripts": "^2.0.0-next.47d2d941"
+    "react-scripts": "^2.0.0-next.47d2d941",
+    "webpack": "3.10.0"
   },
   "scripts": {
     "sync-assets": "rsync -rtu \"$(dirname $(node -p 'require.resolve(\"@aragon/ui\")'))/\" public/aragon-ui",
@@ -21,5 +22,18 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
-  "proxy": "http://localhost:3003"
+  "proxy": "http://localhost:3003",
+  "browserslist": {
+    "development": [
+      "last 2 chrome versions",
+      "last 2 firefox versions",
+      "last 2 edge versions"
+    ],
+    "production": [
+      ">1%",
+      "last 4 versions",
+      "Firefox ESR",
+      "not ie < 11"
+    ]
+  }
 }
