@@ -104,9 +104,7 @@ contract BetaTemplateBase {
         }
 
         // inits
-        //vault.initialize(vault.erc20ConnectorBase(), vault.ethConnectorBase()); // init with trusted connectors
-        vault.initializeEmpty();
-        //vault.initializeConnectors(); // TODO: it doesn't work... out of gas?
+        vault.initialize(vault.erc20ConnectorBase(), vault.ethConnectorBase()); // init with trusted connectors
         finance.initialize(IVaultConnector(vault), uint64(-1) - uint64(now)); // yuge period
 
         // clean-up
