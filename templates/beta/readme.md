@@ -8,6 +8,13 @@ functionality in the organization.
 The difference between them is how the Voting app is configured and the token
 distribution.
 
+## Install local environment
+
+- Install [Docker CE](https://docs.docker.com/install/)
+- `cd templates/beta && npm run docker:run`
+- Outputted ENS address has to be provided to the client
+- That's really it 🦅🚀
+
 ## Usage
 
 Both templates require 2 transactions to completely set up an organization.
@@ -88,6 +95,18 @@ are managed by different team members.
 
 Templates will deploy the last version of the apps according to their APM repos,
 this will allow us to update the apps without the need to update templates.
+
+For our Rinkeby deployment we are using a custom ENS deployment. This is fairly
+trustful as an account we control is the ENS root.
+
+```
+ENS: 0xaa0ccb537289d226941745c4dd7a819a750897d0
+APM: 0x8da0fe11ece85f48723d45c3d6767db9bd4f0b29
+```
+
+Repos can be found by resolving the repo appId in ENS (e.g. `ens.resolve('voting.aragonpm.eth')`).
+New versions have to be submitted directly to the repo address. If you don't
+have permission to do so, please ask the permission manager (aka Jorge).
 
 ## Gotchas
 

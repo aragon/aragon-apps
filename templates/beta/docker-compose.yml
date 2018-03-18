@@ -1,0 +1,43 @@
+version: "2"
+services:
+  deploy:
+    image: aragon/templates-beta
+    depends_on:
+      - devnet
+      - ipfs
+    command: >
+      bash -c "sleep 3
+      && npm run docker:wait-gas
+      && scripts/deploy.sh"
+    environment:
+      - OWNER=${OWNER}
+    links:
+      - ipfs
+    networks:
+      - devnet
+      - ipfs
+  devnet:
+    image: aragon/geth-devnet
+    volumes:
+      - ${ETHDATA_LOCAL_PATH}:/root/.ethdata
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+    expose:
+      - 8545
+    environment:
+      - DEV_CHAIN_ENABLED=true
+    networks:
+      - devnet
+  ipfs:
+    image: aragon/ipfs
+    ports:
+      - "5001:5001"
+      - "4001:4001"
+    expose:
+      - 5001
+    networks:
+      - ipfs
+networks:
+  devnet:
+  ipfs:
