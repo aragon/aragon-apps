@@ -82,6 +82,13 @@ class Transfers extends React.Component {
       selectedTransferType,
     })
     const symbols = tokens.map(({ symbol }) => symbol)
+    const tokenDecimals = tokens.reduce(
+      (tokenDecimals, { address, decimals }) => {
+        tokenDecimals[address] = decimals
+        return tokenDecimals
+      },
+      {}
+    )
     const filtersActive =
       selectedToken !== 0 || selectedTransferType !== TransferTypes.All
     return (
@@ -134,7 +141,11 @@ class Transfers extends React.Component {
               {filteredTransfers
                 .slice(0, displayedTransfers)
                 .map(transfer => (
-                  <TransferRow key={transfer.transactionHash} {...transfer} />
+                  <TransferRow
+                    key={transfer.transactionHash}
+                    decimals={tokenDecimals[transfer.token]}
+                    {...transfer}
+                  />
                 ))}
             </FixedTable>
             {displayedTransfers < filteredTransfers.length && (

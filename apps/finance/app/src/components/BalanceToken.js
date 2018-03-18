@@ -13,7 +13,7 @@ const splitAmount = amount => {
   )
 }
 
-const BalanceToken = ({ symbol, amount, convertedAmount = -1 }) => (
+const BalanceToken = ({ amount, symbol, convertedAmount = -1 }) => (
   <Main>
     <Token>
       <img

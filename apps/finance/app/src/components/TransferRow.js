@@ -46,12 +46,16 @@ class TransferRow extends React.Component {
     const {
       amount,
       date,
+      decimals,
       entity,
       network: { etherscanBaseUrl },
       reference,
       symbol,
     } = this.props
     const { showCopyTransferMessage } = this.state
+    const formattedAmount = formatTokenAmount(amount, decimals, true, {
+      rounding: 5,
+    })
     const formattedDate = formatHtmlDatetime(date)
     return (
       <TableRow>
@@ -73,7 +77,7 @@ class TransferRow extends React.Component {
         <NoWrapCell>{reference}</NoWrapCell>
         <NoWrapCell align="right">
           <Amount positive={amount > 0}>
-            {formatTokenAmount(amount, true)} {symbol}
+            {formattedAmount} {symbol}
           </Amount>
         </NoWrapCell>
         <NoWrapCell>

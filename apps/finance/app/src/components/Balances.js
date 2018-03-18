@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { theme } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
+import { round } from '../lib/math-utils'
 
 const CONVERT_API_BASE = 'https://min-api.cryptocompare.com/data'
 
@@ -37,12 +38,21 @@ class Balances extends React.Component {
         <ScrollView>
           <List>
             {balances
-              .map(({ symbol, amount }) => ({
-                symbol,
+              .map(({ amount, decimals, ...token }) => ({
+                ...token,
+                amount: amount / Math.pow(10, decimals),
+              }))
+              .map(({ amount, symbol }) => ({
                 amount,
+                symbol,
                 convertedAmount: convertRates[symbol]
                   ? amount / convertRates[symbol]
                   : -1,
+              }))
+              .map(({ amount, convertedAmount, ...balance }) => ({
+                ...balance,
+                amount: round(amount, 5),
+                convertedAmount: round(convertedAmount, 5),
               }))
               .sort(
                 (balanceA, balanceB) =>

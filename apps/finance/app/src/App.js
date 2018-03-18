@@ -46,7 +46,11 @@ class App extends React.Component {
   render() {
     const { balances, transactions } = this.props
     const { newTransferOpened } = this.state
-    const tokens = balances.map(({ address, symbol }) => ({ address, symbol }))
+    const tokens = balances.map(({ address, symbol, decimals }) => ({
+      address,
+      symbol,
+      decimals,
+    }))
     return (
       <AragonApp publicUrl="/aragon-ui/">
         <Layout>
