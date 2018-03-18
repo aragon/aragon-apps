@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
-import { format } from 'date-fns'
 import copy from 'copy-to-clipboard'
+import { format } from 'date-fns/esm'
 import {
   TableRow,
   TableCell,
@@ -9,6 +9,7 @@ import {
   ContextMenuItem,
   IconTokens,
   SafeLink,
+  formatHtmlDatetime,
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
@@ -52,10 +53,11 @@ class TransferRow extends React.Component {
       approvedBy,
       transaction,
     } = this.props
+    const formattedDate = formatHtmlDatetime(date)
     return (
       <TableRow key={transaction}>
         <NoWrapCell>
-          <time dateTime={format(date)} title={format(date)}>
+          <time dateTime={formattedDate} title={formattedDate}>
             {format(date, 'DD/MM/YY')}
           </time>
         </NoWrapCell>

@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aragon/ui": "^0.4.0",
+    "@aragon/ui": "^0.6.2",
     "copy-to-clipboard": "^3.0.8",
-    "date-fns": "^1.29.0",
+    "date-fns": "^2.0.0-alpha.7",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-display-name": "^0.2.3",
