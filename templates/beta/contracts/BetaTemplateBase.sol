@@ -64,12 +64,7 @@ contract BetaTemplateBase {
 
         ACL acl = ACL(dao.acl());
 
-        acl.createPermission(
-            this,
-            dao,
-            dao.APP_MANAGER_ROLE(),
-            this
-        );
+        acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
         Voting voting = Voting(dao.newAppInstance(appIds[uint8(Apps.Voting)], latestVersionAppBase(appIds[uint8(Apps.Voting)])));
         InstalledApp(voting, appIds[uint8(Apps.Voting)]);
@@ -103,8 +98,9 @@ contract BetaTemplateBase {
             tokenManager.mint(holders[i], stakes[i]);
         }
 
+        Vault vaultBase = Vault(latestVersionAppBase(appIds[uint8(Apps.Vault)]));
         // inits
-        vault.initialize(vault.erc20ConnectorBase(), vault.ethConnectorBase()); // init with trusted connectors
+        // vault.initialize(vaultBase.erc20ConnectorBase(), vaultBase.ethConnectorBase()); // init with trusted connectors
         finance.initialize(IVaultConnector(vault), uint64(-1) - uint64(now)); // yuge period
 
         // clean-up
