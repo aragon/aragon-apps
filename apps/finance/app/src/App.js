@@ -20,9 +20,9 @@ class App extends React.Component {
   handleNewTransferClose = () => {
     this.setState({ newTransferOpened: false })
   }
-  handleSubmitTransfer = (token, recipient, amount) => {
+  handleSubmitTransfer = (token, recipient, amount, reference) => {
     // Immediate, one-time payment
-    this.props.app.newPayment(token, recipient, amount, 0, 1, '')
+    this.props.app.newPayment(token, recipient, amount, 0, 1, reference)
   }
   render() {
     const { newTransferOpened } = this.state

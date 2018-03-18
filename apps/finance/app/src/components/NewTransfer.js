@@ -6,6 +6,7 @@ class NewTransfer extends React.Component {
   state = {
     selectedToken: 0,
     recipient: '',
+    reference: '',
     amount: -1,
   }
   handleSelectToken = index => {
@@ -13,6 +14,9 @@ class NewTransfer extends React.Component {
   }
   handleRecipientUpdate = event => {
     this.setState({ recipient: event.target.value })
+  }
+  handleReferenceUpdate = event => {
+    this.setState({ reference: event.target.value })
   }
   handleAmountUpdate = event => {
     const value = event.target.value
@@ -23,7 +27,7 @@ class NewTransfer extends React.Component {
   }
   render() {
     const { title, tokens } = this.props
-    const { recipient, amount, selectedToken } = this.state
+    const { amount, recipient, reference, selectedToken } = this.state
     return (
       <div>
         <h1>{title}</h1>
@@ -53,6 +57,13 @@ class NewTransfer extends React.Component {
             />
           </CombinedInput>
         </AmountField>
+        <Field label="Reference">
+          <TextInput
+            onChange={this.handleReferenceUpdate}
+            value={reference}
+            wide
+          />
+        </Field>
         <ButtonWrapper>
           <Button mode="strong" wide>
             Submit Transfer
