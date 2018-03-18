@@ -100,7 +100,7 @@ contract BetaTemplateBase {
 
         Vault vaultBase = Vault(latestVersionAppBase(appIds[uint8(Apps.Vault)]));
         // inits
-        // vault.initialize(vaultBase.erc20ConnectorBase(), vaultBase.ethConnectorBase()); // init with trusted connectors
+        vault.initialize(vaultBase.erc20ConnectorBase(), vaultBase.ethConnectorBase()); // init with trusted connectors
         finance.initialize(IVaultConnector(vault), uint64(-1) - uint64(now)); // yuge period
 
         // clean-up
