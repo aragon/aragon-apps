@@ -1,137 +1,46 @@
-import Aragon from '@aragon/client'
-import Messenger, { providers } from '@aragon/messenger'
 import React from 'react'
-import { AragonApp, AppBar, Button, SidePanel } from '@aragon/ui'
-import { USER_ACCOUNT } from './demo-state'
+import PropTypes from 'prop-types'
+import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
 import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
 import AppLayout from './components/AppLayout'
+import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
 import { getQuorumProgress } from './vote-utils'
 
 class App extends React.Component {
-  state = {
+  static propTypes = {
+    app: PropTypes.object.isRequired,
+  }
+  static defaultProps = {
+    pctBase: -1,
+    supportRequiredPct: -1,
+    userAccount: '',
     votes: [],
+    voteTime: -1,
+  }
+  state = {
     createVoteVisible: false,
     currentVoteId: -1,
+    settingsLoaded: false,
     voteVisible: false,
     voteSidebarOpened: false,
-
-    settingsReady: false,
-    supportRequiredPct: -1,
-    voteTime: -1,
-    pctBase: -1,
-    userAccount: '',
-  }
-  componentDidMount() {
-    window.addEventListener('load', this.handleWindowLoad)
-    window.addEventListener('message', this.handleWrapperMessage)
   }
 
-  componentWillUnmount() {
-    window.removeEventListener('load', this.handleWindowLoad)
-    window.removeEventListener('message', this.handleWrapperMessage)
-  }
-
-  handleWrapperMessage = ({ data }) => {
-    if (data.from !== 'wrapper') {
-      return
-    }
-    if (data.name === 'account') {
-      this.setState({ userAccount: data.value })
-    }
-    if (data.name === 'ready') {
-      this.connectApp()
-    }
-  }
-
-  sendMessageToWrapper = (name, value) => {
-    window.parent.postMessage({ from: 'app', name, value }, '*')
-  }
-
-  connectApp = () => {
-    // Only connect once
-    if (this.app) {
-      return
-    }
-
-    this.app = new Aragon(
-      new Messenger(new providers.WindowMessage(window.parent))
-    )
-
-    const events$ = this.app.events()
-
-    events$
-      .filter(({ event }) => event === 'StartVote')
-      .map(({ returnValues: { voteId } }) => voteId)
-      .subscribe(voteId => {
-        this.app.call('getVote', voteId).subscribe(vote => {
-          this.updateVote({
-            ...this.getVote(voteId),
-            vote: this.transformVote(vote),
-          })
-        })
-        this.app.call('getVoteMetadata', voteId).subscribe(meta => {
-          this.updateVote({
-            ...this.getVote(voteId),
-            question: meta,
-          })
-        })
+  componentWillReceiveProps(nextProps) {
+    const { settingsLoaded } = this.state
+    // Is this the first time we've loaded the settings?
+    if (!settingsLoaded && hasLoadedVoteSettings(nextProps)) {
+      this.setState({
+        settingsLoaded: true,
       })
-
-    const voteSettings = [
-      ['voteTime', 'voteTime'],
-      ['PCT_BASE', 'pctBase'],
-      ['supportRequiredPct', 'supportRequiredPct'],
-    ]
-    voteSettings.forEach(([name, key], i) => {
-      this.app.call(name).subscribe(val => {
-        const value = parseInt(val, 10)
-        const settingsReady = voteSettings.every(
-          ([name, key], j) => (i === j ? value : this.state[key]) > -1
-        )
-        this.setState({ [key]: value, settingsReady })
-      })
-    })
-
-    this.sendMessageToWrapper('ready', true)
-  }
-
-  // Get a vote using its ID, or create it if needed
-  getVote(voteId) {
-    return this.state.votes.find(vote => vote.voteId === voteId) || { voteId }
-  }
-
-  // Update a vote in the app state (coming from aragon.js)
-  updateVote(updatedVote) {
-    const { votes } = this.state
-    const { voteId } = updatedVote
-    const exists = votes.some(vote => vote.voteId === voteId)
-    const updatesVotes = exists
-      ? votes.map(vote => (vote.voteId === voteId ? updatedVote : vote))
-      : votes.concat([updatedVote])
-    this.setState({ votes: updatesVotes })
-  }
-
-  // Apply transmations to a vote received from the contract
-  transformVote(vote) {
-    return {
-      creator: vote.creator,
-      startDate: parseInt(vote.startDate, 10),
-      snapshotBlock: parseInt(vote.snapshotBlock, 10),
-      minAcceptQuorumPct: parseInt(vote.minAcceptQuorum, 10),
-      yea: parseInt(vote.yea, 10),
-      nay: parseInt(vote.nay, 10),
-      totalVoters: parseInt(vote.totalVoters, 10),
-      executed: vote.executed,
-      open: vote.open,
     }
   }
 
   handleCreateVote = question => {
-    this.app.newVote('0x00000001', question)
+    this.props.app.newVote('0x00000001', question)
     this.handleCreateVoteClose()
   }
   handleCreateVoteOpen = () => {
@@ -141,7 +50,7 @@ class App extends React.Component {
     this.setState({ createVoteVisible: false })
   }
   handleVoteOpen = voteId => {
-    const exists = this.state.votes.some(vote => voteId === vote.voteId)
+    const exists = this.props.votes.some(vote => voteId === vote.voteId)
     if (!exists) return
     this.setState({
       currentVoteId: voteId,
@@ -150,7 +59,7 @@ class App extends React.Component {
     })
   }
   handleVote = (voteId, voteType) => {
-    this.app.vote(voteId, voteType === VOTE_YEA, false)
+    this.props.app.vote(voteId, voteType === VOTE_YEA, false)
     this.handleVoteClose()
   }
   handleVoteClose = () => {
@@ -161,29 +70,31 @@ class App extends React.Component {
   }
   render() {
     const {
-      votes,
-      voteVisible,
-      currentVoteId,
-      createVoteVisible,
-      voteSidebarOpened,
-
-      settingsReady,
-      voteTime,
-      supportRequiredPct,
       pctBase,
+      supportRequiredPct,
+      userAccount,
+      votes,
+      voteTime,
+    } = this.props
+    const {
+      createVoteVisible,
+      currentVoteId,
+      settingsLoaded,
+      voteSidebarOpened,
+      voteVisible,
     } = this.state
 
-    const displayVotes = settingsReady && votes.length > 0
-    const supportRequired = settingsReady ? supportRequiredPct / pctBase : -1
+    const displayVotes = settingsLoaded && votes.length > 0
+    const supportRequired = settingsLoaded ? supportRequiredPct / pctBase : -1
 
     // Add useful properties to the votes
     const preparedVotes = displayVotes
       ? votes.map(vote => ({
           ...vote,
           support: supportRequired,
-          quorum: vote.vote.minAcceptQuorumPct / pctBase,
-          endDate: new Date(vote.vote.startDate * 1000 + voteTime * 1000),
-          quorumProgress: getQuorumProgress(vote.vote),
+          quorum: vote.data.minAcceptQuorumPct / pctBase,
+          endDate: new Date(vote.data.startDate * 1000 + voteTime * 1000),
+          quorumProgress: getQuorumProgress(vote.data),
         }))
       : votes
 
@@ -222,7 +133,7 @@ class App extends React.Component {
         {displayVotes && (
           <SidePanel
             title={
-              currentVote && currentVote.vote.open
+              currentVote && currentVote.data.open
                 ? 'Opened Vote'
                 : 'Closed Vote'
             }
@@ -233,7 +144,7 @@ class App extends React.Component {
             {currentVote && (
               <VotePanelContent
                 vote={currentVote}
-                user={USER_ACCOUNT}
+                user={userAccount}
                 ready={voteSidebarOpened}
                 onVote={this.handleVote}
               />
@@ -256,4 +167,7 @@ class App extends React.Component {
   }
 }
 
-export default App
+export default observe(
+  observable => observable.map(state => ({ ...state })),
+  {}
+)(App)

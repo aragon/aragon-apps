@@ -27,8 +27,8 @@ class VotePanelContent extends React.Component {
       return null
     }
 
-    const { question, quorum, support, endDate, quorumProgress } = vote
-    const { creator, yea, nay, totalVoters } = vote.vote
+    const { quorum, support, endDate, quorumProgress } = vote
+    const { creator, metadata, nay, totalVoters, yea } = vote.data
 
     const creatorName = 'Robert Johnson' // TODO: get creator name
     const accountVote = VOTE_ABSENT // TODO: detect if the current account voted
@@ -64,7 +64,7 @@ class VotePanelContent extends React.Component {
             <Label>Question:</Label>
           </h2>
           <p>
-            <strong>{question}</strong>
+            <strong>{metadata}</strong>
           </p>
           <h2>
             <Label>Description:</Label>
