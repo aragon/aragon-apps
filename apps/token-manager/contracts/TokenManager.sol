@@ -48,7 +48,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     event RevokeVesting(address indexed receiver, uint256 vestingId);
 
     /**
-    * @notice Initializes TokenManager
+    * @notice Initializes Token Manager for `_token.symbol(): string`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''` and with`_logHolders ? '' : 'out'` storage of token holders.
     * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
     * @param _transferable whether the token can be transferred by holders
     * @param _maxAccountTokens maximum amount of tokens an account can have (0 for infinite tokens)
@@ -74,7 +74,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Mint `_amount` of tokens for `_receiver`
+    * @notice Mint `_amount` tokens for `_receiver`
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens minted
     */
@@ -84,7 +84,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Mint `_amount` of tokens for the token manager
+    * @notice Mint `_amount` tokens
     * @param _amount Number of tokens minted
     */
     function issue(uint256 _amount) authP(ISSUE_ROLE, arr(_amount)) external {
@@ -92,7 +92,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Assign `_amount` of tokens for `_receiver` from Token Manager's holdings
+    * @notice Assign `_amount` tokens for `_receiver` from Token Manager's holdings
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transfered
     */
@@ -111,7 +111,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Assign `_amount` of tokens for `_receiver` from Token Manager's holdings with a `_revokable` revokable vesting starting `_start`, cliff on `_cliff` (first portion of tokens transferable) and vesting on `_vesting` (all tokens transferable)
+    * @notice Assign `_amount` tokens to `_receiver` with a `_revokable : 'revokable' : ''` vesting starting at `_start` and a cliff at `_cliff`, with vesting on `_vesting`
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transfered
     * @param _start Date the vesting calculations start
@@ -176,6 +176,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
+    * @notice Forward script
     * @dev IForwarder interface conformance. Forwards any token holder action.
     * @param _evmScript script being executed
     */
