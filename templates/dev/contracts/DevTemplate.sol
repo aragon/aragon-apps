@@ -52,14 +52,16 @@ contract DevTemplate {
 
         acl.createPermission(ANY_ENTITY, dao, dao.APP_MANAGER_ROLE(), msg.sender);
 
+        Vault vaultBase = Vault(latestVersionAppBase(vaultAppId()));
+
         Finance finance = Finance(dao.newAppInstance(financeAppId(), latestVersionAppBase(financeAppId())));
         TokenManager tokenManager = TokenManager(dao.newAppInstance(tokenManagerAppId(), latestVersionAppBase(tokenManagerAppId())));
-        Vault vault = Vault(dao.newAppInstance(vaultAppId(), latestVersionAppBase(vaultAppId())));
+        Vault vault = Vault(dao.newAppInstance(vaultAppId(), vaultBase));
         Voting voting = Voting(dao.newAppInstance(votingAppId(), latestVersionAppBase(votingAppId())));
         MiniMeToken token = minimeFac.createCloneToken(address(0), 0, "DevToken", 18, "XDT", true);
 
         // finance initialization
-        vault.initialize(vault.erc20ConnectorBase(), vault.ethConnectorBase());
+        vault.initialize(vaultBase.erc20ConnectorBase(), vaultBase.ethConnectorBase());
         finance.initialize(IVaultConnector(vault), uint64(-1) - uint64(now));
 
         // token manager initialization

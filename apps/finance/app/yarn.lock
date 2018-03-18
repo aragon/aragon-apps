@@ -15,7 +15,7 @@
     rxjs "^5.5.6"
     uuid "^3.2.1"
 
-"@aragon/ui@^0.6.2":
+"@aragon/ui@^0.7.0":
   version "0.6.2"
   resolved "https://registry.yarnpkg.com/@aragon/ui/-/ui-0.6.2.tgz#3d6fb3e073f1acc8f4bdd5524dd8ee8ca9903f7b"
   dependencies:

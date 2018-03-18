@@ -51,7 +51,7 @@
     "webpack": "^3.7.1"
   },
   "dependencies": {
-    "@aragon/apps-vault": "^1.0.0",
+    "@aragon/apps-vault": "^2.0.0",
     "@aragon/os": "^3.1.1"
   }
 }

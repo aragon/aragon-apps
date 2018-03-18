@@ -18,14 +18,18 @@ contract Vault is VaultBase {
 
     TokenStandard[] public standards;
     mapping (address => address) public connectors;
-    mapping(uint32 => bool) public supportedInterfaceDetectionERCs;
+    mapping (uint32 => bool) public supportedInterfaceDetectionERCs;
+
+    // this is required to avoid having to redeploy on every instance.
+    // they can just be gotten from the base by templates
+    ERC20Connector public erc20ConnectorBase;
+    ETHConnector public ethConnectorBase;
 
     event NewTokenStandard(uint32 indexed erc, uint32 indexed interfaceDetectionERC, bytes4 indexed interfaceID, address connector);
 
-    // TODO Role??
-    function initializeConnectors() public {
-        // this allows to simplify template logic, as they don't have to deploy this
-        _setConnectors(new ERC20Connector(), new ETHConnector());
+    function Vault() {
+        erc20ConnectorBase = new ERC20Connector();
+        ethConnectorBase = new ETHConnector();
     }
 
     function initializeEmpty() onlyInit public {
@@ -41,14 +45,17 @@ contract Vault is VaultBase {
         _setConnectors(erc20Connector, ethConnector);
     }
 
-    function _setConnectors(ERC20Connector erc20Connector, ETHConnector ethConnector) internal {
-        // register erc20 as the first standard
-        if (erc20Connector != address(0))
-            _registerStandard(20, NO_DETECTION, bytes4(0), erc20Connector);
-        // directly manage ETH with the ethConnector
-        if (ethConnector != address(0))
-            connectors[ETH] = ethConnector;
+    function initializeWithBase(Vault baseVault) onlyInit {
+        initialize(baseVault.erc20ConnectorBase(), baseVault.ethConnectorBase());
+    }
 
+    function _setConnectors(ERC20Connector erc20Connector, ETHConnector ethConnector) internal {
+        require(erc20Connector != address(0) && ethConnector != address(0));
+
+        // register erc20 as the first standard
+        _registerStandard(20, NO_DETECTION, bytes4(0), erc20Connector);
+        // directly manage ETH with the ethConnector
+        connectors[ETH] = ethConnector;
     }
 
     function () payable public {

@@ -107,7 +107,7 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @notice Initialize Finance app for `_vault` with duration `_periodDuration`
+    * @notice Initialize Finance app for Vault at `_vault` with period length of `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ''`
     * @param _vault Address of the vault Finance will rely on (non changeable)
     * @param _periodDuration Duration in seconds of each period
     */
@@ -129,7 +129,7 @@ contract Finance is AragonApp {
 
     /**
     * @dev Deposit for ERC20 approved tokens
-    * @notice Send `_amount` `_token`
+    * @notice Send `_amount` `_token.symbol(): string`
     * @param _token Address of deposited token
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
@@ -172,7 +172,7 @@ contract Finance is AragonApp {
     */
 
     /**
-    * @notice New payment
+    * @notice Create a new payment of `_amount` `_token.symbol(): string`. `_maxRepeats > 0 ? 'It will be executed ' _maxRepeats ' times at intervals of ' (_interval - _interval % 86400) / 86400 ' days' : ''`
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment.
     * @param _amount units of token that are payed every time the payment is due.
@@ -224,7 +224,7 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @notice Change period duration to `_duration`. Will be effective for next accounting period.
+    * @notice Change period duration to `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ''`, effective for next accounting period.
     * @param _periodDuration Duration in seconds for accounting periods
     */
     function setPeriodDuration(uint64 _periodDuration) authP(CHANGE_PERIOD_ROLE, arr(uint256(_periodDuration), uint256(settings.periodDuration))) transitionsPeriod external {
@@ -234,7 +234,7 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @notice Set budget for `_token` to `_amount`. Effective to current accounting period.
+    * @notice Set budget for `_token.symbol(): string` to `_amount`, effective immediately.
     * @param _token Address for token
     * @param _amount New budget amount
     */
@@ -247,7 +247,7 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @notice Remove budget for `_token`. Will be able to spend entire balance.
+    * @notice Remove spending limit for `_token.symbol(): string`.
     * @param _token Address for token
     */
     function removeBudget(address _token) authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token])) transitionsPeriod external {
@@ -257,7 +257,7 @@ contract Finance is AragonApp {
 
     /**
     * @dev Withdraws any payment (requires certain status)
-    * @notice Trigger pending withdraw for `_paymentId`
+    * @notice Execute pending payment (#`_paymentId`)
     * @param _paymentId Identifier for payment
     */
     function executePayment(uint256 _paymentId) authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId)) external {
@@ -268,7 +268,7 @@ contract Finance is AragonApp {
 
     /**
     * @dev Always allows receiver of a payment to trigger execution
-    * @notice Trigger pending withdraw for `_paymentId`
+    * @notice Execute pending payment (#`_paymentId`)
     * @param _paymentId Identifier for payment
     */
     function receiverExecutePayment(uint256 _paymentId) external {
@@ -279,7 +279,7 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @notice Sets payment `_paymentId` as `_disabled ? 'disabled' : 'enabled'`
+    * @notice `_disabled ? 'Disable' : 'Enable'` payment `_paymentId`
     * @param _paymentId Identifier for payment
     * @param _disabled Whether it will be disabled or enabled
     */

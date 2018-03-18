@@ -4,7 +4,7 @@
   "description": "Beta template for v0.5 Aragon orgs",
   "main": "index.js",
   "scripts": {
-    "prepublish": "truffle compile && node scripts/extract-abis.js",
+    "prepublish": "exit 0 && truffle compile && node scripts/extract-abis.js",
     "deploy:rinkeby": "truffle migrate --network rinkeby --reset",
     "deploy:rpc": "truffle migrate --network rpc --reset",
     "deploy:devnet": "truffle migrate --network devnet --reset",
@@ -39,7 +39,7 @@
   "dependencies": {
     "@aragon/os": "^3.1.1",
     "@aragon/apps-voting": "^1.0.0",
-    "@aragon/apps-vault": "^1.0.0",
+    "@aragon/apps-vault": "^2.0.0",
     "@aragon/apps-finance": "^1.0.0",
     "@aragon/apps-token-manager": "^1.0.0"
   }

@@ -100,7 +100,7 @@ For our Rinkeby deployment we are using a custom ENS deployment. This is fairly
 trustful as an account we control is the ENS root.
 
 ```
-ENS: 0xaa0ccb537289d226941745c4dd7a819a750897d0
+ENS: 0xfbae32d1cde62858bc45f51efc8cc4fa1415447e
 APM: 0x8da0fe11ece85f48723d45c3d6767db9bd4f0b29
 ```
 
