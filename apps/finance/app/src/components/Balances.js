@@ -37,11 +37,11 @@ class Balances extends React.Component {
         <ScrollView>
           <List>
             {balances
-              .map(({ symbol, amount }) => ({
-                symbol,
+              .map(({ amount, decimals, symbol }) => ({
                 amount,
+                symbol,
                 convertedAmount: convertRates[symbol]
-                  ? amount / convertRates[symbol]
+                  ? amount / Math.pow(10, decimals) / convertRates[symbol]
                   : -1,
               }))
               .sort(
