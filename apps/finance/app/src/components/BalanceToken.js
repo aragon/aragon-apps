@@ -13,16 +13,16 @@ const splitAmount = amount => {
   )
 }
 
-const BalanceToken = ({ token, amount, convertedAmount = -1 }) => (
+const BalanceToken = ({ symbol, amount, convertedAmount = -1 }) => (
   <Main>
     <Token>
       <img
         alt=""
         width="16"
         height="16"
-        src={`https://chasing-coins.com/coin/logo/${token}`}
+        src={`https://chasing-coins.com/coin/logo/${symbol}`}
       />
-      {token}
+      {symbol}
     </Token>
     <Amount>{splitAmount(amount.toFixed(3))}</Amount>
     <ConvertedAmount>

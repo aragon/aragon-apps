@@ -3,6 +3,9 @@ import styled from 'styled-components'
 import { Field, TextInput, Text, Button, DropDown, theme } from '@aragon/ui'
 
 class NewTransfer extends React.Component {
+  static defaultProps = {
+    onTransfer: () => {},
+  }
   state = {
     selectedToken: 0,
     recipient: '',
@@ -25,9 +28,15 @@ class NewTransfer extends React.Component {
       amount: !Number.isInteger(amount) || amount < 0 ? -1 : amount,
     })
   }
+  handleTransfer = () => {
+    const { onTransfer, tokens } = this.props
+    const { amount, recipient, reference, selectedToken } = this.state
+    onTransfer(tokens[selectedToken], recipient, amount, reference)
+  }
   render() {
     const { title, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
+    const symbols = tokens.map(({ symbol }) => symbol)
     return (
       <div>
         <h1>{title}</h1>
@@ -51,7 +60,7 @@ class NewTransfer extends React.Component {
               wide
             />
             <DropDown
-              items={tokens}
+              items={symbols}
               active={selectedToken}
               onChange={this.handleSelectToken}
             />
@@ -65,7 +74,7 @@ class NewTransfer extends React.Component {
           />
         </Field>
         <ButtonWrapper>
-          <Button mode="strong" wide>
+          <Button mode="strong" wide onClick={this.handleTransfer}>
             Submit Transfer
           </Button>
         </ButtonWrapper>

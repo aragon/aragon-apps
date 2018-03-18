@@ -5,8 +5,8 @@ import BalanceToken from './BalanceToken'
 
 const CONVERT_API_BASE = 'https://min-api.cryptocompare.com/data'
 
-const convertApiUrl = tokens =>
-  `${CONVERT_API_BASE}/price?fsym=USD&tsyms=${tokens.join(',')}`
+const convertApiUrl = symbols =>
+  `${CONVERT_API_BASE}/price?fsym=USD&tsyms=${symbols.join(',')}`
 
 class Balances extends React.Component {
   state = {
@@ -19,12 +19,12 @@ class Balances extends React.Component {
     this.updateConvertedRates()
   }
   async updateConvertedRates() {
-    const tokens = this.props.balances.map(({ token }) => token)
+    const symbols = this.props.balances.map(({ symbol }) => symbol)
 
     // Uncomment the next line to simulate a delay
     await new Promise(r => setTimeout(r, 2000))
 
-    const res = await fetch(convertApiUrl(tokens))
+    const res = await fetch(convertApiUrl(symbols))
     const convertRates = await res.json()
     this.setState({ convertRates })
   }
@@ -37,21 +37,21 @@ class Balances extends React.Component {
         <ScrollView>
           <List>
             {balances
-              .map(({ token, amount }) => ({
-                token,
+              .map(({ symbol, amount }) => ({
+                symbol,
                 amount,
-                convertedAmount: convertRates[token]
-                  ? amount / convertRates[token]
+                convertedAmount: convertRates[symbol]
+                  ? amount / convertRates[symbol]
                   : -1,
               }))
               .sort(
                 (balanceA, balanceB) =>
                   balanceB.convertedAmount - balanceA.convertedAmount
               )
-              .map(({ token, amount, convertedAmount }) => (
-                <ListItem key={token}>
+              .map(({ symbol, amount, convertedAmount }) => (
+                <ListItem key={symbol}>
                   <BalanceToken
-                    token={token}
+                    symbol={symbol}
                     amount={amount}
                     convertedAmount={convertedAmount}
                   />

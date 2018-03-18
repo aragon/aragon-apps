@@ -25,7 +25,7 @@ class TransferRow extends React.Component {
       'https://app.aragon.one/#/finance/finance?params=' +
         encodeURIComponent(
           JSON.stringify({
-            transaction: this.props.transaction,
+            transaction: this.props.transactionHash,
           })
         )
     )
@@ -34,8 +34,8 @@ class TransferRow extends React.Component {
     })
   }
   handleViewTransaction = () => {
-    const { network: { etherscanBaseUrl }, transaction } = this.props
-    window.open(`${etherscanBaseUrl}/address/${transaction}`, '_blank')
+    const { network: { etherscanBaseUrl }, transactionHash } = this.props
+    window.open(`${etherscanBaseUrl}/tx/${transactionHash}`, '_blank')
   }
   handleConfirmMessageDone = () => {
     this.setState({
@@ -43,19 +43,18 @@ class TransferRow extends React.Component {
     })
   }
   render() {
-    const { showCopyTransferMessage } = this.state
     const {
+      amount,
       date,
+      entity,
       network: { etherscanBaseUrl },
       reference,
-      amount,
-      token,
-      approvedBy,
-      transaction,
+      symbol,
     } = this.props
+    const { showCopyTransferMessage } = this.state
     const formattedDate = formatHtmlDatetime(date)
     return (
-      <TableRow key={transaction}>
+      <TableRow>
         <NoWrapCell>
           <time dateTime={formattedDate} title={formattedDate}>
             {format(date, 'DD/MM/YY')}
@@ -64,17 +63,17 @@ class TransferRow extends React.Component {
         <NoWrapCell>
           <TextOverflow>
             <SafeLink
-              href={`${etherscanBaseUrl}/address/${approvedBy}`}
+              href={`${etherscanBaseUrl}/address/${entity}`}
               target="_blank"
             >
-              {approvedBy}
+              {entity}
             </SafeLink>
           </TextOverflow>
         </NoWrapCell>
         <NoWrapCell>{reference}</NoWrapCell>
         <NoWrapCell align="right">
           <Amount positive={amount > 0}>
-            {formatTokenAmount(amount, true)} {token}
+            {formatTokenAmount(amount, true)} {symbol}
           </Amount>
         </NoWrapCell>
         <NoWrapCell>
