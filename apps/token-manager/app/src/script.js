@@ -1,6 +1,6 @@
 import Aragon from '@aragon/client'
 import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
-import minimeArtifact from '@aragon/os/build/contracts/MinimeToken.json'
+import tokenAbi from './abi/minimeToken.json'
 
 const app = new Aragon()
 
@@ -11,7 +11,7 @@ app
   .subscribe(initialize)
 
 async function initialize(tokenAddr) {
-  const token = app.external(tokenAddr, minimeArtifact.abi)
+  const token = app.external(tokenAddr, tokenAbi)
   try {
     const tokenSymbol = await loadTokenSymbol(token)
     app.identify(tokenSymbol)
