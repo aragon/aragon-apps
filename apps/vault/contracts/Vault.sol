@@ -27,15 +27,11 @@ contract Vault is VaultBase {
         ethConnectorBase = new ETHConnector();
     }
 
-    function initializeEmpty() onlyInit public {
+    function initialize(ERC20Connector erc20Connector, ETHConnector ethConnector) onlyInit public {
         initialized();
 
         supportedInterfaceDetectionERCs[NO_DETECTION] = true;
         supportedInterfaceDetectionERCs[ERC165] = true;
-    }
-
-    function initialize(ERC20Connector erc20Connector, ETHConnector ethConnector) onlyInit public {
-        initializeEmpty();
 
         _setConnectors(erc20Connector, ethConnector);
     }
