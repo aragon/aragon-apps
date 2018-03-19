@@ -22,10 +22,9 @@ contract Vault is VaultBase {
 
     event NewTokenStandard(uint32 indexed erc, uint32 indexed interfaceDetectionERC, bytes4 indexed interfaceID, address connector);
 
-    // TODO Role??
-    function initializeConnectors() public {
-        // this allows to simplify template logic, as they don't have to deploy this
-        _setConnectors(new ERC20Connector(), new ETHConnector());
+    function Vault() public {
+        erc20ConnectorBase = new ERC20Connector();
+        ethConnectorBase = new ETHConnector();
     }
 
     function initializeEmpty() onlyInit public {
@@ -39,6 +38,10 @@ contract Vault is VaultBase {
         initializeEmpty();
 
         _setConnectors(erc20Connector, ethConnector);
+    }
+
+    function initializeWithBase(Vault baseVault) onlyInit public {
+        initialize(baseVault.erc20ConnectorBase(), baseVault.ethConnectorBase());
     }
 
     function _setConnectors(ERC20Connector erc20Connector, ETHConnector ethConnector) internal {
