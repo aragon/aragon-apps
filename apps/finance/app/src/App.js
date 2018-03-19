@@ -41,7 +41,15 @@ class App extends React.Component {
     reference
   ) => {
     // Immediate, one-time payment
-    this.props.app.newPayment(tokenAddress, recipient, amount, 0, 1, reference)
+    this.props.app.newPayment(
+      tokenAddress,
+      recipient,
+      amount,
+      0, // initial payment time
+      0, // interval
+      1, // max repeats
+      reference
+    )
   }
   render() {
     const { balances, transactions } = this.props
@@ -80,7 +88,7 @@ class App extends React.Component {
           onClose={this.handleNewTransferClose}
           title="New Transfer"
         >
-          <NewTransfer tokens={tokens} />
+          <NewTransfer onTransfer={this.handleSubmitTransfer} tokens={tokens} />
         </SidePanel>
       </AragonApp>
     )
