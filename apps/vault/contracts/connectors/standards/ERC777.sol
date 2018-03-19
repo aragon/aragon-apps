@@ -1,6 +1,5 @@
 pragma solidity ^0.4.18;
 
-import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
 import "../../detectors/standards/ERC165.sol";
 
 interface ERC777 {
@@ -36,38 +35,8 @@ interface ERC777TokensRecipient {
 }
 
 
-contract ERC777Token is MiniMeToken, ERC165 {
-    function granularity() public constant returns (uint256) {
-        // TODO
-    }
-
-    function send(address to, uint256 amount) public {
-        // TODO
-    }
-
-    function send(address to, uint256 amount, bytes userData) public {
-        // TODO
-    }
-
-    function authorizeOperator(address operator) public {
-        // TODO
-    }
-
-    function revokeOperator(address operator) public {
-        // TODO
-    }
-
-    function isOperatorFor(address operator, address tokenHolder) public constant returns (bool) {
-        // TODO
-    }
-
-    function operatorSend(address from, address to, uint256 amount, bytes userData, bytes operatorData) public {
-        // TODO
-    }
-
-    function supportsInterface(bytes4 interfaceID) external view returns (bool) {
-        /* solium-disable-next-line */
-        return interfaceID == this.supportsInterface.selector || interfaceID == this.name.selector ^ this.symbol.selector ^ this.totalSupply.selector ^ this.granularity.selector ^ this.balanceOf.selector ^ this.authorizeOperator.selector ^ this.revokeOperator.selector ^ this.isOperatorFor.selector ^ this.operatorSend.selector;
-        /* TODO! this.send.selector */
+contract ERC777Fake {
+    function ERC777Fake() public {
+        // work around coverage weird error
     }
 }
