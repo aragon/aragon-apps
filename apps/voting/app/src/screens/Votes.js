@@ -10,7 +10,7 @@ import VotesTable from '../components/VotesTable'
 class Votes extends React.Component {
   render() {
     const { votes, onSelectVote } = this.props
-    const openedVotes = votes.filter(({ vote }) => vote.open)
+    const openedVotes = votes.filter(({ data: { open } }) => open)
     const closedVotes = votes.filter(vote => !openedVotes.includes(vote))
     return (
       <Main>
@@ -26,7 +26,7 @@ class Votes extends React.Component {
               />
             </Title>
             <VotesTable
-              opened={true}
+              opened
               votes={openedVotes}
               onSelectVote={onSelectVote}
             />
@@ -46,9 +46,9 @@ class Votes extends React.Component {
           </VotesTableWrapper>
         )}
 
-        {/*<SeeMoreWrapper>
+        {/* <SeeMoreWrapper>
           <Button mode="secondary">Show Previous Votes</Button>
-        </SeeMoreWrapper>*/}
+        </SeeMoreWrapper> */}
       </Main>
     )
   }
