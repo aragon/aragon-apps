@@ -66,17 +66,8 @@ contract ERC777Token is MiniMeToken, ERC165 {
     }
 
     function supportsInterface(bytes4 interfaceID) external view returns (bool) {
-        return
-          interfaceID == this.supportsInterface.selector || // ERC165
-          interfaceID == this.name.selector
-            ^ this.symbol.selector
-            ^ this.totalSupply.selector
-            ^ this.granularity.selector
-            ^ this.balanceOf.selector
-            // TODO! ^ this.send.selector
-            ^ this.authorizeOperator.selector
-            ^ this.revokeOperator.selector
-            ^ this.isOperatorFor.selector
-            ^ this.operatorSend.selector;
+        /* solium-disable-next-line */
+        return interfaceID == this.supportsInterface.selector || interfaceID == this.name.selector ^ this.symbol.selector ^ this.totalSupply.selector ^ this.granularity.selector ^ this.balanceOf.selector ^ this.authorizeOperator.selector ^ this.revokeOperator.selector ^ this.isOperatorFor.selector ^ this.operatorSend.selector;
+        /* TODO! this.send.selector */
     }
 }
