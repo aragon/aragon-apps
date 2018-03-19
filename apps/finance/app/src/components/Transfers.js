@@ -8,15 +8,25 @@ import {
   DropDown,
   theme,
 } from '@aragon/ui'
+import * as TransferTypes from '../transfer-types'
 import TransferRow from './TransferRow'
 
-const TRANSFER_TYPES = ['All', 'Incoming', 'Outgoing']
+const TRANSFER_TYPES = [
+  TransferTypes.All,
+  TransferTypes.Incoming,
+  TransferTypes.Outgoing,
+]
+const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
+
+const initialState = {
+  selectedToken: 0,
+  selectedTransferType: 0,
+  displayedTransfers: 10,
+}
 
 class Transfers extends React.Component {
   state = {
-    selectedToken: 0,
-    selectedTransferType: 0,
-    displayedTransfers: 10,
+    ...initialState,
   }
   componentDidMount() {
     this.setState({ selectedToken: 0 })
@@ -28,13 +38,14 @@ class Transfers extends React.Component {
     this.setState({ selectedToken: index, displayedTransfers: 10 })
   }
   handleTransferTypeChange = index => {
-    this.setState({ selectedTransferType: index, displayedTransfers: 10 })
+    this.setState({
+      selectedTransferType: index,
+      displayedTransfers: 10,
+    })
   }
   handleResetFilters = () => {
     this.setState({
-      selectedTransferType: 0,
-      selectedToken: 0,
-      displayedTransfers: 10,
+      ...initialState,
     })
   }
   showMoreTransfers = () => {
@@ -46,16 +57,17 @@ class Transfers extends React.Component {
   // Filter transfer based on the selected filters
   getFilteredTransfers({
     tokens,
-    transfers,
+    transactions,
     selectedToken,
     selectedTransferType,
   }) {
-    return transfers.filter(
-      ({ token, amount }) =>
-        (selectedToken === 0 || token === tokens[selectedToken - 1]) &&
-        (selectedTransferType === 0 ||
-          (selectedTransferType === 1 && amount > 0) ||
-          (selectedTransferType === 2 && amount < 0))
+    const transferType = TRANSFER_TYPES[selectedTransferType]
+    return transactions.filter(
+      ({ token, isIncoming }) =>
+        (selectedToken === 0 || token === tokens[selectedToken - 1].address) &&
+        (transferType === TransferTypes.All ||
+          (transferType === TransferTypes.Incoming && isIncoming) ||
+          (transferType === TransferTypes.Outgoing && !isIncoming))
     )
   }
   render() {
@@ -64,13 +76,21 @@ class Transfers extends React.Component {
       selectedToken,
       selectedTransferType,
     } = this.state
-    const { transfers, tokens } = this.props
+    const { transactions, tokens } = this.props
     const filteredTransfers = this.getFilteredTransfers({
       tokens,
-      transfers,
+      transactions,
       selectedToken,
       selectedTransferType,
     })
+    const symbols = tokens.map(({ symbol }) => symbol)
+    const tokenDecimals = tokens.reduce(
+      (tokenDecimals, { address, decimals }) => {
+        tokenDecimals[address] = decimals
+        return tokenDecimals
+      },
+      {}
+    )
     const filtersActive = selectedToken !== 0 || selectedTransferType !== 0
     return (
       <section>
@@ -80,7 +100,7 @@ class Transfers extends React.Component {
             <label>
               <Label>Token:</Label>
               <DropDown
-                items={['All', ...tokens]}
+                items={['All', ...symbols]}
                 active={selectedToken}
                 onChange={this.handleTokenChange}
               />
@@ -88,7 +108,7 @@ class Transfers extends React.Component {
             <label>
               <Label>Transfer type:</Label>
               <DropDown
-                items={TRANSFER_TYPES}
+                items={TRANSFER_TYPES_STRING}
                 active={selectedTransferType}
                 onChange={this.handleTransferTypeChange}
               />
@@ -121,19 +141,13 @@ class Transfers extends React.Component {
             >
               {filteredTransfers
                 .slice(0, displayedTransfers)
-                .map(
-                  ({ date, ref, amount, token, approvedBy, transaction }) => (
-                    <TransferRow
-                      date={date}
-                      reference={ref}
-                      amount={amount}
-                      token={token}
-                      approvedBy={approvedBy}
-                      transaction={transaction}
-                      key={transaction}
-                    />
-                  )
-                )}
+                .map(transfer => (
+                  <TransferRow
+                    key={transfer.transactionHash}
+                    decimals={tokenDecimals[transfer.token]}
+                    {...transfer}
+                  />
+                ))}
             </FixedTable>
             {displayedTransfers < filteredTransfers.length && (
               <Footer>

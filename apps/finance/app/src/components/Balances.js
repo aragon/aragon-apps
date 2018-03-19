@@ -2,11 +2,12 @@ import React from 'react'
 import styled from 'styled-components'
 import { theme } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
+import { round } from '../lib/math-utils'
 
 const CONVERT_API_BASE = 'https://min-api.cryptocompare.com/data'
 
-const convertApiUrl = tokens =>
-  `${CONVERT_API_BASE}/price?fsym=USD&tsyms=${tokens.join(',')}`
+const convertApiUrl = symbols =>
+  `${CONVERT_API_BASE}/price?fsym=USD&tsyms=${symbols.join(',')}`
 
 class Balances extends React.Component {
   state = {
@@ -19,12 +20,12 @@ class Balances extends React.Component {
     this.updateConvertedRates()
   }
   async updateConvertedRates() {
-    const tokens = this.props.balances.map(({ token }) => token)
+    const symbols = this.props.balances.map(({ symbol }) => symbol)
 
     // Uncomment the next line to simulate a delay
     await new Promise(r => setTimeout(r, 2000))
 
-    const res = await fetch(convertApiUrl(tokens))
+    const res = await fetch(convertApiUrl(symbols))
     const convertRates = await res.json()
     this.setState({ convertRates })
   }
@@ -37,21 +38,30 @@ class Balances extends React.Component {
         <ScrollView>
           <List>
             {balances
-              .map(({ token, amount }) => ({
-                token,
+              .map(({ amount, decimals, ...token }) => ({
+                ...token,
+                amount: amount / Math.pow(10, decimals),
+              }))
+              .map(({ amount, symbol }) => ({
                 amount,
-                convertedAmount: convertRates[token]
-                  ? amount / convertRates[token]
+                symbol,
+                convertedAmount: convertRates[symbol]
+                  ? amount / convertRates[symbol]
                   : -1,
+              }))
+              .map(({ amount, convertedAmount, ...balance }) => ({
+                ...balance,
+                amount: round(amount, 5),
+                convertedAmount: round(convertedAmount, 5),
               }))
               .sort(
                 (balanceA, balanceB) =>
                   balanceB.convertedAmount - balanceA.convertedAmount
               )
-              .map(({ token, amount, convertedAmount }) => (
-                <ListItem key={token}>
+              .map(({ symbol, amount, convertedAmount }) => (
+                <ListItem key={symbol}>
                   <BalanceToken
-                    token={token}
+                    symbol={symbol}
                     amount={amount}
                     convertedAmount={convertedAmount}
                   />
