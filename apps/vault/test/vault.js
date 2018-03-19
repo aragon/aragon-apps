@@ -28,10 +28,7 @@ contract('Vault app', (accounts) => {
   beforeEach(async () => {
     vaultBase = await Vault.new()
     vault = IVaultConnector.at(vaultBase.address)
-    await vaultBase.initializeEmpty()
-    await vaultBase.initializeConnectors()
-    //
-    await vaultBase
+    await vaultBase.initializeWithBase(vaultBase.address)
   })
 
   context('Deposits and transfers', async() => {
