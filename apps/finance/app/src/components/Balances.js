@@ -23,7 +23,7 @@ class Balances extends React.Component {
     const symbols = this.props.balances.map(({ symbol }) => symbol)
 
     // Uncomment the next line to simulate a delay
-    await new Promise(r => setTimeout(r, 2000))
+    // await new Promise(r => setTimeout(r, 2000))
 
     const res = await fetch(convertApiUrl(symbols))
     const convertRates = await res.json()
