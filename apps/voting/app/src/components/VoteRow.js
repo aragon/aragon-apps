@@ -1,18 +1,21 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Button, Countdown, TableCell, TableRow } from '@aragon/ui'
-import { VOTE_ABSENT } from '../vote-types'
 import ProgressBar from './ProgressBar'
 import VoteStatus from './VoteStatus'
 
 class VoteRow extends React.Component {
+  static defaultProps = {
+    onSelectVote: () => {},
+  }
+
   handleVoteClick = () => {
     this.props.onSelectVote(this.props.vote.voteId)
   }
   render() {
     const { vote } = this.props
-    const { question, endDate } = vote
-    const { yea, nay, totalVoters, open } = vote.vote
+    const { endDate } = vote
+    const { metadata, nay, open, totalVoters, yea } = vote.data
     const totalVotes = (yea + nay) / totalVoters
 
     return (
@@ -22,7 +25,7 @@ class VoteRow extends React.Component {
         </StatusCell>
         <QuestionCell>
           <QuestionWrapper>
-            <div>{question}</div>
+            <div>{metadata}</div>
           </QuestionWrapper>
         </QuestionCell>
         <Cell align="right">{Math.round(totalVotes * 10000) / 100}%</Cell>
@@ -50,14 +53,6 @@ class VoteRow extends React.Component {
       </TableRow>
     )
   }
-}
-
-VoteRow.defaultProps = {
-  question: '',
-  votesYea: 0,
-  votesNay: 0,
-  userVote: VOTE_ABSENT,
-  onSelectVote: () => {},
 }
 
 const Cell = styled(TableCell)`
