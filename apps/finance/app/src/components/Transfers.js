@@ -16,10 +16,11 @@ const TRANSFER_TYPES = [
   TransferTypes.Incoming,
   TransferTypes.Outgoing,
 ]
+const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
 
 const initialState = {
   selectedToken: 0,
-  selectedTransferType: TransferTypes.All,
+  selectedTransferType: 0,
   displayedTransfers: 10,
 }
 
@@ -38,7 +39,7 @@ class Transfers extends React.Component {
   }
   handleTransferTypeChange = index => {
     this.setState({
-      selectedTransferType: TRANSFER_TYPES[index],
+      selectedTransferType: index,
       displayedTransfers: 10,
     })
   }
@@ -60,12 +61,13 @@ class Transfers extends React.Component {
     selectedToken,
     selectedTransferType,
   }) {
+    const transferType = TRANSFER_TYPES[selectedTransferType]
     return transactions.filter(
       ({ token, isIncoming }) =>
         (selectedToken === 0 || token === tokens[selectedToken - 1].address) &&
-        (selectedTransferType === TransferTypes.All ||
-          (selectedTransferType === TransferTypes.Incoming && isIncoming) ||
-          (selectedTransferType === TransferTypes.Outgoing && !isIncoming))
+        (transferType === TransferTypes.All ||
+          (transferType === TransferTypes.Incoming && isIncoming) ||
+          (transferType === TransferTypes.Outgoing && !isIncoming))
     )
   }
   render() {
@@ -89,8 +91,7 @@ class Transfers extends React.Component {
       },
       {}
     )
-    const filtersActive =
-      selectedToken !== 0 || selectedTransferType !== TransferTypes.All
+    const filtersActive = selectedToken !== 0 || selectedTransferType !== 0
     return (
       <section>
         <Header>
@@ -107,7 +108,7 @@ class Transfers extends React.Component {
             <label>
               <Label>Transfer type:</Label>
               <DropDown
-                items={TRANSFER_TYPES}
+                items={TRANSFER_TYPES_STRING}
                 active={selectedTransferType}
                 onChange={this.handleTransferTypeChange}
               />
