@@ -3,15 +3,13 @@ pragma solidity 0.4.18;
 import "../contracts/Vault.sol";
 import "../contracts/IVaultConnector.sol";
 
-import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
+import "./tokens/SimpleERC20.sol";
+import "./tokens/SimpleERC777.sol";
 
 import "truffle/Assert.sol";
 
 contract TestVault {
-    MiniMeToken token;
-
-    ERC20Connector erc20Connector = new ERC20Connector();
-    ETHConnector ethConnector = new ETHConnector();
+    SimpleERC20 token;
 
     IVaultConnector vault;
 
@@ -19,14 +17,13 @@ contract TestVault {
     address constant ETH = address(0);
 
     function beforeAll() {
-        token = new MiniMeToken(address(0), address(0), 0, "CARLOS", 2, "MATOS", true);
-        token.generateTokens(this, 200);
-        token.changeController(msg.sender);
+        token = new SimpleERC20();
     }
 
     function beforeEach() {
-        vault = IVaultConnector(new Vault());
-        Vault(vault).initialize(erc20Connector, ethConnector);
+        Vault vaultBase = new Vault();
+        vault = IVaultConnector(vaultBase);
+        vaultBase.initializeWithBase(vaultBase);
     }
 
     function testETHDeposit() {
