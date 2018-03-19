@@ -1,16 +1,18 @@
 import React from 'react'
 import styled from 'styled-components'
-import { format } from 'date-fns'
 import copy from 'copy-to-clipboard'
+import { format } from 'date-fns/esm'
 import {
   TableRow,
   TableCell,
   ContextMenu,
   ContextMenuItem,
-  IconShare,
   IconTokens,
+  SafeLink,
+  formatHtmlDatetime,
   theme,
 } from '@aragon/ui'
+import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
 import ConfirmMessage from './ConfirmMessage'
 
@@ -23,7 +25,7 @@ class TransferRow extends React.Component {
       'https://app.aragon.one/#/finance/finance?params=' +
         encodeURIComponent(
           JSON.stringify({
-            transaction: this.props.transaction,
+            transaction: this.props.transactionHash,
           })
         )
     )
@@ -32,8 +34,8 @@ class TransferRow extends React.Component {
     })
   }
   handleViewTransaction = () => {
-    const { transaction } = this.props
-    window.open(`https://etherscan.io/address/${transaction}`, '_blank')
+    const { network: { etherscanBaseUrl }, transactionHash } = this.props
+    window.open(`${etherscanBaseUrl}/tx/${transactionHash}`, '_blank')
   }
   handleConfirmMessageDone = () => {
     this.setState({
@@ -41,45 +43,50 @@ class TransferRow extends React.Component {
     })
   }
   render() {
-    const { showCopyTransferMessage } = this.state
     const {
-      date,
-      reference,
       amount,
-      token,
-      approvedBy,
-      transaction,
+      date,
+      decimals,
+      entity,
+      network: { etherscanBaseUrl },
+      reference,
+      symbol,
     } = this.props
+    const { showCopyTransferMessage } = this.state
+    const formattedAmount = formatTokenAmount(amount, decimals, true, {
+      rounding: 5,
+    })
+    const formattedDate = formatHtmlDatetime(date)
     return (
-      <TableRow key={transaction}>
+      <TableRow>
         <NoWrapCell>
-          <time dateTime={format(date)} title={format(date)}>
+          <time dateTime={formattedDate} title={formattedDate}>
             {format(date, 'DD/MM/YY')}
           </time>
         </NoWrapCell>
         <NoWrapCell>
           <TextOverflow>
-            <a
+            <SafeLink
+              href={`${etherscanBaseUrl}/address/${entity}`}
               target="_blank"
-              href={`https://etherscan.io/address/${approvedBy}`}
             >
-              {approvedBy}
-            </a>
+              {entity}
+            </SafeLink>
           </TextOverflow>
         </NoWrapCell>
         <NoWrapCell>{reference}</NoWrapCell>
         <NoWrapCell align="right">
           <Amount positive={amount > 0}>
-            {formatTokenAmount(amount, true)} {token}
+            {formattedAmount} {symbol}
           </Amount>
         </NoWrapCell>
         <NoWrapCell>
           <ActionsWrapper>
             <ContextMenu>
-              <ContextMenuItem onClick={this.handleCopyTransferUrl}>
+              {/* <ContextMenuItem onClick={this.handleCopyTransferUrl}>
                 <IconShare />
                 <ActionLabel>Copy Transfer URL</ActionLabel>
-              </ContextMenuItem>
+              </ContextMenuItem> */}
               <ContextMenuItem onClick={this.handleViewTransaction}>
                 <IconTokens />
                 <ActionLabel>View Transaction</ActionLabel>
@@ -129,4 +136,4 @@ const ConfirmMessageWrapper = styled.div`
   z-index: 2;
 `
 
-export default TransferRow
+export default provideNetwork(TransferRow)

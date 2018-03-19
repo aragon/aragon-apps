@@ -1,14 +1,32 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { SidePanel, AragonApp, AppBar, Button } from '@aragon/ui'
-import { transfers, balances } from './demo-state'
-import Transfers from './components/Transfers'
+import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
 import Balances from './components/Balances'
 import NewTransfer from './components/NewTransfer'
+import Transfers from './components/Transfers'
+import { networkContextType } from './lib/provideNetwork'
 
 class App extends React.Component {
+  static propTypes = {
+    app: PropTypes.object.isRequired,
+  }
+  static defaultProps = {
+    balances: [],
+    transactions: [],
+    network: {
+      etherscanBaseUrl: 'https://rinkeby.etherscan.io',
+      name: 'rinkeby',
+    },
+  }
+  static childContextTypes = {
+    network: networkContextType,
+  }
   state = {
     newTransferOpened: false,
+  }
+  getChildContext() {
+    return { network: this.props.network }
   }
   handleNewTransferOpen = () => {
     this.setState({ newTransferOpened: true })
@@ -16,9 +34,31 @@ class App extends React.Component {
   handleNewTransferClose = () => {
     this.setState({ newTransferOpened: false })
   }
+  handleSubmitTransfer = (
+    { address: tokenAddress },
+    recipient,
+    amount,
+    reference
+  ) => {
+    // Immediate, one-time payment
+    this.props.app.newPayment(
+      tokenAddress,
+      recipient,
+      amount,
+      0, // initial payment time
+      0, // interval
+      1, // max repeats
+      reference
+    )
+  }
   render() {
+    const { balances, transactions } = this.props
     const { newTransferOpened } = this.state
-    const tokens = balances.map(({ token }) => token)
+    const tokens = balances.map(({ address, symbol, decimals }) => ({
+      address,
+      symbol,
+      decimals,
+    }))
     return (
       <AragonApp publicUrl="/aragon-ui/">
         <Layout>
@@ -38,7 +78,7 @@ class App extends React.Component {
                 <Balances balances={balances} />
               </SpacedBlock>
               <SpacedBlock>
-                <Transfers transfers={transfers} tokens={tokens} />
+                <Transfers transactions={transactions} tokens={tokens} />
               </SpacedBlock>
             </Content>
           </Layout.ScrollWrapper>
@@ -48,7 +88,7 @@ class App extends React.Component {
           onClose={this.handleNewTransferClose}
           title="New Transfer"
         >
-          <NewTransfer tokens={tokens} />
+          <NewTransfer onTransfer={this.handleSubmitTransfer} tokens={tokens} />
         </SidePanel>
       </AragonApp>
     )
@@ -86,4 +126,7 @@ Layout.ScrollWrapper = styled.div`
   flex-grow: 1;
 `
 
-export default App
+export default observe(
+  observable => observable.map(state => ({ ...state })),
+  {}
+)(App)
