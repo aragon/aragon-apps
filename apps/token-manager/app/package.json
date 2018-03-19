@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aragon/client": "^1.0.0-beta.1",
-    "@aragon/ui": "^0.5.0",
+    "@aragon/client": "^1.0.0-beta.4",
+    "@aragon/ui": "^0.7.0",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
@@ -17,7 +17,7 @@
     "babel-preset-env": "^1.6.1",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
-    "eslint": "^4.12.1",
+    "eslint": "4.15.0",
     "eslint-config-prettier": "^2.9.0",
     "eslint-config-standard": "^10.2.1",
     "eslint-config-standard-react": "^5.0.0",
@@ -29,7 +29,7 @@
     "eslint-plugin-standard": "^3.0.1",
     "parcel-bundler": "^1.6.2",
     "prettier": "^1.8.2",
-    "react-scripts": "1.0.17"
+    "react-scripts": "2.0.0-next.9754a231"
   },
   "scripts": {
     "lint": "eslint ./src",
@@ -40,5 +40,11 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
-  "proxy": "http://localhost:3003"
+  "proxy": "http://localhost:3003",
+  "browserslist": [
+    ">2%",
+    "last 1 edge versions",
+    "not ie > 0",
+    "not op_mini all"
+  ]
 }
