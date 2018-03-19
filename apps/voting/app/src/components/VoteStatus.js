@@ -26,8 +26,8 @@ const ATTRIBUTES = {
   },
 }
 
-const VoteStatus = ({ vote: { vote, support, quorum } }) => {
-  const status = getVoteStatus(vote, support, quorum)
+const VoteStatus = ({ vote: { data, support, quorum } }) => {
+  const status = getVoteStatus(data, support, quorum)
   const { color, label, Icon } = ATTRIBUTES[status]
   return (
     <Main color={color}>
