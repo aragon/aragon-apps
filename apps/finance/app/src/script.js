@@ -4,9 +4,12 @@ import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
 
-const app = new Aragon()
-const tokenSymbols = new Map()
 const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
+
+const tokenContracts = new Map() // Addr -> External contract
+const tokenSymbols = new Map() // External contract -> symbol
+
+const app = new Aragon()
 
 // Hook up the script as an aragon.js store
 app.store(async (state, event) => {
@@ -41,7 +44,7 @@ async function newTransaction(state, { transactionId }, { transactionHash }) {
     id: transactionId,
   }
   const balances = await updateBalances(state, transactionDetails)
-  const transactions = await updateTransaction(state, transactionDetails)
+  const transactions = await updateTransactions(state, transactionDetails)
 
   return {
     ...state,
@@ -60,82 +63,91 @@ async function updateBalances(
   { balances = [], vaultAddress },
   { token: tokenAddr }
 ) {
-  const token = app.external(tokenAddr, tokenAbi)
+  const tokenContract = tokenContracts.has(tokenAddr)
+    ? tokenContracts.get(tokenAddr)
+    : app.external(tokenAddr, tokenAbi)
+  tokenContracts.set(tokenAddr, tokenContract)
 
   const balancesIndex = balances.findIndex(
     ({ address }) => address === tokenAddr
   )
   if (balancesIndex === -1) {
     return balances.concat(
-      await makeNewBalanceToken(token, tokenAddr, vaultAddress)
+      await makeNewBalanceToken(tokenContract, tokenAddr, vaultAddress)
     )
   } else {
     const newBalances = Array.from(balances)
     newBalances[balancesIndex] = {
       ...balances[balancesIndex],
-      amount: await loadTokenBalance(token, vaultAddress),
+      amount: await loadTokenBalance(tokenContract, vaultAddress),
     }
     return newBalances
   }
 }
 
-function updateTransaction({ transactions = [] }, transactionDetails) {
-  const transactionIndex = transactions.findIndex(
+function updateTransactions({ transactions = [] }, transactionDetails) {
+  const transactionsIndex = transactions.findIndex(
     ({ id }) => id === transactionDetails.id
   )
-  if (transactionIndex === -1) {
+  if (transactionsIndex === -1) {
     return transactions.concat(transactionDetails)
   } else {
     const newTransactions = Array.from(transactions)
-    newTransactions[transactionIndex] = transactionDetails
+    newTransactions[transactionsIndex] = transactionDetails
     return newTransactions
   }
 }
 
-async function makeNewBalanceToken(token, tokenAddr, vaultAddr) {
+async function makeNewBalanceToken(tokenContract, tokenAddr, vaultAddr) {
   const [balance, decimals, symbol] = await Promise.all([
-    loadTokenBalance(token, vaultAddr),
-    loadTokenDecimals(token),
-    loadTokenSymbol(token, tokenAddr),
+    loadTokenBalance(tokenContract, vaultAddr),
+    loadTokenDecimals(tokenContract),
+    loadTokenSymbol(tokenContract),
   ])
 
-  return { balance, decimals, symbol }
+  return {
+    decimals,
+    symbol,
+    address: tokenAddr,
+    amount: balance,
+  }
 }
 
-function loadTokenBalance(token, vaultAddr) {
+function loadTokenBalance(tokenContract, vaultAddr) {
   return new Promise((resolve, reject) => {
     if (!vaultAddr) {
       // No vault address yet, so leave it as unknown
       resolve(-1)
     } else {
-      token
+      tokenContract
         .balanceOf(vaultAddr)
         .first()
+        .map(val => parseInt(val, 10))
         .subscribe(resolve, reject)
     }
   })
 }
 
-function loadTokenDecimals(token) {
+function loadTokenDecimals(tokenContract) {
   return new Promise((resolve, reject) => {
-    token
+    tokenContract
       .decimals()
       .first()
+      .map(val => parseInt(val, 10))
       .subscribe(resolve, reject)
   })
 }
 
-function loadTokenSymbol(token, tokenAddr) {
+function loadTokenSymbol(tokenContract) {
   return new Promise((resolve, reject) => {
-    if (tokenSymbols.has(tokenAddr)) {
-      resolve(tokenSymbols.get(tokenAddr))
+    if (tokenSymbols.has(tokenContract)) {
+      resolve(tokenSymbols.get(tokenContract))
     } else {
-      const token = app.external(tokenAddr, tokenSymbolAbi)
-      token
+      tokenContract
         .symbol()
         .first()
         .subscribe(symbol => {
-          tokenSymbols.set(tokenAddr, symbol)
+          tokenSymbols.set(tokenContract, symbol)
           resolve(symbol)
         }, reject)
     }
