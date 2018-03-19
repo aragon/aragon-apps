@@ -1,0 +1,44 @@
+{
+  "name": "aragon-token-manager",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@aragon/client": "^1.0.0-beta.1",
+    "@aragon/ui": "^0.5.0",
+    "prop-types": "^15.6.0",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "styled-components": "^3.1.6"
+  },
+  "devDependencies": {
+    "babel-eslint": "^8.0.3",
+    "babel-plugin-styled-components": "^1.5.1",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "eslint": "^4.12.1",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-config-standard-react": "^5.0.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-prettier": "^2.3.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-react": "^7.5.1",
+    "eslint-plugin-standard": "^3.0.1",
+    "parcel-bundler": "^1.6.2",
+    "prettier": "^1.8.2",
+    "react-scripts": "1.0.17"
+  },
+  "scripts": {
+    "lint": "eslint ./src",
+    "sync-assets": "rsync -rtu \"$(dirname $(node -p 'require.resolve(\"@aragon/ui\")'))/\" public/aragon-ui",
+    "start": "npm run sync-assets && npm run build:script -- --no-minify && PORT=3003 react-scripts start",
+    "build": "npm run sync-assets && npm run build:script && react-scripts build",
+    "build:script": "parcel build src/script.js -d public/ -o script.js",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "proxy": "http://localhost:3003"
+}
