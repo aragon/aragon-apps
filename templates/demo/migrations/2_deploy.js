@@ -89,7 +89,7 @@ module.exports = async (deployer, network, accounts) => {
   await Promise.all(
     [0, 1].map(i => {
       const amount = Math.floor(tokenDeposits[i] * Math.random() / 3)
-      const paymentRef = `Payment ${i}`
+      const paymentRef = `Transfer ${i}`
       console.log(`${paymentRef}: payment of ${amount} to ${accounts[1]}`)
     })
   )
