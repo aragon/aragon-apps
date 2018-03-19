@@ -32,6 +32,6 @@ echo "Starting our own testrpc instance at port $testrpc_port"
 start_testrpc
 
 if [ "$TRUFFLE_TEST" = true ]; then
-  truffle test --network rpc
+  truffle test --network rpc "$@"
   kill -9 $testrpc_pid
 fi
