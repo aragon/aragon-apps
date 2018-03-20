@@ -42,7 +42,7 @@ contract('Beta Base Template', accounts => {
 
     context('Democracy Template', async() => {
 
-        let template, tokenAddress, receiptInstance, daoAddress, dao, voting
+        let template, tokenAddress, receiptInstance, daoAddress, voting
         const neededSupport = pct16(50)
         const minimumAcceptanceQuorum = pct16(20)
         const votingTime = 10
@@ -58,7 +58,6 @@ contract('Beta Base Template', accounts => {
             // create Instance
             receiptInstance = await template.newInstance('DemocracyDao', holders, stakes, neededSupport, minimumAcceptanceQuorum, votingTime, { from: owner })
             daoAddress = getEventResult(receiptInstance, 'DeployInstance', 'dao')
-            dao = getContract('Kernel').at(daoAddress)
             // generated Voting app
             const votingProxyAddress = getAppProxy(receiptInstance, appIds[3])
             voting = Voting.at(votingProxyAddress)
@@ -214,7 +213,7 @@ contract('Beta Base Template', accounts => {
 
     context('Multisig Template', async() => {
 
-        let template, tokenAddress, receiptInstance, daoAddress, dao, voting
+        let template, tokenAddress, receiptInstance, daoAddress, voting
         const signers = [holder19, holder31, holder50]
         const neededSignatures = 2
         const multisigSupport = new web3.BigNumber(10 ** 18).times(neededSignatures).dividedToIntegerBy(signers.length)

@@ -66,8 +66,9 @@ module.exports = async (deployer, network, accounts) => {
 
   if (indexObj.networks[network] === undefined)
     indexObj.networks[network] = {}
-  indexObj.networks[network].ens = ens
+  indexObj.networks[network].ens = ens.address
   indexObj.networks[network].templates = ts
+  delete indexObj.templates
   const indexFile = 'module.exports = ' + JSON.stringify(indexObj, null, 2)
   // could also use https://github.com/yeoman/stringify-object if you wanted single quotes
   if (network != 'rpc' && network != 'devnet') {
