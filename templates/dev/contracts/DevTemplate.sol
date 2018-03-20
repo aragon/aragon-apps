@@ -87,7 +87,9 @@ contract DevTemplate {
         InstalledApp(tokenManager, tokenManagerAppId());
 
         // vault permissions
-        acl.createPermission(voting, vault, vault.TRANSFER_ROLE(), msg.sender);
+        acl.createPermission(finance, vault, vault.TRANSFER_ROLE(), this);
+        acl.grantPermission(voting, vault, vault.TRANSFER_ROLE());
+        acl.setPermissionManager(msg.sender, vault, vault.TRANSFER_ROLE());
         InstalledApp(vault, vaultAppId());
 
         // voting permissions
