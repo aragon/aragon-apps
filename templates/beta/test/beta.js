@@ -29,7 +29,8 @@ const getAppProxy = (receipt, id) => receipt.logs.filter(l => l.event == 'Instal
 //const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 
 contract('Beta Base Template', accounts => {
-    let ensFactory, ens, apmFactory, registry, baseDeployed, baseAddrs, daoFactory = {}, etherToken, minimeFac
+    const ETH = '0x0'
+    let ensFactory, ens, apmFactory, registry, baseDeployed, baseAddrs, daoFactory = {}, minimeFac
     let aragonId, daoAddress, tokenAddress
     const ensOwner = accounts[0]
     const apmOwner = accounts[1]
@@ -61,7 +62,6 @@ contract('Beta Base Template', accounts => {
         apmFactory = await getContract('APMRegistryFactory').new(daoFactoryNoReg.address, ...baseAddrs, ens.address, '0x0')
         ens.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonpm'), apmFactory.address, { from: ensOwner })
 
-        etherToken = await getContract('EtherToken').new()
         minimeFac = await getContract('MiniMeTokenFactory').new()
         const publicResolver = getContract('PublicResolver').at(await ens.resolver(namehash('resolver.eth')))
         aragonId = await getContract('FIFSResolvingRegistrar').new(ens.address, publicResolver.address, namehash('aragonid.eth'))
@@ -89,7 +89,7 @@ contract('Beta Base Template', accounts => {
 
         before(async () => {
             // create Democracy Template
-            template = await getContract('DemocracyTemplate').new(daoFactory.address, minimeFac.address, registry.address, etherToken.address, aragonId.address, appIds)
+            template = await getContract('DemocracyTemplate').new(daoFactory.address, minimeFac.address, registry.address, aragonId.address, appIds)
             const holders = [holder19, holder31, holder50]
             const stakes = [19e18, 31e18, 50e18]
             // create Token
@@ -226,16 +226,16 @@ contract('Beta Base Template', accounts => {
                 vault = getContract('Vault').at(vaultProxyAddress)
                 //await logBalances(financeProxyAddress, vaultProxyAddress)
                 // Fund Finance
-                await etherToken.wrapAndCall(financeProxyAddress, "", { value: payment })
+                await finance.sendTransaction({ value: payment })
                 //await logBalances(financeProxyAddress, vaultProxyAddress)
-                const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(etherToken.address, nonHolder, payment, 0, 0, 1, "voting payment") }
+                const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(ETH, nonHolder, payment, 0, 0, 1, "voting payment") }
                 script = encodeCallScript([action])
                 voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: nonHolder }))
             })
 
             it('finance can not be accessed directly (without a vote)', async () => {
                 return assertRevert(async() => {
-                    await finance.newPayment(etherToken.address, nonHolder, 2e16, 0, 0, 1, "voting payment")
+                    await finance.newPayment(ETH, nonHolder, 2e16, 0, 0, 1, "voting payment")
                 })
             })
 
@@ -265,7 +265,7 @@ contract('Beta Base Template', accounts => {
 
         before(async () => {
             // create Democracy Template
-            template = await getContract('MultisigTemplate').new(daoFactory.address, minimeFac.address, registry.address, etherToken.address, aragonId.address, appIds)
+            template = await getContract('MultisigTemplate').new(daoFactory.address, minimeFac.address, registry.address, aragonId.address, appIds)
             // create Token
             const receiptToken = await template.newToken('MultisigToken', 'MTT')
             tokenAddress = getEventResult(receiptToken, 'DeployToken', 'token')
@@ -373,16 +373,16 @@ contract('Beta Base Template', accounts => {
                 vault = getContract('Vault').at(vaultProxyAddress)
                 //await logBalances(financeProxyAddress, vaultProxyAddress)
                 // Fund Finance
-                await etherToken.wrapAndCall(financeProxyAddress, "", { value: payment })
+                await finance.sendTransaction({ value: payment })
                 //await logBalances(financeProxyAddress, vaultProxyAddress)
-                const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(etherToken.address, nonHolder, payment, 0, 0, 1, "voting payment") }
+                const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(ETH, nonHolder, payment, 0, 0, 1, "voting payment") }
                 script = encodeCallScript([action])
                 voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: nonHolder }))
             })
 
             it('finance can not be accessed directly (without a vote)', async () => {
                 return assertRevert(async() => {
-                    await finance.newPayment(etherToken.address, nonHolder, 2e16, 0, 0, 1, "voting payment")
+                    await finance.newPayment(ETH, nonHolder, 2e16, 0, 0, 1, "voting payment")
                 })
             })
 
@@ -398,13 +398,9 @@ contract('Beta Base Template', accounts => {
     })
     const logBalances = async(financeProxyAddress, vaultProxyAddress) => {
         console.log('Owner ETH: ' + await getBalance(accounts[0]))
-        console.log('Owner Ether Token: ' + await etherToken.balanceOf(accounts[0]))
         console.log('Finance ETH: ' + await getBalance(financeProxyAddress))
-        console.log('Finance Ether Token: ' + await etherToken.balanceOf(financeProxyAddress))
         console.log('Vault ETH: ' + await getBalance(vaultProxyAddress))
-        console.log('Vault Ether Token: ' + await etherToken.balanceOf(vaultProxyAddress))
         console.log('Receiver ETH: ' + await getBalance(nonHolder))
-        console.log('Receiver Ether Token: ' + await etherToken.balanceOf(nonHolder))
         console.log('-----------------')
     }
 })

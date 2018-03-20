@@ -8,11 +8,10 @@ contract DemocracyTemplate is BetaTemplateBase {
         DAOFactory _fac,
         MiniMeTokenFactory _minimeFac,
         APMRegistry _apm,
-        EtherToken _etherToken,
         IFIFSResolvingRegistrar _aragonID,
         bytes32[4] _appIds
     )
-        BetaTemplateBase(_fac, _minimeFac, _apm, _etherToken, _aragonID, _appIds)
+        BetaTemplateBase(_fac, _minimeFac, _apm, _aragonID, _appIds)
         public
     {}
 

@@ -15,4 +15,4 @@ node_modules
 lerna-debug.log
 
 # truffle build artifacts
-**/*/build
+*/**/build
