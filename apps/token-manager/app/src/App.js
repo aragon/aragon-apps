@@ -43,7 +43,7 @@ class App extends React.Component {
   handleAssignTokens = ({ amount, recipient }) => {
     const { app } = this.props
     const { tokenDecimalsBase } = this.state
-    app.assign(recipient, amount * tokenDecimalsBase)
+    app.mint(recipient, amount * tokenDecimalsBase)
   }
   handleAppBarLaunchAssignTokens = () => this.handleLaunchAssignTokens()
   handleLaunchAssignTokens = recipient => {
