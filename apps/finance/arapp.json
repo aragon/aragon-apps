@@ -1,26 +1,63 @@
 {
-    "appName": "finance.aragonpm.eth",
-    "version": "1.0.0",
-    "dependencies": [
+  "appName": "finance.aragonpm.eth",
+  "version": "1.0.3",
+  "dependencies": [
+    {
+      "appName": "vault.aragonpm.eth",
+      "version": "^1.0.0",
+      "initParam": "_vault",
+      "state": "vault",
+      "requiredPermissions": [
         {
-            "appName": "vault.aragonpm.eth",
-            "version": "^1.0.0",
-            "initParam": "_vault",
-            "state": "vault",
-            "requiredPermissions": [
-                {
-                    "name": "TRANSFER_ROLE",
-                    "params": "*"
-                }
-            ]
+          "name": "TRANSFER_ROLE",
+          "params": "*"
         }
-    ],
-    "roles": [
-        { "name": "Create new payments", "id": "CREATE_PAYMENTS_ROLE", "params": ["Token address", "Receiver address", "Token amount", "Payment interval", "Max repeats"]},
-        { "name": "Change period duration", "id": "CHANGE_PERIOD_ROLE", "params": ["New period duration", "Old period duration"]},
-        { "name": "Change budgets", "id": "CHANGE_BUDGETS_ROLE", "params": ["Token address", "New budget amount", "Old budget amount"]},
-        { "name": "Execute payments", "id": "EXECUTE_PAYMENTS_ROLE", "params": ["Payment ID"]},
-        { "name": "Disable payments", "id": "DISABLE_PAYMENTS_ROLE", "params": ["Payment ID"] }
-    ],
-    "path": "contracts/Finance.sol"
+      ]
+    }
+  ],
+  "roles": [
+    {
+      "name": "Create new payments",
+      "id": "CREATE_PAYMENTS_ROLE",
+      "params": [
+        "Token address",
+        "Receiver address",
+        "Token amount",
+        "Payment interval",
+        "Max repeats"
+      ]
+    },
+    {
+      "name": "Change period duration",
+      "id": "CHANGE_PERIOD_ROLE",
+      "params": [
+        "New period duration",
+        "Old period duration"
+      ]
+    },
+    {
+      "name": "Change budgets",
+      "id": "CHANGE_BUDGETS_ROLE",
+      "params": [
+        "Token address",
+        "New budget amount",
+        "Old budget amount"
+      ]
+    },
+    {
+      "name": "Execute payments",
+      "id": "EXECUTE_PAYMENTS_ROLE",
+      "params": [
+        "Payment ID"
+      ]
+    },
+    {
+      "name": "Disable payments",
+      "id": "DISABLE_PAYMENTS_ROLE",
+      "params": [
+        "Payment ID"
+      ]
+    }
+  ],
+  "path": "contracts/Finance.sol"
 }
