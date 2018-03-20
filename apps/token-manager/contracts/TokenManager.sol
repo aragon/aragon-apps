@@ -92,7 +92,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Assign `_amount` tokens for `_receiver` from Token Manager's holdings
+    * @notice Assign `_amount` tokens to `_receiver` from Token Manager's holdings
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transfered
     */
@@ -149,7 +149,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Revoke vesting `_vestingId` from `_holder` returning unvested tokens to Token Manager
+    * @notice Revoke vesting `_vestingId` from `_holder`, returning unvested tokens to Token Manager
     * @param _holder Address getting vesting revoked
     * @param _vestingId Numeric id of the vesting
     */
@@ -176,7 +176,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Forward script
+    * @notice Execute desired action as a token holder
     * @dev IForwarder interface conformance. Forwards any token holder action.
     * @param _evmScript script being executed
     */
