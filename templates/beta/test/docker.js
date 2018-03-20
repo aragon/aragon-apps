@@ -21,7 +21,8 @@ const getAppProxy = (receipt, id) => receipt.logs.filter(l => l.event == 'Instal
 
 
 contract('Beta Base Template', accounts => {
-    let etherToken, daoAddress, tokenAddress
+    const ETH = '0x0'
+    let daoAddress, tokenAddress
     let owner = process.env.OWNER //'0x1f7402f55e142820ea3812106d0657103fc1709e'
     const holder19 = accounts[6]
     const holder31 = accounts[7]
@@ -30,7 +31,6 @@ contract('Beta Base Template', accounts => {
     let indexObj = require('../index_local.js')
 
     before(async () => {
-        etherToken = await getContract('EtherToken').new()
         // transfer some ETH to other accounts
         await web3.eth.sendTransaction({ from: owner, to: holder19, value: web3.toWei(1, 'ether') })
         await web3.eth.sendTransaction({ from: owner, to: holder31, value: web3.toWei(1, 'ether') })
@@ -182,30 +182,29 @@ contract('Beta Base Template', accounts => {
                 // generated Vault app
                 vaultProxyAddress = getAppProxy(receiptInstance, appIds[2])
                 vault = getContract('Vault').at(vaultProxyAddress)
+                await vault.initializeConnectors()
                 // Fund Finance
-                await etherToken.wrapAndCall(financeProxyAddress, "", { value: payment, from: owner })
-                const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(etherToken.address, nonHolder, payment, 0, 0, 1, "voting payment") }
+                await finance.sendTransaction({ value: payment, from: owner })
+                const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(ETH, nonHolder, payment, 0, 0, 1, "voting payment") }
                 script = encodeCallScript([action])
                 voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: owner }))
             })
 
             it('finance can not be accessed directly (without a vote)', async () => {
-                let fail = await finance.newPayment(etherToken.address, nonHolder, 2e16, 0, 0, 1, "voting payment")
+                let fail = await finance.newPayment(ETH, nonHolder, 2e16, 0, 0, 1, "voting payment")
                 assert(fail.receipt.status, 0, "It should have thrown")
             })
 
             it('transfers funds if vote is approved', async () => {
-                //const receiverInitialBalance = await getBalance(nonHolder)
-                const receiverInitialBalance = await etherToken.balanceOf(nonHolder)
-                //logBalances(financeProxyAddress, vaultProxyAddress)
+                const receiverInitialBalance = await getBalance(nonHolder)
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
                 await voting.vote(voteId, true, true, { from: holder31 })
                 await voting.vote(voteId, false, true, { from: holder19 })
                 //await timeTravel(votingTime + 1)
                 await sleep(votingTime+1)
                 await voting.executeVote(voteId, {from: owner})
-                //logBalances(financeProxyAddress, vaultProxyAddress)
-                //assert.equal((await getBalance(nonHolder)).toString(), receiverInitialBalance.plus(payment).toString(), 'Receiver didn\'t get the payment')
-                assert.equal((await etherToken.balanceOf(nonHolder)).toString(), receiverInitialBalance.plus(payment).toString(), 'Receiver didn\'t get the payment')
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
+                assert.equal((await getBalance(nonHolder)).toString(), receiverInitialBalance.plus(payment).toString(), 'Receiver didn\'t get the payment')
             })
         })
     })
@@ -323,40 +322,37 @@ contract('Beta Base Template', accounts => {
                 // generated Vault app
                 vaultProxyAddress = getAppProxy(receiptInstance, appIds[2])
                 vault = getContract('Vault').at(vaultProxyAddress)
+                await vault.initializeConnectors()
                 // Fund Finance
-                await etherToken.wrapAndCall(financeProxyAddress, "", { value: payment, from: owner })
-                const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(etherToken.address, nonHolder, payment, 0, 0, 1, "voting payment") }
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
+                await finance.sendTransaction({ value: payment, from: owner })
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
+                const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(ETH, nonHolder, payment, 0, 0, 1, "voting payment") }
                 script = encodeCallScript([action])
                 voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: owner }))
             })
 
             it('finance can not be accessed directly (without a vote)', async () => {
-                let fail = await finance.newPayment(etherToken.address, nonHolder, 2e16, 0, 0, 1, "voting payment")
+                let fail = await finance.newPayment(ETH, nonHolder, 2e16, 0, 0, 1, "voting payment")
                 assert(fail.receipt.status, 0, "It should have thrown")
             })
 
             it('transfers funds if vote is approved', async () => {
-                //const receiverInitialBalance = await getBalance(nonHolder)
-                const receiverInitialBalance = await etherToken.balanceOf(nonHolder)
-                //logBalances(financeProxyAddress, vaultProxyAddress)
+                const receiverInitialBalance = await getBalance(nonHolder)
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
                 await voting.vote(voteId, true, true, { from: holder31 })
                 await voting.vote(voteId, true, true, { from: holder19 })
-                //logBalances(financeProxyAddress, vaultProxyAddress)
-                //assert.equal((await getBalance(nonHolder)).toString(), receiverInitialBalance.plus(payment).toString(), 'Receiver didn\'t get the payment')
-                assert.equal((await etherToken.balanceOf(nonHolder)).toString(), receiverInitialBalance.plus(payment).toString(), 'Receiver didn\'t get the payment')
+                //await logBalances(financeProxyAddress, vaultProxyAddress)
+                assert.equal((await getBalance(nonHolder)).toString(), receiverInitialBalance.plus(payment).toString(), 'Receiver didn\'t get the payment')
             })
         })
     })
 
     const logBalances = async(financeProxyAddress, vaultProxyAddress) => {
         console.log('Owner ETH: ' + await getBalance(owner))
-        console.log('Owner Ether Token: ' + await etherToken.balanceOf(owner))
         console.log('Finance ETH: ' + await getBalance(financeProxyAddress))
-        console.log('Finance Ether Token: ' + await etherToken.balanceOf(financeProxyAddress))
         console.log('Vault ETH: ' + await getBalance(vaultProxyAddress))
-        console.log('Vault Ether Token: ' + await etherToken.balanceOf(vaultProxyAddress))
         console.log('Receiver ETH: ' + await getBalance(nonHolder))
-        console.log('Receiver Ether Token: ' + await etherToken.balanceOf(nonHolder))
         console.log('-----------------')
     }
 
