@@ -16,3 +16,5 @@ lerna-debug.log
 
 # truffle build artifacts
 */**/build
+*/**/abis.json
+*/**/.DS_Store
