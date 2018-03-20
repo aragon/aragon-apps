@@ -17,7 +17,6 @@ cd ../aragon-apps
 cd templates/beta
 npm run deploy:devnet
 
-npm install
 cd node_modules/@aragon/test-helpers
 npm install
 cd ../../../

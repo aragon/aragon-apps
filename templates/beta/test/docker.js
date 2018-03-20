@@ -182,7 +182,6 @@ contract('Beta Base Template', accounts => {
                 // generated Vault app
                 vaultProxyAddress = getAppProxy(receiptInstance, appIds[2])
                 vault = getContract('Vault').at(vaultProxyAddress)
-                await vault.initializeConnectors()
                 // Fund Finance
                 await finance.sendTransaction({ value: payment, from: owner })
                 const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(ETH, nonHolder, payment, 0, 0, 1, "voting payment") }
@@ -322,7 +321,6 @@ contract('Beta Base Template', accounts => {
                 // generated Vault app
                 vaultProxyAddress = getAppProxy(receiptInstance, appIds[2])
                 vault = getContract('Vault').at(vaultProxyAddress)
-                await vault.initializeConnectors()
                 // Fund Finance
                 //await logBalances(financeProxyAddress, vaultProxyAddress)
                 await finance.sendTransaction({ value: payment, from: owner })
