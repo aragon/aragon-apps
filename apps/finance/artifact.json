@@ -1,0 +1,1070 @@
+{
+	"version": "1.0.0",
+	"dependencies": [
+		{
+			"appName": "vault.aragonpm.eth",
+			"version": "^1.0.0",
+			"initParam": "_vault",
+			"state": "vault",
+			"requiredPermissions": [
+				{
+					"name": "TRANSFER_ROLE",
+					"params": "*"
+				}
+			]
+		}
+	],
+	"roles": [
+		{
+			"name": "Create new payments",
+			"id": "CREATE_PAYMENTS_ROLE",
+			"params": [
+				"Token address",
+				"Receiver address",
+				"Token amount",
+				"Payment interval",
+				"Max repeats"
+			],
+			"bytes": "0x5de467a460382d13defdc02aacddc9c7d6605d6d4e0b8bd2f70732cae8ea17bc"
+		},
+		{
+			"name": "Change period duration",
+			"id": "CHANGE_PERIOD_ROLE",
+			"params": [
+				"New period duration",
+				"Old period duration"
+			],
+			"bytes": "0xd35e458bacdd5343c2f050f574554b2f417a8ea38d6a9a65ce2225dbe8bb9a9d"
+		},
+		{
+			"name": "Change budgets",
+			"id": "CHANGE_BUDGETS_ROLE",
+			"params": [
+				"Token address",
+				"New budget amount",
+				"Old budget amount"
+			],
+			"bytes": "0xd79730e82bfef7d2f9639b9d10bf37ebb662b22ae2211502a00bdf7b2cc3a23a"
+		},
+		{
+			"name": "Execute payments",
+			"id": "EXECUTE_PAYMENTS_ROLE",
+			"params": [
+				"Payment ID"
+			],
+			"bytes": "0x563165d3eae48bcb0a092543ca070d989169c98357e9a1b324ec5da44bab75fd"
+		},
+		{
+			"name": "Disable payments",
+			"id": "DISABLE_PAYMENTS_ROLE",
+			"params": [
+				"Payment ID"
+			],
+			"bytes": "0x8d7d2f9e236b86ec9fcb40d8d87dac984e77769036b3c133886929e59c704339"
+		}
+	],
+	"path": "contracts/Finance.sol",
+	"appId": "0xbf8491150dafc5dcaee5b861414dca922de09ccffa344964ae167212e8c673ae",
+	"abi": [
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "CREATE_PAYMENTS_ROLE",
+			"outputs": [
+				{
+					"name": "",
+					"type": "bytes32"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [],
+			"name": "escapeHatch",
+			"outputs": [],
+			"payable": true,
+			"stateMutability": "payable",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_paymentId",
+					"type": "uint256"
+				}
+			],
+			"name": "executePayment",
+			"outputs": [],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_token",
+					"type": "address"
+				}
+			],
+			"name": "removeBudget",
+			"outputs": [],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_token",
+					"type": "address"
+				}
+			],
+			"name": "getBudget",
+			"outputs": [
+				{
+					"name": "budget",
+					"type": "uint256"
+				},
+				{
+					"name": "hasBudget",
+					"type": "bool"
+				},
+				{
+					"name": "remainingBudget",
+					"type": "uint256"
+				}
+			],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "DISABLE_PAYMENTS_ROLE",
+			"outputs": [
+				{
+					"name": "",
+					"type": "bytes32"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [
+				{
+					"name": "_paymentId",
+					"type": "uint256"
+				}
+			],
+			"name": "getPayment",
+			"outputs": [
+				{
+					"name": "token",
+					"type": "address"
+				},
+				{
+					"name": "receiver",
+					"type": "address"
+				},
+				{
+					"name": "amount",
+					"type": "uint256"
+				},
+				{
+					"name": "initialPaymentTime",
+					"type": "uint64"
+				},
+				{
+					"name": "interval",
+					"type": "uint64"
+				},
+				{
+					"name": "maxRepeats",
+					"type": "uint64"
+				},
+				{
+					"name": "reference",
+					"type": "string"
+				},
+				{
+					"name": "disabled",
+					"type": "bool"
+				},
+				{
+					"name": "repeats",
+					"type": "uint256"
+				},
+				{
+					"name": "createdBy",
+					"type": "address"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [
+				{
+					"name": "_transactionId",
+					"type": "uint256"
+				}
+			],
+			"name": "getTransaction",
+			"outputs": [
+				{
+					"name": "periodId",
+					"type": "uint256"
+				},
+				{
+					"name": "amount",
+					"type": "uint256"
+				},
+				{
+					"name": "paymentId",
+					"type": "uint256"
+				},
+				{
+					"name": "token",
+					"type": "address"
+				},
+				{
+					"name": "entity",
+					"type": "address"
+				},
+				{
+					"name": "isIncoming",
+					"type": "bool"
+				},
+				{
+					"name": "date",
+					"type": "uint64"
+				},
+				{
+					"name": "reference",
+					"type": "string"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [
+				{
+					"name": "_periodId",
+					"type": "uint256"
+				},
+				{
+					"name": "_token",
+					"type": "address"
+				}
+			],
+			"name": "getPeriodTokenStatement",
+			"outputs": [
+				{
+					"name": "expenses",
+					"type": "uint256"
+				},
+				{
+					"name": "income",
+					"type": "uint256"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [
+				{
+					"name": "_periodId",
+					"type": "uint256"
+				}
+			],
+			"name": "getPeriod",
+			"outputs": [
+				{
+					"name": "isCurrent",
+					"type": "bool"
+				},
+				{
+					"name": "startTime",
+					"type": "uint64"
+				},
+				{
+					"name": "endTime",
+					"type": "uint64"
+				},
+				{
+					"name": "firstTransactionId",
+					"type": "uint256"
+				},
+				{
+					"name": "lastTransactionId",
+					"type": "uint256"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "CHANGE_PERIOD_ROLE",
+			"outputs": [
+				{
+					"name": "",
+					"type": "bytes32"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "CHANGE_BUDGETS_ROLE",
+			"outputs": [
+				{
+					"name": "",
+					"type": "bytes32"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "EVMSCRIPT_REGISTRY_APP_ID",
+			"outputs": [
+				{
+					"name": "",
+					"type": "bytes32"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_paymentId",
+					"type": "uint256"
+				}
+			],
+			"name": "receiverExecutePayment",
+			"outputs": [],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_periodDuration",
+					"type": "uint64"
+				}
+			],
+			"name": "setPeriodDuration",
+			"outputs": [],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_token",
+					"type": "address"
+				},
+				{
+					"name": "_receiver",
+					"type": "address"
+				},
+				{
+					"name": "_amount",
+					"type": "uint256"
+				},
+				{
+					"name": "_initialPaymentTime",
+					"type": "uint64"
+				},
+				{
+					"name": "_interval",
+					"type": "uint64"
+				},
+				{
+					"name": "_maxRepeats",
+					"type": "uint64"
+				},
+				{
+					"name": "_reference",
+					"type": "string"
+				}
+			],
+			"name": "newPayment",
+			"outputs": [
+				{
+					"name": "paymentId",
+					"type": "uint256"
+				}
+			],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_token",
+					"type": "address"
+				},
+				{
+					"name": "_amount",
+					"type": "uint256"
+				}
+			],
+			"name": "setBudget",
+			"outputs": [],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_vault",
+					"type": "address"
+				},
+				{
+					"name": "_etherToken",
+					"type": "address"
+				},
+				{
+					"name": "_periodDuration",
+					"type": "uint64"
+				}
+			],
+			"name": "initialize",
+			"outputs": [],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "appId",
+			"outputs": [
+				{
+					"name": "",
+					"type": "bytes32"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "getInitializationBlock",
+			"outputs": [
+				{
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_from",
+					"type": "address"
+				},
+				{
+					"name": "_amount",
+					"type": "uint256"
+				},
+				{
+					"name": "_token",
+					"type": "address"
+				},
+				{
+					"name": "_data",
+					"type": "bytes"
+				}
+			],
+			"name": "receiveApproval",
+			"outputs": [],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "EXECUTE_PAYMENTS_ROLE",
+			"outputs": [
+				{
+					"name": "",
+					"type": "bytes32"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "MAX_PERIOD_TRANSITIONS_PER_TX",
+			"outputs": [
+				{
+					"name": "",
+					"type": "uint64"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "currentPeriodId",
+			"outputs": [
+				{
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "EVMSCRIPT_REGISTRY_APP",
+			"outputs": [
+				{
+					"name": "",
+					"type": "bytes32"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [
+				{
+					"name": "_sender",
+					"type": "address"
+				},
+				{
+					"name": "_role",
+					"type": "bytes32"
+				},
+				{
+					"name": "params",
+					"type": "uint256[]"
+				}
+			],
+			"name": "canPerform",
+			"outputs": [
+				{
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_ttl",
+					"type": "uint256"
+				}
+			],
+			"name": "tryTransitionAccountingPeriod",
+			"outputs": [
+				{
+					"name": "success",
+					"type": "bool"
+				}
+			],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "getPeriodDuration",
+			"outputs": [
+				{
+					"name": "periodDuration",
+					"type": "uint64"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "etherToken",
+			"outputs": [
+				{
+					"name": "",
+					"type": "address"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_token",
+					"type": "address"
+				},
+				{
+					"name": "_amount",
+					"type": "uint256"
+				},
+				{
+					"name": "_reference",
+					"type": "string"
+				}
+			],
+			"name": "deposit",
+			"outputs": [],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "from",
+					"type": "address"
+				},
+				{
+					"name": "amount",
+					"type": "uint256"
+				},
+				{
+					"name": "data",
+					"type": "bytes"
+				}
+			],
+			"name": "tokenFallback",
+			"outputs": [
+				{
+					"name": "success",
+					"type": "bool"
+				}
+			],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "MAX_UINT64",
+			"outputs": [
+				{
+					"name": "",
+					"type": "uint64"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [
+				{
+					"name": "_paymentId",
+					"type": "uint256"
+				}
+			],
+			"name": "nextPaymentTime",
+			"outputs": [
+				{
+					"name": "",
+					"type": "uint64"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_paymentId",
+					"type": "uint256"
+				},
+				{
+					"name": "_disabled",
+					"type": "bool"
+				}
+			],
+			"name": "setPaymentDisabled",
+			"outputs": [],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "kernel",
+			"outputs": [
+				{
+					"name": "",
+					"type": "address"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "MAX_UINT",
+			"outputs": [
+				{
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_token",
+					"type": "address"
+				}
+			],
+			"name": "depositToVault",
+			"outputs": [],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "MAX_PAYMENTS_PER_TX",
+			"outputs": [
+				{
+					"name": "",
+					"type": "uint64"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [
+				{
+					"name": "_script",
+					"type": "bytes"
+				}
+			],
+			"name": "getExecutor",
+			"outputs": [
+				{
+					"name": "",
+					"type": "address"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "vault",
+			"outputs": [
+				{
+					"name": "",
+					"type": "address"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"name": "periodId",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"name": "periodStarts",
+					"type": "uint64"
+				},
+				{
+					"indexed": false,
+					"name": "periodEnds",
+					"type": "uint64"
+				}
+			],
+			"name": "NewPeriod",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"name": "token",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"name": "amount",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"name": "hasBudget",
+					"type": "bool"
+				}
+			],
+			"name": "SetBudget",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"name": "paymentId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"name": "recipient",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"name": "maxRepeats",
+					"type": "uint64"
+				}
+			],
+			"name": "NewPayment",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"name": "transactionId",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"name": "incoming",
+					"type": "bool"
+				},
+				{
+					"indexed": true,
+					"name": "entity",
+					"type": "address"
+				}
+			],
+			"name": "NewTransaction",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"name": "paymentId",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"name": "disabled",
+					"type": "bool"
+				}
+			],
+			"name": "ChangePaymentState",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": false,
+					"name": "newDuration",
+					"type": "uint64"
+				}
+			],
+			"name": "ChangePeriodDuration",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": false,
+					"name": "paymentId",
+					"type": "uint256"
+				}
+			],
+			"name": "PaymentFailure",
+			"type": "event"
+		}
+	],
+	"functions": [
+		{
+			"sig": "escapeHatch()",
+			"roles": [],
+			"notice": "Allows to send ETH from this contract to Vault, to avoid locking them in contract forever."
+		},
+		{
+			"sig": "initialize(address)",
+			"roles": [],
+			"notice": "Initialize Finance app for `_vault` with duration `_periodDuration`"
+		},
+		{
+			"sig": "deposit(address,uint256,address)",
+			"roles": [],
+			"notice": "Send `_amount` `_token`"
+		},
+		{
+			"sig": "receiveApproval(address,uint256,address,bytes)",
+			"roles": [],
+			"notice": null
+		},
+		{
+			"sig": "tokenFallback(address,uint256,bytes)",
+			"roles": [],
+			"notice": null
+		},
+		{
+			"sig": "newPayment(address,address,uint256,uint64,uint64,uint64,address)",
+			"roles": [
+				"CREATE_PAYMENTS_ROLE"
+			],
+			"notice": "New payment"
+		},
+		{
+			"sig": "setPeriodDuration(uint64)",
+			"roles": [
+				"CHANGE_PERIOD_ROLE"
+			],
+			"notice": "Change period duration to `_duration`. Will be effective for next accounting period."
+		},
+		{
+			"sig": "setBudget(address,uint256)",
+			"roles": [
+				"CHANGE_BUDGETS_ROLE"
+			],
+			"notice": "Set budget for `_token` to `_amount`. Effective to current accounting period."
+		},
+		{
+			"sig": "removeBudget(address)",
+			"roles": [
+				"CHANGE_BUDGETS_ROLE"
+			],
+			"notice": "Remove budget for `_token`. Will be able to spend entire balance."
+		},
+		{
+			"sig": "executePayment(uint256)",
+			"roles": [
+				"EXECUTE_PAYMENTS_ROLE"
+			],
+			"notice": "Trigger pending withdraw for `_paymentId`"
+		},
+		{
+			"sig": "receiverExecutePayment(uint256)",
+			"roles": [],
+			"notice": "Trigger pending withdraw for `_paymentId`"
+		},
+		{
+			"sig": "setPaymentDisabled(uint256,bool)",
+			"roles": [
+				"DISABLE_PAYMENTS_ROLE"
+			],
+			"notice": "Sets payment `_paymentId` as `_disabled ? 'disabled' : 'enabled'`"
+		},
+		{
+			"sig": "depositToVault(address)",
+			"roles": [],
+			"notice": "Send tokens to Vault"
+		},
+		{
+			"sig": "tryTransitionAccountingPeriod(address,address)",
+			"roles": [],
+			"notice": "Transition accounting period if needed"
+		},
+		{
+			"sig": "getBudget(address)",
+			"roles": [],
+			"notice": null
+		}
+	]
+}
