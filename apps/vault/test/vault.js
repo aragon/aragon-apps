@@ -17,22 +17,8 @@ contract('Vault app', (accounts) => {
   const NO_DETECTION = 2**32 - 1
 
   before(async () => {
-<<<<<<< HEAD
     token = await getContract('SimpleERC20').new()
     token777 = await getContract('SimpleERC777').new()
-=======
-    token = await MiniMeToken.new(NULL_ADDRESS, NULL_ADDRESS, 0, 'N', 0, 'N', true)
-    await token.generateTokens(accounts[0], 200)
-
-    token777 = await getContract('ERC777').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'N', 0, 'N', true)
-    await token777.generateTokens(accounts[0], 200)
-  })
-
-  beforeEach(async () => {
-    vaultBase = await Vault.new()
-    vault = IVaultConnector.at(vaultBase.address)
-    await vaultBase.initializeWithBase(vaultBase.address)
->>>>>>> c134db0... vault: Remove initializeEmpty function
   })
 
   context('Deposits and transfers', async() => {

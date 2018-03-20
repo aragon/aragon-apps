@@ -26,7 +26,7 @@ const newRepo = async (apm, name, acc, contract) => {
 }
 
 module.exports = async (deployer, network, accounts) => {
-  if (network == 'rpc') { // TODO!!
+  if (network == 'rpc' && false) { // TODO!!
     console.log("Local testing network, exiting...")
     return;
   }
