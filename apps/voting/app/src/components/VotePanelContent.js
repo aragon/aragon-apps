@@ -81,7 +81,7 @@ class VotePanelContent extends React.Component {
     }
 
     const { quorum, support, endDate, quorumProgress } = vote
-    const { creator, metadata, nay, totalVoters, yea } = vote.data
+    const { creator, metadata, nay, totalVoters, yea, description } = vote.data
 
     // const creatorName = 'Robert Johnson' // TODO: get creator name
 
@@ -112,21 +112,19 @@ class VotePanelContent extends React.Component {
           </div>
         </SidePanelSplit>
         <Part>
-          <h2>
+          {metadata && (<h2>
             <Label>Question:</Label>
           </h2>
           <p>
             <strong>{metadata}</strong>
-          </p>
-          {/*
-          <h2>
+          </p>)}
+          {description && (<h2>
             <Label>Description:</Label>
           </h2>
           <p>
             Fusce vehicula dolor arcu, sit amet blandit dolor mollis nec. Sed
             sollicitudin ipsum quis nunc sollicitudin ultrices?
-          </p>
-          */}
+          </p>)}
         </Part>
         <SidePanelSeparator />
         <Part>
