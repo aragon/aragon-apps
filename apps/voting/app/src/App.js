@@ -123,7 +123,7 @@ class App extends React.Component {
       ? votes.map(vote => ({
           ...vote,
           support: supportRequired,
-          quorum: safeDiv(vote.data.minAcceptQuorumPct / pctBase),
+          quorum: safeDiv(vote.data.minAcceptQuorum, pctBase),
           endDate: new Date(vote.data.startDate * 1000 + voteTime * 1000),
           quorumProgress: getQuorumProgress(vote.data),
         }))

@@ -153,7 +153,7 @@ function loadVoteSettings() {
 function marshallVote({
   creator,
   executed,
-  minAcceptQuorumPct,
+  minAcceptQuorum,
   nay,
   open,
   snapshotBlock,
@@ -167,7 +167,7 @@ function marshallVote({
     creator,
     executed,
     open,
-    minAcceptQuorumPct: parseInt(minAcceptQuorumPct, 10),
+    minAcceptQuorum: parseInt(minAcceptQuorum, 10),
     nay: parseInt(nay, 10),
     snapshotBlock: parseInt(snapshotBlock, 10),
     startDate: parseInt(startDate, 10),
