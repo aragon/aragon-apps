@@ -1,6 +1,7 @@
 import Aragon from '@aragon/client'
 import { combineLatest } from './rxjs'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
+import { EMPTY_CALLSCRIPT } from './vote-utils'
 
 const app = new Aragon()
 
@@ -60,7 +61,6 @@ async function startVote(state, { voteId }) {
  *                     *
  ***********************/
 
-const EMPTY_CALLSCRIPT = '0x00000001'
 async function loadVoteDescription(vote) {
   if (!vote.script || vote.script === EMPTY_CALLSCRIPT) {
     return vote
