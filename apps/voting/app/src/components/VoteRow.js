@@ -15,9 +15,9 @@ class VoteRow extends React.Component {
   }
   render() {
     const { vote } = this.props
-    const { endDate } = vote
-    const { metadata: question, nay, open, totalVoters, yea } = vote.data
-    const totalVotes = safeDiv((yea + nay) / totalVoters)
+    const { endDate, open } = vote
+    const { metadata: question, nay, totalVoters, yea } = vote.data
+    const totalVotes = safeDiv(yea + nay, totalVoters)
 
     return (
       <TableRow>
@@ -33,13 +33,13 @@ class VoteRow extends React.Component {
             <Bar>
               <ProgressBar
                 type="positive"
-                progress={safeDiv(yea / totalVoters)}
+                progress={safeDiv(yea, totalVoters)}
               />
             </Bar>
             <Bar>
               <ProgressBar
                 type="negative"
-                progress={safeDiv(nay / totalVoters)}
+                progress={safeDiv(nay, totalVoters)}
               />
             </Bar>
           </BarsGroup>
