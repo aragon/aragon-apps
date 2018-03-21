@@ -132,7 +132,16 @@ function loadVoteSettings() {
           app
             .call(name)
             .first()
-            .map(val => (type === 'number' ? parseInt(val, 10) : val))
+            .map(val => {
+              if (type === 'number') {
+                return parseInt(val, 10)
+              }
+              if (type === 'time') {
+                // Adjust for js time (in ms vs s)
+                return parseInt(val, 10) * 1000
+              }
+              return val
+            })
             .subscribe(value => {
               resolve({ [key]: value })
             }, reject)
@@ -169,7 +178,7 @@ function marshallVote({
     minAcceptQuorum: parseInt(minAcceptQuorum, 10),
     nay: parseInt(nay, 10),
     snapshotBlock: parseInt(snapshotBlock, 10),
-    startDate: parseInt(startDate, 10),
+    startDate: parseInt(startDate, 10) * 1000, // adjust for js time (in ms vs s)
     totalVoters: parseInt(totalVoters, 10),
     yea: parseInt(yea, 10),
     script,
