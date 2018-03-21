@@ -68,14 +68,13 @@ async function loadVoteDescription(vote) {
 
   const path = await app.describeScript(vote.script).toPromise()
 
-  vote.description = path.map((step) => {
-    let app = `${step.to}`
-    if (step.name) {
-      app = `${step.name} (${step.to})`
-    }
+  vote.description = path
+    .map(step => {
+      const app = step.name ? `${step.name} (${step.to})` : `${step.to}`
 
-    return `${app}: ${step.description || 'No description'}`
-  }).join('\n')
+      return `${app}: ${step.description || 'No description'}`
+    })
+    .join('\n')
 
   return vote
 }
@@ -88,13 +87,12 @@ function loadVoteData(voteId) {
     )
       .first()
       .subscribe(([vote, metadata]) => {
-        loadVoteDescription(vote)
-          .then((vote) => {
-            resolve({
-              ...marshallVote(vote),
-              metadata,
-            })
+        loadVoteDescription(vote).then(vote => {
+          resolve({
+            ...marshallVote(vote),
+            metadata,
           })
+        })
       })
   })
 }
