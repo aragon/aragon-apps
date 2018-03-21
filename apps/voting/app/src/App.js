@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { isBefore } from 'date-fns/esm'
 import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
@@ -120,13 +121,18 @@ class App extends React.Component {
 
     // Add useful properties to the votes
     const preparedVotes = displayVotes
-      ? votes.map(vote => ({
-          ...vote,
-          support: supportRequired,
-          quorum: safeDiv(vote.data.minAcceptQuorum, pctBase),
-          endDate: new Date(vote.data.startDate * 1000 + voteTime * 1000),
-          quorumProgress: getQuorumProgress(vote.data),
-        }))
+      ? votes.map(vote => {
+          const endDate = new Date(vote.data.startDate * 1000 + voteTime * 1000)
+          return {
+            ...vote,
+            endDate,
+            // Either not executed or now is still before end date
+            open: !vote.data.executed || isBefore(new Date(), endDate),
+            quorum: safeDiv(vote.data.minAcceptQuorum, pctBase),
+            quorumProgress: getQuorumProgress(vote.data),
+            support: supportRequired,
+          }
+        })
       : votes
 
     const currentVote =
@@ -164,9 +170,7 @@ class App extends React.Component {
         {displayVotes && (
           <SidePanel
             title={
-              currentVote && currentVote.data.open
-                ? 'Opened Vote'
-                : 'Closed Vote'
+              currentVote && currentVote.open ? 'Opened Vote' : 'Closed Vote'
             }
             opened={Boolean(!createVoteVisible && voteVisible)}
             onClose={this.handleVoteClose}

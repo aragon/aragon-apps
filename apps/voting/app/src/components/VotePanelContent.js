@@ -89,7 +89,7 @@ class VotePanelContent extends React.Component {
       return null
     }
 
-    const { quorum, support, endDate, quorumProgress } = vote
+    const { endDate, open, quorum, quorumProgress, support } = vote
     const { creator, metadata, nay, totalVoters, yea, description } = vote.data
 
     // const creatorName = 'Robert Johnson' // TODO: get creator name
@@ -99,10 +99,10 @@ class VotePanelContent extends React.Component {
         <SidePanelSplit>
           <div>
             <h2>
-              <Label>{vote.open ? 'Time Remaining:' : 'Status'}</Label>
+              <Label>{open ? 'Time Remaining:' : 'Status'}</Label>
             </h2>
             <div>
-              {vote.open ? (
+              {open ? (
                 <Countdown end={endDate} />
               ) : (
                 <VoteStatus
