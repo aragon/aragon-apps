@@ -122,12 +122,12 @@ class App extends React.Component {
     // Add useful properties to the votes
     const preparedVotes = displayVotes
       ? votes.map(vote => {
-          const endDate = new Date(vote.data.startDate * 1000 + voteTime * 1000)
+          const endDate = new Date(vote.data.startDate + voteTime)
           return {
             ...vote,
             endDate,
-            // Either not executed or now is still before end date
-            open: !vote.data.executed || isBefore(new Date(), endDate),
+            // Open if not executed and now is still before end date
+            open: !vote.data.executed && isBefore(new Date(), endDate),
             quorum: safeDiv(vote.data.minAcceptQuorum, pctBase),
             quorumProgress: getQuorumProgress(vote.data),
             support: supportRequired,
