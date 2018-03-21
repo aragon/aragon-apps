@@ -1,5 +1,6 @@
 import Aragon from '@aragon/client'
 import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
+import { addressesEqual } from './web3-utils'
 import tokenAbi from './abi/minimeToken.json'
 
 const app = new Aragon()
@@ -37,10 +38,10 @@ async function createStore(token, tokenAddr) {
           : {}),
       }
 
-      if (address === tokenAddr) {
+      if (addressesEqual(address, tokenAddr)) {
         switch (event) {
           case 'ClaimedTokens':
-            if (returnValues._token === tokenAddr) {
+            if (addressesEqual(returnValues._token, tokenAddr)) {
               nextState = await claimedTokens(token, nextState, returnValues)
             }
             break
@@ -104,7 +105,7 @@ function updateState(state, changes) {
 
 function updateHolders(holders, changed) {
   const holderIndex = holders.findIndex(
-    holder => holder.address === changed.address
+    holder => addressesEqual(holder.address, changed.address)
   )
 
   if (holderIndex === -1) {

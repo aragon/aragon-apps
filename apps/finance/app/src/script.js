@@ -1,6 +1,7 @@
 import Aragon from '@aragon/client'
 import financeSettings, { hasLoadedFinanceSettings } from './finance-settings'
 import { testTokenAddresses } from './testnet'
+import { addressesEqual } from './web3-utils'
 import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
@@ -74,8 +75,8 @@ async function updateBalances(
     : app.external(tokenAddress, tokenAbi)
   tokenContracts.set(tokenAddress, tokenContract)
 
-  const balancesIndex = balances.findIndex(
-    ({ address }) => address === tokenAddress
+  const balancesIndex = balances.findIndex(({ address }) =>
+    addressesEqual(address, tokenAddress)
   )
   if (balancesIndex === -1) {
     return balances.concat(
