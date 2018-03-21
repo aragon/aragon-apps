@@ -15,10 +15,12 @@ class Holders extends React.Component {
       tokenDecimalsBase,
       tokenSupply,
     } = this.props
-    const groupMode =
+    const singleHolder = holders.length === 1 && holders[0].balance !== 1
+    const sameBalances =
       holders.length > 0 &&
       holders[0].balance > 0 &&
       holders.every(({ balance }) => balance === holders[0].balance)
+    const groupMode = sameBalances && !singleHolder
     return (
       <TwoPanels>
         <Main>
