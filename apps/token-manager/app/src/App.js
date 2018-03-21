@@ -44,6 +44,7 @@ class App extends React.Component {
     const { app } = this.props
     const { tokenDecimalsBase } = this.state
     app.mint(recipient, amount * tokenDecimalsBase)
+    this.handleSidepanelClose()
   }
   handleAppBarLaunchAssignTokens = () => this.handleLaunchAssignTokens()
   handleLaunchAssignTokens = recipient => {
