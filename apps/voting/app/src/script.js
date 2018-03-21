@@ -1,5 +1,5 @@
 import Aragon from '@aragon/client'
-import { combineLatest } from 'rxjs/observable/combineLatest'
+import { combineLatest } from './rxjs'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
 
 const app = new Aragon()
