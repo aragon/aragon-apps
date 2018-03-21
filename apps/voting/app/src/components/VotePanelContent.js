@@ -73,6 +73,15 @@ class VotePanelContent extends React.Component {
         })
     }
   }
+  renderDescription = (description = '') => {
+    // Make '\n's real breaks
+    return description.split('\n').map((line, i) => (
+      <React.Fragment key={i}>
+        {line}
+        <br />
+      </React.Fragment>
+    ))
+  }
   render() {
     const { network: { etherscanBaseUrl }, vote, ready } = this.props
     const { userBalance, userCanVote } = this.state
@@ -127,7 +136,7 @@ class VotePanelContent extends React.Component {
               <h2>
                 <Label>Description:</Label>
               </h2>
-              <p>{description}</p>
+              <p>{this.renderDescription(description)}</p>
             </React.Fragment>
           )}
         </Part>
