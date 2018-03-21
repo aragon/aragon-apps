@@ -74,7 +74,15 @@ async function claimedTokens(token, state, { _token, _controller }) {
 
 async function transfer(token, state, { _from, _to }) {
   const changes = await loadNewBalances(token, _from, _to)
-  return updateState(state, changes)
+  // The transfer may have increased the token's total supply, so let's refresh it
+  const tokenSupply = await loadTokenSupply(token)
+  return updateState(
+    {
+      ...state,
+      tokenSupply,
+    },
+    changes
+  )
 }
 
 /***********************
@@ -130,6 +138,16 @@ function loadNewBalances(token, ...addresses) {
     // TODO: ideally, this would actually cause the UI to show "unknown" for the address
     return {}
   })
+}
+
+function loadTokenSupply(token) {
+  return new Promise((resolve, reject) =>
+    token
+      .totalSupply()
+      .first()
+      .map(totalSupply => parseInt(totalSupply, 10))
+      .subscribe(resolve, reject)
+  )
 }
 
 function loadTokenSettings(token) {
