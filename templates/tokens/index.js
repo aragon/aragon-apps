@@ -1,6 +1,7 @@
 module.exports = {
   rinkeby: {
     factory: '0xff4E0FE747f999a07AB03eBf3c8B3B5232Ef2350',
+    depositer: '0x39a4d265db942361d92e2b0039cae73ea72a2ff9',
     tokens: [
       '0x0d5263b7969144a852d58505602f630f9b20239d',
       '0x6142214d83670226872d51e935fb57bec8832a60',
