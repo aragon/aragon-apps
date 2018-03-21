@@ -66,19 +66,19 @@ async function newTransaction(state, { transactionId }, { transactionHash }) {
 
 async function updateBalances(
   { balances = [], vaultAddress },
-  { token: tokenAddr }
+  { token: tokenAddress }
 ) {
-  const tokenContract = tokenContracts.has(tokenAddr)
-    ? tokenContracts.get(tokenAddr)
-    : app.external(tokenAddr, tokenAbi)
-  tokenContracts.set(tokenAddr, tokenContract)
+  const tokenContract = tokenContracts.has(tokenAddress)
+    ? tokenContracts.get(tokenAddress)
+    : app.external(tokenAddress, tokenAbi)
+  tokenContracts.set(tokenAddress, tokenContract)
 
   const balancesIndex = balances.findIndex(
-    ({ address }) => address === tokenAddr
+    ({ address }) => address === tokenAddress
   )
   if (balancesIndex === -1) {
     return balances.concat(
-      await makeNewBalanceToken(tokenContract, tokenAddr, vaultAddress)
+      await makeNewBalanceToken(tokenContract, tokenAddress, vaultAddress)
     )
   } else {
     const newBalances = Array.from(balances)
@@ -103,9 +103,9 @@ function updateTransactions({ transactions = [] }, transactionDetails) {
   }
 }
 
-async function makeNewBalanceToken(tokenContract, tokenAddr, vaultAddr) {
+async function makeNewBalanceToken(tokenContract, tokenAddress, vaultAddress) {
   const [balance, decimals, symbol] = await Promise.all([
-    loadTokenBalance(tokenContract, vaultAddr),
+    loadTokenBalance(tokenContract, vaultAddress),
     loadTokenDecimals(tokenContract),
     loadTokenSymbol(tokenContract),
   ])
@@ -113,19 +113,19 @@ async function makeNewBalanceToken(tokenContract, tokenAddr, vaultAddr) {
   return {
     decimals,
     symbol,
-    address: tokenAddr,
+    address: tokenAddress,
     amount: balance,
   }
 }
 
-function loadTokenBalance(tokenContract, vaultAddr) {
+function loadTokenBalance(tokenContract, vaultAddress) {
   return new Promise((resolve, reject) => {
-    if (!vaultAddr) {
+    if (!vaultAddress) {
       // No vault address yet, so leave it as unknown
       resolve(-1)
     } else {
       tokenContract
-        .balanceOf(vaultAddr)
+        .balanceOf(vaultAddress)
         .first()
         .map(val => parseInt(val, 10))
         .subscribe(resolve, reject)
