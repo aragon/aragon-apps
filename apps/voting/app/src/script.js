@@ -106,12 +106,12 @@ async function updateState(state, voteId, transform) {
 function loadVoteSettings() {
   return Promise.all(
     voteSettings.map(
-      ([name, key]) =>
+      ([name, key, type = 'string']) =>
         new Promise((resolve, reject) =>
           app
             .call(name)
             .first()
-            .map(val => parseInt(val, 10))
+            .map(val => (type === 'number' ? parseInt(val, 10) : val))
             .subscribe(value => {
               resolve({ [key]: value })
             }, reject)
