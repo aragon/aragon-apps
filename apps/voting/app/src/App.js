@@ -12,9 +12,8 @@ import { networkContextType } from './utils/provideNetwork'
 import { safeDiv } from './math-utils'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
-import { getQuorumProgress } from './vote-utils'
+import { EMPTY_CALLSCRIPT, getQuorumProgress } from './vote-utils'
 
-const EMPTY_CALLSCRIPT = '0x00000001'
 const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi)
 
 class App extends React.Component {
