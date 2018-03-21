@@ -74,7 +74,11 @@ class TransferRow extends React.Component {
             </SafeLink>
           </TextOverflow>
         </NoWrapCell>
-        <NoWrapCell>{reference}</NoWrapCell>
+        <NoWrapCell title={reference} style={{ position: 'relative' }}>
+          <TextOverflow style={{ position: 'absolute', left: '0', right: '0' }}>
+            {reference}
+          </TextOverflow>
+        </NoWrapCell>
         <NoWrapCell align="right">
           <Amount positive={amount > 0}>
             {formattedAmount} {symbol}
