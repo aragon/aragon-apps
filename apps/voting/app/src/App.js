@@ -9,6 +9,7 @@ import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
 import AppLayout from './components/AppLayout'
 import { networkContextType } from './utils/provideNetwork'
+import { safeDiv } from './math-utils'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
 import { getQuorumProgress } from './vote-utils'
@@ -123,7 +124,7 @@ class App extends React.Component {
       ? votes.map(vote => ({
           ...vote,
           support: supportRequired,
-          quorum: vote.data.minAcceptQuorumPct / pctBase,
+          quorum: safeDiv(vote.data.minAcceptQuorumPct / pctBase),
           endDate: new Date(vote.data.startDate * 1000 + voteTime * 1000),
           quorumProgress: getQuorumProgress(vote.data),
         }))
