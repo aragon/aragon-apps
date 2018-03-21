@@ -74,6 +74,20 @@
     {
       "constant": true,
       "inputs": [],
+      "name": "etherToken",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
       "name": "apm",
       "outputs": [
         {
@@ -163,6 +177,10 @@
         },
         {
           "name": "_apm",
+          "type": "address"
+        },
+        {
+          "name": "_etherToken",
           "type": "address"
         },
         {
@@ -293,6 +311,20 @@
     {
       "constant": true,
       "inputs": [],
+      "name": "etherToken",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
       "name": "apm",
       "outputs": [
         {
@@ -382,6 +414,10 @@
         },
         {
           "name": "_apm",
+          "type": "address"
+        },
+        {
+          "name": "_etherToken",
           "type": "address"
         },
         {
