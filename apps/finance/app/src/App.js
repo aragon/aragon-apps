@@ -35,7 +35,7 @@ class App extends React.Component {
     this.setState({ newTransferOpened: false })
   }
   handleSubmitTransfer = (
-    { address: tokenAddress },
+    { decimals, address: tokenAddress },
     recipient,
     amount,
     reference
@@ -44,7 +44,7 @@ class App extends React.Component {
     this.props.app.newPayment(
       tokenAddress,
       recipient,
-      amount,
+      amount * Math.pow(10, decimals),
       0, // initial payment time
       0, // interval
       1, // max repeats
