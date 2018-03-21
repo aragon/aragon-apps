@@ -84,10 +84,13 @@ class Transfers extends React.Component {
       selectedTransferType,
     })
     const symbols = tokens.map(({ symbol }) => symbol)
-    const tokenDecimals = tokens.reduce(
-      (tokenDecimals, { address, decimals }) => {
-        tokenDecimals[address] = decimals
-        return tokenDecimals
+    const tokenDetails = tokens.reduce(
+      (details, { address, decimals, symbol }) => {
+        details[address] = {
+          decimals,
+          symbol,
+        }
+        return details
       },
       {}
     )
@@ -144,7 +147,7 @@ class Transfers extends React.Component {
                 .map(transfer => (
                   <TransferRow
                     key={transfer.transactionHash}
-                    decimals={tokenDecimals[transfer.token]}
+                    {...tokenDetails[transfer.token]}
                     {...transfer}
                   />
                 ))}
