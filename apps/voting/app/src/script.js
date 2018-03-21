@@ -60,6 +60,26 @@ async function startVote(state, { voteId }) {
  *                     *
  ***********************/
 
+const EMPTY_CALLSCRIPT = '0x00000001'
+async function loadVoteDescription(vote) {
+  if (!vote.script || vote.script === EMPTY_CALLSCRIPT) {
+    return vote
+  }
+
+  const path = await app.describeScript(vote.script).toPromise()
+
+  vote.description = path.map((step) => {
+    let app = `${step.to}`
+    if (step.name) {
+      app = `${step.name} (${step.to})`
+    }
+
+    return `${app}: ${step.description || 'No description'}`
+  }).join('\n')
+
+  return vote
+}
+
 function loadVoteData(voteId) {
   return new Promise(resolve => {
     combineLatest(
@@ -68,10 +88,13 @@ function loadVoteData(voteId) {
     )
       .first()
       .subscribe(([vote, metadata]) => {
-        resolve({
-          ...marshallVote(vote),
-          metadata,
-        })
+        loadVoteDescription(vote)
+          .then((vote) => {
+            resolve({
+              ...marshallVote(vote),
+              metadata,
+            })
+          })
       })
   })
 }
@@ -139,6 +162,8 @@ function marshallVote({
   startDate,
   totalVoters,
   yea,
+  script,
+  description,
 }) {
   return {
     creator,
@@ -150,5 +175,7 @@ function marshallVote({
     startDate: parseInt(startDate, 10),
     totalVoters: parseInt(totalVoters, 10),
     yea: parseInt(yea, 10),
+    script,
+    description,
   }
 }
