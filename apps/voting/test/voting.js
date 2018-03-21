@@ -7,13 +7,13 @@ const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScri
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const Voting = artifacts.require('Voting')
-const MiniMeToken = artifacts.require('@aragon/core/contracts/common/MiniMeToken')
-const DAOFactory = artifacts.require('@aragon/core/contracts/factory/DAOFactory')
-const EVMScriptRegistryFactory = artifacts.require('@aragon/core/contracts/factory/EVMScriptRegistryFactory')
-const ACL = artifacts.require('@aragon/core/contracts/acl/ACL')
-const Kernel = artifacts.require('@aragon/core/contracts/kernel/Kernel')
+const MiniMeToken = artifacts.require('@aragon/os/contracts/lib/minime/MiniMeToken')
+const DAOFactory = artifacts.require('@aragon/os/contracts/factory/DAOFactory')
+const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory/EVMScriptRegistryFactory')
+const ACL = artifacts.require('@aragon/os/contracts/acl/ACL')
+const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel')
 
-
+const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
 const createdVoteId = receipt => receipt.logs.filter(x => x.event == 'StartVote')[0].args.voteId
 
@@ -32,8 +32,10 @@ contract('Voting App', accounts => {
     const root = accounts[0]
 
     before(async () => {
+        const kernelBase = await getContract('Kernel').new()
+        const aclBase = await getContract('ACL').new()
         const regFact = await EVMScriptRegistryFactory.new()
-        daoFact = await DAOFactory.new(regFact.address)
+        daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
     })
 
     beforeEach(async () => {

@@ -13,18 +13,22 @@ const EVMScriptRegistryFactory = artifacts.require('@aragon/core/contracts/facto
 const ACL = artifacts.require('@aragon/core/contracts/acl/ACL')
 const Kernel = artifacts.require('@aragon/core/contracts/kernel/Kernel')
 
+const getContract = name => artifacts.require(name)
+
 const n = '0x00'
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 
 contract('Token Manager', accounts => {
-    let tokenManager, token = {}
+    let daoFact, tokenManager, token = {}
 
     const root = accounts[0]
     const holder = accounts[1]
 
     before(async () => {
+        const kernelBase = await getContract('Kernel').new()
+        const aclBase = await getContract('ACL').new()
         const regFact = await EVMScriptRegistryFactory.new()
-        daoFact = await DAOFactory.new(regFact.address)
+        daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
     })
 
     beforeEach(async () => {
