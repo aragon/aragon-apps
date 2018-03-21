@@ -73,6 +73,15 @@ class VotePanelContent extends React.Component {
         })
     }
   }
+  renderDescription = (description = '') => {
+    // Make '\n's real breaks
+    return description.split('\n').map((line, i) => (
+      <React.Fragment key={i}>
+        {line}
+        <br />
+      </React.Fragment>
+    ))
+  }
   render() {
     const { network: { etherscanBaseUrl }, vote, ready } = this.props
     const { userBalance, userCanVote } = this.state
@@ -81,7 +90,7 @@ class VotePanelContent extends React.Component {
     }
 
     const { quorum, support, endDate, quorumProgress } = vote
-    const { creator, metadata, nay, totalVoters, yea } = vote.data
+    const { creator, metadata, nay, totalVoters, yea, description } = vote.data
 
     // const creatorName = 'Robert Johnson' // TODO: get creator name
 
@@ -112,21 +121,24 @@ class VotePanelContent extends React.Component {
           </div>
         </SidePanelSplit>
         <Part>
-          <h2>
-            <Label>Question:</Label>
-          </h2>
-          <p>
-            <strong>{metadata}</strong>
-          </p>
-          {/*
-          <h2>
-            <Label>Description:</Label>
-          </h2>
-          <p>
-            Fusce vehicula dolor arcu, sit amet blandit dolor mollis nec. Sed
-            sollicitudin ipsum quis nunc sollicitudin ultrices?
-          </p>
-          */}
+          {metadata && (
+            <React.Fragment>
+              <h2>
+                <Label>Question:</Label>
+              </h2>
+              <p>
+                <strong>{metadata}</strong>
+              </p>
+            </React.Fragment>
+          )}
+          {description && (
+            <React.Fragment>
+              <h2>
+                <Label>Description:</Label>
+              </h2>
+              <p>{this.renderDescription(description)}</p>
+            </React.Fragment>
+          )}
         </Part>
         <SidePanelSeparator />
         <Part>

@@ -1,6 +1,7 @@
 import Aragon from '@aragon/client'
 import { combineLatest } from './rxjs'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
+import { EMPTY_CALLSCRIPT } from './vote-utils'
 
 const app = new Aragon()
 
@@ -60,6 +61,24 @@ async function startVote(state, { voteId }) {
  *                     *
  ***********************/
 
+async function loadVoteDescription(vote) {
+  if (!vote.script || vote.script === EMPTY_CALLSCRIPT) {
+    return vote
+  }
+
+  const path = await app.describeScript(vote.script).toPromise()
+
+  vote.description = path
+    .map(step => {
+      const app = step.name ? `${step.name} (${step.to})` : `${step.to}`
+
+      return `${app}: ${step.description || 'No description'}`
+    })
+    .join('\n')
+
+  return vote
+}
+
 function loadVoteData(voteId) {
   return new Promise(resolve => {
     combineLatest(
@@ -68,9 +87,11 @@ function loadVoteData(voteId) {
     )
       .first()
       .subscribe(([vote, metadata]) => {
-        resolve({
-          ...marshallVote(vote),
-          metadata,
+        loadVoteDescription(vote).then(vote => {
+          resolve({
+            ...marshallVote(vote),
+            metadata,
+          })
         })
       })
   })
@@ -139,6 +160,8 @@ function marshallVote({
   startDate,
   totalVoters,
   yea,
+  script,
+  description,
 }) {
   return {
     creator,
@@ -150,5 +173,7 @@ function marshallVote({
     startDate: parseInt(startDate, 10),
     totalVoters: parseInt(totalVoters, 10),
     yea: parseInt(yea, 10),
+    script,
+    description,
   }
 }
