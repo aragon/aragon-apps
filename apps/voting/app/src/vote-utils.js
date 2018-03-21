@@ -30,4 +30,4 @@ export const getVoteStatus = (vote, support, quorum) => {
 }
 
 export const getQuorumProgress = ({ yea, totalVoters }) =>
-  safeDiv(yea / totalVoters)
+  safeDiv(yea, totalVoters)

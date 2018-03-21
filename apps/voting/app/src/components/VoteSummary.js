@@ -18,11 +18,11 @@ const VoteSummary = ({
   ready,
 }) => {
   const totalVotes = votesYea + votesNay
-  const votesYeaPct = safeDiv(votesYea / tokenSupply)
-  const votesNayPct = safeDiv(votesNay / tokenSupply)
+  const votesYeaPct = safeDiv(votesYea, tokenSupply)
+  const votesNayPct = safeDiv(votesNay, tokenSupply)
 
-  const votesYeaVotersPct = safeDiv(votesYea / totalVotes)
-  const votesNayVotersPct = safeDiv(votesNay / totalVotes)
+  const votesYeaVotersPct = safeDiv(votesYea, totalVotes)
+  const votesNayVotersPct = safeDiv(votesNay, totalVotes)
 
   return (
     <Motion
