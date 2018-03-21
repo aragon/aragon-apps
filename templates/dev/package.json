@@ -24,7 +24,7 @@
   "dependencies": {
     "@aragon/apps-finance": "^1.0.0",
     "@aragon/apps-token-manager": "^1.0.0",
-    "@aragon/apps-vault": "^2.0.0",
+    "@aragon/apps-vault": "^2.0.1",
     "@aragon/apps-voting": "^1.0.0",
     "@aragon/os": "^3.1.1",
     "eth-ens-namehash": "^2.0.8"

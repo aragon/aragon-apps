@@ -17,6 +17,6 @@
   },
   "dependencies": {
     "@aragon/apps-finance": "^1.0.1",
-    "@aragon/apps-vault": "^2.0.0"
+    "@aragon/apps-vault": "^2.0.1"
   }
 }
