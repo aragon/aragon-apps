@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { Motion, spring } from 'react-motion'
 import { SidePanel, Text, theme, spring as springConf } from '@aragon/ui'
+import { safeDiv } from '../math-utils'
 
 const { PANEL_INNER_WIDTH } = SidePanel
 
@@ -17,11 +18,11 @@ const VoteSummary = ({
   ready,
 }) => {
   const totalVotes = votesYea + votesNay
-  const votesYeaPct = votesYea / tokenSupply
-  const votesNayPct = votesNay / tokenSupply
+  const votesYeaPct = safeDiv(votesYea / tokenSupply)
+  const votesNayPct = safeDiv(votesNay / tokenSupply)
 
-  const votesYeaVotersPct = votesYea / totalVotes
-  const votesNayVotersPct = votesNay / totalVotes
+  const votesYeaVotersPct = safeDiv(votesYea / totalVotes)
+  const votesNayVotersPct = safeDiv(votesNay / totalVotes)
 
   return (
     <Motion
@@ -45,7 +46,7 @@ const VoteSummary = ({
               style={{
                 transform: `
                 translateX(${PANEL_INNER_WIDTH * quorum * progress}px)
-                scaleY(${quorum ? quorum * progress / quorum : 0})
+                scaleY(${quorum ? progress : 0})
               `,
               }}
             />

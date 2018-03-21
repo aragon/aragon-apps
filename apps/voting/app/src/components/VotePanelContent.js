@@ -1,28 +1,81 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import Blockies from 'react-blockies'
 import {
   Button,
   Info,
+  SafeLink,
   SidePanelSplit,
   SidePanelSeparator,
   Countdown,
   Text,
   theme,
 } from '@aragon/ui'
-import { VOTE_ABSENT, VOTE_NAY, VOTE_YEA } from '../vote-types'
+import { combineLatest } from '../rxjs'
+import provideNetwork from '../utils/provideNetwork'
+import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import VoteSummary from './VoteSummary'
 import VoteStatus from './VoteStatus'
 
 class VotePanelContent extends React.Component {
+  static propTypes = {
+    app: PropTypes.object.isRequired,
+  }
+  state = {
+    userCanVote: false,
+    userBalance: null,
+  }
+  componentDidMount() {
+    this.loadUserCanVote()
+    this.loadUserBalance()
+  }
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.user !== this.props.user) {
+      this.loadUserCanVote()
+    }
+    if (nextProps.tokenContract !== this.props.tokenContract) {
+      this.loadUserBalance()
+    }
+  }
   handleNoClick = () => {
     this.props.onVote(this.props.vote.voteId, VOTE_NAY)
   }
   handleYesClick = () => {
     this.props.onVote(this.props.vote.voteId, VOTE_YEA)
   }
+  loadUserBalance = () => {
+    const { tokenContract, user } = this.props
+    if (tokenContract && user) {
+      combineLatest(tokenContract.balanceOf(user), tokenContract.decimals())
+        .first()
+        .subscribe(([balance, decimals]) => {
+          const adjustedBalance = Math.floor(
+            parseInt(balance, 10) / Math.pow(10, decimals)
+          )
+          this.setState({
+            userBalance: adjustedBalance,
+          })
+        })
+    }
+  }
+  loadUserCanVote = () => {
+    const { app, user, vote } = this.props
+    if (user && vote) {
+      // Get if user can vote
+      app
+        .call('canVote', vote.voteId, user)
+        .first()
+        .subscribe(canVote => {
+          this.setState({
+            userCanVote: canVote,
+          })
+        })
+    }
+  }
   render() {
-    const { vote, user, ready } = this.props
+    const { network: { etherscanBaseUrl }, vote, ready } = this.props
+    const { userBalance, userCanVote } = this.state
     if (!vote) {
       return null
     }
@@ -30,8 +83,7 @@ class VotePanelContent extends React.Component {
     const { quorum, support, endDate, quorumProgress } = vote
     const { creator, metadata, nay, totalVoters, yea } = vote.data
 
-    const creatorName = 'Robert Johnson' // TODO: get creator name
-    const accountVote = VOTE_ABSENT // TODO: detect if the current account voted
+    // const creatorName = 'Robert Johnson' // TODO: get creator name
 
     return (
       <div>
@@ -66,6 +118,7 @@ class VotePanelContent extends React.Component {
           <p>
             <strong>{metadata}</strong>
           </p>
+          {/*
           <h2>
             <Label>Description:</Label>
           </h2>
@@ -73,6 +126,7 @@ class VotePanelContent extends React.Component {
             Fusce vehicula dolor arcu, sit amet blandit dolor mollis nec. Sed
             sollicitudin ipsum quis nunc sollicitudin ultrices?
           </p>
+          */}
         </Part>
         <SidePanelSeparator />
         <Part>
@@ -84,16 +138,16 @@ class VotePanelContent extends React.Component {
               <Blockies seed={creator} size={8} />
             </CreatorImg>
             <div>
-              <p>
+              {/* <p>
                 <strong>{creatorName}</strong>
-              </p>
+              </p> */}
               <p>
-                <a
-                  href={`https://etherscan.io/address/${creator}`}
+                <SafeLink
+                  href={`${etherscanBaseUrl}/address/${creator}`}
                   target="_blank"
                 >
                   {creator}
-                </a>
+                </SafeLink>
               </p>
             </div>
           </Creator>
@@ -110,7 +164,7 @@ class VotePanelContent extends React.Component {
           ready={ready}
         />
 
-        {accountVote === VOTE_ABSENT && (
+        {userCanVote && (
           <div>
             <SidePanelSeparator />
             <VotingButtons>
@@ -131,7 +185,7 @@ class VotePanelContent extends React.Component {
                 No
               </Button>
             </VotingButtons>
-            <Info title={`You will cast ${user.balance} votes`} />
+            <Info title={`You will cast ${userBalance || '...'} votes`} />
           </div>
         )}
       </div>
@@ -186,4 +240,4 @@ const VotingButtons = styled.div`
   }
 `
 
-export default VotePanelContent
+export default provideNetwork(VotePanelContent)

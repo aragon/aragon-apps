@@ -1,3 +1,4 @@
+import { safeDiv } from './math-utils'
 import {
   VOTE_ABSENT,
   VOTE_STATUS_ONGOING,
@@ -26,4 +27,5 @@ export const getVoteStatus = (vote, support, quorum) => {
     : VOTE_STATUS_REJECTED
 }
 
-export const getQuorumProgress = ({ yea, totalVoters }) => yea / totalVoters
+export const getQuorumProgress = ({ yea, totalVoters }) =>
+  safeDiv(yea / totalVoters)
