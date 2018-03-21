@@ -126,9 +126,9 @@ class VotePanelContent extends React.Component {
               <h2>
                 <Label>Question:</Label>
               </h2>
-              <p>
-                <strong>{metadata}</strong>
-              </p>
+              <Question>
+                {metadata}
+              </Question>
             </React.Fragment>
           )}
           {description && (
@@ -221,6 +221,13 @@ const Part = styled.div`
       margin-top: 0;
     }
   }
+`
+
+const Question = styled.p`
+  max-width: 100%;
+  overflow: hidden;
+  word-break: break-all;
+  hyphens: auto;
 `
 
 const Creator = styled.div`
