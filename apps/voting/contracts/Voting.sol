@@ -76,7 +76,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^14) / 10^16`
+     * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^14) / 10^16`%
     * @param _minAcceptQuorumPct New acceptance quorum
     */
     function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) external {
@@ -88,7 +88,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Create new vote
+    * @notice Create a new vote about "`_metadata`"
     * @param _executionScript EVM script to be executed on approval
     * @return voteId id for newly created vote
     */
@@ -97,7 +97,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Vote `_supports ? 'yay' : 'nay'` in vote with #`_voteId`
+    * @notice Vote `_supports ? 'yay' : 'nay'` in vote #`_voteId`
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether it should execute the vote if it becomes decided
@@ -113,7 +113,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Execute the result of vote `_voteId`
+    * @notice Execute the result of vote #`_voteId`
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external {
@@ -126,7 +126,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Forward script
+    * @notice Creates a vote to execute the desired action
     * @dev IForwarder interface conformance
     * @param _evmScript Start vote with script
     */

@@ -129,7 +129,7 @@ contract Finance is AragonApp {
 
     /**
     * @dev Deposit for ERC20 approved tokens
-    * @notice Send `_amount` `_token.symbol(): string`
+    * @notice Deposit `_amount` `_token.symbol(): string`
     * @param _token Address of deposited token
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
@@ -257,7 +257,7 @@ contract Finance is AragonApp {
 
     /**
     * @dev Withdraws any payment (requires certain status)
-    * @notice Execute pending payment (#`_paymentId`)
+    * @notice Execute pending payment #`_paymentId`
     * @param _paymentId Identifier for payment
     */
     function executePayment(uint256 _paymentId) authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId)) external {
@@ -268,7 +268,7 @@ contract Finance is AragonApp {
 
     /**
     * @dev Always allows receiver of a payment to trigger execution
-    * @notice Execute pending payment (#`_paymentId`)
+    * @notice Execute pending payment #`_paymentId`
     * @param _paymentId Identifier for payment
     */
     function receiverExecutePayment(uint256 _paymentId) external {
@@ -316,7 +316,7 @@ contract Finance is AragonApp {
     * @dev Transitions accounting periods if needed. For preventing OOG attacks,
            a TTL param is provided. If more that TTL periods need to be transitioned,
            it will return false.
-    * @notice Transition accounting period if needed
+    * @notice Transition accounting period
     * @param _ttl Maximum periods that can be transitioned
     * @return success boolean indicating whether the accounting period is the correct one (if false, TTL was surpased and another call is needed)
     */
