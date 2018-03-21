@@ -88,7 +88,11 @@ class App extends React.Component {
           onClose={this.handleNewTransferClose}
           title="New Transfer"
         >
-          <NewTransfer onTransfer={this.handleSubmitTransfer} tokens={tokens} />
+          <NewTransfer
+            balances={balances}
+            onClose={this.handleNewTransferClose}
+            onTransfer={this.handleSubmitTransfer}
+          />
         </SidePanel>
       </AragonApp>
     )

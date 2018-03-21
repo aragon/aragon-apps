@@ -1,6 +1,14 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Field, TextInput, Text, Button, DropDown, theme } from '@aragon/ui'
+import {
+  Button,
+  DropDown,
+  Info,
+  Field,
+  Text,
+  TextInput,
+  theme,
+} from '@aragon/ui'
 
 class NewTransfer extends React.Component {
   static defaultProps = {
@@ -29,15 +37,16 @@ class NewTransfer extends React.Component {
     })
   }
   handleTransfer = () => {
-    const { onTransfer, tokens } = this.props
+    const { balances, onTransfer } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
-    onTransfer(tokens[selectedToken], recipient, amount, reference)
+    onTransfer(balances[selectedToken], recipient, amount, reference)
   }
   render() {
-    const { title, tokens } = this.props
+    const { balances, onClose, title } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
-    const symbols = tokens.map(({ symbol }) => symbol)
-    return (
+    const paymentPossibleTokens = balances.filter(({ amount }) => amount)
+    const symbols = paymentPossibleTokens.map(({ symbol }) => symbol)
+    return paymentPossibleTokens.length ? (
       <div>
         <h1>{title}</h1>
         <Field label="Recipient">
@@ -76,6 +85,18 @@ class NewTransfer extends React.Component {
         <ButtonWrapper>
           <Button mode="strong" wide onClick={this.handleTransfer}>
             Submit Transfer
+          </Button>
+        </ButtonWrapper>
+      </div>
+    ) : (
+      <div>
+        <Info.Permissions title="Action impossible">
+          You cannot create any payments. The DAO does not have any tokens
+          available to transfer.
+        </Info.Permissions>
+        <ButtonWrapper>
+          <Button mode="strong" wide onClick={onClose}>
+            Close
           </Button>
         </ButtonWrapper>
       </div>
