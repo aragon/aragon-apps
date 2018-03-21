@@ -1,4 +1,4 @@
 import testTokens from '@aragon/templates-tokens'
 
 const NETWORK = 'rinkeby'
-export const testTokenAddresses = tokens[NETWORK].tokens
+export const testTokenAddresses = testTokens[NETWORK].tokens
