@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { Button, Countdown, TableCell, TableRow } from '@aragon/ui'
 import ProgressBar from './ProgressBar'
 import VoteStatus from './VoteStatus'
+import { safeDiv } from '../math-utils'
 
 class VoteRow extends React.Component {
   static defaultProps = {
@@ -16,7 +17,7 @@ class VoteRow extends React.Component {
     const { vote } = this.props
     const { endDate } = vote
     const { metadata, nay, open, totalVoters, yea } = vote.data
-    const totalVotes = (yea + nay) / totalVoters
+    const totalVotes = safeDiv((yea + nay) / totalVoters)
 
     return (
       <TableRow>
@@ -34,13 +35,13 @@ class VoteRow extends React.Component {
             <Bar>
               <ProgressBar
                 type="positive"
-                progress={totalVotes > 0 ? yea / totalVoters : 0}
+                progress={safeDiv(yea / totalVoters)}
               />
             </Bar>
             <Bar>
               <ProgressBar
                 type="negative"
-                progress={totalVotes > 0 ? nay / totalVoters : 0}
+                progress={safeDiv(nay / totalVoters)}
               />
             </Bar>
           </BarsGroup>
