@@ -1,5 +1,6 @@
 import Aragon from '@aragon/client'
 import financeSettings, { hasLoadedFinanceSettings } from './finance-settings'
+import { testTokenAddresses } from './testnet'
 import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
@@ -13,6 +14,8 @@ const app = new Aragon()
 
 // Hook up the script as an aragon.js store
 app.store(async (state, event) => {
+  // **NOTE**: Thankfully, the Finance app always creates an event when it's
+  // initialized (NewPeriod), so store will always be invoked at least once
   const { event: eventName, returnValues } = event
   let nextState = {
     ...state,
@@ -27,6 +30,9 @@ app.store(async (state, event) => {
     default:
       break
   }
+
+  // NOTE: this is only for rinkeby!
+  nextState = await loadTestnetState(nextState)
 
   return nextState
 })
@@ -61,19 +67,19 @@ async function newTransaction(state, { transactionId }, { transactionHash }) {
 
 async function updateBalances(
   { balances = [], vaultAddress },
-  { token: tokenAddr }
+  { token: tokenAddress }
 ) {
-  const tokenContract = tokenContracts.has(tokenAddr)
-    ? tokenContracts.get(tokenAddr)
-    : app.external(tokenAddr, tokenAbi)
-  tokenContracts.set(tokenAddr, tokenContract)
+  const tokenContract = tokenContracts.has(tokenAddress)
+    ? tokenContracts.get(tokenAddress)
+    : app.external(tokenAddress, tokenAbi)
+  tokenContracts.set(tokenAddress, tokenContract)
 
   const balancesIndex = balances.findIndex(
-    ({ address }) => address === tokenAddr
+    ({ address }) => address === tokenAddress
   )
   if (balancesIndex === -1) {
     return balances.concat(
-      await makeNewBalanceToken(tokenContract, tokenAddr, vaultAddress)
+      await makeNewBalanceToken(tokenContract, tokenAddress, vaultAddress)
     )
   } else {
     const newBalances = Array.from(balances)
@@ -98,9 +104,9 @@ function updateTransactions({ transactions = [] }, transactionDetails) {
   }
 }
 
-async function makeNewBalanceToken(tokenContract, tokenAddr, vaultAddr) {
+async function makeNewBalanceToken(tokenContract, tokenAddress, vaultAddress) {
   const [balance, decimals, symbol] = await Promise.all([
-    loadTokenBalance(tokenContract, vaultAddr),
+    loadTokenBalance(tokenContract, vaultAddress),
     loadTokenDecimals(tokenContract),
     loadTokenSymbol(tokenContract),
   ])
@@ -108,19 +114,19 @@ async function makeNewBalanceToken(tokenContract, tokenAddr, vaultAddr) {
   return {
     decimals,
     symbol,
-    address: tokenAddr,
+    address: tokenAddress,
     amount: balance,
   }
 }
 
-function loadTokenBalance(tokenContract, vaultAddr) {
+function loadTokenBalance(tokenContract, vaultAddress) {
   return new Promise((resolve, reject) => {
-    if (!vaultAddr) {
+    if (!vaultAddress) {
       // No vault address yet, so leave it as unknown
       resolve(-1)
     } else {
       tokenContract
-        .balanceOf(vaultAddr)
+        .balanceOf(vaultAddress)
         .first()
         .map(val => parseInt(val, 10))
         .subscribe(resolve, reject)
@@ -211,4 +217,25 @@ function marshallTransactionDetails({
     paymentId: parseInt(paymentId, 10),
     periodId: parseInt(periodId, 10),
   }
+}
+
+/**********************
+ *                    *
+ * RINKEBY TEST STATE *
+ *                    *
+ **********************/
+function loadTestnetState(nextState) {
+  // Reload all the test tokens' balances for this DAO's vault
+  return loadTestnetTokenBalances(nextState)
+}
+
+async function loadTestnetTokenBalances(nextState) {
+  let reducedState = nextState
+  for (let tokenAddress of testTokenAddresses) {
+    reducedState = {
+      ...reducedState,
+      balances: await updateBalances(reducedState, { token: tokenAddress }),
+    }
+  }
+  return reducedState
 }
