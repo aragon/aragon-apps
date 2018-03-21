@@ -10,7 +10,7 @@ import VotesTable from '../components/VotesTable'
 class Votes extends React.Component {
   render() {
     const { votes, onSelectVote } = this.props
-    const openedVotes = votes.filter(({ data: { open } }) => open)
+    const openedVotes = votes.filter(({ open }) => open)
     const closedVotes = votes.filter(vote => !openedVotes.includes(vote))
     return (
       <Main>
