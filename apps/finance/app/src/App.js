@@ -50,6 +50,7 @@ class App extends React.Component {
       1, // max repeats
       reference
     )
+    this.handleNewTransferClose()
   }
   render() {
     const { balances, transactions } = this.props
