@@ -15,8 +15,8 @@ class VoteRow extends React.Component {
   }
   render() {
     const { vote } = this.props
-    const { endDate } = vote
-    const { metadata, nay, open, totalVoters, yea } = vote.data
+    const { endDate, open } = vote
+    const { metadata, nay, totalVoters, yea } = vote.data
     const totalVotes = safeDiv(yea + nay, totalVoters)
 
     return (
