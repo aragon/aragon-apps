@@ -150,12 +150,12 @@ function loadVoteSettings() {
 }
 
 // Apply transmations to a vote received from web3
+// Note: ignores the 'open' field as we calculate that locally
 function marshallVote({
   creator,
   executed,
   minAcceptQuorum,
   nay,
-  open,
   snapshotBlock,
   startDate,
   totalVoters,
@@ -166,7 +166,6 @@ function marshallVote({
   return {
     creator,
     executed,
-    open,
     minAcceptQuorum: parseInt(minAcceptQuorum, 10),
     nay: parseInt(nay, 10),
     snapshotBlock: parseInt(snapshotBlock, 10),
