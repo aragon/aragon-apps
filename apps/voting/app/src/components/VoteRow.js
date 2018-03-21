@@ -16,7 +16,7 @@ class VoteRow extends React.Component {
   render() {
     const { vote } = this.props
     const { endDate, open } = vote
-    const { metadata: question, nay, totalVoters, yea } = vote.data
+    const { metadata: question, description, nay, totalVoters, yea } = vote.data
     const totalVotes = safeDiv(yea + nay, totalVoters)
 
     return (
@@ -25,7 +25,14 @@ class VoteRow extends React.Component {
           {open ? <Countdown end={endDate} /> : <VoteStatus vote={vote} />}
         </StatusCell>
         <QuestionCell>
-          <QuestionWrapper>{question}</QuestionWrapper>
+          <div>
+            <QuestionWrapper>
+              {description ? <strong>{question}</strong> : question}
+            </QuestionWrapper>
+            {description && (
+              <DescriptionWrapper>{description}</DescriptionWrapper>
+            )}
+          </div>
         </QuestionCell>
         <Cell align="right">{Math.round(totalVotes * 10000) / 100}%</Cell>
         <BarsCell>
@@ -77,10 +84,15 @@ const ActionsCell = styled(Cell)`
   width: 0;
 `
 
-const QuestionWrapper = styled.div`
+const QuestionWrapper = styled.p`
   margin-right: 20px;
   word-break: break-all;
   hyphens: auto;
+`
+
+const DescriptionWrapper = styled.p`
+  margin-top: 10px;
+  margin-right: 20px;
 `
 
 const BarsGroup = styled.div`
