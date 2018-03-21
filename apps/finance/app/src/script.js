@@ -161,7 +161,7 @@ async function updateBalances({ balances = [] }, tokenAddress, settings) {
     const newBalances = Array.from(balances)
     newBalances[balancesIndex] = {
       ...balances[balancesIndex],
-      amount: await loadTokenBalance(tokenContract, settings),
+      amount: await loadTokenBalance(tokenAddress, settings),
     }
     return newBalances
   }
