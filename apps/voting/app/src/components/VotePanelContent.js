@@ -112,19 +112,24 @@ class VotePanelContent extends React.Component {
           </div>
         </SidePanelSplit>
         <Part>
-          {metadata && (<h2>
-            <Label>Question:</Label>
-          </h2>
-          <p>
-            <strong>{metadata}</strong>
-          </p>)}
-          {description && (<h2>
-            <Label>Description:</Label>
-          </h2>
-          <p>
-            Fusce vehicula dolor arcu, sit amet blandit dolor mollis nec. Sed
-            sollicitudin ipsum quis nunc sollicitudin ultrices?
-          </p>)}
+          {metadata && (
+            <React.Fragment>
+              <h2>
+                <Label>Question:</Label>
+              </h2>
+              <p>
+                <strong>{metadata}</strong>
+              </p>
+            </React.Fragment>
+          )}
+          {description && (
+            <React.Fragment>
+              <h2>
+                <Label>Description:</Label>
+              </h2>
+              <p>{description}</p>
+            </React.Fragment>
+          )}
         </Part>
         <SidePanelSeparator />
         <Part>
