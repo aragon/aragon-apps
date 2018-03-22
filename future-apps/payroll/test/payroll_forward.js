@@ -7,17 +7,21 @@ const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory
 const ACL = artifacts.require('@aragon/os/contracts/acl/ACL');
 const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel');
 
+const getContract = name => artifacts.require(name)
+
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff';
 
 contract('PayrollForward', function(accounts) {
-  let payroll3;
+  let daoFact, payroll3;
   let owner = accounts[0];
   let employee1 = accounts[1];
   let unused_account = accounts[7];
 
   before(async () => {
+    const kernelBase = await getContract('Kernel').new()
+    const aclBase = await getContract('ACL').new()
     const regFact = await EVMScriptRegistryFactory.new();
-    daoFact = await DAOFactory.new(regFact.address);
+    daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address);
   });
 
   beforeEach(async () => {
@@ -36,7 +40,7 @@ contract('PayrollForward', function(accounts) {
   });
 
   it("checks that it's forwarder", async () => {
-    let result = await payroll3.isForwarder();
+    let result = await payroll3.isForwarder.call();
     assert.equal(result.toString(), "true", "It's not forwarder");
   });
 
