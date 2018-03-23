@@ -2,7 +2,6 @@ pragma solidity 0.4.18;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/Initializable.sol";
-import "@aragon/os/contracts/lib/erc677/ERC677Receiver.sol";
 
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
 
@@ -13,7 +12,7 @@ import "@aragon/os/contracts/lib/zeppelin/math/Math.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract Fundraising is AragonApp, ERC677Receiver {
+contract Fundraising is AragonApp {
     using SafeMath for uint256;
 
     uint256 constant MAX_PERIODS = 50;
@@ -141,6 +140,7 @@ contract Fundraising is AragonApp, ERC677Receiver {
     /**
     * @dev ERC677 buy in support. Data must be equivalent to a buy(uint256) call
     */
+    /* TODO: adapt to ERC777
     function tokenFallback(address _sender, uint256 _value, bytes _data) external returns (bool ok) {
         var (sig, saleId) = parseBuyData(_data);
         require(sig == bytes4(sha3("buyWithToken(uint256)"))); // TODO: Replace for .request with solc 0.4.17
@@ -156,16 +156,19 @@ contract Fundraising is AragonApp, ERC677Receiver {
 
         return true;
     }
+    */
 
     /**
     * @dev Dummy function for ERC677 entrypoint. Call is handled on token fallback but must have this function's format
     * @notice Buy in sale with id `_saleId`
     * @param _saleId Sale numeric identifier
     */
+    /* TODO: adapt to ERC777
     function buyWithToken(uint256 _saleId) external {
         _saleId;
         revert();
     }
+    */
 
     /**
     * @notice Force the close of sale with id `_saleId` (It will always succeed if sale is open)
@@ -335,12 +338,14 @@ contract Fundraising is AragonApp, ERC677Receiver {
             sale.currentPeriod = newCurrentPeriod;
     }
 
+    /* TODO: adapt to ERC777
     function parseBuyData(bytes data) internal pure returns (bytes4 sig, uint256 saleId) {
         assembly {
             sig := mload(add(data, 0x20))
             saleId := mload(add(data, 0x24)) // read first parameter of buy function call
         }
     }
+    */
 
     function getTimestamp() internal view returns (uint256) {
         return now;

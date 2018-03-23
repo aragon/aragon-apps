@@ -74,7 +74,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Mint `_amount` tokens for `_receiver`
+    * @notice Mint `_amount / 10^18` tokens for `_receiver`
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens minted
     */
@@ -84,7 +84,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Mint `_amount` tokens
+    * @notice Mint `_amount / 10^18` tokens
     * @param _amount Number of tokens minted
     */
     function issue(uint256 _amount) authP(ISSUE_ROLE, arr(_amount)) external {
@@ -92,7 +92,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Assign `_amount` tokens to `_receiver` from Token Manager's holdings
+    * @notice Assign `_amount / 10^18` tokens to `_receiver` from Token Manager's holdings
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transfered
     */
@@ -101,7 +101,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Burn `_amount` tokens from `_holder`
+    * @notice Burn `_amount / 10^18` tokens from `_holder`
     * @param _holder Holder being removed tokens
     * @param _amount Number of tokens being burned
     */
@@ -111,7 +111,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Assign `_amount` tokens to `_receiver` with a `_revokable : 'revokable' : ''` vesting starting at `_start` and a cliff at `_cliff`, with vesting on `_vesting`
+    * @notice Assign `_amount / 10^18` tokens to `_receiver` with a `_revokable : 'revokable' : ''` vesting starting at `_start` and a cliff at `_cliff`, with vesting on `_vesting`
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transfered
     * @param _start Date the vesting calculations start
