@@ -11,6 +11,7 @@
     "styled-components": "^3.1.6"
   },
   "devDependencies": {
+    "@aragon/react-scripts": "^1.1.0-aragon.4",
     "babel-eslint": "^8.0.3",
     "babel-plugin-styled-components": "^1.5.1",
     "babel-plugin-transform-runtime": "^6.23.0",
@@ -28,8 +29,7 @@
     "eslint-plugin-react": "^7.5.1",
     "eslint-plugin-standard": "^3.0.1",
     "parcel-bundler": "^1.6.2",
-    "prettier": "^1.8.2",
-    "react-scripts": "2.0.0-next.9754a231"
+    "prettier": "^1.8.2"
   },
   "scripts": {
     "lint": "eslint ./src",
