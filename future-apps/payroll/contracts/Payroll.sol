@@ -24,6 +24,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     bytes32 constant public REMOVE_EMPLOYEE_ROLE = keccak256("REMOVE_EMPLOYEE_ROLE");
     bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
     bytes32 constant public ORACLE_ROLE = keccak256("ORACLE_ROLE");
+    address constant public ETH = address(0);
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
@@ -38,7 +39,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     mapping(address => uint128) private employeeIds;
 
     Finance public finance;
-    ERC20 public denominationToken;
+    address public denominationToken;
     mapping(address => uint256) private exchangeRates;
     mapping(address => bool) private allowedTokens;
     address[] private allowedTokensArray;
@@ -62,7 +63,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      */
     function initialize(
         Finance _finance,
-        ERC20 _denominationToken
+        address _denominationToken
     ) external
         onlyInit
     {
@@ -88,7 +89,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         authP(ORACLE_ROLE, arr(token, denominationExchangeRate, exchangeRates[token]))
     {
         // Denomination Token is a special one, so we can not allow its exchange rate to be changed
-        require(token != address(denominationToken));
+        require(token != denominationToken);
         exchangeRates[token] = denominationExchangeRate;
         ExchangeRateSet(token, denominationExchangeRate);
     }
@@ -224,7 +225,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Allows to send ETH from this contract to Finance, to avoid locking them in contract forever.
      */
     function escapeHatch() external {
-        finance.escapeHatch.value(this.balance)();
+        finance.call.value(this.balance)();
     }
 
     /**
@@ -433,9 +434,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             uint256 tokenAmount = employee.denominationTokenSalary
                 .mul(exchangeRates[token]).mul(employee.allocation[token]) / 100;
             tokenAmount = tokenAmount.mul(time);
-            ERC20 tokenContract = ERC20(token);
             finance.newPayment(
-                tokenContract,
+                token,
                 employee.accountAddress,
                 tokenAmount,
                 0,

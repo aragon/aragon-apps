@@ -1,8 +1,6 @@
 const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow');
 const getBalance = require('@aragon/test-helpers/balance')(web3);
 const Payroll = artifacts.require("Payroll");
-const ERC677Token = artifacts.require("./tokens/ERC677GenToken.sol");
-const EtherToken = artifacts.require('EtherToken.sol');
 const Vault = artifacts.require('Vault');
 const Finance = artifacts.require('Finance');
 const OracleMock = artifacts.require("./oracle/OracleMock.sol");
@@ -11,7 +9,7 @@ const Zombie = artifacts.require("Zombie.sol");
 
 // we use here real Payroll to use getTimestamp (to achieve 100% coverage)
 
-contract('Payroll', function(accounts) {
+contract('Payroll Timestamp', function(accounts) {
   let payroll;
   let finance;
   let vault;
@@ -19,7 +17,6 @@ contract('Payroll', function(accounts) {
   let oracle;
   let employee1_1 = accounts[2];
   let employee1 = employee1_1;
-  let etherToken;
   let usdToken;
   const USD_PRECISION = 10**9;
   const SECONDS_IN_A_YEAR = 31557600; // 365.25 days
@@ -40,10 +37,10 @@ contract('Payroll', function(accounts) {
   };
 
   it("deploys and initializes contract", async () => {
-    etherToken = await EtherToken.new();
     vault = await Vault.new();
+    await vault.initializeWithBase(vault.address)
     finance = await Finance.new();
-    await finance.initialize(vault.address, etherToken.address, 100);
+    await finance.initialize(vault.address, 100);
     payroll = await Payroll.new();
     usdToken = await deployErc20Token("USD");
     oracle = await OracleMock.new();
