@@ -50,11 +50,10 @@ const calculateStakes = (accounts, total) => {
 
 class SideBar extends React.Component {
   static defaultProps = {
-    groupMode: false,
     holders: [],
   }
   render() {
-    const { groupMode, holders, tokenDecimalsBase, tokenSupply } = this.props
+    const { holders, tokenDecimalsBase, tokenSupply } = this.props
     const stakes = calculateStakes(holders, tokenSupply).map((stake, i) => ({
       ...stake,
       color: DISTRIBUTION_COLORS[i] || '#000000',
@@ -82,44 +81,42 @@ class SideBar extends React.Component {
             </InfoRow>
           </ul>
         </Part>
-        {!groupMode && (
-          <Part>
-            <h1>
-              <Text color={theme.textSecondary} smallcaps>
-                Ownership Distribution
-              </Text>
-            </h1>
-            <Text size="large" weight="bold">
-              Token Holder Stakes
+        <Part>
+          <h1>
+            <Text color={theme.textSecondary} smallcaps>
+              Ownership Distribution
             </Text>
-            <StakesBar>
-              {stakes.map(({ name, stake, color }) => (
-                <div
-                  key={name}
-                  title={`${name}: ${stake}%`}
-                  style={{
-                    width: `${stake}%`,
-                    height: '10px',
-                    background: color,
-                  }}
-                />
-              ))}
-            </StakesBar>
-            <ul>
-              {stakes.map(({ name, stake, color }) => (
-                <StakesListItem key={name}>
-                  <span>
-                    <StakesListBullet style={{ background: color }} />
-                    <Text title={name} color={theme.textSecondary}>
-                      {name}
-                    </Text>
-                  </span>
-                  <strong>{stake}%</strong>
-                </StakesListItem>
-              ))}
-            </ul>
-          </Part>
-        )}
+          </h1>
+          <Text size="large" weight="bold">
+            Token Holder Stakes
+          </Text>
+          <StakesBar>
+            {stakes.map(({ name, stake, color }) => (
+              <div
+                key={name}
+                title={`${name}: ${stake}%`}
+                style={{
+                  width: `${stake}%`,
+                  height: '10px',
+                  background: color,
+                }}
+              />
+            ))}
+          </StakesBar>
+          <ul>
+            {stakes.map(({ name, stake, color }) => (
+              <StakesListItem key={name}>
+                <span>
+                  <StakesListBullet style={{ background: color }} />
+                  <Text title={name} color={theme.textSecondary}>
+                    {name}
+                  </Text>
+                </span>
+                <strong>{stake}%</strong>
+              </StakesListItem>
+            ))}
+          </ul>
+        </Part>
       </Main>
     )
   }
