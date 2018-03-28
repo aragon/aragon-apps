@@ -264,9 +264,7 @@ function marshallTransactionDetails({
     isIncoming,
     reference,
     token,
-    amount: isIncoming
-      ? parseInt(amount, 10)
-      : parseInt(amount, 10) * -1,
+    amount: parseInt(amount, 10),
     date: parseInt(date, 10) * 1000, // adjust for JS time (in ms vs s)
     paymentId: parseInt(paymentId, 10),
     periodId: parseInt(periodId, 10),
