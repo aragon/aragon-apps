@@ -1,5 +1,6 @@
 import React from 'react'
-import { Button, Info, TextInput, Field } from '@aragon/ui'
+import styled from 'styled-components'
+import { Button, Info, Text, TextInput, Field } from '@aragon/ui'
 
 class NewVotePanelContent extends React.Component {
   static defaultProps = {
@@ -24,13 +25,10 @@ class NewVotePanelContent extends React.Component {
     const { question } = this.state
     return (
       <div>
-        <Field>
-          <Info.Action title="Votes are informative">
-            They don’t have any direct repercussion on the organization.
-          </Info.Action>
-        </Field>
-
-        <form onSubmit={this.handleSubmit}>
+        <Info.Action title="Votes are informative">
+          They don’t have any direct repercussion on the organization.
+        </Info.Action>
+        <Form onSubmit={this.handleSubmit}>
           <Field label="Question">
             <TextInput
               value={question}
@@ -42,10 +40,23 @@ class NewVotePanelContent extends React.Component {
           <Button mode="strong" type="submit" wide>
             Begin Vote
           </Button>
-        </form>
+          <Warning>
+            By opening this vote, you will automatically vote yay.
+          </Warning>
+        </Form>
       </div>
     )
   }
 }
+
+const Form = styled.form`
+  margin-top: 20px;
+`
+
+const Warning = styled(Text.Paragraph).attrs({
+  size: 'xsmall',
+})`
+  margin-top: 10px;
+`
 
 export default NewVotePanelContent
