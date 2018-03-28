@@ -21,7 +21,10 @@ AppLayout.ScrollWrapper = styled.div`
 `
 
 AppLayout.Content = styled.div`
+  display: flex;
+  flex-direction: column;
   padding: 30px;
+  flex-grow: 1;
 `
 
 export default AppLayout
