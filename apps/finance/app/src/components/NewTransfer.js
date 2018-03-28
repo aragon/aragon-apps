@@ -37,16 +37,15 @@ class NewTransfer extends React.Component {
     })
   }
   handleTransfer = () => {
-    const { balances, onTransfer } = this.props
+    const { onTransfer, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
-    onTransfer(balances[selectedToken], recipient, amount, reference)
+    onTransfer(tokens[selectedToken], recipient, amount, reference)
   }
   render() {
-    const { balances, onClose, title } = this.props
+    const { onClose, title, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
-    const paymentPossibleTokens = balances.filter(({ amount }) => amount)
-    const symbols = paymentPossibleTokens.map(({ symbol }) => symbol)
-    return paymentPossibleTokens.length ? (
+    const symbols = tokens.map(({ symbol }) => symbol)
+    return tokens.length ? (
       <div>
         <h1>{title}</h1>
         <Field label="Recipient">

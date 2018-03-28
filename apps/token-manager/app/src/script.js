@@ -104,8 +104,8 @@ function updateState(state, changes) {
 }
 
 function updateHolders(holders, changed) {
-  const holderIndex = holders.findIndex(
-    holder => addressesEqual(holder.address, changed.address)
+  const holderIndex = holders.findIndex(holder =>
+    addressesEqual(holder.address, changed.address)
   )
 
   if (holderIndex === -1) {
