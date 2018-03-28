@@ -88,8 +88,8 @@ class App extends React.Component {
       voteSidebarOpened: false,
     })
   }
-  handleVote = (voteId, voteType) => {
-    this.props.app.vote(voteId, voteType === VOTE_YEA, false)
+  handleVote = (voteId, voteType, executesIfDecided = true) => {
+    this.props.app.vote(voteId, voteType === VOTE_YEA, executesIfDecided)
     this.handleVoteClose()
   }
   handleVoteClose = () => {
