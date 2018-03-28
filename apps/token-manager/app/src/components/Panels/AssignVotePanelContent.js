@@ -33,7 +33,7 @@ class AssignVotePanelContent extends React.Component {
     const { amount, recipient } = this.state
     event.preventDefault()
     this.props.onAssignTokens({
-      amount,
+      amount: Number(amount),
       recipient: recipient.trim(),
     })
   }
