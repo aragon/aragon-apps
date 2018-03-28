@@ -97,12 +97,16 @@ contract Finance is AragonApp {
     }
 
     /**
-     * @dev Sends ETH to Vault. This contract should never receive funds,
-     *      but in case it happens, this function recovers them sending them
-     *      to Vault.
+     * @dev Sends ETH to Vault. Sends all the available balance.
      * @notice Allows to send ETH from this contract to Vault, to avoid locking them in contract forever.
      */
     function () public payable {
+        _recordIncomingTransaction(
+            ETH,
+            msg.sender,
+            this.balance,
+            ""
+        );
         vault.deposit.value(this.balance)(ETH, msg.sender, this.balance, new bytes(0));
     }
 
