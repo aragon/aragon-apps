@@ -7,13 +7,13 @@ import {
   TableCell,
   ContextMenu,
   ContextMenuItem,
-  IconTokens,
   SafeLink,
   formatHtmlDatetime,
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
+import IconTokens from './icons/IconTokens'
 import ConfirmMessage from './ConfirmMessage'
 
 class TransferRow extends React.Component {
