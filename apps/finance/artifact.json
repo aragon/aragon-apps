@@ -926,7 +926,7 @@
 		{
 			"sig": "initialize(address)",
 			"roles": [],
-			"notice": "Initialize Finance app for Vault at `_vault` with period length of `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ''`"
+			"notice": "Initialize Finance app for Vault at `_vault` with period length of `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ' '`"
 		},
 		{
 			"sig": "deposit(address,uint256,string)",
@@ -943,14 +943,14 @@
 			"roles": [
 				"CREATE_PAYMENTS_ROLE"
 			],
-			"notice": "Create a new payment of `_amount / 10^18` `_token.symbol(): string`. `_maxRepeats > 0 ? 'It will be executed ' _maxRepeats ' times at intervals of ' (_interval - _interval % 86400) / 86400 ' days' : ''`"
+			"notice": "Create a new payment of `_amount / 10^18` `_token.symbol(): string`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + (_interval - _interval % 86400) / 86400 + ' days' : ' '`"
 		},
 		{
 			"sig": "setPeriodDuration(uint64)",
 			"roles": [
 				"CHANGE_PERIOD_ROLE"
 			],
-			"notice": "Change period duration to `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ''`, effective for next accounting period."
+			"notice": "Change period duration to `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ' '`, effective for next accounting period."
 		},
 		{
 			"sig": "setBudget(address,uint256)",

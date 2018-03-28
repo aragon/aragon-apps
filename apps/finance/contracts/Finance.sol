@@ -176,7 +176,7 @@ contract Finance is AragonApp {
     */
 
     /**
-    * @notice Create a new payment of `_amount / 10^18` `_token.symbol(): string`. `_maxRepeats > 0 ? 'It will be executed ' _maxRepeats ' times at intervals of ' (_interval - _interval % 86400) / 86400 ' days' : ''`
+    * @notice Create a new payment of `_amount / 10^18` `_token.symbol(): string`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + (_interval - _interval % 86400) / 86400 + ' days' : ''`
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment.
     * @param _amount units of token that are payed every time the payment is due.
