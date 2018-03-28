@@ -14,20 +14,22 @@ class Balances extends React.Component {
     convertRates: {},
   }
   componentDidMount() {
-    this.updateConvertedRates()
+    this.updateConvertedRates(this.props)
   }
-  componentWillReceiveProps() {
-    this.updateConvertedRates()
+  componentWillReceiveProps(nextProps) {
+    this.updateConvertedRates(nextProps)
   }
-  async updateConvertedRates() {
-    const symbols = this.props.balances.map(({ symbol }) => symbol)
+  async updateConvertedRates({ balances }) {
+    const symbols = balances.map(({ symbol }) => symbol)
 
-    // Uncomment the next line to simulate a delay
-    // await new Promise(r => setTimeout(r, 2000))
+    if (symbols.length) {
+      // Uncomment the next line to simulate a delay
+      // await new Promise(r => setTimeout(r, 2000))
 
-    const res = await fetch(convertApiUrl(symbols))
-    const convertRates = await res.json()
-    this.setState({ convertRates })
+      const res = await fetch(convertApiUrl(symbols))
+      const convertRates = await res.json()
+      this.setState({ convertRates })
+    }
   }
   render() {
     const { balances } = this.props
