@@ -9,7 +9,7 @@ const VotesTable = ({ votes, opened, onSelectVote }) => (
         <TableHeader title={opened ? 'Time Remaining' : 'Status'} />
         <TableHeader title="Question" />
         <TableHeader title="Total Votes" align="right" />
-        <TableHeader title={opened ? '' : 'Result'} />
+        <TableHeader title={opened ? 'Progress' : 'Result'} />
         <TableHeader title="Actions" />
       </TableRow>
     }
