@@ -42,6 +42,8 @@ class VotePanelContent extends React.Component {
     this.props.onVote(this.props.vote.voteId, VOTE_NAY)
   }
   handleYesClick = () => {
+    // TODO: add a manual execute button and checkboxes to let user select if
+    // they want to auto execute
     this.props.onVote(this.props.vote.voteId, VOTE_YEA)
   }
   loadUserBalance = () => {
