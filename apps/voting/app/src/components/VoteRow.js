@@ -26,9 +26,11 @@ class VoteRow extends React.Component {
         </StatusCell>
         <QuestionCell>
           <div>
-            <QuestionWrapper>
-              {description ? <strong>{question}</strong> : question}
-            </QuestionWrapper>
+            {question && (
+              <QuestionWrapper>
+                {description ? <strong>{question}</strong> : question}
+              </QuestionWrapper>
+            )}
             {description && (
               <DescriptionWrapper>{description}</DescriptionWrapper>
             )}
@@ -91,8 +93,11 @@ const QuestionWrapper = styled.p`
 `
 
 const DescriptionWrapper = styled.p`
-  margin-top: 10px;
   margin-right: 20px;
+
+  ${QuestionWrapper} + & {
+    margin-top: 10px;
+  }
 `
 
 const BarsGroup = styled.div`
