@@ -105,7 +105,7 @@ contract Finance is AragonApp {
             ETH,
             msg.sender,
             this.balance,
-            ""
+            "Ether transfer to Finance app"
         );
         vault.deposit.value(this.balance)(ETH, msg.sender, this.balance, new bytes(0));
     }
