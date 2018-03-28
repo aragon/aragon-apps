@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Button, Info, TextInput, Field } from '@aragon/ui'
+import { Button, Info, Text, TextInput, Field } from '@aragon/ui'
 
 class NewVotePanelContent extends React.Component {
   static defaultProps = {
@@ -27,9 +27,6 @@ class NewVotePanelContent extends React.Component {
       <div>
         <Info.Action title="Votes are informative">
           They don’t have any direct repercussion on the organization.
-          <Warning>
-            By opening this vote, you will automatically vote yay.
-          </Warning>
         </Info.Action>
         <Form onSubmit={this.handleSubmit}>
           <Field label="Question">
@@ -43,6 +40,9 @@ class NewVotePanelContent extends React.Component {
           <Button mode="strong" type="submit" wide>
             Begin Vote
           </Button>
+          <Warning>
+            By opening this vote, you will automatically vote yay.
+          </Warning>
         </Form>
       </div>
     )
@@ -53,7 +53,9 @@ const Form = styled.form`
   margin-top: 20px;
 `
 
-const Warning = styled.p`
+const Warning = styled(Text.Paragraph).attrs({
+  size: 'xsmall',
+})`
   margin-top: 10px;
 `
 
