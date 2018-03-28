@@ -9,7 +9,7 @@ import {
   theme,
 } from '@aragon/ui'
 import * as TransferTypes from '../transfer-types'
-import { addressesEqual } from '../web3-utils'
+import { addressesEqual, removeChecksum } from '../web3-utils'
 import TransferRow from './TransferRow'
 
 const TRANSFER_TYPES = [
@@ -88,7 +88,7 @@ class Transfers extends React.Component {
     const symbols = tokens.map(({ symbol }) => symbol)
     const tokenDetails = tokens.reduce(
       (details, { address, decimals, symbol }) => {
-        details[address] = {
+        details[removeChecksum(address)] = {
           decimals,
           symbol,
         }
@@ -149,7 +149,7 @@ class Transfers extends React.Component {
                 .map(transfer => (
                   <TransferRow
                     key={transfer.transactionHash}
-                    {...tokenDetails[transfer.token]}
+                    {...tokenDetails[removeChecksum(transfer.token)]}
                     {...transfer}
                   />
                 ))}

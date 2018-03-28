@@ -6,12 +6,12 @@
  * Fixed for NaNs on really small values
  *
  * @param {number} num Number to round
- * @param {number} places Number of places to round to
+ * @param {number} [places=2] Number of places to round to
  * @param {number} Rounded number
  */
 export function round(num, places = 2) {
   const rounded = +(Math.round(num + 'e+' + places) + 'e-' + places)
-  return Number.isNaN(rounded) ? 0 : rounded
+  return Number.isNaN(rounded) ? +num.toFixed(places) : rounded
 }
 
 /**
