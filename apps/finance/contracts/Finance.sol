@@ -138,7 +138,7 @@ contract Finance is AragonApp {
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
     */
-    function deposit(address _token, uint256 _amount, string _reference) external transitionsPeriod {
+    function deposit(address _token, uint256 _amount, string _reference) external isInitialized transitionsPeriod {
         _recordIncomingTransaction(
             _token,
             msg.sender,
@@ -193,7 +193,7 @@ contract Finance is AragonApp {
         uint64 _interval,
         uint64 _maxRepeats,
         string _reference
-    ) authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, _interval, _maxRepeats)) transitionsPeriod external returns (uint256 paymentId)
+    ) authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, _interval, _maxRepeats)) isInitialized transitionsPeriod external returns (uint256 paymentId)
     {
 
         require(settings.budgets[_token] > 0 || !settings.hasBudget[_token]); // Token must have been added to budget
@@ -301,7 +301,7 @@ contract Finance is AragonApp {
      * @notice Send tokens to Vault
      * @param _token Token whose balance is going to be transferred.
      */
-    function depositToVault(address _token) public {
+    function depositToVault(address _token) isInitialized public {
         uint256 value = ERC20(_token).balanceOf(this);
         require(value > 0);
 
@@ -468,7 +468,7 @@ contract Finance is AragonApp {
         uint256 _amount,
         uint256 _paymentId,
         string _reference
-        ) internal
+        ) isInitialized internal
     {
         require(_getRemainingBudget(_token) >= _amount);
         _recordTransaction(
