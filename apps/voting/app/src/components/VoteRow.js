@@ -53,7 +53,7 @@ class VoteRow extends React.Component {
         </BarsCell>
         <ActionsCell>
           <Button mode="outline" onClick={this.handleVoteClick}>
-            Open Vote
+            View Vote
           </Button>
         </ActionsCell>
       </TableRow>
