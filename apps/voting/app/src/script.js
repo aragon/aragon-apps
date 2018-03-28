@@ -73,7 +73,12 @@ async function loadVoteDescription(vote) {
 
   vote.description = path
     .map(step => {
-      const app = step.name ? `${step.name} (${step.to})` : `${step.to}`
+      let identifier = ''
+      if (step.identifier) identifier = ` (${step.identifier})`
+
+      const app = step.name
+        ? `${step.name}${identifier}`
+        : `${step.to}`
 
       return `${app}: ${step.description || 'No description'}`
     })
