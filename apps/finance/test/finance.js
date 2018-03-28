@@ -14,7 +14,7 @@ contract('Finance App', accounts => {
     const periodDuration = 100
     const withdrawAddr = '0x0000000000000000000000000000000000001234'
 
-    const ETH = '0x0'
+    const ETH = '0x0000000000000000000000000000000000000000'
 
     beforeEach(async () => {
         vault = await Vault.new()
@@ -74,6 +74,23 @@ contract('Finance App', accounts => {
         assert.isTrue(incoming, 'tx should be incoming')
         assert.equal(date, 1, 'date should be correct')
         assert.equal(ref, 'ref', 'ref should be correct')
+    })
+
+    it('records ETH deposits', async () => {
+        await app.send(10, { gas: 3e5 })
+
+        const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
+
+        // vault has 400 wei initially
+        assert.equal(await ETHConnector.at(vault.address).balance(ETH), 400 + 10, 'deposited ETH must be in vault')
+        assert.equal(periodId, 0, 'period id should be correct')
+        assert.equal(amount, 10, 'amount should be correct')
+        assert.equal(paymentId, 0, 'payment id should be 0')
+        assert.equal(token, ETH, 'token should be ETH token')
+        assert.equal(entity, accounts[0], 'entity should be correct')
+        assert.isTrue(incoming, 'tx should be incoming')
+        assert.equal(date, 1, 'date should be correct')
+        assert.equal(ref, 'Ether transfer to Finance app', 'ref should be correct')
     })
 
     /* TODO: ERC777 */
