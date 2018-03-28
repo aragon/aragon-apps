@@ -18,7 +18,7 @@ class NewTransfer extends React.Component {
     selectedToken: 0,
     recipient: '',
     reference: '',
-    amount: -1,
+    amount: '',
   }
   handleSelectToken = index => {
     this.setState({ selectedToken: index })
@@ -30,28 +30,26 @@ class NewTransfer extends React.Component {
     this.setState({ reference: event.target.value })
   }
   handleAmountUpdate = event => {
-    const value = event.target.value
-    const amount = value === '' ? 0 : parseInt(value, 10)
-    this.setState({
-      amount: !Number.isInteger(amount) || amount < 0 ? -1 : amount,
-    })
+    this.setState({ amount: event.target.value })
   }
-  handleTransfer = () => {
+  handleTransfer = event => {
+    event.preventDefault()
     const { onTransfer, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
-    onTransfer(tokens[selectedToken], recipient, amount, reference)
+    onTransfer(tokens[selectedToken], recipient, Number(amount), reference)
   }
   render() {
     const { onClose, title, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
     const symbols = tokens.map(({ symbol }) => symbol)
     return tokens.length ? (
-      <div>
+      <form onSubmit={this.handleTransfer}>
         <h1>{title}</h1>
         <Field label="Recipient">
           <TextInput
             onChange={this.handleRecipientUpdate}
             value={recipient}
+            required
             wide
           />
         </Field>
@@ -62,9 +60,12 @@ class NewTransfer extends React.Component {
             </Text.Block>
           </label>
           <CombinedInput>
-            <TextInput
+            <TextInput.Number
+              value={amount}
               onChange={this.handleAmountUpdate}
-              value={amount === -1 ? '' : amount}
+              min={0}
+              step="any"
+              required
               wide
             />
             <DropDown
@@ -82,11 +83,11 @@ class NewTransfer extends React.Component {
           />
         </Field>
         <ButtonWrapper>
-          <Button mode="strong" wide onClick={this.handleTransfer}>
+          <Button mode="strong" type="submit" wide>
             Submit Transfer
           </Button>
         </ButtonWrapper>
-      </div>
+      </form>
     ) : (
       <div>
         <Info.Permissions title="Action impossible">

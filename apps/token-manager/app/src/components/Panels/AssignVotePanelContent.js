@@ -2,7 +2,7 @@ import React from 'react'
 import { Button, Field, TextInput } from '@aragon/ui'
 
 const initialState = {
-  amount: 0,
+  amount: '',
   recipient: '',
 }
 
@@ -55,6 +55,7 @@ class AssignVotePanelContent extends React.Component {
               value={amount}
               onChange={this.handleAmountChange}
               min={0}
+              step="any"
               required
               wide
             />
