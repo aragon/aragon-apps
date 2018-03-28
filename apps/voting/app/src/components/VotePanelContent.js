@@ -126,9 +126,7 @@ class VotePanelContent extends React.Component {
               <h2>
                 <Label>Question:</Label>
               </h2>
-              <Question>
-                {metadata}
-              </Question>
+              <Question>{metadata}</Question>
             </React.Fragment>
           )}
           {description && (
