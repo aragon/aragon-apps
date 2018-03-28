@@ -18,10 +18,10 @@ const app = new Aragon()
 combineLatest(
   app.call('vault'),
   /**
-   * This is what is should be, but aragon-dev-cli doesn't know about public
-   * constants on contracts :(
-   *
    * app.call('ETH')
+   *
+   * Is how we should be getting the ETH token, but aragon-dev-cli doesn't know
+   * about public constants on contracts :(
    */
   of('0x0000000000000000000000000000000000000000')
 )
@@ -59,15 +59,9 @@ function createStore(settings) {
         nextState = await initializeState(nextState, settings)
       } else if (addressesEqual(eventAddress, vault.address)) {
         // Vault event
-        switch (eventName) {
-          // Both of these events in the Vault should just refresh the balance of the token
-          case 'Deposit':
-          case 'Transfer':
-            nextState = await vaultLoadBalance(nextState, event, settings)
-            break
-          default:
-            break
-        }
+        // Note: it looks like vault events don't have a defined `event.event` or anything in the
+        // `event.returnValues`... so let's just refetch its ETH balance.
+        nextState = await vaultLoadBalance(nextState, event, settings)
       } else {
         // Finance event
         switch (eventName) {
@@ -110,7 +104,11 @@ async function initializeState(state, settings) {
 async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
   return {
     ...state,
-    balances: await updateBalances(state, token, settings),
+    balances: await updateBalances(
+      state,
+      token || settings.ethToken.address,
+      settings
+    ),
   }
 }
 
