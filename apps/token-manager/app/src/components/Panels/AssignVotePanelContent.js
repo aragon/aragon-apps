@@ -54,6 +54,7 @@ class AssignVotePanelContent extends React.Component {
             <TextInput.Number
               value={amount}
               onChange={this.handleAmountChange}
+              min={0}
               required
               wide
             />
