@@ -9,7 +9,7 @@ import {
   theme,
 } from '@aragon/ui'
 import * as TransferTypes from '../transfer-types'
-import { removeChecksum } from '../web3-utils'
+import { addressesEqual, removeChecksum } from '../web3-utils'
 import TransferRow from './TransferRow'
 
 const TRANSFER_TYPES = [
@@ -65,7 +65,8 @@ class Transfers extends React.Component {
     const transferType = TRANSFER_TYPES[selectedTransferType]
     return transactions.filter(
       ({ token, isIncoming }) =>
-        (selectedToken === 0 || token === tokens[selectedToken - 1].address) &&
+        (selectedToken === 0 ||
+          addressesEqual(token, tokens[selectedToken - 1].address)) &&
         (transferType === TransferTypes.All ||
           (transferType === TransferTypes.Incoming && isIncoming) ||
           (transferType === TransferTypes.Outgoing && !isIncoming))
