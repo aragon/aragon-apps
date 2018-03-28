@@ -60,6 +60,7 @@ class App extends React.Component {
       symbol,
       decimals,
     }))
+    const paymentPossibleTokens = balances.filter(({ amount }) => amount)
     return (
       <AragonApp publicUrl="/aragon-ui/">
         <Layout>
@@ -90,7 +91,7 @@ class App extends React.Component {
           title="New Transfer"
         >
           <NewTransfer
-            balances={balances}
+            tokens={paymentPossibleTokens}
             onClose={this.handleNewTransferClose}
             onTransfer={this.handleSubmitTransfer}
           />
