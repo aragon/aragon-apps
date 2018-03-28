@@ -11,5 +11,5 @@
  */
 export function round(num, places = 2) {
   const rounded = +(Math.round(num + 'e+' + places) + 'e-' + places)
-  return Number.isNaN(rounded) ? 0 : rounded
+  return Number.isNaN(rounded) ? +num.toFixed(places) : rounded
 }
