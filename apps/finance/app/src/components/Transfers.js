@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import { compareDesc } from 'date-fns/esm'
 import {
   Button,
   Table,
@@ -146,6 +147,10 @@ class Transfers extends React.Component {
             >
               {filteredTransfers
                 .slice(0, displayedTransfers)
+                .sort(({ date: dateLeft }, { date: dateRight }) =>
+                  // Sort by date descending
+                  compareDesc(dateLeft, dateRight)
+                )
                 .map(transfer => (
                   <TransferRow
                     key={transfer.transactionHash}
