@@ -43,7 +43,7 @@ const calculateStakes = (accounts, total) => {
   const rest =
     100 - displayedStakes.reduce((total, { stake }) => total + stake, 0)
 
-  return rest > 0
+  return displayedStakes.length < accounts.length
     ? [...displayedStakes, { name: 'Rest', stake: rest }].sort(byStake)
     : displayedStakes
 }
