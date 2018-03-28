@@ -1,4 +1,5 @@
 import React from 'react'
+import { compareDesc } from 'date-fns/esm'
 import { Table, TableHeader, TableRow } from '@aragon/ui'
 import VoteRow from './VoteRow'
 
@@ -14,9 +15,18 @@ const VotesTable = ({ votes, opened, onSelectVote }) => (
       </TableRow>
     }
   >
-    {votes.map(vote => (
-      <VoteRow key={vote.voteId} vote={vote} onSelectVote={onSelectVote} />
-    ))}
+    {votes
+      .sort(
+        (
+          { data: { startDate: startDateLeft } },
+          { data: { startDate: startDateRight } }
+        ) =>
+          // Sort by date descending
+          compareDesc(startDateLeft, startDateRight)
+      )
+      .map(vote => (
+        <VoteRow key={vote.voteId} vote={vote} onSelectVote={onSelectVote} />
+      ))}
   </Table>
 )
 
