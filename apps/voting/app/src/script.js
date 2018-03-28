@@ -47,7 +47,10 @@ async function castVote(state, { voteId }) {
 }
 
 async function executeVote(state, { voteId }) {
-  const transform = vote => ({ ...vote, executed: true })
+  const transform = ({ data, ...vote }) => ({
+    ...vote,
+    data: { ...data, executed: true },
+  })
   return updateState(state, voteId, transform)
 }
 
