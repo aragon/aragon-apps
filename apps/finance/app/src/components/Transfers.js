@@ -126,7 +126,7 @@ class Transfers extends React.Component {
               No transfers found.{' '}
               {filtersActive && (
                 <a role="button" onClick={this.handleResetFilters}>
-                  reset filters
+                  Reset filters
                 </a>
               )}
             </p>
