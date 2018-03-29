@@ -23,6 +23,12 @@ class AssignVotePanelContent extends React.Component {
     }
   }
   componentWillReceiveProps({ opened, recipient = '' }) {
+    if (opened && !this.props.opened) {
+      // setTimeout is needed as a small hack to wait until the input's on
+      // screen until we call focus
+      this.recipientInput && setTimeout(() => this.recipientInput.focus(), 0)
+    }
+
     if (recipient !== this.props.recipient && opened) {
       // Recipient override passed in from props
       this.setState({
@@ -72,6 +78,7 @@ class AssignVotePanelContent extends React.Component {
         <form onSubmit={this.handleSubmit}>
           <Field label="Recipient (must be a valid Ethereum address)">
             <TextInput
+              innerRef={recipient => (this.recipientInput = recipient)}
               value={recipient.value}
               onChange={this.handleRecipientChange}
               pattern={
