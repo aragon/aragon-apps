@@ -7,5 +7,7 @@ export function addressesEqual(first, second) {
   return first === second
 }
 
+export const addressPattern = '(0x)?[0-9a-fA-F]{40}'
+
 // Re-export some web3-utils functions
-export { toChecksumAddress } from 'web3-utils'
+export { isAddress, toChecksumAddress } from 'web3-utils'

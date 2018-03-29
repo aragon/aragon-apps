@@ -3,12 +3,14 @@ import styled from 'styled-components'
 import {
   Button,
   DropDown,
+  IconCross,
   Info,
   Field,
   Text,
   TextInput,
   theme,
 } from '@aragon/ui'
+import { addressPattern, isAddress } from '../web3-utils'
 
 class NewTransfer extends React.Component {
   static defaultProps = {
@@ -16,7 +18,10 @@ class NewTransfer extends React.Component {
   }
   state = {
     selectedToken: 0,
-    recipient: '',
+    recipient: {
+      error: null,
+      value: '',
+    },
     reference: '',
     amount: '',
   }
@@ -24,7 +29,12 @@ class NewTransfer extends React.Component {
     this.setState({ selectedToken: index })
   }
   handleRecipientUpdate = event => {
-    this.setState({ recipient: event.target.value })
+    this.setState({
+      recipient: {
+        error: null,
+        value: event.target.value,
+      },
+    })
   }
   handleReferenceUpdate = event => {
     this.setState({ reference: event.target.value })
@@ -36,7 +46,22 @@ class NewTransfer extends React.Component {
     event.preventDefault()
     const { onTransfer, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
-    onTransfer(tokens[selectedToken], recipient, Number(amount), reference)
+    const recipientAddress = recipient.value.trim()
+    if (isAddress(recipientAddress)) {
+      onTransfer(
+        tokens[selectedToken],
+        recipientAddress,
+        Number(amount),
+        reference
+      )
+    } else {
+      this.setState(({ recipient }) => ({
+        recipient: {
+          ...recipient,
+          error: true,
+        },
+      }))
+    }
   }
   render() {
     const { onClose, title, tokens } = this.props
@@ -45,10 +70,14 @@ class NewTransfer extends React.Component {
     return tokens.length ? (
       <form onSubmit={this.handleTransfer}>
         <h1>{title}</h1>
-        <Field label="Recipient">
+        <Field label="Recipient (must be a valid Ethereum address)">
           <TextInput
             onChange={this.handleRecipientUpdate}
-            value={recipient}
+            pattern={
+              // Allow spaces to be trimmable
+              ` *${addressPattern} *`
+            }
+            value={recipient.value}
             required
             wide
           />
@@ -87,6 +116,9 @@ class NewTransfer extends React.Component {
             Submit Transfer
           </Button>
         </ButtonWrapper>
+        {recipient.error && (
+          <ValidationError message="Recipient must be a valid Ethereum address" />
+        )}
       </form>
     ) : (
       <div>
@@ -123,6 +155,19 @@ const CombinedInput = styled.div`
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
+`
+
+const ValidationError = ({ message }) => (
+  <ValidationErrorBlock>
+    <IconCross />
+    <Text size="small" style={{ marginLeft: '10px' }}>
+      Recipient must be a valid Ethereum address
+    </Text>
+  </ValidationErrorBlock>
+)
+
+const ValidationErrorBlock = styled.p`
+  margin-top: 15px;
 `
 
 export default NewTransfer
