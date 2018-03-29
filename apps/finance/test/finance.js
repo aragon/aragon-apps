@@ -188,11 +188,14 @@ contract('Finance App', accounts => {
 
         it('can create single payment', async () => {
             const amount = 10
-
+            const ref = 'one time ref'
             // interval 0, repeat 1 (single payment)
-            await app.newPayment(token1.address, recipient, amount, time, 0, 1, '')
+            await app.newPayment(token1.address, recipient, amount, time, 0, 1, ref)
+
+            const txData = await app.getTransaction(1)
 
             assert.equal(await token1.balanceOf(recipient), amount, 'recipient should have received tokens')
+            assert.equal(txData[7], ref, 'ref should be saved in one time payments')
         })
 
         it('can decrease budget after spending', async () => {

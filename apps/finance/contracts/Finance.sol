@@ -204,7 +204,8 @@ contract Finance is AragonApp {
                 _token,
                 _receiver,
                 _amount,
-                0   // unrelated to any payment id, it isn't created
+                0,   // unrelated to any payment id, it isn't created
+                _reference
             );
             return;
         }
@@ -423,7 +424,6 @@ contract Finance is AragonApp {
     }
 
     // internal fns
-
     function _newPeriod(uint64 _startTime) internal returns (Period storage) {
         uint256 newPeriodId = periods.length++;
 
@@ -455,7 +455,8 @@ contract Finance is AragonApp {
                 payment.token,
                 payment.receiver,
                 payment.amount,
-                _paymentId
+                _paymentId,
+                "" // reference can be fetched from paymentId, save gas
             );
         }
     }
@@ -464,7 +465,8 @@ contract Finance is AragonApp {
         address _token,
         address _receiver,
         uint256 _amount,
-        uint256 _paymentId
+        uint256 _paymentId,
+        string _reference
         ) internal
     {
         require(_getRemainingBudget(_token) >= _amount);
@@ -474,7 +476,7 @@ contract Finance is AragonApp {
             _receiver,
             _amount,
             _paymentId,
-            ""
+            _reference
         );
 
         vault.transfer(_token, _receiver, _amount, new bytes(0));
