@@ -91,6 +91,7 @@ class App extends React.Component {
           title="New Transfer"
         >
           <NewTransfer
+            opened={newTransferOpened}
             tokens={paymentPossibleTokens}
             onClose={this.handleNewTransferClose}
             onTransfer={this.handleSubmitTransfer}

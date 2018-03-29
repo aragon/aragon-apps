@@ -7,7 +7,7 @@ export const formatTokenAmount = (
   displaySign = false,
   { rounding = 2 } = {}
 ) =>
-  (displaySign && isIncoming ? '+' : '') +
+  (displaySign && isIncoming ? '+' : '-') +
   Number(round(amount / Math.pow(10, decimals), rounding)).toLocaleString(
     'latn',
     {
