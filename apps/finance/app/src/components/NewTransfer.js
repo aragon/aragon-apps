@@ -30,7 +30,11 @@ class NewTransfer extends React.Component {
     ...initialState,
   }
   componentWillReceiveProps({ opened }) {
-    if (!opened && this.props.opened) {
+    if (opened && !this.props.opened) {
+      // setTimeout is needed as a small hack to wait until the input's on
+      // screen until we call focus
+      this.recipientInput && setTimeout(() => this.recipientInput.focus(), 0)
+    } else if (!opened && this.props.opened) {
       // Finished closing the panel, so reset its state
       this.setState({ ...initialState })
     }
@@ -82,6 +86,7 @@ class NewTransfer extends React.Component {
         <h1>{title}</h1>
         <Field label="Recipient (must be a valid Ethereum address)">
           <TextInput
+            innerRef={recipient => (this.recipientInput = recipient)}
             onChange={this.handleRecipientUpdate}
             pattern={
               // Allow spaces to be trimmable
