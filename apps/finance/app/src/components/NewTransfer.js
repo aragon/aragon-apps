@@ -3,28 +3,52 @@ import styled from 'styled-components'
 import {
   Button,
   DropDown,
+  IconCross,
   Info,
   Field,
   Text,
   TextInput,
   theme,
 } from '@aragon/ui'
+import { addressPattern, isAddress } from '../web3-utils'
+
+const initialState = {
+  selectedToken: 0,
+  recipient: {
+    error: null,
+    value: '',
+  },
+  reference: '',
+  amount: '',
+}
 
 class NewTransfer extends React.Component {
   static defaultProps = {
     onTransfer: () => {},
   }
   state = {
-    selectedToken: 0,
-    recipient: '',
-    reference: '',
-    amount: '',
+    ...initialState,
+  }
+  componentWillReceiveProps({ opened }) {
+    if (opened && !this.props.opened) {
+      // setTimeout is needed as a small hack to wait until the input's on
+      // screen until we call focus
+      this.recipientInput && setTimeout(() => this.recipientInput.focus(), 0)
+    } else if (!opened && this.props.opened) {
+      // Finished closing the panel, so reset its state
+      this.setState({ ...initialState })
+    }
   }
   handleSelectToken = index => {
     this.setState({ selectedToken: index })
   }
   handleRecipientUpdate = event => {
-    this.setState({ recipient: event.target.value })
+    this.setState({
+      recipient: {
+        error: null,
+        value: event.target.value,
+      },
+    })
   }
   handleReferenceUpdate = event => {
     this.setState({ reference: event.target.value })
@@ -36,7 +60,22 @@ class NewTransfer extends React.Component {
     event.preventDefault()
     const { onTransfer, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
-    onTransfer(tokens[selectedToken], recipient, Number(amount), reference)
+    const recipientAddress = recipient.value.trim()
+    if (isAddress(recipientAddress)) {
+      onTransfer(
+        tokens[selectedToken],
+        recipientAddress,
+        Number(amount),
+        reference
+      )
+    } else {
+      this.setState(({ recipient }) => ({
+        recipient: {
+          ...recipient,
+          error: true,
+        },
+      }))
+    }
   }
   render() {
     const { onClose, title, tokens } = this.props
@@ -45,10 +84,15 @@ class NewTransfer extends React.Component {
     return tokens.length ? (
       <form onSubmit={this.handleTransfer}>
         <h1>{title}</h1>
-        <Field label="Recipient">
+        <Field label="Recipient (must be a valid Ethereum address)">
           <TextInput
+            innerRef={recipient => (this.recipientInput = recipient)}
             onChange={this.handleRecipientUpdate}
-            value={recipient}
+            pattern={
+              // Allow spaces to be trimmable
+              ` *${addressPattern} *`
+            }
+            value={recipient.value}
             required
             wide
           />
@@ -87,6 +131,9 @@ class NewTransfer extends React.Component {
             Submit Transfer
           </Button>
         </ButtonWrapper>
+        {recipient.error && (
+          <ValidationError message="Recipient must be a valid Ethereum address" />
+        )}
       </form>
     ) : (
       <div>
@@ -123,6 +170,19 @@ const CombinedInput = styled.div`
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
+`
+
+const ValidationError = ({ message }) => (
+  <ValidationErrorBlock>
+    <IconCross />
+    <Text size="small" style={{ marginLeft: '10px' }}>
+      Recipient must be a valid Ethereum address
+    </Text>
+  </ValidationErrorBlock>
+)
+
+const ValidationErrorBlock = styled.p`
+  margin-top: 15px;
 `
 
 export default NewTransfer
