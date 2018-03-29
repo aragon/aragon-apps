@@ -2,16 +2,25 @@ import React from 'react'
 import styled from 'styled-components'
 import { Button, Info, Text, TextInput, Field } from '@aragon/ui'
 
+const initialState = {
+  question: '',
+}
+
 class NewVotePanelContent extends React.Component {
   static defaultProps = {
     onCreateVote: () => {},
   }
   state = {
-    question: '',
+    ...initialState,
   }
   componentWillReceiveProps({ opened }) {
     if (opened && !this.props.opened) {
-      this.setState({ question: '' })
+      // setTimeout is needed as a small hack to wait until the input's on
+      // screen until we call focus
+      this.questionInput && setTimeout(() => this.questionInput.focus(), 0)
+    } else if (!opened && this.props.opened) {
+      // Finished closing the panel, so reset its state
+      this.setState({ ...initialState })
     }
   }
   handleQuestionChange = event => {
@@ -31,6 +40,7 @@ class NewVotePanelContent extends React.Component {
         <Form onSubmit={this.handleSubmit}>
           <Field label="Question">
             <TextInput
+              innerRef={question => (this.questionInput = question)}
               value={question}
               onChange={this.handleQuestionChange}
               required
