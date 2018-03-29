@@ -24,6 +24,7 @@ class App extends React.Component {
     tokenSupply: null,
     tokenSymbol: null,
     holders: [],
+    userAccount: '',
   }
   state = {
     assignTokensConfig: {},
@@ -60,9 +61,9 @@ class App extends React.Component {
     })
   }
   render() {
-    const { tokenSymbol, tokenSupply, holders } = this.props
-    const { tokenDecimalsBase } = this.state
+    const { tokenSymbol, tokenSupply, holders, userAccount } = this.props
     const {
+      tokenDecimalsBase,
       assignTokensConfig,
       sidepanelOpened,
       tokenSettingsLoaded,
@@ -96,6 +97,7 @@ class App extends React.Component {
                   onAssignTokens={this.handleLaunchAssignTokens}
                   tokenDecimalsBase={tokenDecimalsBase}
                   tokenSupply={tokenSupply}
+                  userAccount={userAccount}
                 />
               ) : (
                 <EmptyState onActivate={this.handleLaunchAssignTokens} />

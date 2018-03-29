@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aragon/client": "^1.0.0-beta.5",
-    "@aragon/ui": "^0.7.0",
+    "@aragon/client": "^1.0.0-beta.7",
+    "@aragon/ui": "^0.11.0",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@aragon/react-scripts": "^1.1.0-aragon.4",
+    "babel-core": "^6.26.0",
     "babel-eslint": "^8.0.3",
     "babel-plugin-styled-components": "^1.5.1",
     "babel-plugin-transform-runtime": "^6.23.0",
@@ -29,7 +30,7 @@
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-react": "^7.5.1",
     "eslint-plugin-standard": "^3.0.1",
-    "parcel-bundler": "^1.6.2",
+    "parcel-bundler": "^1.7.0",
     "prettier": "^1.8.2"
   },
   "scripts": {
