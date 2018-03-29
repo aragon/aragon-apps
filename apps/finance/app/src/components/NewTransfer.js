@@ -12,18 +12,28 @@ import {
 } from '@aragon/ui'
 import { addressPattern, isAddress } from '../web3-utils'
 
+const initialState = {
+  selectedToken: 0,
+  recipient: {
+    error: null,
+    value: '',
+  },
+  reference: '',
+  amount: '',
+}
+
 class NewTransfer extends React.Component {
   static defaultProps = {
     onTransfer: () => {},
   }
   state = {
-    selectedToken: 0,
-    recipient: {
-      error: null,
-      value: '',
-    },
-    reference: '',
-    amount: '',
+    ...initialState,
+  }
+  componentWillReceiveProps({ opened }) {
+    if (!opened && this.props.opened) {
+      // Finished closing the panel, so reset its state
+      this.setState({ ...initialState })
+    }
   }
   handleSelectToken = index => {
     this.setState({ selectedToken: index })
