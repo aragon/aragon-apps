@@ -14,6 +14,7 @@ class Holders extends React.Component {
       onAssignTokens,
       tokenDecimalsBase,
       tokenSupply,
+      userAccount,
     } = this.props
     const singleHolder =
       // We assume that a token is liquid if a single holder has more than one token
@@ -44,6 +45,7 @@ class Holders extends React.Component {
                 groupMode={groupMode}
                 onAssignTokens={onAssignTokens}
                 tokenDecimalsBase={tokenDecimalsBase}
+                isCurrentUser={userAccount && userAccount === address}
               />
             ))}
           </Table>
