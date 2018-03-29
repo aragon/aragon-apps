@@ -457,7 +457,7 @@ contract Finance is AragonApp {
                 payment.receiver,
                 payment.amount,
                 _paymentId,
-                payment.reference
+                "" // since paymentId is saved, the payment reference can be fetched
             );
         }
     }
