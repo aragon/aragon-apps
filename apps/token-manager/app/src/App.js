@@ -24,16 +24,12 @@ class App extends React.Component {
     tokenSupply: null,
     tokenSymbol: null,
     holders: [],
+    userAccount: '',
   }
   state = {
     assignTokensConfig: {},
     sidepanelOpened: false,
     tokenSettingsLoaded: false,
-    userAccount: '',
-  }
-  constructor(props) {
-    super(props)
-    this.initUserAddress()
   }
   componentWillReceiveProps(nextProps) {
     const { tokenSettingsLoaded } = this.state
@@ -44,13 +40,6 @@ class App extends React.Component {
         tokenSettingsLoaded: true,
       })
     }
-  }
-  initUserAddress = () => {
-    this.props.app.accounts().subscribe(([userAccount]) => {
-      if (userAccount) {
-        this.setState({ userAccount })
-      }
-    })
   }
   handleAssignTokens = ({ amount, recipient }) => {
     const { app } = this.props
@@ -72,13 +61,12 @@ class App extends React.Component {
     })
   }
   render() {
-    const { tokenSymbol, tokenSupply, holders } = this.props
-    const { tokenDecimalsBase } = this.state
+    const { tokenSymbol, tokenSupply, holders, userAccount } = this.props
     const {
+      tokenDecimalsBase,
       assignTokensConfig,
       sidepanelOpened,
       tokenSettingsLoaded,
-      userAccount,
     } = this.state
     return (
       <AragonApp publicUrl="/aragon-ui/">
