@@ -2,11 +2,11 @@
 # yarn lockfile v1
 
 
-"@aragon/apps-vault@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@aragon/apps-vault/-/apps-vault-1.0.0.tgz#56e54538e2e876a7de0b14159c7b837ca1da0bc9"
+"@aragon/apps-vault@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@aragon/apps-vault/-/apps-vault-2.0.1.tgz#f6866726694c4907792351a70a05c00ef8a7e961"
   dependencies:
-    "@aragon/os" "^3.0.8"
+    "@aragon/os" "^3.1.1"
 
 "@aragon/cli@^2.0.4":
   version "2.0.8"
@@ -30,9 +30,9 @@
     web3 "1.0.0-beta.26"
     yargs "^10.1.0"
 
-"@aragon/os@^3.0.8":
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/@aragon/os/-/os-3.1.1.tgz#8a9adb5510eaae68e8f3a1de0f8aa66fb9c46db3"
+"@aragon/os@^3.1.1":
+  version "3.1.2"
+  resolved "https://registry.yarnpkg.com/@aragon/os/-/os-3.1.2.tgz#c3fcdad029403efe1f23098b8373f8edcd6d0c57"
   dependencies:
     homedir "^0.6.0"
     truffle-privatekey-provider "0.0.5"
