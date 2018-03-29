@@ -190,9 +190,19 @@ contract('Finance App', accounts => {
             const amount = 10
 
             // interval 0, repeat 1 (single payment)
-            await app.newPayment(token1.address, recipient, amount, time, 0, 1, '')
+            await app.newPayment(token1.address, recipient, amount, time, 0, 1, 'ref')
 
             assert.equal(await token1.balanceOf(recipient), amount, 'recipient should have received tokens')
+
+            const [periodId, am, paymentId, token, entity, isIncoming, date, ref] = await app.getTransaction(1)
+            assert.equal(periodId, 0, 'period id should be correct')
+            assert.equal(am, amount, 'amount should match')
+            assert.equal(paymentId, 0, 'payment id should be 0 for single payment')
+            assert.equal(token, token1.address, 'token address should match')
+            assert.equal(entity, recipient, 'receiver should match')
+            assert.isFalse(isIncoming, 'single payment should be outgoing')
+            assert.equal(date.toNumber(), time, 'date should be correct')
+            assert.equal(ref, 'ref', 'ref should match')
         })
 
         it('can decrease budget after spending', async () => {
