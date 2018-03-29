@@ -1,16 +1,20 @@
 import React from 'react'
-import { Button, Field, TextInput } from '@aragon/ui'
+import styled from 'styled-components'
+import { Button, Field, IconCross, Text, TextInput } from '@aragon/ui'
+import { addressPattern, isAddress } from '../../web3-utils'
 
 const initialState = {
   amount: '',
-  recipient: '',
-}
-
-const handleFieldChange = (component, field) => event => {
-  component.setState({ [field]: event.target.value })
+  recipient: {
+    error: null,
+    value: '',
+  },
 }
 
 class AssignVotePanelContent extends React.Component {
+  static defaultProps = {
+    onAssignTokens: () => {},
+  }
   constructor(props) {
     super(props)
     this.state = {
@@ -18,34 +22,62 @@ class AssignVotePanelContent extends React.Component {
       ...props.recipient,
     }
   }
-  componentWillReceiveProps({ opened, recipient }) {
-    if (recipient && recipient !== this.props.recipient && opened) {
+  componentWillReceiveProps({ opened, recipient = '' }) {
+    if (recipient !== this.props.recipient && opened) {
       // Recipient override passed in from props
-      this.setState({ recipient })
+      this.setState({
+        recipient: {
+          ...initialState.recipient,
+          value: recipient,
+        },
+      })
     } else if (!opened && this.props.opened) {
       // Finished closing the panel, so reset its state
       this.setState({ ...initialState })
     }
   }
-  handleAmountChange = handleFieldChange(this, 'amount')
-  handleRecipientChange = handleFieldChange(this, 'recipient')
-  handleSubmit = event => {
-    const { amount, recipient } = this.state
-    event.preventDefault()
-    this.props.onAssignTokens({
-      amount: Number(amount),
-      recipient: recipient.trim(),
+  handleAmountChange = event => {
+    this.setState({ amount: event.target.value })
+  }
+  handleRecipientChange = event => {
+    this.setState({
+      recipient: {
+        error: null,
+        value: event.target.value,
+      },
     })
+  }
+  handleSubmit = event => {
+    event.preventDefault()
+    const { amount, recipient } = this.state
+    const recipientAddress = recipient.value.trim()
+    if (isAddress(recipientAddress)) {
+      this.props.onAssignTokens({
+        amount: Number(amount),
+        recipient: recipientAddress,
+      })
+    } else {
+      this.setState(({ recipient }) => ({
+        recipient: {
+          ...recipient,
+          error: true,
+        },
+      }))
+    }
   }
   render() {
     const { amount, recipient } = this.state
     return (
       <div>
         <form onSubmit={this.handleSubmit}>
-          <Field label="Recipient">
+          <Field label="Recipient (must be a valid Ethereum address)">
             <TextInput
-              value={recipient}
+              value={recipient.value}
               onChange={this.handleRecipientChange}
+              pattern={
+                // Allow spaces to be trimmable
+                ` *${addressPattern} *`
+              }
               required
               wide
             />
@@ -63,14 +95,26 @@ class AssignVotePanelContent extends React.Component {
           <Button mode="strong" type="submit" wide>
             Assign Tokens
           </Button>
+          {recipient.error && (
+            <ValidationError message="Recipient must be a valid Ethereum address" />
+          )}
         </form>
       </div>
     )
   }
 }
 
-AssignVotePanelContent.defaultProps = {
-  onAssignTokens: () => {},
-}
+const ValidationError = ({ message }) => (
+  <ValidationErrorBlock>
+    <IconCross />
+    <Text size="small" style={{ marginLeft: '10px' }}>
+      Recipient must be a valid Ethereum address
+    </Text>
+  </ValidationErrorBlock>
+)
+
+const ValidationErrorBlock = styled.p`
+  margin-top: 15px;
+`
 
 export default AssignVotePanelContent
