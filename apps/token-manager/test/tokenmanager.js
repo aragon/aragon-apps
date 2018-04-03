@@ -331,22 +331,24 @@ contract('Token Manager', accounts => {
     })
 
     context('app not initialized', async () => {
-
         it('fails to mint tokens', async() => {
             return assertRevert(async() => {
                 await tokenManager.mint(accounts[1], 1)
             })
         })
+
         it('fails to assign tokens', async() => {
             return assertRevert(async() => {
                 await tokenManager.assign(accounts[1], 1)
             })
         })
+
         it('fails to issue tokens', async() => {
             return assertRevert(async() => {
                 await tokenManager.issue(1)
             })
         })
+
         it('fails to burn tokens', async() => {
             return assertRevert(async() => {
                 await tokenManager.burn(accounts[0], 1)
