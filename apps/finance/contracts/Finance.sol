@@ -335,7 +335,7 @@ contract Finance is AragonApp {
         // If there were any transactions in period, record which was the last
         // In case 0 transactions occured, first and last tx id will be 0
         if (currentPeriod.firstTransactionId != 0)
-            currentPeriod.lastTransactionId = transactions.length - 1;
+            currentPeriod.lastTransactionId = transactions.length.sub(1);
 
         // new period starts at end time + 1
         Period storage newPeriod = _newPeriod(currentPeriod.endTime.add(1));
