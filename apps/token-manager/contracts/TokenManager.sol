@@ -222,7 +222,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
-        return token.balanceOf(_receiver) + _inc <= maxAccountTokens;
+        return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
     }
 
     function tokenGrantsCount(address _holder) public view returns (uint256) {
@@ -310,6 +310,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
             )
         );
 
+        // will always be >= 0 as we checked before that time >= vesting
         return tokens - vestedTokens;
     }
 
