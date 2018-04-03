@@ -310,8 +310,8 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
             )
         );
 
-        // will always be >= 0 as we checked before that time >= vesting
-        return tokens - vestedTokens;
+        // tokens - vestedTokens
+        return tokens.sub(vestedTokens);
     }
 
     function _assign(address _receiver, uint256 _amount) internal {
