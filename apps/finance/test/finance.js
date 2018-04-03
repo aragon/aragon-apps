@@ -407,4 +407,45 @@ contract('Finance App', accounts => {
             assert.equal(await token1.balanceOf(recipient), 80, 'recipient should have received tokens')
         })
     })
+
+    context('Without initialize', async () => {
+        let nonInit
+
+        beforeEach(async () => {
+            nonInit = await Finance.new()
+            await nonInit.mock_setTimestamp(1)
+        })
+
+        it('fails to create new Payment', async() => {
+            const recipient = accounts[1]
+            const amount = 1
+            const time = 22
+            await nonInit.mock_setTimestamp(time)
+
+            return assertRevert(async() => {
+                await nonInit.newPayment(token1.address, recipient, amount, time, 0, 1, 'ref')
+            })
+        })
+
+        it('fails to deposit ERC20 tokens', async() => {
+            await token1.approve(nonInit.address, 5)
+            return assertRevert(async() => {
+                await nonInit.deposit(token1.address, 5, 'ref')
+            })
+        })
+
+        it('fails to send tokens to Vault', async() => {
+            // 'lock' tokens
+            await token1.transfer(nonInit.address, 5)
+            return assertRevert(async() => {
+                await nonInit.depositToVault(token1.address)
+            })
+        })
+
+        it('fails to deposit ETH', async() => {
+            return assertInvalidOpcode(async() => {
+                await nonInit.send(10, { gas: 3e5 })
+            })
+        })
+    })
 })
