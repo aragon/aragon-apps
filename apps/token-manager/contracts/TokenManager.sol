@@ -105,7 +105,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _holder Holder being removed tokens
     * @param _amount Number of tokens being burned
     */
-    function burn(address _holder, uint256 _amount) authP(BURN_ROLE, arr(_holder, _amount)) external {
+    function burn(address _holder, uint256 _amount) authP(BURN_ROLE, arr(_holder, _amount)) isInitialized external {
         // minime.destroyTokens() never returns false, only reverts on failure
         token.destroyTokens(_holder, _amount);
     }
@@ -313,12 +313,12 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
         return tokens - vestedTokens;
     }
 
-    function _assign(address _receiver, uint256 _amount) internal {
+    function _assign(address _receiver, uint256 _amount) isInitialized internal {
         require(isBalanceIncreaseAllowed(_receiver, _amount));
         require(token.transfer(_receiver, _amount));
     }
 
-    function _mint(address _receiver, uint256 _amount) internal {
+    function _mint(address _receiver, uint256 _amount) isInitialized internal {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
         _logHolderIfNeeded(_receiver);
     }

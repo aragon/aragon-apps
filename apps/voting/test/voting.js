@@ -365,4 +365,11 @@ contract('Voting App', accounts => {
             assert.isTrue(isExecuted, 'vote should have been executed')
         })
     })
+    context('before init', () => {
+        it('fails creating a vote before initialization', async () => {
+            return assertRevert(async () => {
+                await app.newVote(encodeCallScript([]), '')
+            })
+        })
+    })
 })
