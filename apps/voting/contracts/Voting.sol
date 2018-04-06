@@ -210,7 +210,7 @@ contract Voting is IForwarder, AragonApp {
         return true;
     }
 
-    function getVote(uint256 _voteId) public view returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 votingPower, uint256 quorum, bytes script) {
+    function getVote(uint256 _voteId) public view returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 votingPower, uint256 quorum, uint256 options, bytes script) {
         Vote vote = votes[_voteId];
 
         open = _isVoteOpen(vote);
@@ -219,11 +219,16 @@ contract Voting is IForwarder, AragonApp {
         startDate = vote.startDate;
         snapshotBlock = vote.snapshotBlock;
         minAcceptQuorum = vote.minAcceptQuorumPct;
-        yea = vote.votes[YEA_VOTE_OPTION];
-        nay = vote.votes[NAY_VOTE_OPTION];
         votingPower = vote.votingPower;
         quorum = vote.quorum;
+        options = vote.options;
         script = vote.executionScript;
+
+        // yea and nay are only returned in case of binary votes, otherwise getOptionSupport(..) should be used
+        if (options == 2) {
+            yea = vote.votes[YEA_VOTE_OPTION];
+            nay = vote.votes[NAY_VOTE_OPTION]; 
+        }
     }
 
     function getVoteMetadata(uint256 _voteId) public view returns (string) {

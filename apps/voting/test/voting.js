@@ -19,7 +19,7 @@ const createdVoteId = receipt => receipt.logs.filter(x => x.event == 'StartVote'
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 
-const VOTER_STATE = ['ABSENT', 'YEA', 'NAY'].reduce((state, key, index) => {
+const VOTER_STATE = ['NO_VOTE', 'YEA', 'NAY'].reduce((state, key, index) => {
     state[key] = index;
     return state;
 }, {})
@@ -122,18 +122,16 @@ contract('Voting App', accounts => {
             assert.equal(await app.minAcceptQuorumPct(), 1, 'should have change acceptance quorum')
         })
 
-        context('creating vote by forwarding', () => {
+        context('creating signaling vote', () => {
             let voteId = {}
-            let script = ''
+            let optionsCount = 10e9 // lots of options
 
             beforeEach(async () => {
-                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-                script = encodeCallScript([action, action])
-                voteId = createdVoteId(await app.newVote(script, 'metadata', { from: nonHolder }))
+                voteId = createdVoteId(await app.newSignalingVote('metadata', optionsCount, { from: nonHolder }))
             })
 
             it('has correct state', async () => {
-                const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, quorum, execScript] = await app.getVote(voteId)
+                const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, quorum, options, execScript] = await app.getVote(voteId)
 
                 assert.isTrue(isOpen, 'vote should be open')
                 assert.isFalse(isExecuted, 'vote should not be executed')
@@ -142,11 +140,88 @@ contract('Voting App', accounts => {
                 assert.deepEqual(minQuorum, minimumAcceptanceQuorum, 'min quorum should be app min quorum')
                 assert.equal(y, 0, 'initial yea should be 0')
                 assert.equal(n, 0, 'initial nay should be 0')
-                assert.equal(quorum, 0, 'initial quorum should be 0')
+                assert.equal(quorum, 0, 'initial quorum should be 0') // didn't vote even though creator was holder
                 assert.equal(totalVoters, 100, 'total voters should be 100')
+                assert.equal(options, optionsCount, 'options should be 2 in binary votes')
+                assert.equal(execScript, '0x', 'script should be empty')
+                assert.equal(await app.getVoteMetadata(voteId), 'metadata', 'should have returned correct metadata')
+                assert.equal(await app.getVoterState(voteId, nonHolder), VOTER_STATE.NO_VOTE, 'nonHolder should not have voted')
+            })
+
+            it('counts votes properly', async () => {
+                await app.voteOption(voteId, 10, true, { from: holder31 })
+                await app.voteOption(voteId, 11, true, { from: holder31 }) // h31 votes for option 11
+
+                await app.voteOption(voteId, 12, true, { from: holder50 }) // h51 votes for option 12
+                await app.voteOption(voteId, 1, true, { from: holder19 }) // h19 votes for option 1
+
+                assert.equal(await app.getOptionSupport(voteId, 1), 19)
+                assert.equal(await app.getOptionSupport(voteId, 10), 0)
+                assert.equal(await app.getOptionSupport(voteId, 11), 31)
+                assert.equal(await app.getOptionSupport(voteId, 12), 50)
+
+                const state = await app.getVote(voteId)
+
+                assert.equal(state[6], 0, 'yays should be 0 on signaling votes')
+                assert.equal(state[8], 100, 'quorum should de 100')
+
+            })
+
+            it('fails if voting on non-existing option', async () => {
+                await app.voteOption(voteId, optionsCount, true, { from: holder31 })
+
+                return assertRevert(async () => {
+                    await app.voteOption(voteId, optionsCount + 1, true, { from: holder31 })
+                })
+            })
+
+            it('can never be executed', async () => {
+                await app.voteOption(voteId, 1, true, { from: holder50 })
+                await app.voteOption(voteId, 1, true, { from: holder31 })
+                await app.voteOption(voteId, 1, true, { from: holder19 })
+
+                return assertRevert(async () => {
+                    await app.executeVote(voteId)
+                })
+            })
+
+            it('allows to remove and re-vote', async () => {
+                await app.voteOption(voteId, 1, true, { from: holder50 })
+                await app.voteOption(voteId, 0, true, { from: holder50 })
+                await app.voteOption(voteId, 100, true, { from: holder50 })
+
+                assert.equal(await app.getOptionSupport(voteId, 1), 0)
+                assert.equal(await app.getOptionSupport(voteId, 0), 0)
+                assert.equal(await app.getOptionSupport(voteId, 100), 50)
+            })
+        })
+
+        context('creating binary binding vote', () => {
+            let voteId = {}
+            let script = ''
+
+            beforeEach(async () => {
+                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                script = encodeCallScript([action, action])
+                voteId = createdVoteId(await app.newVote(script, 'metadata', { from: holder31 }))
+            })
+
+            it('has correct state', async () => {
+                const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, quorum, options, execScript] = await app.getVote(voteId)
+
+                assert.isTrue(isOpen, 'vote should be open')
+                assert.isFalse(isExecuted, 'vote should not be executed')
+                assert.equal(creator, holder31, 'creator should be correct')
+                assert.equal(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
+                assert.deepEqual(minQuorum, minimumAcceptanceQuorum, 'min quorum should be app min quorum')
+                assert.equal(y, 0, 'initial yea should be 0')
+                assert.equal(n, 0, 'initial nay should be 0')
+                assert.equal(quorum, 0, 'initial quorum should be 0') // didn't vote even though creator was holder
+                assert.equal(totalVoters, 100, 'total voters should be 100')
+                assert.equal(options, 2, 'options should be 2 in binary votes')
                 assert.equal(execScript, script, 'script should be correct')
                 assert.equal(await app.getVoteMetadata(voteId), 'metadata', 'should have returned correct metadata')
-                assert.equal(await app.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')
+                assert.equal(await app.getVoterState(voteId, nonHolder), VOTER_STATE.NO_VOTE, 'nonHolder should not have voted')
             })
 
             it('changing min quorum doesnt affect vote min quorum', async () => {
@@ -213,6 +288,29 @@ contract('Voting App', accounts => {
                 await timeTravel(votingTime + 1)
                 await app.executeVote(voteId)
                 assert.equal(await executionTarget.counter(), 2, 'should have executed result')
+            })
+
+            it('holder can remove vote', async () => {
+                await app.vote(voteId, true, true, { from: holder31 })
+                await app.voteOption(voteId, 0, true, { from: holder31 })
+
+                const state = await app.getVote(voteId)
+
+                assert.equal(state[6], 0, 'yea vote should have been removed')
+                assert.equal(state[9], 0, 'quorum should be 0')
+            })
+
+            it('fails if voting with no tokens', async () => {
+                return assertRevert(async () => {
+                    await app.vote(voteId, true, true, { from: nonHolder })
+                })
+            })
+
+            it('fails if voting the same option', async () => {
+                await app.vote(voteId, true, true, { from: holder31 })
+                return assertRevert(async () => {
+                    await app.vote(voteId, true, true, { from: holder31 })
+                })
             })
 
             it('cannot execute vote if not enough quorum met', async () => {
