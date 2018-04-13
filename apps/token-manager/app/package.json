@@ -38,7 +38,7 @@
     "sync-assets": "rsync -rtu \"$(dirname $(node -p 'require.resolve(\"@aragon/ui\")'))/\" public/aragon-ui",
     "start": "npm run sync-assets && npm run build:script -- --no-minify && PORT=3003 react-scripts start",
     "build": "npm run sync-assets && npm run build:script && react-scripts build",
-    "build:script": "parcel build src/script.js -d public/ -o script.js",
+    "build:script": "parcel build src/script.js -d public/",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
