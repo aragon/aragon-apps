@@ -88,7 +88,7 @@ const ActionsCell = styled(Cell)`
 
 const QuestionWrapper = styled.p`
   margin-right: 20px;
-  word-break: break-all;
+  word-break: break-word;
   hyphens: auto;
 `
 
