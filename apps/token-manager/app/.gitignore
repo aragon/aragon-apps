@@ -26,3 +26,4 @@ yarn-error.log*
 # built assets
 /public/aragon-ui
 /public/script.js
+/public/script.map
