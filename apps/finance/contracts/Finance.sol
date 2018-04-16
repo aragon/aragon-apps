@@ -83,7 +83,7 @@ contract Finance is AragonApp {
     event NewPeriod(uint256 indexed periodId, uint64 periodStarts, uint64 periodEnds);
     event SetBudget(address indexed token, uint256 amount, bool hasBudget);
     event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxRepeats);
-    event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity);
+    event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity, uint256 amount);
     event ChangePaymentState(uint256 indexed paymentId, bool disabled);
     event ChangePeriodDuration(uint64 newDuration);
     event PaymentFailure(uint256 paymentId);
@@ -532,7 +532,7 @@ contract Finance is AragonApp {
         if (period.firstTransactionId == 0)
             period.firstTransactionId = transactionId;
 
-        NewTransaction(transactionId, _incoming, _entity);
+        NewTransaction(transactionId, _incoming, _entity, _amount);
     }
 
     function _canMakePayment(address _token, uint256 _amount) internal view returns (bool) {
