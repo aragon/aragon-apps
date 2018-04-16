@@ -318,34 +318,35 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @dev Transitions accounting periods if needed. For preventing OOG attacks,
-           a TTL param is provided. If more that TTL periods need to be transitioned,
-           it will return false.
+    * @dev Transitions accounting periods if needed. For preventing OOG attacks, a maxTransitions
+    *      param is provided. If more than the specified number of periods need to be transitioned,
+    *      it will return false.
     * @notice Transition accounting period
-    * @param _ttl Maximum periods that can be transitioned
-    * @return success boolean indicating whether the accounting period is the correct one (if false, TTL was surpased and another call is needed)
+    * @param _maxTransitions Maximum periods that can be transitioned
+    * @return success boolean indicating whether the accounting period is the correct one (if false,
+    *                 maxTransitions was surpased and another call is needed)
     */
-    function tryTransitionAccountingPeriod(uint256 _ttl) public returns (bool success) {
+    function tryTransitionAccountingPeriod(uint256 _maxTransitions) public returns (bool success) {
         Period storage currentPeriod = periods[currentPeriodId()];
-        if (getTimestamp() <= currentPeriod.endTime)
-            return true; // transition not needed yet
+        uint256 timestamp = getTimestamp();
 
-        // Transitioning period
+        // Transition periods if necessary
+        while (timestamp > currentPeriod.endTime) {
+            if (_maxTransitions == 0) {
+                // Required number of transitions is over allowed number, return false indicating
+                // it didn't fully transition
+                return false;
+            }
+            _maxTransitions = _maxTransitions.sub(1);
 
-        // If there were any transactions in period, record which was the last
-        // In case 0 transactions occured, first and last tx id will be 0
-        if (currentPeriod.firstTransactionId != 0)
-            currentPeriod.lastTransactionId = transactions.length.sub(1);
+            // If there were any transactions in period, record which was the last
+            // In case 0 transactions occured, first and last tx id will be 0
+            if (currentPeriod.firstTransactionId != 0) {
+                currentPeriod.lastTransactionId = transactions.length.sub(1);
+            }
 
-        // new period starts at end time + 1
-        Period storage newPeriod = _newPeriod(currentPeriod.endTime.add(1));
-
-        // In case multiple periods have to be transitioned at once
-        if (getTimestamp() > newPeriod.endTime) {
-            if (_ttl == 0)
-                return false; // if over TTL, return false indicating it didn't fully transition
-
-            return tryTransitionAccountingPeriod(_ttl.sub(1));
+            // new period starts at end time + 1
+            currentPeriod = _newPeriod(currentPeriod.endTime.add(1));
         }
 
         return true;
