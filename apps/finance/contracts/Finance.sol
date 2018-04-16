@@ -51,6 +51,7 @@ contract Finance is AragonApp {
         uint256 amount;
         uint256 paymentId;
         string reference;
+        uint256 paymentRepeatNumber;
     }
 
     struct TokenStatement {
@@ -204,7 +205,8 @@ contract Finance is AragonApp {
                 _token,
                 _receiver,
                 _amount,
-                0,   // unrelated to any payment id, it isn't created
+                0,   // unrelated to any payment id; it isn't created
+                0,   // also unrelated to any payment repeats
                 _reference
             );
             return;
@@ -368,7 +370,7 @@ contract Finance is AragonApp {
         createdBy = payment.createdBy;
     }
 
-    function getTransaction(uint256 _transactionId) public view returns (uint256 periodId, uint256 amount, uint256 paymentId, address token, address entity, bool isIncoming, uint64 date, string reference) {
+    function getTransaction(uint256 _transactionId) public view returns (uint256 periodId, uint256 amount, uint256 paymentId, uint256 paymentRepeatNumber, address token, address entity, bool isIncoming, uint64 date, string reference) {
         Transaction storage transaction = transactions[_transactionId];
 
         token = transaction.token;
@@ -378,6 +380,7 @@ contract Finance is AragonApp {
         periodId = transaction.periodId;
         amount = transaction.amount;
         paymentId = transaction.paymentId;
+        paymentRepeatNumber = transaction.paymentRepeatNumber;
         reference = transaction.reference;
     }
 
@@ -457,6 +460,7 @@ contract Finance is AragonApp {
                 payment.receiver,
                 payment.amount,
                 _paymentId,
+                payment.repeats,
                 "" // since paymentId is saved, the payment reference can be fetched
             );
         }
@@ -467,6 +471,7 @@ contract Finance is AragonApp {
         address _receiver,
         uint256 _amount,
         uint256 _paymentId,
+        uint256 _paymentRepeatNumber,
         string _reference
         ) isInitialized internal
     {
@@ -477,6 +482,7 @@ contract Finance is AragonApp {
             _receiver,
             _amount,
             _paymentId,
+            _paymentRepeatNumber,
             _reference
         );
 
@@ -496,6 +502,7 @@ contract Finance is AragonApp {
             _sender,
             _amount,
             0, // unrelated to any existing payment
+            0, // and no payment repeats
             _reference
         );
     }
@@ -506,6 +513,7 @@ contract Finance is AragonApp {
         address _entity,
         uint256 _amount,
         uint256 _paymentId,
+        uint256 _paymentRepeatNumber,
         string _reference
         ) internal
     {
@@ -522,6 +530,7 @@ contract Finance is AragonApp {
         transaction.periodId = periodId;
         transaction.amount = _amount;
         transaction.paymentId = _paymentId;
+        transaction.paymentRepeatNumber = _paymentRepeatNumber;
         transaction.isIncoming = _incoming;
         transaction.token = _token;
         transaction.entity = _entity;
@@ -529,8 +538,9 @@ contract Finance is AragonApp {
         transaction.reference = _reference;
 
         Period storage period = periods[periodId];
-        if (period.firstTransactionId == 0)
+        if (period.firstTransactionId == 0) {
             period.firstTransactionId = transactionId;
+        }
 
         NewTransaction(transactionId, _incoming, _entity);
     }

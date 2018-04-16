@@ -62,13 +62,14 @@ contract('Finance App', accounts => {
         await token1.approve(app.address, 5)
         await app.deposit(token1.address, 5, 'ref')
 
-        const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
+        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await app.getTransaction(1)
 
         // vault has 100 token1 initially
         assert.equal((await token1.balanceOf(vault.address)).toString(), 100 + 5, 'deposited tokens must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, 5, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')
+        assert.equal(paymentRepeatNumber, 0, 'payment repeat number should be 0')
         assert.equal(token, token1.address, 'token should be correct')
         assert.equal(entity, accounts[0], 'entity should be correct')
         assert.isTrue(incoming, 'tx should be incoming')
@@ -79,13 +80,14 @@ contract('Finance App', accounts => {
     it('records ETH deposits', async () => {
         await app.send(10, { gas: 3e5 })
 
-        const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
+        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await app.getTransaction(1)
 
         // vault has 400 wei initially
         assert.equal(await ETHConnector.at(vault.address).balance(ETH), 400 + 10, 'deposited ETH must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, 10, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')
+        assert.equal(paymentRepeatNumber, 0, 'payment repeat number should be 0')
         assert.equal(token, ETH, 'token should be ETH token')
         assert.equal(entity, accounts[0], 'entity should be correct')
         assert.isTrue(incoming, 'tx should be incoming')
@@ -102,7 +104,7 @@ contract('Finance App', accounts => {
 
         await app.depositToVault(token1.address)
 
-        const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
+        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await app.getTransaction(1)
 
         let finalBalance = await token1.balanceOf(vault.address)
         assert.equal(finalBalance.toString(), initialBalance.plus(5).toString(), 'deposited tokens must be in vault')
@@ -110,6 +112,7 @@ contract('Finance App', accounts => {
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, 5, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')
+        assert.equal(paymentRepeatNumber, 0, 'payment repeat number should be 0')
         assert.equal(token, token1.address, 'token should be correct')
         assert.equal(entity, app.address, 'entity should be correct')
         assert.isTrue(incoming, 'tx should be incoming')
@@ -194,10 +197,11 @@ contract('Finance App', accounts => {
 
             assert.equal(await token1.balanceOf(recipient), amount, 'recipient should have received tokens')
 
-            const [periodId, am, paymentId, token, entity, isIncoming, date, ref] = await app.getTransaction(1)
+            const [periodId, am, paymentId, paymentRepeatNumber, token, entity, isIncoming, date, ref] = await app.getTransaction(1)
             assert.equal(periodId, 0, 'period id should be correct')
             assert.equal(am, amount, 'amount should match')
             assert.equal(paymentId, 0, 'payment id should be 0 for single payment')
+            assert.equal(paymentRepeatNumber, 0, 'payment repeat number should be 0')
             assert.equal(token, token1.address, 'token address should match')
             assert.equal(entity, recipient, 'receiver should match')
             assert.isFalse(isIncoming, 'single payment should be outgoing')
@@ -232,12 +236,23 @@ contract('Finance App', accounts => {
             const amount = 10
 
             // repeats up to 10 times every 2 seconds
-            await app.newPayment(token1.address, recipient, amount, time, 2, 10, '')
+            const firstReceipt = await app.newPayment(token1.address, recipient, amount, time, 2, 10, '')
             await app.mock_setTimestamp(time + 4)
-            await app.executePayment(1)
+            const secondReceipt = await app.executePayment(1)
 
             assert.equal(await token1.balanceOf(recipient), amount * 3, 'recipient should have received tokens')
             assert.equal(await app.nextPaymentTime(1), time + 4 + 2, 'payment should be repeated again in 2')
+
+            return Promise.all([firstReceipt, secondReceipt].map(async (receipt, index) => {
+              const repeatNum = index + 1
+
+              const transactionId = receipt.logs.filter(log => log.event == 'NewTransaction')[0].args.transactionId
+              const [periodId, txAmount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await app.getTransaction(transactionId)
+
+              assert.equal(txAmount, amount, 'amount should be correct')
+              assert.equal(paymentId, 1, 'payment id should be 1')
+              assert.equal(paymentRepeatNumber.toNumber(), repeatNum, `payment repeat number should be ${repeatNum}`)
+            }))
         })
 
         it('can create recurring ether payment', async () => {
