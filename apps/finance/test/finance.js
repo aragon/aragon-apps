@@ -60,6 +60,12 @@ contract('Finance App', accounts => {
         })
     })
 
+    it('fails on initializing with no vault', async () => {
+        app = await Finance.new()
+
+        return assertRevert(() => app.initialize(0, periodDuration))
+    })
+
     it('fails on initializing with less than one day period', async () => {
         const badPeriod = 60 * 60 * 24 - 1
 
