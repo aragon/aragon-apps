@@ -139,6 +139,7 @@ contract Finance is AragonApp {
     * @param _reference Reason for payment
     */
     function deposit(address _token, uint256 _amount, string _reference) external isInitialized transitionsPeriod {
+        require(_amount > 0);
         _recordIncomingTransaction(
             _token,
             msg.sender,

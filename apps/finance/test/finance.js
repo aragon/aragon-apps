@@ -76,6 +76,12 @@ contract('Finance App', accounts => {
         assert.equal(ref, 'ref', 'ref should be correct')
     })
 
+    it('fails on no value ERC20 deposits', async () => {
+        await assertRevert(() => {
+          return app.deposit(token1.address, 0, 'ref')
+        })
+    })
+
     it('records ETH deposits', async () => {
         await app.send(10, { gas: 3e5 })
 
