@@ -195,9 +195,6 @@ contract Finance is AragonApp {
         string _reference
     ) authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, _interval, _maxRepeats)) isInitialized transitionsPeriod external returns (uint256 paymentId)
     {
-
-        require(settings.budgets[_token] > 0 || !settings.hasBudget[_token]); // Token must have been added to budget
-
         // Avoid saving payment data for 1 time immediate payments
         if (_initialPaymentTime <= getTimestamp() && _maxRepeats == 1) {
             _makePaymentTransaction(
@@ -210,7 +207,11 @@ contract Finance is AragonApp {
             return;
         }
 
+        // Budget must allow at least one instance of this payment each period, or not be set at all
+        require(settings.budgets[_token] >= _amount || !settings.hasBudget[_token]);
+
         paymentId = payments.length++;
+        NewPayment(paymentId, _receiver, _maxRepeats);
 
         Payment storage payment = payments[paymentId];
         payment.token = _token;
@@ -222,10 +223,9 @@ contract Finance is AragonApp {
         payment.reference = _reference;
         payment.createdBy = msg.sender;
 
-        NewPayment(paymentId, _receiver, _maxRepeats);
-
-        if (nextPaymentTime(paymentId) <= getTimestamp())
+        if (nextPaymentTime(paymentId) <= getTimestamp()) {
             _executePayment(paymentId);
+        }
     }
 
     /**
