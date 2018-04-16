@@ -52,7 +52,8 @@ contract('Finance App', accounts => {
     it('adds new token to budget', async () => {
         await app.setBudget(token1.address, 10)
 
-        const [budget, hasBudget, remainingBudget] = await app.getBudget.call(token1.address)
+        const [budget, hasBudget] = await app.getBudget.call(token1.address)
+        const remainingBudget = await app.getRemainingBudget.call(token1.address)
         assert.equal(budget, 10, 'should have correct budget')
         assert.isTrue(hasBudget, 'has budget should be true')
         assert.equal(remainingBudget, 10, 'all budget is remaining')
@@ -214,7 +215,8 @@ contract('Finance App', accounts => {
             const newBudgetAmount = 5
             await app.setBudget(token1.address, newBudgetAmount)
 
-            const [budget, hasBudget, remainingBudget] = await app.getBudget.call(token1.address)
+            const [budget, hasBudget] = await app.getBudget.call(token1.address)
+            const remainingBudget = await app.getRemainingBudget.call(token1.address)
 
             assert.equal(budget, newBudgetAmount, 'new budget should be correct')
             assert.isTrue(hasBudget, 'should have budget')
