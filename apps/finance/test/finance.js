@@ -353,6 +353,18 @@ contract('Finance App', accounts => {
                 assert.equal(await token1.balanceOf(recipient), amount, 'should have received payment')
             })
 
+            it('fails creating a zero-amount payment', async () => {
+                await assertRevert(async () => {
+                    // one-time
+                    await app.newPayment(token1.address, recipient, 0, time + 1, 1, 1, '')
+                })
+
+                await assertRevert(async () => {
+                    // recurring
+                    await app.newPayment(token1.address, recipient, 0, time + 1, 4, 1, '')
+                })
+            })
+
             it('fails when non-receiver attempts to execute a payment', async () => {
                 await app.mock_setTimestamp(time + 1)
 
