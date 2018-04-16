@@ -17,7 +17,7 @@
     "test:local": "TRUFFLE_TEST=true npm run ganache-cli:dev test/TestTemplates.sol test/beta.js",
     "test:gas": "GAS_REPORTER=true npm test:local",
     "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh",
-    "console": "node_modules/.bin/truffle console",
+    "truffle:dev": "node_modules/.bin/truffle dev",
     "ganache-cli:dev": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
     "ganache-cli:coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:dev"
   },
