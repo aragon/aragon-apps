@@ -430,8 +430,14 @@ contract Finance is AragonApp {
 
         Period storage period = periods[newPeriodId];
         period.startTime = _startTime;
-        // endTime = startTime + periodDuration - 1
-        period.endTime = _startTime.add(settings.periodDuration).sub(1);
+
+        // Be careful here to not overflow; if startTime + periodDuration overflows, we set endTime
+        // to MAX_UINT64 (let's assume that's the end of time for now).
+        uint64 endTime = _startTime + settings.periodDuration - 1;
+        if (endTime < _startTime) { // overflowed
+            endTime = MAX_UINT64;
+        }
+        period.endTime = endTime;
 
         NewPeriod(newPeriodId, period.startTime, period.endTime);
 

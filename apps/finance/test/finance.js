@@ -43,6 +43,17 @@ contract('Finance App', accounts => {
         assert.equal(await app.currentPeriodId(), 0, 'current period should be 0')
     })
 
+    it('sets the end of time correctly', async () => {
+        const maxUint64 = await app.MAX_UINT64()
+
+        app = await Finance.new()
+        // initialize with MAX_UINT64 as period duration
+        await app.initialize(vault.address, maxUint64)
+        const [isCurrent, start, end, firstTx, lastTx] = await app.getPeriod(await app.currentPeriodId())
+
+        assert.equal(end.toNumber(), maxUint64.toNumber(), "should have set the period's end date to MAX_UINT64")
+    })
+
     it('fails on reinitialization', async () => {
         return assertRevert(async () => {
             await app.initialize(vault.address, periodDuration)
