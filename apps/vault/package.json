@@ -15,10 +15,9 @@
     "lint": "solium --dir ./contracts",
     "test": "./node_modules/.bin/truffle test",
     "test:gas": "GAS_REPORTER=true npm test",
-    "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh",
+    "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:dev",
     "console": "node_modules/.bin/truffle console",
-    "ganache-cli:dev": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
-    "ganache-cli:coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:dev"
+    "ganache-cli:dev": "./node_modules/@aragon/test-helpers/ganache-cli.sh"
   },
   "keywords": [],
   "author": "Aragon Institution MTU <contact@aragon.one>",
