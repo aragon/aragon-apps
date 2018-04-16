@@ -123,6 +123,7 @@ contract Finance is AragonApp {
         initialized();
 
         require(_periodDuration >= 1 days);
+        require(_vault != address(0));
 
         vault = _vault;
 
