@@ -30,8 +30,11 @@ fi
 
 echo "Starting our own testrpc instance at port $testrpc_port"
 start_testrpc
+sleep 5
 
-if [ "$TRUFFLE_TEST" = true ]; then
+if [ "$SOLIDITY_COVERAGE" = true ]; then
+  ./node_modules/.bin/solidity-coverage "$@"
+elif [ "$TRUFFLE_TEST" = true ]; then
   truffle test --network rpc "$@"
-  kill -9 $testrpc_pid
 fi
+kill -9 $testrpc_pid
