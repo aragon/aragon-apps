@@ -19,7 +19,7 @@ contract Voting is IForwarder, AragonApp {
     uint256 public minAcceptQuorumPct;
     uint64 public voteTime;
 
-    uint256 constant public PCT_BASE = 10 ** 18;
+    uint256 constant public PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18 
 
     bytes32 constant public CREATE_VOTES_ROLE = keccak256("CREATE_VOTES_ROLE");
     bytes32 constant public MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
@@ -76,7 +76,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^14) / 10^16`%
+    * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^14) / 10^16`%
     * @param _minAcceptQuorumPct New acceptance quorum
     */
     function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) external {
@@ -90,6 +90,7 @@ contract Voting is IForwarder, AragonApp {
     /**
     * @notice Create a new vote about "`_metadata`"
     * @param _executionScript EVM script to be executed on approval
+    * @param _metadata Vote metadata
     * @return voteId id for newly created vote
     */
     function newVote(bytes _executionScript, string _metadata) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
@@ -126,13 +127,17 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Creates a vote to execute the desired action
+    * @notice Creates a vote to execute the desired action, and casts a support vote
     * @dev IForwarder interface conformance
     * @param _evmScript Start vote with script
     */
     function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript));
-        _newVote(_evmScript, "");
+        uint256 voteId = _newVote(_evmScript, "");
+
+        if (canVote(voteId, msg.sender)) {
+            _vote(voteId, true, msg.sender, true);
+        }
     }
 
     function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
@@ -205,15 +210,6 @@ contract Voting is IForwarder, AragonApp {
         vote.minAcceptQuorumPct = minAcceptQuorumPct;
 
         StartVote(voteId);
-
-        if (canVote(voteId, msg.sender)) {
-            _vote(
-                voteId,
-                true,
-                msg.sender,
-                true
-            );
-        }
     }
 
     function _vote(
@@ -264,7 +260,7 @@ contract Voting is IForwarder, AragonApp {
         ExecuteVote(_voteId);
     }
 
-    function _isVoteOpen(Vote storage vote) internal view returns (bool) {
+    function _isVoteOpen(Vote vote) internal view returns (bool) {
         return uint64(now) < (vote.startDate.add(voteTime)) && !vote.executed;
     }
 
