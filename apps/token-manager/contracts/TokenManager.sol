@@ -198,6 +198,15 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
 
     function allHolders() public view returns (address[]) { return holders; }
 
+    function getVesting(address _recipient, uint256 _vestingId) public view returns (uint256 amount, uint64 start, uint64 cliff, uint64 vesting, bool revokable) {
+        TokenVesting storage tokenVesting = vestings[_recipient][_vestingId];
+        amount = tokenVesting.amount;
+        start = tokenVesting.start;
+        cliff = tokenVesting.cliff;
+        vesting = tokenVesting.vesting;
+        revokable = tokenVesting.revokable;
+    }
+
     /*
     * @dev Notifies the controller about a token transfer allowing the
     *      controller to decide whether to allow it or react if desired
