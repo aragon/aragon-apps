@@ -62,10 +62,14 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
         )
         onlyInit external
     {
-
         initialized();
 
         require(_token.controller() == address(this));
+        if (!_token.transfersEnabled()) {
+            // If the token itself isn't transferable, make sure this app is also initialized to not
+            // be transferable
+            require(!_transferable);
+        }
 
         token = _token;
         transferable = _transferable;

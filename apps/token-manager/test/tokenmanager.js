@@ -56,6 +56,14 @@ contract('Token Manager', accounts => {
         })
     })
 
+    it('fails when initializing as transferable if token not transferable', async () => {
+      await token.enableTransfers(false)
+      await token.changeController(tokenManager.address)
+      return assertRevert(() => {
+        return tokenManager.initialize(token.address, true, 0, true)
+      })
+    })
+
     it('fails when sending ether to token', async () => {
         return assertRevert(async () => {
             await token.send(1) // transfer 1 wei to token contract
