@@ -94,7 +94,18 @@ contract Voting is IForwarder, AragonApp {
     * @return voteId id for newly created vote
     */
     function newVote(bytes _executionScript, string _metadata) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
-        return _newVote(_executionScript, _metadata);
+        return _newVote(_executionScript, _metadata, true);
+    }
+
+    /**
+     * @notice Create a new vote about "`_metadata`"
+     * @param _executionScript EVM script to be executed on approval
+     * @param _metadata Vote metadata
+     * @param _castVote Wether to also cast newly created vote
+     * @return voteId id for newly created vote
+     */
+    function newVote(bytes _executionScript, string _metadata, bool _castVote) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
+        return _newVote(_executionScript, _metadata, _castVote);
     }
 
     /**
@@ -133,11 +144,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript));
-        uint256 voteId = _newVote(_evmScript, "");
-
-        if (canVote(voteId, msg.sender)) {
-            _vote(voteId, true, msg.sender, true);
-        }
+        uint256 voteId = _newVote(_evmScript, "", true);
     }
 
     function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
@@ -198,7 +205,7 @@ contract Voting is IForwarder, AragonApp {
         return votes[_voteId].voters[_voter];
     }
 
-    function _newVote(bytes _executionScript, string _metadata) isInitialized internal returns (uint256 voteId) {
+    function _newVote(bytes _executionScript, string _metadata, bool _castVote) isInitialized internal returns (uint256 voteId) {
         voteId = votes.length++;
         Vote storage vote = votes[voteId];
         vote.executionScript = _executionScript;
@@ -210,6 +217,15 @@ contract Voting is IForwarder, AragonApp {
         vote.minAcceptQuorumPct = minAcceptQuorumPct;
 
         StartVote(voteId);
+
+        if (_castVote && canVote(voteId, msg.sender)) {
+            _vote(
+                voteId,
+                true,
+                msg.sender,
+                true
+            );
+        }
     }
 
     function _vote(
@@ -260,7 +276,7 @@ contract Voting is IForwarder, AragonApp {
         ExecuteVote(_voteId);
     }
 
-    function _isVoteOpen(Vote vote) internal view returns (bool) {
+    function _isVoteOpen(Vote storage vote) internal view returns (bool) {
         return uint64(now) < (vote.startDate.add(voteTime)) && !vote.executed;
     }
 
