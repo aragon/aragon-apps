@@ -234,7 +234,7 @@ contract('Token Manager', accounts => {
             // Make sure this callback fails when called out-of-context
             await assertRevert(() => tokenManager.onTransfer(holder, accounts[2], 10))
 
-            // Make sure the same transfer through through the token's context doesn't revert
+            // Make sure the same transfer through the token's context doesn't revert
             await token.transfer(accounts[2], amount, { from: holder })
         })
 
