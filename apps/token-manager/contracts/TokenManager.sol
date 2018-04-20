@@ -16,7 +16,6 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     using SafeMath for uint256;
 
     MiniMeToken public token;
-    bool public transferable;
     uint256 public maxAccountTokens;
     bool public logHolders;
 
@@ -65,16 +64,14 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
         initialized();
 
         require(_token.controller() == address(this));
-        if (!_token.transfersEnabled()) {
-            // If the token itself isn't transferable, make sure this app is also initialized to not
-            // be transferable
-            require(!_transferable);
-        }
 
         token = _token;
-        transferable = _transferable;
         maxAccountTokens = _maxAccountTokens == 0 ? uint256(-1) : _maxAccountTokens;
         logHolders = _logHolders;
+
+        if (token.transfersEnabled() != _transferable) {
+            token.enableTransfers(_transferable);
+        }
     }
 
     /**
@@ -215,7 +212,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
 
         if (!includesTokenManager) {
             bool toCanReceive = isBalanceIncreaseAllowed(_to, _amount);
-            if (!(transferable && toCanReceive && (transferableBalance(_from, now) >= _amount))) {
+            if (!toCanReceive || transferableBalance(_from, now) < _amount) {
                 return false;
             }
         }
@@ -320,7 +317,8 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
 
     function _assign(address _receiver, uint256 _amount) isInitialized internal {
         require(isBalanceIncreaseAllowed(_receiver, _amount));
-        require(token.transfer(_receiver, _amount));
+        // Must use transferFrom() as transfer() does not give the token controller full control
+        require(token.transferFrom(this, _receiver, _amount));
     }
 
     function _mint(address _receiver, uint256 _amount) isInitialized internal {
