@@ -101,7 +101,7 @@ contract Voting is IForwarder, AragonApp {
      * @notice Create a new vote about "`_metadata`"
      * @param _executionScript EVM script to be executed on approval
      * @param _metadata Vote metadata
-     * @param _castVote Wether to also cast newly created vote
+     * @param _castVote Whether to also cast newly created vote
      * @return voteId id for newly created vote
      */
     function newVote(bytes _executionScript, string _metadata, bool _castVote) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
@@ -144,7 +144,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript));
-        uint256 voteId = _newVote(_evmScript, "", true);
+        _newVote(_evmScript, "", true);
     }
 
     function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
