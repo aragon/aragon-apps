@@ -13,12 +13,11 @@
     "publish:rinkeby": "npm run compile && aragon publish --no-confirm=true --keyfile ~/.rinkebykey.json \"$(npm run deploy:rinkeby | tail -n 1)\"",
     "publish:rinkeby:content": "aragon publish --no-confirm=true --keyfile ~/.rinkebykey.json",
     "lint": "solium --dir ./contracts",
-    "test": "TRUFFLE_TEST=true npm run ganache-cli:dev",
+    "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
-    "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh",
+    "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "console": "node_modules/.bin/truffle console",
-    "ganache-cli:dev": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
-    "ganache-cli:coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:dev"
+    "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh"
   },
   "keywords": [],
   "author": "Aragon Institution MTU <contact@aragon.one>",
