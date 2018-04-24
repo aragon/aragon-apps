@@ -1,9 +1,12 @@
+import { safeDiv } from './math-utils'
 import {
   VOTE_ABSENT,
   VOTE_STATUS_ONGOING,
   VOTE_STATUS_REJECTED,
   VOTE_STATUS_ACCEPTED,
 } from './vote-types'
+
+export const EMPTY_CALLSCRIPT = '0x00000001'
 
 export const getAccountVote = (account, voters) =>
   voters[account] || VOTE_ABSENT
@@ -26,4 +29,5 @@ export const getVoteStatus = (vote, support, quorum) => {
     : VOTE_STATUS_REJECTED
 }
 
-export const getQuorumProgress = ({ yea, totalVoters }) => yea / totalVoters
+export const getQuorumProgress = ({ yea, totalVoters }) =>
+  safeDiv(yea, totalVoters)

@@ -1,6 +1,6 @@
 {
   "appName": "finance.aragonpm.eth",
-  "version": "1.0.3",
+  "version": "3.0.1",
   "dependencies": [
     {
       "appName": "vault.aragonpm.eth",

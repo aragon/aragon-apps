@@ -74,7 +74,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Mint `_amount` tokens for `_receiver`
+    * @notice Mint `_amount / 10^18` tokens for `_receiver`
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens minted
     */
@@ -84,7 +84,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Mint `_amount` tokens
+    * @notice Mint `_amount / 10^18` tokens
     * @param _amount Number of tokens minted
     */
     function issue(uint256 _amount) authP(ISSUE_ROLE, arr(_amount)) external {
@@ -92,7 +92,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Assign `_amount` tokens for `_receiver` from Token Manager's holdings
+    * @notice Assign `_amount / 10^18` tokens to `_receiver` from Token Manager's holdings
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transfered
     */
@@ -101,17 +101,17 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Burn `_amount` tokens from `_holder`
+    * @notice Burn `_amount / 10^18` tokens from `_holder`
     * @param _holder Holder being removed tokens
     * @param _amount Number of tokens being burned
     */
-    function burn(address _holder, uint256 _amount) authP(BURN_ROLE, arr(_holder, _amount)) external {
+    function burn(address _holder, uint256 _amount) authP(BURN_ROLE, arr(_holder, _amount)) isInitialized external {
         // minime.destroyTokens() never returns false, only reverts on failure
         token.destroyTokens(_holder, _amount);
     }
 
     /**
-    * @notice Assign `_amount` tokens to `_receiver` with a `_revokable : 'revokable' : ''` vesting starting at `_start` and a cliff at `_cliff`, with vesting on `_vesting`
+    * @notice Assign `_amount / 10^18` tokens to `_receiver` with a `_revokable : 'revokable' : ''` vesting starting at `_start` and a cliff at `_cliff`, with vesting on `_vesting`
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transfered
     * @param _start Date the vesting calculations start
@@ -149,7 +149,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Revoke vesting `_vestingId` from `_holder` returning unvested tokens to Token Manager
+    * @notice Revoke vesting `_vestingId` from `_holder`, returning unvested tokens to Token Manager
     * @param _holder Address getting vesting revoked
     * @param _vestingId Numeric id of the vesting
     */
@@ -176,7 +176,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Forward script
+    * @notice Execute desired action as a token holder
     * @dev IForwarder interface conformance. Forwards any token holder action.
     * @param _evmScript script being executed
     */
@@ -222,7 +222,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
-        return token.balanceOf(_receiver) + _inc <= maxAccountTokens;
+        return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
     }
 
     function tokenGrantsCount(address _holder) public view returns (uint256) {
@@ -310,15 +310,16 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
             )
         );
 
-        return tokens - vestedTokens;
+        // tokens - vestedTokens
+        return tokens.sub(vestedTokens);
     }
 
-    function _assign(address _receiver, uint256 _amount) internal {
+    function _assign(address _receiver, uint256 _amount) isInitialized internal {
         require(isBalanceIncreaseAllowed(_receiver, _amount));
         require(token.transfer(_receiver, _amount));
     }
 
-    function _mint(address _receiver, uint256 _amount) internal {
+    function _mint(address _receiver, uint256 _amount) isInitialized internal {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
         _logHolderIfNeeded(_receiver);
     }

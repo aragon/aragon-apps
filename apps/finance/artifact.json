@@ -1,5 +1,5 @@
 {
-	"version": "1.0.0",
+	"version": "1.0.3",
 	"dependencies": [
 		{
 			"appName": "vault.aragonpm.eth",
@@ -82,15 +82,6 @@
 		},
 		{
 			"constant": false,
-			"inputs": [],
-			"name": "escapeHatch",
-			"outputs": [],
-			"payable": true,
-			"stateMutability": "payable",
-			"type": "function"
-		},
-		{
-			"constant": false,
 			"inputs": [
 				{
 					"name": "_paymentId",
@@ -98,6 +89,24 @@
 				}
 			],
 			"name": "executePayment",
+			"outputs": [],
+			"payable": false,
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"constant": false,
+			"inputs": [
+				{
+					"name": "_vault",
+					"type": "address"
+				},
+				{
+					"name": "_periodDuration",
+					"type": "uint64"
+				}
+			],
+			"name": "initialize",
 			"outputs": [],
 			"payable": false,
 			"stateMutability": "nonpayable",
@@ -118,7 +127,7 @@
 			"type": "function"
 		},
 		{
-			"constant": false,
+			"constant": true,
 			"inputs": [
 				{
 					"name": "_token",
@@ -141,7 +150,7 @@
 				}
 			],
 			"payable": false,
-			"stateMutability": "nonpayable",
+			"stateMutability": "view",
 			"type": "function"
 		},
 		{
@@ -454,28 +463,6 @@
 			"type": "function"
 		},
 		{
-			"constant": false,
-			"inputs": [
-				{
-					"name": "_vault",
-					"type": "address"
-				},
-				{
-					"name": "_etherToken",
-					"type": "address"
-				},
-				{
-					"name": "_periodDuration",
-					"type": "uint64"
-				}
-			],
-			"name": "initialize",
-			"outputs": [],
-			"payable": false,
-			"stateMutability": "nonpayable",
-			"type": "function"
-		},
-		{
 			"constant": true,
 			"inputs": [],
 			"name": "appId",
@@ -483,6 +470,20 @@
 				{
 					"name": "",
 					"type": "bytes32"
+				}
+			],
+			"payable": false,
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"constant": true,
+			"inputs": [],
+			"name": "ETH",
+			"outputs": [
+				{
+					"name": "",
+					"type": "address"
 				}
 			],
 			"payable": false,
@@ -501,32 +502,6 @@
 			],
 			"payable": false,
 			"stateMutability": "view",
-			"type": "function"
-		},
-		{
-			"constant": false,
-			"inputs": [
-				{
-					"name": "_from",
-					"type": "address"
-				},
-				{
-					"name": "_amount",
-					"type": "uint256"
-				},
-				{
-					"name": "_token",
-					"type": "address"
-				},
-				{
-					"name": "_data",
-					"type": "bytes"
-				}
-			],
-			"name": "receiveApproval",
-			"outputs": [],
-			"payable": false,
-			"stateMutability": "nonpayable",
 			"type": "function"
 		},
 		{
@@ -646,20 +621,6 @@
 			"type": "function"
 		},
 		{
-			"constant": true,
-			"inputs": [],
-			"name": "etherToken",
-			"outputs": [
-				{
-					"name": "",
-					"type": "address"
-				}
-			],
-			"payable": false,
-			"stateMutability": "view",
-			"type": "function"
-		},
-		{
 			"constant": false,
 			"inputs": [
 				{
@@ -677,33 +638,6 @@
 			],
 			"name": "deposit",
 			"outputs": [],
-			"payable": false,
-			"stateMutability": "nonpayable",
-			"type": "function"
-		},
-		{
-			"constant": false,
-			"inputs": [
-				{
-					"name": "from",
-					"type": "address"
-				},
-				{
-					"name": "amount",
-					"type": "uint256"
-				},
-				{
-					"name": "data",
-					"type": "bytes"
-				}
-			],
-			"name": "tokenFallback",
-			"outputs": [
-				{
-					"name": "success",
-					"type": "bool"
-				}
-			],
 			"payable": false,
 			"stateMutability": "nonpayable",
 			"type": "function"
@@ -849,6 +783,11 @@
 			"type": "function"
 		},
 		{
+			"payable": true,
+			"stateMutability": "payable",
+			"type": "fallback"
+		},
+		{
 			"anonymous": false,
 			"inputs": [
 				{
@@ -980,76 +919,71 @@
 	],
 	"functions": [
 		{
-			"sig": "escapeHatch()",
+			"sig": "()",
 			"roles": [],
 			"notice": "Allows to send ETH from this contract to Vault, to avoid locking them in contract forever."
 		},
 		{
 			"sig": "initialize(address)",
 			"roles": [],
-			"notice": "Initialize Finance app for `_vault` with duration `_periodDuration`"
+			"notice": "Initialize Finance app for Vault at `_vault` with period length of `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ' '`"
 		},
 		{
-			"sig": "deposit(address,uint256,address)",
+			"sig": "deposit(address,uint256,string)",
 			"roles": [],
-			"notice": "Send `_amount` `_token`"
+			"notice": "Deposit `_amount / 10^18` `_token.symbol(): string`"
 		},
 		{
-			"sig": "receiveApproval(address,uint256,address,bytes)",
-			"roles": [],
-			"notice": null
-		},
-		{
-			"sig": "tokenFallback(address,uint256,bytes)",
+			"sig": "tokensReceived(address,address,address,uint,bytes,bytes)",
 			"roles": [],
 			"notice": null
 		},
 		{
-			"sig": "newPayment(address,address,uint256,uint64,uint64,uint64,address)",
+			"sig": "newPayment(address,address,uint256,uint64,uint64,uint64,string)",
 			"roles": [
 				"CREATE_PAYMENTS_ROLE"
 			],
-			"notice": "New payment"
+			"notice": "Create a new payment of `_amount / 10^18` `_token.symbol(): string`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + (_interval - _interval % 86400) / 86400 + ' days' : ' '`"
 		},
 		{
 			"sig": "setPeriodDuration(uint64)",
 			"roles": [
 				"CHANGE_PERIOD_ROLE"
 			],
-			"notice": "Change period duration to `_duration`. Will be effective for next accounting period."
+			"notice": "Change period duration to `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ' '`, effective for next accounting period."
 		},
 		{
 			"sig": "setBudget(address,uint256)",
 			"roles": [
 				"CHANGE_BUDGETS_ROLE"
 			],
-			"notice": "Set budget for `_token` to `_amount`. Effective to current accounting period."
+			"notice": "Set budget for `_token.symbol(): string` to `_amount / 10^18`, effective immediately."
 		},
 		{
 			"sig": "removeBudget(address)",
 			"roles": [
 				"CHANGE_BUDGETS_ROLE"
 			],
-			"notice": "Remove budget for `_token`. Will be able to spend entire balance."
+			"notice": "Remove spending limit for `_token.symbol(): string`."
 		},
 		{
 			"sig": "executePayment(uint256)",
 			"roles": [
 				"EXECUTE_PAYMENTS_ROLE"
 			],
-			"notice": "Trigger pending withdraw for `_paymentId`"
+			"notice": "Execute pending payment #`_paymentId`"
 		},
 		{
 			"sig": "receiverExecutePayment(uint256)",
 			"roles": [],
-			"notice": "Trigger pending withdraw for `_paymentId`"
+			"notice": "Execute pending payment #`_paymentId`"
 		},
 		{
 			"sig": "setPaymentDisabled(uint256,bool)",
 			"roles": [
 				"DISABLE_PAYMENTS_ROLE"
 			],
-			"notice": "Sets payment `_paymentId` as `_disabled ? 'disabled' : 'enabled'`"
+			"notice": "`_disabled ? 'Disable' : 'Enable'` payment `_paymentId`"
 		},
 		{
 			"sig": "depositToVault(address)",
@@ -1057,12 +991,22 @@
 			"notice": "Send tokens to Vault"
 		},
 		{
-			"sig": "tryTransitionAccountingPeriod(address,address)",
+			"sig": "tryTransitionAccountingPeriod(uint256)",
 			"roles": [],
-			"notice": "Transition accounting period if needed"
+			"notice": "Transition accounting period"
 		},
 		{
-			"sig": "getBudget(address)",
+			"sig": "_makePaymentTransaction(address,address,uint256,uint256)",
+			"roles": [],
+			"notice": null
+		},
+		{
+			"sig": "_recordIncomingTransaction(address,address,uint256,address)",
+			"roles": [],
+			"notice": null
+		},
+		{
+			"sig": "_recordTransaction(bool,address,address,uint256,uint256,address)",
 			"roles": [],
 			"notice": null
 		}

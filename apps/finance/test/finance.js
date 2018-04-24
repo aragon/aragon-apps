@@ -14,7 +14,7 @@ contract('Finance App', accounts => {
     const periodDuration = 100
     const withdrawAddr = '0x0000000000000000000000000000000000001234'
 
-    const ETH = '0x0'
+    const ETH = '0x0000000000000000000000000000000000000000'
 
     beforeEach(async () => {
         vault = await Vault.new()
@@ -74,6 +74,23 @@ contract('Finance App', accounts => {
         assert.isTrue(incoming, 'tx should be incoming')
         assert.equal(date, 1, 'date should be correct')
         assert.equal(ref, 'ref', 'ref should be correct')
+    })
+
+    it('records ETH deposits', async () => {
+        await app.send(10, { gas: 3e5 })
+
+        const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
+
+        // vault has 400 wei initially
+        assert.equal(await ETHConnector.at(vault.address).balance(ETH), 400 + 10, 'deposited ETH must be in vault')
+        assert.equal(periodId, 0, 'period id should be correct')
+        assert.equal(amount, 10, 'amount should be correct')
+        assert.equal(paymentId, 0, 'payment id should be 0')
+        assert.equal(token, ETH, 'token should be ETH token')
+        assert.equal(entity, accounts[0], 'entity should be correct')
+        assert.isTrue(incoming, 'tx should be incoming')
+        assert.equal(date, 1, 'date should be correct')
+        assert.equal(ref, 'Ether transfer to Finance app', 'ref should be correct')
     })
 
     /* TODO: ERC777 */
@@ -173,9 +190,19 @@ contract('Finance App', accounts => {
             const amount = 10
 
             // interval 0, repeat 1 (single payment)
-            await app.newPayment(token1.address, recipient, amount, time, 0, 1, '')
+            await app.newPayment(token1.address, recipient, amount, time, 0, 1, 'ref')
 
             assert.equal(await token1.balanceOf(recipient), amount, 'recipient should have received tokens')
+
+            const [periodId, am, paymentId, token, entity, isIncoming, date, ref] = await app.getTransaction(1)
+            assert.equal(periodId, 0, 'period id should be correct')
+            assert.equal(am, amount, 'amount should match')
+            assert.equal(paymentId, 0, 'payment id should be 0 for single payment')
+            assert.equal(token, token1.address, 'token address should match')
+            assert.equal(entity, recipient, 'receiver should match')
+            assert.isFalse(isIncoming, 'single payment should be outgoing')
+            assert.equal(date.toNumber(), time, 'date should be correct')
+            assert.equal(ref, 'ref', 'ref should match')
         })
 
         it('can decrease budget after spending', async () => {
@@ -378,6 +405,47 @@ contract('Finance App', accounts => {
 
             assertPaymentFailure(receipt)
             assert.equal(await token1.balanceOf(recipient), 80, 'recipient should have received tokens')
+        })
+    })
+
+    context('Without initialize', async () => {
+        let nonInit
+
+        beforeEach(async () => {
+            nonInit = await Finance.new()
+            await nonInit.mock_setTimestamp(1)
+        })
+
+        it('fails to create new Payment', async() => {
+            const recipient = accounts[1]
+            const amount = 1
+            const time = 22
+            await nonInit.mock_setTimestamp(time)
+
+            return assertRevert(async() => {
+                await nonInit.newPayment(token1.address, recipient, amount, time, 0, 1, 'ref')
+            })
+        })
+
+        it('fails to deposit ERC20 tokens', async() => {
+            await token1.approve(nonInit.address, 5)
+            return assertRevert(async() => {
+                await nonInit.deposit(token1.address, 5, 'ref')
+            })
+        })
+
+        it('fails to send tokens to Vault', async() => {
+            // 'lock' tokens
+            await token1.transfer(nonInit.address, 5)
+            return assertRevert(async() => {
+                await nonInit.depositToVault(token1.address)
+            })
+        })
+
+        it('fails to deposit ETH', async() => {
+            return assertInvalidOpcode(async() => {
+                await nonInit.send(10, { gas: 3e5 })
+            })
         })
     })
 })

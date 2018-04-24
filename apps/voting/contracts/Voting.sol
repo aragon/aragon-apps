@@ -19,7 +19,7 @@ contract Voting is IForwarder, AragonApp {
     uint256 public minAcceptQuorumPct;
     uint64 public voteTime;
 
-    uint256 constant public PCT_BASE = 10 ** 18;
+    uint256 constant public PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18 
 
     bytes32 constant public CREATE_VOTES_ROLE = keccak256("CREATE_VOTES_ROLE");
     bytes32 constant public MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
@@ -76,7 +76,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^14) / 10^16`
+    * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^14) / 10^16`%
     * @param _minAcceptQuorumPct New acceptance quorum
     */
     function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) external {
@@ -88,16 +88,28 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Create new vote
+    * @notice Create a new vote about "`_metadata`"
     * @param _executionScript EVM script to be executed on approval
+    * @param _metadata Vote metadata
     * @return voteId id for newly created vote
     */
     function newVote(bytes _executionScript, string _metadata) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
-        return _newVote(_executionScript, _metadata);
+        return _newVote(_executionScript, _metadata, true);
     }
 
     /**
-    * @notice Vote `_supports ? 'yay' : 'nay'` in vote with #`_voteId`
+     * @notice Create a new vote about "`_metadata`"
+     * @param _executionScript EVM script to be executed on approval
+     * @param _metadata Vote metadata
+     * @param _castVote Whether to also cast newly created vote
+     * @return voteId id for newly created vote
+     */
+    function newVote(bytes _executionScript, string _metadata, bool _castVote) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
+        return _newVote(_executionScript, _metadata, _castVote);
+    }
+
+    /**
+    * @notice Vote `_supports ? 'yay' : 'nay'` in vote #`_voteId`
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether it should execute the vote if it becomes decided
@@ -113,7 +125,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Execute the result of vote `_voteId`
+    * @notice Execute the result of vote #`_voteId`
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external {
@@ -126,13 +138,13 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Forward script
+    * @notice Creates a vote to execute the desired action, and casts a support vote
     * @dev IForwarder interface conformance
     * @param _evmScript Start vote with script
     */
     function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript));
-        _newVote(_evmScript, "");
+        _newVote(_evmScript, "", true);
     }
 
     function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
@@ -193,7 +205,7 @@ contract Voting is IForwarder, AragonApp {
         return votes[_voteId].voters[_voter];
     }
 
-    function _newVote(bytes _executionScript, string _metadata) internal returns (uint256 voteId) {
+    function _newVote(bytes _executionScript, string _metadata, bool _castVote) isInitialized internal returns (uint256 voteId) {
         voteId = votes.length++;
         Vote storage vote = votes[voteId];
         vote.executionScript = _executionScript;
@@ -206,7 +218,7 @@ contract Voting is IForwarder, AragonApp {
 
         StartVote(voteId);
 
-        if (canVote(voteId, msg.sender)) {
+        if (_castVote && canVote(voteId, msg.sender)) {
             _vote(
                 voteId,
                 true,

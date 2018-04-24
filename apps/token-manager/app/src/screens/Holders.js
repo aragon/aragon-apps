@@ -14,11 +14,17 @@ class Holders extends React.Component {
       onAssignTokens,
       tokenDecimalsBase,
       tokenSupply,
+      userAccount,
     } = this.props
-    const groupMode =
+    const singleHolder =
+      // We assume that a token is liquid if a single holder has more than one token
+      holders.length === 1 && holders[0].balance !== 1 * tokenDecimalsBase
+    const sameBalances =
       holders.length > 0 &&
       holders[0].balance > 0 &&
       holders.every(({ balance }) => balance === holders[0].balance)
+    // Be in group mode if everyone has the same balances, unless there's only one token holder
+    const groupMode = sameBalances && !singleHolder
     return (
       <TwoPanels>
         <Main>
@@ -39,6 +45,7 @@ class Holders extends React.Component {
                 groupMode={groupMode}
                 onAssignTokens={onAssignTokens}
                 tokenDecimalsBase={tokenDecimalsBase}
+                isCurrentUser={userAccount && userAccount === address}
               />
             ))}
           </Table>

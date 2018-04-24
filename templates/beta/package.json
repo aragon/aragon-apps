@@ -13,10 +13,9 @@
     "lint": "solium --dir ./contracts",
     "test": "npm run docker:run && npm run docker:wait-gas && (export `grep ^OWNER .env`; ./scripts/deploy.sh)",
     "test:gas": "GAS_REPORTER=true npm test:local",
-    "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh",
+    "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "console": "node_modules/.bin/truffle console",
-    "ganache-cli:dev": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
-    "ganache-cli:coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:dev"
+    "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh"
   },
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "license": "GPL-3.0",
@@ -34,9 +33,9 @@
     "truffle-hdwallet-provider": "0.0.3"
   },
   "dependencies": {
-    "@aragon/os": "^3.1.1",
+    "@aragon/os": "^3.1.2",
     "@aragon/apps-voting": "^1.0.0",
-    "@aragon/apps-vault": "^2.0.0",
+    "@aragon/apps-vault": "^2.0.1",
     "@aragon/apps-finance": "^1.0.0",
     "@aragon/apps-token-manager": "^1.0.0"
   }

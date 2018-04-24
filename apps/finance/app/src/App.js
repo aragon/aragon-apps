@@ -35,7 +35,7 @@ class App extends React.Component {
     this.setState({ newTransferOpened: false })
   }
   handleSubmitTransfer = (
-    { address: tokenAddress },
+    { decimals, address: tokenAddress },
     recipient,
     amount,
     reference
@@ -44,12 +44,13 @@ class App extends React.Component {
     this.props.app.newPayment(
       tokenAddress,
       recipient,
-      amount,
+      amount * Math.pow(10, decimals),
       0, // initial payment time
       0, // interval
       1, // max repeats
       reference
     )
+    this.handleNewTransferClose()
   }
   render() {
     const { balances, transactions } = this.props
@@ -59,6 +60,7 @@ class App extends React.Component {
       symbol,
       decimals,
     }))
+    const paymentPossibleTokens = balances.filter(({ amount }) => amount)
     return (
       <AragonApp publicUrl="/aragon-ui/">
         <Layout>
@@ -88,7 +90,12 @@ class App extends React.Component {
           onClose={this.handleNewTransferClose}
           title="New Transfer"
         >
-          <NewTransfer onTransfer={this.handleSubmitTransfer} tokens={tokens} />
+          <NewTransfer
+            opened={newTransferOpened}
+            tokens={paymentPossibleTokens}
+            onClose={this.handleNewTransferClose}
+            onTransfer={this.handleSubmitTransfer}
+          />
         </SidePanel>
       </AragonApp>
     )

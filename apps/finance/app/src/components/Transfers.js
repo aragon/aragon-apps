@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import { compareDesc } from 'date-fns/esm'
 import {
   Button,
   Table,
@@ -9,6 +10,7 @@ import {
   theme,
 } from '@aragon/ui'
 import * as TransferTypes from '../transfer-types'
+import { addressesEqual, toChecksumAddress } from '../web3-utils'
 import TransferRow from './TransferRow'
 
 const TRANSFER_TYPES = [
@@ -64,7 +66,8 @@ class Transfers extends React.Component {
     const transferType = TRANSFER_TYPES[selectedTransferType]
     return transactions.filter(
       ({ token, isIncoming }) =>
-        (selectedToken === 0 || token === tokens[selectedToken - 1].address) &&
+        (selectedToken === 0 ||
+          addressesEqual(token, tokens[selectedToken - 1].address)) &&
         (transferType === TransferTypes.All ||
           (transferType === TransferTypes.Incoming && isIncoming) ||
           (transferType === TransferTypes.Outgoing && !isIncoming))
@@ -84,10 +87,13 @@ class Transfers extends React.Component {
       selectedTransferType,
     })
     const symbols = tokens.map(({ symbol }) => symbol)
-    const tokenDecimals = tokens.reduce(
-      (tokenDecimals, { address, decimals }) => {
-        tokenDecimals[address] = decimals
-        return tokenDecimals
+    const tokenDetails = tokens.reduce(
+      (details, { address, decimals, symbol }) => {
+        details[toChecksumAddress(address)] = {
+          decimals,
+          symbol,
+        }
+        return details
       },
       {}
     )
@@ -121,7 +127,7 @@ class Transfers extends React.Component {
               No transfers found.{' '}
               {filtersActive && (
                 <a role="button" onClick={this.handleResetFilters}>
-                  reset filters
+                  Reset filters
                 </a>
               )}
             </p>
@@ -141,10 +147,14 @@ class Transfers extends React.Component {
             >
               {filteredTransfers
                 .slice(0, displayedTransfers)
+                .sort(({ date: dateLeft }, { date: dateRight }) =>
+                  // Sort by date descending
+                  compareDesc(dateLeft, dateRight)
+                )
                 .map(transfer => (
                   <TransferRow
                     key={transfer.transactionHash}
-                    decimals={tokenDecimals[transfer.token]}
+                    {...tokenDetails[toChecksumAddress(transfer.token)]}
                     {...transfer}
                   />
                 ))}

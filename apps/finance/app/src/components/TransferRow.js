@@ -7,13 +7,13 @@ import {
   TableCell,
   ContextMenu,
   ContextMenuItem,
-  IconTokens,
   SafeLink,
   formatHtmlDatetime,
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
+import IconTokens from './icons/IconTokens'
 import ConfirmMessage from './ConfirmMessage'
 
 class TransferRow extends React.Component {
@@ -48,14 +48,19 @@ class TransferRow extends React.Component {
       date,
       decimals,
       entity,
+      isIncoming,
       network: { etherscanBaseUrl },
       reference,
       symbol,
     } = this.props
     const { showCopyTransferMessage } = this.state
-    const formattedAmount = formatTokenAmount(amount, decimals, true, {
-      rounding: 5,
-    })
+    const formattedAmount = formatTokenAmount(
+      amount,
+      isIncoming,
+      decimals,
+      true,
+      { rounding: 5 }
+    )
     const formattedDate = formatHtmlDatetime(date)
     return (
       <TableRow>
@@ -74,9 +79,13 @@ class TransferRow extends React.Component {
             </SafeLink>
           </TextOverflow>
         </NoWrapCell>
-        <NoWrapCell>{reference}</NoWrapCell>
+        <NoWrapCell title={reference} style={{ position: 'relative' }}>
+          <TextOverflow style={{ position: 'absolute', left: '0', right: '0' }}>
+            {reference}
+          </TextOverflow>
+        </NoWrapCell>
         <NoWrapCell align="right">
-          <Amount positive={amount > 0}>
+          <Amount positive={isIncoming}>
             {formattedAmount} {symbol}
           </Amount>
         </NoWrapCell>

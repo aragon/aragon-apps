@@ -1,5 +1,6 @@
 import Aragon from '@aragon/client'
 import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
+import { addressesEqual } from './web3-utils'
 import tokenAbi from './abi/minimeToken.json'
 
 const app = new Aragon()
@@ -37,10 +38,10 @@ async function createStore(token, tokenAddr) {
           : {}),
       }
 
-      if (address === tokenAddr) {
+      if (addressesEqual(address, tokenAddr)) {
         switch (event) {
           case 'ClaimedTokens':
-            if (returnValues._token === tokenAddr) {
+            if (addressesEqual(returnValues._token, tokenAddr)) {
               nextState = await claimedTokens(token, nextState, returnValues)
             }
             break
@@ -74,7 +75,15 @@ async function claimedTokens(token, state, { _token, _controller }) {
 
 async function transfer(token, state, { _from, _to }) {
   const changes = await loadNewBalances(token, _from, _to)
-  return updateState(state, changes)
+  // The transfer may have increased the token's total supply, so let's refresh it
+  const tokenSupply = await loadTokenSupply(token)
+  return updateState(
+    {
+      ...state,
+      tokenSupply,
+    },
+    changes
+  )
 }
 
 /***********************
@@ -95,8 +104,8 @@ function updateState(state, changes) {
 }
 
 function updateHolders(holders, changed) {
-  const holderIndex = holders.findIndex(
-    holder => holder.address === changed.address
+  const holderIndex = holders.findIndex(holder =>
+    addressesEqual(holder.address, changed.address)
   )
 
   if (holderIndex === -1) {
@@ -130,6 +139,16 @@ function loadNewBalances(token, ...addresses) {
     // TODO: ideally, this would actually cause the UI to show "unknown" for the address
     return {}
   })
+}
+
+function loadTokenSupply(token) {
+  return new Promise((resolve, reject) =>
+    token
+      .totalSupply()
+      .first()
+      .map(totalSupply => parseInt(totalSupply, 10))
+      .subscribe(resolve, reject)
+  )
 }
 
 function loadTokenSettings(token) {

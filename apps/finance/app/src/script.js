@@ -1,35 +1,88 @@
 import Aragon from '@aragon/client'
-import financeSettings, { hasLoadedFinanceSettings } from './finance-settings'
+import { combineLatest, of } from './rxjs'
+import { testTokenAddresses } from './testnet'
+import { addressesEqual } from './web3-utils'
 import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
+import vaultBalanceAbi from './abi/vault-balance.json'
 
 const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
 
+const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const tokenContracts = new Map() // Addr -> External contract
 const tokenSymbols = new Map() // External contract -> symbol
 
 const app = new Aragon()
 
+combineLatest(
+  app.call('vault'),
+  /**
+   * app.call('ETH')
+   *
+   * Is how we should be getting the ETH token, but aragon-dev-cli doesn't know
+   * about public constants on contracts :(
+   */
+  of('0x0000000000000000000000000000000000000000')
+)
+  .first()
+  .subscribe(addresses => initialize(...addresses))
+
+async function initialize(vaultAddress, ethAddress) {
+  const vaultContract = app.external(vaultAddress, vaultBalanceAbi)
+
+  // Place dummy contract for ETH
+  tokenContracts.set(ethAddress, null)
+
+  return createStore({
+    ethToken: {
+      address: ethAddress,
+    },
+    vault: {
+      address: vaultAddress,
+      contract: vaultContract,
+    },
+  })
+}
+
 // Hook up the script as an aragon.js store
-app.store(async (state, event) => {
-  const { event: eventName, returnValues } = event
-  let nextState = {
-    ...state,
-    // Fetch the app's settings, if we haven't already
-    ...(!hasLoadedFinanceSettings(state) ? await loadFinanceSettings() : {}),
-  }
+function createStore(settings) {
+  return app.store(
+    async (state, event) => {
+      const { vault } = settings
+      const { address: eventAddress, event: eventName } = event
+      let nextState = {
+        ...state,
+      }
 
-  switch (eventName) {
-    case 'NewTransaction':
-      nextState = await newTransaction(nextState, returnValues, event)
-      break
-    default:
-      break
-  }
+      if (eventName === INITIALIZATION_TRIGGER) {
+        nextState = await initializeState(nextState, settings)
+      } else if (addressesEqual(eventAddress, vault.address)) {
+        // Vault event
+        // Note: it looks like vault events don't have a defined `event.event` or anything in the
+        // `event.returnValues`... so let's just refetch its ETH balance.
+        nextState = await vaultLoadBalance(nextState, event, settings)
+      } else {
+        // Finance event
+        switch (eventName) {
+          case 'NewTransaction':
+            nextState = await newTransaction(nextState, event, settings)
+            break
+          default:
+            break
+        }
+      }
 
-  return nextState
-})
+      return nextState
+    },
+    [
+      // Always initialize the store with our own home-made event
+      of({ event: INITIALIZATION_TRIGGER }),
+      // Handle Vault events in case they're not always controlled by this Finance app
+      settings.vault.contract.events(),
+    ]
+  )
+}
 
 /***********************
  *                     *
@@ -37,14 +90,44 @@ app.store(async (state, event) => {
  *                     *
  ***********************/
 
-async function newTransaction(state, { transactionId }, { transactionHash }) {
+async function initializeState(state, settings) {
+  const nextState = {
+    ...state,
+    vaultAddress: settings.vault.address,
+  }
+
+  const withTestnetState = await loadTestnetState(nextState, settings)
+  const withEthBalance = await loadEthBalance(withTestnetState, settings)
+  return withEthBalance
+}
+
+async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
+  return {
+    ...state,
+    balances: await updateBalances(
+      state,
+      token || settings.ethToken.address,
+      settings
+    ),
+  }
+}
+
+async function newTransaction(
+  state,
+  { transactionHash, returnValues: { transactionId } },
+  settings
+) {
   const transactionDetails = {
     ...(await loadTransactionDetails(transactionId)),
     transactionHash,
     id: transactionId,
   }
-  const balances = await updateBalances(state, transactionDetails)
   const transactions = await updateTransactions(state, transactionDetails)
+  const balances = await updateBalances(
+    state,
+    transactionDetails.token,
+    settings
+  )
 
   return {
     ...state,
@@ -59,27 +142,24 @@ async function newTransaction(state, { transactionId }, { transactionHash }) {
  *                     *
  ***********************/
 
-async function updateBalances(
-  { balances = [], vaultAddress },
-  { token: tokenAddr }
-) {
-  const tokenContract = tokenContracts.has(tokenAddr)
-    ? tokenContracts.get(tokenAddr)
-    : app.external(tokenAddr, tokenAbi)
-  tokenContracts.set(tokenAddr, tokenContract)
+async function updateBalances({ balances = [] }, tokenAddress, settings) {
+  const tokenContract = tokenContracts.has(tokenAddress)
+    ? tokenContracts.get(tokenAddress)
+    : app.external(tokenAddress, tokenAbi)
+  tokenContracts.set(tokenAddress, tokenContract)
 
-  const balancesIndex = balances.findIndex(
-    ({ address }) => address === tokenAddr
+  const balancesIndex = balances.findIndex(({ address }) =>
+    addressesEqual(address, tokenAddress)
   )
   if (balancesIndex === -1) {
     return balances.concat(
-      await makeNewBalanceToken(tokenContract, tokenAddr, vaultAddress)
+      await newBalanceEntry(tokenContract, tokenAddress, settings)
     )
   } else {
     const newBalances = Array.from(balances)
     newBalances[balancesIndex] = {
       ...balances[balancesIndex],
-      amount: await loadTokenBalance(tokenContract, vaultAddress),
+      amount: await loadTokenBalance(tokenAddress, settings),
     }
     return newBalances
   }
@@ -98,33 +178,36 @@ function updateTransactions({ transactions = [] }, transactionDetails) {
   }
 }
 
-async function makeNewBalanceToken(tokenContract, tokenAddr, vaultAddr) {
+async function newBalanceEntry(tokenContract, tokenAddress, settings) {
+  const isEthToken = tokenAddress === settings.ethToken.address
   const [balance, decimals, symbol] = await Promise.all([
-    loadTokenBalance(tokenContract, vaultAddr),
-    loadTokenDecimals(tokenContract),
-    loadTokenSymbol(tokenContract),
+    loadTokenBalance(tokenAddress, settings),
+    isEthToken ? Promise.resolve(18) : loadTokenDecimals(tokenContract),
+    isEthToken ? Promise.resolve('ETH') : loadTokenSymbol(tokenContract),
   ])
 
   return {
     decimals,
     symbol,
-    address: tokenAddr,
+    address: tokenAddress,
     amount: balance,
   }
 }
 
-function loadTokenBalance(tokenContract, vaultAddr) {
+async function loadEthBalance(state, settings) {
+  return {
+    ...state,
+    balances: await updateBalances(state, settings.ethToken.address, settings),
+  }
+}
+
+function loadTokenBalance(tokenAddress, { vault }) {
   return new Promise((resolve, reject) => {
-    if (!vaultAddr) {
-      // No vault address yet, so leave it as unknown
-      resolve(-1)
-    } else {
-      tokenContract
-        .balanceOf(vaultAddr)
-        .first()
-        .map(val => parseInt(val, 10))
-        .subscribe(resolve, reject)
-    }
+    vault.contract
+      .balance(tokenAddress)
+      .first()
+      .map(val => parseInt(val, 10))
+      .subscribe(resolve, reject)
   })
 }
 
@@ -166,31 +249,6 @@ function loadTransactionDetails(id) {
   )
 }
 
-function loadFinanceSettings() {
-  return Promise.all(
-    financeSettings.map(
-      ([name, key, type]) =>
-        new Promise((resolve, reject) =>
-          app
-            .call(name)
-            .first()
-            .map(val => (type === 'number' ? parseInt(val, 10) : val))
-            .subscribe(value => {
-              resolve({ [key]: value })
-            }, reject)
-        )
-    )
-  )
-    .then(settings =>
-      settings.reduce((acc, setting) => ({ ...acc, ...setting }), {})
-    )
-    .catch(err => {
-      console.error("Failed to load finance's settings due to:", err)
-      // Return an empty object to try again later
-      return {}
-    })
-}
-
 function marshallTransactionDetails({
   amount,
   date,
@@ -207,8 +265,29 @@ function marshallTransactionDetails({
     reference,
     token,
     amount: parseInt(amount, 10),
-    date: parseInt(date, 10),
+    date: parseInt(date, 10) * 1000, // adjust for JS time (in ms vs s)
     paymentId: parseInt(paymentId, 10),
     periodId: parseInt(periodId, 10),
   }
+}
+
+/**********************
+ *                    *
+ * RINKEBY TEST STATE *
+ *                    *
+ **********************/
+function loadTestnetState(nextState, settings) {
+  // Reload all the test tokens' balances for this DAO's vault
+  return loadTestnetTokenBalances(nextState, settings)
+}
+
+async function loadTestnetTokenBalances(nextState, settings) {
+  let reducedState = nextState
+  for (let tokenAddress of testTokenAddresses) {
+    reducedState = {
+      ...reducedState,
+      balances: await updateBalances(reducedState, tokenAddress, settings),
+    }
+  }
+  return reducedState
 }

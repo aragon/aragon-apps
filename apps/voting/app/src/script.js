@@ -1,6 +1,7 @@
 import Aragon from '@aragon/client'
-import { combineLatest } from 'rxjs/observable/combineLatest'
+import { combineLatest } from './rxjs'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
+import { EMPTY_CALLSCRIPT } from './vote-utils'
 
 const app = new Aragon()
 
@@ -46,7 +47,10 @@ async function castVote(state, { voteId }) {
 }
 
 async function executeVote(state, { voteId }) {
-  const transform = vote => ({ ...vote, executed: true })
+  const transform = ({ data, ...vote }) => ({
+    ...vote,
+    data: { ...data, executed: true },
+  })
   return updateState(state, voteId, transform)
 }
 
@@ -60,6 +64,25 @@ async function startVote(state, { voteId }) {
  *                     *
  ***********************/
 
+async function loadVoteDescription(vote) {
+  if (!vote.script || vote.script === EMPTY_CALLSCRIPT) {
+    return vote
+  }
+
+  const path = await app.describeScript(vote.script).toPromise()
+
+  vote.description = path
+    .map(step => {
+      const identifier = step.identifier ? ` (${step.identifier})` : ''
+      const app = step.name ? `${step.name}${identifier}` : `${step.to}`
+
+      return `${app}: ${step.description || 'No description'}`
+    })
+    .join('\n')
+
+  return vote
+}
+
 function loadVoteData(voteId) {
   return new Promise(resolve => {
     combineLatest(
@@ -68,9 +91,11 @@ function loadVoteData(voteId) {
     )
       .first()
       .subscribe(([vote, metadata]) => {
-        resolve({
-          ...marshallVote(vote),
-          metadata,
+        loadVoteDescription(vote).then(vote => {
+          resolve({
+            ...marshallVote(vote),
+            metadata,
+          })
         })
       })
   })
@@ -106,12 +131,21 @@ async function updateState(state, voteId, transform) {
 function loadVoteSettings() {
   return Promise.all(
     voteSettings.map(
-      ([name, key]) =>
+      ([name, key, type = 'string']) =>
         new Promise((resolve, reject) =>
           app
             .call(name)
             .first()
-            .map(val => parseInt(val, 10))
+            .map(val => {
+              if (type === 'number') {
+                return parseInt(val, 10)
+              }
+              if (type === 'time') {
+                // Adjust for js time (in ms vs s)
+                return parseInt(val, 10) * 1000
+              }
+              return val
+            })
             .subscribe(value => {
               resolve({ [key]: value })
             }, reject)
@@ -129,26 +163,29 @@ function loadVoteSettings() {
 }
 
 // Apply transmations to a vote received from web3
+// Note: ignores the 'open' field as we calculate that locally
 function marshallVote({
   creator,
   executed,
-  minAcceptQuorumPct,
+  minAcceptQuorum,
   nay,
-  open,
   snapshotBlock,
   startDate,
   totalVoters,
   yea,
+  script,
+  description,
 }) {
   return {
     creator,
     executed,
-    open,
-    minAcceptQuorumPct: parseInt(minAcceptQuorumPct, 10),
+    minAcceptQuorum: parseInt(minAcceptQuorum, 10),
     nay: parseInt(nay, 10),
     snapshotBlock: parseInt(snapshotBlock, 10),
-    startDate: parseInt(startDate, 10),
+    startDate: parseInt(startDate, 10) * 1000, // adjust for js time (in ms vs s)
     totalVoters: parseInt(totalVoters, 10),
     yea: parseInt(yea, 10),
+    script,
+    description,
   }
 }

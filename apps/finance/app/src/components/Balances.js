@@ -14,51 +14,54 @@ class Balances extends React.Component {
     convertRates: {},
   }
   componentDidMount() {
-    this.updateConvertedRates()
+    this.updateConvertedRates(this.props)
   }
-  componentWillReceiveProps() {
-    this.updateConvertedRates()
+  componentWillReceiveProps(nextProps) {
+    this.updateConvertedRates(nextProps)
   }
-  async updateConvertedRates() {
-    const symbols = this.props.balances.map(({ symbol }) => symbol)
+  async updateConvertedRates({ balances }) {
+    const symbols = balances.map(({ symbol }) => symbol)
 
-    // Uncomment the next line to simulate a delay
-    // await new Promise(r => setTimeout(r, 2000))
+    if (symbols.length) {
+      // Uncomment the next line to simulate a delay
+      // await new Promise(r => setTimeout(r, 2000))
 
-    const res = await fetch(convertApiUrl(symbols))
-    const convertRates = await res.json()
-    this.setState({ convertRates })
+      const res = await fetch(convertApiUrl(symbols))
+      const convertRates = await res.json()
+      this.setState({ convertRates })
+    }
   }
   render() {
     const { balances } = this.props
     const { convertRates } = this.state
+    const balanceItems = balances
+      .map(({ amount, decimals, ...token }) => ({
+        ...token,
+        amount: amount / Math.pow(10, decimals),
+      }))
+      .map(({ amount, symbol }) => ({
+        amount,
+        symbol,
+        convertedAmount: convertRates[symbol]
+          ? amount / convertRates[symbol]
+          : -1,
+      }))
+      .map(({ amount, convertedAmount, ...balance }) => ({
+        ...balance,
+        amount: round(amount, 5),
+        convertedAmount: round(convertedAmount, 5),
+      }))
+      .sort(
+        (balanceA, balanceB) =>
+          balanceB.convertedAmount - balanceA.convertedAmount
+      )
     return (
       <section>
         <Title>Token Balances</Title>
         <ScrollView>
           <List>
-            {balances
-              .map(({ amount, decimals, ...token }) => ({
-                ...token,
-                amount: amount / Math.pow(10, decimals),
-              }))
-              .map(({ amount, symbol }) => ({
-                amount,
-                symbol,
-                convertedAmount: convertRates[symbol]
-                  ? amount / convertRates[symbol]
-                  : -1,
-              }))
-              .map(({ amount, convertedAmount, ...balance }) => ({
-                ...balance,
-                amount: round(amount, 5),
-                convertedAmount: round(convertedAmount, 5),
-              }))
-              .sort(
-                (balanceA, balanceB) =>
-                  balanceB.convertedAmount - balanceA.convertedAmount
-              )
-              .map(({ symbol, amount, convertedAmount }) => (
+            {balanceItems.length > 0 ? (
+              balanceItems.map(({ symbol, amount, convertedAmount }) => (
                 <ListItem key={symbol}>
                   <BalanceToken
                     symbol={symbol}
@@ -66,13 +69,22 @@ class Balances extends React.Component {
                     convertedAmount={convertedAmount}
                   />
                 </ListItem>
-              ))}
+              ))
+            ) : (
+              <EmptyListItem />
+            )}
           </List>
         </ScrollView>
       </section>
     )
   }
 }
+
+const EmptyListItem = () => (
+  <ListItem style={{ opacity: '0' }}>
+    <BalanceToken symbol=" " amount={0} convertedAmount={0} />
+  </ListItem>
+)
 
 const ScrollView = styled.div`
   overflow-x: auto;

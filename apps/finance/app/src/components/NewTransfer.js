@@ -1,49 +1,99 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Field, TextInput, Text, Button, DropDown, theme } from '@aragon/ui'
+import {
+  Button,
+  DropDown,
+  IconCross,
+  Info,
+  Field,
+  Text,
+  TextInput,
+  theme,
+} from '@aragon/ui'
+import { addressPattern, isAddress } from '../web3-utils'
+
+const initialState = {
+  selectedToken: 0,
+  recipient: {
+    error: null,
+    value: '',
+  },
+  reference: '',
+  amount: '',
+}
 
 class NewTransfer extends React.Component {
   static defaultProps = {
     onTransfer: () => {},
   }
   state = {
-    selectedToken: 0,
-    recipient: '',
-    reference: '',
-    amount: -1,
+    ...initialState,
+  }
+  componentWillReceiveProps({ opened }) {
+    if (opened && !this.props.opened) {
+      // setTimeout is needed as a small hack to wait until the input's on
+      // screen until we call focus
+      this.recipientInput && setTimeout(() => this.recipientInput.focus(), 0)
+    } else if (!opened && this.props.opened) {
+      // Finished closing the panel, so reset its state
+      this.setState({ ...initialState })
+    }
   }
   handleSelectToken = index => {
     this.setState({ selectedToken: index })
   }
   handleRecipientUpdate = event => {
-    this.setState({ recipient: event.target.value })
+    this.setState({
+      recipient: {
+        error: null,
+        value: event.target.value,
+      },
+    })
   }
   handleReferenceUpdate = event => {
     this.setState({ reference: event.target.value })
   }
   handleAmountUpdate = event => {
-    const value = event.target.value
-    const amount = value === '' ? 0 : parseInt(value, 10)
-    this.setState({
-      amount: !Number.isInteger(amount) || amount < 0 ? -1 : amount,
-    })
+    this.setState({ amount: event.target.value })
   }
-  handleTransfer = () => {
+  handleTransfer = event => {
+    event.preventDefault()
     const { onTransfer, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
-    onTransfer(tokens[selectedToken], recipient, amount, reference)
+    const recipientAddress = recipient.value.trim()
+    if (isAddress(recipientAddress)) {
+      onTransfer(
+        tokens[selectedToken],
+        recipientAddress,
+        Number(amount),
+        reference
+      )
+    } else {
+      this.setState(({ recipient }) => ({
+        recipient: {
+          ...recipient,
+          error: true,
+        },
+      }))
+    }
   }
   render() {
-    const { title, tokens } = this.props
+    const { onClose, title, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
     const symbols = tokens.map(({ symbol }) => symbol)
-    return (
-      <div>
+    return tokens.length ? (
+      <form onSubmit={this.handleTransfer}>
         <h1>{title}</h1>
-        <Field label="Recipient">
+        <Field label="Recipient (must be a valid Ethereum address)">
           <TextInput
+            innerRef={recipient => (this.recipientInput = recipient)}
             onChange={this.handleRecipientUpdate}
-            value={recipient}
+            pattern={
+              // Allow spaces to be trimmable
+              ` *${addressPattern} *`
+            }
+            value={recipient.value}
+            required
             wide
           />
         </Field>
@@ -54,9 +104,12 @@ class NewTransfer extends React.Component {
             </Text.Block>
           </label>
           <CombinedInput>
-            <TextInput
+            <TextInput.Number
+              value={amount}
               onChange={this.handleAmountUpdate}
-              value={amount === -1 ? '' : amount}
+              min={0}
+              step="any"
+              required
               wide
             />
             <DropDown
@@ -74,8 +127,23 @@ class NewTransfer extends React.Component {
           />
         </Field>
         <ButtonWrapper>
-          <Button mode="strong" wide onClick={this.handleTransfer}>
+          <Button mode="strong" type="submit" wide>
             Submit Transfer
+          </Button>
+        </ButtonWrapper>
+        {recipient.error && (
+          <ValidationError message="Recipient must be a valid Ethereum address" />
+        )}
+      </form>
+    ) : (
+      <div>
+        <Info.Permissions title="Action impossible">
+          You cannot create any payments. The DAO does not have any tokens
+          available to transfer.
+        </Info.Permissions>
+        <ButtonWrapper>
+          <Button mode="strong" wide onClick={onClose}>
+            Close
           </Button>
         </ButtonWrapper>
       </div>
@@ -102,6 +170,19 @@ const CombinedInput = styled.div`
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
+`
+
+const ValidationError = ({ message }) => (
+  <ValidationErrorBlock>
+    <IconCross />
+    <Text size="small" style={{ marginLeft: '10px' }}>
+      Recipient must be a valid Ethereum address
+    </Text>
+  </ValidationErrorBlock>
+)
+
+const ValidationErrorBlock = styled.p`
+  margin-top: 15px;
 `
 
 export default NewTransfer
