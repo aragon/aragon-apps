@@ -1,0 +1,20 @@
+{
+  "appName": "survey.aragonpm.eth",
+  "version": "1.0.1",
+  "roles": [
+    {
+      "name": "Create new surveys",
+      "id": "CREATE_SURVEYS_ROLE",
+      "params": []
+    },
+    {
+      "name": "Modify quorum",
+      "id": "MODIFY_PARTICIPATION_ROLE",
+      "params": [
+        "New quorum",
+        "Current quorum"
+      ]
+    }
+  ],
+  "path": "contracts/Survey.sol"
+}
