@@ -94,7 +94,7 @@ contract('Beta Base Template', accounts => {
                     executionTarget = await getContract('ExecutionTarget').new()
                     const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                     script = encodeCallScript([action, action])
-                    voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: owner }))
+                    voteId = createdVoteId(await voting.newVote(script, 'metadata', true, { from: owner }))
                 })
 
                 it('has correct state', async() => {
@@ -185,7 +185,7 @@ contract('Beta Base Template', accounts => {
                 await finance.sendTransaction({ value: payment, from: owner })
                 const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(ETH, nonHolder, payment, 0, 0, 1, "voting payment") }
                 script = encodeCallScript([action])
-                voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: owner }))
+                voteId = createdVoteId(await voting.newVote(script, 'metadata', true, { from: owner }))
             })
 
             it('finance can not be accessed directly (without a vote)', async () => {
@@ -255,7 +255,7 @@ contract('Beta Base Template', accounts => {
                     executionTarget = await getContract('ExecutionTarget').new()
                     const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                     script = encodeCallScript([action, action])
-                    voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: owner }))
+                    voteId = createdVoteId(await voting.newVote(script, 'metadata', true, { from: owner }))
                 })
 
                 it('has correct state', async() => {
@@ -326,7 +326,7 @@ contract('Beta Base Template', accounts => {
                 //await logBalances(financeProxyAddress, vaultProxyAddress)
                 const action = { to: financeProxyAddress, calldata: finance.contract.newPayment.getData(ETH, nonHolder, payment, 0, 0, 1, "voting payment") }
                 script = encodeCallScript([action])
-                voteId = createdVoteId(await voting.newVote(script, 'metadata', { from: owner }))
+                voteId = createdVoteId(await voting.newVote(script, 'metadata', true, { from: owner }))
             })
 
             it('finance can not be accessed directly (without a vote)', async () => {
