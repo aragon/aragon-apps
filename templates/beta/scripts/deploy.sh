@@ -10,6 +10,7 @@ npm run deploy:devnet:apm
 cd -
 
 cd node_modules/@aragon/id
+npm install
 npm run deploy:devnet
 cd -
 
