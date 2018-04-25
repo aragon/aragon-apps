@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "TRUFFLE_TEST=true npm run ganache-cli:dev",
+    "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
+    "test:gas": "GAS_REPORTER=true npm test",
     "lint": "solium --dir ./contracts",
-    "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh",
-    "ganache-cli:dev": "./node_modules/@aragon/test-helpers/ganache-cli.sh"
+    "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
+    "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh"
   },
   "keywords": [],
   "author": "Aragon Institution MTU <contact@aragon.one>",
