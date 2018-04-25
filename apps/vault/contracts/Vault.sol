@@ -1,62 +1,118 @@
 pragma solidity 0.4.18;
 
-import "@aragon/core/contracts/apps/App.sol";
+import "./VaultBase.sol"; // split made to avoid circular import
 
-import "@aragon/core/contracts/zeppelin/token/ERC20.sol";
+import "./connectors/ERC20Connector.sol";
+import "./connectors/ETHConnector.sol";
 
-import "@aragon/core/contracts/misc/Migrations.sol";
+import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract Vault is App {
-    event SetAllowance(address indexed token, address indexed spender, uint256 amount);
-    event TokenTransfer(address indexed token, address indexed receiver, uint256 amount);
+contract Vault is VaultBase {
+    struct TokenStandard {
+        uint32 erc;
+        uint32 interfaceDetectionERC;
+        bytes4 interfaceID;
+        address connector;
+    }
 
-    bytes32 constant public REQUEST_ALLOWANCES_ROLE = bytes32(1);
-    bytes32 constant public TRANSFER_ROLE = bytes32(2);
+    TokenStandard[] public standards;
+    mapping (address => address) public connectors;
+    mapping (uint32 => bool) public supportedInterfaceDetectionERCs;
 
-    /**
-    * @notice Request for `_spender` to spend up to `_amounts` in `_tokens`
-    * @dev This action creates an ERC20 allowance for each token in `_tokens` and will allow the spender to transferFrom the Vault address until the allowance is completely spent or is overidden
-    * @param _tokens Array of token addresses
-    * @param _amounts Array of token allowances
-    */
-    function requestAllowances(ERC20[] _tokens, uint256[] _amounts) auth(REQUEST_ALLOWANCES_ROLE) external {
-        require(_tokens.length == _amounts.length);
+    // this is required to avoid having to redeploy on every instance.
+    // they can just be gotten from the base by templates
+    ERC20Connector public erc20ConnectorBase;
+    ETHConnector public ethConnectorBase;
 
-        for (uint i = 0; i < _tokens.length; i++) {
-            requestAllowance(_tokens[i], _amounts[i]);
+    event NewTokenStandard(uint32 indexed erc, uint32 indexed interfaceDetectionERC, bytes4 indexed interfaceID, address connector);
+
+    function Vault() public {
+        erc20ConnectorBase = new ERC20Connector();
+        ethConnectorBase = new ETHConnector();
+    }
+
+    function initialize(ERC20Connector erc20Connector, ETHConnector ethConnector) onlyInit public {
+        initialized();
+
+        supportedInterfaceDetectionERCs[NO_DETECTION] = true;
+        supportedInterfaceDetectionERCs[ERC165] = true;
+
+        _setConnectors(erc20Connector, ethConnector);
+    }
+
+    function initializeWithBase(Vault baseVault) onlyInit public {
+        initialize(baseVault.erc20ConnectorBase(), baseVault.ethConnectorBase());
+    }
+
+    function _setConnectors(ERC20Connector erc20Connector, ETHConnector ethConnector) internal {
+        require(erc20Connector != address(0) && ethConnector != address(0));
+
+        // register erc20 as the first standard
+        _registerStandard(20, NO_DETECTION, bytes4(0), erc20Connector);
+        // directly manage ETH with the ethConnector
+        connectors[ETH] = ethConnector;
+    }
+
+    function () payable public {
+        address token = ETH;
+
+        // 4 (sig) + 32 (at least the token address to locate connector)
+        if (msg.data.length < 36) {
+            require(msg.value > 0); // if no data, only call ETH connector when ETH
+        } else {
+            assembly { token := calldataload(4) } // token address MUST be the first argument to any Vault calls
         }
+
+        if (connectors[token] == address(0)) {
+            connectors[token] = standards[detectTokenStandard(token)].connector;
+        }
+
+        // if return data size is less than 32 bytes, it will revert
+        delegatedFwd(connectors[token], msg.data, 32);
     }
 
-    /**
-    * @notice Request for `_spender` to spend up to `_amount` in `_token`
-    * @dev This action creates an ERC20 allowance for each `_token` and will allow the spender to transferFrom the Vault address until the allowance is completely spent or is overidden
-    * @param _token Token address
-    * @param _amount Token allowance
-    */
-    function requestAllowance(ERC20 _token, uint256 _amount) auth(REQUEST_ALLOWANCES_ROLE) public {
-        address spender = msg.sender;
+    function registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector)
+             authP(REGISTER_TOKEN_STANDARD, arr(uint256(erc), interfaceDetectionERC))
+             public
+    {
 
-        // Some token implementations will throw when changing an allowance from non-zero to non-zero
-        // https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        if (_token.allowance(address(this), spender) > 0)
-            assert(_token.approve(spender, 0));
-
-        if (_amount > 0)
-            assert(_token.approve(spender, _amount));
-
-        SetAllowance(_token, spender, _amount);
+        _registerStandard(erc, interfaceDetectionERC, interfaceID, connector);
     }
 
-    /**
-    * @notice Transfer `_amount` `_token` from the Vault to `_receiver`
-    * @dev This function should be used as little as possible, in favor of using allowances
-    * @param _token Address of the token being transferred
-    * @param _receiver Address of the recipient of tokens
-    * @param _amount Amount of tokens being transferred
-    */
-    function transferTokens(ERC20 _token, address _receiver, uint256 _amount) auth(TRANSFER_ROLE) external {
-        assert(_token.transfer(_receiver, _amount));
-        TokenTransfer(_token, _receiver, _amount);
+    function detectTokenStandard(address token) public view returns (uint256 standardId) {
+        // skip index 0 which is erc20 and it is not conformant to any
+        for (uint256 i = 1; i < standards.length; i++) {
+            if (conformsToStandard(token, i)) {
+                return i;
+            }
+        }
+
+        // no definition, return ERC20 standard
+        return 0;
+    }
+
+    function conformsToStandard(address token, uint256 standardId) public view returns (bool) {
+        if (standards[standardId].interfaceDetectionERC == ERC165) {
+            return conformsToERC165(token, bytes4(standards[standardId].interfaceID));
+        }
+
+        return false;
+    }
+
+    function isInterfaceDetectionERCSupported(uint32 interfaceDetectionERC) public view returns (bool) {
+        return supportedInterfaceDetectionERCs[interfaceDetectionERC];
+    }
+
+    function _registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector) internal {
+        require(isInterfaceDetectionERCSupported(interfaceDetectionERC));
+
+        for (uint256 i = 0; i < standards.length; i++) {
+            require(standards[i].erc != erc);
+        }
+
+        standards.push(TokenStandard(erc, interfaceDetectionERC, interfaceID, connector));
+
+        NewTokenStandard(erc, interfaceDetectionERC, interfaceID, connector);
     }
 }

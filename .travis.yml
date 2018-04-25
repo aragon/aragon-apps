@@ -1,3 +1,6 @@
+sudo: required
+services:
+  - docker
 language: node_js
 cache:
   directories:
@@ -7,10 +10,10 @@ notifications:
 node_js:
   - '8'
 env:
+  - TASK=test
   - TASK=lint
   - TASK=coverage
 before_script:
-  - npm run bootstrap
   - npm prune
 script:
   - npm run $TASK

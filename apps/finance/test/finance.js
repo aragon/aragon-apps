@@ -2,9 +2,10 @@ const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/asse
 const getBalance = require('@aragon/test-helpers/balance')(web3)
 
 const Vault = artifacts.require('Vault')
+const ERC20Connector = artifacts.require('ERC20Connector')
+const ETHConnector = artifacts.require('ETHConnector')
 const Finance = artifacts.require('FinanceMock')
 const MiniMeToken = artifacts.require('MiniMeToken')
-const EtherToken = artifacts.require('EtherToken')
 
 contract('Finance App', accounts => {
     let app, vault, token1, token2, executionTarget, etherToken = {}
@@ -13,10 +14,14 @@ contract('Finance App', accounts => {
     const periodDuration = 100
     const withdrawAddr = '0x0000000000000000000000000000000000001234'
 
+    const ETH = '0x0000000000000000000000000000000000000000'
+
     beforeEach(async () => {
         vault = await Vault.new()
+        const ethConnector = await ETHConnector.new()
+        const erc20Connector = await ERC20Connector.new()
+        await vault.initialize(erc20Connector.address, ethConnector.address)
 
-        etherToken = await EtherToken.new()
 
         token1 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token1.generateTokens(vault.address, 100)
@@ -25,13 +30,12 @@ contract('Finance App', accounts => {
         token2 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token2.generateTokens(vault.address, 200)
 
-        await etherToken.wrap({ value: 500 })
-        await etherToken.transfer(vault.address, 400)
+        await ETHConnector.at(vault.address).deposit(ETH, accounts[0], 400, [0], { value: 400 });
 
         app = await Finance.new()
         await app.mock_setTimestamp(1)
 
-        await app.initialize(vault.address, etherToken.address, periodDuration)
+        await app.initialize(vault.address, periodDuration)
     })
 
     it('initialized first accounting period and settings', async () => {
@@ -41,14 +45,14 @@ contract('Finance App', accounts => {
 
     it('fails on reinitialization', async () => {
         return assertRevert(async () => {
-            await app.initialize(vault.address, '0x00', periodDuration)
+            await app.initialize(vault.address, periodDuration)
         })
     })
 
     it('adds new token to budget', async () => {
         await app.setBudget(token1.address, 10)
 
-        const [budget, hasBudget, remainingBudget] = await app.getBudget(token1.address)
+        const [budget, hasBudget, remainingBudget] = await app.getBudget.call(token1.address)
         assert.equal(budget, 10, 'should have correct budget')
         assert.isTrue(hasBudget, 'has budget should be true')
         assert.equal(remainingBudget, 10, 'all budget is remaining')
@@ -61,7 +65,7 @@ contract('Finance App', accounts => {
         const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
 
         // vault has 100 token1 initially
-        assert.equal(await token1.balanceOf(vault.address), 100 + 5, 'deposited tokens must be in vault')
+        assert.equal((await token1.balanceOf(vault.address)).toString(), 100 + 5, 'deposited tokens must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, 5, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')
@@ -72,57 +76,24 @@ contract('Finance App', accounts => {
         assert.equal(ref, 'ref', 'ref should be correct')
     })
 
-    it('records ERC20 approveAndCall deposits', async () => {
-        let initialBalance = await token1.balanceOf(vault.address)
-        await token1.approveAndCall(app.address, 5, 'ref')
+    it('records ETH deposits', async () => {
+        await app.send(10, { gas: 3e5 })
 
         const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
 
-        let finalBalance = await token1.balanceOf(vault.address)
-        assert.equal(finalBalance.toString(), initialBalance.plus(5).toString(), 'deposited tokens must be in vault')
+        // vault has 400 wei initially
+        assert.equal(await ETHConnector.at(vault.address).balance(ETH), 400 + 10, 'deposited ETH must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
-        assert.equal(amount, 5, 'amount should be correct')
+        assert.equal(amount, 10, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')
-        assert.equal(token, token1.address, 'token should be correct')
+        assert.equal(token, ETH, 'token should be ETH token')
         assert.equal(entity, accounts[0], 'entity should be correct')
         assert.isTrue(incoming, 'tx should be incoming')
         assert.equal(date, 1, 'date should be correct')
-        assert.equal(ref, 'ref', 'ref should be correct')
+        assert.equal(ref, 'Ether transfer to Finance app', 'ref should be correct')
     })
 
-    it('records ERC677 deposits', async () => {
-        await etherToken.transferAndCall(app.address, 50, 'reference')
-
-        const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
-
-        // vault has 400 ether tokens initially
-        assert.equal(await etherToken.balanceOf(vault.address), 400 + 50, 'deposited tokens must be in vault')
-        assert.equal(periodId, 0, 'period id should be correct')
-        assert.equal(amount, 50, 'amount should be correct')
-        assert.equal(paymentId, 0, 'payment id should be 0')
-        assert.equal(token, etherToken.address, 'token should be correct')
-        assert.equal(entity, accounts[0], 'entity should be correct')
-        assert.isTrue(incoming, 'tx should be incoming')
-        assert.equal(date, 1, 'date should be correct')
-        assert.equal(ref, 'reference', 'ref should be correct')
-    })
-
-    it('can wrapAndCall with EtherToken', async () => {
-        await etherToken.wrapAndCall(app.address, 'reference', { from: accounts[1], value: 100 })
-
-        const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
-
-        // vault has 400 ether tokens initially
-        assert.equal(await etherToken.balanceOf(vault.address), 400 + 100, 'deposited tokens must be in vault')
-        assert.equal(periodId, 0, 'period id should be correct')
-        assert.equal(amount, 100, 'amount should be correct')
-        assert.equal(paymentId, 0, 'payment id should be 0')
-        assert.equal(token, etherToken.address, 'token should be correct')
-        assert.equal(entity, accounts[1], 'entity should be correct')
-        assert.isTrue(incoming, 'tx should be incoming')
-        assert.equal(date, 1, 'date should be correct')
-        assert.equal(ref, 'reference', 'ref should be correct')
-    })
+    /* TODO: ERC777 */
 
     it('sends locked tokens to Vault', async () => {
         let initialBalance = await token1.balanceOf(vault.address)
@@ -173,6 +144,17 @@ contract('Finance App', accounts => {
         assert.equal(await app.currentPeriodId(), 2, 'should have transitioned 2 periods')
     })
 
+    it("escapes hatch, recovers ETH", async () => {
+        let vaultInitialBalance = await getBalance(vault.address)
+        let financeInitialBalance = await getBalance(app.address)
+        let amount = web3.toWei(1, 'ether')
+        await app.sendTransaction({value: amount})
+        let vaultFinalBalance = await getBalance(vault.address)
+        let financeFinalBalance = await getBalance(app.address)
+        assert.equal(financeFinalBalance.valueOf(), 0, "Funds not recovered (Finance)!")
+        assert.equal(vaultFinalBalance.toString(), vaultInitialBalance.add(amount).toString(), "Funds not recovered (Vault)!")
+    })
+
     context('setting budget', () => {
         const recipient = accounts[1]
         const time = 22
@@ -180,7 +162,7 @@ contract('Finance App', accounts => {
         beforeEach(async () => {
             await app.setBudget(token1.address, 50)
             await app.setBudget(token2.address, 100)
-            await app.setBudget(etherToken.address, 150)
+            await app.setBudget(ETH, 150)
 
             await app.mock_setTimestamp(time)
         })
@@ -208,9 +190,19 @@ contract('Finance App', accounts => {
             const amount = 10
 
             // interval 0, repeat 1 (single payment)
-            await app.newPayment(token1.address, recipient, amount, time, 0, 1, '')
+            await app.newPayment(token1.address, recipient, amount, time, 0, 1, 'ref')
 
             assert.equal(await token1.balanceOf(recipient), amount, 'recipient should have received tokens')
+
+            const [periodId, am, paymentId, token, entity, isIncoming, date, ref] = await app.getTransaction(1)
+            assert.equal(periodId, 0, 'period id should be correct')
+            assert.equal(am, amount, 'amount should match')
+            assert.equal(paymentId, 0, 'payment id should be 0 for single payment')
+            assert.equal(token, token1.address, 'token address should match')
+            assert.equal(entity, recipient, 'receiver should match')
+            assert.isFalse(isIncoming, 'single payment should be outgoing')
+            assert.equal(date.toNumber(), time, 'date should be correct')
+            assert.equal(ref, 'ref', 'ref should match')
         })
 
         it('can decrease budget after spending', async () => {
@@ -222,7 +214,7 @@ contract('Finance App', accounts => {
             const newBudgetAmount = 5
             await app.setBudget(token1.address, newBudgetAmount)
 
-            const [budget, hasBudget, remainingBudget] = await app.getBudget(token1.address)
+            const [budget, hasBudget, remainingBudget] = await app.getBudget.call(token1.address)
 
             assert.equal(budget, newBudgetAmount, 'new budget should be correct')
             assert.isTrue(hasBudget, 'should have budget')
@@ -252,7 +244,7 @@ contract('Finance App', accounts => {
             const amount = 10
 
             // repeats up to 10 times every 2 seconds
-            await app.newPayment(etherToken.address, withdrawAddr, amount, time, 2, 10, '')
+            await app.newPayment(ETH, withdrawAddr, amount, time, 2, 10, '')
             await app.mock_setTimestamp(time + 4)
             await app.executePayment(1)
 
@@ -413,6 +405,47 @@ contract('Finance App', accounts => {
 
             assertPaymentFailure(receipt)
             assert.equal(await token1.balanceOf(recipient), 80, 'recipient should have received tokens')
+        })
+    })
+
+    context('Without initialize', async () => {
+        let nonInit
+
+        beforeEach(async () => {
+            nonInit = await Finance.new()
+            await nonInit.mock_setTimestamp(1)
+        })
+
+        it('fails to create new Payment', async() => {
+            const recipient = accounts[1]
+            const amount = 1
+            const time = 22
+            await nonInit.mock_setTimestamp(time)
+
+            return assertRevert(async() => {
+                await nonInit.newPayment(token1.address, recipient, amount, time, 0, 1, 'ref')
+            })
+        })
+
+        it('fails to deposit ERC20 tokens', async() => {
+            await token1.approve(nonInit.address, 5)
+            return assertRevert(async() => {
+                await nonInit.deposit(token1.address, 5, 'ref')
+            })
+        })
+
+        it('fails to send tokens to Vault', async() => {
+            // 'lock' tokens
+            await token1.transfer(nonInit.address, 5)
+            return assertRevert(async() => {
+                await nonInit.depositToVault(token1.address)
+            })
+        })
+
+        it('fails to deposit ETH', async() => {
+            return assertInvalidOpcode(async() => {
+                await nonInit.send(10, { gas: 3e5 })
+            })
         })
     })
 })

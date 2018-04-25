@@ -1,10 +1,4 @@
-# Aragon Core Apps
-
-[![Travis](https://img.shields.io/travis/aragon/aragon-apps.svg?style=flat-square)](https://travis-ci.org/aragon/aragon-apps)
-[![Coveralls](https://img.shields.io/coveralls/aragon/aragon-apps.svg?style=flat-square)](https://coveralls.io/github/aragon/aragon-apps)
-
-This [monorepo](https://github.com/babel/babel/blob/master/doc/design/monorepo.md) contains the core applications that are bundled with Aragon by default.
-
+# Aragon Apps <img align="right" src="https://raw.githubusercontent.com/aragon/issues/master/logo.png" height="80px" /> [![Travis branch](https://img.shields.io/travis/aragon/aragon-apps/master.svg?style=for-the-badge)](https://travis-ci.org/aragon/aragon-apps) [![Coveralls branch](https://img.shields.io/coveralls/aragon/aragon-apps/master.svg?style=for-the-badge)](https://coveralls.io/github/aragon/aragon-apps)
 ## Apps
 
 This repository contains the following apps:
@@ -15,6 +9,13 @@ This repository contains the following apps:
 - **[Token Manager](apps/token-manager)**: Manages organization tokens.
 
 You can read more about the individual apps in [their specifications](https://wiki.aragon.one/dev/apps/) on the Aragon Wiki.
+
+## Coming soon apps
+
+The following apps are still under development, not ready for production deployment yet:
+
+- **[Payroll](future-apps/payroll)**: Manages employees' payrolls.
+- **[Fundraising](future-apps/fundraising)**: Manages fundraising campaings.
 
 ## Developing
 

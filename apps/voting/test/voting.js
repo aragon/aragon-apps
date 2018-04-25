@@ -3,19 +3,54 @@ const sha3 = require('solidity-sha3').default
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
-const { encodeScript } = require('@aragon/test-helpers/evmScript')
+const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const Voting = artifacts.require('Voting')
-const MiniMeToken = artifacts.require('@aragon/core/contracts/common/MiniMeToken')
+const MiniMeToken = artifacts.require('@aragon/os/contracts/lib/minime/MiniMeToken')
+const DAOFactory = artifacts.require('@aragon/os/contracts/factory/DAOFactory')
+const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory/EVMScriptRegistryFactory')
+const ACL = artifacts.require('@aragon/os/contracts/acl/ACL')
+const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel')
 
+const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
 const createdVoteId = receipt => receipt.logs.filter(x => x.event == 'StartVote')[0].args.voteId
 
+const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
+
+const VOTER_STATE = ['ABSENT', 'YEA', 'NAY'].reduce((state, key, index) => {
+    state[key] = index;
+    return state;
+}, {})
+
+
 contract('Voting App', accounts => {
-    let app, token, executionTarget = {}
+    let daoFact, app, token, executionTarget = {}
 
     const votingTime = 1000
+    const root = accounts[0]
+
+    before(async () => {
+        const kernelBase = await getContract('Kernel').new()
+        const aclBase = await getContract('ACL').new()
+        const regFact = await EVMScriptRegistryFactory.new()
+        daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
+    })
+
+    beforeEach(async () => {
+        const r = await daoFact.newDAO(root)
+        const dao = Kernel.at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
+        const acl = ACL.at(await dao.acl())
+
+        await acl.createPermission(root, dao.address, await dao.APP_MANAGER_ROLE(), root, { from: root })
+
+        const receipt = await dao.newAppInstance('0x1234', (await Voting.new()).address, { from: root })
+        app = Voting.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+
+        await acl.createPermission(ANY_ADDR, app.address, await app.CREATE_VOTES_ROLE(), root, { from: root })
+        await acl.createPermission(ANY_ADDR, app.address, await app.MODIFY_QUORUM_ROLE(), root, { from: root })
+    })
 
     context('normal token supply', () => {
         const holder19 = accounts[0]
@@ -34,7 +69,6 @@ contract('Voting App', accounts => {
             await token.generateTokens(holder31, 31)
             await token.generateTokens(holder50, 50)
 
-            app = await Voting.new()
             await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
 
             executionTarget = await ExecutionTarget.new()
@@ -48,34 +82,34 @@ contract('Voting App', accounts => {
 
         it('deciding voting is automatically executed', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            const script = encodeScript([action])
-            const voteId = createdVoteId(await app.newVote(script, '', { from: holder50 }))
+            const script = encodeCallScript([action])
+            const voteId = createdVoteId(await app.newVote(script, '', true, { from: holder50 }))
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
         })
 
         it('execution scripts can execute multiple actions', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            const script = encodeScript([action, action, action])
-            const voteId = createdVoteId(await app.newVote(script, '', { from: holder50 }))
+            const script = encodeCallScript([action, action, action])
+            const voteId = createdVoteId(await app.newVote(script, '', true, { from: holder50 }))
             assert.equal(await executionTarget.counter(), 3, 'should have executed multiple times')
         })
 
         it('execution script can be empty', async () => {
-            const voteId = createdVoteId(await app.newVote(encodeScript([]), '', { from: holder50 }))
+            const voteId = createdVoteId(await app.newVote(encodeCallScript([]), '', true, { from: holder50 }))
         })
 
         it('execution throws if any action on script throws', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            let script = encodeScript([action])
+            let script = encodeCallScript([action])
             script = script.slice(0, -2) // remove one byte from calldata for it to fail
             return assertRevert(async () => {
-                await app.newVote(script, '', { from: holder50 })
+                await app.newVote(script, '', true, { from: holder50 })
             })
         })
 
         it('forwarding creates vote', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            const script = encodeScript([action])
+            const script = encodeCallScript([action])
             const voteId = createdVoteId(await app.forward(script, { from: holder50 }))
             assert.equal(voteId, 1, 'voting should have been created')
         })
@@ -94,31 +128,24 @@ contract('Voting App', accounts => {
 
             beforeEach(async () => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-                script = encodeScript([action, action])
-                voteId = createdVoteId(await app.newVote(script, 'metadata', { from: nonHolder }))
+                script = encodeCallScript([action, action])
+                voteId = createdVoteId(await app.newVote(script, 'metadata', false, { from: holder50 }))
             })
 
             it('has correct state', async () => {
-                const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript, scriptActionsCount] = await app.getVote(voteId)
+                const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await app.getVote(voteId)
 
                 assert.isTrue(isOpen, 'vote should be open')
-                assert.isFalse(isExecuted, 'vote should be executed')
-                assert.equal(creator, nonHolder, 'creator should be correct')
+                assert.isFalse(isExecuted, 'vote should not be executed')
+                assert.equal(creator, holder50, 'creator should be correct')
                 assert.equal(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
                 assert.deepEqual(minQuorum, minimumAcceptanceQuorum, 'min quorum should be app min quorum')
                 assert.equal(y, 0, 'initial yea should be 0')
                 assert.equal(n, 0, 'initial nay should be 0')
                 assert.equal(totalVoters, 100, 'total voters should be 100')
                 assert.equal(execScript, script, 'script should be correct')
-                assert.equal(scriptActionsCount, 2)
                 assert.equal(await app.getVoteMetadata(voteId), 'metadata', 'should have returned correct metadata')
-            })
-
-            it('has correct script actions', async () => {
-                const [addr, calldata] = await app.getVoteScriptAction(voteId, 1)
-
-                assert.equal(addr, executionTarget.address, 'execution addr should match')
-                assert.equal(calldata, executionTarget.contract.execute.getData(), 'calldata should match')
+                assert.equal(await app.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')
             })
 
             it('changing min quorum doesnt affect vote min quorum', async () => {
@@ -127,6 +154,7 @@ contract('Voting App', accounts => {
                 // With previous min acceptance quorum at 20%, vote should be approved
                 // with new quorum at 50% it shouldn't have, but since min quorum is snapshotted
                 // it will succeed
+
 
                 await app.vote(voteId, true, true, { from: holder31 })
                 await timeTravel(votingTime + 1)
@@ -139,8 +167,10 @@ contract('Voting App', accounts => {
             it('holder can vote', async () => {
                 await app.vote(voteId, false, true, { from: holder31 })
                 const state = await app.getVote(voteId)
+                const voterState = await app.getVoterState(voteId, holder31)
 
                 assert.equal(state[7], 31, 'nay vote should have been counted')
+                assert.equal(voterState, VOTER_STATE.NAY, 'holder31 should have nay voter status')
             })
 
             it('holder can modify vote', async () => {
@@ -192,6 +222,15 @@ contract('Voting App', accounts => {
                 })
             })
 
+            it('cannot execute vote if not support met', async () => {
+                await app.vote(voteId, false, true, { from: holder31 })
+                await app.vote(voteId, false, true, { from: holder19 })
+                await timeTravel(votingTime + 1)
+                return assertRevert(async () => {
+                    await app.executeVote(voteId)
+                })
+            })
+
             it('vote can be executed automatically if decided', async () => {
                 await app.vote(voteId, true, true, { from: holder50 }) // causes execution
                 assert.equal(await executionTarget.counter(), 2, 'should have executed result')
@@ -219,6 +258,37 @@ contract('Voting App', accounts => {
         })
     })
 
+    context('wrong initializations', () => {
+        beforeEach(async() => {
+            const n = '0x00'
+            token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // empty parameters minime
+        })
+
+        it('fails if min acceptance quorum is 0', () => {
+            const neededSupport = pct16(20)
+            const minimumAcceptanceQuorum = pct16(0)
+            return assertRevert(async() => {
+                await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            })
+        })
+
+        it('fails if min acceptance quorum is greater than min support', () => {
+            const neededSupport = pct16(20)
+            const minimumAcceptanceQuorum = pct16(50)
+            return assertRevert(async() => {
+                await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            })
+        })
+
+        it('fails if min support is greater than 100', () => {
+            const neededSupport = pct16(101)
+            const minimumAcceptanceQuorum = pct16(20)
+            return assertRevert(async() => {
+                await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            })
+        })
+    })
+
     context('token supply = 1', () => {
         const holder = accounts[1]
 
@@ -231,12 +301,11 @@ contract('Voting App', accounts => {
 
             await token.generateTokens(holder, 1)
 
-            app = await Voting.new()
             await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
         })
 
         it('new vote cannot be executed before voting', async () => {
-            const voteId = createdVoteId(await app.newVote('0x', 'metadata'))
+            const voteId = createdVoteId(await app.newVote(EMPTY_SCRIPT, 'metadata', true))
 
             assert.isFalse(await app.canExecute(voteId), 'vote cannot be executed')
 
@@ -249,8 +318,8 @@ contract('Voting App', accounts => {
 
         })
 
-        it('creating vote as holder executes vote', async () => {
-            const voteId = createdVoteId(await app.newVote('0x', 'metadata', { from: holder }))
+        it('creating vote as holder executes vote (if _castVote param says so)', async () => {
+            const voteId = createdVoteId(await app.newVote(EMPTY_SCRIPT, 'metadata', true, { from: holder }))
             const [isOpen, isExecuted] = await app.getVote(voteId)
 
             assert.isFalse(isOpen, 'vote should be closed')
@@ -272,12 +341,11 @@ contract('Voting App', accounts => {
             await token.generateTokens(holder1, 1)
             await token.generateTokens(holder2, 2)
 
-            app = await Voting.new()
             await app.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
         })
 
         it('new vote cannot be executed before holder2 voting', async () => {
-            const voteId = createdVoteId(await app.newVote('0x', 'metadata'))
+            const voteId = createdVoteId(await app.newVote(EMPTY_SCRIPT, 'metadata', true))
 
             assert.isFalse(await app.canExecute(voteId), 'vote cannot be executed')
 
@@ -291,11 +359,19 @@ contract('Voting App', accounts => {
         })
 
         it('creating vote as holder2 executes vote', async () => {
-            const voteId = createdVoteId(await app.newVote('0x', 'metadata', { from: holder2 }))
+            const voteId = createdVoteId(await app.newVote(EMPTY_SCRIPT, 'metadata', true, { from: holder2 }))
             const [isOpen, isExecuted] = await app.getVote(voteId)
 
             assert.isFalse(isOpen, 'vote should be closed')
             assert.isTrue(isExecuted, 'vote should have been executed')
+        })
+    })
+
+    context('before init', () => {
+        it('fails creating a vote before initialization', async () => {
+            return assertRevert(async () => {
+                await app.newVote(encodeCallScript([]), '', false)
+            })
         })
     })
 })

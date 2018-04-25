@@ -1,20 +1,18 @@
 pragma solidity 0.4.18;
 
-import "@aragon/core/contracts/apps/App.sol";
+import "@aragon/os/contracts/apps/AragonApp.sol";
 
-import "@aragon/core/contracts/common/TokenController.sol";
-import "@aragon/core/contracts/common/MiniMeToken.sol";
-import "@aragon/core/contracts/common/Initializable.sol";
-import "@aragon/core/contracts/common/IForwarder.sol";
-import "@aragon/core/contracts/common/EVMCallScript.sol";
+import "@aragon/os/contracts/lib/minime/ITokenController.sol";
+import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
+import "@aragon/os/contracts/common/IForwarder.sol";
 
-import "@aragon/core/contracts/zeppelin/token/ERC20.sol";
-import "@aragon/core/contracts/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 
-import "@aragon/core/contracts/misc/Migrations.sol";
+import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunner, IForwarder {
+contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes coverage crash (removes pure and interface doesnt match)
     using SafeMath for uint256;
 
     MiniMeToken public token;
@@ -22,11 +20,11 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     uint256 public maxAccountTokens;
     bool public logHolders;
 
-    bytes32 constant public MINT_ROLE = bytes32(1);
-    bytes32 constant public ISSUE_ROLE = bytes32(2);
-    bytes32 constant public ASSIGN_ROLE = bytes32(3);
-    bytes32 constant public REVOKE_VESTINGS_ROLE = bytes32(4);
-    bytes32 constant public BURN_ROLE = bytes32(5);
+    bytes32 constant public MINT_ROLE = keccak256("MINT_ROLE");
+    bytes32 constant public ISSUE_ROLE = keccak256("ISSUE_ROLE");
+    bytes32 constant public ASSIGN_ROLE = keccak256("ASSIGN_ROLE");
+    bytes32 constant public REVOKE_VESTINGS_ROLE = keccak256("REVOKE_VESTINGS_ROLE");
+    bytes32 constant public BURN_ROLE = keccak256("BURN_ROLE");
 
     uint256 constant MAX_VESTINGS_PER_ADDRESS = 50;
     struct TokenVesting {
@@ -50,9 +48,9 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     event RevokeVesting(address indexed receiver, uint256 vestingId);
 
     /**
-    * @notice Initializes TokenManager app
+    * @notice Initializes Token Manager for `_token.symbol(): string`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''` and with`_logHolders ? '' : 'out'` storage of token holders.
     * @param _token MiniMeToken address for the managed token (Token Manager instance must be already set as the token controller)
-    * @param _transferable Whether the token can be transferred by holders (entities may still be assigned tokens by the Token Manager)
+    * @param _transferable whether the token can be transferred by holders
     * @param _maxAccountTokens Maximum amount of tokens an account can have (0 for infinite tokens)
     * @param _logHolders Whether the Token Manager will store all token holders (makes token transfers more expensive!)
     */
@@ -76,44 +74,44 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     /**
-    * @notice Mint `_amount` of tokens for `_receiver`
+    * @notice Mint `_amount / 10^18` tokens for `_receiver`
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens minted
     */
-    function mint(address _receiver, uint256 _amount) auth(MINT_ROLE) external {
+    function mint(address _receiver, uint256 _amount) authP(MINT_ROLE, arr(_receiver, _amount)) external {
         require(isBalanceIncreaseAllowed(_receiver, _amount));
         _mint(_receiver, _amount);
     }
 
     /**
-    * @notice Mint `_amount` of tokens for the Token Manager
+    * @notice Mint `_amount / 10^18` tokens for the Token Manager
     * @param _amount Number of tokens minted
     */
-    function issue(uint256 _amount) auth(ISSUE_ROLE) external {
+    function issue(uint256 _amount) authP(ISSUE_ROLE, arr(_amount)) external {
         _mint(address(this), _amount);
     }
 
     /**
-    * @notice Assign `_amount` of tokens for `_receiver` from Token Manager's holdings
+    * @notice Assign `_amount / 10^18` tokens to `_receiver` from Token Manager's holdings
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transferred
     */
-    function assign(address _receiver, uint256 _amount) auth(ASSIGN_ROLE) external {
+    function assign(address _receiver, uint256 _amount) authP(ASSIGN_ROLE, arr(_receiver, _amount)) external {
         _assign(_receiver, _amount);
     }
 
     /**
-    * @notice Burn `_amount` tokens from `_holder`
+    * @notice Burn `_amount / 10^18` tokens from `_holder`
     * @param _holder Holder being removed tokens
     * @param _amount Number of tokens being burned
     */
-    function burn(address _holder, uint256 _amount) auth(BURN_ROLE) external {
+    function burn(address _holder, uint256 _amount) authP(BURN_ROLE, arr(_holder, _amount)) isInitialized external {
         // minime.destroyTokens() never returns false, only reverts on failure
         token.destroyTokens(_holder, _amount);
     }
 
     /**
-    * @notice Assign `_amount` of tokens for `_receiver` from the Token Manager's holdings with a `_revokable` revokable vesting starting from `_start`, cliff at `_cliff` (first portion of tokens transferable), and completed vesting at `_vested` (all tokens transferable)
+    * @notice Assign `_amount / 10^18` tokens to `_receiver` from the Token Manager's holdings with a `_revokable : 'revokable' : ''` vesting starting at `_start`, cliff at `_cliff` (first portion of tokens transferable), and completed vesting at `_vesting` (all tokens transferable)
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens vested
     * @param _start Date the vesting calculations start
@@ -128,7 +126,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         uint64 _cliff,
         uint64 _vested,
         bool _revokable
-    ) auth(ASSIGN_ROLE) external returns (uint256)
+    ) authP(ASSIGN_ROLE, arr(_receiver, _amount)) external returns (uint256)
     {
         require(tokenGrantsCount(_receiver) < MAX_VESTINGS_PER_ADDRESS);
 
@@ -151,11 +149,11 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     /**
-    * @notice Revoke vesting `_vestingId` from `_holder` returning unvested tokens to Token Manager
+    * @notice Revoke vesting `_vestingId` from `_holder`, returning unvested tokens to Token Manager
     * @param _holder Address getting vesting revoked
     * @param _vestingId Numeric id of the vesting
     */
-    function revokeVesting(address _holder, uint256 _vestingId) auth(REVOKE_VESTINGS_ROLE) external {
+    function revokeVesting(address _holder, uint256 _vestingId) authP(REVOKE_VESTINGS_ROLE, arr(_holder)) external {
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 
@@ -178,15 +176,19 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     }
 
     /**
+    * @notice Execute desired action as a token holder
     * @dev IForwarder interface conformance. Forwards any token holder action.
-    * @param _evmCallScript Script being executed
+    * @param _evmScript Script being executed
     */
-    function forward(bytes _evmCallScript) external {
-        require(canForward(msg.sender, _evmCallScript));
-        runScript(_evmCallScript);
+    function forward(bytes _evmScript) public {
+        require(canForward(msg.sender, _evmScript));
+        bytes memory input = new bytes(0); // TODO: Consider input for this
+        address[] memory blacklist = new address[](1);
+        blacklist[0] = address(token);
+        runScript(_evmScript, input, blacklist);
     }
 
-    function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
+    function canForward(address _sender, bytes) public view returns (bool) {
         return token.balanceOf(_sender) > 0;
     }
 
@@ -199,7 +201,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _amount The amount of the transfer
     * @return False if the controller does not authorize the transfer
     */
-    function onTransfer(address _from, address _to, uint _amount) public view returns (bool) {
+    function onTransfer(address _from, address _to, uint _amount) public returns (bool) {
         bool includesTokenManager = _from == address(this) || _to == address(this);
 
         if (!includesTokenManager) {
@@ -214,8 +216,8 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         return true;
     }
 
-    function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal returns (bool) {
-        return token.balanceOf(_receiver) + _inc <= maxAccountTokens;
+    function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
+        return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
     }
 
     function tokenGrantsCount(address _holder) public view returns (uint256) {
@@ -274,7 +276,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         uint256 time,
         uint256 start,
         uint256 cliff,
-        uint256 vested) private view returns (uint256)
+        uint256 vested) private pure returns (uint256)
     {
         // Shortcuts for before cliff and after vested cases.
         if (time >= vested) {
@@ -303,15 +305,16 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
             )
         );
 
-        return tokens - vestedTokens;
+        // tokens - vestedTokens
+        return tokens.sub(vestedTokens);
     }
 
-    function _assign(address _receiver, uint256 _amount) internal {
+    function _assign(address _receiver, uint256 _amount) isInitialized internal {
         require(isBalanceIncreaseAllowed(_receiver, _amount));
         require(token.transfer(_receiver, _amount));
     }
 
-    function _mint(address _receiver, uint256 _amount) internal {
+    function _mint(address _receiver, uint256 _amount) isInitialized internal {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
         _logHolderIfNeeded(_receiver);
     }
@@ -345,7 +348,10 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _amount The amount in the `approve()` call
     * @return False if the controller does not authorize the approval
     */
-    function onApprove(address _owner, address _spender, uint _amount) public view returns (bool) {
+    function onApprove(address _owner, address _spender, uint _amount) public returns (bool) {
+        _owner;
+        _spender;
+        _amount;
         return true;
     }
 }
