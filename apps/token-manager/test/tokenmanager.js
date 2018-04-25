@@ -247,6 +247,17 @@ contract('Token Manager', accounts => {
             })
         })
 
+        it("cannot call onTransfer() from outside of the token's context", async () => {
+            const amount = 10
+            await tokenManager.mint(holder, amount)
+
+            // Make sure this callback fails when called out-of-context
+            await assertRevert(() => tokenManager.onTransfer(holder, accounts[2], 10))
+
+            // Make sure the same transfer through the token's context doesn't revert
+            await token.transfer(accounts[2], amount, { from: holder })
+        })
+
         it('fails when assigning invalid vesting schedule', async () => {
             return assertRevert(async () => {
                 const tokens = 10
