@@ -380,6 +380,16 @@ contract('Finance App', accounts => {
                 })
             })
 
+            it('fails to create a payment too high for the current budget', async () => {
+                const budget = 10
+                await app.setBudget(token1.address, budget)
+
+                return assertRevert(() => {
+                    const paymentAmount = budget * 10
+                    return app.newPayment(token1.address, recipient, 50, paymentAmount, 1, 2, '')
+                })
+            })
+
             it('fails executing a payment before time', async () => {
                 return assertRevert(async () => {
                     await app.executePayment(1, { from: recipient })
@@ -408,8 +418,17 @@ contract('Finance App', accounts => {
         }
 
         it('emits payment failure event when out of budget', async () => {
-            // repeats up to 4 times every 1 seconds
-            const receipt = await app.newPayment(token1.address, recipient, 51, time, 1, 4, '')
+            // Enough budget to allow creation of a new payment, but not enough left in the period
+            // to execute it
+            const budget = 50
+            const amountPerPayment = 50
+
+            // Create the budget, and use it up for the period
+            await app.setBudget(token1.address, budget)
+            await app.newPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
+
+            // No more budget left
+            const receipt = await app.newPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
             assertPaymentFailure(receipt)
         })
 
