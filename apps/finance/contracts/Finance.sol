@@ -413,11 +413,25 @@ contract Finance is AragonApp {
         return settings.periodDuration;
     }
 
-    function getBudget(address _token) transitionsPeriod public view returns (uint256 budget, bool hasBudget, uint256 remainingBudget) {
+    function getBudget(address _token) transitionsPeriod public view returns (uint256 budget, bool hasBudget) {
         budget = settings.budgets[_token];
         hasBudget = settings.hasBudget[_token];
-        remainingBudget = _getRemainingBudget(_token);
     }
+
+    function getRemainingBudget(address _token) public view returns (uint256) {
+        if (!settings.hasBudget[_token])
+            return MAX_UINT;
+
+        uint256 spent = periods[currentPeriodId()].tokenStatement[_token].expenses;
+
+        // A budget decrease can cause the spent amount to be greater than period budget
+        // If so, return 0 to not allow more spending during period
+        if (spent >= settings.budgets[_token])
+            return 0;
+
+        return settings.budgets[_token].sub(spent);
+    }
+
 
     function currentPeriodId() public view returns (uint256) {
         return periods.length - 1;
@@ -476,7 +490,7 @@ contract Finance is AragonApp {
         string _reference
         ) isInitialized internal
     {
-        require(_getRemainingBudget(_token) >= _amount);
+        require(getRemainingBudget(_token) >= _amount);
         _recordTransaction(
             false,
             _token,
@@ -542,21 +556,7 @@ contract Finance is AragonApp {
     }
 
     function _canMakePayment(address _token, uint256 _amount) internal view returns (bool) {
-        return _getRemainingBudget(_token) >= _amount && vault.balance(_token) >= _amount;
-    }
-
-    function _getRemainingBudget(address _token) internal view returns (uint256) {
-        if (!settings.hasBudget[_token])
-            return MAX_UINT;
-
-        uint256 spent = periods[currentPeriodId()].tokenStatement[_token].expenses;
-
-        // A budget decrease can cause the spent amount to be greater than period budget
-        // If so, return 0 to not allow more spending during period
-        if (spent >= settings.budgets[_token])
-            return 0;
-
-        return settings.budgets[_token].sub(spent);
+        return getRemainingBudget(_token) >= _amount && vault.balance(_token) >= _amount;
     }
 
     function getTimestamp() internal view returns (uint256) { return now; }
