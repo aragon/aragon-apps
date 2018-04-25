@@ -10,8 +10,6 @@ import "@aragon/id/contracts/IFIFSResolvingRegistrar.sol";
 
 import "@aragon/apps-voting/contracts/Voting.sol";
 import "@aragon/apps-vault/contracts/Vault.sol";
-//import "@aragon/apps-vault/contracts/connectors/ETHConnector.sol";
-//import "@aragon/apps-vault/contracts/connectors/ERC20Connector.sol";
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
 import "@aragon/apps-finance/contracts/Finance.sol";
 
