@@ -115,7 +115,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens vested
     * @param _start Date the vesting calculations start
-    * @param _cliff Date when the initial proportion of tokens are transferable
+    * @param _cliff Date when the initial portion of tokens are transferable
     * @param _vested Date when all tokens are transferable
     * @param _revokable Whether the vesting can be revoked by the Token Manager
     */
@@ -188,6 +188,10 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
         runScript(_evmScript, input, blacklist);
     }
 
+    function isForwarder() public pure returns (bool) {
+        return true;
+    }
+
     function canForward(address _sender, bytes) public view returns (bool) {
         return token.balanceOf(_sender) > 0;
     }
@@ -251,7 +255,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @dev Calculate amount of non-vested tokens at a specifc time
     * @param tokens The total amount of tokens vested
     * @param time The time at which to check
-    * @param start The the vesting started
+    * @param start The date vesting started
     * @param cliff The cliff period
     * @param vested The fully vested date
     * @return The amount of non-vested tokens of a specific grant
