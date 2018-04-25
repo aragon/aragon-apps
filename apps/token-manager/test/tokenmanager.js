@@ -237,19 +237,33 @@ contract('Token Manager', accounts => {
 
         context('assigning vested tokens', () => {
             let now = 0
+            let startDate, cliffDate, vestingDate
 
             const start = 1000
             const cliff = 2000
             const vesting = 5000
 
             const totalTokens = 40
+            const revokable = true
 
             beforeEach(async () => {
                 await tokenManager.issue(totalTokens)
                 const block = await getBlock(await getBlockNumber())
                 now = block.timestamp
+                startDate = now + start
+                cliffDate = now + cliff
+                vestingDate = now + vesting
 
-                await tokenManager.assignVested(holder, totalTokens, now + start, now + cliff, now + vesting, true)
+                await tokenManager.assignVested(holder, totalTokens, startDate, cliffDate, vestingDate, revokable)
+            })
+
+            it('can get vesting details before being revoked', async () => {
+                const [vAmount, vStartDate, vCliffDate, vVestingDate, vRevokable] = await tokenManager.getVesting(holder, 0)
+                assert.equal(vAmount, totalTokens)
+                assert.equal(vStartDate, startDate)
+                assert.equal(vCliffDate, cliffDate)
+                assert.equal(vVestingDate, vestingDate)
+                assert.equal(vRevokable, revokable)
             })
 
             it('can start transfering on cliff', async () => {
