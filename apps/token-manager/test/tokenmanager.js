@@ -50,6 +50,24 @@ contract('Token Manager', accounts => {
         token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
     })
 
+    it('initializating as transferable sets the token as transferable', async () => {
+        const transferable = true
+        await token.enableTransfers(!transferable)
+
+        await token.changeController(tokenManager.address)
+        await tokenManager.initialize(token.address, transferable, 0, false)
+        assert.equal(transferable, await token.transfersEnabled())
+    })
+
+    it('initializating as non-transferable sets the token as non-transferable', async () => {
+        const transferable = false
+        await token.enableTransfers(!transferable)
+
+        await token.changeController(tokenManager.address)
+        await tokenManager.initialize(token.address, transferable, 0, false)
+        assert.equal(transferable, await token.transfersEnabled())
+    })
+
     it('fails when initializing without setting controller', async () => {
         return assertRevert(async () => {
             await tokenManager.initialize(token.address, true, 0, false)
@@ -76,18 +94,20 @@ contract('Token Manager', accounts => {
             })
         })
 
-        it('can transfer to token manager', async () => {
-            await tokenManager.mint(holder, 2000)
-            await token.transfer(tokenManager.address, 10, { from: holder })
-
-            assert.equal(await token.balanceOf(tokenManager.address), 10, 'should have tokens')
-        })
-
         it('token manager can transfer', async () => {
             await tokenManager.issue(100)
             await tokenManager.assign(holder, 10)
 
             assert.equal(await token.balanceOf(holder), 10, 'should have tokens')
+        })
+
+        it('token manager can burn assigned tokens', async () => {
+            const mintAmount = 2000
+            const burnAmount = 10
+            await tokenManager.mint(holder, mintAmount)
+            await tokenManager.burn(holder, burnAmount)
+
+            assert.equal(await token.balanceOf(holder), mintAmount - burnAmount, 'should have burned tokens')
         })
 
         it('forwards actions to holder', async () => {
