@@ -17,7 +17,7 @@
     "test:local": "TRUFFLE_TEST=true npm run ganache-cli:test test/TestTemplates.sol test/beta.js",
     "test:gas": "GAS_REPORTER=true npm test:local",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "console": "node_modules/.bin/truffle console",
+    "truffle:dev": "node_modules/.bin/truffle dev",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh"
   },
   "author": "Aragon Institution MTU <contact@aragon.one>",

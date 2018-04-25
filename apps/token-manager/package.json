@@ -16,7 +16,7 @@
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "console": "node_modules/.bin/truffle console",
+    "truffle:dev": "node_modules/.bin/truffle dev",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh"
   },
   "keywords": [],
