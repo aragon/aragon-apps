@@ -83,7 +83,7 @@ contract Finance is AragonApp {
     event NewPeriod(uint256 indexed periodId, uint64 periodStarts, uint64 periodEnds);
     event SetBudget(address indexed token, uint256 amount, bool hasBudget);
     event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxRepeats);
-    event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity);
+    event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity, uint256 amount);
     event ChangePaymentState(uint256 indexed paymentId, bool disabled);
     event ChangePeriodDuration(uint64 newDuration);
     event PaymentFailure(uint256 paymentId);
@@ -132,13 +132,14 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @dev Deposit for ERC20 approved tokens
+    * @dev Deposit for approved ERC20 tokens
     * @notice Deposit `_amount / 10^18` `_token.symbol(): string`
     * @param _token Address of deposited token
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
     */
     function deposit(address _token, uint256 _amount, string _reference) external isInitialized transitionsPeriod {
+        require(_amount > 0);
         _recordIncomingTransaction(
             _token,
             msg.sender,
@@ -178,12 +179,12 @@ contract Finance is AragonApp {
     /**
     * @notice Create a new payment of `_amount / 10^18` `_token.symbol(): string`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + (_interval - _interval % 86400) / 86400 + ' days' : ''`
     * @param _token Address of token for payment
-    * @param _receiver Address that will receive payment.
-    * @param _amount units of token that are payed every time the payment is due.
-    * @param _initialPaymentTime timestamp for when the first payment is done.
-    * @param _interval number of seconds that need to pass between payment transactions.
-    * @param _maxRepeats maximum instances a payment can be executed.
-    * @param _reference string detailing payment reason
+    * @param _receiver Address that will receive payment
+    * @param _amount Tokens that are payed every time the payment is due
+    * @param _initialPaymentTime Timestamp for when the first payment is done
+    * @param _interval Number of seconds that need to pass between payment transactions
+    * @param _maxRepeats Maximum instances a payment can be executed
+    * @param _reference String detailing payment reason
     */
     function newPayment(
         address _token,
@@ -196,7 +197,6 @@ contract Finance is AragonApp {
     ) authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, _interval, _maxRepeats)) isInitialized transitionsPeriod external returns (uint256 paymentId)
     {
         require(_amount > 0);
-
         require(settings.budgets[_token] > 0 || !settings.hasBudget[_token]); // Token must have been added to budget
 
         // Avoid saving payment data for 1 time immediate payments
@@ -266,7 +266,7 @@ contract Finance is AragonApp {
     * @notice Execute pending payment #`_paymentId`
     * @param _paymentId Identifier for payment
     */
-    function executePayment(uint256 _paymentId) authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId)) external {
+    function executePayment(uint256 _paymentId) authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, payments[_paymentId].amount)) external {
         require(nextPaymentTime(_paymentId) <= getTimestamp());
 
         _executePayment(_paymentId);
@@ -295,11 +295,10 @@ contract Finance is AragonApp {
     }
 
     /**
-     * @dev Allows make a simple payment from this contract to Vault,
-            to avoid locked tokens in contract forever.
-            This contract should never receive tokens with a simple transfer call,
-            but in case it happens, this function allows to recover them.
-     * @notice Send tokens to Vault
+     * @dev Allows making a simple payment from this contract to the Vault, to avoid locked tokens.
+     *      This contract should never receive tokens with a simple transfer call, but in case it
+     *      happens, this function allows for their recovery.
+     * @notice Send tokens held in this contract to the Vault
      * @param _token Token whose balance is going to be transferred.
      */
     function depositToVault(address _token) isInitialized public {
@@ -320,11 +319,11 @@ contract Finance is AragonApp {
 
     /**
     * @dev Transitions accounting periods if needed. For preventing OOG attacks,
-           a TTL param is provided. If more that TTL periods need to be transitioned,
-           it will return false.
-    * @notice Transition accounting period
+    *      a TTL param is provided. If more than the TTL periods need to be transitioned,
+    *      it will return false.
+    * @notice Transition accounting period if needed
     * @param _ttl Maximum periods that can be transitioned
-    * @return success boolean indicating whether the accounting period is the correct one (if false, TTL was surpased and another call is needed)
+    * @return Boolean indicating whether the accounting period was transitioned to the correct one (if false, TTL was surpased and another call is needed)
     */
     function tryTransitionAccountingPeriod(uint256 _ttl) public returns (bool success) {
         Period storage currentPeriod = periods[currentPeriodId()];
@@ -395,7 +394,8 @@ contract Finance is AragonApp {
 
     function getPeriodTokenStatement(uint256 _periodId, address _token) public view returns (uint256 expenses, uint256 income) {
         TokenStatement storage tokenStatement = periods[_periodId].tokenStatement[_token];
-        return (tokenStatement.expenses, tokenStatement.income);
+        expenses = tokenStatement.expenses;
+        income = tokenStatement.income;
     }
 
     function nextPaymentTime(uint256 _paymentId) public view returns (uint64) {
@@ -410,15 +410,29 @@ contract Finance is AragonApp {
         return uint64(nextPayment);
     }
 
-    function getPeriodDuration() public view returns (uint64 periodDuration) {
+    function getPeriodDuration() public view returns (uint64) {
         return settings.periodDuration;
     }
 
-    function getBudget(address _token) transitionsPeriod public view returns (uint256 budget, bool hasBudget, uint256 remainingBudget) {
+    function getBudget(address _token) transitionsPeriod public view returns (uint256 budget, bool hasBudget) {
         budget = settings.budgets[_token];
         hasBudget = settings.hasBudget[_token];
-        remainingBudget = _getRemainingBudget(_token);
     }
+
+    function getRemainingBudget(address _token) public view returns (uint256) {
+        if (!settings.hasBudget[_token])
+            return MAX_UINT;
+
+        uint256 spent = periods[currentPeriodId()].tokenStatement[_token].expenses;
+
+        // A budget decrease can cause the spent amount to be greater than period budget
+        // If so, return 0 to not allow more spending during period
+        if (spent >= settings.budgets[_token])
+            return 0;
+
+        return settings.budgets[_token].sub(spent);
+    }
+
 
     function currentPeriodId() public view returns (uint256) {
         return periods.length - 1;
@@ -431,8 +445,14 @@ contract Finance is AragonApp {
 
         Period storage period = periods[newPeriodId];
         period.startTime = _startTime;
-        // endTime = startTime + periodDuration - 1
-        period.endTime = _startTime.add(settings.periodDuration).sub(1);
+
+        // Be careful here to not overflow; if startTime + periodDuration overflows, we set endTime
+        // to MAX_UINT64 (let's assume that's the end of time for now).
+        uint64 endTime = _startTime + settings.periodDuration - 1;
+        if (endTime < _startTime) { // overflowed
+            endTime = MAX_UINT64;
+        }
+        period.endTime = endTime;
 
         NewPeriod(newPeriodId, period.startTime, period.endTime);
 
@@ -471,7 +491,7 @@ contract Finance is AragonApp {
         string _reference
         ) isInitialized internal
     {
-        require(_getRemainingBudget(_token) >= _amount);
+        require(getRemainingBudget(_token) >= _amount);
         _recordTransaction(
             false,
             _token,
@@ -533,25 +553,11 @@ contract Finance is AragonApp {
         if (period.firstTransactionId == 0)
             period.firstTransactionId = transactionId;
 
-        NewTransaction(transactionId, _incoming, _entity);
+        NewTransaction(transactionId, _incoming, _entity, _amount);
     }
 
     function _canMakePayment(address _token, uint256 _amount) internal view returns (bool) {
-        return _getRemainingBudget(_token) >= _amount && vault.balance(_token) >= _amount;
-    }
-
-    function _getRemainingBudget(address _token) internal view returns (uint256) {
-        if (!settings.hasBudget[_token])
-            return MAX_UINT;
-
-        uint256 spent = periods[currentPeriodId()].tokenStatement[_token].expenses;
-
-        // A budget decrease can cause the spent amount to be greater than period budget
-        // If so, return 0 to not allow more spending during period
-        if (spent >= settings.budgets[_token])
-            return 0;
-
-        return settings.budgets[_token].sub(spent);
+        return getRemainingBudget(_token) >= _amount && vault.balance(_token) >= _amount;
     }
 
     function getTimestamp() internal view returns (uint256) { return now; }

@@ -49,10 +49,10 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
 
     /**
     * @notice Initializes Token Manager for `_token.symbol(): string`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''` and with`_logHolders ? '' : 'out'` storage of token holders.
-    * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
+    * @param _token MiniMeToken address for the managed token (Token Manager instance must be already set as the token controller)
     * @param _transferable whether the token can be transferred by holders
-    * @param _maxAccountTokens maximum amount of tokens an account can have (0 for infinite tokens)
-    * @param _logHolders Whether the token manager will store all token holders (makes token transfers more expensive!)
+    * @param _maxAccountTokens Maximum amount of tokens an account can have (0 for infinite tokens)
+    * @param _logHolders Whether the Token Manager will store all token holders (makes token transfers more expensive!)
     */
     function initialize(
         MiniMeToken _token,
@@ -84,7 +84,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Mint `_amount / 10^18` tokens
+    * @notice Mint `_amount / 10^18` tokens for the Token Manager
     * @param _amount Number of tokens minted
     */
     function issue(uint256 _amount) authP(ISSUE_ROLE, arr(_amount)) external {
@@ -94,7 +94,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     /**
     * @notice Assign `_amount / 10^18` tokens to `_receiver` from Token Manager's holdings
     * @param _receiver The address receiving the tokens
-    * @param _amount Number of tokens transfered
+    * @param _amount Number of tokens transferred
     */
     function assign(address _receiver, uint256 _amount) authP(ASSIGN_ROLE, arr(_receiver, _amount)) external {
         _assign(_receiver, _amount);
@@ -111,32 +111,32 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @notice Assign `_amount / 10^18` tokens to `_receiver` with a `_revokable : 'revokable' : ''` vesting starting at `_start` and a cliff at `_cliff`, with vesting on `_vesting`
+    * @notice Assign `_amount / 10^18` tokens to `_receiver` from the Token Manager's holdings with a `_revokable : 'revokable' : ''` vesting starting at `_start`, cliff at `_cliff` (first portion of tokens transferable), and completed vesting at `_vesting` (all tokens transferable)
     * @param _receiver The address receiving the tokens
-    * @param _amount Number of tokens transfered
+    * @param _amount Number of tokens vested
     * @param _start Date the vesting calculations start
-    * @param _cliff Date when the initial proportional amount of tokens are transferable
-    * @param _vesting Date when all tokens are transferable
-    * @param _revokable Whether the vesting can be revoked by the token manager
+    * @param _cliff Date when the initial portion of tokens are transferable
+    * @param _vested Date when all tokens are transferable
+    * @param _revokable Whether the vesting can be revoked by the Token Manager
     */
     function assignVested(
         address _receiver,
         uint256 _amount,
         uint64 _start,
         uint64 _cliff,
-        uint64 _vesting,
+        uint64 _vested,
         bool _revokable
     ) authP(ASSIGN_ROLE, arr(_receiver, _amount)) external returns (uint256)
     {
         require(tokenGrantsCount(_receiver) < MAX_VESTINGS_PER_ADDRESS);
 
-        require(_start <= _cliff && _cliff <= _vesting);
+        require(_start <= _cliff && _cliff <= _vested);
 
         TokenVesting memory tokenVesting = TokenVesting(
             _amount,
             _start,
             _cliff,
-            _vesting,
+            _vested,
             _revokable
         );
         uint256 vestingId = vestings[_receiver].push(tokenVesting) - 1;
@@ -178,7 +178,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     /**
     * @notice Execute desired action as a token holder
     * @dev IForwarder interface conformance. Forwards any token holder action.
-    * @param _evmScript script being executed
+    * @param _evmScript Script being executed
     */
     function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript));
@@ -199,8 +199,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     function allHolders() public view returns (address[]) { return holders; }
 
     /*
-    * @dev Notifies the controller about a token transfer allowing the
-    *      controller to decide whether to allow it or react if desired
+    * @dev Notifies the controller about a token transfer allowing the controller to decide whether to allow it or react if desired
     * @param _from The origin of the transfer
     * @param _to The destination of the transfer
     * @param _amount The amount of the transfer
@@ -253,13 +252,13 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /**
-    * @dev Calculate amount of non-vested tokens at a specifc time.
-    * @param tokens uint256 The amount of tokens grantted.
-    * @param time uint64 The time to be checked
-    * @param start uint64 A time representing the begining of the grant
-    * @param cliff uint64 The cliff period.
-    * @param vesting uint64 The vesting period.
-    * @return An uint256 representing the amount of non-vested tokensof a specif grant.
+    * @dev Calculate amount of non-vested tokens at a specifc time
+    * @param tokens The total amount of tokens vested
+    * @param time The time at which to check
+    * @param start The date vesting started
+    * @param cliff The cliff period
+    * @param vested The fully vested date
+    * @return The amount of non-vested tokens of a specific grant
     *  transferableTokens
     *   |                         _/--------   vestedTokens rect
     *   |                       _/
@@ -274,17 +273,17 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     *   |      .        |
     *   |    .          |
     *   +===+===========+---------+----------> time
-    *      Start       Clift    Vesting
+    *      Start       Clift    Vested
     */
     function calculateNonVestedTokens(
         uint256 tokens,
         uint256 time,
         uint256 start,
         uint256 cliff,
-        uint256 vesting) private pure returns (uint256)
+        uint256 vested) private pure returns (uint256)
     {
-        // Shortcuts for before cliff and after vesting cases.
-        if (time >= vesting) {
+        // Shortcuts for before cliff and after vested cases.
+        if (time >= vested) {
             return 0;
         }
         if (time < cliff) {
@@ -295,7 +294,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
         // As before cliff the shortcut returns 0, we can use just calculate a value
         // in the vesting rect (as shown in above's figure)
 
-        // vestedTokens = tokens * (time - start) / (vesting - start)
+        // vestedTokens = tokens * (time - start) / (vested - start)
         uint256 vestedTokens = SafeMath.div(
             SafeMath.mul(
                 tokens,
@@ -305,7 +304,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
                 )
             ),
             SafeMath.sub(
-                vesting,
+                vested,
                 start
             )
         );
@@ -343,13 +342,11 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
         // Even though it is tested, solidity-coverage doesnt get it because
         // MiniMeToken is not instrumented and entire tx is reverted
         require(msg.sender == address(token));
-        _owner;
         return false;
     }
 
     /**
-    * @dev Notifies the controller about an approval allowing the
-    * controller to react if desired
+    * @dev Notifies the controller about an approval allowing the controller to react if desired
     * @param _owner The address that calls `approve()`
     * @param _spender The spender in the `approve()` call
     * @param _amount The amount in the `approve()` call

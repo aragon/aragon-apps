@@ -43,6 +43,17 @@ contract('Finance App', accounts => {
         assert.equal(await app.currentPeriodId(), 0, 'current period should be 0')
     })
 
+    it('sets the end of time correctly', async () => {
+        const maxUint64 = await app.MAX_UINT64()
+
+        app = await Finance.new()
+        // initialize with MAX_UINT64 as period duration
+        await app.initialize(vault.address, maxUint64)
+        const [isCurrent, start, end, firstTx, lastTx] = await app.getPeriod(await app.currentPeriodId())
+
+        assert.equal(end.toNumber(), maxUint64.toNumber(), "should have set the period's end date to MAX_UINT64")
+    })
+
     it('fails on reinitialization', async () => {
         return assertRevert(async () => {
             await app.initialize(vault.address, periodDuration)
@@ -52,7 +63,8 @@ contract('Finance App', accounts => {
     it('adds new token to budget', async () => {
         await app.setBudget(token1.address, 10)
 
-        const [budget, hasBudget, remainingBudget] = await app.getBudget.call(token1.address)
+        const [budget, hasBudget] = await app.getBudget.call(token1.address)
+        const remainingBudget = await app.getRemainingBudget.call(token1.address)
         assert.equal(budget, 10, 'should have correct budget')
         assert.isTrue(hasBudget, 'has budget should be true')
         assert.equal(remainingBudget, 10, 'all budget is remaining')
@@ -74,6 +86,12 @@ contract('Finance App', accounts => {
         assert.isTrue(incoming, 'tx should be incoming')
         assert.equal(date, 1, 'date should be correct')
         assert.equal(ref, 'ref', 'ref should be correct')
+    })
+
+    it('fails on no value ERC20 deposits', async () => {
+        await assertRevert(() => {
+          return app.deposit(token1.address, 0, 'ref')
+        })
     })
 
     it('records ETH deposits', async () => {
@@ -214,7 +232,8 @@ contract('Finance App', accounts => {
             const newBudgetAmount = 5
             await app.setBudget(token1.address, newBudgetAmount)
 
-            const [budget, hasBudget, remainingBudget] = await app.getBudget.call(token1.address)
+            const [budget, hasBudget] = await app.getBudget.call(token1.address)
+            const remainingBudget = await app.getRemainingBudget.call(token1.address)
 
             assert.equal(budget, newBudgetAmount, 'new budget should be correct')
             assert.isTrue(hasBudget, 'should have budget')
