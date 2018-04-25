@@ -51,6 +51,7 @@ contract Finance is AragonApp {
         uint256 amount;
         uint256 paymentId;
         string reference;
+        uint256 paymentRepeatNumber;
     }
 
     struct TokenStatement {
@@ -197,7 +198,6 @@ contract Finance is AragonApp {
     ) authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, _interval, _maxRepeats)) isInitialized transitionsPeriod external returns (uint256 paymentId)
     {
         require(_amount > 0);
-        require(settings.budgets[_token] > 0 || !settings.hasBudget[_token]); // Token must have been added to budget
 
         // Avoid saving payment data for 1 time immediate payments
         if (_initialPaymentTime <= getTimestamp() && _maxRepeats == 1) {
@@ -205,13 +205,18 @@ contract Finance is AragonApp {
                 _token,
                 _receiver,
                 _amount,
-                0,   // unrelated to any payment id, it isn't created
+                0,   // unrelated to any payment id; it isn't created
+                0,   // also unrelated to any payment repeats
                 _reference
             );
             return;
         }
 
+        // Budget must allow at least one instance of this payment each period, or not be set at all
+        require(settings.budgets[_token] >= _amount || !settings.hasBudget[_token]);
+
         paymentId = payments.length++;
+        NewPayment(paymentId, _receiver, _maxRepeats);
 
         Payment storage payment = payments[paymentId];
         payment.token = _token;
@@ -223,10 +228,9 @@ contract Finance is AragonApp {
         payment.reference = _reference;
         payment.createdBy = msg.sender;
 
-        NewPayment(paymentId, _receiver, _maxRepeats);
-
-        if (nextPaymentTime(paymentId) <= getTimestamp())
+        if (nextPaymentTime(paymentId) <= getTimestamp()) {
             _executePayment(paymentId);
+        }
     }
 
     /**
@@ -368,7 +372,7 @@ contract Finance is AragonApp {
         createdBy = payment.createdBy;
     }
 
-    function getTransaction(uint256 _transactionId) public view returns (uint256 periodId, uint256 amount, uint256 paymentId, address token, address entity, bool isIncoming, uint64 date, string reference) {
+    function getTransaction(uint256 _transactionId) public view returns (uint256 periodId, uint256 amount, uint256 paymentId, uint256 paymentRepeatNumber, address token, address entity, bool isIncoming, uint64 date, string reference) {
         Transaction storage transaction = transactions[_transactionId];
 
         token = transaction.token;
@@ -378,6 +382,7 @@ contract Finance is AragonApp {
         periodId = transaction.periodId;
         amount = transaction.amount;
         paymentId = transaction.paymentId;
+        paymentRepeatNumber = transaction.paymentRepeatNumber;
         reference = transaction.reference;
     }
 
@@ -478,6 +483,7 @@ contract Finance is AragonApp {
                 payment.receiver,
                 payment.amount,
                 _paymentId,
+                payment.repeats,
                 "" // since paymentId is saved, the payment reference can be fetched
             );
         }
@@ -488,6 +494,7 @@ contract Finance is AragonApp {
         address _receiver,
         uint256 _amount,
         uint256 _paymentId,
+        uint256 _paymentRepeatNumber,
         string _reference
         ) isInitialized internal
     {
@@ -498,6 +505,7 @@ contract Finance is AragonApp {
             _receiver,
             _amount,
             _paymentId,
+            _paymentRepeatNumber,
             _reference
         );
 
@@ -517,6 +525,7 @@ contract Finance is AragonApp {
             _sender,
             _amount,
             0, // unrelated to any existing payment
+            0, // and no payment repeats
             _reference
         );
     }
@@ -527,6 +536,7 @@ contract Finance is AragonApp {
         address _entity,
         uint256 _amount,
         uint256 _paymentId,
+        uint256 _paymentRepeatNumber,
         string _reference
         ) internal
     {
@@ -543,6 +553,7 @@ contract Finance is AragonApp {
         transaction.periodId = periodId;
         transaction.amount = _amount;
         transaction.paymentId = _paymentId;
+        transaction.paymentRepeatNumber = _paymentRepeatNumber;
         transaction.isIncoming = _incoming;
         transaction.token = _token;
         transaction.entity = _entity;
@@ -550,8 +561,9 @@ contract Finance is AragonApp {
         transaction.reference = _reference;
 
         Period storage period = periods[periodId];
-        if (period.firstTransactionId == 0)
+        if (period.firstTransactionId == 0) {
             period.firstTransactionId = transactionId;
+        }
 
         NewTransaction(transactionId, _incoming, _entity, _amount);
     }
