@@ -45,7 +45,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
 
     // Other token specific events can be watched on the token address directly (avoid duplication)
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
-    event RevokeVesting(address indexed receiver, uint256 vestingId);
+    event RevokeVesting(address indexed receiver, uint256 vestingId, uint256 nonVestedAmount);
 
     /**
     * @notice Initializes Token Manager for `_token.symbol(): string`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''` and with`_logHolders ? '' : 'out'` storage of token holders.
@@ -157,7 +157,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 
-        uint nonVested = calculateNonVestedTokens(
+        uint256 nonVested = calculateNonVestedTokens(
             v.amount,
             uint64(now),
             v.start,
@@ -172,7 +172,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
         // onTransfer hook always allows if transfering to token controller
         require(token.transferFrom(_holder, address(this), nonVested));
 
-        RevokeVesting(_holder, _vestingId);
+        RevokeVesting(_holder, _vestingId, nonVested);
     }
 
     /**
@@ -197,6 +197,15 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     function allHolders() public view returns (address[]) { return holders; }
+
+    function getVesting(address _recipient, uint256 _vestingId) public view returns (uint256 amount, uint64 start, uint64 cliff, uint64 vesting, bool revokable) {
+        TokenVesting storage tokenVesting = vestings[_recipient][_vestingId];
+        amount = tokenVesting.amount;
+        start = tokenVesting.start;
+        cliff = tokenVesting.cliff;
+        vesting = tokenVesting.vesting;
+        revokable = tokenVesting.revokable;
+    }
 
     /*
     * @dev Notifies the controller about a token transfer allowing the controller to decide whether to allow it or react if desired
