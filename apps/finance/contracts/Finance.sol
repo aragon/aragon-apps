@@ -196,8 +196,6 @@ contract Finance is AragonApp {
         string _reference
     ) authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, _interval, _maxRepeats)) isInitialized transitionsPeriod external returns (uint256 paymentId)
     {
-        require(settings.budgets[_token] > 0 || !settings.hasBudget[_token]); // Token must have been added to budget
-
         // Avoid saving payment data for 1 time immediate payments
         if (_initialPaymentTime <= getTimestamp() && _maxRepeats == 1) {
             _makePaymentTransaction(
