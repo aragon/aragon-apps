@@ -209,13 +209,15 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     }
 
     /*
-    * @dev Notifies the controller about a token transfer allowing the controller to decide whether to allow it or react if desired
+    * @dev Notifies the controller about a token transfer allowing the controller to decide whether to allow it or react if desired (only callable from the token)
     * @param _from The origin of the transfer
     * @param _to The destination of the transfer
     * @param _amount The amount of the transfer
     * @return False if the controller does not authorize the transfer
     */
     function onTransfer(address _from, address _to, uint _amount) public returns (bool) {
+        require(msg.sender == address(token));
+
         bool includesTokenManager = _from == address(this) || _to == address(this);
 
         if (!includesTokenManager) {
