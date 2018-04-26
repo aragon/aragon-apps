@@ -39,7 +39,7 @@
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
     "eth-gas-reporter": "^0.1.1",
-    "ganache-cli": "^6.0.3",
+    "ganache-cli": "^6.1.0",
     "solidity-coverage": "0.3.5",
     "solium": "^1.0.4",
     "truffle": "4.0.5",
