@@ -80,7 +80,9 @@ contract('Survey app', accounts => {
         assert.equal(participation, 0, 'initial participation should be 0') // didn't vote even though creator was holder
         assert.equal(options, optionsCount, 'number of options should be correct')
         assert.equal(await app.getSurveyMetadata(surveyId), 'metadata', 'should have returned correct metadata')
-        assert.equal(await app.getVoterState(surveyId, nonHolder), 0, 'nonHolder should not have voted')
+        const voterState = await app.getVoterState(surveyId, nonHolder)
+        assert.equal(voterState[0].length, 0, 'nonHolder should not have voted (options)')
+        assert.equal(voterState[1].length, 0, 'nonHolder should not have voted (stakes)')
       })
 
       it('counts votes properly', async () => {
@@ -97,7 +99,7 @@ contract('Survey app', accounts => {
 
         const state = await app.getSurvey(surveyId)
 
-        assert.equal(state[6], 100, 'participation should de 100')
+        assert.equal(state[6], 100, 'participation should be 100')
 
       })
 
@@ -121,7 +123,8 @@ contract('Survey app', accounts => {
 
       it('allows to remove and re-vote', async () => {
         await app.voteOption(surveyId, 1, { from: holder50 })
-        await app.voteOption(surveyId, 0, { from: holder50 })
+        await app.voteOptions(surveyId, [], [], { from: holder50 })
+        assert.equal(await app.getOptionSupport(surveyId, 1), 0)
         await app.voteOption(surveyId, 100, { from: holder50 })
 
         assert.equal(await app.getOptionSupport(surveyId, 1), 0)
@@ -161,10 +164,50 @@ contract('Survey app', accounts => {
         })
       })
 
-      it('fails if voting the same option', async () => {
-        await app.voteOption(surveyId, 1, { from: holder31 })
+      it('casts complete multi option vote', async () => {
+        await app.voteOptions(surveyId, [1,2], [10, 21], { from: holder31 })
+        const voterState = await app.getVoterState(surveyId, holder31)
+        assert.equal(voterState[0][0].toString(), 0, "First option should be NO VOTE")
+        assert.equal(voterState[1][0].toString(), 0, "NO VOTE stake doesn't match")
+        assert.equal(voterState[0][1].toString(), 1, "First voted option doesn't match")
+        assert.equal(voterState[1][1].toString(), 10, "First voted stake doesn't match")
+        assert.equal(voterState[0][2].toString(), 2, "Second voted option doesn't match")
+        assert.equal(voterState[1][2].toString(), 21, "Second voted stake doesn't match")
+      })
+
+      it('casts incomplete multi option vote', async () => {
+        // 10 = 20 = 30, 1 vote missing
+        await app.voteOptions(surveyId, [1,2], [10, 20], { from: holder31 })
+        const voterState = await app.getVoterState(surveyId, holder31)
+        assert.equal(voterState[0][0].toString(), 0, "First option should be NO VOTE")
+        assert.equal(voterState[1][0].toString(), 1, "NO VOTE stake doesn't match")
+        assert.equal(voterState[0][1].toString(), 1, "First voted option doesn't match")
+        assert.equal(voterState[1][1].toString(), 10, "First voted stake doesn't match")
+        assert.equal(voterState[0][2].toString(), 2, "Second voted option doesn't match")
+        assert.equal(voterState[1][2].toString(), 20, "Second voted stake doesn't match")
+      })
+
+      it('fails if multi option vote has different size arrays', async () => {
         return assertRevert(async () => {
-          await app.voteOption(surveyId, 1, { from: holder31 })
+          await app.voteOptions(surveyId, [1,2], [10, 10, 11], { from: holder31 })
+        })
+      })
+
+      it('fails if multi option vote has unordered options', async () => {
+        return assertRevert(async () => {
+          await app.voteOptions(surveyId, [2,1], [10, 21], { from: holder31 })
+        })
+      })
+
+      it('fails if multi option vote has NO VOTE option', async () => {
+        return assertRevert(async () => {
+          await app.voteOptions(surveyId, [0,2], [10, 21], { from: holder31 })
+        })
+      })
+
+      it('fails if multi option vote has a zero stake option', async () => {
+        return assertRevert(async () => {
+          await app.voteOptions(surveyId, [1,2], [10, 0], { from: holder31 })
         })
       })
     })
