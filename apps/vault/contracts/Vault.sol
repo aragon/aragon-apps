@@ -108,7 +108,7 @@ contract Vault is VaultBase, DelegateProxy, ERC165Detector {
 
     // Proxy implementation
     function proxyType() public pure returns (uint256 proxyTypeId) {
-        return FORWARDING;
+        return UPGRADEABLE;
     }
 
     function implementation() public view returns (address codeAddr) {
