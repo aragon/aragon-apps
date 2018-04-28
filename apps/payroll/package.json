@@ -1,5 +1,5 @@
 {
-  "name": "@aragon/future-apps-payroll",
+  "name": "@aragon/apps-payroll",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -34,6 +34,6 @@
   },
   "dependencies": {
     "@aragon/apps-finance": "^1.0.0",
-    "@aragon/os": "^3.0.6"
+    "@aragon/os": "^3.1.4"
   }
 }
