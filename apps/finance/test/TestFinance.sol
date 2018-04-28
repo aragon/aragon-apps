@@ -1,8 +1,6 @@
 pragma solidity 0.4.18;
 
 import "@aragon/apps-vault/contracts/Vault.sol";
-import "@aragon/apps-vault/contracts/connectors/ETHConnector.sol";
-import "@aragon/apps-vault/contracts/connectors/ERC20Connector.sol";
 import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
 
 // You might think this file is a bit odd, but let me explain.

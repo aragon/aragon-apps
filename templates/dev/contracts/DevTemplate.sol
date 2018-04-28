@@ -58,12 +58,8 @@ contract DevTemplate {
         Voting voting = Voting(dao.newAppInstance(votingAppId(), latestVersionAppBase(votingAppId())));
         MiniMeToken token = minimeFac.createCloneToken(address(0), 0, "DevToken", 18, "XDT", true);
 
-        // vault initialization
-        Vault vaultBase = Vault(latestVersionAppBase(vaultAppId()));
-        vault.initialize(vaultBase.erc20ConnectorBase(), vaultBase.ethConnectorBase()); // init with trusted connectors
-
         // finance initialization
-        finance.initialize(IVaultConnector(vault), uint64(-1) - uint64(now));
+        finance.initialize(vault, uint64(-1) - uint64(now));
 
         // token manager initialization
         token.changeController(tokenManager); // token manager has to create tokens
