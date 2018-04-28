@@ -62,4 +62,12 @@ contract Vault is AragonApp {
 
         Transfer(token, to, value);
     }
+
+    function balance(address token) public view returns (uint256) {
+        if (token == ETH) {
+            return address(this).balance;
+        } else {
+            return ERC20(token).balanceOf(this);
+        }
+    }
 }
