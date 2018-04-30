@@ -18,7 +18,7 @@ contract Vault is AragonApp {
     * @dev When used behind an AppProxy, this fallback is never executed
     *      as it will be intercepted by the Proxy (see aragonOS#281)
     */ 
-    function () payable {
+    function () payable external {
         require(msg.data.length == 0);
         deposit(ETH, msg.sender, msg.value, msg.data);
     }
@@ -50,7 +50,8 @@ contract Vault is AragonApp {
     */
     function transfer(address token, address to, uint256 value, bytes data)
         authP(TRANSFER_ROLE, arr(address(token), to, value))
-        external {
+        external
+    {
 
         require(value > 0);
 
