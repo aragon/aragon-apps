@@ -1,8 +1,0 @@
-{
-  "name": "Fundraising",
-  "description": "Fundraise for your organization by selling tokens",
-  "icons": [{
-    "src": "images/icon.png",
-    "sizes": "192x192"
-  }]
-}
