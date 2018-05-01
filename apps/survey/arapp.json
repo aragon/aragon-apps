@@ -1,6 +1,6 @@
 {
   "appName": "survey.aragonpm.eth",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "roles": [
     {
       "name": "Create new surveys",
