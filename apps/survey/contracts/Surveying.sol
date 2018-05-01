@@ -26,7 +26,7 @@ contract Surveying is AragonApp {
         uint256 stake;
     }
 
-    /* To allow multiple option votes.
+    /** To allow multiple option votes.
      * Index 0 will always be for NO_VOTE option
      * option Ids must be in ascending order
      */
@@ -109,7 +109,6 @@ contract Surveying is AragonApp {
         require(_options.length == _stakes.length);
         require(canVote(_surveyId, msg.sender));
 
-        uint256 i;
         Survey storage survey = surveys[_surveyId];
 
         uint256 voterStake = token.balanceOfAt(msg.sender, survey.snapshotBlock);
@@ -118,7 +117,7 @@ contract Surveying is AragonApp {
         // revert previous votes, if any
         if (previouslyVoted.optionsCastedLength > 0) {
             // voter removes their vote
-            for (i = 1; i <= previouslyVoted.optionsCastedLength; i++) {
+            for (uint256 i = 1; i <= previouslyVoted.optionsCastedLength; i++) {
                 survey.votes[previouslyVoted.castedVotes[i].optionId] = survey.votes[previouslyVoted.castedVotes[i].optionId].sub(previouslyVoted.castedVotes[i].stake);
             }
             // remove previous vote participation
@@ -131,15 +130,25 @@ contract Surveying is AragonApp {
         uint256 totalVoted = 0;
         // reserve first index for NO_VOTE
         survey.voters[msg.sender].castedVotes[0] = OptionCast({optionId: NO_VOTE, stake: 0});
-        for (i = 0; i < _options.length; i++) {
+        for (uint256 j = 0; j < _options.length; j++) {
+            require(_options[j] != NO_VOTE && _options[j] <= survey.options);
+            require(_stakes[j] > 0);
+
+            // register voter amount
             // index 0 in options array is reserved for NO_VOTE, so index will be 1 more
-            _voteOption(_surveyId, i+1, _options[i], _stakes[i]);
+            survey.voters[msg.sender].castedVotes[j + 1] = OptionCast({optionId: _options[j], stake: _stakes[j]});
+
+            // add to total option support
+            survey.votes[_options[j]] = survey.votes[_options[j]].add(_stakes[j]);
+
             // let's avoid repeating an option by
             // making sure that ascending order is preserved in options array
             // index 0 in options array is reserved for NO_VOTE, so here we are comparing
-            // the option just added (_options[i] = options[i+1]) with the previous one (options[i])
-            require(survey.voters[msg.sender].castedVotes[i].optionId < survey.voters[msg.sender].castedVotes[i+1].optionId);
-            totalVoted = totalVoted.add(_stakes[i]);
+            // the option just added (_options[j] = options[j+1]) with the previous one (options[j])
+            require(survey.voters[msg.sender].castedVotes[j].optionId < survey.voters[msg.sender].castedVotes[j + 1].optionId);
+            totalVoted = totalVoted.add(_stakes[j]);
+
+            CastVote(_surveyId, msg.sender, _options[j], _stakes[j]);
         }
 
         // compute and register non used tokens
@@ -170,21 +179,6 @@ contract Surveying is AragonApp {
         stakes[0] = voterStake;
 
         voteOptions(_surveyId, options, stakes);
-    }
-
-    function _voteOption(uint256 _surveyId, uint256 index, uint256 _option, uint256 _stake) internal {
-        Survey storage survey = surveys[_surveyId];
-
-        require(_option != NO_VOTE && _option <= survey.options);
-        require(_stake > 0);
-
-        // register voter amount
-        survey.voters[msg.sender].castedVotes[index] = OptionCast({optionId: _option, stake: _stake});
-
-        // add to total option support
-        survey.votes[_option] = survey.votes[_option].add(_stake);
-
-        CastVote(_surveyId, msg.sender, _option, _stake);
     }
 
     function canVote(uint256 _surveyId, address _voter) public view returns (bool) {
