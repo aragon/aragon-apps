@@ -119,10 +119,10 @@ contract Surveying is AragonApp {
             }
             // remove previous vote participation
             survey.participation = survey.participation.sub(voterStake.sub(previouslyVoted.stakes[0]));
-        }
 
-        // reset previously voted options, if any
-        delete survey.voters[msg.sender];
+            // reset previously voted options, if any
+            delete survey.voters[msg.sender];
+        }
 
         uint256 totalVoted = 0;
         // reserve first index for NO_VOTE
@@ -132,12 +132,15 @@ contract Surveying is AragonApp {
             _voteOption(_surveyId, _options[i], _stakes[i]);
             // let's avoid repeating an option by
             // making sure that ascending order is preserved in options array
+            // index 0 in options array is reserved for NO_VOTE, so here we are comparing
+            // the option just added (_options[i] = options[i+1]) with the previous one (options[i])
             require(survey.voters[msg.sender].options[i] < survey.voters[msg.sender].options[i+1]);
             totalVoted = totalVoted.add(_stakes[i]);
         }
 
         // compute and register non used tokens
-        // implictly we are doing require(totalVoted <= voterStake) too:
+        // implictly we are doing require(totalVoted <= voterStake) too
+        // (as stated before, index 0 is for NO_VOTE option)
         survey.voters[msg.sender].stakes[0] = voterStake.sub(totalVoted);
 
         // add voter tokens to participation
@@ -156,18 +159,17 @@ contract Surveying is AragonApp {
         uint256 voterStake = token.balanceOfAt(msg.sender, survey.snapshotBlock);
         uint256[] memory options = new uint256[](1);
         uint256[] memory stakes = new uint256[](1);
-        options[0]= _option;
+        options[0] = _option;
         stakes[0] = voterStake;
 
         voteOptions(_surveyId, options, stakes);
     }
 
-    function _voteOption(uint256 _surveyId, uint256 _option, uint256 _stake) public {
+    function _voteOption(uint256 _surveyId, uint256 _option, uint256 _stake) internal {
         Survey storage survey = surveys[_surveyId];
 
         require(_option != NO_VOTE && _option <= survey.options);
         require(_stake > 0);
-
 
         // register voter amount
         survey.voters[msg.sender].options.push(_option);
@@ -234,7 +236,7 @@ contract Surveying is AragonApp {
     }
 
     function _isSurveyOpen(Survey storage survey) internal view returns (bool) {
-        return uint64(now) < (survey.startDate.add(surveyTime));
+        return uint64(now) < survey.startDate.add(surveyTime);
     }
 
 }
