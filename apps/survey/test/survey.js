@@ -7,7 +7,7 @@ const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16
 const createdSurveyId = receipt => receipt.logs.filter(x => x.event == 'StartSurvey')[0].args.surveyId
 
 contract('Survey app', accounts => {
-  let app
+  let app, NO_VOTE
   const surveyTime = 1000
   const holder19 = accounts[0]
   const holder31 = accounts[1]
@@ -16,6 +16,7 @@ contract('Survey app', accounts => {
 
   beforeEach(async () => {
     app = await getContract('Surveying').new()
+    NO_VOTE = await app.NO_VOTE()
   })
 
   context('normal token supply', () => {
@@ -167,7 +168,7 @@ contract('Survey app', accounts => {
       it('casts complete multi option vote', async () => {
         await app.voteOptions(surveyId, [1,2], [10, 21], { from: holder31 })
         const voterState = await app.getVoterState(surveyId, holder31)
-        assert.equal(voterState[0][0].toString(), 0, "First option should be NO VOTE")
+        assert.equal(voterState[0][0].toString(), NO_VOTE, "First option should be NO VOTE")
         assert.equal(voterState[1][0].toString(), 0, "NO VOTE stake doesn't match")
         assert.equal(voterState[0][1].toString(), 1, "First voted option doesn't match")
         assert.equal(voterState[1][1].toString(), 10, "First voted stake doesn't match")
@@ -179,7 +180,7 @@ contract('Survey app', accounts => {
         // 10 = 20 = 30, 1 vote missing
         await app.voteOptions(surveyId, [1,2], [10, 20], { from: holder31 })
         const voterState = await app.getVoterState(surveyId, holder31)
-        assert.equal(voterState[0][0].toString(), 0, "First option should be NO VOTE")
+        assert.equal(voterState[0][0].toString(), NO_VOTE, "First option should be NO VOTE")
         assert.equal(voterState[1][0].toString(), 1, "NO VOTE stake doesn't match")
         assert.equal(voterState[0][1].toString(), 1, "First voted option doesn't match")
         assert.equal(voterState[1][1].toString(), 10, "First voted stake doesn't match")
@@ -201,7 +202,7 @@ contract('Survey app', accounts => {
 
       it('fails if multi option vote has NO VOTE option', async () => {
         return assertRevert(async () => {
-          await app.voteOptions(surveyId, [0,2], [10, 21], { from: holder31 })
+          await app.voteOptions(surveyId, [NO_VOTE, 2], [10, 21], { from: holder31 })
         })
       })
 
