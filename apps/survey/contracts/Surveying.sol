@@ -13,7 +13,7 @@ contract Surveying is AragonApp {
     using SafeMath64 for uint64;
 
     uint256 constant public PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
-    uint256 constant NO_VOTE = 0;
+    uint256 constant public NO_VOTE = 0;
     bytes32 constant public CREATE_SURVEYS_ROLE = keccak256("CREATE_SURVEYS_ROLE");
     bytes32 constant public MODIFY_PARTICIPATION_ROLE = keccak256("MODIFY_PARTICIPATION_ROLE");
 
@@ -21,14 +21,18 @@ contract Surveying is AragonApp {
     uint256 public minAcceptParticipationPct;
     uint64 public surveyTime;
 
+    struct OptionCast {
+        uint256 optionId;
+        uint256 stake;
+    }
+
     /* To allow multiple option votes.
-     * Array lengths must match.
      * Index 0 will always be for NO_VOTE option
-     * options array must be in ascending order
+     * option Ids must be in ascending order
      */
     struct MultiOptionVote {
-        uint256[] options;
-        uint256[] stakes;
+        uint256 optionsCastedLength;
+        mapping (uint256 => OptionCast) castedVotes;
     }
 
     struct Survey {
@@ -112,13 +116,13 @@ contract Surveying is AragonApp {
         MultiOptionVote storage previouslyVoted = survey.voters[msg.sender];
 
         // revert previous votes, if any
-        if (previouslyVoted.options.length > 0) {
+        if (previouslyVoted.optionsCastedLength > 0) {
             // voter removes their vote
-            for (i = 1; i < previouslyVoted.options.length; i++) {
-                survey.votes[previouslyVoted.options[i]] = survey.votes[previouslyVoted.options[i]].sub(previouslyVoted.stakes[i]);
+            for (i = 1; i <= previouslyVoted.optionsCastedLength; i++) {
+                survey.votes[previouslyVoted.castedVotes[i].optionId] = survey.votes[previouslyVoted.castedVotes[i].optionId].sub(previouslyVoted.castedVotes[i].stake);
             }
             // remove previous vote participation
-            survey.participation = survey.participation.sub(voterStake.sub(previouslyVoted.stakes[0]));
+            survey.participation = survey.participation.sub(voterStake.sub(previouslyVoted.castedVotes[0].stake));
 
             // reset previously voted options, if any
             delete survey.voters[msg.sender];
@@ -126,22 +130,25 @@ contract Surveying is AragonApp {
 
         uint256 totalVoted = 0;
         // reserve first index for NO_VOTE
-        survey.voters[msg.sender].options.push(NO_VOTE);
-        survey.voters[msg.sender].stakes.push(0);
+        survey.voters[msg.sender].castedVotes[0] = OptionCast({optionId: NO_VOTE, stake: 0});
         for (i = 0; i < _options.length; i++) {
-            _voteOption(_surveyId, _options[i], _stakes[i]);
+            // index 0 in options array is reserved for NO_VOTE, so index will be 1 more
+            _voteOption(_surveyId, i+1, _options[i], _stakes[i]);
             // let's avoid repeating an option by
             // making sure that ascending order is preserved in options array
             // index 0 in options array is reserved for NO_VOTE, so here we are comparing
             // the option just added (_options[i] = options[i+1]) with the previous one (options[i])
-            require(survey.voters[msg.sender].options[i] < survey.voters[msg.sender].options[i+1]);
+            require(survey.voters[msg.sender].castedVotes[i].optionId < survey.voters[msg.sender].castedVotes[i+1].optionId);
             totalVoted = totalVoted.add(_stakes[i]);
         }
 
         // compute and register non used tokens
         // implictly we are doing require(totalVoted <= voterStake) too
         // (as stated before, index 0 is for NO_VOTE option)
-        survey.voters[msg.sender].stakes[0] = voterStake.sub(totalVoted);
+        survey.voters[msg.sender].castedVotes[0].stake = voterStake.sub(totalVoted);
+
+        // register number of options voted
+        survey.voters[msg.sender].optionsCastedLength = _options.length;
 
         // add voter tokens to participation
         survey.participation = survey.participation.add(totalVoted);
@@ -165,15 +172,14 @@ contract Surveying is AragonApp {
         voteOptions(_surveyId, options, stakes);
     }
 
-    function _voteOption(uint256 _surveyId, uint256 _option, uint256 _stake) internal {
+    function _voteOption(uint256 _surveyId, uint256 index, uint256 _option, uint256 _stake) internal {
         Survey storage survey = surveys[_surveyId];
 
         require(_option != NO_VOTE && _option <= survey.options);
         require(_stake > 0);
 
         // register voter amount
-        survey.voters[msg.sender].options.push(_option);
-        survey.voters[msg.sender].stakes.push(_stake);
+        survey.voters[msg.sender].castedVotes[index] = OptionCast({optionId: _option, stake: _stake});
 
         // add to total option support
         survey.votes[_option] = survey.votes[_option].add(_stake);
@@ -205,8 +211,16 @@ contract Surveying is AragonApp {
     }
 
     function getVoterState(uint256 _surveyId, address _voter) public view returns (uint256[] options, uint256[] stakes) {
-        options = surveys[_surveyId].voters[_voter].options;
-        stakes = surveys[_surveyId].voters[_voter].stakes;
+        if (surveys[_surveyId].voters[_voter].optionsCastedLength == 0) {
+            return (new uint256[](0), new uint256[](0));
+        }
+
+        options = new uint256[](surveys[_surveyId].voters[_voter].optionsCastedLength + 1);
+        stakes = new uint256[](surveys[_surveyId].voters[_voter].optionsCastedLength + 1);
+        for (uint256 i = 0; i <= surveys[_surveyId].voters[_voter].optionsCastedLength; i++) {
+            options[i] = surveys[_surveyId].voters[_voter].castedVotes[i].optionId;
+            stakes[i] = surveys[_surveyId].voters[_voter].castedVotes[i].stake;
+        }
     }
 
     function getOptionSupport(uint256 _surveyId, uint256 _option) public view returns (uint256) {
