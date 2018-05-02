@@ -1,27 +1,11 @@
 version: "2"
 services:
-  deploy:
-    image: aragon/templates-beta
-    depends_on:
-      - devnet
-      - ipfs
-    command: >
-      bash -c "sleep 3
-      && npm run docker:wait-gas
-      && scripts/deploy.sh"
-    environment:
-      - OWNER=${OWNER}
-    links:
-      - ipfs
-    networks:
-      - devnet
-      - ipfs
   devnet:
     image: aragon/geth-devnet
     volumes:
       - ${ETHDATA_LOCAL_PATH}:/root/.ethereum
     ports:
-      - "8545:8545"
+      - "8535:8545"
       - "8546:8546"
     expose:
       - 8545

@@ -10,19 +10,21 @@
   ],
   "devDependencies": {
     "coveralls": "^2.13.1",
-    "ganache-cli": "^6.0.3",
+    "ganache-cli": "^6.1.0",
     "lcov-result-merger": "^1.2.0",
     "lerna": "^2.8.0"
   },
   "scripts": {
     "install": "npm run bootstrap",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/os",
-    "test": "lerna run --scope=@aragon/apps-* --scope=@aragon/templates-beta --concurrency=1 --stream test",
-    "test:gas": "lerna run --scope=@aragon/apps-* --scope=@aragon/templates-beta --concurrency=1 --stream test:gas",
+    "test": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream test",
+    "test:future": "lerna run --scope=@aragon/future-apps-* --concurrency=1 --stream test",
+    "test:templates-beta": "lerna run --scope=@aragon/templates-beta --concurrency=1 --stream test",
+    "test:gas": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream test:gas",
     "lint": "lerna run --scope=@aragon/apps-* --scope=@aragon/templates-beta lint",
-    "coverage": "lerna run --scope=@aragon/apps-* --scope=@aragon/templates-beta --concurrency=1 --stream coverage",
+    "coverage": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",
     "link:os": "lerna exec --scope '@aragon/apps-*' --scope=@aragon/templates-beta 'npm link @aragon/os'",
-    "ganache-cli:dev": "shared/test-helpers/ganache-cli.sh",
+    "ganache-cli:test": "shared/test-helpers/ganache-cli.sh",
     "publish:devnet": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream publish:devnet",
     "publish:rpc": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream publish:rpc",
     "publish:rinkeby": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream publish:rinkeby"

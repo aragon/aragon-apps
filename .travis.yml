@@ -13,6 +13,7 @@ env:
   - TASK=test
   - TASK=lint
   - TASK=coverage
+  - TASK=test:templates-beta
 before_script:
   - npm prune
 script:

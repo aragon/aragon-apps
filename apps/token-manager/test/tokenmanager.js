@@ -50,6 +50,24 @@ contract('Token Manager', accounts => {
         token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
     })
 
+    it('initializating as transferable sets the token as transferable', async () => {
+        const transferable = true
+        await token.enableTransfers(!transferable)
+
+        await token.changeController(tokenManager.address)
+        await tokenManager.initialize(token.address, transferable, 0, false)
+        assert.equal(transferable, await token.transfersEnabled())
+    })
+
+    it('initializating as non-transferable sets the token as non-transferable', async () => {
+        const transferable = false
+        await token.enableTransfers(!transferable)
+
+        await token.changeController(tokenManager.address)
+        await tokenManager.initialize(token.address, transferable, 0, false)
+        assert.equal(transferable, await token.transfersEnabled())
+    })
+
     it('fails when initializing without setting controller', async () => {
         return assertRevert(async () => {
             await tokenManager.initialize(token.address, true, 0, false)
@@ -76,18 +94,20 @@ contract('Token Manager', accounts => {
             })
         })
 
-        it('can transfer to token manager', async () => {
-            await tokenManager.mint(holder, 2000)
-            await token.transfer(tokenManager.address, 10, { from: holder })
-
-            assert.equal(await token.balanceOf(tokenManager.address), 10, 'should have tokens')
-        })
-
         it('token manager can transfer', async () => {
             await tokenManager.issue(100)
             await tokenManager.assign(holder, 10)
 
             assert.equal(await token.balanceOf(holder), 10, 'should have tokens')
+        })
+
+        it('token manager can burn assigned tokens', async () => {
+            const mintAmount = 2000
+            const burnAmount = 10
+            await tokenManager.mint(holder, mintAmount)
+            await tokenManager.burn(holder, burnAmount)
+
+            assert.equal(await token.balanceOf(holder), mintAmount - burnAmount, 'should have burned tokens')
         })
 
         it('forwards actions to holder', async () => {
@@ -227,6 +247,17 @@ contract('Token Manager', accounts => {
             })
         })
 
+        it("cannot call onTransfer() from outside of the token's context", async () => {
+            const amount = 10
+            await tokenManager.mint(holder, amount)
+
+            // Make sure this callback fails when called out-of-context
+            await assertRevert(() => tokenManager.onTransfer(holder, accounts[2], 10))
+
+            // Make sure the same transfer through the token's context doesn't revert
+            await token.transfer(accounts[2], amount, { from: holder })
+        })
+
         it('fails when assigning invalid vesting schedule', async () => {
             return assertRevert(async () => {
                 const tokens = 10
@@ -237,19 +268,33 @@ contract('Token Manager', accounts => {
 
         context('assigning vested tokens', () => {
             let now = 0
+            let startDate, cliffDate, vestingDate
 
             const start = 1000
             const cliff = 2000
             const vesting = 5000
 
             const totalTokens = 40
+            const revokable = true
 
             beforeEach(async () => {
                 await tokenManager.issue(totalTokens)
                 const block = await getBlock(await getBlockNumber())
                 now = block.timestamp
+                startDate = now + start
+                cliffDate = now + cliff
+                vestingDate = now + vesting
 
-                await tokenManager.assignVested(holder, totalTokens, now + start, now + cliff, now + vesting, true)
+                await tokenManager.assignVested(holder, totalTokens, startDate, cliffDate, vestingDate, revokable)
+            })
+
+            it('can get vesting details before being revoked', async () => {
+                const [vAmount, vStartDate, vCliffDate, vVestingDate, vRevokable] = await tokenManager.getVesting(holder, 0)
+                assert.equal(vAmount, totalTokens)
+                assert.equal(vStartDate, startDate)
+                assert.equal(vCliffDate, cliffDate)
+                assert.equal(vVestingDate, vestingDate)
+                assert.equal(vRevokable, revokable)
             })
 
             it('can start transfering on cliff', async () => {
