@@ -15,7 +15,7 @@ contract('Survey app', accounts => {
   const nonHolder = accounts[4]
 
   beforeEach(async () => {
-    app = await getContract('Surveying').new()
+    app = await getContract('Survey').new()
     NO_VOTE = await app.NO_VOTE()
   })
 
@@ -248,7 +248,7 @@ contract('Survey app', accounts => {
       const n = '0x00'
       const minimumAcceptanceParticipationPct = pct16(20)
 
-      badApp = await getContract('Surveying').new()
+      badApp = await getContract('Survey').new()
       badToken = await getContract('MiniMeToken').new(n, n, 0, 'n', 0, 'n', true) // empty parameters minime
       await badApp.initialize(badToken.address, minimumAcceptanceParticipationPct, surveyTime)
     })
