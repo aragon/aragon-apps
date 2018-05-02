@@ -870,6 +870,11 @@
 					"indexed": true,
 					"name": "entity",
 					"type": "address"
+				},
+				{
+					"indexed": false,
+					"name": "amount",
+					"type": "uint256"
 				}
 			],
 			"name": "NewTransaction",
