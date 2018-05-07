@@ -37,6 +37,7 @@ contract('Payroll', function(accounts) {
   const USD_PRECISION = 10**9;
   const SECONDS_IN_A_YEAR = 31557600; // 365.25 days
   const ETH = '0x0'
+  const periodDuration = 60 * 60 * 24 // One day in seconds
 
   const deployErc20Token = async (name="ERC20Token") => {
     let token = await MiniMeToken.new("0x0", "0x0", 0, name, 18, 'E20', true); // dummy parameters for minime
@@ -69,8 +70,9 @@ contract('Payroll', function(accounts) {
 
     vault = await Vault.new();
     await vault.initializeWithBase(vault.address)
+
     finance = await Finance.new();
-    await finance.initialize(vault.address, 100);
+    await finance.initialize(vault.address, periodDuration);
     payroll = await Payroll.new();
     usdToken = await deployErc20Token("USD");
     oracle = await OracleMock.new();
