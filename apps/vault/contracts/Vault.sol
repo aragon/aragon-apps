@@ -4,11 +4,13 @@ import "./VaultBase.sol"; // split made to avoid circular import
 
 import "./connectors/ERC20Connector.sol";
 import "./connectors/ETHConnector.sol";
+import "./detectors/ERC165Detector.sol";
 
+import "@aragon/os/contracts/common/DelegateProxy.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract Vault is VaultBase {
+contract Vault is VaultBase, DelegateProxy, ERC165Detector {
     struct TokenStandard {
         uint32 erc;
         uint32 interfaceDetectionERC;
@@ -102,6 +104,17 @@ contract Vault is VaultBase {
 
     function isInterfaceDetectionERCSupported(uint32 interfaceDetectionERC) public view returns (bool) {
         return supportedInterfaceDetectionERCs[interfaceDetectionERC];
+    }
+
+    // Proxy implementation
+    function proxyType() public pure returns (uint256 proxyTypeId) {
+        return UPGRADEABLE;
+    }
+
+    function implementation() public view returns (address codeAddr) {
+        // No input given to differentiate connectors, so we just give the ETH connector as the
+        // default implementation
+        return connectors[ETH];
     }
 
     function _registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector) internal {
