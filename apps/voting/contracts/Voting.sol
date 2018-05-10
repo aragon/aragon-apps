@@ -275,7 +275,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     function _isVoteOpen(Vote storage vote) internal view returns (bool) {
-        return uint64(now) < (vote.startDate.add(voteTime)) && !vote.executed;
+        return uint64(now) < vote.startDate.add(voteTime) && !vote.executed;
     }
 
     /**
