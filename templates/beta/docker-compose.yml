@@ -18,6 +18,7 @@ services:
     ports:
       - "5001:5001"
       - "4001:4001"
+      - "8080:8080"
     expose:
       - 5001
     networks:
