@@ -71,8 +71,6 @@ contract Voting is IForwarder, AragonApp {
         supportRequiredPct = _supportRequiredPct;
         minAcceptQuorumPct = _minAcceptQuorumPct;
         voteTime = _voteTime;
-
-        votes.length += 1;
     }
 
     /**
