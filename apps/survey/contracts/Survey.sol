@@ -13,7 +13,7 @@ contract Survey is AragonApp {
     using SafeMath64 for uint64;
 
     uint256 constant public PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
-    uint256 constant public NO_VOTE = 0;
+    uint256 constant public ABSTAIN_VOTE = 0;
     bytes32 constant public CREATE_SURVEYS_ROLE = keccak256("CREATE_SURVEYS_ROLE");
     bytes32 constant public MODIFY_PARTICIPATION_ROLE = keccak256("MODIFY_PARTICIPATION_ROLE");
 
@@ -26,11 +26,12 @@ contract Survey is AragonApp {
         uint256 stake;
     }
 
-    /** To allow multiple option votes.
-     * Index 0 will always be for NO_VOTE option
+    /* To allow multiple option votes.
+     * Index 0 will always be for ABSTAIN_VOTE option
      * option Ids must be in ascending order
      */
     struct MultiOptionVote {
+        // replacing 2 arrays of ints here by this mapping to save gas
         uint256 optionsCastedLength;
         mapping (uint256 => OptionCast) castedVotes;
     }
@@ -45,8 +46,8 @@ contract Survey is AragonApp {
         uint256 participation;                  // tokens that casted a vote
         string metadata;
 
-        mapping (uint256 => uint256) votes;     // option -> voting power for option
-        mapping (address => MultiOptionVote) voters;    // voter -> options voted, with its stakes
+        mapping (uint256 => uint256) optionVotes;     // option -> voting power for option
+        mapping (address => MultiOptionVote) votes;    // voter -> options voted, with its stakes
     }
 
     SurveyStruct[] surveys;
@@ -99,83 +100,103 @@ contract Survey is AragonApp {
     }
 
     /**
-    * @notice Vote for multiple options in survey #`_surveyId`.
-    * @dev Empty options and stakes arrays allow to remove previous votes
-    * @param _surveyId Id for survey
-    * @param _options Array with indexes of supported options
-    * @param _stakes Number of tokens assigned to each option
-    */
-    function voteOptions(uint256 _surveyId, uint256[] _options, uint256[] _stakes) public {
-        require(_options.length == _stakes.length);
+     * @notice Reset previously casted vote in survey #`_surveyId`, if any.
+     * @param _surveyId Id for survey
+     */
+    function resetVote(uint256 _surveyId) public {
         require(canVote(_surveyId, msg.sender));
 
         SurveyStruct storage survey = surveys[_surveyId];
-
-        uint256 voterStake = token.balanceOfAt(msg.sender, survey.snapshotBlock);
-        MultiOptionVote storage previouslyVoted = survey.voters[msg.sender];
-
-        // revert previous votes, if any
-        if (previouslyVoted.optionsCastedLength > 0) {
-            // voter removes their vote
-            for (uint256 i = 1; i <= previouslyVoted.optionsCastedLength; i++) {
-                survey.votes[previouslyVoted.castedVotes[i].optionId] = survey.votes[previouslyVoted.castedVotes[i].optionId].sub(previouslyVoted.castedVotes[i].stake);
-            }
-            // remove previous vote participation
-            survey.participation = survey.participation.sub(voterStake.sub(previouslyVoted.castedVotes[0].stake));
-
-            // reset previously voted options, if any
-            delete survey.voters[msg.sender];
+        MultiOptionVote storage previousVote = survey.votes[msg.sender];
+        if (previousVote.optionsCastedLength == 0) {
+            return;
         }
 
+        // voter removes their vote
+        for (uint256 i = 1; i <= previousVote.optionsCastedLength; i++) {
+            OptionCast storage previousOptionCast = previousVote.castedVotes[i];
+            survey.optionVotes[previousOptionCast.optionId] = survey.optionVotes[previousOptionCast.optionId].sub(previousOptionCast.stake);
+        }
+
+        // compute previously casted votes (i.e. substract non-used tokens from stake)
+        uint256 voterStake = token.balanceOfAt(msg.sender, survey.snapshotBlock);
+        uint256 previousParticipation = voterStake.sub(previousVote.castedVotes[0].stake);
+        // and remove it from total participation
+        survey.participation = survey.participation.sub(previousParticipation);
+
+        // reset previously voted options, if any
+        delete survey.votes[msg.sender];
+    }
+
+    /**
+    * @notice Vote for multiple options in survey #`_surveyId`.
+    * @param _surveyId Id for survey
+    * @param _optionIds Array with indexes of supported options
+    * @param _stakes Number of tokens assigned to each option
+    */
+    function voteOptions(uint256 _surveyId, uint256[] _optionIds, uint256[] _stakes) public {
+        require(_optionIds.length == _stakes.length && _optionIds.length > 0);
+
+        SurveyStruct storage survey = surveys[_surveyId];
+
+        // revert previous votes, if any (also checks if canVote)
+        resetVote(_surveyId);
+
         uint256 totalVoted = 0;
-        // reserve first index for NO_VOTE
-        survey.voters[msg.sender].castedVotes[0] = OptionCast({optionId: NO_VOTE, stake: 0});
-        for (uint256 j = 0; j < _options.length; j++) {
-            require(_options[j] != NO_VOTE && _options[j] <= survey.options);
-            require(_stakes[j] > 0);
+        // reserve first index for ABSTAIN_VOTE
+        survey.votes[msg.sender].castedVotes[0] = OptionCast({optionId: ABSTAIN_VOTE, stake: 0});
+        for (uint256 j = 1; j <= _optionIds.length; j++) {
+            // parameter arrays don't have abstain vote, while survey ones do, so we subtract 1 here to the index
+            uint256 optionId = _optionIds[j-1];
+            uint256 stake = _stakes[j-1];
+            require(optionId != ABSTAIN_VOTE && optionId <= survey.options);
+            require(stake > 0);
 
             // register voter amount
-            // index 0 in options array is reserved for NO_VOTE, so index will be 1 more
-            survey.voters[msg.sender].castedVotes[j + 1] = OptionCast({optionId: _options[j], stake: _stakes[j]});
+            // index 0 in options array is reserved for ABSTAIN_VOTE, so index will be 1 more
+            survey.votes[msg.sender].castedVotes[j] = OptionCast({optionId: optionId, stake: stake});
 
             // add to total option support
-            survey.votes[_options[j]] = survey.votes[_options[j]].add(_stakes[j]);
+            survey.optionVotes[optionId] = survey.optionVotes[optionId].add(stake);
 
             // let's avoid repeating an option by
             // making sure that ascending order is preserved in options array
-            // index 0 in options array is reserved for NO_VOTE, so here we are comparing
-            // the option just added (_options[j] = options[j+1]) with the previous one (options[j])
-            require(survey.voters[msg.sender].castedVotes[j].optionId < survey.voters[msg.sender].castedVotes[j + 1].optionId);
-            totalVoted = totalVoted.add(_stakes[j]);
+            // index 0 in options array is reserved for ABSTAIN_VOTE, so here we are comparing
+            // the option just added with the previous one
+            require(survey.votes[msg.sender].castedVotes[j - 1].optionId < survey.votes[msg.sender].castedVotes[j].optionId);
+            totalVoted = totalVoted.add(stake);
 
-            CastVote(_surveyId, msg.sender, _options[j], _stakes[j]);
+            CastVote(_surveyId, msg.sender, optionId, stake);
         }
 
         // compute and register non used tokens
         // implictly we are doing require(totalVoted <= voterStake) too
-        // (as stated before, index 0 is for NO_VOTE option)
-        survey.voters[msg.sender].castedVotes[0].stake = voterStake.sub(totalVoted);
+        // (as stated before, index 0 is for ABSTAIN_VOTE option)
+        uint256 voterStake = token.balanceOfAt(msg.sender, survey.snapshotBlock);
+        survey.votes[msg.sender].castedVotes[0].stake = voterStake.sub(totalVoted);
 
         // register number of options voted
-        survey.voters[msg.sender].optionsCastedLength = _options.length;
+        survey.votes[msg.sender].optionsCastedLength = _optionIds.length;
 
         // add voter tokens to participation
         survey.participation = survey.participation.add(totalVoted);
+        require(survey.participation <= survey.votingPower);
     }
 
     /**
-    * @notice Vote option #`_option` in survey #`_surveyId`.
-    * @dev It will use the whole balance. If voting option is 0, that's like cancelling the previously casted vote
+    * @notice Vote option #`_optionId` in survey #`_surveyId`.
+    * @dev It will use the whole balance.
     * @param _surveyId Id for survey
-    * @param _option Index of supported option
+    * @param _optionId Index of supported option
     */
-    function voteOption(uint256 _surveyId, uint256 _option) public {
+    function voteOption(uint256 _surveyId, uint256 _optionId) public {
+        require(_optionId != ABSTAIN_VOTE);
         SurveyStruct storage survey = surveys[_surveyId];
         // this could re-enter, though we can asume the governance token is not maliciuous
         uint256 voterStake = token.balanceOfAt(msg.sender, survey.snapshotBlock);
         uint256[] memory options = new uint256[](1);
         uint256[] memory stakes = new uint256[](1);
-        options[0] = _option;
+        options[0] = _optionId;
         stakes[0] = voterStake;
 
         voteOptions(_surveyId, options, stakes);
@@ -204,21 +225,22 @@ contract Survey is AragonApp {
         return surveys[_surveyId].metadata;
     }
 
-    function getVoterState(uint256 _surveyId, address _voter) public view returns (uint256[] options, uint256[] stakes) {
-        if (surveys[_surveyId].voters[_voter].optionsCastedLength == 0) {
+    function getVoterState(uint256 _surveyId, address _voter) external view returns (uint256[] options, uint256[] stakes) {
+        if (surveys[_surveyId].votes[_voter].optionsCastedLength == 0) {
             return (new uint256[](0), new uint256[](0));
         }
 
-        options = new uint256[](surveys[_surveyId].voters[_voter].optionsCastedLength + 1);
-        stakes = new uint256[](surveys[_surveyId].voters[_voter].optionsCastedLength + 1);
-        for (uint256 i = 0; i <= surveys[_surveyId].voters[_voter].optionsCastedLength; i++) {
-            options[i] = surveys[_surveyId].voters[_voter].castedVotes[i].optionId;
-            stakes[i] = surveys[_surveyId].voters[_voter].castedVotes[i].stake;
+        MultiOptionVote storage vote = surveys[_surveyId].votes[_voter];
+        options = new uint256[](vote.optionsCastedLength + 1);
+        stakes = new uint256[](vote.optionsCastedLength + 1);
+        for (uint256 i = 0; i <= vote.optionsCastedLength; i++) {
+            options[i] = vote.castedVotes[i].optionId;
+            stakes[i] = vote.castedVotes[i].stake;
         }
     }
 
-    function getOptionSupport(uint256 _surveyId, uint256 _option) public view returns (uint256) {
-        return surveys[_surveyId].votes[_option];
+    function getOptionSupport(uint256 _surveyId, uint256 _optionId) public view returns (uint256) {
+        return surveys[_surveyId].optionVotes[_optionId];
     }
 
     function isParticipationAchieved(uint256 _surveyId) public view returns (bool) {
