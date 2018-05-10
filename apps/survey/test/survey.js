@@ -281,4 +281,25 @@ contract('Survey app', accounts => {
       })
     })
   })
+
+  context('worng supply token', () => {
+    let badApp, badToken
+
+    before(async() => {
+      const minimumAcceptanceParticipationPct = pct16(20)
+
+      badApp = await getContract('Survey').new()
+      badToken = await getContract('BadToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
+      await badToken.generateTokens(holder19, 19)
+      await badApp.initialize(badToken.address, minimumAcceptanceParticipationPct, surveyTime)
+    })
+
+    // this bad token has broken `totalSupplyAt`, returning always 1
+    it('fails voting with more than 1 token because of wrong votingPower', async () => {
+      const surveyId = createdSurveyId(await badApp.newSurvey('metadata', 10))
+      return assertRevert(async () => {
+        await badApp.voteOption(surveyId, 10, { from: holder19 })
+      })
+    })
+  })
 })
