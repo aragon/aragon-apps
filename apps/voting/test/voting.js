@@ -18,6 +18,7 @@ const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16
 const createdVoteId = receipt => receipt.logs.filter(x => x.event == 'StartVote')[0].args.voteId
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
+const NULL_ADDRESS = '0x00'
 
 const VOTER_STATE = ['ABSENT', 'YEA', 'NAY'].reduce((state, key, index) => {
     state[key] = index;
@@ -62,8 +63,7 @@ contract('Voting App', accounts => {
         const minimumAcceptanceQuorum = pct16(20)
 
         beforeEach(async () => {
-            const n = '0x00'
-            token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // empty parameters minime
+            token = await MiniMeToken.new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
             await token.generateTokens(holder19, 19)
             await token.generateTokens(holder31, 31)
@@ -260,8 +260,7 @@ contract('Voting App', accounts => {
 
     context('wrong initializations', () => {
         beforeEach(async() => {
-            const n = '0x00'
-            token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // empty parameters minime
+            token = await MiniMeToken.new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
         })
 
         it('fails if min acceptance quorum is 0', () => {
@@ -296,8 +295,7 @@ contract('Voting App', accounts => {
         const minimumAcceptanceQuorum = pct16(20)
 
         beforeEach(async () => {
-            const n = '0x00'
-            token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // empty parameters minime
+            token = await MiniMeToken.new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
             await token.generateTokens(holder, 1)
 
@@ -335,8 +333,7 @@ contract('Voting App', accounts => {
         const minimumAcceptanceQuorum = pct16(20)
 
         beforeEach(async () => {
-            const n = '0x00'
-            token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // empty parameters minime
+            token = await MiniMeToken.new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
             await token.generateTokens(holder1, 1)
             await token.generateTokens(holder2, 2)

@@ -7,16 +7,17 @@ const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16
 const createdSurveyId = receipt => receipt.logs.filter(x => x.event == 'StartSurvey')[0].args.surveyId
 
 contract('Survey app', accounts => {
-  let app, NO_VOTE
+  let app, ABSTAIN_VOTE
   const surveyTime = 1000
   const holder19 = accounts[0]
   const holder31 = accounts[1]
   const holder50 = accounts[2]
   const nonHolder = accounts[4]
+  const NULL_ADDRESS = '0x00'
 
   beforeEach(async () => {
     app = await getContract('Survey').new()
-    NO_VOTE = await app.NO_VOTE()
+    ABSTAIN_VOTE = await app.ABSTAIN_VOTE()
   })
 
   context('normal token supply', () => {
@@ -25,8 +26,7 @@ contract('Survey app', accounts => {
     const minimumAcceptanceParticipationPct = pct16(20)
 
     beforeEach(async () => {
-      const n = '0x00'
-      token = await getContract('MiniMeToken').new(n, n, 0, 'n', 0, 'n', true) // empty parameters minime
+      token = await getContract('MiniMeToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
       await token.generateTokens(holder19, 19)
       await token.generateTokens(holder31, 31)
@@ -104,6 +104,10 @@ contract('Survey app', accounts => {
 
       })
 
+      /* next 2 tests check if isParticipationAchieved works properly
+       * checking whether participation was above minimum set when survey
+       * was created
+       */
       it('accounts for achieved participation properly', async () => {
         await app.voteOption(surveyId, 1, { from: holder31 })
         assert.isTrue(await app.isParticipationAchieved(surveyId), 'participation achieved should be true')
@@ -122,9 +126,21 @@ contract('Survey app', accounts => {
         })
       })
 
+      it('fails if vote has no options', async () => {
+        return assertRevert(async () => {
+          await app.voteOptions(surveyId, [], [], { from: holder50 })
+        })
+      })
+
+      it('fails if single-option vote is for ABSTAIN_VOTE', async () => {
+        return assertRevert(async () => {
+          await app.voteOption(surveyId, ABSTAIN_VOTE, { from: holder50 })
+        })
+      })
+
       it('allows to remove and re-vote', async () => {
         await app.voteOption(surveyId, 1, { from: holder50 })
-        await app.voteOptions(surveyId, [], [], { from: holder50 })
+        await app.resetVote(surveyId, { from: holder50 })
         assert.equal(await app.getOptionSupport(surveyId, 1), 0)
         await app.voteOption(surveyId, 100, { from: holder50 })
 
@@ -168,7 +184,7 @@ contract('Survey app', accounts => {
       it('casts complete multi option vote', async () => {
         await app.voteOptions(surveyId, [1,2], [10, 21], { from: holder31 })
         const voterState = await app.getVoterState(surveyId, holder31)
-        assert.equal(voterState[0][0].toString(), NO_VOTE, "First option should be NO VOTE")
+        assert.equal(voterState[0][0].toString(), ABSTAIN_VOTE, "First option should be NO VOTE")
         assert.equal(voterState[1][0].toString(), 0, "NO VOTE stake doesn't match")
         assert.equal(voterState[0][1].toString(), 1, "First voted option doesn't match")
         assert.equal(voterState[1][1].toString(), 10, "First voted stake doesn't match")
@@ -180,7 +196,7 @@ contract('Survey app', accounts => {
         // 10 = 20 = 30, 1 vote missing
         await app.voteOptions(surveyId, [1,2], [10, 20], { from: holder31 })
         const voterState = await app.getVoterState(surveyId, holder31)
-        assert.equal(voterState[0][0].toString(), NO_VOTE, "First option should be NO VOTE")
+        assert.equal(voterState[0][0].toString(), ABSTAIN_VOTE, "First option should be NO VOTE")
         assert.equal(voterState[1][0].toString(), 1, "NO VOTE stake doesn't match")
         assert.equal(voterState[0][1].toString(), 1, "First voted option doesn't match")
         assert.equal(voterState[1][1].toString(), 10, "First voted stake doesn't match")
@@ -202,7 +218,7 @@ contract('Survey app', accounts => {
 
       it('fails if multi option vote has NO VOTE option', async () => {
         return assertRevert(async () => {
-          await app.voteOptions(surveyId, [NO_VOTE, 2], [10, 21], { from: holder31 })
+          await app.voteOptions(surveyId, [ABSTAIN_VOTE, 2], [10, 21], { from: holder31 })
         })
       })
 
@@ -218,8 +234,7 @@ contract('Survey app', accounts => {
     let token
 
     beforeEach(async () => {
-      const n = '0x00'
-      token = await getContract('MiniMeToken').new(n, n, 0, 'n', 0, 'n', true) // empty parameters minime
+      token = await getContract('MiniMeToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
       await token.generateTokens(holder19, 19)
       await token.generateTokens(holder31, 31)
@@ -245,11 +260,10 @@ contract('Survey app', accounts => {
     let badApp, badToken
 
     before(async() => {
-      const n = '0x00'
       const minimumAcceptanceParticipationPct = pct16(20)
 
       badApp = await getContract('Survey').new()
-      badToken = await getContract('MiniMeToken').new(n, n, 0, 'n', 0, 'n', true) // empty parameters minime
+      badToken = await getContract('MiniMeToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
       await badApp.initialize(badToken.address, minimumAcceptanceParticipationPct, surveyTime)
     })
 
