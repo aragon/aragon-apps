@@ -3,7 +3,6 @@ pragma solidity 0.4.18;
 import "@aragon/os/contracts/apps/AragonApp.sol";
 
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
-import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
 contract Vault is AragonApp {
