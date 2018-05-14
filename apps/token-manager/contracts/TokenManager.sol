@@ -351,7 +351,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _owner The address that sent the ether to create tokens
     * @return True if the ether is accepted, false for it to throw
     */
-    function proxyPayment(address _owner) payable isInitialized public returns (bool) {
+    function proxyPayment(address _owner) payable public returns (bool) {
         // Even though it is tested, solidity-coverage doesnt get it because
         // MiniMeToken is not instrumented and entire tx is reverted
         require(msg.sender == address(token));
@@ -365,7 +365,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _amount The amount in the `approve()` call
     * @return False if the controller does not authorize the approval
     */
-    function onApprove(address _owner, address _spender, uint _amount) isInitialized public returns (bool) {
+    function onApprove(address _owner, address _spender, uint _amount) public returns (bool) {
         _owner;
         _spender;
         _amount;
