@@ -57,7 +57,7 @@ contract Survey is AragonApp {
     event ChangeMinParticipation(uint256 minAcceptParticipationPct);
 
     /**
-    * @notice Initializes Survey app with `_token.symbol(): string` for governance, minimum acceptance participation of `(_minAcceptParticipationPct - _minAcceptParticipationPct % 10^14) / 10^16` and durations of `(_surveyTime - _surveyTime % 86400) / 86400` day `_surveyTime >= 172800 ? 's' : ''`
+    * @notice Initializes Survey app with `_token.symbol(): string` for governance, minimum acceptance participation of `(_minAcceptParticipationPct - _minAcceptParticipationPct % 10^16) / 10^14` and durations of `(_surveyTime - _surveyTime % 86400) / 86400` day `_surveyTime >= 172800 ? 's' : ''`
     * @param _token MiniMeToken address that will be used as governance token
     * @param _minAcceptParticipationPct Percentage of total voting power that must participate in a survey for it to be taken into account (expressed as a 10^18 percentage, (eg 10^16 = 1%, 10^18 = 100%)
     * @param _surveyTime Seconds that a survey will be open for token holders to vote
@@ -78,7 +78,7 @@ contract Survey is AragonApp {
     }
 
     /**
-    * @notice Change minimum acceptance participation to `(_minAcceptParticipationPct - _minAcceptParticipationPct % 10^14) / 10^16`%
+    * @notice Change minimum acceptance participation to `(_minAcceptParticipationPct - _minAcceptParticipationPct % 10^16) / 10^14`%
     * @param _minAcceptParticipationPct New acceptance participation
     */
     function changeMinAcceptParticipationPct(uint256 _minAcceptParticipationPct) authP(MODIFY_PARTICIPATION_ROLE, arr(_minAcceptParticipationPct)) external {
