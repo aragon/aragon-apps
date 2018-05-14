@@ -34,7 +34,7 @@ contract('Vault app', (accounts) => {
     })
 
     it('transfers ETH', async () => {
-      await vault.sendTransaction( { value: 100 }) 
+      await vault.sendTransaction( { value: 100 })
       const testAccount = '0xbeef000000000000000000000000000000000000'
       const initialBalance = await getBalance(testAccount)
 

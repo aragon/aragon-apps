@@ -17,7 +17,7 @@ contract Vault is AragonApp {
     /**
     * @dev When used behind an AppProxy, this fallback is never executed
     *      as it will be intercepted by the Proxy (see aragonOS#281)
-    */ 
+    */
     function () payable external {
         require(msg.data.length == 0);
         deposit(ETH, msg.sender, msg.value, msg.data);
