@@ -54,7 +54,7 @@ contract Vault is VaultBase {
         connectors[ETH] = ethConnector;
     }
 
-    function () payable isInitialized public {
+    function () payable public {
         address token = ETH;
 
         // 4 (sig) + 32 (at least the token address to locate connector)
@@ -74,7 +74,6 @@ contract Vault is VaultBase {
 
     function registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector)
              authP(REGISTER_TOKEN_STANDARD, arr(uint256(erc), interfaceDetectionERC))
-             isInitialized
              public
     {
 
