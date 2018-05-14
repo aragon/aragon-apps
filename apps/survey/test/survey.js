@@ -282,7 +282,7 @@ contract('Survey app', accounts => {
     })
   })
 
-  context('worng supply token', () => {
+  context('wrong supply token', () => {
     let badApp, badToken
 
     before(async() => {

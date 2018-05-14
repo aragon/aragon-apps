@@ -95,15 +95,26 @@ contract Survey is AragonApp {
     * @param _options Number of options voters can decide between
     * @return surveyId id for newly created survey
     */
-    function newSurvey(string _metadata, uint256 _options) auth(CREATE_SURVEYS_ROLE) external returns (uint256 surveyId) {
-        return _newSurvey(_metadata, _options);
+    function newSurvey(string _metadata, uint256 _options) auth(CREATE_SURVEYS_ROLE) isInitialized external returns (uint256 surveyId) {
+        surveyId = surveys.length++;
+        SurveyStruct storage survey = surveys[surveyId];
+        survey.creator = msg.sender;
+        survey.startDate = uint64(now);
+        survey.options = _options;
+        survey.metadata = _metadata;
+        survey.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
+        survey.votingPower = token.totalSupplyAt(survey.snapshotBlock);
+        require(survey.votingPower > 0);
+        survey.minAcceptParticipationPct = minAcceptParticipationPct;
+
+        StartSurvey(surveyId);
     }
 
     /**
      * @notice Reset previously casted vote in survey #`_surveyId`, if any.
      * @param _surveyId Id for survey
      */
-    function resetVote(uint256 _surveyId) public {
+    function resetVote(uint256 _surveyId) isInitialized public {
         require(canVote(_surveyId, msg.sender));
 
         SurveyStruct storage survey = surveys[_surveyId];
@@ -134,7 +145,7 @@ contract Survey is AragonApp {
     * @param _optionIds Array with indexes of supported options
     * @param _stakes Number of tokens assigned to each option
     */
-    function voteOptions(uint256 _surveyId, uint256[] _optionIds, uint256[] _stakes) public {
+    function voteOptions(uint256 _surveyId, uint256[] _optionIds, uint256[] _stakes) isInitialized public {
         require(_optionIds.length == _stakes.length && _optionIds.length > 0);
 
         SurveyStruct storage survey = surveys[_surveyId];
@@ -189,7 +200,7 @@ contract Survey is AragonApp {
     * @param _surveyId Id for survey
     * @param _optionId Index of supported option
     */
-    function voteOption(uint256 _surveyId, uint256 _optionId) public {
+    function voteOption(uint256 _surveyId, uint256 _optionId) isInitialized public {
         require(_optionId != ABSTAIN_VOTE);
         SurveyStruct storage survey = surveys[_surveyId];
         // this could re-enter, though we can asume the governance token is not maliciuous
@@ -248,21 +259,6 @@ contract Survey is AragonApp {
         // votingPower is always > 0
         uint256 participationPct = survey.participation.mul(PCT_BASE) / survey.votingPower;
         return participationPct >= survey.minAcceptParticipationPct;
-    }
-
-    function _newSurvey(string _metadata, uint256 _options) isInitialized internal returns (uint256 surveyId) {
-        surveyId = surveys.length++;
-        SurveyStruct storage survey = surveys[surveyId];
-        survey.creator = msg.sender;
-        survey.startDate = uint64(now);
-        survey.options = _options;
-        survey.metadata = _metadata;
-        survey.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
-        survey.votingPower = token.totalSupplyAt(survey.snapshotBlock);
-        require(survey.votingPower > 0);
-        survey.minAcceptParticipationPct = minAcceptParticipationPct;
-
-        StartSurvey(surveyId);
     }
 
     function _isSurveyOpen(SurveyStruct storage survey) internal view returns (bool) {
