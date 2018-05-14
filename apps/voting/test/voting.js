@@ -111,7 +111,7 @@ contract('Voting App', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeCallScript([action])
             const voteId = createdVoteId(await app.forward(script, { from: holder50 }))
-            assert.equal(voteId.valueOf(), 0, 'voting should have been created')
+            assert.equal(voteId, 1, 'voting should have been created')
         })
 
         it('can change minimum acceptance quorum', async () => {
