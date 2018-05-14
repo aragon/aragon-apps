@@ -119,24 +119,22 @@ contract Survey is AragonApp {
 
         SurveyStruct storage survey = surveys[_surveyId];
         MultiOptionVote storage previousVote = survey.votes[msg.sender];
-        if (previousVote.optionsCastedLength == 0) {
-            return;
+        if (previousVote.optionsCastedLength > 0) {
+            // voter removes their vote
+            for (uint256 i = 1; i <= previousVote.optionsCastedLength; i++) {
+                OptionCast storage previousOptionCast = previousVote.castedVotes[i];
+                survey.optionVotes[previousOptionCast.optionId] = survey.optionVotes[previousOptionCast.optionId].sub(previousOptionCast.stake);
+            }
+
+            // compute previously casted votes (i.e. substract non-used tokens from stake)
+            uint256 voterStake = token.balanceOfAt(msg.sender, survey.snapshotBlock);
+            uint256 previousParticipation = voterStake.sub(previousVote.castedVotes[0].stake);
+            // and remove it from total participation
+            survey.participation = survey.participation.sub(previousParticipation);
+
+            // reset previously voted options, if any
+            delete survey.votes[msg.sender];
         }
-
-        // voter removes their vote
-        for (uint256 i = 1; i <= previousVote.optionsCastedLength; i++) {
-            OptionCast storage previousOptionCast = previousVote.castedVotes[i];
-            survey.optionVotes[previousOptionCast.optionId] = survey.optionVotes[previousOptionCast.optionId].sub(previousOptionCast.stake);
-        }
-
-        // compute previously casted votes (i.e. substract non-used tokens from stake)
-        uint256 voterStake = token.balanceOfAt(msg.sender, survey.snapshotBlock);
-        uint256 previousParticipation = voterStake.sub(previousVote.castedVotes[0].stake);
-        // and remove it from total participation
-        survey.participation = survey.participation.sub(previousParticipation);
-
-        // reset previously voted options, if any
-        delete survey.votes[msg.sender];
     }
 
     /**
