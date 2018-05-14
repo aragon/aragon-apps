@@ -51,6 +51,7 @@ contract('Token Manager', accounts => {
     })
 
     it('initializating as transferable sets the token as transferable', async () => {
+        assert.isTrue(0)
         const transferable = true
         await token.enableTransfers(!transferable)
 
