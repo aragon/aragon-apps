@@ -1,4 +1,4 @@
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { assertInvalidOpcode, assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
 
@@ -47,7 +47,7 @@ contract('Survey app', accounts => {
       const events = receipt.logs.filter(x => x.event == 'ChangeMinParticipation')
 
       assert.equal(events.length, 1, 'should have emitted ChangeMinParticipation event')
-      assert.equal(await app.minAcceptParticipationPct(), 1, 'should have change acceptance participation')
+      assert.equal(await app.minParticipationPct(), 1, 'should have change acceptance participation')
     })
 
     it('cannot change minimum acceptance participation to 0', async () => {
@@ -297,7 +297,7 @@ contract('Survey app', accounts => {
     // this bad token has broken `totalSupplyAt`, returning always 1
     it('fails voting with more than 1 token because of wrong votingPower', async () => {
       const surveyId = createdSurveyId(await badApp.newSurvey('metadata', 10))
-      return assertRevert(async () => {
+      return assertInvalidOpcode(async () => {
         await badApp.voteOption(surveyId, 10, { from: holder19 })
       })
     })
