@@ -374,4 +374,26 @@ contract('Voting App', accounts => {
             })
         })
     })
+
+    context('isValuePct unit test', async () => {
+        let votingMock
+
+        before(async () => {
+            votingMock = await getContract('VotingMock').new()
+        })
+
+        it('tests total = 0', async () => {
+            const result1 = await votingMock.isValuePct(0, 0, pct16(50))
+            assert.equal(result1, false, "total 0 should always return false")
+            const result2 = await votingMock.isValuePct(1, 0, pct16(50))
+            assert.equal(result2, false, "total 0 should always return false")
+        })
+
+        it('tests value = 0', async () => {
+            const result1 = await votingMock.isValuePct(0, 10, pct16(50))
+            assert.equal(result1, false, "value 0 should false if pct is non-zero")
+            const result2 = await votingMock.isValuePct(0, 10, 0)
+            assert.equal(result2, true, "value 0 should return true if pcs is zero")
+        })
+    })
 })

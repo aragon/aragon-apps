@@ -285,10 +285,6 @@ contract Voting is IForwarder, AragonApp {
     */
     function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal pure returns (bool) {
         if (_total == 0) {
-            return true;
-        }
-
-        if (_value == 0) {
             return false;
         }
 
