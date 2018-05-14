@@ -9,8 +9,6 @@ import "@aragon/os/contracts/common/IForwarder.sol";
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 
-import "@aragon/os/contracts/lib/misc/Migrations.sol";
-
 
 contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes coverage crash (removes pure and interface doesnt match)
     using SafeMath for uint256;

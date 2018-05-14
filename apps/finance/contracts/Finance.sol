@@ -8,8 +8,6 @@ import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
 
 import "@aragon/apps-vault/contracts/IVaultConnector.sol";
 
-import "@aragon/os/contracts/lib/misc/Migrations.sol";
-
 
 contract Finance is AragonApp {
     using SafeMath for uint256;
