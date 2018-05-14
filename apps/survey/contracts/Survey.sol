@@ -158,18 +158,18 @@ contract Survey is AragonApp {
             // Voters don't specify that they're abstaining,
             // but we still keep track of this by reserving the first index of a survey's votes.
             // We subtract 1 from the indexes of the arrays passed in by the voter to account for this.
-            uint256 optionId = _optionIds[optionIndex-1];
-            uint256 stake = _stakes[optionIndex-1];
+            uint256 optionId = _optionIds[optionIndex - 1];
+            uint256 stake = _stakes[optionIndex - 1];
+
             require(optionId != ABSTAIN_VOTE && optionId <= survey.options);
             require(stake > 0);
+            // Let's avoid repeating an option by making sure that ascending order is preserved in
+            // the options array by checking that the current optionId is larger than the last one
+            // we added
+            require(survey.votes[msg.sender].castedVotes[optionIndex - 1].optionId < optionId);
 
             // register voter amount
-            // index 0 in options array is reserved for ABSTAIN_VOTE, so index will be 1 more
             survey.votes[msg.sender].castedVotes[optionIndex] = OptionCast({optionId: optionId, stake: stake});
-
-            // let's avoid repeating an option by
-            // making sure that ascending order is preserved in options array
-            require(survey.votes[msg.sender].castedVotes[optionIndex - 1].optionId < survey.votes[msg.sender].castedVotes[optionIndex].optionId);
 
             // add to total option support
             survey.optionPower[optionId] = survey.optionPower[optionId].add(stake);
