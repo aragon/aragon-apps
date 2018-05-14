@@ -30,9 +30,11 @@ contract Vault is AragonApp {
     * @param value Amount of tokens being transferred
     */
     function deposit(address token, address from, uint256 value) payable public {
+        require(value > 0);
+
         if (token == ETH) {
-            require(msg.value > 0 && msg.value == value);
-            require(msg.sender == from);
+            // Deposit is implicit in this case
+            require(msg.value == value && msg.sender == from);
         } else {
             require(ERC20(token).transferFrom(from, this, value));
         }
