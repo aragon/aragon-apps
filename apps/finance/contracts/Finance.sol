@@ -108,7 +108,7 @@ contract Finance is AragonApp {
             this.balance,
             "Ether transfer to Finance app"
         );
-        vault.deposit.value(this.balance)(ETH, this, this.balance, new bytes(0));
+        vault.deposit.value(this.balance)(ETH, this, this.balance);
     }
 
     /**
@@ -152,7 +152,7 @@ contract Finance is AragonApp {
         // and then approve them to vault
         ERC20(_token).approve(address(vault), _amount);
         // finally we can deposit them
-        vault.deposit(_token, this, _amount, new bytes(0));
+        vault.deposit(_token, this, _amount);
     }
 
     /**
@@ -318,7 +318,7 @@ contract Finance is AragonApp {
         // First we approve tokens to vault
         ERC20(_token).approve(address(vault), value);
         // then we can deposit them
-        vault.deposit(_token, this, value, new bytes(0));
+        vault.deposit(_token, this, value);
     }
 
     /**
@@ -510,7 +510,7 @@ contract Finance is AragonApp {
             _reference
         );
 
-        vault.transfer(_token, _receiver, _amount, new bytes(0));
+        vault.transfer(_token, _receiver, _amount);
     }
 
     function _recordIncomingTransaction(

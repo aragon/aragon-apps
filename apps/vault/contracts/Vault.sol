@@ -28,9 +28,8 @@ contract Vault is AragonApp {
     * @param token Address of the token being transferred
     * @param from Entity that currently owns the tokens
     * @param value Amount of tokens being transferred
-    * @param data (Currently unused for API comp) Extra data associated with the deposit
     */
-    function deposit(address token, address from, uint256 value, bytes data) payable public {
+    function deposit(address token, address from, uint256 value) payable public {
         if (token == ETH) {
             require(msg.value > 0 && msg.value == value);
             require(msg.sender == from);
@@ -42,17 +41,40 @@ contract Vault is AragonApp {
     }
 
     /**
+    * @notice Deposit `value` `token` to the vault
+    * @param token Address of the token being transferred
+    * @param from Entity that currently owns the tokens
+    * @param value Amount of tokens being transferred
+    * @param data Extra data associated with the deposit (currently unused)
+    */
+    function deposit(address token, address from, uint256 value, bytes data) payable public {
+        deposit(token, from, value);
+    }
+
+    /**
     * @notice Transfer `value` `token` from the Vault to `to`
     * @param token Address of the token being transferred
     * @param to Address of the recipient of tokens
     * @param value Amount of tokens being transferred
-    * @param data Extra data associated with the transfer (only allowed for ETH)
     */
-    function transfer(address token, address to, uint256 value, bytes data)
+    function transfer(address token, address to, uint256 value)
         authP(TRANSFER_ROLE, arr(address(token), to, value))
         external
     {
+        transfer(token, to, value, new bytes(0));
+    }
 
+    /**
+    * @notice Transfer `value` `token` from the Vault to `to`
+    * @param token Address of the token being transferred
+    * @param to Address of the recipient of tokens
+    * @param value Amount of tokens being transferred
+    * @param data Extra data associated with the transfer (only used for ETH)
+    */
+    function transfer(address token, address to, uint256 value, bytes data)
+        authP(TRANSFER_ROLE, arr(address(token), to, value))
+        public
+    {
         require(value > 0);
 
         if (token == ETH) {
