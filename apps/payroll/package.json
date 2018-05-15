@@ -1,12 +1,14 @@
 {
-  "name": "@aragon/future-apps-payroll",
+  "name": "@aragon/apps-payroll",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "compile": "truffle compile",
+    "lint": "solium --dir ./contracts",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
-    "lint": "solium --dir ./contracts",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
+    "truffle:dev": "node_modules/.bin/truffle dev",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh"
   },
   "keywords": [],
@@ -34,6 +36,6 @@
   },
   "dependencies": {
     "@aragon/apps-finance": "^1.0.0",
-    "@aragon/os": "^3.0.6"
+    "@aragon/os": "^3.1.4"
   }
 }
