@@ -79,7 +79,7 @@ contract Voting is IForwarder, AragonApp {
     * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^16) / 10^14`%
     * @param _minAcceptQuorumPct New acceptance quorum
     */
-    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) external {
+    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) isInitialized external {
         require(_minAcceptQuorumPct > 0);
         require(supportRequiredPct >= _minAcceptQuorumPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
@@ -114,7 +114,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
     */
-    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external {
+    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) isInitialized external {
         require(canVote(_voteId, msg.sender));
         _vote(
             _voteId,
@@ -128,7 +128,7 @@ contract Voting is IForwarder, AragonApp {
     * @notice Execute the result of vote #`_voteId`
     * @param _voteId Id for vote
     */
-    function executeVote(uint256 _voteId) external {
+    function executeVote(uint256 _voteId) isInitialized external {
         require(canExecute(_voteId));
         _executeVote(_voteId);
     }
