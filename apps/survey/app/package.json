@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aragon/ui": "file:../../../../aragon-ui",
+    "@aragon/ui": "^0.11.0",
     "date-fns": "^2.0.0-alpha.7",
     "onecolor": "^3.0.5",
     "popmotion-pose": "^1.4.4",
