@@ -1,0 +1,20 @@
+{
+  "presets": [
+    [
+      "env",
+      {
+        "modules": false,
+        "targets": {
+          "browsers": [">2%, last 1 edge versions, not ie > 0, not op_mini all"]
+        },
+        "useBuiltIns": false
+      }
+    ],
+    "stage-2"
+  ],
+  "plugins": [
+    ["styled-components", { "displayName": true }],
+    "transform-class-properties",
+    "transform-runtime"
+  ]
+}
