@@ -393,7 +393,7 @@ contract('Voting App', accounts => {
             const result1 = await votingMock.isValuePct(0, 10, pct16(50))
             assert.equal(result1, false, "value 0 should false if pct is non-zero")
             const result2 = await votingMock.isValuePct(0, 10, 0)
-            assert.equal(result2, true, "value 0 should return true if pcs is zero")
+            assert.equal(result2, true, "value 0 should return true if pct is zero")
         })
     })
 })
