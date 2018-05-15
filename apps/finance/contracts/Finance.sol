@@ -101,7 +101,7 @@ contract Finance is AragonApp {
      * @dev Sends ETH to Vault. Sends all the available balance.
      * @notice Allows to send ETH from this contract to Vault, to avoid locking them in contract forever.
      */
-    function () public payable {
+    function () isInitialized public payable {
         _recordIncomingTransaction(
             ETH,
             msg.sender,
@@ -165,7 +165,7 @@ contract Finance is AragonApp {
     * @param _operatorData Information attached to the transaction by the operator
     */
     /*
-    function tokensReceived(address _operator, address _from, address _to, uint _amount, bytes _userData, bytes _operatorData) transitionsPeriod external {
+    function tokensReceived(address _operator, address _from, address _to, uint _amount, bytes _userData, bytes _operatorData) transitionsPeriod isInitialized external {
         _recordIncomingTransaction(
             msg.sender,
             _from,
@@ -237,7 +237,7 @@ contract Finance is AragonApp {
     * @notice Change period duration to `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ''`, effective for next accounting period.
     * @param _periodDuration Duration in seconds for accounting periods
     */
-    function setPeriodDuration(uint64 _periodDuration) authP(CHANGE_PERIOD_ROLE, arr(uint256(_periodDuration), uint256(settings.periodDuration))) transitionsPeriod external {
+    function setPeriodDuration(uint64 _periodDuration) authP(CHANGE_PERIOD_ROLE, arr(uint256(_periodDuration), uint256(settings.periodDuration))) transitionsPeriod isInitialized external {
         require(_periodDuration >= 1 days);
         settings.periodDuration = _periodDuration;
         ChangePeriodDuration(_periodDuration);
@@ -248,7 +248,7 @@ contract Finance is AragonApp {
     * @param _token Address for token
     * @param _amount New budget amount
     */
-    function setBudget(address _token, uint256 _amount) authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token])) transitionsPeriod external {
+    function setBudget(address _token, uint256 _amount) authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token])) transitionsPeriod isInitialized external {
         settings.budgets[_token] = _amount;
         if (!settings.hasBudget[_token]) {
             settings.hasBudget[_token] = true;
@@ -260,7 +260,7 @@ contract Finance is AragonApp {
     * @notice Remove spending limit for `_token.symbol(): string`.
     * @param _token Address for token
     */
-    function removeBudget(address _token) authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token])) transitionsPeriod external {
+    function removeBudget(address _token) authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token])) transitionsPeriod isInitialized external {
         settings.hasBudget[_token] = false;
         SetBudget(_token, 0, false);
     }
@@ -270,7 +270,7 @@ contract Finance is AragonApp {
     * @notice Execute pending payment #`_paymentId`
     * @param _paymentId Identifier for payment
     */
-    function executePayment(uint256 _paymentId) authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, payments[_paymentId].amount)) external {
+    function executePayment(uint256 _paymentId) authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, payments[_paymentId].amount)) isInitialized external {
         require(nextPaymentTime(_paymentId) <= getTimestamp());
 
         _executePayment(_paymentId);
@@ -281,7 +281,7 @@ contract Finance is AragonApp {
     * @notice Execute pending payment #`_paymentId`
     * @param _paymentId Identifier for payment
     */
-    function receiverExecutePayment(uint256 _paymentId) external {
+    function receiverExecutePayment(uint256 _paymentId) isInitialized external {
         require(nextPaymentTime(_paymentId) <= getTimestamp());
         require(payments[_paymentId].receiver == msg.sender);
 
@@ -293,7 +293,7 @@ contract Finance is AragonApp {
     * @param _paymentId Identifier for payment
     * @param _disabled Whether it will be disabled or enabled
     */
-    function setPaymentDisabled(uint256 _paymentId, bool _disabled) authP(DISABLE_PAYMENTS_ROLE, arr(_paymentId)) external {
+    function setPaymentDisabled(uint256 _paymentId, bool _disabled) authP(DISABLE_PAYMENTS_ROLE, arr(_paymentId)) isInitialized external {
         payments[_paymentId].disabled = _disabled;
         ChangePaymentState(_paymentId, _disabled);
     }
@@ -330,7 +330,7 @@ contract Finance is AragonApp {
     * @return success Boolean indicating whether the accounting period is the correct one (if false,
     *                 maxTransitions was surpased and another call is needed)
     */
-    function tryTransitionAccountingPeriod(uint256 _maxTransitions) public returns (bool success) {
+    function tryTransitionAccountingPeriod(uint256 _maxTransitions) isInitialized public returns (bool success) {
         Period storage currentPeriod = periods[currentPeriodId()];
         uint256 timestamp = getTimestamp();
 
