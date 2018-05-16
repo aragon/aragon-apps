@@ -40,7 +40,7 @@
     "babel-register": "^6.26.0",
     "eth-gas-reporter": "^0.1.1",
     "ganache-cli": "^6.1.0",
-    "solidity-coverage": "0.3.5",
+    "solidity-coverage": "0.4.3",
     "solidity-sha3": "^0.4.1",
     "solium": "^1.0.4",
     "truffle": "4.0.5",
