@@ -283,7 +283,7 @@ contract TokenManager is ITokenController, AragonApp, IForwarder {
     *   |      .        |
     *   |    .          |
     *   +===+===========+---------+----------> time
-    *      Start       Clift    Vested
+    *      Start       Cliff    Vested
     */
     function calculateNonVestedTokens(
         uint256 tokens,
