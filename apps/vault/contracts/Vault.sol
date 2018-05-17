@@ -5,8 +5,6 @@ import "./VaultBase.sol"; // split made to avoid circular import
 import "./connectors/ERC20Connector.sol";
 import "./connectors/ETHConnector.sol";
 
-import "@aragon/os/contracts/lib/misc/Migrations.sol";
-
 
 contract Vault is VaultBase {
     struct TokenStandard {
