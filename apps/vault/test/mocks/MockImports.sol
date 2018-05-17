@@ -1,11 +1,6 @@
 pragma solidity 0.4.18;
 
-import "../migrations/Migrations.sol";
-
-import "@aragon/apps-vault/contracts/Vault.sol";
-import "@aragon/apps-vault/contracts/connectors/ETHConnector.sol";
-import "@aragon/apps-vault/contracts/connectors/ERC20Connector.sol";
-import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
+import "../../migrations/Migrations.sol";
 
 // You might think this file is a bit odd, but let me explain.
 // We only use some contracts in our tests, which means Truffle
@@ -19,6 +14,6 @@ import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
 //
 // You know which one I went for.
 
-contract TestFinance {
+contract MockImports {
   // ...
 }
