@@ -192,10 +192,6 @@ contract('Vault app', (accounts) => {
         await kernel.transferToVault(ETH)
         assert.equal((await getBalance(kernel.address)).valueOf(), 0, 'kernel should have 0 balance')
         assert.equal((await getBalance(defaultVault.address)).valueOf(), 1, 'default value should have 1 balance')
-
-        // Now make sure that if we try this on the vault, it fails
-        await vault.sendTransaction({ value: 1, gas: 31000 })
-        assert.equal((await getBalance(vault.address)).valueOf(), 1, 'vault should have 1 balance')
       })
 
       it('set up the default vault correctly to recover tokens from the kernel', async () => {
