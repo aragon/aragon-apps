@@ -2,6 +2,7 @@
   "name": "aragon-finance",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@aragon/client": "^1.0.0-beta.8",
     "@aragon/templates-tokens": "^1.1.1",

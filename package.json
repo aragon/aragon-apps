@@ -8,6 +8,7 @@
     "Oliver Nordbjerg <oliver@aragon.one>",
     "Brett Sun <brett@aragon.one>"
   ],
+  "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "devDependencies": {
     "coveralls": "^3.0.1",
     "ganache-cli": "^6.1.0",
