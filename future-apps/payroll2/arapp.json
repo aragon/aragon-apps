@@ -1,0 +1,17 @@
+{
+  "appName": "payroll2.aragonpm.eth",
+  "version": "1.0.0",
+  "roles": [
+    {
+      "name": "Increment the counter",
+      "id": "INCREMENT_ROLE",
+      "params": []
+    },
+    {
+      "name": "Increment the counter",
+      "id": "DECREMENT_ROLE",
+      "params": []
+    }
+  ],
+  "path": "contracts/CounterApp.sol"
+}

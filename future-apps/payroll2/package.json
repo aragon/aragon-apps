@@ -1,0 +1,30 @@
+{
+  "name": "app-name",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {
+    "@aragon/os": "^3.0.2",
+    "@aragon/client": "^1.0.0-beta.6",
+    "@aragon/ui": "^0.11.0",
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2",
+    "styled-components": "^3.2.6"
+  },
+  "devDependencies": {
+    "@aragon/cli": "^2.0.0",
+    "parcel-bundler": "^1.8.1",
+    "truffle": "^4.0.5"
+  },
+  "scripts": {
+    "start": "aragon run",
+    "test": "truffle test",
+    "compile": "truffle compile",
+    "sync-assets": "mkdir -p dist; rsync -rtu \"$(dirname $(node -p 'require.resolve(\"@aragon/ui\")'))/\" dist/aragon-ui",
+    "build:app": "parcel build app/index.html -d dist/ --public-url '.'",
+    "build:script": "parcel build app/script.js -d dist/",
+    "build": "npm run compile && npm run sync-assets && npm run build:app && npm run build:script",
+    "publish": "aragon publish"
+  },
+  "keywords": [],
+  "license": "GPL-3.0"
+}
