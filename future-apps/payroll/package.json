@@ -49,6 +49,7 @@
     "babel-plugin-styled-components": "^1.5.1",
     "babel-plugin-transform-runtime": "^6.23.0",
     "copy-to-clipboard": "^3.0.8",
+    "currency-formatter": "^1.4.2",
     "date-fns": "^2.0.0-alpha.7",
     "moment": "^2.22.1",
     "react": "^16.3.2",

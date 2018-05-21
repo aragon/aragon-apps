@@ -46,54 +46,9 @@ class Transfers extends React.Component {
   render() {
     const { displayedTransfers, selectedToken, selectedTransferType } = this.state;
 
-    // const { transactions, tokens } = this.props
+    const { transactions } = this.props;
 
-    const transactions = [
-      {
-        token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
-        isIncoming: false,
-        transactionHash: '0x09d846935dba964e33dcba4cd5',
-        amount: 3.0,
-        date: 1460714400,
-        exchangeRate: 43.302,
-        decimals: 4,
-        entity: 'none',
-        isIncoming: false,
-        reference: 'none',
-        status: 'Pending...',
-        symbol: 'EHT'
-      },
-      {
-        token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
-        isIncoming: false,
-        transactionHash: '0x09d846935dba964ebbdcba4cd5',
-        amount: 32.4747,
-        date: 1460714400,
-        exchangeRate: 94.302,
-        decimals: 4,
-        entity: 'none',
-        isIncoming: false,
-        reference: 'none',
-        status: 'Complete',
-        symbol: 'EHT'
-      },
-      {
-        token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
-        isIncoming: false,
-        transactionHash: '0x234846935dba964ebbdcba4cd5',
-        amount: 103.1,
-        date: 1460714400,
-        decimals: 4,
-        exchangeRate: 3.2,
-        entity: 'none',
-        isIncoming: false,
-        reference: 'none',
-        symbol: 'EHT',
-        status: 'Complete'
-      }
-    ];
-
-    const tokens = [{ symobl: 'ETH', decimals: 5, address: '0x00be01CAF657Ff277269f169bd5220A390f791f7' }];
+    const tokens = [{ symbol: 'ETH', decimals: 5, address: '0x00be01CAF657Ff277269f169bd5220A390f791f7' }];
 
     const filteredTransfers = this.getFilteredTransfers({
       tokens,
@@ -110,7 +65,9 @@ class Transfers extends React.Component {
       };
       return details;
     }, {});
+
     const filtersActive = selectedToken !== 0 || selectedTransferType !== 0;
+    
     return (
       <section>
         <Header>
@@ -130,8 +87,8 @@ class Transfers extends React.Component {
                 small={true}
                 startDatePlaceholderText={'00/00/00'}
                 endDatePlaceholderText={'00/00/00'}
-                showClearDates={false}                
-                numberOfMonths={1}                
+                showClearDates={false}
+                numberOfMonths={1}
               />
             </label>
             <label>
@@ -233,22 +190,12 @@ const FixedTable = styled(Table)`
   color: rgba(0, 0, 0, 0.75);
 `;
 
-const DateHeader = styled(TableHeader)`
-  
-`;
-const SourceRecipientHeader = styled(TableHeader)`
-  
-`;
-const ReferenceHeader = styled(TableHeader)`
-  
-`;
-const AmountHeader = styled(TableHeader)`
-  
-`;
+const DateHeader = styled(TableHeader)``;
+const SourceRecipientHeader = styled(TableHeader)``;
+const ReferenceHeader = styled(TableHeader)``;
+const AmountHeader = styled(TableHeader)``;
 
-const StatusHeader = styled(TableHeader)`
-  
-`;
+const StatusHeader = styled(TableHeader)``;
 
 const Footer = styled.div`
   display: flex;

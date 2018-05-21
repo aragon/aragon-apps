@@ -2,8 +2,23 @@ import React from 'react';
 import styled from 'styled-components';
 import { Text, theme, Button, Countdown } from '@aragon/ui';
 import { sciNot } from '../math-utils';
-
+import currencyFormatter from 'currency-formatter';
+import moment from 'moment';
 class AvaliableSalary extends React.Component {
+  
+    msToCountDown(timeInMs) {    
+    const CurrentDate = moment();
+    const LastPayment = moment.unix(1520380800);
+    let diff = CurrentDate.diff(LastPayment, 'ms');
+
+    const endDate = new Date(timeInMs);
+    return endDate;
+  }
+
+  formatMonies(amount) {
+    return currencyFormatter.format(amount, { code: 'USD' });
+  }
+
   render() {
     return (
       <AvaliableSalaryTitleGrid>
@@ -29,18 +44,19 @@ class AvaliableSalary extends React.Component {
         </HeaderCell>
 
         <WhiteCell border="1px 0px 1px 1px" style={{ paddingLeft: '22px', paddingTop: '27px', minWidth: '200px' }}>
-          <CountdownWStyle end={this.props.endDate} />
+          <CountdownWStyle end={this.msToCountDown(this.props.endDate)} />
         </WhiteCell>
         <WhiteCell border="1px 0px 1px 0px">
           <Text size="xxlarge" color="#21D48E">
-            {`+$${this.props.avaliableBalance}`}
+            {/* {`+$${this.props.avaliableBalance}`} */}
+            {this.formatMonies(this.props.avaliableBalance)}
           </Text>
         </WhiteCell>
         <WhiteCell border="1px 0px 1px 0px">
-          <Text size="xxlarge">{`$${this.props.totalTransfered}`}</Text>
+          <Text size="xxlarge">{this.formatMonies(this.props.totalTransfered)}</Text>
         </WhiteCell>
         <WhiteCell border="1px 1px 1px 0px">
-          <Text size="xxlarge">{`$${this.props.yrSalary}`}</Text>
+          <Text size="xxlarge">{this.formatMonies(this.props.yrSalary)}</Text>
         </WhiteCell>
       </AvaliableSalaryTitleGrid>
     );

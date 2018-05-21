@@ -8,11 +8,56 @@ import Holders from './screens/Holders'; //not working
 import SideBar2 from './components/SideBar2';
 import AvaliableSalary from './components/AvailableSalary';
 import './styles/datepicker.css';
-
+import moment from 'moment';
 import 'react-dates/initialize';
 
-const DAY_IN_MS = 1000 * 60 * 60 * 24;
+const DAY_IN_MS = 1000 * 60 * 60 * 24 * 5;
 const endDate = new Date(Date.now() + 5 * DAY_IN_MS);
+
+const transactions = [
+  {
+    token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
+    isIncoming: false,
+    transactionHash: '0x09d846935dba964e33dcba4cd5',
+    amount: 3.0,
+    date: 1460714400,
+    exchangeRate: 43.302,
+    decimals: 4,
+    entity: 'none',
+    isIncoming: false,
+    reference: 'none',
+    status: 'Pending...',
+    symbol: 'EHT'
+  },
+  {
+    token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
+    isIncoming: false,
+    transactionHash: '0x09d846935dba964ebbdcba4cd5',
+    amount: 32.4747,
+    date: 1460714400,
+    exchangeRate: 94.302,
+    decimals: 4,
+    entity: 'none',
+    isIncoming: false,
+    reference: 'none',
+    status: 'Complete',
+    symbol: 'EHT'
+  },
+  {
+    token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
+    isIncoming: false,
+    transactionHash: '0x234846935dba964ebbdcba4cd5',
+    amount: 103.1,
+    date: 1460714400,
+    decimals: 4,
+    exchangeRate: 3.2,
+    entity: 'none',
+    isIncoming: false,
+    reference: 'none',
+    symbol: 'EHT',
+    status: 'Complete'
+  }
+];
 
 export default class App extends React.Component {
   constructor() {
@@ -68,7 +113,7 @@ export default class App extends React.Component {
 
                 <SpacedBlock>
                   {/* <Transfers transactions={transactions} tokens={tokens} /> */}
-                  <Transfers />
+                  <Transfers transactions={transactions} />
                 </SpacedBlock>
               </Content>
             </Layout.ScrollWrapper>
