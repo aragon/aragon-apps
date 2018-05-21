@@ -53,7 +53,7 @@ class Transfers extends React.Component {
         isIncoming: false,
         transactionHash: '0x09d846935dba964ebbdcba4cd51d51f43660ddb9c2c76b4f4a0c354619978bc5',
         amount: 3.4747,
-        date: 43984397347398348,
+        date: 1460714400,
         decimals: 4,
         entity: 'none',
         isIncoming: false,
@@ -65,7 +65,7 @@ class Transfers extends React.Component {
         isIncoming: false,
         transactionHash: '0x09d846935dba964ebbdcba4cd51d51f43660ddb9c2c76b4f4a0c354619978bc5',
         amount: 3.4747,
-        date: 43984397347398348,
+        date: 1460714400,
         decimals: 4,
         entity: 'none',
         isIncoming: false,
@@ -77,7 +77,7 @@ class Transfers extends React.Component {
         isIncoming: false,
         transactionHash: '0x09d846935dba964ebbdcba4cd51d51f43660ddb9c2c76b4f4a0c354619978bc5',
         amount: 3.4747,
-        date: 43984397347398348,
+        date: 1460714400,
         decimals: 4,
         entity: 'none',
         isIncoming: false,
@@ -107,15 +107,15 @@ class Transfers extends React.Component {
     return (
       <section>
         <Header>
-          <Title>Transfers</Title>
+          <Title>Previous salary</Title>
           <div>
-            <label>
-              <Label>Token:</Label>
-              <DropDown items={['All', ...symbols]} active={selectedToken} onChange={this.handleTokenChange} />
-            </label>
             <label>
               <Label>Date Range:</Label>
               <DropDown />
+            </label>
+            <label>
+              <Label>Token:</Label>
+              <DropDown items={['All', ...symbols]} active={selectedToken} onChange={this.handleTokenChange} />
             </label>
           </div>
         </Header>

@@ -2,9 +2,10 @@ import React from 'react';
 import { AragonApp, Button, Text, observe, AppBar, SidePanel, theme, Countdown } from '@aragon/ui';
 import Aragon, { providers } from '@aragon/client';
 import styled from 'styled-components';
-import Transfers from './components/Transfers'
-import { networkContextType } from './lib/provideNetwork'
-
+import Transfers from './components/Transfers';
+import { networkContextType } from './lib/provideNetwork';
+import Holders from './screens/Holders'; //not working
+import SideBar2 from './components/SideBar2';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 const endDate = new Date(Date.now() + 5 * DAY_IN_MS);
@@ -44,82 +45,100 @@ export default class App extends React.Component {
               }
             />
           </Layout.FixedHeader>
-          <Layout.ScrollWrapper>
-            <Content>
-              <Text size="large">Available salary</Text>
-              <AvaliableSalaryTitleGrid>
-                <HeaderCell style={{ marginLeft: '20px' }}>
-                  <Text size="small" color={theme.textSecondary}>
-                    TIME SINCE LAST SALARY
-                  </Text>
-                </HeaderCell>
-                <HeaderCell>
-                  <Text size="small" color={theme.textSecondary}>
-                    AVALIABLE BALANCE
-                  </Text>
-                </HeaderCell>
-                <HeaderCell>
-                  <Text size="small" color={theme.textSecondary}>
-                    TOTAL TRANSFERED
-                  </Text>
-                </HeaderCell>
-                <HeaderCell>
-                  <Text size="small" color={theme.textSecondary}>
-                    YOUR YEARLY SALARY
-                  </Text>
-                </HeaderCell>
+          <GridLayout>
+            <Layout.ScrollWrapper>
+              <Content>
+                <Text size="large">Available salary</Text>
+                <AvaliableSalaryTitleGrid>
+                  <HeaderCell style={{ marginLeft: '20px' }}>
+                    <Text size="small" color={theme.textSecondary}>
+                      TIME SINCE LAST SALARY
+                    </Text>
+                  </HeaderCell>
+                  <HeaderCell>
+                    <Text size="small" color={theme.textSecondary}>
+                      AVALIABLE BALANCE
+                    </Text>
+                  </HeaderCell>
+                  <HeaderCell>
+                    <Text size="small" color={theme.textSecondary}>
+                      TOTAL TRANSFERED
+                    </Text>
+                  </HeaderCell>
+                  <HeaderCell>
+                    <Text size="small" color={theme.textSecondary}>
+                      YOUR YEARLY SALARY
+                    </Text>
+                  </HeaderCell>
 
-                <WhiteCell border="1px 0px 1px 1px" style={{ paddingLeft: '22px', paddingTop: '27px' }}>
-                  <CountdownWStyle end={endDate} />
-                </WhiteCell>
-                <WhiteCell border="1px 0px 1px 0px">
-                  <Text size="xxlarge" color="#21D48E">
-                    +$6,245.52
-                  </Text>
-                </WhiteCell>
-                <WhiteCell border="1px 0px 1px 0px">
-                  <Text size="xxlarge">$45,352.27</Text>
-                </WhiteCell>
-                <WhiteCell border="1px 1px 1px 0px">
-                  <Text size="xxlarge">$80,000</Text>
-                </WhiteCell>
-              </AvaliableSalaryTitleGrid>
+                  <WhiteCell border="1px 0px 1px 1px" style={{ paddingLeft: '22px', paddingTop: '27px' }}>
+                    <CountdownWStyle end={endDate} />
+                  </WhiteCell>
+                  <WhiteCell border="1px 0px 1px 0px">
+                    <Text size="xxlarge" color="#21D48E">
+                      +$6,245.52
+                    </Text>
+                  </WhiteCell>
+                  <WhiteCell border="1px 0px 1px 0px">
+                    <Text size="xxlarge">$45,352.27</Text>
+                  </WhiteCell>
+                  <WhiteCell border="1px 1px 1px 0px">
+                    <Text size="xxlarge">$80,000</Text>
+                  </WhiteCell>
+                </AvaliableSalaryTitleGrid>
 
-               <SpacedBlock>
-                {/* <Transfers transactions={transactions} tokens={tokens} /> */}
-                <Transfers />
-              </SpacedBlock>
+                <SpacedBlock>
+                  {/* <Transfers transactions={transactions} tokens={tokens} /> */}
+                  <Transfers />
+                </SpacedBlock>
 
-              <PreviousSalaryGrid>
+                {/* <PreviousSalaryGrid>
                 <Text size="large">Previous salary</Text>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <Text Text size="small" color={theme.textSecondary}>
                     DATE RANGE:
                   </Text>
-                  <input  style={{marginLeft:'8px'}} placeholder='00/00/00 - 00/00/00' />
+                  <input style={{ marginLeft: '8px' }} placeholder="00/00/00 - 00/00/00" />
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <Text Text size="small" color={theme.textSecondary}>
                     TOKEN:
                   </Text>
-                  <select style={{marginLeft:'8px'}}>
+                  <select style={{ marginLeft: '8px' }}>
                     <option value="all">All</option>
                     <option value="saab">Saab</option>
                     <option value="mercedes">Mercedes</option>
                     <option value="audi">Audi</option>
                   </select>
                 </div>
-              </PreviousSalaryGrid>
+              </PreviousSalaryGrid> */}
 
-              <div>
+                {/* <div>
                 <ObservedCount observable={this.state$} />
                 <Button onClick={() => this.app.decrement(1)}>Decrement</Button>
                 <Button onClick={() => this.app.increment(1)}>Increment</Button>
-              </div>
-            </Content>
-          </Layout.ScrollWrapper>
+              </div> */}
+              </Content>
+
+              {/* <Holders
+              holders={holders}
+              onAssignTokens={this.handleLaunchAssignTokens}
+              tokenDecimalsBase={tokenDecimalsBase}
+              tokenSupply={tokenSupply}
+              userAccount={userAccount}
+            /> */}
+            </Layout.ScrollWrapper>
+            <SideBarHolder>
+              <SideBar2
+                holders={[{ name: 'ETH', balance: 329 }, { name: 'ANT', balance: 31 }, { name: 'SNT', balance: 31 }]}
+                tokenSupply={10000}
+                tokenDecimalsBase={5}
+              />
+            </SideBarHolder>
+          </GridLayout>
         </Layout>
+
         <SidePanel opened={newTransferOpened} onClose={this.handleNewTransferClose} title="New Transfer">
           {/* <NewTransfer opened={newTransferOpened} onClose={this.handleNewTransferClose} /> */}
         </SidePanel>
@@ -128,16 +147,21 @@ export default class App extends React.Component {
   }
 }
 
-
 const SpacedBlock = styled.div`
   margin-top: 30px;
   &:first-child {
     margin-top: 0;
   }
-`
+`;
 
 const ListItem = styled.div`
   padding: 25px;
+`;
+
+const SideBarHolder = styled.div`
+  margin-right: 50px;
+  margin-top: 25px;
+  margin-left: -10px;
 `;
 
 const List = styled.div`
@@ -155,6 +179,10 @@ const Layout = styled.div`
   justify-content: stretch;
 `;
 
+const GridLayout = styled.div`
+  display: grid;
+  grid-template-columns: 2fr auto;
+`;
 const Content = styled.div`
   padding: 30px;
 `;
