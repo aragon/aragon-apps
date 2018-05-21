@@ -51,38 +51,44 @@ class Transfers extends React.Component {
       {
         token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
         isIncoming: false,
-        transactionHash: '0x09d846935dba964ebbdcba4cd51d51f43660ddb9c2c76b4f4a0c354619978bc5',
-        amount: 3.4747,
+        transactionHash: '0x09d846935dba964e33dcba4cd5',
+        amount: 3.00,
         date: 1460714400,
+        exchangeRate: 43.302,
         decimals: 4,
         entity: 'none',
         isIncoming: false,
         reference: 'none',
+        status: 'Pending...',
         symbol: 'EHT'
       },
       {
         token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
         isIncoming: false,
-        transactionHash: '0x09d846935dba964ebbdcba4cd51d51f43660ddb9c2c76b4f4a0c354619978bc5',
-        amount: 3.4747,
+        transactionHash: '0x09d846935dba964ebbdcba4cd5',
+        amount: 32.4747,
         date: 1460714400,
+        exchangeRate: 94.302,
         decimals: 4,
         entity: 'none',
         isIncoming: false,
         reference: 'none',
+        status: 'Complete',
         symbol: 'EHT'
       },
       {
         token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
         isIncoming: false,
-        transactionHash: '0x09d846935dba964ebbdcba4cd51d51f43660ddb9c2c76b4f4a0c354619978bc5',
-        amount: 3.4747,
+        transactionHash: '0x234846935dba964ebbdcba4cd5',
+        amount: 103.1,
         date: 1460714400,
         decimals: 4,
+        exchangeRate: 3.20,
         entity: 'none',
         isIncoming: false,
         reference: 'none',
-        symbol: 'EHT'
+        symbol: 'EHT',
+        status: 'Complete'
       }
     ];
 
@@ -135,10 +141,11 @@ class Transfers extends React.Component {
             <FixedTable
               header={
                 <TableRow>
-                  <DateHeader title="Date" />
-                  <SourceRecipientHeader title="Source / Recipient" />
-                  <ReferenceHeader title="Reference" />
-                  <AmountHeader title="Amount" align="right" />
+                  <DateHeader title="DATE" />
+                  <StatusHeader title="STATUS" />
+                  <SourceRecipientHeader title="TRANSACTION ADDRESS" />
+                  <AmountHeader title="AMOUNT" align="right" />
+                  <AmountHeader title="EXCHANGE RATE" align="right" />
                   <TableHeader />
                 </TableRow>
               }
@@ -215,12 +222,16 @@ const DateHeader = styled(TableHeader)`
   width: 12%;
 `;
 const SourceRecipientHeader = styled(TableHeader)`
-  width: 40%;
+  width: 36%;
 `;
 const ReferenceHeader = styled(TableHeader)`
   width: 100%;
 `;
 const AmountHeader = styled(TableHeader)`
+  width: 0;
+`;
+
+const StatusHeader = styled(TableHeader)`
   width: 0;
 `;
 
