@@ -105,7 +105,7 @@ class SideBar2 extends React.Component {
             ))}
           </ul>
           <ButtonHolder>
-            <Button mode='secondary'>Edit salary allocation</Button>
+            <Button  onClick={this.props.openSlider} mode='secondary'>Edit salary allocation</Button>
           </ButtonHolder>
         </Part>
       </Main>

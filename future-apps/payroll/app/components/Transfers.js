@@ -4,6 +4,7 @@ import { compareDesc } from 'date-fns/esm';
 import { Button, Table, TableHeader, TableRow, DropDown, theme } from '@aragon/ui';
 import { addressesEqual, toChecksumAddress } from '../web3-utils';
 import TransferRow from './TransferRow';
+import { DateRangePicker, SingleDatePicker, DayPickerRangeController } from 'react-dates';
 
 const initialState = {
   selectedToken: 0,
@@ -52,7 +53,7 @@ class Transfers extends React.Component {
         token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
         isIncoming: false,
         transactionHash: '0x09d846935dba964e33dcba4cd5',
-        amount: 3.00,
+        amount: 3.0,
         date: 1460714400,
         exchangeRate: 43.302,
         decimals: 4,
@@ -83,7 +84,7 @@ class Transfers extends React.Component {
         amount: 103.1,
         date: 1460714400,
         decimals: 4,
-        exchangeRate: 3.20,
+        exchangeRate: 3.2,
         entity: 'none',
         isIncoming: false,
         reference: 'none',
@@ -117,7 +118,21 @@ class Transfers extends React.Component {
           <div>
             <label>
               <Label>Date Range:</Label>
-              <DropDown />
+
+              <DateRangePicker
+                startDate={this.state.startDate} // momentPropTypes.momentObj or null,
+                startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
+                endDate={this.state.endDate} // momentPropTypes.momentObj or null,
+                endDateId="your_unique_end_date_id" // PropTypes.string.isRequired,
+                onDatesChange={({ startDate, endDate }) => this.setState({ startDate, endDate })} // PropTypes.func.isRequired,
+                focusedInput={this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
+                onFocusChange={focusedInput => this.setState({ focusedInput })} // PropTypes.func.isRequired,
+                small={true}
+                startDatePlaceholderText={'00/00/00'}
+                endDatePlaceholderText={'00/00/00'}
+                showClearDates={false}                
+                numberOfMonths={1}                
+              />
             </label>
             <label>
               <Label>Token:</Label>
@@ -219,20 +234,20 @@ const FixedTable = styled(Table)`
 `;
 
 const DateHeader = styled(TableHeader)`
-  width: 12%;
+  
 `;
 const SourceRecipientHeader = styled(TableHeader)`
-  width: 36%;
+  
 `;
 const ReferenceHeader = styled(TableHeader)`
-  width: 100%;
+  
 `;
 const AmountHeader = styled(TableHeader)`
-  width: 0;
+  
 `;
 
 const StatusHeader = styled(TableHeader)`
-  width: 0;
+  
 `;
 
 const Footer = styled.div`

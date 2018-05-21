@@ -1,11 +1,15 @@
 import React from 'react';
-import { AragonApp, Button, Text, observe, AppBar, SidePanel, theme, Countdown } from '@aragon/ui';
+import { AragonApp, Button, Text, observe, AppBar, SidePanel, theme, Countdown, Info, DropDown } from '@aragon/ui';
 import Aragon, { providers } from '@aragon/client';
 import styled from 'styled-components';
 import Transfers from './components/Transfers';
 import { networkContextType } from './lib/provideNetwork';
 import Holders from './screens/Holders'; //not working
 import SideBar2 from './components/SideBar2';
+import AvaliableSalary from './components/AvailableSalary';
+import './styles/datepicker.css';
+
+import 'react-dates/initialize';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 const endDate = new Date(Date.now() + 5 * DAY_IN_MS);
@@ -19,7 +23,9 @@ export default class App extends React.Component {
   }
 
   state = {
-    newTransferOpened: false
+    newTransferOpened: false,
+    activeItem: 0,
+    items: ['Wandering Thunder', 'Black Wildflower', 'Ancient Paper']
   };
 
   handleNewTransferOpen = () => {
@@ -29,8 +35,11 @@ export default class App extends React.Component {
     this.setState({ newTransferOpened: false });
   };
 
+  handleChange(index) {
+    this.setState({ activeItem: index });
+  }
+
   render() {
-    console.log(this.state.newTransferOpened);
     let { newTransferOpened } = this.state;
     return (
       <AragonApp>
@@ -49,98 +58,41 @@ export default class App extends React.Component {
             <Layout.ScrollWrapper>
               <Content>
                 <Text size="large">Available salary</Text>
-                <AvaliableSalaryTitleGrid>
-                  <HeaderCell style={{ marginLeft: '20px' }}>
-                    <Text size="small" color={theme.textSecondary}>
-                      TIME SINCE LAST SALARY
-                    </Text>
-                  </HeaderCell>
-                  <HeaderCell>
-                    <Text size="small" color={theme.textSecondary}>
-                      AVALIABLE BALANCE
-                    </Text>
-                  </HeaderCell>
-                  <HeaderCell>
-                    <Text size="small" color={theme.textSecondary}>
-                      TOTAL TRANSFERED
-                    </Text>
-                  </HeaderCell>
-                  <HeaderCell>
-                    <Text size="small" color={theme.textSecondary}>
-                      YOUR YEARLY SALARY
-                    </Text>
-                  </HeaderCell>
 
-                  <WhiteCell border="1px 0px 1px 1px" style={{ paddingLeft: '22px', paddingTop: '27px' }}>
-                    <CountdownWStyle end={endDate} />
-                  </WhiteCell>
-                  <WhiteCell border="1px 0px 1px 0px">
-                    <Text size="xxlarge" color="#21D48E">
-                      +$6,245.52
-                    </Text>
-                  </WhiteCell>
-                  <WhiteCell border="1px 0px 1px 0px">
-                    <Text size="xxlarge">$45,352.27</Text>
-                  </WhiteCell>
-                  <WhiteCell border="1px 1px 1px 0px">
-                    <Text size="xxlarge">$80,000</Text>
-                  </WhiteCell>
-                </AvaliableSalaryTitleGrid>
+                <AvaliableSalary
+                  endDate={endDate}
+                  avaliableBalance={'5,902.54'}
+                  totalTransfered={'45,352.27'}
+                  yrSalary={'80,000'}
+                />
 
                 <SpacedBlock>
                   {/* <Transfers transactions={transactions} tokens={tokens} /> */}
                   <Transfers />
                 </SpacedBlock>
-
-                {/* <PreviousSalaryGrid>
-                <Text size="large">Previous salary</Text>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Text Text size="small" color={theme.textSecondary}>
-                    DATE RANGE:
-                  </Text>
-                  <input style={{ marginLeft: '8px' }} placeholder="00/00/00 - 00/00/00" />
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Text Text size="small" color={theme.textSecondary}>
-                    TOKEN:
-                  </Text>
-                  <select style={{ marginLeft: '8px' }}>
-                    <option value="all">All</option>
-                    <option value="saab">Saab</option>
-                    <option value="mercedes">Mercedes</option>
-                    <option value="audi">Audi</option>
-                  </select>
-                </div>
-              </PreviousSalaryGrid> */}
-
-                {/* <div>
-                <ObservedCount observable={this.state$} />
-                <Button onClick={() => this.app.decrement(1)}>Decrement</Button>
-                <Button onClick={() => this.app.increment(1)}>Increment</Button>
-              </div> */}
               </Content>
-
-              {/* <Holders
-              holders={holders}
-              onAssignTokens={this.handleLaunchAssignTokens}
-              tokenDecimalsBase={tokenDecimalsBase}
-              tokenSupply={tokenSupply}
-              userAccount={userAccount}
-            /> */}
             </Layout.ScrollWrapper>
             <SideBarHolder>
               <SideBar2
-                holders={[{ name: 'ETH', balance: 329 }, { name: 'ANT', balance: 31 }, { name: 'SNT', balance: 31 }]}
+                holders={[
+                  { name: 'ETH', balance: 1329 },
+                  { name: 'ANT', balance: 3321 },
+                  { name: 'SNT', balance: 1131 }
+                ]}
                 tokenSupply={10000}
                 tokenDecimalsBase={5}
+                openSlider={this.handleNewTransferOpen}
               />
             </SideBarHolder>
           </GridLayout>
         </Layout>
 
-        <SidePanel opened={newTransferOpened} onClose={this.handleNewTransferClose} title="New Transfer">
-          {/* <NewTransfer opened={newTransferOpened} onClose={this.handleNewTransferClose} /> */}
+        <SidePanel opened={newTransferOpened} onClose={this.handleNewTransferClose} title="Edit salary allocation">
+          <Info.Action title="Choose which tokens you get paid in">
+            You can add as many tokens as you like, as long as your DAO has these tokens.
+          </Info.Action>
+
+          <DropDown items={this.state.items} active={this.state.activeItem} onChange={this.handleChange} />
         </SidePanel>
       </AragonApp>
     );
@@ -181,6 +133,7 @@ const Layout = styled.div`
 
 const GridLayout = styled.div`
   display: grid;
+  height: 100vh;
   grid-template-columns: 2fr auto;
 `;
 const Content = styled.div`
