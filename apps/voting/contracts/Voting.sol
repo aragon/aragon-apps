@@ -48,7 +48,7 @@ contract Voting is IForwarder, AragonApp {
     event ChangeMinQuorum(uint256 minAcceptQuorumPct);
 
     /**
-    * @notice Initializes Voting app with `_token.symbol(): string` for governance, minimum support of `(_supportRequiredPct - _supportRequiredPct % 10^14) / 10^16`, minimum acceptance quorum of `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^14) / 10^16` and vote duations of `(_voteTime - _voteTime % 86400) / 86400` day `_voteTime >= 172800 ? 's' : ''`
+    * @notice Initializes Voting app with `_token.symbol(): string` for governance, minimum support of `(_supportRequiredPct - _supportRequiredPct % 10^16) / 10^14`, minimum acceptance quorum of `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^16) / 10^14` and vote duations of `(_voteTime - _voteTime % 86400) / 86400` day `_voteTime >= 172800 ? 's' : ''`
     * @param _token MiniMeToken Address that will be used as governance token
     * @param _supportRequiredPct Percentage of yeas in casted votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
     * @param _minAcceptQuorumPct Percentage of yeas in total possible votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
@@ -76,10 +76,10 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^14) / 10^16`%
+    * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^16) / 10^14`%
     * @param _minAcceptQuorumPct New acceptance quorum
     */
-    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) external {
+    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) isInitialized external {
         require(_minAcceptQuorumPct > 0);
         require(supportRequiredPct >= _minAcceptQuorumPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
@@ -114,7 +114,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
     */
-    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external {
+    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) isInitialized external {
         require(canVote(_voteId, msg.sender));
         _vote(
             _voteId,
@@ -128,7 +128,7 @@ contract Voting is IForwarder, AragonApp {
     * @notice Execute the result of vote #`_voteId`
     * @param _voteId Id for vote
     */
-    function executeVote(uint256 _voteId) external {
+    function executeVote(uint256 _voteId) isInitialized external {
         require(canExecute(_voteId));
         _executeVote(_voteId);
     }
@@ -277,20 +277,19 @@ contract Voting is IForwarder, AragonApp {
     }
 
     function _isVoteOpen(Vote storage vote) internal view returns (bool) {
-        return uint64(now) < (vote.startDate.add(voteTime)) && !vote.executed;
+        return uint64(now) < vote.startDate.add(voteTime) && !vote.executed;
     }
 
     /**
     * @dev Calculates whether `_value` is at least a percentage `_pct` of `_total`
     */
     function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal pure returns (bool) {
-        if (_value == 0 && _total > 0)
+        if (_total == 0) {
             return false;
+        }
 
-        uint256 m = _total.mul(_pct);
-        uint256 v = m / PCT_BASE;
+        uint256 computedPct = _value.mul(PCT_BASE) / _total;
 
-        // If division is exact, allow same value, otherwise require value to be greater
-        return m % PCT_BASE == 0 ? _value >= v : _value > v;
+        return computedPct >= _pct;
     }
 }

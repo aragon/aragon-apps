@@ -12,7 +12,7 @@ import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes coverage crash (removes pure and interface doesnt match)
+contract TokenManager is ITokenController, AragonApp, IForwarder {
     using SafeMath for uint256;
 
     MiniMeToken public token;
@@ -154,7 +154,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _holder Address getting vesting revoked
     * @param _vestingId Numeric id of the vesting
     */
-    function revokeVesting(address _holder, uint256 _vestingId) authP(REVOKE_VESTINGS_ROLE, arr(_holder)) external {
+    function revokeVesting(address _holder, uint256 _vestingId) authP(REVOKE_VESTINGS_ROLE, arr(_holder)) isInitialized external {
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 
@@ -181,7 +181,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @dev IForwarder interface conformance. Forwards any token holder action.
     * @param _evmScript Script being executed
     */
-    function forward(bytes _evmScript) public {
+    function forward(bytes _evmScript) isInitialized public {
         require(canForward(msg.sender, _evmScript));
         bytes memory input = new bytes(0); // TODO: Consider input for this
         address[] memory blacklist = new address[](1);
@@ -215,7 +215,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     * @param _amount The amount of the transfer
     * @return False if the controller does not authorize the transfer
     */
-    function onTransfer(address _from, address _to, uint _amount) public returns (bool) {
+    function onTransfer(address _from, address _to, uint _amount) isInitialized public returns (bool) {
         require(msg.sender == address(token));
 
         bool includesTokenManager = _from == address(this) || _to == address(this);
@@ -285,7 +285,7 @@ contract TokenManager is ITokenController, AragonApp { // ,IForwarder makes cove
     *   |      .        |
     *   |    .          |
     *   +===+===========+---------+----------> time
-    *      Start       Clift    Vested
+    *      Start       Cliff    Vested
     */
     function calculateNonVestedTokens(
         uint256 tokens,
