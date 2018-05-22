@@ -65,7 +65,7 @@ export const surveys = [
   },
 ].map((survey, i) => {
   const historyLength =
-    survey.endDate < new Date() ? 16 : 10 // + Math.floor(Math.random() * 10)
+    survey.endDate < new Date() ? 16 : 5 + Math.floor(Math.random() * 5)
   const history = [...new Array(historyLength)].map((_, i, history) =>
     historyPoints(history[i - 1] || new Array(survey.options.length).fill(0.5))
   )
