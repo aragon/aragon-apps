@@ -100,9 +100,11 @@ class SurveyDetails extends React.Component {
                     style={{ opacity: progress.interpolate(p => p) }}
                   >
                     <SectionTitle>Web Link</SectionTitle>
-                    <p>
-                      <a href={survey.url}>{survey.url}</a>
-                    </p>
+                    <UrlBlock>
+                      <a title={survey.url} href={survey.url}>
+                        {survey.url}
+                      </a>
+                    </UrlBlock>
                   </animated.section>
                 ),
                 ({ progress }) => (
@@ -187,8 +189,15 @@ const VoteButtonWrapper = styled.div`
   justify-content: flex-end;
 `
 
+const UrlBlock = styled.div`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: ${theme.accent};
+`
+
 const Cols = styled.div`
-  @media (min-width: 800px) {
+  @media (min-width: 1100px) {
     display: flex;
     width: 100%;
     > div {

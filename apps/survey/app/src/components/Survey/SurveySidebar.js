@@ -22,7 +22,8 @@ class SurveySidebar extends React.Component {
 }
 
 const Part = styled.div`
-  margin-bottom: 15px;
+  max-width: 400px;
+  margin: 0 auto 15px;
 `
 
 const Title = styled.h1`
