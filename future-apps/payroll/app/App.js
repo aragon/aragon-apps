@@ -10,6 +10,7 @@ import AvaliableSalary from './components/AvailableSalary';
 import './styles/datepicker.css';
 import moment from 'moment';
 import 'react-dates/initialize';
+import SidePanelContent from './components/SidePanelContent';
 
 const fiveDaysAgo = 1000 * 60 * 60 * 24 * 5;
 
@@ -67,8 +68,7 @@ export default class App extends React.Component {
 
   state = {
     newTransferOpened: false,
-    activeItem: 0,
-    items: ['Wandering Thunder', 'Black Wildflower', 'Ancient Paper']
+    activeItem: 0
   };
 
   handleNewTransferOpen = () => {
@@ -77,10 +77,6 @@ export default class App extends React.Component {
   handleNewTransferClose = () => {
     this.setState({ newTransferOpened: false });
   };
-
-  handleChange(index) {
-    this.setState({ activeItem: index });
-  }
 
   render() {
     let { newTransferOpened } = this.state;
@@ -91,7 +87,7 @@ export default class App extends React.Component {
             <AppBar
               title="Payroll"
               endContent={
-                <Button mode="strong" onClick={this.handleNewTransferOpen}>
+                <Button mode="strong" onClick={()=>console.log('hi')}>
                   Request salary
                 </Button>
               }
@@ -106,13 +102,12 @@ export default class App extends React.Component {
                   targetDate={fiveDaysAgo}
                   avaliableBalance={5902.54}
                   totalTransfered={45352.27}
-                  yrSalary={80000.00}
+                  yrSalary={80000.0}
                 />
 
-                <SpacedBlock>                  
+                <SpacedBlock>
                   <Transfers transactions={transactions} />
                 </SpacedBlock>
-
               </Content>
             </Layout.ScrollWrapper>
             <SideBarHolder>
@@ -131,11 +126,7 @@ export default class App extends React.Component {
         </Layout>
 
         <SidePanel opened={newTransferOpened} onClose={this.handleNewTransferClose} title="Edit salary allocation">
-          <Info.Action title="Choose which tokens you get paid in">
-            You can add as many tokens as you like, as long as your DAO has these tokens.
-          </Info.Action>
-
-          <DropDown items={this.state.items} active={this.state.activeItem} onChange={this.handleChange} />
+          <SidePanelContent />
         </SidePanel>
       </AragonApp>
     );

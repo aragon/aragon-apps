@@ -614,7 +614,8 @@
   font-weight: 200;
   font-size: 19px;
   line-height: 24px;
-  color: #484848;
+  /* color: #484848; */
+  color: black;
   background-color: #fff;
   width: 100%;
   padding: 11px 11px 9px;
