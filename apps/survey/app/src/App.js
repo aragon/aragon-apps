@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { AppBar, AppView, AragonApp, Badge, Button } from '@aragon/ui'
-import { Spring, animated } from 'react-spring'
+import { Transition, animated } from 'react-spring'
 import NewSurveyPanel from './components/NewSurveyPanel/NewSurveyPanel'
 import Survey from './components/Survey/Survey'
 import Surveys from './components/Surveys/Surveys'
@@ -16,6 +16,9 @@ class App extends React.Component {
     openedSurveyRect: {},
     showNewSurveyPanel: false,
     ...(typeof demoState !== 'undefined' ? demoState : {}),
+  }
+  getSurvey = id => {
+    return this.state.surveys.find(survey => survey.id === id)
   }
   handleOpenSurvey = id => {
     // Try to get the card rectangle before opening it
@@ -43,25 +46,21 @@ class App extends React.Component {
       showNewSurveyPanel,
       surveys,
     } = this.state
-    const openedSurvey = surveys.find(survey => survey.id === openedSurveyId)
+    const openedSurvey = this.getSurvey(openedSurveyId)
     return (
       <AragonApp publicUrl="/aragon-ui/">
         <AppView appBar={this.renderAppBar()}>
-          <Spring
-            from={{ showProgress: 1 }}
-            to={{ showProgress: openedSurveyId ? 0 : 1 }}
+          <Transition
+            from={{ showProgress: 0 }}
+            enter={{ showProgress: 1 }}
+            leave={{ showProgress: 0 }}
             native
+            onOpenSurvey={this.handleOpenSurvey}
+            onCardRef={this.handleCardRef}
+            surveys={surveys}
           >
-            {({ showProgress }) => (
-              <animated.div style={{ opacity: showProgress }}>
-                <Surveys
-                  surveys={surveys}
-                  onOpenSurvey={this.handleOpenSurvey}
-                  onCardRef={this.handleCardRef}
-                />
-              </animated.div>
-            )}
-          </Spring>
+            {!openedSurvey && SurveysWrapper}
+          </Transition>
           <Survey
             survey={openedSurvey}
             transitionFrom={openedSurveyRect}
@@ -95,6 +94,16 @@ class App extends React.Component {
     )
   }
 }
+
+const SurveysWrapper = ({ showProgress, surveys, onOpenSurvey, onCardRef }) => (
+  <animated.div style={{ opacity: showProgress }}>
+    <Surveys
+      surveys={surveys}
+      onOpenSurvey={onOpenSurvey}
+      onCardRef={onCardRef}
+    />
+  </animated.div>
+)
 
 const AppBarTitle = styled.span`
   display: flex;
