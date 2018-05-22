@@ -4,7 +4,7 @@
   "description": "Beta template for v0.5 Aragon orgs",
   "main": "index.js",
   "scripts": {
-    "prepublish": "truffle compile && node scripts/extract-abis.js",
+    "prepublishOnly": "truffle compile && node scripts/extract-abis.js",
     "deploy:rinkeby": "truffle migrate --network rinkeby --reset",
     "deploy:rpc": "truffle migrate --network rpc --reset",
     "deploy:devnet": "truffle migrate --network devnet --reset",
