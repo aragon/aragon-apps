@@ -34,7 +34,7 @@ class Survey extends React.Component {
         })
         this._detailsWrapperEl.scrollIntoView({
           behavior: 'smooth',
-          block: 'nearest',
+          block: 'start',
         })
       }
     }
