@@ -1,21 +1,26 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Text } from '@aragon/ui'
-import posed from 'react-pose'
+import { animated } from 'react-spring'
 
-class SurveyCardOption extends React.Component {
+class SurveyOption extends React.Component {
   render() {
-    const { label, value } = this.props
+    const { label, value, showProgress } = this.props
     return (
       <Main>
         <Labels>
           <Text size="xsmall">{label}</Text>
           <Text size="xsmall" color="#98A0A2">
-            {value * 100}%
+            {Math.round(value * 1000) / 10}%
           </Text>
         </Labels>
         <BarWrapper>
-          <Bar style={{ width: `calc(100% * ${value})` }} />
+          <Bar
+            style={{
+              width: `calc(100% * ${value})`,
+              transform: showProgress.interpolate(t => `scaleX(${t})`),
+            }}
+          />
         </BarWrapper>
       </Main>
     )
@@ -40,13 +45,10 @@ const BarWrapper = styled.div`
   border-radius: 2px;
 `
 
-const Bar = posed(styled.div`
+const Bar = styled(animated.div)`
   height: 6px;
   background: #21d48e;
   transform-origin: 0 0;
-`)({
-  show: { scaleX: 1 },
-  hide: { scaleX: 0 },
-})
+`
 
-export default SurveyCardOption
+export default SurveyOption
