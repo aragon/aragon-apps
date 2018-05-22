@@ -14,7 +14,9 @@ const initialState = {
 
 class Transfers extends React.Component {
   state = {
-    ...initialState
+    ...initialState,
+    startDate: null,
+    endDate: null
   };
   componentDidMount() {
     this.setState({ selectedToken: 0 });
@@ -37,6 +39,10 @@ class Transfers extends React.Component {
     }));
   };
 
+  filterDateRange = () => {
+    
+  }
+
   // Filter transfer based on the selected filters
   getFilteredTransfers({ tokens, transactions, selectedToken, selectedTransferType }) {
     return transactions.filter(
@@ -44,7 +50,7 @@ class Transfers extends React.Component {
     );
   }
   render() {
-    const { displayedTransfers, selectedToken, selectedTransferType } = this.state;
+    const { displayedTransfers, selectedToken, selectedTransferType, startDate, endDate } = this.state;
 
     const { transactions } = this.props;
 
@@ -56,6 +62,9 @@ class Transfers extends React.Component {
       selectedToken,
       selectedTransferType
     });
+
+    console.log('filteredTransfers ', filteredTransfers);
+
     const symbols = tokens.map(({ symbol }) => symbol);
 
     const tokenDetails = tokens.reduce((details, { address, decimals, symbol }) => {
@@ -67,7 +76,7 @@ class Transfers extends React.Component {
     }, {});
 
     const filtersActive = selectedToken !== 0 || selectedTransferType !== 0;
-    
+
     return (
       <section>
         <Header>
@@ -89,6 +98,9 @@ class Transfers extends React.Component {
                 endDatePlaceholderText={'00/00/00'}
                 showClearDates={false}
                 numberOfMonths={1}
+                onDatesChange={({ startDate, endDate }) => this.setState({ startDate, endDate })} // PropTypes.func.isRequired,
+                isOutsideRange={() => false}
+                displayFormat={'DD/MM/YY'}
               />
             </label>
             <label>
@@ -123,6 +135,23 @@ class Transfers extends React.Component {
               }
             >
               {filteredTransfers
+                .filter(transfer => {
+                  if (!startDate && !endDate) {
+                    return true;
+                  } else if (
+                    startDate &&
+                    endDate &&
+                    transfer.date > startDate.unix() &&
+                    transfer.date < endDate.unix()
+                  ) {
+                    return true;
+                  } else if (startDate && !endDate && transfer.date > startDate.unix()) {
+                    return true;
+                  } else if (endDate && !startDate && transfer.date < endDate.unix()) {
+                    return true;
+                  }
+                  return false;
+                })
                 .slice(0, displayedTransfers)
                 .sort(({ date: dateLeft }, { date: dateRight }) =>
                   // Sort by date descending

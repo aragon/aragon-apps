@@ -2,24 +2,26 @@ import React from 'react';
 import styled from 'styled-components';
 import { Text, theme, Button, Countdown } from '@aragon/ui';
 import { sciNot } from '../math-utils';
-import currencyFormatter from 'currency-formatter';
-import moment from 'moment';
+import { formatTokenAmount } from '../lib/utils';
+
 class AvaliableSalary extends React.Component {
-  
-    msToCountDown(timeInMs) {    
-    const CurrentDate = moment();
-    const LastPayment = moment.unix(1520380800);
-    let diff = CurrentDate.diff(LastPayment, 'ms');
-
-    const endDate = new Date(timeInMs);
-    return endDate;
+  msToCountDown(timeInMs) {
+    return new Date(Date.now() - timeInMs);
   }
 
-  formatMonies(amount) {
-    return currencyFormatter.format(amount, { code: 'USD' });
-  }
+  splitAmount = amount => {    
+    const [integer, fractional] = formatTokenAmount(amount).split('.');
+    return (
+      <span>
+        <span className="integer">{integer}</span>
+        {fractional && <span className="fractional">.{fractional}</span>}
+      </span>
+    );
+  };
 
   render() {
+    const { avaliableBalance, endDate, totalTransfered, yrSalary, targetDate } = this.props;
+
     return (
       <AvaliableSalaryTitleGrid>
         <HeaderCell style={{ marginLeft: '20px' }}>
@@ -44,19 +46,22 @@ class AvaliableSalary extends React.Component {
         </HeaderCell>
 
         <WhiteCell border="1px 0px 1px 1px" style={{ paddingLeft: '22px', paddingTop: '27px', minWidth: '200px' }}>
-          <CountdownWStyle end={this.msToCountDown(this.props.endDate)} />
+          <CountdownWStyle end={this.msToCountDown(targetDate)} />
         </WhiteCell>
         <WhiteCell border="1px 0px 1px 0px">
           <Text size="xxlarge" color="#21D48E">
-            {/* {`+$${this.props.avaliableBalance}`} */}
-            {this.formatMonies(this.props.avaliableBalance)}
+            <Amount>${this.splitAmount(avaliableBalance.toFixed(2))}</Amount>
           </Text>
         </WhiteCell>
         <WhiteCell border="1px 0px 1px 0px">
-          <Text size="xxlarge">{this.formatMonies(this.props.totalTransfered)}</Text>
+          <Text size="xxlarge">
+            <Amount>${this.splitAmount(totalTransfered.toFixed(2))}</Amount>
+          </Text>
         </WhiteCell>
         <WhiteCell border="1px 1px 1px 0px">
-          <Text size="xxlarge">{this.formatMonies(this.props.yrSalary)}</Text>
+          <Text size="xxlarge">
+            <Amount>${this.splitAmount(yrSalary.toFixed(2))}</Amount>
+          </Text>
         </WhiteCell>
       </AvaliableSalaryTitleGrid>
     );
@@ -83,6 +88,13 @@ const AvaliableSalaryTitleGrid = styled.div`
 const CountdownWStyle = styled(Countdown)`
   display: flex;
   margin-top: 10px;
+`;
+
+const Amount = styled.div`
+  font-size: 26px;
+  .fractional {
+    font-size: 14px;
+  }
 `;
 
 export default AvaliableSalary;

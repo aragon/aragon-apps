@@ -11,8 +11,7 @@ import './styles/datepicker.css';
 import moment from 'moment';
 import 'react-dates/initialize';
 
-const DAY_IN_MS = 1000 * 60 * 60 * 24 * 5;
-const endDate = new Date(Date.now() + 5 * DAY_IN_MS);
+const fiveDaysAgo = 1000 * 60 * 60 * 24 * 5;
 
 const transactions = [
   {
@@ -20,7 +19,7 @@ const transactions = [
     isIncoming: false,
     transactionHash: '0x09d846935dba964e33dcba4cd5',
     amount: 3.0,
-    date: 1460714400,
+    date: 1526978544,
     exchangeRate: 43.302,
     decimals: 4,
     entity: 'none',
@@ -34,7 +33,7 @@ const transactions = [
     isIncoming: false,
     transactionHash: '0x09d846935dba964ebbdcba4cd5',
     amount: 32.4747,
-    date: 1460714400,
+    date: 1526632944,
     exchangeRate: 94.302,
     decimals: 4,
     entity: 'none',
@@ -48,13 +47,13 @@ const transactions = [
     isIncoming: false,
     transactionHash: '0x234846935dba964ebbdcba4cd5',
     amount: 103.1,
-    date: 1460714400,
+    date: 1522658544,
     decimals: 4,
     exchangeRate: 3.2,
     entity: 'none',
     isIncoming: false,
     reference: 'none',
-    symbol: 'EHT',
+    symbol: 'ANT',
     status: 'Complete'
   }
 ];
@@ -62,7 +61,6 @@ const transactions = [
 export default class App extends React.Component {
   constructor() {
     super();
-
     this.app = new Aragon(new providers.WindowMessage(window.parent));
     this.state$ = this.app.state();
   }
@@ -105,16 +103,16 @@ export default class App extends React.Component {
                 <Text size="large">Available salary</Text>
 
                 <AvaliableSalary
-                  endDate={endDate}
-                  avaliableBalance={'5,902.54'}
-                  totalTransfered={'45,352.27'}
-                  yrSalary={'80,000'}
+                  targetDate={fiveDaysAgo}
+                  avaliableBalance={5902.54}
+                  totalTransfered={45352.27}
+                  yrSalary={80000.00}
                 />
 
-                <SpacedBlock>
-                  {/* <Transfers transactions={transactions} tokens={tokens} /> */}
+                <SpacedBlock>                  
                   <Transfers transactions={transactions} />
                 </SpacedBlock>
+
               </Content>
             </Layout.ScrollWrapper>
             <SideBarHolder>

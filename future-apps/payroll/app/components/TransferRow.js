@@ -26,6 +26,7 @@ class TransferRow extends React.Component {
   //     const { network: { etherscanBaseUrl }, transactionHash } = this.props
   //     window.open(`${etherscanBaseUrl}/tx/${transactionHash}`, '_blank')
   //   }
+  
   handleConfirmMessageDone = () => {
     this.setState({
       showCopyTransferMessage: false
@@ -45,13 +46,16 @@ class TransferRow extends React.Component {
       exchangeRate
     } = this.props;
 
+    const dateObj = new Date(date*1000);
+
     const formattedAmount = formatTokenAmount(amount, isIncoming, decimals, true, { rounding: 5 });
-    const formattedDate = formatHtmlDatetime(date);
+    const formattedDate = formatHtmlDatetime(dateObj);
+
     return (
       <TableRow>
         <NoWrapCell>
           <time dateTime={formattedDate} title={formattedDate}>
-            {format(date, 'DD/MM/YY')}
+            {format(dateObj, 'dd/MM/YY')}
           </time>
         </NoWrapCell>
         <NoWrapCell>
