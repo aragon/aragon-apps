@@ -1,6 +1,6 @@
 module.exports = {
-  finance: 'ipfs:QmVx4gi6VCoxYHQjZBdgoVHT1oG1faYcbi8ERpMGVc7Ag6',
-  tokenManager: 'ipfs:QmYeV2iNw6EVDmChWKS8dXmFf7PJev8y8rWGx9Zty4jUBy',
-  vault: 'ipfs:QmPhd9aQGGoHJNcVVAmbzudShvhpYmyKxLWgqLoqSGD81G',
-  voting: 'ipfs:QmUtHQheXXrLZGkXkSj82ABeM8Mj8fBrZcK5TMxbd4PvnB',
+  finance: 'ipfs:QmZzLQdMjALTNc2aJRa4iyUxXadZZQnxWe82bYT8EGZ5nk',
+  tokenManager: 'ipfs:QmQ94bjem1wcBB2UFeHFRa59D2DSYDzft43DRytDREEbAv',
+  vault: 'ipfs:QmfWoMrEWMaskEFssgUCuTeG1B4y9BC9DG6zi2jtCvWaYg',
+  voting: 'ipfs:QmfX6udPSMuadNtKHAZKPdf92hxpcGykvWWE6cgLAKjx7Z',
 }

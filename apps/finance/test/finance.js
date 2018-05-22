@@ -529,7 +529,7 @@ contract('Finance App', accounts => {
         })
 
         it('fails to deposit ETH', async() => {
-            return assertInvalidOpcode(async() => {
+            return assertRevert(async() => {
                 await nonInit.send(10, { gas: 3e5 })
             })
         })
