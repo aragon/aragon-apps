@@ -164,9 +164,6 @@ contract('Vault app', (accounts) => {
       vault = Vault.at(vaultProxyAddress)
     })
 
-    it('forwards funds', async () => {
-    })
-
     context('disallows recovering assets', async () => {
       let defaultVault
 
