@@ -8,21 +8,17 @@ const etherscanBaseUrl = ''
 class Creator extends React.Component {
   render() {
     const { address } = this.props
+    const url = `${etherscanBaseUrl}/address/${address}`
     return (
       <Main>
         <Img>
           <Blockies seed={address} size={8} />
         </Img>
-        <div>
-          <p>
-            <SafeLink
-              href={`${etherscanBaseUrl}/address/${address}`}
-              target="_blank"
-            >
-              {address}
-            </SafeLink>
-          </p>
-        </div>
+        <Address title={url}>
+          <SafeLink href={url} target="_blank">
+            {address}
+          </SafeLink>
+        </Address>
       </Main>
     )
   }
@@ -39,7 +35,14 @@ const Img = styled.div`
     border: 1px solid ${theme.contentBorder};
     border-radius: 16px;
   }
-  & + div a {
+`
+
+const Address = styled.div`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: ${theme.accent};
+  a {
     color: ${theme.accent};
   }
 `

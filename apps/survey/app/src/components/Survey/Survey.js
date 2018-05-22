@@ -131,25 +131,33 @@ class Survey extends React.Component {
   }
 }
 
+const DetailsWrapper = styled.div`
+  width: 100%;
+  margin-top: -30px;
+  padding-top: 30px;
+  padding-right: ${CONTENT_PADDING}px;
+`
+
+const SidebarWrapper = styled.div`
+  overflow: hidden;
+  margin-top: 30px;
+`
+
 const Main = styled.div`
   position: absolute;
   display: flex;
   top: 30px;
   left: ${CONTENT_PADDING}px;
   right: 0;
-`
-
-const DetailsWrapper = styled.div`
-  width: 100%;
-  margin-top: -30px;
-  padding-top: 30px;
-  margin-right: ${CONTENT_PADDING}px;
-`
-
-const SidebarWrapper = styled.div`
-  overflow: hidden;
-  width: ${SIDEBAR_WIDTH}px;
-  flex-shrink: 0;
+  flex-direction: column;
+  @media (min-width: 900px) {
+    flex-direction: row;
+    ${SidebarWrapper} {
+      margin-top: 0;
+      width: ${SIDEBAR_WIDTH}px;
+      flex-shrink: 0;
+    }
+  }
 `
 
 export default Survey
