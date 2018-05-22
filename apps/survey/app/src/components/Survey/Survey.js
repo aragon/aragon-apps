@@ -57,6 +57,25 @@ class Survey extends React.Component {
   handleDetailsWrapperRef = el => {
     this._detailsWrapperEl = el
   }
+  getTransform = t => {
+    const to = this.state.transitionTo
+    const from = this.props.transitionFrom || {
+      x: to.x + to.w / 4,
+      y: to.y + to.y / 4,
+      w: to.w / 2,
+      h: to.h / 2,
+    }
+    return `
+      translate(
+        ${lerp(t, -to.x + from.x, 0)}px,
+        ${lerp(t, -to.y + from.y, 0)}px
+      )
+      scale(
+        ${lerp(t, from.width / to.width, 1)},
+        ${lerp(t, from.height / to.height, 1)}
+      )
+    `
+  }
   render() {
     const { survey, transitionFrom } = this.props
     const { animateSidebar, transitionTo } = this.state
@@ -77,26 +96,7 @@ class Survey extends React.Component {
                 style={{
                   opacity: styles.show,
                   transformOrigin: '0 0',
-                  transform: styles.show.interpolate(
-                    t => `
-                      translate(
-                        ${lerp(t, -transitionTo.x + transitionFrom.x, 0)}px,
-                        ${lerp(t, -transitionTo.y + transitionFrom.y, 0)}px
-                      )
-                      scale(
-                        ${lerp(
-                          t,
-                          transitionFrom.width / transitionTo.width,
-                          1
-                        )},
-                        ${lerp(
-                          t,
-                          transitionFrom.height / transitionTo.height,
-                          1
-                        )}
-                      )
-                    `
-                  ),
+                  transform: styles.show.interpolate(this.getTransform),
                 }}
               >
                 <SurveyDetails survey={survey} />
