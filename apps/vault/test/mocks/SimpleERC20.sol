@@ -27,7 +27,6 @@ contract SimpleERC20 /*is ERC20Interface*/ {
 
     // Transfer the balance from owner's account to another account
     function transfer(address _to, uint256 _amount) public returns (bool success) {
-
         if (balances[msg.sender] >= _amount
             && _amount > 0
             && balances[_to] + _amount > balances[_to]) {

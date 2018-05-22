@@ -1,5 +1,13 @@
 const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
+const { hash } = require('eth-ens-namehash')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
+const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
+
+const ACL = artifacts.require('ACL')
+const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
+const DAOFactory = artifacts.require('DAOFactory')
+const Kernel = artifacts.require('Kernel')
+const KernelProxy = artifacts.require('KernelProxy')
 
 const Vault = artifacts.require('Vault')
 
@@ -10,8 +18,6 @@ const getContract = name => artifacts.require(name)
 const NULL_ADDRESS = '0x00'
 
 contract('Vault app', (accounts) => {
-  let token, token777
-
   const ETH = '0x0'
   const NO_DATA = '0x'
 
@@ -128,9 +134,86 @@ contract('Vault app', (accounts) => {
   })
 
   context('using Vault behind proxy', async () => {
-    // TODO(BLOCKED): Waiting for aragonOS#281
-    it('forwards funds')
-    it('fails when attempting to recover assets out of the vault')
+    let kernel, token, vault, vaultBase, vaultId
+
+    beforeEach(async () => {
+      const permissionsRoot = accounts[0]
+      token = await SimpleERC20.new()
+
+      const kernelBase = await getContract('Kernel').new()
+      const aclBase = await getContract('ACL').new()
+      const factory = await DAOFactory.new(kernelBase.address, aclBase.address, NULL_ADDRESS)
+
+      const receipt = await factory.newDAO(permissionsRoot)
+      const kernelAddress = getEvent(receipt, 'DeployDAO', 'dao')
+
+      kernel = Kernel.at(kernelAddress)
+      const acl = ACL.at(await kernel.acl())
+
+      const r = await kernel.APP_MANAGER_ROLE()
+      await acl.createPermission(permissionsRoot, kernel.address, r, permissionsRoot)
+
+      // Install the vault app to the kernel
+      vaultBase = await Vault.new()
+
+      vaultId = hash('vault.aragonpm.test')
+      const APP_BASE_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
+
+      const vaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address)
+      const vaultProxyAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
+      vault = Vault.at(vaultProxyAddress)
+    })
+
+    it('forwards funds', async () => {
+    })
+
+    context('disallows recovering assets', async () => {
+      let defaultVault
+
+      beforeEach(async () => {
+        const APP_ADDR_NAMESPACE = await kernel.APP_ADDR_NAMESPACE()
+        const ETH = await kernel.ETH()
+
+        // Create a new vault
+        const defaultVaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address)
+        const defaultVaultAddress = getEvent(defaultVaultReceipt, 'NewAppProxy', 'proxy')
+        defaultVault = Vault.at(defaultVaultAddress)
+
+        // Set that vault as the default vault in the kernel
+        await kernel.setApp(APP_ADDR_NAMESPACE, vaultId, defaultVault.address)
+        await kernel.setRecoveryVaultId(vaultId)
+
+      })
+
+      it('set up the default vault correctly to recover ETH from the kernel', async () => {
+        await kernel.sendTransaction({ value: 1, gas: 31000 })
+        assert.equal((await getBalance(kernel.address)).valueOf(), 1, 'kernel should have 1 balance')
+
+        await kernel.transferToVault(ETH)
+        assert.equal((await getBalance(kernel.address)).valueOf(), 0, 'kernel should have 0 balance')
+        assert.equal((await getBalance(defaultVault.address)).valueOf(), 1, 'default value should have 1 balance')
+      })
+
+      it('set up the default vault correctly to recover tokens from the kernel', async () => {
+        await token.transfer(kernel.address, 10)
+        assert.equal((await token.balanceOf(kernel.address)), 10, 'kernel should have 10 balance')
+
+        await kernel.transferToVault(token.address)
+        assert.equal((await token.balanceOf(kernel.address)), 0, 'kernel should have 0 balance')
+        assert.equal((await token.balanceOf(defaultVault.address)), 10, 'default value should have 10 balance')
+      })
+
+      it('fails when attempting to recover ETH out of the vault', async () => {
+        await vault.sendTransaction({ value: 1, gas: 31000 })
+        assert.equal((await getBalance(vault.address)).valueOf(), 1, 'vault should have 1 balance')
+        await assertRevert(() => vault.transferToVault(ETH))
+      })
+
+      it('fails when attempting to recover ETH out of the vault', async () => {
+        await token.transfer(vault.address, 10)
+        assert.equal((await token.balanceOf(vault.address)), 10, 'vault should have 10 balance')
+        await assertRevert(() => vault.transferToVault(ETH))
+      })
+    })
   })
 })
-

@@ -94,4 +94,12 @@ contract Vault is AragonApp {
             return ERC20(token).balanceOf(this);
         }
     }
+
+    /**
+    * @dev Disable recovery escape hatch, as it could be used
+    *      maliciously to transfer funds away from the vault
+    */
+    function allowRecoverability(address token) public view returns (bool) {
+        return false;
+    }
 }
