@@ -22,7 +22,7 @@
   "license": "GPL-3.0",
   "description": "",
   "devDependencies": {
-    "@aragon/cli": "4.0.2",
+    "@aragon/cli": "4.0.3",
     "@aragon/test-helpers": "^1.0.0",
     "babel-helpers": "^6.24.1",
     "babel-polyfill": "^6.26.0",
