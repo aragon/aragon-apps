@@ -1,0 +1,31 @@
+{
+  "name": "@aragon/templates-dev-payroll",
+  "version": "1.0.0",
+  "description": "Dev template for aragon orgs",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "migrate": "truffle migrate --network rpc --reset"
+  },
+  "author": "Aragon Institution MTU <contact@aragon.one>",
+  "files": [
+    "ipfs.js",
+    "build/",
+    "contracts/",
+    "migrations/"
+  ],
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "truffle": "4.0.5",
+    "truffle-hdwallet-provider": "0.0.3"
+  },
+  "dependencies": {
+    "@aragon/apps-finance": "^1.0.0",    
+    "@aragon/apps-vault": "^2.0.1",
+    
+    "@aragon/os": "^3.1.2",
+    "eth-ens-namehash": "^2.0.8"
+  }
+}
