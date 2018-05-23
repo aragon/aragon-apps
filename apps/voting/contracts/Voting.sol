@@ -109,7 +109,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Vote `_supports ? 'yay' : 'nay'` in vote #`_voteId`
+    * @notice Vote `_supports ? 'yea' : 'nay'` in vote #`_voteId`
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
@@ -277,20 +277,19 @@ contract Voting is IForwarder, AragonApp {
     }
 
     function _isVoteOpen(Vote storage vote) internal view returns (bool) {
-        return uint64(now) < (vote.startDate.add(voteTime)) && !vote.executed;
+        return uint64(now) < vote.startDate.add(voteTime) && !vote.executed;
     }
 
     /**
     * @dev Calculates whether `_value` is at least a percentage `_pct` of `_total`
     */
     function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal pure returns (bool) {
-        if (_value == 0 && _total > 0)
+        if (_total == 0) {
             return false;
+        }
 
-        uint256 m = _total.mul(_pct);
-        uint256 v = m / PCT_BASE;
+        uint256 computedPct = _value.mul(PCT_BASE) / _total;
 
-        // If division is exact, allow same value, otherwise require value to be greater
-        return m % PCT_BASE == 0 ? _value >= v : _value > v;
+        return computedPct >= _pct;
     }
 }
