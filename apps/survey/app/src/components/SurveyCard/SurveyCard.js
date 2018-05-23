@@ -61,33 +61,13 @@ class SurveyCard extends React.Component {
               </More>
             )}
           </Content>
-          {this.renderFooter(past)}
+          {past ? (
+            <PastFooter onClick={this.handleOpen} />
+          ) : (
+            <ActiveFooter onClick={this.handleOpen} />
+          )}
         </Card>
       </Main>
-    )
-  }
-  renderFooter(past) {
-    if (past) {
-      return (
-        <Footer alignRight>
-          <SecondaryButton onClick={this.handleOpen}>
-            View details
-          </SecondaryButton>
-        </Footer>
-      )
-    }
-    return (
-      <Footer>
-        <Button.Anchor
-          mode="text"
-          compact
-          style={{ marginLeft: '-15px' }}
-          onClick={this.handleOpen}
-        >
-          View details
-        </Button.Anchor>
-        <SecondaryButton>Vote</SecondaryButton>
-      </Footer>
     )
   }
 }
@@ -153,6 +133,26 @@ const Footer = styled.div`
     alignRight ? 'flex-end' : 'space-between'};
   flex-shrink: 0;
 `
+
+const ActiveFooter = ({ onClick }) => (
+  <Footer>
+    <Button.Anchor
+      mode="text"
+      compact
+      style={{ paddingLeft: '0' }}
+      onClick={onClick}
+    >
+      View details
+    </Button.Anchor>
+    <SecondaryButton>Vote</SecondaryButton>
+  </Footer>
+)
+
+const PastFooter = ({ onClick }) => (
+  <Footer alignRight>
+    <SecondaryButton onClick={onClick}>View details</SecondaryButton>
+  </Footer>
+)
 
 SurveyCard.Group = SurveyCardGroup
 SurveyCard.Card = Card
