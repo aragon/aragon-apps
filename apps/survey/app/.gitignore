@@ -28,4 +28,4 @@ yarn-error.log*
 /public/script.js
 /public/script.map
 
-/dist
+dist/
