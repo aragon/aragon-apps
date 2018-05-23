@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import Transfers from './components/Transfers';
 import { networkContextType } from './lib/provideNetwork';
 import Holders from './screens/Holders'; //not working
-import SideBar2 from './components/SideBar2';
+import SideChart from './components/SideChart';
 import AvaliableSalary from './components/AvailableSalary';
 import './styles/datepicker.css';
 import moment from 'moment';
@@ -27,7 +27,7 @@ const transactions = [
     isIncoming: false,
     reference: 'none',
     status: 'Pending...',
-    symbol: 'EHT'
+    symbol: 'ETH'
   },
   {
     token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
@@ -41,7 +41,7 @@ const transactions = [
     isIncoming: false,
     reference: 'none',
     status: 'Complete',
-    symbol: 'EHT'
+    symbol: 'ETH'
   },
   {
     token: '0x00be01CAF657Ff277269f169bd5220A390f791f7',
@@ -87,7 +87,7 @@ export default class App extends React.Component {
             <AppBar
               title="Payroll"
               endContent={
-                <Button mode="strong" onClick={()=>console.log('hi')}>
+                <Button mode="strong">
                   Request salary
                 </Button>
               }
@@ -111,7 +111,7 @@ export default class App extends React.Component {
               </Content>
             </Layout.ScrollWrapper>
             <SideBarHolder>
-              <SideBar2
+              <SideChart
                 holders={[
                   { name: 'ETH', balance: 1329 },
                   { name: 'ANT', balance: 3321 },

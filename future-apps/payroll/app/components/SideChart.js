@@ -5,40 +5,8 @@ import { sciNot } from '../math-utils';
 
 // Number of digits before "Total Supply" gets wrapped into two lines
 const TOTAL_SUPPLY_CUTOFF_LENGTH = 18;
-
 const DISTRIBUTION_ITEMS_MAX = 7;
 const DISTRIBUTION_COLORS = ['#000000', '#57666F', '#028CD1', '#21AAE7', '#39CAD0', '#ADE9EC', '#80AEDC'];
-
-// const calculateStakes = (accounts, total) => {
-//     const maxDisplayed = DISTRIBUTION_ITEMS_MAX - 1
-//     const byStake = (a, b) => b.stake - a.stake
-
-//     const stakes = accounts.map(({ address, balance }) => ({
-//       name: address,
-//       stake: Math.floor(balance / total * 100),
-//     }))
-
-//     stakes.push({
-//       name: 'Organization Reserves',
-//       stake: Math.floor(
-//         (total - accounts.reduce((total, { balance }) => total + balance, 0)) /
-//           total *
-//           100
-//       ),
-//     })
-
-//     const displayedStakes = stakes
-//       .filter(({ stake }) => stake > 0)
-//       .sort(byStake)
-//       .slice(0, maxDisplayed)
-
-//     const rest =
-//       100 - displayedStakes.reduce((total, { stake }) => total + stake, 0)
-
-//     return displayedStakes.length < accounts.length
-//       ? [...displayedStakes, { name: 'Rest', stake: rest }].sort(byStake)
-//       : displayedStakes
-//   }
 
 const showTokenDistro = (accounts, total) => {
   const stakes = accounts.map(({ name, balance }) => ({
@@ -54,7 +22,7 @@ const showTokenDistro = (accounts, total) => {
   return stakes;
 };
 
-class SideBar2 extends React.Component {
+class SideChart extends React.Component {
   static defaultProps = {
     holders: []
   };
@@ -195,4 +163,4 @@ const ButtonHolder = styled.div`
   justify-content: flex-end;
 `;
 
-export default SideBar2;
+export default SideChart;
