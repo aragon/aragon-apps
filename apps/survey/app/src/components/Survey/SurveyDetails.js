@@ -135,25 +135,6 @@ class SurveyDetails extends React.Component {
       </Card>
     )
   }
-  renderSections() {
-    return [
-      <section>
-        <SectionTitle>Description</SectionTitle>
-        <div>
-          <p>
-            What should the maximum yearly budget from Aragon Foundation be for
-            funding open source projects?
-          </p>
-        </div>
-      </section>,
-      <section>
-        <SectionTitle>Web Link</SectionTitle>
-        <p>
-          <a href={survey.url}>{survey.url}</a>
-        </p>
-      </section>,
-    ]
-  }
 }
 
 const Card = styled(SurveyCard.Card)`
