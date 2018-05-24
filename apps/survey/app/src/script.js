@@ -1,5 +1,4 @@
 import Aragon from '@aragon/client'
-import { combineLatest } from './rxjs'
 import surveySettings, { hasLoadedSurveySettings } from './survey-settings'
 
 const app = new Aragon()
@@ -38,10 +37,17 @@ async function startSurvey(state, { surveyId }) {
   return updateState(state, surveyId, transform)
 }
 
-async function castVote(state, { surveyId }) {
-  const transform = async survey => ({
+async function castVote(state, { surveyId, voter, option: optionId }) {
+  const transform = async ({ data, ...survey }) => ({
     ...survey,
+
+    // Reload the contract data, mostly so we can get updated participation numbers
     data: await loadSurveyData(surveyId),
+
+    // Update power for option
+    options: updatePowerForOption(survey.options, surveyId, optionId),
+
+    // TODO: recalculate histogram buckets
   })
   return updateState(state, surveyId, transform)
 }
@@ -57,25 +63,72 @@ async function updateState(state, surveyId, transform) {
 
   return {
     ...state,
-    surveys: await updateSurvey(surveys, surveyId, transform),
+    surveys: await updateSurveys(surveys, surveyId, transform),
   }
 }
 
-async function updateSurvey(surveys, surveyId, transform) {
+async function updateSurveys(surveys, surveyId, transform) {
   const surveyIndex = surveys.findIndex(survey => survey.surveyId === surveyId)
 
   if (surveyId === -1) {
     // If we can't find it, load its data, perform the transformation, and concat
-    return surveys.concat(
-      await transform({
-        surveyId,
-        data: await loadSurveyData(surveyId),
-      })
-    )
+    return surveys.concat(await transform(createNewSurvey(surveyId)))
   } else {
     const nextSurveys = Array.from(surveys)
     nextSurveys[surveyIndex] = await transform(nextSurveys[surveyIndex])
     return nextSurveys
+  }
+}
+
+async function updatePowerForOption(options, surveyId, optionId) {
+  const optionIndex = options.findIndex(option => option.optionId === optionId)
+
+  if (surveyId !== -1) {
+    const nextOptions = Array.from(options)
+    nextOptions[optionIndex] = {
+      ...nextOptions[optionIndex],
+      power: await loadSurveyOptionPower(surveyId, optionId),
+    }
+    return nextOptions
+  } else {
+    console.error(
+      `Tried to update option #${optionId} in survey #${surveyId} that shouldn't exist!`
+    )
+  }
+}
+
+async function createNewSurvey(surveyId) {
+  const surveyData = await loadSurveyData(surveyId)
+  const surveyMetadata = await loadSurveyMetadata(surveyId)
+  const {
+    metadata: { options: optionLabels = [], ...metadata } = {},
+  } = surveyMetadata
+
+  while (surveyData.options > optionLabels.length) {
+    optionLabels.push(`Option ${optionLabels.length + 1}`)
+  }
+
+  // Load initial voting powers for the options
+  const options = await Promise.all(
+    optionLabels.map(async (label, optionIndex) => {
+      // Add one to optionIndex as optionId always starts from 1
+      const optionId = optionIndex + 1
+      const power = await loadSurveyOptionPower(surveyId, optionId)
+
+      return {
+        label,
+        power,
+        optionId,
+      }
+    })
+  )
+
+  return {
+    metadata,
+    options,
+    data: surveyData,
+    history: [],
+    id: surveyId,
   }
 }
 
@@ -107,7 +160,7 @@ function loadSurveySettings() {
       settings.reduce((acc, setting) => ({ ...acc, ...setting }), {})
     )
     .catch(err => {
-      console.error('Failed to load Survey settings', err)
+      console.erroror('Failed to load Survey settings', err)
       // Return an empty object to try again later
       return {}
     })
@@ -115,22 +168,50 @@ function loadSurveySettings() {
 
 function loadSurveyData(surveyId) {
   return new Promise(resolve => {
-    combineLatest(
-      app.call('getSurvey', surveyId),
-      app.call('getSurveyMetadata', surveyId)
-    )
+    app
+      .call('getSurvey', surveyId)
       .first()
-      .subscribe(([survey, metadata]) => {
-        resolve({
-          ...marshallSurvey(survey),
-          metadata,
-        })
+      .subscribe(survey => {
+        resolve(marshallSurvey(survey))
       })
   })
 }
 
+function loadSurveyMetadata(surveyId) {
+  return new Promise(resolve => {
+    app
+      .call('getSurveyMetadata', surveyId)
+      .first()
+      .subscribe(metadata => {
+        try {
+          resolve(marshallMetadata(metadata))
+        } catch (err) {
+          console.error(`Failed to load survey ${surveyId}'s metadata`, err)
+          resolve({})
+        }
+      })
+  })
+}
+
+function loadSurveyOptionPower(surveyId, optionId) {
+  return new Promise(resolve =>
+    app
+      .call('getOptionPower', surveyId, optionId)
+      .first()
+      .map(power => parseInt(power, 10))
+      .subscribe(resolve, err => {
+        console.error(
+          `Failed to get option power for option #${optionId} in survey #${surveyId}`,
+          err
+        )
+        resolve(0)
+      })
+  )
+}
+
+// Apply transmations to a survey received from web3
+// Note: ignores the 'open' field as we calculate that locally
 function marshallSurvey({
-  open,
   creator,
   startDate,
   snapshotBlock,
@@ -140,7 +221,6 @@ function marshallSurvey({
   options,
 }) {
   return {
-    open,
     creator,
     startDate: parseInt(startDate, 10) * 1000, // adjust for js time (in ms vs s)
     minParticipationPct: parseInt(minParticipationPct, 10),
@@ -149,4 +229,8 @@ function marshallSurvey({
     participation: parseInt(participation, 10),
     options: parseInt(options, 10),
   }
+}
+
+function marshallMetadata(metadata) {
+  return JSON.parse(metadata)
 }
