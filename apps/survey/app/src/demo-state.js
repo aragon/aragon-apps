@@ -1,7 +1,5 @@
 // Demo state for App.js
 
-const OPTION_COLORS = ['#028CD1', '#39CAD0', '#8CD102', '#CAD039', '#D0CA39']
-
 // date utils
 const HOURS = 1000 * 60 * 60
 const dateFromNow = diff => new Date(Date.now() + diff)
@@ -28,40 +26,61 @@ const historyPoints = prevPoints => {
 
 export const surveys = [
   {
-    id: '0x01',
-    endDate: dateFromNow(28.23 * HOURS),
-    question: 'Should ANT be listed on Binance?',
+    surveyId: '0x01',
+    endDate: dateFromNow(28.23 * HOURS), // TODO: use start date + survey time transform to date
+    metadata: {
+      question: 'Should ANT be listed on Binance?',
+      description: 'This is the description',
+    },
     options: [{ label: 'Yes' }, { label: 'No' }],
+    votingPower: 10000,
   },
   {
-    id: '0x02',
+    surveyId: '0x02',
     endDate: dateFromNow(32.44 * HOURS),
-    question: 'Should offer Aragon as a voting mechanism for EIP resolution? ',
+    metadata: {
+      question:
+        'Should offer Aragon as a voting mechanism for EIP resolution? ',
+      description: 'This is the description',
+    },
     options: [{ label: 'Yes' }, { label: 'Maybe' }, { label: 'No' }],
+    votingPower: 10000,
   },
   {
-    id: '0x03',
+    surveyId: '0x03',
     endDate: dateFromNow(44.74 * HOURS),
-    question: 'Should drop shadows be banned?',
+    metadata: {
+      question: 'Should drop shadows be banned?',
+      description: 'This is the description',
+    },
     options: [{ label: 'Yes!' }, { label: 'Nooo…' }],
+    votingPower: 10000,
   },
   {
-    id: '0x04',
+    surveyId: '0x04',
     endDate: dateFromNow(-28.98 * HOURS),
-    question: 'Which exchanges should Aragon engage with for listing ANT?',
+    metadata: {
+      question: 'Which exchanges should Aragon engage with for listing ANT?',
+      description: 'This is the description',
+    },
     options: [{ label: 'Binance' }, { label: 'OKEx' }, { label: 'None' }],
+    votingPower: 10000,
   },
   {
-    id: '0x05',
+    surveyId: '0x05',
     endDate: dateFromNow(-10.41 * HOURS),
-    question:
-      'How much should Nest spend on funding open source projects yearly?',
+    metadata: {
+      question:
+        'How much should Nest spend on funding open source projects yearly?',
+      description: 'This is the description',
+    },
     options: [
       { label: '$2m' },
       { label: '$1m' },
       { label: '$500k' },
       { label: '$100k' },
     ],
+    votingPower: 10000,
   },
 ].map((survey, i) => {
   const historyLength =
@@ -72,15 +91,13 @@ export const surveys = [
   return {
     ...survey,
     url: `https://github.com/aragon/nest/issues/${i + 1}`,
-    createdBy: '0x15840997e342e2637a4087b8da7d595302ecdbca',
+    creator: '0x15840997e342e2637a4087b8da7d595302ecdbca',
     options: survey.options.map((option, i) => {
-      const value = history[history.length - 1][i]
+      const power = history[history.length - 1][i]
       return {
         ...option,
-        id: survey.id + option.label,
-        color: OPTION_COLORS[i % OPTION_COLORS.length],
-        value,
-        totalVotes: Math.round(10000 * value),
+        optionId: `${i + 1}`,
+        power: Math.round(10000 * power),
       }
     }),
     history,

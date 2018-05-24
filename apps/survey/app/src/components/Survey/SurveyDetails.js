@@ -37,7 +37,7 @@ class SurveyDetails extends React.Component {
         >
           {({ progress }) => (
             <animated.div style={{ opacity: progress.interpolate(p => p) }}>
-              <Question>{survey.question}</Question>
+              <Question>{survey.metadata.question}</Question>
             </animated.div>
           )}
         </Spring>
@@ -57,7 +57,10 @@ class SurveyDetails extends React.Component {
                     style={{ opacity: progress.interpolate(p => p) }}
                   >
                     <SectionTitle>Options</SectionTitle>
-                    <SurveyOptions options={survey.options} />
+                    <SurveyOptions
+                      options={survey.options}
+                      totalPower={survey.votingPower}
+                    />
                   </animated.section>
                 ),
                 ({ progress }) => (
@@ -87,10 +90,7 @@ class SurveyDetails extends React.Component {
                   >
                     <SectionTitle>Description</SectionTitle>
                     <div>
-                      <p>
-                        What should the maximum yearly budget from Aragon
-                        Foundation be for funding open source projects?
-                      </p>
+                      <p>{survey.metadata.description}</p>
                     </div>
                   </animated.section>
                 ),
@@ -101,8 +101,8 @@ class SurveyDetails extends React.Component {
                   >
                     <SectionTitle>Web Link</SectionTitle>
                     <UrlBlock>
-                      <a title={survey.url} href={survey.url}>
-                        {survey.url}
+                      <a title={survey.metadata.url} href={survey.metadata.url}>
+                        {survey.metadata.url}
                       </a>
                     </UrlBlock>
                   </animated.section>
@@ -113,7 +113,7 @@ class SurveyDetails extends React.Component {
                     style={{ opacity: progress.interpolate(p => p) }}
                   >
                     <SectionTitle>Created By</SectionTitle>
-                    <Creator address={survey.createdBy} />
+                    <Creator address={survey.creator} />
                   </animated.section>
                 ),
                 ({ progress }) => (
