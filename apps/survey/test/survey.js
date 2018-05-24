@@ -93,10 +93,10 @@ contract('Survey app', accounts => {
         await app.voteOption(surveyId, 12, { from: holder50 }) // h51 votes for option 12
         await app.voteOption(surveyId, 1, { from: holder19 }) // h19 votes for option 1
 
-        assert.equal(await app.getOptionSupport(surveyId, 1), 19)
-        assert.equal(await app.getOptionSupport(surveyId, 10), 0)
-        assert.equal(await app.getOptionSupport(surveyId, 11), 31)
-        assert.equal(await app.getOptionSupport(surveyId, 12), 50)
+        assert.equal(await app.getOptionPower(surveyId, 1), 19)
+        assert.equal(await app.getOptionPower(surveyId, 10), 0)
+        assert.equal(await app.getOptionPower(surveyId, 11), 31)
+        assert.equal(await app.getOptionPower(surveyId, 12), 50)
 
         const state = await app.getSurvey(surveyId)
 
@@ -141,12 +141,12 @@ contract('Survey app', accounts => {
       it('allows to remove and re-vote', async () => {
         await app.voteOption(surveyId, 1, { from: holder50 })
         await app.resetVote(surveyId, { from: holder50 })
-        assert.equal(await app.getOptionSupport(surveyId, 1), 0)
+        assert.equal(await app.getOptionPower(surveyId, 1), 0)
         await app.voteOption(surveyId, 100, { from: holder50 })
 
-        assert.equal(await app.getOptionSupport(surveyId, 1), 0)
-        assert.equal(await app.getOptionSupport(surveyId, 0), 0)
-        assert.equal(await app.getOptionSupport(surveyId, 100), 50)
+        assert.equal(await app.getOptionPower(surveyId, 1), 0)
+        assert.equal(await app.getOptionPower(surveyId, 0), 0)
+        assert.equal(await app.getOptionPower(surveyId, 100), 50)
       })
 
       it('changing min participation doesnt affect survey min participation', async () => {
@@ -162,7 +162,7 @@ contract('Survey app', accounts => {
         await token.transfer(nonHolder, 31, { from: holder31 })
 
         await app.voteOption(surveyId, 1, { from: holder31 })
-        const optionSupport = await app.getOptionSupport(surveyId, 1)
+        const optionSupport = await app.getOptionPower(surveyId, 1)
 
         assert.equal(optionSupport, 31, 'vote should have been counted')
         assert.equal(await token.balanceOf(holder31), 0, 'balance should be 0 at current block')
