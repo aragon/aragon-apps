@@ -1,6 +1,6 @@
-# [Payroll](https://github.com/aragon/aragon-apps/tree/master/apps/payroll)
+# [Payroll](https://github.com/aragon/aragon-apps/tree/master/future-apps/payroll)
 
-_**Code in Github:**_ [aragon-apps/apps/payroll](https://github.com/aragon/aragon-apps/tree/master/apps/payroll)
+_**Code in Github:**_ [aragon-apps/apps/payroll](https://github.com/aragon/aragon-apps/tree/master/future-apps/payroll)
 
 The purpose of the Payroll app is to implement a Payroll system in multiple currencies.
 
@@ -8,7 +8,7 @@ The purpose of the Payroll app is to implement a Payroll system in multiple curr
 
 Initializing a Payroll app requires the following parameters:
 
-- **Finance**: a reference to [Finance](finance.md) instance that Payroll app will use to pay salaries. Finance in turn will use [Vault](vault.md) to access funds, but going through Finance will have everything properly accounted for.
+- **Finance**: a reference to [Finance](https://github.com/aragon/aragon-apps/tree/master/apps/finance) instance that Payroll app will use to pay salaries. Finance in turn will use [Vault](https://github.com/aragon/aragon-apps/tree/master/apps/vault) to access funds, but going through Finance will have everything properly accounted for.
 - **Ether Token**: EtherToken instance used as ether.
 - **Denomination Token**: token used to denominate salaries. All exchange rates for other tokens will be paired with it.
 
