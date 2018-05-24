@@ -126,7 +126,7 @@ contract Survey is AragonApp {
                 OptionCast storage previousOptionCast = previousVote.castedVotes[i];
                 survey.optionPower[previousOptionCast.optionId] = survey.optionPower[previousOptionCast.optionId].sub(previousOptionCast.stake);
 
-                ResetVote(_surveyId, msg.sender, previousOptionCast.optionId, previousOptionCast.stake)
+                ResetVote(_surveyId, msg.sender, previousOptionCast.optionId, previousOptionCast.stake);
             }
 
             // compute previously casted votes (i.e. substract non-used tokens from stake)
