@@ -253,7 +253,7 @@ contract Survey is AragonApp {
         }
     }
 
-    function getOptionSupport(uint256 _surveyId, uint256 _optionId) public view returns (uint256) {
+    function getOptionPower(uint256 _surveyId, uint256 _optionId) public view returns (uint256) {
         return surveys[_surveyId].optionPower[_optionId];
     }
 
