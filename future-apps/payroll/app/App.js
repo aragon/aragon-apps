@@ -4,7 +4,6 @@ import Aragon, { providers } from '@aragon/client';
 import styled from 'styled-components';
 import Transfers from './components/Transfers';
 import { networkContextType } from './lib/provideNetwork';
-import Holders from './screens/Holders'; //not working
 import SideChart from './components/SideChart';
 import AvaliableSalary from './components/AvailableSalary';
 import './styles/datepicker.css';
