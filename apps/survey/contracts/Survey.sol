@@ -53,8 +53,8 @@ contract Survey is AragonApp {
     SurveyStruct[] surveys;
 
     event StartSurvey(uint256 indexed surveyId);
-    event CastVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 stake);
-    event ResetVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 previousStake);
+    event CastVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 stake, uint256 optionPower);
+    event ResetVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 previousStake, uint256 optionPower);
     event ChangeMinParticipation(uint256 minParticipationPct);
 
     /**
@@ -124,9 +124,10 @@ contract Survey is AragonApp {
             // voter removes their vote
             for (uint256 i = 1; i <= previousVote.optionsCastedLength; i++) {
                 OptionCast storage previousOptionCast = previousVote.castedVotes[i];
-                survey.optionPower[previousOptionCast.optionId] = survey.optionPower[previousOptionCast.optionId].sub(previousOptionCast.stake);
+                uint256 previousOptionPower = survey.optionPower[previousOptionCast.optionId];
+                survey.optionPower[previousOptionCast.optionId] = previousOptionPower.sub(previousOptionCast.stake);
 
-                ResetVote(_surveyId, msg.sender, previousOptionCast.optionId, previousOptionCast.stake);
+                ResetVote(_surveyId, msg.sender, previousOptionCast.optionId, previousOptionCast.stake, previousOptionPower);
             }
 
             // compute previously casted votes (i.e. substract non-used tokens from stake)
@@ -180,7 +181,7 @@ contract Survey is AragonApp {
             // keep track of staked used so far
             totalVoted = totalVoted.add(stake);
 
-            CastVote(_surveyId, msg.sender, optionId, stake);
+            CastVote(_surveyId, msg.sender, optionId, stake, survey.optionPower[optionId]);
         }
 
         // compute and register non used tokens
