@@ -141,7 +141,7 @@ class App extends React.Component {
         : preparedVotes.find(vote => vote.voteId === currentVoteId)
 
     return (
-      <AragonApp publicUrl="/aragon-ui/">
+      <AragonApp publicUrl="./aragon-ui/">
         <AppLayout>
           <AppLayout.Header>
             <AppBar
