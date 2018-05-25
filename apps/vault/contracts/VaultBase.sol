@@ -7,7 +7,7 @@ import "@aragon/os/contracts/common/DelegateProxy.sol";
 import "@aragon/os/contracts/apps/AragonApp.sol";
 
 
-contract VaultBase is AragonApp, DelegateProxy, ERC165Detector {
+contract VaultBase is AragonApp, ERC165Detector {
     address constant ETH = address(0);
     uint32 constant ERC165 = 165;
     uint32 constant NO_DETECTION = uint32(-1);

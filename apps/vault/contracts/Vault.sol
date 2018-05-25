@@ -8,7 +8,7 @@ import "./connectors/ETHConnector.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract Vault is VaultBase {
+contract Vault is VaultBase, DelegateProxy {
     struct TokenStandard {
         uint32 erc;
         uint32 interfaceDetectionERC;
