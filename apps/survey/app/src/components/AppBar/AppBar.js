@@ -7,7 +7,7 @@ const AppBarWrapper = ({ token, onOpenNewSurveyPanel }) => (
     title={
       <Title>
         <span>Survey</span>
-        <Badge>ANT</Badge>
+        <Badge>{token}</Badge>
       </Title>
     }
     endContent={
