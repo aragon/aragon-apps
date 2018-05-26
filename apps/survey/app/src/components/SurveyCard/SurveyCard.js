@@ -13,23 +13,23 @@ class SurveyCard extends React.Component {
     options: [],
   }
   handleVote = () => {
-    this.props.onVote(this.props.id)
+    this.props.onVote(this.props.survey.surveyId)
   }
   handleOpenDetails = () => {
-    this.props.onOpenSurveyDetails(this.props.id)
+    this.props.onOpenDetails(this.props.survey.surveyId)
   }
   handleCardRef = element => {
-    this.props.onCardRef({ id: this.props.id, element })
+    this.props.onCardRef({ id: this.props.survey.surveyId, element })
   }
   render() {
+    const { survey, past, showProgress } = this.props
     const {
       endDate,
-      question,
-      showProgress,
-      options: unsortedOptions,
-    } = this.props
-    const options = unsortedOptions.sort((a, b) => a.value < b.value)
-    const past = endDate < new Date()
+      metadata: { question },
+      options,
+      votingPower,
+    } = survey
+
     return (
       <Main>
         <Header>
@@ -46,7 +46,10 @@ class SurveyCard extends React.Component {
             <Question>
               <Text>{question}</Text>
             </Question>
-            <SurveyOptions options={options.slice(0, OPTIONS_DISPLAYED)} />
+            <SurveyOptions
+              options={options.slice(0, OPTIONS_DISPLAYED)}
+              totalPower={votingPower}
+            />
             {options.length > OPTIONS_DISPLAYED && (
               <More>
                 <Button.Anchor mode="text" onClick={this.handleOpenDetails}>
@@ -64,33 +67,16 @@ class SurveyCard extends React.Component {
               </More>
             )}
           </Content>
-          {this.renderFooter(past)}
+          {past ? (
+            <PastFooter onOpenDetails={this.handleOpenDetails} />
+          ) : (
+            <ActiveFooter
+              onOpenDetails={this.handleOpenDetails}
+              onVote={this.handleVote}
+            />
+          )}
         </Card>
       </Main>
-    )
-  }
-  renderFooter(past) {
-    if (past) {
-      return (
-        <Footer alignRight>
-          <SecondaryButton onClick={this.handleOpenDetails}>
-            View details
-          </SecondaryButton>
-        </Footer>
-      )
-    }
-    return (
-      <Footer>
-        <Button.Anchor
-          mode="text"
-          compact
-          style={{ marginLeft: '-15px' }}
-          onClick={this.handleOpenDetails}
-        >
-          View details
-        </Button.Anchor>
-        <SecondaryButton onClick={this.handleVote}>Vote</SecondaryButton>
-      </Footer>
     )
   }
 }
@@ -156,6 +142,26 @@ const Footer = styled.div`
     alignRight ? 'flex-end' : 'space-between'};
   flex-shrink: 0;
 `
+
+const ActiveFooter = ({ onOpenDetails, onVote }) => (
+  <Footer>
+    <Button.Anchor
+      mode="text"
+      compact
+      style={{ paddingLeft: '0' }}
+      onClick={onOpenDetails}
+    >
+      View details
+    </Button.Anchor>
+    <SecondaryButton onClick={onVote}>Vote</SecondaryButton>
+  </Footer>
+)
+
+const PastFooter = ({ onOpenDetails }) => (
+  <Footer alignRight>
+    <SecondaryButton onClick={onOpenDetails}>View details</SecondaryButton>
+  </Footer>
+)
 
 SurveyCard.Group = SurveyCardGroup
 SurveyCard.Card = Card

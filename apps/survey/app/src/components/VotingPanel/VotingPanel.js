@@ -21,11 +21,11 @@ class VotingPanel extends React.Component {
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (!props.survey || props.survey.id === state.surveyId) {
+    if (!props.survey || props.survey.surveyId === state.surveyId) {
       return null
     }
     return {
-      surveyId: props.survey.id,
+      surveyId: props.survey.surveyId,
       distribution: [...new Array(props.survey.options.length)].fill(0),
     }
   }
@@ -88,7 +88,8 @@ class VotingPanel extends React.Component {
 
   handleOptionUpdate = (id, value) => {
     const { survey } = this.props
-    const index = survey.options.findIndex(o => o.id === id)
+    const index = survey.options.findIndex(o => o.optionId === id)
+    console.log('indexToUpdate', index, id)
     this.setState({
       distribution: VotingPanel.updateDistributionValue(
         index,
@@ -118,7 +119,17 @@ class VotingPanel extends React.Component {
               <Label>Question</Label>
             </h2>
             <p>
-              <strong>{survey.question}</strong>
+              <strong>{survey.metadata.question}</strong>
+            </p>
+          </Part>
+
+          <SidePanelSeparator />
+          <Part>
+            <h2>
+              <Label>Description</Label>
+            </h2>
+            <p>
+              <strong>{survey.metadata.description}</strong>
             </p>
           </Part>
 
@@ -127,7 +138,7 @@ class VotingPanel extends React.Component {
             <h2>
               <Label>Created By</Label>
             </h2>
-            <Creator address={survey.createdBy} />
+            <Creator address={survey.creator} />
           </Part>
 
           <SidePanelSeparator />
@@ -138,12 +149,12 @@ class VotingPanel extends React.Component {
               </h2>
               <Label>Percentage</Label>
             </TwoLabels>
-            {survey.options.map(({ id, label }, index) => {
+            {survey.options.map(({ optionId, label }, index) => {
               const { value, percentage } = distributionPairs[index]
               return (
                 <Option
-                  key={index}
-                  id={id}
+                  key={optionId}
+                  id={optionId}
                   label={label}
                   value={value}
                   percentage={percentage}

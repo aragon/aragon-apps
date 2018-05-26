@@ -1,6 +1,7 @@
 import React from 'react'
 import { Trail, config as springs } from 'react-spring'
 import SurveyOption from './SurveyOption'
+import { percentageList } from '../../math-utils'
 
 const ANIM_DELAY_MIN = 100
 const ANIM_DELAY_MAX = 300
@@ -32,8 +33,11 @@ class SurveyOptions extends React.Component {
     clearTimeout(this._transitionTimer)
   }
   render() {
+    const { options, totalPower } = this.props
     const { animate } = this.state
-    const { options } = this.props
+
+    const percentages = percentageList(options.map(o => o.power / totalPower))
+
     return (
       <Trail
         from={{ showProgress: 0 }}
@@ -41,11 +45,13 @@ class SurveyOptions extends React.Component {
         keys={options.map(option => option.label)}
         native
       >
-        {options.map(option => ({ showProgress }) => (
+        {options.map((option, i) => ({ showProgress }) => (
           <SurveyOption
-            key={option.label}
+            key={option.optionId}
             showProgress={showProgress}
             config={springs.stiff}
+            value={Math.floor(option.power / totalPower * 100) / 100}
+            percentage={percentages[i]}
             {...option}
           />
         ))}

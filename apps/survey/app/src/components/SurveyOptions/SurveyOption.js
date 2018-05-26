@@ -5,19 +5,19 @@ import { animated } from 'react-spring'
 
 class SurveyOption extends React.Component {
   render() {
-    const { label, value, showProgress } = this.props
+    const { label, value, percentage, showProgress } = this.props
     return (
       <Main>
         <Labels>
           <Text size="xsmall">{label}</Text>
           <Text size="xsmall" color="#98A0A2">
-            {Math.round(value * 1000) / 10}%
+            {percentage}%
           </Text>
         </Labels>
         <BarWrapper>
           <Bar
             style={{
-              width: `calc(100% * ${value})`,
+              width: `${value * 100}%`,
               transform: showProgress.interpolate(t => `scaleX(${t})`),
             }}
           />
