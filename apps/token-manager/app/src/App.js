@@ -69,7 +69,7 @@ class App extends React.Component {
       tokenSettingsLoaded,
     } = this.state
     return (
-      <AragonApp publicUrl="/aragon-ui/">
+      <AragonApp publicUrl="./aragon-ui/">
         <AppLayout>
           <AppLayout.Header>
             <AppBar
