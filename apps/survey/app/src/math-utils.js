@@ -22,8 +22,9 @@ export function percentageList(values, digits = 0) {
 
   // Add the remaining to the value that is the closest
   // to the next integer, until we reach 100.
+  let index = -1
   while (remaining--) {
-    let index = percentages
+    index = percentages
       .map(({ remain }, index) => ({ remain, index }))
       .sort((p1, p2) => p2.remain - p1.remain)[0].index
 
