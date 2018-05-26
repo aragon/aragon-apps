@@ -160,7 +160,7 @@ function loadSurveySettings() {
       settings.reduce((acc, setting) => ({ ...acc, ...setting }), {})
     )
     .catch(err => {
-      console.erroror('Failed to load Survey settings', err)
+      console.error('Failed to load Survey settings', err)
       // Return an empty object to try again later
       return {}
     })
