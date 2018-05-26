@@ -3,7 +3,8 @@ import SurveyCard from '../SurveyCard/SurveyCard'
 
 class Surveys extends React.Component {
   static defaultProps = {
-    onOpenSurvey: () => {},
+    onOpenSurveyDetails: () => {},
+    onOpenVotingPanel: () => {},
     onCardRef: () => {},
   }
   getSurveyGroups() {
@@ -36,7 +37,8 @@ class Surveys extends React.Component {
             endDate={endDate}
             question={question}
             options={options}
-            onOpenSurvey={this.props.onOpenSurvey}
+            onOpenSurveyDetails={this.props.onOpenSurveyDetails}
+            onVote={this.props.onOpenVotingPanel}
             onCardRef={this.props.onCardRef}
           />
         ))}

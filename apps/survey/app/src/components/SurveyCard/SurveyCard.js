@@ -12,8 +12,11 @@ class SurveyCard extends React.Component {
   static defaultProps = {
     options: [],
   }
-  handleOpen = () => {
-    this.props.onOpenSurvey(this.props.id)
+  handleVote = () => {
+    this.props.onVote(this.props.id)
+  }
+  handleOpenDetails = () => {
+    this.props.onOpenSurveyDetails(this.props.id)
   }
   handleCardRef = element => {
     this.props.onCardRef({ id: this.props.id, element })
@@ -46,7 +49,7 @@ class SurveyCard extends React.Component {
             <SurveyOptions options={options.slice(0, OPTIONS_DISPLAYED)} />
             {options.length > OPTIONS_DISPLAYED && (
               <More>
-                <Button.Anchor mode="text" onClick={this.handleOpen}>
+                <Button.Anchor mode="text" onClick={this.handleOpenDetails}>
                   <Badge
                     background={color(theme.infoBackground)
                       .alpha(0.8)
@@ -70,7 +73,7 @@ class SurveyCard extends React.Component {
     if (past) {
       return (
         <Footer alignRight>
-          <SecondaryButton onClick={this.handleOpen}>
+          <SecondaryButton onClick={this.handleOpenDetails}>
             View details
           </SecondaryButton>
         </Footer>
@@ -82,11 +85,11 @@ class SurveyCard extends React.Component {
           mode="text"
           compact
           style={{ marginLeft: '-15px' }}
-          onClick={this.handleOpen}
+          onClick={this.handleOpenDetails}
         >
           View details
         </Button.Anchor>
-        <SecondaryButton>Vote</SecondaryButton>
+        <SecondaryButton onClick={this.handleVote}>Vote</SecondaryButton>
       </Footer>
     )
   }
