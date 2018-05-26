@@ -129,7 +129,7 @@ class VotingPanel extends React.Component {
               <Label>Description</Label>
             </h2>
             <p>
-              <strong>{survey.metadata.description}</strong>
+              {survey.metadata.description}
             </p>
           </Part>
 
