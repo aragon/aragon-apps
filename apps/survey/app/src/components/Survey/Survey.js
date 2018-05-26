@@ -21,8 +21,7 @@ class Survey extends React.Component {
   componentDidMount() {
     this.startSidebarTransitionTimer()
   }
-  componentWillReceiveProps(props) {
-    const { props: prevProps } = this
+  componentDidUpdate(prevProps) {
     if (prevProps.survey !== this.props.survey) {
       this.setState({ animateSidebar: false })
       this.clearSidebarTransitionTimer()
@@ -50,9 +49,6 @@ class Survey extends React.Component {
   }
   clearSidebarTransitionTimer() {
     clearTimeout(this._sidebarTransitionTimer)
-  }
-  handleClose = () => {
-    this.props.onClose()
   }
   handleDetailsWrapperRef = el => {
     this._detailsWrapperEl = el
@@ -92,7 +88,6 @@ class Survey extends React.Component {
           >
             {styles => (
               <animated.div
-                onClick={this.handleClose}
                 style={{
                   opacity: styles.show,
                   transformOrigin: '0 0',

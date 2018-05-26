@@ -47,6 +47,9 @@ class App extends React.Component {
   handleOpenNewSurveyPanel = () => {
     this.setState({ newSurveyPanelOpened: true })
   }
+  handleCloseSurveyDetails = () => {
+    this.setState({ openedSurveyId: null })
+  }
   handleCardRef = ({ id, element }) => {
     if (!this._cardRefs) {
       this._cardRefs = new Map()
@@ -69,8 +72,10 @@ class App extends React.Component {
         <AppView
           appBar={
             <AppBar
+              view={openedSurvey ? 'survey' : 'surveys'}
               token="ANT"
               onOpenNewSurveyPanel={this.handleOpenNewSurveyPanel}
+              onBack={this.handleCloseSurveyDetails}
             />
           }
         >
@@ -90,9 +95,6 @@ class App extends React.Component {
           <Survey
             survey={openedSurvey}
             transitionFrom={openedSurveyRect}
-            onClose={() => {
-              this.setState({ openedSurveyId: null })
-            }}
           />
         </AppView>
         <NewSurveyPanel
