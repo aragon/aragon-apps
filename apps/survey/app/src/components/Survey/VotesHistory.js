@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Trail, Spring } from 'react-spring'
+import { getOptionColor } from '../../option-utils'
 import springs from '../../springs'
 
 const WIDTH = 300
@@ -62,42 +63,45 @@ class VotesHistory extends React.Component {
                   strokeWidth="1"
                   stroke={BORDER_COLOR}
                 />
-                {filteredOptions.map(({ history, color }) => (
-                  <g key={color}>
-                    <path
-                      d={`
-                        M${this.getX(0)},${this.getY(history[0], progress)}
-                        ${history
-                          .slice(1)
-                          .map(
-                            (val, i) =>
-                              `L
-                                ${this.getX((i + 1) * progress)},
-                                ${this.getY(val, progress)}
-                              `
-                          )
-                          .join('')}
-                      `}
-                      fill="transparent"
-                      stroke={color}
-                      strokeWidth="2"
-                      strokeOpacity="0.7"
-                    />
-                    {history
-                      .slice(1, -1)
-                      .map((val, i) => (
-                        <circle
-                          key={i}
-                          cx={this.getX(i + 1) * progress}
-                          cy={this.getY(val, progress)}
-                          r={DOT_RADIUS}
-                          fill="white"
-                          stroke={color}
-                          strokeWidth="1"
-                        />
-                      ))}
-                  </g>
-                ))}
+                {filteredOptions.map(({ history, optionId }) => {
+                  const color = getOptionColor(optionId)
+                  return (
+                    <g key={optionId}>
+                      <path
+                        d={`
+                          M${this.getX(0)},${this.getY(history[0], progress)}
+                          ${history
+                            .slice(1)
+                            .map(
+                              (val, i) =>
+                                `L
+                                  ${this.getX((i + 1) * progress)},
+                                  ${this.getY(val, progress)}
+                                `
+                            )
+                            .join('')}
+                        `}
+                        fill="transparent"
+                        stroke={color}
+                        strokeWidth="2"
+                        strokeOpacity="0.7"
+                      />
+                      {history
+                        .slice(1, -1)
+                        .map((val, i) => (
+                          <circle
+                            key={i}
+                            cx={this.getX(i + 1) * progress}
+                            cy={this.getY(val, progress)}
+                            r={DOT_RADIUS}
+                            fill="white"
+                            stroke={color}
+                            strokeWidth="1"
+                          />
+                        ))}
+                    </g>
+                  )
+                })}
                 <line
                   x1={this.getX(history.length - 1) * progress}
                   y1="0"

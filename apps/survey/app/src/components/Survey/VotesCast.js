@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { Spring, Trail, animated } from 'react-spring'
 import { theme } from '@aragon/ui'
+import { getOptionColor } from '../../option-utils'
 import springs from '../../springs'
 
 const ANIM_DELAY = 600
@@ -29,14 +30,14 @@ class VotesCast extends React.Component {
           <Trail
             from={{ progress: 0 }}
             to={{ progress: Number(animate) }}
-            keys={survey.options.map(o => o.id)}
+            keys={survey.options.map(o => o.optionId)}
             config={springs.stiff}
             native
           >
             {survey.options.map(
-              ({ id, label, color, totalVotes }) => ({ progress }) => (
+              ({ label, optionId, power }, index) => ({ progress }) => (
                 <animated.li
-                  key={id}
+                  key={optionId}
                   style={{
                     opacity: progress,
                     transform: progress.interpolate(
@@ -45,10 +46,10 @@ class VotesCast extends React.Component {
                   }}
                 >
                   <span>
-                    <Disc style={{ background: color }} />
+                    <Disc style={{ background: getOptionColor(optionId) }} />
                     {label}
                   </span>
-                  <strong>{Math.floor(totalVotes)}</strong>
+                  <strong>{Math.floor(power)}</strong>
                 </animated.li>
               )
             )}

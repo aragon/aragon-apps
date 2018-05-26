@@ -18,7 +18,7 @@ class App extends React.Component {
     ...(typeof demoState !== 'undefined' ? demoState : {}),
   }
   getSurvey = id => {
-    return this.state.surveys.find(survey => survey.id === id)
+    return this.state.surveys.find(survey => survey.surveyId === id)
   }
   handleOpenSurvey = id => {
     // Try to get the card rectangle before opening it

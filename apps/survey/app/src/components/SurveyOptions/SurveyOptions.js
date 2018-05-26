@@ -32,8 +32,8 @@ class SurveyOptions extends React.Component {
     clearTimeout(this._transitionTimer)
   }
   render() {
+    const { options, totalPower } = this.props
     const { animate } = this.state
-    const { options } = this.props
     return (
       <Trail
         from={{ showProgress: 0 }}
@@ -43,9 +43,10 @@ class SurveyOptions extends React.Component {
       >
         {options.map(option => ({ showProgress }) => (
           <SurveyOption
-            key={option.label}
+            key={option.optionId}
             showProgress={showProgress}
             config={springs.stiff}
+            value={option.power / totalPower}
             {...option}
           />
         ))}

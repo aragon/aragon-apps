@@ -21,23 +21,21 @@ class Surveys extends React.Component {
     const surveys = this.getSurveyGroups()
     return (
       <React.Fragment>
-        {this.renderGroup('Open Surveys', surveys.opened)}
-        {this.renderGroup('Past Surveys', surveys.closed)}
+        {this.renderGroup('Open Surveys', surveys.opened, false)}
+        {this.renderGroup('Past Surveys', surveys.closed, true)}
       </React.Fragment>
     )
   }
-  renderGroup(title, surveys) {
+  renderGroup(title, surveys, past) {
     return (
       <SurveyCard.Group title={title} count={surveys.length}>
-        {surveys.map(({ id, endDate, question, options }) => (
+        {surveys.map(survey => (
           <SurveyCard
-            key={id}
-            id={id}
-            endDate={endDate}
-            question={question}
-            options={options}
+            key={survey.surveyId}
             onOpenSurvey={this.props.onOpenSurvey}
             onCardRef={this.props.onCardRef}
+            past={past}
+            {...survey}
           />
         ))}
       </SurveyCard.Group>

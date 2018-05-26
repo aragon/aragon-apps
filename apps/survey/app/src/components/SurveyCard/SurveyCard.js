@@ -13,20 +13,22 @@ class SurveyCard extends React.Component {
     options: [],
   }
   handleOpen = () => {
-    this.props.onOpenSurvey(this.props.id)
+    this.props.onOpenSurvey(this.props.surveyId)
   }
   handleCardRef = element => {
-    this.props.onCardRef({ id: this.props.id, element })
+    this.props.onCardRef({ id: this.props.surveyId, element })
   }
   render() {
     const {
       endDate,
-      question,
+      past,
       showProgress,
+      votingPower,
+      metadata: { question },
       options: unsortedOptions,
     } = this.props
     const options = unsortedOptions.sort((a, b) => a.value < b.value)
-    const past = endDate < new Date()
+
     return (
       <Main>
         <Header>
@@ -43,7 +45,10 @@ class SurveyCard extends React.Component {
             <Question>
               <Text>{question}</Text>
             </Question>
-            <SurveyOptions options={options.slice(0, OPTIONS_DISPLAYED)} />
+            <SurveyOptions
+              options={options.slice(0, OPTIONS_DISPLAYED)}
+              totalPower={votingPower}
+            />
             {options.length > OPTIONS_DISPLAYED && (
               <More>
                 <Button.Anchor mode="text" onClick={this.handleOpen}>
@@ -61,33 +66,13 @@ class SurveyCard extends React.Component {
               </More>
             )}
           </Content>
-          {this.renderFooter(past)}
+          {past ? (
+            <PastFooter onClick={this.handleOpen} />
+          ) : (
+            <ActiveFooter onClick={this.handleOpen} />
+          )}
         </Card>
       </Main>
-    )
-  }
-  renderFooter(past) {
-    if (past) {
-      return (
-        <Footer alignRight>
-          <SecondaryButton onClick={this.handleOpen}>
-            View details
-          </SecondaryButton>
-        </Footer>
-      )
-    }
-    return (
-      <Footer>
-        <Button.Anchor
-          mode="text"
-          compact
-          style={{ marginLeft: '-15px' }}
-          onClick={this.handleOpen}
-        >
-          View details
-        </Button.Anchor>
-        <SecondaryButton>Vote</SecondaryButton>
-      </Footer>
     )
   }
 }
@@ -153,6 +138,26 @@ const Footer = styled.div`
     alignRight ? 'flex-end' : 'space-between'};
   flex-shrink: 0;
 `
+
+const ActiveFooter = ({ onClick }) => (
+  <Footer>
+    <Button.Anchor
+      mode="text"
+      compact
+      style={{ paddingLeft: '0' }}
+      onClick={onClick}
+    >
+      View details
+    </Button.Anchor>
+    <SecondaryButton>Vote</SecondaryButton>
+  </Footer>
+)
+
+const PastFooter = ({ onClick }) => (
+  <Footer alignRight>
+    <SecondaryButton onClick={onClick}>View details</SecondaryButton>
+  </Footer>
+)
 
 SurveyCard.Group = SurveyCardGroup
 SurveyCard.Card = Card
