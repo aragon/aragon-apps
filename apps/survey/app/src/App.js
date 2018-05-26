@@ -10,9 +10,6 @@ import AppBar from './components/AppBar/AppBar'
 // Comment this to disable the demo state
 import * as demoState from './demo-state'
 
-const PANEL_VOTING = Symbol('PANEL_VOTING')
-const PANEL_NEW_SURVEY = Symbol('PANEL_NEW_SURVEY')
-
 class App extends React.Component {
   state = {
     surveys: [],
@@ -20,7 +17,7 @@ class App extends React.Component {
     openedSurveyRect: {},
     votingPanelOpened: false,
     votingPanelSurveyId: null,
-    showPanel: null,
+    newSurveyPanelOpened: false,
 
     ...(typeof demoState !== 'undefined' ? demoState : {}),
   }
@@ -37,8 +34,8 @@ class App extends React.Component {
   handlePanelClose = () => {
     this.setState({
       openedSurveyId: false,
-      showNewSurveyPanel: false,
       votingPanelOpened: false,
+      newSurveyPanelOpened: false,
     })
   }
   handleOpenVotingPanel = id => {
@@ -48,7 +45,7 @@ class App extends React.Component {
     })
   }
   handleOpenNewSurveyPanel = () => {
-    this.setState({ showNewSurveyPanel: true })
+    this.setState({ newSurveyPanelOpened: true })
   }
   handleCardRef = ({ id, element }) => {
     if (!this._cardRefs) {
@@ -62,7 +59,7 @@ class App extends React.Component {
       openedSurveyRect,
       votingPanelSurveyId,
       votingPanelOpened,
-      showPanel,
+      newSurveyPanelOpened,
       surveys,
     } = this.state
     const openedSurvey = this.getSurvey(openedSurveyId)
@@ -99,7 +96,7 @@ class App extends React.Component {
           />
         </AppView>
         <NewSurveyPanel
-          opened={showPanel === PANEL_NEW_SURVEY}
+          opened={newSurveyPanelOpened}
           onClose={this.handlePanelClose}
         />
         <VotingPanel

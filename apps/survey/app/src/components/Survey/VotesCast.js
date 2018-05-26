@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Spring, Trail, animated } from 'react-spring'
+import { Trail, animated } from 'react-spring'
 import { theme } from '@aragon/ui'
 import { getOptionColor } from '../../option-utils'
 import springs from '../../springs'

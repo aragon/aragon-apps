@@ -6,7 +6,6 @@ const dateFromNow = diff => new Date(Date.now() + diff)
 
 // Generate history values
 const historyPoints = prevPoints => {
-  const maxDiff = 1 / prevPoints.length
   let remaining = 1
   const newPoints = prevPoints.map((point, i) => {
     const pointsLeft = prevPoints.length - i

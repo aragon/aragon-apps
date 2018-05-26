@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Trail, Spring } from 'react-spring'
+import { Spring } from 'react-spring'
 import { getOptionColor } from '../../option-utils'
 import springs from '../../springs'
 
@@ -123,10 +123,7 @@ class VotesHistory extends React.Component {
                 />
                 <g transform={`translate(0,${HEIGHT + CAPTIONS_HEIGHT * 0.7})`}>
                   {[...new Array(DURATION_SLICES - 1)].map((_, i) => (
-                    <text
-                      key={i}
-                      x={this.getX(i) + (i === 0 ? 2 : 0)}
-                    >
+                    <text key={i} x={this.getX(i) + (i === 0 ? 2 : 0)}>
                       {i + 1}.
                     </text>
                   ))}

@@ -1,8 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Spring, Trail, animated } from 'react-spring'
+import { Spring, animated } from 'react-spring'
 import springs from '../../springs'
-import SurveyOptions from '../SurveyOptions/SurveyOptions'
 import SurveyDetails from './SurveyDetails'
 import SurveySidebar from './SurveySidebar'
 
@@ -22,7 +21,8 @@ class Survey extends React.Component {
   componentDidMount() {
     this.startSidebarTransitionTimer()
   }
-  componentDidUpdate(prevProps) {
+  componentWillReceiveProps(props) {
+    const { props: prevProps } = this
     if (prevProps.survey !== this.props.survey) {
       this.setState({ animateSidebar: false })
       this.clearSidebarTransitionTimer()
@@ -77,8 +77,8 @@ class Survey extends React.Component {
     `
   }
   render() {
-    const { survey, transitionFrom } = this.props
-    const { animateSidebar, transitionTo } = this.state
+    const { survey } = this.props
+    const { animateSidebar } = this.state
     if (!survey) return null
 
     return (

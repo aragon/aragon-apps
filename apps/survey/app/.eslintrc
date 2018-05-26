@@ -7,7 +7,6 @@
     "standard",
     "standard-react",
     "prettier",
-    "prettier/flowtype",
     "prettier/react"
   ],
   "parser": "babel-eslint",

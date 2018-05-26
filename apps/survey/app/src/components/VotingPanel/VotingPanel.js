@@ -87,7 +87,7 @@ class VotingPanel extends React.Component {
   }
 
   render() {
-    const { opened, onClose, survey } = this.props
+    const { survey } = this.props
     const distributionPairs = this.getDistributionPairs()
     return this.renderPanel(
       survey && (
@@ -182,11 +182,11 @@ class Option extends React.Component {
     this.props.onUpdate(this.props.id, 1)
   }
   handleInputChange = e => {
-    return // disabled for now
-    const value = Math.max(0, Math.min(100, parseInt(e.target.value, 10)))
-    if (!isNaN(value)) {
-      this.props.onUpdate(this.props.id, value)
-    }
+    // disable input changes for now
+    // const value = Math.max(0, Math.min(100, parseInt(e.target.value, 10)))
+    // if (!isNaN(value)) {
+    //   this.props.onUpdate(this.props.id, value)
+    // }
   }
   render() {
     const { id, label, value, percentage } = this.props

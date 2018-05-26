@@ -38,6 +38,8 @@
   },
   "scripts": {
     "lint": "eslint ./src",
+    "lint:fix": "eslint --fix ./src",
+    "test": "npm run lint",
     "sync-assets": "mkdir -p dist && rsync -rtu \"$(dirname $(node -p 'require.resolve(\"@aragon/ui\")'))/\" dist/aragon-ui",
     "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve index.html -p 3004 --out-dir public/",
     "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir public/",

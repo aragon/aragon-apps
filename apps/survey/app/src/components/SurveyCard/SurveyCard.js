@@ -22,7 +22,7 @@ class SurveyCard extends React.Component {
     this.props.onCardRef({ id: this.props.survey.surveyId, element })
   }
   render() {
-    const { survey, past, showProgress } = this.props
+    const { survey, past } = this.props
     const {
       endDate,
       metadata: { question },
