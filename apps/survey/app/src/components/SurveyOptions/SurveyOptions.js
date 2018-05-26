@@ -33,16 +33,22 @@ class SurveyOptions extends React.Component {
     clearTimeout(this._transitionTimer)
   }
   render() {
-    const { options, totalPower } = this.props
+    const {
+      options: allOptions,
+      optionsDisplayed = allOptions.length,
+      totalPower,
+    } = this.props
     const { animate } = this.state
-
-    const percentages = percentageList(options.map(o => o.power / totalPower))
-
+    const percentages = percentageList(
+      allOptions.map(o => o.power / totalPower),
+      2
+    )
+    const options = allOptions.slice(0, optionsDisplayed)
     return (
       <Trail
         from={{ showProgress: 0 }}
         to={{ showProgress: Number(animate) }}
-        keys={options.map(option => option.label)}
+        keys={options.map(option => option.optionId)}
         native
       >
         {options.map((option, i) => ({ showProgress }) => (

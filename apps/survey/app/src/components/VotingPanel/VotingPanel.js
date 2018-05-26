@@ -13,6 +13,7 @@ import {
   Info,
 } from '@aragon/ui'
 import Creator from '../Creator/Creator'
+import { percentageList } from '../../math-utils'
 
 class VotingPanel extends React.Component {
   state = {
@@ -65,31 +66,17 @@ class VotingPanel extends React.Component {
 
   getDistributionPairs() {
     const { distribution } = this.state
+    const percentages = percentageList(distribution)
 
-    const total = distribution.reduce((t, v) => t + v, 0)
-
-    const pairs = distribution.map(value => ({
+    return distribution.map((value, i) => ({
       value,
-      percentage: Math.round(value * 100),
+      percentage: percentages[i],
     }))
-
-    if (total === 0) {
-      return pairs
-    }
-
-    // Add / remove the missing percentage after rounding the values
-    pairs[0].percentage += pairs.reduce(
-      (total, { percentage }) => total - percentage,
-      100
-    )
-
-    return pairs
   }
 
   handleOptionUpdate = (id, value) => {
     const { survey } = this.props
     const index = survey.options.findIndex(o => o.optionId === id)
-    console.log('indexToUpdate', index, id)
     this.setState({
       distribution: VotingPanel.updateDistributionValue(
         index,
@@ -128,9 +115,7 @@ class VotingPanel extends React.Component {
             <h2>
               <Label>Description</Label>
             </h2>
-            <p>
-              {survey.metadata.description}
-            </p>
+            <p>{survey.metadata.description}</p>
           </Part>
 
           <SidePanelSeparator />

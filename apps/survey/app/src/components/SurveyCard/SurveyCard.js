@@ -47,7 +47,8 @@ class SurveyCard extends React.Component {
               <Text>{question}</Text>
             </Question>
             <SurveyOptions
-              options={options.slice(0, OPTIONS_DISPLAYED)}
+              options={options}
+              optionsDisplayed={OPTIONS_DISPLAYED}
               totalPower={votingPower}
             />
             {options.length > OPTIONS_DISPLAYED && (
