@@ -28,8 +28,10 @@ const main = (retryTimer = 1000) => {
 
 async function initialize(tokenAddr) {
   const token = app.external(tokenAddr, tokenAbi)
+
+  let tokenSymbol
   try {
-    const tokenSymbol = await loadTokenSymbol(token)
+    tokenSymbol = await loadTokenSymbol(token)
     app.identify(tokenSymbol)
   } catch (err) {
     console.error(
@@ -50,11 +52,12 @@ async function initialize(tokenAddr) {
     tokenDecimals = 18
   }
 
-  return createStore(token, tokenDecimals)
+  return createStore(token, { decimals: tokenDecimals, symbol: tokenSymbol })
 }
 
 // Hook up the script as an aragon.js store
-async function createStore(token, tokenDecimals) {
+async function createStore(token, tokenSettings) {
+  const { decimals: tokenDecimals, symbol: tokenSymbol } = tokenSettings
   return app.store(
     async (state, { blockNumber, event, returnValues }) => {
       let nextState = {
@@ -67,6 +70,7 @@ async function createStore(token, tokenDecimals) {
         nextState = {
           ...nextState,
           tokenDecimals,
+          tokenSymbol,
         }
       } else {
         switch (event) {

@@ -97,7 +97,7 @@ class VotingPanel extends React.Component {
             <h2>
               <Label>Time Remaining</Label>
             </h2>
-            <Countdown end={survey.endDate} />
+            <Countdown end={survey.data.endDate} />
           </Part>
 
           <SidePanelSeparator />
@@ -123,7 +123,7 @@ class VotingPanel extends React.Component {
             <h2>
               <Label>Created By</Label>
             </h2>
-            <Creator address={survey.creator} />
+            <Creator address={survey.data.creator} />
           </Part>
 
           <SidePanelSeparator />

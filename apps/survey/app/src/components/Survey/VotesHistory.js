@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { Spring } from 'react-spring'
 import { getOptionColor } from '../../option-utils'
 import springs from '../../springs'
+import * as demoState from '../../demo-state'
 
 const WIDTH = 300
 const HEIGHT = 200
@@ -35,7 +36,9 @@ class VotesHistory extends React.Component {
     return HEIGHT - HEIGHT * votePercentage * progress
   }
   render() {
-    const { survey } = this.props
+    // TODO: add real history to each survey
+    // const { survey } = this.props
+    const survey = demoState.surveys[0]
     const history = survey.history.slice(0, DURATION_SLICES)
     const filteredOptions = survey.options.map((option, i) => ({
       ...option,

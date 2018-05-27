@@ -59,7 +59,7 @@ class SurveyDetails extends React.Component {
                     <SectionTitle>Options</SectionTitle>
                     <SurveyOptions
                       options={survey.options}
-                      totalPower={survey.votingPower}
+                      totalPower={survey.data.votingPower}
                     />
                   </animated.section>
                 ),
@@ -69,7 +69,7 @@ class SurveyDetails extends React.Component {
                     style={{ opacity: progress.interpolate(p => p) }}
                   >
                     <SectionTitle>Time Remaining</SectionTitle>
-                    <Countdown end={survey.endDate} />
+                    <Countdown end={survey.data.endDate} />
                   </animated.section>
                 ),
               ]}
@@ -113,7 +113,7 @@ class SurveyDetails extends React.Component {
                     style={{ opacity: progress.interpolate(p => p) }}
                   >
                     <SectionTitle>Created By</SectionTitle>
-                    <Creator address={survey.creator} />
+                    <Creator address={survey.data.creator} />
                   </animated.section>
                 ),
                 ({ progress }) => (

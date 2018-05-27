@@ -22,23 +22,22 @@ class SurveyCard extends React.Component {
     this.props.onCardRef({ id: this.props.survey.surveyId, element })
   }
   render() {
-    const { survey, past } = this.props
+    const { survey } = this.props
     const {
-      endDate,
+      data: { endDate, open, votingPower },
       metadata: { question },
       options,
-      votingPower,
     } = survey
 
     return (
       <Main>
         <Header>
-          {past ? (
+          {open ? (
+            <Countdown end={endDate} />
+          ) : (
             <PastDate dateTime={format(endDate, 'yyyy-MM-dd[T]HH:mm:ss')}>
               {format(endDate, 'dd MMM yyyy HH:mm')}
             </PastDate>
-          ) : (
-            <Countdown end={endDate} />
           )}
         </Header>
         <Card innerRef={this.handleCardRef}>
@@ -68,13 +67,13 @@ class SurveyCard extends React.Component {
               </More>
             )}
           </Content>
-          {past ? (
-            <PastFooter onOpenDetails={this.handleOpenDetails} />
-          ) : (
+          {open ? (
             <ActiveFooter
               onOpenDetails={this.handleOpenDetails}
               onVote={this.handleVote}
             />
+          ) : (
+            <PastFooter onOpenDetails={this.handleOpenDetails} />
           )}
         </Card>
       </Main>
