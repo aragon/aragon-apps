@@ -25,6 +25,7 @@ const main = (retryTimer = 1000) => {
       setTimeout(() => main(5 * retryTimer), retryTimer)
     })
 }
+main()
 
 async function initialize(tokenAddr) {
   const token = app.external(tokenAddr, tokenAbi)
