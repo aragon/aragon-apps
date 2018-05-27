@@ -86,10 +86,10 @@ const BackButton = styled.span`
   padding: 0 30px;
   cursor: pointer;
   svg path {
-    fill: hsl(179, 76%, 48%);
+    stroke: hsl(179, 76%, 48%);
   }
   :active svg path {
-    fill: hsl(179, 76%, 63%);
+    stroke: hsl(179, 76%, 63%);
   }
 `
 
