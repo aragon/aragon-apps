@@ -22,12 +22,18 @@ class Survey extends React.Component {
     this.startSidebarTransitionTimer()
   }
   componentDidUpdate(prevProps) {
+    // React's new `getDerivedStateFromProps()` hook forces us to store the information we want to
+    // compare from `prevProps` in state... so we decided to keep `componentDidUpdate()`.
+    // Using `setState()` in this hook can be generally dangerous, but because we're not updating
+    // something that will trigger another `setState()`, we should be safe here.
     if (prevProps.survey !== this.props.survey) {
+      // eslint-disable-next-line react/no-did-update-set-state
       this.setState({ animateSidebar: false })
       this.clearSidebarTransitionTimer()
 
       if (this.props.survey) {
         this.startSidebarTransitionTimer()
+        // eslint-disable-next-line react/no-did-update-set-state
         this.setState({
           transitionTo: this._detailsWrapperEl.getBoundingClientRect(),
         })

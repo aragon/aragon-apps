@@ -1,29 +1,98 @@
 import Aragon from '@aragon/client'
+import { of } from './rxjs'
 import surveySettings, { hasLoadedSurveySettings } from './survey-settings'
+import tokenDecimalsAbi from './abi/token-decimals.json'
+import tokenSymbolAbi from './abi/token-symbol.json'
+
+const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
+
+const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
 
 const app = new Aragon()
 
+// Get the token address to initialize ourselves
+const main = (retryTimer = 1000) => {
+  app
+    .call('token')
+    .first()
+    .subscribe(initialize, err => {
+      console.error(
+        'Could not start background script execution due to the contract not loading the token:',
+        err
+      )
+      console.error(`Retrying in ${retryTimer / 1000}s...`)
+      // Exponentially backoff attempts
+      setTimeout(() => main(5 * retryTimer), retryTimer)
+    })
+}
+
+async function initialize(tokenAddr) {
+  const token = app.external(tokenAddr, tokenAbi)
+
+  let tokenSymbol
+  try {
+    tokenSymbol = await loadTokenSymbol(token)
+    app.identify(tokenSymbol)
+  } catch (err) {
+    console.error(
+      `Failed to load token symbol for token at ${tokenAddr} due to:`,
+      err
+    )
+  }
+
+  let tokenDecimals
+  try {
+    tokenDecimals = await loadTokenDecimals(token)
+  } catch (err) {
+    console.err(
+      `Failed to load token decimals for token at ${tokenAddr} due to:`,
+      err
+    )
+    console.err('Defaulting to 18...')
+    tokenDecimals = 18
+  }
+
+  return createStore(token, { decimals: tokenDecimals, symbol: tokenSymbol })
+}
+
 // Hook up the script as an aragon.js store
-app.store(async (state, { event, returnValues }) => {
-  let nextState = {
-    ...state,
-    // Fetch the app's settings, if we haven't already
-    ...(!hasLoadedSurveySettings(state) ? await loadSurveySettings() : {}),
-  }
+async function createStore(token, tokenSettings) {
+  const { decimals: tokenDecimals, symbol: tokenSymbol } = tokenSettings
+  return app.store(
+    async (state, { blockNumber, event, returnValues }) => {
+      let nextState = {
+        ...state,
+        // Fetch the app's settings, if we haven't already
+        ...(!hasLoadedSurveySettings(state) ? await loadSurveySettings() : {}),
+      }
 
-  switch (event) {
-    case 'StartSurvey':
-      nextState = await startSurvey(nextState, returnValues)
-      break
-    case 'CastVote':
-      nextState = await castVote(nextState, returnValues)
-      break
-    default:
-      break
-  }
+      if (event === INITIALIZATION_TRIGGER) {
+        nextState = {
+          ...nextState,
+          tokenDecimals,
+          tokenSymbol,
+        }
+      } else {
+        switch (event) {
+          case 'StartSurvey':
+            nextState = await startSurvey(nextState, returnValues)
+            break
+          case 'CastVote':
+            nextState = await castVote(nextState, returnValues)
+            break
+          default:
+            break
+        }
+      }
 
-  return nextState
-})
+      return nextState
+    },
+    [
+      // Always initialize the store with our own home-made event
+      of({ event: INITIALIZATION_TRIGGER }),
+    ]
+  )
+}
 
 /***********************
  *                     *
@@ -126,9 +195,9 @@ async function createNewSurvey(surveyId) {
   return {
     metadata,
     options,
+    surveyId,
     data: surveyData,
     history: [],
-    id: surveyId,
   }
 }
 
@@ -207,6 +276,25 @@ function loadSurveyOptionPower(surveyId, optionId) {
         resolve(0)
       })
   )
+}
+
+function loadTokenDecimals(tokenContract) {
+  return new Promise((resolve, reject) => {
+    tokenContract
+      .decimals()
+      .first()
+      .map(val => parseInt(val, 10))
+      .subscribe(resolve, reject)
+  })
+}
+
+function loadTokenSymbol(tokenContract) {
+  return new Promise((resolve, reject) => {
+    tokenContract
+      .symbol()
+      .first()
+      .subscribe(resolve, reject)
+  })
 }
 
 // Apply transmations to a survey received from web3

@@ -9,10 +9,9 @@ class Surveys extends React.Component {
   }
   getSurveyGroups() {
     const { surveys } = this.props
-    const now = new Date()
     return surveys.reduce(
       (groups, survey) => {
-        const group = survey.endDate > now ? 'opened' : 'closed'
+        const group = survey.data.open ? 'opened' : 'closed'
         return { ...groups, [group]: [...groups[group], survey] }
       },
       { opened: [], closed: [] }
@@ -22,19 +21,18 @@ class Surveys extends React.Component {
     const surveys = this.getSurveyGroups()
     return (
       <React.Fragment>
-        {this.renderGroup('Open Surveys', surveys.opened, false)}
-        {this.renderGroup('Past Surveys', surveys.closed, true)}
+        {this.renderGroup('Open Surveys', surveys.opened)}
+        {this.renderGroup('Past Surveys', surveys.closed)}
       </React.Fragment>
     )
   }
-  renderGroup(title, surveys, past) {
+  renderGroup(title, surveys) {
     return (
       <SurveyCard.Group title={title} count={surveys.length}>
         {surveys.map(survey => (
           <SurveyCard
             key={survey.surveyId}
             survey={survey}
-            past={past}
             onOpenDetails={this.props.onOpenSurveyDetails}
             onVote={this.props.onOpenVotingPanel}
             onCardRef={this.props.onCardRef}

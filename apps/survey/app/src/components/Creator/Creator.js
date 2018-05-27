@@ -2,12 +2,14 @@ import React from 'react'
 import styled from 'styled-components'
 import Blockies from 'react-blockies'
 import { theme, SafeLink } from '@aragon/ui'
-
-const etherscanBaseUrl = ''
+import { provideNetwork } from '../../provide-network'
 
 class Creator extends React.Component {
   render() {
-    const { address } = this.props
+    const {
+      address,
+      network: { etherscanBaseUrl },
+    } = this.props
     const url = `${etherscanBaseUrl}/address/${address}`
     return (
       <Main>
@@ -47,4 +49,4 @@ const Address = styled.div`
   }
 `
 
-export default Creator
+export default provideNetwork(Creator)
