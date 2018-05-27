@@ -195,7 +195,12 @@ export default observe(observable => {
           open: isBefore(now, endDate),
           minParticipationPct: data.minParticipationPct / pctBase,
           participation: data.participation / pctBase,
+          votingPower: data.votingPower / pctBase,
         },
+        options: survey.options.map(({ power, ...option }) => ({
+          ...option,
+          power: power / pctBase,
+        })),
       }
     }),
   }))
