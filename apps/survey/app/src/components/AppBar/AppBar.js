@@ -3,7 +3,6 @@ import styled from 'styled-components'
 import { AppBar, Badge, Button } from '@aragon/ui'
 import { Transition, animated } from 'react-spring'
 import LeftIcon from './LeftIcon'
-import springs from '../../springs'
 
 const AppBarWrapper = ({ token, onOpenNewSurveyPanel, view, onBack }) => (
   <AppBar
@@ -47,7 +46,7 @@ const TitleSurveys = ({ opacity, position, token }) => (
   >
     <Title>
       <span>Survey</span>
-      <SpacedBadge>{token}</SpacedBadge>
+      {token && <SpacedBadge>{token}</SpacedBadge>}
     </Title>
   </animated.span>
 )
@@ -64,7 +63,7 @@ const TitleSurvey = ({ opacity, position, token, onBack }) => (
         <LeftIcon />
       </BackButton>
       <span>Survey Details</span>
-      <SpacedBadge>{token}</SpacedBadge>
+      {token && <SpacedBadge>{token}</SpacedBadge>}
     </Title>
   </animated.span>
 )
