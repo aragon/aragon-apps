@@ -115,7 +115,7 @@ async function castVote(state, { surveyId, voter, option: optionId }) {
     data: await loadSurveyData(surveyId),
 
     // Update power for option
-    options: updatePowerForOption(survey.options, surveyId, optionId),
+    options: await updatePowerForOption(survey.options, surveyId, optionId),
 
     // TODO: recalculate histogram buckets
   })
@@ -142,7 +142,7 @@ async function updateSurveys(surveys, surveyId, transform) {
 
   if (surveyId === -1) {
     // If we can't find it, load its data, perform the transformation, and concat
-    return surveys.concat(await transform(createNewSurvey(surveyId)))
+    return surveys.concat(await transform(await createNewSurvey(surveyId)))
   } else {
     const nextSurveys = Array.from(surveys)
     nextSurveys[surveyIndex] = await transform(nextSurveys[surveyIndex])
