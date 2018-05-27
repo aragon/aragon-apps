@@ -117,7 +117,12 @@ async function castVote(state, { surveyId, voter, option: optionId }) {
     // Update power for option
     options: await updatePowerForOption(survey.options, surveyId, optionId),
 
-    // TODO: recalculate histogram buckets
+    // Update power for option
+    options: await updatePowerForOption(
+      options,
+      surveyId,
+      parseInt(optionId, 10)
+    ),
   })
   return updateState(state, surveyId, transform)
 }
