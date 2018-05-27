@@ -2,9 +2,9 @@
   "name": "Signaling",
   "description": "Create signaling votes.",
   "icons": [{
-    "src": "images/icon.png",
+    "src": "/app/dist/images/icon.png",
     "sizes": "192x192"
   }],
-  "script": "/script.js",
-  "start_url": "/index.html"
+  "script": "/app/dist/script.js",
+  "start_url": "/app/dist/index.html"
 }
