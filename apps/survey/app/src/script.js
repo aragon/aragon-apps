@@ -140,7 +140,7 @@ async function updateState(state, surveyId, transform) {
 async function updateSurveys(surveys, surveyId, transform) {
   const surveyIndex = surveys.findIndex(survey => survey.surveyId === surveyId)
 
-  if (surveyId === -1) {
+  if (surveyIndex === -1) {
     // If we can't find it, load its data, perform the transformation, and concat
     return surveys.concat(await transform(await createNewSurvey(surveyId)))
   } else {
