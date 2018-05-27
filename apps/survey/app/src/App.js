@@ -45,7 +45,7 @@ class App extends React.Component {
     })
   }
   handleOpenNewSurveyPanel = () => {
-    this.setState({ newSurveyPanelOpened: true })
+    // this.setState({ newSurveyPanelOpened: true })
   }
   handleCloseSurveyDetails = () => {
     this.setState({ openedSurveyId: null })

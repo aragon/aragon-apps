@@ -31,7 +31,7 @@ const AppBarWrapper = ({ token, onOpenNewSurveyPanel, view, onBack }) => (
       </Container>
     }
     endContent={
-      <Button mode="strong" onClick={onOpenNewSurveyPanel}>
+      <Button mode="strong" disabled onClick={onOpenNewSurveyPanel}>
         New Survey
       </Button>
     }
