@@ -68,7 +68,7 @@ class App extends React.Component {
     }
   }
   getSurvey = id => {
-    return this.state.surveys.find(survey => survey.surveyId === id)
+    return this.props.surveys.find(survey => survey.surveyId === id)
   }
   getTokenContract(tokenAddress) {
     return tokenAddress && this.props.app.external(tokenAddress, tokenAbi)

@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import Blockies from 'react-blockies'
 import { theme, SafeLink } from '@aragon/ui'
-import { provideNetwork } from '../../provide-network'
+import provideNetwork from '../../provide-network'
 
 class Creator extends React.Component {
   render() {
