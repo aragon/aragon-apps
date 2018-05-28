@@ -5,7 +5,6 @@ import { unselectable } from '@aragon/ui'
 import { getOptionColor } from '../../option-utils'
 import springs from '../../springs'
 import { DURATION_SLICES } from '../../survey-settings'
-import * as demoState from '../../demo-state'
 
 const WIDTH = 300
 const HEIGHT = 200
@@ -37,13 +36,11 @@ class VotesHistory extends React.Component {
     return HEIGHT - HEIGHT * votePercentage * progress
   }
   render() {
-    // TODO: add real history to each survey
-    // const { survey } = this.props
-    const survey = demoState.surveys[0]
-    const history = survey.history.slice(0, DURATION_SLICES)
+    const { survey } = this.props
+    const { options: optionsHistory } = survey.optionsHistory
     const filteredOptions = survey.options.map((option, i) => ({
       ...option,
-      history: history.map(points => points[i]),
+      optionsHistory: optionsHistory.map(points => points[i]),
     }))
     const { animate } = this.state
     return (
@@ -67,14 +64,17 @@ class VotesHistory extends React.Component {
                   strokeWidth="1"
                   stroke={BORDER_COLOR}
                 />
-                {filteredOptions.map(({ history, optionId }) => {
+                {filteredOptions.map(({ optionsHistory, optionId }) => {
                   const color = getOptionColor(optionId)
                   return (
                     <g key={optionId}>
                       <path
                         d={`
-                          M${this.getX(0)},${this.getY(history[0], progress)}
-                          ${history
+                          M${this.getX(0)},${this.getY(
+                          optionsHistory[0],
+                          progress
+                        )}
+                          ${optionsHistory
                             .slice(1)
                             .map(
                               (val, i) =>
@@ -90,7 +90,7 @@ class VotesHistory extends React.Component {
                         strokeWidth="2"
                         strokeOpacity="0.7"
                       />
-                      {history
+                      {optionsHistory
                         .slice(1, -1)
                         .map((val, i) => (
                           <circle
@@ -107,9 +107,9 @@ class VotesHistory extends React.Component {
                   )
                 })}
                 <line
-                  x1={this.getX(history.length - 1) * progress}
+                  x1={this.getX(optionsHistory.length - 1) * progress}
                   y1="0"
-                  x2={this.getX(history.length - 1) * progress}
+                  x2={this.getX(optionsHistory.length - 1) * progress}
                   y2={HEIGHT}
                   stroke="#DAEAEF"
                   strokeWidth="3"
