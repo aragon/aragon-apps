@@ -107,7 +107,7 @@ class App extends React.Component {
             .first()
             .subscribe(resolve, reject)
         })
-        return { ...survey, userBalance: BigNumber(userBalance) }
+        return { ...survey, userBalance: new BigNumber(userBalance) }
       })
     )
 
