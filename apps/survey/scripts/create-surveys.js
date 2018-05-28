@@ -20,21 +20,25 @@ const surveys = [
 		question: "How should the following features be prioritized?"
 		description: "",
 		options: [ "Identity", "Permissions app", "App Manager" ],
+		url: "https://github.com/aragon/governance/issues/19",
 	},
 	{
 		question: "What type of grants would you like Aragon Nest to fund in the future?"
 		description: "",
 		options: [ "Aragon Apps", "Ethereum user experience", "Ethereum scalability", "Dev Tooling for Aragon and Ethereum ecosystems", "None of the above" ],
+		url: "https://github.com/aragon/governance/issues/20"
 	},
 	{
 		question: "Do your values align with those described in the Aragon Manifesto?"
 		description: "",
 		options: [ "Yes", "No" ],
+		url: "https://github.com/aragon/governance/issues/21",
 	},
 	{
 		question: "Do you support EIP999?"
 		description: "",
 		options: [ "Yes", "No", "I do not feel strongly one way or the other" ],
+		url: "https://github.com/aragon/governance/issues/22",
 	}
 ]
 
