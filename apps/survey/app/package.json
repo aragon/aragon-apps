@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aragon/client": "1.0.0-beta.8",
+    "@aragon/client": "1.0.0-beta.9",
     "@aragon/ui": "0.12.0",
     "date-fns": "2.0.0-alpha.8",
     "onecolor": "^3.0.5",
