@@ -112,11 +112,11 @@ class VotingPanel extends React.Component {
       app.voteOptions(
         ${survey.surveyId},
         [${ids}],
-        [${stakes.map(v => v.toFixed())}]
+        [${stakes.map(String)}]
       )
     `)
 
-    this.props.app.voteOptions( survey.surveyId, ids, stakes)
+    this.props.app.voteOptions(survey.surveyId, ids, stakes.map(String))
   }
 
   render() {
