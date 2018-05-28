@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Badge, Text } from '@aragon/ui'
+import { Badge, Text, unselectable } from '@aragon/ui'
 
 const SurveyCardGroup = ({ title, count, children }) => (
   <Main>
@@ -33,6 +33,7 @@ const Title = styled.h1`
   display: flex;
   align-items: center;
   margin-bottom: 25px;
+  ${unselectable};
 `
 
 const TitleBadge = styled.span`

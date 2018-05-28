@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { theme } from '@aragon/ui'
+import { theme, unselectable } from '@aragon/ui'
 import VotesHistory from './VotesHistory'
 import VotesCast from './VotesCast'
 
@@ -35,6 +35,7 @@ const Title = styled.h1`
   font-weight: 600;
   font-size: 16px;
   border-bottom: 1px solid ${theme.contentBorder};
+  ${unselectable};
 `
 
 export default SurveySidebar

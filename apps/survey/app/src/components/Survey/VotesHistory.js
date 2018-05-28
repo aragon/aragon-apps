@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Spring } from 'react-spring'
+import { unselectable } from '@aragon/ui'
 import { getOptionColor } from '../../option-utils'
 import springs from '../../springs'
 import * as demoState from '../../demo-state'
@@ -144,6 +145,7 @@ const Main = styled.section`
   h1 {
     margin-bottom: 15px;
     font-size: 16px;
+    ${unselectable};
   }
 `
 
@@ -154,6 +156,7 @@ const SvgWrapper = styled.div`
       font-size: 12px;
       font-weight: 300;
       fill: #6d777b;
+      ${unselectable};
     }
   }
 `

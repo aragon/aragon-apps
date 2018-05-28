@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Trail, animated } from 'react-spring'
-import { theme } from '@aragon/ui'
+import { theme, unselectable } from '@aragon/ui'
 import { getOptionColor } from '../../option-utils'
 import springs from '../../springs'
 
@@ -64,6 +64,7 @@ const Main = styled.section`
   h1 {
     margin-bottom: 15px;
     font-size: 16px;
+    ${unselectable};
   }
   li {
     list-style: none;

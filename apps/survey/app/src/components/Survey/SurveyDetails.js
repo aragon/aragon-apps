@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { theme, Countdown, Button } from '@aragon/ui'
+import { theme, Countdown, Button, unselectable } from '@aragon/ui'
 import { Spring, Trail, animated } from 'react-spring'
 import color from 'onecolor'
 import SurveyCard from '../SurveyCard/SurveyCard'
@@ -161,6 +161,7 @@ const SectionTitle = styled.h1`
   font-variant: small-caps;
   font-weight: 600;
   font-size: 16px;
+  ${unselectable};
 `
 
 const VoteButtonWrapper = styled.div`
