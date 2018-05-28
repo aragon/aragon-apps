@@ -14,9 +14,15 @@ function lerp(progress, value1, value2) {
 }
 
 class Survey extends React.Component {
+  static defaultProps = {
+    onOpenVotingPanel: () => {},
+  }
   state = {
     animateSidebar: false,
     transitionTo: {},
+  }
+  handleOpenVotingPanel = () => {
+    this.props.onOpenVotingPanel(this.props.survey.surveyId)
   }
   componentDidMount() {
     this.startSidebarTransitionTimer()
@@ -100,7 +106,10 @@ class Survey extends React.Component {
                   transform: styles.show.interpolate(this.getTransform),
                 }}
               >
-                <SurveyDetails survey={survey} />
+                <SurveyDetails
+                  survey={survey}
+                  onOpenVotingPanel={this.handleOpenVotingPanel}
+                />
               </animated.div>
             )}
           </Spring>

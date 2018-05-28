@@ -1,3 +1,5 @@
+import BigNumber from 'bignumber.js'
+
 // Get a list of rounded 0 => `total` numbers, from a list of 0 => 1 values.
 // If the total of the values is exactly 1, the total of the resulting values
 // will be exactly `total`.
@@ -39,6 +41,56 @@ export function scaleValuesSet(values, digits = 0, total = 100) {
   }
 
   return percentages.map(p => p.percentage / digitsMultiplicator)
+}
+
+function highestValueIndex(values) {
+  return values
+    .map((value, index) => ({ value, index }))
+    .sort((v1, v2) => v2.value.minus(v1.value))[0].index
+}
+
+export function scaleBigNumberValuesSet(values, total = BigNumber(100)) {
+  if (values.length === 0) {
+    return []
+  }
+
+  values = values.map(v => BigNumber(v))
+
+  // Required correction of the 0 => 1 values due to the BigNumber conversion
+  const valuesCorrection = BigNumber(1).minus(
+    values.reduce((total, v) => v.plus(total), 0)
+  )
+  const correctionIndex = highestValueIndex(values)
+  values[correctionIndex] = values[correctionIndex].plus(valuesCorrection)
+
+  let remaining = BigNumber(total)
+
+  // First pass, all numbers are rounded down
+  const scaledValues = values.map(value => {
+    const scaledValue = total.times(value)
+    const scaledValueInteger = scaledValue.integerValue(BigNumber.ROUND_DOWN)
+    remaining = remaining.minus(scaledValueInteger)
+    return { value, scaledValue, remain: scaledValue.modulo(1) }
+  })
+
+  // Add the remaining to the value that is the closest
+  // to the next integer, until we reach `total`.
+  let index = -1
+  while (remaining.isGreaterThan(0)) {
+    index = highestValueIndex(scaledValues.map(({ remain }) => remain))
+
+    // The total of the values is not 1, we can stop adjusting here
+    if (scaledValues[index].remain.isZero()) {
+      break
+    }
+
+    scaledValues[index].scaledValue = scaledValues[index].scaledValue.plus(1)
+    scaledValues[index].remain = BigNumber(0)
+
+    remaining = remaining.minus(1)
+  }
+
+  return scaledValues.map(p => p.scaledValue)
 }
 
 export const percentageList = (values, digits = 0) =>

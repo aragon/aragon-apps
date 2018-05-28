@@ -12,6 +12,7 @@ const ANIM_DELAY = 300
 class SurveyDetails extends React.Component {
   static defaultProps = {
     survey: {},
+    onOpenVotingPanel: () => {},
   }
   state = {
     animate: false,
@@ -122,7 +123,11 @@ class SurveyDetails extends React.Component {
                     style={{ opacity: progress.interpolate(p => p) }}
                   >
                     <VoteButtonWrapper>
-                      <Button mode="strong" style={{ width: '50%' }}>
+                      <Button
+                        mode="strong"
+                        style={{ width: '50%' }}
+                        onClick={this.props.onOpenVotingPanel}
+                      >
                         Vote
                       </Button>
                     </VoteButtonWrapper>

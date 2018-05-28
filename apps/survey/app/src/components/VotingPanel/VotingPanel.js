@@ -13,7 +13,11 @@ import {
   Info,
 } from '@aragon/ui'
 import Creator from '../Creator/Creator'
-import { percentageList } from '../../math-utils'
+import {
+  percentageList,
+  scaleValuesSet,
+  scaleBigNumberValuesSet,
+} from '../../math-utils'
 
 class VotingPanel extends React.Component {
   state = {
@@ -56,7 +60,7 @@ class VotingPanel extends React.Component {
     const updateOtherValue = prevValue => {
       return prevValue === 0
         ? 0
-        : prevValue - (othersTotal + value - 1) * prevValue / othersTotal
+        : prevValue - ((othersTotal + value - 1) * prevValue) / othersTotal
     }
 
     return distribution.map(
@@ -74,6 +78,15 @@ class VotingPanel extends React.Component {
     }))
   }
 
+  canVote() {
+    const { survey } = this.props
+    const { distribution } = this.state
+    if (!survey || survey.userBalance.isZero()) {
+      return false
+    }
+    return distribution.reduce((total, v) => total + v, 0) > 0
+  }
+
   handleOptionUpdate = (id, value) => {
     const { survey } = this.props
     const index = survey.options.findIndex(o => o.optionId === id)
@@ -86,89 +99,111 @@ class VotingPanel extends React.Component {
     })
   }
 
-  render() {
-    const { survey } = this.props
-    const distributionPairs = this.getDistributionPairs()
-    return this.renderPanel(
-      survey && (
-        <div>
-          <SidePanelSeparator />
-          <Part>
-            <h2>
-              <Label>Time Remaining</Label>
-            </h2>
-            <Countdown end={survey.data.endDate} />
-          </Part>
+  handleSubmit = event => {
+    event.preventDefault()
 
-          <SidePanelSeparator />
-          <Part>
-            <h2>
-              <Label>Question</Label>
-            </h2>
-            <p>
-              <strong>{survey.metadata.question}</strong>
-            </p>
-          </Part>
-
-          <SidePanelSeparator />
-          <Part>
-            <h2>
-              <Label>Description</Label>
-            </h2>
-            <p>{survey.metadata.description}</p>
-          </Part>
-
-          <SidePanelSeparator />
-          <Part>
-            <h2>
-              <Label>Created By</Label>
-            </h2>
-            <Creator address={survey.data.creator} />
-          </Part>
-
-          <SidePanelSeparator />
-          <Part>
-            <TwoLabels>
-              <h2>
-                <Label>Allocate your tokens to vote</Label>
-              </h2>
-              <Label>Percentage</Label>
-            </TwoLabels>
-            {survey.options.map(({ optionId, label }, index) => {
-              const { value, percentage } = distributionPairs[index]
-              return (
-                <Option
-                  key={optionId}
-                  id={optionId}
-                  label={label}
-                  value={value}
-                  percentage={percentage}
-                  onUpdate={this.handleOptionUpdate}
-                />
-              )
-            })}
-          </Part>
-
-          <Info.Action>Voting with 3925 of your 3925 ANT</Info.Action>
-
-          <Footer>
-            <Button mode="strong" type="submit" wide>
-              Cast your vote
-            </Button>
-          </Footer>
-        </div>
-      )
+    const scaledValues = scaleBigNumberValuesSet(
+      this.state.distribution,
+      this.props.survey.userBalance
     )
+
+    console.log('OPTIONS VALUES', scaledValues.map(v => v.toFixed()))
   }
-  renderPanel(children) {
-    const { opened, onClose } = this.props
+
+  render() {
+    const { opened, onClose, survey, tokenSymbol, tokenDecimals } = this.props
+    const distributionPairs = this.getDistributionPairs()
+    const balance = survey
+      ? survey.userBalance.div(Math.pow(10, tokenDecimals))
+      : 0
+
+    const enableSubmit = this.canVote()
+
     return (
       <SidePanel
         title="Vote in non-binding survey"
         opened={opened}
         onClose={onClose}
       >
-        {children}
+        {survey && (
+          <div>
+            <form onSubmit={this.handleSubmit}>
+              <SidePanelSeparator />
+              <Part>
+                <h2>
+                  <Label>Time Remaining</Label>
+                </h2>
+                <Countdown end={survey.data.endDate} />
+              </Part>
+
+              <SidePanelSeparator />
+              <Part>
+                <h2>
+                  <Label>Question</Label>
+                </h2>
+                <p>
+                  <strong>{survey.metadata.question}</strong>
+                </p>
+              </Part>
+
+              <SidePanelSeparator />
+              <Part>
+                <h2>
+                  <Label>Description</Label>
+                </h2>
+                <p>{survey.metadata.description}</p>
+              </Part>
+
+              <SidePanelSeparator />
+              <Part>
+                <h2>
+                  <Label>Created By</Label>
+                </h2>
+                <Creator address={survey.data.creator} />
+              </Part>
+
+              <SidePanelSeparator />
+              <Part>
+                <TwoLabels>
+                  <h2>
+                    <Label>Allocate your tokens to vote</Label>
+                  </h2>
+                  <Label>Percentage</Label>
+                </TwoLabels>
+                {survey.options.map(({ optionId, label }, index) => {
+                  const { value, percentage } = distributionPairs[index]
+                  return (
+                    <Option
+                      key={optionId}
+                      id={optionId}
+                      label={label}
+                      value={value}
+                      percentage={percentage}
+                      onUpdate={this.handleOptionUpdate}
+                    />
+                  )
+                })}
+              </Part>
+
+              {balance > 0 && (
+                <Info.Action>
+                  Voting with your {balance.toFixed(2)} {tokenSymbol}
+                </Info.Action>
+              )}
+
+              <Footer>
+                <Button
+                  mode="strong"
+                  type="submit"
+                  wide
+                  disabled={!enableSubmit}
+                >
+                  Cast your vote
+                </Button>
+              </Footer>
+            </form>
+          </div>
+        )}
       </SidePanel>
     )
   }

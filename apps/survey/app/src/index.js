@@ -7,6 +7,7 @@ class ConnectedApp extends React.Component {
   state = {
     app: new Aragon(new providers.WindowMessage(window.parent)),
     observable: null,
+    userAccount: '',
   }
   componentDidMount() {
     window.addEventListener('message', this.handleWrapperMessage)
@@ -15,13 +16,15 @@ class ConnectedApp extends React.Component {
     window.removeEventListener('message', this.handleWrapperMessage)
   }
   handleWrapperMessage = ({ data }) => {
+    const { app } = this.state
     if (data.from !== 'wrapper') {
       return
     }
     if (data.name === 'ready') {
       this.sendMessageToWrapper('ready', true)
-      this.setState({
-        observable: this.state.app.state(),
+      this.setState({ observable: app.state() })
+      app.accounts().subscribe(accounts => {
+        this.setState({ userAccount: accounts[0] || '' })
       })
     }
   }
