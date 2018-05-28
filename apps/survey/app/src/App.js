@@ -181,22 +181,29 @@ export default observe(observable => {
   return observable.map(state => ({
     ...state,
     // Transform the survey data for the frontend
-    surveys: state.surveys.map(survey => {
-      const { pctBase, surveyTime } = state
-      const { data } = survey
-      const endDate = new Date(data.startDate + surveyTime)
-      const startDate = new Date(data.startDate)
-      return {
-        ...survey,
-        data: {
-          ...data,
-          endDate,
-          startDate,
-          open: isBefore(now, endDate),
-          minParticipationPct: data.minParticipationPct / pctBase,
-          participation: data.participation / pctBase,
-        },
-      }
-    }),
+    surveys: state.surveys
+      ? state.surveys.map(survey => {
+          const { pctBase, surveyTime } = state
+          const { data } = survey
+          const endDate = new Date(data.startDate + surveyTime)
+          const startDate = new Date(data.startDate)
+          return {
+            ...survey,
+            data: {
+              ...data,
+              endDate,
+              startDate,
+              open: isBefore(now, endDate),
+              minParticipationPct: data.minParticipationPct / pctBase,
+              participation: data.participation / pctBase,
+              votingPower: data.votingPower / pctBase,
+            },
+            options: survey.options.map(({ power, ...option }) => ({
+              ...option,
+              power: power / pctBase,
+            })),
+          }
+        })
+      : [],
   }))
 }, {})(App)

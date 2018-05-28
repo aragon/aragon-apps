@@ -146,7 +146,12 @@ async function castVote(state, { surveyId, voter, option: optionId }) {
     // Update power for option
     options: await updatePowerForOption(survey.options, surveyId, optionId),
 
-    // TODO: recalculate histogram buckets
+    // Update power for option
+    options: await updatePowerForOption(
+      options,
+      surveyId,
+      parseInt(optionId, 10)
+    ),
   })
   return updateState(state, surveyId, transform)
 }
@@ -182,7 +187,7 @@ async function updateSurveys(surveys, surveyId, transform) {
 async function updatePowerForOption(options, surveyId, optionId) {
   const optionIndex = options.findIndex(option => option.optionId === optionId)
 
-  if (surveyId !== -1) {
+  if (optionIndex !== -1) {
     const nextOptions = Array.from(options)
     nextOptions[optionIndex] = {
       ...nextOptions[optionIndex],
