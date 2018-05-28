@@ -13,4 +13,6 @@ export function hasLoadedSurveySettings(state) {
   )
 }
 
+export const DURATION_SLICES = 16
+
 export default surveySettings

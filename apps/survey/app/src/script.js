@@ -1,6 +1,9 @@
 import Aragon from '@aragon/client'
 import { of } from './rxjs'
-import surveySettings, { hasLoadedSurveySettings } from './survey-settings'
+import surveySettings, {
+  DURATION_SLICES,
+  hasLoadedSurveySettings,
+} from './survey-settings'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
 
@@ -85,7 +88,7 @@ async function initialize(tokenAddr) {
 async function createStore(token, tokenSettings) {
   const { decimals: tokenDecimals, symbol: tokenSymbol } = tokenSettings
   return app.store(
-    async (state, { blockNumber, event, returnValues }) => {
+    async (state, { blockNumber, event, returnValues, transactionIndex }) => {
       let nextState = {
         ...state,
         // Fetch the app's settings, if we haven't already
@@ -104,7 +107,12 @@ async function createStore(token, tokenSettings) {
             nextState = await startSurvey(nextState, returnValues)
             break
           case 'CastVote':
-            nextState = await castVote(nextState, returnValues)
+            nextState = await castVote(
+              nextState,
+              returnValues,
+              blockNumber,
+              transactionIndex
+            )
             break
           default:
             break
@@ -132,23 +140,36 @@ async function startSurvey(state, { surveyId }) {
   return updateState(state, surveyId, transform)
 }
 
-async function castVote(state, { surveyId, voter, option: optionId }) {
-  const transform = async ({ data, ...survey }) => ({
-    ...survey,
-
+async function castVote(
+  state,
+  { optionPower, surveyId, voter, option: optionId },
+  blockNumber,
+  transactionIndex
+) {
+  const transform = async ({ data, options, ...survey }) => {
     // Reload the contract data, mostly so we can get updated participation numbers
-    data: await loadSurveyData(surveyId),
+    const newData = await loadSurveyData(surveyId)
+    return {
+      ...survey,
+      data: newData,
+      optionsHistory: await updateHistoryForOption(
+        survey.optionsHistory,
+        optionId,
+        optionPower,
+        newData,
+        state.surveyTime,
+        blockNumber,
+        transactionIndex
+      ),
 
-    // Update power for option
-    options: await updatePowerForOption(survey.options, surveyId, optionId),
-
-    // Update power for option
-    options: await updatePowerForOption(
-      options,
-      surveyId,
-      parseInt(optionId, 10)
-    ),
-  })
+      // Update power for option
+      options: await updatePowerForOption(
+        options,
+        surveyId,
+        parseInt(optionId, 10)
+      ),
+    }
+  }
   return updateState(state, surveyId, transform)
 }
 
@@ -197,6 +218,50 @@ async function updatePowerForOption(options, surveyId, optionId) {
   }
 }
 
+async function updateHistoryForOption(
+  history,
+  optionId,
+  optionPower,
+  surveyData,
+  surveyTime,
+  blockNumber,
+  transactionIndex
+) {
+  let newHistory = history
+  const { lastUpdated } = history
+
+  // We haven't encountered this event before! Let's update our history!
+  if (
+    lastUpdated.blockNumber <= blockNumber &&
+    lastUpdated.transactionIndex <= transactionIndex
+  ) {
+    const { startDate } = surveyData
+    const surveyTimeSlice = (startDate + surveyTime) / DURATION_SLICES
+
+    const blockTimestamp = await loadBlockTime(blockNumber)
+    const diffFromStart = blockTimestamp - startDate
+    const timeBucket = Math.floor(diffFromStart / surveyTimeSlice)
+
+    // OptionId always starts at 1, so we need to adjust for our history arrays
+    const optionIndex = optionId - 1
+    const options = Array.from(history.options)
+    const optionHistory = Array.from(options[optionIndex])
+
+    optionHistory[timeBucket] = optionPower
+    options[optionIndex] = optionHistory
+
+    newHistory = {
+      options,
+      lastUpdated: {
+        blockNumber,
+        transactionIndex,
+      },
+    }
+  }
+
+  return newHistory
+}
+
 async function createNewSurvey(surveyId) {
   const surveyData = await loadSurveyData(surveyId)
   const surveyMetadata = await loadSurveyMetadata(surveyId)
@@ -228,7 +293,13 @@ async function createNewSurvey(surveyId) {
     options,
     surveyId,
     data: surveyData,
-    history: [],
+    optionsHistory: {
+      lastUpdated: {
+        blockNumber: 0,
+        transactionIndex: 0,
+      },
+      options: options.map(() => new Array(DURATION_SLICES)),
+    },
   }
 }
 
@@ -306,6 +377,17 @@ function loadSurveyOptionPower(surveyId, optionId) {
         )
         resolve(0)
       })
+  )
+}
+
+function loadBlockTime(blockNumber) {
+  return new Promise((resolve, reject) =>
+    app
+      .web3Eth('getBlock', blockNumber)
+      .first()
+      // Adjust for solidity time (s => ms)
+      .map(({ timestamp }) => timestamp * 1000)
+      .subscribe(resolve, reject)
   )
 }
 

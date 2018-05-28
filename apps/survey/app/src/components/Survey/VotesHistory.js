@@ -4,12 +4,12 @@ import { Spring } from 'react-spring'
 import { unselectable } from '@aragon/ui'
 import { getOptionColor } from '../../option-utils'
 import springs from '../../springs'
+import { DURATION_SLICES } from '../../survey-settings'
 import * as demoState from '../../demo-state'
 
 const WIDTH = 300
 const HEIGHT = 200
 const CAPTIONS_HEIGHT = 20
-const DURATION_SLICES = 16
 const DOT_RADIUS = 7 / 2
 
 const ANIM_DELAY = 500
