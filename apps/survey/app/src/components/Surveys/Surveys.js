@@ -27,6 +27,9 @@ class Surveys extends React.Component {
     )
   }
   renderGroup(title, surveys) {
+    if (surveys.length === 0) {
+      return null
+    }
     return (
       <SurveyCard.Group title={title} count={surveys.length}>
         {surveys.map(survey => (
