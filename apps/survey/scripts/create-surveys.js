@@ -1,6 +1,6 @@
 const namehash = require('eth-ens-namehash').hash
 
-const SURVEY_APP = process.env.SURVEY || '0xffe447378285b1637305f4f0d05639afe156791d' 
+const SURVEY_APP = process.env.SURVEY || '0xffe447378285b1637305f4f0d05639afe156791d'
 
 const getMetadata = ({ question, description, options, url }) => {
 	const metadata = {
@@ -39,6 +39,24 @@ const surveys = [
 		description: "We would like to understand how ANT holders feel about EIP999, as it is a significant discussion within the wider Ethereum community that impacts the Aragon project and its community members. ",
 		options: [ "Yes", "No", "I do not feel strongly one way or the other" ],
 		url: "https://github.com/aragon/governance/issues/22",
+	},
+	{
+		question: "How should the surveys be sorted?",
+		description: "This proposals is intended to discuss and gauge sentiment of the community on how to set the default order/sorting of the surveys.",
+		options: [ "Chronologically: Latest to oldest", "Alphabetically: From A to Z", "By participation: Most votes to least votes so far" ],
+		url: "https://github.com/aragon/governance/issues/19",
+	},
+	{
+		question: "How should the apps be sorted in the upcoming App center?",
+		description: "This proposals is intended to discuss and gauge sentiment of the community on how to set the default order/sorting of apps in the upcoming App center.",
+		options: [ "Chronologically: Latest to oldest", "Alphabetically: From A to Z", "By installations: Most installations to least installations" ],
+		url: "https://github.com/aragon/governance/issues/19",
+	},
+	{
+		question: "How quickly should we prioritize adding privacy features to Aragon products?",
+		description: "Privacy is important, more important to others especially on a public blockchain. How quickly should be prioritize adding privacy features to Aragon products such as Aragon Core and aragonOS?",
+		options: [ "Short-term", "Medium-term", "Long-term", "I don't care about privacy" ],
+		url: "https://github.com/aragon/governance/issues/19",
 	}
 ]
 
