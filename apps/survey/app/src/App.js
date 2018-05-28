@@ -152,7 +152,7 @@ class App extends React.Component {
     this._cardRefs.set(id, element)
   }
   render() {
-    const { tokenSymbol, tokenDecimals } = this.props
+    const { tokenSymbol, tokenDecimals, app } = this.props
     const {
       surveys,
       openedSurveyId,
@@ -205,6 +205,7 @@ class App extends React.Component {
           survey={votingPanelSurvey}
           opened={votingPanelOpened}
           onClose={this.handlePanelClose}
+          app={app}
         />
       </AragonApp>
     )

@@ -102,12 +102,21 @@ class VotingPanel extends React.Component {
   handleSubmit = event => {
     event.preventDefault()
 
-    const scaledValues = scaleBigNumberValuesSet(
-      this.state.distribution,
-      this.props.survey.userBalance
-    )
+    const { app, survey } = this.props
+    const { distribution } = this.state
 
-    console.log('OPTIONS VALUES', scaledValues.map(v => v.toFixed()))
+    const ids = survey.options.map(o => o.optionId)
+    const stakes = scaleBigNumberValuesSet(distribution, survey.userBalance)
+
+    console.log(`
+      app.voteOptions(
+        ${survey.surveyId},
+        [${ids}],
+        [${stakes.map(v => v.toFixed())}]
+      )
+    `)
+
+    this.props.app.voteOptions( survey.surveyId, ids, stakes)
   }
 
   render() {
