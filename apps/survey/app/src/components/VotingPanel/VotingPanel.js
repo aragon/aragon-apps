@@ -194,9 +194,14 @@ class VotingPanel extends React.Component {
                 })}
               </Part>
 
-              {balance > 0 && (
+              {balance > 0 ? (
                 <Info.Action>
                   Voting with your {balance.toFixed(2)} {tokenSymbol}
+                </Info.Action>
+              ) : (
+                <Info.Action>
+                  You need to add some {tokenSymbol} on this account before you
+                  can vote.
                 </Info.Action>
               )}
 
