@@ -249,7 +249,11 @@ class Option extends React.Component {
           <Slider value={value} onUpdate={this.handleSliderUpdate} />
         </OptionSlider>
         <OptionInputWrapper>
-          <OptionInput value={percentage} onChange={this.handleInputChange} />
+          <OptionInput
+            value={percentage}
+            onChange={this.handleInputChange}
+            readonly
+          />
         </OptionInputWrapper>
       </OptionRow>
     )
@@ -316,6 +320,11 @@ const OptionInput = styled(TextInput)`
   width: 65px;
   text-align: right;
   padding-right: 30px;
+
+  /* disabled style */
+  color: ${theme.textSecondary};
+  box-shadow: none;
+  cursor: default;
 `
 
 const Label = styled(Text).attrs({
