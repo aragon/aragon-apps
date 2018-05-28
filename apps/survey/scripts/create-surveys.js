@@ -17,7 +17,7 @@ const getMetadata = ({ question, description, options, url }) => {
 
 const surveys = [
 	{
-		question: "How should Aragon One prioritize the following features?"
+		question: "How should the following features be prioritized?"
 		description: "",
 		options: [ "Identity", "Permissions app", "App Manager" ],
 	},
