@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { theme, Countdown, Button, unselectable } from '@aragon/ui'
+import { theme, Countdown, Button, unselectable, SafeLink } from '@aragon/ui'
 import { Spring, Trail, animated } from 'react-spring'
 import color from 'onecolor'
 import SurveyCard from '../SurveyCard/SurveyCard'
@@ -102,9 +102,13 @@ class SurveyDetails extends React.Component {
                   >
                     <SectionTitle>Web Link</SectionTitle>
                     <UrlBlock>
-                      <a title={survey.metadata.url} href={survey.metadata.url}>
+                      <SafeLink
+                        title={survey.metadata.url}
+                        href={survey.metadata.url}
+                        target="_blank"
+                      >
                         {survey.metadata.url}
-                      </a>
+                      </SafeLink>
                     </UrlBlock>
                   </animated.section>
                 ),
