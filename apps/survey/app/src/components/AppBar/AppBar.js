@@ -4,7 +4,7 @@ import { AppBar, Badge, Button } from '@aragon/ui'
 import { Transition, animated } from 'react-spring'
 import LeftIcon from './LeftIcon'
 
-const AppBarWrapper = ({ token, onOpenNewSurveyPanel, view, onBack }) => (
+const AppBarWrapper = ({ tokenSymbol, onOpenNewSurveyPanel, view, onBack }) => (
   <AppBar
     title={
       <Container>
@@ -13,7 +13,7 @@ const AppBarWrapper = ({ token, onOpenNewSurveyPanel, view, onBack }) => (
           from={{ opacity: 0, position: -1 }}
           enter={{ opacity: 1, position: 0 }}
           leave={{ opacity: 0, position: -1 }}
-          token={token}
+          tokenSymbol={tokenSymbol}
         >
           {view === 'surveys' && TitleSurveys}
         </Transition>
@@ -22,7 +22,7 @@ const AppBarWrapper = ({ token, onOpenNewSurveyPanel, view, onBack }) => (
           from={{ opacity: 0, position: 1 }}
           enter={{ opacity: 1, position: 0 }}
           leave={{ opacity: 0, position: 1 }}
-          token={token}
+          tokenSymbol={tokenSymbol}
           onBack={onBack}
         >
           {view === 'survey' && TitleSurvey}
@@ -37,7 +37,7 @@ const AppBarWrapper = ({ token, onOpenNewSurveyPanel, view, onBack }) => (
   />
 )
 
-const TitleSurveys = ({ opacity, position, token }) => (
+const TitleSurveys = ({ opacity, position, tokenSymbol }) => (
   <animated.span
     style={{
       opacity,
@@ -46,12 +46,12 @@ const TitleSurveys = ({ opacity, position, token }) => (
   >
     <Title>
       <span>Survey</span>
-      {token && <SpacedBadge>{token}</SpacedBadge>}
+      {tokenSymbol && <SpacedBadge>{tokenSymbol}</SpacedBadge>}
     </Title>
   </animated.span>
 )
 
-const TitleSurvey = ({ opacity, position, token, onBack }) => (
+const TitleSurvey = ({ opacity, position, tokenSymbol, onBack }) => (
   <animated.span
     style={{
       opacity,
@@ -63,7 +63,7 @@ const TitleSurvey = ({ opacity, position, token, onBack }) => (
         <LeftIcon />
       </BackButton>
       <span>Survey Details</span>
-      {token && <SpacedBadge>{token}</SpacedBadge>}
+      {tokenSymbol && <SpacedBadge>{tokenSymbol}</SpacedBadge>}
     </Title>
   </animated.span>
 )
