@@ -37,12 +37,12 @@ class VotesHistory extends React.Component {
   }
   render() {
     const { survey } = this.props
+    const { animate } = this.state
     const { options: optionsHistory } = survey.optionsHistory
     const filteredOptions = survey.options.map((option, i) => ({
       ...option,
       optionsHistory: optionsHistory.map(points => points[i]),
     }))
-    const { animate } = this.state
     return (
       <Main>
         <h1>Votes</h1>
@@ -70,17 +70,17 @@ class VotesHistory extends React.Component {
                     <g key={optionId}>
                       <path
                         d={`
-                          M${this.getX(0)},${this.getY(
-                          optionsHistory[0],
-                          progress
-                        )}
+                          M
+                          ${this.getX(0)},
+                          ${this.getY(optionsHistory[0], progress)}
+
                           ${optionsHistory
                             .slice(1)
                             .map(
                               (val, i) =>
                                 `L
-                                  ${this.getX((i + 1) * progress)},
-                                  ${this.getY(val, progress)}
+                                 ${this.getX((i + 1) * progress)},
+                                 ${this.getY(val, progress)}
                                 `
                             )
                             .join('')}
