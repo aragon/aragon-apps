@@ -25,12 +25,9 @@ const app = new Aragon()
  * }, 1000, 2)
  *
  */
-const retryEvery = (
-  callback,
-  initialRetryTimer = 1000,
-  increaseFactor = 5
-) => {
+const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
   const attempt = (retryTimer = initialRetryTimer) => {
+    // eslint-disable-next-line standard/no-callback-literal
     callback(() => {
       console.error(`Retrying in ${retryTimer / 1000}s...`)
 
@@ -53,8 +50,7 @@ retryEvery(retry => {
       )
       retry()
     })
-}
-main()
+})
 
 async function initialize(tokenAddr) {
   const token = app.external(tokenAddr, tokenAbi)
