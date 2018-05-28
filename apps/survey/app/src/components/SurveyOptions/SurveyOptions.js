@@ -39,10 +39,16 @@ class SurveyOptions extends React.Component {
       totalPower,
     } = this.props
     const { animate } = this.state
-    const percentages = percentageList(
-      allOptions.map(o => o.power / totalPower),
-      2
+
+    const totalVotes = allOptions.reduce(
+      (total, option) => total + option.power,
+      0
     )
+    const percentages =
+      totalVotes > 0
+        ? percentageList(allOptions.map(o => o.power / totalVotes), 2)
+        : Array(allOptions.length).fill(0)
+
     const options = allOptions.slice(0, optionsDisplayed)
     return (
       <Trail
@@ -56,7 +62,7 @@ class SurveyOptions extends React.Component {
             key={option.optionId}
             showProgress={showProgress}
             config={springs.stiff}
-            value={Math.floor(option.power / totalPower * 100) / 100}
+            value={totalVotes > 0 ? option.power / totalVotes : 0}
             percentage={percentages[i]}
             {...option}
           />
