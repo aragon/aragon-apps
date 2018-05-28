@@ -10,8 +10,39 @@ const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
 
 const app = new Aragon()
 
+/*
+ * Calls `callback` exponentially, everytime `retry()` is called.
+ *
+ * Usage:
+ *
+ * retryEvery(retry => {
+ *  // do something
+ *
+ *  if (condition) {
+ *    // retry in 1, 2, 4, 8 seconds… as long as the condition passes.
+ *    retry()
+ *  }
+ * }, 1000, 2)
+ *
+ */
+const retryEvery = (
+  callback,
+  initialRetryTimer = 1000,
+  increaseFactor = 5
+) => {
+  const attempt = (retryTimer = initialRetryTimer) => {
+    callback(() => {
+      console.error(`Retrying in ${retryTimer / 1000}s...`)
+
+      // Exponentially backoff attempts
+      setTimeout(() => attempt(retryTimer * increaseFactor), retryTimer)
+    })
+  }
+  attempt()
+}
+
 // Get the token address to initialize ourselves
-const main = (retryTimer = 1000) => {
+retryEvery(retry => {
   app
     .call('token')
     .first()
@@ -20,9 +51,7 @@ const main = (retryTimer = 1000) => {
         'Could not start background script execution due to the contract not loading the token:',
         err
       )
-      console.error(`Retrying in ${retryTimer / 1000}s...`)
-      // Exponentially backoff attempts
-      setTimeout(() => main(5 * retryTimer), retryTimer)
+      retry()
     })
 }
 main()
