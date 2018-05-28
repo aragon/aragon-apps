@@ -1,27 +1,28 @@
-// Get a list of rounded 0 => 100 numbers, from a list of 0 => 1 values.
-// If the total of the values is 1, the percentages total will be 100.
-export function percentageList(values, digits = 0) {
+// Get a list of rounded 0 => `total` numbers, from a list of 0 => 1 values.
+// If the total of the values is exactly 1, the total of the resulting values
+// will be exactly `total`.
+export function scaleValuesSet(values, digits = 0, total = 100) {
   const digitsMultiplicator = Math.pow(10, digits)
 
   if (values.length === 0) {
     return []
   }
 
-  let remaining = 100 * digitsMultiplicator
+  let remaining = total * digitsMultiplicator
 
   // First pass, all numbers are rounded down
   const percentages = values.map(value => {
-    const percentage = Math.floor(value * 100 * digitsMultiplicator)
+    const percentage = Math.floor(value * total * digitsMultiplicator)
     remaining -= percentage
     return {
       value,
       percentage,
-      remain: (value * 100 * digitsMultiplicator) % 1,
+      remain: (value * total * digitsMultiplicator) % 1,
     }
   })
 
   // Add the remaining to the value that is the closest
-  // to the next integer, until we reach 100.
+  // to the next integer, until we reach `total`.
   let index = -1
   while (remaining--) {
     index = percentages
@@ -39,3 +40,6 @@ export function percentageList(values, digits = 0) {
 
   return percentages.map(p => p.percentage / digitsMultiplicator)
 }
+
+export const percentageList = (values, digits = 0) =>
+  scaleValuesSet(values, digits)
