@@ -15,7 +15,7 @@ import { networkContextType } from './provide-network'
 import { hasLoadedSurveySettings } from './survey-settings'
 import { makeEtherscanBaseUrl } from './utils'
 
-const { ETHEREUM_NETWORK = 'rinkeby' } = process.env
+const { ETHEREUM_NETWORK = 'mainnet' } = process.env
 
 const tokenAbi = [].concat(tokenBalanceOfAtAbi, tokenDecimalsAbi)
 
