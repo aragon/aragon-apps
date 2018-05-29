@@ -127,13 +127,15 @@ class SurveyDetails extends React.Component {
                     style={{ opacity: progress.interpolate(p => p) }}
                   >
                     <VoteButtonWrapper>
-                      <Button
-                        mode="strong"
-                        style={{ width: '50%' }}
-                        onClick={this.props.onOpenVotingPanel}
-                      >
-                        Vote
-                      </Button>
+                      {survey.data.open && (
+                        <Button
+                          mode="strong"
+                          style={{ width: '50%' }}
+                          onClick={this.props.onOpenVotingPanel}
+                        >
+                          Vote
+                        </Button>
+                      )}
                     </VoteButtonWrapper>
                   </animated.section>
                 ),
