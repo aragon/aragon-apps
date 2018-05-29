@@ -239,7 +239,7 @@ export default observe(observable => {
       state && state.surveys
         ? state.surveys.map(survey => {
             const { pctBase, surveyTime, tokenDecimals } = state
-            const { data } = survey
+            const { data, options, optionsHistory } = survey
             const tokenMultiplier = Math.pow(10, tokenDecimals)
             const endDate = new Date(data.startDate + surveyTime)
             const startDate = new Date(data.startDate)
@@ -254,10 +254,25 @@ export default observe(observable => {
                 participation: data.participation / tokenMultiplier,
                 votingPower: data.votingPower / tokenMultiplier,
               },
-              options: survey.options.map(({ power, ...option }) => ({
+              options: options.map(({ power, ...option }) => ({
                 ...option,
                 power: power / tokenMultiplier,
               })),
+              optionsHistory: {
+                ...optionsHistory,
+                options: optionsHistory.options.map(optionHistory =>
+                  optionHistory.map((power, index) => {
+                    // Adjust power for token multiplier
+                    // If there's no power filled in this slot, fill it in with the previous power
+                    // (and use 0 for the first index if so)
+                    return power
+                      ? power / tokenMultiplier
+                      : index === 0
+                        ? 0
+                        : optionHistory[index - 1]
+                  })
+                ),
+              },
             }
           })
         : [],
