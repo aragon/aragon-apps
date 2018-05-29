@@ -101,18 +101,35 @@ class VotingPanel extends React.Component {
     const { app, survey } = this.props
     const { distribution } = this.state
 
-    const ids = survey.options.map(o => o.optionId)
-    const stakes = scaleBigNumberValuesSet(distribution, survey.userBalance)
+    const optionVotes = scaleBigNumberValuesSet(
+      distribution,
+      survey.userBalance
+    )
+      .map((stake, i) => ({
+        id: survey.options[i].optionId,
+        stake,
+      }))
+      .filter(({ stake }) => stake > 0)
+
+    // Transforms [ { id: 'foo', stake: 123 }, { id: 'bar', stake: 456 } ]
+    // into [ ['foo', 'bar'], ['123', '456'] ]
+    const [ids, stakes] = optionVotes.reduce(
+      ([ids, stakes], { id, stake }) => [
+        [...ids, id],
+        [...stakes, stake.toString()],
+      ],
+      [[], []]
+    )
 
     console.log(`
       app.voteOptions(
-        ${survey.surveyId},
-        [${ids}],
-        [${stakes.map(String)}]
+        "${survey.surveyId}",
+        [${ids.map(s => `"${s}"`)}],
+        [${stakes.map(s => `"${s}"`)}]
       )
     `)
 
-    app.voteOptions(survey.surveyId, ids, stakes.map(String))
+    app.voteOptions(survey.surveyId, ids, stakes)
   }
 
   render() {
