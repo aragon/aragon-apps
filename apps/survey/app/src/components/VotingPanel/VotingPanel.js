@@ -13,11 +13,7 @@ import {
   Info,
 } from '@aragon/ui'
 import Creator from '../Creator/Creator'
-import {
-  percentageList,
-  scaleValuesSet,
-  scaleBigNumberValuesSet,
-} from '../../math-utils'
+import { percentageList, scaleBigNumberValuesSet } from '../../math-utils'
 
 class VotingPanel extends React.Component {
   state = {
@@ -116,7 +112,7 @@ class VotingPanel extends React.Component {
       )
     `)
 
-    this.props.app.voteOptions(survey.surveyId, ids, stakes.map(String))
+    app.voteOptions(survey.surveyId, ids, stakes.map(String))
   }
 
   render() {

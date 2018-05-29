@@ -94,13 +94,12 @@ class App extends React.Component {
 
   // Add user-related data to every survey object
   async prepareSurveys(surveys, userAccount, tokenContract) {
-    const { tokenDecimals } = this.props
     if (!tokenContract) {
       return surveys
     }
     const preparedSurveys = await Promise.all(
       surveys.map(async survey => {
-        const { startDate, snapshotBlock } = survey.data
+        const { snapshotBlock } = survey.data
         const userBalance = await new Promise((resolve, reject) => {
           tokenContract
             .balanceOfAt(userAccount, snapshotBlock)

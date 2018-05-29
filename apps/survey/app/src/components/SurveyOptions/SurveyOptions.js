@@ -36,7 +36,6 @@ class SurveyOptions extends React.Component {
     const {
       options: allOptions,
       optionsDisplayed = allOptions.length,
-      totalPower,
     } = this.props
     const { animate } = this.state
 
