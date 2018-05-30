@@ -9,8 +9,8 @@ const historyPoints = prevPoints => {
   let remaining = 1
   const newPoints = prevPoints.map((point, i) => {
     const pointsLeft = prevPoints.length - i
-    const maxDiff = remaining / pointsLeft
-    const diff = -maxDiff + (maxDiff * Math.random() * 2) / 2
+    const maxDiff = remaining / pointsLeft / 2
+    const diff = -maxDiff + maxDiff * Math.random() * 2
     let newPoint = point + diff
     if (newPoint < 0) newPoint = 0.1
     if (newPoint > 1) newPoint = 0.9
