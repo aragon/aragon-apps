@@ -10,6 +10,7 @@ interface ERCStaking {
   function unstake(uint256 amount, bytes data) public;
 
   function totalStakedFor(address addr) public view returns (uint256);
+  function totalStaked() public view returns (uint256);
   function token() public view returns (address);
 
   function supportsHistory() public pure returns (bool);

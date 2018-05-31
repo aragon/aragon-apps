@@ -182,6 +182,10 @@ contract Staking is ERCStaking, AragonApp {
     return accounts[addr].amount;
   }
 
+  function totalStaked() public view returns (uint256) {
+    return stakingToken.balanceOf(this);
+  }
+
   function unlockedBalanceOf(address acct) public view returns (uint256) {
     uint256 unlockedTokens = accounts[acct].amount;
 
