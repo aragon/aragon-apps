@@ -70,7 +70,11 @@ export function scaleBigNumberValuesSet(values, total = new BigNumber(100)) {
     const scaledValue = total.times(value)
     const scaledValueInteger = scaledValue.integerValue(BigNumber.ROUND_DOWN)
     remaining = remaining.minus(scaledValueInteger)
-    return { value, scaledValue, remain: scaledValue.modulo(1) }
+    return {
+      value,
+      scaledValue: scaledValueInteger,
+      remain: scaledValue.modulo(1),
+    }
   })
 
   // Add the remaining to the value that is the closest
