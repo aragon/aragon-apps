@@ -258,7 +258,7 @@ class Option extends React.Component {
           <RadioButton checked={value === 1} onClick={this.handleRadioClick} />
         </OptionRadio>
         <OptionSlider>
-          <OptionLabel>{label}</OptionLabel>
+          <OptionLabel title={label}>{label}</OptionLabel>
           <Slider value={value} onUpdate={this.handleSliderUpdate} />
         </OptionSlider>
         <OptionInputWrapper>
@@ -312,6 +312,10 @@ const OptionLabel = styled.div`
   position: absolute;
   top: -15px;
   left: 20px;
+  width: calc(100% - 35px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `
 
 const OptionInputWrapper = styled.div`
