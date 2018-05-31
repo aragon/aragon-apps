@@ -272,12 +272,12 @@ export default observe(observable => {
                 options: optionsHistory.options.map(optionHistory =>
                   optionHistory.reduce((powers, power, index) => {
                     if (index <= nowBucket) {
-                      // Adjust power for token multiplier
+                      // Adjust power for participation (so it's a percentage of total partcipation)
                       // If there's no power filled in this slot, fill it in with the previous power
                       // (and use 0 for the first index if so)
                       powers.push(
                         power
-                          ? power / tokenMultiplier
+                          ? power / data.participation // no need to adjust for decimals
                           : index === 0
                             ? 0
                             : powers[index - 1]
