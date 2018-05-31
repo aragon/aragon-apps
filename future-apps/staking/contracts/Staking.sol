@@ -4,9 +4,12 @@ import "./ERCStaking.sol";
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 
 
 contract Staking is ERCStaking, AragonApp {
+  using SafeMath for uint256;
+
   struct Account {
     uint256 amount;
     Lock[] locks;
@@ -70,23 +73,19 @@ contract Staking is ERCStaking, AragonApp {
   function stakeFor(address acct, uint256 amount, bytes data) authP(STAKE_ROLE, arr(amount)) public {
     // From needs to be msg.sender to avoid token stealing by front-running
     require(stakingToken.transferFrom(msg.sender, this, amount));
-    processStake(acct, amount, data);
+
+    // process Stake
+    accounts[acct].amount = accounts[acct].amount.add(amount);
+
+    Staked(acct, amount, totalStakedFor(acct), data);
 
     if (stakeScript.length > 0) {
       runScript(stakeScript, data, new address[](0));
     }
   }
 
-  function processStake(address acct, uint256 amount, bytes data) internal {
-    accounts[acct].amount += amount; // overflow check in token contract
-    assert(accounts[acct].amount >= amount);
-
-    Staked(acct, amount, totalStakedFor(acct), data);
-  }
-
   function unstake(uint256 amount, bytes data) authP(UNSTAKE_ROLE, arr(amount)) checkUnlocked(amount) public {
-    require(accounts[msg.sender].amount >= amount);
-    accounts[msg.sender].amount -= amount;
+    accounts[msg.sender].amount = accounts[msg.sender].amount.sub(amount);
 
     require(stakingToken.transfer(msg.sender, amount));
 
@@ -158,12 +157,8 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   function moveTokens(address from, address to, uint256 amount) authP(GOD_ROLE, arr(from, to, amount)) external {
-    require(accounts[from].amount >= amount);
-
-    accounts[from].amount -= amount;
-    accounts[to].amount += amount;
-
-    assert(accounts[to].amount >= amount);
+    accounts[from].amount = accounts[from].amount.sub(amount);
+    accounts[to].amount = accounts[to].amount.add(amount);
 
     MovedTokens(from, to, amount);
   }
@@ -192,7 +187,7 @@ contract Staking is ERCStaking, AragonApp {
     Lock[] storage locks = accounts[acct].locks;
     for (uint256 i = 0; i < locks.length; i++) {
       if (!canUnlock(acct, i)) {
-        unlockedTokens -= locks[i].amount;
+        unlockedTokens = unlockedTokens.sub(locks[i].amount);
       }
     }
 
