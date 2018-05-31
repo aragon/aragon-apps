@@ -71,6 +71,8 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   function stakeFor(address acct, uint256 amount, bytes data) authP(STAKE_ROLE, arr(amount)) public {
+    // stake 0 tokens makes no sense
+    require(amount > 0);
     // From needs to be msg.sender to avoid token stealing by front-running
     require(stakingToken.transferFrom(msg.sender, this, amount));
 
@@ -85,6 +87,9 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   function unstake(uint256 amount, bytes data) authP(UNSTAKE_ROLE, arr(amount)) checkUnlocked(amount) public {
+    // unstake 0 tokens makes no sense
+    require(amount > 0);
+
     accounts[msg.sender].amount = accounts[msg.sender].amount.sub(amount);
 
     require(stakingToken.transfer(msg.sender, amount));
@@ -108,6 +113,9 @@ contract Staking is ERCStaking, AragonApp {
     checkUnlocked(amount)
     public
   {
+    // lock 0 tokens makes no sense
+    require(amount > 0);
+
     Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker, metadata);
     uint256 lockId = accounts[msg.sender].locks.push(newLock) - 1;
 
@@ -157,6 +165,9 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   function moveTokens(address from, address to, uint256 amount) authP(GOD_ROLE, arr(from, to, amount)) external {
+    // move 0 tokens makes no sense
+    require(amount > 0);
+
     accounts[from].amount = accounts[from].amount.sub(amount);
     accounts[to].amount = accounts[to].amount.add(amount);
 
