@@ -12,7 +12,8 @@ import Survey from './components/Survey/Survey'
 import Surveys from './components/Surveys/Surveys'
 import AppBar from './components/AppBar/AppBar'
 import { networkContextType } from './provide-network'
-import { hasLoadedSurveySettings } from './survey-settings'
+import { hasLoadedSurveySettings, DURATION_SLICES } from './survey-settings'
+import { getTimeBucket } from './time-utils'
 import { makeEtherscanBaseUrl } from './utils'
 
 const { ETHEREUM_NETWORK = 'mainnet' } = process.env
@@ -239,10 +240,18 @@ export default observe(observable => {
       state && state.surveys
         ? state.surveys.map(survey => {
             const { pctBase, surveyTime, tokenDecimals } = state
-            const { data } = survey
+            const { data, options, optionsHistory } = survey
             const tokenMultiplier = Math.pow(10, tokenDecimals)
             const endDate = new Date(data.startDate + surveyTime)
             const startDate = new Date(data.startDate)
+
+            const nowBucket = getTimeBucket(
+              Date.now(),
+              data.startDate,
+              surveyTime,
+              DURATION_SLICES
+            )
+
             return {
               ...survey,
               data: {
@@ -254,10 +263,30 @@ export default observe(observable => {
                 participation: data.participation / tokenMultiplier,
                 votingPower: data.votingPower / tokenMultiplier,
               },
-              options: survey.options.map(({ power, ...option }) => ({
+              options: options.map(({ power, ...option }) => ({
                 ...option,
                 power: power / tokenMultiplier,
               })),
+              optionsHistory: {
+                ...optionsHistory,
+                options: optionsHistory.options.map(optionHistory =>
+                  optionHistory.reduce((powers, power, index) => {
+                    if (index <= nowBucket) {
+                      // Adjust power for participation (so it's a percentage of total partcipation)
+                      // If there's no power filled in this slot, fill it in with the previous power
+                      // (and use 0 for the first index if so)
+                      powers.push(
+                        power
+                          ? power / data.participation // no need to adjust for decimals
+                          : index === 0
+                            ? 0
+                            : powers[index - 1]
+                      )
+                    }
+                    return powers
+                  }, [])
+                ),
+              },
             }
           })
         : [],

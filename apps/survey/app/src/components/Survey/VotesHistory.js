@@ -38,11 +38,12 @@ class VotesHistory extends React.Component {
   render() {
     const { survey } = this.props
     const { animate } = this.state
-    const { options: optionsHistory } = survey.optionsHistory
-    const filteredOptions = survey.options.map((option, i) => ({
+    const options = survey.options.map((option, i) => ({
       ...option,
-      optionsHistory: optionsHistory.map(points => points[i]),
+      history: survey.optionsHistory.options[i],
     }))
+    // All the options' histories have already been reduced to the same length
+    const historyLength = options[0].history.length
     return (
       <Main>
         <h1>Votes</h1>
@@ -64,7 +65,7 @@ class VotesHistory extends React.Component {
                   strokeWidth="1"
                   stroke={BORDER_COLOR}
                 />
-                {filteredOptions.map(({ optionsHistory, optionId }) => {
+                {options.map(({ history, optionId }) => {
                   const color = getOptionColor(optionId)
                   return (
                     <g key={optionId}>
@@ -72,9 +73,9 @@ class VotesHistory extends React.Component {
                         d={`
                           M
                           ${this.getX(0)},
-                          ${this.getY(optionsHistory[0], progress)}
+                          ${this.getY(history[0], progress)}
 
-                          ${optionsHistory
+                          ${history
                             .slice(1)
                             .map(
                               (val, i) =>
@@ -90,7 +91,7 @@ class VotesHistory extends React.Component {
                         strokeWidth="2"
                         strokeOpacity="0.7"
                       />
-                      {optionsHistory
+                      {history
                         .slice(1, -1)
                         .map((val, i) => (
                           <circle
@@ -107,9 +108,9 @@ class VotesHistory extends React.Component {
                   )
                 })}
                 <line
-                  x1={this.getX(optionsHistory.length - 1) * progress}
+                  x1={this.getX(historyLength - 1) * progress}
                   y1="0"
-                  x2={this.getX(optionsHistory.length - 1) * progress}
+                  x2={this.getX(historyLength - 1) * progress}
                   y2={HEIGHT}
                   stroke="#DAEAEF"
                   strokeWidth="3"

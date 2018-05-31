@@ -4,6 +4,7 @@ import surveySettings, {
   DURATION_SLICES,
   hasLoadedSurveySettings,
 } from './survey-settings'
+import { getTimeBucket } from './time-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
 
@@ -230,17 +231,21 @@ async function updateHistoryForOption(
   let newHistory = history
   const { lastUpdated } = history
 
-  // We haven't encountered this event before! Let's update our history!
   if (
-    lastUpdated.blockNumber <= blockNumber &&
-    lastUpdated.transactionIndex <= transactionIndex
+    lastUpdated.blockNumber < blockNumber ||
+    (lastUpdated.blockNumber === blockNumber &&
+      lastUpdated.transactionIndex <= transactionIndex)
   ) {
+    // We haven't encountered this event before! Let's update our history!
     const { startDate } = surveyData
-    const surveyTimeSlice = (startDate + surveyTime) / DURATION_SLICES
 
     const blockTimestamp = await loadBlockTime(blockNumber)
-    const diffFromStart = blockTimestamp - startDate
-    const timeBucket = Math.floor(diffFromStart / surveyTimeSlice)
+    const timeBucket = getTimeBucket(
+      blockTimestamp,
+      startDate,
+      surveyTime,
+      DURATION_SLICES
+    )
 
     // OptionId always starts at 1, so we need to adjust for our history arrays
     const optionIndex = optionId - 1
@@ -298,7 +303,9 @@ async function createNewSurvey(surveyId) {
         blockNumber: 0,
         transactionIndex: 0,
       },
-      options: options.map(() => new Array(DURATION_SLICES)),
+      // Initialize each option's history with an empty zeroed array
+      // matching the number of time slices
+      options: options.map(() => new Array(DURATION_SLICES).fill(0)),
     },
   }
 }
