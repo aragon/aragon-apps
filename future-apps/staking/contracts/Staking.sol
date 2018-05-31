@@ -149,10 +149,24 @@ contract Staking is ERCStaking, AragonApp {
     lock(amount, lockUnit, lockEnds, unlocker, metadata, lockData);
   }
 
-  function unlockAll(address acct) external {
+  function unlockAllOrNone(address acct) external {
     while (accounts[acct].locks.length > 0) {
-      if (canUnlock(acct, 0)) {
-        unlock(acct, 0);
+      uint256 lastAccountLock = accounts[acct].locks.length - 1;
+      require(canUnlock(acct, lastAccountLock));
+
+      accounts[acct].locks.length -= 1;
+
+      Unlocked(acct, msg.sender, lastAccountLock);
+    }
+  }
+
+  function unlockAll(address acct) external {
+    if (accounts[acct].locks.length == 0) {
+      return;
+    }
+    for (uint256 i = accounts[acct].locks.length; i > 0; i--) {
+      if (canUnlock(acct, i - 1)) {
+        unlock(acct, i - 1);
       }
     }
   }
