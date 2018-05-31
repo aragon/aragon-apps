@@ -213,8 +213,8 @@ class VotingPanel extends React.Component {
                 </Info.Action>
               ) : (
                 <Info.Action>
-                  You need to send some {tokenSymbol} to this account before
-                  voting.
+                  Your account needed to have some {tokenSymbol} by the time this survey
+                  was created in order to cast a valid vote.
                 </Info.Action>
               )}
 
