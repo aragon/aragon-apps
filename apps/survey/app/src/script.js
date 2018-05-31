@@ -231,11 +231,12 @@ async function updateHistoryForOption(
   let newHistory = history
   const { lastUpdated } = history
 
-  // We haven't encountered this event before! Let's update our history!
   if (
-    lastUpdated.blockNumber <= blockNumber &&
-    lastUpdated.transactionIndex <= transactionIndex
+    lastUpdated.blockNumber < blockNumber ||
+    (lastUpdated.blockNumber === blockNumber &&
+      lastUpdated.transactionIndex <= transactionIndex)
   ) {
+    // We haven't encountered this event before! Let's update our history!
     const { startDate } = surveyData
 
     const blockTimestamp = await loadBlockTime(blockNumber)
