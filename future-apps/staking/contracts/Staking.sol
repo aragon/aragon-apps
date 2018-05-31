@@ -10,6 +10,8 @@ import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 contract Staking is ERCStaking, AragonApp {
   using SafeMath for uint256;
 
+  uint64 constant public MAX_UINT64 = uint64(-1);
+
   struct Account {
     uint256 amount;
     Lock[] locks;
@@ -99,6 +101,10 @@ contract Staking is ERCStaking, AragonApp {
     if (unstakeScript.length > 0) {
       runScript(unstakeScript, data, new address[](0));
     }
+  }
+
+  function lockIndefinitely(uint256 amount, address unlocker, bytes32 metadata, bytes data) public returns(uint256 lockId) {
+    return lock(amount, uint8(TimeUnit.Seconds), MAX_UINT64, unlocker, metadata, data);
   }
 
   function lock(
