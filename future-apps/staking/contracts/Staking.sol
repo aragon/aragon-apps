@@ -188,6 +188,9 @@ contract Staking is ERCStaking, AragonApp {
     // move 0 tokens makes no sense
     require(amount > 0);
 
+    // make sure we don't move locked tokens, to avoid inconsistency
+    require(unlockedBalanceOf(from) >= amount);
+
     accounts[from].amount = accounts[from].amount.sub(amount);
     accounts[to].amount = accounts[to].amount.add(amount);
 
