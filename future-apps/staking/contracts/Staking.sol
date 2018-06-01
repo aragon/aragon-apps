@@ -3,6 +3,7 @@ pragma solidity 0.4.18;
 import "./ERCStaking.sol";
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
+import "@aragon/os/contracts/lib/misc/Migrations.sol";
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 
@@ -47,10 +48,10 @@ contract Staking is ERCStaking, AragonApp {
 
   event MovedTokens(address indexed from, address indexed to, uint256 amount);
 
-  bytes32 constant STAKE_ROLE = keccak256("STAKE_ROLE");
-  bytes32 constant UNSTAKE_ROLE = keccak256("UNSTAKE_ROLE");
-  bytes32 constant LOCK_ROLE = keccak256("LOCK_ROLE");
-  bytes32 constant GOD_ROLE = keccak256("GOD_ROLE");
+  bytes32 constant public STAKE_ROLE = keccak256("STAKE_ROLE");
+  bytes32 constant public UNSTAKE_ROLE = keccak256("UNSTAKE_ROLE");
+  bytes32 constant public LOCK_ROLE = keccak256("LOCK_ROLE");
+  bytes32 constant public GOD_ROLE = keccak256("GOD_ROLE");
 
   modifier checkUnlocked(uint256 amount) {
     require(unlockedBalanceOf(msg.sender) >= amount);
@@ -234,12 +235,15 @@ contract Staking is ERCStaking, AragonApp {
     return accounts[acct].locks.length;
   }
 
-  function getLock(address acct, uint256 lockId) public view returns (Lock) {
-    return accounts[acct].locks[lockId];
+  function getLock(address acct, uint256 lockId) public view returns (uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker, bytes32 metadata) {
+    Lock lock = accounts[acct].locks[lockId];
+
+    return (lock.amount, uint8(lock.timespan.unit), uint64(lock.timespan.end), lock.unlocker, lock.metadata);
   }
 
-  function lastLock(address acct) public view returns (Lock) {
-    return accounts[acct].locks[locksCount(acct) - 1];
+  function lastLock(address acct) public view returns (uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker, bytes32 metadata) {
+    Lock lock = accounts[acct].locks[locksCount(acct) - 1];
+    return (lock.amount, uint8(lock.timespan.unit), uint64(lock.timespan.end), lock.unlocker, lock.metadata);
   }
 
   function canUnlock(address acct, uint256 lockId) public view returns (bool) {
