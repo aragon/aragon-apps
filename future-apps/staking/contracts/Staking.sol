@@ -118,12 +118,13 @@ contract Staking is ERCStaking, AragonApp {
     authP(LOCK_ROLE, arr(amount, uint256(lockUnit), uint256(lockEnds)))
     checkUnlocked(amount)
     public
+    returns(uint256 lockId)
   {
     // lock 0 tokens makes no sense
     require(amount > 0);
 
     Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker, metadata);
-    uint256 lockId = accounts[msg.sender].locks.push(newLock) - 1;
+    lockId = accounts[msg.sender].locks.push(newLock) - 1;
 
     Locked(msg.sender, lockId, metadata);
 
@@ -144,9 +145,10 @@ contract Staking is ERCStaking, AragonApp {
     authP(STAKE_ROLE, arr(amount))
     authP(LOCK_ROLE, arr(amount, uint256(lockUnit), uint256(lockEnds)))
     public
+    returns(uint256 lockId)
   {
     stake(amount, stakeData);
-    lock(amount, lockUnit, lockEnds, unlocker, metadata, lockData);
+    return lock(amount, lockUnit, lockEnds, unlocker, metadata, lockData);
   }
 
   function unlockAllOrNone(address acct) external {
