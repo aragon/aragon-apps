@@ -25,6 +25,7 @@
     "babel-preset-stage-2": "^6.24.1",
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
+    "ethereumjs-abi": "^0.6.4",
     "ganache-cli": "^6.1.0",
     "solidity-coverage": "0.3.5",
     "solium": "^1.1.3",
