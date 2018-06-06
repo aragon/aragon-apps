@@ -116,7 +116,7 @@ class VotingPanel extends React.Component {
     const [ids, stakes] = optionVotes.reduce(
       ([ids, stakes], { id, stake }) => [
         [...ids, id],
-        [...stakes, stake.toString()],
+        [...stakes, stake.toFixed(0)],
       ],
       [[], []]
     )
