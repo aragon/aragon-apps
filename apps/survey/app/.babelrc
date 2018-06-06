@@ -16,5 +16,18 @@
     ["styled-components", { "displayName": true }],
     "transform-class-properties",
     "transform-runtime"
-  ]
+  ],
+  "env": {
+    "test": {
+      "presets": [
+        [
+          "env",
+          {
+            "modules": "commonjs",
+            "targets": { "node": "current" }
+          }
+        ]
+      ]
+    }
+  }
 }

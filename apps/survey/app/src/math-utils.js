@@ -49,21 +49,31 @@ function highestValueIndex(values) {
     .sort((v1, v2) => v2.value.minus(v1.value))[0].index
 }
 
-export function scaleBigNumberValuesSet(values, total = new BigNumber(100)) {
+// Scale a set of 0 => 1 values to equal `total`.
+export function scaleBigNumberValuesSet(
+  values = [],
+  total = new BigNumber(100)
+) {
   if (values.length === 0) {
     return []
   }
 
   values = values.map(v => new BigNumber(v))
+  let remaining = new BigNumber(total)
 
-  // Required correction of the 0 => 1 values due to the BigNumber conversion
+  // Correct 0 => 1 values due to the Number => BigNumber() conversion
   const valuesCorrection = new BigNumber(1).minus(
     values.reduce((total, v) => v.plus(total), 0)
   )
   const correctionIndex = highestValueIndex(values)
   values[correctionIndex] = values[correctionIndex].plus(valuesCorrection)
 
-  let remaining = new BigNumber(total)
+  if (
+    values[correctionIndex].isGreaterThan(1) ||
+    values[correctionIndex].isLessThan(0)
+  ) {
+    throw new Error('The values are too far from 1 to be corrected.')
+  }
 
   // First pass, all numbers are rounded down
   const scaledValues = values.map(value => {
