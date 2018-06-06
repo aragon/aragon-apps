@@ -43,7 +43,7 @@ contract Staking is ERCStaking, AragonApp {
   // TODO: figure out a way to get lock from metadata, given changing lock ids
   // mapping (bytes32 => LockLocation) lockByMetadata;
 
-  event Locked(address indexed account, uint256 lockId, bytes32 metadata);
+  event Locked(address indexed account, uint256 lockId, uint256 amount, bytes32 metadata);
   event Unlocked(address indexed account, address indexed unlocker, uint256 oldLockId);
 
   event MovedTokens(address indexed from, address indexed to, uint256 amount);
@@ -127,7 +127,7 @@ contract Staking is ERCStaking, AragonApp {
     Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker, metadata);
     lockId = accounts[msg.sender].locks.push(newLock) - 1;
 
-    Locked(msg.sender, lockId, metadata);
+    Locked(msg.sender, lockId, amount, metadata);
 
     if (lockScript.length > 0) {
       runScript(lockScript, data, new address[](0));
@@ -153,20 +153,12 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   function unlockAllOrNone(address acct) external {
-    while (accounts[acct].locks.length > 0) {
-      uint256 lastAccountLock = accounts[acct].locks.length - 1;
-      require(canUnlock(acct, lastAccountLock));
-
-      accounts[acct].locks.length -= 1;
-
-      Unlocked(acct, msg.sender, lastAccountLock);
+    for (uint256 i = accounts[acct].locks.length; i > 0; i--) {
+      unlock(acct, i - 1);
     }
   }
 
-  function unlockAll(address acct) external {
-    if (accounts[acct].locks.length == 0) {
-      return;
-    }
+  function unlockAll(address acct) public {
     for (uint256 i = accounts[acct].locks.length; i > 0; i--) {
       if (canUnlock(acct, i - 1)) {
         unlock(acct, i - 1);
@@ -185,6 +177,11 @@ contract Staking is ERCStaking, AragonApp {
     accounts[acct].locks.length -= 1;
 
     Unlocked(acct, msg.sender, lockId);
+  }
+
+  function unlockAndUnstake(uint256 amount, bytes data) public {
+    unlockAll(msg.sender);
+    unstake(amount, data);
   }
 
   function moveTokens(address from, address to, uint256 amount) authP(GOD_ROLE, arr(from, to, amount)) external {
