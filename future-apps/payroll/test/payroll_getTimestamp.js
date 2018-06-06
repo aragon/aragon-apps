@@ -3,7 +3,7 @@ const getBalance = require('@aragon/test-helpers/balance')(web3);
 const Payroll = artifacts.require("Payroll");
 const Vault = artifacts.require('Vault');
 const Finance = artifacts.require('Finance');
-const OracleMock = artifacts.require("./oracle/OracleMock.sol");
+const PriceFeedMock = artifacts.require("./feed/PriceFeedMock.sol");
 const MiniMeToken = artifacts.require('@aragon/os/contracts/common/MiniMeToken');
 const Zombie = artifacts.require("Zombie.sol");
 
@@ -14,11 +14,12 @@ contract('Payroll Timestamp', function(accounts) {
   let finance;
   let vault;
   let owner = accounts[0];
-  let oracle;
+  let priceFeed;
   let employee1_1 = accounts[2];
   let employee1 = employee1_1;
   let usdToken;
-  const USD_PRECISION = 10**9;
+  const rateExpiryTime = 1000
+  const USD_PRECISION = 10**18;
   const SECONDS_IN_A_YEAR = 31557600; // 365.25 days
 
   const deployErc20Token = async (name="ERC20Token") => {
@@ -43,18 +44,18 @@ contract('Payroll Timestamp', function(accounts) {
     await finance.initialize(vault.address, 100);
     payroll = await Payroll.new();
     usdToken = await deployErc20Token("USD");
-    oracle = await OracleMock.new();
-    await payroll.initialize(finance.address, usdToken.address);
+    priceFeed = await PriceFeedMock.new();
+    await payroll.initialize(finance.address, usdToken.address, priceFeed.address, rateExpiryTime);
   });
 
   const convertAndRoundSalary = function (a) {
-    return Math.floor(Math.floor(a * USD_PRECISION / SECONDS_IN_A_YEAR) * SECONDS_IN_A_YEAR / USD_PRECISION);
+    return Math.floor(a / SECONDS_IN_A_YEAR) * SECONDS_IN_A_YEAR;
   };
 
   it("adds employee", async () => {
     let name = '';
     let employeeId = 1;
-    let salary1 = 100000;
+    let salary1 = 100000 * USD_PRECISION;
     await payroll.addEmployee(employee1_1, salary1);
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee1_1, "Employee account doesn't match");

@@ -6,10 +6,11 @@ import "@aragon/os/contracts/common/IForwarder.sol";
 
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
 
 import "@aragon/apps-finance/contracts/Finance.sol";
 
-import "./DenominationToken.sol";
+import "ppf-monorepo/packages/ppf-contracts/contracts/Feed.sol";
 
 
 /**
@@ -17,14 +18,17 @@ import "./DenominationToken.sol";
  */
 contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (removes pure and interface doesnt match)
     using SafeMath for uint256;
-    using DenominationToken for uint256;
+    using SafeMath64 for uint64;
 
     // kernel roles
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
     bytes32 constant public REMOVE_EMPLOYEE_ROLE = keccak256("REMOVE_EMPLOYEE_ROLE");
     bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
-    bytes32 constant public ORACLE_ROLE = keccak256("ORACLE_ROLE");
+    bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("MODIFY_PRICE_FEED_ROLE");
+    bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
+    uint256 constant public SECONDS_IN_A_YEAR = 31557600; // 365.25 days
     address constant public ETH = address(0);
+    uint128 constant public ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
@@ -40,7 +44,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     Finance public finance;
     address public denominationToken;
-    mapping(address => uint256) private exchangeRates;
+    Feed public feed;
+    uint64 public rateExpiryTime;
     mapping(address => bool) private allowedTokens;
     address[] private allowedTokensArray;
 
@@ -54,7 +59,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     event Fund(address sender, address token, uint amount, uint balance, bytes data);
     event SendPayroll(address employee, address token, uint amount);
-    event ExchangeRateSet(address token, uint rate);
+    event PriceFeedSet(address feed);
+    event RateExpiryTimeSet(uint64 time);
 
     /**
      * @notice Initialize Payroll app for `_finance`. Set ETH and Denomination tokens
@@ -63,35 +69,39 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      */
     function initialize(
         Finance _finance,
-        address _denominationToken
+        address _denominationToken,
+        Feed _priceFeed,
+        uint64 _rateExpiryTime
     ) external
         onlyInit
     {
+        require(address(_finance) != address(0));
+
         initialized();
 
         nextEmployee = 1; // leave 0 to check null address mapping
         finance = _finance;
         denominationToken = _denominationToken;
-        exchangeRates[address(denominationToken)] = 1;
+        _setPriceFeed(_priceFeed);
+        _setRateExpiryTime(_rateExpiryTime);
     }
 
     /**
-     * @dev Set the Denomination exchange rate for a token. Uses decimals from token
-     * @notice Sets the Denomination exchange rate for a token
-     * @param token The token address
-     * @param denominationExchangeRate The exchange rate
+     * @notice Sets the Price Feed for exchange rates to `_feed`.
+     * @param _feed The Price Feed address
      */
-    function setExchangeRate(
-        address token,
-        uint256 denominationExchangeRate
-    )
-        external
-        authP(ORACLE_ROLE, arr(token, denominationExchangeRate, exchangeRates[token]))
-    {
-        // Denomination Token is a special one, so we can not allow its exchange rate to be changed
-        require(token != denominationToken);
-        exchangeRates[token] = denominationExchangeRate;
-        ExchangeRateSet(token, denominationExchangeRate);
+    function setPriceFeed(Feed _feed) external auth(CHANGE_PRICE_FEED_ROLE) {
+        _setPriceFeed(_feed);
+    }
+
+    /**
+     * @dev Set the exchange rate expiry time, in seconds. Exchange rates older than it won't be accepted for payments.
+     * @notice Sets the exchange rate expiry time to `_time`.
+     * @param _time The expiration time in seconds for exchange rates
+     */
+    // TODO!!! function setRateExpiryTime(uint64 _time) external authP(MODIFY_RATE_EXPIRY_ROLE, arr(_time)) {
+    function setRateExpiryTime(uint64 _time) external auth(MODIFY_RATE_EXPIRY_ROLE) {
+        _setRateExpiryTime(_time);
     }
 
     /**
@@ -197,7 +207,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         /* check that employee exists */
         require(employeeIds[employees[employeeId].accountAddress] != 0);
 
-        employees[employeeId].denominationTokenSalary = yearlyDenominationSalary.toSecondDenominationToken();
+        employees[employeeId].denominationTokenSalary = yearlyDenominationSalary / SECONDS_IN_A_YEAR;
     }
 
     /**
@@ -339,7 +349,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         Employee storage employee = employees[employeeId];
 
         accountAddress = employee.accountAddress;
-        yearlyDenominationSalary = employee.denominationTokenSalary.toYearlyDenomination();
+        yearlyDenominationSalary = employee.denominationTokenSalary.mul(SECONDS_IN_A_YEAR);
         name = employee.name;
         lastPayroll = employee.lastPayroll;
     }
@@ -354,13 +364,12 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     }
 
     /**
-     * @dev Get the Denomination exchange rate of a Token
-     * @notice Get the Denomination exchange rate of a Token
-     * @param token The token address
-     * @return denominationExchangeRate The exchange rate
+     * @dev Check if a token is allowed
+     * @param _token Address of token to check
+     * @return True if it's in the list of allowed tokens, False otherwise
      */
-    function getExchangeRate(address token) external view returns (uint256 rate) {
-        rate = exchangeRates[token];
+    function isTokenAllowed(address _token) external view returns (bool) {
+        return allowedTokens[_token];
     }
 
     /**
@@ -398,7 +407,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint128 employeeId = nextEmployee;
         employees[employeeId] = Employee({
             accountAddress: accountAddress,
-            denominationTokenSalary: initialYearlyDenominationSalary.toSecondDenominationToken(),
+            denominationTokenSalary: initialYearlyDenominationSalary / SECONDS_IN_A_YEAR,
             lastPayroll: startDate,
             name: name
         });
@@ -415,6 +424,18 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         nextEmployee++;
     }
 
+    function _setPriceFeed(Feed _feed) internal {
+        require(_feed != address(0));
+        feed = _feed;
+        PriceFeedSet(feed);
+    }
+
+    function _setRateExpiryTime(uint64 _time) internal {
+        require(_time > 0);
+        rateExpiryTime = _time;
+        RateExpiryTimeSet(rateExpiryTime);
+    }
+
     /**
      * @dev Loop over tokens and send Payroll to employee
      * @param employeeId Id of employee receiving payroll
@@ -429,11 +450,13 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             address token = allowedTokensArray[i];
             if (employee.allocation[token] == 0)
                 continue;
-            require(checkExchangeRate(token));
+            uint128 exchangeRate = getExchangeRate(token);
+            require(exchangeRate > 0);
             // salary converted to token and applied allocation percentage
             uint256 tokenAmount = employee.denominationTokenSalary
-                .mul(exchangeRates[token]).mul(employee.allocation[token]) / 100;
-            tokenAmount = tokenAmount.mul(time);
+                .mul(exchangeRate).mul(employee.allocation[token]);
+            // dividing by 100 for the allocation and by ONE for the exchange rate
+            tokenAmount = tokenAmount.mul(time) / 100 / ONE;
             finance.newPayment(
                 token,
                 employee.accountAddress,
@@ -449,16 +472,28 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     }
 
     /**
-     * @dev Check that a token has the exchange rate already set
-     *      Internal function, needed to ensure that we have the rate before making a payment.
+     * @dev Check that a token gets a correct exchange rate.
+     *      Internal function, needed to ensure that we have a recent rate before making a payment.
      * @param token The token address
      * @return True if we have the exchange rate, false otherwise
      */
-    function checkExchangeRate(address token) internal view returns (bool) {
-        if (exchangeRates[token] == 0) {
-            return false;
+    function getExchangeRate(address token) internal view returns (uint128) {
+        uint128 xrt;
+        uint64 when;
+
+        // denomination token has always exchange rate of 1
+        if (token == denominationToken) {
+            return ONE;
         }
-        return true;
+
+        (xrt, when) = feed.get(denominationToken, token);
+
+        // check it's recent enough
+        if (when < uint64(getTimestamp()).sub(rateExpiryTime)) {
+            return 0;
+        }
+
+        return xrt;
     }
 
     function getTimestamp() internal view returns (uint256) { return now; }
