@@ -3,10 +3,16 @@ pragma solidity 0.4.18;
 import "./ERCStaking.sol";
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
+import "@aragon/os/contracts/lib/misc/Migrations.sol";
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 
 
 contract Staking is ERCStaking, AragonApp {
+  using SafeMath for uint256;
+
+  uint64 constant public MAX_UINT64 = uint64(-1);
+
   struct Account {
     uint256 amount;
     Lock[] locks;
@@ -37,15 +43,15 @@ contract Staking is ERCStaking, AragonApp {
   // TODO: figure out a way to get lock from metadata, given changing lock ids
   // mapping (bytes32 => LockLocation) lockByMetadata;
 
-  event Locked(address indexed account, uint256 lockId, bytes32 metadata);
+  event Locked(address indexed account, uint256 lockId, uint256 amount, bytes32 metadata);
   event Unlocked(address indexed account, address indexed unlocker, uint256 oldLockId);
 
   event MovedTokens(address indexed from, address indexed to, uint256 amount);
 
-  bytes32 constant STAKE_ROLE = keccak256("STAKE_ROLE");
-  bytes32 constant UNSTAKE_ROLE = keccak256("UNSTAKE_ROLE");
-  bytes32 constant LOCK_ROLE = keccak256("LOCK_ROLE");
-  bytes32 constant GOD_ROLE = keccak256("GOD_ROLE");
+  bytes32 constant public STAKE_ROLE = keccak256("STAKE_ROLE");
+  bytes32 constant public UNSTAKE_ROLE = keccak256("UNSTAKE_ROLE");
+  bytes32 constant public LOCK_ROLE = keccak256("LOCK_ROLE");
+  bytes32 constant public GOD_ROLE = keccak256("GOD_ROLE");
 
   modifier checkUnlocked(uint256 amount) {
     require(unlockedBalanceOf(msg.sender) >= amount);
@@ -68,25 +74,26 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   function stakeFor(address acct, uint256 amount, bytes data) authP(STAKE_ROLE, arr(amount)) public {
+    // stake 0 tokens makes no sense
+    require(amount > 0);
     // From needs to be msg.sender to avoid token stealing by front-running
     require(stakingToken.transferFrom(msg.sender, this, amount));
-    processStake(acct, amount, data);
+
+    // process Stake
+    accounts[acct].amount = accounts[acct].amount.add(amount);
+
+    Staked(acct, amount, totalStakedFor(acct), data);
 
     if (stakeScript.length > 0) {
       runScript(stakeScript, data, new address[](0));
     }
   }
 
-  function processStake(address acct, uint256 amount, bytes data) internal {
-    accounts[acct].amount += amount; // overflow check in token contract
-    assert(accounts[acct].amount >= amount);
-
-    Staked(acct, amount, totalStakedFor(acct), data);
-  }
-
   function unstake(uint256 amount, bytes data) authP(UNSTAKE_ROLE, arr(amount)) checkUnlocked(amount) public {
-    require(accounts[msg.sender].amount >= amount);
-    accounts[msg.sender].amount -= amount;
+    // unstake 0 tokens makes no sense
+    require(amount > 0);
+
+    accounts[msg.sender].amount = accounts[msg.sender].amount.sub(amount);
 
     require(stakingToken.transfer(msg.sender, amount));
 
@@ -95,6 +102,10 @@ contract Staking is ERCStaking, AragonApp {
     if (unstakeScript.length > 0) {
       runScript(unstakeScript, data, new address[](0));
     }
+  }
+
+  function lockIndefinitely(uint256 amount, address unlocker, bytes32 metadata, bytes data) public returns(uint256 lockId) {
+    return lock(amount, uint8(TimeUnit.Seconds), MAX_UINT64, unlocker, metadata, data);
   }
 
   function lock(
@@ -108,11 +119,15 @@ contract Staking is ERCStaking, AragonApp {
     authP(LOCK_ROLE, arr(amount, uint256(lockUnit), uint256(lockEnds)))
     checkUnlocked(amount)
     public
+    returns(uint256 lockId)
   {
-    Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker, metadata);
-    uint256 lockId = accounts[msg.sender].locks.push(newLock) - 1;
+    // lock 0 tokens makes no sense
+    require(amount > 0);
 
-    Locked(msg.sender, lockId, metadata);
+    Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker, metadata);
+    lockId = accounts[msg.sender].locks.push(newLock) - 1;
+
+    Locked(msg.sender, lockId, amount, metadata);
 
     if (lockScript.length > 0) {
       runScript(lockScript, data, new address[](0));
@@ -131,15 +146,22 @@ contract Staking is ERCStaking, AragonApp {
     authP(STAKE_ROLE, arr(amount))
     authP(LOCK_ROLE, arr(amount, uint256(lockUnit), uint256(lockEnds)))
     public
+    returns(uint256 lockId)
   {
     stake(amount, stakeData);
-    lock(amount, lockUnit, lockEnds, unlocker, metadata, lockData);
+    return lock(amount, lockUnit, lockEnds, unlocker, metadata, lockData);
   }
 
-  function unlockAll(address acct) external {
-    while (accounts[acct].locks.length > 0) {
-      if (canUnlock(acct, 0)) {
-        unlock(acct, 0);
+  function unlockAllOrNone(address acct) external {
+    for (uint256 i = accounts[acct].locks.length; i > 0; i--) {
+      unlock(acct, i - 1);
+    }
+  }
+
+  function unlockAll(address acct) public {
+    for (uint256 i = accounts[acct].locks.length; i > 0; i--) {
+      if (canUnlock(acct, i - 1)) {
+        unlock(acct, i - 1);
       }
     }
   }
@@ -157,13 +179,20 @@ contract Staking is ERCStaking, AragonApp {
     Unlocked(acct, msg.sender, lockId);
   }
 
+  function unlockAndUnstake(uint256 amount, bytes data) public {
+    unlockAll(msg.sender);
+    unstake(amount, data);
+  }
+
   function moveTokens(address from, address to, uint256 amount) authP(GOD_ROLE, arr(from, to, amount)) external {
-    require(accounts[from].amount >= amount);
+    // move 0 tokens makes no sense
+    require(amount > 0);
 
-    accounts[from].amount -= amount;
-    accounts[to].amount += amount;
+    // make sure we don't move locked tokens, to avoid inconsistency
+    require(unlockedBalanceOf(from) >= amount);
 
-    assert(accounts[to].amount >= amount);
+    accounts[from].amount = accounts[from].amount.sub(amount);
+    accounts[to].amount = accounts[to].amount.add(amount);
 
     MovedTokens(from, to, amount);
   }
@@ -182,13 +211,17 @@ contract Staking is ERCStaking, AragonApp {
     return accounts[addr].amount;
   }
 
+  function totalStaked() public view returns (uint256) {
+    return stakingToken.balanceOf(this);
+  }
+
   function unlockedBalanceOf(address acct) public view returns (uint256) {
     uint256 unlockedTokens = accounts[acct].amount;
 
     Lock[] storage locks = accounts[acct].locks;
     for (uint256 i = 0; i < locks.length; i++) {
       if (!canUnlock(acct, i)) {
-        unlockedTokens -= locks[i].amount;
+        unlockedTokens = unlockedTokens.sub(locks[i].amount);
       }
     }
 
@@ -199,23 +232,35 @@ contract Staking is ERCStaking, AragonApp {
     return accounts[acct].locks.length;
   }
 
-  function getLock(address acct, uint256 lockId) public view returns (Lock) {
-    return accounts[acct].locks[lockId];
+  function getLock(address acct, uint256 lockId) public view returns (uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker, bytes32 metadata) {
+    Lock memory acctLock = accounts[acct].locks[lockId];
+
+    return (acctLock.amount, uint8(acctLock.timespan.unit), uint64(acctLock.timespan.end), acctLock.unlocker, acctLock.metadata);
   }
 
-  function lastLock(address acct) public view returns (Lock) {
-    return accounts[acct].locks[locksCount(acct) - 1];
+  function lastLock(address acct) public view returns (uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker, bytes32 metadata) {
+    Lock memory acctLock = accounts[acct].locks[locksCount(acct) - 1];
+    return (acctLock.amount, uint8(acctLock.timespan.unit), uint64(acctLock.timespan.end), acctLock.unlocker, acctLock.metadata);
   }
 
   function canUnlock(address acct, uint256 lockId) public view returns (bool) {
-    Lock memory l = accounts[acct].locks[lockId];
+    Lock memory acctLock = accounts[acct].locks[lockId];
 
-    return timespanEnded(l.timespan) || msg.sender == l.unlocker;
+    return timespanEnded(acctLock.timespan) || msg.sender == acctLock.unlocker;
   }
 
   function timespanEnded(Timespan memory timespan) internal view returns (bool) {
-    uint256 comparingValue = timespan.unit == TimeUnit.Blocks ? block.number : block.timestamp;
+    uint256 comparingValue = timespan.unit == TimeUnit.Blocks ? getBlocknumber() : getTimestamp();
 
     return uint64(comparingValue) > timespan.end;
+  }
+
+  function getTimestamp() internal view returns (uint256) {
+    return block.timestamp;
+  }
+
+  // TODO: Use getBlockNumber from Initializable.sol - issue with solidity-coverage
+  function getBlocknumber() internal returns (uint256) {
+    return block.number;
   }
 }
