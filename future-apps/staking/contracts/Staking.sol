@@ -250,8 +250,17 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   function timespanEnded(Timespan memory timespan) internal view returns (bool) {
-    uint256 comparingValue = timespan.unit == TimeUnit.Blocks ? block.number : block.timestamp;
+    uint256 comparingValue = timespan.unit == TimeUnit.Blocks ? getBlocknumber() : getTimestamp();
 
     return uint64(comparingValue) > timespan.end;
+  }
+
+  function getTimestamp() internal view returns (uint256) {
+    return block.timestamp;
+  }
+
+  // TODO: Use getBlockNumber from Initializable.sol - issue with solidity-coverage
+  function getBlocknumber() internal returns (uint256) {
+    return block.number;
   }
 }

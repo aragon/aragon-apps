@@ -1,7 +1,4 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
-const getBlock = require('@aragon/test-helpers/block')(web3)
-const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 
 const getContract = artifacts.require
@@ -19,7 +16,7 @@ contract('Staking app', accounts => {
 
   context('Without scripts', async () => {
     beforeEach(async () => {
-      app = await getContract('Staking').new()
+      app = await getContract('StakingMock').new()
       token = await getContract('StandardTokenMock').new(owner, balance)
       await app.initialize(token.address, '', '', '')
     })
@@ -135,7 +132,7 @@ contract('Staking app', accounts => {
       const lockId = getEvent(r, 'Locked', 'lockId')
       // can not unlock
       assert.isFalse(await app.canUnlock(owner, lockId))
-      await timeTravel(5000)
+      await app.setTimestamp((await app.getTimestampExt()) + 5000)
       // still the same, can not unlock
       assert.isFalse(await app.canUnlock(owner, lockId))
       assert.equal((await app.unlockedBalanceOf(owner)).valueOf(), amount / 2, "Unlocked balance should match")
@@ -147,16 +144,15 @@ contract('Staking app', accounts => {
       const time = 1000
       await token.approve(app.address, amount)
       await app.stake(amount, '')
-      const initialBlockNumber = await getBlockNumber()
-      const initialTimestamp = (await getBlock(initialBlockNumber)).timestamp
-      const r = await app.lock(amount / 2, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '')
+      const endTime = (await app.getTimestampExt()) + time
+      const r = await app.lock(amount / 2, TIME_UNIT_SECONDS, endTime, other, '', '')
       const lockId = getEvent(r, 'Locked', 'lockId')
 
       // check lock values
       const lock = await app.getLock(owner, lockId)
       assert.equal(lock[0], amount / 2, "locked amount should match")
       assert.equal(lock[1], TIME_UNIT_SECONDS, "lock time unit should match")
-      assert.equal(lock[2], initialTimestamp + time, "lock time end should match")
+      assert.equal(lock[2], endTime, "lock time end should match")
       assert.equal(lock[3], other, "unlocker should match")
       assert.equal(lock[4], zeroAddress, "lock metadata should match")
 
@@ -165,7 +161,7 @@ contract('Staking app', accounts => {
       assert.equal((await app.unlockedBalanceOf(owner)).valueOf(), amount / 2, "Unlocked balance should match")
       assert.equal((await app.locksCount(owner)).valueOf(), parseInt(lockId, 10) + 1, "last lock id should match")
 
-      await timeTravel(time + 1000)
+      await app.setTimestamp(endTime + 1)
       // can unlock
       assert.isTrue(await app.canUnlock(owner, lockId))
       // unlockable balance counts as unlocked
@@ -178,15 +174,15 @@ contract('Staking app', accounts => {
       const blocks = 2
       await token.approve(app.address, amount)
       await app.stake(amount, '')
-      const initialBlockNumber = await getBlockNumber()
-      const r = await app.lock(amount / 2, TIME_UNIT_BLOCKS, initialBlockNumber + blocks, other, '', '')
+      const endBlock = (await app.getBlockNumberExt()) + blocks
+      const r = await app.lock(amount / 2, TIME_UNIT_BLOCKS, endBlock, other, '', '')
       const lockId = getEvent(r, 'Locked', 'lockId')
 
       // check lock values
       const lock = await app.lastLock(owner)
       assert.equal(lock[0], amount / 2, "locked amount should match")
       assert.equal(lock[1], TIME_UNIT_BLOCKS, "lock time unit should match")
-      assert.equal(lock[2], initialBlockNumber + blocks, "lock time end should match")
+      assert.equal(lock[2], endBlock, "lock time end should match")
       assert.equal(lock[3], other, "unlocker should match")
       assert.equal(lock[4], "0x0000000000000000000000000000000000000000000000000000000000000000", "lock metadata should match")
 
@@ -195,10 +191,7 @@ contract('Staking app', accounts => {
       assert.equal((await app.unlockedBalanceOf(owner)).valueOf(), amount / 2, "Unlocked balance should match")
       assert.equal((await app.locksCount(owner)).valueOf(), parseInt(lockId, 10) + 1, "last lock id should match")
 
-      // we just send dumb transactions to increment block number
-      for (let x of new Array(blocks)) {
-        web3.eth.sendTransaction({ from: owner, to: owner, value: 1, gasPrice: 1 })
-      }
+      await app.setBlockNumber(endBlock + 1)
       // can unlock
       assert.isTrue(await app.canUnlock(owner, lockId))
     })
@@ -208,9 +201,9 @@ contract('Staking app', accounts => {
       const blocks = 10
       await token.approve(app.address, amount)
       await app.stake(amount, '')
-      const initialBlockNumber = await getBlockNumber()
+      const endBlock = (await app.getBlockNumberExt()) + blocks
       return assertRevert(async () => {
-        await app.lock(0, TIME_UNIT_BLOCKS, initialBlockNumber + blocks, other, '', '')
+        await app.lock(0, TIME_UNIT_BLOCKS, endBlock, other, '', '')
       })
     })
 
@@ -219,9 +212,9 @@ contract('Staking app', accounts => {
       const blocks = 10
       await token.approve(app.address, amount)
       await app.stake(amount, '')
-      const initialBlockNumber = await getBlockNumber()
+      const endBlock = (await app.getBlockNumberExt()) + blocks
       return assertRevert(async () => {
-        await app.lock(amount + 1, TIME_UNIT_BLOCKS, initialBlockNumber + blocks, other, '', '')
+        await app.lock(amount + 1, TIME_UNIT_BLOCKS, endBlock, other, '', '')
       })
     })
 
@@ -229,9 +222,8 @@ contract('Staking app', accounts => {
       const amount = 100
       const time = 1000
       await token.approve(app.address, amount)
-      const initialBlockNumber = await getBlockNumber()
-      const initialTimestamp = (await getBlock(initialBlockNumber)).timestamp
-      const r = await app.stakeAndLock(amount, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '', '')
+      const endTime = (await app.getTimestampExt()) + time
+      const r = await app.stakeAndLock(amount, TIME_UNIT_SECONDS, endTime, other, '', '', '')
       const lockId = getEvent(r, 'Locked', 'lockId')
 
       // can not unlock
@@ -239,7 +231,7 @@ contract('Staking app', accounts => {
       assert.equal((await app.unlockedBalanceOf(owner)).valueOf(), 0, "Unlocked balance should match")
       assert.equal((await app.locksCount(owner)).valueOf(), parseInt(lockId, 10) + 1, "last lock id should match")
 
-      await timeTravel(time + 1000)
+      await app.setTimestamp(endTime + 1)
       // can unlock
       assert.isTrue(await app.canUnlock(owner, lockId))
     })
@@ -249,9 +241,8 @@ contract('Staking app', accounts => {
       const time = 1000
       await token.approve(app.address, amount)
       await app.stake(amount, '')
-      const initialBlockNumber = await getBlockNumber()
-      const initialTimestamp = (await getBlock(initialBlockNumber)).timestamp
-      const r = await app.lock(amount / 2, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '')
+      const endTime = (await app.getTimestampExt()) + time
+      const r = await app.lock(amount / 2, TIME_UNIT_SECONDS, endTime, other, '', '')
       const lockId = getEvent(r, 'Locked', 'lockId')
 
       // unlock
@@ -266,11 +257,10 @@ contract('Staking app', accounts => {
       const time = 1000
       await token.approve(app.address, amount)
       await app.stake(amount, '')
-      const initialBlockNumber = await getBlockNumber()
-      const initialTimestamp = (await getBlock(initialBlockNumber)).timestamp
-      const r = await app.lock(amount / 2, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '')
+      const endTime = (await app.getTimestampExt()) + time
+      const r = await app.lock(amount / 2, TIME_UNIT_SECONDS, endTime, other, '', '')
       const lockId = getEvent(r, 'Locked', 'lockId')
-      await app.lock(amount / 2, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '')
+      await app.lock(amount / 2, TIME_UNIT_SECONDS, endTime, other, '', '')
 
       // unlock
       await app.unlock(owner, lockId, { from: other })
@@ -284,9 +274,8 @@ contract('Staking app', accounts => {
       const time = 1000
       await token.approve(app.address, amount)
       await app.stake(amount, '')
-      const initialBlockNumber = await getBlockNumber()
-      const initialTimestamp = (await getBlock(initialBlockNumber)).timestamp
-      const r = await app.lock(amount / 2, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '')
+      const endTime = (await app.getTimestampExt()) + time
+      const r = await app.lock(amount / 2, TIME_UNIT_SECONDS, endTime, other, '', '')
       const lockId = getEvent(r, 'Locked', 'lockId')
 
       // tries to unlock
@@ -300,10 +289,9 @@ contract('Staking app', accounts => {
       const time = 1000
       await token.approve(app.address, amount)
       await app.stake(amount, '')
-      const initialBlockNumber = await getBlockNumber()
-      const initialTimestamp = (await getBlock(initialBlockNumber)).timestamp
-      await app.lock(amount / 4, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '')
-      await app.lock(amount / 4, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '')
+      const endTime = (await app.getTimestampExt()) + time
+      await app.lock(amount / 4, TIME_UNIT_SECONDS, endTime, other, '', '')
+      await app.lock(amount / 4, TIME_UNIT_SECONDS, endTime, other, '', '')
 
       // unlock
       await app.unlockAll(owner, { from: other })
@@ -323,11 +311,10 @@ contract('Staking app', accounts => {
       await token.approve(app.address, amount)
       await app.stake(amount, '')
       await app.lockIndefinitely(amount / 2, other, '', '')
-      const initialBlockNumber = await getBlockNumber()
-      const initialTimestamp = (await getBlock(initialBlockNumber)).timestamp
-      await app.lock(amount / 4, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '')
+      const endTime = (await app.getTimestampExt()) + time
+      await app.lock(amount / 4, TIME_UNIT_SECONDS, endTime, other, '', '')
 
-      await timeTravel(time + 1)
+      await app.setTimestamp(endTime + 1)
       // unlock
       await app.unlockAll(owner)
 
@@ -341,11 +328,10 @@ contract('Staking app', accounts => {
       await token.approve(app.address, amount)
       await app.stake(amount, '')
       await app.lockIndefinitely(amount / 2, other, '', '')
-      const initialBlockNumber = await getBlockNumber()
-      const initialTimestamp = (await getBlock(initialBlockNumber)).timestamp
-      await app.lock(amount / 4, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '')
+      const endTime = (await app.getTimestampExt()) + time
+      await app.lock(amount / 4, TIME_UNIT_SECONDS, endTime, other, '', '')
 
-      await timeTravel(time + 1)
+      await app.setTimestamp(endTime + 1)
       // unlock
       return assertRevert(async () => {
         await app.unlockAllOrNone(owner)
@@ -420,8 +406,8 @@ contract('Staking app', accounts => {
       await acl.createPermission(owner, dao.address, await dao.APP_MANAGER_ROLE(), owner, { from: owner })
 
       // App
-      const receipt = await dao.newAppInstance('0x1234', (await getContract('Staking').new()).address, { from: owner })
-      app = getContract('Staking').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+      const receipt = await dao.newAppInstance('0x1234', (await getContract('StakingMock').new()).address, { from: owner })
+      app = getContract('StakingMock').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
       await app.initialize(token.address, stakeScript, unstakeScript, lockScript)
 
       // Permissions
@@ -476,7 +462,7 @@ contract('Staking app', accounts => {
       const lockId = getEvent(r, 'Locked', 'lockId')
       // can not unlock
       assert.isFalse(await app.canUnlock(owner, lockId))
-      await timeTravel(5000)
+      await app.setTimestamp((await app.getTimestampExt()) + 5000)
       // still the same, can not unlock
       assert.isFalse(await app.canUnlock(owner, lockId))
       assert.equal((await app.unlockedBalanceOf(owner)).valueOf(), amount / 2, "Unlocked balance should match")
@@ -491,10 +477,9 @@ contract('Staking app', accounts => {
       const initialStakingBalance = parseInt((await token.balanceOf(app.address)).valueOf(), 10)
       // allow Staking app to move owner tokens
       await token.approve(app.address, amount)
-      const initialBlockNumber = await getBlockNumber()
-      const initialTimestamp = (await getBlock(initialBlockNumber)).timestamp
+      const endTime = (await app.getTimestampExt()) + time
       // stake and lock tokens
-      const r = await app.stakeAndLock(amount, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '', '')
+      const r = await app.stakeAndLock(amount, TIME_UNIT_SECONDS, endTime, other, '', '', '')
       const lockId = getEvent(r, 'Locked', 'lockId')
 
       // can not unlock
@@ -502,7 +487,7 @@ contract('Staking app', accounts => {
       assert.equal((await app.unlockedBalanceOf(owner)).valueOf(), 0, "Unlocked balance should match")
       assert.equal((await app.locksCount(owner)).valueOf(), parseInt(lockId, 10) + 1, "last lock id should match")
 
-      await timeTravel(time + 1000)
+      await app.setTimestamp(endTime + 1)
       // can unlock
       assert.isTrue(await app.canUnlock(owner, lockId))
 
@@ -528,11 +513,10 @@ contract('Staking app', accounts => {
       // stake tokens
       await app.stake(amount, '')
       // locks tokens
-      const initialBlockNumber = await getBlockNumber()
-      const initialTimestamp = (await getBlock(initialBlockNumber)).timestamp
-      await app.lock(amount, TIME_UNIT_SECONDS, initialTimestamp + time, other, '', '')
+      const endTime = (await app.getTimestampExt()) + time
+      await app.lock(amount, TIME_UNIT_SECONDS, endTime, other, '', '')
 
-      await timeTravel(time + 1000)
+      await app.setTimestamp(endTime + 1)
 
       // unlock and unstake half of them
       await app.unlockAndUnstake(amount / 2, '')
