@@ -16,6 +16,8 @@ interface ERCStaking {
   function supportsHistory() public pure returns (bool);
 }
 
+
+// to avoid coverage issue
 contract ERCFake {
-  // to avoid coverage issue
+  function ERCFake() public {}
 }

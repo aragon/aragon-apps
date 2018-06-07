@@ -233,20 +233,20 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   function getLock(address acct, uint256 lockId) public view returns (uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker, bytes32 metadata) {
-    Lock lock = accounts[acct].locks[lockId];
+    Lock memory acctLock = accounts[acct].locks[lockId];
 
-    return (lock.amount, uint8(lock.timespan.unit), uint64(lock.timespan.end), lock.unlocker, lock.metadata);
+    return (acctLock.amount, uint8(acctLock.timespan.unit), uint64(acctLock.timespan.end), acctLock.unlocker, acctLock.metadata);
   }
 
   function lastLock(address acct) public view returns (uint256 amount, uint8 lockUnit, uint64 lockEnds, address unlocker, bytes32 metadata) {
-    Lock lock = accounts[acct].locks[locksCount(acct) - 1];
-    return (lock.amount, uint8(lock.timespan.unit), uint64(lock.timespan.end), lock.unlocker, lock.metadata);
+    Lock memory acctLock = accounts[acct].locks[locksCount(acct) - 1];
+    return (acctLock.amount, uint8(acctLock.timespan.unit), uint64(acctLock.timespan.end), acctLock.unlocker, acctLock.metadata);
   }
 
   function canUnlock(address acct, uint256 lockId) public view returns (bool) {
-    Lock memory l = accounts[acct].locks[lockId];
+    Lock memory acctLock = accounts[acct].locks[lockId];
 
-    return timespanEnded(l.timespan) || msg.sender == l.unlocker;
+    return timespanEnded(acctLock.timespan) || msg.sender == acctLock.unlocker;
   }
 
   function timespanEnded(Timespan memory timespan) internal view returns (bool) {
