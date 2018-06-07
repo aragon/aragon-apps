@@ -11,7 +11,8 @@ const Zombie = artifacts.require("Zombie.sol");
 
 contract('Payroll', function(accounts) {
   const rateExpiryTime = 1000;
-  const USD_PRECISION = 10**18;
+  const USD_DECIMALS= 18;
+  const USD_PRECISION = 10**USD_DECIMALS;
   const SECONDS_IN_A_YEAR = 31557600; // 365.25 days
   const ONE = 1e18
   const ETH = '0x0'
@@ -36,13 +37,15 @@ contract('Payroll', function(accounts) {
   let usdToken;
   let erc20Token1;
   let erc20Token2;
-  let erc20Token1ExchangeRate
-  let erc20Token2ExchangeRate
+  let erc20Token1ExchangeRate;
+  let erc20Token2ExchangeRate;
+  const erc20Token1Decimals = 18;
+  const erc20Token2Decimals = 16;
   let etherExchangeRate
 
-  const deployErc20Token = async (name="ERC20Token") => {
-    let token = await MiniMeToken.new("0x0", "0x0", 0, name, 18, 'E20', true); // dummy parameters for minime
-    let amount = new web3.BigNumber(10**9).times(new web3.BigNumber(10**18));
+  const deployErc20Token = async (name="ERC20Token", decimals=18) => {
+    let token = await MiniMeToken.new("0x0", "0x0", 0, name, decimals, 'E20', true); // dummy parameters for minime
+    let amount = new web3.BigNumber(10**9).times(new web3.BigNumber(10**decimals));
     let sender = owner;
     let receiver = finance.address;
     let initialSenderBalance = await token.balanceOf(sender);
@@ -73,13 +76,13 @@ contract('Payroll', function(accounts) {
     finance = await Finance.new();
     await finance.initialize(vault.address, 100);
 
-    usdToken = await deployErc20Token("USD");
+    usdToken = await deployErc20Token("USD", USD_DECIMALS);
     priceFeed = await PriceFeedMock.new();
     payroll = await Payroll.new();
 
     // Deploy ERC 20 Tokens
-    erc20Token1 = await deployErc20Token();
-    erc20Token2 = await deployErc20Token();
+    erc20Token1 = await deployErc20Token("Token 1", erc20Token1Decimals);
+    erc20Token2 = await deployErc20Token("Token 2", erc20Token2Decimals);
 
     // get exchange rates
     erc20Token1ExchangeRate = (await priceFeed.get(usdToken.address, erc20Token1.address))[0]
@@ -261,7 +264,7 @@ contract('Payroll', function(accounts) {
 
   it("sends tokens using approveAndCall and transferAndCall", async () => {
     // ERC20
-    const amount = new web3.BigNumber(10**2).times(new web3.BigNumber(10**18));
+    const amount = new web3.BigNumber(10**2).times(new web3.BigNumber(10**erc20Token1Decimals));
     let sender = owner;
     let receiver;
     let initialSenderBalance;
@@ -283,7 +286,6 @@ contract('Payroll', function(accounts) {
     await erc20Token1.transfer(receiver, amount, {from: sender});
     await payroll.depositToFinance(erc20Token1.address);
     await checkFinal(erc20Token1);
-
   });
 
   it("fails on payday with no token allocation", async () => {
@@ -294,7 +296,7 @@ contract('Payroll', function(accounts) {
     // make sure this payroll has enough funds
     let etherFunds = new web3.BigNumber(90).times(10**18);
     let usdTokenFunds = new web3.BigNumber(10**9).times(USD_PRECISION);
-    let erc20Token1Funds = new web3.BigNumber(10**9).times(10**18);
+    let erc20Token1Funds = new web3.BigNumber(10**9).times(10**erc20Token1Decimals);
     await usdToken.generateTokens(owner, usdTokenFunds);
     await erc20Token1.generateTokens(owner, erc20Token1Funds);
     // Send funds to Finance
@@ -352,11 +354,11 @@ contract('Payroll', function(accounts) {
 
       return new Promise(resolve => {resolve(txFee);});
     };
-    const addInitialBalance = async (token, name="", generate=true) => {
+    const addInitialBalance = async (token, name="", generate=true, decimals=18) => {
       let txFee = new web3.BigNumber(0);
       // add some tokens to Payroll (it shouldn't happen, but to test it)
       if (generate) {
-        const amount = new web3.BigNumber(10**2).times(new web3.BigNumber(10**18));
+        const amount = new web3.BigNumber(10**2).times(new web3.BigNumber(10**decimals));
         let transaction1 = await token.generateTokens(owner, amount);
         txFee = txFee.plus(await getTxFee(transaction1));
         let transaction2 = await token.transfer(payroll2.address, amount, {from: owner});
@@ -380,8 +382,8 @@ contract('Payroll', function(accounts) {
     // Initial values
     let transaction;
     let vaultInitialBalance = await getBalance(vault.address);
-    totalTxFee = totalTxFee.plus(await addInitialBalance(usdToken, "USD Token"));
-    totalTxFee = totalTxFee.plus(await addInitialBalance(erc20Token1, "ERC20 Token 1"));
+    totalTxFee = totalTxFee.plus(await addInitialBalance(usdToken, "USD Token", USD_DECIMALS));
+    totalTxFee = totalTxFee.plus(await addInitialBalance(erc20Token1, "ERC20 Token 1", erc20Token1Decimals));
     // Escape Hatch
     transaction = await payroll2.depositToFinance(usdToken.address);
     totalTxFee = totalTxFee.plus(await getTxFee(transaction));

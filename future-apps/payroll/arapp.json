@@ -19,7 +19,7 @@
         { "name": "Add employees", "id": "ADD_EMPLOYEE_ROLE", "params": ["Initial yearly payroll", "Start date"] },
         { "name": "Remove employees", "id": "REMOVE_EMPLOYEE_ROLE" },
         { "name": "Allowed Tokens Manager", "id": "ALLOWED_TOKENS_MANAGER_ROLE", "params": "Token" },
-        { "name": "Change Price Feed", "id": "CHANGE_PRICE_FEED_ROLE" }
+        { "name": "Change Price Feed", "id": "CHANGE_PRICE_FEED_ROLE", "params": ["Old Price Feed", "New Price Feed"] },
         { "name": "Modify Rate Expiry Time", "id": "MODIFY_RATE_EXPIRY_ROLE", "params": ["Rate expiry time"] }
     ],
     "path": "contracts/Payroll.sol"
