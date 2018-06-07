@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aragon/client": "^1.0.0-beta.7",
+    "@aragon/client": "^1.0.0-beta.8",
     "@aragon/templates-tokens": "^1.1.1",
     "@aragon/ui": "^0.11.0",
     "copy-to-clipboard": "^3.0.8",
@@ -54,5 +54,6 @@
     "last 1 edge versions",
     "not ie > 0",
     "not op_mini all"
-  ]
+  ],
+  "homepage": "."
 }

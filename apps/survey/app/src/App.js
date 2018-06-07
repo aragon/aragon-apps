@@ -1,86 +1,294 @@
 import React from 'react'
-import styled from 'styled-components'
-import { AppBar, AppView, AragonApp, Badge, Button } from '@aragon/ui'
-import SurveyCard from './components/SurveyCard/SurveyCard'
+import PropTypes from 'prop-types'
+import BigNumber from 'bignumber.js'
+import { isBefore } from 'date-fns'
+import { AppView, AragonApp, observe } from '@aragon/ui'
+import { Transition, animated } from 'react-spring'
+import tokenBalanceOfAtAbi from './abi/token-balanceOfAt.json'
+import tokenDecimalsAbi from './abi/token-decimals.json'
 import NewSurveyPanel from './components/NewSurveyPanel/NewSurveyPanel'
+import VotingPanel from './components/VotingPanel/VotingPanel'
+import Survey from './components/Survey/Survey'
+import Surveys from './components/Surveys/Surveys'
+import AppBar from './components/AppBar/AppBar'
+import { networkContextType } from './provide-network'
+import { hasLoadedSurveySettings, DURATION_SLICES } from './survey-settings'
+import { getTimeBucket } from './time-utils'
+import { makeEtherscanBaseUrl } from './utils'
 
-// Comment this to disable the demo state
-import * as demoState from './demo-state'
+const { ETHEREUM_NETWORK = 'mainnet' } = process.env
+
+const tokenAbi = [].concat(tokenBalanceOfAtAbi, tokenDecimalsAbi)
 
 class App extends React.Component {
-  state = {
+  static propTypes = {
+    app: PropTypes.object.isRequired,
+    userAccount: PropTypes.string.isRequired,
+  }
+  static defaultProps = {
+    network: {
+      etherscanBaseUrl: makeEtherscanBaseUrl(ETHEREUM_NETWORK),
+      name: ETHEREUM_NETWORK,
+    },
+    minParticipationPct: null,
+    pctBase: null,
     surveys: [],
-    showNewSurveyPanel: false,
-    ...(typeof demoState !== 'undefined' ? demoState : {}),
+    surveyTime: null,
+    tokenAddress: null,
+    tokenDecimals: 18,
+    tokenSymbol: '',
   }
-  getSurveyGroups() {
-    const now = new Date()
-    return this.state.surveys.reduce(
-      (groups, survey) => {
-        const group = survey.endDate > now ? 'opened' : 'closed'
-        return { ...groups, [group]: [...groups[group], survey] }
-      },
-      { opened: [], closed: [] }
+  static childContextTypes = {
+    network: networkContextType,
+  }
+  constructor(props) {
+    super(props)
+    this.state = {
+      openedSurveyId: null,
+      openedSurveyRect: {},
+      votingPanelOpened: false,
+      votingPanelSurveyId: null,
+      newSurveyPanelOpened: false,
+      settingsLoaded: false,
+      surveys: [],
+      tokenContract: this.getTokenContract(props.tokenAddress),
+    }
+
+    this.prepareSurveys(props.userAccount, props.surveys)
+  }
+  getChildContext() {
+    return { network: this.props.network }
+  }
+  componentWillReceiveProps(nextProps) {
+    const { settingsLoaded } = this.state
+    const { surveys, userAccount } = this.props
+
+    // Is this the first time we've loaded the settings?
+    if (!settingsLoaded && hasLoadedSurveySettings(nextProps)) {
+      this.setState({
+        settingsLoaded: true,
+      })
+    }
+
+    // Update the token contract
+    if (nextProps.tokenAddress !== this.props.tokenAddress) {
+      const tokenContract = this.getTokenContract(nextProps.tokenAddress)
+      this.setState({ tokenContract })
+      this.prepareSurveys(
+        nextProps.surveys,
+        nextProps.userAccount,
+        tokenContract
+      )
+    }
+
+    if (
+      nextProps.surveys !== surveys ||
+      nextProps.userAccount !== userAccount
+    ) {
+      this.prepareSurveys(
+        nextProps.surveys,
+        nextProps.userAccount,
+        this.getTokenContract(nextProps.tokenAddress)
+      )
+    }
+  }
+
+  // Add user-related data to every survey object
+  async prepareSurveys(surveys, userAccount, tokenContract) {
+    if (!tokenContract) {
+      return surveys
+    }
+    const preparedSurveys = await Promise.all(
+      surveys.map(async survey => {
+        const { snapshotBlock } = survey.data
+        const userBalance = await new Promise((resolve, reject) => {
+          tokenContract
+            .balanceOfAt(userAccount, snapshotBlock)
+            .first()
+            .subscribe(resolve, reject)
+        })
+        return { ...survey, userBalance: new BigNumber(userBalance) }
+      })
     )
+
+    this.setState({ surveys: preparedSurveys })
   }
-  handleNewSurveyPanelClose = () => {
-    this.setState({ showNewSurveyPanel: false })
+  getSurvey(id) {
+    return this.state.surveys.find(survey => survey.surveyId === id)
   }
-  handleNewSurveyPanelOpen = () => {
-    this.setState({ showNewSurveyPanel: true })
+  getTokenContract(tokenAddress) {
+    return tokenAddress && this.props.app.external(tokenAddress, tokenAbi)
+  }
+  handleOpenSurveyDetails = id => {
+    // Try to get the card rectangle before opening it
+    // So we can animate from the card to the expanded view
+    const cardElt = this._cardRefs.get(id)
+    const rect = cardElt ? cardElt.getBoundingClientRect() : null
+    this.setState({ openedSurveyId: id, openedSurveyRect: rect })
+  }
+  handlePanelClose = () => {
+    this.setState({
+      openedSurveyId: false,
+      votingPanelOpened: false,
+      newSurveyPanelOpened: false,
+    })
+  }
+  handleOpenVotingPanel = id => {
+    this.setState({
+      votingPanelOpened: true,
+      votingPanelSurveyId: id,
+    })
+  }
+  handleOpenNewSurveyPanel = () => {
+    // this.setState({ newSurveyPanelOpened: true })
+  }
+  handleCloseSurveyDetails = () => {
+    this.setState({ openedSurveyId: null })
+  }
+  handleCardRef = ({ id, element }) => {
+    if (!this._cardRefs) {
+      this._cardRefs = new Map()
+    }
+    this._cardRefs.set(id, element)
   }
   render() {
-    const surveys = this.getSurveyGroups()
-    const { showNewSurveyPanel } = this.state
+    const { tokenSymbol, tokenDecimals, app } = this.props
+    const {
+      surveys,
+      openedSurveyId,
+      openedSurveyRect,
+      votingPanelSurveyId,
+      votingPanelOpened,
+      newSurveyPanelOpened,
+    } = this.state
+    const openedSurvey = this.getSurvey(openedSurveyId)
+    const votingPanelSurvey = this.getSurvey(votingPanelSurveyId)
     return (
       <AragonApp publicUrl="/aragon-ui/">
-        <AppView appBar={this.renderAppBar()}>
-          {this.renderGroup('Open Surveys', surveys.opened)}
-          {this.renderGroup('Past Surveys', surveys.closed)}
+        <AppView
+          appBar={
+            <AppBar
+              view={openedSurvey ? 'survey' : 'surveys'}
+              tokenSymbol={tokenSymbol}
+              tokenDecimals={tokenDecimals}
+              onOpenNewSurveyPanel={this.handleOpenNewSurveyPanel}
+              onBack={this.handleCloseSurveyDetails}
+            />
+          }
+        >
+          <Transition
+            native
+            from={{ showProgress: 0 }}
+            enter={{ showProgress: 1 }}
+            leave={{ showProgress: 0 }}
+            surveys={surveys}
+            onCardRef={this.handleCardRef}
+            onOpenVotingPanel={this.handleOpenVotingPanel}
+            onCloseVotingPanel={this.handleCloseVotingPanel}
+            onOpenSurveyDetails={this.handleOpenSurveyDetails}
+          >
+            {!openedSurvey && SurveysWrapper}
+          </Transition>
+          <Survey
+            survey={openedSurvey}
+            transitionFrom={openedSurveyRect}
+            onOpenVotingPanel={this.handleOpenVotingPanel}
+          />
         </AppView>
         <NewSurveyPanel
-          opened={showNewSurveyPanel}
-          onClose={this.handleNewSurveyPanelClose}
+          opened={newSurveyPanelOpened}
+          onClose={this.handlePanelClose}
+        />
+        <VotingPanel
+          tokenSymbol={tokenSymbol}
+          tokenDecimals={tokenDecimals}
+          survey={votingPanelSurvey}
+          opened={votingPanelOpened}
+          onClose={this.handlePanelClose}
+          app={app}
         />
       </AragonApp>
     )
   }
-  renderAppBar() {
-    return (
-      <AppBar
-        title={
-          <AppBarTitle>
-            <span style={{ marginRight: '10px' }}>Survey</span>
-            <Badge>ANT</Badge>
-          </AppBarTitle>
-        }
-        endContent={
-          <Button mode="strong" onClick={this.handleNewSurveyPanelOpen}>
-            New Survey
-          </Button>
-        }
-      />
-    )
-  }
-  renderGroup(title, surveys) {
-    return (
-      <SurveyCard.Group title={title} count={surveys.length}>
-        {surveys.map(({ endDate, question, options }) => (
-          <SurveyCard
-            key={question}
-            endDate={endDate}
-            question={question}
-            options={options}
-          />
-        ))}
-      </SurveyCard.Group>
-    )
-  }
 }
 
-const AppBarTitle = styled.span`
-  display: flex;
-  align-items: center;
-`
+const SurveysWrapper = ({
+  showProgress,
+  surveys,
+  onOpenSurveyDetails,
+  onOpenVotingPanel,
+  onCloseVotingPanel,
+  onCardRef,
+}) => (
+  <animated.div style={{ opacity: showProgress }}>
+    <Surveys
+      surveys={surveys}
+      onOpenSurveyDetails={onOpenSurveyDetails}
+      onOpenVotingPanel={onOpenVotingPanel}
+      onCloseVotingPanel={onCloseVotingPanel}
+      onCardRef={onCardRef}
+    />
+  </animated.div>
+)
 
-export default App
+export default observe(observable => {
+  const now = new Date()
+  return observable.map(state => ({
+    ...state,
+    // Transform the survey data for the frontend
+    surveys:
+      state && state.surveys
+        ? state.surveys.map(survey => {
+            const { pctBase, surveyTime, tokenDecimals } = state
+            const { data, options, optionsHistory } = survey
+            const tokenMultiplier = Math.pow(10, tokenDecimals)
+            const endDate = new Date(data.startDate + surveyTime)
+            const startDate = new Date(data.startDate)
+
+            const nowBucket = getTimeBucket(
+              Date.now(),
+              data.startDate,
+              surveyTime,
+              DURATION_SLICES
+            )
+
+            return {
+              ...survey,
+              data: {
+                ...data,
+                endDate,
+                startDate,
+                open: isBefore(now, endDate),
+                minParticipationPct: data.minParticipationPct / pctBase,
+                participation: data.participation / tokenMultiplier,
+                votingPower: data.votingPower / tokenMultiplier,
+              },
+              options: options.map(({ power, ...option }) => ({
+                ...option,
+                power: power / tokenMultiplier,
+              })),
+              optionsHistory: {
+                ...optionsHistory,
+                options: optionsHistory.options.map(optionHistory =>
+                  optionHistory.reduce((powers, power, index) => {
+                    if (index <= nowBucket) {
+                      // Adjust power for participation (so it's a percentage of total partcipation)
+                      // If there's no power filled in this slot, fill it in with the previous power
+                      // (and use 0 for the first index if so)
+                      powers.push(
+                        power
+                          ? power / data.participation // no need to adjust for decimals
+                          : index === 0
+                            ? 0
+                            : powers[index - 1]
+                      )
+                    }
+                    return powers
+                  }, [])
+                ),
+              },
+            }
+          })
+        : [],
+  }))
+}, {})(App)

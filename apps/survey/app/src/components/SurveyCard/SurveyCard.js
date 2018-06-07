@@ -1,59 +1,58 @@
 import React from 'react'
 import styled from 'styled-components'
 import color from 'onecolor'
-import posed from 'react-pose'
 import { format } from 'date-fns'
 import { Countdown, Text, Button, Badge, theme } from '@aragon/ui'
 import SurveyCardGroup from './SurveyCardGroup'
-import SurveyCardOption from './SurveyCardOption'
+import SurveyOptions from '../SurveyOptions/SurveyOptions'
 
 const OPTIONS_DISPLAYED = 3
-const ANIM_DELAY_MAX = 200
 
 class SurveyCard extends React.Component {
   static defaultProps = {
     options: [],
   }
-  state = {
-    show: false,
+  handleVote = () => {
+    this.props.onVote(this.props.survey.surveyId)
   }
-  componentDidMount() {
-    this._transitionTimer = setTimeout(() => {
-      this.setState({ show: true })
-    }, Math.random() * ANIM_DELAY_MAX)
+  handleOpenDetails = () => {
+    this.props.onOpenDetails(this.props.survey.surveyId)
   }
-  componentWillUnmount() {
-    clearTimeout(this._transitionTimer)
+  handleCardRef = element => {
+    this.props.onCardRef({ id: this.props.survey.surveyId, element })
   }
   render() {
-    const { endDate, question, options: unsortedOptions } = this.props
-    const { show } = this.state
-    const options = unsortedOptions.sort((a, b) => a.value > b.value)
-    const past = endDate < new Date()
+    const { survey } = this.props
+    const {
+      data: { endDate, open, votingPower },
+      metadata: { question },
+      options,
+    } = survey
+
     return (
       <Main>
         <Header>
-          {past ? (
-            <PastDate datetime={format(endDate, 'YYYY-MM-DDTHH:mm:ss')}>
-              {format(endDate, 'DD MMM YYYY HH:mm')}
-            </PastDate>
-          ) : (
+          {open ? (
             <Countdown end={endDate} />
+          ) : (
+            <PastDate dateTime={format(endDate, 'yyyy-MM-dd[T]HH:mm:ss')}>
+              {format(endDate, 'dd MMM yyyy HH:mm')}
+            </PastDate>
           )}
         </Header>
-        <Card pose={show ? 'show' : 'hide'}>
+        <Card innerRef={this.handleCardRef}>
           <Content>
             <Question>
               <Text>{question}</Text>
             </Question>
-            {options
-              .slice(0, OPTIONS_DISPLAYED)
-              .map(option => (
-                <SurveyCardOption key={option.label} {...option} />
-              ))}
+            <SurveyOptions
+              options={options}
+              optionsDisplayed={OPTIONS_DISPLAYED}
+              totalPower={votingPower}
+            />
             {options.length > OPTIONS_DISPLAYED && (
               <More>
-                <Button.Anchor mode="text">
+                <Button.Anchor mode="text" onClick={this.handleOpenDetails}>
                   <Badge
                     background={color(theme.infoBackground)
                       .alpha(0.8)
@@ -68,26 +67,16 @@ class SurveyCard extends React.Component {
               </More>
             )}
           </Content>
-          {this.renderFooter(past)}
+          {open ? (
+            <ActiveFooter
+              onOpenDetails={this.handleOpenDetails}
+              onVote={this.handleVote}
+            />
+          ) : (
+            <PastFooter onOpenDetails={this.handleOpenDetails} />
+          )}
         </Card>
       </Main>
-    )
-  }
-  renderFooter(past) {
-    if (past) {
-      return (
-        <Footer alignRight>
-          <SecondaryButton>View details</SecondaryButton>
-        </Footer>
-      )
-    }
-    return (
-      <Footer>
-        <Button.Anchor mode="text" compact style={{ marginLeft: '-15px' }}>
-          View details
-        </Button.Anchor>
-        <SecondaryButton>Vote</SecondaryButton>
-      </Footer>
     )
   }
 }
@@ -111,7 +100,7 @@ const SecondaryButton = styled(Button).attrs({
     .cssa()};
 `
 
-const Card = posed(styled.div`
+const Card = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -119,12 +108,7 @@ const Card = posed(styled.div`
   background: #ffffff;
   border: 1px solid rgba(209, 209, 209, 0.5);
   border-radius: 3px;
-`)({
-  show: {
-    staggerChildren: 50,
-  },
-  hide: {},
-})
+`
 
 const Content = styled.div`
   height: 100%;
@@ -159,6 +143,27 @@ const Footer = styled.div`
   flex-shrink: 0;
 `
 
+const ActiveFooter = ({ onOpenDetails, onVote }) => (
+  <Footer>
+    <Button.Anchor
+      mode="text"
+      compact
+      style={{ paddingLeft: '0' }}
+      onClick={onOpenDetails}
+    >
+      View details
+    </Button.Anchor>
+    <SecondaryButton onClick={onVote}>Vote</SecondaryButton>
+  </Footer>
+)
+
+const PastFooter = ({ onOpenDetails }) => (
+  <Footer alignRight>
+    <SecondaryButton onClick={onOpenDetails}>View details</SecondaryButton>
+  </Footer>
+)
+
 SurveyCard.Group = SurveyCardGroup
+SurveyCard.Card = Card
 
 export default SurveyCard
