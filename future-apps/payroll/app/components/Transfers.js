@@ -1,10 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
 import { compareDesc } from 'date-fns/esm';
-import { Button, Table, TableHeader, TableRow, DropDown, theme } from '@aragon/ui';
+import { Button, Table, TableHeader, TableRow, DropDown, theme, IconTime } from '@aragon/ui';
 import { addressesEqual, toChecksumAddress } from '../web3-utils';
 import TransferRow from './TransferRow';
-import { DateRangePicker, SingleDatePicker, DayPickerRangeController } from 'react-dates';
+import { DateRangePicker} from 'react-dates';
 
 const initialState = {
   selectedToken: 0,
@@ -78,7 +78,7 @@ class Transfers extends React.Component {
     const filtersActive = selectedToken !== 0 || selectedTransferType !== 0;
 
     return (
-      <section>
+      <section >
         <Header>
           <Title>Previous salary</Title>
           <div>
@@ -129,8 +129,7 @@ class Transfers extends React.Component {
                   <StatusHeader title="STATUS" />
                   <SourceRecipientHeader title="TRANSACTION ADDRESS" />
                   <AmountHeader title="AMOUNT" align="right" />
-                  <AmountHeader title="EXCHANGE RATE" align="right" />
-                  <TableHeader />
+                  <AmountHeader title="EXCHANGE RATE" align="right" />                  
                 </TableRow>
               }
             >
@@ -173,7 +172,7 @@ class Transfers extends React.Component {
               </Footer>
             )}
           </div>
-        )}
+        )}        
       </section>
     );
   }
@@ -221,7 +220,6 @@ const FixedTable = styled(Table)`
 
 const DateHeader = styled(TableHeader)``;
 const SourceRecipientHeader = styled(TableHeader)``;
-const ReferenceHeader = styled(TableHeader)``;
 const AmountHeader = styled(TableHeader)``;
 
 const StatusHeader = styled(TableHeader)``;

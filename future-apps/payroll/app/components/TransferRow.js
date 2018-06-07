@@ -1,16 +1,22 @@
-import React from 'react';
-import styled from 'styled-components';
-import copy from 'copy-to-clipboard';
-import { format } from 'date-fns/esm';
-import { TableRow, TableCell, ContextMenu, ContextMenuItem, SafeLink, formatHtmlDatetime, theme } from '@aragon/ui';
-import provideNetwork from '../lib/provideNetwork';
-import { formatTokenAmount } from '../lib/utils';
-import IconTokens from './icons/IconTokens';
+import React from "react";
+import styled from "styled-components";
+import copy from "copy-to-clipboard";
+import { format } from "date-fns/esm";
+import {
+  TableRow,
+  TableCell,
+  formatHtmlDatetime,
+  theme,
+  IconTime,
+  IconCheck
+} from "@aragon/ui";
+import provideNetwork from "../lib/provideNetwork";
+import { formatTokenAmount } from "../lib/utils";
 
 class TransferRow extends React.Component {
   handleCopyTransferUrl = () => {
     copy(
-      'https://app.aragon.one/#/finance/finance?params=' +
+      "https://app.aragon.one/#/finance/finance?params=" +
         encodeURIComponent(
           JSON.stringify({
             transaction: this.props.transactionHash
@@ -26,7 +32,7 @@ class TransferRow extends React.Component {
   //     const { network: { etherscanBaseUrl }, transactionHash } = this.props
   //     window.open(`${etherscanBaseUrl}/tx/${transactionHash}`, '_blank')
   //   }
-  
+
   handleConfirmMessageDone = () => {
     this.setState({
       showCopyTransferMessage: false
@@ -46,7 +52,7 @@ class TransferRow extends React.Component {
       exchangeRate
     } = this.props;
 
-    const dateObj = new Date(date*1000);
+    const dateObj = new Date(date * 1000);
 
     const formattedAmount = formatTokenAmount(amount, isIncoming, decimals, true, { rounding: 5 });
     const formattedDate = formatHtmlDatetime(dateObj);
@@ -55,23 +61,28 @@ class TransferRow extends React.Component {
       <TableRow>
         <NoWrapCell>
           <time dateTime={formattedDate} title={formattedDate}>
-            {format(dateObj, 'dd/MM/YY')}
+            {format(dateObj, "dd/MM/YY")}
           </time>
         </NoWrapCell>
         <NoWrapCell>
-          <TextOverflow>{status}</TextOverflow>
+          <TextOverflow>
+            <StatusHolder>
+              {status == "Complete" ? <IconCheck /> : <IconTime style={{ marginTop: "-2px" }} />}
+              <StatusStyle>{status}</StatusStyle>
+            </StatusHolder>
+          </TextOverflow>
         </NoWrapCell>
         <NoWrapCell>
           <TextOverflow>{transactionHash}</TextOverflow>
         </NoWrapCell>
         <NoWrapCell align="right">
           <Amount positive={true}>
-            {amount} {symbol}
+            +{amount} {symbol}
           </Amount>
         </NoWrapCell>
         <NoWrapCell align="right">
           <Exchange>
-            {'$'}
+            {"$"}
             {exchangeRate}
           </Exchange>
         </NoWrapCell>
@@ -91,7 +102,6 @@ const TextOverflow = styled.div`
 `;
 
 const Amount = styled.span`
-  font-weight: 600;
   color: ${({ positive }) => (positive ? theme.positive : theme.negative)};
 `;
 
@@ -99,19 +109,13 @@ const Exchange = styled.span`
   font-weight: 600;
 `;
 
-const ActionsWrapper = styled.div`
-  position: relative;
+const StatusStyle = styled.div`
+  margin-left: 5px;
 `;
 
-const ActionLabel = styled.span`
-  margin-left: 15px;
-`;
-
-const ConfirmMessageWrapper = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2;
+const StatusHolder = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 export default provideNetwork(TransferRow);
