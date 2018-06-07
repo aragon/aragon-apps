@@ -8,9 +8,9 @@ import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
 
-import "@aragon/apps-finance/contracts/Finance.sol";
+import "@aragon/ppf-contracts/contracts/Feed.sol";
 
-import "ppf-monorepo/packages/ppf-contracts/contracts/Feed.sol";
+import "@aragon/apps-finance/contracts/Finance.sol";
 
 
 /**
@@ -24,7 +24,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
     bytes32 constant public REMOVE_EMPLOYEE_ROLE = keccak256("REMOVE_EMPLOYEE_ROLE");
     bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
-    bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("MODIFY_PRICE_FEED_ROLE");
+    bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("CHANGE_PRICE_FEED_ROLE");
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
     uint256 constant public SECONDS_IN_A_YEAR = 31557600; // 365.25 days
     address constant public ETH = address(0);
@@ -49,7 +49,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     mapping(address => bool) private allowedTokens;
     address[] private allowedTokensArray;
 
-    event EmployeeAdded(
+    event AddEmployee(
         uint128 employeeId,
         address accountAddress,
         uint256 initialYearlyDenominationSalary,
@@ -59,8 +59,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     event Fund(address sender, address token, uint amount, uint balance, bytes data);
     event SendPayroll(address employee, address token, uint amount);
-    event PriceFeedSet(address feed);
-    event RateExpiryTimeSet(uint64 time);
+    event SetPriceFeed(address feed);
+    event SetRateExpiryTime(uint64 time);
 
     /**
      * @notice Initialize Payroll app for `_finance`. Set ETH and Denomination tokens
@@ -90,7 +90,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Sets the Price Feed for exchange rates to `_feed`.
      * @param _feed The Price Feed address
      */
-    function setPriceFeed(Feed _feed) external auth(CHANGE_PRICE_FEED_ROLE) {
+    function setPriceFeed(Feed _feed) external authP(CHANGE_PRICE_FEED_ROLE, arr(feed, _feed)) {
         _setPriceFeed(_feed);
     }
 
@@ -99,8 +99,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Sets the exchange rate expiry time to `_time`.
      * @param _time The expiration time in seconds for exchange rates
      */
-    // TODO!!! function setRateExpiryTime(uint64 _time) external authP(MODIFY_RATE_EXPIRY_ROLE, arr(_time)) {
-    function setRateExpiryTime(uint64 _time) external auth(MODIFY_RATE_EXPIRY_ROLE) {
+    function setRateExpiryTime(uint64 _time) external authP(MODIFY_RATE_EXPIRY_ROLE, arr(uint256(_time))) {
         _setRateExpiryTime(_time);
     }
 
@@ -413,7 +412,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         });
         // Ids mapping
         employeeIds[accountAddress] = employeeId;
-        EmployeeAdded(
+        AddEmployee(
             employeeId,
             accountAddress,
             initialYearlyDenominationSalary,
@@ -427,13 +426,13 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     function _setPriceFeed(Feed _feed) internal {
         require(_feed != address(0));
         feed = _feed;
-        PriceFeedSet(feed);
+        SetPriceFeed(feed);
     }
 
     function _setRateExpiryTime(uint64 _time) internal {
         require(_time > 0);
         rateExpiryTime = _time;
-        RateExpiryTimeSet(rateExpiryTime);
+        SetRateExpiryTime(rateExpiryTime);
     }
 
     /**
@@ -456,7 +455,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             uint256 tokenAmount = employee.denominationTokenSalary
                 .mul(exchangeRate).mul(employee.allocation[token]);
             // dividing by 100 for the allocation and by ONE for the exchange rate
-            tokenAmount = tokenAmount.mul(time) / 100 / ONE;
+            tokenAmount = tokenAmount.mul(time) / (100 * ONE);
             finance.newPayment(
                 token,
                 employee.accountAddress,

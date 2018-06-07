@@ -1,6 +1,6 @@
 pragma solidity ^0.4.18;
 
-import "ppf-monorepo/packages/ppf-contracts/contracts/Feed.sol";
+import "@aragon/ppf-contracts/contracts/Feed.sol";
 
 
 contract PriceFeedFailMock is Feed {
