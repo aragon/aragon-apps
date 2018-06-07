@@ -80,7 +80,7 @@ export default class App extends React.Component {
   render() {
     let { newTransferOpened } = this.state;
     return (
-      <AragonApp>
+      <AragonApp publicUrl="/aragon-ui">
         <Layout>
           <Layout.FixedHeader>
             <AppBar

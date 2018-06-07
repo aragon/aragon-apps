@@ -143,12 +143,12 @@ class SidePanelContent extends React.Component {
                   active={tokenNumber}
                   onChange={e => this.handleChange(e, newTokenList)}
                 />
-                <SliderWrapper
+                {/* <SliderWrapper
                   index={index}
                   onChange={this.handleSliderChange}
                   value={item.value}
                   percentage={item.percentage}
-                />
+                /> */}
 
                 <TextInputWrapper>
                   <NumberInput id={index} type="text" value={item.value} onChange={e => this.updatePercent(e, index)} />
