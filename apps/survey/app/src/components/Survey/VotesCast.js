@@ -66,6 +66,12 @@ const Main = styled.section`
     strong {
       color: ${theme.textPrimary};
     }
+    > span:first-child {
+      display: flex;
+      > :first-child {
+        flex-shrink: 0;
+      }
+    }
   }
 `
 
