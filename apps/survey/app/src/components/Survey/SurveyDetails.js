@@ -14,30 +14,18 @@ class SurveyDetails extends React.Component {
     survey: {},
     onOpenVotingPanel: () => {},
   }
-  state = {
-    animate: false,
-  }
-  componentDidMount() {
-    // animate after a delay
-    this._transitionTimer = setTimeout(() => {
-      this.setState({ animate: true })
-    }, ANIM_DELAY)
-  }
-  componentWillUnmount() {
-    clearTimeout(this._transitionTimer)
-  }
   render() {
-    const { animate } = this.state
     const { survey } = this.props
     return (
       <Card>
         <Spring
           from={{ progress: 0 }}
-          to={{ progress: Number(animate) }}
+          to={{ progress: 1 }}
+          delay={ANIM_DELAY}
           native
         >
           {({ progress }) => (
-            <animated.div style={{ opacity: progress.interpolate(p => p) }}>
+            <animated.div style={{ opacity: progress }}>
               <Question>{survey.metadata.question}</Question>
             </animated.div>
           )}
@@ -48,14 +36,15 @@ class SurveyDetails extends React.Component {
             <Trail
               keys={['options', 'time']}
               from={{ progress: 0 }}
-              to={{ progress: Number(animate) }}
+              to={{ progress: 1 }}
+              delay={ANIM_DELAY}
               native
             >
               {[
                 ({ progress }) => (
                   <animated.section
                     key="options"
-                    style={{ opacity: progress.interpolate(p => p) }}
+                    style={{ opacity: progress }}
                   >
                     <SectionTitle>Options</SectionTitle>
                     <SurveyOptions
@@ -67,7 +56,7 @@ class SurveyDetails extends React.Component {
                 ({ progress }) => (
                   <animated.section
                     key="time"
-                    style={{ opacity: progress.interpolate(p => p) }}
+                    style={{ opacity: progress }}
                   >
                     <SectionTitle>Time Remaining</SectionTitle>
                     <Countdown end={survey.data.endDate} />
@@ -80,14 +69,15 @@ class SurveyDetails extends React.Component {
             <Trail
               keys={['description', 'url', 'creator', 'vote']}
               from={{ progress: 0 }}
-              to={{ progress: Number(animate) }}
+              to={{ progress: 1 }}
+              delay={ANIM_DELAY}
               native
             >
               {[
                 ({ progress }) => (
                   <animated.section
                     key="description"
-                    style={{ opacity: progress.interpolate(p => p) }}
+                    style={{ opacity: progress }}
                   >
                     <SectionTitle>Description</SectionTitle>
                     <div>
@@ -98,7 +88,7 @@ class SurveyDetails extends React.Component {
                 ({ progress }) => (
                   <animated.section
                     key="url"
-                    style={{ opacity: progress.interpolate(p => p) }}
+                    style={{ opacity: progress }}
                   >
                     <SectionTitle>Web Link</SectionTitle>
                     <UrlBlock>
@@ -115,7 +105,7 @@ class SurveyDetails extends React.Component {
                 ({ progress }) => (
                   <animated.section
                     key="creator"
-                    style={{ opacity: progress.interpolate(p => p) }}
+                    style={{ opacity: progress }}
                   >
                     <SectionTitle>Created By</SectionTitle>
                     <Creator address={survey.data.creator} />
@@ -124,7 +114,7 @@ class SurveyDetails extends React.Component {
                 ({ progress }) => (
                   <animated.section
                     key="vote"
-                    style={{ opacity: progress.interpolate(p => p) }}
+                    style={{ opacity: progress }}
                   >
                     <VoteButtonWrapper>
                       {survey.data.open && (

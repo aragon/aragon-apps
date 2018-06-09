@@ -8,30 +8,21 @@ import springs from '../../springs'
 const ANIM_DELAY = 600
 
 class VotesCast extends React.Component {
-  state = {
-    animate: false,
-  }
-  componentDidMount() {
-    // animate after a delay
-    this._transitionTimer = setTimeout(() => {
-      this.setState({ animate: true })
-    }, ANIM_DELAY)
-  }
-  componentWillUnmount() {
-    clearTimeout(this._transitionTimer)
+  getTransform(t) {
+    return `translate3d(${20 * (1 - t)}%, 0, 0)`
   }
   render() {
     const { survey } = this.props
-    const { animate } = this.state
     return (
       <Main>
         <h1>Votes cast so far</h1>
         <ul>
           <Trail
             from={{ progress: 0 }}
-            to={{ progress: Number(animate) }}
+            to={{ progress: 1 }}
             keys={survey.options.map(o => o.optionId)}
             config={springs.stiff}
+            delay={ANIM_DELAY}
             native
           >
             {survey.options.map(
@@ -40,14 +31,14 @@ class VotesCast extends React.Component {
                   key={optionId}
                   style={{
                     opacity: progress,
-                    transform: progress.interpolate(
-                      t => `translateX(${20 * (1 - t)}%)`
-                    ),
+                    transform: progress.interpolate(this.getTransform),
                   }}
                 >
                   <span>
-                    <Disc style={{ background: getOptionColor(optionId) }} />
-                    {label}
+                    <span>
+                      <Disc style={{ background: getOptionColor(optionId) }} />
+                    </span>
+                    <span>{label}</span>
                   </span>
                   <strong>{Math.floor(power)}</strong>
                 </animated.li>
