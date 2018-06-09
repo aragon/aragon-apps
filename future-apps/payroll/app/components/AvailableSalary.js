@@ -1,16 +1,16 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Text, theme, Button, Countdown } from '@aragon/ui';
-import { sciNot } from '../math-utils';
-import { formatTokenAmount } from '../lib/utils';
+import React from "react";
+import styled from "styled-components";
+import { Text, theme, Button, Countdown } from "@aragon/ui";
+import { sciNot } from "../math-utils";
+import { formatTokenAmount } from "../lib/utils";
 
 class AvaliableSalary extends React.Component {
   msToCountDown(timeInMs) {
     return new Date(Date.now() - timeInMs);
   }
 
-  splitAmount = amount => {    
-    const [integer, fractional] = formatTokenAmount(amount).split('.');
+  splitAmount = amount => {
+    const [integer, fractional] = formatTokenAmount(amount).split(".");
     return (
       <span>
         <span className="integer">{integer}</span>
@@ -23,47 +23,50 @@ class AvaliableSalary extends React.Component {
     const { avaliableBalance, endDate, totalTransfered, yrSalary, targetDate } = this.props;
 
     return (
-      <AvaliableSalaryTitleGrid>
-        <HeaderCell style={{ marginLeft: '20px' }}>
-          <Text size="xsmall" color={theme.textSecondary}>
-            TIME SINCE LAST SALARY
-          </Text>
-        </HeaderCell>
-        <HeaderCell>
-          <Text size="xsmall" color={theme.textSecondary}>
-            AVALIABLE BALANCE
-          </Text>
-        </HeaderCell>
-        <HeaderCell>
-          <Text size="xsmall" color={theme.textSecondary}>
-            TOTAL TRANSFERED
-          </Text>
-        </HeaderCell>
-        <HeaderCell>
-          <Text size="xsmall" color={theme.textSecondary}>
-            YOUR YEARLY SALARY
-          </Text>
-        </HeaderCell>
+      <div>
+        <Text size="large">Available salary</Text>
+        <AvaliableSalaryTitleGrid>
+          <HeaderCell style={{ marginLeft: "20px" }}>
+            <Text size="xsmall" color={theme.textSecondary}>
+              TIME SINCE LAST SALARY
+            </Text>
+          </HeaderCell>
+          <HeaderCell>
+            <Text size="xsmall" color={theme.textSecondary}>
+              AVALIABLE BALANCE
+            </Text>
+          </HeaderCell>
+          <HeaderCell>
+            <Text size="xsmall" color={theme.textSecondary}>
+              TOTAL TRANSFERED
+            </Text>
+          </HeaderCell>
+          <HeaderCell>
+            <Text size="xsmall" color={theme.textSecondary}>
+              YOUR YEARLY SALARY
+            </Text>
+          </HeaderCell>
 
-        <WhiteCell border="1px 0px 1px 1px" style={{ paddingLeft: '22px', paddingTop: '27px', minWidth: '200px' }}>
-          <CountdownWStyle end={this.msToCountDown(targetDate)} />
-        </WhiteCell>
-        <WhiteCell border="1px 0px 1px 0px">
-          <Text size="xxlarge" color="#21D48E">
-            <Amount>${this.splitAmount(avaliableBalance.toFixed(2))}</Amount>
-          </Text>
-        </WhiteCell>
-        <WhiteCell border="1px 0px 1px 0px">
-          <Text size="xxlarge">
-            <Amount>${this.splitAmount(totalTransfered.toFixed(2))}</Amount>
-          </Text>
-        </WhiteCell>
-        <WhiteCell border="1px 1px 1px 0px">
-          <Text size="xxlarge">
-            <Amount>${this.splitAmount(yrSalary.toFixed(2))}</Amount>
-          </Text>
-        </WhiteCell>
-      </AvaliableSalaryTitleGrid>
+          <WhiteCell border="1px 0px 1px 1px" style={{ paddingLeft: "22px", paddingTop: "27px", minWidth: "200px" }}>
+            <CountdownWStyle end={this.msToCountDown(targetDate)} />
+          </WhiteCell>
+          <WhiteCell border="1px 0px 1px 0px">
+            <Text size="xxlarge" color="#21D48E">
+              <Amount>${this.splitAmount(avaliableBalance.toFixed(2))}</Amount>
+            </Text>
+          </WhiteCell>
+          <WhiteCell border="1px 0px 1px 0px">
+            <Text size="xxlarge">
+              <Amount>${this.splitAmount(totalTransfered.toFixed(2))}</Amount>
+            </Text>
+          </WhiteCell>
+          <WhiteCell border="1px 1px 1px 0px">
+            <Text size="xxlarge">
+              <Amount>${this.splitAmount(yrSalary.toFixed(2))}</Amount>
+            </Text>
+          </WhiteCell>
+        </AvaliableSalaryTitleGrid>
+      </div>
     );
   }
 }

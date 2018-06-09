@@ -41,11 +41,7 @@ class TransferRow extends React.Component {
   render() {
     const {
       amount,
-      date,
-      decimals,
-      entity,
-      isIncoming,
-      reference,
+      date,      
       symbol,
       status,
       transactionHash,
@@ -54,7 +50,7 @@ class TransferRow extends React.Component {
 
     const dateObj = new Date(date * 1000);
 
-    const formattedAmount = formatTokenAmount(amount, isIncoming, decimals, true, { rounding: 5 });
+    
     const formattedDate = formatHtmlDatetime(dateObj);
 
     return (
