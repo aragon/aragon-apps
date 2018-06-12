@@ -10,7 +10,7 @@ contract('Staking app', accounts => {
   const other = accounts[1]
   const balance = 1000
 
-  const zeroAddress = "0x0000000000000000000000000000000000000000000000000000000000000000"
+  const zeroBytes32 = "0x0000000000000000000000000000000000000000000000000000000000000000"
   const TIME_UNIT_BLOCKS = 0
   const TIME_UNIT_SECONDS = 1
 
@@ -154,7 +154,7 @@ contract('Staking app', accounts => {
       assert.equal(lock[1], TIME_UNIT_SECONDS, "lock time unit should match")
       assert.equal(lock[2], endTime, "lock time end should match")
       assert.equal(lock[3], other, "unlocker should match")
-      assert.equal(lock[4], zeroAddress, "lock metadata should match")
+      assert.equal(lock[4], zeroBytes32, "lock metadata should match")
 
       // can not unlock
       assert.isFalse(await app.canUnlock(owner, lockId))
