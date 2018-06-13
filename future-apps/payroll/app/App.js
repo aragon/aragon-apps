@@ -14,7 +14,7 @@ const fiveDaysAgo = 1000 * 60 * 60 * 24 * 5;
 
 const transactions = [
   {
-    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",    
+    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",
     transactionHash: "0x09d846935dba964e33dcba4cd5",
     amount: 3.0,
     date: 1526978544,
@@ -27,7 +27,7 @@ const transactions = [
     symbol: "ETH"
   },
   {
-    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",    
+    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",
     transactionHash: "0x09d846935dba964ebbdcba4cd5",
     amount: 32.4747,
     date: 1526632944,
@@ -40,7 +40,7 @@ const transactions = [
     symbol: "ETH"
   },
   {
-    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",    
+    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",
     transactionHash: "0x234846935dba964ebbdcba4cd5",
     amount: 103.1,
     date: 1522658544,
@@ -55,15 +55,13 @@ const transactions = [
 ];
 
 export default class App extends React.Component {
-  constructor() {
-    super();
-    this.app = new Aragon(new providers.WindowMessage(window.parent));
-    this.state$ = this.app.state();
-  }
+  app = new Aragon(new providers.WindowMessage(window.parent));
+  state$ = this.app.state();
 
   state = {
     newTransferOpened: false,
-    activeItem: 0
+    activeItem: 0,
+    requestSalary: false
   };
 
   handleNewTransferOpen = () => {
@@ -73,8 +71,16 @@ export default class App extends React.Component {
     this.setState({ newTransferOpened: false });
   };
 
+  handleSidePanelChange = () => {
+    console.log('here')
+
+    let value = !this.state.requestSalary
+
+    this.setState({ requestSalary: value});
+  };
+
   render() {
-    let { newTransferOpened } = this.state;
+    let { newTransferOpened, requestSalary } = this.state;
     return (
       <AragonApp publicUrl="/aragon-ui">
         <Layout>
@@ -84,7 +90,6 @@ export default class App extends React.Component {
           <GridLayout>
             <Layout.ScrollWrapper>
               <Content>
-
                 {/* Available salary */}
                 <AvaliableSalary
                   targetDate={fiveDaysAgo}
@@ -95,7 +100,6 @@ export default class App extends React.Component {
 
                 {/* Previous salary */}
                 <Transfers transactions={transactions} />
-
               </Content>
             </Layout.ScrollWrapper>
             <SideBarHolder>
@@ -113,8 +117,8 @@ export default class App extends React.Component {
           </GridLayout>
         </Layout>
 
-        <SidePanel opened={newTransferOpened} onClose={this.handleNewTransferClose} title="Edit salary allocation">
-          <SidePanelContent />
+        <SidePanel opened={newTransferOpened} onClose={this.handleNewTransferClose} title={requestSalary ? "Request salary" :"Edit salary allocation"}>
+          <SidePanelContent requestSalary={this.state.requestSalary} handleSidePanelChange={this.handleSidePanelChange} />
         </SidePanel>
       </AragonApp>
     );

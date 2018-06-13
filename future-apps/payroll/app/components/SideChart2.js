@@ -79,16 +79,14 @@ class SideChart2 extends React.Component {
           <BreakGrid>
             <div style={{ fontWeight: 600 }}>Total salary</div>
             <div />
-            <div style={{  fontWeight: 600, textAlign: "center" }}>$23,424.32 </div>
+            <div style={{ fontWeight: 600, textAlign: "center" }}>$23,424.32 </div>
             <div style={{ fontWeight: 600, textAlign: "right" }}>100%</div>
           </BreakGrid>
           <ButtonHolder>
-            <Button onClick={this.props.openSlider} mode="text">
+            <Button onClick={this.props.handleSidePanelChange} mode="text">
               Edit salary allocation
             </Button>
           </ButtonHolder>
-
-          
         </Part>
       </Main>
     );
@@ -98,7 +96,7 @@ class SideChart2 extends React.Component {
 const BreakGrid = styled.aside`
   margin-top: 20px;
   display: grid;
-  grid-template-columns: 100px 100px 150px 45px;
+  grid-template-columns: 100px 100px 150px 42px;
 `;
 
 const Main = styled.aside`
@@ -110,7 +108,7 @@ const Main = styled.aside`
 `;
 
 const Part = styled.div`
-  margin-bottom: 55px;
+  margin-bottom: 40px;
   h1 {
     margin-bottom: 15px;
     color: ${theme.textSecondary};

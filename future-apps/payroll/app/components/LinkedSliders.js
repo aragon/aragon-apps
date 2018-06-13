@@ -8,7 +8,7 @@ const ROWS_MAX = 7;
 
 class LinkedSliders extends React.Component {
   state = {
-    tokenList: ["ETH", "ANT", "SNT", "WOW", "XHR"],
+    tokenList: ["ETH", "ANT", "SNT", "WOW", "XHR","DEX", "YYY"],
     distribution: [{ symbol: "ETH", value: 0.2 }, { symbol: "WOW", value: 0.3 }, { symbol: "ANT", value: 0.5 }]
   };
 
@@ -126,46 +126,57 @@ class LinkedSliders extends React.Component {
             percentage
           </Text>
         </SliderHeader>
-        {distributionPairs.map((item, index) => {
-          let newTokenList = this.getTokenList(item.symbol);
-          let tokenNumber = newTokenList.indexOf(item.symbol);
-          return (
-            <TokenInfo key={index}>
-              <DropDown items={newTokenList} active={tokenNumber} onChange={e => this.handleChange(e, newTokenList)} />
-
-              <PercentageRow
-                key={index}
-                index={index}
-                value={item.value}
-                percentage={item.percentage}
-                onUpdate={this.handleUpdate}
-              />
-
-              <TextInputWrapper>
-                <NumberInput
-                  id={index}
-                  type="text"
-                  value={item.percentage}
-                  onChange={e => this.updatePercent(e, index)}
+        <ScrollBox>
+          {distributionPairs.map((item, index) => {
+            let newTokenList = this.getTokenList(item.symbol);
+            let tokenNumber = newTokenList.indexOf(item.symbol);
+            return (
+              <TokenInfo key={index}>
+                <DropDown
+                  items={newTokenList}
+                  active={tokenNumber}
+                  onChange={e => this.handleChange(e, newTokenList)}
                 />
-              </TextInputWrapper>
-            </TokenInfo>
-          );
-        })}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end"
-          }}
-        >
-          <Button mode="secondary" onClick={() => this.addToken()}>
-            + New token
-          </Button>
-        </div>
+
+                <PercentageRow
+                  key={index}
+                  index={index}
+                  value={item.value}
+                  percentage={item.percentage}
+                  onUpdate={this.handleUpdate}
+                />
+
+                <TextInputWrapper>
+                  <NumberInput
+                    id={index}
+                    type="text"
+                    value={item.percentage}
+                    onChange={e => this.updatePercent(e, index)}
+                  />
+                </TextInputWrapper>
+              </TokenInfo>
+            );
+          })}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end"
+            }}
+          >
+            <Button mode="secondary" onClick={() => this.addToken()}>
+              + New token
+            </Button>
+          </div>
+        </ScrollBox>
       </div>
     );
   }
 }
+
+const ScrollBox = styled.div`
+  overflow-y: scroll;
+  height: 90%;
+`;
 
 const SliderHeader = styled.div`
   display: grid;
