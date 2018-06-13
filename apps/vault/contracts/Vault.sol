@@ -17,7 +17,7 @@ contract Vault is AragonApp {
     */
     function () payable external {
         require(msg.data.length == 0);
-        deposit(ETH, msg.sender, msg.value, msg.data);
+        deposit(ETH, msg.sender, msg.value);
     }
 
     /**
@@ -46,7 +46,7 @@ contract Vault is AragonApp {
     * @param value Amount of tokens being transferred
     * @param data Extra data associated with the deposit (currently unused)
     */
-    function deposit(address token, address from, uint256 value, bytes data) payable public {
+    function deposit(address token, address from, uint256 value, bytes data) payable external {
         deposit(token, from, value);
     }
 
