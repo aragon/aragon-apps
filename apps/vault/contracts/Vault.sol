@@ -31,7 +31,7 @@ contract Vault is AragonApp {
 
         if (token == ETH) {
             // Deposit is implicit in this case
-            require(msg.value == value && msg.sender == from);
+            require(msg.sender == from && msg.value == value);
         } else {
             require(ERC20(token).transferFrom(from, this, value));
         }
