@@ -28,7 +28,7 @@
     "Oliver Nordbjerg <oliver@aragon.one>",
     "Brett Sun <brett@aragon.one>"
   ],
-  "license": "GPL-3.0",
+  "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "description": "",
   "devDependencies": {
     "@aragon/cli": "^2.0.4",
