@@ -1,6 +1,6 @@
 {
   "name": "@aragon/apps-survey",
-  "version": "1.0.0",
+  "version": "0.0.3",
   "main": "index.js",
   "scripts": {
     "compile": "truffle compile",
@@ -17,11 +17,12 @@
     "test:gas": "GAS_REPORTER=true npm test",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "console": "node_modules/.bin/truffle console",
-    "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh"
+    "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
+    "prepublishOnly": "truffle compile --all"
   },
   "keywords": [],
   "author": "Aragon Institution MTU <contact@aragon.one>",
-  "license": "GPL-3.0",
+  "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "description": "",
   "devDependencies": {
     "@aragon/cli": "^2.0.4",

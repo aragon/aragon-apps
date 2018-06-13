@@ -2,9 +2,9 @@
   "name": "aragon-voting",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@aragon/client": "^1.0.0-beta.7",
+    "@aragon/client": "^1.0.0-beta.8",
     "@aragon/ui": "^0.11.0",
     "date-fns": "^2.0.0-alpha.7",
     "prop-types": "^15.6.0",
@@ -52,5 +52,6 @@
     "last 1 edge versions",
     "not ie > 0",
     "not op_mini all"
-  ]
+  ],
+  "homepage": "."
 }
