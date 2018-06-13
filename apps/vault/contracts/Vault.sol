@@ -6,8 +6,6 @@ import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 
 
 contract Vault is AragonApp {
-    address constant ETH = address(0);
-
     bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
 
     event Transfer(address indexed token, address indexed to, uint256 amount);
