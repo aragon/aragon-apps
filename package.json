@@ -8,8 +8,9 @@
     "Oliver Nordbjerg <oliver@aragon.one>",
     "Brett Sun <brett@aragon.one>"
   ],
+  "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "devDependencies": {
-    "coveralls": "^2.13.1",
+    "coveralls": "^3.0.1",
     "ganache-cli": "^6.1.0",
     "lcov-result-merger": "^1.2.0",
     "lerna": "^2.8.0"

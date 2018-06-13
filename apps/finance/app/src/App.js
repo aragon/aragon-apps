@@ -62,7 +62,7 @@ class App extends React.Component {
     }))
     const paymentPossibleTokens = balances.filter(({ amount }) => amount)
     return (
-      <AragonApp publicUrl="/aragon-ui/">
+      <AragonApp publicUrl="./aragon-ui/">
         <Layout>
           <Layout.FixedHeader>
             <AppBar

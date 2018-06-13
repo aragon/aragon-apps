@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identitifer:    GPL-3.0-or-later
+ */
+
 pragma solidity 0.4.18;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
@@ -109,7 +113,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Vote `_supports ? 'yay' : 'nay'` in vote #`_voteId`
+    * @notice Vote `_supports ? 'yea' : 'nay'` in vote #`_voteId`
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
