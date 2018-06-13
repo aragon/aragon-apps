@@ -60,9 +60,6 @@ class Transfers extends React.Component {
       selectedToken,
       selectedTransferType
     });
-
-    console.log("filteredTransfers ", filteredTransfers);
-
     const symbols = tokens.map(({ symbol }) => symbol);
 
     const tokenDetails = tokens.reduce((details, { address, decimals, symbol }) => {

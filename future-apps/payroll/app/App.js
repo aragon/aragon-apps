@@ -9,6 +9,7 @@ import AvaliableSalary from "./components/AvailableSalary";
 import "./styles/datepicker.css";
 import "react-dates/initialize";
 import SidePanelContent from "./components/SidePanelContent";
+import TeamPayroll from "./components/TeamPayroll";
 
 const fiveDaysAgo = 1000 * 60 * 60 * 24 * 5;
 
@@ -61,7 +62,8 @@ export default class App extends React.Component {
   state = {
     newTransferOpened: false,
     activeItem: 0,
-    requestSalary: false
+    requestSalary: false,
+    teamPayrollTab: false
   };
 
   handleNewTransferOpen = () => {
@@ -72,53 +74,73 @@ export default class App extends React.Component {
   };
 
   handleSidePanelChange = () => {
-    console.log('here')
+    let value = !this.state.requestSalary;
+    this.setState({ requestSalary: value });
+  };
 
-    let value = !this.state.requestSalary
-
-    this.setState({ requestSalary: value});
+  handleTabChange = bool => {
+    this.setState({ teamPayrollTab: bool });
   };
 
   render() {
-    let { newTransferOpened, requestSalary } = this.state;
+    let { newTransferOpened, requestSalary, teamPayrollTab } = this.state;
     return (
       <AragonApp publicUrl="/aragon-ui">
         <Layout>
           <Layout.FixedHeader>
-            <AppBar title="Payroll" endContent={<Button mode="strong">Request salary</Button>} />
+            <AppBarRedux title="Payroll" endContent={<Button mode="strong">Request salary</Button>} />
+            <TabGrid>
+              <Tabs teamPayrollTab={!teamPayrollTab} onClick={() => this.handleTabChange(false)}>
+                <div>My payroll</div>
+              </Tabs>
+              <Tabs teamPayrollTab={teamPayrollTab} onClick={() => this.handleTabChange(true)}>
+                <div>Team payroll</div>
+              </Tabs>
+            </TabGrid>
           </Layout.FixedHeader>
-          <GridLayout>
-            <Layout.ScrollWrapper>
-              <Content>
-                {/* Available salary */}
-                <AvaliableSalary
-                  targetDate={fiveDaysAgo}
-                  avaliableBalance={5902.54}
-                  totalTransfered={45352.27}
-                  yrSalary={80000.0}
-                />
+          {teamPayrollTab ? (
+            <TeamPayroll />
+          ) : (
+            <GridLayout>
+              <Layout.ScrollWrapper>
+                <Content>
+                  {/* Available salary */}
+                  <AvaliableSalary
+                    targetDate={fiveDaysAgo}
+                    avaliableBalance={5902.54}
+                    totalTransfered={45352.27}
+                    yrSalary={80000.0}
+                  />
 
-                {/* Previous salary */}
-                <Transfers transactions={transactions} />
-              </Content>
-            </Layout.ScrollWrapper>
-            <SideBarHolder>
-              <SideChart
-                holders={[
-                  { name: "ETH", balance: 1329 },
-                  { name: "ANT", balance: 3321 },
-                  { name: "SNT", balance: 1131 }
-                ]}
-                tokenSupply={10000}
-                tokenDecimalsBase={5}
-                openSlider={this.handleNewTransferOpen}
-              />
-            </SideBarHolder>
-          </GridLayout>
+                  {/* Previous salary */}
+                  <Transfers transactions={transactions} />
+                </Content>
+              </Layout.ScrollWrapper>
+              <SideBarHolder>
+                <SideChart
+                  holders={[
+                    { name: "ETH", balance: 1329 },
+                    { name: "ANT", balance: 3321 },
+                    { name: "SNT", balance: 1131 }
+                  ]}
+                  tokenSupply={10000}
+                  tokenDecimalsBase={5}
+                  openSlider={this.handleNewTransferOpen}
+                />
+              </SideBarHolder>
+            </GridLayout>
+          )}
         </Layout>
 
-        <SidePanel opened={newTransferOpened} onClose={this.handleNewTransferClose} title={requestSalary ? "Request salary" :"Edit salary allocation"}>
-          <SidePanelContent requestSalary={this.state.requestSalary} handleSidePanelChange={this.handleSidePanelChange} />
+        <SidePanel
+          opened={newTransferOpened}
+          onClose={this.handleNewTransferClose}
+          title={requestSalary ? "Request salary" : "Edit salary allocation"}
+        >
+          <SidePanelContent
+            requestSalary={this.state.requestSalary}
+            handleSidePanelChange={this.handleSidePanelChange}
+          />
         </SidePanel>
       </AragonApp>
     );
@@ -130,6 +152,26 @@ const SpacedBlock = styled.div`
   &:first-child {
     margin-top: 0;
   }
+`;
+
+const AppBarRedux = styled(AppBar)`
+  border-bottom: none;
+`;
+
+const Tabs = styled.div`
+  border-bottom: ${props => (props.teamPayrollTab ? "4px solid #1dd9d5" : "")};
+  text-align: center;
+  font-weight: ${props => (props.teamPayrollTab ? "bold" : "400")};
+  height: 30px;
+`;
+
+const TabGrid = styled.div`
+  display: grid;
+  grid-template-columns: auto auto 5fr;
+  padding-left: 31px;
+  background-color: white;
+  grid-gap: 30px;
+  border-bottom: .5px solid #e8e8e8
 `;
 
 const SideBarHolder = styled.div`

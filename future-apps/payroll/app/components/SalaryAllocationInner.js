@@ -26,7 +26,7 @@ const showTokenDistro = (accounts, total) => {
   return stakes;
 };
 
-class SideChart2 extends React.Component {
+class SalaryAllocationInner extends React.Component {
   static defaultProps = {
     holders: []
   };
@@ -181,4 +181,4 @@ const ButtonHolder = styled.div`
   justify-content: flex-end;
 `;
 
-export default SideChart2;
+export default SalaryAllocationInner;

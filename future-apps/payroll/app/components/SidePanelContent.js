@@ -2,16 +2,15 @@ import React from "react";
 import styled from "styled-components";
 import { Text, Button, Info, TextInput, IconFundraising, theme } from "@aragon/ui";
 import LinkedSliders from "./LinkedSliders";
-import SideChart2 from "./SideChart2";
+import SalaryAllocationInner from "./SalaryAllocationInner";
 
 class SidePanelContent extends React.Component {
-  render() {
-    console.log(this.props.requestSalary);
+  render() {    
     return (
       <div>
         {this.props.requestSalary ? (
           <SalaryContainer>
-            <SideChart2
+            <SalaryAllocationInner
               holders={[
                 { name: "ETH", balance: 1329, price: 39.99 },
                 { name: "ANT", balance: 3321, price: 39.99 },
@@ -45,9 +44,7 @@ class SidePanelContent extends React.Component {
 
               <div />
 
-              <Info.Permissions title="Submission note">
-                The actual exchange rate might change once the transaction takes place
-              </Info.Permissions>
+              <Info.Action title=" The actual exchange rate might change once the transaction takes place" />
 
               <Button
                 mode="strong"
@@ -87,13 +84,12 @@ class SidePanelContent extends React.Component {
 }
 
 const SalaryContainer = styled.div`
-padding-bottom: 0px;
+  padding-bottom: 0px;
 `;
 
 const SalaryGrid = styled.div`
-  display: grid;
-  height: 57vh;
-  grid-template-rows: 40px 110px 120px 90px 50px;
+  display: grid;  
+  grid-template-rows: 40px 145px 120px 90px 50px;
   grid-gap: 20px;
 `;
 
