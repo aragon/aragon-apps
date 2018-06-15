@@ -278,7 +278,7 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   // TODO: Use getBlockNumber from Initializable.sol - issue with solidity-coverage
-  function getBlocknumber() internal returns (uint256) {
+  function getBlocknumber() internal view returns (uint256) {
     return block.number;
   }
 }
