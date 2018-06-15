@@ -179,17 +179,17 @@ contract Staking is ERCStaking, AragonApp {
     Unlocked(acct, msg.sender, lockId);
   }
 
-  function unlockPartial(address _acct, uint256 _lockId, uint256 _amount) public {
+  function unlockPartial(address acct, uint256 lockId, uint256 amount) public {
     require(canUnlock(acct, lockId));
 
-    Lock storage acctLock = accounts[_acct].locks[_lockId];
-    acctLock.amount = acctLock.amount.sub(_amount);
+    Lock storage acctLock = accounts[acct].locks[lockId];
+    acctLock.amount = acctLock.amount.sub(amount);
 
     if (acctLock.amount == 0) {
-      unlock(_acct, _lockId);
+      unlock(acct, lockId);
     }
 
-    UnlockedPartial(_acct, msg.sender, _lockId, _amount);
+    UnlockedPartial(acct, msg.sender, lockId, amount);
   }
 
   function unlockAndUnstake(uint256 amount, bytes data) public {

@@ -338,12 +338,36 @@ contract('Staking app', accounts => {
       })
     })
 
+    it('unlocks partially', async () => {
+      const amount = 100
+      const time = 1000
+      await token.approve(app.address, amount)
+      await app.stake(amount, '')
+      const endTime = (await app.getTimestampExt()) + time
+      const r = await app.lock(amount / 2, TIME_UNIT_SECONDS, endTime, other, '', '')
+      const lockId = getEvent(r, 'Locked', 'lockId')
+
+      // unlock
+      await app.unlockPartial(owner, lockId, amount / 4, { from: other })
+
+      assert.equal((await app.unlockedBalanceOf(owner)).valueOf(), amount * 3 / 4, "Unlocked balance should match")
+      assert.equal((await app.locksCount(owner)).valueOf(), 1, "there should still be 1 lock")
+
+      // unlocks again
+      await app.unlockPartial(owner, lockId, amount / 4, { from: other })
+
+      assert.equal((await app.unlockedBalanceOf(owner)).valueOf(), amount, "Unlocked balance should match")
+      assert.equal((await app.locksCount(owner)).valueOf(), 0, "there shouldnt be locks")
+    })
+
     it('moves tokens', async () => {
       const amount = 100
       const time = 1000
       await token.approve(app.address, amount)
       await app.stake(amount, '')
       await app.moveTokens(owner, other, amount / 2)
+      assert.equal((await app.unlockedBalanceOf(owner)).valueOf(), amount / 2, "Unlocked owner balance should match")
+      assert.equal((await app.unlockedBalanceOf(other)).valueOf(), amount / 2, "Unlocked other balance should match")
     })
 
     it('fails moving 0 tokens', async () => {
@@ -373,6 +397,24 @@ contract('Staking app', accounts => {
         await app.moveTokens(owner, other, amount / 2 + 1)
       })
     })
+
+    it('unlocks and moves tokens', async () => {
+      const amount = 100
+      const time = 1000
+      await token.approve(app.address, amount)
+      await app.stake(amount, '')
+      const endTime = (await app.getTimestampExt()) + time
+      const r = await app.lock(amount / 2, TIME_UNIT_SECONDS, endTime, other, '', '')
+      const lockId = getEvent(r, 'Locked', 'lockId')
+
+      // unlock
+      await app.unlockAndMoveTokens(lockId, owner, other, amount / 4, { from: other })
+
+      assert.equal((await app.unlockedBalanceOf(owner)).valueOf(), amount / 2, "Unlocked owner balance should match")
+      assert.equal((await app.locksCount(owner)).valueOf(), 1, "there should still be 1 lock")
+      assert.equal((await app.unlockedBalanceOf(other)).valueOf(), amount / 4, "Unlocked other balance should match")
+    })
+
   })
 
   context('With scripts', async () => {
