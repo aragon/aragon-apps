@@ -36,6 +36,6 @@
   "dependencies": {
     "@aragon/apps-finance": "^1.0.0",
     "@aragon/os": "^3.0.6",
-    "@aragon/ppf-contracts": "^1.0.0"
+    "@aragon/ppf-contracts": "^1.0.2"
   }
 }

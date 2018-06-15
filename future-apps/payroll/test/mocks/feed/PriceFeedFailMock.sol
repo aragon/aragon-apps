@@ -1,9 +1,9 @@
 pragma solidity ^0.4.18;
 
-import "@aragon/ppf-contracts/contracts/Feed.sol";
+import "@aragon/ppf-contracts/contracts/IFeed.sol";
 
 
-contract PriceFeedFailMock is Feed {
+contract PriceFeedFailMock is IFeed {
     event PriceFeedFailLogSetRate (address sender, address token, uint128 value);
 
     function get(address base, address quote) external view returns (uint128 xrt, uint64 when) {
