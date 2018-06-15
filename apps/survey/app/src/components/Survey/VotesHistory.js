@@ -33,7 +33,8 @@ class VotesHistory extends React.Component {
     return slice * voteIndex
   }
   getY(votePercentage, progress) {
-    return HEIGHT - HEIGHT * votePercentage * progress
+    const padding = DOT_RADIUS + 2
+    return HEIGHT - padding - (HEIGHT - padding * 2) * votePercentage * progress
   }
   render() {
     const { survey } = this.props
@@ -64,6 +65,17 @@ class VotesHistory extends React.Component {
                   fill="#ffffff"
                   strokeWidth="1"
                   stroke={BORDER_COLOR}
+                />
+                <path
+                  d={`
+                    M 0,${HEIGHT}
+                    ${[...new Array(DURATION_SLICES)].reduce(
+                      (path = '', _, i) =>
+                        `${path} M ${this.getX(i)},${HEIGHT} l 0,-8`
+                    )}
+                  `}
+                  stroke={BORDER_COLOR}
+                  strokeWidth="1"
                 />
                 {options.map(({ history, optionId }) => {
                   const color = getOptionColor(optionId)
@@ -114,17 +126,6 @@ class VotesHistory extends React.Component {
                   y2={HEIGHT}
                   stroke="#DAEAEF"
                   strokeWidth="3"
-                />
-                <path
-                  d={`
-                    M 0,${HEIGHT}
-                    ${[...new Array(DURATION_SLICES)].reduce(
-                      (path = '', _, i) =>
-                        `${path} M ${this.getX(i)},${HEIGHT} l 0,-8`
-                    )}
-                  `}
-                  stroke={BORDER_COLOR}
-                  strokeWidth="1"
                 />
                 {/*<g transform={`translate(0,${HEIGHT + CAPTIONS_HEIGHT * 0.7})`}>
                   {[...new Array(DURATION_SLICES - 1)].map((_, i) => (
