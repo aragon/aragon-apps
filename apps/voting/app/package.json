@@ -2,7 +2,7 @@
   "name": "aragon-voting",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@aragon/client": "^1.0.0-beta.8",
     "@aragon/ui": "^0.11.0",

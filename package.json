@@ -8,6 +8,7 @@
     "Oliver Nordbjerg <oliver@aragon.one>",
     "Brett Sun <brett@aragon.one>"
   ],
+  "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "devDependencies": {
     "coveralls": "^3.0.1",
     "ganache-cli": "^6.1.0",
@@ -17,6 +18,7 @@
   "scripts": {
     "install": "npm run bootstrap",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/os",
+    "clean": "lerna clean",
     "test": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream test",
     "test:future": "lerna run --scope=@aragon/future-apps-* --concurrency=1 --stream test",
     "test:templates-beta": "lerna run --scope=@aragon/templates-beta --concurrency=1 --stream test",
