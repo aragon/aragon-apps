@@ -46,7 +46,7 @@ class TotalPayroll extends React.Component {
             </Text>
           </HeaderCell>
 
-          <WhiteCell border="1px 0px 1px 1px" style={{ paddingLeft: "22px", minWidth: "200px" }}>
+          <WhiteCell border="1px 0px 1px 1px" style={{ paddingLeft: "22px" }}>
             <Text size="xxlarge">
               <Amount>{numberOfEmployees}</Amount>
             </Text>

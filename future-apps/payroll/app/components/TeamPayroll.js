@@ -1,11 +1,9 @@
 import React from "react";
-import { AragonApp, Button, Text, AppBar, SidePanel } from "@aragon/ui";
-import Aragon, { providers } from "@aragon/client";
+import {SidePanel } from "@aragon/ui";
 import styled from "styled-components";
-import Transfers from "./Transfers";
-
+import EmployeesList from "./EmployeeList";
 import SideChart from "./SideChart";
-import AvaliableSalary from "./AvailableSalary";
+
 import "../styles/datepicker.css";
 import "react-dates/initialize";
 import SidePanelContent from "./SidePanelContent";
@@ -13,53 +11,44 @@ import TotalPayroll from "./TotalPayroll";
 
 const transactions = [
   {
-    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",
-    transactionHash: "0x09d846935dba964e33dcba4cd5",
-    amount: 3.0,
-    date: 1526978544,
-    exchangeRate: 620.23,
-    decimals: 2,
-    entity: "none",
-    isIncoming: true,
-    reference: "none",
-    status: "Pending...",
-    symbol: "ETH"
+    name: "Miles Davis",
+    startDate: 1526632944,
+    endDate: 1527742944,
+    role: "CEO",
+    salary: 80000,
+    totalPaidYr: 54343.32,
+    tx: 1
   },
   {
-    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",
-    transactionHash: "0x09d846935dba964ebbdcba4cd5",
-    amount: 32.4747,
-    date: 1526632944,
-    exchangeRate: 620.23,
-    decimals: 4,
-    entity: "none",
-    isIncoming: true,
-    reference: "none",
-    status: "Complete",
-    symbol: "ETH"
+    name: "May Davis",
+    startDate: 1526632944,
+    endDate: 1527742944,
+    role: "CFO",
+    salary: 80000,
+    totalPaidYr: 5343.32,
+    tx: 2
   },
   {
-    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",
-    transactionHash: "0x234846935dba964ebbdcba4cd5",
-    amount: 103.1,
-    date: 1522658544,
-    decimals: 4,
-    exchangeRate: 6.23,
-    entity: "none",
-    isIncoming: true,
-    reference: "none",
-    symbol: "ANT",
-    status: "Complete"
+    name: "John Davis",
+    startDate: 1526632944,
+    endDate: 1527742944,
+    role: "CZO",
+    salary: 80000,
+    totalPaidYr: 343.32,
+    tx: 3
   }
 ];
 
 export class TeamPayroll extends React.Component {
-  handleNewTransferOpen = () => {
-    this.setState({ newTransferOpened: true });
+  state = {
+    newTransferOpened: false,
+    requestSalary: false,
+    teamPayrollTab: false
   };
 
   render() {
-    const { value } = this.props;
+    let { newTransferOpened, requestSalary, teamPayrollTab } = this.state;
+
     return (
       <GridLayout>
         <Layout.ScrollWrapper>
@@ -68,7 +57,7 @@ export class TeamPayroll extends React.Component {
             <TotalPayroll numberOfEmployees={9} avgSalary={80000.0} monthlyBurnRate={59994.94} totalPaidYr={11989.88} />
 
             {/* Previous salary */}
-            <Transfers transactions={transactions} />
+            <EmployeesList transactions={transactions} />
           </Content>
         </Layout.ScrollWrapper>
         <SideBarHolder>
@@ -76,9 +65,20 @@ export class TeamPayroll extends React.Component {
             holders={[{ name: "ETH", balance: 1329 }, { name: "ANT", balance: 3321 }, { name: "SNT", balance: 1131 }]}
             tokenSupply={10000}
             tokenDecimalsBase={5}
-            openSlider={this.handleNewTransferOpen}
+            openSlider={this.props.handleNewTransferOpen}
           />
         </SideBarHolder>
+
+        <SidePanel
+          opened={newTransferOpened}
+          onClose={this.props.handleNewTransferClose}
+          title={requestSalary ? "Request salary" : "Edit salary allocation"}
+        >
+          <SidePanelContent
+            requestSalary={this.state.requestSalary}
+            handleSidePanelChange={this.props.handleSidePanelChange}
+          />
+        </SidePanel>
       </GridLayout>
     );
   }

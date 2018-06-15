@@ -96,7 +96,7 @@ class SalaryAllocationInner extends React.Component {
 const BreakGrid = styled.aside`
   margin-top: 20px;
   display: grid;
-  grid-template-columns: 100px 100px 150px 42px;
+  grid-template-columns:100px 100px 150px 42px;
 `;
 
 const Main = styled.aside`

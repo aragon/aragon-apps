@@ -5,7 +5,7 @@ import LinkedSliders from "./LinkedSliders";
 import SalaryAllocationInner from "./SalaryAllocationInner";
 
 class SidePanelContent extends React.Component {
-  render() {    
+  render() {
     return (
       <div>
         {this.props.requestSalary ? (
@@ -44,7 +44,10 @@ class SidePanelContent extends React.Component {
 
               <div />
 
-              <Info.Action title=" The actual exchange rate might change once the transaction takes place" />
+              <Info.Action
+                background="#FFF9EB"
+                title=" The actual exchange rate might change once the transaction takes place"
+              />
 
               <Button
                 mode="strong"
@@ -88,8 +91,8 @@ const SalaryContainer = styled.div`
 `;
 
 const SalaryGrid = styled.div`
-  display: grid;  
-  grid-template-rows: 40px 145px 120px 90px 50px;
+  display: grid;
+  grid-template-rows: 40px 115px 152px 70px 50px;
   grid-gap: 20px;
 `;
 
