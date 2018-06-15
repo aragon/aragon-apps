@@ -74,7 +74,7 @@ contract('Payroll', function(accounts) {
     vault = await Vault.new();
     await vault.initializeWithBase(vault.address)
     finance = await Finance.new();
-    await finance.initialize(vault.address, 3600 * 24 * 2); // more than one day
+    await finance.initialize(vault.address, SECONDS_IN_A_YEAR); // more than one day
 
     usdToken = await deployErc20Token("USD", USD_DECIMALS);
     priceFeed = await PriceFeedMock.new();
