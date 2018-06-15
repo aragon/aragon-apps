@@ -1,9 +1,9 @@
 pragma solidity ^0.4.18;
 
-import "@aragon/ppf-contracts/contracts/Feed.sol";
+import "@aragon/ppf-contracts/contracts/IFeed.sol";
 
 
-contract PriceFeedMock is Feed {
+contract PriceFeedMock is IFeed {
     uint private _mockTime = now;
 
     event PriceFeedLogSetRate(address sender, address token, uint128 value);

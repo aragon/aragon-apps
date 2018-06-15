@@ -8,7 +8,7 @@ import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
 
-import "@aragon/ppf-contracts/contracts/Feed.sol";
+import "@aragon/ppf-contracts/contracts/IFeed.sol";
 
 import "@aragon/apps-finance/contracts/Finance.sol";
 
@@ -44,7 +44,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     Finance public finance;
     address public denominationToken;
-    Feed public feed;
+    IFeed public feed;
     uint64 public rateExpiryTime;
     mapping(address => bool) private allowedTokens;
     address[] private allowedTokensArray;
@@ -70,7 +70,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     function initialize(
         Finance _finance,
         address _denominationToken,
-        Feed _priceFeed,
+        IFeed _priceFeed,
         uint64 _rateExpiryTime
     ) external
         onlyInit
@@ -90,7 +90,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Sets the Price Feed for exchange rates to `_feed`.
      * @param _feed The Price Feed address
      */
-    function setPriceFeed(Feed _feed) external authP(CHANGE_PRICE_FEED_ROLE, arr(feed, _feed)) {
+    function setPriceFeed(IFeed _feed) external authP(CHANGE_PRICE_FEED_ROLE, arr(feed, _feed)) {
         _setPriceFeed(_feed);
     }
 
@@ -423,7 +423,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         nextEmployee++;
     }
 
-    function _setPriceFeed(Feed _feed) internal {
+    function _setPriceFeed(IFeed _feed) internal {
         require(_feed != address(0));
         feed = _feed;
         SetPriceFeed(feed);
