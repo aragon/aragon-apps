@@ -45,7 +45,7 @@ contract Staking is ERCStaking, AragonApp {
 
   event Locked(address indexed account, uint256 lockId, uint256 amount, bytes32 metadata);
   event Unlocked(address indexed account, address indexed unlocker, uint256 oldLockId);
-
+  event UnlockedPartial(address indexed account, address indexed unlocker, uint256 lockId, uint256 amount);
   event MovedTokens(address indexed from, address indexed to, uint256 amount);
 
   bytes32 constant public STAKE_ROLE = keccak256("STAKE_ROLE");
@@ -179,12 +179,25 @@ contract Staking is ERCStaking, AragonApp {
     Unlocked(acct, msg.sender, lockId);
   }
 
+  function unlockPartial(address _acct, uint256 _lockId, uint256 _amount) public {
+    require(canUnlock(acct, lockId));
+
+    Lock storage acctLock = accounts[_acct].locks[_lockId];
+    acctLock.amount = acctLock.amount.sub(_amount);
+
+    if (acctLock.amount == 0) {
+      unlock(_acct, _lockId);
+    }
+
+    UnlockedPartial(_acct, msg.sender, _lockId, _amount);
+  }
+
   function unlockAndUnstake(uint256 amount, bytes data) public {
     unlockAll(msg.sender);
     unstake(amount, data);
   }
 
-  function moveTokens(address from, address to, uint256 amount) authP(GOD_ROLE, arr(from, to, amount)) external {
+  function moveTokens(address from, address to, uint256 amount) authP(GOD_ROLE, arr(from, to, amount)) public {
     // move 0 tokens makes no sense
     require(amount > 0);
 
@@ -195,6 +208,11 @@ contract Staking is ERCStaking, AragonApp {
     accounts[to].amount = accounts[to].amount.add(amount);
 
     MovedTokens(from, to, amount);
+  }
+
+  function unlockAndMoveTokens(uint256 lockId, address from, address to, uint256 amount) external {
+    unlockPartial(from, lockId, amount);
+    moveTokens(from, to, amount);
   }
 
   // ERCStaking
