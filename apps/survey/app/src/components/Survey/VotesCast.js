@@ -27,21 +27,16 @@ class VotesCast extends React.Component {
           >
             {survey.options.map(
               ({ label, optionId, power }, index) => ({ progress }) => (
-                <animated.li
+                <AnimatedLi
                   key={optionId}
                   style={{
                     opacity: progress,
                     transform: progress.interpolate(this.getTransform),
                   }}
                 >
-                  <span>
-                    <span>
-                      <Disc style={{ background: getOptionColor(optionId) }} />
-                    </span>
-                    <span>{label}</span>
-                  </span>
+                  <DiscLabel color={getOptionColor(optionId)} label={label} />
                   <strong>{Math.floor(power)}</strong>
-                </animated.li>
+                </AnimatedLi>
               )
             )}
           </Trail>
@@ -57,21 +52,16 @@ const Main = styled.section`
     font-size: 16px;
     ${unselectable};
   }
-  li {
-    list-style: none;
-    display: flex;
-    margin-bottom: 10px;
-    justify-content: space-between;
-    color: ${theme.textSecondary};
-    strong {
-      color: ${theme.textPrimary};
-    }
-    > span:first-child {
-      display: flex;
-      > :first-child {
-        flex-shrink: 0;
-      }
-    }
+`
+
+const AnimatedLi = styled(animated.li)`
+  list-style: none;
+  display: flex;
+  margin-bottom: 10px;
+  justify-content: space-between;
+  color: ${theme.textSecondary};
+  strong {
+    color: ${theme.textPrimary};
   }
 `
 
@@ -81,6 +71,26 @@ const Disc = styled.span`
   height: 10px;
   margin-right: 15px;
   border-radius: 50%;
+  background: ${({ color }) => color};
 `
+
+const DiscContainer = styled.span``
+
+const DiscLabelContainer = styled.span`
+  display: flex;
+
+  ${DiscContainer} {
+    flex-shrink: 0;
+  }
+`
+
+const DiscLabel = ({ color, label }) => (
+  <DiscLabelContainer>
+    <DiscContainer>
+      <Disc color={color} />
+    </DiscContainer>
+    <span>{label}</span>
+  </DiscLabelContainer>
+)
 
 export default VotesCast
