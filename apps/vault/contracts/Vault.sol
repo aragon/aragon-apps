@@ -4,6 +4,7 @@ import "@aragon/os/contracts/apps/AragonApp.sol";
 
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 
+import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 contract Vault is AragonApp {
     bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
@@ -39,16 +40,17 @@ contract Vault is AragonApp {
         Deposit(token, from, value);
     }
 
-    /**
+    /*
+    TODO: Function could be brought back when https://github.com/ethereum/solidity/issues/526 is fixed
     * @notice Deposit `value` `token` to the vault
     * @param token Address of the token being transferred
     * @param from Entity that currently owns the tokens
     * @param value Amount of tokens being transferred
     * @param data Extra data associated with the deposit (currently unused)
-    */
     function deposit(address token, address from, uint256 value, bytes data) payable external {
         deposit(token, from, value);
     }
+    */
 
     /**
     * @notice Transfer `value` `token` from the Vault to `to`

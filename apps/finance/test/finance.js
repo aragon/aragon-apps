@@ -16,15 +16,12 @@ contract('Finance App', accounts => {
 
     beforeEach(async () => {
         vault = await Vault.new()
-
         token1 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token1.generateTokens(vault.address, 100)
         await token1.generateTokens(accounts[0], 10)
-
         token2 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token2.generateTokens(vault.address, 200)
-
-        await vault.deposit(ETH, accounts[0], 400, [0], { value: 400 });
+        await vault.deposit(ETH, accounts[0], 400, { value: 400 });
 
         app = await Finance.new()
         await app.mock_setTimestamp(1)
