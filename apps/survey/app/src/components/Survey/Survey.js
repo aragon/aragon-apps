@@ -18,27 +18,18 @@ class Survey extends React.Component {
     onOpenVotingPanel: () => {},
   }
   state = {
-    animateSidebar: false,
     transitionTo: {},
   }
   handleOpenVotingPanel = () => {
     this.props.onOpenVotingPanel(this.props.survey.surveyId)
   }
-  componentDidMount() {
-    this.startSidebarTransitionTimer()
-  }
   componentDidUpdate(prevProps) {
-    // React's new `getDerivedStateFromProps()` hook forces us to store the information we want to
-    // compare from `prevProps` in state... so we decided to keep `componentDidUpdate()`.
-    // Using `setState()` in this hook can be generally dangerous, but because we're not updating
-    // something that will trigger another `setState()`, we should be safe here.
-    if (prevProps.survey !== this.props.survey) {
-      // eslint-disable-next-line react/no-did-update-set-state
-      this.setState({ animateSidebar: false })
-      this.clearSidebarTransitionTimer()
-
-      if (this.props.survey) {
-        this.startSidebarTransitionTimer()
+    // React's new `getDerivedStateFromProps()` hook forces us to store the
+    // information we want to compare from `prevProps` in state... so we
+    // decided to keep `componentDidUpdate()`. Using `setState()` in this hook
+    // can be generally dangerous, but because we're not updating something
+    // that will trigger another `setState()`, we should be safe here.
+    if (prevProps.survey !== this.props.survey && this.props.survey) {
         // eslint-disable-next-line react/no-did-update-set-state
         this.setState({
           transitionTo: this._detailsWrapperEl.getBoundingClientRect(),
@@ -47,20 +38,7 @@ class Survey extends React.Component {
           behavior: 'smooth',
           block: 'start',
         })
-      }
     }
-  }
-  componentWillUnmount() {
-    this.clearSidebarTransitionTimer()
-  }
-  startSidebarTransitionTimer() {
-    // animate the sidebar after a delay
-    this._sidebarTransitionTimer = setTimeout(() => {
-      this.setState({ animateSidebar: true })
-    }, SIDEBAR_TRANSITION_DELAY)
-  }
-  clearSidebarTransitionTimer() {
-    clearTimeout(this._sidebarTransitionTimer)
   }
   handleDetailsWrapperRef = el => {
     this._detailsWrapperEl = el
@@ -74,9 +52,10 @@ class Survey extends React.Component {
       h: to.h / 2,
     }
     return `
-      translate(
+      translate3d(
         ${lerp(t, -to.x + from.x, 0)}px,
-        ${lerp(t, -to.y + from.y, 0)}px
+        ${lerp(t, -to.y + from.y, 0)}px,
+        0
       )
       scale(
         ${lerp(t, from.width / to.width, 1)},
@@ -86,7 +65,6 @@ class Survey extends React.Component {
   }
   render() {
     const { survey } = this.props
-    const { animateSidebar } = this.state
     if (!survey) return null
 
     return (
@@ -117,8 +95,9 @@ class Survey extends React.Component {
         <SidebarWrapper>
           <Spring
             from={{ progress: 0 }}
-            to={{ progress: Number(animateSidebar) }}
+            to={{ progress: 1 }}
             config={springs.slow}
+            delay={SIDEBAR_TRANSITION_DELAY}
             native
           >
             {({ progress }) => (
@@ -127,7 +106,7 @@ class Survey extends React.Component {
                   paddingRight: `${CONTENT_PADDING}px`,
                   opacity: progress,
                   transform: progress.interpolate(
-                    t => `translateX(${(1 - t) * 100}%)`
+                    t => `translate3d(${(1 - t) * 100}%, 0, 0)`
                   ),
                 }}
               >

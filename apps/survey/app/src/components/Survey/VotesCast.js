@@ -8,49 +8,35 @@ import springs from '../../springs'
 const ANIM_DELAY = 600
 
 class VotesCast extends React.Component {
-  state = {
-    animate: false,
-  }
-  componentDidMount() {
-    // animate after a delay
-    this._transitionTimer = setTimeout(() => {
-      this.setState({ animate: true })
-    }, ANIM_DELAY)
-  }
-  componentWillUnmount() {
-    clearTimeout(this._transitionTimer)
+  getTransform(t) {
+    return `translate3d(${20 * (1 - t)}%, 0, 0)`
   }
   render() {
     const { survey } = this.props
-    const { animate } = this.state
     return (
       <Main>
         <h1>Votes cast so far</h1>
         <ul>
           <Trail
             from={{ progress: 0 }}
-            to={{ progress: Number(animate) }}
+            to={{ progress: 1 }}
             keys={survey.options.map(o => o.optionId)}
             config={springs.stiff}
+            delay={ANIM_DELAY}
             native
           >
             {survey.options.map(
               ({ label, optionId, power }, index) => ({ progress }) => (
-                <animated.li
+                <AnimatedLi
                   key={optionId}
                   style={{
                     opacity: progress,
-                    transform: progress.interpolate(
-                      t => `translateX(${20 * (1 - t)}%)`
-                    ),
+                    transform: progress.interpolate(this.getTransform),
                   }}
                 >
-                  <span>
-                    <Disc style={{ background: getOptionColor(optionId) }} />
-                    {label}
-                  </span>
+                  <DiscLabel color={getOptionColor(optionId)} label={label} />
                   <strong>{Math.floor(power)}</strong>
-                </animated.li>
+                </AnimatedLi>
               )
             )}
           </Trail>
@@ -66,15 +52,16 @@ const Main = styled.section`
     font-size: 16px;
     ${unselectable};
   }
-  li {
-    list-style: none;
-    display: flex;
-    margin-bottom: 10px;
-    justify-content: space-between;
-    color: ${theme.textSecondary};
-    strong {
-      color: ${theme.textPrimary};
-    }
+`
+
+const AnimatedLi = styled(animated.li)`
+  list-style: none;
+  display: flex;
+  margin-bottom: 10px;
+  justify-content: space-between;
+  color: ${theme.textSecondary};
+  strong {
+    color: ${theme.textPrimary};
   }
 `
 
@@ -84,6 +71,26 @@ const Disc = styled.span`
   height: 10px;
   margin-right: 15px;
   border-radius: 50%;
+  background: ${({ color }) => color};
 `
+
+const DiscContainer = styled.span``
+
+const DiscLabelContainer = styled.span`
+  display: flex;
+
+  ${DiscContainer} {
+    flex-shrink: 0;
+  }
+`
+
+const DiscLabel = ({ color, label }) => (
+  <DiscLabelContainer>
+    <DiscContainer>
+      <Disc color={color} />
+    </DiscContainer>
+    <span>{label}</span>
+  </DiscLabelContainer>
+)
 
 export default VotesCast
