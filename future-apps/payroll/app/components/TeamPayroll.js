@@ -2,7 +2,7 @@ import React from "react";
 import {SidePanel } from "@aragon/ui";
 import styled from "styled-components";
 import EmployeesList from "./EmployeeList";
-import SideChart from "./SideChart";
+import KeyStats from "./KeyStats";
 
 import "../styles/datepicker.css";
 import "react-dates/initialize";
@@ -60,8 +60,10 @@ export class TeamPayroll extends React.Component {
             <EmployeesList transactions={transactions} />
           </Content>
         </Layout.ScrollWrapper>
+
+
         <SideBarHolder>
-          <SideChart
+          <KeyStats
             holders={[{ name: "ETH", balance: 1329 }, { name: "ANT", balance: 3321 }, { name: "SNT", balance: 1131 }]}
             tokenSupply={10000}
             tokenDecimalsBase={5}

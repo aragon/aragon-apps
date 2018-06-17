@@ -41,7 +41,10 @@ export default class App extends React.Component {
       <AragonApp publicUrl="/aragon-ui">
         <Layout>
           <Layout.FixedHeader>
-            <AppBarRedux title="Payroll" endContent={<Button mode="strong">Request salary</Button>} />
+            <AppBarRedux
+              title="Payroll"
+              endContent={<Button mode="strong">{teamPayrollTab ? "Add new employee" : "Request salary"}</Button>}
+            />
             <TabGrid>
               <Tabs teamPayrollTab={!teamPayrollTab} onClick={() => this.handleTabChange(false)}>
                 <div>My payroll</div>
@@ -71,16 +74,12 @@ export default class App extends React.Component {
           onClose={this.handleNewTransferClose}
           title={requestSalary ? "Request salary" : "Edit salary allocation"}
         >
-          <SidePanelContent
-            requestSalary={requestSalary}
-            handleSidePanelChange={this.handleSidePanelChange}
-          />
+          <SidePanelContent requestSalary={requestSalary} handleSidePanelChange={this.handleSidePanelChange} />
         </SidePanel>
       </AragonApp>
     );
   }
 }
-
 
 const AppBarRedux = styled(AppBar)`
   border-bottom: none;
@@ -102,7 +101,6 @@ const TabGrid = styled.div`
   border-bottom: 0.5px solid #e8e8e8;
 `;
 
-
 const Layout = styled.div`
   display: flex;
   height: 100vh;
@@ -110,7 +108,6 @@ const Layout = styled.div`
   align-items: stretch;
   justify-content: stretch;
 `;
-
 
 Layout.FixedHeader = styled.div`
   flex-shrink: 0;
