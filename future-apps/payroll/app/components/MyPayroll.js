@@ -54,7 +54,7 @@ const transactions = [
   }
 ];
 
-export class TeamPayroll extends React.Component {
+export class MyPayroll extends React.Component {
   state = {
     newTransferOpened: false,
     requestSalary: false,
@@ -89,7 +89,7 @@ export class TeamPayroll extends React.Component {
           />
         </SideBarHolder>
 
-        <SidePanel
+        {/* <SidePanel
           opened={newTransferOpened}
           onClose={this.props.handleNewTransferClose}
           title={requestSalary ? "Request salary" : "Edit salary allocation"}
@@ -98,13 +98,14 @@ export class TeamPayroll extends React.Component {
             requestSalary={this.state.requestSalary}
             handleSidePanelChange={this.props.handleSidePanelChange}
           />
-        </SidePanel>
+        </SidePanel> */}
+        
       </GridLayout>
     );
   }
 }
 
-export default TeamPayroll;
+export default MyPayroll;
 
 const Tabs = styled.div`
   border-bottom: ${props => (props.teamPayrollTab ? "4px solid #1dd9d5" : "")};

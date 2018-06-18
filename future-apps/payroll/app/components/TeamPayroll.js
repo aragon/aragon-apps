@@ -8,6 +8,7 @@ import "../styles/datepicker.css";
 import "react-dates/initialize";
 import SidePanelContent from "./SidePanelContent";
 import TotalPayroll from "./TotalPayroll";
+import AddEmpSlider from './AddEmpSlider'
 
 const transactions = [
   {
@@ -71,7 +72,7 @@ export class TeamPayroll extends React.Component {
           />
         </SideBarHolder>
 
-        <SidePanel
+        {/* <AddEmpSlider
           opened={newTransferOpened}
           onClose={this.props.handleNewTransferClose}
           title={requestSalary ? "Request salary" : "Edit salary allocation"}
@@ -80,7 +81,7 @@ export class TeamPayroll extends React.Component {
             requestSalary={this.state.requestSalary}
             handleSidePanelChange={this.props.handleSidePanelChange}
           />
-        </SidePanel>
+        </AddEmpSlider> */}
       </GridLayout>
     );
   }

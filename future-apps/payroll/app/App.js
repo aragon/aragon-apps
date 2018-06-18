@@ -7,6 +7,7 @@ import "react-dates/initialize";
 import SidePanelContent from "./components/SidePanelContent";
 import TeamPayroll from "./components/TeamPayroll";
 import MyPayroll from "./components/MyPayroll";
+import SidePanelEmpAdd from "./components/SidePanelEmpAdd";
 
 export default class App extends React.Component {
   app = new Aragon(new providers.WindowMessage(window.parent));
@@ -14,6 +15,7 @@ export default class App extends React.Component {
 
   state = {
     newTransferOpened: false,
+    empSliderOpen: false,
     activeItem: 0,
     requestSalary: false,
     teamPayrollTab: false
@@ -35,15 +37,31 @@ export default class App extends React.Component {
     this.setState({ teamPayrollTab: bool });
   };
 
+  handleEmpSlider = () => {
+    let value = !this.state.empSliderOpen;
+    this.setState({ empSliderOpen: value });
+  };
+
+  AppBarButtonClicked = () => {
+    if (this.state.teamPayrollTab) {
+      this.handleEmpSlider();
+    }
+    return;
+  };
+
   render() {
-    let { newTransferOpened, requestSalary, teamPayrollTab } = this.state;
+    let { newTransferOpened, requestSalary, teamPayrollTab, empSliderOpen } = this.state;
     return (
       <AragonApp publicUrl="/aragon-ui">
         <Layout>
           <Layout.FixedHeader>
             <AppBarRedux
               title="Payroll"
-              endContent={<Button mode="strong">{teamPayrollTab ? "Add new employee" : "Request salary"}</Button>}
+              endContent={
+                <Button onClick={this.AppBarButtonClicked} mode="strong">
+                  {teamPayrollTab ? "Add new employee" : "Request salary"}
+                </Button>
+              }
             />
             <TabGrid>
               <Tabs teamPayrollTab={!teamPayrollTab} onClick={() => this.handleTabChange(false)}>
@@ -75,6 +93,10 @@ export default class App extends React.Component {
           title={requestSalary ? "Request salary" : "Edit salary allocation"}
         >
           <SidePanelContent requestSalary={requestSalary} handleSidePanelChange={this.handleSidePanelChange} />
+        </SidePanel>
+
+        <SidePanel opened={empSliderOpen} onClose={this.handleEmpSlider} title="Add new employee">
+          <SidePanelEmpAdd requestSalary={requestSalary} handleSidePanelChange={this.handleEmpSlider} />
         </SidePanel>
       </AragonApp>
     );

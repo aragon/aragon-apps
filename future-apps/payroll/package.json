@@ -27,7 +27,7 @@
 	"description": "",
 	"devDependencies": {
 		"@aragon/cli": "^4.0.0-rc.3",
-		"parcel-bundler": "^1.8.1",
+		"parcel-bundler": "^1.9.0",
 		"@aragon/apps-vault": "^2.0.1",
 		"@aragon/test-helpers": "^1.0.0",
 		"babel-helpers": "^6.24.1",

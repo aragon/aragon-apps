@@ -590,7 +590,8 @@
   left: 0;
   overflow-y: scroll;
 }
-.DateInput {  
+.DateInput {
+  height: 25px;
   margin: 0;
   padding: 0;
   background: #fff;
@@ -627,8 +628,10 @@
   border-radius: 0;
 }
 .DateInput_input__small {
+  height: 25px;
+  font-size:14px;
   border-radius: 3px;
-  font-size: 15px;
+
   font-weight: 400;
   line-height: 18px;
   letter-spacing: 0.2px;
@@ -644,6 +647,8 @@
   user-select: none;
 }
 .DateInput_input__focused {
+  height: 22px;
+    font-size: 14px;
   outline: 0;
   background: #fff;
   border: 0;
