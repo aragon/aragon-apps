@@ -579,7 +579,18 @@ contract('Payroll', function(accounts) {
     return assertRevert(async () => {
       await payroll.payday({from: employee2});
     })
+  })
 
+  it("determining allocation deletes previous entries", async () => {
+    await payroll.determineAllocation([ETH], [100], {from: employee1});
+    await payroll.determineAllocation([usdToken.address], [100], {from: employee1});
+    const tokens = [usdToken, erc20Token1, erc20Token2]
+    const currencies = [ETH].concat(tokens.map(c => c.address))
+    let totalAllocation = 0
+    for (let tokenAddress of currencies) {
+      totalAllocation += parseInt(await payroll.getAllocation(tokenAddress, {from: employee1}), 10)
+    }
+    assert.equal(totalAllocation, 100, "Total allocation should remain 100")
   })
 
   it('fails to change the price feed time to 0', async () => {
