@@ -16,6 +16,7 @@ contract('PayrollForward', function(accounts) {
   let owner = accounts[0];
   let employee1 = accounts[1];
   let unused_account = accounts[7];
+  const SECONDS_IN_A_YEAR = 31557600; // 365.25 days
 
   before(async () => {
     const kernelBase = await getContract('Kernel').new()
@@ -36,6 +37,16 @@ contract('PayrollForward', function(accounts) {
 
     await acl.createPermission(ANY_ADDR, payroll3.address, await payroll3.ADD_EMPLOYEE_ROLE(), owner, { from: owner });
 
+    // init payroll
+    const token = await getContract('MiniMeToken').new("0x0", "0x0", 0, "Token", 18, 'E20', true); // dummy parameters for minime
+    const vault = await getContract('Vault').new();
+    await vault.initializeWithBase(vault.address)
+    const finance = await getContract('Finance').new();
+    await finance.initialize(vault.address, SECONDS_IN_A_YEAR); // more than one day
+    const priceFeed = await getContract('PriceFeedMock').new();
+    const rateExpiryTime = SECONDS_IN_A_YEAR;
+    await payroll3.initialize(finance.address, token.address, priceFeed.address, rateExpiryTime)
+    // add employee
     await payroll3.addEmployee(employee1, 100000);
   });
 
