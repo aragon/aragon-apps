@@ -3,6 +3,7 @@
   "version": "0.0.3",
   "main": "index.js",
   "scripts": {
+    "postinstall": "cd app && npm install",
     "compile": "truffle compile",
     "deploy:rpc": "truffle exec scripts/deploy.js --network rpc",
     "deploy:rinkeby": "truffle exec scripts/deploy.js --network rinkeby",
