@@ -2,6 +2,17 @@ import React from "react";
 import styled from "styled-components";
 import { Text, theme, Button, DropDown } from "@aragon/ui";
 import { sciNot } from "../math-utils";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+
+const data = [
+  { name: "SEP", uv: 4000, pv: 2400, amt: 2400 },
+  { name: "NOV", uv: 3000, pv: 1398, amt: 2210 },
+  { name: "JAN", uv: 2000, pv: 9800, amt: 2290 },
+  { name: "MAR", uv: 2780, pv: 3908, amt: 2000 },
+  { name: "MAY", uv: 1890, pv: 4800, amt: 2181 },
+  { name: "JUL", uv: 2390, pv: 3800, amt: 2500 },
+  { name: "SEP", uv: 3490, pv: 4300, amt: 2100 }
+];
 
 // Number of digits before "Total Supply" gets wrapped into two lines
 const TOTAL_SUPPLY_CUTOFF_LENGTH = 18;
@@ -64,8 +75,20 @@ class SideChart extends React.Component {
               onChange={this.handleTokenChange}
             />
 
-            
-            <TitleSpanTwo >Salary burn rate</TitleSpanTwo>
+            <SpanTwo>
+              <LineChart width={300} height={150} data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <XAxis dataKey="name" />
+                {/* <YAxis /> */}
+                {/* <CartesianGrid strokeDasharray="3 3" /> */}
+                <Tooltip />
+                {/* <Legend /> */}
+                <Line style={{backgroundColor: '#fff'}} fill="#8884d8" type="monotone" dataKey="pv" stroke="#8884d8" activeDot={{ r: 8 }} />
+                {/* <Line type="monotone" dataKey="uv" stroke="#82ca9d" /> */}
+              </LineChart>
+            </SpanTwo>
+
+
+            <TitleSpanTwo>Salary burn rate</TitleSpanTwo>
 
             <Text color={theme.textSecondary}>Salary paid this year</Text>
             <MoneyStyle weight="bold">$119,989.88</MoneyStyle>
@@ -91,15 +114,19 @@ const MoneyStyle = styled(Text)`
   text-align: right;
 `;
 
+const SpanTwo = styled.div`
+  grid-column: 1/3;
+`;
+
 const TitleSpanTwo = styled.div`
   grid-column: 1/3;
   margin-bottom: 5px;
-  font-weight:bold;
+  font-weight: bold;
 `;
 
 const LineBreak = styled.div`
   grid-column: 1/3;
-  border-bottom: 0.5px solid #D1D1D1;
+  border-bottom: 0.5px solid #d1d1d1;
   height: 1px;
 `;
 
