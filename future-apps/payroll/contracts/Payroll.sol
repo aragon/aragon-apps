@@ -315,7 +315,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
         employee.accountAddress = newAddress;
         employeeIds[newAddress] = employeeId;
-        employeeIds[msg.sender] = 0;
+        delete employeeIds[msg.sender];
     }
 
     /**
@@ -350,6 +350,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @dev Get payment proportion for a token and an employee (the caller)
      * @notice Get payment proportion for a token and an employee (the caller)
      * @param token The token address
+     * @return Allocation for token and employee
      */
     function getAllocation(address token) external view returns (uint8 allocation) {
         return employees[employeeIds[msg.sender]].allocation[token];
@@ -365,7 +366,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     }
 
     /**
-     * @dev IForwarder interface conformance. Forwards any token holder action.
+     * @dev IForwarder interface conformance. Forwards any employee action.
      * @param _evmScript script being executed
      */
     function forward(bytes _evmScript) public {
