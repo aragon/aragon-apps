@@ -118,7 +118,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     /**
      * @dev Add token to the allowed set
-     * @notice Add token to the allowed set
+     * @notice Add `_allowedToken` to the set of allowed tokens
      * @param _allowedToken New token allowed for payment
      */
     function addAllowedToken(address _allowedToken) isInitialized external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
@@ -134,8 +134,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      */
 
     /**
-     * @dev Add employee to Payroll
-     * @notice Add employee to Payroll. See addEmployeeWithNameAndStartDate
+     * @dev Add employee to Payroll. See addEmployeeWithNameAndStartDate
+     * @notice Add employee with address `accountAddress` to Payroll with a salary of `initialDenominationSalary` per second.
      * @param accountAddress Employee's address to receive Payroll
      * @param initialDenominationSalary Employee's salary, per second in denomination Token
      */
@@ -155,8 +155,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     }
 
     /**
-     * @dev Add employee to Payroll
-     * @notice Add employee to Payroll. See addEmployeeWithNameAndStartDate
+     * @dev Add employee to Payroll. See addEmployeeWithNameAndStartDate
+     * @notice Add employee `name` with address `accountAddress` to Payroll with a salary of `initialDenominationSalary` per second.
      * @param accountAddress Employee's address to receive Payroll
      * @param initialDenominationSalary Employee's salary, per second in denomination Token
      * @param name Employee's name
@@ -179,7 +179,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     /**
      * @dev Add employee to Payroll
-     * @notice Creates employee, adds it to mappings, initializes values.
+     * @notice Add employee `name` with address `accountAddress` to Payroll with a salary of `initialDenominationSalary` per second, starting on `startDate`.
      * @param accountAddress Employee's address to receive Payroll
      * @param initialDenominationSalary Employee's salary, per second in denomintation Token
      * @param name Employee's name
@@ -204,6 +204,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     /**
      * @dev Set employee's annual salary
+     * @notice Set employee #`employeeId` annual salary to `denominationSalary` per second.
      * @param employeeId Employee's identifier
      * @param denominationSalary Employee's new salary, per second in denomintation Token
      */
@@ -221,6 +222,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     /**
      * @dev Remove employee from Payroll
+     * @notice Remove employee #`employeeId` from Payroll
      * @param employeeId Employee's identifier
      */
     function removeEmployee(uint128 employeeId) isInitialized employeeExists(employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
@@ -301,7 +303,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     /**
      * @dev Change employee account address. To be called by Employee
-     * @notice Change employee account address
+     * @notice Change employee account address to `newAddress`
      * @param newAddress New address to receive payments
      */
     function changeAddressByEmployee(address newAddress) isInitialized employeeMatches external {
