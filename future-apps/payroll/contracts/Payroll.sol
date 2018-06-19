@@ -50,15 +50,15 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     address[] private allowedTokensArray;
 
     event AddEmployee(
-        uint128 employeeId,
-        address accountAddress,
+        uint128 indexed employeeId,
+        address indexed accountAddress,
         uint256 initialYearlyDenominationSalary,
         string name,
         uint256 startDate
     );
 
-    event Fund(address sender, address token, uint amount, uint balance, bytes data);
-    event SendPayroll(address employee, address token, uint amount);
+    event Fund(address indexed sender, address indexed token, uint amount, uint balance, bytes data);
+    event SendPayroll(address indexed employee, address indexed token, uint amount);
     event SetPriceFeed(address feed);
     event SetRateExpiryTime(uint64 time);
 
