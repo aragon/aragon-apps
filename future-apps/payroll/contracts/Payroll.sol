@@ -101,7 +101,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Sets the Price Feed for exchange rates to `_feed`.
      * @param _feed The Price Feed address
      */
-    function setPriceFeed(IFeed _feed) external authP(CHANGE_PRICE_FEED_ROLE, arr(feed, _feed)) {
+    function setPriceFeed(IFeed _feed) isInitialized external authP(CHANGE_PRICE_FEED_ROLE, arr(feed, _feed)) {
         _setPriceFeed(_feed);
     }
 
@@ -110,7 +110,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Sets the exchange rate expiry time to `_time`.
      * @param _time The expiration time in seconds for exchange rates
      */
-    function setRateExpiryTime(uint64 _time) external authP(MODIFY_RATE_EXPIRY_ROLE, arr(uint256(_time))) {
+    function setRateExpiryTime(uint64 _time) isInitialized external authP(MODIFY_RATE_EXPIRY_ROLE, arr(uint256(_time))) {
         _setRateExpiryTime(_time);
     }
 
@@ -119,7 +119,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Add token to the allowed set
      * @param _allowedToken New token allowed for payment
      */
-    function addAllowedToken(address _allowedToken) external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
+    function addAllowedToken(address _allowedToken) isInitialized external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
         require(!allowedTokens[_allowedToken]);
         allowedTokens[_allowedToken] = true;
         allowedTokensArray.push(_allowedToken);
@@ -209,6 +209,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint128 employeeId,
         uint256 denominationSalary
     )
+        isInitialized
         employeeExists(employeeId)
         external
         authP(ADD_EMPLOYEE_ROLE, arr(employees[employeeId].accountAddress, denominationSalary, 0))
@@ -220,7 +221,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @dev Remove employee from Payroll
      * @param employeeId Employee's identifier
      */
-    function removeEmployee(uint128 employeeId) employeeExists(employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
+    function removeEmployee(uint128 employeeId) isInitialized employeeExists(employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
         // Pay owed salary to employee
         _payTokens(employeeId);
 
@@ -233,7 +234,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      *      but in case it happens, this function allows to recover them.
      * @notice Allows to send ETH from this contract to Finance, to avoid locking them in contract forever.
      */
-    function escapeHatch() external {
+    function escapeHatch() isInitialized external {
         finance.call.value(this.balance)();
     }
 
@@ -244,7 +245,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             but in case it happens, this function allows to recover them.
      * @notice Allows to send tokens from this contract to Finance, to avoid locked tokens in contract forever
      */
-    function depositToFinance(address token) external {
+    function depositToFinance(address token) isInitialized external {
         ERC20 tokenContract = ERC20(token);
         uint256 value = tokenContract.balanceOf(this);
         if (value == 0)
@@ -262,7 +263,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @param tokens Array with the tokens to receive, they must belong to allowed tokens for employee
      * @param distribution Array (correlated to tokens) with the proportions (integers summing to 100)
      */
-    function determineAllocation(address[] tokens, uint8[] distribution) employeeMatches external {
+    function determineAllocation(address[] tokens, uint8[] distribution) isInitialized employeeMatches external {
         Employee storage employee = employees[employeeIds[msg.sender]];
 
         // check arrays match
@@ -290,7 +291,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @dev To withdraw payment by employee (the caller). The amount owed since last call will be transferred.
      * @notice To withdraw payment by employee (the caller). The amount owed since last call will be transferred.
      */
-    function payday() employeeMatches external {
+    function payday() isInitialized employeeMatches external {
         Employee storage employee = employees[employeeIds[msg.sender]];
 
         bool somethingPaid = _payTokens(employeeIds[msg.sender]);
@@ -302,7 +303,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Change employee account address
      * @param newAddress New address to receive payments
      */
-    function changeAddressByEmployee(address newAddress) employeeMatches external {
+    function changeAddressByEmployee(address newAddress) isInitialized employeeMatches external {
         // check that account doesn't exist
         require(employeeIds[newAddress] == 0);
         // check it's non-null address
@@ -389,6 +390,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         string name,
         uint256 startDate
     )
+        isInitialized
         internal
     {
         // check that account doesn't exist
