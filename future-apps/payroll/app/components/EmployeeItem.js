@@ -42,14 +42,6 @@ class EmployeeItem extends React.Component {
             {format(dateObjEnd, "dd/MM/YY")}
           </time>
         </NoWrapCell>
-        {/* <NoWrapCell>
-          <TextOverflow>
-            <StatusHolder>
-              {status == "Complete" ? <IconCheck /> : <IconTime style={{ marginTop: "-2px" }} />}
-              <StatusStyle>{status}</StatusStyle>
-            </StatusHolder>
-          </TextOverflow>
-        </NoWrapCell> */}
         <NoWrapCell>
           <TextOverflow>{role}</TextOverflow>
         </NoWrapCell>
@@ -79,7 +71,7 @@ const Amount = styled.span`
 `;
 
 const Exchange = styled.span`
-  font-weight: 600;
+  font-weight: 400;
 `;
 
 const StatusStyle = styled.div`

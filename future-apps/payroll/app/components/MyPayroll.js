@@ -68,6 +68,7 @@ export class MyPayroll extends React.Component {
       <GridLayout>
         <Layout.ScrollWrapper>
           <Content>
+
             {/* Available salary */}
             <AvaliableSalary
               targetDate={fiveDaysAgo}
@@ -78,6 +79,7 @@ export class MyPayroll extends React.Component {
 
             {/* Previous salary */}
             <Transfers transactions={transactions} />
+            
           </Content>
         </Layout.ScrollWrapper>
         <SideBarHolder>
@@ -87,19 +89,7 @@ export class MyPayroll extends React.Component {
             tokenDecimalsBase={5}
             openSlider={this.props.handleNewTransferOpen}
           />
-        </SideBarHolder>
-
-        {/* <SidePanel
-          opened={newTransferOpened}
-          onClose={this.props.handleNewTransferClose}
-          title={requestSalary ? "Request salary" : "Edit salary allocation"}
-        >
-          <SidePanelContent
-            requestSalary={this.state.requestSalary}
-            handleSidePanelChange={this.props.handleSidePanelChange}
-          />
-        </SidePanel> */}
-        
+        </SideBarHolder>              
       </GridLayout>
     );
   }

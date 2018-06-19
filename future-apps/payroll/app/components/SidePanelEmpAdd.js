@@ -7,7 +7,7 @@ import "../styles/singleDatePicker.css";
 import "react-dates/initialize";
 import { SingleDatePicker } from "react-dates";
 import calIcon from "./icons/Icon_calendar.svg";
-
+import questionIcon from "./icons/question-icon.png";
 class SidePanelEmpAdd extends React.Component {
   state = {
     SidePanelEmpAdd: true
@@ -17,26 +17,30 @@ class SidePanelEmpAdd extends React.Component {
     return (
       <div>
         <Container>
-          <TextInputHolderFull>
+          {/* <TextInputHolderFull>
             <Text smallcaps color="#6D777B">
               ENTITY
             </Text>
             <TextInput placeholder="ivanka.trump.eth" />
+          </TextInputHolderFull> */}
+
+          <TextInputHolderFull>
+            <Text smallcaps color="#6D777B">
+              ENTITY
+            </Text>
+
+            <InputWithIcon>
+              <input placeholder="ivanka.trump.eth" style={{ border: "none", outline: "none" }} type="text" />
+              <div style={{ marginTop: "6px" }}>
+                <img src={questionIcon} />
+              </div>
+            </InputWithIcon>
           </TextInputHolderFull>
 
           <TextInputHolder>
             <Text smallcaps color="#6D777B">
               Salary
             </Text>
-            {/* <TextInput placeholder={"80,000"}/> */}
-            {/* <input type="text"> */}
-
-            {/* <div>
-                <div>
-                  <IconTime />
-                </div>
-                <input type="text" />
-              </div> */}
 
             <InputWithIcon>
               <div style={{ color: "#C4C4C4" }}>{"$"}</div>
@@ -49,7 +53,7 @@ class SidePanelEmpAdd extends React.Component {
               Start date
             </Text>
 
-            <InputWithIcon style={{paddingLeft:'0px'}}>
+            <InputWithIcon style={{ paddingLeft: "0px" }}>
               <SingleDatePicker
                 placeholder={"DD/MM/YY"}
                 noBorder={true}

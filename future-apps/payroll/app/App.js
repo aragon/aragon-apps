@@ -73,17 +73,9 @@ export default class App extends React.Component {
             </TabGrid>
           </Layout.FixedHeader>
           {teamPayrollTab ? (
-            <TeamPayroll
-              handleNewTransferOpen={this.handleNewTransferOpen}
-              handleNewTransferClose={this.handleNewTransferClose}
-              handleSidePanelChange={this.handleSidePanelChange}
-            />
+            <TeamPayroll handleNewTransferOpen={this.handleNewTransferOpen} />
           ) : (
-            <MyPayroll
-              handleNewTransferClose={this.handleNewTransferClose}
-              handleNewTransferOpen={this.handleNewTransferOpen}
-              handleSidePanelChange={this.handleSidePanelChange}
-            />
+            <MyPayroll handleNewTransferOpen={this.handleNewTransferOpen} />
           )}
         </Layout>
 

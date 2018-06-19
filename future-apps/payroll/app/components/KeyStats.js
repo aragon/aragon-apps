@@ -64,6 +64,7 @@ class SideChart extends React.Component {
               onChange={this.handleTokenChange}
             />
 
+            
             <TitleSpanTwo >Salary burn rate</TitleSpanTwo>
 
             <Text color={theme.textSecondary}>Salary paid this year</Text>

@@ -44,7 +44,6 @@ export class TeamPayroll extends React.Component {
   state = {
     newTransferOpened: false,
     requestSalary: false,
-    teamPayrollTab: false
   };
 
   render() {
@@ -71,17 +70,6 @@ export class TeamPayroll extends React.Component {
             openSlider={this.props.handleNewTransferOpen}
           />
         </SideBarHolder>
-
-        {/* <AddEmpSlider
-          opened={newTransferOpened}
-          onClose={this.props.handleNewTransferClose}
-          title={requestSalary ? "Request salary" : "Edit salary allocation"}
-        >
-          <SidePanelContent
-            requestSalary={this.state.requestSalary}
-            handleSidePanelChange={this.props.handleSidePanelChange}
-          />
-        </AddEmpSlider> */}
       </GridLayout>
     );
   }
