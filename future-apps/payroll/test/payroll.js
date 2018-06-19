@@ -136,7 +136,18 @@ contract('Payroll', function(accounts) {
     assert.equal(employee[0], employee1_1, "Employee account doesn't match");
     assert.equal(employee[1].toString(), salary1_1.toString(), "Employee salary doesn't match");
     assert.equal(employee[2], name, "Employee name doesn't match");
+    assert.equal(employee[3].toString(), (await payroll.getTimestampPublic()).toString(), "last payroll should match")
   });
+
+  it('get employee by its address', async () => {
+    let name = '';
+    let employeeId = 1;
+    let employee = await payroll.getEmployeeByAddress(employee1_1);
+    assert.equal(employee[0], employeeId, "Employee Id doesn't match");
+    assert.equal(employee[1].toString(), salary1_1.toString(), "Employee salary doesn't match");
+    assert.equal(employee[2], name, "Employee name doesn't match");
+    assert.equal(employee[3].toString(), (await payroll.getTimestampPublic()).toString(), "last payroll should match")
+  })
 
   it("fails adding again same employee", async () => {
     return assertRevert(async () => {
