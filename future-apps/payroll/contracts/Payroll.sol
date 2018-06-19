@@ -26,14 +26,13 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
     bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("CHANGE_PRICE_FEED_ROLE");
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
-    uint256 constant public SECONDS_IN_A_YEAR = 31557600; // 365.25 days
     address constant public ETH = address(0);
     uint128 constant public ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
         mapping(address => uint8) allocation;
-        uint256 denominationTokenSalary; // per second
+        uint256 denominationTokenSalary; // per second in denomination Token
         uint256 lastPayroll;
         string name;
     }
@@ -52,7 +51,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     event AddEmployee(
         uint128 indexed employeeId,
         address indexed accountAddress,
-        uint256 initialYearlyDenominationSalary,
+        uint256 initialDenominationSalary,
         string name,
         uint256 startDate
     );
@@ -124,18 +123,18 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @dev Add employee to Payroll
      * @notice Add employee to Payroll. See addEmployeeWithNameAndStartDate
      * @param accountAddress Employee's address to receive Payroll
-     * @param initialYearlyDenominationSalary Employee's salary
+     * @param initialDenominationSalary Employee's salary, per second in denomination Token
      */
     function addEmployee(
         address accountAddress,
-        uint256 initialYearlyDenominationSalary
+        uint256 initialDenominationSalary
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialYearlyDenominationSalary, getTimestamp()))
+        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialDenominationSalary, getTimestamp()))
     {
         _addEmployee(
             accountAddress,
-            initialYearlyDenominationSalary,
+            initialDenominationSalary,
             "",
             getTimestamp()
         );
@@ -145,20 +144,20 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @dev Add employee to Payroll
      * @notice Add employee to Payroll. See addEmployeeWithNameAndStartDate
      * @param accountAddress Employee's address to receive Payroll
-     * @param initialYearlyDenominationSalary Employee's salary
+     * @param initialDenominationSalary Employee's salary, per second in denomination Token
      * @param name Employee's name
      */
     function addEmployeeWithName(
         address accountAddress,
-        uint256 initialYearlyDenominationSalary,
+        uint256 initialDenominationSalary,
         string name
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialYearlyDenominationSalary, getTimestamp()))
+        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialDenominationSalary, getTimestamp()))
     {
         _addEmployee(
             accountAddress,
-            initialYearlyDenominationSalary,
+            initialDenominationSalary,
             name,
             getTimestamp()
         );
@@ -167,24 +166,23 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     /**
      * @dev Add employee to Payroll
      * @notice Creates employee, adds it to mappings, initializes values.
-               Updates also global Payroll salary sum.
      * @param accountAddress Employee's address to receive Payroll
-     * @param initialYearlyDenominationSalary Employee's salary
+     * @param initialDenominationSalary Employee's salary, per second in denomintation Token
      * @param name Employee's name
      * @param startDate It will actually set initial lastPayroll value
      */
     function addEmployeeWithNameAndStartDate(
         address accountAddress,
-        uint256 initialYearlyDenominationSalary,
+        uint256 initialDenominationSalary,
         string name,
         uint256 startDate
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialYearlyDenominationSalary, startDate))
+        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialDenominationSalary, startDate))
     {
         _addEmployee(
             accountAddress,
-            initialYearlyDenominationSalary,
+            initialDenominationSalary,
             name,
             startDate
         );
@@ -192,26 +190,24 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     /**
      * @dev Set employee's annual salary
-     * @notice Updates also global Payroll salary sum
      * @param employeeId Employee's identifier
-     * @param yearlyDenominationSalary Employee's new salary
+     * @param denominationSalary Employee's new salary, per second in denomintation Token
      */
     function setEmployeeSalary(
         uint128 employeeId,
-        uint256 yearlyDenominationSalary
+        uint256 denominationSalary
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(employees[employeeId].accountAddress, yearlyDenominationSalary, 0))
+        authP(ADD_EMPLOYEE_ROLE, arr(employees[employeeId].accountAddress, denominationSalary, 0))
     {
         /* check that employee exists */
         require(employeeIds[employees[employeeId].accountAddress] != 0);
 
-        employees[employeeId].denominationTokenSalary = yearlyDenominationSalary / SECONDS_IN_A_YEAR;
+        employees[employeeId].denominationTokenSalary = denominationSalary;
     }
 
     /**
      * @dev Remove employee from Payroll
-     * @notice Updates also global Payroll salary sum
      * @param employeeId Employee's identifier
      */
     function removeEmployee(uint128 employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
@@ -324,7 +320,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Return all Employee's important info
      * @param employeeId Employee's identifier
      * @return Employee's address to receive payments
-     * @return Employee's annual salary
+     * @return Employee's annual salary, per second in denomination Token
      * @return Employee's name
      * @return Employee's last call to payment distribution date
      * @return Employee's last payment received date
@@ -334,7 +330,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         view
         returns (
             address accountAddress,
-            uint256 yearlyDenominationSalary,
+            uint256 denominationSalary,
             string name,
             uint256 lastPayroll
         )
@@ -342,7 +338,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         Employee storage employee = employees[employeeId];
 
         accountAddress = employee.accountAddress;
-        yearlyDenominationSalary = employee.denominationTokenSalary.mul(SECONDS_IN_A_YEAR);
+        denominationSalary = employee.denominationTokenSalary;
         name = employee.name;
         lastPayroll = employee.lastPayroll;
     }
@@ -388,7 +384,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     function _addEmployee(
         address accountAddress,
-        uint256 initialYearlyDenominationSalary,
+        uint256 initialDenominationSalary,
         string name,
         uint256 startDate
     )
@@ -400,7 +396,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint128 employeeId = nextEmployee;
         employees[employeeId] = Employee({
             accountAddress: accountAddress,
-            denominationTokenSalary: initialYearlyDenominationSalary / SECONDS_IN_A_YEAR,
+            denominationTokenSalary: initialDenominationSalary,
             lastPayroll: startDate,
             name: name
         });
@@ -409,7 +405,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         AddEmployee(
             employeeId,
             accountAddress,
-            initialYearlyDenominationSalary,
+            initialDenominationSalary,
             name,
             startDate
         );

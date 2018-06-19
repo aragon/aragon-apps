@@ -28,11 +28,11 @@ contract('Payroll', function(accounts) {
   let employee1_2 = accounts[4];
   let unused_account = accounts[7];
   let total_salary = 0;
-  let salary1_1 = (new web3.BigNumber(100000)).times(USD_PRECISION);
-  let salary1_2 = (new web3.BigNumber(110000)).times(USD_PRECISION);
+  let salary1_1 = (new web3.BigNumber(100000)).times(USD_PRECISION).dividedToIntegerBy(SECONDS_IN_A_YEAR);
+  let salary1_2 = (new web3.BigNumber(110000)).times(USD_PRECISION).dividedToIntegerBy(SECONDS_IN_A_YEAR);
   let salary1 = salary1_1;
-  let salary2_1 = (new web3.BigNumber(120000)).times(USD_PRECISION);
-  let salary2_2 = (new web3.BigNumber(125000)).times(USD_PRECISION);
+  let salary2_1 = (new web3.BigNumber(120000)).times(USD_PRECISION).dividedToIntegerBy(SECONDS_IN_A_YEAR);
+  let salary2_2 = (new web3.BigNumber(125000)).times(USD_PRECISION).dividedToIntegerBy(SECONDS_IN_A_YEAR);
   let salary2 = salary2_1;
   let usdToken;
   let erc20Token1;
@@ -128,10 +128,6 @@ contract('Payroll', function(accounts) {
     });
   });
 
-  const convertAndRoundSalary = function (a) {
-    return a.dividedToIntegerBy(SECONDS_IN_A_YEAR).times(SECONDS_IN_A_YEAR);
-  };
-
   it("adds employee", async () => {
     let name = '';
     let employeeId = 1;
@@ -139,7 +135,7 @@ contract('Payroll', function(accounts) {
     salary1 = salary1_1;
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee1_1, "Employee account doesn't match");
-    assert.equal(employee[1].toString(), convertAndRoundSalary(salary1_1).toString(), "Employee salary doesn't match");
+    assert.equal(employee[1].toString(), salary1_1.toString(), "Employee salary doesn't match");
     assert.equal(employee[2], name, "Employee name doesn't match");
   });
 
@@ -156,7 +152,7 @@ contract('Payroll', function(accounts) {
     salary2 = salary2_1;
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee2, "Employee account doesn't match");
-    assert.equal(employee[1].toString(), convertAndRoundSalary(salary2_1).toString(), "Employee salary doesn't match");
+    assert.equal(employee[1].toString(), salary2_1.toString(), "Employee salary doesn't match");
     assert.equal(employee[2], name, "Employee name doesn't match");
   });
 
@@ -180,7 +176,7 @@ contract('Payroll', function(accounts) {
     salary2 = salary2_1;
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee2, "Employee account doesn't match");
-    assert.equal(employee[1].toString(), convertAndRoundSalary(salary2_1).toString(), "Employee salary doesn't match");
+    assert.equal(employee[1].toString(), salary2_1.toString(), "Employee salary doesn't match");
     assert.equal(employee[2], name, "Employee name doesn't match");
   });
 
@@ -189,7 +185,7 @@ contract('Payroll', function(accounts) {
     await payroll.determineAllocation([usdToken.address], [100], {from: employee2});
     let initialBalance = await usdToken.balanceOf(employee2);
     let timePassed = await getTimePassed(employeeId);
-    let owed = salary2.dividedToIntegerBy(SECONDS_IN_A_YEAR).times(timePassed);
+    let owed = salary2.times(timePassed);
     await payroll.removeEmployee(employeeId);
     salary2 = 0;
     let finalBalance = await usdToken.balanceOf(employee2);
@@ -209,7 +205,7 @@ contract('Payroll', function(accounts) {
     let transaction = await payroll.addEmployeeWithNameAndStartDate(employee2, salary2_2, name, Math.floor((new Date()).getTime() / 1000) - 2628600);
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee2, "Employee account doesn't match");
-    assert.equal(employee[1].toString(), convertAndRoundSalary(salary2_2).toString(), "Employee salary doesn't match");
+    assert.equal(employee[1].toString(), salary2_2.toString(), "Employee salary doesn't match");
     assert.equal(employee[2], name, "Employee name doesn't match");
     salary2 = salary2_2;
   });
@@ -219,7 +215,7 @@ contract('Payroll', function(accounts) {
     await payroll.setEmployeeSalary(employeeId, salary1_2);
     salary1 = salary1_2;
     let employee = await payroll.getEmployee(employeeId);
-    assert.equal(employee[1].toString(), convertAndRoundSalary(salary1_2).toString(), "Salary doesn't match");
+    assert.equal(employee[1].toString(), salary1_2.toString(), "Salary doesn't match");
   });
 
   it("fails modifying non-existent employee salary", async () => {
@@ -501,7 +497,7 @@ contract('Payroll', function(accounts) {
     };
 
     const checkTokenBalances = async (token, salary, timePassed, initialBalancePayroll, initialBalanceEmployee, exchangeRate, allocation, name='') => {
-      let payed = salary.dividedToIntegerBy(SECONDS_IN_A_YEAR).times(exchangeRate).times(allocation).times(timePassed).dividedToIntegerBy(100).dividedToIntegerBy(ONE)
+      let payed = salary.times(exchangeRate).times(allocation).times(timePassed).dividedToIntegerBy(100).dividedToIntegerBy(ONE)
       let expectedPayroll = initialBalancePayroll.minus(payed);
       let expectedEmployee = initialBalanceEmployee.plus(payed);
       let newBalancePayroll;
@@ -520,7 +516,7 @@ contract('Payroll', function(accounts) {
       let txFee = gasPrice.times(transaction.receipt.cumulativeGasUsed);
       let newEthPayroll = await getBalance(vault.address);
       let newEthEmployee2 = await getBalance(employee2);
-      let payed = salary2.dividedToIntegerBy(SECONDS_IN_A_YEAR).times(etherExchangeRate).times(ethAllocation).times(timePassed).dividedToIntegerBy(100).dividedToIntegerBy(ONE)
+      let payed = salary2.times(etherExchangeRate).times(ethAllocation).times(timePassed).dividedToIntegerBy(100).dividedToIntegerBy(ONE)
       let expectedPayroll = initialEthPayroll.minus(payed);
       let expectedEmployee2 = initialEthEmployee2.plus(payed).minus(txFee);
       //logPayroll(salary2, initialEthPayroll, initialEthEmployee2, payed, newEthPayroll, newEthEmployee2, expectedPayroll, expectedEmployee2, "ETH");
