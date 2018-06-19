@@ -131,7 +131,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint256 initialYearlyDenominationSalary
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(initialYearlyDenominationSalary, getTimestamp()))
+        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialYearlyDenominationSalary, getTimestamp()))
     {
         _addEmployee(
             accountAddress,
@@ -154,7 +154,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         string name
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(initialYearlyDenominationSalary, getTimestamp()))
+        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialYearlyDenominationSalary, getTimestamp()))
     {
         _addEmployee(
             accountAddress,
@@ -180,7 +180,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint256 startDate
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(initialYearlyDenominationSalary, startDate))
+        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialYearlyDenominationSalary, startDate))
     {
         _addEmployee(
             accountAddress,
@@ -201,7 +201,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint256 yearlyDenominationSalary
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(yearlyDenominationSalary, 0))
+        authP(ADD_EMPLOYEE_ROLE, arr(employees[employeeId].accountAddress, yearlyDenominationSalary, 0))
     {
         /* check that employee exists */
         require(employeeIds[employees[employeeId].accountAddress] != 0);
