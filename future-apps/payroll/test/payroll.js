@@ -66,8 +66,7 @@ contract('Payroll', function(accounts) {
   const getTimePassed = async (employeeId) => {
     let employee = await payroll.getEmployee(employeeId);
     let currentTime = await payroll.getTimestampPublic();
-    let timePassed = currentTime - employee[3];
-    return new Promise(resolve => {resolve(timePassed);});
+    return currentTime - employee[3];
   };
 
   before(async () => {
@@ -346,10 +345,10 @@ contract('Payroll', function(accounts) {
     const getTxFee = async (transaction) => {
       let tx = await getTransaction(transaction.tx);
       let gasPrice = new web3.BigNumber(tx.gasPrice);
-      let txFee = gasPrice.times(transaction.receipt.cumulativeGasUsed);
 
-      return new Promise(resolve => {resolve(txFee);});
+      return gasPrice.times(transaction.receipt.cumulativeGasUsed);
     };
+
     const addInitialBalance = async (token, name="", generate=true, decimals=18) => {
       let txFee = new web3.BigNumber(0);
       // add some tokens to Payroll (it shouldn't happen, but to test it)
@@ -366,7 +365,7 @@ contract('Payroll', function(accounts) {
       vaultTokenBalances[token.address] = vaultBalance;
       payrollTokenBalances[token.address] = payrollBalance;
 
-      return new Promise(resolve => {resolve(txFee);});
+      return txFee;
     };
     const checkFinalBalance = async (token, name="") => {
       let vaultBalance = await token.balanceOf(vault.address);
