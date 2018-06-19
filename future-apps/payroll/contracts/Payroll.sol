@@ -256,9 +256,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     /**
      * @dev Set token distribution for payments to an employee (the caller)
      * @notice Set token distribution for payments to an employee (the caller).
-     *         Only callable once every 6 months
      * @param tokens Array with the tokens to receive, they must belong to allowed tokens for employee
-     * @param distribution Array (correlated to tokens) with the proportions (integers over 100)
+     * @param distribution Array (correlated to tokens) with the proportions (integers summing to 100)
      */
     function determineAllocation(address[] tokens, uint8[] distribution) external {
         Employee storage employee = employees[employeeIds[msg.sender]];
@@ -268,10 +267,14 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         // check arrays match
         require(tokens.length == distribution.length);
 
+        // delete previous allocation
+        for (uint32 j = 0; j < allowedTokensArray.length; j++) {
+            delete employee.allocation[allowedTokensArray[j]];
+        }
+
         // check distribution is right
         uint8 sum = 0;
-        uint32 i;
-        for (i = 0; i < distribution.length; i++) {
+        for (uint32 i = 0; i < distribution.length; i++) {
             // check token is allowed
             require(allowedTokens[tokens[i]]);
             // set distribution
