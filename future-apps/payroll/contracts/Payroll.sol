@@ -7,6 +7,7 @@ import "@aragon/os/contracts/common/IForwarder.sol";
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
+import "@aragon/os/contracts/lib/zeppelin/math/SafeMath8.sol";
 
 import "@aragon/ppf-contracts/contracts/IFeed.sol";
 
@@ -19,6 +20,7 @@ import "@aragon/apps-finance/contracts/Finance.sol";
 contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (removes pure and interface doesnt match)
     using SafeMath for uint256;
     using SafeMath64 for uint64;
+    using SafeMath8 for uint8;
 
     // kernel roles
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
@@ -281,8 +283,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             require(allowedTokens[tokens[i]]);
             // set distribution
             employee.allocation[tokens[i]] = distribution[i];
-            sum += distribution[i];
-            require(sum >= distribution[i]);
+            sum = sum.add(distribution[i]);
         }
         require(sum == 100);
     }
