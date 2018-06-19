@@ -219,10 +219,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         require(employeeIds[employees[employeeId].accountAddress] != 0);
 
         // Pay owed salary to employee
-        // get time that has gone by (seconds)
-        uint256 time = getTimestamp().sub(employees[employeeId].lastPayroll);
-        if (time > 0)
-            _payTokens(employeeId, time);
+        _payTokens(employeeId);
 
         delete employeeIds[employees[employeeId].accountAddress];
         delete employees[employeeId];
@@ -293,15 +290,9 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         Employee storage employee = employees[employeeIds[msg.sender]];
         // check that employee exists (and matches)
         require(employees[employeeIds[msg.sender]].accountAddress == msg.sender);
-        // get time that has gone by (seconds)
-        uint256 time = getTimestamp().sub(employees[employeeIds[msg.sender]].lastPayroll);
-        require(time > 0);
 
-        bool somethingPaid = _payTokens(employeeIds[msg.sender], time);
+        bool somethingPaid = _payTokens(employeeIds[msg.sender]);
         require(somethingPaid);
-
-        // finally update last payroll date
-        employee.lastPayroll = getTimestamp();
     }
 
     /**
@@ -438,11 +429,17 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     /**
      * @dev Loop over tokens and send Payroll to employee
      * @param employeeId Id of employee receiving payroll
-     * @param time Time owed to employee (since last payroll)
      * @return True if something has been paid
      */
-    function _payTokens(uint128 employeeId, uint256 time) internal returns (bool somethingPaid) {
+    function _payTokens(uint128 employeeId) internal returns (bool somethingPaid) {
+        // get time that has gone by (seconds)
+        uint256 time = getTimestamp().sub(employees[employeeId].lastPayroll);
+        if (time == 0) {
+            return false;
+        }
         Employee storage employee = employees[employeeId];
+        // update last payroll date first thing (to avoid re-entrancy)
+        employee.lastPayroll = getTimestamp();
         // loop over allowed tokens
         somethingPaid = false;
         for (uint32 i = 0; i < allowedTokensArray.length; i++) {
