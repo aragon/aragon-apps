@@ -319,7 +319,36 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     }
 
     /**
-     * @dev Return all important info too through employees mapping
+     * @dev Return all Employee's important info
+     * @notice Return all Employee's important info
+     * @param accountAddress Employee's address to receive payments
+     * @return Employee's identifier
+     * @return Employee's annual salary, per second in denomination Token
+     * @return Employee's name
+     * @return Employee's last call to payment distribution date
+     * @return Employee's last payment received date
+     */
+    function getEmployeeByAddress(address accountAddress)
+        external
+        view
+        returns (
+            uint128 employeeId,
+            uint256 denominationSalary,
+            string name,
+            uint256 lastPayroll
+        )
+    {
+        employeeId = employeeIds[accountAddress];
+
+        Employee memory employee = employees[employeeId];
+
+        denominationSalary = employee.denominationTokenSalary;
+        name = employee.name;
+        lastPayroll = employee.lastPayroll;
+    }
+
+    /**
+     * @dev Return all Employee's important info
      * @notice Return all Employee's important info
      * @param employeeId Employee's identifier
      * @return Employee's address to receive payments
@@ -338,7 +367,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             uint256 lastPayroll
         )
     {
-        Employee storage employee = employees[employeeId];
+        Employee memory employee = employees[employeeId];
 
         accountAddress = employee.accountAddress;
         denominationSalary = employee.denominationTokenSalary;
@@ -497,5 +526,4 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     }
 
     function getTimestamp() internal view returns (uint256) { return now; }
-
 }
