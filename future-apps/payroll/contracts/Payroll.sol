@@ -474,7 +474,6 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         // update last payroll date first thing (to avoid re-entrancy)
         employee.lastPayroll = getTimestamp();
         // loop over allowed tokens
-        somethingPaid = false;
         for (uint32 i = 0; i < allowedTokensArray.length; i++) {
             address token = allowedTokensArray[i];
             if (employee.allocation[token] == 0)
