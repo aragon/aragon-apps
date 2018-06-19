@@ -61,6 +61,18 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     event SetPriceFeed(address feed);
     event SetRateExpiryTime(uint64 time);
 
+    modifier employeeExists(uint128 employeeId) {
+        /* check that employee exists */
+        require(employeeIds[employees[employeeId].accountAddress] != 0);
+        _;
+    }
+
+    modifier employeeMatches {
+        // check that employee exists (and matches)
+        require(employees[employeeIds[msg.sender]].accountAddress == msg.sender);
+        _;
+    }
+
     /**
      * @notice Initialize Payroll app for `_finance`. Set ETH and Denomination tokens
      * @param _finance Address of the finance Payroll will rely on (non changeable)
@@ -197,12 +209,10 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint128 employeeId,
         uint256 denominationSalary
     )
+        employeeExists(employeeId)
         external
         authP(ADD_EMPLOYEE_ROLE, arr(employees[employeeId].accountAddress, denominationSalary, 0))
     {
-        /* check that employee exists */
-        require(employeeIds[employees[employeeId].accountAddress] != 0);
-
         employees[employeeId].denominationTokenSalary = denominationSalary;
     }
 
@@ -210,10 +220,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @dev Remove employee from Payroll
      * @param employeeId Employee's identifier
      */
-    function removeEmployee(uint128 employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
-        /* check that employee exists */
-        require(employeeIds[employees[employeeId].accountAddress] != 0);
-
+    function removeEmployee(uint128 employeeId) employeeExists(employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
         // Pay owed salary to employee
         _payTokens(employeeId);
 
@@ -255,10 +262,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @param tokens Array with the tokens to receive, they must belong to allowed tokens for employee
      * @param distribution Array (correlated to tokens) with the proportions (integers summing to 100)
      */
-    function determineAllocation(address[] tokens, uint8[] distribution) external {
+    function determineAllocation(address[] tokens, uint8[] distribution) employeeMatches external {
         Employee storage employee = employees[employeeIds[msg.sender]];
-        // check that employee exists (and matches)
-        require(employee.accountAddress == msg.sender);
 
         // check arrays match
         require(tokens.length == distribution.length);
@@ -285,10 +290,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @dev To withdraw payment by employee (the caller). The amount owed since last call will be transferred.
      * @notice To withdraw payment by employee (the caller). The amount owed since last call will be transferred.
      */
-    function payday() external {
+    function payday() employeeMatches external {
         Employee storage employee = employees[employeeIds[msg.sender]];
-        // check that employee exists (and matches)
-        require(employees[employeeIds[msg.sender]].accountAddress == msg.sender);
 
         bool somethingPaid = _payTokens(employeeIds[msg.sender]);
         require(somethingPaid);
@@ -299,16 +302,14 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Change employee account address
      * @param newAddress New address to receive payments
      */
-    function changeAddressByEmployee(address newAddress) external {
+    function changeAddressByEmployee(address newAddress) employeeMatches external {
         // check that account doesn't exist
         require(employeeIds[newAddress] == 0);
         // check it's non-null address
         require(newAddress != address(0));
-        // check that employee exists (and matches)
+
         uint128 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
-        // check that employee exists (and matches)
-        require(employee.accountAddress == msg.sender);
 
         employee.accountAddress = newAddress;
         employeeIds[newAddress] = employeeId;
