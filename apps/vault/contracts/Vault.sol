@@ -13,8 +13,8 @@ contract Vault is AragonApp {
     event Deposit(address indexed token, address indexed sender, uint256 amount);
 
     /**
-    * @dev When used behind an AppProxy, this fallback is never executed
-    *      as it will be intercepted by the Proxy (see aragonOS#281)
+    * @dev On a normal send() or transfer() this fallback is never executed as it will be
+    * intercepted by the Proxy (see aragonOS#281)
     */
     function () payable external {
         require(msg.data.length == 0);
@@ -30,7 +30,7 @@ contract Vault is AragonApp {
     function deposit(address token, address from, uint256 value) payable public {
         require(value > 0);
         require(msg.sender == from);
-        
+
         if (token == ETH) {
             // Deposit is implicit in this case
             require(msg.value == value);
