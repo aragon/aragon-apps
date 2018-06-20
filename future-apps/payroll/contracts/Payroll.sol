@@ -50,6 +50,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     mapping(address => bool) private allowedTokens;
     address[] private allowedTokensArray;
 
+    event AddAllowedToken(address token);
     event AddEmployee(
         uint128 indexed employeeId,
         address indexed accountAddress,
@@ -57,8 +58,10 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         string name,
         uint256 startDate
     );
-
-    event Fund(address indexed sender, address indexed token, uint amount, uint balance, bytes data);
+    event SetEmployeeSalary(uint128 indexed employeeId, uint256 denominationSalary);
+    event RemoveEmployee(uint128 indexed employeeId, address accountAddress);
+    event ChangeAddressByEmployee(uint128 indexed employeeId, address oldAddress, address newAddress);
+    event DetermineAllocation(uint128 indexed employeeId, address indexed employee);
     event SendPayroll(address indexed employee, address indexed token, uint amount);
     event SetPriceFeed(address feed);
     event SetRateExpiryTime(uint64 time);
@@ -125,6 +128,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         require(!allowedTokens[_allowedToken]);
         allowedTokens[_allowedToken] = true;
         allowedTokensArray.push(_allowedToken);
+
+        AddAllowedToken(_allowedToken);
     }
 
     /*
@@ -218,6 +223,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         authP(ADD_EMPLOYEE_ROLE, arr(employees[employeeId].accountAddress, denominationSalary, 0))
     {
         employees[employeeId].denominationTokenSalary = denominationSalary;
+
+        SetEmployeeSalary(employeeId, denominationSalary);
     }
 
     /**
@@ -228,6 +235,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     function removeEmployee(uint128 employeeId) isInitialized employeeExists(employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
         // Pay owed salary to employee
         _payTokens(employeeId);
+
+        RemoveEmployee(employeeId, employees[employeeId].accountAddress);
 
         delete employeeIds[employees[employeeId].accountAddress];
         delete employees[employeeId];
@@ -288,6 +297,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             sum = sum.add(distribution[i]);
         }
         require(sum == 100);
+
+        DetermineAllocation(employeeIds[msg.sender], msg.sender);
     }
 
     /**
@@ -315,6 +326,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint128 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
 
+        ChangeAddressByEmployee(employeeId, employee.accountAddress, newAddress);
         employee.accountAddress = newAddress;
         employeeIds[newAddress] = employeeId;
         delete employeeIds[msg.sender];
