@@ -8,7 +8,7 @@ import SidePanelContent from "./components/SidePanelContent";
 import TeamPayroll from "./components/TeamPayroll";
 import MyPayroll from "./components/MyPayroll";
 import SidePanelEmpAdd from "./components/SidePanelEmpAdd";
-
+import EmployeeDetails from "./components/EmployeeDetails";
 export default class App extends React.Component {
   app = new Aragon(new providers.WindowMessage(window.parent));
   state$ = this.app.state();
@@ -18,7 +18,9 @@ export default class App extends React.Component {
     empSliderOpen: false,
     activeItem: 0,
     requestSalary: false,
-    teamPayrollTab: false
+    teamPayrollTab: false,
+    employeeDetails: false,
+    noHeader: false
   };
 
   handleNewTransferOpen = () => {
@@ -42,42 +44,71 @@ export default class App extends React.Component {
     this.setState({ empSliderOpen: value });
   };
 
-  AppBarButtonClicked = () => {
+  appbarButtonClicked = () => {
     if (this.state.teamPayrollTab) {
       this.handleEmpSlider();
     }
     return;
   };
 
+  handleEmployeeDetailsChange = () => {
+    let value = !this.state.employeeDetails;
+    
+
+    this.setState({ employeeDetails: value });
+  };
+
   render() {
-    let { newTransferOpened, requestSalary, teamPayrollTab, empSliderOpen } = this.state;
+    let { newTransferOpened, requestSalary, teamPayrollTab, empSliderOpen, employeeDetails, noHeader } = this.state;
     return (
       <AragonApp publicUrl="/aragon-ui">
-        <Layout>
-          <Layout.FixedHeader>
-            <AppBarRedux
-              title="Payroll"
-              endContent={
-                <Button onClick={this.AppBarButtonClicked} mode="strong">
-                  {teamPayrollTab ? "Add new employee" : "Request salary"}
-                </Button>
-              }
-            />
-            <TabGrid>
-              <Tabs teamPayrollTab={!teamPayrollTab} onClick={() => this.handleTabChange(false)}>
-                <div>My payroll</div>
-              </Tabs>
-              <Tabs teamPayrollTab={teamPayrollTab} onClick={() => this.handleTabChange(true)}>
-                <div>Team payroll</div>
-              </Tabs>
-            </TabGrid>
-          </Layout.FixedHeader>
-          {teamPayrollTab ? (
-            <TeamPayroll handleNewTransferOpen={this.handleNewTransferOpen} />
-          ) : (
-            <MyPayroll handleNewTransferOpen={this.handleNewTransferOpen} />
-          )}
-        </Layout>
+        {employeeDetails ? (
+          <Layout>
+            <Layout.FixedHeader>
+              <AppBar
+                title="Payroll"
+                endContent={
+                  <Button onClick={this.handleEmployeeDetailsChange} mode="strong">
+                    {"Back"}
+                  </Button>
+                }
+              >
+                Employee details
+              </AppBar>
+            </Layout.FixedHeader>
+            <EmployeeDetails noHeader={true} />
+          </Layout>
+        ) : (
+          <Layout>
+            <Layout.FixedHeader>
+              <AppBarRedux
+                title="Payroll"
+                endContent={
+                  <Button onClick={this.appbarButtonClicked} mode="strong">
+                    {teamPayrollTab ? "Add new employee" : "Request salary"}
+                  </Button>
+                }
+              />
+              <TabGrid>
+                <Tabs teamPayrollTab={!teamPayrollTab} onClick={() => this.handleTabChange(false)}>
+                  <div>My payroll</div>
+                </Tabs>
+                <Tabs teamPayrollTab={teamPayrollTab} onClick={() => this.handleTabChange(true)}>
+                  <div>Team payroll</div>
+                </Tabs>
+              </TabGrid>
+            </Layout.FixedHeader>
+            {teamPayrollTab ? (
+              <TeamPayroll
+              
+                handleNewTransferOpen={this.handleNewTransferOpen}
+                handleEmployeeDetailsChange={this.handleEmployeeDetailsChange}
+              />
+            ) : (
+              <MyPayroll handleNewTransferOpen={this.handleNewTransferOpen} />
+            )}
+          </Layout>
+        )}
 
         <SidePanel
           opened={newTransferOpened}

@@ -28,7 +28,7 @@ class EmployeeItem extends React.Component {
 
     console.log("props", this.props);
     return (
-      <TableRow>
+      <TableRow onClick={this.props.handleEmployeeDetailsChange}>
         <NoWrapCell>
           <TextOverflow>{name}</TextOverflow>
         </NoWrapCell>

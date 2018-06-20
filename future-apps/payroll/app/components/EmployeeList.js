@@ -66,19 +66,21 @@ class EmployeeList extends React.Component {
     return (
       <SpacedBlock>
         <section>
-          <Header>
-            <Title>Employees</Title>
-            <div>
-              <label>
-                <Label>STATUS:</Label>
-                <DropDown items={["All", ...symbols]} active={selectedToken} onChange={this.handleTokenChange} />
-              </label>
-              <label>
-                <Label>ROLE TYPE:</Label>
-                <DropDown items={["All", ...symbols]} active={selectedToken} onChange={this.handleTokenChange} />
-              </label>
-            </div>
-          </Header>
+          {this.props.noHeader ? <div/> : (
+            <Header>
+              <Title>Employees</Title>
+              <div>
+                <label>
+                  <Label>STATUS:</Label>
+                  <DropDown items={["All", ...symbols]} active={selectedToken} onChange={this.handleTokenChange} />
+                </label>
+                <label>
+                  <Label>ROLE TYPE:</Label>
+                  <DropDown items={["All", ...symbols]} active={selectedToken} onChange={this.handleTokenChange} />
+                </label>
+              </div>
+            </Header>
+          )}
           {filteredTransfers.length === 0 ? (
             <NoTransfers>
               <p>
@@ -110,12 +112,7 @@ class EmployeeList extends React.Component {
                     // Sort by date descending
                     compareDesc(dateLeft, dateRight)
                   )
-                  .map(transfer => (
-                    <EmployeeItem
-                      key={transfer.tx}                     
-                      {...transfer}
-                    />
-                  ))}
+                  .map(transfer => <EmployeeItem handleEmployeeDetailsChange={this.props.handleEmployeeDetailsChange} key={transfer.tx} {...transfer} />)}
               </FixedTable>
               {displayedTransfers < filteredTransfers.length && (
                 <Footer>
@@ -132,9 +129,7 @@ class EmployeeList extends React.Component {
   }
 }
 
-
 export default EmployeeList;
-
 
 const Header = styled.div`
   display: flex;

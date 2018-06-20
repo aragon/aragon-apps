@@ -1,5 +1,5 @@
 import React from "react";
-import {SidePanel } from "@aragon/ui";
+import { SidePanel } from "@aragon/ui";
 import styled from "styled-components";
 import EmployeesList from "./EmployeeList";
 import KeyStats from "./KeyStats";
@@ -8,7 +8,7 @@ import "../styles/datepicker.css";
 import "react-dates/initialize";
 import SidePanelContent from "./SidePanelContent";
 import TotalPayroll from "./TotalPayroll";
-import AddEmpSlider from './AddEmpSlider'
+import AddEmpSlider from "./AddEmpSlider";
 
 const transactions = [
   {
@@ -43,7 +43,7 @@ const transactions = [
 export class TeamPayroll extends React.Component {
   state = {
     newTransferOpened: false,
-    requestSalary: false,
+    requestSalary: false
   };
 
   render() {
@@ -57,10 +57,9 @@ export class TeamPayroll extends React.Component {
             <TotalPayroll numberOfEmployees={9} avgSalary={80000.0} monthlyBurnRate={59994.94} totalPaidYr={11989.88} />
 
             {/* Previous salary */}
-            <EmployeesList transactions={transactions} />
+            <EmployeesList transactions={transactions} handleEmployeeDetailsChange={this.props.handleEmployeeDetailsChange} />
           </Content>
         </Layout.ScrollWrapper>
-
 
         <SideBarHolder>
           <KeyStats
