@@ -210,7 +210,7 @@ contract Staking is ERCStaking, AragonApp {
     MovedTokens(from, to, amount);
   }
 
-  function unlockAndMoveTokens(uint256 lockId, address from, address to, uint256 amount) external {
+  function unlockAndMoveTokens(address from, uint256 lockId, address to, uint256 amount) external {
     unlockPartial(from, lockId, amount);
     moveTokens(from, to, amount);
   }

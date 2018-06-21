@@ -408,7 +408,7 @@ contract('Staking app', accounts => {
       const lockId = getEvent(r, 'Locked', 'lockId')
 
       // unlock
-      await app.unlockAndMoveTokens(lockId, owner, other, amount / 4, { from: other })
+      await app.unlockAndMoveTokens(owner, lockId, other, amount / 4, { from: other })
 
       assert.equal((await app.unlockedBalanceOf.call(owner)).valueOf(), amount / 2, "Unlocked owner balance should match")
       assert.equal((await app.locksCount.call(owner)).valueOf(), 1, "there should still be 1 lock")
