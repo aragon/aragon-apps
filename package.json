@@ -1,6 +1,7 @@
 {
   "name": "@aragon/monorepo-apps",
   "version": "1.0.0",
+  "private": true,
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "contributors": [
     "Jorge Izquierdo <jorge@aragon.one>",
