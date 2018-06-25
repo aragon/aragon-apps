@@ -2,7 +2,7 @@
   "name": "@aragon/apps-staking",
   "version": "1.0.0",
   "description": "Generic staking primitive",
-  "main": "truffle-config.js",
+  "main": "truffle.js",
   "scripts": {
     "lint": "solium --dir ./contracts",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:dev",

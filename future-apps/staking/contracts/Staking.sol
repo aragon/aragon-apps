@@ -1,6 +1,7 @@
 pragma solidity 0.4.18;
 
-import "./ERCStaking.sol";
+import "./interfaces/ERCStaking.sol";
+import "./interfaces/IStaking.sol";
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
@@ -8,7 +9,7 @@ import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 
 
-contract Staking is ERCStaking, AragonApp {
+contract Staking is ERCStaking, IStaking, AragonApp {
   using SafeMath for uint256;
 
   uint64 constant public MAX_UINT64 = uint64(-1);
