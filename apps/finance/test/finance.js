@@ -2,8 +2,6 @@ const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/asse
 const getBalance = require('@aragon/test-helpers/balance')(web3)
 
 const Vault = artifacts.require('Vault')
-const ERC20Connector = artifacts.require('ERC20Connector')
-const ETHConnector = artifacts.require('ETHConnector')
 const Finance = artifacts.require('FinanceMock')
 const MiniMeToken = artifacts.require('MiniMeToken')
 
@@ -18,19 +16,12 @@ contract('Finance App', accounts => {
 
     beforeEach(async () => {
         vault = await Vault.new()
-        const ethConnector = await ETHConnector.new()
-        const erc20Connector = await ERC20Connector.new()
-        await vault.initialize(erc20Connector.address, ethConnector.address)
-
-
         token1 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token1.generateTokens(vault.address, 100)
         await token1.generateTokens(accounts[0], 10)
-
         token2 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token2.generateTokens(vault.address, 200)
-
-        await ETHConnector.at(vault.address).deposit(ETH, accounts[0], 400, [0], { value: 400 });
+        await vault.deposit(ETH, accounts[0], 400, { value: 400 });
 
         app = await Finance.new()
         await app.mock_setTimestamp(1)
@@ -110,7 +101,7 @@ contract('Finance App', accounts => {
         const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await app.getTransaction(1)
 
         // vault has 400 wei initially
-        assert.equal(await ETHConnector.at(vault.address).balance(ETH), 400 + 10, 'deposited ETH must be in vault')
+        assert.equal(await vault.balance(ETH), 400 + 10, 'deposited ETH must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, 10, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')

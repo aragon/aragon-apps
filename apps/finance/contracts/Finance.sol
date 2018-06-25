@@ -10,7 +10,7 @@ import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
 
-import "@aragon/apps-vault/contracts/IVaultConnector.sol";
+import "@aragon/apps-vault/contracts/Vault.sol";
 
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
@@ -78,7 +78,7 @@ contract Finance is AragonApp {
         mapping (address => bool) hasBudget;
     }
 
-    IVaultConnector public vault;
+    Vault public vault;
 
     Payment[] payments; // first index is 1
     Transaction[] transactions; // first index is 1
@@ -112,7 +112,7 @@ contract Finance is AragonApp {
             this.balance,
             "Ether transfer to Finance app"
         );
-        vault.deposit.value(this.balance)(ETH, msg.sender, this.balance, new bytes(0));
+        vault.deposit.value(this.balance)(ETH, this, this.balance);
     }
 
     /**
@@ -120,7 +120,7 @@ contract Finance is AragonApp {
     * @param _vault Address of the vault Finance will rely on (non changeable)
     * @param _periodDuration Duration in seconds of each period
     */
-    function initialize(IVaultConnector _vault, uint64 _periodDuration) external onlyInit {
+    function initialize(Vault _vault, uint64 _periodDuration) external onlyInit {
         initialized();
 
         require(_periodDuration >= 1 days);
@@ -156,7 +156,7 @@ contract Finance is AragonApp {
         // and then approve them to vault
         ERC20(_token).approve(address(vault), _amount);
         // finally we can deposit them
-        vault.deposit(_token, this, _amount, new bytes(0));
+        vault.deposit(_token, this, _amount);
     }
 
     /**
@@ -322,7 +322,7 @@ contract Finance is AragonApp {
         // First we approve tokens to vault
         ERC20(_token).approve(address(vault), value);
         // then we can deposit them
-        vault.deposit(_token, this, value, new bytes(0));
+        vault.deposit(_token, this, value);
     }
 
     /**
@@ -514,7 +514,7 @@ contract Finance is AragonApp {
             _reference
         );
 
-        vault.transfer(_token, _receiver, _amount, new bytes(0));
+        vault.transfer(_token, _receiver, _amount);
     }
 
     function _recordIncomingTransaction(
