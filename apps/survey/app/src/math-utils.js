@@ -49,7 +49,7 @@ function highestValueIndex(values) {
     .sort((v1, v2) => v2.value.minus(v1.value))[0].index
 }
 
-// Scale a set of 0 => 1 values to equal `total`.
+// Scale to `total` a set of values summing to 1.
 export function scaleBigNumberValuesSet(
   values = [],
   total = new BigNumber(100)
