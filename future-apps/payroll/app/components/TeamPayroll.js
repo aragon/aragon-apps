@@ -1,44 +1,11 @@
 import React from "react";
-import { SidePanel } from "@aragon/ui";
 import styled from "styled-components";
 import EmployeesList from "./EmployeeList";
 import KeyStats from "./KeyStats";
-
 import "../styles/datepicker.css";
 import "react-dates/initialize";
-import SidePanelContent from "./SidePanelContent";
 import TotalPayroll from "./TotalPayroll";
-import AddEmpSlider from "./AddEmpSlider";
 
-const transactions = [
-  {
-    name: "Miles Davis",
-    startDate: 1526632944,
-    endDate: 1527742944,
-    role: "CEO",
-    salary: 80000,
-    totalPaidYr: 54343.32,
-    tx: 1
-  },
-  {
-    name: "May Davis",
-    startDate: 1526632944,
-    endDate: 1527742944,
-    role: "CFO",
-    salary: 80000,
-    totalPaidYr: 5343.32,
-    tx: 2
-  },
-  {
-    name: "John Davis",
-    startDate: 1526632944,
-    endDate: 1527742944,
-    role: "CZO",
-    salary: 80000,
-    totalPaidYr: 343.32,
-    tx: 3
-  }
-];
 
 export class TeamPayroll extends React.Component {
   state = {
@@ -47,6 +14,7 @@ export class TeamPayroll extends React.Component {
   };
 
   render() {
+    
     let { newTransferOpened, requestSalary, teamPayrollTab } = this.state;
 
     return (
@@ -57,7 +25,7 @@ export class TeamPayroll extends React.Component {
             <TotalPayroll numberOfEmployees={9} avgSalary={80000.0} monthlyBurnRate={59994.94} totalPaidYr={11989.88} />
 
             {/* Previous salary */}
-            <EmployeesList transactions={transactions} handleEmployeeDetailsChange={this.props.handleEmployeeDetailsChange} />
+            <EmployeesList transactions={this.props.transactions} handleEmployeeDetailsChange={this.props.handleEmployeeDetailsChange} />
           </Content>
         </Layout.ScrollWrapper>
 

@@ -186,7 +186,7 @@ const SliderHeader = styled.div`
 
 const TokenInfo = styled.div`
   display: grid;
-  grid-template-columns: 75px auto 70px;
+  grid-template-columns: 80px auto 70px;
   align-self: center;
 
   height: 40px;

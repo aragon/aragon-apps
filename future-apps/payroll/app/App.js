@@ -9,6 +9,9 @@ import TeamPayroll from "./components/TeamPayroll";
 import MyPayroll from "./components/MyPayroll";
 import SidePanelEmpAdd from "./components/SidePanelEmpAdd";
 import EmployeeDetails from "./components/EmployeeDetails";
+import axios from "axios";
+import { Employees } from "./mockData";
+
 export default class App extends React.Component {
   app = new Aragon(new providers.WindowMessage(window.parent));
   state$ = this.app.state();
@@ -22,6 +25,11 @@ export default class App extends React.Component {
     employeeDetails: false,
     noHeader: false
   };
+
+  async componentDidMount() {
+    // let test = await axios.get("http://ppf.aragon.one/api/rates");
+    // console.log("test", test);
+  }
 
   handleNewTransferOpen = () => {
     this.setState({ newTransferOpened: true });
@@ -53,7 +61,6 @@ export default class App extends React.Component {
 
   handleEmployeeDetailsChange = () => {
     let value = !this.state.employeeDetails;
-    
 
     this.setState({ employeeDetails: value });
   };
@@ -62,6 +69,7 @@ export default class App extends React.Component {
     let { newTransferOpened, requestSalary, teamPayrollTab, empSliderOpen, employeeDetails, noHeader } = this.state;
     return (
       <AragonApp publicUrl="/aragon-ui">
+        {/* header display */}
         {employeeDetails ? (
           <Layout>
             <Layout.FixedHeader>
@@ -98,9 +106,11 @@ export default class App extends React.Component {
                 </Tabs>
               </TabGrid>
             </Layout.FixedHeader>
+
+            {/* page content */}
             {teamPayrollTab ? (
               <TeamPayroll
-              
+                transactions={Employees}
                 handleNewTransferOpen={this.handleNewTransferOpen}
                 handleEmployeeDetailsChange={this.handleEmployeeDetailsChange}
               />
@@ -110,6 +120,7 @@ export default class App extends React.Component {
           </Layout>
         )}
 
+        {/* sidepanel content */}
         <SidePanel
           opened={newTransferOpened}
           onClose={this.handleNewTransferClose}

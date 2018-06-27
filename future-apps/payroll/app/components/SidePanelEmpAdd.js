@@ -1,8 +1,6 @@
 import React from "react";
 import styled from "styled-components";
 import { Text, Button, Info, TextInput, IconFundraising, theme, IconTime } from "@aragon/ui";
-import LinkedSliders from "./LinkedSliders";
-import SalaryAllocationInner from "./SalaryAllocationInner";
 import "../styles/singleDatePicker.css";
 import "react-dates/initialize";
 import { SingleDatePicker } from "react-dates";
@@ -17,13 +15,6 @@ class SidePanelEmpAdd extends React.Component {
     return (
       <div>
         <Container>
-          {/* <TextInputHolderFull>
-            <Text smallcaps color="#6D777B">
-              ENTITY
-            </Text>
-            <TextInput placeholder="ivanka.trump.eth" />
-          </TextInputHolderFull> */}
-
           <TextInputHolderFull>
             <Text smallcaps color="#6D777B">
               ENTITY

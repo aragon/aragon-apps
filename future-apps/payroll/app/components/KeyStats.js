@@ -77,8 +77,7 @@ class SideChart extends React.Component {
 
             <SpanTwo>
               <LineChart width={300} height={150} data={data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                <XAxis dataKey="name" />                
-                {/* <CartesianGrid strokeDasharray="3 3" /> */}
+                <XAxis dataKey="name" />                                
                 <Tooltip />
                 <Line
                   type="monotone"
