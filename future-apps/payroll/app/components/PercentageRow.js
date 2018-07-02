@@ -22,7 +22,7 @@ export default PercentageRow;
 
 const Row = styled.div`
   display: flex;
-  margin-bottom: 10px;
+  margin-top: 3px;
 `;
 
 const SliderWrapper = styled.div`

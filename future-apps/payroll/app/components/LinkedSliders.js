@@ -8,7 +8,7 @@ const ROWS_MAX = 7;
 
 class LinkedSliders extends React.Component {
   state = {
-    tokenList: ["ETH", "ANT", "SNT", "WOW", "XHR","DEX", "YYY"],
+    tokenList: ["ETH", "ANT", "SNT", "WOW", "XHR", "DEX", "YYY"],
     distribution: [{ symbol: "ETH", value: 0.2 }, { symbol: "WOW", value: 0.3 }, { symbol: "ANT", value: 0.5 }]
   };
 
@@ -132,11 +132,13 @@ class LinkedSliders extends React.Component {
             let tokenNumber = newTokenList.indexOf(item.symbol);
             return (
               <TokenInfo key={index}>
-                <DropDown
-                  items={newTokenList}
-                  active={tokenNumber}
-                  onChange={e => this.handleChange(e, newTokenList)}
-                />
+                <div>
+                  <DropDown wide
+                    items={newTokenList}
+                    active={tokenNumber}
+                    onChange={e => this.handleChange(e, newTokenList)}
+                  />
+                </div>
 
                 <PercentageRow
                   key={index}
@@ -186,7 +188,7 @@ const SliderHeader = styled.div`
 
 const TokenInfo = styled.div`
   display: grid;
-  grid-template-columns: 80px auto 70px;
+  grid-template-columns: 85px auto 70px;
   align-self: center;
 
   height: 40px;
@@ -213,6 +215,11 @@ const NumberInput = styled(TextInput)`
   width: 70px;
   padding-left: 16px;
   height: 40px;
+`;
+
+const DropDownWidth = styled(DropDown)`
+  width: 100%;
+  display:block;
 `;
 
 export default LinkedSliders;

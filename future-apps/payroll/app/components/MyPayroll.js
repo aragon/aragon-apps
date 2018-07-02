@@ -7,63 +7,10 @@ import SideChart from "./SideChart";
 import AvaliableSalary from "./AvailableSalary";
 import "../styles/datepicker.css";
 import "react-dates/initialize";
-import SidePanelContent from "./SidePanelContent";
-import TotalPayroll from "./TotalPayroll";
 
-const fiveDaysAgo = 1000 * 60 * 60 * 24 * 5;
-
-const transactions = [
-  {
-    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",
-    transactionHash: "0x09d846935dba964e33dcba4cd5",
-    amount: 3.0,
-    date: 1526978544,
-    exchangeRate: 620.23,
-    decimals: 2,
-    entity: "none",
-    isIncoming: true,
-    reference: "none",
-    status: "Pending...",
-    symbol: "ETH"
-  },
-  {
-    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",
-    transactionHash: "0x09d846935dba964ebbdcba4cd5",
-    amount: 32.4747,
-    date: 1526632944,
-    exchangeRate: 620.23,
-    decimals: 4,
-    entity: "none",
-    isIncoming: true,
-    reference: "none",
-    status: "Complete",
-    symbol: "ETH"
-  },
-  {
-    token: "0x00be01CAF657Ff277269f169bd5220A390f791f7",
-    transactionHash: "0x234846935dba964ebbdcba4cd5",
-    amount: 103.1,
-    date: 1522658544,
-    decimals: 4,
-    exchangeRate: 6.23,
-    entity: "none",
-    isIncoming: true,
-    reference: "none",
-    symbol: "ANT",
-    status: "Complete"
-  }
-];
-
-export class MyPayroll extends React.Component {
-  state = {
-    newTransferOpened: false,
-    requestSalary: false,
-    teamPayrollTab: false
-  };
+class MyPayroll extends React.Component {
 
   render() {
-    let { newTransferOpened, requestSalary, teamPayrollTab } = this.state;
-
     return (
       <GridLayout>
         <Layout.ScrollWrapper>
@@ -71,22 +18,17 @@ export class MyPayroll extends React.Component {
 
             {/* Available salary */}
             <AvaliableSalary
-              targetDate={fiveDaysAgo}
-              avaliableBalance={5902.54}
-              totalTransfered={45352.27}
-              yrSalary={80000.0}
+             {...this.props.avaliableSalaryData}
             />
 
             {/* Previous salary */}
-            <Transfers transactions={transactions} />
+            <Transfers transactions={this.props.salaryTransactions} />
             
           </Content>
         </Layout.ScrollWrapper>
         <SideBarHolder>
           <SideChart
-            holders={[{ name: "ETH", balance: 1329 }, { name: "ANT", balance: 3321 }, { name: "SNT", balance: 1131 }]}
-            tokenSupply={10000}
-            tokenDecimalsBase={5}
+            {...this.props.salaryAllocData}
             openSlider={this.props.handleNewTransferOpen}
           />
         </SideBarHolder>              
@@ -95,22 +37,6 @@ export class MyPayroll extends React.Component {
   }
 }
 
-export default MyPayroll;
-
-const Tabs = styled.div`
-  border-bottom: ${props => (props.teamPayrollTab ? "4px solid #1dd9d5" : "")};
-  text-align: center;
-  font-weight: ${props => (props.teamPayrollTab ? "bold" : "400")};
-  height: 30px;
-`;
-
-const TabGrid = styled.div`
-  display: grid;
-  grid-template-columns: auto auto 5fr;
-  padding-left: 31px;
-  background-color: white;
-  grid-gap: 30px;
-`;
 
 const SideBarHolder = styled.div`
   margin-right: 50px;
@@ -146,3 +72,7 @@ Layout.ScrollWrapper = styled.div`
   overflow: auto;
   flex-grow: 1;
 `;
+
+
+export default MyPayroll;
+

@@ -6,36 +6,32 @@ import "../styles/datepicker.css";
 import "react-dates/initialize";
 import TotalPayroll from "./TotalPayroll";
 
-
 export class TeamPayroll extends React.Component {
-  state = {
-    newTransferOpened: false,
-    requestSalary: false
-  };
-
   render() {
-    
-    let { newTransferOpened, requestSalary, teamPayrollTab } = this.state;
+    const { employees, avgSalary, monthlyBurnRate, totalPaidThisYear } = this.props.totalPayroll;
 
     return (
       <GridLayout>
         <Layout.ScrollWrapper>
           <Content>
             {/* Total payroll */}
-            <TotalPayroll numberOfEmployees={9} avgSalary={80000.0} monthlyBurnRate={59994.94} totalPaidYr={11989.88} />
+            <TotalPayroll
+              numberOfEmployees={employees}
+              avgSalary={avgSalary}
+              monthlyBurnRate={monthlyBurnRate}
+              totalPaidYr={totalPaidThisYear}
+            />
 
             {/* Previous salary */}
-            <EmployeesList transactions={this.props.transactions} handleEmployeeDetailsChange={this.props.handleEmployeeDetailsChange} />
+            <EmployeesList
+              transactions={this.props.transactions}
+              handleEmployeeDetailsChange={this.props.handleEmployeeDetailsChange}
+            />
           </Content>
         </Layout.ScrollWrapper>
 
         <SideBarHolder>
-          <KeyStats
-            holders={[{ name: "ETH", balance: 1329 }, { name: "ANT", balance: 3321 }, { name: "SNT", balance: 1131 }]}
-            tokenSupply={10000}
-            tokenDecimalsBase={5}
-            openSlider={this.props.handleNewTransferOpen}
-          />
+          <KeyStats paidSalaries={this.props.paidSalaries} openSlider={this.props.handleNewTransferOpen} />
         </SideBarHolder>
       </GridLayout>
     );
@@ -43,21 +39,6 @@ export class TeamPayroll extends React.Component {
 }
 
 export default TeamPayroll;
-
-const Tabs = styled.div`
-  border-bottom: ${props => (props.teamPayrollTab ? "4px solid #1dd9d5" : "")};
-  text-align: center;
-  font-weight: ${props => (props.teamPayrollTab ? "bold" : "400")};
-  height: 30px;
-`;
-
-const TabGrid = styled.div`
-  display: grid;
-  grid-template-columns: auto auto 5fr;
-  padding-left: 31px;
-  background-color: white;
-  grid-gap: 30px;
-`;
 
 const SideBarHolder = styled.div`
   margin-right: 50px;
@@ -80,10 +61,6 @@ const GridLayout = styled.div`
 `;
 const Content = styled.div`
   padding: 30px;
-`;
-
-Layout.FixedHeader = styled.div`
-  flex-shrink: 0;
 `;
 
 Layout.ScrollWrapper = styled.div`

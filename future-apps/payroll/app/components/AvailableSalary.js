@@ -1,12 +1,12 @@
 import React from "react";
 import styled from "styled-components";
 import { Text, theme, Button, Countdown } from "@aragon/ui";
-import { sciNot } from "../math-utils";
 import { formatTokenAmount } from "../lib/utils";
 
 class AvaliableSalary extends React.Component {
   msToCountDown(timeInMs) {
-    return new Date(Date.now() - timeInMs);
+    console.log("time since", new Date(timeInMs));
+    return new Date(timeInMs);
   }
 
   splitAmount = amount => {
@@ -20,7 +20,7 @@ class AvaliableSalary extends React.Component {
   };
 
   render() {
-    const { avaliableBalance, endDate, totalTransfered, yrSalary, targetDate } = this.props;
+    const { avaliableBalance, totalTransfered, yrSalary, targetDate } = this.props;
 
     return (
       <div>

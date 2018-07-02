@@ -133,16 +133,14 @@ class Transfers extends React.Component {
                   .filter(transfer => {
                     if (!startDate && !endDate) {
                       return true;
-                    } else if (
-                      startDate &&
-                      endDate &&
-                      transfer.date > startDate.unix() &&
-                      transfer.date < endDate.unix()
-                    ) {
+                    }
+                    if (startDate && endDate && transfer.date > startDate.unix() && transfer.date < endDate.unix()) {
                       return true;
-                    } else if (startDate && !endDate && transfer.date > startDate.unix()) {
+                    }
+                    if (startDate && !endDate && transfer.date > startDate.unix()) {
                       return true;
-                    } else if (endDate && !startDate && transfer.date < endDate.unix()) {
+                    }
+                    if (endDate && !startDate && transfer.date < endDate.unix()) {
                       return true;
                     }
                     return false;

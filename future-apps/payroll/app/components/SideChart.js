@@ -1,22 +1,22 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Text, theme, Button } from '@aragon/ui';
-import { sciNot } from '../math-utils';
+import React from "react";
+import styled from "styled-components";
+import { Text, theme, Button } from "@aragon/ui";
+import { sciNot } from "../math-utils";
 
 // Number of digits before "Total Supply" gets wrapped into two lines
 const TOTAL_SUPPLY_CUTOFF_LENGTH = 18;
 const DISTRIBUTION_ITEMS_MAX = 7;
-const DISTRIBUTION_COLORS = ['#000000', '#57666F', '#028CD1', '#21AAE7', '#39CAD0', '#ADE9EC', '#80AEDC'];
+const DISTRIBUTION_COLORS = ["#000000", "#57666F", "#028CD1", "#21AAE7", "#39CAD0", "#ADE9EC", "#80AEDC"];
 
 const showTokenDistro = (accounts, total) => {
   const stakes = accounts.map(({ name, balance }) => ({
     name: name,
-    stake: Math.floor(balance / total * 100)
+    stake: Math.floor((balance / total) * 100)
   }));
 
   stakes.push({
-    name: 'WOW',
-    stake: Math.floor((total - accounts.reduce((total, { balance }) => total + balance, 0)) / total * 100)
+    name: "WOW",
+    stake: Math.floor(((total - accounts.reduce((total, { balance }) => total + balance, 0)) / total) * 100)
   });
 
   return stakes;
@@ -30,7 +30,7 @@ class SideChart extends React.Component {
     const { holders, tokenDecimalsBase, tokenSupply } = this.props;
     const stakes = showTokenDistro(holders, tokenSupply).map((stake, i) => ({
       ...stake,
-      color: DISTRIBUTION_COLORS[i] || '#000000'
+      color: DISTRIBUTION_COLORS[i] || "#000000"
     }));
 
     const adjustedTokenSupply = sciNot(tokenSupply / tokenDecimalsBase, TOTAL_SUPPLY_CUTOFF_LENGTH, { rounding: 5 });
@@ -53,7 +53,7 @@ class SideChart extends React.Component {
                 title={`${name}: ${stake}%`}
                 style={{
                   width: `${stake}%`,
-                  height: '10px',
+                  height: "10px",
                   background: color
                 }}
               />
@@ -73,7 +73,9 @@ class SideChart extends React.Component {
             ))}
           </ul>
           <ButtonHolder>
-            <Button  onClick={this.props.openSlider} mode='secondary'>Edit salary allocation</Button>
+            <Button onClick={this.props.openSlider} mode="secondary">
+              Edit salary allocation
+            </Button>
           </ButtonHolder>
         </Part>
       </Main>

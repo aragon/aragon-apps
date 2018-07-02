@@ -10,7 +10,14 @@ import MyPayroll from "./components/MyPayroll";
 import SidePanelEmpAdd from "./components/SidePanelEmpAdd";
 import EmployeeDetails from "./components/EmployeeDetails";
 import axios from "axios";
-import { Employees } from "./mockData";
+import {
+  employees,
+  totalPayroll,
+  paidSalaries,
+  salaryTransactions,
+  avaliableSalaryData,
+  salaryAllocData
+} from "./mockData";
 
 export default class App extends React.Component {
   app = new Aragon(new providers.WindowMessage(window.parent));
@@ -27,8 +34,8 @@ export default class App extends React.Component {
   };
 
   async componentDidMount() {
-    // let test = await axios.get("http://ppf.aragon.one/api/rates");
-    // console.log("test", test);
+    let test = await axios.get("http://ppf.aragon.one/api/rates");
+    console.log("test", test);
   }
 
   handleNewTransferOpen = () => {
@@ -68,7 +75,7 @@ export default class App extends React.Component {
   render() {
     let { newTransferOpened, requestSalary, teamPayrollTab, empSliderOpen, employeeDetails, noHeader } = this.state;
     return (
-      <AragonApp publicUrl="/aragon-ui">
+      <AragonApp publicUrl="/aragon-ui/">
         {/* header display */}
         {employeeDetails ? (
           <Layout>
@@ -110,12 +117,19 @@ export default class App extends React.Component {
             {/* page content */}
             {teamPayrollTab ? (
               <TeamPayroll
-                transactions={Employees}
+                paidSalaries={paidSalaries}
+                totalPayroll={totalPayroll}
+                transactions={employees}
                 handleNewTransferOpen={this.handleNewTransferOpen}
                 handleEmployeeDetailsChange={this.handleEmployeeDetailsChange}
               />
             ) : (
-              <MyPayroll handleNewTransferOpen={this.handleNewTransferOpen} />
+              <MyPayroll
+                salaryAllocData={salaryAllocData}
+                avaliableSalaryData={avaliableSalaryData}
+                salaryTransactions={salaryTransactions}
+                handleNewTransferOpen={this.handleNewTransferOpen}
+              />
             )}
           </Layout>
         )}

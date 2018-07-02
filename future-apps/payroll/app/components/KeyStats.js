@@ -1,60 +1,22 @@
 import React from "react";
 import styled from "styled-components";
 import { Text, theme, Button, DropDown } from "@aragon/ui";
-import { sciNot } from "../math-utils";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-
-const data = [
-  { name: "SEP", uv: 4000, cost: 2400, amt: 2400 },
-  { name: "NOV", uv: 3000, cost: 1398, amt: 2210 },
-  { name: "JAN", uv: 2000, cost: 9800, amt: 2290 },
-  { name: "MAR", uv: 2780, cost: 3908, amt: 2000 },
-  { name: "MAY", uv: 1890, cost: 4800, amt: 2181 },
-  { name: "JUL", uv: 2390, cost: 3800, amt: 2500 },
-  { name: "SEP", uv: 3490, cost: 4300, amt: 2100 }
-];
-
-// Number of digits before "Total Supply" gets wrapped into two lines
-const TOTAL_SUPPLY_CUTOFF_LENGTH = 18;
-const DISTRIBUTION_ITEMS_MAX = 7;
-const DISTRIBUTION_COLORS = ["#000000", "#57666F", "#028CD1", "#21AAE7", "#39CAD0", "#ADE9EC", "#80AEDC"];
-
-const showTokenDistro = (accounts, total) => {
-  const stakes = accounts.map(({ name, balance }) => ({
-    name: name,
-    stake: Math.floor((balance / total) * 100)
-  }));
-
-  stakes.push({
-    name: "WOW",
-    stake: Math.floor(((total - accounts.reduce((total, { balance }) => total + balance, 0)) / total) * 100)
-  });
-
-  return stakes;
-};
+import { LineChart, Line, XAxis, Tooltip } from "recharts";
 
 class SideChart extends React.Component {
-  static defaultProps = {
-    holders: []
-  };
-
   state = {
     selectedToken: 0
   };
 
-  handleTokenChange = index => {
-    this.setState({ selectedToken: index, displayedTransfers: 10 });
-  };
+  time(){
+    //get all transaction data for this year
+    //give me the lastest month, start with jan
+
+    //create the graph based on these dates
+
+  }
 
   render() {
-    const { holders, tokenDecimalsBase, tokenSupply } = this.props;
-    const stakes = showTokenDistro(holders, tokenSupply).map((stake, i) => ({
-      ...stake,
-      color: DISTRIBUTION_COLORS[i] || "#000000"
-    }));
-
-    const adjustedTokenSupply = sciNot(tokenSupply / tokenDecimalsBase, TOTAL_SUPPLY_CUTOFF_LENGTH, { rounding: 5 });
-
     return (
       <Main>
         <Part>
@@ -69,15 +31,20 @@ class SideChart extends React.Component {
               Paid salaries
             </Text>
 
-            <DropDown
+            {/* <DropDown
               items={["Monthly", "Daily"]}
               active={this.state.selectedToken}
               onChange={this.handleTokenChange}
-            />
+            /> */}
 
             <SpanTwo>
-              <LineChart width={300} height={150} data={data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                <XAxis dataKey="name" />                                
+              <LineChart
+                width={300}
+                height={150}
+                data={this.props.paidSalaries}
+                margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+              >
+                <XAxis dataKey="name" tickCount={12}  />
                 <Tooltip />
                 <Line
                   type="monotone"
@@ -87,6 +54,9 @@ class SideChart extends React.Component {
                 />
               </LineChart>
             </SpanTwo>
+
+            <Text color={theme.textSecondary}>Salary paid this year</Text>
+            <MoneyStyle weight="bold">$119,989.88</MoneyStyle>
 
             <TitleSpanTwo>Salary burn rate</TitleSpanTwo>
 
@@ -157,66 +127,6 @@ const Part = styled.div`
     font-size: 16px;
     border-bottom: 1px solid ${theme.contentBorder};
   }
-`;
-
-const InfoRow = styled.li`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  list-style: none;
-
-  > span:nth-child(1) {
-    font-weight: 400;
-    color: ${theme.textSecondary};
-  }
-  > span:nth-child(2) {
-    display: none;
-  }
-  strong {
-    text-transform: uppercase;
-  }
-`;
-
-const StakesBar = styled.div`
-  display: flex;
-  width: 100%;
-  overflow: hidden;
-  margin: 10px 0 30px;
-  border-radius: 3px;
-`;
-
-const StakesListItem = styled.li`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 10px;
-  list-style: none;
-
-  > span:first-child {
-    display: flex;
-    align-items: center;
-    max-width: 80%;
-  }
-`;
-
-const StakesListBullet = styled.span`
-  width: 10px;
-  height: 10px;
-  margin-right: 15px;
-  border-radius: 5px;
-  flex-shrink: 0;
-  & + span {
-    flex-shrink: 1;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
-`;
-
-const ButtonHolder = styled.div`
-  display: flex;
-  align-items: end;
-  margin-top: 20px;
-  justify-content: flex-end;
 `;
 
 export default SideChart;
