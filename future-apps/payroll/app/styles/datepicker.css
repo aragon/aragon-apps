@@ -591,6 +591,7 @@
   overflow-y: scroll;
 }
 .DateInput {  
+  height: 25px;
   margin: 0;
   padding: 0;
   background: #fff;
@@ -633,6 +634,9 @@
   line-height: 18px;
   letter-spacing: 0.2px;
   /* padding: 7px 7px 5px; */
+  height: 24px;		
+  font-size:14px;
+  letter-spacing: 0.2px; 
 }
 .DateInput_input__regular {
   font-weight: auto;
@@ -652,6 +656,8 @@
   border-radius: 3px;
   /* border-bottom: 2px solid #008489; */
   border-left: 0;
+  height: 22px;		
+  font-size: 14px;
 }
 .DateInput_input__disabled {
   background: #f2f2f2;

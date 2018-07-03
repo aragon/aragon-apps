@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { Text, theme, Button, Countdown } from "@aragon/ui";
-import { formatTokenAmount } from "../lib/utils";
+import { formatTokenAmount } from "../../lib/utils";
 
 class TotalPayroll extends React.Component {
   msToCountDown(timeInMs) {

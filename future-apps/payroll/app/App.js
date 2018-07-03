@@ -5,8 +5,8 @@ import styled from "styled-components";
 import "./styles/datepicker.css";
 import "react-dates/initialize";
 import SidePanelContent from "./components/sidepanels/salary/SidePanelContent";
-import TeamPayroll from "./components/TeamPayroll";
-import MyPayroll from "./components/MyPayroll";
+import TeamPayroll from "./components/team-payroll/TeamPayroll";
+import MyPayroll from "./components/my-payroll/MyPayroll";
 import SidePanelEmpAdd from "./components/sidepanels/employee/SidePanelEmpAdd";
 import HeaderEmployeeDetails from "./components/headers/HeaderEmployeeDetails";
 import Header from "./components/headers/Header";
@@ -128,16 +128,5 @@ const Layout = styled.div`
   justify-content: stretch;
 `;
 
-Layout.FixedHeader = styled.div`
-  flex-shrink: 0;
-`;
-
-Layout.ScrollWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-  overflow: auto;
-  flex-grow: 1;
-`;
 
 export default App;

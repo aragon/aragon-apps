@@ -1,9 +1,9 @@
 import React from "react";
 import styled from "styled-components";
-import Transfers from "./transfers/Transfers";
-import SideChart from "./sides/SideChart";
+import Transfers from "../transfers/Transfers";
+import SideChart from "../sides/SideChart";
 import AvaliableSalary from "./AvailableSalary";
-import "../styles/datepicker.css";
+import "../../styles/datepicker.css";
 import "react-dates/initialize";
 
 class MyPayroll extends React.Component {
