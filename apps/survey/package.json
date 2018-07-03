@@ -3,6 +3,7 @@
   "version": "0.0.3",
   "main": "index.js",
   "scripts": {
+    "postinstall": "cd app && npm install",
     "compile": "truffle compile",
     "deploy:rpc": "truffle exec scripts/deploy.js --network rpc",
     "deploy:rinkeby": "truffle exec scripts/deploy.js --network rinkeby",
@@ -22,7 +23,7 @@
   },
   "keywords": [],
   "author": "Aragon Institution MTU <contact@aragon.one>",
-  "license": "GPL-3.0",
+  "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "description": "",
   "devDependencies": {
     "@aragon/cli": "^2.0.4",
