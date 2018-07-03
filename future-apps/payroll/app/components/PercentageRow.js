@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Slider } from "@aragon/ui"
+import { Slider } from "@aragon/ui";
 
 class PercentageRow extends React.Component {
   handleUpdate = value => {
@@ -12,13 +12,11 @@ class PercentageRow extends React.Component {
       <Row>
         <SliderWrapper>
           <Slider value={value} onUpdate={this.handleUpdate} />
-        </SliderWrapper>        
+        </SliderWrapper>
       </Row>
     );
   }
 }
-
-export default PercentageRow;
 
 const Row = styled.div`
   display: flex;
@@ -29,3 +27,4 @@ const SliderWrapper = styled.div`
   width: 100%;
 `;
 
+export default PercentageRow;

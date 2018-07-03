@@ -66,7 +66,9 @@ class EmployeeList extends React.Component {
     return (
       <SpacedBlock>
         <section>
-          {this.props.noHeader ? <div/> : (
+          {this.props.noHeader ? (
+            <div />
+          ) : (
             <Header>
               <Title>Employees</Title>
               <div>
@@ -112,7 +114,13 @@ class EmployeeList extends React.Component {
                     // Sort by date descending
                     compareDesc(dateLeft, dateRight)
                   )
-                  .map(transfer => <EmployeeItem handleEmployeeDetailsChange={this.props.handleEmployeeDetailsChange} key={transfer.tx} {...transfer} />)}
+                  .map(transfer => (
+                    <EmployeeItem
+                      handleEmployeeDetailsChange={this.props.handleEmployeeDetailsChange}
+                      key={transfer.tx}
+                      {...transfer}
+                    />
+                  ))}
               </FixedTable>
               {displayedTransfers < filteredTransfers.length && (
                 <Footer>
@@ -128,8 +136,6 @@ class EmployeeList extends React.Component {
     );
   }
 }
-
-export default EmployeeList;
 
 const Header = styled.div`
   display: flex;
@@ -189,3 +195,5 @@ const SpacedBlock = styled.div`
     margin-top: 0;
   }
 `;
+
+export default EmployeeList;

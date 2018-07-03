@@ -824,3 +824,23 @@
   width: 15px;
   fill: #cacccd;
 }
+
+
+#Range .DateInput_input__focused {
+  height: 38px;
+  font-size: 15px;
+}
+
+#Range .DateInput_input__small{
+  height: 38px;
+  font-size: 15px;
+}
+
+#Range .DateInput__small {
+  height: 38px;
+}
+
+#Range .DateRangePicker {
+  height: 40px;
+}
+

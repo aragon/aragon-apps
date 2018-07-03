@@ -4,8 +4,8 @@ import { Text, Button, Info, TextInput, IconFundraising, theme, IconTime } from 
 import "../styles/singleDatePicker.css";
 import "react-dates/initialize";
 import { SingleDatePicker } from "react-dates";
-import calIcon from "./icons/Icon_calendar.svg";
-import questionIcon from "./icons/question-icon.png";
+import calIcon from "../icons/Icon_calendar.svg";
+import questionIcon from "../icons/question-icon.png";
 class SidePanelEmpAdd extends React.Component {
   state = {
     SidePanelEmpAdd: true

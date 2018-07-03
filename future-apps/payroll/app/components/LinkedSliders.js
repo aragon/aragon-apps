@@ -133,7 +133,8 @@ class LinkedSliders extends React.Component {
             return (
               <TokenInfo key={index}>
                 <div>
-                  <DropDown wide
+                  <DropDown
+                    wide
                     items={newTokenList}
                     active={tokenNumber}
                     onChange={e => this.handleChange(e, newTokenList)}
@@ -176,7 +177,7 @@ class LinkedSliders extends React.Component {
 }
 
 const ScrollBox = styled.div`
-  overflow-y: scroll;
+  // overflow-y: scroll;
   height: 90%;
 `;
 
@@ -215,11 +216,6 @@ const NumberInput = styled(TextInput)`
   width: 70px;
   padding-left: 16px;
   height: 40px;
-`;
-
-const DropDownWidth = styled(DropDown)`
-  width: 100%;
-  display:block;
 `;
 
 export default LinkedSliders;

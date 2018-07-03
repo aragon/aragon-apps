@@ -61,6 +61,7 @@ const GridLayout = styled.div`
 `;
 const Content = styled.div`
   padding: 30px;
+  min-width: 740px;
 `;
 
 Layout.ScrollWrapper = styled.div`

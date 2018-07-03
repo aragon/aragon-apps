@@ -37,7 +37,7 @@ class SalaryAllocationInner extends React.Component {
       color: DISTRIBUTION_COLORS[i] || "#000000"
     }));
 
-    const adjustedTokenSupply = sciNot(tokenSupply / tokenDecimalsBase, TOTAL_SUPPLY_CUTOFF_LENGTH, { rounding: 5 });
+    // const adjustedTokenSupply = sciNot(tokenSupply / tokenDecimalsBase, TOTAL_SUPPLY_CUTOFF_LENGTH, { rounding: 5 });
 
     return (
       <Main>
@@ -118,24 +118,6 @@ const Part = styled.div`
     font-weight: 600;
     font-size: 16px;
     border-bottom: 1px solid ${theme.contentBorder};
-  }
-`;
-
-const InfoRow = styled.li`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  list-style: none;
-
-  > span:nth-child(1) {
-    font-weight: 400;
-    color: ${theme.textSecondary};
-  }
-  > span:nth-child(2) {
-    display: none;
-  }
-  strong {
-    text-transform: uppercase;
   }
 `;
 

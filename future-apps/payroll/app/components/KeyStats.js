@@ -8,14 +8,6 @@ class SideChart extends React.Component {
     selectedToken: 0
   };
 
-  time(){
-    //get all transaction data for this year
-    //give me the lastest month, start with jan
-
-    //create the graph based on these dates
-
-  }
-
   render() {
     return (
       <Main>
@@ -31,12 +23,6 @@ class SideChart extends React.Component {
               Paid salaries
             </Text>
 
-            {/* <DropDown
-              items={["Monthly", "Daily"]}
-              active={this.state.selectedToken}
-              onChange={this.handleTokenChange}
-            /> */}
-
             <SpanTwo>
               <LineChart
                 width={300}
@@ -44,7 +30,7 @@ class SideChart extends React.Component {
                 data={this.props.paidSalaries}
                 margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
               >
-                <XAxis dataKey="name" tickCount={12}  />
+                <XAxis dataKey="name" tickCount={12} />
                 <Tooltip />
                 <Line
                   type="monotone"

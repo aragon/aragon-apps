@@ -27,12 +27,8 @@ class TransferRow extends React.Component {
       showCopyTransferMessage: true
     });
   };
-  //   handleViewTransaction = () => {
-  //       console.log('here2')
-  //     const { network: { etherscanBaseUrl }, transactionHash } = this.props
-  //     window.open(`${etherscanBaseUrl}/tx/${transactionHash}`, '_blank')
-  //   }
 
+  
   handleConfirmMessageDone = () => {
     this.setState({
       showCopyTransferMessage: false

@@ -1,6 +1,4 @@
 import React from "react";
-import { AragonApp, Button, Text, AppBar, SidePanel } from "@aragon/ui";
-import Aragon, { providers } from "@aragon/client";
 import styled from "styled-components";
 import Transfers from "./Transfers";
 import SideChart from "./SideChart";
@@ -59,6 +57,7 @@ const GridLayout = styled.div`
 `;
 const Content = styled.div`
   padding: 30px;
+  min-width: 815px;
 `;
 
 Layout.FixedHeader = styled.div`

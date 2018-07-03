@@ -119,7 +119,7 @@ const MoneyBox = styled.div`
 
 const Container = styled.div`
   display: grid;
-  grid-template-rows: 112px 53vh 100px 50px;
+  grid-template-rows: 112px auto 100px 50px;
   grid-gap: 30px;
 `;
 

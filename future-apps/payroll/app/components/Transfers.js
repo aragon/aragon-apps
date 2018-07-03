@@ -5,6 +5,7 @@ import { Button, Table, TableHeader, TableRow, DropDown, theme, IconTime } from 
 import { addressesEqual, toChecksumAddress } from "../web3-utils";
 import TransferRow from "./TransferRow";
 import { DateRangePicker } from "react-dates";
+import '../styles/datepicker.css'
 
 const initialState = {
   selectedToken: 0,
@@ -81,23 +82,25 @@ class Transfers extends React.Component {
               <label>
                 <Label>Date Range:</Label>
 
-                <DateRangePicker
-                  startDate={this.state.startDate} // momentPropTypes.momentObj or null,
-                  startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
-                  endDate={this.state.endDate} // momentPropTypes.momentObj or null,
-                  endDateId="your_unique_end_date_id" // PropTypes.string.isRequired,
-                  onDatesChange={({ startDate, endDate }) => this.setState({ startDate, endDate })} // PropTypes.func.isRequired,
-                  focusedInput={this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
-                  onFocusChange={focusedInput => this.setState({ focusedInput })} // PropTypes.func.isRequired,
-                  small={true}
-                  startDatePlaceholderText={"00/00/00"}
-                  endDatePlaceholderText={"00/00/00"}
-                  showClearDates={false}
-                  numberOfMonths={1}
-                  onDatesChange={({ startDate, endDate }) => this.setState({ startDate, endDate })} // PropTypes.func.isRequired,
-                  isOutsideRange={() => false}
-                  displayFormat={"DD/MM/YY"}
-                />
+                <div id="Range" style={{ display: "inherit" }}>
+                  <DateRangePicker
+                    startDate={this.state.startDate} // momentPropTypes.momentObj or null,
+                    startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
+                    endDate={this.state.endDate} // momentPropTypes.momentObj or null,
+                    endDateId="your_unique_end_date_id" // PropTypes.string.isRequired,
+                    onDatesChange={({ startDate, endDate }) => this.setState({ startDate, endDate })} // PropTypes.func.isRequired,
+                    focusedInput={this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
+                    onFocusChange={focusedInput => this.setState({ focusedInput })} // PropTypes.func.isRequired,
+                    small={true}
+                    startDatePlaceholderText={"00/00/00"}
+                    endDatePlaceholderText={"00/00/00"}
+                    showClearDates={false}
+                    numberOfMonths={1}
+                    onDatesChange={({ startDate, endDate }) => this.setState({ startDate, endDate })} // PropTypes.func.isRequired,
+                    isOutsideRange={() => false}
+                    displayFormat={"DD/MM/YY"}
+                  />
+                </div>
               </label>
               <label>
                 <Label>Token:</Label>

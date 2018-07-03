@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import copy from "copy-to-clipboard";
 import { format } from "date-fns/esm";
-import { TableRow, TableCell, formatHtmlDatetime, theme, IconTime, IconCheck } from "@aragon/ui";
+import { TableRow, TableCell, formatHtmlDatetime, theme } from "@aragon/ui";
 import provideNetwork from "../lib/provideNetwork";
 import { formatTokenAmount } from "../lib/utils";
 
@@ -25,8 +25,6 @@ class EmployeeItem extends React.Component {
 
     const dateObjEnd = new Date(endDate * 1000);
     const formattedDateEnd = formatHtmlDatetime(dateObj);
-
-    console.log("props", this.props);
     return (
       <TableRow onClick={this.props.handleEmployeeDetailsChange}>
         <NoWrapCell>

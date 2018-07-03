@@ -19,8 +19,7 @@ class TotalPayroll extends React.Component {
   };
 
   render() {
-    const { numberOfEmployees, avgSalary, monthlyBurnRate, totalPaidYr } = this.props;
-    console.log(this.props);
+    const { numberOfEmployees, avgSalary, monthlyBurnRate, totalPaidYr } = this.props;    
     return (
       <div>
         <Text size="large">Total payroll</Text>

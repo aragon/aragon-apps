@@ -1,6 +1,5 @@
 import React from "react";
 import styled from "styled-components";
-import { Slider } from "@aragon/ui";
 import EmployeesList from "./EmployeeList";
 
 const transactions = [
@@ -28,14 +27,6 @@ class EmployeeDetails extends React.Component {
     );
   }
 }
-
-export default EmployeeDetails;
-
-const SideBarHolder = styled.div`
-  margin-right: 50px;
-  margin-top: 25px;
-  margin-left: -10px;
-`;
 
 const Layout = styled.div`
   display: flex;
@@ -65,3 +56,6 @@ Layout.ScrollWrapper = styled.div`
   overflow: auto;
   flex-grow: 1;
 `;
+
+
+export default EmployeeDetails;
