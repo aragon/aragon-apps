@@ -88,11 +88,6 @@ const AvaliableSalaryTitleGrid = styled.div`
   grid-template-rows: auto;
 `;
 
-const CountdownWStyle = styled(Countdown)`
-  display: flex;
-  margin-top: 10px;
-`;
-
 const Amount = styled.div`
   font-size: 26px;
   .fractional {

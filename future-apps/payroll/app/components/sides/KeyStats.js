@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Text, theme, Button, DropDown } from "@aragon/ui";
+import { Text, theme } from "@aragon/ui";
 import { LineChart, Line, XAxis, Tooltip } from "recharts";
 
 class SideChart extends React.Component {

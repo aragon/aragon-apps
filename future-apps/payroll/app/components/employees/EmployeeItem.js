@@ -3,8 +3,8 @@ import styled from "styled-components";
 import copy from "copy-to-clipboard";
 import { format } from "date-fns/esm";
 import { TableRow, TableCell, formatHtmlDatetime, theme } from "@aragon/ui";
-import provideNetwork from "../lib/provideNetwork";
-import { formatTokenAmount } from "../lib/utils";
+import provideNetwork from "../../lib/provideNetwork";
+import { formatTokenAmount } from "../../lib/utils";
 
 class EmployeeItem extends React.Component {
   splitAmount = amount => {

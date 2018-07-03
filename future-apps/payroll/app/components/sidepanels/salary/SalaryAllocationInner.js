@@ -1,11 +1,12 @@
 import React from "react";
 import styled from "styled-components";
 import { Text, theme, Button, Info } from "@aragon/ui";
-import { sciNot } from "../math-utils";
+// import { sciNot } from "../math-utils";
 
 // Number of digits before "Total Supply" gets wrapped into two lines
-const TOTAL_SUPPLY_CUTOFF_LENGTH = 18;
-const DISTRIBUTION_ITEMS_MAX = 7;
+// const TOTAL_SUPPLY_CUTOFF_LENGTH = 18;
+// const DISTRIBUTION_ITEMS_MAX = 7;
+
 const DISTRIBUTION_COLORS = ["#000000", "#57666F", "#028CD1", "#21AAE7", "#39CAD0", "#ADE9EC", "#80AEDC"];
 
 const showTokenDistro = (accounts, total) => {

@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Text, Button, Info, TextInput, IconFundraising, theme } from "@aragon/ui";
+import { Text, Button, Info, IconFundraising, theme } from "@aragon/ui";
 import LinkedSliders from "./LinkedSliders";
 import SalaryAllocationInner from "./SalaryAllocationInner";
 

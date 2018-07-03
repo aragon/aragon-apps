@@ -1,6 +1,6 @@
 import React from "react";
 import { Button, AppBar } from "@aragon/ui";
-import EmployeeDetails from "./EmployeeDetails";
+import EmployeeDetails from "../employees/EmployeeDetails";
 import styled from "styled-components";
 
 class HeaderEmployeeDetails extends React.Component {

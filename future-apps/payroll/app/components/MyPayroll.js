@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import Transfers from "./Transfers";
-import SideChart from "./SideChart";
+import SideChart from "./sides/SideChart";
 import AvaliableSalary from "./AvailableSalary";
 import "../styles/datepicker.css";
 import "react-dates/initialize";
@@ -24,6 +24,7 @@ class MyPayroll extends React.Component {
             
           </Content>
         </Layout.ScrollWrapper>
+        
         <SideBarHolder>
           <SideChart
             {...this.props.salaryAllocData}

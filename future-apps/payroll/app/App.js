@@ -1,15 +1,15 @@
 import React from "react";
-import { AragonApp, Button, Text, AppBar, SidePanel } from "@aragon/ui";
+import { AragonApp, SidePanel } from "@aragon/ui";
 import Aragon, { providers } from "@aragon/client";
 import styled from "styled-components";
 import "./styles/datepicker.css";
 import "react-dates/initialize";
-import SidePanelContent from "./components/SidePanelContent";
+import SidePanelContent from "./components/sidepanels/salary/SidePanelContent";
 import TeamPayroll from "./components/TeamPayroll";
 import MyPayroll from "./components/MyPayroll";
-import SidePanelEmpAdd from "./components/SidePanelEmpAdd";
-import HeaderEmployeeDetails from "./components/HeaderEmployeeDetails";
-import Header from "./components/Header";
+import SidePanelEmpAdd from "./components/sidepanels/employee/SidePanelEmpAdd";
+import HeaderEmployeeDetails from "./components/headers/HeaderEmployeeDetails";
+import Header from "./components/headers/Header";
 
 import {
   employees,

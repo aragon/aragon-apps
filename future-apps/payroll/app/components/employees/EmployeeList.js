@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { compareDesc } from "date-fns/esm";
 import { Button, Table, TableHeader, TableRow, DropDown, theme, IconTime } from "@aragon/ui";
-import { addressesEqual, toChecksumAddress } from "../web3-utils";
+import { addressesEqual, toChecksumAddress } from "../../web3-utils";
 import EmployeeItem from "./EmployeeItem";
 
 const initialState = {

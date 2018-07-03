@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import EmployeesList from "./EmployeeList";
-import KeyStats from "./KeyStats";
+import EmployeesList from "./employees/EmployeeList";
+import KeyStats from "./sides/KeyStats";
 import "../styles/datepicker.css";
 import "react-dates/initialize";
 import TotalPayroll from "./TotalPayroll";
