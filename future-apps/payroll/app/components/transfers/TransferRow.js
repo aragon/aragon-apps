@@ -10,8 +10,8 @@ import {
   IconTime,
   IconCheck
 } from "@aragon/ui";
-import provideNetwork from "../lib/provideNetwork";
-import { formatTokenAmount } from "../lib/utils";
+import provideNetwork from "../../lib/provideNetwork";
+// import { formatTokenAmount } from "../lib/utils";
 
 class TransferRow extends React.Component {
   handleCopyTransferUrl = () => {

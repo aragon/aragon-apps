@@ -2,10 +2,10 @@ import React from "react";
 import styled from "styled-components";
 import { compareDesc } from "date-fns/esm";
 import { Button, Table, TableHeader, TableRow, DropDown, theme, IconTime } from "@aragon/ui";
-import { addressesEqual, toChecksumAddress } from "../web3-utils";
+import { addressesEqual, toChecksumAddress } from "../../web3-utils";
 import TransferRow from "./TransferRow";
 import { DateRangePicker } from "react-dates";
-import '../styles/datepicker.css'
+import '../../styles/datepicker.css'
 
 const initialState = {
   selectedToken: 0,

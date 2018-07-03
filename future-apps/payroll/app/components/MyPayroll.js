@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import Transfers from "./Transfers";
+import Transfers from "./transfers/Transfers";
 import SideChart from "./sides/SideChart";
 import AvaliableSalary from "./AvailableSalary";
 import "../styles/datepicker.css";
