@@ -45,11 +45,11 @@ class TotalPayroll extends React.Component {
             </Text>
           </HeaderCell>
 
-          <WhiteCell border="1px 0px 1px 1px" style={{ paddingLeft: "22px" }}>
+          <WhiteCellEnd border="1px 0px 1px 1px" left style={{ paddingLeft: "22px" }}>
             <Text size="xxlarge">
               <Amount>{numberOfEmployees}</Amount>
             </Text>
-          </WhiteCell>
+          </WhiteCellEnd>
           <WhiteCell border="1px 0px 1px 0px">
             <Text size="xxlarge">
               <Amount>${this.splitAmount(avgSalary.toFixed(2))}</Amount>
@@ -60,11 +60,11 @@ class TotalPayroll extends React.Component {
               <Amount>${this.splitAmount(monthlyBurnRate.toFixed(2))}</Amount>
             </Text>
           </WhiteCell>
-          <WhiteCell border="1px 1px 1px 0px">
+          <WhiteCellEnd border="1px 1px 1px 0px" right >
             <Text size="xxlarge">
               <Amount>${this.splitAmount(totalPaidYr.toFixed(2))}</Amount>
             </Text>
-          </WhiteCell>
+          </WhiteCellEnd>
         </AvaliableSalaryTitleGrid>
       </div>
     );
@@ -80,6 +80,14 @@ const WhiteCell = styled.div`
   border: solid #e8e8e8 0px;
   border-width: ${props => props.border};
 `;
+
+const WhiteCellEnd = WhiteCell.extend`
+  border-top-left-radius: ${props => props.left && "3px"};
+  border-bottom-left-radius: ${props => props.left && "3px"};
+  border-top-right-radius: ${props => props.right && "3px"};
+  border-bottom-right-radius: ${props => props.right && "3px"};
+`;
+
 
 const AvaliableSalaryTitleGrid = styled.div`
   margin-top: 15px;

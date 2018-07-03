@@ -4,7 +4,7 @@ import { Text, theme, Countdown } from "@aragon/ui";
 import { formatTokenAmount } from "../../lib/utils";
 
 class AvaliableSalary extends React.Component {
-  msToCountDown(timeInMs) {    
+  msToCountDown(timeInMs) {
     return new Date(timeInMs);
   }
 
@@ -46,9 +46,9 @@ class AvaliableSalary extends React.Component {
             </Text>
           </HeaderCell>
 
-          <WhiteCell border="1px 0px 1px 1px" style={{ paddingLeft: "22px", paddingTop: "27px", minWidth: "200px", borderTopLeftRadius:"3px", borderBottomLeftRadius:"3px" }}>
+          <WhiteCellEnd border="1px 0px 1px 1px" style={{ paddingLeft: "22px", paddingTop: "27px", minWidth: "200px" }} left >
             <CountdownWStyle end={this.msToCountDown(targetDate)} />
-          </WhiteCell>
+          </WhiteCellEnd>
           <WhiteCell border="1px 0px 1px 0px">
             <Text size="xxlarge" color="#21D48E">
               <Amount>${this.splitAmount(avaliableBalance.toFixed(2))}</Amount>
@@ -59,11 +59,11 @@ class AvaliableSalary extends React.Component {
               <Amount>${this.splitAmount(totalTransfered.toFixed(2))}</Amount>
             </Text>
           </WhiteCell>
-          <WhiteCell border="1px 1px 1px 0px" style={{borderTopRightRadius:"3px", borderBottomRightRadius:"3px"}}>
+          <WhiteCellEnd border="1px 1px 1px 0px" right>
             <Text size="xxlarge">
               <Amount>${this.splitAmount(yrSalary.toFixed(2))}</Amount>
             </Text>
-          </WhiteCell>
+          </WhiteCellEnd>
         </AvaliableSalaryTitleGrid>
       </div>
     );
@@ -78,6 +78,13 @@ const WhiteCell = styled.div`
   padding: 20px 0px 20px 0px;
   border: solid #e8e8e8 0px;
   border-width: ${props => props.border};
+`;
+
+const WhiteCellEnd = WhiteCell.extend`
+  border-top-left-radius: ${props => props.left && "3px"};
+  border-bottom-left-radius: ${props => props.left && "3px"};
+  border-top-right-radius: ${props => props.right && "3px"};
+  border-bottom-right-radius: ${props => props.right && "3px"};
 `;
 
 const AvaliableSalaryTitleGrid = styled.div`

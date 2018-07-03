@@ -30,14 +30,14 @@ class App extends React.Component {
     employeeDetails: false
   };
 
-  async componentDidMount() {
-    try {
-      let response = await fetch("http://ppf.aragon.one/api/rates");
-      console.error(response);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  // async componentDidMount() {
+  //   try {
+  //     let response = await fetch("http://ppf.aragon.one/api/rates");
+  //     console.error(response);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }
 
   handleNewTransferOpen = () => {
     this.setState({ newTransferOpened: true });
