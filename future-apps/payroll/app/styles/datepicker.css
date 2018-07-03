@@ -167,6 +167,7 @@
   padding: 0;
   cursor: pointer;
   font-size: 14px;
+  display:none;
 }
 .DayPickerKeyboardShortcuts_buttonReset:active {
   outline: 0;
@@ -199,6 +200,7 @@
   border-left: 33px solid #00a699;
   top: 0;
   left: 0;
+  display:none;
 }
 .DayPickerKeyboardShortcuts_show__topLeft:hover {
   border-left: 33px solid #008489;
@@ -210,6 +212,7 @@
 .DayPickerKeyboardShortcuts_showSpan__bottomRight {
   bottom: 0;
   right: -28px;
+  display:none;
 }
 .DayPickerKeyboardShortcuts_showSpan__topRight {
   top: 1px;
@@ -232,6 +235,7 @@
   z-index: 2;
   padding: 22px;
   margin: 33px;
+  display:none;
 }
 .DayPickerKeyboardShortcuts_title {
   font-size: 16px;

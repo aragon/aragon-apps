@@ -45,10 +45,6 @@ const Content = styled.div`
   padding: 30px;
 `;
 
-Layout.FixedHeader = styled.div`
-  flex-shrink: 0;
-`;
-
 Layout.ScrollWrapper = styled.div`
   display: flex;
   flex-direction: column;

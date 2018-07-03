@@ -64,9 +64,6 @@ const TextOverflow = styled.div`
   text-overflow: ellipsis;
 `;
 
-const Amount = styled.span`
-  color: ${({ positive }) => (positive ? theme.positive : theme.negative)};
-`;
 
 const Exchange = styled.span`
   font-weight: 400;

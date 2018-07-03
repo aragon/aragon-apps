@@ -55,7 +55,7 @@ class SidePanelEmpAdd extends React.Component {
                 onDateChange={date => this.setState({ date })} // PropTypes.func.isRequired
                 focused={this.state.focused} // PropTypes.bool
                 onFocusChange={({ focused }) => this.setState({ focused })} // PropTypes.func.isRequired
-                id="your_unique_id" // PropTypes.string.isRequired,
+                id="single" // PropTypes.string.isRequired,
               />
               <div>
                 <img src={calIcon} />

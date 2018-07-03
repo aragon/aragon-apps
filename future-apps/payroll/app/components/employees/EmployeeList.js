@@ -47,21 +47,19 @@ class EmployeeList extends React.Component {
     );
   }
   render() {
+    //might remove all this
     const { displayedTransfers, selectedToken, selectedTransferType, startDate, endDate } = this.state;
-
-    const { transactions } = this.props;
-
     const tokens = [{ symbol: "ETH", decimals: 5, address: "0x00be01CAF657Ff277269f169bd5220A390f791f7" }];
+    const symbols = tokens.map(({ symbol }) => symbol);
+    const filtersActive = selectedToken !== 0 || selectedTransferType !== 0;
 
+    const { transactions } = this.props;    
     const filteredTransfers = this.getFilteredTransfers({
       tokens,
       transactions,
       selectedToken,
       selectedTransferType
     });
-    const symbols = tokens.map(({ symbol }) => symbol);
-
-    const filtersActive = selectedToken !== 0 || selectedTransferType !== 0;
 
     return (
       <SpacedBlock>
