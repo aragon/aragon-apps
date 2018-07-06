@@ -24,18 +24,22 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     // kernel roles
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
-    bytes32 constant public REMOVE_EMPLOYEE_ROLE = keccak256("REMOVE_EMPLOYEE_ROLE");
+    bytes32 constant public TERMINATE_EMPLOYEE_ROLE = keccak256("TERMINATE_EMPLOYEE_ROLE");
+    bytes32 constant public ADD_ACCRUED_VALUE_ROLE = keccak256("ADD_ACCRUED_VALUE_ROLE");
     bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
     bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("CHANGE_PRICE_FEED_ROLE");
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
     address constant public ETH = address(0);
     uint128 constant public ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
+    uint64 constant public MAX_UINT64 = uint64(-1);
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
         mapping(address => uint8) allocation;
         uint256 denominationTokenSalary; // per second in denomination Token
-        uint256 lastPayroll;
+        uint256 accruedValue;
+        uint64 lastPayroll;
+        uint64 endDate;
         string name;
     }
 
@@ -56,10 +60,11 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         address indexed accountAddress,
         uint256 initialDenominationSalary,
         string name,
-        uint256 startDate
+        uint64 startDate
     );
     event SetEmployeeSalary(uint128 indexed employeeId, uint256 denominationSalary);
-    event RemoveEmployee(uint128 indexed employeeId, address accountAddress);
+    event AddEmployeeAccruedValue(uint128 indexed employeeId, uint256 amount);
+    event TerminateEmployee(uint128 indexed employeeId, address accountAddress, uint64 endDate);
     event ChangeAddressByEmployee(uint128 indexed employeeId, address oldAddress, address newAddress);
     event DetermineAllocation(uint128 indexed employeeId, address indexed employee);
     event SendPayroll(address indexed employee, address indexed token, uint amount);
@@ -67,8 +72,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     event SetRateExpiryTime(uint64 time);
 
     modifier employeeExists(uint128 employeeId) {
-        /* check that employee exists */
-        require(employeeIds[employees[employeeId].accountAddress] != 0);
+        /* check that employee exists and is active */
+        require(employeeIds[employees[employeeId].accountAddress] != 0 && employees[employeeId].endDate >= getTimestamp());
         _;
     }
 
@@ -194,7 +199,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         address accountAddress,
         uint256 initialDenominationSalary,
         string name,
-        uint256 startDate
+        uint64 startDate
     )
         external
         authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialDenominationSalary, startDate))
@@ -215,31 +220,71 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      */
     function setEmployeeSalary(
         uint128 employeeId,
-        uint256 denominationSalary
+        uint256 denominationSalary,
+        uint64 changeDate
     )
         isInitialized
         employeeExists(employeeId)
         external
         authP(ADD_EMPLOYEE_ROLE, arr(employees[employeeId].accountAddress, denominationSalary, 0))
     {
+        if (changeDate > employees[employeeId].lastPayroll) {
+            // Add owed salary to employee's accrued value
+            uint256 owed = _getOwedSalary(employeeId, changeDate);
+
+            employees[employeeId].lastPayroll = changeDate;
+            _addAccruedValue(employeeId, owed);
+        }
+
         employees[employeeId].denominationTokenSalary = denominationSalary;
 
         SetEmployeeSalary(employeeId, denominationSalary);
     }
 
     /**
-     * @dev Remove employee from Payroll
-     * @notice Remove employee #`employeeId` from Payroll
+     * @dev Terminate employee from Payroll
+     * @notice Terminate employee #`employeeId` from Payroll
      * @param employeeId Employee's identifier
      */
-    function removeEmployee(uint128 employeeId) isInitialized employeeExists(employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
-        // Pay owed salary to employee
-        _payTokens(employeeId);
+    function terminateEmployee(
+        uint128 employeeId,
+        uint64 endDate
+    )
+        isInitialized
+        employeeExists(employeeId)
+        external
+        authP(TERMINATE_EMPLOYEE_ROLE, arr(employees[employeeId].accountAddress))
+    {
+        // prevent to re-enable terminated employees
+        require(employees[employeeId].endDate > endDate || endDate > getTimestamp());
 
-        RemoveEmployee(employeeId, employees[employeeId].accountAddress);
+        if (endDate <= getTimestamp()) {
+            // Add owed salary to employee's accrued value
+            uint256 owed = _getOwedSalary(employeeId, endDate);
 
-        delete employeeIds[employees[employeeId].accountAddress];
-        delete employees[employeeId];
+            employees[employeeId].lastPayroll = endDate;
+            _addAccruedValue(employeeId, owed);
+        }
+
+        employees[employeeId].endDate = endDate;
+
+        TerminateEmployee(employeeId, employees[employeeId].accountAddress, endDate);
+
+        _tryToRemoveEmployee(employeeId);
+    }
+
+    /**
+     */
+    function addAccruedValue(
+        uint128 employeeId,
+        uint256 amount
+    )
+        isInitialized
+        employeeExists(employeeId)
+        external
+        authP(ADD_ACCRUED_VALUE_ROLE, arr(employees[employeeId].accountAddress, amount))
+    {
+        _addAccruedValue(employeeId, amount);
     }
 
     /**
@@ -338,8 +383,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @param accountAddress Employee's address to receive payments
      * @return Employee's identifier
      * @return Employee's annual salary, per second in denomination Token
+     * @return Employee's accrued value
      * @return Employee's name
-     * @return Employee's last call to payment distribution date
      * @return Employee's last payment received date
      */
     function getEmployeeByAddress(address accountAddress)
@@ -348,8 +393,9 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         returns (
             uint128 employeeId,
             uint256 denominationSalary,
+            uint256 accruedValue,
             string name,
-            uint256 lastPayroll
+            uint64 lastPayroll
         )
     {
         employeeId = employeeIds[accountAddress];
@@ -357,6 +403,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         Employee memory employee = employees[employeeId];
 
         denominationSalary = employee.denominationTokenSalary;
+        accruedValue = employee.accruedValue;
         name = employee.name;
         lastPayroll = employee.lastPayroll;
     }
@@ -367,24 +414,26 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @param employeeId Employee's identifier
      * @return Employee's address to receive payments
      * @return Employee's annual salary, per second in denomination Token
+     * @return Employee's accrued value
      * @return Employee's name
-     * @return Employee's last call to payment distribution date
      * @return Employee's last payment received date
      */
     function getEmployee(uint128 employeeId)
-        external
+        public
         view
         returns (
             address accountAddress,
             uint256 denominationSalary,
+            uint256 accruedValue,
             string name,
-            uint256 lastPayroll
+            uint64 lastPayroll
         )
     {
         Employee memory employee = employees[employeeId];
 
         accountAddress = employee.accountAddress;
         denominationSalary = employee.denominationTokenSalary;
+        accruedValue = employee.accruedValue;
         name = employee.name;
         lastPayroll = employee.lastPayroll;
     }
@@ -433,7 +482,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         address accountAddress,
         uint256 initialDenominationSalary,
         string name,
-        uint256 startDate
+        uint64 startDate
     )
         isInitialized
         internal
@@ -445,7 +494,9 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         employees[employeeId] = Employee({
             accountAddress: accountAddress,
             denominationTokenSalary: initialDenominationSalary,
+            accruedValue: 0,
             lastPayroll: startDate,
+            endDate: MAX_UINT64,
             name: name
         });
         // Ids mapping
@@ -461,6 +512,12 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         nextEmployee++;
     }
 
+    function _addAccruedValue(uint128 employeeId, uint256 amount) internal {
+        employees[employeeId].accruedValue = employees[employeeId].accruedValue.add(amount);
+
+        AddEmployeeAccruedValue(employeeId, amount);
+    }
+
     function _setPriceFeed(IFeed _feed) internal {
         require(_feed != address(0));
         feed = _feed;
@@ -473,20 +530,37 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         SetRateExpiryTime(rateExpiryTime);
     }
 
+    function _getOwedSalary(uint128 employeeId, uint64 date) returns (uint256) {
+        // get time that has gone by (seconds)
+        uint64 time = date.sub(employees[employeeId].lastPayroll);
+        if (time == 0) {
+            return 0;
+        }
+
+        return employees[employeeId].denominationTokenSalary.mul(time);
+    }
+
     /**
      * @dev Loop over tokens and send Payroll to employee
      * @param employeeId Id of employee receiving payroll
      * @return True if something has been paid
      */
     function _payTokens(uint128 employeeId) internal returns (bool somethingPaid) {
-        // get time that has gone by (seconds)
-        uint256 time = getTimestamp().sub(employees[employeeId].lastPayroll);
-        if (time == 0) {
+        Employee storage employee = employees[employeeId];
+
+        // get the min of current date and termination date
+        uint64 toDate = employee.endDate > getTimestamp() ? getTimestamp() : employee.endDate;
+        // compute owed amount
+        uint256 owed = employee.accruedValue.add(_getOwedSalary(employeeId, toDate));
+
+        if (owed == 0) {
             return false;
         }
-        Employee storage employee = employees[employeeId];
-        // update last payroll date first thing (to avoid re-entrancy)
+
+        // update last payroll date and accrued value first thing (to avoid re-entrancy)
         employee.lastPayroll = getTimestamp();
+        employee.accruedValue = 0;
+
         // loop over allowed tokens
         for (uint32 i = 0; i < allowedTokensArray.length; i++) {
             address token = allowedTokensArray[i];
@@ -495,10 +569,9 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             uint128 exchangeRate = getExchangeRate(token);
             require(exchangeRate > 0);
             // salary converted to token and applied allocation percentage
-            uint256 tokenAmount = employee.denominationTokenSalary
-                .mul(exchangeRate).mul(employee.allocation[token]);
+            uint256 tokenAmount = owed.mul(exchangeRate).mul(employee.allocation[token]);
             // dividing by 100 for the allocation and by ONE for the exchange rate
-            tokenAmount = tokenAmount.mul(time) / (100 * ONE);
+            tokenAmount = tokenAmount / (100 * ONE);
             finance.newPayment(
                 token,
                 employee.accountAddress,
@@ -510,6 +583,15 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             );
             SendPayroll(employee.accountAddress, token, tokenAmount);
             somethingPaid = true;
+        }
+
+        _tryToRemoveEmployee(employeeId);
+    }
+
+    function _tryToRemoveEmployee(uint128 employeeId) internal {
+        if (employees[employeeId].endDate <= getTimestamp() && employees[employeeId].accruedValue == 0) {
+            delete employeeIds[employees[employeeId].accountAddress];
+            delete employees[employeeId];
         }
     }
 
@@ -531,12 +613,12 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         (xrt, when) = feed.get(denominationToken, token);
 
         // check it's recent enough
-        if (when < uint64(getTimestamp()).sub(rateExpiryTime)) {
+        if (when < getTimestamp().sub(rateExpiryTime)) {
             return 0;
         }
 
         return xrt;
     }
 
-    function getTimestamp() internal view returns (uint256) { return now; }
+    function getTimestamp() internal view returns (uint64) { return uint64(now); }
 }

@@ -60,7 +60,7 @@ contract('Payroll Timestamp', function(accounts) {
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee1_1, "Employee account doesn't match");
     assert.equal(employee[1].toString(), convertAndRoundSalary(salary1), "Employee salary doesn't match");
-    assert.equal(employee[2], name, "Employee name doesn't match");
+    assert.equal(employee[3], name, "Employee name doesn't match");
   });
 
 });

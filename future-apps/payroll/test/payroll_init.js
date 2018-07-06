@@ -3,7 +3,7 @@ const { assertRevert } = require('@aragon/test-helpers/assertThrow');
 const MiniMeToken = artifacts.require('@aragon/os/contracts/common/MiniMeToken');
 const Vault = artifacts.require('Vault');
 const Finance = artifacts.require('Finance');
-const Payroll = artifacts.require("Payroll");
+const Payroll = artifacts.require("PayrollMock");
 const PriceFeedMock = artifacts.require("./mocks/feed/PriceFeedMock.sol");
 
 contract('Payroll without init', function([owner, employee1, _]) {
@@ -66,13 +66,13 @@ contract('Payroll without init', function([owner, employee1, _]) {
 
   it('fails to call setEmployeeSalary', async () => {
     return assertRevert(async () => {
-      await payroll.setEmployeeSalary(1, 20000)
+      await payroll.setEmployeeSalary(1, 20000, await payroll.getTimestampPublic.call())
     })
   })
 
-  it('fails to call removeEmployee', async () => {
+  it('fails to call terminateEmployee', async () => {
     return assertRevert(async () => {
-      await payroll.removeEmployee(1)
+      await payroll.terminateEmployee(1, await payroll.getTimestampPublic.call())
     })
   })
 

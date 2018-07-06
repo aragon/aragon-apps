@@ -66,7 +66,7 @@ contract('Payroll', function(accounts) {
   const getTimePassed = async (employeeId) => {
     let employee = await payroll.getEmployee(employeeId);
     let currentTime = await payroll.getTimestampPublic();
-    return currentTime - employee[3];
+    return currentTime - employee[4];
   };
 
   before(async () => {
@@ -135,8 +135,9 @@ contract('Payroll', function(accounts) {
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee1_1, "Employee account doesn't match");
     assert.equal(employee[1].toString(), salary1_1.toString(), "Employee salary doesn't match");
-    assert.equal(employee[2], name, "Employee name doesn't match");
-    assert.equal(employee[3].toString(), (await payroll.getTimestampPublic()).toString(), "last payroll should match")
+    assert.equal(employee[2].toString(), 0, "Employee accrued value doesn't match");
+    assert.equal(employee[3], name, "Employee name doesn't match");
+    assert.equal(employee[4].toString(), (await payroll.getTimestampPublic()).toString(), "last payroll should match")
   });
 
   it('get employee by its address', async () => {
@@ -145,8 +146,9 @@ contract('Payroll', function(accounts) {
     let employee = await payroll.getEmployeeByAddress(employee1_1);
     assert.equal(employee[0], employeeId, "Employee Id doesn't match");
     assert.equal(employee[1].toString(), salary1_1.toString(), "Employee salary doesn't match");
-    assert.equal(employee[2], name, "Employee name doesn't match");
-    assert.equal(employee[3].toString(), (await payroll.getTimestampPublic()).toString(), "last payroll should match")
+    assert.equal(employee[2].toString(), 0, "Employee accrued value doesn't match");
+    assert.equal(employee[3], name, "Employee name doesn't match");
+    assert.equal(employee[4].toString(), (await payroll.getTimestampPublic()).toString(), "last payroll should match")
   })
 
   it("fails adding again same employee", async () => {
@@ -163,20 +165,20 @@ contract('Payroll', function(accounts) {
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee2, "Employee account doesn't match");
     assert.equal(employee[1].toString(), salary2_1.toString(), "Employee salary doesn't match");
-    assert.equal(employee[2], name, "Employee name doesn't match");
+    assert.equal(employee[3], name, "Employee name doesn't match");
   });
 
-  it("removes employee (no time passed since 'last allocation')", async () => {
+  it("terminates employee (no time passed since 'last allocation')", async () => {
     // therefore, no salary owed
     let employeeId = 2;
     await payroll.determineAllocation([usdToken.address], [100], {from: employee2});
     let initialBalance = await usdToken.balanceOf(employee2);
-    await payroll.removeEmployee(employeeId);
+    await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic.call());
     salary2 = 0;
     let finalBalance = await usdToken.balanceOf(employee2);
     assert.equal(finalBalance.toString(), initialBalance.toString());
     let employee = await payroll.getEmployee(employeeId);
-    assert.equal(parseInt(employee[0], 16), 0, "Employee not properly removed");
+    assert.equal(parseInt(employee[0], 16), 0, "Employee not properly terminated");
   });
 
   it("adds employee again with name and start date", async () => {
@@ -187,25 +189,29 @@ contract('Payroll', function(accounts) {
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee2, "Employee account doesn't match");
     assert.equal(employee[1].toString(), salary2_1.toString(), "Employee salary doesn't match");
-    assert.equal(employee[2], name, "Employee name doesn't match");
+    assert.equal(employee[3], name, "Employee name doesn't match");
   });
 
-  it("removes employee with remaining payroll", async () => {
+  it("terminates employee with remaining payroll", async () => {
     let employeeId = 3;
     await payroll.determineAllocation([usdToken.address], [100], {from: employee2});
     let initialBalance = await usdToken.balanceOf(employee2);
     let timePassed = await getTimePassed(employeeId);
     let owed = salary2.times(timePassed);
-    await payroll.removeEmployee(employeeId);
+    await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic.call());
     salary2 = 0;
+    // owed salary is only added to accrued value, employee need to call `payday` again
     let finalBalance = await usdToken.balanceOf(employee2);
+    assert.equal(finalBalance.toString(), initialBalance.toString());
+    await payroll.payday({ from: employee2 })
+    finalBalance = await usdToken.balanceOf(employee2);
     assert.equal(finalBalance.toString(), initialBalance.add(owed).toString());
   });
 
   it("fails on removing non-existent employee", async () => {
     let employeeId = 1;
     return assertRevert(async () => {
-      await payroll.removeEmployee(10);
+      await payroll.terminateEmployee(10, await payroll.getTimestampPublic.call());
     });
   });
 
@@ -216,13 +222,13 @@ contract('Payroll', function(accounts) {
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee2, "Employee account doesn't match");
     assert.equal(employee[1].toString(), salary2_2.toString(), "Employee salary doesn't match");
-    assert.equal(employee[2], name, "Employee name doesn't match");
+    assert.equal(employee[3], name, "Employee name doesn't match");
     salary2 = salary2_2;
   });
 
   it("modifies employee salary", async () => {
     let employeeId = 1;
-    await payroll.setEmployeeSalary(employeeId, salary1_2);
+    await payroll.setEmployeeSalary(employeeId, salary1_2, await payroll.getTimestampPublic.call());
     salary1 = salary1_2;
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[1].toString(), salary1_2.toString(), "Salary doesn't match");
@@ -231,7 +237,7 @@ contract('Payroll', function(accounts) {
   it("fails modifying non-existent employee salary", async () => {
     let employeeId = 1;
     return assertRevert(async () => {
-      await payroll.setEmployeeSalary(10, salary1_2);
+      await payroll.setEmployeeSalary(10, salary1_2, await payroll.getTimestampPublic.call());
     });
   });
 
