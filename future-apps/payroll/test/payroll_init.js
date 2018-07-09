@@ -105,4 +105,11 @@ contract('Payroll without init', function([owner, employee1, _]) {
       await payroll.changeAddressByEmployee(owner, { from: employee1 })
     })
   })
+
+  it('fails to call addAccruedValue', async () => {
+    return assertRevert(async () => {
+      await payroll.addAccruedValue(1, 1000)
+    })
+  })
+
 })

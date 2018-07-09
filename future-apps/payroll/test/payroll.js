@@ -1,4 +1,4 @@
-const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow');
+const { assertRevert } = require('@aragon/test-helpers/assertThrow');
 const getBalance = require('@aragon/test-helpers/balance')(web3);
 const getTransaction = require('@aragon/test-helpers/transaction')(web3);
 const MiniMeToken = artifacts.require('@aragon/os/contracts/common/MiniMeToken');
@@ -8,6 +8,8 @@ const Payroll = artifacts.require("PayrollMock");
 const PriceFeedMock = artifacts.require("./feed/PriceFeedMock.sol");
 const PriceFeedFailMock = artifacts.require("./feed/PriceFeedFailMock.sol");
 const Zombie = artifacts.require("Zombie.sol");
+
+const { deployErc20Token, addAllowedTokens, getTimePassed } = require('./helpers.js')
 
 contract('Payroll', function(accounts) {
   const rateExpiryTime = 1000;
@@ -20,8 +22,8 @@ contract('Payroll', function(accounts) {
   let payroll2;
   let finance;
   let vault;
-  let owner = accounts[0];
   let priceFeed;
+  let owner = accounts[0];
   let employee1_1 = accounts[2];
   let employee1 = employee1_1;
   let employee2 = accounts[3];
@@ -43,45 +45,19 @@ contract('Payroll', function(accounts) {
   const erc20Token2Decimals = 16;
   let etherExchangeRate
 
-  const deployErc20Token = async (name="ERC20Token", decimals=18) => {
-    let token = await MiniMeToken.new("0x0", "0x0", 0, name, decimals, 'E20', true); // dummy parameters for minime
-    let amount = new web3.BigNumber(10**9).times(new web3.BigNumber(10**decimals));
-    let sender = owner;
-    let receiver = finance.address;
-    let initialSenderBalance = await token.balanceOf(sender);
-    let initialVaultBalance = await token.balanceOf(vault.address);
-    await token.generateTokens(sender, amount);
-    await token.approve(receiver, amount, {from: sender});
-    await finance.deposit(token.address, amount, "Initial deployment", {from: sender});
-    assert.equal((await token.balanceOf(sender)).toString(), initialSenderBalance.toString());
-    assert.equal((await token.balanceOf(vault.address)).toString(), (new web3.BigNumber(initialVaultBalance).plus(amount)).toString());
-    return token;
-  };
-
-  const addAllowedTokens = async(payroll, tokens) => {
-    const currencies = [ETH].concat(tokens.map(c => c.address))
-    await Promise.all(currencies.map(token => payroll.addAllowedToken(token)))
-  }
-
-  const getTimePassed = async (employeeId) => {
-    let employee = await payroll.getEmployee(employeeId);
-    let currentTime = await payroll.getTimestampPublic();
-    return currentTime - employee[4];
-  };
-
   before(async () => {
     vault = await Vault.new();
     await vault.initializeWithBase(vault.address)
     finance = await Finance.new();
     await finance.initialize(vault.address, SECONDS_IN_A_YEAR); // more than one day
 
-    usdToken = await deployErc20Token("USD", USD_DECIMALS);
+    usdToken = await deployErc20Token(owner, finance, vault, "USD", USD_DECIMALS);
     priceFeed = await PriceFeedMock.new();
     payroll = await Payroll.new();
 
     // Deploy ERC 20 Tokens
-    erc20Token1 = await deployErc20Token("Token 1", erc20Token1Decimals);
-    erc20Token2 = await deployErc20Token("Token 2", erc20Token2Decimals);
+    erc20Token1 = await deployErc20Token(owner, finance, vault, "Token 1", erc20Token1Decimals);
+    erc20Token2 = await deployErc20Token(owner, finance, vault, "Token 2", erc20Token2Decimals);
 
     // get exchange rates
     erc20Token1ExchangeRate = (await priceFeed.get(usdToken.address, erc20Token1.address))[0]
@@ -168,48 +144,24 @@ contract('Payroll', function(accounts) {
     assert.equal(employee[3], name, "Employee name doesn't match");
   });
 
-  it("terminates employee (no time passed since 'last allocation')", async () => {
-    // therefore, no salary owed
+  it("terminates employee with remaining payroll", async () => {
     let employeeId = 2;
     await payroll.determineAllocation([usdToken.address], [100], {from: employee2});
     let initialBalance = await usdToken.balanceOf(employee2);
-    await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic.call());
-    salary2 = 0;
-    let finalBalance = await usdToken.balanceOf(employee2);
-    assert.equal(finalBalance.toString(), initialBalance.toString());
-    let employee = await payroll.getEmployee(employeeId);
-    assert.equal(parseInt(employee[0], 16), 0, "Employee not properly terminated");
-  });
-
-  it("adds employee again with name and start date", async () => {
-    let name = 'Joe';
-    let employeeId = 3;
-    await payroll.addEmployeeWithNameAndStartDate(employee2, salary2_1, name, Math.floor((new Date()).getTime() / 1000) - 2628600);
-    salary2 = salary2_1;
-    let employee = await payroll.getEmployee(employeeId);
-    assert.equal(employee[0], employee2, "Employee account doesn't match");
-    assert.equal(employee[1].toString(), salary2_1.toString(), "Employee salary doesn't match");
-    assert.equal(employee[3], name, "Employee name doesn't match");
-  });
-
-  it("terminates employee with remaining payroll", async () => {
-    let employeeId = 3;
-    await payroll.determineAllocation([usdToken.address], [100], {from: employee2});
-    let initialBalance = await usdToken.balanceOf(employee2);
-    let timePassed = await getTimePassed(employeeId);
+    let timePassed = 1000;
+    await payroll.mockAddTimestamp(timePassed);
     let owed = salary2.times(timePassed);
     await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic.call());
     salary2 = 0;
     // owed salary is only added to accrued value, employee need to call `payday` again
     let finalBalance = await usdToken.balanceOf(employee2);
     assert.equal(finalBalance.toString(), initialBalance.toString());
-    await payroll.payday({ from: employee2 })
+    await payroll.payday({ from: employee2 });
     finalBalance = await usdToken.balanceOf(employee2);
     assert.equal(finalBalance.toString(), initialBalance.add(owed).toString());
   });
 
   it("fails on removing non-existent employee", async () => {
-    let employeeId = 1;
     return assertRevert(async () => {
       await payroll.terminateEmployee(10, await payroll.getTimestampPublic.call());
     });
@@ -217,7 +169,7 @@ contract('Payroll', function(accounts) {
 
   it("adds removed employee again (with name and start date)", async () => {
     let name = 'John';
-    let employeeId = 4;
+    let employeeId = 3;
     let transaction = await payroll.addEmployeeWithNameAndStartDate(employee2, salary2_2, name, Math.floor((new Date()).getTime() / 1000) - 2628600);
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[0], employee2, "Employee account doesn't match");
@@ -546,8 +498,8 @@ contract('Payroll', function(accounts) {
     // determine allocation
     await payroll.determineAllocation([ETH, usdToken.address, erc20Token1.address], [ethAllocation, usdTokenAllocation, erc20Token1Allocation], {from: employee2});
     await setInitialBalances();
-    let employeeId = 4;
-    let timePassed = await getTimePassed(employeeId); // get employee 2
+    let employeeId = 3;
+    let timePassed = await getTimePassed(payroll, employeeId); // get employee 2
     // call payday
     let transaction = await payroll.payday({from: employee2});
     await checkPayday(transaction, timePassed);
@@ -559,7 +511,7 @@ contract('Payroll', function(accounts) {
     // we need to forward time in price feed, or rate will be obsolete
     await priceFeed.mockSetTimestamp(newTime);
     await setInitialBalances();
-    timePassed = await getTimePassed(employeeId); // get employee 2
+    timePassed = await getTimePassed(payroll, employeeId); // get employee 2
     // call payday again
     let transaction2 = await payroll.payday({from: employee2});
     await checkPayday(transaction2, timePassed);
@@ -582,8 +534,8 @@ contract('Payroll', function(accounts) {
     const ethAllocation = 100 - usdTokenAllocation - erc20Token1Allocation;
     // determine allocation
     await payroll.determineAllocation([ETH, usdToken.address, erc20Token1.address], [ethAllocation, usdTokenAllocation, erc20Token1Allocation], {from: employee2});
-    const employeeId = 4;
-    await getTimePassed(employeeId); // get employee 2
+    const employeeId = 3;
+    await getTimePassed(payroll, employeeId); // get employee 2
     // set old date in price feed
     const oldTime = parseInt(await payroll.getTimestampPublic(), 10) - rateExpiryTime - 1
     await priceFeed.mockSetTimestamp(oldTime)

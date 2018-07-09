@@ -8,6 +8,7 @@ contract PayrollMock is Payroll {
 
     function mockUpdateTimestamp() public { _mockTime = uint64(now); }
     function mockSetTimestamp(uint64 i) public { _mockTime = i; }
+    function mockAddTimestamp(uint64 i) public { _mockTime += i; require(_mockTime >= i); }
     function getTimestampPublic() public constant returns (uint64) { return _mockTime; }
     function getTimestamp() internal constant returns (uint64) { return _mockTime; }
 }
