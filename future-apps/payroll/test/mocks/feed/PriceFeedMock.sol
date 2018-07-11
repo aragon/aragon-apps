@@ -30,4 +30,9 @@ contract PriceFeedMock is IFeed {
         _mockTime = _time;
     }
 
+    function mockAddTimestamp(uint64 time) public {
+        _mockTime += time;
+        require(_mockTime >= time);
+    }
+
 }

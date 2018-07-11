@@ -9,7 +9,7 @@ const PriceFeedMock = artifacts.require("./feed/PriceFeedMock.sol");
 const PriceFeedFailMock = artifacts.require("./feed/PriceFeedFailMock.sol");
 const Zombie = artifacts.require("Zombie.sol");
 
-const { deployErc20Token, addAllowedTokens, getTimePassed } = require('./helpers.js')
+const { deployErc20TokenAndDeposit, addAllowedTokens, getTimePassed } = require('./helpers.js')
 
 contract('Payroll', function(accounts) {
   const rateExpiryTime = 1000;
@@ -51,13 +51,13 @@ contract('Payroll', function(accounts) {
     finance = await Finance.new();
     await finance.initialize(vault.address, SECONDS_IN_A_YEAR); // more than one day
 
-    usdToken = await deployErc20Token(owner, finance, vault, "USD", USD_DECIMALS);
+    usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", USD_DECIMALS);
     priceFeed = await PriceFeedMock.new();
     payroll = await Payroll.new();
 
     // Deploy ERC 20 Tokens
-    erc20Token1 = await deployErc20Token(owner, finance, vault, "Token 1", erc20Token1Decimals);
-    erc20Token2 = await deployErc20Token(owner, finance, vault, "Token 2", erc20Token2Decimals);
+    erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 1", erc20Token1Decimals);
+    erc20Token2 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 2", erc20Token2Decimals);
 
     // get exchange rates
     erc20Token1ExchangeRate = (await priceFeed.get(usdToken.address, erc20Token1.address))[0]
@@ -153,6 +153,8 @@ contract('Payroll', function(accounts) {
     let owed = salary2.times(timePassed);
     await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic.call());
     salary2 = 0;
+    await payroll.mockAddTimestamp(timePassed);
+    await priceFeed.mockAddTimestamp(timePassed);
     // owed salary is only added to accrued value, employee need to call `payday` again
     let finalBalance = await usdToken.balanceOf(employee2);
     assert.equal(finalBalance.toString(), initialBalance.toString());
@@ -180,7 +182,7 @@ contract('Payroll', function(accounts) {
 
   it("modifies employee salary", async () => {
     let employeeId = 1;
-    await payroll.setEmployeeSalary(employeeId, salary1_2, await payroll.getTimestampPublic.call());
+    await payroll.setEmployeeSalary(employeeId, salary1_2);
     salary1 = salary1_2;
     let employee = await payroll.getEmployee(employeeId);
     assert.equal(employee[1].toString(), salary1_2.toString(), "Salary doesn't match");
@@ -189,7 +191,7 @@ contract('Payroll', function(accounts) {
   it("fails modifying non-existent employee salary", async () => {
     let employeeId = 1;
     return assertRevert(async () => {
-      await payroll.setEmployeeSalary(10, salary1_2, await payroll.getTimestampPublic.call());
+      await payroll.setEmployeeSalary(10, salary1_2);
     });
   });
 
@@ -506,10 +508,10 @@ contract('Payroll', function(accounts) {
 
     // check that we can call payday again after some time
     // set time forward, 1 month
-    let newTime = parseInt(await payroll.getTimestampPublic(), 10) + 2678400; // 31 * 24 * 3600
-    await payroll.mockSetTimestamp(newTime);
+    const timePassed2 = 2678400;
+    await payroll.mockAddTimestamp(timePassed2);
     // we need to forward time in price feed, or rate will be obsolete
-    await priceFeed.mockSetTimestamp(newTime);
+    await priceFeed.mockAddTimestamp(timePassed2);
     await setInitialBalances();
     timePassed = await getTimePassed(payroll, employeeId); // get employee 2
     // call payday again
@@ -518,10 +520,10 @@ contract('Payroll', function(accounts) {
 
     // check that time restriction for determineAllocation works in a positive way (i.e. when time has gone by)
     // set time forward, 5 more months
-    let newTime2 = parseInt(await payroll.getTimestampPublic(), 10) + 13392000; // 5 * 31 * 24 * 3600
-    await payroll.mockSetTimestamp(newTime2)
+    const timePassed3 = 13392000; // 5 * 31 * 24 * 3600
+    await payroll.mockAddTimestamp(timePassed3)
     // we need to forward time in price feed, or rate will be obsolete
-    await priceFeed.mockSetTimestamp(newTime2);
+    await priceFeed.mockAddTimestamp(timePassed3);
     await payroll.determineAllocation([ETH, usdToken.address, erc20Token1.address], [15, 60, 25], {from: employee2});
     assert.equal((await payroll.getAllocation(ETH, {from: employee2})).valueOf(), 15, "ETH allocation doesn't match");
     assert.equal((await payroll.getAllocation(usdToken.address, {from: employee2})).valueOf(), 60, "USD allocation doesn't match");
