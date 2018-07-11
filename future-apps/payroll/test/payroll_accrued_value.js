@@ -1,5 +1,5 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { deployErc20TokenAndDeposit, addAllowedTokens, getTimePassed } = require('./helpers.js')
+const { deployErc20TokenAndDeposit, addAllowedTokens, getTimePassed, redistributeEth } = require('./helpers.js')
 
 const getContract = name => artifacts.require(name)
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
@@ -39,9 +39,8 @@ contract('Payroll, accrued value,', async (accounts) => {
     // Deploy ERC 20 Tokens
     erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 1", erc20Token1Decimals)
 
-    // transfer ETH to Payroll contract
-    for (let i = 1; i < 9; i++)
-      await finance.sendTransaction({ from: accounts[i], value: web3.toWei(90, 'ether') })
+    // make sure owner and Payroll have enough funds
+    await redistributeEth(accounts, finance)
   })
 
   beforeEach(async () => {
