@@ -17,8 +17,9 @@
     ],
     "roles": [
         { "name": "Add employees", "id": "ADD_EMPLOYEE_ROLE", "params": ["Account address", "Initial yearly payroll", "Start date"] },
-        { "name": "Terminate employees", "id": "TERMINATE_EMPLOYEE_ROLE", "params": ["Account address"] },
-        { "name": "Add accrued value for employee", "id": "ADD_ACCRUED_VALUE_ROLE", "params": ["Account address", "Amount"] },
+        { "name": "Terminate employees", "id": "TERMINATE_EMPLOYEE_ROLE", "params": ["Employee Id"] },
+        { "name": "Set employee salary", "id": "SET_EMPLOYEE_SALARY_ROLE", "params": ["Employee Id", "Amount"] },
+        { "name": "Add accrued value for employee", "id": "ADD_ACCRUED_VALUE_ROLE", "params": ["Employee Id", "Amount"] },
         { "name": "Allowed Tokens Manager", "id": "ALLOWED_TOKENS_MANAGER_ROLE", "params": "Token" },
         { "name": "Change Price Feed", "id": "CHANGE_PRICE_FEED_ROLE", "params": ["Old Price Feed", "New Price Feed"] },
         { "name": "Modify Rate Expiry Time", "id": "MODIFY_RATE_EXPIRY_ROLE", "params": ["Rate expiry time"] }

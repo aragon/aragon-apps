@@ -22,7 +22,7 @@ contract('Payroll Timestamp', function(accounts) {
   const USD_PRECISION = 10**18;
   const SECONDS_IN_A_YEAR = 31557600; // 365.25 days
 
-  const deployErc20Token = async (name="ERC20Token") => {
+  const deployErc20TokenAndDeposit = async (name="ERC20Token") => {
     let token = await MiniMeToken.new("0x0", "0x0", 0, name, 18, 'E20', true); // dummy parameters for minime
     let amount = new web3.BigNumber(10**9).times(new web3.BigNumber(10**18));
     let sender = owner;
@@ -43,7 +43,7 @@ contract('Payroll Timestamp', function(accounts) {
     finance = await Finance.new();
     await finance.initialize(vault.address, SECONDS_IN_A_YEAR); // more than one day
     payroll = await Payroll.new();
-    usdToken = await deployErc20Token("USD");
+    usdToken = await deployErc20TokenAndDeposit("USD");
     priceFeed = await PriceFeedMock.new();
     await payroll.initialize(finance.address, usdToken.address, priceFeed.address, rateExpiryTime);
   });

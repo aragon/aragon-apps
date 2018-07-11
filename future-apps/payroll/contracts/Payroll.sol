@@ -25,13 +25,16 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     // kernel roles
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
     bytes32 constant public TERMINATE_EMPLOYEE_ROLE = keccak256("TERMINATE_EMPLOYEE_ROLE");
+    bytes32 constant public SET_EMPLOYEE_SALARY_ROLE = keccak256("SET_EMPLOYEE_SALARY_ROLE");
     bytes32 constant public ADD_ACCRUED_VALUE_ROLE = keccak256("ADD_ACCRUED_VALUE_ROLE");
     bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
     bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("CHANGE_PRICE_FEED_ROLE");
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
+
     address constant public ETH = address(0);
     uint128 constant public ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
     uint64 constant public MAX_UINT64 = uint64(-1);
+    uint256 constant public MAX_ACCRUED_VALUE = 2**128;
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
@@ -40,6 +43,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint256 accruedValue;
         uint64 lastPayroll;
         uint64 endDate;
+        bool terminated;
         string name;
     }
 
@@ -73,7 +77,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     modifier employeeExists(uint128 employeeId) {
         /* check that employee exists and is active */
-        require(employeeIds[employees[employeeId].accountAddress] != 0 && employees[employeeId].endDate >= getTimestamp());
+        require(employeeIds[employees[employeeId].accountAddress] != 0 && !employees[employeeId].terminated);
         _;
     }
 
@@ -217,25 +221,22 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Set employee #`employeeId` annual salary to `denominationSalary` per second.
      * @param employeeId Employee's identifier
      * @param denominationSalary Employee's new salary, per second in denomintation Token
-     * @param changeDate New salary effective date
      */
     function setEmployeeSalary(
         uint128 employeeId,
-        uint256 denominationSalary,
-        uint64 changeDate
+        uint256 denominationSalary
     )
         isInitialized
         employeeExists(employeeId)
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(employees[employeeId].accountAddress, denominationSalary, 0))
+        authP(SET_EMPLOYEE_SALARY_ROLE, arr(uint256(employeeId), denominationSalary))
     {
-        // forbid to change salary in the past
-        require(changeDate >= getTimestamp());
+        uint64 timestamp = getTimestamp();
 
         // Add owed salary to employee's accrued value
-        uint256 owed = _getOwedSalary(employeeId, changeDate);
+        uint256 owed = _getOwedSalary(employeeId, timestamp);
 
-        employees[employeeId].lastPayroll = changeDate;
+        employees[employeeId].lastPayroll = timestamp;
         _addAccruedValue(employeeId, owed);
 
         // set new salary
@@ -255,7 +256,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         isInitialized
         employeeExists(employeeId)
         external
-        authP(TERMINATE_EMPLOYEE_ROLE, arr(employees[employeeId].accountAddress))
+        authP(TERMINATE_EMPLOYEE_ROLE, arr(uint256(employeeId)))
     {
         _terminateEmployee(employeeId, getTimestamp());
     }
@@ -273,12 +274,15 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         isInitialized
         employeeExists(employeeId)
         external
-        authP(TERMINATE_EMPLOYEE_ROLE, arr(employees[employeeId].accountAddress))
+        authP(TERMINATE_EMPLOYEE_ROLE, arr(uint256(employeeId)))
     {
         _terminateEmployee(employeeId, endDate);
     }
 
     /**
+     * @notice Adds `amount` to accrued value for employee with id `employeeId`
+     * @param employeeId Id of the employee
+     * @param amount Added amount
      */
     function addAccruedValue(
         uint128 employeeId,
@@ -287,8 +291,10 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         isInitialized
         employeeExists(employeeId)
         external
-        authP(ADD_ACCRUED_VALUE_ROLE, arr(employees[employeeId].accountAddress, amount))
+        authP(ADD_ACCRUED_VALUE_ROLE, arr(uint256(employeeId), amount))
     {
+        require(amount <= MAX_ACCRUED_VALUE);
+
         _addAccruedValue(employeeId, amount);
     }
 
@@ -392,6 +398,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @return Employee's name
      * @return Employee's last payment received date
      * @return Employee's termination date (max uint64 if none)
+     * @return Bool indicating if employee is terminated
      */
     function getEmployeeByAddress(address accountAddress)
         external
@@ -402,7 +409,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             uint256 accruedValue,
             string name,
             uint64 lastPayroll,
-            uint64 endDate
+            uint64 endDate,
+            bool terminated
         )
     {
         employeeId = employeeIds[accountAddress];
@@ -414,6 +422,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         name = employee.name;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
+        terminated = employee.terminated;
     }
 
     /**
@@ -426,6 +435,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @return Employee's name
      * @return Employee's last payment received date
      * @return Employee's termination date (max uint64 if none)
+     * @return Bool indicating if employee is terminated
      */
     function getEmployee(uint128 employeeId)
         public
@@ -436,7 +446,8 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             uint256 accruedValue,
             string name,
             uint64 lastPayroll,
-            uint64 endDate
+            uint64 endDate,
+            bool terminated
         )
     {
         Employee memory employee = employees[employeeId];
@@ -447,6 +458,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         name = employee.name;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
+        terminated = employee.terminated;
     }
 
     /**
@@ -508,6 +520,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             accruedValue: 0,
             lastPayroll: startDate,
             endDate: MAX_UINT64,
+            terminated: false,
             name: name
         });
         // Ids mapping
@@ -551,10 +564,15 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
         // get the min of current date and termination date
         uint64 timestamp = getTimestamp();
-        uint64 toDate = employee.endDate > timestamp ? timestamp : employee.endDate;
+        uint64 toDate;
+        if (employee.terminated && employee.endDate < timestamp) {
+            toDate = employee.endDate;
+        } else {
+            toDate = timestamp;
+        }
+
         // compute owed amount
         uint256 owed = employee.accruedValue.add(_getOwedSalary(employeeId, toDate));
-
         if (owed == 0) {
             return false;
         }
@@ -588,7 +606,10 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         }
 
         // try to remove employee
-        if (employees[employeeId].endDate <= getTimestamp() && employees[employeeId].accruedValue == 0) {
+        if (employees[employeeId].terminated &&
+            employees[employeeId].endDate <= getTimestamp() &&
+            employees[employeeId].accruedValue == 0
+        ) {
             delete employeeIds[employees[employeeId].accountAddress];
             delete employees[employeeId];
         }
@@ -598,6 +619,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         // prevent past termination dates
         require(endDate >= getTimestamp());
 
+        employees[employeeId].terminated = true;
         employees[employeeId].endDate = endDate;
 
         TerminateEmployee(employeeId, employees[employeeId].accountAddress, endDate);
