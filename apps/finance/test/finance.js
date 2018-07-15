@@ -105,14 +105,16 @@ contract('Finance App', accounts => {
     })
 
     it('records ETH deposits', async () => {
-        await app.send(10, { gas: 3e5 })
+        const sentWei = 10
+        const receipt = await app.send(sentWei, { gas: 3e5 })
+        const transactionId = receipt.logs.filter(log => log.event == 'NewTransaction')[0].args.transactionId
 
-        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await app.getTransaction(1)
+        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await app.getTransaction(transactionId)
 
         // vault has 400 wei initially
         assert.equal(await ETHConnector.at(vault.address).balance(ETH), 400 + 10, 'deposited ETH must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
-        assert.equal(amount, 10, 'amount should be correct')
+        assert.equal(amount, sentWei, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')
         assert.equal(paymentRepeatNumber, 0, 'payment repeat number should be 0')
         assert.equal(token, ETH, 'token should be ETH token')
@@ -195,7 +197,7 @@ contract('Finance App', accounts => {
     it("escapes hatch, recovers ETH", async () => {
         let vaultInitialBalance = await getBalance(vault.address)
         let financeInitialBalance = await getBalance(app.address)
-        let amount = web3.toWei(1, 'ether')
+        let amount = web3.toWei('1', 'ether')
         await app.sendTransaction({value: amount})
         let vaultFinalBalance = await getBalance(vault.address)
         let financeFinalBalance = await getBalance(app.address)
@@ -367,16 +369,36 @@ contract('Finance App', accounts => {
             })
 
             it('fails when too many period transitions are needed', async () => {
-                return assertRevert(async () => {
+                // Normal payments
+                await assertRevert(async () => {
                     await app.newPayment(token1.address, recipient, 10, time, 1, 1, '')
+                })
+
+                // Direct ETH transfers
+                await assertRevert(async () => {
+                    await app.send(10, { gas: 3e5 })
                 })
             })
 
-            it('can transition periods externally to remove deadlock', async () => {
+            it('can transition periods externally to remove deadlock for payments', async () => {
                 await app.tryTransitionAccountingPeriod(maxTransitions)
                 await app.newPayment(token1.address, recipient, 10, time, 1, 1, '')
 
                 assert.equal(await token1.balanceOf(recipient), 10, 'recipient should have received tokens')
+            })
+
+            it('can transition periods externally to remove deadlock for direct deposits', async () => {
+                const sentWei = 10
+                const prevVaultBalance = (await getBalance(vault.address)).toNumber()
+
+                await app.tryTransitionAccountingPeriod(maxTransitions)
+
+                const receipt = await app.send(sentWei, { gas: 3e5 })
+                const transactionId = receipt.logs.filter(log => log.event == 'NewTransaction')[0].args.transactionId
+                const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await app.getTransaction(transactionId)
+
+                assert.equal(amount, sentWei, 'app should have received ETH and sent it to vault')
+                assert.equal((await getBalance(vault.address)).toNumber(), prevVaultBalance + sentWei, 'app should have received ETH and sent it to vault')
             })
 
             it('non-activity accounting periods have no transactions', async () => {
