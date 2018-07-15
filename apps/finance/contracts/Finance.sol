@@ -21,7 +21,6 @@ contract Finance is AragonApp {
 
     address constant public ETH = address(0);
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
-    uint64 constant public MAX_PERIOD_TRANSITIONS_PER_TX = 10;
     uint64 constant public MAX_UINT64 = uint64(-1);
     uint256 constant public MAX_UINT = uint256(-1);
 
@@ -96,7 +95,7 @@ contract Finance is AragonApp {
     // Modifier used by all methods that impact accounting to make sure accounting period
     // is changed before the operation if needed
     modifier transitionsPeriod {
-        bool completeTransition = tryTransitionAccountingPeriod(MAX_PERIOD_TRANSITIONS_PER_TX);
+        bool completeTransition = tryTransitionAccountingPeriod(getMaxPeriodTransitions());
         require(completeTransition);
         _;
     }
@@ -327,7 +326,7 @@ contract Finance is AragonApp {
 
     /**
     * @dev Transitions accounting periods if needed. For preventing OOG attacks, a maxTransitions
-    *      a TTL param is provided. If more than the specified number of periods need to be transitioned,
+    *      param is provided. If more than the specified number of periods need to be transitioned,
     *      it will return false.
     * @notice Transition accounting period if needed
     * @param _maxTransitions Maximum periods that can be transitioned
@@ -576,6 +575,9 @@ contract Finance is AragonApp {
     function _canMakePayment(address _token, uint256 _amount) internal view returns (bool) {
         return getRemainingBudget(_token) >= _amount && vault.balance(_token) >= _amount;
     }
+
+    // Must be view for mocking purposes
+    function getMaxPeriodTransitions() internal view returns (uint256) { return MAX_UINT64; }
 
     function getTimestamp() internal view returns (uint256) { return now; }
 }
