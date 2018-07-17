@@ -29,8 +29,22 @@ class SurveyOptions extends React.Component {
       this.setState({ animate: true })
     }, delay)
   }
-  componentWillUnmount() {
-    clearTimeout(this._transitionTimer)
+  shouldComponentUpdate(nextProps) {
+    const { options } = this.props
+    const { options: nextOptions } = nextProps
+    return this.didOptionsChange(options, nextOptions)
+  }
+  didOptionsChange(options, nextOptions) {
+    if (options.length !== nextOptions.length) {
+      return true
+    }
+    let i = options.length
+    while (i--) {
+      if (options[i].optionId !== nextOptions[i].optionId) {
+        return true
+      }
+    }
+    return false
   }
   render() {
     const {
