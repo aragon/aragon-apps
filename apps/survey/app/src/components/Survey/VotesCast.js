@@ -5,7 +5,7 @@ import { theme, unselectable } from '@aragon/ui'
 import { getOptionColor } from '../../option-utils'
 import springs from '../../springs'
 
-const ANIM_DELAY = 600
+const ANIM_DELAY = 400
 
 class VotesCast extends React.Component {
   getTransform(t) {
