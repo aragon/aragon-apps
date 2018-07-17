@@ -4,7 +4,7 @@ import SurveyOption from './SurveyOption'
 import { percentageList } from '../../math-utils'
 
 const ANIM_DELAY_MIN = 100
-const ANIM_DELAY_MAX = 300
+const ANIM_DELAY_MAX = 800
 
 class SurveyOptions extends React.Component {
   static defaultProps = {
