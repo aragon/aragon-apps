@@ -5,17 +5,16 @@
   "main": "truffle.js",
   "scripts": {
     "lint": "solium --dir ./contracts",
-    "test": "TRUFFLE_TEST=true npm run ganache-cli:dev",
+    "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
-    "coverage": "./node_modules/@aragon/test-helpers/run-coverage.sh",
+    "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "console": "node_modules/.bin/truffle console",
-    "ganache-cli:dev": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
-    "ganache-cli:coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:dev"
+    "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh"
   },
   "author": "Aragon One AG",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@aragon/test-helpers": "^1.0.0",
+    "@aragon/test-helpers": "^1.0.1",
     "ethereumjs-abi": "^0.6.4",
     "ganache-cli": "^6.0.3",
     "solidity-coverage": "0.4.3",

@@ -14,9 +14,12 @@ interface IStaking {
         returns (
             uint256 amount,
             uint8 lockUnit,
+            uint64 lockStarts,
             uint64 lockEnds,
             address unlocker,
-            bytes32 metadata
+            bytes32 metadata,
+            uint256 prevUnlockerLockId,
+            uint256 nextUnlockerLockId
         );
 }
 
