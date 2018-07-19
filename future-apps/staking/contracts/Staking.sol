@@ -13,6 +13,7 @@ contract Staking is ERCStaking, IStaking, AragonApp {
   using SafeMath for uint256;
 
   uint64 constant public MAX_UINT64 = uint64(-1);
+  address constant public ANY_ENTITY = address(0);
 
   struct Account {
     uint256 amount;
@@ -27,14 +28,15 @@ contract Staking is ERCStaking, IStaking, AragonApp {
   }
 
   struct Timespan {
-    //uint64 start; // exclusive
-    uint64 end;     // inclusive
+    uint64 start;
+    uint64 end;
     TimeUnit unit;
   }
 
   enum TimeUnit { Blocks, Seconds }
 
-  ERC20 public stakingToken;
+  bool public overlocking; // if true, an unlocker can use the same stake in different locks
+  ERC20 private stakingToken; // it already has a getter, conforming ERCStaking interface
   bytes public stakeScript;
   bytes public unstakeScript;
   bytes public lockScript;
@@ -54,14 +56,15 @@ contract Staking is ERCStaking, IStaking, AragonApp {
   bytes32 constant public LOCK_ROLE = keccak256("LOCK_ROLE");
   bytes32 constant public GOD_ROLE = keccak256("GOD_ROLE");
 
-  modifier checkUnlocked(uint256 amount) {
-    require(unlockedBalanceOf(msg.sender) >= amount);
+  modifier checkUnlocked(uint256 amount, address unlocker) {
+    require(unlockedBalanceOf(msg.sender, unlocker) >= amount);
     _;
   }
 
   // TODO: Implement forwarder interface
 
-  function initialize(ERC20 _stakingToken, bytes _stakeScript, bytes _unstakeScript, bytes _lockScript) onlyInit external {
+  function initialize(bool _overlocking, ERC20 _stakingToken, bytes _stakeScript, bytes _unstakeScript, bytes _lockScript) onlyInit external {
+    overlocking = _overlocking;
     stakingToken = _stakingToken;
     stakeScript = _stakeScript;
     unstakeScript = _unstakeScript;
@@ -90,7 +93,7 @@ contract Staking is ERCStaking, IStaking, AragonApp {
     }
   }
 
-  function unstake(uint256 amount, bytes data) authP(UNSTAKE_ROLE, arr(amount)) checkUnlocked(amount) public {
+  function unstake(uint256 amount, bytes data) authP(UNSTAKE_ROLE, arr(amount)) checkUnlocked(amount, ANY_ENTITY) public {
     // unstake 0 tokens makes no sense
     require(amount > 0);
 
@@ -106,10 +109,10 @@ contract Staking is ERCStaking, IStaking, AragonApp {
   }
 
   function lockIndefinitely(uint256 amount, address unlocker, bytes32 metadata, bytes data) public returns(uint256 lockId) {
-    return lock(amount, uint8(TimeUnit.Seconds), MAX_UINT64, unlocker, metadata, data);
+    return lock(amount, uint8(TimeUnit.Seconds), getTimestamp(), MAX_UINT64, unlocker, metadata, data);
   }
 
-  function lock(
+  function lockNow(
     uint256 amount,
     uint8 lockUnit,
     uint64 lockEnds,
@@ -117,15 +120,34 @@ contract Staking is ERCStaking, IStaking, AragonApp {
     bytes32 metadata,
     bytes data
   )
+    public
+    returns(uint256 lockId)
+  {
+    uint64 lockStarts = lockUnit == uint8(TimeUnit.Blocks) ? getBlocknumber() : getTimestamp();
+    return lock(amount, lockUnit, lockStarts, lockEnds, unlocker, metadata, data);
+  }
+
+  function lock(
+    uint256 amount,
+    uint8 lockUnit,
+    uint64 lockStarts,
+    uint64 lockEnds,
+    address unlocker,
+    bytes32 metadata,
+    bytes data
+  )
     authP(LOCK_ROLE, arr(amount, uint256(lockUnit), uint256(lockEnds)))
-    checkUnlocked(amount)
+    checkUnlocked(amount, unlocker)
     public
     returns(uint256 lockId)
   {
     // lock 0 tokens makes no sense
     require(amount > 0);
 
-    Lock memory newLock = Lock(amount, Timespan(lockEnds, TimeUnit(lockUnit)), unlocker, metadata);
+    // TODO: should we prevent startin locks in the past?
+    // require(lockStarts >= (TimeUnit(lockUnit) == TimeUnit.Blocks ? getBlocknumber() : getTimestamp()));
+
+    Lock memory newLock = Lock(amount, Timespan(lockStarts, lockEnds, TimeUnit(lockUnit)), unlocker, metadata);
     lockId = accounts[msg.sender].locks.push(newLock) - 1;
 
     Locked(msg.sender, lockId, amount, metadata);
@@ -138,6 +160,7 @@ contract Staking is ERCStaking, IStaking, AragonApp {
   function stakeAndLock(
     uint256 amount,
     uint8 lockUnit,
+    uint64 lockStarts,
     uint64 lockEnds,
     address unlocker,
     bytes32 metadata,
@@ -150,7 +173,7 @@ contract Staking is ERCStaking, IStaking, AragonApp {
     returns(uint256 lockId)
   {
     stake(amount, stakeData);
-    return lock(amount, lockUnit, lockEnds, unlocker, metadata, lockData);
+    return lock(amount, lockUnit, lockStarts, lockEnds, unlocker, metadata, lockData);
   }
 
   function unlockAllOrNone(address acct) external {
@@ -186,11 +209,11 @@ contract Staking is ERCStaking, IStaking, AragonApp {
     Lock storage acctLock = accounts[acct].locks[lockId];
     acctLock.amount = acctLock.amount.sub(amount);
 
+    UnlockedPartial(acct, msg.sender, lockId, amount);
+
     if (acctLock.amount == 0) {
       unlock(acct, lockId);
     }
-
-    UnlockedPartial(acct, msg.sender, lockId, amount);
   }
 
   function unlockAndUnstake(uint256 amount, bytes data) public {
@@ -235,12 +258,25 @@ contract Staking is ERCStaking, IStaking, AragonApp {
   }
 
   function unlockedBalanceOf(address acct) public view returns (uint256) {
+    return unlockedBalanceOf(acct, ANY_ENTITY);
+  }
+
+  function unlockedBalanceOf(address acct, address unlocker) public view returns (uint256) {
     uint256 unlockedTokens = accounts[acct].amount;
 
     Lock[] storage locks = accounts[acct].locks;
     for (uint256 i = 0; i < locks.length; i++) {
       if (!canUnlock(acct, i)) {
-        unlockedTokens = unlockedTokens.sub(locks[i].amount);
+        if (overlocking) { // with ovelocking underflow is possible
+          if (locks[i].unlocker == ANY_ENTITY || locks[i].unlocker != unlocker) {
+            if (locks[i].amount > unlockedTokens) {
+              return 0;
+            }
+            unlockedTokens -= locks[i].amount;
+          }
+        } else { // without overlocking locks must be always subtracted and no underflow is allowed
+          unlockedTokens = unlockedTokens.sub(locks[i].amount);
+        }
       }
     }
 
@@ -265,21 +301,21 @@ contract Staking is ERCStaking, IStaking, AragonApp {
   function canUnlock(address acct, uint256 lockId) public view returns (bool) {
     Lock memory acctLock = accounts[acct].locks[lockId];
 
-    return timespanEnded(acctLock.timespan) || msg.sender == acctLock.unlocker;
+    return outOfTimespan(acctLock.timespan) || msg.sender == acctLock.unlocker;
   }
 
-  function timespanEnded(Timespan memory timespan) internal view returns (bool) {
-    uint256 comparingValue = timespan.unit == TimeUnit.Blocks ? getBlocknumber() : getTimestamp();
+  function outOfTimespan(Timespan memory timespan) internal view returns (bool) {
+    uint64 comparingValue = timespan.unit == TimeUnit.Blocks ? getBlocknumber() : getTimestamp();
 
-    return uint64(comparingValue) > timespan.end;
+    return comparingValue < timespan.start || comparingValue > timespan.end;
   }
 
-  function getTimestamp() internal view returns (uint256) {
-    return block.timestamp;
+  function getTimestamp() internal view returns (uint64) {
+    return uint64(block.timestamp);
   }
 
   // TODO: Use getBlockNumber from Initializable.sol - issue with solidity-coverage
-  function getBlocknumber() internal view returns (uint256) {
-    return block.number;
+  function getBlocknumber() internal view returns (uint64) {
+    return uint64(block.number);
   }
 }
