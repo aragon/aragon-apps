@@ -47,7 +47,7 @@ contract('Staking app, Real one (no mock)', accounts => {
     assert.isFalse(await app.canUnlock.call(owner, lockId))
     assert.equal((await app.unlockedBalanceOf.call(owner, ANY_ENTITY)).valueOf(), amount / 2, "Unlocked balance should match")
     assert.equal((await app.unlockedBalanceOf.call(owner, other)).valueOf(), amount / 2, "Unlocked balance should match for unlocker")
-    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId, 10) + 1, "last lock id should match")
+    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId, 10), "last lock id should match")
   })
 
   it('locks using blocks', async () => {
@@ -71,6 +71,6 @@ contract('Staking app, Real one (no mock)', accounts => {
     assert.isFalse(await app.canUnlock.call(owner, lockId))
     assert.equal((await app.unlockedBalanceOf.call(owner, ANY_ENTITY)).valueOf(), amount / 2, "Unlocked balance should match")
     assert.equal((await app.unlockedBalanceOf.call(owner, other)).valueOf(), amount / 2, "Unlocked balance should match for unlocker")
-    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId, 10) + 1, "last lock id should match")
+    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId, 10), "last lock id should match")
   })
 })

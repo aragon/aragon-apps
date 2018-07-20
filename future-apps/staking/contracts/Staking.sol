@@ -17,12 +17,14 @@ contract Staking is ERCStaking, IStaking, AragonApp {
 
   struct Unlocker {
     address account;
-    uint128 maxLockId; // Id of the biggest lock for that unlocker
+    uint256 maxLockId; // Id of the biggest lock for that unlocker
   }
 
   struct Account {
     uint256 amount;
-    Lock[] locks;
+    mapping(uint256 => Lock) locks;
+    uint256[] lockIds;
+    uint256 lastLockId;
     Unlocker[] unlockers;
   }
 
@@ -31,8 +33,9 @@ contract Staking is ERCStaking, IStaking, AragonApp {
     Timespan timespan;
     address unlocker;
     bytes32 metadata;
-    uint128 prevUnlockerLockId; // keep an ordered double linked list for unlocker's locks
-    uint128 nextUnlockerLockId;
+    // TODO: uint128? <-> IStaking
+    uint256 prevUnlockerLockId; // keep an ordered double linked list for unlocker's locks
+    uint256 nextUnlockerLockId;
   }
 
   struct Timespan {
@@ -156,14 +159,13 @@ contract Staking is ERCStaking, IStaking, AragonApp {
     // require(lockStarts >= (TimeUnit(lockUnit) == TimeUnit.Blocks ? getBlocknumber() : getTimestamp()));
 
     // leave index 0 empty
-    if (accounts[msg.sender].locks.length == 0) {
-      accounts[msg.sender].locks.length++;
-    }
+    lockId = ++accounts[msg.sender].lastLockId;
     // create new lock
     Lock memory newLock = Lock(amount, Timespan(lockStarts, lockEnds, TimeUnit(lockUnit)), unlocker, metadata, 0, 0);
-    lockId = accounts[msg.sender].locks.push(newLock) - 1;
+    accounts[msg.sender].locks[lockId] = newLock;
+    accounts[msg.sender].lockIds.push(lockId);
 
-    insertUnlockerLock(unlocker, uint128(lockId));
+    insertUnlockerLock(unlocker, lockId);
 
     Locked(msg.sender, lockId, amount, metadata);
 
@@ -173,15 +175,15 @@ contract Staking is ERCStaking, IStaking, AragonApp {
   }
 
   // TODO: move below
-  function insertUnlockerLock(address unlocker, uint128 lockId) private {
+  function insertUnlockerLock(address unlocker, uint256 lockId) private {
     Account storage account = accounts[msg.sender];
 
     // find unlocker in list
     Unlocker memory tmpUnlocker;
-    uint256 l = account.unlockers.length;
-    while(tmpUnlocker.account != unlocker && l > 0) {
-      tmpUnlocker = account.unlockers[l-1];
-      l--;
+    uint256 unlockersIndex = account.unlockers.length;
+    while (tmpUnlocker.account != unlocker && unlockersIndex > 0) {
+      unlockersIndex--;
+      tmpUnlocker = account.unlockers[unlockersIndex];
     }
     // not found
     if (tmpUnlocker.account != unlocker) {
@@ -191,18 +193,18 @@ contract Staking is ERCStaking, IStaking, AragonApp {
       account.unlockers.push(tmpUnlocker);
     } else { // found, insert lock in its oredered list
       uint256 amount = account.locks[lockId].amount;
-      uint128 i = tmpUnlocker.maxLockId;
-      uint128 lastId = 0;
-      while(i >= 0) {
+      uint256 i = tmpUnlocker.maxLockId;
+      uint256 lastId = 0;
+      while (i >= 0) {
         if (account.locks[i].amount <= amount) {
           // next
           account.locks[lockId].nextUnlockerLockId = i;
-          if(i > 0) {
+          if (i > 0) {
             account.locks[i].prevUnlockerLockId = lockId;
           }
           // previous
           if (lastId == 0) { // the new lock is the first one
-            account.unlockers[l].maxLockId = lockId;
+            account.unlockers[unlockersIndex].maxLockId = lockId;
           } else {
             account.locks[lastId].nextUnlockerLockId = lockId;
             account.locks[lockId].prevUnlockerLockId = lastId;
@@ -235,15 +237,16 @@ contract Staking is ERCStaking, IStaking, AragonApp {
   }
 
   function unlockAllOrNone(address acct) external {
-    for (uint256 i = accounts[acct].locks.length; i > 1; i--) {
-      unlock(acct, i - 1);
+    for (uint256 i = accounts[acct].lockIds.length; i > 0; i--) {
+      unlock(acct, accounts[acct].lockIds[i - 1]);
     }
   }
 
   function unlockAll(address acct) public {
-    for (uint256 i = accounts[acct].locks.length; i > 1; i--) {
-      if (canUnlock(acct, i - 1)) {
-        unlock(acct, i - 1);
+    for (uint256 i = accounts[acct].lockIds.length; i > 0; i--) {
+      uint256 lockId = accounts[acct].lockIds[i - 1];
+      if (canUnlock(acct, lockId)) {
+        unlock(acct, lockId);
       }
     }
   }
@@ -271,6 +274,16 @@ contract Staking is ERCStaking, IStaking, AragonApp {
     }
 
     delete(accounts[acct].locks[lockId]);
+    // delete from lockIds array
+    // find it first
+    uint256 locksLength = accounts[acct].lockIds.length;
+    for (uint256 j = 0; j < locksLength; j++) {
+      if (accounts[acct].lockIds[j] == lockId) {
+        break;
+      }
+    }
+    accounts[acct].lockIds[j] = accounts[acct].lockIds[locksLength - 1];
+    accounts[acct].lockIds.length--;
 
     Unlocked(acct, msg.sender, lockId);
   }
@@ -338,17 +351,15 @@ contract Staking is ERCStaking, IStaking, AragonApp {
 
     uint256 unlockedTokens = account.amount;
 
-    Lock[] storage locks = accounts[acct].locks;
-
     if (overlocking) { // with ovelocking we only discount biggest one for each unlocker
       for (uint256 j = 0; j < account.unlockers.length; j++) {
         if (unlocker == ANY_ENTITY || unlocker != account.unlockers[j].account) {
-          unlockedTokens = unlockedTokens.sub(locks[account.unlockers[j].maxLockId].amount);
+          unlockedTokens = unlockedTokens.sub(accounts[acct].locks[account.unlockers[j].maxLockId].amount);
         }
       }
     } else { // without overlocking all locks must be subtracted
-      for (uint256 i = 1; i < locks.length; i++) {
-        unlockedTokens = unlockedTokens.sub(locks[i].amount);
+      for (uint256 i = 0; i < accounts[acct].lockIds.length; i++) {
+        unlockedTokens = unlockedTokens.sub(accounts[acct].locks[accounts[acct].lockIds[i]].amount);
       }
     }
 
@@ -356,7 +367,7 @@ contract Staking is ERCStaking, IStaking, AragonApp {
   }
 
   function locksCount(address acct) public view returns (uint256) {
-    return accounts[acct].locks.length;
+    return accounts[acct].lockIds.length;
   }
 
   function getLock(
@@ -406,7 +417,7 @@ contract Staking is ERCStaking, IStaking, AragonApp {
       uint256 nextUnlockerLockId
     )
   {
-    Lock memory acctLock = accounts[acct].locks[locksCount(acct) - 1];
+    Lock memory acctLock = accounts[acct].locks[accounts[acct].lockIds[locksCount(acct) - 1]];
 
     return (
       acctLock.amount,

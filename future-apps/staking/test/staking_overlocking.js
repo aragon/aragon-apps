@@ -77,9 +77,9 @@ contract('Staking app, overlocking', accounts => {
     // still the same, can not unlock
     assert.isFalse(await app.canUnlock.call(owner, lockId))
     assert.equal((await app.unlockedBalanceOf.call(owner, ANY_ENTITY)).valueOf(), amount / 2, "Unlocked balance should match")
-    // lock doesn't count for the unlocker as overlocing is enabled
+    // lock doesn't count for the unlocker as overlocking is enabled
     assert.equal((await app.unlockedBalanceOf.call(owner, other)).valueOf(), amount, "Unlocked balance should match for unlocker")
-    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId, 10) + 1, "last lock id should match")
+    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId, 10), "last lock id should match")
   })
 
   it('locks already locked tokens (overlocking)', async () => {
@@ -93,9 +93,9 @@ contract('Staking app, overlocking', accounts => {
     assert.notEqual(lockId1, lockId2, "Lock Ids should be different")
     // only biggest one counts
     assert.equal((await app.unlockedBalanceOf.call(owner, ANY_ENTITY)).valueOf(), amount / 2 - 1, "Unlocked balance should match")
-    // lock doesn't count for the unlocker as overlocing is enabled
+    // lock doesn't count for the unlocker as overlocking is enabled
     assert.equal((await app.unlockedBalanceOf.call(owner, other)).valueOf(), amount, "Unlocked balance should match for unlocker")
-    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId2, 10) + 1, "last lock id should match")
+    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId2, 10), "last lock id should match")
   })
 
   it('locks using seconds', async () => {
@@ -119,15 +119,15 @@ contract('Staking app, overlocking', accounts => {
     // can not unlock
     assert.isFalse(await app.canUnlock.call(owner, lockId))
     assert.equal((await app.unlockedBalanceOf.call(owner, ANY_ENTITY)).valueOf(), amount / 2, "Unlocked balance should match")
-    // lock doesn't count for the unlocker as overlocing is enabled
+    // lock doesn't count for the unlocker as overlocking is enabled
     assert.equal((await app.unlockedBalanceOf.call(owner, other)).valueOf(), amount, "Unlocked balance should match for unlocker")
-    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId, 10) + 1, "last lock id should match")
+    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId, 10), "last lock id should match")
 
     await app.setTimestamp(endTime + 1)
     // can unlock
     assert.isTrue(await app.canUnlock.call(owner, lockId))
     assert.equal((await app.unlockedBalanceOf.call(owner, ANY_ENTITY)).valueOf(), amount / 2, "Unlocked balance should match")
-    // lock doesn't count for the unlocker as overlocing is enabled
+    // lock doesn't count for the unlocker as overlocking is enabled
     assert.equal((await app.unlockedBalanceOf.call(owner, other)).valueOf(), amount, "Unlocked balance should match for unlocker")
 
   })
@@ -153,9 +153,9 @@ contract('Staking app, overlocking', accounts => {
     // can not unlock
     assert.isFalse(await app.canUnlock.call(owner, lockId))
     assert.equal((await app.unlockedBalanceOf.call(owner, ANY_ENTITY)).valueOf(), amount / 2, "Unlocked balance should match")
-    // lock doesn't count for the unlocker as overlocing is enabled
+    // lock doesn't count for the unlocker as overlocking is enabled
     assert.equal((await app.unlockedBalanceOf.call(owner, other)).valueOf(), amount, "Unlocked balance should match for unlocker")
-    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId, 10) + 1, "last lock id should match")
+    assert.equal((await app.locksCount.call(owner)).valueOf(), parseInt(lockId, 10), "last lock id should match")
 
     await app.setBlockNumber(endBlock + 1)
     // can unlock
@@ -174,17 +174,17 @@ contract('Staking app, overlocking', accounts => {
     await app.unlockPartial(owner, lockId, amount / 4, { from: other })
 
     assert.equal((await app.unlockedBalanceOf.call(owner, ANY_ENTITY)).valueOf(), amount * 3 / 4, "Unlocked balance should match")
-    // lock doesn't count for the unlocker as overlocing is enabled
+    // lock doesn't count for the unlocker as overlocking is enabled
     assert.equal((await app.unlockedBalanceOf.call(owner, other)).valueOf(), amount, "Unlocked balance should match for unlocker")
-    assert.equal((await app.locksCount.call(owner)).valueOf(), 2, "there should still be 1 lock") // id 0 is left empty
+    assert.equal((await app.locksCount.call(owner)).valueOf(), 1, "there should still be 1 lock")
 
     // unlocks again
     await app.unlockPartial(owner, lockId, amount / 4, { from: other })
 
     assert.equal((await app.unlockedBalanceOf.call(owner, ANY_ENTITY)).valueOf(), amount, "Unlocked balance should match")
-    // lock doesn't count for the unlocker as overlocing is enabled
+    // lock doesn't count for the unlocker as overlocking is enabled
     assert.equal((await app.unlockedBalanceOf.call(owner, other)).valueOf(), amount, "Unlocked balance should match for unlocker")
-    // TODO assert.equal((await app.locksCount.call(owner)).valueOf(), 1, "there shouldn't be locks") // id 0 is left empty
+    assert.equal((await app.locksCount.call(owner)).valueOf(), 0, "there shouldn't be locks")
   })
 
   it('moves tokens', async () => {
@@ -240,7 +240,7 @@ contract('Staking app, overlocking', accounts => {
     await app.unlockPartialAndMoveTokens(owner, lockId, other, amount / 4, { from: other })
 
     assert.equal((await app.unlockedBalanceOf.call(owner, ANY_ENTITY)).valueOf(), amount / 2, "Unlocked owner balance should match")
-    assert.equal((await app.locksCount.call(owner)).valueOf(), 2, "there should still be 1 lock") // id 0 is left empty
+    assert.equal((await app.locksCount.call(owner)).valueOf(), 1, "there should still be 1 lock")
     assert.equal((await app.unlockedBalanceOf.call(other, ANY_ENTITY)).valueOf(), amount / 4, "Unlocked other balance should match")
   })
 })
