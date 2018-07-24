@@ -57,9 +57,10 @@ class Survey extends React.Component {
         ${lerp(t, -to.y + from.y, 0)}px,
         0
       )
-      scale(
+      scale3d(
         ${lerp(t, from.width / to.width, 1)},
-        ${lerp(t, from.height / to.height, 1)}
+        ${lerp(t, from.height / to.height, 1)},
+        1
       )
     `
   }

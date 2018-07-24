@@ -18,7 +18,7 @@ class SurveyOption extends React.Component {
           <Bar
             style={{
               width: `${value * 100}%`,
-              transform: showProgress.interpolate(t => `scaleX(${t})`),
+              transform: showProgress.interpolate(t => `scale3d(${t}, 1, 1)`),
             }}
           />
         </BarWrapper>
