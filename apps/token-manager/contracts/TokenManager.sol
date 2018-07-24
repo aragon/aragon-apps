@@ -38,8 +38,8 @@ contract TokenManager is ITokenController, AragonApp, IForwarder {
         bool revokable;
     }
 
-    mapping (address => TokenVesting[]) vestings;
-    mapping (address => bool) everHeld;
+    mapping (address => TokenVesting[]) internal vestings;
+    mapping (address => bool) public everHeld;
 
     // Returns all holders the token had (since managing it).
     // Some of them can have a balance of 0.

@@ -80,10 +80,10 @@ contract Finance is AragonApp {
 
     IVaultConnector public vault;
 
-    Payment[] payments; // first index is 1
-    Transaction[] transactions; // first index is 1
-    Period[] periods; // first index is 0
-    Settings settings;
+    Payment[] internal payments; // first index is 1
+    Transaction[] internal transactions; // first index is 1
+    Period[] internal periods; // first index is 0
+    Settings internal settings;
 
     event NewPeriod(uint256 indexed periodId, uint64 periodStarts, uint64 periodEnds);
     event SetBudget(address indexed token, uint256 amount, bool hasBudget);
