@@ -4,7 +4,7 @@ import "../../contracts/Finance.sol";
 
 contract FinanceMock is Finance {
     uint256 mockTime = now;
-    uint mockMaxPeriodTransitions = MAX_UINT;
+    uint256 mockMaxPeriodTransitions = MAX_UINT;
 
     function mock_setMaxPeriodTransitions(uint256 i) public { mockMaxPeriodTransitions = i; }
     function mock_setTimestamp(uint256 i) public { mockTime = i; }
