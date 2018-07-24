@@ -273,6 +273,11 @@ contract('Finance App', accounts => {
 
         it('removing budget allows unlimited spending', async () => {
             await app.removeBudget(token2.address)
+
+            const [budget, hasBudget] = await app.getBudget.call(token2.address)
+            assert.equal(budget, 0, 'removed budget should be 0')
+            assert.isFalse(hasBudget, 'should not have budget')
+
             // budget was 100
             await app.newPayment(token2.address, recipient, 190, time, 0, 1, '')
             assert.equal(await token2.balanceOf(recipient), 190, 'recipient should have received tokens')

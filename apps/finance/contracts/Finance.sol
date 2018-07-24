@@ -265,6 +265,7 @@ contract Finance is AragonApp {
     * @param _token Address for token
     */
     function removeBudget(address _token) authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token])) transitionsPeriod isInitialized external {
+        settings.budgets[_token] = 0;
         settings.hasBudget[_token] = false;
         SetBudget(_token, 0, false);
     }
