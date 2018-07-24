@@ -54,7 +54,7 @@ contract Survey is AragonApp {
         mapping (address => MultiOptionVote) votes;    // voter -> options voted, with its stakes
     }
 
-    SurveyStruct[] surveys;
+    SurveyStruct[] internal surveys;
 
     event StartSurvey(uint256 indexed surveyId);
     event CastVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 stake, uint256 optionPower);
