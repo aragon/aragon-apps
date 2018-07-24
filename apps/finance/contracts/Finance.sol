@@ -425,7 +425,7 @@ contract Finance is AragonApp {
         return settings.periodDuration;
     }
 
-    function getBudget(address _token) transitionsPeriod public view returns (uint256 budget, bool hasBudget) {
+    function getBudget(address _token) public view returns (uint256 budget, bool hasBudget) {
         budget = settings.budgets[_token];
         hasBudget = settings.hasBudget[_token];
     }
