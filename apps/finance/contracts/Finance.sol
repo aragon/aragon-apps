@@ -143,7 +143,7 @@ contract Finance is AragonApp {
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
     */
-    function deposit(address _token, uint256 _amount, string _reference) external isInitialized transitionsPeriod {
+    function deposit(ERC20 _token, uint256 _amount, string _reference) external isInitialized transitionsPeriod {
         require(_amount > 0);
         _recordIncomingTransaction(
             _token,
@@ -152,9 +152,9 @@ contract Finance is AragonApp {
             _reference
         );
         // first we need to get the tokens to Finance
-        ERC20(_token).transferFrom(msg.sender, this, _amount);
+        _token.transferFrom(msg.sender, this, _amount);
         // and then approve them to vault
-        ERC20(_token).approve(address(vault), _amount);
+        _token.approve(vault, _amount);
         // finally we can deposit them
         vault.deposit(_token, this, _amount, new bytes(0));
     }
@@ -309,8 +309,8 @@ contract Finance is AragonApp {
      * @notice Send tokens held in this contract to the Vault
      * @param _token Token whose balance is going to be transferred.
      */
-    function depositToVault(address _token) isInitialized public {
-        uint256 value = ERC20(_token).balanceOf(this);
+    function depositToVault(ERC20 _token) isInitialized public {
+        uint256 value = _token.balanceOf(this);
         require(value > 0);
 
         _recordIncomingTransaction(
@@ -320,7 +320,7 @@ contract Finance is AragonApp {
             "Deposit to Vault"
         );
         // First we approve tokens to vault
-        ERC20(_token).approve(address(vault), value);
+        _token.approve(vault, value);
         // then we can deposit them
         vault.deposit(_token, this, value, new bytes(0));
     }
