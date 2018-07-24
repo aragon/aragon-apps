@@ -105,7 +105,7 @@ contract Finance is AragonApp {
      * @dev Sends ETH to Vault. Sends all the available balance.
      * @notice Allows to send ETH from this contract to Vault, to avoid locking them in contract forever.
      */
-    function () public payable isInitialized transitionsPeriod {
+    function () external payable isInitialized transitionsPeriod {
         _recordIncomingTransaction(
             ETH,
             msg.sender,
