@@ -366,10 +366,11 @@ contract('Finance App', accounts => {
         })
 
         context('many accounting period transitions', () => {
-            let maxTransitions = 0
+            // Arbitrary number of max transitions to simulate OOG behaviour with transitionsPeriod
+            const maxTransitions = 20
 
             beforeEach(async () => {
-                maxTransitions = await app.MAX_PERIOD_TRANSITIONS_PER_TX().then(bn => bn.toNumber())
+                await app.mock_setMaxPeriodTransitions(maxTransitions)
                 await app.mock_setTimestamp(time + (maxTransitions + 2) * periodDuration)
             })
 
