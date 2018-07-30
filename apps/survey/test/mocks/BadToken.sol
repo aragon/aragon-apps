@@ -5,8 +5,8 @@ import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
 
 contract BadToken is MiniMeToken {
     function BadToken(
-        address _tokenFactory,
-        address _parentToken,
+        MiniMeTokenFactory _tokenFactory,
+        MiniMeToken _parentToken,
         uint _parentSnapShotBlock,
         string _tokenName,
         uint8 _decimalUnits,
