@@ -214,7 +214,7 @@ contract Voting is IForwarder, AragonApp {
         Vote storage vote = votes[voteId];
         vote.executionScript = _executionScript;
         vote.creator = msg.sender;
-        vote.startDate = uint64(now);
+        vote.startDate = getTimestamp64();
         vote.metadata = _metadata;
         vote.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote.totalVoters = token.totalSupplyAt(vote.snapshotBlock);
@@ -281,7 +281,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     function _isVoteOpen(Vote storage vote) internal view returns (bool) {
-        return uint64(now) < vote.startDate.add(voteTime) && !vote.executed;
+        return getTimestamp64() < vote.startDate.add(voteTime) && !vote.executed;
     }
 
     /**
