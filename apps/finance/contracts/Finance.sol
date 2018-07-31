@@ -251,7 +251,15 @@ contract Finance is AragonApp {
     * @param _token Address for token
     * @param _amount New budget amount
     */
-    function setBudget(address _token, uint256 _amount) authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token])) transitionsPeriod isInitialized external {
+    function setBudget(
+        address _token,
+        uint256 _amount
+    )
+        authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token], settings.hasBudget[_token] ? 1 : 0))
+        transitionsPeriod
+        isInitialized
+        external
+    {
         settings.budgets[_token] = _amount;
         if (!settings.hasBudget[_token]) {
             settings.hasBudget[_token] = true;
@@ -263,7 +271,12 @@ contract Finance is AragonApp {
     * @notice Remove spending limit for `_token.symbol(): string`.
     * @param _token Address for token
     */
-    function removeBudget(address _token) authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token])) transitionsPeriod isInitialized external {
+    function removeBudget(address _token)
+        authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token], settings.hasBudget[_token] ? 1 : 0))
+        transitionsPeriod
+        isInitialized
+        external
+    {
         settings.budgets[_token] = 0;
         settings.hasBudget[_token] = false;
         SetBudget(_token, 0, false);
