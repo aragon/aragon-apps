@@ -272,11 +272,11 @@ export default observe(observable => {
                 options: optionsHistory.options.map(optionHistory =>
                   optionHistory.reduce((powers, power, index) => {
                     if (index <= nowBucket) {
-                      // Adjust power for participation (so it's a percentage of total partcipation)
-                      // If there's no power filled in this slot, fill it in with the previous power
-                      // (and use 0 for the first index if so)
+                      // Adjust power for participation (so it's a percentage of total participation)
+                      // If there's no power filled in this slot (-1 signifies it's sparse), fill it
+                      // in with the previous power (and use 0 for the first index if so)
                       powers.push(
-                        power
+                        power !== -1
                           ? power / data.participation // no need to adjust for decimals
                           : index === 0
                             ? 0
