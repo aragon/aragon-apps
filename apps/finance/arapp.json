@@ -41,7 +41,8 @@
       "params": [
         "Token address",
         "New budget amount",
-        "Old budget amount"
+        "Old budget amount",
+        "Has budget flag"
       ]
     },
     {
