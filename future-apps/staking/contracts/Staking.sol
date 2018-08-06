@@ -14,7 +14,6 @@ contract Staking is ERCStaking, AragonApp {
   uint64 constant public MAX_UINT64 = uint64(-1);
 
   struct Account {
-    uint256 amount;
     Lock[] locks;
   }
 
@@ -39,6 +38,7 @@ contract Staking is ERCStaking, AragonApp {
   bytes public lockScript;
 
   mapping (address => Account) accounts;
+  mapping (address => uint256) stakedAmount;
 
   // TODO: figure out a way to get lock from metadata, given changing lock ids
   // mapping (bytes32 => LockLocation) lockByMetadata;
@@ -80,7 +80,7 @@ contract Staking is ERCStaking, AragonApp {
     require(stakingToken.transferFrom(msg.sender, this, amount));
 
     // process Stake
-    accounts[acct].amount = accounts[acct].amount.add(amount);
+    modifyStakeBalance(msg.sender, amount, true);
 
     Staked(acct, amount, totalStakedFor(acct), data);
 
@@ -93,7 +93,7 @@ contract Staking is ERCStaking, AragonApp {
     // unstake 0 tokens makes no sense
     require(amount > 0);
 
-    accounts[msg.sender].amount = accounts[msg.sender].amount.sub(amount);
+    modifyStakeBalance(msg.sender, amount, false);
 
     require(stakingToken.transfer(msg.sender, amount));
 
@@ -191,8 +191,8 @@ contract Staking is ERCStaking, AragonApp {
     // make sure we don't move locked tokens, to avoid inconsistency
     require(unlockedBalanceOf(from) >= amount);
 
-    accounts[from].amount = accounts[from].amount.sub(amount);
-    accounts[to].amount = accounts[to].amount.add(amount);
+    modifyStakeBalance(from, amount, false);
+    modifyStakeBalance(to, amount, true); 
 
     MovedTokens(from, to, amount);
   }
@@ -208,7 +208,7 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   function totalStakedFor(address addr) public view returns (uint256) {
-    return accounts[addr].amount;
+    return stakedAmount[addr];
   }
 
   function totalStaked() public view returns (uint256) {
@@ -216,7 +216,7 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   function unlockedBalanceOf(address acct) public view returns (uint256) {
-    uint256 unlockedTokens = accounts[acct].amount;
+    uint256 unlockedTokens = totalStakedFor(acct);
 
     Lock[] storage locks = accounts[acct].locks;
     for (uint256 i = 0; i < locks.length; i++) {
@@ -249,6 +249,18 @@ contract Staking is ERCStaking, AragonApp {
     return timespanEnded(acctLock.timespan) || msg.sender == acctLock.unlocker;
   }
 
+  function modifyStakeBalance(address acct, uint256 by, bool increase) internal {
+    uint256 currentStake = totalStakedFor(acct);
+
+    uint256 newStake = increase ? currentStake.add(by) : currentStake.sub(by);
+
+    setStakedFor(acct, newStake);
+  }
+
+  function setStakedFor(address acct, uint256 amount) internal {
+    stakedAmount[acct] = amount;
+  } 
+
   function timespanEnded(Timespan memory timespan) internal view returns (bool) {
     uint256 comparingValue = timespan.unit == TimeUnit.Blocks ? getBlocknumber() : getTimestamp();
 
@@ -260,7 +272,7 @@ contract Staking is ERCStaking, AragonApp {
   }
 
   // TODO: Use getBlockNumber from Initializable.sol - issue with solidity-coverage
-  function getBlocknumber() internal returns (uint256) {
+  function getBlocknumber() internal view returns (uint256) {
     return block.number;
   }
 }
