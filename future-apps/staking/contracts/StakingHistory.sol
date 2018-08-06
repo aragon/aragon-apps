@@ -50,6 +50,6 @@ contract StakingHistory is ERCStakingHistory, Staking {
   }
 
   function updateTotalStaked() internal {
-    totalStakedHistory.add(stakingToken.balanceOf(this), getBlocknumber());
+    totalStakedHistory.add(super.totalStaked(), getBlocknumber());
   }
 }

@@ -15,8 +15,8 @@ contract('Staking app', accounts => {
   const TIME_UNIT_SECONDS = 1
 
   const contracts = [
-    { name: 'StakingHistory', contractName: 'StakingHistoryMock', history: true },
     { name: 'Staking (no history)', contractName: 'StakingMock', history: false },
+    { name: 'StakingHistory', contractName: 'StakingHistoryMock', history: true },
   ]
 
   contracts.forEach(({ contractName, name, history }) => {
