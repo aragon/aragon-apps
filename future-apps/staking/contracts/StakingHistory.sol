@@ -28,7 +28,7 @@ contract StakingHistory is ERCStakingHistory, Staking {
   function totalStaked() public view returns (uint256) {
     return totalStakedAt(getBlocknumber());
   }
-  
+
   function lastStakedFor(address acct) public view returns (uint256) {
     return stakeHistory[acct].lastUpdated();
   }
@@ -50,8 +50,6 @@ contract StakingHistory is ERCStakingHistory, Staking {
   }
 
   function updateTotalStaked() internal {
-    uint256 totalStaked = stakingToken.balanceOf(this);
-
-    totalStakedHistory.add(totalStaked, getBlocknumber());
+    totalStakedHistory.add(stakingToken.balanceOf(this), getBlocknumber());
   }
 }

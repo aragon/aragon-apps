@@ -25,6 +25,11 @@ library Checkpointing {
 
   function get128(History storage self, uint128 time) internal view returns (uint128) {
     uint256 length = self.history.length;
+
+    if (length == 0) {
+      return 0;
+    }
+    
     uint256 lastIndex = length - 1;
 
     // short-circuit
@@ -52,7 +57,7 @@ library Checkpointing {
     return self.history[low].value;
   }
 
-  function lastUpdated(History storage self) public view returns (uint256) {
+  function lastUpdated(History storage self) internal view returns (uint256) {
     if (self.history.length > 0) {
       return uint256(self.history[self.history.length - 1].time);
     }
@@ -78,7 +83,7 @@ library Checkpointing {
 
   function get(History storage self, uint256 time) internal view returns (uint256) {
     require(time <= MAX_UINT128);
-    
+
     return uint256(get128(self, uint128(time)));
   }
 }

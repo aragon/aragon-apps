@@ -1,8 +1,9 @@
 pragma solidity 0.4.18;
 
 import "../../contracts/Staking.sol";
+import "../../contracts/StakingHistory.sol";
 
-contract StakingMock is Staking {
+contract StakingMockBase is AragonApp {
     uint _mockTime = now;
     uint _mockBlockNumber = block.number;
 
@@ -27,7 +28,10 @@ contract StakingMock is Staking {
     }
 
     // TODO: Use getBlockNumber from Initializable.sol - issue with solidity-coverage
-    function getBlocknumber() internal returns (uint256) {
+    function getBlocknumber() internal view returns (uint256) {
         return _mockBlockNumber;
     }
 }
+
+contract StakingMock is Staking, StakingMockBase {}
+contract StakingHistoryMock is StakingHistory, StakingMockBase {}

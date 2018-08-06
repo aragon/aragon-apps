@@ -80,7 +80,7 @@ contract Staking is ERCStaking, AragonApp {
     require(stakingToken.transferFrom(msg.sender, this, amount));
 
     // process Stake
-    modifyStakeBalance(msg.sender, amount, true);
+    modifyStakeBalance(acct, amount, true);
 
     Staked(acct, amount, totalStakedFor(acct), data);
 

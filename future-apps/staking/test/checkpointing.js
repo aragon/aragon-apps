@@ -68,6 +68,9 @@ contract('Checkpointing', (accounts) => {
   context('checkpointing supports:', () => {
     tests.forEach(({ description, values, expects, size }) => {
       it(description, async () => {
+
+        assert.equal(await checkpointing.lastUpdated(), 0, 'last updated should be 0')
+
         // add values sequentially
         await values.reduce((prev, { v, t }) => 
           prev.then(() => checkpointing.add(v, t))
@@ -83,6 +86,7 @@ contract('Checkpointing', (accounts) => {
         , Promise.resolve())
 
         assert.equal(await checkpointing.getHistorySize(), size, 'size should match')
+        assert.equal(await checkpointing.lastUpdated(), values.slice(-1)[0].t, 'last updated should be correct')
       })
     })
   })
@@ -95,6 +99,28 @@ contract('Checkpointing', (accounts) => {
 
     return assertRevert(async () => {
       await checkpointing.add(value, time - 1)
+    })
+  })
+  
+  const UINT128_OVERFLOW = new web3.BigNumber(2).pow(128).plus(1)
+
+  it('fails if set value is too high', async () => {
+    return assertRevert(async () => {
+      await checkpointing.add(UINT128_OVERFLOW, 1)
+    })
+  })
+
+  it('fails if set time is too high', async () => {
+    return assertRevert(async () => {
+      await checkpointing.add(1, UINT128_OVERFLOW)
+    })
+  })
+
+  it('fails if requested time is too high', async () => {
+    await checkpointing.add(1, 1)
+
+    return assertRevert(async () => {
+      await checkpointing.get(UINT128_OVERFLOW)
     })
   })
 })
