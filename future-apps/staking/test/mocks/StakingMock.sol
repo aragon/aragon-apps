@@ -19,6 +19,10 @@ contract StakingMockBase is AragonApp {
         _mockTime = i;
     }
 
+    function disableBlockNumberMocking() public {
+        _mockBlockNumber = 0;
+    }
+
     function setBlockNumber(uint i) public {
         _mockBlockNumber = i;
     }
@@ -29,7 +33,7 @@ contract StakingMockBase is AragonApp {
 
     // TODO: Use getBlockNumber from Initializable.sol - issue with solidity-coverage
     function getBlocknumber() internal view returns (uint256) {
-        return _mockBlockNumber;
+        return _mockBlockNumber == 0 ? block.number : _mockBlockNumber;
     }
 }
 
