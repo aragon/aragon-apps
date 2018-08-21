@@ -102,25 +102,32 @@ contract('Checkpointing', (accounts) => {
     })
   })
   
-  const UINT128_OVERFLOW = new web3.BigNumber(2).pow(128).plus(1)
+  const UINT64_OVERFLOW = new web3.BigNumber(2).pow(64)
+  const UINT192_OVERFLOW = new web3.BigNumber(2).pow(192)
 
   it('fails if set value is too high', async () => {
+    await checkpointing.add(UINT192_OVERFLOW.minus(1), 1) // can set just below limit
+
     return assertRevert(async () => {
-      await checkpointing.add(UINT128_OVERFLOW, 1)
+      await checkpointing.add(UINT192_OVERFLOW, 2)
     })
   })
 
   it('fails if set time is too high', async () => {
+    await checkpointing.add(1, UINT64_OVERFLOW.minus(1)) // can set just below limit
+
     return assertRevert(async () => {
-      await checkpointing.add(1, UINT128_OVERFLOW)
+      await checkpointing.add(1, UINT64_OVERFLOW)
     })
   })
 
   it('fails if requested time is too high', async () => {
     await checkpointing.add(1, 1)
 
+    assert.equal(await checkpointing.get(UINT64_OVERFLOW.minus(1)), 1) // can set just below limit
+
     return assertRevert(async () => {
-      await checkpointing.get(UINT128_OVERFLOW)
+      await checkpointing.get(UINT64_OVERFLOW)
     })
   })
 })

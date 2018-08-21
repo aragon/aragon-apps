@@ -2,17 +2,18 @@ pragma solidity 0.4.18;
 
 library Checkpointing {
   struct Checkpoint {
-    uint128 value;
-    uint128 time;
+    uint192 value;
+    uint64 time;
   }
 
   struct History {
     Checkpoint[] history;
   }
 
-  uint256 constant MAX_UINT128 = uint256(uint128(-1));
+  uint256 constant MAX_UINT192 = uint256(uint192(-1));
+  uint256 constant MAX_UINT64 = uint256(uint64(-1));
 
-  function add128(History storage self, uint128 value, uint128 time) internal {
+  function add128(History storage self, uint192 value, uint64 time) internal {
     if (self.history.length == 0 || self.history[self.history.length - 1].time < time) {
       self.history.push(Checkpoint(value, time));
     } else {
@@ -23,7 +24,7 @@ library Checkpointing {
     }
   }
 
-  function get128(History storage self, uint128 time) internal view returns (uint128) {
+  function get128(History storage self, uint64 time) internal view returns (uint192) {
     uint256 length = self.history.length;
 
     if (length == 0) {
@@ -75,15 +76,15 @@ library Checkpointing {
   */
 
   function add(History storage self, uint256 value, uint256 time) internal {
-    require(time <= MAX_UINT128);
-    require(value <= MAX_UINT128);
+    require(time <= MAX_UINT64);
+    require(value <= MAX_UINT192);
 
-    add128(self, uint128(value), uint128(time));
+    add128(self, uint192(value), uint64(time));
   }
 
   function get(History storage self, uint256 time) internal view returns (uint256) {
-    require(time <= MAX_UINT128);
+    require(time <= MAX_UINT64);
 
-    return uint256(get128(self, uint128(time)));
+    return uint256(get128(self, uint64(time)));
   }
 }
