@@ -12,8 +12,9 @@ contract('StakingHistory app', accounts => {
   const balance = 1000
 
   beforeEach(async () => {
-    app = await StandardToken.new()
-    token = await StakingHistory.new(owner, balance)
+    app = await StakingHistory.new()
+    token = await StandardToken.new(owner, balance)
+    
     await app.initialize(token.address, '', '', '')
     await app.disableBlockNumberMocking()
   })
