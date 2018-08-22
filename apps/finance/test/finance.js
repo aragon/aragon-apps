@@ -63,7 +63,8 @@ contract('Finance App', accounts => {
     it('fails on initializing with no vault', async () => {
         app = await Finance.new()
 
-        return assertRevert(() => app.initialize(0, periodDuration))
+        await assertRevert(() => app.initialize(0, periodDuration))
+        await assertRevert(() => app.initialize(withdrawAddr, periodDuration))
     })
 
     it('fails on initializing with less than one day period', async () => {
