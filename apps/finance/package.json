@@ -36,7 +36,7 @@
     "@aragon/test-helpers": "^1.0.1",
     "eth-gas-reporter": "^0.1.1",
     "ganache-cli": "^6.0.3",
-    "solidity-coverage": "0.3.5",
+    "solidity-coverage": "0.4.3",
     "solium": "^1.0.4",
     "truffle": "4.0.5",
     "truffle-hdwallet-provider": "0.0.3",
