@@ -13,7 +13,7 @@ const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel')
 
 const MiniMeToken = artifacts.require('@aragon-apps/minime/contracts/MiniMeToken')
 
-const Voting = artifacts.require('Voting')
+const Voting = artifacts.require('VotingMock')
 
 const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
@@ -38,7 +38,7 @@ contract('Voting App', accounts => {
     const root = accounts[0]
 
     before(async () => {
-        const kernelBase = await getContract('Kernel').new()
+        const kernelBase = await getContract('Kernel').new(true) // petrify immediately
         const aclBase = await getContract('ACL').new()
         const regFact = await EVMScriptRegistryFactory.new()
         daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
@@ -94,19 +94,19 @@ contract('Voting App', accounts => {
         it('deciding voting is automatically executed', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeCallScript([action])
-            const voteId = createdVoteId(await voting.newVote(script, '', true, { from: holder50 }))
+            const voteId = createdVoteId(await voting.newVoteWithCast(script, '', true, { from: holder50 }))
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
         })
 
         it('execution scripts can execute multiple actions', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeCallScript([action, action, action])
-            const voteId = createdVoteId(await voting.newVote(script, '', true, { from: holder50 }))
+            const voteId = createdVoteId(await voting.newVoteWithCast(script, '', true, { from: holder50 }))
             assert.equal(await executionTarget.counter(), 3, 'should have executed multiple times')
         })
 
         it('execution script can be empty', async () => {
-            const voteId = createdVoteId(await voting.newVote(encodeCallScript([]), '', true, { from: holder50 }))
+            const voteId = createdVoteId(await voting.newVoteWithCast(encodeCallScript([]), '', true, { from: holder50 }))
         })
 
         it('execution throws if any action on script throws', async () => {
@@ -114,7 +114,7 @@ contract('Voting App', accounts => {
             let script = encodeCallScript([action])
             script = script.slice(0, -2) // remove one byte from calldata for it to fail
             return assertRevert(async () => {
-                await voting.newVote(script, '', true, { from: holder50 })
+                await voting.newVoteWithCast(script, '', true, { from: holder50 })
             })
         })
 
@@ -140,7 +140,7 @@ contract('Voting App', accounts => {
             beforeEach(async () => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 script = encodeCallScript([action, action])
-                voteId = createdVoteId(await voting.newVote(script, 'metadata', false, { from: holder50 }))
+                voteId = createdVoteId(await voting.newVoteWithCast(script, 'metadata', false, { from: holder50 }))
             })
 
             it('has correct state', async () => {
@@ -314,7 +314,7 @@ contract('Voting App', accounts => {
         })
 
         it('new vote cannot be executed before voting', async () => {
-            const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata', true))
+            const voteId = createdVoteId(await voting.newVoteWithCast(EMPTY_SCRIPT, 'metadata', true))
 
             assert.isFalse(await voting.canExecute(voteId), 'vote cannot be executed')
 
@@ -328,7 +328,7 @@ contract('Voting App', accounts => {
         })
 
         it('creating vote as holder executes vote (if _castVote param says so)', async () => {
-            const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata', true, { from: holder }))
+            const voteId = createdVoteId(await voting.newVoteWithCast(EMPTY_SCRIPT, 'metadata', true, { from: holder }))
             const [isOpen, isExecuted] = await voting.getVote(voteId)
 
             assert.isFalse(isOpen, 'vote should be closed')
@@ -353,7 +353,7 @@ contract('Voting App', accounts => {
         })
 
         it('new vote cannot be executed before holder2 voting', async () => {
-            const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata', true))
+            const voteId = createdVoteId(await voting.newVoteWithCast(EMPTY_SCRIPT, 'metadata', true))
 
             assert.isFalse(await voting.canExecute(voteId), 'vote cannot be executed')
 
@@ -367,7 +367,7 @@ contract('Voting App', accounts => {
         })
 
         it('creating vote as holder2 executes vote', async () => {
-            const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata', true, { from: holder2 }))
+            const voteId = createdVoteId(await voting.newVoteWithCast(EMPTY_SCRIPT, 'metadata', true, { from: holder2 }))
             const [isOpen, isExecuted] = await voting.getVote(voteId)
 
             assert.isFalse(isOpen, 'vote should be closed')
@@ -378,29 +378,23 @@ contract('Voting App', accounts => {
     context('before init', () => {
         it('fails creating a vote before initialization', async () => {
             return assertRevert(async () => {
-                await voting.newVote(encodeCallScript([]), '', false)
+                await voting.newVoteWithCast(encodeCallScript([]), '', false)
             })
         })
     })
 
     context('isValuePct unit test', async () => {
-        let votingMock
-
-        before(async () => {
-            votingMock = await getContract('VotingMock').new()
-        })
-
         it('tests total = 0', async () => {
-            const result1 = await votingMock.isValuePct(0, 0, pct16(50))
+            const result1 = await voting.isValuePct(0, 0, pct16(50))
             assert.equal(result1, false, "total 0 should always return false")
-            const result2 = await votingMock.isValuePct(1, 0, pct16(50))
+            const result2 = await voting.isValuePct(1, 0, pct16(50))
             assert.equal(result2, false, "total 0 should always return false")
         })
 
         it('tests value = 0', async () => {
-            const result1 = await votingMock.isValuePct(0, 10, pct16(50))
+            const result1 = await voting.isValuePct(0, 10, pct16(50))
             assert.equal(result1, false, "value 0 should false if pct is non-zero")
-            const result2 = await votingMock.isValuePct(0, 10, 0)
+            const result2 = await voting.isValuePct(0, 10, 0)
             assert.equal(result2, true, "value 0 should return true if pct is zero")
         })
     })
