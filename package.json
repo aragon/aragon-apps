@@ -22,6 +22,7 @@
     "clean": "git clean -fdxi apps future-apps shared templates",
     "test": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream test",
     "test:future": "lerna run --scope=@aragon/future-apps-* --concurrency=1 --stream test",
+    "test:shared": "lerna run --scope=@aragon-apps/* --concurrency=1 --stream test",
     "test:templates-beta": "lerna run --scope=@aragon/templates-beta --concurrency=1 --stream test",
     "test:gas": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream test:gas",
     "lint": "lerna run --scope=@aragon/apps-* --scope=@aragon/templates-beta lint",
