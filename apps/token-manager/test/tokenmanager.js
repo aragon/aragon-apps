@@ -28,7 +28,7 @@ contract('Token Manager', accounts => {
     const holder = accounts[1]
 
     before(async () => {
-        const kernelBase = await getContract('Kernel').new()
+        const kernelBase = await getContract('Kernel').new(true) // petrify immediately
         const aclBase = await getContract('ACL').new()
         const regFact = await EVMScriptRegistryFactory.new()
         daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
