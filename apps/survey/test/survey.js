@@ -16,7 +16,7 @@ contract('Survey app', accounts => {
   const NULL_ADDRESS = '0x00'
 
   beforeEach(async () => {
-    app = await getContract('Survey').new()
+    app = await getContract('SurveyMock').new()
     ABSTAIN_VOTE = await app.ABSTAIN_VOTE()
   })
 
@@ -262,7 +262,7 @@ contract('Survey app', accounts => {
     before(async() => {
       const minimumAcceptanceParticipationPct = pct16(20)
 
-      badApp = await getContract('Survey').new()
+      badApp = await getContract('SurveyMock').new()
       badToken = await getContract('MiniMeToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
       await badApp.initialize(badToken.address, minimumAcceptanceParticipationPct, surveyTime)
     })
@@ -288,7 +288,7 @@ contract('Survey app', accounts => {
     before(async() => {
       const minimumAcceptanceParticipationPct = pct16(20)
 
-      badApp = await getContract('Survey').new()
+      badApp = await getContract('SurveyMock').new()
       badToken = await getContract('BadToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
       await badToken.generateTokens(holder19, 19)
       await badApp.initialize(badToken.address, minimumAcceptanceParticipationPct, surveyTime)

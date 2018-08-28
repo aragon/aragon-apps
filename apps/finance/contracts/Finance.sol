@@ -2,24 +2,22 @@
  * SPDX-License-Identitifer:    GPL-3.0-or-later
  */
 
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 
-import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
-import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
-import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
+import "@aragon/os/contracts/common/EtherTokenConstant.sol";
+import "@aragon/os/contracts/lib/token/ERC20.sol";
+import "@aragon/os/contracts/lib/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 
 import "@aragon/apps-vault/contracts/IVaultConnector.sol";
 
-import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
-
-contract Finance is AragonApp {
+contract Finance is AragonApp, EtherTokenConstant {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
-    address constant public ETH = address(0);
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
     uint64 constant public MAX_UINT64 = uint64(-1);
     uint256 constant public MAX_UINT = uint256(-1);
@@ -198,7 +196,7 @@ contract Finance is AragonApp {
         uint64 _interval,
         uint64 _maxRepeats,
         string _reference
-    ) authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, _interval, _maxRepeats)) isInitialized transitionsPeriod external returns (uint256 paymentId)
+    ) authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, _interval, _maxRepeats)) transitionsPeriod external returns (uint256 paymentId)
     {
         require(_amount > 0);
 
@@ -240,7 +238,7 @@ contract Finance is AragonApp {
     * @notice Change period duration to `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ''`, effective for next accounting period.
     * @param _periodDuration Duration in seconds for accounting periods
     */
-    function setPeriodDuration(uint64 _periodDuration) authP(CHANGE_PERIOD_ROLE, arr(uint256(_periodDuration), uint256(settings.periodDuration))) transitionsPeriod isInitialized external {
+    function setPeriodDuration(uint64 _periodDuration) authP(CHANGE_PERIOD_ROLE, arr(uint256(_periodDuration), uint256(settings.periodDuration))) transitionsPeriod external {
         require(_periodDuration >= 1 days);
         settings.periodDuration = _periodDuration;
         ChangePeriodDuration(_periodDuration);
@@ -257,7 +255,6 @@ contract Finance is AragonApp {
     )
         authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token], settings.hasBudget[_token] ? 1 : 0))
         transitionsPeriod
-        isInitialized
         external
     {
         settings.budgets[_token] = _amount;
@@ -274,7 +271,6 @@ contract Finance is AragonApp {
     function removeBudget(address _token)
         authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token], settings.hasBudget[_token] ? 1 : 0))
         transitionsPeriod
-        isInitialized
         external
     {
         settings.budgets[_token] = 0;
@@ -287,7 +283,7 @@ contract Finance is AragonApp {
     * @notice Execute pending payment #`_paymentId`
     * @param _paymentId Identifier for payment
     */
-    function executePayment(uint256 _paymentId) authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, payments[_paymentId].amount)) isInitialized external {
+    function executePayment(uint256 _paymentId) authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, payments[_paymentId].amount)) external {
         require(nextPaymentTime(_paymentId) <= getTimestamp());
 
         _executePayment(_paymentId);
@@ -310,7 +306,7 @@ contract Finance is AragonApp {
     * @param _paymentId Identifier for payment
     * @param _disabled Whether it will be disabled or enabled
     */
-    function setPaymentDisabled(uint256 _paymentId, bool _disabled) authP(DISABLE_PAYMENTS_ROLE, arr(_paymentId)) isInitialized external {
+    function setPaymentDisabled(uint256 _paymentId, bool _disabled) authP(DISABLE_PAYMENTS_ROLE, arr(_paymentId)) external {
         payments[_paymentId].disabled = _disabled;
         ChangePaymentState(_paymentId, _disabled);
     }
@@ -514,7 +510,7 @@ contract Finance is AragonApp {
         uint256 _paymentId,
         uint256 _paymentRepeatNumber,
         string _reference
-        ) isInitialized internal
+        ) internal
     {
         require(getRemainingBudget(_token) >= _amount);
         _recordTransaction(

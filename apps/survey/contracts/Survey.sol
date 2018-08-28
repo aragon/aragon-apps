@@ -2,14 +2,14 @@
  * SPDX-License-Identitifer:    GPL-3.0-or-later
  */
 
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 
-import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
-import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
-import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
-import "@aragon/os/contracts/lib/misc/Migrations.sol";
+import "@aragon/os/contracts/lib/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/math/SafeMath64.sol";
+
+import "@aragon-apps/minime/contracts/MiniMeToken.sol";
 
 
 contract Survey is AragonApp {
@@ -100,7 +100,7 @@ contract Survey is AragonApp {
     * @param _options Number of options voters can decide between
     * @return surveyId id for newly created survey
     */
-    function newSurvey(string _metadata, uint256 _options) auth(CREATE_SURVEYS_ROLE) isInitialized external returns (uint256 surveyId) {
+    function newSurvey(string _metadata, uint256 _options) auth(CREATE_SURVEYS_ROLE) external returns (uint256 surveyId) {
         surveyId = surveys.length++;
         SurveyStruct storage survey = surveys[surveyId];
         survey.creator = msg.sender;
@@ -272,5 +272,4 @@ contract Survey is AragonApp {
     function _isSurveyOpen(SurveyStruct storage survey) internal view returns (bool) {
         return uint64(now) < survey.startDate.add(surveyTime);
     }
-
 }

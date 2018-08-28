@@ -34,15 +34,17 @@
   "devDependencies": {
     "@aragon/cli": "^2.0.4",
     "@aragon/test-helpers": "^1.0.1",
+    "@aragon-apps/migrations": "1.0.0",
     "eth-gas-reporter": "^0.1.1",
     "ganache-cli": "^6.1.0",
-    "solidity-coverage": "0.4.3",
+    "solidity-coverage": "0.5.8",
     "solium": "^1.0.4",
-    "truffle": "4.0.5",
+    "truffle": "4.1.14",
     "truffle-hdwallet-provider": "0.0.3",
     "webpack": "3.10.0"
   },
   "dependencies": {
-    "@aragon/os": "^3.1.2"
+    "@aragon/os": "4.0.0-alpha.2",
+    "@aragon-apps/minime": "1.0.0"
   }
 }
