@@ -6,7 +6,7 @@ const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
-const TokenManager = artifacts.require('TokenManagerMock')
+const TokenManager = artifacts.require('TokenManager')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const DAOFactory = artifacts.require('@aragon/core/contracts/factory/DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('@aragon/core/contracts/factory/EVMScriptRegistryFactory')
@@ -19,7 +19,10 @@ const n = '0x00'
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 
 contract('Token Manager', accounts => {
-    let daoFact, tokenManager, token = {}
+    let tokenManagerBase, daoFact, tokenManager, token
+
+    let APP_MANAGER_ROLE
+    let MINT_ROLE, ISSUE_ROLE, ASSIGN_ROLE, REVOKE_VESTINGS_ROLE, BURN_ROLE
 
     const root = accounts[0]
     const holder = accounts[1]
@@ -29,6 +32,15 @@ contract('Token Manager', accounts => {
         const aclBase = await getContract('ACL').new()
         const regFact = await EVMScriptRegistryFactory.new()
         daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
+        tokenManagerBase = await TokenManager.new()
+
+        // Setup constants
+        APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+        MINT_ROLE = await tokenManagerBase.MINT_ROLE()
+        ISSUE_ROLE = await tokenManagerBase.ISSUE_ROLE()
+        ASSIGN_ROLE = await tokenManagerBase.ASSIGN_ROLE()
+        REVOKE_VESTINGS_ROLE = await tokenManagerBase.REVOKE_VESTINGS_ROLE()
+        BURN_ROLE = await tokenManagerBase.BURN_ROLE()
     })
 
     beforeEach(async () => {
@@ -36,16 +48,16 @@ contract('Token Manager', accounts => {
         const dao = Kernel.at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
         const acl = ACL.at(await dao.acl())
 
-        await acl.createPermission(root, dao.address, await dao.APP_MANAGER_ROLE(), root, { from: root })
+        await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
-        const receipt = await dao.newAppInstance('0x1234', (await TokenManager.new()).address, { from: root })
+        const receipt = await dao.newAppInstance('0x1234', tokenManagerBase.address, { from: root })
         tokenManager = TokenManager.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
 
-        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.MINT_ROLE(), root, { from: root })
-        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.ISSUE_ROLE(), root, { from: root })
-        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.ASSIGN_ROLE(), root, { from: root })
-        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.REVOKE_VESTINGS_ROLE(), root, { from: root })
-        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.BURN_ROLE(), root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, MINT_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, ISSUE_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, ASSIGN_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, REVOKE_VESTINGS_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, BURN_ROLE, root, { from: root })
 
         token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
     })
