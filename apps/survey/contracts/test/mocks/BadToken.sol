@@ -1,10 +1,10 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
-import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
+import "@aragon-apps/minime/contracts/MiniMeToken.sol";
 
 
 contract BadToken is MiniMeToken {
-    function BadToken(
+    constructor(
         MiniMeTokenFactory _tokenFactory,
         MiniMeToken _parentToken,
         uint _parentSnapShotBlock,

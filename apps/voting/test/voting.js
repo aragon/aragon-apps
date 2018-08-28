@@ -6,12 +6,14 @@ const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
 const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
-const Voting = artifacts.require('Voting')
-const MiniMeToken = artifacts.require('@aragon/os/contracts/lib/minime/MiniMeToken')
 const DAOFactory = artifacts.require('@aragon/os/contracts/factory/DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory/EVMScriptRegistryFactory')
 const ACL = artifacts.require('@aragon/os/contracts/acl/ACL')
 const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel')
+
+const MiniMeToken = artifacts.require('@aragon-apps/minime/contracts/MiniMeToken')
+
+const Voting = artifacts.require('Voting')
 
 const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))

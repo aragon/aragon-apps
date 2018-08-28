@@ -2,21 +2,19 @@
  * SPDX-License-Identitifer:    GPL-3.0-or-later
  */
 
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
-
-import "@aragon/os/contracts/lib/minime/ITokenController.sol";
-import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
 
-import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
-import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/token/ERC20.sol";
+import "@aragon/os/contracts/lib/math/SafeMath.sol";
 
-import "@aragon/os/contracts/lib/misc/Migrations.sol";
+import "@aragon-apps/minime/contracts/ITokenController.sol";
+import "@aragon-apps/minime/contracts/MiniMeToken.sol";
 
 
-contract TokenManager is ITokenController, AragonApp, IForwarder {
+contract TokenManager is ITokenController, IForwarder, AragonApp {
     using SafeMath for uint256;
 
     MiniMeToken public token;
@@ -110,7 +108,7 @@ contract TokenManager is ITokenController, AragonApp, IForwarder {
     * @param _holder Holder being removed tokens
     * @param _amount Number of tokens being burned
     */
-    function burn(address _holder, uint256 _amount) authP(BURN_ROLE, arr(_holder, _amount)) isInitialized external {
+    function burn(address _holder, uint256 _amount) authP(BURN_ROLE, arr(_holder, _amount)) external {
         // minime.destroyTokens() never returns false, only reverts on failure
         token.destroyTokens(_holder, _amount);
     }
@@ -158,7 +156,7 @@ contract TokenManager is ITokenController, AragonApp, IForwarder {
     * @param _holder Address getting vesting revoked
     * @param _vestingId Numeric id of the vesting
     */
-    function revokeVesting(address _holder, uint256 _vestingId) authP(REVOKE_VESTINGS_ROLE, arr(_holder)) isInitialized external {
+    function revokeVesting(address _holder, uint256 _vestingId) authP(REVOKE_VESTINGS_ROLE, arr(_holder)) external {
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 

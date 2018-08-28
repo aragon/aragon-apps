@@ -6,7 +6,7 @@ const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
-const TokenManager = artifacts.require('TokenManager')
+const TokenManager = artifacts.require('TokenManagerMock')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const DAOFactory = artifacts.require('@aragon/core/contracts/factory/DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('@aragon/core/contracts/factory/EVMScriptRegistryFactory')
