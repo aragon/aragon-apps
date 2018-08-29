@@ -6,24 +6,52 @@ const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
 const createdSurveyId = receipt => receipt.logs.filter(x => x.event == 'StartSurvey')[0].args.surveyId
 
+const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
+
 contract('Survey app', accounts => {
-  let survey, ABSTAIN_VOTE
+  let daoFact, surveyBase, survey
+
+  let ABSTAIN_VOTE, APP_MANAGER_ROLE, CREATE_SURVEYS_ROLE, MODIFY_PARTICIPATION_ROLE
+
   const surveyTime = 1000
+  const root = accounts[0]
   const holder19 = accounts[0]
   const holder31 = accounts[1]
   const holder50 = accounts[2]
   const nonHolder = accounts[4]
   const NULL_ADDRESS = '0x00'
+  const minimumAcceptanceParticipationPct = pct16(20)
+
+  before(async () => {
+    const kernelBase = await getContract('Kernel').new(true) // petrify immediately
+    const aclBase = await getContract('ACL').new()
+    const regFact = await getContract('EVMScriptRegistryFactory').new()
+    daoFact = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, regFact.address)
+    surveyBase = await getContract('Survey').new()
+
+    // Setup constants
+    APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+    ABSTAIN_VOTE = await surveyBase.ABSTAIN_VOTE()
+    CREATE_SURVEYS_ROLE  = await surveyBase.CREATE_SURVEYS_ROLE()
+    MODIFY_PARTICIPATION_ROLE  = await surveyBase.MODIFY_PARTICIPATION_ROLE()
+  })
 
   beforeEach(async () => {
-    survey = await getContract('Survey').new()
-    ABSTAIN_VOTE = await survey.ABSTAIN_VOTE()
+    const r = await daoFact.newDAO(root)
+    const dao = getContract('Kernel').at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
+    const acl = getContract('ACL').at(await dao.acl())
+
+    await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
+
+    const receipt = await dao.newAppInstance('0x1234', surveyBase.address, { from: root })
+    survey = getContract('Survey').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+
+    await acl.createPermission(ANY_ADDR, survey.address, CREATE_SURVEYS_ROLE, root, { from: root })
+    await acl.createPermission(ANY_ADDR, survey.address, MODIFY_PARTICIPATION_ROLE, root, { from: root })
   })
 
   context('normal token supply', () => {
     let token
-
-    const minimumAcceptanceParticipationPct = pct16(20)
 
     beforeEach(async () => {
       token = await getContract('MiniMeToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
@@ -33,7 +61,6 @@ contract('Survey app', accounts => {
       await token.generateTokens(holder50, 50)
 
       await survey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime)
-
     })
 
     it('fails on reinitialization', async () => {
@@ -242,34 +269,29 @@ contract('Survey app', accounts => {
     })
 
     it('fails if min acceptance participation is 0', () => {
-      const minimumAcceptanceParticipationPct = pct16(0)
+      const badMinimumAcceptanceParticipationPct = pct16(0)
       return assertRevert(async() => {
-        await survey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime)
+        await survey.initialize(token.address, badMinimumAcceptanceParticipationPct, surveyTime)
       })
     })
 
     it('fails if min participation is greater than 100', () => {
-      const minimumAcceptanceParticipationPct = pct16(101)
+      const badMinimumAcceptanceParticipationPct = pct16(101)
       return assertRevert(async() => {
-        await survey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime)
+        await survey.initialize(token.address, badMinimumAcceptanceParticipationPct, surveyTime)
       })
     })
   })
 
   context('empty token', () => {
-    let badSurvey, badToken
-
-    before(async() => {
-      const minimumAcceptanceParticipationPct = pct16(20)
-
-      badSurvey = await getContract('Survey').new()
-      badToken = await getContract('MiniMeToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
-      await badSurvey.initialize(badToken.address, minimumAcceptanceParticipationPct, surveyTime)
+    beforeEach(async() => {
+      const badToken = await getContract('MiniMeToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
+      await survey.initialize(badToken.address, minimumAcceptanceParticipationPct, surveyTime)
     })
 
     it('fails creating a survey if token has no holder', async () => {
       return assertRevert(async () => {
-        await badSurvey.newSurvey('metadata', 10)
+        await survey.newSurvey('metadata', 10)
       })
     })
   })
@@ -283,22 +305,17 @@ contract('Survey app', accounts => {
   })
 
   context('wrong supply token', () => {
-    let badSurvey, badToken
-
-    before(async() => {
-      const minimumAcceptanceParticipationPct = pct16(20)
-
-      badSurvey = await getContract('Survey').new()
-      badToken = await getContract('BadToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
+    beforeEach(async() => {
+      const badToken = await getContract('BadToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
       await badToken.generateTokens(holder19, 19)
-      await badSurvey.initialize(badToken.address, minimumAcceptanceParticipationPct, surveyTime)
+      await survey.initialize(badToken.address, minimumAcceptanceParticipationPct, surveyTime)
     })
 
     // this bad token has broken `totalSupplyAt`, returning always 1
     it('fails voting with more than 1 token because of wrong votingPower', async () => {
-      const surveyId = createdSurveyId(await badSurvey.newSurvey('metadata', 10))
-      return assertInvalidOpcode(async () => {
-        await badSurvey.voteOption(surveyId, 10, { from: holder19 })
+      const surveyId = createdSurveyId(await survey.newSurvey('metadata', 10))
+      return assertRevert(async () => {
+        await survey.voteOption(surveyId, 10, { from: holder19 })
       })
     })
   })
