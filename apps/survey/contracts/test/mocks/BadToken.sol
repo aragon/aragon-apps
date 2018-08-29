@@ -20,6 +20,6 @@ contract BadToken is MiniMeToken {
     }
 
     function totalSupplyAt(uint _blockNumber) public constant returns(uint) {
-        return 1;
+        return _blockNumber - _blockNumber + 1;
     }
 }
