@@ -1,7 +1,7 @@
 import React from 'react'
 import SurveyCard from '../SurveyCard/SurveyCard'
 
-class Surveys extends React.Component {
+class Surveys extends React.PureComponent {
   static defaultProps = {
     onOpenSurveyDetails: () => {},
     onOpenVotingPanel: () => {},

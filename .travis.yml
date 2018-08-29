@@ -10,9 +10,14 @@ notifications:
 node_js:
   - '8'
 env:
-  - TASK=test
   - TASK=lint
+  - TASK=test:finance
+  - TASK=test:survey
+  - TASK=test:token-manager
+  - TASK=test:vault
+  - TASK=test:voting
   - TASK=coverage
+  - TASK=test:shared
   - TASK=test:templates-beta
 before_script:
   - npm prune

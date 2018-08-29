@@ -4,7 +4,7 @@ import SurveyOption from './SurveyOption'
 import { percentageList } from '../../math-utils'
 
 const ANIM_DELAY_MIN = 100
-const ANIM_DELAY_MAX = 300
+const ANIM_DELAY_MAX = 800
 
 class SurveyOptions extends React.Component {
   static defaultProps = {
@@ -14,35 +14,48 @@ class SurveyOptions extends React.Component {
     animationDelay: { min: ANIM_DELAY_MIN, max: ANIM_DELAY_MAX },
   }
   state = {
-    animate: false,
+    delay: 0,
   }
-  componentDidMount() {
-    const { animationDelay } = this.props
+  constructor(props) {
+    super(props)
+    const { animationDelay } = props
 
     const delay = Number.isInteger(animationDelay)
       ? animationDelay
       : animationDelay.min +
         Math.random() * (animationDelay.max - animationDelay.min)
 
-    // animate after a delay
-    this._transitionTimer = setTimeout(() => {
-      this.setState({ animate: true })
-    }, delay)
+    this.state.delay = delay
   }
-  componentWillUnmount() {
-    clearTimeout(this._transitionTimer)
+  shouldComponentUpdate(nextProps) {
+    const { options } = this.props
+    const { options: nextOptions } = nextProps
+    return this.didOptionsChange(options, nextOptions)
+  }
+  didOptionsChange(options, nextOptions) {
+    if (options.length !== nextOptions.length) {
+      return true
+    }
+    let i = options.length
+    while (i--) {
+      if (options[i].optionId !== nextOptions[i].optionId) {
+        return true
+      }
+    }
+    return false
   }
   render() {
+    const { delay } = this.state
     const {
       options: allOptions,
       optionsDisplayed = allOptions.length,
     } = this.props
-    const { animate } = this.state
 
     const totalVotes = allOptions.reduce(
       (total, option) => total + option.power,
       0
     )
+
     const percentages =
       totalVotes > 0
         ? percentageList(allOptions.map(o => o.power / totalVotes), 2)
@@ -51,8 +64,9 @@ class SurveyOptions extends React.Component {
     const options = allOptions.slice(0, optionsDisplayed)
     return (
       <Trail
+        delay={delay}
         from={{ showProgress: 0 }}
-        to={{ showProgress: Number(animate) }}
+        to={{ showProgress: 1 }}
         keys={options.map(option => option.optionId)}
         native
       >

@@ -2,16 +2,15 @@
  * SPDX-License-Identitifer:    GPL-3.0-or-later
  */
 
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
-
 import "@aragon/os/contracts/common/IForwarder.sol";
 
-import "@aragon/os/contracts/lib/minime/MiniMeToken.sol";
-import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
-import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
-import "@aragon/os/contracts/lib/misc/Migrations.sol";
+import "@aragon/os/contracts/lib/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/math/SafeMath64.sol";
+
+import "@aragon-apps/minime/contracts/MiniMeToken.sol";
 
 
 contract Voting is IForwarder, AragonApp {
@@ -44,7 +43,7 @@ contract Voting is IForwarder, AragonApp {
         mapping (address => VoterState) voters;
     }
 
-    Vote[] votes;
+    Vote[] internal votes; // first index is 1
 
     event StartVote(uint256 indexed voteId);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
@@ -83,7 +82,7 @@ contract Voting is IForwarder, AragonApp {
     * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^16) / 10^14`%
     * @param _minAcceptQuorumPct New acceptance quorum
     */
-    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) isInitialized external {
+    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) external {
         require(_minAcceptQuorumPct > 0);
         require(supportRequiredPct >= _minAcceptQuorumPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
@@ -146,7 +145,7 @@ contract Voting is IForwarder, AragonApp {
     * @dev IForwarder interface conformance
     * @param _evmScript Start vote with script
     */
-    function forward(bytes _evmScript) public {
+    function forward(bytes _evmScript) public isInitialized {
         require(canForward(msg.sender, _evmScript));
         _newVote(_evmScript, "", true);
     }
@@ -209,7 +208,7 @@ contract Voting is IForwarder, AragonApp {
         return votes[_voteId].voters[_voter];
     }
 
-    function _newVote(bytes _executionScript, string _metadata, bool _castVote) isInitialized internal returns (uint256 voteId) {
+    function _newVote(bytes _executionScript, string _metadata, bool _castVote) internal returns (uint256 voteId) {
         voteId = votes.length++;
         Vote storage vote = votes[voteId];
         vote.executionScript = _executionScript;

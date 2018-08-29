@@ -1,0 +1,9 @@
+{
+  "name": "@aragon-apps/migrations",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "test": "echo \"No tests\""
+  }
+}

@@ -15,9 +15,9 @@ testrpc_running() {
 
 start_testrpc() {
   if [ "$SOLIDITY_COVERAGE" = true ]; then
-    node_modules/.bin/testrpc-sc -i 16 --gasLimit 0xfffffffffff --port "$testrpc_port"  > /dev/null &
+    npx testrpc-sc -i 16 --gasLimit 0xfffffffffff --port "$testrpc_port"  > /dev/null &
   else
-    node_modules/.bin/ganache-cli -i 15 --gasLimit 50000000 --port "$testrpc_port" > /dev/null &
+    npx ganache-cli -i 15 --gasLimit 50000000 --port "$testrpc_port" > /dev/null &
   fi
 
   testrpc_pid=$!
@@ -36,7 +36,7 @@ sleep 5
 set +e
 result=0
 if [ "$SOLIDITY_COVERAGE" = true ]; then
-  ./node_modules/.bin/solidity-coverage "$@"
+  npx solidity-coverage "$@"
   result=$?
 elif [ "$TRUFFLE_TEST" = true ]; then
   truffle test --network rpc "$@"

@@ -4,7 +4,7 @@
     "apps/*",
     "future-apps/*",
     "templates/*",
-    "shared/test-helpers"
+    "shared/*"
   ],
   "version": "independent"
 }
