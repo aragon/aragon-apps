@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/acl/ACL.sol";
 import "@aragon/os/contracts/apps/AppProxyBase.sol";
@@ -17,6 +17,9 @@ import "@aragon/os/contracts/kernel/KernelProxy.sol";
 //
 // You know which one I went for.
 
-contract MockImports {
-  // ...
+
+contract TestImports {
+  constructor() public {
+    // to avoid lint error
+  }
 }
