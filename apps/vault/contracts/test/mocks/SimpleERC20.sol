@@ -1,9 +1,9 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 //import "./ERC20Interface.sol";
 
 
-contract SimpleERC20 /*is ERC20Interface*/ {
+contract SimpleERC20 { /*is ERC20Interface*/
 
     uint256 public _totalSupply = 10**9 * 10**18;
     // Balances for each account
@@ -12,21 +12,22 @@ contract SimpleERC20 /*is ERC20Interface*/ {
     mapping(address => mapping (address => uint256)) private allowed;
 
     // Constructor
-    function SimpleERC20() public {
+    constructor() public {
         balances[msg.sender] = _totalSupply;
     }
 
-    function totalSupply() public constant returns (uint ts) {
+    function totalSupply() public view returns (uint ts) {
         ts = _totalSupply;
     }
 
     // What is the balance of a particular account?
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
+    function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
 
     // Transfer the balance from owner's account to another account
     function transfer(address _to, uint256 _amount) public returns (bool success) {
+        /* solium-disable-next-line */
         if (balances[msg.sender] >= _amount
             && _amount > 0
             && balances[_to] + _amount > balances[_to]) {
@@ -48,7 +49,11 @@ contract SimpleERC20 /*is ERC20Interface*/ {
         address _from,
         address _to,
         uint256 _amount
-    ) public returns (bool success) {
+    )
+        public
+        returns (bool success)
+    {
+        /* solium-disable-next-line */
         if (balances[_from] >= _amount
             && allowed[_from][msg.sender] >= _amount
             && _amount > 0
@@ -70,7 +75,7 @@ contract SimpleERC20 /*is ERC20Interface*/ {
     }
 
     // Returns the amount which _spender is still allowed to withdraw from _owner
-    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
+    function allowance(address _owner, address _spender) public view returns (uint remaining) {
         remaining = allowed[_owner][_spender];
     }
 }

@@ -6,8 +6,6 @@ import "@aragon/os/contracts/factory/DAOFactory.sol";
 import "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol";
 
 import "@aragon/apps-vault/contracts/Vault.sol";
-import "@aragon/apps-vault/contracts/connectors/ETHConnector.sol";
-import "@aragon/apps-vault/contracts/connectors/ERC20Connector.sol";
 
 import "@aragon-apps/migrations/contracts/Migrations.sol";
 import "@aragon-apps/minime/contracts/MiniMeToken.sol";
@@ -24,6 +22,9 @@ import "@aragon-apps/minime/contracts/MiniMeToken.sol";
 //
 // You know which one I went for.
 
+
 contract TestImports {
-  // ...
+  constructor() public {
+    // to avoid lint error
+  }
 }

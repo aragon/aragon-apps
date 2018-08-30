@@ -18,13 +18,41 @@ const getContract = name => artifacts.require(name)
 const NULL_ADDRESS = '0x00'
 
 contract('Vault app', (accounts) => {
-  const ETH = '0x0'
+  let daoFact, vaultBase, vault
+
+  let ETH, ANY_ENTITY, APP_MANAGER_ROLE, TRANSFER_ROLE
+
+  const root = accounts[0]
   const NO_DATA = '0x'
 
-  let vault
+  before(async () => {
+    const kernelBase = await getContract('Kernel').new(true) // petrify immediately
+    const aclBase = await getContract('ACL').new()
+    const regFact = await getContract('EVMScriptRegistryFactory').new()
+    daoFact = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, regFact.address)
+    vaultBase = await getContract('Vault').new()
+
+    // Setup constants
+    ETH = await vaultBase.ETH()
+    ANY_ENTITY = await aclBase.ANY_ENTITY()
+    APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+    TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
+  })
 
   beforeEach(async () => {
-    vault = await Vault.new()
+    const r = await daoFact.newDAO(root)
+    const dao = getContract('Kernel').at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
+    const acl = getContract('ACL').at(await dao.acl())
+
+    await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
+
+    // vault
+    const receipt = await dao.newAppInstance('0x1234', vaultBase.address, { from: root })
+    vault = getContract('Vault').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+
+    await acl.createPermission(ANY_ENTITY, vault.address, TRANSFER_ROLE, root, { from: root })
+
+    await vault.initialize()
   })
 
   context('ETH:', async () => {
@@ -140,7 +168,7 @@ contract('Vault app', (accounts) => {
       const permissionsRoot = accounts[0]
       token = await SimpleERC20.new()
 
-      const kernelBase = await getContract('Kernel').new()
+      const kernelBase = await getContract('Kernel').new(true) // petrify immediately
       const aclBase = await getContract('ACL').new()
       const factory = await DAOFactory.new(kernelBase.address, aclBase.address, NULL_ADDRESS)
 

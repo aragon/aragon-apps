@@ -1,10 +1,9 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 
-import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
+import "@aragon/os/contracts/lib/token/ERC20.sol";
 
-import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 contract Vault is AragonApp {
     bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
@@ -16,9 +15,17 @@ contract Vault is AragonApp {
     * @dev On a normal send() or transfer() this fallback is never executed as it will be
     * intercepted by the Proxy (see aragonOS#281)
     */
-    function () payable external {
-        require(msg.data.length == 0);
+    function () external payable {
+        require(msg.data.length == 0, "Data must be empty");
         deposit(ETH, msg.sender, msg.value);
+    }
+
+    /**
+    * @notice Initialize Vault app
+    * @dev As an AragonApp it needs to be initialized in order for roles (`auth` and `authP`) to work
+    */
+    function initialize() external onlyInit {
+        initialized();
     }
 
     /**
@@ -27,18 +34,18 @@ contract Vault is AragonApp {
     * @param from Entity that currently owns the tokens
     * @param value Amount of tokens being transferred
     */
-    function deposit(address token, address from, uint256 value) payable public {
-        require(value > 0);
-        require(msg.sender == from);
+    function deposit(address token, address from, uint256 value) public isInitialized payable {
+        require(value > 0, "Value must be positive");
+        require(msg.sender == from, "Sender must be equal to from parameter");
 
         if (token == ETH) {
             // Deposit is implicit in this case
-            require(msg.value == value);
+            require(msg.value == value, "Value must be equal to value parameter");
         } else {
-            require(ERC20(token).transferFrom(from, this, value));
+            require(ERC20(token).transferFrom(from, this, value), "Token transfer must succeed");
         }
 
-        Deposit(token, from, value);
+        emit Deposit(token, from, value);
     }
 
     /*
@@ -59,9 +66,10 @@ contract Vault is AragonApp {
     * @param to Address of the recipient of tokens
     * @param value Amount of tokens being transferred
     */
+    /* solium-disable function-order */
     function transfer(address token, address to, uint256 value)
-        authP(TRANSFER_ROLE, arr(address(token), to, value))
         external
+        authP(TRANSFER_ROLE, arr(token, to, value))
     {
         transfer(token, to, value, new bytes(0));
     }
@@ -74,18 +82,18 @@ contract Vault is AragonApp {
     * @param data Extra data associated with the transfer (only used for ETH)
     */
     function transfer(address token, address to, uint256 value, bytes data)
-        authP(TRANSFER_ROLE, arr(address(token), to, value))
         public
+        authP(TRANSFER_ROLE, arr(token, to, value))
     {
-        require(value > 0);
+        require(value > 0, "Value must be positive");
 
         if (token == ETH) {
-            require(to.call.value(value)(data));
+            require(to.call.value(value)(data), "ETH transfer must succeed");
         } else {
-            require(ERC20(token).transfer(to, value));
+            require(ERC20(token).transfer(to, value), "Token transfer must succeed");
         }
 
-        Transfer(token, to, value);
+        emit Transfer(token, to, value);
     }
 
     function balance(address token) public view returns (uint256) {

@@ -20,6 +20,9 @@ import "@aragon-apps/migrations/contracts/Migrations.sol";
 //
 // You know which one I went for.
 
+
 contract TestImports {
-  // ...
+  constructor() public {
+    // to avoid lint error
+  }
 }

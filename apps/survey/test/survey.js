@@ -6,12 +6,11 @@ const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
 const createdSurveyId = receipt => receipt.logs.filter(x => x.event == 'StartSurvey')[0].args.surveyId
 
-const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
-
 contract('Survey app', accounts => {
   let daoFact, surveyBase, survey
 
-  let ABSTAIN_VOTE, APP_MANAGER_ROLE, CREATE_SURVEYS_ROLE, MODIFY_PARTICIPATION_ROLE
+  let ABSTAIN_VOTE, ANY_ENTITY
+  let APP_MANAGER_ROLE, CREATE_SURVEYS_ROLE, MODIFY_PARTICIPATION_ROLE
 
   const surveyTime = 1000
   const root = accounts[0]
@@ -30,6 +29,7 @@ contract('Survey app', accounts => {
     surveyBase = await getContract('Survey').new()
 
     // Setup constants
+    ANY_ENTITY = await aclBase.ANY_ENTITY()
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     ABSTAIN_VOTE = await surveyBase.ABSTAIN_VOTE()
     CREATE_SURVEYS_ROLE  = await surveyBase.CREATE_SURVEYS_ROLE()
@@ -46,8 +46,8 @@ contract('Survey app', accounts => {
     const receipt = await dao.newAppInstance('0x1234', surveyBase.address, { from: root })
     survey = getContract('Survey').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
 
-    await acl.createPermission(ANY_ADDR, survey.address, CREATE_SURVEYS_ROLE, root, { from: root })
-    await acl.createPermission(ANY_ADDR, survey.address, MODIFY_PARTICIPATION_ROLE, root, { from: root })
+    await acl.createPermission(ANY_ENTITY, survey.address, CREATE_SURVEYS_ROLE, root, { from: root })
+    await acl.createPermission(ANY_ENTITY, survey.address, MODIFY_PARTICIPATION_ROLE, root, { from: root })
   })
 
   context('normal token supply', () => {
