@@ -24,8 +24,7 @@ contract('Survey app', accounts => {
   before(async () => {
     const kernelBase = await getContract('Kernel').new(true) // petrify immediately
     const aclBase = await getContract('ACL').new()
-    const regFact = await getContract('EVMScriptRegistryFactory').new()
-    daoFact = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, regFact.address)
+    daoFact = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, NULL_ADDRESS)
     surveyBase = await getContract('Survey').new()
 
     // Setup constants
