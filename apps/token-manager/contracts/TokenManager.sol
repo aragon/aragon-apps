@@ -12,12 +12,14 @@ import "@aragon/os/contracts/common/IForwarder.sol";
 
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/misc/Uint256Helpers.sol";
 
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
 contract TokenManager is ITokenController, AragonApp, IForwarder {
     using SafeMath for uint256;
+    using Uint256Helpers for uint256;
 
     MiniMeToken public token;
     uint256 public maxAccountTokens;
@@ -164,7 +166,7 @@ contract TokenManager is ITokenController, AragonApp, IForwarder {
 
         uint256 nonVested = calculateNonVestedTokens(
             v.amount,
-            uint64(now),
+            getTimestamp64(),
             v.start,
             v.cliff,
             v.vesting
@@ -256,7 +258,7 @@ contract TokenManager is ITokenController, AragonApp, IForwarder {
             TokenVesting storage v = vestings[_holder][i];
             uint nonTransferable = calculateNonVestedTokens(
                 v.amount,
-                uint64(_time),
+                _time.toUint64(),
                 v.start,
                 v.cliff,
                 v.vesting

@@ -132,7 +132,7 @@ contract Finance is AragonApp {
         transactions.length += 1;
 
         settings.periodDuration = _periodDuration;
-        _newPeriod(uint64(getTimestamp()));
+        _newPeriod(getTimestamp64());
     }
 
     /**
@@ -203,7 +203,7 @@ contract Finance is AragonApp {
         require(_amount > 0);
 
         // Avoid saving payment data for 1 time immediate payments
-        if (_initialPaymentTime <= getTimestamp() && _maxRepeats == 1) {
+        if (_initialPaymentTime <= getTimestamp64() && _maxRepeats == 1) {
             _makePaymentTransaction(
                 _token,
                 _receiver,
@@ -231,7 +231,7 @@ contract Finance is AragonApp {
         payment.reference = _reference;
         payment.createdBy = msg.sender;
 
-        if (nextPaymentTime(paymentId) <= getTimestamp()) {
+        if (nextPaymentTime(paymentId) <= getTimestamp64()) {
             _executePayment(paymentId);
         }
     }
@@ -288,7 +288,7 @@ contract Finance is AragonApp {
     * @param _paymentId Identifier for payment
     */
     function executePayment(uint256 _paymentId) authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, payments[_paymentId].amount)) isInitialized external {
-        require(nextPaymentTime(_paymentId) <= getTimestamp());
+        require(nextPaymentTime(_paymentId) <= getTimestamp64());
 
         _executePayment(_paymentId);
     }
@@ -299,7 +299,7 @@ contract Finance is AragonApp {
     * @param _paymentId Identifier for payment
     */
     function receiverExecutePayment(uint256 _paymentId) isInitialized external {
-        require(nextPaymentTime(_paymentId) <= getTimestamp());
+        require(nextPaymentTime(_paymentId) <= getTimestamp64());
         require(payments[_paymentId].receiver == msg.sender);
 
         _executePayment(_paymentId);
@@ -349,7 +349,7 @@ contract Finance is AragonApp {
     */
     function tryTransitionAccountingPeriod(uint256 _maxTransitions) isInitialized public returns (bool success) {
         Period storage currentPeriod = periods[currentPeriodId()];
-        uint256 timestamp = getTimestamp();
+        uint64 timestamp = getTimestamp64();
 
         // Transition periods if necessary
         while (timestamp > currentPeriod.endTime) {
@@ -428,9 +428,9 @@ contract Finance is AragonApp {
             return MAX_UINT64; // re-executes in some billions of years time... should not need to worry
 
         // split in multiple lines to circunvent linter warning
-        uint256 increase = uint256(payment.repeats).mul(uint256(payment.interval));
-        uint256 nextPayment = uint256(payment.initialPaymentTime).add(increase);
-        return uint64(nextPayment);
+        uint64 increase = payment.repeats.mul(payment.interval);
+        uint64 nextPayment = payment.initialPaymentTime.add(increase);
+        return nextPayment;
     }
 
     function getPeriodDuration() public view returns (uint64) {
@@ -487,7 +487,7 @@ contract Finance is AragonApp {
         require(!payment.disabled);
 
         uint64 payed = 0;
-        while (nextPaymentTime(_paymentId) <= getTimestamp() && payed < MAX_PAYMENTS_PER_TX) {
+        while (nextPaymentTime(_paymentId) <= getTimestamp64() && payed < MAX_PAYMENTS_PER_TX) {
             if (!_canMakePayment(payment.token, payment.amount)) {
                 PaymentFailure(_paymentId);
                 return;
@@ -575,7 +575,7 @@ contract Finance is AragonApp {
         transaction.isIncoming = _incoming;
         transaction.token = _token;
         transaction.entity = _entity;
-        transaction.date = uint64(getTimestamp());
+        transaction.date = getTimestamp64();
         transaction.reference = _reference;
 
         Period storage period = periods[periodId];
@@ -592,6 +592,4 @@ contract Finance is AragonApp {
 
     // Must be view for mocking purposes
     function getMaxPeriodTransitions() internal view returns (uint256) { return MAX_UINT64; }
-
-    function getTimestamp() internal view returns (uint256) { return now; }
 }
