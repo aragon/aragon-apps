@@ -18,7 +18,6 @@ env:
   - TASK=test:voting
   - TASK=coverage
   - TASK=test:shared
-  - TASK=test:templates-beta
 before_script:
   - npm prune
 script:
