@@ -108,7 +108,7 @@ contract Survey is AragonApp {
         survey.metadata = _metadata;
         survey.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         survey.votingPower = token.totalSupplyAt(survey.snapshotBlock);
-        assert(survey.votingPower > 0);
+        require(survey.votingPower > 0);
         survey.minParticipationPct = minParticipationPct;
 
         emit StartSurvey(surveyId);
