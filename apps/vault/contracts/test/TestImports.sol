@@ -6,6 +6,8 @@ import "@aragon/os/contracts/factory/DAOFactory.sol";
 import "@aragon/os/contracts/kernel/Kernel.sol";
 import "@aragon/os/contracts/kernel/KernelProxy.sol";
 
+import "@aragon-apps/migrations/contracts/Migrations.sol";
+
 // You might think this file is a bit odd, but let me explain.
 // We only use these contract in our tests, which means
 // Truffle will not compile it for us, because it is
