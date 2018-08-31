@@ -103,7 +103,7 @@ contract Survey is AragonApp {
         surveyId = surveys.length++;
         SurveyStruct storage survey = surveys[surveyId];
         survey.creator = msg.sender;
-        survey.startDate = uint64(now);
+        survey.startDate = getTimestamp64();
         survey.options = _options;
         survey.metadata = _metadata;
         survey.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
@@ -283,6 +283,6 @@ contract Survey is AragonApp {
     }
 
     function _isSurveyOpen(SurveyStruct storage survey) internal view returns (bool) {
-        return uint64(now) < survey.startDate.add(surveyTime);
+        return getTimestamp64() < survey.startDate.add(surveyTime);
     }
 }
