@@ -66,7 +66,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     {
         initialized();
 
-        require(_token.controller() == address(this), "Token controller must be this contract");
+        require(_token.controller() == address(this));
 
         token = _token;
         maxAccountTokens = _maxAccountTokens == 0 ? uint256(-1) : _maxAccountTokens;
@@ -83,7 +83,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @param _amount Number of tokens minted
     */
     function mint(address _receiver, uint256 _amount) external authP(MINT_ROLE, arr(_receiver, _amount)) {
-        require(isBalanceIncreaseAllowed(_receiver, _amount), "Balance increase is not allowed");
+        require(isBalanceIncreaseAllowed(_receiver, _amount));
         _mint(_receiver, _amount);
     }
 
@@ -135,9 +135,9 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         authP(ASSIGN_ROLE, arr(_receiver, _amount))
         returns (uint256)
     {
-        require(tokenGrantsCount(_receiver) < MAX_VESTINGS_PER_ADDRESS, "Too many vestings");
+        require(tokenGrantsCount(_receiver) < MAX_VESTINGS_PER_ADDRESS);
 
-        require(_start <= _cliff && _cliff <= _vested, "Wrong cliff date");
+        require(_start <= _cliff && _cliff <= _vested);
 
         TokenVesting memory tokenVesting = TokenVesting(
             _amount,
@@ -162,7 +162,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     */
     function revokeVesting(address _holder, uint256 _vestingId) external authP(REVOKE_VESTINGS_ROLE, arr(_holder)) {
         TokenVesting storage v = vestings[_holder][_vestingId];
-        require(v.revokable, "Token vesting is not revokable");
+        require(v.revokable);
 
         uint256 nonVested = calculateNonVestedTokens(
             v.amount,
@@ -177,7 +177,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
         // transferFrom always works as controller
         // onTransfer hook always allows if transfering to token controller
-        require(token.transferFrom(_holder, address(this), nonVested), "Token transfer didn't succeed");
+        require(token.transferFrom(_holder, address(this), nonVested));
 
         emit RevokeVesting(_holder, _vestingId, nonVested);
     }
@@ -188,7 +188,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @param _evmScript Script being executed
     */
     function forward(bytes _evmScript) public isInitialized {
-        require(canForward(msg.sender, _evmScript), "Script can not be forwarded");
+        require(canForward(msg.sender, _evmScript));
         bytes memory input = new bytes(0); // TODO: Consider input for this
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(token);
@@ -235,7 +235,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @return False if the controller does not authorize the transfer
     */
     function onTransfer(address _from, address _to, uint _amount) public isInitialized returns (bool) {
-        require(msg.sender == address(token), "Transaction must be sent from token");
+        require(msg.sender == address(token));
 
         bool includesTokenManager = _from == address(this) || _to == address(this);
 
@@ -346,9 +346,9 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function _assign(address _receiver, uint256 _amount) internal isInitialized {
-        require(isBalanceIncreaseAllowed(_receiver, _amount), "Balance increase is not allowed");
+        require(isBalanceIncreaseAllowed(_receiver, _amount));
         // Must use transferFrom() as transfer() does not give the token controller full control
-        require(token.transferFrom(this, _receiver, _amount), "Token transfer didn't succeed");
+        require(token.transferFrom(this, _receiver, _amount));
     }
 
     function _mint(address _receiver, uint256 _amount) internal isInitialized {
@@ -373,7 +373,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     function proxyPayment(address) public payable returns (bool) {
         // Even though it is tested, solidity-coverage doesnt get it because
         // MiniMeToken is not instrumented and entire tx is reverted
-        require(msg.sender == address(token), "Transaction must be sent from token");
+        require(msg.sender == address(token));
         return false;
     }
 

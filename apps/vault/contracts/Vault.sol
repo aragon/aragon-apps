@@ -16,7 +16,7 @@ contract Vault is AragonApp {
     * intercepted by the Proxy (see aragonOS#281)
     */
     function () external payable {
-        require(msg.data.length == 0, "Data must be empty");
+        require(msg.data.length == 0);
         deposit(ETH, msg.sender, msg.value);
     }
 
@@ -35,14 +35,14 @@ contract Vault is AragonApp {
     * @param value Amount of tokens being transferred
     */
     function deposit(address token, address from, uint256 value) public isInitialized payable {
-        require(value > 0, "Value must be positive");
-        require(msg.sender == from, "Sender must be equal to from parameter");
+        require(value > 0);
+        require(msg.sender == from);
 
         if (token == ETH) {
             // Deposit is implicit in this case
-            require(msg.value == value, "Value must be equal to value parameter");
+            require(msg.value == value);
         } else {
-            require(ERC20(token).transferFrom(from, this, value), "Token transfer must succeed");
+            require(ERC20(token).transferFrom(from, this, value));
         }
 
         emit Deposit(token, from, value);
@@ -85,12 +85,12 @@ contract Vault is AragonApp {
         public
         authP(TRANSFER_ROLE, arr(token, to, value))
     {
-        require(value > 0, "Value must be positive");
+        require(value > 0);
 
         if (token == ETH) {
-            require(to.call.value(value)(data), "ETH transfer must succeed");
+            require(to.call.value(value)(data));
         } else {
-            require(ERC20(token).transfer(to, value), "Token transfer must succeed");
+            require(ERC20(token).transfer(to, value));
         }
 
         emit Transfer(token, to, value);

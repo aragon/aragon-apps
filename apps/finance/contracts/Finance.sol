@@ -93,7 +93,7 @@ contract Finance is AragonApp {
     // is changed before the operation if needed
     modifier transitionsPeriod {
         bool completeTransition = tryTransitionAccountingPeriod(getMaxPeriodTransitions());
-        require(completeTransition, "Incomplete transition");
+        require(completeTransition);
         _;
     }
 
@@ -119,7 +119,7 @@ contract Finance is AragonApp {
     function initialize(Vault _vault, uint64 _periodDuration) external onlyInit {
         initialized();
 
-        require(_periodDuration >= 1 days, "Period duration must be at least 1 day");
+        require(_periodDuration >= 1 days);
 
         vault = _vault;
 
@@ -140,7 +140,7 @@ contract Finance is AragonApp {
     * @param _reference Reason for payment
     */
     function deposit(ERC20 _token, uint256 _amount, string _reference) external isInitialized transitionsPeriod {
-        require(_amount > 0, "Amount must be positive");
+        require(_amount > 0);
         _recordIncomingTransaction(
             _token,
             msg.sender,
@@ -201,7 +201,7 @@ contract Finance is AragonApp {
         transitionsPeriod
         returns (uint256 paymentId)
     {
-        require(_amount > 0, "Amount must be positive");
+        require(_amount > 0);
 
         // Avoid saving payment data for 1 time immediate payments
         if (_initialPaymentTime <= getTimestamp() && _maxRepeats == 1) {
@@ -217,7 +217,7 @@ contract Finance is AragonApp {
         }
 
         // Budget must allow at least one instance of this payment each period, or not be set at all
-        require(settings.budgets[_token] >= _amount || !settings.hasBudget[_token], "Not allowed by budget");
+        require(settings.budgets[_token] >= _amount || !settings.hasBudget[_token]);
 
         paymentId = payments.length++;
         emit NewPayment(paymentId, _receiver, _maxRepeats);
@@ -246,7 +246,7 @@ contract Finance is AragonApp {
         authP(CHANGE_PERIOD_ROLE, arr(uint256(_periodDuration), uint256(settings.periodDuration)))
         transitionsPeriod
     {
-        require(_periodDuration >= 1 days, "Period duration must be at least 1 day");
+        require(_periodDuration >= 1 days);
         settings.periodDuration = _periodDuration;
         emit ChangePeriodDuration(_periodDuration);
     }
@@ -291,7 +291,7 @@ contract Finance is AragonApp {
     * @param _paymentId Identifier for payment
     */
     function executePayment(uint256 _paymentId) external authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, payments[_paymentId].amount)) {
-        require(nextPaymentTime(_paymentId) <= getTimestamp(), "Next payment date not reached yet");
+        require(nextPaymentTime(_paymentId) <= getTimestamp());
 
         _executePayment(_paymentId);
     }
@@ -302,8 +302,8 @@ contract Finance is AragonApp {
     * @param _paymentId Identifier for payment
     */
     function receiverExecutePayment(uint256 _paymentId) external isInitialized {
-        require(nextPaymentTime(_paymentId) <= getTimestamp(), "Next payment date not reached yet");
-        require(payments[_paymentId].receiver == msg.sender, "Sender must be payment receiver");
+        require(nextPaymentTime(_paymentId) <= getTimestamp());
+        require(payments[_paymentId].receiver == msg.sender);
 
         _executePayment(_paymentId);
     }
@@ -327,7 +327,7 @@ contract Finance is AragonApp {
      */
     function depositToVault(ERC20 _token) public isInitialized {
         uint256 value = _token.balanceOf(this);
-        require(value > 0, "Value must be positive");
+        require(value > 0);
 
         _recordIncomingTransaction(
             _token,
@@ -525,7 +525,7 @@ contract Finance is AragonApp {
 
     function _executePayment(uint256 _paymentId) internal transitionsPeriod {
         Payment storage payment = payments[_paymentId];
-        require(!payment.disabled, "Disabled payment");
+        require(!payment.disabled);
 
         uint64 payed = 0;
         while (nextPaymentTime(_paymentId) <= getTimestamp() && payed < MAX_PAYMENTS_PER_TX) {
@@ -557,7 +557,7 @@ contract Finance is AragonApp {
         string _reference
         ) internal
     {
-        require(getRemainingBudget(_token) >= _amount, "Not enough reamining budget");
+        require(getRemainingBudget(_token) >= _amount);
         _recordTransaction(
             false,
             _token,
