@@ -19,7 +19,8 @@ contract BadToken is MiniMeToken {
 
     }
 
-    function totalSupplyAt(uint) public view returns(uint) {
+    // should be changed to view when MiniMe is updated
+    function totalSupplyAt(uint) public constant returns(uint) {
         return 1;
     }
 }

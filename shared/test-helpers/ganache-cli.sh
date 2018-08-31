@@ -15,10 +15,10 @@ testrpc_running() {
 
 start_testrpc() {
   if [ "$SOLIDITY_COVERAGE" = true ]; then
-    npx testrpc-sc -i 16 --gasLimit 0xfffffffffff --port "$testrpc_port"  > /dev/null &
-  else
-    npx ganache-cli -i 15 --gasLimit 50000000 --port "$testrpc_port" > /dev/null &
+    return
   fi
+  echo "Starting our own testrpc instance at port $testrpc_port"
+  npx ganache-cli -i 15 --gasLimit 50000000 --port "$testrpc_port" > /dev/null &
 
   testrpc_pid=$!
 }
@@ -28,7 +28,6 @@ if testrpc_running; then
   kill -9 $(lsof -i:$testrpc_port -t)
 fi
 
-echo "Starting our own testrpc instance at port $testrpc_port"
 start_testrpc
 sleep 5
 
@@ -43,6 +42,8 @@ elif [ "$TRUFFLE_TEST" = true ]; then
   result=$?
 fi
 
-kill -9 $testrpc_pid
+if [ ! -z "$testrpc_pid" ]; then
+  kill -9 $testrpc_pid
+fi
 
 exit $result
