@@ -6,10 +6,10 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
+import "@aragon/os/contracts/common/Uint256Helpers.sol";
 
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
-import "@aragon/os/contracts/lib/misc/Uint256Helpers.sol";
 
 import "@aragon-apps/minime/contracts/ITokenController.sol";
 import "@aragon-apps/minime/contracts/MiniMeToken.sol";
