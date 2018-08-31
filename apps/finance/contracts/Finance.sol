@@ -13,7 +13,7 @@ import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/apps-vault/contracts/Vault.sol";
 
 
-contract Finance is AragonApp {
+contract Finance is AragonApp, EtherTokenConstant {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
