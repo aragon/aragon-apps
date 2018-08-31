@@ -3,7 +3,6 @@
   "packages": [
     "apps/*",
     "future-apps/*",
-    "templates/*",
     "shared/*"
   ],
   "version": "independent"
