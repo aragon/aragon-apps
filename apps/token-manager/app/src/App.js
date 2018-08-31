@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
+import BN from 'bn.js'
 import {
   AragonApp,
   AppBar,
@@ -129,7 +130,21 @@ const Title = styled.span`
   }
 `
 
+// convert tokenSupply and holder balance to strings and then to BNs
+function convertBigNumbers(state) {
+  let { tokenSupply, holders } = state
+  tokenSupply = new BN(`${tokenSupply}`)
+  holders = holders.map(holder => ({
+    ...holder,
+    balance: new BN(`${holder.balance}`),
+  }))
+  return { ...state, tokenSupply, holders }
+}
+
 export default observe(
-  observable => observable.map(state => ({ ...state })),
+  observable =>
+    observable.map(state => {
+      return convertBigNumbers(state)
+    }),
   {}
 )(App)
