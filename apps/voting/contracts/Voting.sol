@@ -158,31 +158,31 @@ contract Voting is IForwarder, AragonApp {
     }
 
     function canVote(uint256 _voteId, address _voter) public view returns (bool) {
-        Vote storage voteTmp = votes[_voteId];
+        Vote storage vote_ = votes[_voteId];
 
-        return _isVoteOpen(voteTmp) && token.balanceOfAt(_voter, voteTmp.snapshotBlock) > 0;
+        return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
     }
 
     function canExecute(uint256 _voteId) public view returns (bool) {
-        Vote storage voteTmp = votes[_voteId];
+        Vote storage vote_ = votes[_voteId];
 
-        if (voteTmp.executed)
+        if (vote_.executed)
             return false;
 
         // Voting is already decided
-        if (_isValuePct(voteTmp.yea, voteTmp.totalVoters, supportRequiredPct))
+        if (_isValuePct(vote_.yea, vote_.totalVoters, supportRequiredPct))
             return true;
 
-        uint256 totalVotes = voteTmp.yea.add(voteTmp.nay);
+        uint256 totalVotes = vote_.yea.add(vote_.nay);
 
         // vote ended?
-        if (_isVoteOpen(voteTmp))
+        if (_isVoteOpen(vote_))
             return false;
         // has Support?
-        if (!_isValuePct(voteTmp.yea, totalVotes, supportRequiredPct))
+        if (!_isValuePct(vote_.yea, totalVotes, supportRequiredPct))
             return false;
         // has Min Quorum?
-        if (!_isValuePct(voteTmp.yea, voteTmp.totalVoters, voteTmp.minAcceptQuorumPct))
+        if (!_isValuePct(vote_.yea, vote_.totalVoters, vote_.minAcceptQuorumPct))
             return false;
 
         return true;
@@ -204,18 +204,18 @@ contract Voting is IForwarder, AragonApp {
             bytes script
         )
     {
-        Vote storage voteTmp = votes[_voteId];
+        Vote storage vote_ = votes[_voteId];
 
-        open = _isVoteOpen(voteTmp);
-        executed = voteTmp.executed;
-        creator = voteTmp.creator;
-        startDate = voteTmp.startDate;
-        snapshotBlock = voteTmp.snapshotBlock;
-        minAcceptQuorum = voteTmp.minAcceptQuorumPct;
-        yea = voteTmp.yea;
-        nay = voteTmp.nay;
-        totalVoters = voteTmp.totalVoters;
-        script = voteTmp.executionScript;
+        open = _isVoteOpen(vote_);
+        executed = vote_.executed;
+        creator = vote_.creator;
+        startDate = vote_.startDate;
+        snapshotBlock = vote_.snapshotBlock;
+        minAcceptQuorum = vote_.minAcceptQuorumPct;
+        yea = vote_.yea;
+        nay = vote_.nay;
+        totalVoters = vote_.totalVoters;
+        script = vote_.executionScript;
     }
 
     function getVoteMetadata(uint256 _voteId) public view returns (string) {
@@ -228,14 +228,14 @@ contract Voting is IForwarder, AragonApp {
 
     function _newVote(bytes _executionScript, string _metadata, bool _castVote) internal returns (uint256 voteId) {
         voteId = votes.length++;
-        Vote storage voteTmp = votes[voteId];
-        voteTmp.executionScript = _executionScript;
-        voteTmp.creator = msg.sender;
-        voteTmp.startDate = getTimestamp64();
-        voteTmp.metadata = _metadata;
-        voteTmp.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
-        voteTmp.totalVoters = token.totalSupplyAt(voteTmp.snapshotBlock);
-        voteTmp.minAcceptQuorumPct = minAcceptQuorumPct;
+        Vote storage vote_ = votes[voteId];
+        vote_.executionScript = _executionScript;
+        vote_.creator = msg.sender;
+        vote_.startDate = getTimestamp64();
+        vote_.metadata = _metadata;
+        vote_.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
+        vote_.totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
+        vote_.minAcceptQuorumPct = minAcceptQuorumPct;
 
         emit StartVote(voteId);
 
@@ -256,24 +256,24 @@ contract Voting is IForwarder, AragonApp {
         bool _executesIfDecided
     ) internal
     {
-        Vote storage voteTmp = votes[_voteId];
+        Vote storage vote_ = votes[_voteId];
 
         // this could re-enter, though we can assume the governance token is not malicious
-        uint256 voterStake = token.balanceOfAt(_voter, voteTmp.snapshotBlock);
-        VoterState state = voteTmp.voters[_voter];
+        uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
+        VoterState state = vote_.voters[_voter];
 
         // if voter had previously voted, decrease count
         if (state == VoterState.Yea)
-            voteTmp.yea = voteTmp.yea.sub(voterStake);
+            vote_.yea = vote_.yea.sub(voterStake);
         if (state == VoterState.Nay)
-            voteTmp.nay = voteTmp.nay.sub(voterStake);
+            vote_.nay = vote_.nay.sub(voterStake);
 
         if (_supports)
-            voteTmp.yea = voteTmp.yea.add(voterStake);
+            vote_.yea = vote_.yea.add(voterStake);
         else
-            voteTmp.nay = voteTmp.nay.add(voterStake);
+            vote_.nay = vote_.nay.add(voterStake);
 
-        voteTmp.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
+        vote_.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
 
         emit CastVote(
             _voteId,
@@ -287,18 +287,18 @@ contract Voting is IForwarder, AragonApp {
     }
 
     function _executeVote(uint256 _voteId) internal {
-        Vote storage voteTmp = votes[_voteId];
+        Vote storage vote_ = votes[_voteId];
 
-        voteTmp.executed = true;
+        vote_.executed = true;
 
         bytes memory input = new bytes(0); // TODO: Consider input for voting scripts
-        runScript(voteTmp.executionScript, input, new address[](0));
+        runScript(vote_.executionScript, input, new address[](0));
 
         emit ExecuteVote(_voteId);
     }
 
-    function _isVoteOpen(Vote storage voteTmp) internal view returns (bool) {
-        return getTimestamp64() < voteTmp.startDate.add(voteTime) && !voteTmp.executed;
+    function _isVoteOpen(Vote storage vote_) internal view returns (bool) {
+        return getTimestamp64() < vote_.startDate.add(voteTime) && !vote_.executed;
     }
 
     /**
