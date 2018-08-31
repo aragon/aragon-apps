@@ -6,6 +6,7 @@ pragma solidity 0.4.18;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 
+import "@aragon/os/contracts/common/IsContract.sol";
 import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
@@ -15,7 +16,7 @@ import "@aragon/apps-vault/contracts/IVaultConnector.sol";
 import "@aragon/os/contracts/lib/misc/Migrations.sol";
 
 
-contract Finance is AragonApp {
+contract Finance is IsContract, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
@@ -123,6 +124,7 @@ contract Finance is AragonApp {
         initialized();
 
         require(_periodDuration >= 1 days);
+        require(isContract(_vault));
 
         vault = _vault;
 
