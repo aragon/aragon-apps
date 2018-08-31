@@ -75,7 +75,7 @@ contract Survey is AragonApp {
     {
         initialized();
 
-        require(_minParticipationPct > 0 && _minParticipationPct <= PCT_BASE, "Wrong minimum participation percentage");
+        require(_minParticipationPct > 0 && _minParticipationPct <= PCT_BASE);
 
         token = _token;
         minParticipationPct = _minParticipationPct;
@@ -87,7 +87,7 @@ contract Survey is AragonApp {
     * @param _minParticipationPct New acceptance participation
     */
     function changeMinAcceptParticipationPct(uint256 _minParticipationPct) external authP(MODIFY_PARTICIPATION_ROLE, arr(_minParticipationPct)) {
-        require(_minParticipationPct > 0 && _minParticipationPct <= PCT_BASE, "Wrong minimum participation percentage");
+        require(_minParticipationPct > 0 && _minParticipationPct <= PCT_BASE);
         minParticipationPct = _minParticipationPct;
 
         emit ChangeMinParticipation(_minParticipationPct);
@@ -119,8 +119,7 @@ contract Survey is AragonApp {
      * @param _surveyId Id for survey
      */
     function resetVote(uint256 _surveyId) public isInitialized {
-        require(canVote(_surveyId, msg.sender),
-                "Sender must be able to cast a vote for this survey (survey must be open and sender must have enough balance)");
+        require(canVote(_surveyId, msg.sender));
 
         SurveyStruct storage survey = surveys[_surveyId];
         MultiOptionVote storage previousVote = survey.votes[msg.sender];
@@ -152,7 +151,7 @@ contract Survey is AragonApp {
     * @param _stakes Number of tokens assigned to each option
     */
     function voteOptions(uint256 _surveyId, uint256[] _optionIds, uint256[] _stakes) public isInitialized {
-        require(_optionIds.length == _stakes.length && _optionIds.length > 0, "Option id and stake arrays must be of equal size and non-empty");
+        require(_optionIds.length == _stakes.length && _optionIds.length > 0);
 
         SurveyStruct storage survey = surveys[_surveyId];
 
@@ -169,12 +168,12 @@ contract Survey is AragonApp {
             uint256 optionId = _optionIds[optionIndex - 1];
             uint256 stake = _stakes[optionIndex - 1];
 
-            require(optionId != ABSTAIN_VOTE && optionId <= survey.options, "Wrong option");
-            require(stake > 0, "Stake must be positive");
+            require(optionId != ABSTAIN_VOTE && optionId <= survey.options);
+            require(stake > 0);
             // Let's avoid repeating an option by making sure that ascending order is preserved in
             // the options array by checking that the current optionId is larger than the last one
             // we added
-            require(survey.votes[msg.sender].castedVotes[optionIndex - 1].optionId < optionId, "Options in array should be in ascending order");
+            require(survey.votes[msg.sender].castedVotes[optionIndex - 1].optionId < optionId);
 
             // register voter amount
             survey.votes[msg.sender].castedVotes[optionIndex] = OptionCast({optionId: optionId, stake: stake});
@@ -209,7 +208,7 @@ contract Survey is AragonApp {
     * @param _optionId Index of supported option
     */
     function voteOption(uint256 _surveyId, uint256 _optionId) public isInitialized {
-        require(_optionId != ABSTAIN_VOTE, "Option can not be abstention");
+        require(_optionId != ABSTAIN_VOTE);
         SurveyStruct storage survey = surveys[_surveyId];
         // this could re-enter, though we can asume the governance token is not maliciuous
         uint256 voterStake = token.balanceOfAt(msg.sender, survey.snapshotBlock);

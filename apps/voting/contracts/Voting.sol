@@ -66,9 +66,9 @@ contract Voting is IForwarder, AragonApp {
     {
         initialized();
 
-        require(_minAcceptQuorumPct > 0, "Minimum acceptance quorum must be positive");
-        require(_supportRequiredPct <= PCT_BASE, "Support required percentage too big");
-        require(_supportRequiredPct >= _minAcceptQuorumPct, "Support required percentage can not be lower than minimum acceptance quorum");
+        require(_minAcceptQuorumPct > 0);
+        require(_supportRequiredPct <= PCT_BASE);
+        require(_supportRequiredPct >= _minAcceptQuorumPct);
 
         token = _token;
         supportRequiredPct = _supportRequiredPct;
@@ -86,8 +86,8 @@ contract Voting is IForwarder, AragonApp {
         external
         authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct))
     {
-        require(_minAcceptQuorumPct > 0, "Minimum acceptance quorum must be positive");
-        require(supportRequiredPct >= _minAcceptQuorumPct, "Minimum acceptance quorum can not be greater than support required percentage");
+        require(_minAcceptQuorumPct > 0);
+        require(supportRequiredPct >= _minAcceptQuorumPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
 
         emit ChangeMinQuorum(_minAcceptQuorumPct);
@@ -121,8 +121,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
     */
     function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external isInitialized {
-        require(canVote(_voteId, msg.sender),
-                "Sender must be able to cast a vote (vote must be open and sender must have enough balance)");
+        require(canVote(_voteId, msg.sender));
         _vote(
             _voteId,
             _supports,
@@ -136,7 +135,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external isInitialized {
-        require(canExecute(_voteId), "Vote can not be executed");
+        require(canExecute(_voteId));
         _executeVote(_voteId);
     }
 
@@ -150,7 +149,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _evmScript Start vote with script
     */
     function forward(bytes _evmScript) public isInitialized {
-        require(canForward(msg.sender, _evmScript), "Script can not be forwarded");
+        require(canForward(msg.sender, _evmScript));
         _newVote(_evmScript, "", true);
     }
 
