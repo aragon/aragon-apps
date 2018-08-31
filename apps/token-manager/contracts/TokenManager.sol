@@ -368,10 +368,9 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     /**
     * @notice Called when `_owner` sends ether to the MiniMe Token contract
-    * @param _owner The address that sent the ether to create tokens
     * @return True if the ether is accepted, false for it to throw
     */
-    function proxyPayment(address _owner) public payable returns (bool) {
+    function proxyPayment(address) public payable returns (bool) {
         // Even though it is tested, solidity-coverage doesnt get it because
         // MiniMeToken is not instrumented and entire tx is reverted
         require(msg.sender == address(token), "Transaction must be sent from token");

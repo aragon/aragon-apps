@@ -154,7 +154,7 @@ contract Voting is IForwarder, AragonApp {
         _newVote(_evmScript, "", true);
     }
 
-    function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
+    function canForward(address _sender, bytes) public view returns (bool) {
         return canPerform(_sender, CREATE_VOTES_ROLE, arr());
     }
 
