@@ -105,10 +105,10 @@ contract('Finance App', accounts => {
     })
 
     it('fails on initializing with no vault', async () => {
-        app = await Finance.new()
+        const { financeApp } = await newProxyFinance()
 
-        await assertRevert(() => app.initialize(0, periodDuration))
-        await assertRevert(() => app.initialize(withdrawAddr, periodDuration))
+        await assertRevert(() => financeApp.initialize(0, PERIOD_DURATION))
+        await assertRevert(() => financeApp.initialize(withdrawAddr, PERIOD_DURATION))
     })
 
     it('fails on initializing with less than one day period', async () => {
