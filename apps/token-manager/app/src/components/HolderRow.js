@@ -8,7 +8,6 @@ import {
   IconAdd,
   Badge,
 } from '@aragon/ui'
-import { round } from '../math-utils'
 
 class HolderRow extends React.Component {
   static defaultProps = {
@@ -29,8 +28,8 @@ class HolderRow extends React.Component {
       tokenDecimalsBase,
       isCurrentUser,
     } = this.props
-    // Rounding their balance to 5 decimals should be enough... right?
-    const adjustedBalance = round(balance / tokenDecimalsBase, 5)
+    const adjustedBalance = balance.divRound(tokenDecimalsBase).toString()
+
     return (
       <TableRow>
         <TableCell>
