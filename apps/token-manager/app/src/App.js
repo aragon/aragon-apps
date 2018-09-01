@@ -37,15 +37,14 @@ class App extends React.Component {
     // Is this the first time we've loaded the token settings?
     if (!tokenSettingsLoaded && hasLoadedTokenSettings(nextProps)) {
       this.setState({
-        tokenDecimalsBase: Math.pow(10, nextProps.tokenDecimals),
         tokenSettingsLoaded: true,
       })
     }
   }
   handleAssignTokens = ({ amount, recipient }) => {
-    const { app } = this.props
-    const { tokenDecimalsBase } = this.state
-    app.mint(recipient, amount * tokenDecimalsBase)
+    const { app, tokenDecimalsBase } = this.props
+    const toMint = new BN(`${amount}`).mul(tokenDecimalsBase)
+    app.mint(recipient, toMint)
     this.handleSidepanelClose()
   }
   handleAppBarLaunchAssignTokens = () => this.handleLaunchAssignTokens()
@@ -62,9 +61,8 @@ class App extends React.Component {
     })
   }
   render() {
-    const { tokenSymbol, tokenSupply, holders, userAccount } = this.props
+    const { tokenSymbol, tokenSupply, tokenDecimalsBase, holders, userAccount } = this.props
     const {
-      tokenDecimalsBase,
       assignTokensConfig,
       sidepanelOpened,
       tokenSettingsLoaded,
@@ -130,15 +128,18 @@ const Title = styled.span`
   }
 `
 
-// convert tokenSupply and holder balance to strings and then to BNs
+// convert tokenSupply, holders balances to strings and then to BNs
+// calculate tokenDecimalsBase
 function convertBigNumbers(state) {
-  let { tokenSupply, holders } = state
+  let { tokenSupply, holders, tokenDecimals } = state
+  const tokenDecimalsBase = new BN(`${Math.pow(10, tokenDecimals)}`)
+
   tokenSupply = new BN(`${tokenSupply}`)
   holders = holders.map(holder => ({
     ...holder,
     balance: new BN(`${holder.balance}`),
   }))
-  return { ...state, tokenSupply, holders }
+  return { ...state, tokenSupply, holders, tokenDecimalsBase }
 }
 
 export default observe(
