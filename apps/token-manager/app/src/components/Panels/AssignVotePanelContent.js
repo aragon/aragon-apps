@@ -59,7 +59,7 @@ class AssignVotePanelContent extends React.Component {
     const recipientAddress = recipient.value.trim()
     if (isAddress(recipientAddress)) {
       this.props.onAssignTokens({
-        amount: Number(amount),
+        amount: amount,
         recipient: recipientAddress,
       })
     } else {
