@@ -56,6 +56,14 @@ contract('Vault app', (accounts) => {
   })
 
   context('ETH:', async () => {
+    it('cannot initialize base app', async () => {
+      const newVault = await Vault.new()
+      assert.isTrue(await newVault.isPetrified())
+      return assertRevert(async () => {
+        await newVault.initialize()
+      })
+    })
+
     it('deposits ETH', async () => {
       const value = 1
 
