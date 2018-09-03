@@ -5,5 +5,6 @@ module.exports = {
         'test/TestImports.sol',
         'test/mocks/ExecutionTarget.sol',
         'test/mocks/VotingMock.sol',
+        'test/mocks/VotingMockExt.sol',
     ]
 }

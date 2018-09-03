@@ -68,6 +68,14 @@ contract('Survey app', accounts => {
       })
     })
 
+    it('cannot initialize base app', async () => {
+      const newSurvey = await getContract('Survey').new()
+      assert.isTrue(await newSurvey.isPetrified())
+      return assertRevert(async () => {
+        await newSurvey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime)
+      })
+    })
+
     it('can change minimum acceptance participation', async () => {
       const receipt = await survey.changeMinAcceptParticipationPct(1)
       const events = receipt.logs.filter(x => x.event == 'ChangeMinParticipation')

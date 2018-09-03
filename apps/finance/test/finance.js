@@ -91,6 +91,7 @@ contract('Finance App', accounts => {
 
     it('sets the end of time correctly', async () => {
         const { financeApp } = await newProxyFinance()
+        await financeApp.mock_setTimestamp(100) // to make sure it overflows
         // initialize with MAX_UINT64 as period duration
         await financeApp.initialize(vault.address, MAX_UINT64)
         const [isCurrent, start, end, firstTx, lastTx] = await financeApp.getPeriod(await financeApp.currentPeriodId())
@@ -101,6 +102,14 @@ contract('Finance App', accounts => {
     it('fails on reinitialization', async () => {
         return assertRevert(async () => {
             await finance.initialize(vault.address, PERIOD_DURATION)
+        })
+    })
+
+    it('cannot initialize base app', async () => {
+        const newFinance = await Finance.new()
+        assert.isTrue(await newFinance.isPetrified())
+        return assertRevert(async () => {
+            await newFinance.initialize(vault.address, PERIOD_DURATION)
         })
     })
 
