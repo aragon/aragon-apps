@@ -256,7 +256,7 @@ contract Survey is AragonApp {
         return surveys[_surveyId].metadata;
     }
 
-    /* solium-disable function-order */
+    /* solium-disable-next-line function-order */
     function getVoterState(uint256 _surveyId, address _voter) external view returns (uint256[] options, uint256[] stakes) {
         if (surveys[_surveyId].votes[_voter].optionsCastedLength == 0) {
             return (new uint256[](0), new uint256[](0));

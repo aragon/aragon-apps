@@ -91,7 +91,7 @@ contract('Finance App', accounts => {
 
     it('sets the end of time correctly', async () => {
         const { financeApp } = await newProxyFinance()
-        await financeApp.mock_setTimestamp(100) // to make sure it overflows
+        await financeApp.mock_setTimestamp(100) // to make sure it overflows with MAX_UINT64 period length
         // initialize with MAX_UINT64 as period duration
         await financeApp.initialize(vault.address, MAX_UINT64)
         const [isCurrent, start, end, firstTx, lastTx] = await financeApp.getPeriod(await financeApp.currentPeriodId())

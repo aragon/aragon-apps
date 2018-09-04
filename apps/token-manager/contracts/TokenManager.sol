@@ -2,6 +2,8 @@
  * SPDX-License-Identitifer:    GPL-3.0-or-later
  */
 
+/* solium-disable function-order */
+
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
@@ -253,7 +255,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return true;
     }
 
-    /* solium-disable function-order */
     function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
         return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
     }
@@ -369,7 +370,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Called when `_owner` sends ether to the MiniMe Token contract
+    * @notice Called when ether is sent to the MiniMe Token contract
     * @return True if the ether is accepted, false for it to throw
     */
     function proxyPayment(address) public payable returns (bool) {
