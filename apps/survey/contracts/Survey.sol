@@ -54,7 +54,9 @@ contract Survey is AragonApp {
         mapping (address => MultiOptionVote) votes;    // voter -> options voted, with its stakes
     }
 
-    SurveyStruct[] internal surveys;
+    // we are mimicing an array, we use a mapping instead to make app upgrade more graceful
+    mapping (uint256 => SurveyStruct) internal surveys;
+    uint256 internal surveysLength;
 
     event StartSurvey(uint256 indexed surveyId);
     event CastVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 stake, uint256 optionPower);
@@ -100,7 +102,7 @@ contract Survey is AragonApp {
     * @return surveyId id for newly created survey
     */
     function newSurvey(string _metadata, uint256 _options) external auth(CREATE_SURVEYS_ROLE) returns (uint256 surveyId) {
-        surveyId = surveys.length++;
+        surveyId = surveysLength++;
         SurveyStruct storage survey = surveys[surveyId];
         survey.creator = msg.sender;
         survey.startDate = getTimestamp64();

@@ -40,7 +40,9 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         bool revokable;
     }
 
-    mapping (address => TokenVesting[]) internal vestings;
+    // we are mimicing an array inside the outer mapping, we use a mapping instead to make app upgrade more graceful
+    mapping (address => mapping (uint256 => TokenVesting)) internal vestings;
+    mapping (address => uint256) internal vestingsLength;
     mapping (address => bool) public everHeld;
 
     // Returns all holders the token had (since managing it).
@@ -150,7 +152,8 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
             _vested,
             _revokable
         );
-        uint256 vestingId = vestings[_receiver].push(tokenVesting) - 1;
+        uint256 vestingId = vestingsLength[_receiver]++;
+        vestings[_receiver][vestingId] = tokenVesting;
 
         _assign(_receiver, _amount);
 
@@ -260,7 +263,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function tokenGrantsCount(address _holder) public view returns (uint256) {
-        return vestings[_holder].length;
+        return vestingsLength[_holder];
     }
 
     function spendableBalanceOf(address _holder) public view returns (uint256) {
