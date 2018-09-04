@@ -43,7 +43,9 @@ contract Voting is IForwarder, AragonApp {
         mapping (address => VoterState) voters;
     }
 
-    Vote[] internal votes; // first index is 1
+    // we are mimicing an array, we use a mapping instead to make app upgrade more graceful
+    mapping (uint256 => Vote) internal votes; // first index is 1
+    uint256 internal votesLength;
 
     event StartVote(uint256 indexed voteId);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
@@ -75,7 +77,7 @@ contract Voting is IForwarder, AragonApp {
         minAcceptQuorumPct = _minAcceptQuorumPct;
         voteTime = _voteTime;
 
-        votes.length += 1;
+        votesLength = 1;
     }
 
     /**
@@ -227,7 +229,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     function _newVote(bytes _executionScript, string _metadata, bool _castVote) internal returns (uint256 voteId) {
-        voteId = votes.length++;
+        voteId = votesLength++;
         Vote storage vote_ = votes[voteId];
         vote_.executionScript = _executionScript;
         vote_.creator = msg.sender;

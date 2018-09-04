@@ -78,9 +78,13 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     Vault public vault;
 
-    Payment[] internal payments; // first index is 1
-    Transaction[] internal transactions; // first index is 1
-    Period[] internal periods; // first index is 0
+    // we are mimicing arrays, we use mappings instead to make app upgrade more graceful
+    mapping (uint256 => Payment) internal payments; // first index is 1
+    uint256 internal paymentsLength;
+    mapping (uint256 => Transaction) internal transactions; // first index is 1
+    uint256 internal transactionsLength;
+    mapping (uint256 => Period) internal periods; // first index is 0
+    uint256 internal periodsLength;
     Settings internal settings;
 
     event NewPeriod(uint256 indexed periodId, uint64 periodStarts, uint64 periodEnds);
@@ -126,10 +130,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
         vault = _vault;
 
-        payments.length += 1;
+        paymentsLength = 1;
         payments[0].disabled = true;
 
-        transactions.length += 1;
+        transactionsLength = 1;
 
         settings.periodDuration = _periodDuration;
         _newPeriod(getTimestamp64());
@@ -222,7 +226,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         // Budget must allow at least one instance of this payment each period, or not be set at all
         require(settings.budgets[_token] >= _amount || !settings.hasBudget[_token]);
 
-        paymentId = payments.length++;
+        paymentId = paymentsLength++;
         emit NewPayment(paymentId, _receiver, _maxRepeats);
 
         Payment storage payment = payments[paymentId];
@@ -369,7 +373,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             // If there were any transactions in period, record which was the last
             // In case 0 transactions occured, first and last tx id will be 0
             if (currentPeriod.firstTransactionId != 0) {
-                currentPeriod.lastTransactionId = transactions.length.sub(1);
+                currentPeriod.lastTransactionId = transactionsLength.sub(1);
             }
 
             // new period starts at end time + 1
@@ -502,13 +506,13 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     function currentPeriodId() public view returns (uint256) {
-        return periods.length - 1;
+        return periodsLength - 1;
     }
 
     // internal fns
 
     function _newPeriod(uint64 _startTime) internal returns (Period storage) {
-        uint256 newPeriodId = periods.length++;
+        uint256 newPeriodId = periodsLength++;
 
         Period storage period = periods[newPeriodId];
         period.startTime = _startTime;
@@ -610,7 +614,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             tokenStatement.expenses = tokenStatement.expenses.add(_amount);
         }
 
-        uint256 transactionId = transactions.length++;
+        uint256 transactionId = transactionsLength++;
         Transaction storage transaction = transactions[transactionId];
         transaction.periodId = periodId;
         transaction.amount = _amount;

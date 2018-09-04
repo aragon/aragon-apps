@@ -18,6 +18,7 @@ contract('Finance App', accounts => {
     const START_TIME = 1
     const PERIOD_DURATION = 60 * 60 * 24 // One day in seconds
     const withdrawAddr = '0x0000000000000000000000000000000000001234'
+    const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000'
 
     before(async () => {
         const kernelBase = await getContract('Kernel').new(true) // petrify immediately
@@ -382,9 +383,10 @@ contract('Finance App', accounts => {
 
         it('doesnt record payment for one time past transaction', async () => {
             await finance.newPayment(token1.address, recipient, 1, time, 1, 1, '')
-            return assertRevert(async () => {
-                await finance.getPayment(1)
-            })
+            const payment = await finance.getPayment(1)
+            assert.equal(payment[0].toString(), EMPTY_ADDRESS, "Token should be zero")
+            assert.equal(payment[1].toString(), EMPTY_ADDRESS, "Receiver should be zero")
+            assert.equal(payment[2].toString(), 0, "Amount should be zero")
         })
 
         context('multitransaction period', async () => {
