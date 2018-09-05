@@ -1,11 +1,11 @@
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
-
+import "@aragon/os/contracts/common/EtherTokenConstant.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 
 
-contract Vault is AragonApp {
+contract Vault is EtherTokenConstant, AragonApp {
     bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
 
     event Transfer(address indexed token, address indexed to, uint256 amount);
