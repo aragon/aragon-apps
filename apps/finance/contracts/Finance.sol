@@ -122,7 +122,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         initialized();
 
         require(_periodDuration >= 1 days);
-        require(isContract(_vault));
+        require(isContract(address(_vault)));
 
         vault = _vault;
 
