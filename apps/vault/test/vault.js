@@ -214,8 +214,7 @@ contract('Vault app', (accounts) => {
 
         // Set that vault as the default vault in the kernel
         await kernel.setApp(APP_ADDR_NAMESPACE, vaultId, defaultVault.address)
-        await kernel.setRecoveryVaultId(vaultId)
-
+        await kernel.setRecoveryVaultAppId(vaultId)
       })
 
       it('set up the default vault correctly to recover ETH from the kernel', async () => {
@@ -242,7 +241,7 @@ contract('Vault app', (accounts) => {
         await assertRevert(() => vault.transferToVault(ETH))
       })
 
-      it('fails when attempting to recover ETH out of the vault', async () => {
+      it('fails when attempting to recover tokens out of the vault', async () => {
         await token.transfer(vault.address, 10)
         assert.equal((await token.balanceOf(vault.address)), 10, 'vault should have 10 balance')
         await assertRevert(() => vault.transferToVault(ETH))
