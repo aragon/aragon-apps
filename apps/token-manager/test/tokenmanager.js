@@ -62,6 +62,10 @@ contract('Token Manager', accounts => {
         token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
     })
 
+    it('checks it is forwarder', async () => {
+        assert.isTrue(await tokenManager.isForwarder())
+    })
+
     it('initializating as transferable sets the token as transferable', async () => {
         const transferable = true
         await token.enableTransfers(!transferable)
@@ -213,6 +217,14 @@ contract('Token Manager', accounts => {
         it('fails on reinitialization', async () => {
             return assertRevert(async () => {
                 await tokenManager.initialize(token.address, true, 0, false)
+            })
+        })
+
+        it('cannot initialize base app', async () => {
+            const newTokenManager = await TokenManager.new()
+            assert.isTrue(await newTokenManager.isPetrified())
+            return assertRevert(async () => {
+                await newTokenManager.initialize(token.address, true, 0, false)
             })
         })
 

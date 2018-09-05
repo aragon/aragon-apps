@@ -14,6 +14,7 @@ testrpc_running() {
 }
 
 start_testrpc() {
+  echo "Starting our own testrpc instance at port $testrpc_port"
   if [ "$SOLIDITY_COVERAGE" = true ]; then
     npx testrpc-sc -i 16 --gasLimit 0xfffffffffff --port "$testrpc_port"  > /dev/null &
   else
@@ -28,7 +29,6 @@ if testrpc_running; then
   kill -9 $(lsof -i:$testrpc_port -t)
 fi
 
-echo "Starting our own testrpc instance at port $testrpc_port"
 start_testrpc
 sleep 5
 
@@ -43,6 +43,8 @@ elif [ "$TRUFFLE_TEST" = true ]; then
   result=$?
 fi
 
-kill -9 $testrpc_pid
+if [ ! -z "$testrpc_pid" ]; then
+  kill -9 $testrpc_pid
+fi
 
 exit $result

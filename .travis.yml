@@ -16,12 +16,15 @@ env:
   - TASK=test:token-manager
   - TASK=test:vault
   - TASK=test:voting
-  - TASK=coverage
+  - TASK=coverage:finance
+  - TASK=coverage:survey
+  - TASK=coverage:token-manager
+  - TASK=coverage:vault
+  - TASK=coverage:voting
   - TASK=test:shared
-  - TASK=test:templates-beta
 before_script:
   - npm prune
 script:
-  - npm run $TASK
+  - travis_wait 60 npm run $TASK
 after_success:
   - ./node_modules/.bin/lcov-result-merger 'apps/*/coverage/lcov.info' | ./node_modules/.bin/coveralls

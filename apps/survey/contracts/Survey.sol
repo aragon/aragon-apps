@@ -9,7 +9,7 @@ import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 
-import "@aragon-apps/minime/contracts/MiniMeToken.sol";
+import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
 
 contract Survey is AragonApp {
@@ -71,7 +71,7 @@ contract Survey is AragonApp {
         MiniMeToken _token,
         uint256 _minParticipationPct,
         uint64 _surveyTime
-    ) onlyInit external
+    ) external onlyInit
     {
         initialized();
 
@@ -86,9 +86,8 @@ contract Survey is AragonApp {
     * @notice Change minimum acceptance participation to `(_minParticipationPct - _minParticipationPct % 10^16) / 10^14`%
     * @param _minParticipationPct New acceptance participation
     */
-    function changeMinAcceptParticipationPct(uint256 _minParticipationPct) authP(MODIFY_PARTICIPATION_ROLE, arr(_minParticipationPct)) external {
-        require(_minParticipationPct > 0);
-        require(_minParticipationPct <= PCT_BASE);
+    function changeMinAcceptParticipationPct(uint256 _minParticipationPct) external authP(MODIFY_PARTICIPATION_ROLE, arr(_minParticipationPct)) {
+        require(_minParticipationPct > 0 && _minParticipationPct <= PCT_BASE);
         minParticipationPct = _minParticipationPct;
 
         emit ChangeMinParticipation(_minParticipationPct);
@@ -100,11 +99,11 @@ contract Survey is AragonApp {
     * @param _options Number of options voters can decide between
     * @return surveyId id for newly created survey
     */
-    function newSurvey(string _metadata, uint256 _options) auth(CREATE_SURVEYS_ROLE) external returns (uint256 surveyId) {
+    function newSurvey(string _metadata, uint256 _options) external auth(CREATE_SURVEYS_ROLE) returns (uint256 surveyId) {
         surveyId = surveys.length++;
         SurveyStruct storage survey = surveys[surveyId];
         survey.creator = msg.sender;
-        survey.startDate = uint64(now);
+        survey.startDate = getTimestamp64();
         survey.options = _options;
         survey.metadata = _metadata;
         survey.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
@@ -119,7 +118,7 @@ contract Survey is AragonApp {
      * @notice Reset previously casted vote in survey #`_surveyId`, if any.
      * @param _surveyId Id for survey
      */
-    function resetVote(uint256 _surveyId) isInitialized public {
+    function resetVote(uint256 _surveyId) public isInitialized {
         require(canVote(_surveyId, msg.sender));
 
         SurveyStruct storage survey = surveys[_surveyId];
@@ -151,7 +150,7 @@ contract Survey is AragonApp {
     * @param _optionIds Array with indexes of supported options
     * @param _stakes Number of tokens assigned to each option
     */
-    function voteOptions(uint256 _surveyId, uint256[] _optionIds, uint256[] _stakes) isInitialized public {
+    function voteOptions(uint256 _surveyId, uint256[] _optionIds, uint256[] _stakes) public isInitialized {
         require(_optionIds.length == _stakes.length && _optionIds.length > 0);
 
         SurveyStruct storage survey = surveys[_surveyId];
@@ -208,7 +207,7 @@ contract Survey is AragonApp {
     * @param _surveyId Id for survey
     * @param _optionId Index of supported option
     */
-    function voteOption(uint256 _surveyId, uint256 _optionId) isInitialized public {
+    function voteOption(uint256 _surveyId, uint256 _optionId) public isInitialized {
         require(_optionId != ABSTAIN_VOTE);
         SurveyStruct storage survey = surveys[_surveyId];
         // this could re-enter, though we can asume the governance token is not maliciuous
@@ -227,7 +226,20 @@ contract Survey is AragonApp {
         return _isSurveyOpen(survey) && token.balanceOfAt(_voter, survey.snapshotBlock) > 0;
     }
 
-    function getSurvey(uint256 _surveyId) public view returns (bool _open, address _creator, uint64 _startDate, uint256 _snapshotBlock, uint256 _minParticipationPct, uint256 _votingPower, uint256 _participation, uint256 _options) {
+    function getSurvey(uint256 _surveyId)
+        public
+        view
+        returns (
+            bool _open,
+            address _creator,
+            uint64 _startDate,
+            uint256 _snapshotBlock,
+            uint256 _minParticipationPct,
+            uint256 _votingPower,
+            uint256 _participation,
+            uint256 _options
+        )
+    {
         SurveyStruct storage survey = surveys[_surveyId];
 
         _open = _isSurveyOpen(survey);
@@ -244,6 +256,7 @@ contract Survey is AragonApp {
         return surveys[_surveyId].metadata;
     }
 
+    /* solium-disable-next-line function-order */
     function getVoterState(uint256 _surveyId, address _voter) external view returns (uint256[] options, uint256[] stakes) {
         if (surveys[_surveyId].votes[_voter].optionsCastedLength == 0) {
             return (new uint256[](0), new uint256[](0));
@@ -270,6 +283,6 @@ contract Survey is AragonApp {
     }
 
     function _isSurveyOpen(SurveyStruct storage survey) internal view returns (bool) {
-        return uint64(now) < survey.startDate.add(surveyTime);
+        return getTimestamp64() < survey.startDate.add(surveyTime);
     }
 }
