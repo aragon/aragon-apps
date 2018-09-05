@@ -120,6 +120,12 @@ contract('Survey app', accounts => {
         assert.equal(voterState[1].length, 0, 'nonHolder should not have voted (stakes)')
       })
 
+      it('fails getting a survey out of bounds', async () => {
+        assertRevert(async () => {
+          await survey.getSurvey(surveyId + 1)
+        })
+      })
+
       it('counts votes properly', async () => {
         await survey.voteOption(surveyId, 10, { from: holder31 })
         await survey.voteOption(surveyId, 11, { from: holder31 }) // h31 votes for option 11

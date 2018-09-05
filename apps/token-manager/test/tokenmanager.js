@@ -312,6 +312,12 @@ contract('Token Manager', accounts => {
                 await tokenManager.assignVested(holder, totalTokens, startDate, cliffDate, vestingDate, revokable)
             })
 
+            it('fails trying to get vesting out of bounds', async () => {
+                return assertRevert(async () => {
+                    await tokenManager.getVesting(holder, 1)
+                })
+            })
+
             it('can get vesting details before being revoked', async () => {
                 const [vAmount, vStartDate, vCliffDate, vVestingDate, vRevokable] = await tokenManager.getVesting(holder, 0)
                 assert.equal(vAmount, totalTokens)

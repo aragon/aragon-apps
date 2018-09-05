@@ -192,6 +192,15 @@ contract('Voting App', accounts => {
                 assert.equal(await voting.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')
             })
 
+            it('fails getting a vote out of bounds', async () => {
+                assertRevert(async () => {
+                    await voting.getVote(0)
+                })
+                assertRevert(async () => {
+                    await voting.getVote(voteId + 1)
+                })
+            })
+
             it('changing min quorum doesnt affect vote min quorum', async () => {
                 await voting.changeMinAcceptQuorumPct(pct16(50))
 
