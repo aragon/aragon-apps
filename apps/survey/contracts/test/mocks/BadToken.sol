@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "@aragon-apps/minime/contracts/MiniMeToken.sol";
+import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
 
 contract BadToken is MiniMeToken {
@@ -19,6 +19,7 @@ contract BadToken is MiniMeToken {
 
     }
 
+    // should be changed to view when MiniMe is updated
     function totalSupplyAt(uint) public constant returns(uint) {
         return 1;
     }

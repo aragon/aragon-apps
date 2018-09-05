@@ -5,7 +5,7 @@ import "@aragon/os/contracts/kernel/Kernel.sol";
 import "@aragon/os/contracts/factory/DAOFactory.sol";
 import "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol";
 
-import "@aragon-apps/migrations/contracts/Migrations.sol";
+import "@aragon/apps-shared-migrations/contracts/Migrations.sol";
 
 // You might think this file is a bit odd, but let me explain.
 // We only use some contracts in our tests, which means Truffle
@@ -19,6 +19,9 @@ import "@aragon-apps/migrations/contracts/Migrations.sol";
 //
 // You know which one I went for.
 
+
 contract TestImports {
-  // ...
+  constructor() public {
+    // to avoid lint error
+  }
 }

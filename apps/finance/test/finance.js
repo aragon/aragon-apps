@@ -1,72 +1,132 @@
 const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
 
-const Vault = artifacts.require('Vault')
-const ERC20Connector = artifacts.require('ERC20Connector')
-const ETHConnector = artifacts.require('ETHConnector')
 const Finance = artifacts.require('FinanceMock')
 const MiniMeToken = artifacts.require('MiniMeToken')
 
-contract('Finance App', accounts => {
-    let finance, vault, token1, token2, executionTarget, etherToken = {}
+const getContract = name => artifacts.require(name)
 
+contract('Finance App', accounts => {
+    let daoFact, financeBase, finance, vaultBase, vault, token1, token2, executionTarget, etherToken = {}
+
+    let ETH, MAX_UINT64, ANY_ENTITY, APP_MANAGER_ROLE
+    let CREATE_PAYMENTS_ROLE, CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, DISABLE_PAYMENTS_ROLE
+    let TRANSFER_ROLE
+
+    const root = accounts[0]
     const n = '0x00'
-    const periodDuration = 60 * 60 * 24 // One day in seconds
+    const START_TIME = 1
+    const PERIOD_DURATION = 60 * 60 * 24 // One day in seconds
     const withdrawAddr = '0x0000000000000000000000000000000000001234'
 
-    const ETH = '0x0000000000000000000000000000000000000000'
+    before(async () => {
+        const kernelBase = await getContract('Kernel').new(true) // petrify immediately
+        const aclBase = await getContract('ACL').new()
+        const regFact = await getContract('EVMScriptRegistryFactory').new()
+        daoFact = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, regFact.address)
+        vaultBase = await getContract('Vault').new()
+        financeBase = await Finance.new()
+
+        // Setup constants
+        ETH = await financeBase.ETH()
+        MAX_UINT64 = await financeBase.MAX_UINT64()
+        ANY_ENTITY = await aclBase.ANY_ENTITY()
+        APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+
+        CREATE_PAYMENTS_ROLE = await financeBase.CREATE_PAYMENTS_ROLE()
+        CHANGE_PERIOD_ROLE = await financeBase.CHANGE_PERIOD_ROLE()
+        CHANGE_BUDGETS_ROLE = await financeBase.CHANGE_BUDGETS_ROLE()
+        EXECUTE_PAYMENTS_ROLE = await financeBase.EXECUTE_PAYMENTS_ROLE()
+        DISABLE_PAYMENTS_ROLE = await financeBase.DISABLE_PAYMENTS_ROLE()
+        TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
+    })
+
+    const newProxyFinance = async () => {
+        const r = await daoFact.newDAO(root)
+        const dao = getContract('Kernel').at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
+        const acl = getContract('ACL').at(await dao.acl())
+
+        await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
+
+        // finance
+        const receipt2 = await dao.newAppInstance('0x5678', financeBase.address, { from: root })
+        const financeApp = Finance.at(receipt2.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+        await financeApp.mock_setMaxPeriodTransitions(MAX_UINT64)
+
+        await acl.createPermission(ANY_ENTITY, financeApp.address, CREATE_PAYMENTS_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ENTITY, financeApp.address, CHANGE_PERIOD_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ENTITY, financeApp.address, CHANGE_BUDGETS_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ENTITY, financeApp.address, EXECUTE_PAYMENTS_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ENTITY, financeApp.address, DISABLE_PAYMENTS_ROLE, root, { from: root })
+
+        return { dao, financeApp }
+    }
 
     beforeEach(async () => {
-        vault = await Vault.new()
-        const ethConnector = await ETHConnector.new()
-        const erc20Connector = await ERC20Connector.new()
-        await vault.initialize(erc20Connector.address, ethConnector.address)
+        const { dao, financeApp } = await newProxyFinance()
+        finance = financeApp
 
+        // vault
+        const receipt1 = await dao.newAppInstance('0x1234', vaultBase.address, { from: root })
+        vault = getContract('Vault').at(receipt1.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+        const acl = getContract('ACL').at(await dao.acl())
+        await acl.createPermission(finance.address, vault.address, TRANSFER_ROLE, root, { from: root })
+        await vault.initialize()
 
         token1 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token1.generateTokens(vault.address, 100)
         await token1.generateTokens(accounts[0], 10)
-
         token2 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token2.generateTokens(vault.address, 200)
+        await vault.deposit(ETH, accounts[0], 400, { value: 400 });
 
-        await ETHConnector.at(vault.address).deposit(ETH, accounts[0], 400, [0], { value: 400 });
-
-        finance = await Finance.new()
-        await finance.mock_setTimestamp(1)
-
-        await finance.initialize(vault.address, periodDuration)
+        await finance.mock_setTimestamp(START_TIME)
+        await finance.initialize(vault.address, PERIOD_DURATION)
     })
 
     it('initialized first accounting period and settings', async () => {
-        assert.equal(periodDuration, await finance.getPeriodDuration(), 'period duration should match')
+        assert.equal(PERIOD_DURATION, await finance.getPeriodDuration(), 'period duration should match')
         assert.equal(await finance.currentPeriodId(), 0, 'current period should be 0')
     })
 
     it('sets the end of time correctly', async () => {
-        const maxUint64 = await finance.MAX_UINT64()
-
-        finance = await Finance.new()
+        const { financeApp } = await newProxyFinance()
+        await financeApp.mock_setTimestamp(100) // to make sure it overflows with MAX_UINT64 period length
         // initialize with MAX_UINT64 as period duration
-        await finance.initialize(vault.address, maxUint64)
-        const [isCurrent, start, end, firstTx, lastTx] = await finance.getPeriod(await finance.currentPeriodId())
+        await financeApp.initialize(vault.address, MAX_UINT64)
+        const [isCurrent, start, end, firstTx, lastTx] = await financeApp.getPeriod(await financeApp.currentPeriodId())
 
-        assert.equal(end.toNumber(), maxUint64.toNumber(), "should have set the period's end date to MAX_UINT64")
+        assert.equal(end.toNumber(), MAX_UINT64.toNumber(), "should have set the period's end date to MAX_UINT64")
     })
 
     it('fails on reinitialization', async () => {
         return assertRevert(async () => {
-            await finance.initialize(vault.address, periodDuration)
+            await finance.initialize(vault.address, PERIOD_DURATION)
         })
+    })
+
+    it('cannot initialize base app', async () => {
+        const newFinance = await Finance.new()
+        assert.isTrue(await newFinance.isPetrified())
+        return assertRevert(async () => {
+            await newFinance.initialize(vault.address, PERIOD_DURATION)
+        })
+    })
+
+    it('fails on initializing with no vault', async () => {
+        const { financeApp } = await newProxyFinance()
+
+        await assertRevert(() => financeApp.initialize(0, PERIOD_DURATION))
+        await assertRevert(() => financeApp.initialize(withdrawAddr, PERIOD_DURATION))
     })
 
     it('fails on initializing with less than one day period', async () => {
         const badPeriod = 60 * 60 * 24 - 1
 
-        finance = await Finance.new()
-        await finance.mock_setTimestamp(1)
+        const { financeApp } = await newProxyFinance()
+        await financeApp.mock_setTimestamp(START_TIME)
 
-        return assertRevert(() => finance.initialize(vault.address, badPeriod))
+        return assertRevert(() => financeApp.initialize(vault.address, badPeriod))
     })
 
     it('adds new token to budget', async () => {
@@ -112,7 +172,7 @@ contract('Finance App', accounts => {
         const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(transactionId)
 
         // vault has 400 wei initially
-        assert.equal(await ETHConnector.at(vault.address).balance(ETH), 400 + 10, 'deposited ETH must be in vault')
+        assert.equal(await vault.balance(ETH), 400 + 10, 'deposited ETH must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, sentWei, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')
@@ -160,11 +220,12 @@ contract('Finance App', accounts => {
     it('before setting budget allows unlimited spending', async () => {
         const recipient = accounts[1]
         const time = 22
+        const amount = 190
 
         await finance.mock_setTimestamp(time)
 
-        await finance.newPayment(token2.address, recipient, 190, time, 0, 1, '')
-        assert.equal(await token2.balanceOf(recipient), 190, 'recipient should have received tokens')
+        await finance.newPayment(token2.address, recipient, amount, time, 0, 1, '')
+        assert.equal((await token2.balanceOf(recipient)).toString(), amount, 'recipient should have received tokens')
     })
 
     it('can change period duration', async () => {
@@ -174,11 +235,11 @@ contract('Finance App', accounts => {
 
         await finance.tryTransitionAccountingPeriod(3) // transition a maximum of 3 accounting periods
 
-        assert.equal(await finance.currentPeriodId(), 2, 'should have transitioned 2 periods')
+        assert.equal((await finance.currentPeriodId()).toString(), 2, 'should have transitioned 2 periods')
     })
 
     it('can transition periods', async () => {
-        await finance.mock_setTimestamp(periodDuration * 2.5) // Force at least two transitions
+        await finance.mock_setTimestamp(PERIOD_DURATION * 2.5) // Force at least two transitions
 
         await finance.tryTransitionAccountingPeriod(3) // transition a maximum of 3 accounting periods
 
@@ -186,7 +247,7 @@ contract('Finance App', accounts => {
     })
 
     it('only transitions as many periods as allowed', async () => {
-        await finance.mock_setTimestamp(periodDuration * 2.5) // Force at least two transitions
+        await finance.mock_setTimestamp(PERIOD_DURATION * 2.5) // Force at least two transitions
 
         const receipt = await finance.tryTransitionAccountingPeriod(1) // Fail if we only allow a single transition
         const newPeriodEvents = receipt.logs.filter(log => log.event == 'NewPeriod')
@@ -207,7 +268,7 @@ contract('Finance App', accounts => {
 
     context('setting budget', () => {
         const recipient = accounts[1]
-        const time = 22
+        const time = START_TIME + 21
 
         beforeEach(async () => {
             await finance.setBudget(token1.address, 50)
@@ -242,7 +303,7 @@ contract('Finance App', accounts => {
             // interval 0, repeat 1 (single payment)
             await finance.newPayment(token1.address, recipient, amount, time, 0, 1, 'ref')
 
-            assert.equal(await token1.balanceOf(recipient), amount, 'recipient should have received tokens')
+            assert.equal((await token1.balanceOf(recipient)).toString(), amount, 'recipient should have received tokens')
 
             const [periodId, am, paymentId, paymentRepeatNumber, token, entity, isIncoming, date, ref] = await finance.getTransaction(1)
             assert.equal(periodId, 0, 'period id should be correct')
@@ -282,7 +343,7 @@ contract('Finance App', accounts => {
 
             // budget was 100
             await finance.newPayment(token2.address, recipient, 190, time, 0, 1, '')
-            assert.equal(await token2.balanceOf(recipient), 190, 'recipient should have received tokens')
+            assert.equal((await token2.balanceOf(recipient)).toString(), 190, 'recipient should have received tokens')
         })
 
         it('can create recurring payment', async () => {
@@ -293,7 +354,7 @@ contract('Finance App', accounts => {
             await finance.mock_setTimestamp(time + 4)
             const secondReceipt = await finance.executePayment(1)
 
-            assert.equal(await token1.balanceOf(recipient), amount * 3, 'recipient should have received tokens')
+            assert.equal((await token1.balanceOf(recipient)).toString(), amount * 3, 'recipient should have received tokens')
             assert.equal(await finance.nextPaymentTime(1), time + 4 + 2, 'payment should be repeated again in 2')
 
             return Promise.all([firstReceipt, secondReceipt].map(async (receipt, index) => {
@@ -316,13 +377,13 @@ contract('Finance App', accounts => {
             await finance.mock_setTimestamp(time + 4)
             await finance.executePayment(1)
 
-            assert.equal(await getBalance(withdrawAddr), amount * 3, 'recipient should have received ether')
+            assert.equal((await getBalance(withdrawAddr)).toString(), amount * 3, 'recipient should have received ether')
         })
 
         it('doesnt record payment for one time past transaction', async () => {
             await finance.newPayment(token1.address, recipient, 1, time, 1, 1, '')
-            return assertInvalidOpcode(async () => {
-                await finance.getPayment(1) // call will do an invalid jump
+            return assertRevert(async () => {
+                await finance.getPayment(1)
             })
         })
 
@@ -352,14 +413,14 @@ contract('Finance App', accounts => {
             })
 
             it('finishes accounting period correctly', async () => {
-                await finance.mock_setTimestamp(periodDuration + 1)
+                await finance.mock_setTimestamp(PERIOD_DURATION + 1)
                 await finance.tryTransitionAccountingPeriod(1)
 
                 const [isCurrent, start, end, firstTx, lastTx] = await finance.getPeriod(0)
 
                 assert.isFalse(isCurrent, 'shouldnt be current period')
-                assert.equal(start, 1, 'should have correct start date')
-                assert.equal(end, periodDuration, 'should have correct end date')
+                assert.equal(start.toString(), START_TIME, 'should have correct start date')
+                assert.equal(end.toString(), START_TIME + PERIOD_DURATION - 1, 'should have correct end date')
                 assert.equal(firstTx, 1, 'should have correct first tx')
                 assert.equal(lastTx, 4, 'should have correct last tx')
             })
@@ -371,7 +432,7 @@ contract('Finance App', accounts => {
 
             beforeEach(async () => {
                 await finance.mock_setMaxPeriodTransitions(maxTransitions)
-                await finance.mock_setTimestamp(time + (maxTransitions + 2) * periodDuration)
+                await finance.mock_setTimestamp(time + (maxTransitions + 2) * PERIOD_DURATION)
             })
 
             it('fails when too many period transitions are needed', async () => {
@@ -390,7 +451,7 @@ contract('Finance App', accounts => {
                 await finance.tryTransitionAccountingPeriod(maxTransitions)
                 await finance.newPayment(token1.address, recipient, 10, time, 1, 1, '')
 
-                assert.equal(await token1.balanceOf(recipient), 10, 'recipient should have received tokens')
+                assert.equal((await token1.balanceOf(recipient)).toString(), 10, 'recipient should have received tokens')
             })
 
             it('can transition periods externally to remove deadlock for direct deposits', async () => {
@@ -413,8 +474,8 @@ contract('Finance App', accounts => {
                 const [isCurrent, start, end, firstTx, lastTx] = await finance.getPeriod(2)
 
                 assert.isFalse(isCurrent, 'shouldnt be current period')
-                assert.equal(start, periodDuration * 2 + 1, 'should have correct start date')
-                assert.equal(end, periodDuration * 3, 'should have correct end date')
+                assert.equal(start.toString(), PERIOD_DURATION * 2 + 1, 'should have correct start date')
+                assert.equal(end.toString(), PERIOD_DURATION * 3, 'should have correct end date')
                 assert.equal(firstTx, 0, 'should have empty txs')
                 assert.equal(lastTx, 0, 'should have empty txs')
             })
@@ -431,7 +492,7 @@ contract('Finance App', accounts => {
                 await finance.mock_setTimestamp(time + 10)
                 await finance.executePayment(1)
 
-                assert.equal(await token1.balanceOf(recipient), amount * 4, 'recipient should have received tokens')
+                assert.equal((await token1.balanceOf(recipient)).toString(), amount * 4, 'recipient should have received tokens')
                 assert.deepEqual(await finance.nextPaymentTime(1), await finance.MAX_UINT64(), 'payment should be repeated again in 2')
             })
 
@@ -439,7 +500,7 @@ contract('Finance App', accounts => {
                 await finance.mock_setTimestamp(time + 1)
                 await finance.receiverExecutePayment(1, { from: recipient })
 
-                assert.equal(await token1.balanceOf(recipient), amount, 'should have received payment')
+                assert.equal((await token1.balanceOf(recipient)).toString(), amount, 'should have received payment')
             })
 
             it('fails creating a zero-amount payment', async () => {
@@ -517,10 +578,10 @@ contract('Finance App', accounts => {
         it('emits payment failure event when out of balance', async () => {
             // repeats up to 3 times every 100 seconds
             await finance.newPayment(token1.address, recipient, 40, time, 100, 3, '')
-            await finance.mock_setTimestamp(time + periodDuration)
+            await finance.mock_setTimestamp(time + PERIOD_DURATION)
             await finance.executePayment(1)
 
-            await finance.mock_setTimestamp(time + periodDuration * 2)
+            await finance.mock_setTimestamp(time + PERIOD_DURATION * 2)
             const receipt = await finance.executePayment(1)
 
             assertPaymentFailure(receipt)
@@ -532,8 +593,9 @@ contract('Finance App', accounts => {
         let nonInit
 
         beforeEach(async () => {
-            nonInit = await Finance.new()
-            await nonInit.mock_setTimestamp(1)
+            const { financeApp } = await newProxyFinance()
+            nonInit = financeApp
+            await nonInit.mock_setTimestamp(START_TIME)
         })
 
         it('fails to create new Payment', async() => {

@@ -10,7 +10,7 @@ import "@aragon/os/contracts/common/IForwarder.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 
-import "@aragon-apps/minime/contracts/MiniMeToken.sol";
+import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
 
 contract Voting is IForwarder, AragonApp {
@@ -62,7 +62,7 @@ contract Voting is IForwarder, AragonApp {
         uint256 _supportRequiredPct,
         uint256 _minAcceptQuorumPct,
         uint64 _voteTime
-    ) onlyInit external
+    ) external onlyInit
     {
         initialized();
 
@@ -82,12 +82,15 @@ contract Voting is IForwarder, AragonApp {
     * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^16) / 10^14`%
     * @param _minAcceptQuorumPct New acceptance quorum
     */
-    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct)) external {
+    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct)
+        external
+        authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct))
+    {
         require(_minAcceptQuorumPct > 0);
         require(supportRequiredPct >= _minAcceptQuorumPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
 
-        ChangeMinQuorum(_minAcceptQuorumPct);
+        emit ChangeMinQuorum(_minAcceptQuorumPct);
     }
 
     /**
@@ -96,7 +99,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _metadata Vote metadata
     * @return voteId Id for newly created vote
     */
-    function newVote(bytes _executionScript, string _metadata) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
+    function newVote(bytes _executionScript, string _metadata) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
         return _newVote(_executionScript, _metadata, true);
     }
 
@@ -107,7 +110,7 @@ contract Voting is IForwarder, AragonApp {
      * @param _castVote Whether to also cast newly created vote
      * @return voteId id for newly created vote
      */
-    function newVote(bytes _executionScript, string _metadata, bool _castVote) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
+    function newVote(bytes _executionScript, string _metadata, bool _castVote) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
         return _newVote(_executionScript, _metadata, _castVote);
     }
 
@@ -117,7 +120,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
     */
-    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) isInitialized external {
+    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external isInitialized {
         require(canVote(_voteId, msg.sender));
         _vote(
             _voteId,
@@ -131,7 +134,7 @@ contract Voting is IForwarder, AragonApp {
     * @notice Execute the result of vote #`_voteId`
     * @param _voteId Id for vote
     */
-    function executeVote(uint256 _voteId) isInitialized external {
+    function executeVote(uint256 _voteId) external isInitialized {
         require(canExecute(_voteId));
         _executeVote(_voteId);
     }
@@ -150,54 +153,69 @@ contract Voting is IForwarder, AragonApp {
         _newVote(_evmScript, "", true);
     }
 
-    function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
+    function canForward(address _sender, bytes) public view returns (bool) {
         return canPerform(_sender, CREATE_VOTES_ROLE, arr());
     }
 
     function canVote(uint256 _voteId, address _voter) public view returns (bool) {
-        Vote storage vote = votes[_voteId];
+        Vote storage vote_ = votes[_voteId];
 
-        return _isVoteOpen(vote) && token.balanceOfAt(_voter, vote.snapshotBlock) > 0;
+        return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
     }
 
     function canExecute(uint256 _voteId) public view returns (bool) {
-        Vote storage vote = votes[_voteId];
+        Vote storage vote_ = votes[_voteId];
 
-        if (vote.executed)
+        if (vote_.executed)
             return false;
 
         // Voting is already decided
-        if (_isValuePct(vote.yea, vote.totalVoters, supportRequiredPct))
+        if (_isValuePct(vote_.yea, vote_.totalVoters, supportRequiredPct))
             return true;
 
-        uint256 totalVotes = vote.yea.add(vote.nay);
+        uint256 totalVotes = vote_.yea.add(vote_.nay);
 
         // vote ended?
-        if (_isVoteOpen(vote))
+        if (_isVoteOpen(vote_))
             return false;
         // has Support?
-        if (!_isValuePct(vote.yea, totalVotes, supportRequiredPct))
+        if (!_isValuePct(vote_.yea, totalVotes, supportRequiredPct))
             return false;
         // has Min Quorum?
-        if (!_isValuePct(vote.yea, vote.totalVoters, vote.minAcceptQuorumPct))
+        if (!_isValuePct(vote_.yea, vote_.totalVoters, vote_.minAcceptQuorumPct))
             return false;
 
         return true;
     }
 
-    function getVote(uint256 _voteId) public view returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script) {
-        Vote storage vote = votes[_voteId];
+    function getVote(uint256 _voteId)
+        public
+        view
+        returns (
+            bool open,
+            bool executed,
+            address creator,
+            uint64 startDate,
+            uint256 snapshotBlock,
+            uint256 minAcceptQuorum,
+            uint256 yea,
+            uint256 nay,
+            uint256 totalVoters,
+            bytes script
+        )
+    {
+        Vote storage vote_ = votes[_voteId];
 
-        open = _isVoteOpen(vote);
-        executed = vote.executed;
-        creator = vote.creator;
-        startDate = vote.startDate;
-        snapshotBlock = vote.snapshotBlock;
-        minAcceptQuorum = vote.minAcceptQuorumPct;
-        yea = vote.yea;
-        nay = vote.nay;
-        totalVoters = vote.totalVoters;
-        script = vote.executionScript;
+        open = _isVoteOpen(vote_);
+        executed = vote_.executed;
+        creator = vote_.creator;
+        startDate = vote_.startDate;
+        snapshotBlock = vote_.snapshotBlock;
+        minAcceptQuorum = vote_.minAcceptQuorumPct;
+        yea = vote_.yea;
+        nay = vote_.nay;
+        totalVoters = vote_.totalVoters;
+        script = vote_.executionScript;
     }
 
     function getVoteMetadata(uint256 _voteId) public view returns (string) {
@@ -210,16 +228,16 @@ contract Voting is IForwarder, AragonApp {
 
     function _newVote(bytes _executionScript, string _metadata, bool _castVote) internal returns (uint256 voteId) {
         voteId = votes.length++;
-        Vote storage vote = votes[voteId];
-        vote.executionScript = _executionScript;
-        vote.creator = msg.sender;
-        vote.startDate = uint64(now);
-        vote.metadata = _metadata;
-        vote.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
-        vote.totalVoters = token.totalSupplyAt(vote.snapshotBlock);
-        vote.minAcceptQuorumPct = minAcceptQuorumPct;
+        Vote storage vote_ = votes[voteId];
+        vote_.executionScript = _executionScript;
+        vote_.creator = msg.sender;
+        vote_.startDate = getTimestamp64();
+        vote_.metadata = _metadata;
+        vote_.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
+        vote_.totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
+        vote_.minAcceptQuorumPct = minAcceptQuorumPct;
 
-        StartVote(voteId);
+        emit StartVote(voteId);
 
         if (_castVote && canVote(voteId, msg.sender)) {
             _vote(
@@ -238,26 +256,26 @@ contract Voting is IForwarder, AragonApp {
         bool _executesIfDecided
     ) internal
     {
-        Vote storage vote = votes[_voteId];
+        Vote storage vote_ = votes[_voteId];
 
         // this could re-enter, though we can assume the governance token is not malicious
-        uint256 voterStake = token.balanceOfAt(_voter, vote.snapshotBlock);
-        VoterState state = vote.voters[_voter];
+        uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
+        VoterState state = vote_.voters[_voter];
 
         // if voter had previously voted, decrease count
         if (state == VoterState.Yea)
-            vote.yea = vote.yea.sub(voterStake);
+            vote_.yea = vote_.yea.sub(voterStake);
         if (state == VoterState.Nay)
-            vote.nay = vote.nay.sub(voterStake);
+            vote_.nay = vote_.nay.sub(voterStake);
 
         if (_supports)
-            vote.yea = vote.yea.add(voterStake);
+            vote_.yea = vote_.yea.add(voterStake);
         else
-            vote.nay = vote.nay.add(voterStake);
+            vote_.nay = vote_.nay.add(voterStake);
 
-        vote.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
+        vote_.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
 
-        CastVote(
+        emit CastVote(
             _voteId,
             _voter,
             _supports,
@@ -269,18 +287,18 @@ contract Voting is IForwarder, AragonApp {
     }
 
     function _executeVote(uint256 _voteId) internal {
-        Vote storage vote = votes[_voteId];
+        Vote storage vote_ = votes[_voteId];
 
-        vote.executed = true;
+        vote_.executed = true;
 
         bytes memory input = new bytes(0); // TODO: Consider input for voting scripts
-        runScript(vote.executionScript, input, new address[](0));
+        runScript(vote_.executionScript, input, new address[](0));
 
-        ExecuteVote(_voteId);
+        emit ExecuteVote(_voteId);
     }
 
-    function _isVoteOpen(Vote storage vote) internal view returns (bool) {
-        return uint64(now) < vote.startDate.add(voteTime) && !vote.executed;
+    function _isVoteOpen(Vote storage vote_) internal view returns (bool) {
+        return getTimestamp64() < vote_.startDate.add(voteTime) && !vote_.executed;
     }
 
     /**
