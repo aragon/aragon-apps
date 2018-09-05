@@ -18,7 +18,6 @@ contract('Finance App', accounts => {
     const START_TIME = 1
     const PERIOD_DURATION = 60 * 60 * 24 // One day in seconds
     const withdrawAddr = '0x0000000000000000000000000000000000001234'
-    const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000'
 
     before(async () => {
         const kernelBase = await getContract('Kernel').new(true) // petrify immediately
@@ -298,6 +297,32 @@ contract('Finance App', accounts => {
             assert.equal(createdBy, accounts[0], 'should have correct creator')
         })
 
+        it('fails trying to get payment out of bounds', async () => {
+            const amount = 10
+            // repeats up to 10 times every 2 seconds
+            await finance.newPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
+
+            assertRevert(async () => {
+                await finance.getPayment(0)
+            })
+            assertRevert(async () => {
+                await finance.getPayment(2)
+            })
+        })
+
+        it('fails trying to get transaction out of bounds', async () => {
+            const amount = 10
+            // repeats up to 10 times every 2 seconds
+            await finance.newPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
+
+            assertRevert(async () => {
+                await finance.getTransaction(0)
+            })
+            assertRevert(async () => {
+                await finance.getTransaction(2)
+            })
+        })
+
         it('can create single payment', async () => {
             const amount = 10
 
@@ -383,10 +408,9 @@ contract('Finance App', accounts => {
 
         it('doesnt record payment for one time past transaction', async () => {
             await finance.newPayment(token1.address, recipient, 1, time, 1, 1, '')
-            const payment = await finance.getPayment(1)
-            assert.equal(payment[0].toString(), EMPTY_ADDRESS, "Token should be zero")
-            assert.equal(payment[1].toString(), EMPTY_ADDRESS, "Receiver should be zero")
-            assert.equal(payment[2].toString(), 0, "Amount should be zero")
+            return assertRevert(async () => {
+                await finance.getPayment(1)
+            })
         })
 
         context('multitransaction period', async () => {
@@ -425,6 +449,16 @@ contract('Finance App', accounts => {
                 assert.equal(end.toString(), START_TIME + PERIOD_DURATION - 1, 'should have correct end date')
                 assert.equal(firstTx, 1, 'should have correct first tx')
                 assert.equal(lastTx, 4, 'should have correct last tx')
+            })
+
+            it('fails trying to access period out of bounds', async () => {
+                await finance.mock_setTimestamp(PERIOD_DURATION + 1)
+                await finance.tryTransitionAccountingPeriod(1)
+
+                const currentPeriodId = await finance.currentPeriodId()
+                return assertRevert(async () => {
+                    await finance.getPeriod(currentPeriodId + 1)
+                })
             })
         })
 

@@ -42,7 +42,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     // we are mimicing an array inside the outer mapping, we use a mapping instead to make app upgrade more graceful
     mapping (address => mapping (uint256 => TokenVesting)) internal vestings;
-    mapping (address => uint256) internal vestingsLength;
+    mapping (address => uint256) public vestingsLengths;
     mapping (address => bool) public everHeld;
 
     // Returns all holders the token had (since managing it).
@@ -53,6 +53,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     // Other token specific events can be watched on the token address directly (avoid duplication)
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
     event RevokeVesting(address indexed receiver, uint256 vestingId, uint256 nonVestedAmount);
+
+    modifier vestingExists(address _holder, uint256 _vestingId) {
+        // TODO: it's not checking for gaps that may appear because of deletes in revokeVesting function
+        require(_vestingId < vestingsLengths[_holder]);
+        _;
+    }
 
     /**
     * @notice Initializes Token Manager for `_token.symbol(): string`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''` and with`_logHolders ? '' : 'out'` storage of token holders.
@@ -152,7 +158,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
             _vested,
             _revokable
         );
-        uint256 vestingId = vestingsLength[_receiver]++;
+        uint256 vestingId = vestingsLengths[_receiver]++;
         vestings[_receiver][vestingId] = tokenVesting;
 
         _assign(_receiver, _amount);
@@ -167,7 +173,11 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @param _holder Address getting vesting revoked
     * @param _vestingId Numeric id of the vesting
     */
-    function revokeVesting(address _holder, uint256 _vestingId) external authP(REVOKE_VESTINGS_ROLE, arr(_holder)) {
+    function revokeVesting(address _holder, uint256 _vestingId)
+        external
+        authP(REVOKE_VESTINGS_ROLE, arr(_holder))
+        vestingExists(_holder, _vestingId)
+    {
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 
@@ -218,6 +228,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     )
         public
         view
+        vestingExists(_recipient, _vestingId)
         returns (
             uint256 amount,
             uint64 start,
@@ -263,7 +274,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function tokenGrantsCount(address _holder) public view returns (uint256) {
-        return vestingsLength[_holder];
+        return vestingsLengths[_holder];
     }
 
     function spendableBalanceOf(address _holder) public view returns (uint256) {
