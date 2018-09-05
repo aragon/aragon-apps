@@ -13,8 +13,8 @@ import "@aragon/os/contracts/common/Uint256Helpers.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 
-import "@aragon-apps/minime/contracts/ITokenController.sol";
-import "@aragon-apps/minime/contracts/MiniMeToken.sol";
+import "@aragon/apps-shared-minime/contracts/ITokenController.sol";
+import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
 
 contract TokenManager is ITokenController, IForwarder, AragonApp {

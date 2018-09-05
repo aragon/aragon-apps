@@ -1,5 +1,5 @@
 {
-  "name": "@aragon-apps/migrations",
+  "name": "@aragon/apps-shared-migrations",
   "version": "1.0.0",
   "description": "",
   "private": true,
