@@ -2,7 +2,6 @@
   "name": "@aragon/apps-shared-minime",
   "version": "1.0.0",
   "license": "GPL-3.0-or-later",
-  "private": "true",
   "scripts": {
     "compile": "truffle compile",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
