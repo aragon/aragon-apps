@@ -16,11 +16,9 @@ class Holders extends React.Component {
       tokenSupply,
       userAccount,
     } = this.props
-
     const singleHolder =
       // We assume that a token is liquid if a single holder has more than one token
-      holders.length === 1 &&
-      holders[0].balance.toString() !== '1' * tokenDecimalsBase
+      holders.length === 1 && !holders[0].balance.eq(tokenDecimalsBase)
     const sameBalances =
       holders.length > 0 &&
       holders[0].balance.gt(0) &&

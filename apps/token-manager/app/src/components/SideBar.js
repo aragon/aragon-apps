@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Text, theme } from '@aragon/ui'
+import BN from 'bn.js'
 import { sciNot } from '../math-utils'
 
 // Number of digits before "Total Supply" gets wrapped into two lines
@@ -17,31 +18,46 @@ const DISTRIBUTION_COLORS = [
   '#80AEDC',
 ]
 
-const calculateStakes = (accounts, total) => {
+const calculateStakes = (accounts, total, tokenDecimalsBase) => {
   const maxDisplayed = DISTRIBUTION_ITEMS_MAX - 1
   const byStake = (a, b) => b.stake - a.stake
 
   const stakes = accounts.map(({ address, balance }) => ({
     name: address,
-    stake: Math.floor(balance / total * 100),
+    stake:
+      // Calcaulate percentages as JS numbers
+      Math.round(
+        (balance.div(tokenDecimalsBase).toNumber() /
+          total.div(tokenDecimalsBase).toNumber()) *
+          100
+      ),
   }))
 
-  stakes.push({
-    name: 'Organization Reserves',
-    stake: Math.floor(
-      (total - accounts.reduce((total, { balance }) => total + balance, 0)) /
-        total *
-        100
-    ),
-  })
+  // TODO: check if this implementation reflects how the state is represented
+  // I assume that if the org has reserves it would show up as an account making
+  // this redundant
+  // const orgReserves = total.sub(
+  //   accounts.reduce((total, { balance }) => total.add(balance), new BN(0))
+  // )
+  // const orgStake =
+  //   (orgReserves.div(tokenDecimalsBase).toNumber() /
+  //     total.div(tokenDecimalsBase).toNumber()) *
+  //   100
+  // stakes.push({
+  //   name: 'Organization Reserves',
+  //   stake: orgStake,
+  // })
 
   const displayedStakes = stakes
     .filter(({ stake }) => stake > 0)
     .sort(byStake)
     .slice(0, maxDisplayed)
 
-  const rest =
-    100 - displayedStakes.reduce((total, { stake }) => total + stake, 0)
+  const displayedSum = displayedStakes.reduce(
+    (total, { stake }) => total + stake,
+    0
+  )
+  const rest = 100 - displayedSum
 
   return displayedStakes.length < accounts.length
     ? [...displayedStakes, { name: 'Rest', stake: rest }].sort(byStake)
@@ -54,13 +70,15 @@ class SideBar extends React.Component {
   }
   render() {
     const { holders, tokenDecimalsBase, tokenSupply } = this.props
-    const stakes = calculateStakes(holders, tokenSupply).map((stake, i) => ({
-      ...stake,
-      color: DISTRIBUTION_COLORS[i] || '#000000',
-    }))
+    const stakes = calculateStakes(holders, tokenSupply, tokenDecimalsBase).map(
+      (stake, i) => ({
+        ...stake,
+        color: DISTRIBUTION_COLORS[i] || '#000000',
+      })
+    )
 
     const adjustedTokenSupply = sciNot(
-      tokenSupply / tokenDecimalsBase,
+      tokenSupply.div(tokenDecimalsBase),
       TOTAL_SUPPLY_CUTOFF_LENGTH,
       { rounding: 5 }
     )
