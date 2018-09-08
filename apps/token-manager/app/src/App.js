@@ -43,7 +43,7 @@ class App extends React.Component {
   }
   handleAssignTokens = ({ amount, recipient }) => {
     const { app, tokenDecimalsBase } = this.props
-    const toMint = new BN(`${amount}`).mul(tokenDecimalsBase)
+    const toMint = new BN(`${amount}`, 10).mul(tokenDecimalsBase)
     app.mint(recipient, toMint.toString())
     this.handleSidepanelClose()
   }
