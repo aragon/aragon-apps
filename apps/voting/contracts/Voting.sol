@@ -31,7 +31,6 @@ contract Voting is IForwarder, AragonApp {
     enum VoterState { Absent, Yea, Nay }
 
     struct Vote {
-        address creator;
         uint64 startDate;
         uint256 snapshotBlock;
         uint256 minAcceptQuorumPct;
@@ -46,7 +45,7 @@ contract Voting is IForwarder, AragonApp {
 
     Vote[] internal votes; // first index is 1
 
-    event StartVote(uint256 indexed voteId);
+    event StartVote(uint256 indexed voteId, address indexed creator);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
     event ChangeMinQuorum(uint256 minAcceptQuorumPct);
@@ -186,12 +185,11 @@ contract Voting is IForwarder, AragonApp {
         return true;
     }
 
-    function getVote(uint256 _voteId) public view returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script) {
+    function getVote(uint256 _voteId) public view returns (bool open, bool executed, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script) {
         Vote storage vote = votes[_voteId];
 
         open = _isVoteOpen(vote);
         executed = vote.executed;
-        creator = vote.creator;
         startDate = vote.startDate;
         snapshotBlock = vote.snapshotBlock;
         minAcceptQuorum = vote.minAcceptQuorumPct;
@@ -213,14 +211,13 @@ contract Voting is IForwarder, AragonApp {
         voteId = votes.length++;
         Vote storage vote = votes[voteId];
         vote.executionScript = _executionScript;
-        vote.creator = msg.sender;
         vote.startDate = uint64(now);
         vote.metadata = _metadata;
         vote.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote.totalVoters = token.totalSupplyAt(vote.snapshotBlock);
         vote.minAcceptQuorumPct = minAcceptQuorumPct;
 
-        StartVote(voteId);
+        StartVote(voteId, msg.sender);
 
         if (_castVote && canVote(voteId, msg.sender)) {
             _vote(
