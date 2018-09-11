@@ -16,6 +16,7 @@ const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel')
 const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
 const createdVoteId = receipt => receipt.logs.filter(x => x.event == 'StartVote')[0].args.voteId
+const startVoteEvent = receipt => receipt.logs.filter(x => x.event == 'StartVote')[0].args
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const NULL_ADDRESS = '0x00'
@@ -129,7 +130,9 @@ contract('Voting App', accounts => {
             beforeEach(async () => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 script = encodeCallScript([action, action])
-                voteId = createdVoteId(await app.newVote(script, 'metadata', false, { from: holder50 }))
+                const startVote = startVoteEvent(await app.newVote(script, 'metadata', false, { from: holder50 }))
+                voteId = startVote.voteId
+                creator = startVote.creator
             })
 
             it('has correct state', async () => {
@@ -137,6 +140,7 @@ contract('Voting App', accounts => {
 
                 assert.isTrue(isOpen, 'vote should be open')
                 assert.isFalse(isExecuted, 'vote should not be executed')
+                assert.equal(creator, holder50, 'creator should be correct')
                 assert.equal(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
                 assert.deepEqual(minQuorum, minimumAcceptanceQuorum, 'min quorum should be app min quorum')
                 assert.equal(y, 0, 'initial yea should be 0')
