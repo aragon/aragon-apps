@@ -20,6 +20,10 @@ lerna-debug.log
 */**/abis.json
 */**/.DS_Store
 
+# VIM
+*.swo
+*.swp
+
 # yarn
 yarn-error.log
 
