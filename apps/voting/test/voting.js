@@ -133,11 +133,10 @@ contract('Voting App', accounts => {
             })
 
             it('has correct state', async () => {
-                const [isOpen, isExecuted, creator, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await app.getVote(voteId)
+                const [isOpen, isExecuted, startDate, snapshotBlock, minQuorum, y, n, totalVoters, execScript] = await app.getVote(voteId)
 
                 assert.isTrue(isOpen, 'vote should be open')
                 assert.isFalse(isExecuted, 'vote should not be executed')
-                assert.equal(creator, holder50, 'creator should be correct')
                 assert.equal(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
                 assert.deepEqual(minQuorum, minimumAcceptanceQuorum, 'min quorum should be app min quorum')
                 assert.equal(y, 0, 'initial yea should be 0')
@@ -160,7 +159,7 @@ contract('Voting App', accounts => {
                 await timeTravel(votingTime + 1)
 
                 const state = await app.getVote(voteId)
-                assert.deepEqual(state[5], minimumAcceptanceQuorum, 'acceptance quorum in vote should stay equal')
+                assert.deepEqual(state[4], minimumAcceptanceQuorum, 'acceptance quorum in vote should stay equal')
                 await app.executeVote(voteId) // exec doesn't fail
             })
 
@@ -169,7 +168,7 @@ contract('Voting App', accounts => {
                 const state = await app.getVote(voteId)
                 const voterState = await app.getVoterState(voteId, holder31)
 
-                assert.equal(state[7], 31, 'nay vote should have been counted')
+                assert.equal(state[6], 31, 'nay vote should have been counted')
                 assert.equal(voterState, VOTER_STATE.NAY, 'holder31 should have nay voter status')
             })
 
@@ -179,8 +178,8 @@ contract('Voting App', accounts => {
                 await app.vote(voteId, true, true, { from: holder31 })
                 const state = await app.getVote(voteId)
 
-                assert.equal(state[6], 31, 'yea vote should have been counted')
-                assert.equal(state[7], 0, 'nay vote should have been removed')
+                assert.equal(state[5], 31, 'yea vote should have been counted')
+                assert.equal(state[6], 0, 'nay vote should have been removed')
             })
 
             it('token transfers dont affect voting', async () => {
@@ -189,7 +188,7 @@ contract('Voting App', accounts => {
                 await app.vote(voteId, true, true, { from: holder31 })
                 const state = await app.getVote(voteId)
 
-                assert.equal(state[6], 31, 'yea vote should have been counted')
+                assert.equal(state[5], 31, 'yea vote should have been counted')
                 assert.equal(await token.balanceOf(holder31), 0, 'balance should be 0 at current block')
             })
 
