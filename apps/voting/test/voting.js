@@ -133,6 +133,7 @@ contract('Voting App', accounts => {
                 const startVote = startVoteEvent(await app.newVote(script, 'metadata', false, { from: holder50 }))
                 voteId = startVote.voteId
                 creator = startVote.creator
+                metadata = startVote.metadata
             })
 
             it('has correct state', async () => {
@@ -147,7 +148,7 @@ contract('Voting App', accounts => {
                 assert.equal(n, 0, 'initial nay should be 0')
                 assert.equal(totalVoters, 100, 'total voters should be 100')
                 assert.equal(execScript, script, 'script should be correct')
-                assert.equal(await app.getVoteMetadata(voteId), 'metadata', 'should have returned correct metadata')
+                assert.equal(metadata, 'metadata', 'should have returned correct metadata')
                 assert.equal(await app.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')
             })
 
