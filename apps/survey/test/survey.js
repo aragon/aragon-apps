@@ -5,6 +5,7 @@ const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
 const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
 const createdSurveyId = receipt => receipt.logs.filter(x => x.event == 'StartSurvey')[0].args.surveyId
+const surveyEvent = receipt => receipt.logs.filter(x => x.event == 'StartSurvey')[0].args
 
 contract('Survey app', accounts => {
   let app, ABSTAIN_VOTE
@@ -67,11 +68,14 @@ contract('Survey app', accounts => {
       let optionsCount = 10e9 // lots of options
 
       beforeEach(async () => {
-        surveyId = createdSurveyId(await app.newSurvey('metadata', optionsCount, { from: nonHolder }))
+        createdEvent = surveyEvent(await app.newSurvey('metadata', optionsCount, { from: nonHolder }))
+        surveyId = createdEvent.surveyId
+        creator = createdEvent.creator
+        metadata = createdEvent.metadata
       })
 
       it('has correct state', async () => {
-        const [isOpen, creator, startDate, snapshotBlock, minParticipationPct, totalVoters, participation, options] = await app.getSurvey(surveyId)
+        const [isOpen, startDate, snapshotBlock, minParticipationPct, totalVoters, participation, options] = await app.getSurvey(surveyId)
 
         assert.isTrue(isOpen, 'survey should be open')
         assert.equal(creator, nonHolder, 'creator should be correct')
@@ -80,7 +84,7 @@ contract('Survey app', accounts => {
         assert.equal(totalVoters, 100, 'total voters should be 100')
         assert.equal(participation, 0, 'initial participation should be 0') // didn't vote even though creator was holder
         assert.equal(options, optionsCount, 'number of options should be correct')
-        assert.equal(await app.getSurveyMetadata(surveyId), 'metadata', 'should have returned correct metadata')
+        assert.equal(metadata, 'metadata', 'should have returned correct metadata')
         const voterState = await app.getVoterState(surveyId, nonHolder)
         assert.equal(voterState[0].length, 0, 'nonHolder should not have voted (options)')
         assert.equal(voterState[1].length, 0, 'nonHolder should not have voted (stakes)')
@@ -100,7 +104,7 @@ contract('Survey app', accounts => {
 
         const state = await app.getSurvey(surveyId)
 
-        assert.equal(state[6], 100, 'participation should be 100')
+        assert.equal(state[5], 100, 'participation should be 100')
 
       })
 
@@ -155,7 +159,7 @@ contract('Survey app', accounts => {
         await timeTravel(surveyTime + 1)
 
         const state = await app.getSurvey(surveyId)
-        assert.deepEqual(state[4], minimumAcceptanceParticipationPct, 'acceptance participation in survey should stay equal')
+        assert.deepEqual(state[3], minimumAcceptanceParticipationPct, 'acceptance participation in survey should stay equal')
       })
 
       it('token transfers dont affect voting', async () => {

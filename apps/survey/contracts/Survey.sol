@@ -41,14 +41,12 @@ contract Survey is AragonApp {
     }
 
     struct SurveyStruct {
-        address creator;
         uint64 startDate;
         uint256 options;
         uint256 snapshotBlock;
         uint256 minParticipationPct;
         uint256 votingPower;                    // total tokens that can cast a vote
         uint256 participation;                  // tokens that casted a vote
-        string metadata;
 
         mapping (uint256 => uint256) optionPower;     // option -> voting power for option
         mapping (address => MultiOptionVote) votes;    // voter -> options voted, with its stakes
@@ -56,7 +54,7 @@ contract Survey is AragonApp {
 
     SurveyStruct[] internal surveys;
 
-    event StartSurvey(uint256 indexed surveyId);
+    event StartSurvey(uint256 indexed surveyId, address indexed creator, string metadata);
     event CastVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 stake, uint256 optionPower);
     event ResetVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 previousStake, uint256 optionPower);
     event ChangeMinParticipation(uint256 minParticipationPct);
@@ -103,16 +101,14 @@ contract Survey is AragonApp {
     function newSurvey(string _metadata, uint256 _options) auth(CREATE_SURVEYS_ROLE) isInitialized external returns (uint256 surveyId) {
         surveyId = surveys.length++;
         SurveyStruct storage survey = surveys[surveyId];
-        survey.creator = msg.sender;
         survey.startDate = uint64(now);
         survey.options = _options;
-        survey.metadata = _metadata;
         survey.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         survey.votingPower = token.totalSupplyAt(survey.snapshotBlock);
         require(survey.votingPower > 0);
         survey.minParticipationPct = minParticipationPct;
 
-        StartSurvey(surveyId);
+        StartSurvey(surveyId, msg.sender, _metadata);
     }
 
     /**
@@ -227,21 +223,16 @@ contract Survey is AragonApp {
         return _isSurveyOpen(survey) && token.balanceOfAt(_voter, survey.snapshotBlock) > 0;
     }
 
-    function getSurvey(uint256 _surveyId) public view returns (bool open, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minParticipationPct, uint256 votingPower, uint256 participation, uint256 options) {
+    function getSurvey(uint256 _surveyId) public view returns (bool open, uint64 startDate, uint256 snapshotBlock, uint256 minParticipationPct, uint256 votingPower, uint256 participation, uint256 options) {
         SurveyStruct storage survey = surveys[_surveyId];
 
         open = _isSurveyOpen(survey);
-        creator = survey.creator;
         startDate = survey.startDate;
         snapshotBlock = survey.snapshotBlock;
         minParticipationPct = survey.minParticipationPct;
         votingPower = survey.votingPower;
         participation = survey.participation;
         options = survey.options;
-    }
-
-    function getSurveyMetadata(uint256 _surveyId) public view returns (string) {
-        return surveys[_surveyId].metadata;
     }
 
     function getVoterState(uint256 _surveyId, address _voter) external view returns (uint256[] options, uint256[] stakes) {
