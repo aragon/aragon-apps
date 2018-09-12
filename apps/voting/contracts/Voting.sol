@@ -37,7 +37,6 @@ contract Voting is IForwarder, AragonApp {
         uint256 yea;
         uint256 nay;
         uint256 totalVoters;
-        string metadata;
         bytes executionScript;
         bool executed;
         mapping (address => VoterState) voters;
@@ -45,7 +44,7 @@ contract Voting is IForwarder, AragonApp {
 
     Vote[] internal votes; // first index is 1
 
-    event StartVote(uint256 indexed voteId, address indexed creator);
+    event StartVote(uint256 indexed voteId, address indexed creator, string metadata);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
     event ChangeMinQuorum(uint256 minAcceptQuorumPct);
@@ -199,10 +198,6 @@ contract Voting is IForwarder, AragonApp {
         script = vote.executionScript;
     }
 
-    function getVoteMetadata(uint256 _voteId) public view returns (string) {
-        return votes[_voteId].metadata;
-    }
-
     function getVoterState(uint256 _voteId, address _voter) public view returns (VoterState) {
         return votes[_voteId].voters[_voter];
     }
@@ -212,12 +207,11 @@ contract Voting is IForwarder, AragonApp {
         Vote storage vote = votes[voteId];
         vote.executionScript = _executionScript;
         vote.startDate = uint64(now);
-        vote.metadata = _metadata;
         vote.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote.totalVoters = token.totalSupplyAt(vote.snapshotBlock);
         vote.minAcceptQuorumPct = minAcceptQuorumPct;
 
-        StartVote(voteId, msg.sender);
+        StartVote(voteId, msg.sender, _metadata);
 
         if (_castVote && canVote(voteId, msg.sender)) {
             _vote(
