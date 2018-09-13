@@ -39,16 +39,11 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     MiniMeToken public token;
     uint256 public maxAccountTokens;
-    bool public logHolders;
 
     // We are mimicing an array in the inner mapping, we use a mapping instead to make app upgrade more graceful
     mapping (address => mapping (uint256 => TokenVesting)) internal vestings;
     mapping (address => uint256) public vestingsLengths;
     mapping (address => bool) public everHeld;
-
-    // Returns all holders the token had (since managing it).
-    // Some of them can have a balance of 0.
-    address[] public holders;
 
     // Other token specific events can be watched on the token address directly (avoids duplication)
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
@@ -61,17 +56,15 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Initializes Token Manager for `_token.symbol(): string`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''` and with`_logHolders ? '' : 'out'` storage of token holders.
+    * @notice Initializes Token Manager for `_token.symbol(): string`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''`.
     * @param _token MiniMeToken address for the managed token (Token Manager instance must be already set as the token controller)
     * @param _transferable whether the token can be transferred by holders
     * @param _maxAccountTokens Maximum amount of tokens an account can have (0 for infinite tokens)
-    * @param _logHolders Whether the Token Manager will store all token holders (makes token transfers more expensive!)
     */
     function initialize(
         MiniMeToken _token,
         bool _transferable,
-        uint256 _maxAccountTokens,
-        bool _logHolders
+        uint256 _maxAccountTokens
     )
         external
         onlyInit
@@ -82,7 +75,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
         token = _token;
         maxAccountTokens = _maxAccountTokens == 0 ? uint256(-1) : _maxAccountTokens;
-        logHolders = _logHolders;
 
         if (token.transfersEnabled() != _transferable) {
             token.enableTransfers(_transferable);
@@ -224,8 +216,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return token.balanceOf(_sender) > 0;
     }
 
-    function allHolders() public view returns (address[]) { return holders; }
-
     function getVesting(
         address _recipient,
         uint256 _vestingId
@@ -267,8 +257,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
                 return false;
             }
         }
-
-        _logHolderIfNeeded(_to);
 
         return true;
     }
@@ -378,17 +366,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     function _mint(address _receiver, uint256 _amount) internal isInitialized {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
-        _logHolderIfNeeded(_receiver);
-    }
-
-    function _logHolderIfNeeded(address _newHolder) internal {
-        // costs 3 sstores (2 full (20k gas) and 1 increase (5k gas)), but makes frontend easier
-        if (!logHolders || everHeld[_newHolder]) {
-            return;
-        }
-
-        everHeld[_newHolder] = true;
-        holders.push(_newHolder);
     }
 
     /**
