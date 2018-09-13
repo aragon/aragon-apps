@@ -81,7 +81,9 @@ contract Survey is AragonApp {
         MiniMeToken _token,
         uint256 _minParticipationPct,
         uint64 _surveyTime
-    ) external onlyInit
+    )
+        external
+        onlyInit
     {
         initialized();
 
@@ -241,26 +243,26 @@ contract Survey is AragonApp {
         view
         surveyExists(_surveyId)
         returns (
-            bool _open,
-            address _creator,
-            uint64 _startDate,
-            uint256 _snapshotBlock,
-            uint256 _minParticipationPct,
-            uint256 _votingPower,
-            uint256 _participation,
-            uint256 _options
+            bool open,
+            address creator,
+            uint64 startDate,
+            uint256 snapshotBlock,
+            uint256 minParticipationPct,
+            uint256 votingPower,
+            uint256 participation,
+            uint256 options
         )
     {
-        SurveyStruct storage survey = surveys[_surveyId];
+        SurveyStruct storage survey_ = surveys[_surveyId];
 
-        _open = _isSurveyOpen(survey);
-        _creator = survey.creator;
-        _startDate = survey.startDate;
-        _snapshotBlock = survey.snapshotBlock;
-        _minParticipationPct = survey.minParticipationPct;
-        _votingPower = survey.votingPower;
-        _participation = survey.participation;
-        _options = survey.options;
+        open = _isSurveyOpen(survey_);
+        creator = survey_.creator;
+        startDate = survey_.startDate;
+        snapshotBlock = survey_.snapshotBlock;
+        minParticipationPct = survey_.minParticipationPct;
+        votingPower = survey_.votingPower;
+        participation = survey_.participation;
+        options = survey_.options;
     }
 
     function getSurveyMetadata(uint256 _surveyId) public view surveyExists(_surveyId) returns (string) {
@@ -298,7 +300,7 @@ contract Survey is AragonApp {
         return participationPct >= survey.minParticipationPct;
     }
 
-    function _isSurveyOpen(SurveyStruct storage survey) internal view returns (bool) {
-        return getTimestamp64() < survey.startDate.add(surveyTime);
+    function _isSurveyOpen(SurveyStruct storage _survey) internal view returns (bool) {
+        return getTimestamp64() < _survey.startDate.add(surveyTime);
     }
 }
