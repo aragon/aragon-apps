@@ -53,8 +53,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint256 periodId;
         uint256 amount;
         uint256 paymentId;
-        string reference;
         uint256 paymentRepeatNumber;
+        string reference;
     }
 
     struct TokenStatement {
@@ -78,6 +78,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     Vault public vault;
+    Settings internal settings;
 
     // We are mimicing arrays, we use mappings instead to make app upgrade more graceful
     mapping (uint256 => Payment) internal payments;
@@ -90,8 +91,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     mapping (uint256 => Period) internal periods;
     uint256 public periodsLength;
-
-    Settings internal settings;
 
     event NewPeriod(uint256 indexed periodId, uint64 periodStarts, uint64 periodEnds);
     event SetBudget(address indexed token, uint256 amount, bool hasBudget);
