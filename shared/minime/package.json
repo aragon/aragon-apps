@@ -1,8 +1,7 @@
 {
-  "name": "@aragon-apps/minime",
+  "name": "@aragon/apps-shared-minime",
   "version": "1.0.0",
   "license": "GPL-3.0-or-later",
-  "private": "true",
   "scripts": {
     "compile": "truffle compile",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
@@ -11,8 +10,8 @@
     "truffle:dev": "npx truffle dev"
   },
   "devDependencies": {
+    "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/test-helpers": "^1.0.1",
-    "@aragon-apps/migrations": "1.0.0",
     "ganache-cli": "6.1.8",
     "solidity-coverage": "0.5.8",
     "truffle": "4.1.14"
