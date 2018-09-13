@@ -49,6 +49,8 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     // Returns all holders the token had (since managing it).
     // Some of them can have a balance of 0.
     address[] public holders;
+
+    // Other token specific events can be watched on the token address directly (avoids duplication)
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
     event RevokeVesting(address indexed receiver, uint256 vestingId, uint256 nonVestedAmount);
 
@@ -205,8 +207,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     function forward(bytes _evmScript) public isInitialized {
         require(canForward(msg.sender, _evmScript));
         bytes memory input = new bytes(0); // TODO: Consider input for this
+
+        // Add the managed token to the blacklist to disallow a token holder from executing actions
+        // on the token controller's (this contract) behalf
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(token);
+
         runScript(_evmScript, input, blacklist);
     }
 
@@ -342,7 +348,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         }
 
         // Interpolate all vested tokens.
-        // As before cliff the shortcut returns 0, we can use just calculate a value
+        // As before cliff the shortcut returns 0, we can just calculate a value
         // in the vesting rect (as shown in above's figure)
 
         // vestedTokens = tokens * (time - start) / (vested - start)

@@ -30,7 +30,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     uint256 internal constant MAX_UINT = uint256(-1);
     uint64 internal constant MAX_UINT64 = uint64(-1);
 
-    // order optimized for storage
+    // Order optimized for storage
     struct Payment {
         address token;
         address receiver;
@@ -44,7 +44,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         string reference;
     }
 
-    // order optimized for storage
+    // Order optimized for storage
     struct Transaction {
         address token;
         address entity;
@@ -175,11 +175,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _amount,
             _reference
         );
-        // first we need to get the tokens to Finance
+        // First we need to get the tokens to Finance
         _token.transferFrom(msg.sender, this, _amount);
-        // and then approve them to vault
+        // And then approve them to vault
         _token.approve(vault, _amount);
-        // finally we can deposit them
+        // Finally we can deposit them
         vault.deposit(_token, this, _amount);
     }
 
@@ -405,7 +405,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 currentPeriod.lastTransactionId = transactionsLength.sub(1);
             }
 
-            // new period starts at end time + 1
+            // New period starts at end time + 1
             currentPeriod = _newPeriod(currentPeriod.endTime.add(1));
         }
 
@@ -514,7 +514,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             return MAX_UINT64; // re-executes in some billions of years time... should not need to worry
         }
 
-        // split in multiple lines to circunvent linter warning
+        // Split in multiple lines to circunvent linter warning
         uint64 increase = payment.repeats.mul(payment.interval);
         uint64 nextPayment = payment.initialPaymentTime.add(increase);
         return nextPayment;
@@ -545,6 +545,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         return settings.budgets[_token].sub(spent);
     }
 
+    /**
+    * @dev We have to check for initialization as periods are only valid after initializing
+    */
     function currentPeriodId() public view isInitialized returns (uint256) {
         return _currentPeriodId();
     }

@@ -136,7 +136,7 @@ contract Survey is AragonApp {
         SurveyStruct storage survey = surveys[_surveyId];
         MultiOptionVote storage previousVote = survey.votes[msg.sender];
         if (previousVote.optionsCastedLength > 0) {
-            // voter removes their vote
+            // Voter removes their vote (index 0 is the abstain vote)
             for (uint256 i = 1; i <= previousVote.optionsCastedLength; i++) {
                 OptionCast storage previousOptionCast = previousVote.castedVotes[i];
                 uint256 previousOptionPower = survey.optionPower[previousOptionCast.optionId];
@@ -167,7 +167,7 @@ contract Survey is AragonApp {
 
         SurveyStruct storage survey = surveys[_surveyId];
 
-        // revert previous votes, if any (also checks if canVote)
+        // Revert previous votes, if any (also checks if canVote)
         resetVote(_surveyId);
 
         uint256 totalVoted = 0;
@@ -193,14 +193,14 @@ contract Survey is AragonApp {
             // add to total option support
             survey.optionPower[optionId] = survey.optionPower[optionId].add(stake);
 
-            // keep track of staked used so far
+            // Keep track of stake used so far
             totalVoted = totalVoted.add(stake);
 
             emit CastVote(_surveyId, msg.sender, optionId, stake, survey.optionPower[optionId]);
         }
 
-        // compute and register non used tokens
-        // implictly we are doing require(totalVoted <= voterStake) too
+        // Compute and register non used tokens
+        // Implictly we are doing require(totalVoted <= voterStake) too
         // (as stated before, index 0 is for ABSTAIN_VOTE option)
         uint256 voterStake = token.balanceOfAt(msg.sender, survey.snapshotBlock);
         survey.votes[msg.sender].castedVotes[0].stake = voterStake.sub(totalVoted);
