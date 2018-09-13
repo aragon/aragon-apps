@@ -230,6 +230,39 @@ contract('Vault app', (accounts) => {
         assert.equal((await token.balanceOf(vault.address)), 10, 'vault should have 10 balance')
         await assertRevert(() => vault.transferToVault(ETH))
       })
+
+      it('checks result of allowRecoverability', async () => {
+        assert.isFalse(await vault.allowRecoverability(token.address))
+        assert.isFalse(await vault.allowRecoverability(ETH))
+      })
+    })
+  })
+
+  context('Vault without init', async () => {
+    let token
+
+    beforeEach(async () => {
+      const r = await daoFact.newDAO(root)
+      const dao = Kernel.at(getEvent(r, 'DeployDAO', 'dao'))
+      const acl = ACL.at(await dao.acl())
+
+      await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
+
+      // vault
+      vaultId = hash('vault.aragonpm.test')
+
+      const vaultReceipt = await dao.newAppInstance(vaultId, vaultBase.address)
+      const vaultProxyAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
+      vault = Vault.at(vaultProxyAddress)
+
+      await acl.createPermission(ANY_ENTITY, vault.address, TRANSFER_ROLE, root, { from: root })
+
+      token = await SimpleERC20.new()
+    })
+
+    it('checks result of allowRecoverability', async () => {
+      assert.isTrue(await vault.allowRecoverability(token.address))
+      assert.isTrue(await vault.allowRecoverability(ETH))
     })
   })
 })
