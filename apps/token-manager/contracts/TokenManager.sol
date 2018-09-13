@@ -95,7 +95,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @param _amount Number of tokens minted
     */
     function mint(address _receiver, uint256 _amount) external authP(MINT_ROLE, arr(_receiver, _amount)) {
-        require(isBalanceIncreaseAllowed(_receiver, _amount));
+        require(_isBalanceIncreaseAllowed(_receiver, _amount));
         _mint(_receiver, _amount);
     }
 
@@ -181,7 +181,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 
-        uint256 nonVested = calculateNonVestedTokens(
+        uint256 nonVested = _calculateNonVestedTokens(
             v.amount,
             getTimestamp64(),
             v.start,
@@ -262,7 +262,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         bool includesTokenManager = _from == address(this) || _to == address(this);
 
         if (!includesTokenManager) {
-            bool toCanReceive = isBalanceIncreaseAllowed(_to, _amount);
+            bool toCanReceive = _isBalanceIncreaseAllowed(_to, _amount);
             if (!toCanReceive || transferableBalance(_from, now) < _amount) {
                 return false;
             }
@@ -273,7 +273,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return true;
     }
 
-    function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
+    function _isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
         return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
     }
 
@@ -291,7 +291,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
         for (uint256 i = 0; i < vestings; i.add(1)) {
             TokenVesting storage v = vestings[_holder][i];
-            uint nonTransferable = calculateNonVestedTokens(
+            uint nonTransferable = _calculateNonVestedTokens(
                 v.amount,
                 _time.toUint64(),
                 v.start,
@@ -328,7 +328,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     *   +===+===========+---------+----------> time
     *      Start       Cliff    Vested
     */
-    function calculateNonVestedTokens(
+    function _calculateNonVestedTokens(
         uint256 tokens,
         uint256 time,
         uint256 start,
@@ -371,7 +371,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function _assign(address _receiver, uint256 _amount) internal isInitialized {
-        require(isBalanceIncreaseAllowed(_receiver, _amount));
+        require(_isBalanceIncreaseAllowed(_receiver, _amount));
         // Must use transferFrom() as transfer() does not give the token controller full control
         require(token.transferFrom(this, _receiver, _amount));
     }
