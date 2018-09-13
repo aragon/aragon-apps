@@ -112,6 +112,6 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
     *      maliciously to transfer funds away from the vault
     */
     function allowRecoverability(address) public view returns (bool) {
-        return hasInitialized() ? false : true;
+        return !hasInitialized();
     }
 }

@@ -231,7 +231,7 @@ contract('Vault app', (accounts) => {
         await assertRevert(() => vault.transferToVault(ETH))
       })
 
-      it('checks result of allowRecoverability', async () => {
+      it('does not allow recoverability', async () => {
         assert.isFalse(await vault.allowRecoverability(token.address))
         assert.isFalse(await vault.allowRecoverability(ETH))
       })
@@ -260,7 +260,7 @@ contract('Vault app', (accounts) => {
       token = await SimpleERC20.new()
     })
 
-    it('checks result of allowRecoverability', async () => {
+    it('allows recoverability', async () => {
       assert.isTrue(await vault.allowRecoverability(token.address))
       assert.isTrue(await vault.allowRecoverability(ETH))
     })
