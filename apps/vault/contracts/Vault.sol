@@ -13,7 +13,7 @@ contract Vault is EtherTokenConstant, AragonApp {
 
     /**
     * @dev On a normal send() or transfer() this fallback is never executed as it will be
-    * intercepted by the Proxy (see aragonOS#281)
+    *      intercepted by the Proxy (see aragonOS#281)
     */
     function () external payable {
         require(msg.data.length == 0);
