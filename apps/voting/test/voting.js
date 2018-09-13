@@ -106,7 +106,7 @@ contract('Voting App', accounts => {
         it('deciding voting is automatically executed', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeCallScript([action])
-            const voteId = createdVoteId(await voting.newVote(script, '', true, { from: holder50 }))
+            await voting.newVote(script, '', true, { from: holder50 })
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
         })
 
@@ -122,12 +122,12 @@ contract('Voting App', accounts => {
         it('execution scripts can execute multiple actions', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeCallScript([action, action, action])
-            const voteId = createdVoteId(await voting.newVote(script, '', true, { from: holder50 }))
+            await voting.newVote(script, '', true, { from: holder50 })
             assert.equal(await executionTarget.counter(), 3, 'should have executed multiple times')
         })
 
         it('execution script can be empty', async () => {
-            const voteId = createdVoteId(await voting.newVote(encodeCallScript([]), '', true, { from: holder50 }))
+            await voting.newVote(encodeCallScript([]), '', true, { from: holder50 })
         })
 
         it('execution throws if any action on script throws', async () => {
@@ -143,7 +143,7 @@ contract('Voting App', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeCallScript([action])
             const voteId = createdVoteId(await voting.forward(script, { from: holder50 }))
-            assert.equal(voteId, 1, 'voting should have been created')
+            assert.equal(voteId, 0, 'voting should have been created')
         })
 
         it('can change minimum acceptance quorum', async () => {
@@ -167,8 +167,7 @@ contract('Voting App', accounts => {
         })
 
         context('creating vote', () => {
-            let voteId = {}
-            let script = ''
+            let script, voteId
 
             beforeEach(async () => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
@@ -193,9 +192,6 @@ contract('Voting App', accounts => {
             })
 
             it('fails getting a vote out of bounds', async () => {
-                assertRevert(async () => {
-                    await voting.getVote(0)
-                })
                 assertRevert(async () => {
                     await voting.getVote(voteId + 1)
                 })

@@ -44,7 +44,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     // we are mimicing an array, we use a mapping instead to make app upgrade more graceful
-    mapping (uint256 => Vote) internal votes; // first index is 1
+    mapping (uint256 => Vote) internal votes;
     uint256 public votesLength;
 
     event StartVote(uint256 indexed voteId);
@@ -53,7 +53,7 @@ contract Voting is IForwarder, AragonApp {
     event ChangeMinQuorum(uint256 minAcceptQuorumPct);
 
     modifier voteExists(uint256 _voteId) {
-        require(_voteId > 0 && _voteId < votesLength); // index 0 is not used
+        require(_voteId < votesLength);
         _;
     }
 
@@ -81,8 +81,6 @@ contract Voting is IForwarder, AragonApp {
         supportRequiredPct = _supportRequiredPct;
         minAcceptQuorumPct = _minAcceptQuorumPct;
         voteTime = _voteTime;
-
-        votesLength = 1;
     }
 
     /**
