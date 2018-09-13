@@ -15,9 +15,9 @@ contract Vault is EtherTokenConstant, AragonApp {
     * @dev On a normal send() or transfer() this fallback is never executed as it will be
     * intercepted by the Proxy (see aragonOS#281)
     */
-    function () external payable {
+    function () external payable isInitialized {
         require(msg.data.length == 0);
-        deposit(ETH, msg.sender, msg.value);
+        _deposit(ETH, msg.sender, msg.value);
     }
 
     /**
@@ -34,18 +34,8 @@ contract Vault is EtherTokenConstant, AragonApp {
     * @param from Entity that currently owns the tokens
     * @param value Amount of tokens being transferred
     */
-    function deposit(address token, address from, uint256 value) public isInitialized payable {
-        require(value > 0);
-        require(msg.sender == from);
-
-        if (token == ETH) {
-            // Deposit is implicit in this case
-            require(msg.value == value);
-        } else {
-            require(ERC20(token).transferFrom(from, this, value));
-        }
-
-        emit Deposit(token, from, value);
+    function deposit(address _token, address _from, uint256 _value) external payable isInitialized {
+        _deposit(_token, _from, _value);
     }
 
     /*
@@ -71,7 +61,7 @@ contract Vault is EtherTokenConstant, AragonApp {
         external
         authP(TRANSFER_ROLE, arr(token, to, value))
     {
-        transfer(token, to, value, new bytes(0));
+        _transfer(_token, _to, _value, new bytes(0));
     }
 
     /**
@@ -81,19 +71,11 @@ contract Vault is EtherTokenConstant, AragonApp {
     * @param value Amount of tokens being transferred
     * @param data Extra data associated with the transfer (only used for ETH)
     */
-    function transfer(address token, address to, uint256 value, bytes data)
-        public
-        authP(TRANSFER_ROLE, arr(token, to, value))
+    function transfer(address _token, address _to, uint256 _value, bytes _data)
+        external
+        authP(TRANSFER_ROLE, arr(_token, _to, _value))
     {
-        require(value > 0);
-
-        if (token == ETH) {
-            require(to.call.value(value)(data));
-        } else {
-            require(ERC20(token).transfer(to, value));
-        }
-
-        emit Transfer(token, to, value);
+        _transfer(_token, _to, _value, _data);
     }
 
     function balance(address token) public view returns (uint256) {
@@ -110,5 +92,31 @@ contract Vault is EtherTokenConstant, AragonApp {
     */
     function allowRecoverability(address) public view returns (bool) {
         return false;
+    }
+
+    function _deposit(address _token, address _from, uint256 _value) internal {
+        require(_value > 0);
+        require(msg.sender == _from);
+
+        if (_token == ETH) {
+            // Deposit is implicit in this case
+            require(msg.value == _value);
+        } else {
+            require(ERC20(_token).transferFrom(_from, this, _value));
+        }
+
+        emit Deposit(_token, _from, _value);
+    }
+
+    function _transfer(address _token, address _to, uint256 _value, bytes _data) internal {
+        require(_value > 0);
+
+        if (_token == ETH) {
+            require(_to.call.value(_value)(_data));
+        } else {
+            require(ERC20(_token).transfer(_to, _value));
+        }
+
+        emit Transfer(_token, _to, _value);
     }
 }

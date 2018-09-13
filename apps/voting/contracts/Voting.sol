@@ -123,20 +123,24 @@ contract Voting is IForwarder, AragonApp {
 
     /**
     * @notice Vote `_supports ? 'yea' : 'nay'` in vote #`_voteId`
+    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote(),` which requires initialization
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
     */
-    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external isInitialized voteExists(_voteId) {
+    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external voteExists(_voteId) {
         require(canVote(_voteId, msg.sender));
         _vote(_voteId, _supports, msg.sender, _executesIfDecided);
     }
 
     /**
     * @notice Execute the result of vote #`_voteId`
+    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote(),` which requires initialization
     * @param _voteId Id for vote
     */
-    function executeVote(uint256 _voteId) external isInitialized voteExists(_voteId) {
+    function executeVote(uint256 _voteId) external voteExists(_voteId) {
         require(canExecute(_voteId));
         _executeVote(_voteId);
     }
@@ -150,13 +154,13 @@ contract Voting is IForwarder, AragonApp {
     * @dev IForwarder interface conformance
     * @param _evmScript Start vote with script
     */
-    function forward(bytes _evmScript) public isInitialized {
+    function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript));
         _newVote(_evmScript, "", true);
     }
 
     function canForward(address _sender, bytes) public view returns (bool) {
-        return canPerform(_sender, CREATE_VOTES_ROLE, arr());
+        return hasInitialized() && canPerform(_sender, CREATE_VOTES_ROLE, arr());
     }
 
     function canVote(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (bool) {
