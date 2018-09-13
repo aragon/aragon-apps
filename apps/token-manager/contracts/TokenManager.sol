@@ -204,7 +204,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @dev IForwarder interface conformance. Forwards any token holder action.
     * @param _evmScript Script being executed
     */
-    function forward(bytes _evmScript) public isInitialized {
+    function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript));
         bytes memory input = new bytes(0); // TODO: Consider input for this
 
@@ -221,7 +221,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function canForward(address _sender, bytes) public view returns (bool) {
-        return token.balanceOf(_sender) > 0;
+        return hasInitialized() && token.balanceOf(_sender) > 0;
     }
 
     function allHolders() public view returns (address[]) { return holders; }
@@ -370,13 +370,13 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return tokens.sub(vestedTokens);
     }
 
-    function _assign(address _receiver, uint256 _amount) internal isInitialized {
+    function _assign(address _receiver, uint256 _amount) internal {
         require(_isBalanceIncreaseAllowed(_receiver, _amount));
         // Must use transferFrom() as transfer() does not give the token controller full control
         require(token.transferFrom(this, _receiver, _amount));
     }
 
-    function _mint(address _receiver, uint256 _amount) internal isInitialized {
+    function _mint(address _receiver, uint256 _amount) internal {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
         _logHolderIfNeeded(_receiver);
     }

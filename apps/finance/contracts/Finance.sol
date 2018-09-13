@@ -103,8 +103,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     // Modifier used by all methods that impact accounting to make sure accounting period
     // is changed before the operation if needed
+    // NOTE: its use **MUST** be accompanied by an initialization check
     modifier transitionsPeriod {
-        bool completeTransition = tryTransitionAccountingPeriod(getMaxPeriodTransitions());
+        bool completeTransition = _tryTransitionAccountingPeriod(getMaxPeriodTransitions());
         require(completeTransition);
         _;
     }
@@ -193,7 +194,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @param _operatorData Information attached to the transaction by the operator
     */
     /*
-    function tokensReceived(address _operator, address _from, address _to, uint _amount, bytes _userData, bytes _operatorData) transitionsPeriod isInitialized external {
+    function tokensReceived(address _operator, address _from, address _to, uint _amount, bytes _userData, bytes _operatorData) isInitialized transitionsPeriod external {
         _recordIncomingTransaction(
             msg.sender,
             _from,
@@ -322,6 +323,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         external
         authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, payments[_paymentId].amount))
         paymentExists(_paymentId)
+        transitionsPeriod
     {
         require(nextPaymentTime(_paymentId) <= getTimestamp64());
 
@@ -333,7 +335,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @notice Execute pending payment #`_paymentId`
     * @param _paymentId Identifier for payment
     */
-    function receiverExecutePayment(uint256 _paymentId) external isInitialized paymentExists(_paymentId) {
+    function receiverExecutePayment(uint256 _paymentId) external isInitialized paymentExists(_paymentId) transitionsPeriod {
         require(nextPaymentTime(_paymentId) <= getTimestamp64());
         require(payments[_paymentId].receiver == msg.sender);
 
@@ -387,29 +389,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     *                 maxTransitions was surpased and another call is needed)
     */
     function tryTransitionAccountingPeriod(uint256 _maxTransitions) public isInitialized returns (bool success) {
-        Period storage currentPeriod = periods[_currentPeriodId()];
-        uint64 timestamp = getTimestamp64();
-
-        // Transition periods if necessary
-        while (timestamp > currentPeriod.endTime) {
-            if (_maxTransitions == 0) {
-                // Required number of transitions is over allowed number, return false indicating
-                // it didn't fully transition
-                return false;
-            }
-            _maxTransitions = _maxTransitions.sub(1);
-
-            // If there were any transactions in period, record which was the last
-            // In case 0 transactions occured, first and last tx id will be 0
-            if (currentPeriod.firstTransactionId != 0) {
-                currentPeriod.lastTransactionId = transactionsLength.sub(1);
-            }
-
-            // New period starts at end time + 1
-            currentPeriod = _newPeriod(currentPeriod.endTime.add(1));
-        }
-
-        return true;
+        return _tryTransitionAccountingPeriod(_maxTransitions);
     }
 
     // consts
@@ -529,20 +509,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         hasBudget = settings.hasBudget[_token];
     }
 
-    function getRemainingBudget(address _token) public view returns (uint256) {
-        if (!settings.hasBudget[_token]) {
-            return MAX_UINT;
-        }
-
-        uint256 spent = periods[_currentPeriodId()].tokenStatement[_token].expenses;
-
-        // A budget decrease can cause the spent amount to be greater than period budget
-        // If so, return 0 to not allow more spending during period
-        if (spent >= settings.budgets[_token]) {
-            return 0;
-        }
-
-        return settings.budgets[_token].sub(spent);
+    /**
+    * @dev We have to check for initialization as periods are only valid after initializing
+    */
+    function getRemainingBudget(address _token) public view isInitialized returns (uint256) {
+        return _getRemainingBudget(_token);
     }
 
     /**
@@ -577,7 +548,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         return period;
     }
 
-    function _executePayment(uint256 _paymentId) internal transitionsPeriod {
+    function _executePayment(uint256 _paymentId) internal {
         Payment storage payment = payments[_paymentId];
         require(!payment.disabled);
 
@@ -612,7 +583,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     )
         internal
     {
-        require(getRemainingBudget(_token) >= _amount);
+        require(_getRemainingBudget(_token) >= _amount);
         _recordTransaction(
             false,
             _token,
@@ -684,8 +655,50 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         emit NewTransaction(transactionId, _incoming, _entity, _amount);
     }
 
+    function _tryTransitionAccountingPeriod(uint256 _maxTransitions) internal returns (bool success) {
+        Period storage currentPeriod = periods[_currentPeriodId()];
+        uint64 timestamp = getTimestamp64();
+
+        // Transition periods if necessary
+        while (timestamp > currentPeriod.endTime) {
+            if (_maxTransitions == 0) {
+                // Required number of transitions is over allowed number, return false indicating
+                // it didn't fully transition
+                return false;
+            }
+            _maxTransitions = _maxTransitions.sub(1);
+
+            // If there were any transactions in period, record which was the last
+            // In case 0 transactions occured, first and last tx id will be 0
+            if (currentPeriod.firstTransactionId != 0) {
+                currentPeriod.lastTransactionId = transactionsLength.sub(1);
+            }
+
+            // New period starts at end time + 1
+            currentPeriod = _newPeriod(currentPeriod.endTime.add(1));
+        }
+
+        return true;
+    }
+
     function _canMakePayment(address _token, uint256 _amount) internal view returns (bool) {
-        return getRemainingBudget(_token) >= _amount && vault.balance(_token) >= _amount;
+        return _getRemainingBudget(_token) >= _amount && vault.balance(_token) >= _amount;
+    }
+
+    function _getRemainingBudget(address _token) internal view returns (uint256) {
+        if (!settings.hasBudget[_token]) {
+            return MAX_UINT;
+        }
+
+        uint256 spent = periods[_currentPeriodId()].tokenStatement[_token].expenses;
+
+        // A budget decrease can cause the spent amount to be greater than period budget
+        // If so, return 0 to not allow more spending during period
+        if (spent >= settings.budgets[_token]) {
+            return 0;
+        }
+
+        return settings.budgets[_token].sub(spent);
     }
 
     // Must be view for mocking purposes
