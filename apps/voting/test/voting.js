@@ -11,7 +11,7 @@ const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory
 const ACL = artifacts.require('@aragon/os/contracts/acl/ACL')
 const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel')
 
-const MiniMeToken = artifacts.require('@aragon-apps/minime/contracts/MiniMeToken')
+const MiniMeToken = artifacts.require('@aragon/apps-shared-minime/contracts/MiniMeToken')
 
 const Voting = artifacts.require('VotingMock')
 
