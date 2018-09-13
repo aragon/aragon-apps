@@ -235,12 +235,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
             bool revokable
         )
     {
-        TokenVesting storage tokenVesting = vestings[_recipient][_vestingId];
-        amount = tokenVesting.amount;
-        start = tokenVesting.start;
-        cliff = tokenVesting.cliff;
-        vesting = tokenVesting.vesting;
-        revokable = tokenVesting.revokable;
+        TokenVesting storage vesting = vestings[_recipient][_vestingId];
+        amount = vesting.amount;
+        start = vesting.start;
+        cliff = vesting.cliff;
+        vesting = vesting.vesting;
+        revokable = vesting.revokable;
     }
 
     /*
@@ -280,10 +280,10 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function transferableBalance(address _holder, uint256 _time) public view returns (uint256) {
-        uint256 vs = tokenGrantsCount(_holder);
+        uint256 vestings = tokenGrantsCount(_holder);
         uint256 totalNonTransferable = 0;
 
-        for (uint256 i = 0; i < vs; i = i.add(1)) {
+        for (uint256 i = 0; i < vestings; i.add(1)) {
             TokenVesting storage v = vestings[_holder][i];
             uint nonTransferable = calculateNonVestedTokens(
                 v.amount,
@@ -327,7 +327,11 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         uint256 time,
         uint256 start,
         uint256 cliff,
-        uint256 vested) private pure returns (uint256)
+        uint256 vested
+    )
+        private
+        pure
+        returns (uint256)
     {
         // Shortcuts for before cliff and after vested cases.
         if (time >= vested) {
@@ -400,9 +404,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @return False if the controller does not authorize the approval
     */
     function onApprove(address _owner, address _spender, uint _amount) public returns (bool) {
-        _owner;
-        _spender;
-        _amount;
         return true;
     }
 }

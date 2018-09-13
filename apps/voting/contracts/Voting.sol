@@ -69,7 +69,9 @@ contract Voting is IForwarder, AragonApp {
         uint256 _supportRequiredPct,
         uint256 _minAcceptQuorumPct,
         uint64 _voteTime
-    ) external onlyInit
+    )
+        external
+        onlyInit
     {
         initialized();
 
@@ -127,12 +129,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external isInitialized voteExists(_voteId) {
         require(canVote(_voteId, msg.sender));
-        _vote(
-            _voteId,
-            _supports,
-            msg.sender,
-            _executesIfDecided
-        );
+        _vote(_voteId, _supports, msg.sender, _executesIfDecided);
     }
 
     /**
@@ -171,24 +168,29 @@ contract Voting is IForwarder, AragonApp {
     function canExecute(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
 
-        if (vote_.executed)
+        if (vote_.executed) {
             return false;
+        }
 
         // Voting is already decided
-        if (_isValuePct(vote_.yea, vote_.totalVoters, supportRequiredPct))
+        if (_isValuePct(vote_.yea, vote_.totalVoters, supportRequiredPct)) {
             return true;
+        }
 
         uint256 totalVotes = vote_.yea.add(vote_.nay);
 
-        // vote ended?
-        if (_isVoteOpen(vote_))
+        // Vote ended?
+        if (_isVoteOpen(vote_)) {
             return false;
-        // has Support?
-        if (!_isValuePct(vote_.yea, totalVotes, supportRequiredPct))
+        }
+        // Has enough support?
+        if (!_isValuePct(vote_.yea, totalVotes, supportRequiredPct)) {
             return false;
-        // has Min Quorum?
-        if (!_isValuePct(vote_.yea, vote_.totalVoters, vote_.minAcceptQuorumPct))
+        }
+        // Has min quorum?
+        if (!_isValuePct(vote_.yea, vote_.totalVoters, vote_.minAcceptQuorumPct)) {
             return false;
+        }
 
         return true;
     }
@@ -246,12 +248,7 @@ contract Voting is IForwarder, AragonApp {
         emit StartVote(voteId);
 
         if (_castVote && canVote(voteId, msg.sender)) {
-            _vote(
-                voteId,
-                true,
-                msg.sender,
-                true
-            );
+            _vote(voteId, true, msg.sender, true);
         }
     }
 
@@ -264,32 +261,30 @@ contract Voting is IForwarder, AragonApp {
     {
         Vote storage vote_ = votes[_voteId];
 
-        // this could re-enter, though we can assume the governance token is not malicious
+        // This could re-enter, though we can assume the governance token is not malicious
         uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
         VoterState state = vote_.voters[_voter];
 
-        // if voter had previously voted, decrease count
-        if (state == VoterState.Yea)
+        // If voter had previously voted, decrease count
+        if (state == VoterState.Yea) {
             vote_.yea = vote_.yea.sub(voterStake);
-        if (state == VoterState.Nay)
+        } else if (state == VoterState.Nay) {
             vote_.nay = vote_.nay.sub(voterStake);
+        }
 
-        if (_supports)
+        if (_supports) {
             vote_.yea = vote_.yea.add(voterStake);
-        else
+        } else {
             vote_.nay = vote_.nay.add(voterStake);
+        }
 
         vote_.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
 
-        emit CastVote(
-            _voteId,
-            _voter,
-            _supports,
-            voterStake
-        );
+        emit CastVote(_voteId, _voter, _supports, voterStake);
 
-        if (_executesIfDecided && canExecute(_voteId))
+        if (_executesIfDecided && canExecute(_voteId)) {
             _executeVote(_voteId);
+        }
     }
 
     function _executeVote(uint256 _voteId) internal {
