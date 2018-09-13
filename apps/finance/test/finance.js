@@ -143,7 +143,7 @@ contract('Finance App', accounts => {
         await token1.approve(finance.address, 5)
         await finance.deposit(token1.address, 5, 'ref')
 
-        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(1)
+        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(0)
 
         // vault has 100 token1 initially
         assert.equal((await token1.balanceOf(vault.address)).toString(), 100 + 5, 'deposited tokens must be in vault')
@@ -193,7 +193,7 @@ contract('Finance App', accounts => {
 
         await finance.depositToVault(token1.address)
 
-        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(1)
+        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(0)
 
         let finalBalance = await token1.balanceOf(vault.address)
         assert.equal(finalBalance.toString(), initialBalance.plus(5).toString(), 'deposited tokens must be in vault')
@@ -283,11 +283,11 @@ contract('Finance App', accounts => {
             // repeats up to 10 times every 2 seconds
             await finance.newPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
 
-            const [token, receiver, am, initialTime, interval, maxRepeats, ref, disabled, repeats, createdBy] = await finance.getPayment(1)
+            const [token, receiver, txAmount, initialTime, interval, maxRepeats, ref, disabled, repeats, createdBy] = await finance.getPayment(1)
 
             assert.equal(token, token1.address, 'token address should match')
             assert.equal(receiver, recipient, 'receiver should match')
-            assert.equal(amount, am, 'amount should match')
+            assert.equal(amount, txAmount, 'amount should match')
             assert.equal(initialTime, time, 'time should match')
             assert.equal(interval, 2, 'interval should match')
             assert.equal(maxRepeats, 10, 'max repeats should match')
@@ -302,10 +302,10 @@ contract('Finance App', accounts => {
             // repeats up to 10 times every 2 seconds
             await finance.newPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
 
-            assertRevert(async () => {
+            await assertRevert(async () => {
                 await finance.getPayment(0)
             })
-            assertRevert(async () => {
+            await assertRevert(async () => {
                 await finance.getPayment(2)
             })
         })
@@ -315,10 +315,7 @@ contract('Finance App', accounts => {
             // repeats up to 10 times every 2 seconds
             await finance.newPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
 
-            assertRevert(async () => {
-                await finance.getTransaction(0)
-            })
-            assertRevert(async () => {
+            await assertRevert(async () => {
                 await finance.getTransaction(2)
             })
         })
@@ -331,9 +328,9 @@ contract('Finance App', accounts => {
 
             assert.equal((await token1.balanceOf(recipient)).toString(), amount, 'recipient should have received tokens')
 
-            const [periodId, am, paymentId, paymentRepeatNumber, token, entity, isIncoming, date, ref] = await finance.getTransaction(1)
+            const [periodId, txAmount, paymentId, paymentRepeatNumber, token, entity, isIncoming, date, ref] = await finance.getTransaction(0)
             assert.equal(periodId, 0, 'period id should be correct')
-            assert.equal(am, amount, 'amount should match')
+            assert.equal(txAmount, amount, 'amount should match')
             assert.equal(paymentId, 0, 'payment id should be 0 for single payment')
             assert.equal(paymentRepeatNumber, 0, 'payment repeat number should be 0')
             assert.equal(token, token1.address, 'token address should match')
@@ -447,8 +444,8 @@ contract('Finance App', accounts => {
                 assert.isFalse(isCurrent, 'shouldnt be current period')
                 assert.equal(start.toString(), START_TIME, 'should have correct start date')
                 assert.equal(end.toString(), START_TIME + PERIOD_DURATION - 1, 'should have correct end date')
-                assert.equal(firstTx, 1, 'should have correct first tx')
-                assert.equal(lastTx, 4, 'should have correct last tx')
+                assert.equal(firstTx.toNumber(), 1, 'should have correct first tx')
+                assert.equal(lastTx.toNumber(), 3, 'should have correct last tx')
             })
 
             it('fails trying to access period out of bounds', async () => {

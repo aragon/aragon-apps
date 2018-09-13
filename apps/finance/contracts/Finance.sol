@@ -78,13 +78,18 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     Vault public vault;
 
-    // we are mimicing arrays, we use mappings instead to make app upgrade more graceful
-    mapping (uint256 => Payment) internal payments; // first index is 1
-    uint256 public paymentsLength;
-    mapping (uint256 => Transaction) internal transactions; // first index is 1
+    // We are mimicing arrays, we use mappings instead to make app upgrade more graceful
+    mapping (uint256 => Payment) internal payments;
+    // Payments start at index 1, to allow us to use payments[0] for transactions that are not
+    // linked to a recurring payment
+    uint256 public paymentsNextIndex;
+
+    mapping (uint256 => Transaction) internal transactions;
     uint256 public transactionsLength;
-    mapping (uint256 => Period) internal periods; // first index is 0
+
+    mapping (uint256 => Period) internal periods;
     uint256 public periodsLength;
+
     Settings internal settings;
 
     event NewPeriod(uint256 indexed periodId, uint64 periodStarts, uint64 periodEnds);
@@ -104,12 +109,12 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     modifier paymentExists(uint256 _paymentId) {
-        require(_paymentId > 0 && _paymentId < paymentsLength); // index 0 is not used
+        require(_paymentId > 0 && _paymentId < paymentsNextIndex);
         _;
     }
 
     modifier transactionExists(uint256 _transactionId) {
-        require(_transactionId > 0 && _transactionId < transactionsLength); // index 0 is not used
+        require(_transactionId < transactionsLength);
         _;
     }
 
@@ -140,17 +145,17 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     function initialize(Vault _vault, uint64 _periodDuration) external onlyInit {
         initialized();
 
-        require(_periodDuration >= 1 days);
         require(isContract(_vault));
-
         vault = _vault;
 
-        paymentsLength = 1;
-        payments[0].disabled = true;
-
-        transactionsLength = 1;
-
+        require(_periodDuration >= 1 days);
         settings.periodDuration = _periodDuration;
+
+        // Reserve the first recurring payment index as an unused index for transactions not linked to a payment
+        payments[0].disabled = true;
+        paymentsNextIndex = 1;
+
+        // Start the first period
         _newPeriod(getTimestamp64());
     }
 
@@ -241,7 +246,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         // Budget must allow at least one instance of this payment each period, or not be set at all
         require(settings.budgets[_token] >= _amount || !settings.hasBudget[_token]);
 
-        paymentId = paymentsLength++;
+        paymentId = paymentsNextIndex++;
         emit NewPayment(paymentId, _receiver, _maxRepeats);
 
         Payment storage payment = payments[paymentId];
@@ -381,7 +386,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     *                 maxTransitions was surpased and another call is needed)
     */
     function tryTransitionAccountingPeriod(uint256 _maxTransitions) public isInitialized returns (bool success) {
-        Period storage currentPeriod = periods[currentPeriodId()];
+        Period storage currentPeriod = periods[_currentPeriodId()];
         uint64 timestamp = getTimestamp64();
 
         // Transition periods if necessary
@@ -482,7 +487,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     {
         Period storage period = periods[_periodId];
 
-        isCurrent = currentPeriodId() == _periodId;
+        isCurrent = _currentPeriodId() == _periodId;
 
         startTime = period.startTime;
         endTime = period.endTime;
@@ -526,7 +531,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         if (!settings.hasBudget[_token])
             return MAX_UINT;
 
-        uint256 spent = periods[currentPeriodId()].tokenStatement[_token].expenses;
+        uint256 spent = periods[_currentPeriodId()].tokenStatement[_token].expenses;
 
         // A budget decrease can cause the spent amount to be greater than period budget
         // If so, return 0 to not allow more spending during period
@@ -536,11 +541,15 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         return settings.budgets[_token].sub(spent);
     }
 
-    function currentPeriodId() public view returns (uint256) {
-        return periodsLength - 1;
+    function currentPeriodId() public view isInitialized returns (uint256) {
+        return _currentPeriodId();
     }
 
     // internal fns
+
+    function _currentPeriodId() internal view returns (uint256) {
+        return periodsLength - 1;
+    }
 
     function _newPeriod(uint64 _startTime) internal returns (Period storage) {
         uint256 newPeriodId = periodsLength++;
@@ -637,7 +646,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         string _reference
         ) internal
     {
-        uint256 periodId = currentPeriodId();
+        uint256 periodId = _currentPeriodId();
         TokenStatement storage tokenStatement = periods[periodId].tokenStatement[_token];
         if (_incoming) {
             tokenStatement.income = tokenStatement.income.add(_amount);
