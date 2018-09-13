@@ -147,19 +147,18 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         authP(ASSIGN_ROLE, arr(_receiver, _amount))
         returns (uint256)
     {
-        require(tokenGrantsCount(_receiver) < MAX_VESTINGS_PER_ADDRESS);
+        require(vestingsLengths[_receiver] < MAX_VESTINGS_PER_ADDRESS);
 
         require(_start <= _cliff && _cliff <= _vested);
 
-        TokenVesting memory tokenVesting = TokenVesting(
+        uint256 vestingId = vestingsLengths[_receiver]++;
+        vestings[_receiver][vestingId] = TokenVesting(
             _amount,
             _start,
             _cliff,
             _vested,
             _revokable
         );
-        uint256 vestingId = vestingsLengths[_receiver]++;
-        vestings[_receiver][vestingId] = tokenVesting;
 
         _assign(_receiver, _amount);
 
@@ -277,16 +276,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
     }
 
-    function tokenGrantsCount(address _holder) public view returns (uint256) {
-        return vestingsLengths[_holder];
-    }
-
     function spendableBalanceOf(address _holder) public view returns (uint256) {
         return transferableBalance(_holder, now);
     }
 
     function transferableBalance(address _holder, uint256 _time) public view returns (uint256) {
-        uint256 vestingsCount = tokenGrantsCount(_holder);
+        uint256 vestingsCount = vestingsLengths[_holder];
         uint256 totalNonTransferable = 0;
 
         for (uint256 i = 0; i < vestingsCount; i = i.add(1)) {
