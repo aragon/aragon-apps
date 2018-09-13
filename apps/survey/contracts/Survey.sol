@@ -16,27 +16,25 @@ contract Survey is AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
-    uint256 constant public PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
-    uint256 constant public ABSTAIN_VOTE = 0;
-    bytes32 constant public CREATE_SURVEYS_ROLE = keccak256("CREATE_SURVEYS_ROLE");
-    bytes32 constant public MODIFY_PARTICIPATION_ROLE = keccak256("MODIFY_PARTICIPATION_ROLE");
+    bytes32 public constant CREATE_SURVEYS_ROLE = keccak256("CREATE_SURVEYS_ROLE");
+    bytes32 public constant MODIFY_PARTICIPATION_ROLE = keccak256("MODIFY_PARTICIPATION_ROLE");
 
-    MiniMeToken public token;
-    uint256 public minParticipationPct;
-    uint64 public surveyTime;
+    uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
+    uint256 public constant ABSTAIN_VOTE = 0;
 
     struct OptionCast {
         uint256 optionId;
         uint256 stake;
     }
 
-    /* To allow multiple option votes.
-     * Index 0 will always be for ABSTAIN_VOTE option
-     * option Ids must be in ascending order
+    /* Allows for multiple option votes.
+     * Index 0 is always used for the ABSTAIN_VOTE option, that's calculated automatically by the
+     * contract.
      */
     struct MultiOptionVote {
-        // replacing 2 arrays of ints here by this mapping to save gas
         uint256 optionsCastedLength;
+        // `castedVotes` simulates an array
+        // Each OptionCast in `castedVotes` must be ordered by ascending option IDs
         mapping (uint256 => OptionCast) castedVotes;
     }
 
@@ -50,11 +48,16 @@ contract Survey is AragonApp {
         uint256 participation;                  // tokens that casted a vote
         string metadata;
 
-        mapping (uint256 => uint256) optionPower;     // option -> voting power for option
-        mapping (address => MultiOptionVote) votes;    // voter -> options voted, with its stakes
+        // Note that option IDs are from 1 to `options`, due to ABSTAIN_VOTE taking 0
+        mapping (uint256 => uint256) optionPower;       // option ID -> voting power for option
+        mapping (address => MultiOptionVote) votes;     // voter -> options voted, with its stakes
     }
 
-    // we are mimicing an array, we use a mapping instead to make app upgrade more graceful
+    MiniMeToken public token;
+    uint256 public minParticipationPct;
+    uint64 public surveyTime;
+
+    // We are mimicing an array, we use a mapping instead to make app upgrade more graceful
     mapping (uint256 => SurveyStruct) internal surveys;
     uint256 public surveysLength;
 

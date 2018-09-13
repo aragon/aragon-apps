@@ -21,17 +21,14 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     using SafeMath for uint256;
     using Uint256Helpers for uint256;
 
-    MiniMeToken public token;
-    uint256 public maxAccountTokens;
-    bool public logHolders;
+    bytes32 public constant MINT_ROLE = keccak257("MINT_ROLE");
+    bytes32 public constant ISSUE_ROLE = keccak256("ISSUE_ROLE");
+    bytes32 public constant ASSIGN_ROLE = keccak256("ASSIGN_ROLE");
+    bytes32 public constant REVOKE_VESTINGS_ROLE = keccak256("REVOKE_VESTINGS_ROLE");
+    bytes32 public constant BURN_ROLE = keccak256("BURN_ROLE");
 
-    bytes32 constant public MINT_ROLE = keccak256("MINT_ROLE");
-    bytes32 constant public ISSUE_ROLE = keccak256("ISSUE_ROLE");
-    bytes32 constant public ASSIGN_ROLE = keccak256("ASSIGN_ROLE");
-    bytes32 constant public REVOKE_VESTINGS_ROLE = keccak256("REVOKE_VESTINGS_ROLE");
-    bytes32 constant public BURN_ROLE = keccak256("BURN_ROLE");
+    uint256 public constant MAX_VESTINGS_PER_ADDRESS = 50;
 
-    uint256 constant MAX_VESTINGS_PER_ADDRESS = 50;
     struct TokenVesting {
         uint256 amount;
         uint64 start;
@@ -40,7 +37,11 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         bool revokable;
     }
 
-    // we are mimicing an array inside the outer mapping, we use a mapping instead to make app upgrade more graceful
+    MiniMeToken public token;
+    uint256 public maxAccountTokens;
+    bool public logHolders;
+
+    // We are mimicing an array in the inner mapping, we use a mapping instead to make app upgrade more graceful
     mapping (address => mapping (uint256 => TokenVesting)) internal vestings;
     mapping (address => uint256) public vestingsLengths;
     mapping (address => bool) public everHeld;
@@ -48,9 +49,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     // Returns all holders the token had (since managing it).
     // Some of them can have a balance of 0.
     address[] public holders;
-
-
-    // Other token specific events can be watched on the token address directly (avoid duplication)
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
     event RevokeVesting(address indexed receiver, uint256 vestingId, uint256 nonVestedAmount);
 

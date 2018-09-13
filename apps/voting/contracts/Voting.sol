@@ -17,15 +17,10 @@ contract Voting is IForwarder, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
-    MiniMeToken public token;
-    uint256 public supportRequiredPct;
-    uint256 public minAcceptQuorumPct;
-    uint64 public voteTime;
+    bytes32 public constant CREATE_VOTES_ROLE = keccak256("CREATE_VOTES_ROLE");
+    bytes32 public constant MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
 
-    uint256 constant public PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
-
-    bytes32 constant public CREATE_VOTES_ROLE = keccak256("CREATE_VOTES_ROLE");
-    bytes32 constant public MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
+    uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
 
     enum VoterState { Absent, Yea, Nay }
 
@@ -43,7 +38,12 @@ contract Voting is IForwarder, AragonApp {
         mapping (address => VoterState) voters;
     }
 
-    // we are mimicing an array, we use a mapping instead to make app upgrade more graceful
+    MiniMeToken public token;
+    uint256 public supportRequiredPct;
+    uint256 public minAcceptQuorumPct;
+    uint64 public voteTime;
+
+    // We are mimicing an array, we use a mapping instead to make app upgrade more graceful
     mapping (uint256 => Vote) internal votes;
     uint256 public votesLength;
 

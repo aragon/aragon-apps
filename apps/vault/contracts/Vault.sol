@@ -6,7 +6,7 @@ import "@aragon/os/contracts/lib/token/ERC20.sol";
 
 
 contract Vault is EtherTokenConstant, AragonApp {
-    bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
+    bytes32 public constant TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
 
     event Transfer(address indexed token, address indexed to, uint256 amount);
     event Deposit(address indexed token, address indexed sender, uint256 amount);
