@@ -71,7 +71,7 @@ contract('Token Manager', accounts => {
         await token.enableTransfers(!transferable)
 
         await token.changeController(tokenManager.address)
-        await tokenManager.initialize(token.address, transferable, 0, false)
+        await tokenManager.initialize(token.address, transferable, 0)
         assert.equal(transferable, await token.transfersEnabled())
     })
 
@@ -80,13 +80,13 @@ contract('Token Manager', accounts => {
         await token.enableTransfers(!transferable)
 
         await token.changeController(tokenManager.address)
-        await tokenManager.initialize(token.address, transferable, 0, false)
+        await tokenManager.initialize(token.address, transferable, 0)
         assert.equal(transferable, await token.transfersEnabled())
     })
 
     it('fails when initializing without setting controller', async () => {
         return assertRevert(async () => {
-            await tokenManager.initialize(token.address, true, 0, false)
+            await tokenManager.initialize(token.address, true, 0)
         })
     })
 
@@ -99,7 +99,7 @@ contract('Token Manager', accounts => {
     context('non-transferable token', async () => {
         beforeEach(async () => {
             await token.changeController(tokenManager.address)
-            await tokenManager.initialize(token.address, false, 0, false)
+            await tokenManager.initialize(token.address, false, 0)
         })
 
         it('holders cannot transfer non-transferable tokens', async () => {
@@ -142,36 +142,12 @@ contract('Token Manager', accounts => {
         })
     })
 
-    context('holder logging', async () => {
-        beforeEach(async () => {
-            await token.changeController(tokenManager.address)
-            await tokenManager.initialize(token.address, true, 0, true)
-        })
-
-        it('logs token manager on issue', async () => {
-            await tokenManager.issue(10)
-
-            const holders = await tokenManager.allHolders()
-            assert.deepEqual(holders, [tokenManager.address], 'holder list should be correct')
-            assert.equal(await tokenManager.holders(0), tokenManager.address, 'should be first holder')
-        })
-
-        it('logs on mints and transfers', async () => {
-            await tokenManager.mint(holder, 10)
-            await token.transfer(accounts[8], 5, { from: holder })
-            await token.transfer(accounts[9], 5, { from: accounts[8] })
-
-            const holders = await tokenManager.allHolders()
-            assert.deepEqual(holders, [holder, accounts[8], accounts[9]], 'holder list should be correct')
-        })
-    })
-
     context('maximum tokens per address limit', async () => {
         const limit = 100
 
         beforeEach(async () => {
             await token.changeController(tokenManager.address)
-            await tokenManager.initialize(token.address, true, limit, false)
+            await tokenManager.initialize(token.address, true, limit)
         })
 
         it('can mint up to than limit', async () => {
@@ -211,12 +187,12 @@ contract('Token Manager', accounts => {
     context('for normal native tokens', () => {
         beforeEach(async () => {
             await token.changeController(tokenManager.address)
-            await tokenManager.initialize(token.address, true, 0, false)
+            await tokenManager.initialize(token.address, true, 0)
         })
 
         it('fails on reinitialization', async () => {
             return assertRevert(async () => {
-                await tokenManager.initialize(token.address, true, 0, false)
+                await tokenManager.initialize(token.address, true, 0)
             })
         })
 
@@ -224,7 +200,7 @@ contract('Token Manager', accounts => {
             const newTokenManager = await TokenManager.new()
             assert.isTrue(await newTokenManager.isPetrified())
             return assertRevert(async () => {
-                await newTokenManager.initialize(token.address, true, 0, false)
+                await newTokenManager.initialize(token.address, true, 0)
             })
         })
 
