@@ -19,15 +19,16 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
-    uint64 constant public MAX_PAYMENTS_PER_TX = 20;
-    uint64 constant public MAX_UINT64 = uint64(-1);
-    uint256 constant public MAX_UINT = uint256(-1);
+    bytes32 public constant CREATE_PAYMENTS_ROLE = keccak256("CREATE_PAYMENTS_ROLE");
+    bytes32 public constant CHANGE_PERIOD_ROLE = keccak256("CHANGE_PERIOD_ROLE");
+    bytes32 public constant CHANGE_BUDGETS_ROLE = keccak256("CHANGE_BUDGETS_ROLE");
+    bytes32 public constant EXECUTE_PAYMENTS_ROLE = keccak256("EXECUTE_PAYMENTS_ROLE");
+    bytes32 public constant DISABLE_PAYMENTS_ROLE = keccak256("DISABLE_PAYMENTS_ROLE");
 
-    bytes32 constant public CREATE_PAYMENTS_ROLE = keccak256("CREATE_PAYMENTS_ROLE");
-    bytes32 constant public CHANGE_PERIOD_ROLE = keccak256("CHANGE_PERIOD_ROLE");
-    bytes32 constant public CHANGE_BUDGETS_ROLE = keccak256("CHANGE_BUDGETS_ROLE");
-    bytes32 constant public EXECUTE_PAYMENTS_ROLE = keccak256("EXECUTE_PAYMENTS_ROLE");
-    bytes32 constant public DISABLE_PAYMENTS_ROLE = keccak256("DISABLE_PAYMENTS_ROLE");
+    uint64 public constant MAX_PAYMENTS_PER_TX = 20;
+
+    uint256 internal constant MAX_UINT = uint256(-1);
+    uint64 internal constant MAX_UINT64 = uint64(-1);
 
     // order optimized for storage
     struct Payment {
