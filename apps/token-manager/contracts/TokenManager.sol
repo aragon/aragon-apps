@@ -393,4 +393,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         _amount;
         return true;
     }
+
+    /**
+    * @dev Disable recovery escape hatch for own token,
+    *      as the it has the concept of issuing tokens without assigning them
+    */
+    function allowRecoverability(address _token) public view returns (bool) {
+        return _token != address(token);
+    }
 }
