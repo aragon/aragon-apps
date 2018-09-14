@@ -243,26 +243,26 @@ contract Survey is AragonApp {
         view
         surveyExists(_surveyId)
         returns (
-            bool open,
-            address creator,
-            uint64 startDate,
-            uint256 snapshotBlock,
-            uint256 minParticipationPct,
-            uint256 votingPower,
-            uint256 participation,
-            uint256 options
+            bool _open,
+            address _creator,
+            uint64 _startDate,
+            uint256 _snapshotBlock,
+            uint256 _minParticipationPct,
+            uint256 _votingPower,
+            uint256 _participation,
+            uint256 _options
         )
     {
         SurveyStruct storage survey = surveys[_surveyId];
 
-        open = _isSurveyOpen(survey);
-        creator = survey.creator;
-        startDate = survey.startDate;
-        snapshotBlock = survey.snapshotBlock;
-        minParticipationPct = survey.minParticipationPct;
-        votingPower = survey.votingPower;
-        participation = survey.participation;
-        options = survey.options;
+        _open = _isSurveyOpen(survey);
+        _creator = survey.creator;
+        _startDate = survey.startDate;
+        _snapshotBlock = survey.snapshotBlock;
+        _minParticipationPct = survey.minParticipationPct;
+        _votingPower = survey.votingPower;
+        _participation = survey.participation;
+        _options = survey.options;
     }
 
     function getSurveyMetadata(uint256 _surveyId) public view surveyExists(_surveyId) returns (string) {
