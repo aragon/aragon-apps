@@ -66,6 +66,7 @@ contract Vault is EtherTokenConstant, AragonApp {
     * @param _to Address of the recipient of tokens
     * @param _value Amount of tokens being transferred
     */
+    /* solium-disable-next-line function-order */
     function transfer(address _token, address _to, uint256 _value)
         external
         authP(TRANSFER_ROLE, arr(_token, _to, _value))
@@ -92,7 +93,7 @@ contract Vault is EtherTokenConstant, AragonApp {
             require(ERC20(_token).transfer(_to, _value));
         }
 
-        emit Transfer(token, to, value);
+        emit Transfer(_token, _to, _value);
     }
 
     function balance(address _token) public view returns (uint256) {
