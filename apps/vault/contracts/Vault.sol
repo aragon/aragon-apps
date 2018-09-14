@@ -1,11 +1,12 @@
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
+import "@aragon/os/contracts/common/DepositableStorage.sol";
 import "@aragon/os/contracts/common/EtherTokenConstant.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 
 
-contract Vault is EtherTokenConstant, AragonApp {
+contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
     bytes32 constant public TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
 
     event Transfer(address indexed token, address indexed to, uint256 amount);
@@ -26,6 +27,7 @@ contract Vault is EtherTokenConstant, AragonApp {
     */
     function initialize() external onlyInit {
         initialized();
+        setDepositable(true);
     }
 
     /**
@@ -34,7 +36,8 @@ contract Vault is EtherTokenConstant, AragonApp {
     * @param from Entity that currently owns the tokens
     * @param value Amount of tokens being transferred
     */
-    function deposit(address token, address from, uint256 value) public isInitialized payable {
+    function deposit(address token, address from, uint256 value) public payable {
+        require(isDepositable());
         require(value > 0);
         require(msg.sender == from);
 
