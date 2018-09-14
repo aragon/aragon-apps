@@ -167,16 +167,18 @@ class App extends React.Component {
           </AppLayout.ScrollWrapper>
         </AppLayout>
 
-        {displayVotes &&
-          currentVote && (
-            <SidePanel
-              title={`Vote #${currentVoteId} (${
-                currentVote.open ? 'Open' : 'Closed'
-              })`}
-              opened={Boolean(!createVoteVisible && voteVisible)}
-              onClose={this.handleVoteClose}
-              onTransitionEnd={this.handleVoteTransitionEnd}
-            >
+        <SidePanel
+          title={`Vote #${currentVoteId} (${
+            currentVote && currentVote.open ? 'Open' : 'Closed'
+          })`}
+          opened={
+            currentVote && displayVotes && !createVoteVisible && voteVisible
+          }
+          onClose={this.handleVoteClose}
+          onTransitionEnd={this.handleVoteTransitionEnd}
+        >
+          {displayVotes &&
+            currentVote && (
               <VotePanelContent
                 app={app}
                 vote={currentVote}
@@ -185,8 +187,8 @@ class App extends React.Component {
                 tokenContract={tokenContract}
                 onVote={this.handleVote}
               />
-            </SidePanel>
-          )}
+            )}
+        </SidePanel>
 
         <SidePanel
           title="New Vote"
