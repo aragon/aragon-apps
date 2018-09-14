@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identitifer:    GPL-3.0-or-later
+ */
+
 pragma solidity 0.4.18;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
@@ -17,7 +21,6 @@ contract Finance is AragonApp {
 
     address constant public ETH = address(0);
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
-    uint64 constant public MAX_PERIOD_TRANSITIONS_PER_TX = 10;
     uint64 constant public MAX_UINT64 = uint64(-1);
     uint256 constant public MAX_UINT = uint256(-1);
 
@@ -76,10 +79,10 @@ contract Finance is AragonApp {
 
     IVaultConnector public vault;
 
-    Payment[] payments; // first index is 1
-    Transaction[] transactions; // first index is 1
-    Period[] periods; // first index is 0
-    Settings settings;
+    Payment[] internal payments; // first index is 1
+    Transaction[] internal transactions; // first index is 1
+    Period[] internal periods; // first index is 0
+    Settings internal settings;
 
     event NewPeriod(uint256 indexed periodId, uint64 periodStarts, uint64 periodEnds);
     event SetBudget(address indexed token, uint256 amount, bool hasBudget);
@@ -92,7 +95,7 @@ contract Finance is AragonApp {
     // Modifier used by all methods that impact accounting to make sure accounting period
     // is changed before the operation if needed
     modifier transitionsPeriod {
-        bool completeTransition = tryTransitionAccountingPeriod(MAX_PERIOD_TRANSITIONS_PER_TX);
+        bool completeTransition = tryTransitionAccountingPeriod(getMaxPeriodTransitions());
         require(completeTransition);
         _;
     }
@@ -101,7 +104,7 @@ contract Finance is AragonApp {
      * @dev Sends ETH to Vault. Sends all the available balance.
      * @notice Allows to send ETH from this contract to Vault, to avoid locking them in contract forever.
      */
-    function () isInitialized public payable {
+    function () external payable isInitialized transitionsPeriod {
         _recordIncomingTransaction(
             ETH,
             msg.sender,
@@ -139,7 +142,7 @@ contract Finance is AragonApp {
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
     */
-    function deposit(address _token, uint256 _amount, string _reference) external isInitialized transitionsPeriod {
+    function deposit(ERC20 _token, uint256 _amount, string _reference) external isInitialized transitionsPeriod {
         require(_amount > 0);
         _recordIncomingTransaction(
             _token,
@@ -148,9 +151,9 @@ contract Finance is AragonApp {
             _reference
         );
         // first we need to get the tokens to Finance
-        ERC20(_token).transferFrom(msg.sender, this, _amount);
+        _token.transferFrom(msg.sender, this, _amount);
         // and then approve them to vault
-        ERC20(_token).approve(address(vault), _amount);
+        _token.approve(vault, _amount);
         // finally we can deposit them
         vault.deposit(_token, this, _amount, new bytes(0));
     }
@@ -178,7 +181,7 @@ contract Finance is AragonApp {
     */
 
     /**
-    * @notice Create a new payment of `_amount / 10^18` `_token.symbol(): string`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + (_interval - _interval % 86400) / 86400 + ' days' : ''`
+    * @notice Create a new payment of `_amount / 10^18` `_token.symbol(): string` to `_receiver`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + (_interval - _interval % 86400) / 86400 + ' days' : ''`
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment
     * @param _amount Tokens that are payed every time the payment is due
@@ -248,7 +251,15 @@ contract Finance is AragonApp {
     * @param _token Address for token
     * @param _amount New budget amount
     */
-    function setBudget(address _token, uint256 _amount) authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token])) transitionsPeriod isInitialized external {
+    function setBudget(
+        address _token,
+        uint256 _amount
+    )
+        authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token], settings.hasBudget[_token] ? 1 : 0))
+        transitionsPeriod
+        isInitialized
+        external
+    {
         settings.budgets[_token] = _amount;
         if (!settings.hasBudget[_token]) {
             settings.hasBudget[_token] = true;
@@ -260,7 +271,13 @@ contract Finance is AragonApp {
     * @notice Remove spending limit for `_token.symbol(): string`.
     * @param _token Address for token
     */
-    function removeBudget(address _token) authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token])) transitionsPeriod isInitialized external {
+    function removeBudget(address _token)
+        authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token], settings.hasBudget[_token] ? 1 : 0))
+        transitionsPeriod
+        isInitialized
+        external
+    {
+        settings.budgets[_token] = 0;
         settings.hasBudget[_token] = false;
         SetBudget(_token, 0, false);
     }
@@ -305,8 +322,8 @@ contract Finance is AragonApp {
      * @notice Send tokens held in this contract to the Vault
      * @param _token Token whose balance is going to be transferred.
      */
-    function depositToVault(address _token) isInitialized public {
-        uint256 value = ERC20(_token).balanceOf(this);
+    function depositToVault(ERC20 _token) isInitialized public {
+        uint256 value = _token.balanceOf(this);
         require(value > 0);
 
         _recordIncomingTransaction(
@@ -316,14 +333,14 @@ contract Finance is AragonApp {
             "Deposit to Vault"
         );
         // First we approve tokens to vault
-        ERC20(_token).approve(address(vault), value);
+        _token.approve(vault, value);
         // then we can deposit them
         vault.deposit(_token, this, value, new bytes(0));
     }
 
     /**
     * @dev Transitions accounting periods if needed. For preventing OOG attacks, a maxTransitions
-    *      a TTL param is provided. If more than the specified number of periods need to be transitioned,
+    *      param is provided. If more than the specified number of periods need to be transitioned,
     *      it will return false.
     * @notice Transition accounting period if needed
     * @param _maxTransitions Maximum periods that can be transitioned
@@ -420,7 +437,7 @@ contract Finance is AragonApp {
         return settings.periodDuration;
     }
 
-    function getBudget(address _token) transitionsPeriod public view returns (uint256 budget, bool hasBudget) {
+    function getBudget(address _token) public view returns (uint256 budget, bool hasBudget) {
         budget = settings.budgets[_token];
         hasBudget = settings.hasBudget[_token];
     }
@@ -572,6 +589,9 @@ contract Finance is AragonApp {
     function _canMakePayment(address _token, uint256 _amount) internal view returns (bool) {
         return getRemainingBudget(_token) >= _amount && vault.balance(_token) >= _amount;
     }
+
+    // Must be view for mocking purposes
+    function getMaxPeriodTransitions() internal view returns (uint256) { return MAX_UINT64; }
 
     function getTimestamp() internal view returns (uint256) { return now; }
 }

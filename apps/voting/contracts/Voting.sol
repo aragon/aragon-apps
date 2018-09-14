@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identitifer:    GPL-3.0-or-later
+ */
+
 pragma solidity 0.4.18;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
@@ -40,7 +44,7 @@ contract Voting is IForwarder, AragonApp {
         mapping (address => VoterState) voters;
     }
 
-    Vote[] votes;
+    Vote[] internal votes; // first index is 1
 
     event StartVote(uint256 indexed voteId);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
