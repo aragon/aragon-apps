@@ -5,7 +5,7 @@ import { Spring, animated } from 'react-spring'
 import { IconCross, IconCheck, theme, springs } from '@aragon/ui'
 
 const ProgressBar = ({ progress, type }) => (
-  <Spring from={{ progress: 0 }} to={{ progress }} native>
+  <Spring from={{ progress: 0 }} to={{ progress }} config={springs.lazy} native>
     {({ progress }) => (
       <Main>
         <IconWrapper>
