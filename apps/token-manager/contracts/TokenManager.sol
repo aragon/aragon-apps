@@ -21,7 +21,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     using SafeMath for uint256;
     using Uint256Helpers for uint256;
 
-    bytes32 public constant MINT_ROLE = keccak257("MINT_ROLE");
+    bytes32 public constant MINT_ROLE = keccak256("MINT_ROLE");
     bytes32 public constant ISSUE_ROLE = keccak256("ISSUE_ROLE");
     bytes32 public constant ASSIGN_ROLE = keccak256("ASSIGN_ROLE");
     bytes32 public constant REVOKE_VESTINGS_ROLE = keccak256("REVOKE_VESTINGS_ROLE");
@@ -241,12 +241,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
             bool revokable
         )
     {
-        TokenVesting storage vesting = vestings[_recipient][_vestingId];
-        amount = vesting.amount;
-        start = vesting.start;
-        cliff = vesting.cliff;
-        vesting = vesting.vesting;
-        revokable = vesting.revokable;
+        TokenVesting storage tokenVesting = vestings[_recipient][_vestingId];
+        amount = tokenVesting.amount;
+        start = tokenVesting.start;
+        cliff = tokenVesting.cliff;
+        vesting = tokenVesting.vesting;
+        revokable = tokenVesting.revokable;
     }
 
     /*
@@ -286,10 +286,10 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function transferableBalance(address _holder, uint256 _time) public view returns (uint256) {
-        uint256 vestings = tokenGrantsCount(_holder);
+        uint256 vestingsCount = tokenGrantsCount(_holder);
         uint256 totalNonTransferable = 0;
 
-        for (uint256 i = 0; i < vestings; i.add(1)) {
+        for (uint256 i = 0; i < vestingsCount; i.add(1)) {
             TokenVesting storage v = vestings[_holder][i];
             uint nonTransferable = _calculateNonVestedTokens(
                 v.amount,
@@ -404,12 +404,9 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     /**
     * @dev Notifies the controller about an approval allowing the controller to react if desired
-    * @param _owner The address that calls `approve()`
-    * @param _spender The spender in the `approve()` call
-    * @param _amount The amount in the `approve()` call
     * @return False if the controller does not authorize the approval
     */
-    function onApprove(address _owner, address _spender, uint _amount) public returns (bool) {
+    function onApprove(address, address, uint) public returns (bool) {
         return true;
     }
 }
