@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identitifer:    GPL-3.0-or-later
+ */
+
 pragma solidity 0.4.18;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
@@ -50,7 +54,7 @@ contract Survey is AragonApp {
         mapping (address => MultiOptionVote) votes;    // voter -> options voted, with its stakes
     }
 
-    SurveyStruct[] surveys;
+    SurveyStruct[] internal surveys;
 
     event StartSurvey(uint256 indexed surveyId);
     event CastVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 stake, uint256 optionPower);
