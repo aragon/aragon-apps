@@ -30,12 +30,6 @@ class Transfers extends React.Component {
   state = {
     ...initialState,
   }
-  componentDidMount() {
-    this.setState({ selectedToken: 0 })
-  }
-  componentWillReceiveProps() {
-    this.setState({ selectedToken: 0 })
-  }
   handleTokenChange = index => {
     this.setState({ selectedToken: index, displayedTransfers: 10 })
   }

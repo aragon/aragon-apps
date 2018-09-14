@@ -1,3 +1,6 @@
+# aragon-cli
+**/**/artifact.json
+
 # Dependencies
 node_modules
 **/*/node_modules
@@ -9,8 +12,6 @@ node_modules
 */**/allFiredEvents
 */**/scTopics
 
-**/**/artifact.json
-
 # lerna
 lerna-debug.log
 
@@ -18,3 +19,10 @@ lerna-debug.log
 */**/build
 */**/abis.json
 */**/.DS_Store
+
+# yarn
+yarn-error.log
+
+# Ignore lock files
+package-lock.json
+yarn.lock

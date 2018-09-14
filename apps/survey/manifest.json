@@ -1,8 +1,8 @@
 {
-  "name": "Signaling",
+  "name": "Survey",
   "description": "Create signaling votes.",
   "icons": [{
-    "src": "images/icon.png",
+    "src": "/images/icon.png",
     "sizes": "192x192"
   }],
   "script": "/script.js",

@@ -82,7 +82,7 @@ class Balances extends React.Component {
 
 const EmptyListItem = () => (
   <ListItem style={{ opacity: '0' }}>
-    <BalanceToken symbol=" " amount={0} convertedAmount={0} />
+    <BalanceToken amount={0} convertedAmount={0} />
   </ListItem>
 )
 
