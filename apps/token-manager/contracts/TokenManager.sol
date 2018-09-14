@@ -289,7 +289,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         uint256 vestingsCount = tokenGrantsCount(_holder);
         uint256 totalNonTransferable = 0;
 
-        for (uint256 i = 0; i < vestingsCount; i.add(1)) {
+        for (uint256 i = 0; i < vestingsCount; i = i.add(1)) {
             TokenVesting storage v = vestings[_holder][i];
             uint nonTransferable = _calculateNonVestedTokens(
                 v.amount,
