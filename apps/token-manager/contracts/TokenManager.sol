@@ -352,10 +352,10 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         // in the vesting rect (as shown in above's figure)
 
         // vestedTokens = tokens * (time - start) / (vested - start)
-        uint256 vestedTokens = SafeMath.div(
-            tokens.mul(time.sub(start)),
-            vested.sub(start)
-        );
+        // In assignVesting we enforce start <= cliff <= vested
+        // Here we shortcut time >= vested and time < cliff,
+        // so no division by 0 is possible
+        uint256 vestedTokens = tokens.mul(time.sub(start)) / vested.sub(start);
 
         // tokens - vestedTokens
         return tokens.sub(vestedTokens);
