@@ -5,7 +5,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@aragon/client": "^1.0.0-beta.8",
-    "@aragon/ui": "^0.11.0",
+    "@aragon/ui": "^0.18.1",
     "date-fns": "^2.0.0-alpha.7",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
@@ -16,7 +16,6 @@
     "styled-components": "3.2.6"
   },
   "devDependencies": {
-    "@aragon/react-scripts": "^1.1.0-aragon.6",
     "babel-core": "^6.26.0",
     "babel-eslint": "^8.0.3",
     "babel-plugin-styled-components": "^1.5.1",
@@ -34,17 +33,15 @@
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-react": "^7.5.1",
     "eslint-plugin-standard": "^3.0.1",
-    "parcel-bundler": "^1.9.1",
+    "parcel-bundler": "^1.9.7",
     "prettier": "^1.8.2"
   },
   "scripts": {
     "lint": "eslint ./src",
-    "sync-assets": "rsync -rtu \"$(dirname $(node -p 'require.resolve(\"@aragon/ui\")'))/\" public/aragon-ui",
-    "start": "npm run sync-assets && npm run build:script -- --no-minify && PORT=3001 react-scripts start",
-    "build": "npm run sync-assets && npm run build:script && react-scripts build",
-    "build:script": "parcel build src/script.js -d public/",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./dist && rsync -rtu ./public/ ./dist",
+    "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve index.html -p 3001 --out-dir dist/",
+    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir dist/ --public-url '.'",
+    "build:script": "parcel build src/script.js --out-dir dist/"
   },
   "proxy": "http://localhost:3001",
   "browserslist": [
