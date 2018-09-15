@@ -128,6 +128,10 @@ class App extends React.Component {
     this.props.app.vote(voteId, voteType === VOTE_YEA, executesIfDecided)
     this.handleVoteClose()
   }
+  handleExecute = voteId => {
+    this.props.app.executeVote(voteId)
+    this.handleVoteClose()
+  }
   handleVoteClose = () => {
     this.setState({ voteVisible: false })
   }
@@ -227,6 +231,7 @@ class App extends React.Component {
                 ready={voteSidebarOpened}
                 tokenContract={tokenContract}
                 onVote={this.handleVote}
+                onExecute={this.handleExecute}
               />
             )}
         </SidePanel>
