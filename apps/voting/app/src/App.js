@@ -13,7 +13,11 @@ import { networkContextType } from './utils/provideNetwork'
 import { safeDiv } from './math-utils'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
-import { EMPTY_CALLSCRIPT, getQuorumProgress } from './vote-utils'
+import {
+  EMPTY_CALLSCRIPT,
+  getQuorumProgress,
+  voteTypeFromContractEnum,
+} from './vote-utils'
 
 const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi)
 
@@ -49,6 +53,7 @@ class App extends React.Component {
       tokenContract: this.getTokenContract(props.tokenAddress),
       voteVisible: false,
       voteSidebarOpened: false,
+      userAccountVotes: new Map(),
     }
   }
   componentWillReceiveProps(nextProps) {
@@ -64,6 +69,37 @@ class App extends React.Component {
         tokenContract: this.getTokenContract(nextProps.tokenAddress),
       })
     }
+
+    this.loadUserAccountVotes(nextProps.userAccount, nextProps.votes)
+  }
+
+  // TODO: call loadUserAccountVotes when there is a change in the votes
+  async loadUserAccountVotes(nextUserAccount, votes) {
+    const { userAccount, app } = this.props
+
+    if (userAccount === nextUserAccount) {
+      return
+    }
+
+    if (!nextUserAccount) {
+      this.setState({ userAccountVotes: new Map() })
+      return
+    }
+
+    this.setState({
+      userAccountVotes: new Map(
+        await Promise.all(
+          votes.map(
+            vote =>
+              new Promise((resolve, reject) => {
+                app
+                  .call('getVoterState', vote.voteId, nextUserAccount)
+                  .subscribe(result => resolve([vote.voteId, result]), reject)
+              })
+          )
+        )
+      ),
+    })
   }
 
   getTokenContract(tokenAddress) {
@@ -107,6 +143,7 @@ class App extends React.Component {
       votes,
       voteTime,
     } = this.props
+
     const {
       createVoteVisible,
       currentVoteId,
@@ -114,6 +151,7 @@ class App extends React.Component {
       tokenContract,
       voteSidebarOpened,
       voteVisible,
+      userAccountVotes,
     } = this.state
 
     const displayVotes = settingsLoaded && votes.length > 0
@@ -131,6 +169,9 @@ class App extends React.Component {
             quorum: safeDiv(vote.data.minAcceptQuorum, pctBase),
             quorumProgress: getQuorumProgress(vote.data),
             support: supportRequired,
+            userAccountVote: voteTypeFromContractEnum(
+              userAccountVotes.get(vote.voteId)
+            ),
           }
         })
       : votes
