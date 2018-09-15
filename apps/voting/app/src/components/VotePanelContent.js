@@ -49,7 +49,10 @@ class VotePanelContent extends React.Component {
   loadUserBalance = () => {
     const { tokenContract, user } = this.props
     if (tokenContract && user) {
-      combineLatest(tokenContract.balanceOf(user), tokenContract.decimals())
+      combineLatest(
+        tokenContract.balanceOfAt(user, vote.data.snapshotBlock),
+        tokenContract.decimals()
+      )
         .first()
         .subscribe(([balance, decimals]) => {
           const adjustedBalance = Math.floor(
