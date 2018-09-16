@@ -23,6 +23,7 @@ contract('Token Manager', accounts => {
 
     let APP_MANAGER_ROLE
     let MINT_ROLE, ISSUE_ROLE, ASSIGN_ROLE, REVOKE_VESTINGS_ROLE, BURN_ROLE
+    let ETH
 
     const root = accounts[0]
     const holder = accounts[1]
@@ -41,6 +42,7 @@ contract('Token Manager', accounts => {
         ASSIGN_ROLE = await tokenManagerBase.ASSIGN_ROLE()
         REVOKE_VESTINGS_ROLE = await tokenManagerBase.REVOKE_VESTINGS_ROLE()
         BURN_ROLE = await tokenManagerBase.BURN_ROLE()
+        ETH = await tokenManagerBase.ETH()
     })
 
     beforeEach(async () => {
@@ -288,6 +290,15 @@ contract('Token Manager', accounts => {
                 // vesting < cliff
                 await tokenManager.assignVested(holder, tokens, 10, 20, 10, true)
             })
+        })
+
+        it('allows to recover external tokens', async () => {
+            assert.isTrue(await tokenManager.allowRecoverability(ETH))
+            assert.isTrue(await tokenManager.allowRecoverability('0x1234'))
+        })
+
+        it('does not allow to recover own tokens', async () => {
+            assert.isFalse(await tokenManager.allowRecoverability(token.address))
         })
 
         context('assigning vested tokens', () => {
