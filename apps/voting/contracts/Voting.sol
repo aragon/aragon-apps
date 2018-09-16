@@ -160,7 +160,8 @@ contract Voting is IForwarder, AragonApp {
     }
 
     function canForward(address _sender, bytes) public view returns (bool) {
-        return hasInitialized() && canPerform(_sender, CREATE_VOTES_ROLE, arr());
+        // Note that `canPerform()` implicitly does an initialization check itself
+        return canPerform(_sender, CREATE_VOTES_ROLE, arr());
     }
 
     function canVote(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (bool) {
