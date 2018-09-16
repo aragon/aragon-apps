@@ -290,10 +290,7 @@ contract Survey is AragonApp {
     }
 
     function getOptionPower(uint256 _surveyId, uint256 _optionId) public view surveyExists(_surveyId) returns (uint256) {
-        SurveyStruct storage survey = surveys[_surveyId];
-        require(_optionId <= survey.options);
-
-        return survey.optionPower[_optionId];
+        return surveys[_surveyId].optionPower[_optionId];
     }
 
     function isParticipationAchieved(uint256 _surveyId) public view surveyExists(_surveyId) returns (bool) {

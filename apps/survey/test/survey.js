@@ -121,20 +121,8 @@ contract('Survey app', accounts => {
       })
 
       it('fails getting a survey out of bounds', async () => {
-        return assertRevert(async () => {
+        assertRevert(async () => {
           await survey.getSurvey(surveyId + 1)
-        })
-      })
-
-      it('fails getting option power for a survey out of bounds', async () => {
-        return assertRevert(async () => {
-          await survey.getOptionPower(surveyId + 1, 0)
-        })
-      })
-
-      it('fails getting option power for an option out of bounds', async () => {
-        return assertRevert(async () => {
-          await survey.getOptionPower(surveyId, optionsCount + 1)
         })
       })
 
