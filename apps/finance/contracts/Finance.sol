@@ -350,6 +350,15 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     // consts
 
+    /**
+    * @dev Disable recovery escape hatch if the app has been initialized, as it could be used
+    *      maliciously to transfer funds in the Finance app to another Vault
+    *      finance#recoverToVault() should be used to recover funds to the Finance's vault
+    */
+    function allowRecoverability(address) public view returns (bool) {
+        return !hasInitialized();
+    }
+
     function getPayment(uint256 _paymentId)
         public
         view

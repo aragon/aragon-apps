@@ -2,6 +2,7 @@ const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/asse
 const getBalance = require('@aragon/test-helpers/balance')(web3)
 
 const Finance = artifacts.require('FinanceMock')
+const Vault = artifacts.require('Vault')
 const MiniMeToken = artifacts.require('MiniMeToken')
 
 const getContract = name => artifacts.require(name)
@@ -25,7 +26,7 @@ contract('Finance App', accounts => {
         const aclBase = await getContract('ACL').new()
         const regFact = await getContract('EVMScriptRegistryFactory').new()
         daoFact = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, regFact.address)
-        vaultBase = await getContract('Vault').new()
+        vaultBase = await Vault.new()
         financeBase = await Finance.new()
 
         // Setup constants
@@ -41,6 +42,17 @@ contract('Finance App', accounts => {
         DISABLE_PAYMENTS_ROLE = await financeBase.DISABLE_PAYMENTS_ROLE()
         TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
     })
+
+    const setupRecoveryVault = async (dao) => {
+        const recoveryVaultAppId = '0x90ab'
+        const vaultReceipt = await dao.newAppInstance(recoveryVaultAppId, vaultBase.address, { from: root })
+        const recoveryVault = Vault.at(vaultReceipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+        await recoveryVault.initialize()
+        await dao.setApp(await dao.APP_ADDR_NAMESPACE(), recoveryVaultAppId, recoveryVault.address)
+        await dao.setRecoveryVaultAppId(recoveryVaultAppId, { from: root })
+
+        return recoveryVault
+    }
 
     const newProxyFinance = async () => {
         const r = await daoFact.newDAO(root)
@@ -60,7 +72,9 @@ contract('Finance App', accounts => {
         await acl.createPermission(ANY_ENTITY, financeApp.address, EXECUTE_PAYMENTS_ROLE, root, { from: root })
         await acl.createPermission(ANY_ENTITY, financeApp.address, DISABLE_PAYMENTS_ROLE, root, { from: root })
 
-        return { dao, financeApp }
+        const recoveryVault = await setupRecoveryVault(dao)
+
+        return { dao, financeApp, recoveryVault }
     }
 
     const forceSendETH = async (to, value) => {
@@ -211,56 +225,95 @@ contract('Finance App', accounts => {
         assert.equal(ref, 'Ether transfer to Finance app', 'ref should be correct')
     })
 
-    it('sends locked tokens to Vault', async () => {
-        let initialBalance = await token1.balanceOf(vault.address)
-        // 'lock' tokens
-        await token1.transfer(finance.address, 5)
+    context('locked tokens', () => {
+        let initialBalance
 
-        await finance.recoverToVault(token1.address)
+        beforeEach(async () => {
+            initialBalance = await token1.balanceOf(vault.address)
+            // 'lock' tokens
+            await token1.transfer(finance.address, 5)
+        })
 
-        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(1)
+        it('allows recoverability is disabled', async () => {
+            assert.isFalse(await finance.allowsRecoverability(token1.address))
+        })
 
-        let finalBalance = await token1.balanceOf(vault.address)
-        assert.equal(finalBalance.toString(), initialBalance.plus(5).toString(), 'deposited tokens must be in vault')
-        assert.equal(await token1.balanceOf(finance.address), 0, 'finance shouldn\'t have tokens')
-        assert.equal(periodId, 0, 'period id should be correct')
-        assert.equal(amount, 5, 'amount should be correct')
-        assert.equal(paymentId, 0, 'payment id should be 0')
-        assert.equal(paymentRepeatNumber, 0, 'payment repeat number should be 0')
-        assert.equal(token, token1.address, 'token should be correct')
-        assert.equal(entity, finance.address, 'entity should be correct')
-        assert.isTrue(incoming, 'tx should be incoming')
-        assert.equal(date, 1, 'date should be correct')
-        assert.equal(ref, 'Recover to Vault', 'ref should be correct')
+        it('are recovered using Finance#recoverToVault', async () => {
+            await finance.recoverToVault(token1.address)
+
+            const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(1)
+
+            let finalBalance = await token1.balanceOf(vault.address)
+            assert.equal(finalBalance.toString(), initialBalance.plus(5).toString(), 'deposited tokens must be in vault')
+            assert.equal(await token1.balanceOf(finance.address), 0, 'finance shouldn\'t have tokens')
+            assert.equal(periodId, 0, 'period id should be correct')
+            assert.equal(amount, 5, 'amount should be correct')
+            assert.equal(paymentId, 0, 'payment id should be 0')
+            assert.equal(paymentRepeatNumber, 0, 'payment repeat number should be 0')
+            assert.equal(token, token1.address, 'token should be correct')
+            assert.equal(entity, finance.address, 'entity should be correct')
+            assert.isTrue(incoming, 'tx should be incoming')
+            assert.equal(date, 1, 'date should be correct')
+            assert.equal(ref, 'Recover to Vault', 'ref should be correct')
+        })
+
+        it('fail to be recovered using AragonApp#transferToVault', async () => {
+            return assertRevert(() => (
+                finance.transferToVault(token1.address)
+            ))
+        })
+
+        it('fail to be recovered if token balance is 0', async () => {
+            // if current balance is zero, it reverts
+            return assertRevert(async () => (
+                finance.recoverToVault(token2.address)
+            ))
+        })
     })
 
-    it('sends locked ETH to Vault', async () => {
+    context('locked ETH', () => {
         const lockedETH = 100
 
-        await forceSendETH(finance.address, lockedETH)
-        assert.equal((await getBalance(finance.address)).toNumber(), lockedETH, 'finance should have stuck ETH')
+        beforeEach(async () => {
+            await forceSendETH(finance.address, lockedETH)
+            assert.equal((await getBalance(finance.address)).toNumber(), lockedETH, 'finance should have stuck ETH')
+        })
 
-        await finance.recoverToVault(ETH)
+        it('allows recoverability is disabled', async () => {
+            assert.isFalse(await finance.allowsRecoverability(ETH))
+        })
 
-        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(1)
+        it('is recovered using Finance#recoverToVault', async () => {
+            await finance.recoverToVault(ETH)
 
-        assert.equal(await vault.balance(ETH), VAULT_INITIAL_ETH_BALANCE + lockedETH, 'recovered ETH must be in vault')
-        assert.equal((await getBalance(finance.address)).toNumber(), 0, 'finance shouldn\'t have ETH')
-        assert.equal(periodId, 0, 'period id should be correct')
-        assert.equal(amount, lockedETH, 'amount should be correct')
-        assert.equal(paymentId, 0, 'payment id should be 0')
-        assert.equal(paymentRepeatNumber, 0, 'payment repeat number should be 0')
-        assert.equal(token, ETH, 'token should be correct')
-        assert.equal(entity, finance.address, 'entity should be correct')
-        assert.isTrue(incoming, 'tx should be incoming')
-        assert.equal(date, 1, 'date should be correct')
-        assert.equal(ref, 'Recover to Vault', 'ref should be correct')
-    })
+            const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(1)
 
-    it('try to send locked tokens to Vault, but balance is 0', async () => {
-        // if current balance is zero, it just fails
-        return assertRevert(async () => {
-            await finance.recoverToVault(token1.address)
+            assert.equal(await vault.balance(ETH), VAULT_INITIAL_ETH_BALANCE + lockedETH, 'recovered ETH must be in vault')
+            assert.equal((await getBalance(finance.address)).toNumber(), 0, 'finance shouldn\'t have ETH')
+            assert.equal(periodId, 0, 'period id should be correct')
+            assert.equal(amount, lockedETH, 'amount should be correct')
+            assert.equal(paymentId, 0, 'payment id should be 0')
+            assert.equal(paymentRepeatNumber, 0, 'payment repeat number should be 0')
+            assert.equal(token, ETH, 'token should be correct')
+            assert.equal(entity, finance.address, 'entity should be correct')
+            assert.isTrue(incoming, 'tx should be incoming')
+            assert.equal(date, 1, 'date should be correct')
+            assert.equal(ref, 'Recover to Vault', 'ref should be correct')
+        })
+
+        it('fails to be recovered using AragonApp#transferToVault', async () => {
+            return assertRevert(() => (
+                finance.transferToVault(ETH)
+            ))
+        })
+
+        it('fails to be recovered if ETH balance is 0', async () => {
+            await finance.recoverToVault(ETH)
+
+            // if current balance is zero, it reverts
+            return assertRevert(async () => (
+                finance.recoverToVault(ETH)
+            ))
         })
     })
 
@@ -626,15 +679,16 @@ contract('Finance App', accounts => {
     })
 
     context('Without initialize', async () => {
-        let nonInit
+        let nonInit, recVault
 
         beforeEach(async () => {
-            const { financeApp } = await newProxyFinance()
+            const { financeApp, recoveryVault } = await newProxyFinance()
             nonInit = financeApp
+            recVault = recoveryVault
             await nonInit.mock_setTimestamp(START_TIME)
         })
 
-        it('fails to create new Payment', async() => {
+        it('fails to create new payment', async() => {
             const recipient = accounts[1]
             const amount = 1
             const time = 22
@@ -663,6 +717,64 @@ contract('Finance App', accounts => {
         it('fails to deposit ETH', async() => {
             return assertRevert(async() => {
                 await nonInit.send(10, { gas: 3e5 })
+            })
+        })
+
+        it('can recover ETH using AragonApp#transferToVault', async () => {
+            await forceSendETH(nonInit.address, 100)
+
+            await nonInit.transferToVault(ETH)
+
+            assert.equal(await recVault.balance(ETH), 100)
+        })
+
+        context('locked tokens', () => {
+            const lockedTokens = 5
+
+            beforeEach(async () => {
+                // 'lock' tokens
+                await token1.transfer(nonInit.address, lockedTokens)
+            })
+
+            it('allows recoverability is enabled', async () => {
+                assert.isTrue(await nonInit.allowsRecoverability(token1.address))
+            })
+
+            it('can be recovered using AragonApp#transferToVault', async () => {
+                await nonInit.transferToVault(token1.address)
+
+                assert.equal(await recVault.balance(token1.address), lockedTokens)
+            })
+
+            it('fail to be recovered using Finance#recoverToVault', async () => {
+                return assertRevert(async () => (
+                    finance.recoverToVault(token1.address)
+                ))
+            })
+        })
+
+        context('locked ETH', () => {
+            const lockedETH = 100
+
+            beforeEach(async () => {
+                await forceSendETH(nonInit.address, lockedETH)
+                assert.equal((await getBalance(nonInit.address)).toNumber(), lockedETH, 'finance should have stuck ETH')
+            })
+
+            it('allows recoverability is enabled', async () => {
+                assert.isTrue(await nonInit.allowsRecoverability(ETH))
+            })
+
+            it('fails to be recovered using Finance#recoverToVault', async () => {
+                return assertRevert(async () => (
+                    await nonInit.recoverToVault(ETH)
+                ))
+            })
+
+            it('can recover ETH using AragonApp#transferToVault', async () => {
+                await nonInit.transferToVault(ETH)
+
+                assert.equal(await recVault.balance(ETH), lockedETH)
             })
         })
     })
