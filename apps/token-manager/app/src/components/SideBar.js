@@ -1,7 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Text, theme } from '@aragon/ui'
-import BN from 'bn.js'
 import { sciNot } from '../math-utils'
 
 // Number of digits before "Total Supply" gets wrapped into two lines
