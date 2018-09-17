@@ -1,6 +1,6 @@
 {
   "name": "@aragon/apps-finance",
-  "version": "1.0.0",
+  "version": "2.0.0-beta.1",
   "main": "index.js",
   "scripts": {
     "postinstall": "cd app && npm install",
@@ -33,18 +33,20 @@
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "description": "",
   "devDependencies": {
+    "@aragon/apps-shared-migrations": "1.0.0",
+    "@aragon/apps-shared-minime": "1.0.0",
     "@aragon/cli": "^2.0.4",
     "@aragon/test-helpers": "^1.0.1",
     "eth-gas-reporter": "^0.1.1",
     "ganache-cli": "^6.0.3",
-    "solidity-coverage": "0.4.3",
+    "solidity-coverage": "0.5.11",
     "solium": "^1.0.4",
-    "truffle": "4.0.5",
+    "truffle": "4.1.14",
     "truffle-hdwallet-provider": "0.0.3",
     "webpack": "3.10.0"
   },
   "dependencies": {
-    "@aragon/apps-vault": "^2.0.1",
-    "@aragon/os": "^3.1.10"
+    "@aragon/apps-vault": "^3.0.0-beta.1",
+    "@aragon/os": "4.0.0-beta.1"
   }
 }
