@@ -76,8 +76,8 @@ contract Voting is IForwarder, AragonApp {
         initialized();
 
         require(_minAcceptQuorumPct > 0);
+        require(_minAcceptQuorumPct <= _supportRequiredPct);
         require(_supportRequiredPct <= PCT_BASE);
-        require(_supportRequiredPct >= _minAcceptQuorumPct);
 
         token = _token;
         supportRequiredPct = _supportRequiredPct;
@@ -94,7 +94,7 @@ contract Voting is IForwarder, AragonApp {
         authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct))
     {
         require(_minAcceptQuorumPct > 0);
-        require(supportRequiredPct >= _minAcceptQuorumPct);
+        require(_minAcceptQuorumPct <= supportRequiredPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
 
         emit ChangeMinQuorum(_minAcceptQuorumPct);
@@ -107,7 +107,7 @@ contract Voting is IForwarder, AragonApp {
     * @return voteId Id for newly created vote
     */
     function newVote(bytes _executionScript, string _metadata) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
-        return _newVote(_executionScript, _metadata, true);
+        return _newVote(_executionScript, _metadata, true, true);
     }
 
     /**
@@ -115,10 +115,15 @@ contract Voting is IForwarder, AragonApp {
      * @param _executionScript EVM script to be executed on approval
      * @param _metadata Vote metadata
      * @param _castVote Whether to also cast newly created vote
+     * @param _executesIfDecided Whether to also immediately execute newly created vote if decided
      * @return voteId id for newly created vote
      */
-    function newVote(bytes _executionScript, string _metadata, bool _castVote) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
-        return _newVote(_executionScript, _metadata, _castVote);
+    function newVote(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided)
+        external
+        auth(CREATE_VOTES_ROLE)
+        returns (uint256 voteId)
+    {
+        return _newVote(_executionScript, _metadata, _castVote, _executesIfDecided);
     }
 
     /**
@@ -152,7 +157,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function forward(bytes _evmScript) public isInitialized {
         require(canForward(msg.sender, _evmScript));
-        _newVote(_evmScript, "", true);
+        _newVote(_evmScript, "", true, true);
     }
 
     function canForward(address _sender, bytes) public view returns (bool) {
@@ -234,7 +239,10 @@ contract Voting is IForwarder, AragonApp {
         return votes[_voteId].voters[_voter];
     }
 
-    function _newVote(bytes _executionScript, string _metadata, bool _castVote) internal returns (uint256 voteId) {
+    function _newVote(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided)
+        internal
+        returns (uint256 voteId)
+    {
         voteId = votesLength++;
         Vote storage vote_ = votes[voteId];
         vote_.executionScript = _executionScript;
@@ -248,7 +256,7 @@ contract Voting is IForwarder, AragonApp {
         emit StartVote(voteId);
 
         if (_castVote && canVote(voteId, msg.sender)) {
-            _vote(voteId, true, msg.sender, true);
+            _vote(voteId, true, msg.sender, _executesIfDecided);
         }
     }
 
