@@ -5,20 +5,20 @@ const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.ev
 
 const ACL = artifacts.require('ACL')
 const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
+const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 const DAOFactory = artifacts.require('DAOFactory')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
+const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
 const Vault = artifacts.require('Vault')
 
 const SimpleERC20 = artifacts.require('tokens/SimpleERC20')
 
-const getContract = name => artifacts.require(name)
-
 const NULL_ADDRESS = '0x00'
 
 contract('Vault app', (accounts) => {
-  let daoFact, vaultBase, vault
+  let daoFact, vaultBase, vault, vaultId
 
   let ETH, ANY_ENTITY, APP_MANAGER_ROLE, TRANSFER_ROLE
 
@@ -26,11 +26,11 @@ contract('Vault app', (accounts) => {
   const NO_DATA = '0x'
 
   before(async () => {
-    const kernelBase = await getContract('Kernel').new(true) // petrify immediately
-    const aclBase = await getContract('ACL').new()
-    const regFact = await getContract('EVMScriptRegistryFactory').new()
-    daoFact = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, regFact.address)
-    vaultBase = await getContract('Vault').new()
+    const kernelBase = await Kernel.new(true) // petrify immediately
+    const aclBase = await ACL.new()
+    const regFact = await EVMScriptRegistryFactory.new()
+    daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
+    vaultBase = await Vault.new()
 
     // Setup constants
     ETH = await vaultBase.ETH()
@@ -41,14 +41,17 @@ contract('Vault app', (accounts) => {
 
   beforeEach(async () => {
     const r = await daoFact.newDAO(root)
-    const dao = getContract('Kernel').at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
-    const acl = getContract('ACL').at(await dao.acl())
+    const dao = Kernel.at(getEvent(r, 'DeployDAO', 'dao'))
+    const acl = ACL.at(await dao.acl())
 
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
     // vault
-    const receipt = await dao.newAppInstance('0x1234', vaultBase.address, { from: root })
-    vault = getContract('Vault').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+    vaultId = hash('vault.aragonpm.test')
+
+    const vaultReceipt = await dao.newAppInstance(vaultId, vaultBase.address)
+    const vaultProxyAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
+    vault = Vault.at(vaultProxyAddress)
 
     await acl.createPermission(ANY_ENTITY, vault.address, TRANSFER_ROLE, root, { from: root })
 
@@ -170,52 +173,32 @@ contract('Vault app', (accounts) => {
   })
 
   context('using Vault behind proxy', async () => {
-    let kernel, token, vault, vaultBase, vaultId
+    let token
 
     beforeEach(async () => {
-      const permissionsRoot = accounts[0]
       token = await SimpleERC20.new()
-
-      const kernelBase = await getContract('Kernel').new(true) // petrify immediately
-      const aclBase = await getContract('ACL').new()
-      const factory = await DAOFactory.new(kernelBase.address, aclBase.address, NULL_ADDRESS)
-
-      const receipt = await factory.newDAO(permissionsRoot)
-      const kernelAddress = getEvent(receipt, 'DeployDAO', 'dao')
-
-      kernel = Kernel.at(kernelAddress)
-      const acl = ACL.at(await kernel.acl())
-
-      const r = await kernel.APP_MANAGER_ROLE()
-      await acl.createPermission(permissionsRoot, kernel.address, r, permissionsRoot)
-
-      // Install the vault app to the kernel
-      vaultBase = await Vault.new()
-
-      vaultId = hash('vault.aragonpm.test')
-      const APP_BASE_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
-
-      const vaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address)
-      const vaultProxyAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
-      vault = Vault.at(vaultProxyAddress)
     })
 
     context('disallows recovering assets', async () => {
-      let defaultVault
+      let kernel, defaultVault
 
       beforeEach(async () => {
-        const APP_ADDR_NAMESPACE = await kernel.APP_ADDR_NAMESPACE()
-        const ETH = await kernel.ETH()
+        const kernelBase = await KernelDepositableMock.new(true) // petrify immediately
+        const kernelProxy = await KernelProxy.new(kernelBase.address)
+        const aclBase = await ACL.new()
+        kernel = KernelDepositableMock.at(kernelProxy.address)
+        await kernel.initialize(aclBase.address, root)
+        await kernel.enableDepositable()
+        const acl = ACL.at(await kernel.acl())
+        await acl.createPermission(root, kernel.address, APP_MANAGER_ROLE, root, { from: root })
 
-        // Create a new vault
-        const defaultVaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address)
+        // Create a new vault and set that vault as the default vault in the kernel
+        const defaultVaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '', true)
         const defaultVaultAddress = getEvent(defaultVaultReceipt, 'NewAppProxy', 'proxy')
         defaultVault = Vault.at(defaultVaultAddress)
+        await defaultVault.initialize()
 
-        // Set that vault as the default vault in the kernel
-        await kernel.setApp(APP_ADDR_NAMESPACE, vaultId, defaultVault.address)
-        await kernel.setRecoveryVaultId(vaultId)
-
+        await kernel.setRecoveryVaultAppId(vaultId)
       })
 
       it('set up the default vault correctly to recover ETH from the kernel', async () => {
@@ -242,10 +225,10 @@ contract('Vault app', (accounts) => {
         await assertRevert(() => vault.transferToVault(ETH))
       })
 
-      it('fails when attempting to recover ETH out of the vault', async () => {
+      it('fails when attempting to recover tokens out of the vault', async () => {
         await token.transfer(vault.address, 10)
         assert.equal((await token.balanceOf(vault.address)), 10, 'vault should have 10 balance')
-        await assertRevert(() => vault.transferToVault(ETH))
+        await assertRevert(() => vault.transferToVault(token.address))
       })
     })
   })
