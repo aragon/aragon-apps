@@ -111,10 +111,9 @@ contract('Voting App', accounts => {
         })
 
         it('deciding voting is automatically executed (long version)', async () => {
-            const votingMockExt = await getContract('VotingMockExt').new(voting.address)
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeCallScript([action])
-            await votingMockExt.newVote(script, '', true, true, { from: holder50 })
+            await voting.newVoteExt(script, '', true, true, { from: holder50 })
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
         })
 
@@ -170,10 +169,9 @@ contract('Voting App', accounts => {
             let script = ''
 
             beforeEach(async () => {
-                const votingMockExt = await getContract('VotingMockExt').new(voting.address)
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 script = encodeCallScript([action, action])
-                voteId = createdVoteId(await votingMockExt.newVote(script, 'metadata', false, false, { from: holder50 }))
+                voteId = createdVoteId(await voting.newVoteExt(script, 'metadata', false, false, { from: holder50 }))
             })
 
             it('has correct state', async () => {
@@ -362,14 +360,8 @@ contract('Voting App', accounts => {
         })
 
         context('new vote parameters', () => {
-            let votingMockExt
-
-            beforeEach(async () => {
-                votingMockExt = await getContract('VotingMockExt').new(voting.address)
-            })
-
             it('creating vote as holder executes vote (if _canExecute param says so)', async () => {
-                const voteId = createdVoteId(await votingMockExt.newVote(EMPTY_SCRIPT, 'metadata', true, true, { from: holder }))
+                const voteId = createdVoteId(await voting.newVoteExt(EMPTY_SCRIPT, 'metadata', true, true, { from: holder }))
                 const [isOpen, isExecuted] = await voting.getVote(voteId)
 
                 assert.isFalse(isOpen, 'vote should be closed')
@@ -377,7 +369,7 @@ contract('Voting App', accounts => {
             })
 
             it("creating vote as holder doesn't execute vote if _canExecute param doesn't says so", async () => {
-                const voteId = createdVoteId(await votingMockExt.newVote(EMPTY_SCRIPT, 'metadata', true, false, { from: holder }))
+                const voteId = createdVoteId(await voting.newVoteExt(EMPTY_SCRIPT, 'metadata', true, false, { from: holder }))
                 const [isOpen, isExecuted] = await voting.getVote(voteId)
 
                 assert.isTrue(isOpen, 'vote should be open')
