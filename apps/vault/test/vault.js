@@ -228,7 +228,7 @@ contract('Vault app', (accounts) => {
       it('fails when attempting to recover tokens out of the vault', async () => {
         await token.transfer(vault.address, 10)
         assert.equal((await token.balanceOf(vault.address)), 10, 'vault should have 10 balance')
-        await assertRevert(() => vault.transferToVault(ETH))
+        await assertRevert(() => vault.transferToVault(token.address))
       })
     })
   })
