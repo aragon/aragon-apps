@@ -141,7 +141,7 @@ contract('Voting App', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeCallScript([action])
             const voteId = createdVoteId(await voting.forward(script, { from: holder50 }))
-            assert.equal(voteId, 1, 'voting should have been created')
+            assert.equal(voteId, 0, 'voting should have been created')
         })
 
         it('can change minimum acceptance quorum', async () => {
@@ -165,8 +165,7 @@ contract('Voting App', accounts => {
         })
 
         context('creating vote', () => {
-            let voteId = {}
-            let script = ''
+            let script, voteId
 
             beforeEach(async () => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
@@ -188,6 +187,12 @@ contract('Voting App', accounts => {
                 assert.equal(execScript, script, 'script should be correct')
                 assert.equal(await voting.getVoteMetadata(voteId), 'metadata', 'should have returned correct metadata')
                 assert.equal(await voting.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')
+            })
+
+            it('fails getting a vote out of bounds', async () => {
+                assertRevert(async () => {
+                    await voting.getVote(voteId + 1)
+                })
             })
 
             it('changing min quorum doesnt affect vote min quorum', async () => {

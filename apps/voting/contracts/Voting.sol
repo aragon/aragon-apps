@@ -43,12 +43,19 @@ contract Voting is IForwarder, AragonApp {
         mapping (address => VoterState) voters;
     }
 
-    Vote[] internal votes; // first index is 1
+    // we are mimicing an array, we use a mapping instead to make app upgrade more graceful
+    mapping (uint256 => Vote) internal votes;
+    uint256 public votesLength;
 
     event StartVote(uint256 indexed voteId);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
     event ChangeMinQuorum(uint256 minAcceptQuorumPct);
+
+    modifier voteExists(uint256 _voteId) {
+        require(_voteId < votesLength);
+        _;
+    }
 
     /**
     * @notice Initializes Voting app with `_token.symbol(): string` for governance, minimum support of `(_supportRequiredPct - _supportRequiredPct % 10^16) / 10^14`, minimum acceptance quorum of `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^16) / 10^14` and vote duations of `(_voteTime - _voteTime % 86400) / 86400` day `_voteTime >= 172800 ? 's' : ''`
@@ -74,8 +81,6 @@ contract Voting is IForwarder, AragonApp {
         supportRequiredPct = _supportRequiredPct;
         minAcceptQuorumPct = _minAcceptQuorumPct;
         voteTime = _voteTime;
-
-        votes.length += 1;
     }
 
     /**
@@ -125,7 +130,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
     */
-    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external isInitialized {
+    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external isInitialized voteExists(_voteId) {
         require(canVote(_voteId, msg.sender));
         _vote(
             _voteId,
@@ -139,7 +144,7 @@ contract Voting is IForwarder, AragonApp {
     * @notice Execute the result of vote #`_voteId`
     * @param _voteId Id for vote
     */
-    function executeVote(uint256 _voteId) external isInitialized {
+    function executeVote(uint256 _voteId) external isInitialized voteExists(_voteId) {
         require(canExecute(_voteId));
         _executeVote(_voteId);
     }
@@ -162,13 +167,13 @@ contract Voting is IForwarder, AragonApp {
         return canPerform(_sender, CREATE_VOTES_ROLE, arr());
     }
 
-    function canVote(uint256 _voteId, address _voter) public view returns (bool) {
+    function canVote(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
 
         return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
     }
 
-    function canExecute(uint256 _voteId) public view returns (bool) {
+    function canExecute(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
 
         if (vote_.executed)
@@ -196,6 +201,7 @@ contract Voting is IForwarder, AragonApp {
     function getVote(uint256 _voteId)
         public
         view
+        voteExists(_voteId)
         returns (
             bool open,
             bool executed,
@@ -223,11 +229,11 @@ contract Voting is IForwarder, AragonApp {
         script = vote_.executionScript;
     }
 
-    function getVoteMetadata(uint256 _voteId) public view returns (string) {
+    function getVoteMetadata(uint256 _voteId) public view voteExists(_voteId) returns (string) {
         return votes[_voteId].metadata;
     }
 
-    function getVoterState(uint256 _voteId, address _voter) public view returns (VoterState) {
+    function getVoterState(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (VoterState) {
         return votes[_voteId].voters[_voter];
     }
 
@@ -235,7 +241,7 @@ contract Voting is IForwarder, AragonApp {
         internal
         returns (uint256 voteId)
     {
-        voteId = votes.length++;
+        voteId = votesLength++;
         Vote storage vote_ = votes[voteId];
         vote_.executionScript = _executionScript;
         vote_.creator = msg.sender;
