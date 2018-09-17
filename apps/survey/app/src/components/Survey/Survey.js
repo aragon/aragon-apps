@@ -30,14 +30,14 @@ class Survey extends React.Component {
     // can be generally dangerous, but because we're not updating something
     // that will trigger another `setState()`, we should be safe here.
     if (prevProps.survey !== this.props.survey && this.props.survey) {
-        // eslint-disable-next-line react/no-did-update-set-state
-        this.setState({
-          transitionTo: this._detailsWrapperEl.getBoundingClientRect(),
-        })
-        this._detailsWrapperEl.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        })
+      // eslint-disable-next-line react/no-did-update-set-state
+      this.setState({
+        transitionTo: this._detailsWrapperEl.getBoundingClientRect(),
+      })
+      this._detailsWrapperEl.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
     }
   }
   handleDetailsWrapperRef = el => {

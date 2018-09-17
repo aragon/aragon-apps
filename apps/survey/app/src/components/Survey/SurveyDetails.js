@@ -42,10 +42,7 @@ class SurveyDetails extends React.Component {
             >
               {[
                 ({ progress }) => (
-                  <animated.section
-                    key="options"
-                    style={{ opacity: progress }}
-                  >
+                  <animated.section key="options" style={{ opacity: progress }}>
                     <SectionTitle>Options</SectionTitle>
                     <SurveyOptions
                       options={survey.options}
@@ -54,10 +51,7 @@ class SurveyDetails extends React.Component {
                   </animated.section>
                 ),
                 ({ progress }) => (
-                  <animated.section
-                    key="time"
-                    style={{ opacity: progress }}
-                  >
+                  <animated.section key="time" style={{ opacity: progress }}>
                     <SectionTitle>Time Remaining</SectionTitle>
                     <Countdown end={survey.data.endDate} />
                   </animated.section>
@@ -86,10 +80,7 @@ class SurveyDetails extends React.Component {
                   </animated.section>
                 ),
                 ({ progress }) => (
-                  <animated.section
-                    key="url"
-                    style={{ opacity: progress }}
-                  >
+                  <animated.section key="url" style={{ opacity: progress }}>
                     <SectionTitle>Web Link</SectionTitle>
                     <UrlBlock>
                       <SafeLink
@@ -103,19 +94,13 @@ class SurveyDetails extends React.Component {
                   </animated.section>
                 ),
                 ({ progress }) => (
-                  <animated.section
-                    key="creator"
-                    style={{ opacity: progress }}
-                  >
+                  <animated.section key="creator" style={{ opacity: progress }}>
                     <SectionTitle>Created By</SectionTitle>
                     <Creator address={survey.data.creator} />
                   </animated.section>
                 ),
                 ({ progress }) => (
-                  <animated.section
-                    key="vote"
-                    style={{ opacity: progress }}
-                  >
+                  <animated.section key="vote" style={{ opacity: progress }}>
                     <VoteButtonWrapper>
                       {survey.data.open && (
                         <Button
