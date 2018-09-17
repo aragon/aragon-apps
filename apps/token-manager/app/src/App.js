@@ -61,7 +61,13 @@ class App extends React.Component {
     })
   }
   render() {
-    const { tokenSymbol, tokenSupply, tokenDecimalsBase, holders, userAccount } = this.props
+    const {
+      tokenSymbol,
+      tokenSupply,
+      tokenDecimalsBase,
+      holders,
+      userAccount,
+    } = this.props
     const {
       assignTokensConfig,
       sidepanelOpened,
@@ -128,6 +134,13 @@ const Title = styled.span`
   }
 `
 
+function byBalance(a, b) {
+  if (a.balance.gt(b.balance)) return -1
+  if (a.balance.lt(b.balance)) return 1
+
+  return 0
+}
+
 // convert tokenSupply, holders balances to strings and then to BNs
 // calculate tokenDecimalsBase
 function convertBigNumbers(state) {
@@ -135,10 +148,12 @@ function convertBigNumbers(state) {
   const tokenDecimalsBase = new BN(`${Math.pow(10, tokenDecimals)}`)
 
   tokenSupply = new BN(`${tokenSupply}`)
-  holders = holders.map(holder => ({
-    ...holder,
-    balance: new BN(`${holder.balance}`),
-  }))
+  holders = holders
+    .map(holder => ({
+      ...holder,
+      balance: new BN(`${holder.balance}`),
+    }))
+    .sort(byBalance)
   return { ...state, tokenSupply, holders, tokenDecimalsBase }
 }
 
