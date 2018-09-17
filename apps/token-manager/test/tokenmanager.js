@@ -19,16 +19,30 @@ const n = '0x00'
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 
 contract('Token Manager', accounts => {
-    let daoFact, tokenManager, token = {}
+    let tokenManagerBase, daoFact, tokenManager, token
+
+    let APP_MANAGER_ROLE
+    let MINT_ROLE, ISSUE_ROLE, ASSIGN_ROLE, REVOKE_VESTINGS_ROLE, BURN_ROLE
+    let ETH
 
     const root = accounts[0]
     const holder = accounts[1]
 
     before(async () => {
-        const kernelBase = await getContract('Kernel').new()
+        const kernelBase = await getContract('Kernel').new(true) // petrify immediately
         const aclBase = await getContract('ACL').new()
         const regFact = await EVMScriptRegistryFactory.new()
         daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
+        tokenManagerBase = await TokenManager.new()
+
+        // Setup constants
+        APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+        MINT_ROLE = await tokenManagerBase.MINT_ROLE()
+        ISSUE_ROLE = await tokenManagerBase.ISSUE_ROLE()
+        ASSIGN_ROLE = await tokenManagerBase.ASSIGN_ROLE()
+        REVOKE_VESTINGS_ROLE = await tokenManagerBase.REVOKE_VESTINGS_ROLE()
+        BURN_ROLE = await tokenManagerBase.BURN_ROLE()
+        ETH = await tokenManagerBase.ETH()
     })
 
     beforeEach(async () => {
@@ -36,18 +50,22 @@ contract('Token Manager', accounts => {
         const dao = Kernel.at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
         const acl = ACL.at(await dao.acl())
 
-        await acl.createPermission(root, dao.address, await dao.APP_MANAGER_ROLE(), root, { from: root })
+        await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
-        const receipt = await dao.newAppInstance('0x1234', (await TokenManager.new()).address, { from: root })
+        const receipt = await dao.newAppInstance('0x1234', tokenManagerBase.address, { from: root })
         tokenManager = TokenManager.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
 
-        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.MINT_ROLE(), root, { from: root })
-        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.ISSUE_ROLE(), root, { from: root })
-        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.ASSIGN_ROLE(), root, { from: root })
-        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.REVOKE_VESTINGS_ROLE(), root, { from: root })
-        await acl.createPermission(ANY_ADDR, tokenManager.address, await tokenManager.BURN_ROLE(), root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, MINT_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, ISSUE_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, ASSIGN_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, REVOKE_VESTINGS_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ADDR, tokenManager.address, BURN_ROLE, root, { from: root })
 
         token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
+    })
+
+    it('checks it is forwarder', async () => {
+        assert.isTrue(await tokenManager.isForwarder())
     })
 
     it('initializating as transferable sets the token as transferable', async () => {
@@ -204,6 +222,14 @@ contract('Token Manager', accounts => {
             })
         })
 
+        it('cannot initialize base app', async () => {
+            const newTokenManager = await TokenManager.new()
+            assert.isTrue(await newTokenManager.isPetrified())
+            return assertRevert(async () => {
+                await newTokenManager.initialize(token.address, true, 0, false)
+            })
+        })
+
         it('can mint tokens', async () => {
             await tokenManager.mint(holder, 100)
 
@@ -264,6 +290,15 @@ contract('Token Manager', accounts => {
                 // vesting < cliff
                 await tokenManager.assignVested(holder, tokens, 10, 20, 10, true)
             })
+        })
+
+        it('allows to recover external tokens', async () => {
+            assert.isTrue(await tokenManager.allowRecoverability(ETH))
+            assert.isTrue(await tokenManager.allowRecoverability('0x1234'))
+        })
+
+        it('does not allow to recover own tokens', async () => {
+            assert.isFalse(await tokenManager.allowRecoverability(token.address))
         })
 
         context('assigning vested tokens', () => {

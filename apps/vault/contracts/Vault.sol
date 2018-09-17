@@ -1,118 +1,117 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
-import "./VaultBase.sol"; // split made to avoid circular import
-
-import "./connectors/ERC20Connector.sol";
-import "./connectors/ETHConnector.sol";
-
-import "@aragon/os/contracts/lib/misc/Migrations.sol";
+import "@aragon/os/contracts/apps/AragonApp.sol";
+import "@aragon/os/contracts/common/DepositableStorage.sol";
+import "@aragon/os/contracts/common/EtherTokenConstant.sol";
+import "@aragon/os/contracts/lib/token/ERC20.sol";
 
 
-contract Vault is VaultBase {
-    struct TokenStandard {
-        uint32 erc;
-        uint32 interfaceDetectionERC;
-        bytes4 interfaceID;
-        address connector;
+contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
+    bytes32 public constant TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
+
+    event Transfer(address indexed token, address indexed to, uint256 amount);
+    event Deposit(address indexed token, address indexed sender, uint256 amount);
+
+    /**
+    * @dev On a normal send() or transfer() this fallback is never executed as it will be
+    *      intercepted by the Proxy (see aragonOS#281)
+    */
+    function () external payable {
+        require(msg.data.length == 0);
+        deposit(ETH, msg.sender, msg.value);
     }
 
-    TokenStandard[] public standards;
-    mapping (address => address) public connectors;
-    mapping (uint32 => bool) public supportedInterfaceDetectionERCs;
-
-    // this is required to avoid having to redeploy on every instance.
-    // they can just be gotten from the base by templates
-    ERC20Connector public erc20ConnectorBase;
-    ETHConnector public ethConnectorBase;
-
-    event NewTokenStandard(uint32 indexed erc, uint32 indexed interfaceDetectionERC, bytes4 indexed interfaceID, address connector);
-
-    function Vault() public {
-        erc20ConnectorBase = new ERC20Connector();
-        ethConnectorBase = new ETHConnector();
-    }
-
-    function initialize(ERC20Connector erc20Connector, ETHConnector ethConnector) onlyInit public {
+    /**
+    * @notice Initialize Vault app
+    * @dev As an AragonApp it needs to be initialized in order for roles (`auth` and `authP`) to work
+    */
+    function initialize() external onlyInit {
         initialized();
-
-        supportedInterfaceDetectionERCs[NO_DETECTION] = true;
-        supportedInterfaceDetectionERCs[ERC165] = true;
-
-        _setConnectors(erc20Connector, ethConnector);
+        setDepositable(true);
     }
 
-    function initializeWithBase(Vault baseVault) onlyInit public {
-        initialize(baseVault.erc20ConnectorBase(), baseVault.ethConnectorBase());
-    }
+    /**
+    * @notice Deposit `_value` `_token` to the vault
+    * @param _token Address of the token being transferred
+    * @param _from Entity that currently owns the tokens
+    * @param _value Amount of tokens being transferred
+    */
+    function deposit(address _token, address _from, uint256 _value) public payable {
+        require(isDepositable());
+        require(_value > 0);
+        require(msg.sender == _from);
 
-    function _setConnectors(ERC20Connector erc20Connector, ETHConnector ethConnector) internal {
-        require(erc20Connector != address(0) && ethConnector != address(0));
-
-        // register erc20 as the first standard
-        _registerStandard(20, NO_DETECTION, bytes4(0), erc20Connector);
-        // directly manage ETH with the ethConnector
-        connectors[ETH] = ethConnector;
-    }
-
-    function () payable public {
-        address token = ETH;
-
-        // 4 (sig) + 32 (at least the token address to locate connector)
-        if (msg.data.length < 36) {
-            require(msg.value > 0); // if no data, only call ETH connector when ETH
+        if (_token == ETH) {
+            // Deposit is implicit in this case
+            require(msg.value == _value);
         } else {
-            assembly { token := calldataload(4) } // token address MUST be the first argument to any Vault calls
+            require(ERC20(_token).transferFrom(_from, this, _value));
         }
 
-        if (connectors[token] == address(0)) {
-            connectors[token] = standards[detectTokenStandard(token)].connector;
-        }
-
-        // if return data size is less than 32 bytes, it will revert
-        delegatedFwd(connectors[token], msg.data, 32);
+        emit Deposit(_token, _from, _value);
     }
 
-    function registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector)
-             authP(REGISTER_TOKEN_STANDARD, arr(uint256(erc), interfaceDetectionERC))
-             public
+    /*
+    * TODO: Function could be brought back when https://github.com/ethereum/solidity/issues/526 is fixed
+    * @notice Deposit `_value` `_token` to the vault
+    * @param _token Address of the token being transferred
+    * @param _from Entity that currently owns the tokens
+    * @param _value Amount of tokens being transferred
+    * @param _data Extra data associated with the deposit (currently unused)
+    function deposit(address _token, address _from, uint256 _value, bytes _data) external isInitialized payable {
+        _deposit(_token, _from, _value);
+    }
+    */
+
+    /**
+    * @notice Transfer `_value` `_token` from the Vault to `_to`
+    * @param _token Address of the token being transferred
+    * @param _to Address of the recipient of tokens
+    * @param _value Amount of tokens being transferred
+    */
+    /* solium-disable-next-line function-order */
+    function transfer(address _token, address _to, uint256 _value)
+        external
+        authP(TRANSFER_ROLE, arr(_token, _to, _value))
     {
-
-        _registerStandard(erc, interfaceDetectionERC, interfaceID, connector);
+        transfer(_token, _to, _value, new bytes(0));
     }
 
-    function detectTokenStandard(address token) public view returns (uint256 standardId) {
-        // skip index 0 which is erc20 and it is not conformant to any
-        for (uint256 i = 1; i < standards.length; i++) {
-            if (conformsToStandard(token, i)) {
-                return i;
-            }
+    /**
+    * @notice Transfer `_value` `_token` from the Vault to `_to`
+    * @param _token Address of the token being transferred
+    * @param _to Address of the recipient of tokens
+    * @param _value Amount of tokens being transferred
+    * @param _data Extra data associated with the transfer (only used for ETH)
+    */
+    function transfer(address _token, address _to, uint256 _value, bytes _data)
+        public
+        authP(TRANSFER_ROLE, arr(_token, _to, _value))
+    {
+        require(_value > 0);
+
+        if (_token == ETH) {
+            require(_to.call.value(_value)(_data));
+        } else {
+            require(ERC20(_token).transfer(_to, _value));
         }
 
-        // no definition, return ERC20 standard
-        return 0;
+        emit Transfer(_token, _to, _value);
     }
 
-    function conformsToStandard(address token, uint256 standardId) public view returns (bool) {
-        if (standards[standardId].interfaceDetectionERC == ERC165) {
-            return conformsToERC165(token, bytes4(standards[standardId].interfaceID));
+    function balance(address _token) public view returns (uint256) {
+        if (_token == ETH) {
+            return address(this).balance;
+        } else {
+            return ERC20(_token).balanceOf(this);
         }
+    }
 
+    /**
+    * @dev Disable recovery escape hatch, as it could be used
+    *      maliciously to transfer funds away from the vault
+    */
+    function allowRecoverability(address) public view returns (bool) {
         return false;
-    }
-
-    function isInterfaceDetectionERCSupported(uint32 interfaceDetectionERC) public view returns (bool) {
-        return supportedInterfaceDetectionERCs[interfaceDetectionERC];
-    }
-
-    function _registerStandard(uint32 erc, uint32 interfaceDetectionERC, bytes4 interfaceID, address connector) internal {
-        require(isInterfaceDetectionERCSupported(interfaceDetectionERC));
-
-        for (uint256 i = 0; i < standards.length; i++) {
-            require(standards[i].erc != erc);
-        }
-
-        standards.push(TokenStandard(erc, interfaceDetectionERC, interfaceID, connector));
-
-        NewTokenStandard(erc, interfaceDetectionERC, interfaceID, connector);
     }
 }
