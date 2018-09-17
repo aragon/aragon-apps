@@ -22,7 +22,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
     uint64 constant public MAX_UINT64 = uint64(-1);
     uint256 constant public MAX_UINT = uint256(-1);
-    uint256 constant NO_TRANSACTION = 0;
+    uint256 internal constant NO_PAYMENT = 0;
+    uint256 internal constant NO_TRANSACTION = 0;
 
     bytes32 constant public CREATE_PAYMENTS_ROLE = keccak256("CREATE_PAYMENTS_ROLE");
     bytes32 constant public CHANGE_PERIOD_ROLE = keccak256("CHANGE_PERIOD_ROLE");
@@ -240,7 +241,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 _token,
                 _receiver,
                 _amount,
-                0,   // unrelated to any payment id; it isn't created
+                NO_PAYMENT,   // unrelated to any payment id; it isn't created
                 0,   // also unrelated to any payment repeats
                 _reference
             );
@@ -634,7 +635,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _token,
             _sender,
             _amount,
-            0, // unrelated to any existing payment
+            NO_PAYMENT, // unrelated to any existing payment
             0, // and no payment repeats
             _reference
         );
