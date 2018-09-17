@@ -194,7 +194,7 @@ contract('Finance App', accounts => {
 
         const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(transactionId)
 
-        assert.equal(await vault.balance(ETH), VAULT_INITIAL_ETH_BALANCE + 10, 'deposited ETH must be in vault')
+        assert.equal(await vault.balance(ETH), VAULT_INITIAL_ETH_BALANCE + sentWei, 'deposited ETH must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, sentWei, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')
@@ -213,7 +213,7 @@ contract('Finance App', accounts => {
 
         const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(transactionId)
 
-        assert.equal(await vault.balance(ETH), VAULT_INITIAL_ETH_BALANCE + 10, 'deposited ETH must be in vault')
+        assert.equal(await vault.balance(ETH), VAULT_INITIAL_ETH_BALANCE + sentWei, 'deposited ETH must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, sentWei, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')

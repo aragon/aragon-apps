@@ -142,7 +142,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
     */
-    function deposit(ERC20 _token, uint256 _amount, string _reference) external payable isInitialized transitionsPeriod {
+    function deposit(address _token, uint256 _amount, string _reference) external payable isInitialized transitionsPeriod {
         _deposit(
             _token,
             _amount,
@@ -300,8 +300,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
      * @notice Send tokens held in this contract to the Vault
      * @param _token Token whose balance is going to be transferred.
      */
-    function recoverToVault(ERC20 _token) public isInitialized transitionsPeriod {
-        uint256 amount = address(_token) == ETH ? address(this).balance : _token.balanceOf(this);
+    function recoverToVault(address _token) public isInitialized transitionsPeriod {
+        uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).balanceOf(this);
         require(amount > 0);
 
         _deposit(
