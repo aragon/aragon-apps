@@ -18,6 +18,7 @@ contract Voting is IForwarder, AragonApp {
     using SafeMath64 for uint64;
 
     bytes32 public constant CREATE_VOTES_ROLE = keccak256("CREATE_VOTES_ROLE");
+    bytes32 public constant MODIFY_SUPPORT_ROLE = keccak256("MODIFY_SUPPORT_ROLE");
     bytes32 public constant MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
 
     uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
@@ -28,6 +29,7 @@ contract Voting is IForwarder, AragonApp {
         address creator;
         uint64 startDate;
         uint256 snapshotBlock;
+        uint256 supportRequiredPct;
         uint256 minAcceptQuorumPct;
         uint256 yea;
         uint256 nay;
@@ -50,6 +52,7 @@ contract Voting is IForwarder, AragonApp {
     event StartVote(uint256 indexed voteId);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
+    event ChangeSupportRequired(uint256 supportRequiredPct);
     event ChangeMinQuorum(uint256 minAcceptQuorumPct);
 
     modifier voteExists(uint256 _voteId) {
@@ -83,6 +86,21 @@ contract Voting is IForwarder, AragonApp {
         supportRequiredPct = _supportRequiredPct;
         minAcceptQuorumPct = _minAcceptQuorumPct;
         voteTime = _voteTime;
+    }
+
+    /**
+    * @notice Change required support to `(_supportRequiredPct - _supportRequiredPct % 10^16) / 10^14`%
+    * @param _supportRequiredPct New required support
+    */
+    function changeSupportRequiredPct(uint256 _supportRequiredPct)
+        external
+        authP(MODIFY_SUPPORT_ROLE, arr(_supportRequiredPct, supportRequiredPct))
+    {
+        require(minAcceptQuorumPct <= _supportRequiredPct);
+        require(_supportRequiredPct <= PCT_BASE);
+        supportRequiredPct = _supportRequiredPct;
+
+        emit ChangeSupportRequired(_supportRequiredPct);
     }
 
     /**
@@ -210,6 +228,7 @@ contract Voting is IForwarder, AragonApp {
             address creator,
             uint64 startDate,
             uint256 snapshotBlock,
+            uint256 supportRequired,
             uint256 minAcceptQuorum,
             uint256 yea,
             uint256 nay,
@@ -224,6 +243,7 @@ contract Voting is IForwarder, AragonApp {
         creator = vote_.creator;
         startDate = vote_.startDate;
         snapshotBlock = vote_.snapshotBlock;
+        supportRequired = vote_.supportRequiredPct;
         minAcceptQuorum = vote_.minAcceptQuorumPct;
         yea = vote_.yea;
         nay = vote_.nay;
@@ -251,6 +271,7 @@ contract Voting is IForwarder, AragonApp {
         vote_.metadata = _metadata;
         vote_.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote_.totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
+        vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
 
         emit StartVote(voteId);
