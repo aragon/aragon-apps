@@ -720,14 +720,6 @@ contract('Finance App', accounts => {
             })
         })
 
-        it('can recover ETH using AragonApp#transferToVault', async () => {
-            await forceSendETH(nonInit.address, 100)
-
-            await nonInit.transferToVault(ETH)
-
-            assert.equal(await recVault.balance(ETH), 100)
-        })
-
         context('locked tokens', () => {
             const lockedTokens = 5
 
