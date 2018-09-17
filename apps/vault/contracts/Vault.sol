@@ -30,9 +30,9 @@ contract Vault is EtherTokenConstant, AragonApp {
 
     /**
     * @notice Deposit `value` `token` to the vault
-    * @param token Address of the token being transferred
-    * @param from Entity that currently owns the tokens
-    * @param value Amount of tokens being transferred
+    * @param _token Address of the token being transferred
+    * @param _from Entity that currently owns the tokens
+    * @param _value Amount of tokens being transferred
     */
     function deposit(address _token, address _from, uint256 _value) external payable isInitialized {
         _deposit(_token, _from, _value);
@@ -52,24 +52,24 @@ contract Vault is EtherTokenConstant, AragonApp {
 
     /**
     * @notice Transfer `value` `token` from the Vault to `to`
-    * @param token Address of the token being transferred
-    * @param to Address of the recipient of tokens
-    * @param value Amount of tokens being transferred
+    * @param _token Address of the token being transferred
+    * @param _to Address of the recipient of tokens
+    * @param _value Amount of tokens being transferred
     */
     /* solium-disable function-order */
-    function transfer(address token, address to, uint256 value)
+    function transfer(address _token, address _to, uint256 _value)
         external
-        authP(TRANSFER_ROLE, arr(token, to, value))
+        authP(TRANSFER_ROLE, arr(_token, _to, _value))
     {
         _transfer(_token, _to, _value, new bytes(0));
     }
 
     /**
     * @notice Transfer `value` `token` from the Vault to `to`
-    * @param token Address of the token being transferred
-    * @param to Address of the recipient of tokens
-    * @param value Amount of tokens being transferred
-    * @param data Extra data associated with the transfer (only used for ETH)
+    * @param _token Address of the token being transferred
+    * @param _to Address of the recipient of tokens
+    * @param _value Amount of tokens being transferred
+    * @param _data Extra data associated with the transfer (only used for ETH)
     */
     function transfer(address _token, address _to, uint256 _value, bytes _data)
         external
