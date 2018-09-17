@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 import "@aragon/ppf-contracts/contracts/IFeed.sol";
 
@@ -12,7 +12,7 @@ contract PriceFeedMock is IFeed {
         xrt = toInt(quote);
         when = uint64(_mockTime);
 
-        PriceFeedLogSetRate(msg.sender, quote, xrt);
+        emit PriceFeedLogSetRate(msg.sender, quote, xrt);
     }
 
     /// Gets the first byte of an address as an integer

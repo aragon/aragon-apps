@@ -1,13 +1,13 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/Initializable.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
 
-import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
-import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
-import "@aragon/os/contracts/lib/zeppelin/math/SafeMath64.sol";
-import "@aragon/os/contracts/lib/zeppelin/math/SafeMath8.sol";
+import "@aragon/os/contracts/lib/token/ERC20.sol";
+import "@aragon/os/contracts/lib/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/math/SafeMath64.sol";
+import "@aragon/os/contracts/lib/math/SafeMath8.sol";
 
 import "@aragon/ppf-contracts/contracts/IFeed.sol";
 
@@ -115,7 +115,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Sets the Price Feed for exchange rates to `_feed`.
      * @param _feed The Price Feed address
      */
-    function setPriceFeed(IFeed _feed) isInitialized external authP(CHANGE_PRICE_FEED_ROLE, arr(feed, _feed)) {
+    function setPriceFeed(IFeed _feed) external authP(CHANGE_PRICE_FEED_ROLE, arr(feed, _feed)) {
         _setPriceFeed(_feed);
     }
 
@@ -124,7 +124,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Sets the exchange rate expiry time to `_time`.
      * @param _time The expiration time in seconds for exchange rates
      */
-    function setRateExpiryTime(uint64 _time) isInitialized external authP(MODIFY_RATE_EXPIRY_ROLE, arr(uint256(_time))) {
+    function setRateExpiryTime(uint64 _time) external authP(MODIFY_RATE_EXPIRY_ROLE, arr(uint256(_time))) {
         _setRateExpiryTime(_time);
     }
 
@@ -133,7 +133,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @notice Add `_allowedToken` to the set of allowed tokens
      * @param _allowedToken New token allowed for payment
      */
-    function addAllowedToken(address _allowedToken) isInitialized external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
+    function addAllowedToken(address _allowedToken) external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
         require(!allowedTokens[_allowedToken]);
         allowedTokens[_allowedToken] = true;
         allowedTokensArray.push(_allowedToken);
@@ -158,13 +158,13 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint256 initialDenominationSalary
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialDenominationSalary, getTimestamp()))
+        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialDenominationSalary, getTimestamp64()))
     {
         _addEmployee(
             accountAddress,
             initialDenominationSalary,
             "",
-            getTimestamp()
+            getTimestamp64()
         );
     }
 
@@ -181,13 +181,13 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         string name
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialDenominationSalary, getTimestamp()))
+        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialDenominationSalary, getTimestamp64()))
     {
         _addEmployee(
             accountAddress,
             initialDenominationSalary,
             name,
-            getTimestamp()
+            getTimestamp64()
         );
     }
 
@@ -226,12 +226,11 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint128 employeeId,
         uint256 denominationSalary
     )
-        isInitialized
         employeeExists(employeeId)
         external
         authP(SET_EMPLOYEE_SALARY_ROLE, arr(uint256(employeeId), denominationSalary))
     {
-        uint64 timestamp = getTimestamp();
+        uint64 timestamp = getTimestamp64();
 
         // Add owed salary to employee's accrued value
         uint256 owed = _getOwedSalary(employeeId, timestamp);
@@ -253,12 +252,11 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     function terminateEmployeeNow(
         uint128 employeeId
     )
-        isInitialized
         employeeExists(employeeId)
         external
         authP(TERMINATE_EMPLOYEE_ROLE, arr(uint256(employeeId)))
     {
-        _terminateEmployee(employeeId, getTimestamp());
+        _terminateEmployee(employeeId, getTimestamp64());
     }
 
     /**
@@ -271,7 +269,6 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint128 employeeId,
         uint64 endDate
     )
-        isInitialized
         employeeExists(employeeId)
         external
         authP(TERMINATE_EMPLOYEE_ROLE, arr(uint256(employeeId)))
@@ -288,7 +285,6 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint128 employeeId,
         uint256 amount
     )
-        isInitialized
         employeeExists(employeeId)
         external
         authP(ADD_ACCRUED_VALUE_ROLE, arr(uint256(employeeId), amount))
@@ -563,7 +559,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         Employee storage employee = employees[employeeId];
 
         // get the min of current date and termination date
-        uint64 timestamp = getTimestamp();
+        uint64 timestamp = getTimestamp64();
         uint64 toDate;
         if (employee.terminated && employee.endDate < timestamp) {
             toDate = employee.endDate;
@@ -607,7 +603,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
         // try to remove employee
         if (employees[employeeId].terminated &&
-            employees[employeeId].endDate <= getTimestamp() &&
+            employees[employeeId].endDate <= getTimestamp64() &&
             employees[employeeId].accruedValue == 0
         ) {
             delete employeeIds[employees[employeeId].accountAddress];
@@ -617,7 +613,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     function _terminateEmployee(uint128 employeeId, uint64 endDate) internal {
         // prevent past termination dates
-        require(endDate >= getTimestamp());
+        require(endDate >= getTimestamp64());
 
         employees[employeeId].terminated = true;
         employees[employeeId].endDate = endDate;
@@ -653,12 +649,10 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         (xrt, when) = feed.get(denominationToken, token);
 
         // check it's recent enough
-        if (when < getTimestamp().sub(rateExpiryTime)) {
+        if (when < getTimestamp64().sub(rateExpiryTime)) {
             return 0;
         }
 
         return xrt;
     }
-
-    function getTimestamp() internal view returns (uint64) { return uint64(now); }
 }

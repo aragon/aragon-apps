@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 import "@aragon/ppf-contracts/contracts/IFeed.sol";
 
@@ -11,7 +11,7 @@ contract PriceFeedFailMock is IFeed {
             return (2*10**18, 0);
         }
 
-        PriceFeedFailLogSetRate(msg.sender, quote, xrt);
+        emit PriceFeedFailLogSetRate(msg.sender, quote, xrt);
 
         return (0, uint64(now));
     }
