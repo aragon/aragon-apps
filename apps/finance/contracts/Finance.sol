@@ -27,8 +27,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     uint64 public constant MAX_PAYMENTS_PER_TX = 20;
 
-    uint256 internal constant MAX_UINT = uint256(-1);
-    uint64 internal constant MAX_UINT64 = uint64(-1);
+    uint256 public constant MAX_UINT = uint256(-1);
+    uint64 public constant MAX_UINT64 = uint64(-1);
 
     // Order optimized for storage
     struct Payment {
