@@ -234,8 +234,8 @@ contract('Finance App', accounts => {
             await token1.transfer(finance.address, 5)
         })
 
-        it('allows recoverability is disabled', async () => {
-            assert.isFalse(await finance.allowsRecoverability(token1.address))
+        it('allow recoverability is disabled', async () => {
+            assert.isFalse(await finance.allowRecoverability(token1.address))
         })
 
         it('are recovered using Finance#recoverToVault', async () => {
@@ -279,8 +279,8 @@ contract('Finance App', accounts => {
             assert.equal((await getBalance(finance.address)).toNumber(), lockedETH, 'finance should have stuck ETH')
         })
 
-        it('allows recoverability is disabled', async () => {
-            assert.isFalse(await finance.allowsRecoverability(ETH))
+        it('allow recoverability is disabled', async () => {
+            assert.isFalse(await finance.allowRecoverability(ETH))
         })
 
         it('is recovered using Finance#recoverToVault', async () => {
@@ -736,8 +736,8 @@ contract('Finance App', accounts => {
                 await token1.transfer(nonInit.address, lockedTokens)
             })
 
-            it('allows recoverability is enabled', async () => {
-                assert.isTrue(await nonInit.allowsRecoverability(token1.address))
+            it('allow recoverability is enabled', async () => {
+                assert.isTrue(await nonInit.allowRecoverability(token1.address))
             })
 
             it('can be recovered using AragonApp#transferToVault', async () => {
@@ -761,8 +761,8 @@ contract('Finance App', accounts => {
                 assert.equal((await getBalance(nonInit.address)).toNumber(), lockedETH, 'finance should have stuck ETH')
             })
 
-            it('allows recoverability is enabled', async () => {
-                assert.isTrue(await nonInit.allowsRecoverability(ETH))
+            it('allow recoverability is enabled', async () => {
+                assert.isTrue(await nonInit.allowRecoverability(ETH))
             })
 
             it('fails to be recovered using Finance#recoverToVault', async () => {
