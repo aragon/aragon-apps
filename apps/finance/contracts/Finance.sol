@@ -29,6 +29,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     uint256 internal constant MAX_UINT = uint256(-1);
     uint64 internal constant MAX_UINT64 = uint64(-1);
+    uint256 internal constant NO_PAYMENT = 0;
+    uint256 internal constant NO_TRANSACTION = 0;
 
     // Order optimized for storage
     struct Payment {
@@ -86,7 +88,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     uint256 public paymentsNextIndex;
 
     mapping (uint256 => Transaction) internal transactions;
-    uint256 public transactionsLength;
+    uint256 public transactionsNextIndex;
 
     mapping (uint256 => Period) internal periods;
     uint256 public periodsLength;
@@ -115,7 +117,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     modifier transactionExists(uint256 _transactionId) {
-        require(_transactionId < transactionsLength);
+        require(_transactionId > 0 && _transactionId < transactionsNextIndex);
         _;
     }
 
@@ -155,6 +157,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         // Reserve the first recurring payment index as an unused index for transactions not linked to a payment
         payments[0].disabled = true;
         paymentsNextIndex = 1;
+
+        // Reserve the first transaction index as an unused index for periods with no transactions
+        transactionsNextIndex = 1;
 
         // Start the first period
         _newPeriod(getTimestamp64());
@@ -237,7 +242,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 _token,
                 _receiver,
                 _amount,
-                0,   // unrelated to any payment id; it isn't created
+                NO_PAYMENT,   // unrelated to any payment id; it isn't created
                 0,   // also unrelated to any payment repeats
                 _reference
             );
@@ -401,8 +406,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
             // If there were any transactions in period, record which was the last
             // In case 0 transactions occured, first and last tx id will be 0
-            if (currentPeriod.firstTransactionId != 0) {
-                currentPeriod.lastTransactionId = transactionsLength.sub(1);
+            if (currentPeriod.firstTransactionId != NO_TRANSACTION) {
+                currentPeriod.lastTransactionId = transactionsNextIndex.sub(1);
             }
 
             // New period starts at end time + 1
@@ -639,7 +644,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _token,
             _sender,
             _amount,
-            0, // unrelated to any existing payment
+            NO_PAYMENT, // unrelated to any existing payment
             0, // and no payment repeats
             _reference
         );
@@ -664,7 +669,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             tokenStatement.expenses = tokenStatement.expenses.add(_amount);
         }
 
-        uint256 transactionId = transactionsLength++;
+        uint256 transactionId = transactionsNextIndex++;
         Transaction storage transaction = transactions[transactionId];
         transaction.periodId = periodId;
         transaction.amount = _amount;
@@ -677,7 +682,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         transaction.reference = _reference;
 
         Period storage period = periods[periodId];
-        if (period.firstTransactionId == 0) {
+        if (period.firstTransactionId == NO_TRANSACTION) {
             period.firstTransactionId = transactionId;
         }
 

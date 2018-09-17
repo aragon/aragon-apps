@@ -143,7 +143,7 @@ contract('Finance App', accounts => {
         await token1.approve(finance.address, 5)
         await finance.deposit(token1.address, 5, 'ref')
 
-        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(0)
+        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(1)
 
         // vault has 100 token1 initially
         assert.equal((await token1.balanceOf(vault.address)).toString(), 100 + 5, 'deposited tokens must be in vault')
@@ -193,7 +193,7 @@ contract('Finance App', accounts => {
 
         await finance.depositToVault(token1.address)
 
-        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(0)
+        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(1)
 
         let finalBalance = await token1.balanceOf(vault.address)
         assert.equal(finalBalance.toString(), initialBalance.plus(5).toString(), 'deposited tokens must be in vault')
@@ -328,7 +328,7 @@ contract('Finance App', accounts => {
 
             assert.equal((await token1.balanceOf(recipient)).toString(), amount, 'recipient should have received tokens')
 
-            const [periodId, txAmount, paymentId, paymentRepeatNumber, token, entity, isIncoming, date, ref] = await finance.getTransaction(0)
+            const [periodId, txAmount, paymentId, paymentRepeatNumber, token, entity, isIncoming, date, ref] = await finance.getTransaction(1)
             assert.equal(periodId, 0, 'period id should be correct')
             assert.equal(txAmount, amount, 'amount should match')
             assert.equal(paymentId, 0, 'payment id should be 0 for single payment')
@@ -445,7 +445,7 @@ contract('Finance App', accounts => {
                 assert.equal(start.toString(), START_TIME, 'should have correct start date')
                 assert.equal(end.toString(), START_TIME + PERIOD_DURATION - 1, 'should have correct end date')
                 assert.equal(firstTx.toNumber(), 1, 'should have correct first tx')
-                assert.equal(lastTx.toNumber(), 3, 'should have correct last tx')
+                assert.equal(lastTx.toNumber(), 4, 'should have correct last tx')
             })
 
             it('fails trying to access period out of bounds', async () => {
