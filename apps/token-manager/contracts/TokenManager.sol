@@ -292,7 +292,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         uint256 vestingsCount = vestingsLengths[_holder];
         uint256 totalNonTransferable = 0;
 
-        for (uint256 i = 0; i < vestingsCount; i = i.add(1)) {
+        for (uint256 i = 0; i < vestingsCount; i++) {
             TokenVesting storage v = vestings[_holder][i];
             uint nonTransferable = _calculateNonVestedTokens(
                 v.amount,
@@ -363,19 +363,10 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         // in the vesting rect (as shown in above's figure)
 
         // vestedTokens = tokens * (time - start) / (vested - start)
-        uint256 vestedTokens = SafeMath.div(
-            SafeMath.mul(
-                tokens,
-                SafeMath.sub(
-                    time,
-                    start
-                )
-            ),
-            SafeMath.sub(
-                vested,
-                start
-            )
-        );
+        // In assignVesting we enforce start <= cliff <= vested
+        // Here we shortcut time >= vested and time < cliff,
+        // so no division by 0 is possible
+        uint256 vestedTokens = tokens.mul(time.sub(start)) / vested.sub(start);
 
         // tokens - vestedTokens
         return tokens.sub(vestedTokens);
