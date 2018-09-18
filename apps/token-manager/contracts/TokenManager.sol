@@ -39,16 +39,11 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     MiniMeToken public token;
     uint256 public maxAccountTokens;
-    bool public logHolders;
 
     // We are mimicing an array in the inner mapping, we use a mapping instead to make app upgrade more graceful
     mapping (address => mapping (uint256 => TokenVesting)) internal vestings;
     mapping (address => uint256) public vestingsLengths;
     mapping (address => bool) public everHeld;
-
-    // Returns all holders the token had (since managing it).
-    // Some of them can have a balance of 0.
-    address[] public holders;
 
     // Other token specific events can be watched on the token address directly (avoids duplication)
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
@@ -61,17 +56,15 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Initializes Token Manager for `_token.symbol(): string`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''` and with`_logHolders ? '' : 'out'` storage of token holders.
+    * @notice Initializes Token Manager for `_token.symbol(): string`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''`.
     * @param _token MiniMeToken address for the managed token (Token Manager instance must be already set as the token controller)
     * @param _transferable whether the token can be transferred by holders
     * @param _maxAccountTokens Maximum amount of tokens an account can have (0 for infinite tokens)
-    * @param _logHolders Whether the Token Manager will store all token holders (makes token transfers more expensive!)
     */
     function initialize(
         MiniMeToken _token,
         bool _transferable,
-        uint256 _maxAccountTokens,
-        bool _logHolders
+        uint256 _maxAccountTokens
     )
         external
         onlyInit
@@ -82,7 +75,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
         token = _token;
         maxAccountTokens = _maxAccountTokens == 0 ? uint256(-1) : _maxAccountTokens;
-        logHolders = _logHolders;
 
         if (token.transfersEnabled() != _transferable) {
             token.enableTransfers(_transferable);
@@ -147,19 +139,18 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         authP(ASSIGN_ROLE, arr(_receiver, _amount))
         returns (uint256)
     {
-        require(tokenGrantsCount(_receiver) < MAX_VESTINGS_PER_ADDRESS);
+        require(vestingsLengths[_receiver] < MAX_VESTINGS_PER_ADDRESS);
 
         require(_start <= _cliff && _cliff <= _vested);
 
-        TokenVesting memory tokenVesting = TokenVesting(
+        uint256 vestingId = vestingsLengths[_receiver]++;
+        vestings[_receiver][vestingId] = TokenVesting(
             _amount,
             _start,
             _cliff,
             _vested,
             _revokable
         );
-        uint256 vestingId = vestingsLengths[_receiver]++;
-        vestings[_receiver][vestingId] = tokenVesting;
 
         _assign(_receiver, _amount);
 
@@ -224,8 +215,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return hasInitialized() && token.balanceOf(_sender) > 0;
     }
 
-    function allHolders() public view returns (address[]) { return holders; }
-
     function getVesting(
         address _recipient,
         uint256 _vestingId
@@ -268,8 +257,26 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
             }
         }
 
-        _logHolderIfNeeded(_to);
+        return true;
+    }
 
+    /**
+    * @notice Called when ether is sent to the MiniMe Token contract
+    * @return True if the ether is accepted, false for it to throw
+    */
+    function proxyPayment(address) public payable returns (bool) {
+        // Sender check is required to avoid anyone sending ETH to the Token Manager through this method
+        // Even though it is tested, solidity-coverage doesnt get it because
+        // MiniMeToken is not instrumented and entire tx is reverted
+        require(msg.sender == address(token));
+        return false;
+    }
+
+    /**
+    * @dev Notifies the controller about an approval allowing the controller to react if desired
+    * @return False if the controller does not authorize the approval
+    */
+    function onApprove(address, address, uint) public returns (bool) {
         return true;
     }
 
@@ -277,19 +284,15 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
     }
 
-    function tokenGrantsCount(address _holder) public view returns (uint256) {
-        return vestingsLengths[_holder];
-    }
-
     function spendableBalanceOf(address _holder) public view returns (uint256) {
         return transferableBalance(_holder, now);
     }
 
     function transferableBalance(address _holder, uint256 _time) public view returns (uint256) {
-        uint256 vestingsCount = tokenGrantsCount(_holder);
+        uint256 vestingsCount = vestingsLengths[_holder];
         uint256 totalNonTransferable = 0;
 
-        for (uint256 i = 0; i < vestingsCount; i = i.add(1)) {
+        for (uint256 i = 0; i < vestingsCount; i++) {
             TokenVesting storage v = vestings[_holder][i];
             uint nonTransferable = _calculateNonVestedTokens(
                 v.amount,
@@ -302,6 +305,14 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         }
 
         return token.balanceOf(_holder).sub(totalNonTransferable);
+    }
+
+    /**
+    * @dev Disable recovery escape hatch for own token,
+    *      as the it has the concept of issuing tokens without assigning them
+    */
+    function allowRecoverability(address _token) public view returns (bool) {
+        return _token != address(token);
     }
 
     /**
@@ -352,19 +363,10 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         // in the vesting rect (as shown in above's figure)
 
         // vestedTokens = tokens * (time - start) / (vested - start)
-        uint256 vestedTokens = SafeMath.div(
-            SafeMath.mul(
-                tokens,
-                SafeMath.sub(
-                    time,
-                    start
-                )
-            ),
-            SafeMath.sub(
-                vested,
-                start
-            )
-        );
+        // In assignVesting we enforce start <= cliff <= vested
+        // Here we shortcut time >= vested and time < cliff,
+        // so no division by 0 is possible
+        uint256 vestedTokens = tokens.mul(time.sub(start)) / vested.sub(start);
 
         // tokens - vestedTokens
         return tokens.sub(vestedTokens);
@@ -378,35 +380,5 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     function _mint(address _receiver, uint256 _amount) internal {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
-        _logHolderIfNeeded(_receiver);
-    }
-
-    function _logHolderIfNeeded(address _newHolder) internal {
-        // costs 3 sstores (2 full (20k gas) and 1 increase (5k gas)), but makes frontend easier
-        if (!logHolders || everHeld[_newHolder]) {
-            return;
-        }
-
-        everHeld[_newHolder] = true;
-        holders.push(_newHolder);
-    }
-
-    /**
-    * @notice Called when ether is sent to the MiniMe Token contract
-    * @return True if the ether is accepted, false for it to throw
-    */
-    function proxyPayment(address) public payable returns (bool) {
-        // Even though it is tested, solidity-coverage doesnt get it because
-        // MiniMeToken is not instrumented and entire tx is reverted
-        require(msg.sender == address(token));
-        return false;
-    }
-
-    /**
-    * @dev Notifies the controller about an approval allowing the controller to react if desired
-    * @return False if the controller does not authorize the approval
-    */
-    function onApprove(address, address, uint) public returns (bool) {
-        return true;
     }
 }

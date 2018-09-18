@@ -23,6 +23,7 @@ contract('Token Manager', accounts => {
 
     let APP_MANAGER_ROLE
     let MINT_ROLE, ISSUE_ROLE, ASSIGN_ROLE, REVOKE_VESTINGS_ROLE, BURN_ROLE
+    let ETH
 
     const root = accounts[0]
     const holder = accounts[1]
@@ -41,6 +42,7 @@ contract('Token Manager', accounts => {
         ASSIGN_ROLE = await tokenManagerBase.ASSIGN_ROLE()
         REVOKE_VESTINGS_ROLE = await tokenManagerBase.REVOKE_VESTINGS_ROLE()
         BURN_ROLE = await tokenManagerBase.BURN_ROLE()
+        ETH = await tokenManagerBase.ETH()
     })
 
     beforeEach(async () => {
@@ -71,7 +73,7 @@ contract('Token Manager', accounts => {
         await token.enableTransfers(!transferable)
 
         await token.changeController(tokenManager.address)
-        await tokenManager.initialize(token.address, transferable, 0, false)
+        await tokenManager.initialize(token.address, transferable, 0)
         assert.equal(transferable, await token.transfersEnabled())
     })
 
@@ -80,13 +82,13 @@ contract('Token Manager', accounts => {
         await token.enableTransfers(!transferable)
 
         await token.changeController(tokenManager.address)
-        await tokenManager.initialize(token.address, transferable, 0, false)
+        await tokenManager.initialize(token.address, transferable, 0)
         assert.equal(transferable, await token.transfersEnabled())
     })
 
     it('fails when initializing without setting controller', async () => {
         return assertRevert(async () => {
-            await tokenManager.initialize(token.address, true, 0, false)
+            await tokenManager.initialize(token.address, true, 0)
         })
     })
 
@@ -99,7 +101,7 @@ contract('Token Manager', accounts => {
     context('non-transferable token', async () => {
         beforeEach(async () => {
             await token.changeController(tokenManager.address)
-            await tokenManager.initialize(token.address, false, 0, false)
+            await tokenManager.initialize(token.address, false, 0)
         })
 
         it('holders cannot transfer non-transferable tokens', async () => {
@@ -142,36 +144,12 @@ contract('Token Manager', accounts => {
         })
     })
 
-    context('holder logging', async () => {
-        beforeEach(async () => {
-            await token.changeController(tokenManager.address)
-            await tokenManager.initialize(token.address, true, 0, true)
-        })
-
-        it('logs token manager on issue', async () => {
-            await tokenManager.issue(10)
-
-            const holders = await tokenManager.allHolders()
-            assert.deepEqual(holders, [tokenManager.address], 'holder list should be correct')
-            assert.equal(await tokenManager.holders(0), tokenManager.address, 'should be first holder')
-        })
-
-        it('logs on mints and transfers', async () => {
-            await tokenManager.mint(holder, 10)
-            await token.transfer(accounts[8], 5, { from: holder })
-            await token.transfer(accounts[9], 5, { from: accounts[8] })
-
-            const holders = await tokenManager.allHolders()
-            assert.deepEqual(holders, [holder, accounts[8], accounts[9]], 'holder list should be correct')
-        })
-    })
-
     context('maximum tokens per address limit', async () => {
         const limit = 100
 
         beforeEach(async () => {
             await token.changeController(tokenManager.address)
-            await tokenManager.initialize(token.address, true, limit, false)
+            await tokenManager.initialize(token.address, true, limit)
         })
 
         it('can mint up to than limit', async () => {
@@ -211,12 +189,12 @@ contract('Token Manager', accounts => {
     context('for normal native tokens', () => {
         beforeEach(async () => {
             await token.changeController(tokenManager.address)
-            await tokenManager.initialize(token.address, true, 0, false)
+            await tokenManager.initialize(token.address, true, 0)
         })
 
         it('fails on reinitialization', async () => {
             return assertRevert(async () => {
-                await tokenManager.initialize(token.address, true, 0, false)
+                await tokenManager.initialize(token.address, true, 0)
             })
         })
 
@@ -224,7 +202,7 @@ contract('Token Manager', accounts => {
             const newTokenManager = await TokenManager.new()
             assert.isTrue(await newTokenManager.isPetrified())
             return assertRevert(async () => {
-                await newTokenManager.initialize(token.address, true, 0, false)
+                await newTokenManager.initialize(token.address, true, 0)
             })
         })
 
@@ -288,6 +266,15 @@ contract('Token Manager', accounts => {
                 // vesting < cliff
                 await tokenManager.assignVested(holder, tokens, 10, 20, 10, true)
             })
+        })
+
+        it('allows to recover external tokens', async () => {
+            assert.isTrue(await tokenManager.allowRecoverability(ETH))
+            assert.isTrue(await tokenManager.allowRecoverability('0x1234'))
+        })
+
+        it('does not allow to recover own tokens', async () => {
+            assert.isFalse(await tokenManager.allowRecoverability(token.address))
         })
 
         context('assigning vested tokens', () => {
