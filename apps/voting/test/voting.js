@@ -202,8 +202,8 @@ contract('Voting App', accounts => {
                 assert.isFalse(isExecuted, 'vote should not be executed')
                 assert.equal(creator, holder50, 'creator should be correct')
                 assert.equal(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
-                assert.deepEqual(supportRequired, neededSupport, 'required support should be app required support')
-                assert.deepEqual(minQuorum, minimumAcceptanceQuorum, 'min quorum should be app min quorum')
+                assert.equal(supportRequired.toNumber(), neededSupport.toNumber(), 'required support should be app required support')
+                assert.equal(minQuorum.toNumber(), minimumAcceptanceQuorum.toNumber(), 'min quorum should be app min quorum')
                 assert.equal(y, 0, 'initial yea should be 0')
                 assert.equal(n, 0, 'initial nay should be 0')
                 assert.equal(totalVoters, 100, 'total voters should be 100')
@@ -230,7 +230,7 @@ contract('Voting App', accounts => {
                 await timeTravel(votingTime + 1)
 
                 const state = await voting.getVote(voteId)
-                assert.deepEqual(state[5], neededSupport, 'required support in vote should stay equal')
+              assert.equal(state[5].toNumber(), neededSupport.toNumber(), 'required support in vote should stay equal')
                 await voting.executeVote(voteId) // exec doesn't fail
             })
 
@@ -246,7 +246,7 @@ contract('Voting App', accounts => {
                 await timeTravel(votingTime + 1)
 
                 const state = await voting.getVote(voteId)
-                assert.deepEqual(state[6], minimumAcceptanceQuorum, 'acceptance quorum in vote should stay equal')
+                assert.equal(state[6].toNumber(), minimumAcceptanceQuorum.toNumber(), 'acceptance quorum in vote should stay equal')
                 await voting.executeVote(voteId) // exec doesn't fail
             })
 
