@@ -31,7 +31,7 @@ contract('Finance App', accounts => {
 
         // Setup constants
         ETH = await financeBase.ETH()
-        MAX_UINT64 = await financeBase.MAX_UINT64()
+        MAX_UINT64 = await financeBase.getMaxUint64()
         ANY_ENTITY = await aclBase.ANY_ENTITY()
         APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
 
@@ -615,7 +615,7 @@ contract('Finance App', accounts => {
                 await finance.executePayment(1)
 
                 assert.equal((await token1.balanceOf(recipient)).toString(), amount * 4, 'recipient should have received tokens')
-                assert.deepEqual(await finance.nextPaymentTime(1), await finance.MAX_UINT64(), 'payment should be repeated again in 2')
+                assert.deepEqual(await finance.nextPaymentTime(1), MAX_UINT64, 'payment should be repeated again in 2')
             })
 
             it('receiver can always execute a payment', async () => {
