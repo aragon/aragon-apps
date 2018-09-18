@@ -154,7 +154,7 @@ contract('Voting App', accounts => {
             assert.equal((await voting.supportRequiredPct()).toString(), neededSupport.add(1).toString(), 'should have changed required support')
         })
 
-        it('fails changing required supoprt lower than minimum acceptance quorum', async () => {
+        it('fails changing required support lower than minimum acceptance quorum', async () => {
             return assertRevert(async () => {
                 await voting.changeSupportRequiredPct(minimumAcceptanceQuorum.minus(1))
             })
@@ -225,12 +225,13 @@ contract('Voting App', accounts => {
                 // with new quorum at 70% it shouldn't have, but since min quorum is snapshotted
                 // it will succeed
 
-                await voting.vote(voteId, true, true, { from: holder50 })
-                await voting.vote(voteId, true, true, { from: holder19 })
+                await voting.vote(voteId, true, false, { from: holder50 })
+                await voting.vote(voteId, true, false, { from: holder19 })
+                await voting.vote(voteId, false, false, { from: holder31 })
                 await timeTravel(votingTime + 1)
 
                 const state = await voting.getVote(voteId)
-              assert.equal(state[5].toNumber(), neededSupport.toNumber(), 'required support in vote should stay equal')
+                assert.equal(state[5].toNumber(), neededSupport.toNumber(), 'required support in vote should stay equal')
                 await voting.executeVote(voteId) // exec doesn't fail
             })
 
@@ -240,7 +241,6 @@ contract('Voting App', accounts => {
                 // With previous min acceptance quorum at 20%, vote should be approved
                 // with new quorum at 50% it shouldn't have, but since min quorum is snapshotted
                 // it will succeed
-
 
                 await voting.vote(voteId, true, true, { from: holder31 })
                 await timeTravel(votingTime + 1)

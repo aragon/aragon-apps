@@ -196,7 +196,7 @@ contract Voting is IForwarder, AragonApp {
         }
 
         // Voting is already decided
-        if (_isValuePct(vote_.yea, vote_.totalVoters, supportRequiredPct)) {
+        if (_isValuePct(vote_.yea, vote_.totalVoters, vote_.supportRequiredPct)) {
             return true;
         }
 
@@ -207,7 +207,7 @@ contract Voting is IForwarder, AragonApp {
             return false;
         }
         // Has enough support?
-        if (!_isValuePct(vote_.yea, totalVotes, supportRequiredPct)) {
+        if (!_isValuePct(vote_.yea, totalVotes, vote_.supportRequiredPct)) {
             return false;
         }
         // Has min quorum?
