@@ -19,19 +19,20 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
-    uint64 constant public MAX_PAYMENTS_PER_TX = 20;
-    uint64 constant public MAX_UINT64 = uint64(-1);
-    uint256 constant public MAX_UINT = uint256(-1);
+    bytes32 public constant CREATE_PAYMENTS_ROLE = keccak256("CREATE_PAYMENTS_ROLE");
+    bytes32 public constant CHANGE_PERIOD_ROLE = keccak256("CHANGE_PERIOD_ROLE");
+    bytes32 public constant CHANGE_BUDGETS_ROLE = keccak256("CHANGE_BUDGETS_ROLE");
+    bytes32 public constant EXECUTE_PAYMENTS_ROLE = keccak256("EXECUTE_PAYMENTS_ROLE");
+    bytes32 public constant DISABLE_PAYMENTS_ROLE = keccak256("DISABLE_PAYMENTS_ROLE");
+
+    uint64 public constant MAX_PAYMENTS_PER_TX = 20;
+
+    uint256 public constant MAX_UINT = uint256(-1);
+    uint64 public constant MAX_UINT64 = uint64(-1);
     uint256 internal constant NO_PAYMENT = 0;
     uint256 internal constant NO_TRANSACTION = 0;
 
-    bytes32 constant public CREATE_PAYMENTS_ROLE = keccak256("CREATE_PAYMENTS_ROLE");
-    bytes32 constant public CHANGE_PERIOD_ROLE = keccak256("CHANGE_PERIOD_ROLE");
-    bytes32 constant public CHANGE_BUDGETS_ROLE = keccak256("CHANGE_BUDGETS_ROLE");
-    bytes32 constant public EXECUTE_PAYMENTS_ROLE = keccak256("EXECUTE_PAYMENTS_ROLE");
-    bytes32 constant public DISABLE_PAYMENTS_ROLE = keccak256("DISABLE_PAYMENTS_ROLE");
-
-    // order optimized for storage
+    // Order optimized for storage
     struct Payment {
         address token;
         address receiver;
@@ -45,7 +46,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         string reference;
     }
 
-    // order optimized for storage
+    // Order optimized for storage
     struct Transaction {
         address token;
         address entity;
@@ -179,11 +180,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _amount,
             _reference
         );
-        // first we need to get the tokens to Finance
+        // First we need to get the tokens to Finance
         _token.transferFrom(msg.sender, this, _amount);
-        // and then approve them to vault
+        // And then approve them to vault
         _token.approve(vault, _amount);
-        // finally we can deposit them
+        // Finally we can deposit them
         vault.deposit(_token, this, _amount);
     }
 
@@ -409,7 +410,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 currentPeriod.lastTransactionId = transactionsNextIndex.sub(1);
             }
 
-            // new period starts at end time + 1
+            // New period starts at end time + 1
             currentPeriod = _newPeriod(currentPeriod.endTime.add(1));
         }
 
@@ -514,10 +515,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     function nextPaymentTime(uint256 _paymentId) public view paymentExists(_paymentId) returns (uint64) {
         Payment memory payment = payments[_paymentId];
 
-        if (payment.repeats >= payment.maxRepeats)
+        if (payment.repeats >= payment.maxRepeats) {
             return MAX_UINT64; // re-executes in some billions of years time... should not need to worry
+        }
 
-        // split in multiple lines to circunvent linter warning
+        // Split in multiple lines to circunvent linter warning
         uint64 increase = payment.repeats.mul(payment.interval);
         uint64 nextPayment = payment.initialPaymentTime.add(increase);
         return nextPayment;
@@ -533,19 +535,24 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     function getRemainingBudget(address _token) public view returns (uint256) {
-        if (!settings.hasBudget[_token])
+        if (!settings.hasBudget[_token]) {
             return MAX_UINT;
+        }
 
         uint256 spent = periods[_currentPeriodId()].tokenStatement[_token].expenses;
 
         // A budget decrease can cause the spent amount to be greater than period budget
         // If so, return 0 to not allow more spending during period
-        if (spent >= settings.budgets[_token])
+        if (spent >= settings.budgets[_token]) {
             return 0;
+        }
 
         return settings.budgets[_token].sub(spent);
     }
 
+    /**
+    * @dev We have to check for initialization as periods are only valid after initializing
+    */
     function currentPeriodId() public view isInitialized returns (uint256) {
         return _currentPeriodId();
     }
@@ -607,7 +614,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint256 _paymentId,
         uint256 _paymentRepeatNumber,
         string _reference
-        ) internal
+    )
+        internal
     {
         require(getRemainingBudget(_token) >= _amount);
         _recordTransaction(
@@ -628,7 +636,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         address _sender,
         uint256 _amount,
         string _reference
-        ) internal
+    )
+        internal
     {
         _recordTransaction(
             true, // incoming transaction
@@ -649,7 +658,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint256 _paymentId,
         uint256 _paymentRepeatNumber,
         string _reference
-        ) internal
+    )
+        internal
     {
         uint256 periodId = _currentPeriodId();
         TokenStatement storage tokenStatement = periods[periodId].tokenStatement[_token];
