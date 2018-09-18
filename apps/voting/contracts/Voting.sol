@@ -78,9 +78,8 @@ contract Voting is IForwarder, AragonApp {
     {
         initialized();
 
-        require(_minAcceptQuorumPct > 0);
         require(_minAcceptQuorumPct <= _supportRequiredPct);
-        require(_supportRequiredPct <= PCT_BASE);
+        require(_supportRequiredPct < PCT_BASE);
 
         token = _token;
         supportRequiredPct = _supportRequiredPct;
@@ -97,7 +96,7 @@ contract Voting is IForwarder, AragonApp {
         authP(MODIFY_SUPPORT_ROLE, arr(_supportRequiredPct, supportRequiredPct))
     {
         require(minAcceptQuorumPct <= _supportRequiredPct);
-        require(_supportRequiredPct <= PCT_BASE);
+        require(_supportRequiredPct < PCT_BASE);
         supportRequiredPct = _supportRequiredPct;
 
         emit ChangeSupportRequired(_supportRequiredPct);
@@ -111,7 +110,6 @@ contract Voting is IForwarder, AragonApp {
         external
         authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct))
     {
-        require(_minAcceptQuorumPct > 0);
         require(_minAcceptQuorumPct <= supportRequiredPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
 
@@ -337,7 +335,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @dev Calculates whether `_value` is at least a percentage `_pct` of `_total`
+    * @dev Calculates whether `_value` is more than a percentage `_pct` of `_total`
     */
     function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal pure returns (bool) {
         if (_total == 0) {
@@ -346,6 +344,6 @@ contract Voting is IForwarder, AragonApp {
 
         uint256 computedPct = _value.mul(PCT_BASE) / _total;
 
-        return computedPct >= _pct;
+        return computedPct > _pct;
     }
 }
