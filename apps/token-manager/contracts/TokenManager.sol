@@ -21,17 +21,14 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     using SafeMath for uint256;
     using Uint256Helpers for uint256;
 
-    MiniMeToken public token;
-    uint256 public maxAccountTokens;
-    bool public logHolders;
+    bytes32 public constant MINT_ROLE = keccak256("MINT_ROLE");
+    bytes32 public constant ISSUE_ROLE = keccak256("ISSUE_ROLE");
+    bytes32 public constant ASSIGN_ROLE = keccak256("ASSIGN_ROLE");
+    bytes32 public constant REVOKE_VESTINGS_ROLE = keccak256("REVOKE_VESTINGS_ROLE");
+    bytes32 public constant BURN_ROLE = keccak256("BURN_ROLE");
 
-    bytes32 constant public MINT_ROLE = keccak256("MINT_ROLE");
-    bytes32 constant public ISSUE_ROLE = keccak256("ISSUE_ROLE");
-    bytes32 constant public ASSIGN_ROLE = keccak256("ASSIGN_ROLE");
-    bytes32 constant public REVOKE_VESTINGS_ROLE = keccak256("REVOKE_VESTINGS_ROLE");
-    bytes32 constant public BURN_ROLE = keccak256("BURN_ROLE");
+    uint256 public constant MAX_VESTINGS_PER_ADDRESS = 50;
 
-    uint256 constant MAX_VESTINGS_PER_ADDRESS = 50;
     struct TokenVesting {
         uint256 amount;
         uint64 start;
@@ -40,7 +37,11 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         bool revokable;
     }
 
-    // we are mimicing an array inside the outer mapping, we use a mapping instead to make app upgrade more graceful
+    MiniMeToken public token;
+    uint256 public maxAccountTokens;
+    bool public logHolders;
+
+    // We are mimicing an array in the inner mapping, we use a mapping instead to make app upgrade more graceful
     mapping (address => mapping (uint256 => TokenVesting)) internal vestings;
     mapping (address => uint256) public vestingsLengths;
     mapping (address => bool) public everHeld;
@@ -49,8 +50,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     // Some of them can have a balance of 0.
     address[] public holders;
 
-
-    // Other token specific events can be watched on the token address directly (avoid duplication)
+    // Other token specific events can be watched on the token address directly (avoids duplication)
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
     event RevokeVesting(address indexed receiver, uint256 vestingId, uint256 nonVestedAmount);
 
@@ -95,7 +95,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @param _amount Number of tokens minted
     */
     function mint(address _receiver, uint256 _amount) external authP(MINT_ROLE, arr(_receiver, _amount)) {
-        require(isBalanceIncreaseAllowed(_receiver, _amount));
+        require(_isBalanceIncreaseAllowed(_receiver, _amount));
         _mint(_receiver, _amount);
     }
 
@@ -181,7 +181,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 
-        uint256 nonVested = calculateNonVestedTokens(
+        uint256 nonVested = _calculateNonVestedTokens(
             v.amount,
             getTimestamp64(),
             v.start,
@@ -207,8 +207,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     function forward(bytes _evmScript) public isInitialized {
         require(canForward(msg.sender, _evmScript));
         bytes memory input = new bytes(0); // TODO: Consider input for this
+
+        // Add the managed token to the blacklist to disallow a token holder from executing actions
+        // on the token controller's (this contract) behalf
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(token);
+
         runScript(_evmScript, input, blacklist);
     }
 
@@ -258,7 +262,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         bool includesTokenManager = _from == address(this) || _to == address(this);
 
         if (!includesTokenManager) {
-            bool toCanReceive = isBalanceIncreaseAllowed(_to, _amount);
+            bool toCanReceive = _isBalanceIncreaseAllowed(_to, _amount);
             if (!toCanReceive || transferableBalance(_from, now) < _amount) {
                 return false;
             }
@@ -269,7 +273,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return true;
     }
 
-    function isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
+    function _isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
         return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
     }
 
@@ -282,12 +286,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function transferableBalance(address _holder, uint256 _time) public view returns (uint256) {
-        uint256 vs = tokenGrantsCount(_holder);
+        uint256 vestingsCount = tokenGrantsCount(_holder);
         uint256 totalNonTransferable = 0;
 
-        for (uint256 i = 0; i < vs; i = i.add(1)) {
+        for (uint256 i = 0; i < vestingsCount; i = i.add(1)) {
             TokenVesting storage v = vestings[_holder][i];
-            uint nonTransferable = calculateNonVestedTokens(
+            uint nonTransferable = _calculateNonVestedTokens(
                 v.amount,
                 _time.toUint64(),
                 v.start,
@@ -324,12 +328,16 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     *   +===+===========+---------+----------> time
     *      Start       Cliff    Vested
     */
-    function calculateNonVestedTokens(
+    function _calculateNonVestedTokens(
         uint256 tokens,
         uint256 time,
         uint256 start,
         uint256 cliff,
-        uint256 vested) private pure returns (uint256)
+        uint256 vested
+    )
+        private
+        pure
+        returns (uint256)
     {
         // Shortcuts for before cliff and after vested cases.
         if (time >= vested) {
@@ -340,7 +348,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         }
 
         // Interpolate all vested tokens.
-        // As before cliff the shortcut returns 0, we can use just calculate a value
+        // As before cliff the shortcut returns 0, we can just calculate a value
         // in the vesting rect (as shown in above's figure)
 
         // vestedTokens = tokens * (time - start) / (vested - start)
@@ -363,7 +371,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function _assign(address _receiver, uint256 _amount) internal isInitialized {
-        require(isBalanceIncreaseAllowed(_receiver, _amount));
+        require(_isBalanceIncreaseAllowed(_receiver, _amount));
         // Must use transferFrom() as transfer() does not give the token controller full control
         require(token.transferFrom(this, _receiver, _amount));
     }
@@ -396,15 +404,9 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     /**
     * @dev Notifies the controller about an approval allowing the controller to react if desired
-    * @param _owner The address that calls `approve()`
-    * @param _spender The spender in the `approve()` call
-    * @param _amount The amount in the `approve()` call
     * @return False if the controller does not authorize the approval
     */
-    function onApprove(address _owner, address _spender, uint _amount) public returns (bool) {
-        _owner;
-        _spender;
-        _amount;
+    function onApprove(address, address, uint) public returns (bool) {
         return true;
     }
 
