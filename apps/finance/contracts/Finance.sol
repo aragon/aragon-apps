@@ -38,11 +38,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         address receiver;
         address createdBy;
         bool disabled;
+        uint256 amount;
         uint64 initialPaymentTime;
         uint64 interval;
         uint64 maxRepeats;
         uint64 repeats;
-        uint256 amount;
         string reference;
     }
 
@@ -51,11 +51,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         address token;
         address entity;
         bool isIncoming;
-        uint64 date;
-        uint256 periodId;
         uint256 amount;
         uint256 paymentId;
-        uint256 paymentRepeatNumber;
+        uint64 paymentRepeatNumber;
+        uint64 date;
+        uint64 periodId;
         string reference;
     }
 
@@ -91,10 +91,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     mapping (uint256 => Transaction) internal transactions;
     uint256 public transactionsNextIndex;
 
-    mapping (uint256 => Period) internal periods;
-    uint256 public periodsLength;
+    mapping (uint64 => Period) internal periods;
+    uint64 public periodsLength;
 
-    event NewPeriod(uint256 indexed periodId, uint64 periodStarts, uint64 periodEnds);
+    event NewPeriod(uint64 indexed periodId, uint64 periodStarts, uint64 periodEnds);
     event SetBudget(address indexed token, uint256 amount, bool hasBudget);
     event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxRepeats);
     event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity, uint256 amount);
@@ -121,7 +121,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         _;
     }
 
-    modifier periodExists(uint256 _periodId) {
+    modifier periodExists(uint64 _periodId) {
         require(_periodId < periodsLength);
         _;
     }
@@ -361,7 +361,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @return success Boolean indicating whether the accounting period is the correct one (if false,
     *                 maxTransitions was surpased and another call is needed)
     */
-    function tryTransitionAccountingPeriod(uint256 _maxTransitions) public isInitialized returns (bool success) {
+    function tryTransitionAccountingPeriod(uint64 _maxTransitions) public isInitialized returns (bool success) {
         return _tryTransitionAccountingPeriod(_maxTransitions);
     }
 
@@ -389,7 +389,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             uint64 maxRepeats,
             string reference,
             bool disabled,
-            uint256 repeats,
+            uint64 repeats,
             address createdBy
         )
     {
@@ -412,10 +412,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         view
         transactionExists(_transactionId)
         returns (
-            uint256 periodId,
+            uint64 periodId,
             uint256 amount,
             uint256 paymentId,
-            uint256 paymentRepeatNumber,
+            uint64 paymentRepeatNumber,
             address token,
             address entity,
             bool isIncoming,
@@ -436,7 +436,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         reference = transaction.reference;
     }
 
-    function getPeriod(uint256 _periodId)
+    function getPeriod(uint64 _periodId)
         public
         view
         periodExists(_periodId)
@@ -458,7 +458,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         lastTransactionId = period.lastTransactionId;
     }
 
-    function getPeriodTokenStatement(uint256 _periodId, address _token)
+    function getPeriodTokenStatement(uint64 _periodId, address _token)
         public
         view
         periodExists(_periodId)
@@ -501,7 +501,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     /**
     * @dev We have to check for initialization as periods are only valid after initializing
     */
-    function currentPeriodId() public view isInitialized returns (uint256) {
+    function currentPeriodId() public view isInitialized returns (uint64) {
         return _currentPeriodId();
     }
 
@@ -539,7 +539,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     function _newPeriod(uint64 _startTime) internal returns (Period storage) {
-        uint256 newPeriodId = periodsLength++;
+        // There should be no way for this to overflow since each period is at least one day
+        uint64 newPeriodId = periodsLength++;
 
         Period storage period = periods[newPeriodId];
         period.startTime = _startTime;
@@ -568,6 +569,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 return;
             }
 
+            // The while() predicate prevents these two from ever overflowing
             payment.repeats += 1;
             payed += 1;
 
@@ -587,7 +589,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         address _receiver,
         uint256 _amount,
         uint256 _paymentId,
-        uint256 _paymentRepeatNumber,
+        uint64 _paymentRepeatNumber,
         string _reference
     )
         internal
@@ -631,12 +633,12 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         address _entity,
         uint256 _amount,
         uint256 _paymentId,
-        uint256 _paymentRepeatNumber,
+        uint64 _paymentRepeatNumber,
         string _reference
     )
         internal
     {
-        uint256 periodId = _currentPeriodId();
+        uint64 periodId = _currentPeriodId();
         TokenStatement storage tokenStatement = periods[periodId].tokenStatement[_token];
         if (_incoming) {
             tokenStatement.income = tokenStatement.income.add(_amount);
@@ -710,10 +712,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         return settings.budgets[_token].sub(spent);
     }
 
-    function _currentPeriodId() internal view returns (uint256) {
+    function _currentPeriodId() internal view returns (uint64) {
+        // There is no way for this to overflow if protected by an initialization check
         return periodsLength - 1;
     }
 
     // Must be view for mocking purposes
-    function getMaxPeriodTransitions() internal view returns (uint256) { return MAX_UINT64; }
+    function getMaxPeriodTransitions() internal view returns (uint64) { return MAX_UINT64; }
 }
