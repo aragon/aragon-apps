@@ -131,13 +131,13 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
      * @notice Allows to send ETH from this contract to Vault, to avoid locking them in contract forever.
      */
     function () external payable isInitialized transitionsPeriod {
-        _recordIncomingTransaction(
+        _deposit(
             ETH,
+            msg.value,
+            "Ether transfer to Finance app",
             msg.sender,
-            address(this).balance,
-            "Ether transfer to Finance app"
+            true
         );
-        vault.deposit.value(address(this).balance)(ETH, this, address(this).balance);
     }
 
     /**
@@ -166,49 +166,21 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @dev Deposit for approved ERC20 tokens
+    * @dev Deposit for approved ERC20 tokens or ETH
     * @notice Deposit `_amount / 10^18` `_token.symbol(): string`
     * @param _token Address of deposited token
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
     */
-    function deposit(ERC20 _token, uint256 _amount, string _reference) external isInitialized transitionsPeriod {
-        require(_amount > 0);
-        _recordIncomingTransaction(
+    function deposit(address _token, uint256 _amount, string _reference) external payable isInitialized transitionsPeriod {
+        _deposit(
             _token,
-            msg.sender,
             _amount,
-            _reference
-        );
-        // First we need to get the tokens to Finance
-        _token.transferFrom(msg.sender, this, _amount);
-        // And then approve them to vault
-        _token.approve(vault, _amount);
-        // Finally we can deposit them
-        vault.deposit(_token, this, _amount);
-    }
-
-    /**
-    * @dev Deposit for ERC777 tokens
-    * @param _operator Address who triggered the transfer, either sender for a direct send or an authorized operator for operatorSend
-    * @param _from Token holder (sender or 0x for minting)
-    * @param _to Tokens recipient (or 0x for burning)
-    * @param _amount Number of tokens transferred, minted or burned
-    * @param _userData Information attached to the transaction by the sender
-    * @param _operatorData Information attached to the transaction by the operator
-    */
-    /*
-    function tokensReceived(address _operator, address _from, address _to, uint _amount, bytes _userData, bytes _operatorData) transitionsPeriod isInitialized external {
-        _recordIncomingTransaction(
+            _reference,
             msg.sender,
-            _from,
-            _amount,
-            string(_userData)
+            true
         );
-        //ERC777(msg.sender).send(adress(vault), _amount, _userData);
-        //vault.deposit(msg.sender, this, _amount, _userData);
     }
-    */
 
     /**
     * @notice Create a new payment of `_amount / 10^18` `_token.symbol(): string` to `_receiver`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + (_interval - _interval % 86400) / 86400 + ' days' : ''`
@@ -366,20 +338,17 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
      * @notice Send tokens held in this contract to the Vault
      * @param _token Token whose balance is going to be transferred.
      */
-    function depositToVault(ERC20 _token) public isInitialized {
-        uint256 value = _token.balanceOf(this);
-        require(value > 0);
+    function recoverToVault(address _token) public isInitialized transitionsPeriod {
+        uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).balanceOf(this);
+        require(amount > 0);
 
-        _recordIncomingTransaction(
+        _deposit(
             _token,
+            amount,
+            "Recover to Vault",
             this,
-            value,
-            "Deposit to Vault"
+            false
         );
-        // First we approve tokens to vault
-        _token.approve(vault, value);
-        // then we can deposit them
-        vault.deposit(_token, this, value);
     }
 
     /**
@@ -418,6 +387,15 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     // consts
+
+    /**
+    * @dev Disable recovery escape hatch if the app has been initialized, as it could be used
+    *      maliciously to transfer funds in the Finance app to another Vault
+    *      finance#recoverToVault() should be used to recover funds to the Finance's vault
+    */
+    function allowRecoverability(address) public view returns (bool) {
+        return !hasInitialized();
+    }
 
     function getPayment(uint256 _paymentId)
         public
@@ -559,8 +537,35 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     // internal fns
 
-    function _currentPeriodId() internal view returns (uint256) {
-        return periodsLength - 1;
+    function _deposit(address _token, uint256 _amount, string _reference, address _sender, bool _isExternalDeposit) internal {
+        require(_amount > 0);
+        _recordIncomingTransaction(
+            _token,
+            _sender,
+            _amount,
+            _reference
+        );
+
+        // If it is an external deposit, check that the assets are actually transferred
+        // External deposit will be false when the assets were already in the Finance app
+        // and just need to be transferred to the vault
+        if (_isExternalDeposit) {
+            if (_token != ETH) {
+                // Get the tokens to Finance
+                require(ERC20(_token).transferFrom(msg.sender, this, _amount));
+            } else {
+                // Ensure that the ETH sent with the transaction equals the amount in the deposit
+                require(msg.value == _amount);
+            }
+        }
+
+        if (_token == ETH) {
+            vault.deposit.value(_amount)(ETH, this, _amount);
+        } else {
+            ERC20(_token).approve(vault, _amount);
+            // finally we can deposit them
+            vault.deposit(_token, this, _amount);
+        }
     }
 
     function _newPeriod(uint64 _startTime) internal returns (Period storage) {
@@ -691,6 +696,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     function _canMakePayment(address _token, uint256 _amount) internal view returns (bool) {
         return getRemainingBudget(_token) >= _amount && vault.balance(_token) >= _amount;
+    }
+
+    function _currentPeriodId() internal view returns (uint256) {
+        return periodsLength - 1;
     }
 
     // Must be view for mocking purposes
