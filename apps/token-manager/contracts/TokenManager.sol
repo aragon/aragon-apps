@@ -260,6 +260,26 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return true;
     }
 
+    /**
+    * @notice Called when ether is sent to the MiniMe Token contract
+    * @return True if the ether is accepted, false for it to throw
+    */
+    function proxyPayment(address) public payable returns (bool) {
+        // Sender check is required to avoid anyone sending ETH to the Token Manager through this method
+        // Even though it is tested, solidity-coverage doesnt get it because
+        // MiniMeToken is not instrumented and entire tx is reverted
+        require(msg.sender == address(token));
+        return false;
+    }
+
+    /**
+    * @dev Notifies the controller about an approval allowing the controller to react if desired
+    * @return False if the controller does not authorize the approval
+    */
+    function onApprove(address, address, uint) public returns (bool) {
+        return true;
+    }
+
     function _isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
         return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
     }
@@ -285,6 +305,14 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         }
 
         return token.balanceOf(_holder).sub(totalNonTransferable);
+    }
+
+    /**
+    * @dev Disable recovery escape hatch for own token,
+    *      as the it has the concept of issuing tokens without assigning them
+    */
+    function allowRecoverability(address _token) public view returns (bool) {
+        return _token != address(token);
     }
 
     /**
@@ -361,32 +389,5 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     function _mint(address _receiver, uint256 _amount) internal isInitialized {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
-    }
-
-    /**
-    * @notice Called when ether is sent to the MiniMe Token contract
-    * @return True if the ether is accepted, false for it to throw
-    */
-    function proxyPayment(address) public payable returns (bool) {
-        // Even though it is tested, solidity-coverage doesnt get it because
-        // MiniMeToken is not instrumented and entire tx is reverted
-        require(msg.sender == address(token));
-        return false;
-    }
-
-    /**
-    * @dev Notifies the controller about an approval allowing the controller to react if desired
-    * @return False if the controller does not authorize the approval
-    */
-    function onApprove(address, address, uint) public returns (bool) {
-        return true;
-    }
-
-    /**
-    * @dev Disable recovery escape hatch for own token,
-    *      as the it has the concept of issuing tokens without assigning them
-    */
-    function allowRecoverability(address _token) public view returns (bool) {
-        return _token != address(token);
     }
 }
