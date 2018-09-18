@@ -200,7 +200,7 @@ class VotePanelContent extends React.Component {
                 No
               </Button>
             </VotingButtons>
-            <Info title={`You will cast ${userBalance || '...'} votes`} />
+            <Info title={`You will cast ${userBalance || '...'} ${userBalance === 1 ? 'vote' : 'votes'} (your balance at block #${vote.data.snapshotBlock})`}/>
           </div>
         )}
       </div>
