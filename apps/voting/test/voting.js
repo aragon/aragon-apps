@@ -149,7 +149,7 @@ contract('Voting App', accounts => {
     })
 
     for (const decimals of [0, 2, 18]) {
-        context('normal token supply, ' + decimals + ' decimals', () => {
+        context(`normal token supply, ${decimals} decimals`, () => {
             const holder20 = accounts[0]
             const holder29 = accounts[1]
             const holder51 = accounts[2]
