@@ -18,6 +18,7 @@ contract Voting is IForwarder, AragonApp {
     using SafeMath64 for uint64;
 
     bytes32 public constant CREATE_VOTES_ROLE = keccak256("CREATE_VOTES_ROLE");
+    bytes32 public constant MODIFY_SUPPORT_ROLE = keccak256("MODIFY_SUPPORT_ROLE");
     bytes32 public constant MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
 
     uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
@@ -28,6 +29,7 @@ contract Voting is IForwarder, AragonApp {
         address creator;
         uint64 startDate;
         uint256 snapshotBlock;
+        uint256 supportRequiredPct;
         uint256 minAcceptQuorumPct;
         uint256 yea;
         uint256 nay;
@@ -50,6 +52,7 @@ contract Voting is IForwarder, AragonApp {
     event StartVote(uint256 indexed voteId);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
+    event ChangeSupportRequired(uint256 supportRequiredPct);
     event ChangeMinQuorum(uint256 minAcceptQuorumPct);
 
     modifier voteExists(uint256 _voteId) {
@@ -76,13 +79,28 @@ contract Voting is IForwarder, AragonApp {
         initialized();
 
         require(_minAcceptQuorumPct > 0);
+        require(_minAcceptQuorumPct <= _supportRequiredPct);
         require(_supportRequiredPct <= PCT_BASE);
-        require(_supportRequiredPct >= _minAcceptQuorumPct);
 
         token = _token;
         supportRequiredPct = _supportRequiredPct;
         minAcceptQuorumPct = _minAcceptQuorumPct;
         voteTime = _voteTime;
+    }
+
+    /**
+    * @notice Change required support to `(_supportRequiredPct - _supportRequiredPct % 10^16) / 10^14`%
+    * @param _supportRequiredPct New required support
+    */
+    function changeSupportRequiredPct(uint256 _supportRequiredPct)
+        external
+        authP(MODIFY_SUPPORT_ROLE, arr(_supportRequiredPct, supportRequiredPct))
+    {
+        require(minAcceptQuorumPct <= _supportRequiredPct);
+        require(_supportRequiredPct <= PCT_BASE);
+        supportRequiredPct = _supportRequiredPct;
+
+        emit ChangeSupportRequired(_supportRequiredPct);
     }
 
     /**
@@ -94,7 +112,7 @@ contract Voting is IForwarder, AragonApp {
         authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct))
     {
         require(_minAcceptQuorumPct > 0);
-        require(supportRequiredPct >= _minAcceptQuorumPct);
+        require(_minAcceptQuorumPct <= supportRequiredPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
 
         emit ChangeMinQuorum(_minAcceptQuorumPct);
@@ -107,7 +125,7 @@ contract Voting is IForwarder, AragonApp {
     * @return voteId Id for newly created vote
     */
     function newVote(bytes _executionScript, string _metadata) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
-        return _newVote(_executionScript, _metadata, true);
+        return _newVote(_executionScript, _metadata, true, true);
     }
 
     /**
@@ -115,28 +133,37 @@ contract Voting is IForwarder, AragonApp {
      * @param _executionScript EVM script to be executed on approval
      * @param _metadata Vote metadata
      * @param _castVote Whether to also cast newly created vote
+     * @param _executesIfDecided Whether to also immediately execute newly created vote if decided
      * @return voteId id for newly created vote
      */
-    function newVote(bytes _executionScript, string _metadata, bool _castVote) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
-        return _newVote(_executionScript, _metadata, _castVote);
+    function newVote(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided)
+        external
+        auth(CREATE_VOTES_ROLE)
+        returns (uint256 voteId)
+    {
+        return _newVote(_executionScript, _metadata, _castVote, _executesIfDecided);
     }
 
     /**
     * @notice Vote `_supports ? 'yea' : 'nay'` in vote #`_voteId`
+    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote(),` which requires initialization
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
     */
-    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external isInitialized voteExists(_voteId) {
+    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external voteExists(_voteId) {
         require(canVote(_voteId, msg.sender));
         _vote(_voteId, _supports, msg.sender, _executesIfDecided);
     }
 
     /**
     * @notice Execute the result of vote #`_voteId`
+    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote(),` which requires initialization
     * @param _voteId Id for vote
     */
-    function executeVote(uint256 _voteId) external isInitialized voteExists(_voteId) {
+    function executeVote(uint256 _voteId) external voteExists(_voteId) {
         require(canExecute(_voteId));
         _executeVote(_voteId);
     }
@@ -150,12 +177,13 @@ contract Voting is IForwarder, AragonApp {
     * @dev IForwarder interface conformance
     * @param _evmScript Start vote with script
     */
-    function forward(bytes _evmScript) public isInitialized {
+    function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript));
-        _newVote(_evmScript, "", true);
+        _newVote(_evmScript, "", true, true);
     }
 
     function canForward(address _sender, bytes) public view returns (bool) {
+        // Note that `canPerform()` implicitly does an initialization check itself
         return canPerform(_sender, CREATE_VOTES_ROLE, arr());
     }
 
@@ -173,7 +201,7 @@ contract Voting is IForwarder, AragonApp {
         }
 
         // Voting is already decided
-        if (_isValuePct(vote_.yea, vote_.totalVoters, supportRequiredPct)) {
+        if (_isValuePct(vote_.yea, vote_.totalVoters, vote_.supportRequiredPct)) {
             return true;
         }
 
@@ -184,7 +212,7 @@ contract Voting is IForwarder, AragonApp {
             return false;
         }
         // Has enough support?
-        if (!_isValuePct(vote_.yea, totalVotes, supportRequiredPct)) {
+        if (!_isValuePct(vote_.yea, totalVotes, vote_.supportRequiredPct)) {
             return false;
         }
         // Has min quorum?
@@ -205,6 +233,7 @@ contract Voting is IForwarder, AragonApp {
             address creator,
             uint64 startDate,
             uint256 snapshotBlock,
+            uint256 supportRequired,
             uint256 minAcceptQuorum,
             uint256 yea,
             uint256 nay,
@@ -219,6 +248,7 @@ contract Voting is IForwarder, AragonApp {
         creator = vote_.creator;
         startDate = vote_.startDate;
         snapshotBlock = vote_.snapshotBlock;
+        supportRequired = vote_.supportRequiredPct;
         minAcceptQuorum = vote_.minAcceptQuorumPct;
         yea = vote_.yea;
         nay = vote_.nay;
@@ -234,7 +264,10 @@ contract Voting is IForwarder, AragonApp {
         return votes[_voteId].voters[_voter];
     }
 
-    function _newVote(bytes _executionScript, string _metadata, bool _castVote) internal returns (uint256 voteId) {
+    function _newVote(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided)
+        internal
+        returns (uint256 voteId)
+    {
         voteId = votesLength++;
         Vote storage vote_ = votes[voteId];
         vote_.executionScript = _executionScript;
@@ -243,12 +276,13 @@ contract Voting is IForwarder, AragonApp {
         vote_.metadata = _metadata;
         vote_.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote_.totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
+        vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
 
         emit StartVote(voteId);
 
         if (_castVote && canVote(voteId, msg.sender)) {
-            _vote(voteId, true, msg.sender, true);
+            _vote(voteId, true, msg.sender, _executesIfDecided);
         }
     }
 

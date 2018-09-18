@@ -127,13 +127,13 @@ class VotesHistory extends React.Component {
                   stroke="#DAEAEF"
                   strokeWidth="3"
                 />
-                {/*<g transform={`translate(0,${HEIGHT + CAPTIONS_HEIGHT * 0.7})`}>
+                {/* <g transform={`translate(0,${HEIGHT + CAPTIONS_HEIGHT * 0.7})`}>
                   {[...new Array(DURATION_SLICES - 1)].map((_, i) => (
                     <text key={i} x={this.getX(i) + (i === 0 ? 2 : 0)}>
                       {i + 1}.
                     </text>
                   ))}
-                </g>*/}
+                </g> */}
               </svg>
             )}
           </Spring>
