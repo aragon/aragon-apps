@@ -15,7 +15,6 @@ You can read more about the individual apps in [their specifications](https://wi
 The following apps are still under development, not ready for production deployment yet:
 
 - **[Payroll](future-apps/payroll)**: Manages employees' payrolls.
-- **[Fundraising](future-apps/fundraising)**: Manages fundraising campaings.
 
 ## Developing
 
