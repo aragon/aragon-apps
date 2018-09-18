@@ -66,6 +66,11 @@ contract Survey is AragonApp {
     event ResetVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 previousStake, uint256 optionPower);
     event ChangeMinParticipation(uint256 minParticipationPct);
 
+    modifier acceptableMinParticipationPct(uint256 _minParticipationPct) {
+        require(_minParticipationPct > 0 && _minParticipationPct <= PCT_BASE);
+        _;
+    }
+
     modifier surveyExists(uint256 _surveyId) {
         require(_surveyId < surveysLength);
         _;
@@ -84,10 +89,9 @@ contract Survey is AragonApp {
     )
         external
         onlyInit
+        acceptableMinParticipationPct(_minParticipationPct)
     {
         initialized();
-
-        require(_minParticipationPct > 0 && _minParticipationPct <= PCT_BASE);
 
         token = _token;
         minParticipationPct = _minParticipationPct;
@@ -98,8 +102,11 @@ contract Survey is AragonApp {
     * @notice Change minimum acceptance participation to `(_minParticipationPct - _minParticipationPct % 10^16) / 10^14`%
     * @param _minParticipationPct New acceptance participation
     */
-    function changeMinAcceptParticipationPct(uint256 _minParticipationPct) external authP(MODIFY_PARTICIPATION_ROLE, arr(_minParticipationPct)) {
-        require(_minParticipationPct > 0 && _minParticipationPct <= PCT_BASE);
+    function changeMinAcceptParticipationPct(uint256 _minParticipationPct)
+        external
+        authP(MODIFY_PARTICIPATION_ROLE, arr(_minParticipationPct))
+        acceptableMinParticipationPct(_minParticipationPct)
+    {
         minParticipationPct = _minParticipationPct;
 
         emit ChangeMinParticipation(_minParticipationPct);
