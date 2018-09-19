@@ -4,7 +4,7 @@ import { isBefore } from 'date-fns/esm'
 import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
-import tokenBalanceOfAbi from './abi/token-balanceof.json'
+import tokenBalanceOfAtAbi from './abi/token-balanceOfAt.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
@@ -15,7 +15,7 @@ import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
 import { EMPTY_CALLSCRIPT, getQuorumProgress } from './vote-utils'
 
-const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi)
+const tokenAbi = [].concat(tokenBalanceOfAtAbi, tokenDecimalsAbi)
 
 class App extends React.Component {
   static propTypes = {
