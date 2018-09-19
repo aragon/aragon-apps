@@ -22,6 +22,7 @@ class VotingCard extends React.Component {
       opened,
       totalVoters,
       status,
+      id,
     } = this.props
     return (
       <Main>
@@ -39,7 +40,8 @@ class VotingCard extends React.Component {
         <Card>
           <Content>
             <Question>
-              <Text>{question}</Text>
+              <Text color={theme.textTertiary}>#{id} </Text>
+              <span>{question}</span>
             </Question>
             <VotingOptions totalVoters={totalVoters} options={options} />
           </Content>
