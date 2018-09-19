@@ -5,12 +5,16 @@
       {
         "name": "_owner",
         "type": "address"
+      },
+      {
+        "name": "_blockNumber",
+        "type": "uint256"
       }
     ],
-    "name": "balanceOf",
+    "name": "balanceOfAt",
     "outputs": [
       {
-        "name": "balance",
+        "name": "",
         "type": "uint256"
       }
     ],

@@ -4,7 +4,7 @@ import { isBefore } from 'date-fns/esm'
 import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
-import tokenBalanceOfAbi from './abi/token-balanceof.json'
+import tokenBalanceOfAtAbi from './abi/token-balanceOfAt.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
@@ -19,7 +19,7 @@ import {
   voteTypeFromContractEnum,
 } from './vote-utils'
 
-const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi)
+const tokenAbi = [].concat(tokenBalanceOfAtAbi, tokenDecimalsAbi)
 
 class App extends React.Component {
   static propTypes = {
@@ -58,30 +58,35 @@ class App extends React.Component {
   }
   componentWillReceiveProps(nextProps) {
     const { settingsLoaded } = this.state
+
     // Is this the first time we've loaded the settings?
     if (!settingsLoaded && hasLoadedVoteSettings(nextProps)) {
       this.setState({
         settingsLoaded: true,
       })
     }
+
+    // Refresh the token contract if its address changes
     if (nextProps.tokenAddress !== this.props.tokenAddress) {
       this.setState({
         tokenContract: this.getTokenContract(nextProps.tokenAddress),
       })
     }
 
-    this.loadUserAccountVotes(nextProps.userAccount, nextProps.votes)
+    // Refresh the account votes if the account changes,
+    // or if there is any vote update.
+    if (
+      nextProps.votes !== this.props.votes ||
+      nextProps.userAccount !== this.props.userAccount
+    ) {
+      this.loadUserAccountVotes(nextProps.userAccount, nextProps.votes)
+    }
   }
 
-  // TODO: call loadUserAccountVotes when there is a change in the votes
-  async loadUserAccountVotes(nextUserAccount, votes) {
-    const { userAccount, app } = this.props
+  async loadUserAccountVotes(userAccount, votes) {
+    const { app } = this.props
 
-    if (userAccount === nextUserAccount) {
-      return
-    }
-
-    if (!nextUserAccount) {
+    if (!userAccount) {
       this.setState({ userAccountVotes: new Map() })
       return
     }
@@ -93,7 +98,7 @@ class App extends React.Component {
             vote =>
               new Promise((resolve, reject) => {
                 app
-                  .call('getVoterState', vote.voteId, nextUserAccount)
+                  .call('getVoterState', vote.voteId, userAccount)
                   .subscribe(result => resolve([vote.voteId, result]), reject)
               })
           )
@@ -126,6 +131,10 @@ class App extends React.Component {
   }
   handleVote = (voteId, voteType, executesIfDecided = true) => {
     this.props.app.vote(voteId, voteType === VOTE_YEA, executesIfDecided)
+    this.handleVoteClose()
+  }
+  handleExecute = voteId => {
+    this.props.app.executeVote(voteId)
     this.handleVoteClose()
   }
   handleVoteClose = () => {
@@ -227,6 +236,7 @@ class App extends React.Component {
                 ready={voteSidebarOpened}
                 tokenContract={tokenContract}
                 onVote={this.handleVote}
+                onExecute={this.handleExecute}
               />
             )}
         </SidePanel>
