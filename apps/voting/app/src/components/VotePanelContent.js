@@ -57,7 +57,10 @@ class VotePanelContent extends React.Component {
   loadUserBalance = () => {
     const { tokenContract, user, vote } = this.props
     if (tokenContract && user) {
-      combineLatest(tokenContract.balanceOf(user), tokenContract.decimals())
+      combineLatest(
+        tokenContract.balanceOfAt(user, vote.data.snapshotBlock),
+        tokenContract.decimals()
+      )
         .first()
         .subscribe(([balance, decimals]) => {
           const adjustedBalance = Math.floor(
@@ -266,7 +269,8 @@ class VotePanelContent extends React.Component {
                 </ButtonsContainer>
                 <Info.Action>
                   <p>
-                    You will cast {userBalance || '…'} votes, since it was your
+                    You will cast {userBalance || '…'}{' '}
+                    {userBalance === 1 ? 'vote' : 'votes'}, since it was your
                     token balance at the{' '}
                     <SafeLink
                       href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
