@@ -17,6 +17,7 @@
     "deprecated-suicide": ["error"],
     "arg-overflow": ["error", 8],
     "pragma-on-top": ["error"],
-    "security/enforce-explicit-visibility": ["error"]
+    "security/enforce-explicit-visibility": ["error"],
+    "error-reason": 0
   }
 }
