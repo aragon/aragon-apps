@@ -1,6 +1,6 @@
 {
   "name": "@aragon/apps-finance",
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0-beta.2",
   "main": "index.js",
   "scripts": {
     "postinstall": "cd app && npm install",
@@ -46,7 +46,7 @@
     "webpack": "3.10.0"
   },
   "dependencies": {
-    "@aragon/apps-vault": "^3.0.0-beta.1",
+    "@aragon/apps-vault": "^3.0.0-beta.2",
     "@aragon/os": "4.0.0-beta.2"
   }
 }
