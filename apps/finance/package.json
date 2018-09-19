@@ -47,6 +47,6 @@
   },
   "dependencies": {
     "@aragon/apps-vault": "^3.0.0-beta.1",
-    "@aragon/os": "4.0.0-beta.1"
+    "@aragon/os": "4.0.0-beta.2"
   }
 }
