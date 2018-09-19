@@ -281,12 +281,12 @@ class VotePanelContent extends React.Component {
                   <p>
                     You will cast {userBalance || '…'}{' '}
                     {userBalance === 1 ? 'vote' : 'votes'}, since it was your
-                    token balance at the{' '}
+                    token balance at the beginning of the vote{' '}
                     <SafeLink
                       href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
                       target="_blank"
                     >
-                      beginning of the vote
+                      (block {snapshotBlock})
                     </SafeLink>
                     .
                   </p>
