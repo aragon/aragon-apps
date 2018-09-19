@@ -30,16 +30,29 @@ class VotePanelContent extends React.Component {
     changeVote: false,
   }
   componentDidMount() {
-    this.loadUserCanVote()
-    this.loadUserBalance()
-    this.loadCanExecute()
+    const { user, vote, tokenContract } = this.props
+    this.loadUserBalance(user, vote, tokenContract)
+    this.loadUserCanVote(user, vote)
+    this.loadCanExecute(vote)
   }
   componentWillReceiveProps(nextProps) {
-    if (nextProps.user !== this.props.user) {
-      this.loadUserCanVote()
+    const { user, vote, tokenContract } = this.props
+
+    const userUpdate = nextProps.user !== user
+    const voteUpdate = nextProps.vote.voteId !== vote.voteId
+    const contractUpdate = nextProps.tokenContract !== tokenContract
+
+    if (userUpdate || contractUpdate || voteUpdate) {
+      this.loadUserBalance(
+        nextProps.user,
+        nextProps.vote,
+        nextProps.tokenContract
+      )
+      this.loadUserCanVote(nextProps.user, nextProps.vote)
     }
-    if (nextProps.tokenContract !== this.props.tokenContract) {
-      this.loadUserBalance()
+
+    if (contractUpdate || voteUpdate) {
+      this.loadCanExecute(vote)
     }
   }
   handleChangeVoteClick = () => {
@@ -54,8 +67,7 @@ class VotePanelContent extends React.Component {
   handleExecuteClick = () => {
     this.props.onExecute(this.props.vote.voteId)
   }
-  loadUserBalance = () => {
-    const { tokenContract, user, vote } = this.props
+  loadUserBalance = (user, vote, tokenContract) => {
     if (tokenContract && user) {
       combineLatest(
         tokenContract.balanceOfAt(user, vote.data.snapshotBlock),
@@ -66,14 +78,12 @@ class VotePanelContent extends React.Component {
           const adjustedBalance = Math.floor(
             parseInt(balance, 10) / Math.pow(10, decimals)
           )
-          this.setState({
-            userBalance: adjustedBalance,
-          })
+          this.setState({ userBalance: adjustedBalance })
         })
     }
   }
-  loadUserCanVote = () => {
-    const { app, user, vote } = this.props
+  loadUserCanVote = (user, vote) => {
+    const { app } = this.props
     if (user && vote) {
       // Get if user can vote
       app
@@ -84,8 +94,8 @@ class VotePanelContent extends React.Component {
         })
     }
   }
-  loadCanExecute = () => {
-    const { app, vote } = this.props
+  loadCanExecute = vote => {
+    const { app } = this.props
     if (vote) {
       app
         .call('canExecute', vote.voteId)
