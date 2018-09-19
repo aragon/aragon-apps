@@ -16,6 +16,7 @@ import { combineLatest } from '../rxjs'
 import provideNetwork from '../utils/provideNetwork'
 import { VOTE_NAY, VOTE_YEA, VOTE_STATUS_ACCEPTED } from '../vote-types'
 import { getVoteStatus } from '../vote-utils'
+import { pluralize } from '../utils'
 import VoteSummary from './VoteSummary'
 import VoteStatus from './VoteStatus'
 
@@ -249,7 +250,21 @@ class VotePanelContent extends React.Component {
                   </Button>
                 </ButtonsContainer>
                 <Info.Action>
-                  You voted yes with {userBalance || '…'} tokens.
+                  <p>
+                    You voted {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'}{' '}
+                    with{' '}
+                    {userBalance === null
+                      ? '…'
+                      : pluralize(userBalance, '$ token', '$ tokens')}
+                    , since it was your balance at the beginning of the vote{' '}
+                    <SafeLink
+                      href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
+                      target="_blank"
+                    >
+                      (block {snapshotBlock})
+                    </SafeLink>
+                    .
+                  </p>
                 </Info.Action>
               </div>
             )
@@ -279,14 +294,16 @@ class VotePanelContent extends React.Component {
                 </ButtonsContainer>
                 <Info.Action>
                   <p>
-                    You will cast {userBalance || '…'}{' '}
-                    {userBalance === 1 ? 'vote' : 'votes'}, since it was your
-                    token balance at the beginning of the vote{' '}
+                    You will cast your vote with{' '}
+                    {userBalance === null
+                      ? '… tokens'
+                      : pluralize(userBalance, '$ token', '$ tokens')}
+                    , since it was your balance at the beginning of the vote{' '}
                     <SafeLink
                       href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
                       target="_blank"
                     >
-                      (block {snapshotBlock})
+                      (block {snapshotBlock})
                     </SafeLink>
                     .
                   </p>
