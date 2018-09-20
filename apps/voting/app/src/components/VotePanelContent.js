@@ -143,7 +143,7 @@ class VotePanelContent extends React.Component {
     } = vote.data
 
     return (
-      <div>
+      <React.Fragment>
         <SidePanelSplit>
           <div>
             <h2>
@@ -312,7 +312,7 @@ class VotePanelContent extends React.Component {
             )
           }
         })()}
-      </div>
+      </React.Fragment>
     )
   }
 }
