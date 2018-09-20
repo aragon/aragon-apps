@@ -101,8 +101,8 @@ const VotesTableWrapper = styled.div`
 
 const You = styled(Badge.Identity).attrs({ children: 'Your vote' })`
   margin-left: 5px;
-  font-variant: small-caps;
-  text-transform: lowercase;
+  font-size: 9px;
+  text-transform: uppercase;
 `
 
 export default Votes
