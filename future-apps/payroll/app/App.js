@@ -1,46 +1,10 @@
 import React from 'react'
-import styled, { css } from 'styled-components'
-import { AragonApp, AppBar, Button } from '@aragon/ui'
+import { AppBar, Button } from '@aragon/ui'
 
 import Tab from './components/Tab'
-
-import { MyPayroll, TeamPayroll } from './components/sections'
-
-const AppContainer = styled(AragonApp)`
-  display: flex;
-  width: 100vw;
-  height: 100vh;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: stretch;
-`
-
-const Header = styled.header`
-  flex-shrink: 0;
-`
-
-const ScrollPane = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-  overflow: auto;
-  flex-grow: 1;
-
-  ${({ vertical = true }) => vertical && css`
-    overflow-y: auto;
-  `}
-  
-  ${({ horizontal = true }) => horizontal && css`
-    overflow-x: auto;
-  `}
-`
-
-const Content = styled.main`
-  display: flex;
-  flex-direction: column;
-  padding: 30px;
-  flex-grow: 1;
-`
+import AppLayout from './components/Layout/AppLayout'
+import MyPayroll from './components/MyPayroll'
+import TeamPayroll from './components/TeamPayroll'
 
 export default class App extends React.Component {
   state = { activeTab: 'my-payroll' }
@@ -71,8 +35,8 @@ export default class App extends React.Component {
     const { activeTab } = this.state
 
     return (
-      <AppContainer publicUrl='/aragon-ui/'>
-        <Header>
+      <AppLayout publicUrl='/aragon-ui/'>
+        <AppLayout.Header>
           <AppBar
             title='Payroll'
             endContent={this.renderActionButton()}
@@ -90,20 +54,18 @@ export default class App extends React.Component {
             />
           </Tab.Container>
 
-        </Header>
+        </AppLayout.Header>
 
-        <ScrollPane>
-          <Content>
-            {activeTab === 'my-payroll' && (
-              <MyPayroll/>
-            )}
+        <AppLayout.Content>
+          {activeTab === 'my-payroll' && (
+            <MyPayroll/>
+          )}
 
-            {activeTab === 'team-payroll' && (
-              <TeamPayroll/>
-            )}
-          </Content>
-        </ScrollPane>
-      </AppContainer>
+          {activeTab === 'team-payroll' && (
+            <TeamPayroll/>
+          )}
+        </AppLayout.Content>
+      </AppLayout>
     )
   }
 }

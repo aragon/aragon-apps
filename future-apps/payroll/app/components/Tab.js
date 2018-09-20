@@ -22,7 +22,7 @@ const Tab = styled.li`
   border-bottom: 4px solid ${({ active }) => active ? theme.gradientEndActive : 'transparent'};
 `
 
-class TabContainer extends React.Component {
+class TabContainer extends React.PureComponent {
   state = { selectedIndex: 0 }
 
   componentDidUpdate (prevProps, prevState) {
