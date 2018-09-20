@@ -1,0 +1,28 @@
+{
+  "presets": [
+    [
+      "env",
+      {
+        "modules": false,
+        "targets": {
+          "browsers": [
+            "> 2%",
+            "last 3 versions",
+            "last 1 edge versions",
+            "ie >= 9",
+            "ios >= 8",
+            "android >= 4.2",
+            "not op_mini all"
+          ]
+        },
+        "useBuiltIns": false
+      }
+    ],
+    "stage-2"
+  ],
+  "plugins": [
+    ["styled-components", { "displayName": true }],
+    "transform-class-properties",
+    "transform-runtime"
+  ]
+}
