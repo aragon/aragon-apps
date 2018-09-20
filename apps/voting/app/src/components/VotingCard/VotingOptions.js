@@ -27,23 +27,6 @@ class VotingOptions extends React.Component {
 
     this.state.delay = delay
   }
-  shouldComponentUpdate(nextProps) {
-    const { options } = this.props
-    const { options: nextOptions } = nextProps
-    return this.didOptionsChange(options, nextOptions)
-  }
-  didOptionsChange(options, nextOptions) {
-    if (options.length !== nextOptions.length) {
-      return true
-    }
-    let i = options.length
-    while (i--) {
-      if (options[i].id !== nextOptions[i].id) {
-        return true
-      }
-    }
-    return false
-  }
   render() {
     const { delay } = this.state
     const {
