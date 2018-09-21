@@ -39,10 +39,10 @@
   },
   "scripts": {
     "lint": "eslint ./src",
-    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./dist && rsync -rtu ./public/ ./dist",
-    "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve index.html -p 3001 --out-dir dist/",
-    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir dist/ --public-url '.'",
-    "build:script": "parcel build src/script.js --out-dir dist/"
+    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build",
+    "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve index.html -p 3001 --out-dir build/",
+    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url '.'",
+    "build:script": "parcel build src/script.js --out-dir build/"
   },
   "proxy": "http://localhost:3001",
   "browserslist": [
