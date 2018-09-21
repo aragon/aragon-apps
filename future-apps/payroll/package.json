@@ -46,6 +46,7 @@
     "@aragon/os": "^4.0.0-beta.1",
     "@aragon/ppf-contracts": "^1.0.2",
     "@aragon/ui": "^0.18.1",
+    "prop-types": "^15.6.2",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
     "styled-components": "^3.4.9"
