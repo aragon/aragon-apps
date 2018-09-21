@@ -13,7 +13,11 @@ import { networkContextType } from './utils/provideNetwork'
 import { safeDiv } from './math-utils'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
-import { EMPTY_CALLSCRIPT, getQuorumProgress } from './vote-utils'
+import {
+  EMPTY_CALLSCRIPT,
+  getQuorumProgress,
+  voteTypeFromContractEnum,
+} from './vote-utils'
 
 const tokenAbi = [].concat(tokenBalanceOfAtAbi, tokenDecimalsAbi)
 
@@ -49,21 +53,58 @@ class App extends React.Component {
       tokenContract: this.getTokenContract(props.tokenAddress),
       voteVisible: false,
       voteSidebarOpened: false,
+      userAccountVotes: new Map(),
     }
   }
   componentWillReceiveProps(nextProps) {
     const { settingsLoaded } = this.state
+
     // Is this the first time we've loaded the settings?
     if (!settingsLoaded && hasLoadedVoteSettings(nextProps)) {
       this.setState({
         settingsLoaded: true,
       })
     }
+
+    // Refresh the token contract if its address changes
     if (nextProps.tokenAddress !== this.props.tokenAddress) {
       this.setState({
         tokenContract: this.getTokenContract(nextProps.tokenAddress),
       })
     }
+
+    // Refresh the account votes if the account changes,
+    // or if there is any vote update.
+    if (
+      nextProps.votes !== this.props.votes ||
+      nextProps.userAccount !== this.props.userAccount
+    ) {
+      this.loadUserAccountVotes(nextProps.userAccount, nextProps.votes)
+    }
+  }
+
+  async loadUserAccountVotes(userAccount, votes) {
+    const { app } = this.props
+
+    if (!userAccount) {
+      this.setState({ userAccountVotes: new Map() })
+      return
+    }
+
+    this.setState({
+      userAccountVotes: new Map(
+        await Promise.all(
+          votes.map(
+            vote =>
+              new Promise((resolve, reject) => {
+                app
+                  .call('getVoterState', vote.voteId, userAccount)
+                  .subscribe(result => resolve([vote.voteId, result]), reject)
+              })
+          )
+        )
+      ),
+    })
   }
 
   getTokenContract(tokenAddress) {
@@ -92,6 +133,10 @@ class App extends React.Component {
     this.props.app.vote(voteId, voteType === VOTE_YEA, executesIfDecided)
     this.handleVoteClose()
   }
+  handleExecute = voteId => {
+    this.props.app.executeVote(voteId)
+    this.handleVoteClose()
+  }
   handleVoteClose = () => {
     this.setState({ voteVisible: false })
   }
@@ -107,6 +152,7 @@ class App extends React.Component {
       votes,
       voteTime,
     } = this.props
+
     const {
       createVoteVisible,
       currentVoteId,
@@ -114,6 +160,7 @@ class App extends React.Component {
       tokenContract,
       voteSidebarOpened,
       voteVisible,
+      userAccountVotes,
     } = this.state
 
     const displayVotes = settingsLoaded && votes.length > 0
@@ -131,6 +178,9 @@ class App extends React.Component {
             quorum: safeDiv(vote.data.minAcceptQuorum, pctBase),
             quorumProgress: getQuorumProgress(vote.data),
             support: supportRequired,
+            userAccountVote: voteTypeFromContractEnum(
+              userAccountVotes.get(vote.voteId)
+            ),
           }
         })
       : votes
@@ -167,16 +217,18 @@ class App extends React.Component {
           </AppLayout.ScrollWrapper>
         </AppLayout>
 
-        {displayVotes &&
-          currentVote && (
-            <SidePanel
-              title={`Vote #${currentVoteId} (${
-                currentVote.open ? 'Open' : 'Closed'
-              })`}
-              opened={Boolean(!createVoteVisible && voteVisible)}
-              onClose={this.handleVoteClose}
-              onTransitionEnd={this.handleVoteTransitionEnd}
-            >
+        <SidePanel
+          title={`Vote #${currentVoteId} (${
+            currentVote && currentVote.open ? 'Open' : 'Closed'
+          })`}
+          opened={
+            currentVote && displayVotes && !createVoteVisible && voteVisible
+          }
+          onClose={this.handleVoteClose}
+          onTransitionEnd={this.handleVoteTransitionEnd}
+        >
+          {displayVotes &&
+            currentVote && (
               <VotePanelContent
                 app={app}
                 vote={currentVote}
@@ -184,9 +236,10 @@ class App extends React.Component {
                 ready={voteSidebarOpened}
                 tokenContract={tokenContract}
                 onVote={this.handleVote}
+                onExecute={this.handleExecute}
               />
-            </SidePanel>
-          )}
+            )}
+        </SidePanel>
 
         <SidePanel
           title="New Vote"
