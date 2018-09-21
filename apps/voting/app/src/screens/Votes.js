@@ -63,12 +63,10 @@ class Votes extends React.Component {
                     onOpen={this.props.onSelectVote}
                     options={[
                       {
-                        id: 'yea' + vote.userAccountVote.description,
                         label: this.optionLabel('Yes', vote, VOTE_YEA),
                         power: vote.data.yea,
                       },
                       {
-                        id: 'nay' + vote.userAccountVote.description,
                         label: this.optionLabel('No', vote, VOTE_NAY),
                         power: vote.data.nay,
                         color: theme.negative,

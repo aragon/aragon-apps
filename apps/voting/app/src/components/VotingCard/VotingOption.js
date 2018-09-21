@@ -8,7 +8,7 @@ class VotingOption extends React.Component {
     color: theme.positive,
   }
   render() {
-    const { label, value, percentage, showProgress, color } = this.props
+    const { value, label, percentage, color } = this.props
     return (
       <Main>
         <Labels>
@@ -20,8 +20,8 @@ class VotingOption extends React.Component {
         <BarWrapper>
           <Bar
             style={{
-              width: `${value * 100}%`,
-              transform: showProgress.interpolate(t => `scale3d(${t}, 1, 1)`),
+              width: '100%',
+              transform: value.interpolate(v => `scale3d(${v}, 1, 1)`),
               backgroundColor: color,
             }}
           />
