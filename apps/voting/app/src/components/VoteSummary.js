@@ -1,12 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Motion, spring } from 'react-motion'
-import { SidePanel, Text, theme, spring as springConf } from '@aragon/ui'
+import { Spring, animated } from 'react-spring'
+import { SidePanel, Text, theme, springs } from '@aragon/ui'
 import { safeDiv } from '../math-utils'
 
 const { PANEL_INNER_WIDTH } = SidePanel
-
-const fast = springConf('fast')
 
 const VoteSummary = ({
   votesYea,
@@ -25,9 +23,11 @@ const VoteSummary = ({
   const votesNayVotersPct = safeDiv(votesNay, totalVotes)
 
   return (
-    <Motion
-      defaultStyle={{ progress: 0 }}
-      style={{ progress: spring(Number(ready), fast) }}
+    <Spring
+      from={{ progress: 0 }}
+      to={{ progress: Number(ready) }}
+      config={springs.lazy}
+      native
     >
       {({ progress }) => (
         <Main>
@@ -44,24 +44,34 @@ const VoteSummary = ({
           <BarWrapper>
             <QuorumBar
               style={{
-                transform: `
-                translateX(${PANEL_INNER_WIDTH * quorum * progress}px)
-                scaleY(${quorum ? progress : 0})
-              `,
+                transform: progress.interpolate(
+                  t => `
+                    translate3d(${PANEL_INNER_WIDTH * quorum * t}px, 0, 0)
+                    scale3d(1, ${quorum ? t : 0}, 1)
+                  `
+                ),
               }}
             />
             <Bar>
               <Votes
-                color={theme.positive}
                 style={{
-                  transform: `scaleX(${votesYeaPct * progress})`,
+                  backgroundColor: theme.positive,
+                  transform: progress.interpolate(
+                    t => `scale3d(${votesYeaPct * t}, 1, 1)`
+                  ),
                 }}
               />
               <Votes
-                color={theme.negative}
                 style={{
-                  transform: `scaleX(${votesNayPct * progress})`,
-                  left: `${PANEL_INNER_WIDTH * votesYeaPct * progress}px`,
+                  backgroundColor: theme.negative,
+                  transform: progress.interpolate(
+                    t => `
+                      translate3d(
+                        ${PANEL_INNER_WIDTH * votesYeaPct * t}px, 0, 0
+                      )
+                      scale3d(${votesNayPct * t}, 1, 1)
+                    `
+                  ),
                 }}
               />
             </Bar>
@@ -69,18 +79,26 @@ const VoteSummary = ({
 
           <YesNoItem color={theme.positive}>
             <span>Yes</span>
-            <strong>{Math.round(votesYeaVotersPct * progress * 100)}%</strong>
+            <animated.strong>
+              {progress.interpolate(
+                t => `${Math.round(votesYeaVotersPct * t * 100)}%`
+              )}
+            </animated.strong>
             <Text size="xsmall" color={theme.textSecondary}>
               ({Math.round(support * 100)}% needed)
             </Text>
           </YesNoItem>
           <YesNoItem color={theme.negative}>
             <span>No</span>
-            <strong>{Math.round(votesNayVotersPct * progress * 100)}%</strong>
+            <animated.strong>
+              {progress.interpolate(
+                t => `${Math.round(votesNayVotersPct * t * 100)}%`
+              )}
+            </animated.strong>
           </YesNoItem>
         </Main>
       )}
-    </Motion>
+    </Spring>
   )
 }
 
@@ -119,7 +137,7 @@ const Bar = styled.div`
   background: #6d777b;
 `
 
-const Votes = styled.div`
+const Votes = styled(animated.div)`
   position: absolute;
   top: 0;
   left: 0;
@@ -127,10 +145,9 @@ const Votes = styled.div`
   bottom: 0;
   height: 6px;
   transform-origin: 0 0;
-  background: ${({ color }) => color};
 `
 
-const QuorumBar = styled.div`
+const QuorumBar = styled(animated.div)`
   position: absolute;
   left: 0;
   top: 0;
@@ -159,8 +176,8 @@ const YesNoItem = styled.div`
     width: 35px;
     color: ${theme.textSecondary};
   }
-  span:last-child {
-    margin-left: 10px;
+  strong {
+    width: 45px;
   }
 `
 
