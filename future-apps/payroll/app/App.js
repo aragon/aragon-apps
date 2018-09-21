@@ -1,13 +1,15 @@
 import React from 'react'
 import { AppBar, Button } from '@aragon/ui'
+import { Tab, TabContainer } from './components/Tab'
 
-import Tab from './components/Tab'
 import AppLayout from './components/Layout/AppLayout'
 import MyPayroll from './components/MyPayroll'
 import TeamPayroll from './components/TeamPayroll'
 
 export default class App extends React.Component {
-  state = { activeTab: 'my-payroll' }
+  state = {
+    activeTab: 'my-payroll'
+  }
 
   handleTabChange = (index, name) => {
     this.setState({ activeTab: name })
@@ -42,17 +44,10 @@ export default class App extends React.Component {
             endContent={this.renderActionButton()}
           />
 
-          <Tab.Container onTabChange={this.handleTabChange}>
-            <Tab
-              name='my-payroll'
-              title='My payroll'
-            />
-
-            <Tab
-              name='team-payroll'
-              title='Team payroll'
-            />
-          </Tab.Container>
+          <TabContainer onTabChange={this.handleTabChange}>
+            <Tab name='my-payroll' title='My payroll'/>
+            <Tab name='team-payroll' title='Team payroll'/>
+          </TabContainer>
 
         </AppLayout.Header>
 
