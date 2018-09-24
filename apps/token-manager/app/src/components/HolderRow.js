@@ -8,6 +8,7 @@ import {
   IconAdd,
   Badge,
 } from '@aragon/ui'
+import { formatBalance } from '../utils'
 
 class HolderRow extends React.Component {
   static defaultProps = {
@@ -28,21 +29,26 @@ class HolderRow extends React.Component {
       tokenDecimalsBase,
       isCurrentUser,
     } = this.props
-    const adjustedBalance = balance.divRound(tokenDecimalsBase).toString()
-
     return (
       <TableRow>
         <TableCell>
           <Owner>
             <span>{name}</span>
             {isCurrentUser && (
-              <Badge.Identity style={{ fontVariant: 'small-caps' }} title='This is your Ethereum address'>
+              <Badge.Identity
+                style={{ fontVariant: 'small-caps' }}
+                title="This is your Ethereum address"
+              >
                 you
               </Badge.Identity>
             )}
           </Owner>
         </TableCell>
-        {!groupMode && <TableCell align="right">{adjustedBalance}</TableCell>}
+        {!groupMode && (
+          <TableCell align="right">
+            {formatBalance(balance, tokenDecimalsBase)}
+          </TableCell>
+        )}
         <TableCell align="right">
           <ContextMenu>
             <ContextMenuItem onClick={this.handleAssignTokens}>

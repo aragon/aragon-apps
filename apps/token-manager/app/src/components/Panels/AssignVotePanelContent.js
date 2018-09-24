@@ -73,6 +73,8 @@ class AssignVotePanelContent extends React.Component {
   }
   render() {
     const { amount, recipient } = this.state
+    const { tokenDecimalsBase } = this.props
+    const minimum = tokenDecimalsBase ? 1 / tokenDecimalsBase : 0
     return (
       <div>
         <form onSubmit={this.handleSubmit}>
@@ -93,7 +95,7 @@ class AssignVotePanelContent extends React.Component {
             <TextInput.Number
               value={amount}
               onChange={this.handleAmountChange}
-              min={0}
+              min={minimum}
               step="any"
               required
               wide

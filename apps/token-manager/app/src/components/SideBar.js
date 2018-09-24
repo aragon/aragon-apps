@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Text, theme } from '@aragon/ui'
-import { sciNot } from '../math-utils'
+import { formatBalance } from '../utils'
 
 // Number of digits before "Total Supply" gets wrapped into two lines
 const TOTAL_SUPPLY_CUTOFF_LENGTH = 18
@@ -76,12 +76,6 @@ class SideBar extends React.Component {
       })
     )
 
-    const adjustedTokenSupply = sciNot(
-      tokenSupply.div(tokenDecimalsBase),
-      TOTAL_SUPPLY_CUTOFF_LENGTH,
-      { rounding: 5 }
-    )
-
     return (
       <Main>
         <Part>
@@ -94,7 +88,7 @@ class SideBar extends React.Component {
             <InfoRow>
               <span>Total Supply</span>
               <span>:</span>
-              <strong>{adjustedTokenSupply}</strong>
+              <strong>{formatBalance(tokenSupply, tokenDecimalsBase)}</strong>
             </InfoRow>
           </ul>
         </Part>

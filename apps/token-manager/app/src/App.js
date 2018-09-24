@@ -43,7 +43,8 @@ class App extends React.Component {
   }
   handleAssignTokens = ({ amount, recipient }) => {
     const { app, tokenDecimalsBase } = this.props
-    const toMint = new BN(`${amount}`, 10).mul(tokenDecimalsBase)
+    const amountConverted = Math.floor(parseFloat(amount) * tokenDecimalsBase)
+    const toMint = new BN(`${amountConverted}`, 10)
     app.mint(recipient, toMint.toString())
     this.handleSidepanelClose()
   }
@@ -118,6 +119,7 @@ class App extends React.Component {
           <AssignVotePanelContent
             onAssignTokens={this.handleAssignTokens}
             opened={sidepanelOpened}
+            tokenDecimalsBase={tokenDecimalsBase}
             {...assignTokensConfig}
           />
         </SidePanel>
