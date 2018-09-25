@@ -1,7 +1,7 @@
 {
   "presets": [
     [
-      "env",
+      "@babel/preset-env",
       {
         "modules": false,
         "targets": {
@@ -14,15 +14,13 @@
             "android >= 4.2",
             "not op_mini all"
           ]
-        },
-        "useBuiltIns": false
+        }
       }
-    ],
-    "stage-2"
+    ]
   ],
   "plugins": [
-    ["styled-components", { "displayName": true }],
-    "transform-class-properties",
-    "transform-runtime"
+    "@babel/plugin-proposal-class-properties",
+    "@babel/plugin-transform-runtime",
+    "babel-plugin-styled-components"
   ]
 }
