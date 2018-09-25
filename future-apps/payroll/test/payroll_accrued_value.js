@@ -30,8 +30,9 @@ contract('Payroll, accrued value,', async (accounts) => {
   const root = accounts[0]
   let dao, daoFact, vaultBase, financeBase, payrollBase
 
-  // let MAX_UINT64, ANY_ENTITY, APP_MANAGER_ROLE, CREATE_PAYMENTS_ROLE
-  // let CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, DISABLE_PAYMENTS_ROLE, TRANSFER_ROLE
+  let MAX_UINT64, ANY_ENTITY, APP_MANAGER_ROLE, CREATE_PAYMENTS_ROLE
+  let CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, DISABLE_PAYMENTS_ROLE, TRANSFER_ROLE
+  let ALLOWED_TOKENS_MANAGER_ROLE, ADD_EMPLOYEE_ROLE, TERMINATE_EMPLOYEE_ROLE, SET_EMPLOYEE_SALARY_ROLE,ADD_ACCRUED_VALUE_ROLE,CHANGE_PRICE_FEED_ROLE,MODIFY_RATE_EXPIRY_ROLE
 
   before(async () => {
     const kernelBase = await getContract('Kernel').new(true) // petrify immediately
@@ -40,24 +41,28 @@ contract('Payroll, accrued value,', async (accounts) => {
     daoFact = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, regFact.address)
     vaultBase = await getContract('Vault').new()
     financeBase = await getContract('Finance').new()
-
-    console.log('1')
     payrollBase = await getContract('PayrollMock').new()
-    console.log('2')
-
 
     // Setup constants
     const ETH = await financeBase.ETH()
-    const MAX_UINT64 = await financeBase.MAX_UINT64()
-    const ANY_ENTITY = await aclBase.ANY_ENTITY()
-    const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+    MAX_UINT64 = await financeBase.MAX_UINT64()
+    ANY_ENTITY = await aclBase.ANY_ENTITY()
+    APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
 
-    const CREATE_PAYMENTS_ROLE = await financeBase.CREATE_PAYMENTS_ROLE()
-    const CHANGE_PERIOD_ROLE = await financeBase.CHANGE_PERIOD_ROLE()
-    const CHANGE_BUDGETS_ROLE = await financeBase.CHANGE_BUDGETS_ROLE()
-    const EXECUTE_PAYMENTS_ROLE = await financeBase.EXECUTE_PAYMENTS_ROLE()
-    const DISABLE_PAYMENTS_ROLE = await financeBase.DISABLE_PAYMENTS_ROLE()
-    const TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
+    CREATE_PAYMENTS_ROLE = await financeBase.CREATE_PAYMENTS_ROLE()
+    CHANGE_PERIOD_ROLE = await financeBase.CHANGE_PERIOD_ROLE()
+    CHANGE_BUDGETS_ROLE = await financeBase.CHANGE_BUDGETS_ROLE()
+    EXECUTE_PAYMENTS_ROLE = await financeBase.EXECUTE_PAYMENTS_ROLE()
+    DISABLE_PAYMENTS_ROLE = await financeBase.DISABLE_PAYMENTS_ROLE()
+    TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
+
+    ALLOWED_TOKENS_MANAGER_ROLE = await payrollBase.ALLOWED_TOKENS_MANAGER_ROLE()
+    ADD_EMPLOYEE_ROLE = await payrollBase.ADD_EMPLOYEE_ROLE()
+    TERMINATE_EMPLOYEE_ROLE = await payrollBase.TERMINATE_EMPLOYEE_ROLE()
+    SET_EMPLOYEE_SALARY_ROLE = await payrollBase.SET_EMPLOYEE_SALARY_ROLE()
+    ADD_ACCRUED_VALUE_ROLE = await payrollBase.ADD_ACCRUED_VALUE_ROLE()
+    CHANGE_PRICE_FEED_ROLE = await payrollBase.CHANGE_PRICE_FEED_ROLE()
+    MODIFY_RATE_EXPIRY_ROLE = await payrollBase.MODIFY_RATE_EXPIRY_ROLE()
 
     const r = await daoFact.newDAO(root)
     dao = getContract('Kernel').at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
@@ -93,30 +98,28 @@ contract('Payroll, accrued value,', async (accounts) => {
     await redistributeEth(accounts, finance)
   })
 
-  // const newProxyPayroll = async () => {
-  //
-  // }
-
   beforeEach(async () => {
-    console.log('beforeEach 1')
     const receipt = await dao.newAppInstance('0x4321', payrollBase.address, { from: root })
-    console.log('beforeEach 1.1')
     payroll = getContract('PayrollMock').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
-    console.log('beforeEach 2')
+
+    const acl = await getContract('ACL').at(await dao.acl())
+    await acl.createPermission(ANY_ENTITY, payroll.address, ALLOWED_TOKENS_MANAGER_ROLE, root, { from: root })
+    await acl.createPermission(ANY_ENTITY, payroll.address, ADD_EMPLOYEE_ROLE, root, { from: root })
+    await acl.createPermission(ANY_ENTITY, payroll.address, TERMINATE_EMPLOYEE_ROLE, root, { from: root })
+    await acl.createPermission(ANY_ENTITY, payroll.address, SET_EMPLOYEE_SALARY_ROLE, root, { from: root })
+    await acl.createPermission(ANY_ENTITY, payroll.address, ADD_ACCRUED_VALUE_ROLE, root, { from: root })
+    await acl.createPermission(ANY_ENTITY, payroll.address, CHANGE_PRICE_FEED_ROLE, root, { from: root })
+    await acl.createPermission(ANY_ENTITY, payroll.address, MODIFY_RATE_EXPIRY_ROLE, root, { from: root })
 
     // inits payroll
     await payroll.initialize(finance.address, usdToken.address, priceFeed.address, rateExpiryTime)
-    console.log('beforeEach 3')
 
     // adds allowed tokens
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
-    console.log('beforeEach 4')
 
     // add employee
     const r = await payroll.addEmployee(employee1, salary1)
-    console.log('beforeEach 5')
     employeeId1 = getEvent(r, 'AddEmployee', 'employeeId')
-    console.log('beforeEach 6')
   })
 
   it('adds accrued Value manually', async () => {

@@ -1,8 +1,7 @@
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
-import "@aragon/os/contracts/common/Initializable.sol";
-import "@aragon/os/contracts/common/IForwarder.sol";
+// import "@aragon/os/contracts/common/IForwarder.sol";
 
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
@@ -476,17 +475,17 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         return allowedTokens[_token];
     }
 
-    /**
-     * @dev IForwarder interface conformance. Forwards any employee action.
-     * @param _evmScript script being executed
-     */
-    function forward(bytes _evmScript) public {
-        require(canForward(msg.sender, _evmScript));
-        bytes memory input = new bytes(0); // TODO: Consider input for this
-        address[] memory blacklist = new address[](1);
-        blacklist[0] = address(finance);
-        runScript(_evmScript, input, blacklist);
-    }
+    // /**
+    //  * @dev IForwarder interface conformance. Forwards any employee action.
+    //  * @param _evmScript script being executed
+    //  */
+    // function forward(bytes _evmScript) public {
+    //     require(canForward(msg.sender, _evmScript));
+    //     bytes memory input = new bytes(0); // TODO: Consider input for this
+    //     address[] memory blacklist = new address[](1);
+    //     blacklist[0] = address(finance);
+    //     runScript(_evmScript, input, blacklist);
+    // }
 
     function isForwarder() public pure returns (bool) {
         return true;
