@@ -1,18 +1,6 @@
-<<<<<<< HEAD
 const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
 const getContract = name => artifacts.require(name)
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
-=======
-const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow');
-const getBalance = require('@aragon/test-helpers/balance')(web3);
-const Payroll = artifacts.require("Payroll");
-const Vault = artifacts.require('Vault');
-const Finance = artifacts.require('Finance');
-const PriceFeedMock = artifacts.require("./feed/PriceFeedMock.sol");
-const MiniMeToken = artifacts.require('@aragon/os/contracts/common/MiniMeToken');
-const Zombie = artifacts.require("Zombie.sol");
->>>>>>> aragon-payroll
-
 
 contract('Payroll Timestamp', function(accounts) {
   const [owner, employee1, employee2] = accounts
