@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { Text, theme } from '@aragon/ui'
 import { formatBalance } from '../utils'
+import BN from 'bn.js'
 
 // Number of digits before "Total Supply" gets wrapped into two lines
 const TOTAL_SUPPLY_CUTOFF_LENGTH = 18
@@ -18,6 +19,8 @@ const DISTRIBUTION_COLORS = [
 ]
 
 const calculateStakes = (accounts, total, tokenDecimalsBase) => {
+  // Calculate the stake percantage accurate to milliether
+  const tokenMillietherBase = new BN(tokenDecimalsBase.div(new BN(1000)))
   const maxDisplayed = DISTRIBUTION_ITEMS_MAX - 1
   const byStake = (a, b) => b.stake - a.stake
 
@@ -26,8 +29,8 @@ const calculateStakes = (accounts, total, tokenDecimalsBase) => {
     stake:
       // Calcaulate percentages as JS numbers
       Math.round(
-        (balance.div(tokenDecimalsBase).toNumber() /
-          total.div(tokenDecimalsBase).toNumber()) *
+        (balance.div(tokenMillietherBase).toNumber() /
+          total.div(tokenMillietherBase).toNumber()) *
           100
       ),
   }))
