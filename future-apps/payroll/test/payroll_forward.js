@@ -55,22 +55,8 @@ contract('PayrollForward', function(accounts) {
     // Deploy ERC 20 Tokens
     erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 1", erc20Token1Decimals)
 
-<<<<<<< HEAD
     // make sure owner and Payroll have enough funds
     await redistributeEth(accounts, finance)
-=======
-    // init payroll
-    const token = await getContract('MiniMeToken').new("0x0", "0x0", 0, "Token", 18, 'E20', true); // dummy parameters for minime
-    const vault = await getContract('Vault').new();
-    await vault.initializeWithBase(vault.address)
-    const finance = await getContract('Finance').new();
-    await finance.initialize(vault.address, SECONDS_IN_A_YEAR); // more than one day
-    const priceFeed = await getContract('PriceFeedMock').new();
-    const rateExpiryTime = SECONDS_IN_A_YEAR;
-    await payroll3.initialize(finance.address, token.address, priceFeed.address, rateExpiryTime)
-    // add employee
-    await payroll3.addEmployee(employee1, 100000);
->>>>>>> aragon-payroll
   });
 
   beforeEach(async () => {
