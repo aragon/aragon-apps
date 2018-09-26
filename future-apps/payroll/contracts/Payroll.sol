@@ -137,7 +137,11 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         allowedTokens[_allowedToken] = true;
         allowedTokensArray.push(_allowedToken);
 
+<<<<<<< HEAD
         emit AddAllowedToken(_allowedToken);
+=======
+        AddAllowedToken(_allowedToken);
+>>>>>>> aragon-payroll
     }
 
     /*
@@ -240,7 +244,10 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         // set new salary
         employees[employeeId].denominationTokenSalary = denominationSalary;
 
+<<<<<<< HEAD
         emit SetEmployeeSalary(employeeId, denominationSalary);
+=======
+        SetEmployeeSalary(employeeId, denominationSalary);
     }
 
     /**
@@ -255,6 +262,30 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         external
         authP(TERMINATE_EMPLOYEE_ROLE, arr(uint256(employeeId)))
     {
+        _terminateEmployee(employeeId, getTimestamp64());
+>>>>>>> aragon-payroll
+    }
+
+    /**
+     * @dev Terminate employee from Payroll
+     * @notice Terminate employee #`employeeId` from Payroll
+     * @param employeeId Employee's identifier
+     * @param endDate Termination date
+     */
+<<<<<<< HEAD
+    function terminateEmployeeNow(
+        uint128 employeeId
+=======
+    function terminateEmployee(
+        uint128 employeeId,
+        uint64 endDate
+>>>>>>> aragon-payroll
+    )
+        employeeExists(employeeId)
+        external
+        authP(TERMINATE_EMPLOYEE_ROLE, arr(uint256(employeeId)))
+    {
+<<<<<<< HEAD
         _terminateEmployee(employeeId, getTimestamp64());
     }
 
@@ -290,6 +321,26 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     {
         require(amount <= MAX_ACCRUED_VALUE);
 
+=======
+        _terminateEmployee(employeeId, endDate);
+    }
+
+    /**
+     * @notice Adds `amount` to accrued value for employee with id `employeeId`
+     * @param employeeId Id of the employee
+     * @param amount Added amount
+     */
+    function addAccruedValue(
+        uint128 employeeId,
+        uint256 amount
+    )
+        employeeExists(employeeId)
+        external
+        authP(ADD_ACCRUED_VALUE_ROLE, arr(uint256(employeeId), amount))
+    {
+        require(amount <= MAX_ACCRUED_VALUE);
+
+>>>>>>> aragon-payroll
         _addAccruedValue(employeeId, amount);
     }
 
@@ -349,7 +400,11 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         }
         require(sum == 100);
 
+<<<<<<< HEAD
         emit DetermineAllocation(employeeIds[msg.sender], msg.sender);
+=======
+        DetermineAllocation(employeeIds[msg.sender], msg.sender);
+>>>>>>> aragon-payroll
     }
 
     /**
@@ -377,7 +432,11 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint128 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
 
+<<<<<<< HEAD
         emit ChangeAddressByEmployee(employeeId, employee.accountAddress, newAddress);
+=======
+        ChangeAddressByEmployee(employeeId, employee.accountAddress, newAddress);
+>>>>>>> aragon-payroll
         employee.accountAddress = newAddress;
         employeeIds[newAddress] = employeeId;
         delete employeeIds[msg.sender];
@@ -475,6 +534,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         return allowedTokens[_token];
     }
 
+<<<<<<< HEAD
     // /**
     //  * @dev IForwarder interface conformance. Forwards any employee action.
     //  * @param _evmScript script being executed
@@ -486,6 +546,19 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     //     blacklist[0] = address(finance);
     //     runScript(_evmScript, input, blacklist);
     // }
+=======
+    /**
+     * @dev IForwarder interface conformance. Forwards any employee action.
+     * @param _evmScript script being executed
+     */
+    function forward(bytes _evmScript) public {
+        require(canForward(msg.sender, _evmScript));
+        bytes memory input = new bytes(0); // TODO: Consider input for this
+        address[] memory blacklist = new address[](1);
+        blacklist[0] = address(finance);
+        runScript(_evmScript, input, blacklist);
+    }
+>>>>>>> aragon-payroll
 
     function isForwarder() public pure returns (bool) {
         return true;
@@ -520,7 +593,11 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         });
         // Ids mapping
         employeeIds[accountAddress] = employeeId;
+<<<<<<< HEAD
         emit AddEmployee(
+=======
+        AddEmployee(
+>>>>>>> aragon-payroll
             employeeId,
             accountAddress,
             initialDenominationSalary,
@@ -534,19 +611,31 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     function _addAccruedValue(uint128 employeeId, uint256 amount) internal {
         employees[employeeId].accruedValue = employees[employeeId].accruedValue.add(amount);
 
+<<<<<<< HEAD
         emit AddEmployeeAccruedValue(employeeId, amount);
+=======
+        AddEmployeeAccruedValue(employeeId, amount);
+>>>>>>> aragon-payroll
     }
 
     function _setPriceFeed(IFeed _feed) internal {
         require(_feed != address(0));
         feed = _feed;
+<<<<<<< HEAD
         emit SetPriceFeed(feed);
+=======
+        SetPriceFeed(feed);
+>>>>>>> aragon-payroll
     }
 
     function _setRateExpiryTime(uint64 _time) internal {
         require(_time > 0);
         rateExpiryTime = _time;
+<<<<<<< HEAD
         emit SetRateExpiryTime(rateExpiryTime);
+=======
+        SetRateExpiryTime(rateExpiryTime);
+>>>>>>> aragon-payroll
     }
 
     /**
@@ -617,7 +706,11 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         employees[employeeId].terminated = true;
         employees[employeeId].endDate = endDate;
 
+<<<<<<< HEAD
         emit TerminateEmployee(employeeId, employees[employeeId].accountAddress, endDate);
+=======
+        TerminateEmployee(employeeId, employees[employeeId].accountAddress, endDate);
+>>>>>>> aragon-payroll
     }
 
     function _getOwedSalary(uint128 employeeId, uint64 date) internal view returns (uint256) {

@@ -1,4 +1,9 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+<<<<<<< HEAD
+=======
+const { deployErc20TokenAndDeposit, addAllowedTokens, getTimePassed, redistributeEth } = require('./helpers.js')
+
+>>>>>>> aragon-payroll
 const getContract = name => artifacts.require(name)
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
@@ -10,6 +15,7 @@ contract('Payroll, accrued value,', async (accounts) => {
   const rateExpiryTime = 1000
 
   const [owner, employee1, _] = accounts
+<<<<<<< HEAD
   const {
     deployErc20TokenAndDeposit,
     addAllowedTokens,
@@ -39,6 +45,28 @@ contract('Payroll, accrued value,', async (accounts) => {
     dao = daoAndFinance.dao
     finance = daoAndFinance.finance
     vault = daoAndFinance.vault
+=======
+  //const owner = accounts[0]
+  //const employee1 = accounts[1]
+  const salary1 = 1000
+
+  let payroll
+  let finance
+  let vault
+  let priceFeed
+
+  let usdToken
+  let erc20Token1
+  const erc20Token1Decimals = 18
+
+  let employeeId1
+
+  before(async () => {
+    vault = await getContract('Vault').new()
+    await vault.initializeWithBase(vault.address)
+    finance = await getContract('Finance').new()
+    await finance.initialize(vault.address, SECONDS_IN_A_YEAR) // more than one day
+>>>>>>> aragon-payroll
 
     usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", USD_DECIMALS)
     priceFeed = await getContract('PriceFeedMock').new()
@@ -50,9 +78,17 @@ contract('Payroll, accrued value,', async (accounts) => {
     await redistributeEth(accounts, finance)
   })
 
+<<<<<<< HEAD
 
   beforeEach(async () => {
     payroll = await initializePayroll(dao, payrollBase, finance, usdToken, priceFeed, rateExpiryTime)
+=======
+  beforeEach(async () => {
+    payroll = await getContract('PayrollMock').new()
+
+    // inits payroll
+    await payroll.initialize(finance.address, usdToken.address, priceFeed.address, rateExpiryTime)
+>>>>>>> aragon-payroll
 
     // adds allowed tokens
     await addAllowedTokens(payroll, [usdToken, erc20Token1])

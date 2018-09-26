@@ -1,4 +1,5 @@
 const getContract = name => artifacts.require(name)
+<<<<<<< HEAD
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 let ETH, MAX_UINT64, ANY_ENTITY, APP_MANAGER_ROLE, CREATE_PAYMENTS_ROLE
@@ -8,6 +9,12 @@ const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
 
 module.exports = (owner) => ({
   async deployErc20TokenAndDeposit (sender, finance, vault, name="ERC20Token", decimals=18) {
+=======
+const ETH = '0x0'
+
+module.exports = {
+  deployErc20TokenAndDeposit: async (sender, finance, vault, name="ERC20Token", decimals=18) => {
+>>>>>>> aragon-payroll
     const token = await getContract('MiniMeToken').new("0x0", "0x0", 0, name, decimals, 'E20', true) // dummy parameters for minime
     const amount = new web3.BigNumber(10**18).times(new web3.BigNumber(10**decimals))
     await token.generateTokens(sender, amount)
@@ -16,18 +23,30 @@ module.exports = (owner) => ({
     return token
   },
 
+<<<<<<< HEAD
   async addAllowedTokens (payroll, tokens) {
+=======
+  addAllowedTokens: async(payroll, tokens) => {
+>>>>>>> aragon-payroll
     const currencies = [ETH].concat(tokens.map(c => c.address))
     await Promise.all(currencies.map(token => payroll.addAllowedToken(token)))
   },
 
+<<<<<<< HEAD
   async getTimePassed (payroll, employeeId) {
+=======
+  getTimePassed: async (payroll, employeeId) => {
+>>>>>>> aragon-payroll
     let employee = await payroll.getEmployee.call(employeeId)
     let currentTime = await payroll.getTimestampPublic.call()
     return currentTime - employee[4]
   },
 
+<<<<<<< HEAD
   async redistributeEth (accounts, finance) {
+=======
+  redistributeEth: async (accounts, finance) => {
+>>>>>>> aragon-payroll
     const amount = 10
     const split = 4
     // transfer ETH to owner
@@ -37,6 +56,7 @@ module.exports = (owner) => ({
     for (let i = split; i < 10; i++)
       await finance.sendTransaction({ from: accounts[i], value: web3.toWei(amount, 'ether') });
 
+<<<<<<< HEAD
   },
 
   async getDaoFinanceVault () {
@@ -113,3 +133,7 @@ module.exports = (owner) => ({
     return payroll
   }
 })
+=======
+  }
+}
+>>>>>>> aragon-payroll

@@ -4,5 +4,7 @@
   "icons": [{
     "src": "images/icon.png",
     "sizes": "192x192"
-  }]
+  }],
+  "start_url": "/build/app/index.html",
+  "script": "/build/app/script.js"
 }

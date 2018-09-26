@@ -1,13 +1,18 @@
 {
   "name": "@aragon/future-apps-payroll",
-  "version": "1.0.0",
-  "main": "index.js",
+  "version": "0.1.0",
   "scripts": {
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
     "lint": "solium --dir ./contracts",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh"
+    "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
+    "start:app": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve app/index.html --port 8001 --out-dir build/app --open",
+    "build": "npm run sync-assets && npm run build:app && npm run build:script",
+    "build:app": "parcel build app/index.html --out-dir build/app --public-url '.' --no-cache",
+    "build:script": "parcel build app/script.js --out-dir build/app  --no-cache",
+    "lint:app": "standard app/**/*.js",
+    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build/app"
   },
   "keywords": [],
   "author": "Aragon Institution MTU <contact@aragon.one>",
@@ -17,6 +22,7 @@
   "license": "GPL-3.0",
   "description": "",
   "devDependencies": {
+<<<<<<< HEAD
     "@aragon/apps-vault": "^3.0.0-beta.1",
     "@aragon/test-helpers": "^1.0.1",
     "@aragon/apps-shared-migrations": "1.0.0",
@@ -39,5 +45,35 @@
     "@aragon/apps-finance": "2.0.0-beta.1",
     "@aragon/os": "4.0.0-beta.1",
     "@aragon/ppf-contracts": "^1.0.2"
+=======
+    "@aragon/apps-shared-migrations": "^1.0.0",
+    "@aragon/apps-shared-minime": "^1.0.0",
+    "@aragon/apps-vault": "^3.0.0-beta.2",
+    "@aragon/test-helpers": "^1.0.1",
+    "@babel/core": "^7.1.0",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-transform-runtime": "^7.1.0",
+    "babel-plugin-styled-components": "^1.7.1",
+    "ethereumjs-abi": "^0.6.4",
+    "ganache-cli": "^6.1.0",
+    "parcel-bundler": "^1.10.0",
+    "solidity-coverage": "^0.5.11",
+    "solium": "^1.1.3",
+    "standard": "*",
+    "truffle": "4.1.14",
+    "truffle-hdwallet-provider": "0.0.3"
+  },
+  "dependencies": {
+    "@aragon/apps-finance": "^2.0.0-beta.2",
+    "@aragon/client": "^1.0.0-beta.9",
+    "@aragon/os": "^4.0.0-beta.1",
+    "@aragon/ppf-contracts": "^1.0.2",
+    "@aragon/ui": "^0.19.0",
+    "@babel/runtime": "^7.0.0",
+    "prop-types": "^15.6.2",
+    "react": "^16.5.2",
+    "react-dom": "^16.5.2",
+    "styled-components": "^3.4.9"
+>>>>>>> aragon-payroll
   }
 }

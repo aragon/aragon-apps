@@ -1,4 +1,5 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+<<<<<<< HEAD
 const getContract = name => artifacts.require(name)
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
@@ -26,6 +27,32 @@ contract('Payroll, initialization,', function(accounts) {
   let finance
   let vault
   let priceFeed
+=======
+const getBalance = require('@aragon/test-helpers/balance')(web3)
+const getTransaction = require('@aragon/test-helpers/transaction')(web3)
+const MiniMeToken = artifacts.require('@aragon/os/contracts/common/MiniMeToken')
+const Vault = artifacts.require('Vault')
+const Finance = artifacts.require('Finance')
+const Payroll = artifacts.require("PayrollMock")
+const PriceFeedMock = artifacts.require("./feed/PriceFeedMock.sol")
+const PriceFeedFailMock = artifacts.require("./feed/PriceFeedFailMock.sol")
+const Zombie = artifacts.require("Zombie.sol")
+
+const { deployErc20TokenAndDeposit, addAllowedTokens, getTimePassed } = require('./helpers.js')
+
+contract('Payroll, initialization,', function(accounts) {
+  const rateExpiryTime = 1000
+  const USD_DECIMALS= 18
+  const USD_PRECISION = 10**USD_DECIMALS
+  const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
+  const ONE = 1e18
+  const ETH = '0x0'
+  let payroll
+  let finance
+  let vault
+  let priceFeed
+  let owner = accounts[0]
+>>>>>>> aragon-payroll
   let usdToken
   let erc20Token1
   let erc20Token2
@@ -33,6 +60,7 @@ contract('Payroll, initialization,', function(accounts) {
   const erc20Token2Decimals = 16
 
   before(async () => {
+<<<<<<< HEAD
     payrollBase = await getContract('PayrollMock').new()
 
     const daoAndFinance = await getDaoFinanceVault()
@@ -43,10 +71,21 @@ contract('Payroll, initialization,', function(accounts) {
 
     usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", USD_DECIMALS)
     priceFeed = await getContract('PriceFeedMock').new()
+=======
+    vault = await Vault.new()
+    await vault.initializeWithBase(vault.address)
+    finance = await Finance.new()
+    await finance.initialize(vault.address, SECONDS_IN_A_YEAR) // more than one day
+
+    usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", USD_DECIMALS)
+    priceFeed = await PriceFeedMock.new()
+    payroll = await Payroll.new()
+>>>>>>> aragon-payroll
 
     // Deploy ERC 20 Tokens
     erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 1", erc20Token1Decimals)
     erc20Token2 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 2", erc20Token2Decimals)
+<<<<<<< HEAD
 
     // make sure owner and Payroll have enough funds
     await redistributeEth(accounts, finance)
@@ -56,6 +95,11 @@ contract('Payroll, initialization,', function(accounts) {
     const receipt = await dao.newAppInstance('0x4321', payrollBase.address, { from: owner })
     payroll = getContract('PayrollMock').at(getEvent(receipt, 'NewAppProxy', 'proxy'))
 
+=======
+  })
+
+  it("fails to initialize with empty finance", async () => {
+>>>>>>> aragon-payroll
     return assertRevert(async () => {
       await payroll.initialize('0x0', usdToken.address, priceFeed.address, rateExpiryTime)
     })
@@ -76,11 +120,14 @@ contract('Payroll, initialization,', function(accounts) {
   })
 
   it("add allowed tokens", async () => {
+<<<<<<< HEAD
     const ALLOWED_TOKENS_MANAGER_ROLE = await payrollBase.ALLOWED_TOKENS_MANAGER_ROLE()
     const acl = await getContract('ACL').at(await dao.acl())
     const ANY_ENTITY = await acl.ANY_ENTITY()
     await acl.createPermission(ANY_ENTITY, payroll.address, ALLOWED_TOKENS_MANAGER_ROLE, owner, { from: owner })
 
+=======
+>>>>>>> aragon-payroll
     // add them to payroll allowed tokens
     await addAllowedTokens(payroll, [usdToken, erc20Token1, erc20Token2])
     assert.isTrue(await payroll.isTokenAllowed(usdToken.address), "USD Token should be allowed")

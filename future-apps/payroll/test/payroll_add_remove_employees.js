@@ -4,6 +4,7 @@ const getTransaction = require('@aragon/test-helpers/transaction')(web3)
 
 const getContract = name => artifacts.require(name)
 
+<<<<<<< HEAD
 contract('Payroll, adding and removing employees,', function(accounts) {
   const [owner, employee1, employee2] = accounts
   const {
@@ -14,24 +15,40 @@ contract('Payroll, adding and removing employees,', function(accounts) {
     initializePayroll
   } = require('./helpers.js')(owner)
 
+=======
+const { deployErc20TokenAndDeposit, addAllowedTokens, getTimePassed } = require('./helpers.js')
+
+contract('Payroll, adding and removing employees,', function(accounts) {
+>>>>>>> aragon-payroll
   const rateExpiryTime = 1000
   const USD_DECIMALS= 18
   const USD_PRECISION = 10**USD_DECIMALS
   const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
   const ONE = 1e18
   const ETH = '0x0'
+<<<<<<< HEAD
 
   let payroll
   let payrollBase
   let finance
   let vault
   let priceFeed
+=======
+  let payroll
+  let finance
+  let vault
+  let priceFeed
+  let owner = accounts[0]
+  let employee1 = accounts[2]
+  let employee2 = accounts[3]
+>>>>>>> aragon-payroll
   let salary1 = (new web3.BigNumber(100000)).times(USD_PRECISION).dividedToIntegerBy(SECONDS_IN_A_YEAR)
   let salary2_1 = (new web3.BigNumber(120000)).times(USD_PRECISION).dividedToIntegerBy(SECONDS_IN_A_YEAR)
   let salary2_2 = (new web3.BigNumber(125000)).times(USD_PRECISION).dividedToIntegerBy(SECONDS_IN_A_YEAR)
   let salary2 = salary2_1
   let usdToken
   let erc20Token1
+<<<<<<< HEAD
   let dao
   const erc20Token1Decimals = 18
 
@@ -43,6 +60,15 @@ contract('Payroll, adding and removing employees,', function(accounts) {
     dao = daoAndFinance.dao
     finance = daoAndFinance.finance
     vault = daoAndFinance.vault
+=======
+  const erc20Token1Decimals = 18
+
+  before(async () => {
+    vault = await getContract('Vault').new()
+    await vault.initializeWithBase(vault.address)
+    finance = await getContract('Finance').new()
+    await finance.initialize(vault.address, SECONDS_IN_A_YEAR) // more than one day
+>>>>>>> aragon-payroll
 
     usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", USD_DECIMALS)
     priceFeed = await getContract('PriceFeedMock').new()
@@ -50,7 +76,14 @@ contract('Payroll, adding and removing employees,', function(accounts) {
     // Deploy ERC 20 Tokens
     erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 1", erc20Token1Decimals)
 
+<<<<<<< HEAD
     payroll = await initializePayroll(dao, payrollBase, finance, usdToken, priceFeed, rateExpiryTime)
+=======
+    payroll = await getContract('PayrollMock').new()
+
+    // inits payroll
+    await payroll.initialize(finance.address, usdToken.address, priceFeed.address, rateExpiryTime)
+>>>>>>> aragon-payroll
 
     // adds allowed tokens
     await addAllowedTokens(payroll, [usdToken, erc20Token1])

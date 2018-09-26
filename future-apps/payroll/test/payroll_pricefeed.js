@@ -5,6 +5,7 @@ const getTransaction = require('@aragon/test-helpers/transaction')(web3)
 const getContract = name => artifacts.require(name)
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
+<<<<<<< HEAD
 contract('Payroll, price feed,', function(accounts) {
   const USD_DECIMALS = 18
   const USD_PRECISION = 10 ** USD_DECIMALS
@@ -23,6 +24,24 @@ contract('Payroll, price feed,', function(accounts) {
     getDaoFinanceVault,
     initializePayroll
   } = require("./helpers.js")(owner)
+=======
+const { deployErc20TokenAndDeposit, addAllowedTokens, getTimePassed, redistributeEth } = require('./helpers.js')
+
+contract('Payroll, price feed,', function(accounts) {
+  const rateExpiryTime = 1000
+  const USD_DECIMALS= 18
+  const USD_PRECISION = 10**USD_DECIMALS
+  const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
+  const ONE = 1e18
+  const ETH = '0x0'
+  let payroll
+  let finance
+  let vault
+  let priceFeed
+
+  let owner = accounts[0]
+  let employee = accounts[1]
+>>>>>>> aragon-payroll
   let salary = (new web3.BigNumber(10000)).times(USD_PRECISION).dividedToIntegerBy(SECONDS_IN_A_YEAR)
 
   let usdToken
