@@ -520,7 +520,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         });
         // Ids mapping
         employeeIds[accountAddress] = employeeId;
-        AddEmployee(
+        emit AddEmployee(
             employeeId,
             accountAddress,
             initialDenominationSalary,
