@@ -38,7 +38,6 @@ contract('PayrollForward', function(accounts) {
   const erc20Token1Decimals = 18
 
   let unused_account = accounts[7];
-  const SECONDS_IN_A_YEAR = 31557600; // 365.25 days
 
   before(async () => {
     payrollBase = await getContract('PayrollMock').new()
