@@ -1,9 +1,7 @@
 const getContract = name => artifacts.require(name)
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
-let ETH, MAX_UINT64, ANY_ENTITY, APP_MANAGER_ROLE, CREATE_PAYMENTS_ROLE
-let CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, DISABLE_PAYMENTS_ROLE, TRANSFER_ROLE
-
+const ETH = '0x0'
 const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
 
 module.exports = (owner) => ({
@@ -47,18 +45,14 @@ module.exports = (owner) => ({
     const vaultBase = await getContract('Vault').new()
     const financeBase = await getContract('Finance').new()
 
-    // Setup constants
-    ETH = await financeBase.ETH()
-    MAX_UINT64 = await financeBase.MAX_UINT64()
-    ANY_ENTITY = await aclBase.ANY_ENTITY()
-    APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
-
-    CREATE_PAYMENTS_ROLE = await financeBase.CREATE_PAYMENTS_ROLE()
-    CHANGE_PERIOD_ROLE = await financeBase.CHANGE_PERIOD_ROLE()
-    CHANGE_BUDGETS_ROLE = await financeBase.CHANGE_BUDGETS_ROLE()
-    EXECUTE_PAYMENTS_ROLE = await financeBase.EXECUTE_PAYMENTS_ROLE()
-    DISABLE_PAYMENTS_ROLE = await financeBase.DISABLE_PAYMENTS_ROLE()
-    TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
+    const ANY_ENTITY = await aclBase.ANY_ENTITY()
+    const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+    const CREATE_PAYMENTS_ROLE = await financeBase.CREATE_PAYMENTS_ROLE()
+    const CHANGE_PERIOD_ROLE = await financeBase.CHANGE_PERIOD_ROLE()
+    const CHANGE_BUDGETS_ROLE = await financeBase.CHANGE_BUDGETS_ROLE()
+    const EXECUTE_PAYMENTS_ROLE = await financeBase.EXECUTE_PAYMENTS_ROLE()
+    const DISABLE_PAYMENTS_ROLE = await financeBase.DISABLE_PAYMENTS_ROLE()
+    const TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
 
     const r = await daoFact.newDAO(owner)
     const dao = getContract('Kernel').at(getEvent(r, 'DeployDAO', 'dao'))
@@ -99,6 +93,7 @@ module.exports = (owner) => ({
     const payroll = getContract('PayrollMock').at(getEvent(receipt, 'NewAppProxy', 'proxy'))
 
     const acl = await getContract('ACL').at(await dao.acl())
+    const ANY_ENTITY = await acl.ANY_ENTITY()
     await acl.createPermission(ANY_ENTITY, payroll.address, ALLOWED_TOKENS_MANAGER_ROLE, owner, { from: owner })
     await acl.createPermission(ANY_ENTITY, payroll.address, ADD_EMPLOYEE_ROLE, owner, { from: owner })
     await acl.createPermission(ANY_ENTITY, payroll.address, TERMINATE_EMPLOYEE_ROLE, owner, { from: owner })

@@ -76,7 +76,11 @@ contract('Payroll, accrued value,', async (accounts) => {
   })
 
   it('fails trying to terminate an employee in the past', async () => {
-    const terminationDate = parseInt(await payroll.getTimestampPublic.call(), 10) - 1
+    const nowMock = new Date().getTime()
+    const terminationDate = nowMock - 1
+
+    await payroll.mockSetTimestamp(nowMock)
+
     return assertRevert(async () => {
       await payroll.terminateEmployee(employeeId1, terminationDate)
     })
