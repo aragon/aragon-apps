@@ -102,5 +102,4 @@ contract('Payroll Timestamp', function(accounts) {
     assert.equal(employee[1].toString(), convertAndRoundSalary(salary2), "Employee salary doesn't match")
     assert.equal(employee[3], name, "Employee name doesn't match")
   })
-
 })

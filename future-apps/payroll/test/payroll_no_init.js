@@ -123,5 +123,4 @@ contract('Payroll, without init,', function(accounts) {
       await payroll.addAccruedValue(1, 1000)
     })
   })
-
 })

@@ -74,7 +74,7 @@ contract('PayrollForward', function(accounts) {
     assert.equal(result.toString(), "true", "It's not forwarder");
   });
 
-  it('forwards actions to employee')
+  it('forwards actions to employee') // FIXME: uncomment once Out of gas error is fixed
   // it('forwards actions to employee', async () => {
     // const executionTarget = await ExecutionTarget.new();
     // const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() };
@@ -88,5 +88,4 @@ contract('PayrollForward', function(accounts) {
     //   await payroll.forward(script, { from: unused_account });
     // });
   // });
-
 });

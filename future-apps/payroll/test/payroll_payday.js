@@ -23,6 +23,7 @@ contract('Payroll, allocation and payday,', function(accounts) {
     getDaoFinanceVault,
     initializePayroll
   } = require("./helpers.js")(owner)
+
   let salary = (new web3.BigNumber(10000)).times(USD_PRECISION).dividedToIntegerBy(SECONDS_IN_A_YEAR)
 
   let usdToken
@@ -40,6 +41,7 @@ contract('Payroll, allocation and payday,', function(accounts) {
   let dao
   let finance
   let vault
+  const nowMock = new Date().getTime()
 
   before(async () => {
     payrollBase = await getContract("PayrollMock").new()
@@ -52,10 +54,15 @@ contract('Payroll, allocation and payday,', function(accounts) {
 
     usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", USD_DECIMALS)
     priceFeed = await getContract("PriceFeedMock").new()
+    priceFeed.mockSetTimestamp(nowMock)
 
     // Deploy ERC 20 Tokens
     erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 1", erc20Token1Decimals)
     erc20Token2 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 2", erc20Token2Decimals);
+
+    // get exchange rates
+    erc20Token1ExchangeRate = (await priceFeed.get(usdToken.address, erc20Token1.address))[0]
+    etherExchangeRate = (await priceFeed.get(usdToken.address, ETH))[0]
 
     // make sure owner and Payroll have enough funds
     await redistributeEth(accounts, finance)
@@ -70,6 +77,8 @@ contract('Payroll, allocation and payday,', function(accounts) {
       priceFeed,
       rateExpiryTime
     )
+
+    await payroll.mockSetTimestamp(nowMock)
 
     // adds allowed tokens
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
@@ -285,5 +294,4 @@ contract('Payroll, allocation and payday,', function(accounts) {
     }
     assert.equal(totalAllocation, 100, "Total allocation should remain 100")
   })
-
 })

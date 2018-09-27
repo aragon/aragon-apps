@@ -22,6 +22,7 @@ module.exports = (owner) => ({
   async getTimePassed (payroll, employeeId) {
     let employee = await payroll.getEmployee.call(employeeId)
     let currentTime = await payroll.getTimestampPublic.call()
+
     return currentTime - employee[4]
   },
 
