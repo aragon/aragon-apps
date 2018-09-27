@@ -115,7 +115,7 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @notice Initialize Finance app for Vault at `_vault` with period length of `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ''`
+    * @notice Initialize Finance app for Vault at `_vault` with period length of `@transformTime(_periodDuration, 'humanize')`
     * @param _vault Address of the vault Finance will rely on (non changeable)
     * @param _periodDuration Duration in seconds of each period
     */
@@ -137,7 +137,7 @@ contract Finance is AragonApp {
 
     /**
     * @dev Deposit for approved ERC20 tokens
-    * @notice Deposit `_amount / 10 ^ (_token.decimals(): uint)` `_token.symbol(): string`
+    * @notice Deposit `@tokenAmount(_token, _amount)`
     * @param _token Address of deposited token
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
@@ -181,7 +181,7 @@ contract Finance is AragonApp {
     */
 
     /**
-    * @notice Create a new payment of `_amount / 10 ^ (_token.decimals(): uint)` `_token.symbol(): string` to `_receiver`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + (_interval - _interval % 86400) / 86400 + ' days' : ''`
+    * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + @transformTime(_interval, 'humanize') : ''`
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment
     * @param _amount Tokens that are payed every time the payment is due
@@ -237,7 +237,7 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @notice Change period duration to `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ''`, effective for next accounting period.
+    * @notice Change period duration to `@transformTime(_periodDuration, 'humanize')`, effective for next accounting period.
     * @param _periodDuration Duration in seconds for accounting periods
     */
     function setPeriodDuration(uint64 _periodDuration) authP(CHANGE_PERIOD_ROLE, arr(uint256(_periodDuration), uint256(settings.periodDuration))) transitionsPeriod isInitialized external {
@@ -247,7 +247,7 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @notice Set budget for `_token.symbol(): string` to `_amount / 10 ^ (_token.decimals(): uint)`, effective immediately.
+    * @notice Set budget for `_token.symbol(): string` to `@tokenAmount(_token, _amount, false)`, effective immediately.
     * @param _token Address for token
     * @param _amount New budget amount
     */
