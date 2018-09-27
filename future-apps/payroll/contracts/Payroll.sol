@@ -247,7 +247,6 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @dev Terminate employee from Payroll
      * @notice Terminate employee #`employeeId` from Payroll
      * @param employeeId Employee's identifier
-     * @param endDate Termination date
      */
     function terminateEmployeeNow(
         uint128 employeeId
