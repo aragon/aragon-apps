@@ -12,13 +12,15 @@ import {
   Text,
   theme,
 } from '@aragon/ui'
-import { combineLatest } from '../rxjs'
 import provideNetwork from '../utils/provideNetwork'
 import { VOTE_NAY, VOTE_YEA, VOTE_STATUS_ACCEPTED } from '../vote-types'
-import { getVoteStatus } from '../vote-utils'
+import { getVoteStatus, getVoteSuccess } from '../vote-utils'
+import { roundToDecimals } from '../math-utils'
 import { pluralize } from '../utils'
 import VoteSummary from './VoteSummary'
 import VoteStatus from './VoteStatus'
+import VoteSuccess from './VoteSuccess'
+import SummaryBar from './SummaryBar'
 
 class VotePanelContent extends React.Component {
   static propTypes = {
@@ -69,15 +71,14 @@ class VotePanelContent extends React.Component {
     this.props.onExecute(this.props.vote.voteId)
   }
   loadUserBalance = (user, vote, tokenContract) => {
+    const { tokenDecimals } = this.props
     if (tokenContract && user) {
-      combineLatest(
-        tokenContract.balanceOfAt(user, vote.data.snapshotBlock),
-        tokenContract.decimals()
-      )
+      tokenContract
+        .balanceOfAt(user, vote.data.snapshotBlock)
         .first()
-        .subscribe(([balance, decimals]) => {
+        .subscribe(balance => {
           const adjustedBalance = Math.floor(
-            parseInt(balance, 10) / Math.pow(10, decimals)
+            parseInt(balance, 10) / Math.pow(10, tokenDecimals)
           )
           this.setState({ userBalance: adjustedBalance })
         })
@@ -120,12 +121,15 @@ class VotePanelContent extends React.Component {
       network: { etherscanBaseUrl },
       vote,
       ready,
+      tokenSymbol,
+      tokenDecimals,
     } = this.props
 
     const { userBalance, userCanVote, changeVote, canExecute } = this.state
 
     const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.userAccountVote)
     const status = getVoteStatus(vote)
+    const success = getVoteSuccess(vote)
 
     if (!vote) {
       return null
@@ -160,12 +164,29 @@ class VotePanelContent extends React.Component {
                 />
               )}
             </div>
+            <div style={{ marginTop: '10px' }}>
+              <VoteSuccess success={success} />
+            </div>
           </div>
           <div>
             <h2>
-              <Label>Quorum</Label>
+              <Label>Total support</Label>
             </h2>
-            <div>{quorum * 100}%</div>
+            <div>
+              {roundToDecimals(quorumProgress * 100, 2)}%{' '}
+              <Text size="small" color={theme.textSecondary}>
+                ({roundToDecimals(quorum * 100, 2)}% needed)
+              </Text>
+            </div>
+
+            <div style={{ marginTop: '10px' }}>
+              <SummaryBar
+                positiveSize={quorumProgress}
+                requiredSize={quorum}
+                show={ready}
+                compact
+              />
+            </div>
           </div>
         </SidePanelSplit>
         <Part>
@@ -216,6 +237,8 @@ class VotePanelContent extends React.Component {
           quorum={quorum}
           quorumProgress={quorumProgress}
           support={support}
+          tokenSymbol={tokenSymbol}
+          tokenDecimals={tokenDecimals}
           ready={ready}
         />
 
@@ -261,7 +284,8 @@ class VotePanelContent extends React.Component {
                       href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
                       target="_blank"
                     >
-                      (block {snapshotBlock})
+                      (block
+                      {snapshotBlock})
                     </SafeLink>
                     .
                   </p>
@@ -303,7 +327,8 @@ class VotePanelContent extends React.Component {
                       href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
                       target="_blank"
                     >
-                      (block {snapshotBlock})
+                      (block
+                      {snapshotBlock})
                     </SafeLink>
                     .
                   </p>

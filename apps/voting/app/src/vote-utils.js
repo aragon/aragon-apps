@@ -14,25 +14,25 @@ export const EMPTY_CALLSCRIPT = '0x00000001'
 export const getAccountVote = (account, voters) =>
   voters[account] || VOTE_ABSENT
 
-export const getVoteStatus = vote => {
-  const { open, support, quorum } = vote
-  const { yea, nay, executed } = vote.data
-
-  if (executed) {
+export function getVoteStatus(vote) {
+  if (vote.executed) {
     return VOTE_STATUS_EXECUTED
   }
+  if (vote.open) {
+    return VOTE_STATUS_ONGOING
+  }
+  return getVoteSuccess(vote) ? VOTE_STATUS_ACCEPTED : VOTE_STATUS_REJECTED
+}
+
+export function getVoteSuccess(vote) {
+  const { support, quorum } = vote
+  const { yea, nay } = vote.data
 
   const totalVotes = yea + nay
   const hasSupport = yea / totalVotes >= support
   const hasMinQuorum = getQuorumProgress(vote.data) >= quorum
 
-  if (open) {
-    return VOTE_STATUS_ONGOING
-  }
-
   return hasSupport && hasMinQuorum
-    ? VOTE_STATUS_ACCEPTED
-    : VOTE_STATUS_REJECTED
 }
 
 // Enums are not supported by the ABI yet:

@@ -1,34 +1,128 @@
 import Aragon from '@aragon/client'
-import { combineLatest } from './rxjs'
+import { combineLatest, of } from './rxjs'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
 import { EMPTY_CALLSCRIPT } from './vote-utils'
+import tokenDecimalsAbi from './abi/token-decimals.json'
+import tokenSymbolAbi from './abi/token-symbol.json'
+
+const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
+
+const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
 
 const app = new Aragon()
 
-// Hook up the script as an aragon.js store
-app.store(async (state, { event, returnValues }) => {
-  let nextState = {
-    ...state,
-    // Fetch the app's settings, if we haven't already
-    ...(!hasLoadedVoteSettings(state) ? await loadVoteSettings() : {}),
-  }
+/*
+ * Calls `callback` exponentially, everytime `retry()` is called.
+ *
+ * Usage:
+ *
+ * retryEvery(retry => {
+ *  // do something
+ *
+ *  if (condition) {
+ *    // retry in 1, 2, 4, 8 seconds… as long as the condition passes.
+ *    retry()
+ *  }
+ * }, 1000, 2)
+ *
+ */
+const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
+  const attempt = (retryTimer = initialRetryTimer) => {
+    // eslint-disable-next-line standard/no-callback-literal
+    callback(() => {
+      console.error(`Retrying in ${retryTimer / 1000}s...`)
 
-  switch (event) {
-    case 'CastVote':
-      nextState = await castVote(nextState, returnValues)
-      break
-    case 'ExecuteVote':
-      nextState = await executeVote(nextState, returnValues)
-      break
-    case 'StartVote':
-      nextState = await startVote(nextState, returnValues)
-      break
-    default:
-      break
+      // Exponentially backoff attempts
+      setTimeout(() => attempt(retryTimer * increaseFactor), retryTimer)
+    })
   }
+  attempt()
+}
 
-  return nextState
+// Get the token address to initialize ourselves
+retryEvery(retry => {
+  app
+    .call('token')
+    .first()
+    .subscribe(initialize, err => {
+      console.error(
+        'Could not start background script execution due to the contract not loading the token:',
+        err
+      )
+      retry()
+    })
 })
+
+async function initialize(tokenAddr) {
+  const token = app.external(tokenAddr, tokenAbi)
+
+  let tokenSymbol
+  try {
+    tokenSymbol = await loadTokenSymbol(token)
+    app.identify(tokenSymbol)
+  } catch (err) {
+    console.error(
+      `Failed to load token symbol for token at ${tokenAddr} due to:`,
+      err
+    )
+  }
+
+  let tokenDecimals
+  try {
+    tokenDecimals = await loadTokenDecimals(token)
+  } catch (err) {
+    console.err(
+      `Failed to load token decimals for token at ${tokenAddr} due to:`,
+      err
+    )
+    console.err('Defaulting to 18...')
+    tokenDecimals = 18
+  }
+
+  return createStore(token, { decimals: tokenDecimals, symbol: tokenSymbol })
+}
+
+// Hook up the script as an aragon.js store
+async function createStore(token, tokenSettings) {
+  const { decimals: tokenDecimals, symbol: tokenSymbol } = tokenSettings
+  return app.store(
+    async (state, { event, returnValues }) => {
+      let nextState = {
+        ...state,
+        // Fetch the app's settings, if we haven't already
+        ...(!hasLoadedVoteSettings(state) ? await loadVoteSettings() : {}),
+      }
+
+      if (event === INITIALIZATION_TRIGGER) {
+        nextState = {
+          ...nextState,
+          tokenDecimals,
+          tokenSymbol,
+        }
+      } else {
+        switch (event) {
+          case 'CastVote':
+            nextState = await castVote(nextState, returnValues)
+            break
+          case 'ExecuteVote':
+            nextState = await executeVote(nextState, returnValues)
+            break
+          case 'StartVote':
+            nextState = await startVote(nextState, returnValues)
+            break
+          default:
+            break
+        }
+      }
+
+      return nextState
+    },
+    [
+      // Always initialize the store with our own home-made event
+      of({ event: INITIALIZATION_TRIGGER }),
+    ]
+  )
+}
 
 /***********************
  *                     *
@@ -160,6 +254,25 @@ function loadVoteSettings() {
       // Return an empty object to try again later
       return {}
     })
+}
+
+function loadTokenDecimals(tokenContract) {
+  return new Promise((resolve, reject) => {
+    tokenContract
+      .decimals()
+      .first()
+      .map(val => parseInt(val, 10))
+      .subscribe(resolve, reject)
+  })
+}
+
+function loadTokenSymbol(tokenContract) {
+  return new Promise((resolve, reject) => {
+    tokenContract
+      .symbol()
+      .first()
+      .subscribe(resolve, reject)
+  })
 }
 
 // Apply transmations to a vote received from web3
