@@ -115,7 +115,7 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @notice Initialize Finance app for Vault at `_vault` with period length of `@transformTime(_periodDuration, 'humanize')`
+    * @notice Initialize Finance app for Vault at `_vault` with period length of `@transformTime(_periodDuration)`
     * @param _vault Address of the vault Finance will rely on (non changeable)
     * @param _periodDuration Duration in seconds of each period
     */
@@ -181,7 +181,7 @@ contract Finance is AragonApp {
     */
 
     /**
-    * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + @transformTime(_interval, 'humanize') : ''`
+    * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + @transformTime(_interval) : ''`
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment
     * @param _amount Tokens that are payed every time the payment is due
@@ -237,7 +237,7 @@ contract Finance is AragonApp {
     }
 
     /**
-    * @notice Change period duration to `@transformTime(_periodDuration, 'humanize')`, effective for next accounting period.
+    * @notice Change period duration to `@transformTime(_periodDuration)`, effective for next accounting period.
     * @param _periodDuration Duration in seconds for accounting periods
     */
     function setPeriodDuration(uint64 _periodDuration) authP(CHANGE_PERIOD_ROLE, arr(uint256(_periodDuration), uint256(settings.periodDuration))) transitionsPeriod isInitialized external {
