@@ -12,7 +12,7 @@
     "build:app": "parcel build app/index.html --out-dir build/app --public-url '.' --no-cache",
     "build:script": "parcel build app/script.js --out-dir build/app  --no-cache",
     "lint:app": "standard app/**/*.js",
-    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build/app"
+    "sync-assets": "copy-aragon-ui-assets -n assets ./build/app"
   },
   "keywords": [],
   "author": "Aragon Institution MTU <contact@aragon.one>",

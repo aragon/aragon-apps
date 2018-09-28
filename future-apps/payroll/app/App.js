@@ -37,7 +37,7 @@ export default class App extends React.Component {
     const { activeTab } = this.state
 
     return (
-      <AppLayout publicUrl='/aragon-ui/'>
+      <AppLayout publicUrl='/assets/'>
         <AppLayout.Header>
           <AppBar
             title='Payroll'
