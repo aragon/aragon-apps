@@ -1,30 +1,55 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow');
+const getContract = name => artifacts.require(name)
+const getEvent = (receipt, event, arg) => {
+  return receipt.logs.filter(l => l.event == event)[0].args[arg]
+}
 
-const MiniMeToken = artifacts.require('@aragon/os/contracts/common/MiniMeToken');
-const Vault = artifacts.require('Vault');
-const Finance = artifacts.require('Finance');
-const Payroll = artifacts.require("PayrollMock");
-const PriceFeedMock = artifacts.require("./mocks/feed/PriceFeedMock.sol");
+contract('Payroll, without init,', function(accounts) {
+  const USD_DECIMALS= 18
+  const USD_PRECISION = 10**USD_DECIMALS
+  const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
+  const ETH = '0x0'
+  const rateExpiryTime = 1000
 
-const { deployErc20TokenAndDeposit, addAllowedTokens, getTimePassed } = require('./helpers.js')
+  const [owner, employee1, _] = accounts
+  const {
+    deployErc20TokenAndDeposit,
+    addAllowedTokens,
+    getTimePassed,
+    redistributeEth,
+    getDaoFinanceVault,
+    initializePayroll
+  } = require('./helpers.js')(owner)
+  const salary1 = 1000
+  const erc20Token1Decimals = 18
 
-contract('Payroll, without init,', function([owner, employee1, _]) {
-  let vault, finance, payroll, priceFeed, erc20Token1;
+  let payroll
+  let ayrollBase
+  let priceFeed
+  let usdToken
+  let erc20Token1
+  let employeeId1
+  let dao
+  let finance
+  let vault
 
-  const SECONDS_IN_A_YEAR = 31557600; // 365.25 days
-  const erc20Token1Decimals = 18;
+  before(async () => {
+    payrollBase = await getContract('PayrollMock').new()
 
-  beforeEach(async () => {
-    vault = await Vault.new();
-    await vault.initializeWithBase(vault.address)
-    finance = await Finance.new();
-    await finance.initialize(vault.address, SECONDS_IN_A_YEAR); // more than one day
+    const daoAndFinance = await getDaoFinanceVault()
 
-    priceFeed = await PriceFeedMock.new();
-    payroll = await Payroll.new();
+    dao = daoAndFinance.dao
+    finance = daoAndFinance.finance
+    vault = daoAndFinance.vault
+
+    usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", USD_DECIMALS)
+    priceFeed = await getContract('PriceFeedMock').new()
 
     // Deploy ERC 20 Tokens
-    erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, "Token 1", erc20Token1Decimals);
+    erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 1", erc20Token1Decimals)
+
+    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, { from: owner })
+    payroll = getContract('PayrollMock').at(getEvent(receipt, 'NewAppProxy', 'proxy'))
   })
 
   it('fails to call setPriceFeed', async () => {
@@ -98,5 +123,4 @@ contract('Payroll, without init,', function([owner, employee1, _]) {
       await payroll.addAccruedValue(1, 1000)
     })
   })
-
 })

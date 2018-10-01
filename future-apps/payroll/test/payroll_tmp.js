@@ -7,48 +7,71 @@ const getTransaction = require('@aragon/test-helpers/transaction')(web3)
 const getContract = name => artifacts.require(name)
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
-const { deployErc20TokenAndDeposit, addAllowedTokens, getTimePassed } = require('./helpers.js')
-
 contract('Payroll, allocation and payday,', function(accounts) {
-  const rateExpiryTime = 1000
-  const USD_DECIMALS= 18
-  const USD_PRECISION = 10**USD_DECIMALS
+  const USD_DECIMALS = 18
+  const USD_PRECISION = 10 ** USD_DECIMALS
   const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
   const ONE = 1e18
-  const ETH = '0x0'
-  let payroll
-  let finance
-  let vault
-  let priceFeed
+  const ETH = "0x0"
+  const rateExpiryTime = 1000
 
-  const owner = accounts[0]
+  const [owner, employee] = accounts
+  const unused_account = accounts[7]
+  const {
+    deployErc20TokenAndDeposit,
+    addAllowedTokens,
+    getTimePassed,
+    redistributeEth,
+    getDaoFinanceVault,
+    initializePayroll
+  } = require("./helpers.js")(owner)
+  let salary = (new web3.BigNumber(10000)).times(USD_PRECISION).dividedToIntegerBy(SECONDS_IN_A_YEAR)
 
   let usdToken
   let erc20Token1
   let erc20Token1ExchangeRate
   const erc20Token1Decimals = 20
+  let erc20Token2;
+  const erc20Token2Decimals = 16;
   let etherExchangeRate
 
+  let payroll
+  let ayrollBase
+  let priceFeed
   let employeeId
+  let dao
+  let finance
+  let vault
 
   before(async () => {
-    vault = await getContract('Vault').new()
-    await vault.initializeWithBase(vault.address)
-    finance = await getContract('Finance').new()
-    await finance.initialize(vault.address, SECONDS_IN_A_YEAR) // more than one day
+    payrollBase = await getContract("PayrollMock").new()
+
+    const daoAndFinance = await getDaoFinanceVault()
+
+    dao = daoAndFinance.dao
+    finance = daoAndFinance.finance
+    vault = daoAndFinance.vault
 
     usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", USD_DECIMALS)
-    priceFeed = await getContract('PriceFeedMock').new()
+    priceFeed = await getContract("PriceFeedMock").new()
 
     // Deploy ERC 20 Tokens
     erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 1", erc20Token1Decimals)
+    erc20Token2 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 2", erc20Token2Decimals);
+
+    // make sure owner and Payroll have enough funds
+    await redistributeEth(accounts, finance)
   })
 
   beforeEach(async () => {
-    payroll = await getContract('PayrollMock').new()
-
-    // inits payroll
-    await payroll.initialize(finance.address, usdToken.address, priceFeed.address, rateExpiryTime)
+    payroll = await initializePayroll(
+      dao,
+      payrollBase,
+      finance,
+      usdToken,
+      priceFeed,
+      rateExpiryTime
+    )
 
     // adds allowed tokens
     await addAllowedTokens(payroll, [usdToken, erc20Token1])

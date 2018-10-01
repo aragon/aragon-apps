@@ -1,8 +1,7 @@
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
-import "@aragon/os/contracts/common/Initializable.sol";
-import "@aragon/os/contracts/common/IForwarder.sol";
+// import "@aragon/os/contracts/common/IForwarder.sol";
 
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
@@ -138,7 +137,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         allowedTokens[_allowedToken] = true;
         allowedTokensArray.push(_allowedToken);
 
-        AddAllowedToken(_allowedToken);
+        emit AddAllowedToken(_allowedToken);
     }
 
     /*
@@ -241,7 +240,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         // set new salary
         employees[employeeId].denominationTokenSalary = denominationSalary;
 
-        SetEmployeeSalary(employeeId, denominationSalary);
+        emit SetEmployeeSalary(employeeId, denominationSalary);
     }
 
     /**
@@ -350,7 +349,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         }
         require(sum == 100);
 
-        DetermineAllocation(employeeIds[msg.sender], msg.sender);
+        emit DetermineAllocation(employeeIds[msg.sender], msg.sender);
     }
 
     /**
@@ -378,7 +377,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint128 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
 
-        ChangeAddressByEmployee(employeeId, employee.accountAddress, newAddress);
+        emit ChangeAddressByEmployee(employeeId, employee.accountAddress, newAddress);
         employee.accountAddress = newAddress;
         employeeIds[newAddress] = employeeId;
         delete employeeIds[msg.sender];
@@ -476,17 +475,17 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         return allowedTokens[_token];
     }
 
-    /**
-     * @dev IForwarder interface conformance. Forwards any employee action.
-     * @param _evmScript script being executed
-     */
-    function forward(bytes _evmScript) public {
-        require(canForward(msg.sender, _evmScript));
-        bytes memory input = new bytes(0); // TODO: Consider input for this
-        address[] memory blacklist = new address[](1);
-        blacklist[0] = address(finance);
-        runScript(_evmScript, input, blacklist);
-    }
+    // /**
+    //  * @dev IForwarder interface conformance. Forwards any employee action.
+    //  * @param _evmScript script being executed
+    //  */
+    // function forward(bytes _evmScript) public {
+    //     require(canForward(msg.sender, _evmScript));
+    //     bytes memory input = new bytes(0); // TODO: Consider input for this
+    //     address[] memory blacklist = new address[](1);
+    //     blacklist[0] = address(finance);
+    //     runScript(_evmScript, input, blacklist);
+    // }
 
     function isForwarder() public pure returns (bool) {
         return true;
@@ -521,7 +520,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         });
         // Ids mapping
         employeeIds[accountAddress] = employeeId;
-        AddEmployee(
+        emit AddEmployee(
             employeeId,
             accountAddress,
             initialDenominationSalary,
@@ -535,19 +534,19 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     function _addAccruedValue(uint128 employeeId, uint256 amount) internal {
         employees[employeeId].accruedValue = employees[employeeId].accruedValue.add(amount);
 
-        AddEmployeeAccruedValue(employeeId, amount);
+        emit AddEmployeeAccruedValue(employeeId, amount);
     }
 
     function _setPriceFeed(IFeed _feed) internal {
         require(_feed != address(0));
         feed = _feed;
-        SetPriceFeed(feed);
+        emit SetPriceFeed(feed);
     }
 
     function _setRateExpiryTime(uint64 _time) internal {
         require(_time > 0);
         rateExpiryTime = _time;
-        SetRateExpiryTime(rateExpiryTime);
+        emit SetRateExpiryTime(rateExpiryTime);
     }
 
     /**
@@ -597,7 +596,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
                 1,
                 ""
             );
-            SendPayroll(employee.accountAddress, token, tokenAmount);
+            emit SendPayroll(employee.accountAddress, token, tokenAmount);
             somethingPaid = true;
         }
 
@@ -618,7 +617,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         employees[employeeId].terminated = true;
         employees[employeeId].endDate = endDate;
 
-        TerminateEmployee(employeeId, employees[employeeId].accountAddress, endDate);
+        emit TerminateEmployee(employeeId, employees[employeeId].accountAddress, endDate);
     }
 
     function _getOwedSalary(uint128 employeeId, uint64 date) internal view returns (uint256) {

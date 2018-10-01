@@ -1,6 +1,4 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { deployErc20TokenAndDeposit, addAllowedTokens, getTimePassed, redistributeEth } = require('./helpers.js')
-
 const getContract = name => artifacts.require(name)
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
@@ -12,26 +10,35 @@ contract('Payroll, accrued value,', async (accounts) => {
   const rateExpiryTime = 1000
 
   const [owner, employee1, _] = accounts
-  //const owner = accounts[0]
-  //const employee1 = accounts[1]
+  const {
+    deployErc20TokenAndDeposit,
+    addAllowedTokens,
+    getTimePassed,
+    redistributeEth,
+    getDaoFinanceVault,
+    initializePayroll
+  } = require('./helpers.js')(owner)
   const salary1 = 1000
-
-  let payroll
-  let finance
-  let vault
-  let priceFeed
-
-  let usdToken
-  let erc20Token1
   const erc20Token1Decimals = 18
 
+  let payroll
+  let ayrollBase
+  let priceFeed
+  let usdToken
+  let erc20Token1
   let employeeId1
+  let dao
+  let finance
+  let vault
 
   before(async () => {
-    vault = await getContract('Vault').new()
-    await vault.initializeWithBase(vault.address)
-    finance = await getContract('Finance').new()
-    await finance.initialize(vault.address, SECONDS_IN_A_YEAR) // more than one day
+    payrollBase = await getContract('PayrollMock').new()
+
+    const daoAndFinance = await getDaoFinanceVault()
+
+    dao = daoAndFinance.dao
+    finance = daoAndFinance.finance
+    vault = daoAndFinance.vault
 
     usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", USD_DECIMALS)
     priceFeed = await getContract('PriceFeedMock').new()
@@ -43,11 +50,9 @@ contract('Payroll, accrued value,', async (accounts) => {
     await redistributeEth(accounts, finance)
   })
 
-  beforeEach(async () => {
-    payroll = await getContract('PayrollMock').new()
 
-    // inits payroll
-    await payroll.initialize(finance.address, usdToken.address, priceFeed.address, rateExpiryTime)
+  beforeEach(async () => {
+    payroll = await initializePayroll(dao, payrollBase, finance, usdToken, priceFeed, rateExpiryTime)
 
     // adds allowed tokens
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
@@ -71,7 +76,11 @@ contract('Payroll, accrued value,', async (accounts) => {
   })
 
   it('fails trying to terminate an employee in the past', async () => {
-    const terminationDate = parseInt(await payroll.getTimestampPublic.call(), 10) - 1
+    const nowMock = new Date().getTime()
+    const terminationDate = nowMock - 1
+
+    await payroll.mockSetTimestamp(nowMock)
+
     return assertRevert(async () => {
       await payroll.terminateEmployee(employeeId1, terminationDate)
     })
