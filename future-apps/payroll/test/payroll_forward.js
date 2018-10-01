@@ -74,18 +74,18 @@ contract('PayrollForward', function(accounts) {
     assert.equal(result.toString(), "true", "It's not forwarder");
   });
 
-  it('forwards actions to employee') // FIXME: uncomment once Out of gas error is fixed
-  // it('forwards actions to employee', async () => {
-    // const executionTarget = await ExecutionTarget.new();
-    // const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() };
-    // const script = encodeCallScript([action]);
-    //
-    // await payroll.forward(script, { from: employee1 });
-    // assert.equal((await executionTarget.counter()).toString(), 1, 'should have received execution call');
-    //
-    // // can not forward call
-    // return assertRevert(async () => {
-    //   await payroll.forward(script, { from: unused_account });
-    // });
-  // });
+  // it('forwards actions to employee') // FIXME: uncomment once Out of gas error is fixed
+  it('forwards actions to employee', async () => {
+    const executionTarget = await ExecutionTarget.new();
+    const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() };
+    const script = encodeCallScript([action]);
+
+    await payroll.forward(script, { from: employee1 });
+    assert.equal((await executionTarget.counter()).toString(), 1, 'should have received execution call');
+
+    // can not forward call
+    return assertRevert(async () => {
+      await payroll.forward(script, { from: unused_account });
+    });
+  });
 });
