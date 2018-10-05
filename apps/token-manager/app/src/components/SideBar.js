@@ -2,7 +2,6 @@ import React from 'react'
 import styled from 'styled-components'
 import { Text, theme } from '@aragon/ui'
 import { formatBalance, stakesPercentages } from '../utils'
-import BN from 'bn.js'
 
 const DISTRIBUTION_ITEMS_MAX = 7
 const DISTRIBUTION_COLORS = [
@@ -22,7 +21,7 @@ const displayedStakes = (accounts, total) => {
     total,
     DISTRIBUTION_ITEMS_MAX
   ).map((stake, index) => ({
-    name: index === -1 ? 'Rest' : positiveAccounts[index].address,
+    name: stake.index === -1 ? 'Rest' : positiveAccounts[index].address,
     stake: stake.percentage,
     color: DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length],
   }))

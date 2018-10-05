@@ -42,27 +42,28 @@ export function stakesPercentages(amounts, total, maxIncluded) {
     }))
     .sort((a, b) => b.percentage.cmp(a.percentage))
 
-  // Add the rest item if needed
-  const addRestIfNeeded = stakes =>
-    hasRest
-      ? stakes.slice(0, maxIncluded).concat([
-          {
-            index: -1,
-            percentage: stakes
-              .slice(maxIncluded)
-              .reduce((total, stake) => total.add(stake.percentage), new BN(0)),
-          },
-        ])
-      : stakes
-
   // convert the percentage back to a number
   const stakePercentageAsNumber = stake => ({
     ...stake,
     percentage: (stake.percentage.toNumber() / pctPrecision.toNumber()) * 100,
   })
 
+  // Add the “Rest” item
+  const addRest = (stakes, percentage) => [...stakes, { index: -1, percentage }]
+
+  const addCalculatedRest = stakes =>
+    addRest(
+      stakes,
+      stakes
+        .slice(maxIncluded)
+        .reduce((total, stake) => total.add(stake.percentage), new BN(0))
+    )
+
   // the stakes to be included (not adjusted yet)
-  const includedStakes = addRestIfNeeded(stakes).map(stakePercentageAsNumber)
+  const includedStakes = (hasRest
+    ? addCalculatedRest(stakes.slice(0, maxIncluded))
+    : stakes
+  ).map(stakePercentageAsNumber)
 
   // Round to the next integer some stake percentages until we get to 100%.
   // Start with the percentages that are the closest to the next integer.
@@ -83,5 +84,25 @@ export function stakesPercentages(amounts, total, maxIncluded) {
     ),
   })
 
-  return includedStakes.map(adjustStakePercentage)
+  const adjustedStakes = includedStakes.map(adjustStakePercentage)
+
+  // Check if there is any 0% item in the list
+  const firstZeroIndex = adjustedStakes.findIndex(
+    ({ percentage }) => percentage === 0
+  )
+
+  if (firstZeroIndex === -1) {
+    return adjustedStakes
+  }
+
+  // Remove the 0% items and group them in a “Rest” item.
+  return hasRest
+    ? // A “Rest” item already exist, we can remove the 0% items.
+      adjustedStakes.slice(0, firstZeroIndex)
+    : // A “Rest” item need to be added and can not be zero,
+      // so we replace the first non-zero percentage by “Rest”.
+      addRest(
+        adjustedStakes.slice(0, firstZeroIndex - 1),
+        adjustedStakes[firstZeroIndex - 1].percentage
+      )
 }
