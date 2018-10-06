@@ -2,7 +2,8 @@ import BN from 'bn.js'
 
 // amount: the total amount (BN.js object)
 // base: the decimals base (BN.js object)
-export function formatBalance(amount, base) {
+// precision: number of decimals to format (Number)
+export function formatBalance(amount, base, precision = 2) {
   const baseLength = base.toString().length
 
   let fraction = amount.mod(base).toString()
@@ -10,7 +11,9 @@ export function formatBalance(amount, base) {
   fraction = `${zeros}${fraction}`
   const whole = amount.div(base).toString()
 
-  return `${whole}${fraction === '0' ? '' : `.${fraction.slice(0, 2)}`}`
+  return `${whole}${
+    parseInt(fraction, 10) === 0 ? '' : `.${fraction.slice(0, precision)}`
+  }`
 }
 
 // Calculates and returns stakes as percentages, adding a “rest” percentage for
