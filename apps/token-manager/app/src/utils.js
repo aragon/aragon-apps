@@ -29,11 +29,16 @@ export function formatBalance(amount, base, precision = 2) {
 //   - `amount` is the original amount provided.
 //   - `percentage` is the calculated percentage.
 //
-export function stakesPercentages(amounts, total, maxIncluded) {
-  const hasRest = amounts.length > maxIncluded
+export function stakesPercentages(
+  amounts,
+  { total = new BN(-1), maxIncluded = amounts.length } = {}
+) {
+  if (total.eqn(-1)) {
+    total = amounts.reduce((total, value) => total.add(value), new BN(0))
+  }
 
   // percentage + two digits (only to sort them by closest to the next integer)
-  const pctPrecision = new BN(10000)
+  const pctPrecision = 10000
 
   // Calculate the percentages of all the stakes
   const stakes = amounts
@@ -41,30 +46,36 @@ export function stakesPercentages(amounts, total, maxIncluded) {
     .filter(({ amount }) => !amount.isZero())
     .map(stake => ({
       ...stake,
-      percentage: stake.amount.mul(pctPrecision).div(total),
+      percentage: stake.amount.muln(pctPrecision).div(total),
     }))
     .sort((a, b) => b.percentage.cmp(a.percentage))
 
   // convert the percentage back to a number
   const stakePercentageAsNumber = stake => ({
     ...stake,
-    percentage: (stake.percentage.toNumber() / pctPrecision.toNumber()) * 100,
+    percentage: (stake.percentage.toNumber() / pctPrecision) * 100,
   })
 
   // Add the “Rest” item
   const addRest = (stakes, percentage) => [...stakes, { index: -1, percentage }]
 
-  const addCalculatedRest = stakes =>
+  const addCalculatedRest = (includedStakes, excludedStakes) =>
     addRest(
-      stakes,
-      stakes
-        .slice(maxIncluded)
-        .reduce((total, stake) => total.add(stake.percentage), new BN(0))
+      includedStakes,
+      excludedStakes.reduce(
+        (total, stake) => total.add(stake.percentage),
+        new BN(0)
+      )
     )
+
+  const hasRest = amounts.length > maxIncluded
 
   // the stakes to be included (not adjusted yet)
   const includedStakes = (hasRest
-    ? addCalculatedRest(stakes.slice(0, maxIncluded))
+    ? addCalculatedRest(
+        stakes.slice(0, maxIncluded - 1),
+        stakes.slice(maxIncluded - 1)
+      )
     : stakes
   ).map(stakePercentageAsNumber)
 

@@ -136,33 +136,21 @@ const Title = styled.span`
   }
 `
 
-function byBalance(a, b) {
-  if (a.balance.gt(b.balance)) return -1
-  if (a.balance.lt(b.balance)) return 1
-
-  return 0
-}
-
-// convert tokenSupply, holders balances to strings and then to BNs
-// calculate tokenDecimalsBase
-function convertBigNumbers(state) {
-  let { tokenSupply, holders, tokenDecimals } = state
-  const tokenDecimalsBase = new BN(`${Math.pow(10, tokenDecimals)}`)
-
-  tokenSupply = new BN(`${tokenSupply}`)
-  holders = holders
-    .map(holder => ({
-      ...holder,
-      balance: new BN(`${holder.balance}`),
-    }))
-    .sort(byBalance)
-  return { ...state, tokenSupply, holders, tokenDecimalsBase }
-}
-
 export default observe(
+  // Convert tokenSupply and holders balances to BNs,
+  // and calculate tokenDecimalsBase.
   observable =>
     observable.map(state => {
-      return convertBigNumbers(state)
+      const { tokenSupply, holders, tokenDecimals } = state
+      const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
+      return {
+        ...state,
+        tokenSupply: new BN(tokenSupply),
+        tokenDecimalsBase,
+        holders: holders
+          .map(holder => ({ ...holder, balance: new BN(holder.balance) }))
+          .sort((a, b) => b.balance.cmp(a.balance)),
+      }
     }),
   {}
 )(App)
