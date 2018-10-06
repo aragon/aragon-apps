@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Button, Field, IconCross, Text, TextInput } from '@aragon/ui'
+import BN from 'bn.js'
 import { addressPattern, isAddress } from '../../web3-utils'
 
 const initialState = {
@@ -74,7 +75,9 @@ class AssignVotePanelContent extends React.Component {
   render() {
     const { amount, recipient } = this.state
     const { tokenDecimalsBase } = this.props
-    const minimum = tokenDecimalsBase ? 1 / tokenDecimalsBase : 0
+    const tokenBase = tokenDecimalsBase
+      ? new BN(1).div(tokenDecimalsBase).toNumber()
+      : 0
     return (
       <div>
         <form onSubmit={this.handleSubmit}>
@@ -95,8 +98,8 @@ class AssignVotePanelContent extends React.Component {
             <TextInput.Number
               value={amount}
               onChange={this.handleAmountChange}
-              min={minimum}
-              step="any"
+              min={tokenBase}
+              step={tokenBase}
               required
               wide
             />
