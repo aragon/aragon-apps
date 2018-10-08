@@ -21,29 +21,29 @@ contract Voting is IForwarder, AragonApp {
     bytes32 public constant MODIFY_SUPPORT_ROLE = keccak256("MODIFY_SUPPORT_ROLE");
     bytes32 public constant MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
 
-    uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
+    uint64 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
 
     enum VoterState { Absent, Yea, Nay }
 
     struct Vote {
         address creator;
+        bool executed;
         uint64 startDate;
-        uint256 snapshotBlock;
-        uint256 supportRequiredPct;
-        uint256 minAcceptQuorumPct;
+        uint64 snapshotBlock;
+        uint64 supportRequiredPct;
+        uint64 minAcceptQuorumPct;
         uint256 yea;
         uint256 nay;
         uint256 totalVoters;
         string metadata;
         bytes executionScript;
-        bool executed;
         mapping (address => VoterState) voters;
     }
 
-    MiniMeToken public token;
-    uint256 public supportRequiredPct;
-    uint256 public minAcceptQuorumPct;
+    uint64 public supportRequiredPct;
+    uint64 public minAcceptQuorumPct;
     uint64 public voteTime;
+    MiniMeToken public token;
 
     // We are mimicing an array, we use a mapping instead to make app upgrade more graceful
     mapping (uint256 => Vote) internal votes;
@@ -69,8 +69,8 @@ contract Voting is IForwarder, AragonApp {
     */
     function initialize(
         MiniMeToken _token,
-        uint256 _supportRequiredPct,
-        uint256 _minAcceptQuorumPct,
+        uint64 _supportRequiredPct,
+        uint64 _minAcceptQuorumPct,
         uint64 _voteTime
     )
         external
@@ -91,9 +91,9 @@ contract Voting is IForwarder, AragonApp {
     * @notice Change required support to `(_supportRequiredPct - _supportRequiredPct % 10^16) / 10^14`%
     * @param _supportRequiredPct New required support
     */
-    function changeSupportRequiredPct(uint256 _supportRequiredPct)
+    function changeSupportRequiredPct(uint64 _supportRequiredPct)
         external
-        authP(MODIFY_SUPPORT_ROLE, arr(_supportRequiredPct, supportRequiredPct))
+        authP(MODIFY_SUPPORT_ROLE, arr(uint256(_supportRequiredPct), uint256(supportRequiredPct)))
     {
         require(minAcceptQuorumPct <= _supportRequiredPct);
         require(_supportRequiredPct < PCT_BASE);
@@ -106,9 +106,9 @@ contract Voting is IForwarder, AragonApp {
     * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^16) / 10^14`%
     * @param _minAcceptQuorumPct New acceptance quorum
     */
-    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct)
+    function changeMinAcceptQuorumPct(uint64 _minAcceptQuorumPct)
         external
-        authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct))
+        authP(MODIFY_QUORUM_ROLE, arr(uint256(_minAcceptQuorumPct), uint256(minAcceptQuorumPct)))
     {
         require(_minAcceptQuorumPct <= supportRequiredPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
@@ -230,9 +230,9 @@ contract Voting is IForwarder, AragonApp {
             bool executed,
             address creator,
             uint64 startDate,
-            uint256 snapshotBlock,
-            uint256 supportRequired,
-            uint256 minAcceptQuorum,
+            uint64 snapshotBlock,
+            uint64 supportRequired,
+            uint64 minAcceptQuorum,
             uint256 yea,
             uint256 nay,
             uint256 totalVoters,
@@ -272,7 +272,7 @@ contract Voting is IForwarder, AragonApp {
         vote_.creator = msg.sender;
         vote_.startDate = getTimestamp64();
         vote_.metadata = _metadata;
-        vote_.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
+        vote_.snapshotBlock = uint40(getBlockNumber() - 1); // avoid double voting in this very block
         vote_.totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
