@@ -1,7 +1,8 @@
 {
   "env": {
     "browser": true,
-    "es6": true
+    "es6": true,
+    "jest/globals": true
   },
   "extends": [
     "standard",
@@ -18,7 +19,7 @@
     },
     "sourceType": "module"
   },
-  "plugins": ["prettier", "react"],
+  "plugins": ["prettier", "react", "jest"],
   "rules": {
     "react/prop-types": 0,
     "prettier/prettier": [
