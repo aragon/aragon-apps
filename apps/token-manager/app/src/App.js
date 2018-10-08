@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
+import BN from 'bn.js'
 import {
   AragonApp,
   AppBar,
@@ -36,15 +37,15 @@ class App extends React.Component {
     // Is this the first time we've loaded the token settings?
     if (!tokenSettingsLoaded && hasLoadedTokenSettings(nextProps)) {
       this.setState({
-        tokenDecimalsBase: Math.pow(10, nextProps.tokenDecimals),
         tokenSettingsLoaded: true,
       })
     }
   }
   handleAssignTokens = ({ amount, recipient }) => {
-    const { app } = this.props
-    const { tokenDecimalsBase } = this.state
-    app.mint(recipient, amount * tokenDecimalsBase)
+    const { app, tokenDecimalsBase } = this.props
+    const amountConverted = Math.floor(parseFloat(amount) * tokenDecimalsBase)
+    const toMint = new BN(`${amountConverted}`, 10)
+    app.mint(recipient, toMint.toString())
     this.handleSidepanelClose()
   }
   handleAppBarLaunchAssignTokens = () => this.handleLaunchAssignTokens()
@@ -61,9 +62,14 @@ class App extends React.Component {
     })
   }
   render() {
-    const { tokenSymbol, tokenSupply, holders, userAccount } = this.props
     const {
+      tokenSymbol,
+      tokenSupply,
       tokenDecimalsBase,
+      holders,
+      userAccount,
+    } = this.props
+    const {
       assignTokensConfig,
       sidepanelOpened,
       tokenSettingsLoaded,
@@ -113,6 +119,7 @@ class App extends React.Component {
           <AssignVotePanelContent
             onAssignTokens={this.handleAssignTokens}
             opened={sidepanelOpened}
+            tokenDecimalsBase={tokenDecimalsBase}
             {...assignTokensConfig}
           />
         </SidePanel>
@@ -130,6 +137,20 @@ const Title = styled.span`
 `
 
 export default observe(
-  observable => observable.map(state => ({ ...state })),
+  // Convert tokenSupply and holders balances to BNs,
+  // and calculate tokenDecimalsBase.
+  observable =>
+    observable.map(state => {
+      const { tokenSupply, holders, tokenDecimals } = state
+      const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
+      return {
+        ...state,
+        tokenSupply: new BN(tokenSupply),
+        tokenDecimalsBase,
+        holders: holders
+          .map(holder => ({ ...holder, balance: new BN(holder.balance) }))
+          .sort((a, b) => b.balance.cmp(a.balance)),
+      }
+    }),
   {}
 )(App)

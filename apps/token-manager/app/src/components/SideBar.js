@@ -1,10 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Text, theme } from '@aragon/ui'
-import { sciNot } from '../math-utils'
-
-// Number of digits before "Total Supply" gets wrapped into two lines
-const TOTAL_SUPPLY_CUTOFF_LENGTH = 18
+import { formatBalance, stakesPercentages } from '../utils'
 
 const DISTRIBUTION_ITEMS_MAX = 7
 const DISTRIBUTION_COLORS = [
@@ -17,35 +14,16 @@ const DISTRIBUTION_COLORS = [
   '#80AEDC',
 ]
 
-const calculateStakes = (accounts, total) => {
-  const maxDisplayed = DISTRIBUTION_ITEMS_MAX - 1
-  const byStake = (a, b) => b.stake - a.stake
-
-  const stakes = accounts.map(({ address, balance }) => ({
-    name: address,
-    stake: Math.floor(balance / total * 100),
+const displayedStakes = (accounts, total) => {
+  const positiveAccounts = accounts.filter(({ balance }) => balance > 0)
+  return stakesPercentages(positiveAccounts.map(({ balance }) => balance), {
+    total,
+    maxIncluded: DISTRIBUTION_ITEMS_MAX,
+  }).map((stake, index) => ({
+    name: stake.index === -1 ? 'Rest' : positiveAccounts[index].address,
+    stake: stake.percentage,
+    color: DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length],
   }))
-
-  stakes.push({
-    name: 'Organization Reserves',
-    stake: Math.floor(
-      (total - accounts.reduce((total, { balance }) => total + balance, 0)) /
-        total *
-        100
-    ),
-  })
-
-  const displayedStakes = stakes
-    .filter(({ stake }) => stake > 0)
-    .sort(byStake)
-    .slice(0, maxDisplayed)
-
-  const rest =
-    100 - displayedStakes.reduce((total, { stake }) => total + stake, 0)
-
-  return displayedStakes.length < accounts.length
-    ? [...displayedStakes, { name: 'Rest', stake: rest }].sort(byStake)
-    : displayedStakes
 }
 
 class SideBar extends React.Component {
@@ -54,17 +32,7 @@ class SideBar extends React.Component {
   }
   render() {
     const { holders, tokenDecimalsBase, tokenSupply } = this.props
-    const stakes = calculateStakes(holders, tokenSupply).map((stake, i) => ({
-      ...stake,
-      color: DISTRIBUTION_COLORS[i] || '#000000',
-    }))
-
-    const adjustedTokenSupply = sciNot(
-      tokenSupply / tokenDecimalsBase,
-      TOTAL_SUPPLY_CUTOFF_LENGTH,
-      { rounding: 5 }
-    )
-
+    const stakes = displayedStakes(holders, tokenSupply)
     return (
       <Main>
         <Part>
@@ -77,7 +45,7 @@ class SideBar extends React.Component {
             <InfoRow>
               <span>Total Supply</span>
               <span>:</span>
-              <strong>{adjustedTokenSupply}</strong>
+              <strong>{formatBalance(tokenSupply, tokenDecimalsBase)}</strong>
             </InfoRow>
           </ul>
         </Part>

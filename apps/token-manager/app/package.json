@@ -6,6 +6,7 @@
   "dependencies": {
     "@aragon/client": "^1.0.0-beta.8",
     "@aragon/ui": "^0.11.0",
+    "bn.js": "^4.11.6",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
@@ -16,6 +17,7 @@
     "@aragon/react-scripts": "^1.1.0-aragon.6",
     "babel-core": "^6.26.0",
     "babel-eslint": "^8.0.3",
+    "babel-jest": "^23.6.0",
     "babel-plugin-styled-components": "^1.5.1",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.1",
@@ -26,11 +28,13 @@
     "eslint-config-standard": "^10.2.1",
     "eslint-config-standard-react": "^5.0.0",
     "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jest": "^21.24.1",
     "eslint-plugin-node": "^5.2.1",
     "eslint-plugin-prettier": "^2.3.1",
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-react": "^7.5.1",
     "eslint-plugin-standard": "^3.0.1",
+    "jest": "^23.6.0",
     "parcel-bundler": "^1.9.1",
     "prettier": "^1.8.2"
   },
@@ -40,7 +44,7 @@
     "start": "npm run sync-assets && npm run build:script -- --no-minify && PORT=3003 react-scripts start",
     "build": "npm run sync-assets && npm run build:script && react-scripts build",
     "build:script": "parcel build src/script.js -d public/",
-    "test": "react-scripts test --env=jsdom",
+    "test": "jest",
     "eject": "react-scripts eject"
   },
   "proxy": "http://localhost:3003",
