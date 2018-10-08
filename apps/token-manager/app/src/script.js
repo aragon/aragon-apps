@@ -126,7 +126,6 @@ function loadNewBalances(token, ...addresses) {
           token
             .balanceOf(address)
             .first()
-            .map(balance => parseInt(balance, 10))
             .subscribe(balance => resolve({ address, balance }), reject)
         )
     )
@@ -146,7 +145,6 @@ function loadTokenSupply(token) {
     token
       .totalSupply()
       .first()
-      .map(totalSupply => parseInt(totalSupply, 10))
       .subscribe(resolve, reject)
   )
 }
@@ -158,7 +156,6 @@ function loadTokenSettings(token) {
         new Promise((resolve, reject) =>
           token[name]()
             .first()
-            .map(val => (type === 'number' ? parseInt(val, 10) : val))
             .subscribe(value => {
               resolve({ [key]: value })
             }, reject)
