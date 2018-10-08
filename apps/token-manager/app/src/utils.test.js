@@ -20,14 +20,14 @@ describe('stakePercentages()', () => {
 
   test('Percentage should be adjusted to reach 100% (1)', () => {
     const stakes = stakesPercentages([bn(100), bn(100), bn(100), bn(11), bn(2)])
-    expect(stakes.length).toBe(5)
+    expect(stakes).toHaveLength(5)
     expect(totalPercentage(stakes)).toBe(100)
     expect(stakes.map(s => s.percentage)).toEqual([32, 32, 32, 3, 1])
   })
 
   test('Percentage should be adjusted to reach 100% (2)', () => {
     const stakes = stakesPercentages(Array(7).fill(bn(1)))
-    expect(stakes.length).toBe(7)
+    expect(stakes).toHaveLength(7)
     expect(totalPercentage(stakes)).toBe(100)
     expect(stakes.map(s => s.percentage)).toEqual([15, 15, 14, 14, 14, 14, 14])
   })
@@ -36,7 +36,7 @@ describe('stakePercentages()', () => {
     const maxIncluded = 5
     const stakes = stakesPercentages(Array(10).fill(bn(1)), { maxIncluded })
 
-    expect(stakes.length).toBe(maxIncluded)
+    expect(stakes).toHaveLength(maxIncluded)
     expect(totalPercentage(stakes)).toBe(100)
     expect(stakes[stakes.length - 1]).toEqual({ index: -1, percentage: 60 })
   })
@@ -44,7 +44,7 @@ describe('stakePercentages()', () => {
   test('Items at 0% should be removed and replaced by a Rest item', () => {
     const values = [bn(1000), bn(1000), bn(1000), bn(10), bn(1)]
     const stakes = stakesPercentages(values)
-    expect(stakes.length).toBe(4)
+    expect(stakes).toHaveLength(4)
     expect(totalPercentage(stakes)).toBe(100)
     expect(stakes.map(s => s.percentage)).toEqual([33, 33, 33, 1])
   })

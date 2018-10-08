@@ -9,7 +9,8 @@
     "standard-react",
     "prettier",
     "prettier/flowtype",
-    "prettier/react"
+    "prettier/react",
+    "plugin:jest/recommended"
   ],
   "parser": "babel-eslint",
   "parserOptions": {
