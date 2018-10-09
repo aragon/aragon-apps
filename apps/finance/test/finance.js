@@ -667,8 +667,8 @@ contract('Finance App', accounts => {
                 })
             })
 
-            it('fails executing disabled payment', async () => {
-                await finance.setPaymentDisabled(1, true)
+            it('fails executing inactive payment', async () => {
+                await finance.setPaymentStatus(1, false)
                 await finance.mock_setTimestamp(time + 1)
 
                 return assertRevert(async () => {

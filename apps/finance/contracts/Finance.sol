@@ -37,7 +37,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         address token;
         address receiver;
         address createdBy;
-        bool disabled;
+        bool inactive;
         uint256 amount;
         uint64 initialPaymentTime;
         uint64 interval;
@@ -98,7 +98,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     event SetBudget(address indexed token, uint256 amount, bool hasBudget);
     event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxRepeats);
     event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity, uint256 amount);
-    event ChangePaymentState(uint256 indexed paymentId, bool disabled);
+    event ChangePaymentState(uint256 indexed paymentId, bool inactive);
     event ChangePeriodDuration(uint64 newDuration);
     event PaymentFailure(uint256 paymentId);
 
@@ -155,7 +155,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         settings.periodDuration = _periodDuration;
 
         // Reserve the first recurring payment index as an unused index for transactions not linked to a payment
-        payments[0].disabled = true;
+        payments[0].inactive = true;
         paymentsNextIndex = 1;
 
         // Reserve the first transaction index as an unused index for periods with no transactions
@@ -319,17 +319,17 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice `_disabled ? 'Disable' : 'Enable'` payment `_paymentId`
+    * @notice `_active ? 'Active' : 'Inactive'` payment `_paymentId`
     * @param _paymentId Identifier for payment
-    * @param _disabled Whether it will be disabled or enabled
+    * @param _active Whether it will be active or inactive
     */
-    function setPaymentDisabled(uint256 _paymentId, bool _disabled)
+    function setPaymentStatus(uint256 _paymentId, bool _active)
         external
         authP(DISABLE_PAYMENTS_ROLE, arr(_paymentId))
         paymentExists(_paymentId)
     {
-        payments[_paymentId].disabled = _disabled;
-        emit ChangePaymentState(_paymentId, _disabled);
+        payments[_paymentId].inactive = !_active;
+        emit ChangePaymentState(_paymentId, _active);
     }
 
     /**
@@ -388,7 +388,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             uint64 interval,
             uint64 maxRepeats,
             string reference,
-            bool disabled,
+            bool inactive,
             uint64 repeats,
             address createdBy
         )
@@ -402,7 +402,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         interval = payment.interval;
         maxRepeats = payment.maxRepeats;
         repeats = payment.repeats;
-        disabled = payment.disabled;
+        inactive = payment.inactive;
         reference = payment.reference;
         createdBy = payment.createdBy;
     }
@@ -560,7 +560,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     function _executePayment(uint256 _paymentId) internal {
         Payment storage payment = payments[_paymentId];
-        require(!payment.disabled);
+        require(!payment.inactive);
 
         uint64 payed = 0;
         while (nextPaymentTime(_paymentId) <= getTimestamp64() && payed < MAX_PAYMENTS_PER_TX) {
