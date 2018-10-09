@@ -272,7 +272,7 @@ contract Voting is IForwarder, AragonApp {
         vote_.creator = msg.sender;
         vote_.startDate = getTimestamp64();
         vote_.metadata = _metadata;
-        vote_.snapshotBlock = uint40(getBlockNumber() - 1); // avoid double voting in this very block
+        vote_.snapshotBlock = uint64(getBlockNumber()) - 1; // avoid double voting in this very block
         vote_.totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
