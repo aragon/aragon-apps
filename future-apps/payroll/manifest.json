@@ -5,6 +5,6 @@
     "src": "images/icon.png",
     "sizes": "192x192"
   }],
-  "start_url": "/build/app/index.html",
-  "script": "/build/app/script.js"
+  "script": "/dist/script.js",
+  "start_url": "/dist/index.html"
 }

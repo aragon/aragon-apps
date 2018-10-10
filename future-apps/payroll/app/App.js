@@ -1,66 +1,84 @@
 import React from 'react'
-import { AppBar, Button } from '@aragon/ui'
-import { Tab, TabContainer } from './components/Tab'
+import { AppBar, AppView, AragonApp, Button } from '@aragon/ui'
+import Tab from './components/Tab'
 
-import AppLayout from './components/Layout/AppLayout'
-import MyPayroll from './components/MyPayroll'
-import TeamPayroll from './components/TeamPayroll'
+import { MyPayroll, TeamPayroll } from './screens'
+import { AddEmployee } from './panels'
 
 export default class App extends React.Component {
   state = {
-    activeTab: 'my-payroll'
+    activeTab: 'my-payroll',
+    showAddEmployeePanel: false
   }
 
-  handleTabChange = (index, name) => {
-    this.setState({ activeTab: name })
+  showAddEmployeePanel = () => {
+    this.setState({ showAddEmployeePanel: true })
   }
 
-  renderActionButton () {
-    if (this.state.activeTab === 'my-payroll') {
-      return (
-        <Button mode='strong'>
-          Request salary
-        </Button>
-      )
-    } else if (this.state.activeTab === 'team-payroll') {
-      return (
-        <Button mode='strong'>
-          Add new employee
-        </Button>
-      )
+  hidePanels = () => {
+    this.setState({ showAddEmployeePanel: false })
+  }
+
+  renderActionButtons () {
+    switch (this.state.activeTab) {
+      case 'my-payroll':
+        return (
+          <Button mode='strong'>
+            Request salary
+          </Button>
+        )
+
+      case 'team-payroll':
+        return (
+          <Button mode='strong' onClick={this.showAddEmployeePanel}>
+            Add new employee
+          </Button>
+        )
+
+      default:
+        return null
     }
-
-    return null
   }
 
   render () {
-    const { activeTab } = this.state
+    const header = (
+      <React.Fragment>
+        <AppBar title='Payroll' endContent={this.renderActionButtons()}/>
 
-    return (
-      <AppLayout publicUrl='/assets/'>
-        <AppLayout.Header>
-          <AppBar
-            title='Payroll'
-            endContent={this.renderActionButton()}
+        <Tab.Container>
+          <Tab
+            title='My payroll'
+            active={this.state.activeTab === 'my-payroll'}
+            onClick={() => this.setState({ activeTab: 'my-payroll' })}
           />
 
-          <TabContainer onTabChange={this.handleTabChange}>
-            <Tab name='my-payroll' title='My payroll'/>
-            <Tab name='team-payroll' title='Team payroll'/>
-          </TabContainer>
+          <Tab
+            title='Team payroll'
+            active={this.state.activeTab === 'team-payroll'}
+            onClick={() => this.setState({ activeTab: 'team-payroll' })}
+          />
+        </Tab.Container>
+      </React.Fragment>
+    )
 
-        </AppLayout.Header>
-
-        <AppLayout.Content>
-          {activeTab === 'my-payroll' && (
-            <MyPayroll/>
+    return (
+      <AragonApp publicUrl='./aragon-ui/'>
+        <AppView appBar={header}>
+          {this.state.activeTab === 'my-payroll' && (
+            <MyPayroll {...this.props}/>
           )}
 
-          {activeTab === 'team-payroll' && (
-            <TeamPayroll/>
+          {this.state.activeTab === 'team-payroll' && (
+            <TeamPayroll {...this.props}/>
           )}
-        </AppLayout.Content>
-      </AppLayout>
+        </AppView>
+
+        <AddEmployee
+          {...this.props}
+          opened={this.state.showAddEmployeePanel}
+          onClose={this.hidePanels}
+        />
+      </AragonApp>
     )
   }
 }

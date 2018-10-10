@@ -43,9 +43,7 @@ class ConnectedApp extends React.Component {
       this.setState({ observable: app.state() })
 
       app.accounts().subscribe(accounts => {
-        this.setState({
-          userAccount: accounts[0]
-        })
+        this.setState({ userAccount: accounts[0] })
       })
     }
   }
