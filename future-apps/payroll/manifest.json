@@ -5,6 +5,6 @@
     "src": "images/icon.png",
     "sizes": "192x192"
   }],
-  "script": "/dist/script.js",
-  "start_url": "/dist/index.html"
+  "script": "/app/dist/script.js",
+  "start_url": "/app/dist/index.html"
 }

@@ -1,62 +1,44 @@
 {
   "name": "@aragon/future-apps-payroll",
-  "version": "0.1.0",
-  "scripts": {
-    "start": "aragon run --network rpc --kit PayrollKit --kit-init @ARAGON_ENS",
-    "dev": "aragon run --network rpc --http localhost:8001 --http-served-from ./dist",
-    "dev:reset": "npm run dev -- --reset",
-    "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
-    "test:gas": "GAS_REPORTER=true npm test",
-    "lint": "solium --dir ./contracts",
-    "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "ganache-cli:test": "./node_modules/@aragon/os/scripts/ganache-cli.sh",
-    "start:ui": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve app/index.html --port 8001 --open",
-    "build": "npm run sync-assets && npm run build:app && npm run build:script",
-    "build:app": "parcel build app/index.html --public-url '.' --no-cache",
-    "build:script": "parcel build app/script.js --no-cache",
-    "lint:app": "standard app/**/*.js",
-    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./dist"
-  },
-  "keywords": [],
+  "version": "0.0.1",
+  "description": "",
+  "keywords": [
+    "app",
+    "aragon",
+    "dao",
+    "payroll"
+  ],
+  "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "contributors": [
-    "ßingen <bingen@aragon.one>"
+    "ßingen <bingen@aragon.one>",
+    "Lisandro Corbalán <lisandro.corbalan@altoros.com>",
+    "Sebastián Galiano <sebastian.galiano@altoros.com>"
   ],
-  "license": "GPL-3.0",
-  "description": "",
+  "scripts": {
+    "build": "cd app && npm run build",
+    "coverage": "SOLIDITY_COVERAGE=true npm test",
+    "dev": "aragon run --network rpc --http localhost:8001 --http-served-from ./app/dist",
+    "dev:reset": "npm run dev -- --reset",
+    "postinstall": "cd app && npm install",
+    "lint": "solium --dir ./contracts",
+    "start": "aragon run --network rpc --kit PayrollKit --kit-init @ARAGON_ENS",
+    "test": "TRUFFLE_TEST=true ./node_modules/@aragon/os/scripts/ganache-cli.sh",
+    "test:gas": "GAS_REPORTER=true npm test"
+  },
+  "dependencies": {
+    "@aragon/apps-finance": "^2.0.0-beta.2",
+    "@aragon/os": "^4.0.0-beta.3",
+    "@aragon/ppf-contracts": "^1.0.2"
+  },
   "devDependencies": {
     "@aragon/apps-shared-migrations": "^1.0.0",
     "@aragon/apps-shared-minime": "^1.0.0",
     "@aragon/apps-vault": "^3.0.0-beta.2",
-    "@aragon/cli": "git+https://github.com/aragon/aragon-cli.git#06e2f1cee4384549441d7ec8807b7635dbd64b69",
+    "@aragon/cli": "^5.0.0",
     "@aragon/test-helpers": "^1.0.1",
-    "@babel/core": "^7.1.1",
-    "@babel/plugin-proposal-class-properties": "^7.1.0",
-    "@babel/plugin-transform-runtime": "^7.1.0",
-    "babel-plugin-styled-components": "^1.7.1",
-    "ethereumjs-abi": "^0.6.4",
-    "parcel-bundler": "^1.10.1",
+    "eth-gas-reporter": "^0.1.12",
     "solidity-coverage": "^0.5.11",
-    "solium": "^1.1.3",
-    "standard": "*",
-    "truffle": "4.1.14",
-    "truffle-hdwallet-provider": "0.0.3"
-  },
-  "dependencies": {
-    "@aragon/apps-finance": "^2.0.0-beta.2",
-    "@aragon/client": "^1.0.0-beta.9",
-    "@aragon/os": "^4.0.0-beta.3",
-    "@aragon/ppf-contracts": "^1.0.2",
-    "@aragon/ui": "^0.19.0",
-    "@babel/runtime": "^7.1.1",
-    "ajv": "^6.5.4",
-    "ajv-keywords": "^3.2.0",
-    "date-fns": "^2.0.0-alpha.21",
-    "prop-types": "^15.6.2",
-    "react": "^16.5.2",
-    "react-autocomplete": "^1.8.1",
-    "react-dom": "^16.5.2",
-    "styled-components": "^3.4.9",
-    "web3-utils": "^1.0.0-beta.36"
+    "solium": "^1.1.3"
   }
 }
