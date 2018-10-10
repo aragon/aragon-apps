@@ -49,7 +49,8 @@
       "name": "Execute payments",
       "id": "EXECUTE_PAYMENTS_ROLE",
       "params": [
-        "Payment ID"
+        "Payment ID",
+        "Payment amount"
       ]
     },
     {
