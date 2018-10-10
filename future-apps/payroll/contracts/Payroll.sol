@@ -475,17 +475,17 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         return allowedTokens[_token];
     }
 
-    // /**
-    //  * @dev IForwarder interface conformance. Forwards any employee action.
-    //  * @param _evmScript script being executed
-    //  */
-    // function forward(bytes _evmScript) public {
-    //     require(canForward(msg.sender, _evmScript));
-    //     bytes memory input = new bytes(0); // TODO: Consider input for this
-    //     address[] memory blacklist = new address[](1);
-    //     blacklist[0] = address(finance);
-    //     runScript(_evmScript, input, blacklist);
-    // }
+    /**
+     * @dev IForwarder interface conformance. Forwards any employee action.
+     * @param _evmScript script being executed
+     */
+    function forward(bytes _evmScript) public {
+        require(canForward(msg.sender, _evmScript));
+        bytes memory input = new bytes(0); // TODO: Consider input for this
+        address[] memory blacklist = new address[](1);
+        blacklist[0] = address(finance);
+        runScript(_evmScript, input, blacklist);
+    }
 
     function isForwarder() public pure returns (bool) {
         return true;
