@@ -35,9 +35,10 @@
     "@aragon/apps-shared-migrations": "^1.0.0",
     "@aragon/apps-shared-minime": "^1.0.0",
     "@aragon/apps-vault": "^3.0.0-beta.2",
-    "@aragon/cli": "^5.0.0",
+    "@aragon/cli": "git+https://github.com/aragon/aragon-cli.git#06e2f1cee4384549441d7ec8807b7635dbd64b69",
     "@aragon/test-helpers": "^1.0.1",
     "eth-gas-reporter": "^0.1.12",
+    "ethereumjs-abi": "^0.6.5",
     "solidity-coverage": "^0.5.11",
     "solium": "^1.1.3"
   }
