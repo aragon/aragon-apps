@@ -52,8 +52,8 @@ contract Voting is IForwarder, AragonApp {
     event StartVote(uint256 indexed voteId);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
-    event ChangeSupportRequired(uint256 supportRequiredPct);
-    event ChangeMinQuorum(uint256 minAcceptQuorumPct);
+    event ChangeSupportRequired(uint64 supportRequiredPct);
+    event ChangeMinQuorum(uint64 minAcceptQuorumPct);
 
     modifier voteExists(uint256 _voteId) {
         require(_voteId < votesLength);
@@ -199,7 +199,7 @@ contract Voting is IForwarder, AragonApp {
         }
 
         // Voting is already decided
-        if (_isValuePct(vote_.yea, vote_.totalVoters, vote_.supportRequiredPct)) {
+        if (_isValuePct(vote_.yea, vote_.totalVoters, uint256(vote_.supportRequiredPct))) {
             return true;
         }
 
@@ -210,11 +210,11 @@ contract Voting is IForwarder, AragonApp {
             return false;
         }
         // Has enough support?
-        if (!_isValuePct(vote_.yea, totalVotes, vote_.supportRequiredPct)) {
+        if (!_isValuePct(vote_.yea, totalVotes, uint256(vote_.supportRequiredPct))) {
             return false;
         }
         // Has min quorum?
-        if (!_isValuePct(vote_.yea, vote_.totalVoters, vote_.minAcceptQuorumPct)) {
+        if (!_isValuePct(vote_.yea, vote_.totalVoters, uint256(vote_.minAcceptQuorumPct))) {
             return false;
         }
 
@@ -343,7 +343,6 @@ contract Voting is IForwarder, AragonApp {
         }
 
         uint256 computedPct = _value.mul(PCT_BASE) / _total;
-
         return computedPct > _pct;
     }
 }

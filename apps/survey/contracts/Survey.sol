@@ -19,8 +19,8 @@ contract Survey is AragonApp {
     bytes32 public constant CREATE_SURVEYS_ROLE = keccak256("CREATE_SURVEYS_ROLE");
     bytes32 public constant MODIFY_PARTICIPATION_ROLE = keccak256("MODIFY_PARTICIPATION_ROLE");
 
-    uint64 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
-    uint64 public constant ABSTAIN_VOTE = 0;
+    uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
+    uint256 public constant ABSTAIN_VOTE = 0;
 
     struct OptionCast {
         uint256 optionId;
@@ -53,7 +53,7 @@ contract Survey is AragonApp {
         mapping (address => MultiOptionVote) votes;     // voter -> options voted, with its stakes
     }
 
-    uint64 public surveyTime;
+    uint256 public surveyTime;
     MiniMeToken public token;
     uint256 public minParticipationPct;
 
@@ -85,7 +85,7 @@ contract Survey is AragonApp {
     function initialize(
         MiniMeToken _token,
         uint256 _minParticipationPct,
-        uint64 _surveyTime
+        uint256 _surveyTime
     )
         external
         onlyInit
@@ -311,6 +311,6 @@ contract Survey is AragonApp {
     }
 
     function _isSurveyOpen(SurveyStruct storage _survey) internal view returns (bool) {
-        return getTimestamp64() < _survey.startDate.add(surveyTime);
+        return getTimestamp64() < _survey.startDate.add(uint64(surveyTime));
     }
 }
