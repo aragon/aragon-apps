@@ -23,7 +23,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     bytes32 public constant CHANGE_PERIOD_ROLE = keccak256("CHANGE_PERIOD_ROLE");
     bytes32 public constant CHANGE_BUDGETS_ROLE = keccak256("CHANGE_BUDGETS_ROLE");
     bytes32 public constant EXECUTE_PAYMENTS_ROLE = keccak256("EXECUTE_PAYMENTS_ROLE");
-    bytes32 public constant DISABLE_PAYMENTS_ROLE = keccak256("DISABLE_PAYMENTS_ROLE");
+    bytes32 public constant MANAGE_PAYMENTS_ROLE = keccak256("MANAGE_PAYMENTS_ROLE");
 
     uint64 public constant MAX_PAYMENTS_PER_TX = 20;
 
@@ -325,7 +325,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function setPaymentStatus(uint256 _paymentId, bool _active)
         external
-        authP(DISABLE_PAYMENTS_ROLE, arr(_paymentId))
+        authP(MANAGE_PAYMENTS_ROLE, arr(_paymentId))
         paymentExists(_paymentId)
     {
         payments[_paymentId].inactive = !_active;
