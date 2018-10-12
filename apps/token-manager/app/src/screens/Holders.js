@@ -13,7 +13,9 @@ class Holders extends React.Component {
       holders,
       onAssignTokens,
       tokenDecimalsBase,
+      tokenName,
       tokenSupply,
+      tokenSymbol,
       tokenTransfersEnabled,
       userAccount,
     } = this.props
@@ -55,7 +57,9 @@ class Holders extends React.Component {
           groupMode={groupMode}
           holders={holders}
           tokenDecimalsBase={tokenDecimalsBase}
+          tokenName={tokenName}
           tokenSupply={tokenSupply}
+          tokenSymbol={tokenSymbol}
           tokenTransfersEnabled={tokenTransfersEnabled}
         />
       </TwoPanels>

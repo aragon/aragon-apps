@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { Text, theme } from '@aragon/ui'
 import { formatBalance, stakesPercentages } from '../utils'
+import TokenBadge from './TokenBadge'
 
 const DISTRIBUTION_ITEMS_MAX = 7
 const DISTRIBUTION_COLORS = [
@@ -38,7 +39,13 @@ class SideBar extends React.Component {
     return tokenTransfersEnabled ? 'Yes' : 'No'
   }
   render() {
-    const { holders, tokenDecimalsBase, tokenSupply } = this.props
+    const {
+      holders,
+      tokenDecimalsBase,
+      tokenName,
+      tokenSupply,
+      tokenSymbol,
+    } = this.props
     const stakes = displayedStakes(holders, tokenSupply)
     return (
       <Main>
@@ -58,6 +65,11 @@ class SideBar extends React.Component {
               <span>Transferable</span>
               <span>:</span>
               <strong>{this.transferableLabel()}</strong>
+            </InfoRow>
+            <InfoRow>
+              <span>Token</span>
+              <span>:</span>
+              <TokenBadge name={tokenName} symbol={tokenSymbol} />
             </InfoRow>
           </ul>
         </Part>

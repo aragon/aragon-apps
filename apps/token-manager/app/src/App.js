@@ -8,6 +8,7 @@ import {
   Button,
   Badge,
   SidePanel,
+  font,
   observe,
 } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
@@ -64,6 +65,7 @@ class App extends React.Component {
   render() {
     const {
       tokenSymbol,
+      tokenName,
       tokenSupply,
       tokenDecimalsBase,
       tokenTransfersEnabled,
@@ -82,7 +84,7 @@ class App extends React.Component {
             <AppBar
               title={
                 <Title>
-                  <span>Token</span>
+                  <TitleLabel>Token</TitleLabel>
                   {tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
                 </Title>
               }
@@ -103,7 +105,9 @@ class App extends React.Component {
                   holders={holders}
                   onAssignTokens={this.handleLaunchAssignTokens}
                   tokenDecimalsBase={tokenDecimalsBase}
+                  tokenName={tokenName}
                   tokenSupply={tokenSupply}
+                  tokenSymbol={tokenSymbol}
                   tokenTransfersEnabled={tokenTransfersEnabled}
                   userAccount={userAccount}
                 />
@@ -133,9 +137,11 @@ class App extends React.Component {
 const Title = styled.span`
   display: flex;
   align-items: center;
-  & > span:first-child {
-    margin-right: 10px;
-  }
+`
+
+const TitleLabel = styled.span`
+  margin-right: 10px;
+  ${font({ size: 'xxlarge' })};
 `
 
 export default observe(
