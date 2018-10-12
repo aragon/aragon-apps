@@ -164,7 +164,7 @@ class VotePanelContent extends React.Component {
                 />
               )}
             </div>
-            <StyledVoteSuccess success={success} />
+            <StyledVoteSuccess vote={vote} />
           </div>
           <div>
             <h2>

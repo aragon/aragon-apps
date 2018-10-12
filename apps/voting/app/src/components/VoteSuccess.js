@@ -1,8 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
 import { theme, IconCross, IconCheck } from '@aragon/ui'
+import { getVoteSuccess } from '../vote-utils'
 
-const VoteSuccess = ({ success = true, vote, ...props }) => {
+const VoteSuccess = ({ vote, ...props }) => {
+  const success = getVoteSuccess(vote)
   const Icon = success ? IconCheck : IconCross
   return (
     <Main {...props}>
