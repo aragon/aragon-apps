@@ -47,7 +47,7 @@ const Bullet = styled.div`
   width: 10px;
   height: 10px;
   margin-right: 15px;
-  border-radius: 5px;
+  border-radius: 50%;
   background: ${({ color }) => color};
 `
 
