@@ -120,7 +120,7 @@ const ValidationError = ({ message }) => (
   <ValidationErrorBlock>
     <IconCross />
     <Text size="small" style={{ marginLeft: '10px' }}>
-      Recipient must be a valid Ethereum address
+      {message}
     </Text>
   </ValidationErrorBlock>
 )
