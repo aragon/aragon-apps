@@ -2,10 +2,10 @@ import React from 'react'
 import styled from 'styled-components'
 import { theme, IconCross, IconCheck } from '@aragon/ui'
 
-const VoteSuccess = ({ success = true, vote }) => {
+const VoteSuccess = ({ success = true, vote, ...props }) => {
   const Icon = success ? IconCheck : IconCross
   return (
-    <Main>
+    <Main {...props}>
       <IconWrapper>
         <Icon />
       </IconWrapper>

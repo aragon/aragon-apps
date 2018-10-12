@@ -18,6 +18,7 @@ class SummaryBar extends React.Component {
       requiredSize,
       show,
       compact,
+      ...props
     } = this.props
     return (
       <Spring
@@ -27,7 +28,7 @@ class SummaryBar extends React.Component {
         native
       >
         {({ progress }) => (
-          <Main compact={compact}>
+          <Main compact={compact} {...props}>
             <CombinedBar>
               <BarPart
                 style={{

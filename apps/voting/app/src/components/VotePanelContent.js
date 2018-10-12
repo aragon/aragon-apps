@@ -164,9 +164,7 @@ class VotePanelContent extends React.Component {
                 />
               )}
             </div>
-            <div style={{ marginTop: '10px' }}>
-              <VoteSuccess success={success} />
-            </div>
+            <StyledVoteSuccess success={success} />
           </div>
           <div>
             <h2>
@@ -178,15 +176,12 @@ class VotePanelContent extends React.Component {
                 ({roundToDecimals(quorum * 100, 2)}% needed)
               </Text>
             </div>
-
-            <div style={{ marginTop: '10px' }}>
-              <SummaryBar
-                positiveSize={quorumProgress}
-                requiredSize={quorum}
-                show={ready}
-                compact
-              />
-            </div>
+            <StyledSummaryBar
+              positiveSize={quorumProgress}
+              requiredSize={quorum}
+              show={ready}
+              compact
+            />
           </div>
         </SidePanelSplit>
         <Part>
@@ -348,6 +343,14 @@ const Label = styled(Text).attrs({
 })`
   display: block;
   margin-bottom: 10px;
+`
+
+const StyledVoteSuccess = styled(VoteSuccess)`
+  margin-top: 10px;
+`
+
+const StyledSummaryBar = styled(SummaryBar)`
+  margin-top: 10px;
 `
 
 const Part = styled.div`

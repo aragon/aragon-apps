@@ -8,7 +8,6 @@ import SummaryRows from './SummaryRows'
 const VoteSummary = ({
   votesYea,
   votesNay,
-  tokenSupply,
   quorum,
   quorumProgress,
   support,
