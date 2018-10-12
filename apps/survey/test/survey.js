@@ -105,7 +105,7 @@ contract('Survey app', accounts => {
       })
 
       it('has correct state', async () => {
-        const [isOpen, creator, startDate, snapshotBlock, minParticipationPct, totalVoters, participation, options] = await survey.getSurvey(surveyId)
+        const [isOpen, creator, startDate, snapshotBlock, minParticipationPct, options, totalVoters, participation] = await survey.getSurvey(surveyId)
 
         assert.isTrue(isOpen, 'survey should be open')
         assert.equal(creator, nonHolder, 'creator should be correct')
