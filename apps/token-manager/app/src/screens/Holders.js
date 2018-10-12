@@ -12,6 +12,7 @@ class Holders extends React.Component {
     const {
       holders,
       onAssignTokens,
+      onRemoveTokens,
       tokenDecimalsBase,
       tokenName,
       tokenSupply,
@@ -49,12 +50,13 @@ class Holders extends React.Component {
             {holders.map(({ address, balance }) => (
               <HolderRow
                 key={address}
-                name={address}
+                address={address}
                 balance={balance}
                 groupMode={groupMode}
-                onAssignTokens={onAssignTokens}
                 tokenDecimalsBase={tokenDecimalsBase}
                 isCurrentUser={userAccount && userAccount === address}
+                onAssignTokens={onAssignTokens}
+                onRemoveTokens={onRemoveTokens}
               />
             ))}
           </Table>

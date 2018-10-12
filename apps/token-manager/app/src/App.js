@@ -29,7 +29,7 @@ class App extends React.Component {
     userAccount: '',
   }
   state = {
-    assignTokensConfig: {},
+    assignTokensConfig: { mode: null },
     sidepanelOpened: false,
     tokenSettingsLoaded: false,
   }
@@ -42,25 +42,37 @@ class App extends React.Component {
       })
     }
   }
-  handleAssignTokens = ({ amount, recipient }) => {
+  handleUpdateTokens = ({ mode, amount, holder }) => {
     const { app, tokenDecimalsBase } = this.props
-    const amountConverted = Math.floor(parseFloat(amount) * tokenDecimalsBase)
-    const toMint = new BN(`${amountConverted}`, 10)
-    app.mint(recipient, toMint.toString())
+    const amountRounded = Math.floor(parseFloat(amount) * tokenDecimalsBase)
+    const amountValue = new BN(`${amountRounded}`, 10).toString()
+
+    if (mode === 'assign') {
+      app.mint(holder, amountValue)
+    }
+    if (mode === 'remove') {
+      app.burn(holder, amountValue)
+    }
+
     this.handleSidepanelClose()
   }
-  handleAppBarLaunchAssignTokens = () => this.handleLaunchAssignTokens()
-  handleLaunchAssignTokens = recipient => {
+  handleAppBarLaunchAssignTokens = () => {
+    this.handleLaunchAssignTokens('')
+  }
+  handleLaunchAssignTokens = holder => {
     this.setState({
-      assignTokensConfig: { recipient },
+      assignTokensConfig: { mode: 'assign', holder },
+      sidepanelOpened: true,
+    })
+  }
+  handleLaunchRemoveTokens = holder => {
+    this.setState({
+      assignTokensConfig: { mode: 'remove', holder },
       sidepanelOpened: true,
     })
   }
   handleSidepanelClose = () => {
-    this.setState({
-      assignTokensConfig: {},
-      sidepanelOpened: false,
-    })
+    this.setState({ sidepanelOpened: false })
   }
   render() {
     const {
@@ -103,13 +115,14 @@ class App extends React.Component {
               {tokenSettingsLoaded && holders.length > 0 ? (
                 <Holders
                   holders={holders}
-                  onAssignTokens={this.handleLaunchAssignTokens}
                   tokenDecimalsBase={tokenDecimalsBase}
                   tokenName={tokenName}
                   tokenSupply={tokenSupply}
                   tokenSymbol={tokenSymbol}
                   tokenTransfersEnabled={tokenTransfersEnabled}
                   userAccount={userAccount}
+                  onAssignTokens={this.handleLaunchAssignTokens}
+                  onRemoveTokens={this.handleLaunchRemoveTokens}
                 />
               ) : (
                 <EmptyState onActivate={this.handleLaunchAssignTokens} />
@@ -118,14 +131,18 @@ class App extends React.Component {
           </AppLayout.ScrollWrapper>
         </AppLayout>
         <SidePanel
-          title="Assign Tokens"
+          title={
+            assignTokensConfig.mode === 'assign'
+              ? 'Assign tokens'
+              : 'Remove tokens'
+          }
           opened={sidepanelOpened}
           onClose={this.handleSidepanelClose}
         >
           <AssignVotePanelContent
-            onAssignTokens={this.handleAssignTokens}
             opened={sidepanelOpened}
             tokenDecimalsBase={tokenDecimalsBase}
+            onUpdateTokens={this.handleUpdateTokens}
             {...assignTokensConfig}
           />
         </SidePanel>

@@ -6,7 +6,8 @@ import { addressPattern, isAddress } from '../../web3-utils'
 
 const initialState = {
   amount: '',
-  recipient: {
+  mode: 'assign',
+  holder: {
     error: null,
     value: '',
   },
@@ -14,28 +15,28 @@ const initialState = {
 
 class AssignVotePanelContent extends React.Component {
   static defaultProps = {
-    onAssignTokens: () => {},
+    onUpdateTokens: () => {},
   }
   constructor(props) {
     super(props)
     this.state = {
       ...initialState,
-      ...props.recipient,
+      ...props.holder,
     }
   }
-  componentWillReceiveProps({ opened, recipient = '' }) {
+  componentWillReceiveProps({ opened, holder = '', mode }) {
     if (opened && !this.props.opened) {
       // setTimeout is needed as a small hack to wait until the input's on
       // screen until we call focus
-      this.recipientInput && setTimeout(() => this.recipientInput.focus(), 0)
+      this.holderInput && setTimeout(() => this.holderInput.focus(), 0)
     }
 
-    if (recipient !== this.props.recipient && opened) {
-      // Recipient override passed in from props
+    if ((holder !== this.props.holder || mode !== this.props.mode) && opened) {
+      // Holder override passed in from props
       this.setState({
-        recipient: {
-          ...initialState.recipient,
-          value: recipient,
+        holder: {
+          ...initialState.holder,
+          value: holder,
         },
       })
     } else if (!opened && this.props.opened) {
@@ -46,9 +47,9 @@ class AssignVotePanelContent extends React.Component {
   handleAmountChange = event => {
     this.setState({ amount: event.target.value })
   }
-  handleRecipientChange = event => {
+  handleHolderChange = event => {
     this.setState({
-      recipient: {
+      holder: {
         error: null,
         value: event.target.value,
       },
@@ -56,36 +57,43 @@ class AssignVotePanelContent extends React.Component {
   }
   handleSubmit = event => {
     event.preventDefault()
-    const { amount, recipient } = this.state
-    const recipientAddress = recipient.value.trim()
-    if (isAddress(recipientAddress)) {
-      this.props.onAssignTokens({
+    const { amount, holder } = this.state
+    const { mode } = this.props
+    const holderAddress = holder.value.trim()
+    if (isAddress(holderAddress)) {
+      this.props.onUpdateTokens({
+        mode,
         amount: amount,
-        recipient: recipientAddress,
+        holder: holderAddress,
       })
     } else {
-      this.setState(({ recipient }) => ({
-        recipient: {
-          ...recipient,
+      this.setState(({ holder }) => ({
+        holder: {
+          ...holder,
           error: true,
         },
       }))
     }
   }
   render() {
-    const { amount, recipient } = this.state
-    const { tokenDecimalsBase } = this.props
+    const { amount, holder } = this.state
+    const { mode, tokenDecimalsBase } = this.props
     const tokenBase = tokenDecimalsBase
       ? new BN(1).div(tokenDecimalsBase).toNumber()
       : 0
     return (
       <div>
         <form onSubmit={this.handleSubmit}>
-          <Field label="Recipient (must be a valid Ethereum address)">
+          <Field
+            label={`
+              ${mode === 'assign' ? 'Recipient' : 'Account'}
+              (must be a valid Ethereum address)
+            `}
+          >
             <TextInput
-              innerRef={recipient => (this.recipientInput = recipient)}
-              value={recipient.value}
-              onChange={this.handleRecipientChange}
+              innerRef={holder => (this.holderInput = holder)}
+              value={holder.value}
+              onChange={this.handleHolderChange}
               pattern={
                 // Allow spaces to be trimmable
                 ` *${addressPattern} *`
@@ -94,7 +102,11 @@ class AssignVotePanelContent extends React.Component {
               wide
             />
           </Field>
-          <Field label="Number of tokens">
+          <Field
+            label={`
+              Number of tokens to ${mode === 'assign' ? 'assign' : 'remove'}
+            `}
+          >
             <TextInput.Number
               value={amount}
               onChange={this.handleAmountChange}
@@ -105,10 +117,15 @@ class AssignVotePanelContent extends React.Component {
             />
           </Field>
           <Button mode="strong" type="submit" wide>
-            Assign Tokens
+            {mode === 'assign' ? 'Assign' : 'Remove'} Tokens
           </Button>
-          {recipient.error && (
-            <ValidationError message="Recipient must be a valid Ethereum address" />
+          {holder.error && (
+            <ValidationError
+              message={`
+                ${mode === 'assign' ? 'Recipient' : 'Account'}
+                must be a valid Ethereum address
+              `}
+            />
           )}
         </form>
       </div>
