@@ -30,6 +30,13 @@ class SideBar extends React.Component {
   static defaultProps = {
     holders: [],
   }
+  transferableLabel() {
+    const { tokenTransfersEnabled } = this.props
+    if (tokenTransfersEnabled === undefined) {
+      return 'Unknown'
+    }
+    return tokenTransfersEnabled ? 'Yes' : 'No'
+  }
   render() {
     const { holders, tokenDecimalsBase, tokenSupply } = this.props
     const stakes = displayedStakes(holders, tokenSupply)
@@ -46,6 +53,11 @@ class SideBar extends React.Component {
               <span>Total Supply</span>
               <span>:</span>
               <strong>{formatBalance(tokenSupply, tokenDecimalsBase)}</strong>
+            </InfoRow>
+            <InfoRow>
+              <span>Transferable</span>
+              <span>:</span>
+              <strong>{this.transferableLabel()}</strong>
             </InfoRow>
           </ul>
         </Part>
@@ -98,7 +110,7 @@ const Main = styled.aside`
   min-height: 100%;
 `
 
-const Part = styled.div`
+const Part = styled.section`
   margin-bottom: 55px;
   h1 {
     margin-bottom: 15px;

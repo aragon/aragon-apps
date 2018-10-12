@@ -66,6 +66,7 @@ class App extends React.Component {
       tokenSymbol,
       tokenSupply,
       tokenDecimalsBase,
+      tokenTransfersEnabled,
       holders,
       userAccount,
     } = this.props
@@ -103,6 +104,7 @@ class App extends React.Component {
                   onAssignTokens={this.handleLaunchAssignTokens}
                   tokenDecimalsBase={tokenDecimalsBase}
                   tokenSupply={tokenSupply}
+                  tokenTransfersEnabled={tokenTransfersEnabled}
                   userAccount={userAccount}
                 />
               ) : (

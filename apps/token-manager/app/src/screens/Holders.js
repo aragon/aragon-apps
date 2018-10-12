@@ -14,6 +14,7 @@ class Holders extends React.Component {
       onAssignTokens,
       tokenDecimalsBase,
       tokenSupply,
+      tokenTransfersEnabled,
       userAccount,
     } = this.props
     const singleHolder =
@@ -55,6 +56,7 @@ class Holders extends React.Component {
           holders={holders}
           tokenDecimalsBase={tokenDecimalsBase}
           tokenSupply={tokenSupply}
+          tokenTransfersEnabled={tokenTransfersEnabled}
         />
       </TwoPanels>
     )
