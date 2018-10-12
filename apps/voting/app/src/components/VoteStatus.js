@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { theme, IconTime, IconCross, IconCheck, Text } from '@aragon/ui'
+import { theme, IconTime, IconCross, IconCheck } from '@aragon/ui'
 import {
   VOTE_STATUS_ONGOING,
   VOTE_STATUS_REJECTED,

@@ -13,8 +13,7 @@ import {
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../utils/provideNetwork'
-import { VOTE_NAY, VOTE_YEA, VOTE_STATUS_ACCEPTED } from '../vote-types'
-import { getVoteStatus, getVoteSuccess } from '../vote-utils'
+import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { roundToDecimals } from '../math-utils'
 import { pluralize } from '../utils'
 import VoteSummary from './VoteSummary'
@@ -128,8 +127,6 @@ class VotePanelContent extends React.Component {
     const { userBalance, userCanVote, changeVote, canExecute } = this.state
 
     const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.userAccountVote)
-    const status = getVoteStatus(vote)
-    const success = getVoteSuccess(vote)
 
     if (!vote) {
       return null
@@ -228,9 +225,6 @@ class VotePanelContent extends React.Component {
         <VoteSummary
           votesYea={yea}
           votesNay={nay}
-          tokenSupply={totalVoters}
-          quorum={quorum}
-          quorumProgress={quorumProgress}
           support={support}
           tokenSymbol={tokenSymbol}
           tokenDecimals={tokenDecimals}
@@ -374,6 +368,7 @@ const Creator = styled.div`
   display: flex;
   align-items: center;
 `
+
 const CreatorImg = styled.div`
   margin-right: 20px;
   canvas {
