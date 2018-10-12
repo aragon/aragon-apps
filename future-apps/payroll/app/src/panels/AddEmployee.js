@@ -107,7 +107,7 @@ class AddEmployee extends React.PureComponent {
         startDate
       ).subscribe(employee => {
           if (employee) {
-            console.info(employee)
+            console.info(`Created employee ${employee}`)
 
             // Reset form data
             this.setState(AddEmployee.initialState)
