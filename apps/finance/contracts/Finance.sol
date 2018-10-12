@@ -247,7 +247,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function setPeriodDuration(uint64 _periodDuration)
         external
-        authP(CHANGE_PERIOD_ROLE, arr(_periodDuration, settings.periodDuration))
+        authP(CHANGE_PERIOD_ROLE, arr(uint256(_periodDuration), uint256(settings.periodDuration)))
         transitionsPeriod
     {
         require(_periodDuration >= 1 days);
