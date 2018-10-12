@@ -93,7 +93,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function changeSupportRequiredPct(uint64 _supportRequiredPct)
         external
-        authP(MODIFY_SUPPORT_ROLE, arr(_supportRequiredPct, supportRequiredPct))
+        authP(MODIFY_SUPPORT_ROLE, arr(uint256(_supportRequiredPct), uint256(supportRequiredPct)))
     {
         require(minAcceptQuorumPct <= _supportRequiredPct);
         require(_supportRequiredPct < PCT_BASE);
@@ -108,7 +108,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function changeMinAcceptQuorumPct(uint64 _minAcceptQuorumPct)
         external
-        authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct))
+        authP(MODIFY_QUORUM_ROLE, arr(uint256(_minAcceptQuorumPct), uint256(minAcceptQuorumPct)))
     {
         require(_minAcceptQuorumPct <= supportRequiredPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
