@@ -41,9 +41,9 @@ contract Survey is AragonApp {
     struct SurveyStruct {
         address creator;
         uint64 startDate;
-        uint256 options;
-        uint256 snapshotBlock;
-        uint256 minParticipationPct;
+        uint64 snapshotBlock;
+        uint64 minParticipationPct;
+        uint64 options;
         uint256 votingPower;                    // total tokens that can cast a vote
         uint256 participation;                  // tokens that casted a vote
         string metadata;
@@ -53,9 +53,9 @@ contract Survey is AragonApp {
         mapping (address => MultiOptionVote) votes;     // voter -> options voted, with its stakes
     }
 
-    uint256 public surveyTime;
     MiniMeToken public token;
-    uint256 public minParticipationPct;
+    uint64 public minParticipationPct;
+    uint64 public surveyTime;
 
     // We are mimicing an array, we use a mapping instead to make app upgrade more graceful
     mapping (uint256 => SurveyStruct) internal surveys;
@@ -64,9 +64,9 @@ contract Survey is AragonApp {
     event StartSurvey(uint256 indexed surveyId);
     event CastVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 stake, uint256 optionPower);
     event ResetVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 previousStake, uint256 optionPower);
-    event ChangeMinParticipation(uint256 minParticipationPct);
+    event ChangeMinParticipation(uint64 minParticipationPct);
 
-    modifier acceptableMinParticipationPct(uint256 _minParticipationPct) {
+    modifier acceptableMinParticipationPct(uint64 _minParticipationPct) {
         require(_minParticipationPct > 0 && _minParticipationPct <= PCT_BASE);
         _;
     }
@@ -84,8 +84,8 @@ contract Survey is AragonApp {
     */
     function initialize(
         MiniMeToken _token,
-        uint256 _minParticipationPct,
-        uint256 _surveyTime
+        uint64 _minParticipationPct,
+        uint64 _surveyTime
     )
         external
         onlyInit
@@ -102,9 +102,9 @@ contract Survey is AragonApp {
     * @notice Change minimum acceptance participation to `(_minParticipationPct - _minParticipationPct % 10^16) / 10^14`%
     * @param _minParticipationPct New acceptance participation
     */
-    function changeMinAcceptParticipationPct(uint256 _minParticipationPct)
+    function changeMinAcceptParticipationPct(uint64 _minParticipationPct)
         external
-        authP(MODIFY_PARTICIPATION_ROLE, arr(_minParticipationPct))
+        authP(MODIFY_PARTICIPATION_ROLE, arr(uint256(_minParticipationPct)))
         acceptableMinParticipationPct(_minParticipationPct)
     {
         minParticipationPct = _minParticipationPct;
@@ -118,14 +118,14 @@ contract Survey is AragonApp {
     * @param _options Number of options voters can decide between
     * @return surveyId id for newly created survey
     */
-    function newSurvey(string _metadata, uint256 _options) external auth(CREATE_SURVEYS_ROLE) returns (uint256 surveyId) {
+    function newSurvey(string _metadata, uint64 _options) external auth(CREATE_SURVEYS_ROLE) returns (uint256 surveyId) {
         surveyId = surveysLength++;
         SurveyStruct storage survey = surveys[surveyId];
         survey.creator = msg.sender;
         survey.startDate = getTimestamp64();
         survey.options = _options;
         survey.metadata = _metadata;
-        survey.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
+        survey.snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
         survey.votingPower = token.totalSupplyAt(survey.snapshotBlock);
         require(survey.votingPower > 0);
         survey.minParticipationPct = minParticipationPct;
@@ -253,11 +253,11 @@ contract Survey is AragonApp {
             bool _open,
             address _creator,
             uint64 _startDate,
-            uint256 _snapshotBlock,
-            uint256 _minParticipationPct,
+            uint64 _snapshotBlock,
+            uint64 _minParticipationPct,
+            uint64 _options,
             uint256 _votingPower,
-            uint256 _participation,
-            uint256 _options
+            uint256 _participation
         )
     {
         SurveyStruct storage survey = surveys[_surveyId];

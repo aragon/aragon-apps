@@ -40,10 +40,10 @@ contract Voting is IForwarder, AragonApp {
         mapping (address => VoterState) voters;
     }
 
+    MiniMeToken public token;
     uint64 public supportRequiredPct;
     uint64 public minAcceptQuorumPct;
     uint64 public voteTime;
-    MiniMeToken public token;
 
     // We are mimicing an array, we use a mapping instead to make app upgrade more graceful
     mapping (uint256 => Vote) internal votes;
@@ -93,7 +93,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function changeSupportRequiredPct(uint64 _supportRequiredPct)
         external
-        authP(MODIFY_SUPPORT_ROLE, arr(uint256(_supportRequiredPct), uint256(supportRequiredPct)))
+        authP(MODIFY_SUPPORT_ROLE, arr(_supportRequiredPct, supportRequiredPct))
     {
         require(minAcceptQuorumPct <= _supportRequiredPct);
         require(_supportRequiredPct < PCT_BASE);
@@ -108,7 +108,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function changeMinAcceptQuorumPct(uint64 _minAcceptQuorumPct)
         external
-        authP(MODIFY_QUORUM_ROLE, arr(uint256(_minAcceptQuorumPct), uint256(minAcceptQuorumPct)))
+        authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct))
     {
         require(_minAcceptQuorumPct <= supportRequiredPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
@@ -199,7 +199,7 @@ contract Voting is IForwarder, AragonApp {
         }
 
         // Voting is already decided
-        if (_isValuePct(vote_.yea, vote_.totalVoters, uint256(vote_.supportRequiredPct))) {
+        if (_isValuePct(vote_.yea, vote_.totalVoters, vote_.supportRequiredPct)) {
             return true;
         }
 
@@ -210,11 +210,11 @@ contract Voting is IForwarder, AragonApp {
             return false;
         }
         // Has enough support?
-        if (!_isValuePct(vote_.yea, totalVotes, uint256(vote_.supportRequiredPct))) {
+        if (!_isValuePct(vote_.yea, totalVotes, vote_.supportRequiredPct)) {
             return false;
         }
         // Has min quorum?
-        if (!_isValuePct(vote_.yea, vote_.totalVoters, uint256(vote_.minAcceptQuorumPct))) {
+        if (!_isValuePct(vote_.yea, vote_.totalVoters, vote_.minAcceptQuorumPct)) {
             return false;
         }
 
@@ -272,7 +272,7 @@ contract Voting is IForwarder, AragonApp {
         vote_.creator = msg.sender;
         vote_.startDate = getTimestamp64();
         vote_.metadata = _metadata;
-        vote_.snapshotBlock = uint64(getBlockNumber()) - 1; // avoid double voting in this very block
+        vote_.snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
         vote_.totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
