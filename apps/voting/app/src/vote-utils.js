@@ -29,8 +29,8 @@ export function getVoteSuccess(vote) {
   const { yea, nay } = vote.data
 
   const totalVotes = yea + nay
-  const hasSupport = yea / totalVotes >= support
-  const hasMinQuorum = getQuorumProgress(vote) >= quorum
+  const hasSupport = yea / totalVotes > support
+  const hasMinQuorum = getQuorumProgress(vote) > quorum
 
   return hasSupport && hasMinQuorum
 }
