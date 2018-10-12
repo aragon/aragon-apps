@@ -3,20 +3,28 @@ import styled from 'styled-components'
 import { theme, IconCross, IconCheck } from '@aragon/ui'
 import { getVoteSuccess } from '../vote-utils'
 
-const VoteSuccess = ({ vote, ...props }) => {
-  const success = getVoteSuccess(vote)
-  const Icon = success ? IconCheck : IconCross
-  return (
-    <Main {...props}>
-      <IconWrapper>
-        <Icon />
-      </IconWrapper>
-      <StatusLabel>
-        {success ? 'Vote will pass' : 'Vote won’t pass'}
-      </StatusLabel>
-    </Main>
-  )
-}
+const VoteSuccess = ({ vote, ...props }) => (
+  <Main {...props}>
+    {(() => {
+      if (!vote.open) {
+        return 'Voting has ended'
+      }
+
+      const success = getVoteSuccess(vote)
+      const Icon = success ? IconCheck : IconCross
+      return (
+        <React.Fragment>
+          <IconWrapper>
+            <Icon />
+          </IconWrapper>
+          <StatusLabel>
+            {success ? 'Vote will pass' : 'Vote won’t pass'}
+          </StatusLabel>
+        </React.Fragment>
+      )
+    })()}
+  </Main>
+)
 
 const Main = styled.div`
   display: flex;
