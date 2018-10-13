@@ -1,23 +1,15 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Text, theme } from '@aragon/ui'
-import { safeDiv, percentageList, tokenAmount } from '../math-utils'
+import { percentageList, safeDiv } from '../math-utils'
 import SummaryBar from './SummaryBar'
 import SummaryRows from './SummaryRows'
 
-const VoteSummary = ({
-  votesYea,
-  votesNay,
-  quorum,
-  quorumProgress,
-  support,
-  tokenSymbol,
-  tokenDecimals,
-  ready,
-}) => {
-  const totalVotes = votesYea + votesNay
-  const votesYeaVotersSize = safeDiv(votesYea, totalVotes)
-  const votesNayVotersSize = safeDiv(votesNay, totalVotes)
+const VoteSummary = ({ vote, tokenSymbol, tokenDecimals, ready }) => {
+  const { yea, nay, supportRequiredPct } = vote.numData
+  const totalVotes = yea + nay
+  const votesYeaVotersSize = safeDiv(yea, totalVotes)
+  const votesNayVotersSize = safeDiv(nay, totalVotes)
 
   const [yeaPct, nayPct] = percentageList(
     [votesYeaVotersSize, votesNayVotersSize],
@@ -32,7 +24,7 @@ const VoteSummary = ({
             Current votes{' '}
           </Text>
           <Text size="xsmall" color={theme.textSecondary}>
-            ({Math.round(support * 100)}% needed)
+            ({Math.round(supportRequiredPct * 100)}% needed)
           </Text>
         </span>
       </Header>
@@ -40,13 +32,13 @@ const VoteSummary = ({
       <SummaryBar
         positiveSize={votesYeaVotersSize}
         negativeSize={votesNayVotersSize}
-        requiredSize={support}
+        requiredSize={supportRequiredPct}
         show={ready}
       />
 
       <SummaryRows
-        yea={{ pct: yeaPct, amount: tokenAmount(votesYea, tokenDecimals) }}
-        nay={{ pct: nayPct, amount: tokenAmount(votesNay, tokenDecimals) }}
+        yea={{ pct: yeaPct, amount: yea }}
+        nay={{ pct: nayPct, amount: nay }}
         symbol={tokenSymbol}
       />
     </Main>

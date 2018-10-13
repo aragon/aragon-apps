@@ -76,7 +76,7 @@ async function initialize(tokenAddr) {
       err
     )
     console.err('Defaulting to 18...')
-    tokenDecimals = 18
+    tokenDecimals = '18'
   }
 
   return createStore(token, { decimals: tokenDecimals, symbol: tokenSymbol })
@@ -231,12 +231,8 @@ function loadVoteSettings() {
             .call(name)
             .first()
             .map(val => {
-              if (type === 'number') {
-                return parseInt(val, 10)
-              }
               if (type === 'time') {
-                // Adjust for js time (in ms vs s)
-                return parseInt(val, 10) * 1000
+                return marshallDate(val)
               }
               return val
             })
@@ -261,7 +257,6 @@ function loadTokenDecimals(tokenContract) {
     tokenContract
       .decimals()
       .first()
-      .map(val => parseInt(val, 10))
       .subscribe(resolve, reject)
   })
 }
@@ -292,13 +287,20 @@ function marshallVote({
   return {
     creator,
     executed,
-    minAcceptQuorum: parseInt(minAcceptQuorum, 10),
-    nay: parseInt(nay, 10),
-    snapshotBlock: parseInt(snapshotBlock, 10),
-    startDate: parseInt(startDate, 10) * 1000, // adjust for js time (in ms vs s)
-    totalVoters: parseInt(totalVoters, 10),
-    yea: parseInt(yea, 10),
-    script,
     description,
+    minAcceptQuorum,
+    nay,
+    script,
+    totalVoters,
+    yea,
+    // Like times, blocks should be safe to represent as real numbers
+    snapshotBlock: parseInt(snapshotBlock, 10),
+    startDate: marshallDate(startDate, 10),
   }
+}
+
+function marshallDate(date) {
+  // Represent dates as real numbers, as it's very unlikely they'll hit the limit...
+  // Adjust for js time (in ms vs s)
+  return parseInt(date, 10) * 1000
 }

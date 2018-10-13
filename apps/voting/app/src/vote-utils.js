@@ -1,4 +1,4 @@
-import { safeDiv } from './math-utils'
+import { isBefore } from 'date-fns/esm'
 import {
   VOTE_ABSENT,
   VOTE_YEA,
@@ -14,25 +14,40 @@ export const EMPTY_CALLSCRIPT = '0x00000001'
 export const getAccountVote = (account, voters) =>
   voters[account] || VOTE_ABSENT
 
-export function getVoteStatus(vote) {
-  if (vote.executed) {
+export function isVoteOpen(vote, date) {
+  const { executed, endDate } = vote.data
+  // Open if not executed and date is still before end date
+  return !executed && isBefore(date, endDate)
+}
+
+export const getQuorumProgress = ({ numData: { yea, totalVoters } }) =>
+  yea / totalVoters
+
+export function getVoteStatus(vote, pctBase) {
+  if (vote.data.executed) {
     return VOTE_STATUS_EXECUTED
   }
   if (vote.open) {
     return VOTE_STATUS_ONGOING
   }
-  return getVoteSuccess(vote) ? VOTE_STATUS_ACCEPTED : VOTE_STATUS_REJECTED
+  return getVoteSuccess(vote, pctBase)
+    ? VOTE_STATUS_ACCEPTED
+    : VOTE_STATUS_REJECTED
 }
 
-export function getVoteSuccess(vote) {
-  const { support, quorum } = vote
-  const { yea, nay } = vote.data
+export function getVoteSuccess(vote, pctBase) {
+  const { yea, nay, minAcceptQuorum, supportRequiredPct } = vote.data
 
-  const totalVotes = yea + nay
-  const hasSupport = yea / totalVotes > support
-  const hasMinQuorum = getQuorumProgress(vote) > quorum
+  // Mirror on-chain calculation
+  const totalVotes = yea.add(nay)
+  if (totalVotes.isZero()) {
+    return false
+  }
+  const yeaPct = yea.mul(pctBase).div(totalVotes)
 
-  return hasSupport && hasMinQuorum
+  // yea / totalVotes > supportRequiredPct
+  // yea / totalVotes > minAcceptQuorum
+  return yeaPct.gt(supportRequiredPct) && yeaPct.gt(minAcceptQuorum)
 }
 
 // Enums are not supported by the ABI yet:
@@ -46,6 +61,3 @@ export function voteTypeFromContractEnum(value) {
   }
   return VOTE_ABSENT
 }
-
-export const getQuorumProgress = ({ data: { yea, totalVoters } }) =>
-  safeDiv(yea, totalVoters)

@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { theme } from '@aragon/ui'
+import { formatNumber } from '../math-utils'
 
 const SummaryRows = ({ yea, nay, symbol }) => (
   <div>
@@ -11,7 +12,7 @@ const SummaryRows = ({ yea, nay, symbol }) => (
         <div>{yea.pct}%</div>
       </RowStart>
       <Amount>
-        {yea.amount} {symbol}
+        {formatNumber(yea.amount, 5)} {symbol}
       </Amount>
     </Row>
     <Row>
@@ -21,7 +22,7 @@ const SummaryRows = ({ yea, nay, symbol }) => (
         <div>{nay.pct}%</div>
       </RowStart>
       <Amount>
-        {nay.amount} {symbol}
+        {formatNumber(nay.amount, 5)} {symbol}
       </Amount>
     </Row>
   </div>

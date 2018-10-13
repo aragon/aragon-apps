@@ -31,11 +31,14 @@ class Votes extends React.Component {
   }
   render() {
     const { votes, onSelectVote } = this.props
-    const sortedVotes = votes.sort((a, b) => (a.endDate > b.endDate ? -1 : 1))
-    const openedVotes = sortedVotes.filter(({ open }) => open)
-    const closedVotes = sortedVotes.filter(vote => !openedVotes.includes(vote))
+    const sortedVotes = votes.sort(
+      (a, b) => (a.data.endDate > b.data.endDate ? -1 : 1)
+    )
+
+    const openVotes = sortedVotes.filter(vote => vote.data.open)
+    const closedVotes = sortedVotes.filter(vote => !openVotes.includes(vote))
     const votingGroups = [
-      ['Opened votes', openedVotes],
+      ['Open votes', openVotes],
       ['Past votes', closedVotes],
     ]
     return (
@@ -55,19 +58,19 @@ class Votes extends React.Component {
                     status={
                       vote.open ? null : <VoteStatus vote={vote} cardStyle />
                     }
-                    endDate={vote.endDate}
-                    opened={vote.open}
+                    endDate={vote.data.endDate}
+                    open={vote.data.open}
                     question={this.getQuestionLabel(vote.data)}
-                    totalVoters={vote.data.totalVoters}
+                    totalVoters={vote.numData.totalVoters}
                     onOpen={onSelectVote}
                     options={[
                       {
                         label: this.optionLabel('Yes', vote, VOTE_YEA),
-                        power: vote.data.yea,
+                        power: vote.numData.yea,
                       },
                       {
                         label: this.optionLabel('No', vote, VOTE_NAY),
-                        power: vote.data.nay,
+                        power: vote.numData.nay,
                         color: theme.negative,
                       },
                     ]}
