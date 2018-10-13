@@ -29,9 +29,7 @@ class AssignVotePanelContent extends React.Component {
       // setTimeout is needed as a small hack to wait until the input's on
       // screen until we call focus
       this.holderInput && setTimeout(() => this.holderInput.focus(), 0)
-    }
 
-    if ((holder !== this.props.holder || mode !== this.props.mode) && opened) {
       // Holder override passed in from props
       this.setState({
         holder: {
@@ -39,8 +37,10 @@ class AssignVotePanelContent extends React.Component {
           value: holder,
         },
       })
-    } else if (!opened && this.props.opened) {
-      // Finished closing the panel, so reset its state
+    }
+
+    // Finished closing the panel, its state can be reset
+    if (!opened && this.props.opened) {
       this.setState({ ...initialState })
     }
   }
