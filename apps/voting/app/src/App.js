@@ -242,65 +242,67 @@ class App extends React.Component {
   }
 }
 
-export default observe(observable => {
-  return observable.map(state => {
-    const appStateReady = hasLoadedVoteSettings(state)
-    if (!appStateReady) {
+export default observe(
+  observable =>
+    observable.map(state => {
+      const appStateReady = hasLoadedVoteSettings(state)
+      if (!appStateReady) {
+        return {
+          ...state,
+          appStateReady,
+        }
+      }
+
+      const { pctBase, supportRequiredPct, tokenDecimals, voteTime } = state
+
+      const pctBaseNum = parseInt(pctBase, 10)
+      const supportRequiredPctNum = parseInt(supportRequiredPct, 10)
+      const tokenDecimalsNum = parseInt(tokenDecimals, 10)
+      const tokenDecimalsBaseNum = Math.pow(10, tokenDecimalsNum)
+
       return {
         ...state,
+
         appStateReady,
+        pctBase: new BN(pctBase),
+        supportRequiredPct: new BN(supportRequiredPct),
+        tokenDecimals: new BN(tokenDecimals),
+
+        numData: {
+          pctBase: pctBaseNum,
+          supportRequiredPct: supportRequiredPctNum,
+          tokenDecimals: tokenDecimalsNum,
+        },
+
+        // Transform the vote data for the frontend
+        votes:
+          state && state.votes
+            ? state.votes.map(vote => {
+                const { data } = vote
+                return {
+                  ...vote,
+                  data: {
+                    ...data,
+                    endDate: new Date(data.startDate + voteTime),
+                    minAcceptQuorum: new BN(data.minAcceptQuorum),
+                    nay: new BN(data.nay),
+                    totalVoters: new BN(data.totalVoters),
+                    yea: new BN(data.yea),
+                    supportRequiredPct: new BN(supportRequiredPct),
+                  },
+                  numData: {
+                    minAcceptQuorum:
+                      parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
+                    nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
+                    totalVoters:
+                      parseInt(data.totalVoters, 10) / tokenDecimalsBaseNum,
+                    yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,
+                    supportRequiredPct: supportRequiredPctNum / pctBaseNum,
+                  },
+                }
+              })
+            : [],
       }
-    }
-
-    const { pctBase, supportRequiredPct, tokenDecimals, voteTime } = state
-
-    const pctBaseNum = parseInt(pctBase, 10)
-    const supportRequiredPctNum = parseInt(supportRequiredPct, 10)
-    const tokenDecimalsNum = parseInt(tokenDecimals, 10)
-    const tokenDecimalsBaseNum = Math.pow(10, tokenDecimalsNum)
-
-    return {
-      ...state,
-
-      appStateReady,
-      pctBase: new BN(pctBase),
-      supportRequiredPct: new BN(supportRequiredPct),
-      tokenDecimals: new BN(tokenDecimals),
-
-      numData: {
-        pctBase: pctBaseNum,
-        supportRequiredPct: supportRequiredPctNum,
-        tokenDecimals: tokenDecimalsNum,
-      },
-
-      // Transform the vote data for the frontend
-      votes:
-        state && state.votes
-          ? state.votes.map(vote => {
-              const { data } = vote
-              return {
-                ...vote,
-                data: {
-                  ...data,
-                  endDate: new Date(data.startDate + voteTime),
-                  minAcceptQuorum: new BN(data.minAcceptQuorum),
-                  nay: new BN(data.nay),
-                  totalVoters: new BN(data.totalVoters),
-                  yea: new BN(data.yea),
-                  supportRequiredPct: new BN(supportRequiredPct),
-                },
-                numData: {
-                  minAcceptQuorum:
-                    parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
-                  nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
-                  totalVoters:
-                    parseInt(data.totalVoters, 10) / tokenDecimalsBaseNum,
-                  yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,
-                  supportRequiredPct: supportRequiredPctNum / pctBaseNum,
-                },
-              }
-            })
-          : [],
-    }
-  })
-}, {})(App)
+    }),
+  {}
+)(App)
