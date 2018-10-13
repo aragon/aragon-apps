@@ -26,6 +26,7 @@ env:
   - TASK=test:finance
   - TASK=test:survey
   - TASK=test:token-manager
+  - TASK=test:token-manager:app
   - TASK=test:vault
   - TASK=test:voting
   - TASK=coverage:finance

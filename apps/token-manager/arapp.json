@@ -31,6 +31,14 @@
       "params": [
         "Holder"
       ]
+    },
+    {
+      "name": "Burn tokens",
+      "id": "BURN_ROLE",
+      "params": [
+        "Holder",
+        "Token amount"
+      ]
     }
   ],
   "path": "contracts/TokenManager.sol"

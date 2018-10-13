@@ -171,7 +171,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Creates a vote to execute the desired action, and casts a support vote
+    * @notice Creates a vote to execute the desired action, and casts a support vote if possible
     * @dev IForwarder interface conformance
     * @param _evmScript Start vote with script
     */

@@ -1,14 +1,16 @@
 {
   "env": {
     "browser": true,
-    "es6": true
+    "es6": true,
+    "jest/globals": true
   },
   "extends": [
     "standard",
     "standard-react",
     "prettier",
     "prettier/flowtype",
-    "prettier/react"
+    "prettier/react",
+    "plugin:jest/recommended"
   ],
   "parser": "babel-eslint",
   "parserOptions": {
@@ -18,7 +20,7 @@
     },
     "sourceType": "module"
   },
-  "plugins": ["prettier", "react"],
+  "plugins": ["prettier", "react", "jest"],
   "rules": {
     "react/prop-types": 0,
     "prettier/prettier": [

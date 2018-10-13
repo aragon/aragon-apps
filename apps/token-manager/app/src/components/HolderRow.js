@@ -8,7 +8,7 @@ import {
   IconAdd,
   Badge,
 } from '@aragon/ui'
-import { round } from '../math-utils'
+import { formatBalance } from '../utils'
 
 class HolderRow extends React.Component {
   static defaultProps = {
@@ -29,21 +29,26 @@ class HolderRow extends React.Component {
       tokenDecimalsBase,
       isCurrentUser,
     } = this.props
-    // Rounding their balance to 5 decimals should be enough... right?
-    const adjustedBalance = round(balance / tokenDecimalsBase, 5)
     return (
       <TableRow>
         <TableCell>
           <Owner>
             <span>{name}</span>
             {isCurrentUser && (
-              <Badge.Identity style={{ fontVariant: 'small-caps' }} title='This is your Ethereum address'>
+              <Badge.Identity
+                style={{ fontVariant: 'small-caps' }}
+                title="This is your Ethereum address"
+              >
                 you
               </Badge.Identity>
             )}
           </Owner>
         </TableCell>
-        {!groupMode && <TableCell align="right">{adjustedBalance}</TableCell>}
+        {!groupMode && (
+          <TableCell align="right">
+            {formatBalance(balance, tokenDecimalsBase)}
+          </TableCell>
+        )}
         <TableCell align="right">
           <ContextMenu>
             <ContextMenuItem onClick={this.handleAssignTokens}>

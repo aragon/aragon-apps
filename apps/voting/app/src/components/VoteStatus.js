@@ -14,25 +14,25 @@ const ATTRIBUTES = {
     label: 'Ongoing',
     Icon: IconTime,
     color: theme.textTertiary,
-    bord: false,
+    bold: false,
   },
   [VOTE_STATUS_ACCEPTED]: {
     label: 'Pending execution',
     Icon: null,
     color: theme.textTertiary,
-    bord: false,
+    bold: false,
   },
   [VOTE_STATUS_REJECTED]: {
     label: 'Rejected',
     Icon: IconCross,
     color: theme.negative,
-    bord: true,
+    bold: true,
   },
   [VOTE_STATUS_EXECUTED]: {
     label: 'Executed',
     Icon: IconCheck,
     color: theme.positive,
-    bord: true,
+    bold: true,
   },
 }
 
