@@ -23,11 +23,11 @@ class App extends React.Component {
     app: PropTypes.object.isRequired,
   }
   static defaultProps = {
+    appStateReady: false,
     network: {
       etherscanBaseUrl: 'https://rinkeby.etherscan.io',
       name: 'rinkeby',
     },
-    settingsLoaded: false,
     tokenSymbol: '',
     userAccount: '',
     votes: [],
@@ -139,7 +139,7 @@ class App extends React.Component {
   render() {
     const {
       app,
-      settingsLoaded,
+      appStateReady,
       tokenDecimals,
       tokenSymbol,
       userAccount,
@@ -156,10 +156,9 @@ class App extends React.Component {
     } = this.state
 
     const now = new Date()
-    const appReady = settingsLoaded && votes.length > 0
 
     // Add useful properties to the votes
-    const preparedVotes = appReady
+    const preparedVotes = appStateReady
       ? votes.map(vote => ({
           ...vote,
           data: {
@@ -176,6 +175,7 @@ class App extends React.Component {
       currentVoteId === -1
         ? null
         : preparedVotes.find(vote => vote.voteId === currentVoteId)
+    const hasCurrentVote = appStateReady && Boolean(currentVote)
 
     return (
       <AragonApp publicUrl="./aragon-ui/">
@@ -192,7 +192,7 @@ class App extends React.Component {
           </AppLayout.Header>
           <AppLayout.ScrollWrapper>
             <AppLayout.Content>
-              {appReady ? (
+              {appStateReady && votes.length > 0 ? (
                 <Votes
                   votes={preparedVotes}
                   onSelectVote={this.handleVoteOpen}
@@ -208,24 +208,23 @@ class App extends React.Component {
           title={`Vote #${currentVoteId} (${
             currentVote && currentVote.open ? 'Open' : 'Closed'
           })`}
-          opened={appReady && currentVote && !createVoteVisible && voteVisible}
+          opened={hasCurrentVote && !createVoteVisible && voteVisible}
           onClose={this.handleVoteClose}
           onTransitionEnd={this.handleVoteTransitionEnd}
         >
-          {appReady &&
-            currentVote && (
-              <VotePanelContent
-                app={app}
-                vote={currentVote}
-                user={userAccount}
-                ready={voteSidebarOpened}
-                tokenContract={tokenContract}
-                tokenDecimals={tokenDecimals}
-                tokenSymbol={tokenSymbol}
-                onVote={this.handleVote}
-                onExecute={this.handleExecute}
-              />
-            )}
+          {hasCurrentVote && (
+            <VotePanelContent
+              app={app}
+              vote={currentVote}
+              user={userAccount}
+              ready={voteSidebarOpened}
+              tokenContract={tokenContract}
+              tokenDecimals={tokenDecimals}
+              tokenSymbol={tokenSymbol}
+              onVote={this.handleVote}
+              onExecute={this.handleExecute}
+            />
+          )}
         </SidePanel>
 
         <SidePanel
@@ -245,11 +244,11 @@ class App extends React.Component {
 
 export default observe(observable => {
   return observable.map(state => {
-    const settingsLoaded = hasLoadedVoteSettings(state)
-    if (!settingsLoaded) {
+    const appStateReady = hasLoadedVoteSettings(state)
+    if (!appStateReady) {
       return {
         ...state,
-        settingsLoaded,
+        appStateReady,
       }
     }
 
@@ -263,7 +262,7 @@ export default observe(observable => {
     return {
       ...state,
 
-      settingsLoaded,
+      appStateReady,
       pctBase: new BN(pctBase),
       supportRequiredPct: new BN(supportRequiredPct),
       tokenDecimals: new BN(tokenDecimals),
