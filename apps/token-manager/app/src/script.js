@@ -36,6 +36,7 @@ async function createStore(token, tokenAddr) {
         ...(!hasLoadedTokenSettings(state)
           ? await loadTokenSettings(token)
           : {}),
+        tokenAddress: tokenAddr,
       }
 
       if (addressesEqual(address, tokenAddr)) {

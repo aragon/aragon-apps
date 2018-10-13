@@ -25,6 +25,7 @@ class App extends React.Component {
     tokenDecimals: null,
     tokenSupply: null,
     tokenSymbol: null,
+    tokenAddress: '',
     holders: [],
     userAccount: '',
   }
@@ -76,6 +77,7 @@ class App extends React.Component {
   }
   render() {
     const {
+      tokenAddress,
       tokenSymbol,
       tokenName,
       tokenSupply,
@@ -115,6 +117,7 @@ class App extends React.Component {
               {tokenSettingsLoaded && holders.length > 0 ? (
                 <Holders
                   holders={holders}
+                  tokenAddress={tokenAddress}
                   tokenDecimalsBase={tokenDecimalsBase}
                   tokenName={tokenName}
                   tokenSupply={tokenSupply}

@@ -41,6 +41,7 @@ class SideBar extends React.Component {
   render() {
     const {
       holders,
+      tokenAddress,
       tokenDecimalsBase,
       tokenName,
       tokenSupply,
@@ -69,7 +70,11 @@ class SideBar extends React.Component {
             <InfoRow>
               <span>Token</span>
               <span>:</span>
-              <TokenBadge name={tokenName} symbol={tokenSymbol} />
+              <TokenBadge
+                address={tokenAddress}
+                name={tokenName}
+                symbol={tokenSymbol}
+              />
             </InfoRow>
           </ul>
         </Part>

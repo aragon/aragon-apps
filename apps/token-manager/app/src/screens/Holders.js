@@ -13,6 +13,7 @@ class Holders extends React.Component {
       holders,
       onAssignTokens,
       onRemoveTokens,
+      tokenAddress,
       tokenDecimalsBase,
       tokenName,
       tokenSupply,
@@ -64,6 +65,7 @@ class Holders extends React.Component {
         <SideBar
           groupMode={groupMode}
           holders={holders}
+          tokenAddress={tokenAddress}
           tokenDecimalsBase={tokenDecimalsBase}
           tokenName={tokenName}
           tokenSupply={tokenSupply}

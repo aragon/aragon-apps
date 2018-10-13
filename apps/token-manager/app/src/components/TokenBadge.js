@@ -3,9 +3,9 @@ import styled from 'styled-components'
 
 class TokenBadge extends React.PureComponent {
   render() {
-    const { name, symbol } = this.props
+    const { address, name, symbol } = this.props
     return (
-      <Main>
+      <Main title={name === symbol ? name : `${name} (${address})`}>
         <Label>
           <Icon src={`https://chasing-coins.com/coin/logo/${symbol}`} />
           {name === symbol ? name : `${name} (${symbol})`}
