@@ -8,7 +8,6 @@
     "standard",
     "standard-react",
     "prettier",
-    "prettier/flowtype",
     "prettier/react",
     "plugin:jest/recommended"
   ],
@@ -30,8 +29,7 @@
         "semi": false,
         "trailingComma": "es5",
         "bracketSpacing": true,
-        "jsxBracketSameLine": false,
-        "parser": "flow"
+        "jsxBracketSameLine": false
       }
     ],
     "linebreak-style": ["error", "unix"]
