@@ -44,7 +44,7 @@ contract Voting is IForwarder, AragonApp {
         uint64 minAcceptQuorumPct;
         uint256 yea;
         uint256 nay;
-        uint256 totalVoters;
+        uint256 votingPower;
         bytes executionScript;
         mapping (address => VoterState) voters;
     }
@@ -208,7 +208,7 @@ contract Voting is IForwarder, AragonApp {
         }
 
         // Voting is already decided
-        if (_isValuePct(vote_.yea, vote_.totalVoters, vote_.supportRequiredPct)) {
+        if (_isValuePct(vote_.yea, vote_.votingPower, vote_.supportRequiredPct)) {
             return true;
         }
 
@@ -223,7 +223,7 @@ contract Voting is IForwarder, AragonApp {
             return false;
         }
         // Has min quorum?
-        if (!_isValuePct(vote_.yea, vote_.totalVoters, vote_.minAcceptQuorumPct)) {
+        if (!_isValuePct(vote_.yea, vote_.votingPower, vote_.minAcceptQuorumPct)) {
             return false;
         }
 
@@ -243,7 +243,7 @@ contract Voting is IForwarder, AragonApp {
             uint64 minAcceptQuorum,
             uint256 yea,
             uint256 nay,
-            uint256 totalVoters,
+            uint256 votingPower,
             bytes script
         )
     {
@@ -257,7 +257,7 @@ contract Voting is IForwarder, AragonApp {
         minAcceptQuorum = vote_.minAcceptQuorumPct;
         yea = vote_.yea;
         nay = vote_.nay;
-        totalVoters = vote_.totalVoters;
+        votingPower = vote_.votingPower;
         script = vote_.executionScript;
     }
 
@@ -269,8 +269,8 @@ contract Voting is IForwarder, AragonApp {
         internal
         returns (uint256 voteId)
     {
-        uint256 totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
-        require(totalVoters > 0, ERROR_NO_VOTING_POWER);
+        uint256 votingPower = token.totalSupplyAt(vote_.snapshotBlock);
+        require(votingPower > 0, ERROR_NO_VOTING_POWER);
 
         voteId = votesLength++;
         Vote storage vote_ = votes[voteId];
@@ -278,7 +278,7 @@ contract Voting is IForwarder, AragonApp {
         vote_.snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
-        vote_.totalVoters = totalVoters;
+        vote_.votingPower = votingPower;
         vote_.executionScript = _executionScript;
 
         emit StartVote(voteId, msg.sender, _metadata);

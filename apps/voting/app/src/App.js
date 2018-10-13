@@ -291,18 +291,18 @@ export default observe(
                   endDate: new Date(data.startDate + voteTime),
                   minAcceptQuorum: new BN(data.minAcceptQuorum),
                   nay: new BN(data.nay),
-                  totalVoters: new BN(data.totalVoters),
-                  yea: new BN(data.yea),
                   supportRequiredPct: new BN(supportRequiredPct),
+                  votingPower: new BN(data.votingPower),
+                  yea: new BN(data.yea),
                 },
                 numData: {
                   minAcceptQuorum:
                     parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
                   nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
-                  totalVoters:
-                    parseInt(data.totalVoters, 10) / tokenDecimalsBaseNum,
-                  yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,
                   supportRequiredPct: supportRequiredPctNum / pctBaseNum,
+                  votingPower:
+                    parseInt(data.votingPower, 10) / tokenDecimalsBaseNum,
+                  yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,
                 },
               }
             })

@@ -61,7 +61,7 @@ class Votes extends React.Component {
                     endDate={vote.data.endDate}
                     open={vote.data.open}
                     question={this.getQuestionLabel(vote.data)}
-                    totalVoters={vote.numData.totalVoters}
+                    votingPower={vote.numData.votingPower}
                     onOpen={onSelectVote}
                     options={[
                       {
