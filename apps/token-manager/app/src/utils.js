@@ -50,11 +50,11 @@ export function stakesPercentages(
 
   // Calculate the percentages of all the stakes
   const stakes = amounts
-    .map((amount, index) => ({ index, amount }))
-    .filter(({ amount }) => !amount.isZero())
-    .map(stake => ({
-      ...stake,
-      percentage: stake.amount.muln(pctPrecision).div(total),
+    .filter(amount => !amount.isZero())
+    .map((amount, index) => ({
+      amount,
+      index,
+      percentage: amount.muln(pctPrecision).div(total),
     }))
     .sort((a, b) => b.percentage.cmp(a.percentage))
 
