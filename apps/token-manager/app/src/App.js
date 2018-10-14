@@ -17,6 +17,8 @@ import AppLayout from './components/AppLayout'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import { hasLoadedTokenSettings } from './token-settings'
 
+const initialAssignTokensConfig = { mode: null }
+
 class App extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
@@ -26,7 +28,7 @@ class App extends React.Component {
     userAccount: '',
   }
   state = {
-    assignTokensConfig: { mode: null },
+    assignTokensConfig: initialAssignTokensConfig,
     sidepanelOpened: false,
   }
   handleUpdateTokens = ({ mode, amount, holder }) => {
@@ -60,6 +62,11 @@ class App extends React.Component {
   }
   handleSidepanelClose = () => {
     this.setState({ sidepanelOpened: false })
+  }
+  handleSidepanelTransitionEnd = open => {
+    if (!open) {
+      this.setState({ assignTokensConfig: initialAssignTokensConfig })
+    }
   }
   render() {
     const {
@@ -124,6 +131,7 @@ class App extends React.Component {
           }
           opened={sidepanelOpened}
           onClose={this.handleSidepanelClose}
+          onTransitionEnd={this.handleSidepanelTransitionEnd}
         >
           {appStateReady && (
             <AssignVotePanelContent
