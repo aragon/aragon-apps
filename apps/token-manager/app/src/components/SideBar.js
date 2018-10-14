@@ -16,12 +16,11 @@ const DISTRIBUTION_COLORS = [
 ]
 
 const displayedStakes = (accounts, total) => {
-  const positiveAccounts = accounts.filter(({ balance }) => balance > 0)
-  return stakesPercentages(positiveAccounts.map(({ balance }) => balance), {
+  return stakesPercentages(accounts.map(({ balance }) => balance), {
     total,
     maxIncluded: DISTRIBUTION_ITEMS_MAX,
   }).map((stake, index) => ({
-    name: stake.index === -1 ? 'Rest' : positiveAccounts[index].address,
+    name: stake.index === -1 ? 'Rest' : accounts[index].address,
     stake: stake.percentage,
     color: DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length],
   }))
