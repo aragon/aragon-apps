@@ -19,8 +19,8 @@ contract Survey is AragonApp {
     bytes32 public constant CREATE_SURVEYS_ROLE = keccak256("CREATE_SURVEYS_ROLE");
     bytes32 public constant MODIFY_PARTICIPATION_ROLE = keccak256("MODIFY_PARTICIPATION_ROLE");
 
-    uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
-    uint256 public constant ABSTAIN_VOTE = 0;
+    uint64 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
+    uint64 public constant ABSTAIN_VOTE = 0;
 
     struct OptionCast {
         uint256 optionId;
@@ -43,7 +43,7 @@ contract Survey is AragonApp {
         uint64 startDate;
         uint64 snapshotBlock;
         uint64 minParticipationPct;
-        uint64 options;
+        uint256 options;
         uint256 votingPower;                    // total tokens that can cast a vote
         uint256 participation;                  // tokens that casted a vote
         string metadata;
@@ -118,7 +118,7 @@ contract Survey is AragonApp {
     * @param _options Number of options voters can decide between
     * @return surveyId id for newly created survey
     */
-    function newSurvey(string _metadata, uint64 _options) external auth(CREATE_SURVEYS_ROLE) returns (uint256 surveyId) {
+    function newSurvey(string _metadata, uint256 _options) external auth(CREATE_SURVEYS_ROLE) returns (uint256 surveyId) {
         surveyId = surveysLength++;
         SurveyStruct storage survey = surveys[surveyId];
         survey.creator = msg.sender;
@@ -255,9 +255,9 @@ contract Survey is AragonApp {
             uint64 _startDate,
             uint64 _snapshotBlock,
             uint64 _minParticipationPct,
-            uint64 _options,
             uint256 _votingPower,
-            uint256 _participation
+            uint256 _participation,
+            uint256 _options
         )
     {
         SurveyStruct storage survey = surveys[_surveyId];
@@ -311,6 +311,6 @@ contract Survey is AragonApp {
     }
 
     function _isSurveyOpen(SurveyStruct storage _survey) internal view returns (bool) {
-        return getTimestamp64() < _survey.startDate.add(uint64(surveyTime));
+        return getTimestamp64() < _survey.startDate.add(surveyTime);
     }
 }
