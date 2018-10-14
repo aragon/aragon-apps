@@ -283,8 +283,7 @@ class VotePanelContent extends React.Component {
                   <Info.Action>
                     <p>
                       You voted{' '}
-                      {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'}
-                      with{' '}
+                      {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'} with{' '}
                       {userBalance === null
                         ? '…'
                         : pluralize(userBalance, '$ token', '$ tokens')}
@@ -293,8 +292,7 @@ class VotePanelContent extends React.Component {
                         href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
                         target="_blank"
                       >
-                        (block
-                        {snapshotBlock})
+                        (block {snapshotBlock})
                       </SafeLink>
                       .
                     </p>
