@@ -5,7 +5,7 @@ class TokenBadge extends React.PureComponent {
   render() {
     const { address, name, symbol } = this.props
     return (
-      <Main title={name === symbol ? name : `${name} (${address})`}>
+      <Main title={`${name} (${address})`}>
         <Label>
           <Icon src={`https://chasing-coins.com/coin/logo/${symbol}`} />
           {name === symbol ? name : `${name} (${symbol})`}
