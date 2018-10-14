@@ -24,6 +24,7 @@ class App extends React.Component {
     app: PropTypes.object.isRequired,
   }
   static defaultProps = {
+    appStateReady: false,
     holders: [],
     userAccount: '',
   }
