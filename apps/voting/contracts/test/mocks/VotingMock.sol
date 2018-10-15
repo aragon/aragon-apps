@@ -13,7 +13,7 @@ contract VotingMock is Voting {
         returns (uint256 voteId)
     {
         voteId = _newVote(_executionScript, _metadata, _castVote, _executesIfDecided);
-        emit StartVote(voteId);
+        emit StartVote(voteId, msg.sender, _metadata);
     }
 
     // _isValuePct public wrapper

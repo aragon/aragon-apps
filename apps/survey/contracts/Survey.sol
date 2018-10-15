@@ -266,10 +266,6 @@ contract Survey is AragonApp {
         _options = survey.options;
     }
 
-    function getSurveyMetadata(uint256 _surveyId) public view surveyExists(_surveyId) returns (string) {
-        return surveys[_surveyId].metadata;
-    }
-
     /* solium-disable-next-line function-order */
     function getVoterState(uint256 _surveyId, address _voter)
         external

@@ -4,8 +4,8 @@ const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
 
 const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
-const createdSurveyId = receipt => receipt.logs.filter(x => x.event == 'StartSurvey')[0].args.surveyId
 const surveyEvent = receipt => receipt.logs.filter(x => x.event == 'StartSurvey')[0].args
+const createdSurveyId = receipt => surveyEvent(receipt).surveyId
 
 contract('Survey app', accounts => {
   let daoFact, surveyBase, survey
