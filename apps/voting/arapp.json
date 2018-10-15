@@ -8,6 +8,14 @@
       "params": []
     },
     {
+      "name": "Modify support",
+      "id": "MODIFY_SUPPORT_ROLE",
+      "params": [
+        "New support",
+        "Current support"
+      ]
+    },
+    {
       "name": "Modify quorum",
       "id": "MODIFY_QUORUM_ROLE",
       "params": [

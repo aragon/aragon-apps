@@ -5,18 +5,39 @@ language: node_js
 cache:
   directories:
     - node_modules
+    - apps/finance/node_modules
+    - apps/finance/app/node_modules
+    - apps/survey/node_modules
+    - apps/survey/app/node_modules
+    - apps/token-manager/node_modules
+    - apps/token-manager/app/node_modules
+    - apps/vault/node_modules
+    - apps/voting/node_modules
+    - apps/voting/app/node_modules
+    - shared/migrations/node_modules
+    - shared/minime/node_modules
+    - shared/test-helpers/node_modules
 notifications:
   email: false
 node_js:
   - '8'
 env:
-  - TASK=test
   - TASK=lint
-  - TASK=coverage
-  - TASK=test:templates-beta
+  - TASK=test:finance
+  - TASK=test:survey
+  - TASK=test:token-manager
+  - TASK=test:token-manager:app
+  - TASK=test:vault
+  - TASK=test:voting
+  - TASK=coverage:finance
+  - TASK=coverage:survey
+  - TASK=coverage:token-manager
+  - TASK=coverage:vault
+  - TASK=coverage:voting
+  - TASK=test:shared
 before_script:
   - npm prune
 script:
-  - npm run $TASK
+  - travis_wait 60 npm run $TASK
 after_success:
   - ./node_modules/.bin/lcov-result-merger 'apps/*/coverage/lcov.info' | ./node_modules/.bin/coveralls

@@ -1,5 +1,5 @@
 function assertError(error, s, message) {
-  assert.isAbove(error.message.search(s), -1, message)
+  assert.isAbove(error.message.search(s), -1, `${message}\n\t(error: ${error})`);
 }
 
 async function assertThrows(block, message, errorCode) {

@@ -1,25 +1,30 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { Motion, spring } from 'react-motion'
-import { IconCross, IconCheck, theme } from '@aragon/ui'
+import { Spring, animated } from 'react-spring'
+import { IconCross, IconCheck, theme, springs } from '@aragon/ui'
 
 const ProgressBar = ({ progress, type }) => (
-  <Motion defaultStyle={{ progress: 0 }} style={{ progress: spring(progress) }}>
+  <Spring from={{ progress: 0 }} to={{ progress }} config={springs.lazy} native>
     {({ progress }) => (
       <Main>
         <IconWrapper>
           {type === 'positive' ? <IconCheck /> : <IconCross />}
         </IconWrapper>
         <Base>
-          <Progress
-            color={type === 'positive' ? theme.positive : theme.negative}
-            style={{ width: `${progress * 100}%` }}
-          />
+          <ProgressWrapper>
+            <Progress
+              style={{
+                backgroundColor:
+                  type === 'positive' ? theme.positive : theme.negative,
+                transform: progress.interpolate(t => `scale3d(${t}, 1, 1)`),
+              }}
+            />
+          </ProgressWrapper>
         </Base>
       </Main>
     )}
-  </Motion>
+  </Spring>
 )
 
 ProgressBar.defaultProps = {
@@ -51,10 +56,15 @@ const Base = styled.div`
   background: #edf3f6;
   border-radius: 2px;
 `
-const Progress = styled.div`
-  height: 6px;
-  background: ${({ color }) => color};
+
+const ProgressWrapper = styled.div`
+  overflow: hidden;
   border-radius: 2px;
+`
+
+const Progress = styled(animated.div)`
+  height: 6px;
+  transform-origin: 0 0;
 `
 
 export default ProgressBar

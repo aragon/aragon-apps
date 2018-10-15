@@ -18,10 +18,11 @@
     ],
     "stage-2"
   ],
+  "env": {
+    "test": { "presets": [["env"], "stage-2"] }
+  },
   "plugins": [
-    ["styled-components", {
-      "displayName": true
-    }],
+    ["styled-components", { "displayName": true }],
     "transform-runtime"
   ]
 }
