@@ -1,7 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Badge, BadgeNumber, colors, theme } from '@aragon/ui'
-import VotesTable from '../components/VotesTable'
+import { Badge, theme } from '@aragon/ui'
 import VotingCard from '../components/VotingCard/VotingCard'
 import VotingCardGroup from '../components/VotingCard/VotingCardGroup'
 import VoteStatus from '../components/VoteStatus'
@@ -60,7 +59,7 @@ class Votes extends React.Component {
                     opened={vote.open}
                     question={this.getQuestionLabel(vote.data)}
                     totalVoters={vote.data.totalVoters}
-                    onOpen={this.props.onSelectVote}
+                    onOpen={onSelectVote}
                     options={[
                       {
                         label: this.optionLabel('Yes', vote, VOTE_YEA),
@@ -81,21 +80,6 @@ class Votes extends React.Component {
     )
   }
 }
-
-const Title = styled.h1`
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  font-weight: 600;
-  font-size: 16px;
-  & > span:first-child {
-    margin-right: 10px;
-  }
-`
-
-const VotesTableWrapper = styled.div`
-  margin-bottom: 30px;
-`
 
 const You = styled(Badge.Identity).attrs({ children: 'Your vote' })`
   margin-left: 5px;
