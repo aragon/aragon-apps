@@ -1,8 +1,11 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Button, Field, IconCross, Text, TextInput } from '@aragon/ui'
-import BN from 'bn.js'
 import { addressPattern, isAddress } from '../../web3-utils'
+import { fromDecimals, toDecimals } from '../../utils'
+
+// Any more and the number input field starts to put numbers in scientific notation
+const MAX_INPUT_DECIMAL_BASE = 6
 
 const initialState = {
   amount: '',
@@ -58,12 +61,12 @@ class AssignVotePanelContent extends React.Component {
   handleSubmit = event => {
     event.preventDefault()
     const { amount, holder } = this.state
-    const { mode } = this.props
+    const { mode, tokenDecimals } = this.props
     const holderAddress = holder.value.trim()
     if (isAddress(holderAddress)) {
       this.props.onUpdateTokens({
         mode,
-        amount: amount,
+        amount: toDecimals(amount, tokenDecimals),
         holder: holderAddress,
       })
     } else {
@@ -77,10 +80,11 @@ class AssignVotePanelContent extends React.Component {
   }
   render() {
     const { amount, holder } = this.state
-    const { mode, tokenDecimalsBase } = this.props
-    const tokenBase = tokenDecimalsBase
-      ? new BN(1).div(tokenDecimalsBase).toNumber()
-      : 0
+    const { mode, tokenDecimals } = this.props
+    const minTokenStep = fromDecimals(
+      '1',
+      Math.min(MAX_INPUT_DECIMAL_BASE, tokenDecimals)
+    )
     return (
       <div>
         <form onSubmit={this.handleSubmit}>
@@ -110,8 +114,8 @@ class AssignVotePanelContent extends React.Component {
             <TextInput.Number
               value={amount}
               onChange={this.handleAmountChange}
-              min={tokenBase}
-              step={tokenBase}
+              min={minTokenStep}
+              step={minTokenStep}
               required
               wide
             />
