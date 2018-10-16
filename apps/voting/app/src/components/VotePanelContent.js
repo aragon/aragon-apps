@@ -13,8 +13,7 @@ import {
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../utils/provideNetwork'
-import { VOTE_NAY, VOTE_YEA, VOTE_STATUS_ACCEPTED } from '../vote-types'
-import { getVoteStatus, getVoteSuccess } from '../vote-utils'
+import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { roundToDecimals } from '../math-utils'
 import { pluralize } from '../utils'
 import VoteSummary from './VoteSummary'
@@ -31,6 +30,8 @@ class VotePanelContent extends React.Component {
     userBalance: null,
     canExecute: false,
     changeVote: false,
+    loadingCanExecute: true,
+    loadingCanVote: true,
   }
   componentDidMount() {
     const { user, vote, tokenContract } = this.props
@@ -87,23 +88,27 @@ class VotePanelContent extends React.Component {
   loadUserCanVote = (user, vote) => {
     const { app } = this.props
     if (user && vote) {
+      this.setState({ loadingCanVote: true })
+
       // Get if user can vote
       app
         .call('canVote', vote.voteId, user)
         .first()
         .subscribe(canVote => {
-          this.setState({ userCanVote: canVote })
+          this.setState({ loadingCanVote: false, userCanVote: canVote })
         })
     }
   }
   loadCanExecute = vote => {
     const { app } = this.props
     if (vote) {
+      this.setState({ loadingCanExecute: true })
+
       app
         .call('canExecute', vote.voteId)
         .first()
         .subscribe(canExecute => {
-          this.setState({ canExecute })
+          this.setState({ canExecute, loadingCanExecute: false })
         })
     }
   }
@@ -125,11 +130,16 @@ class VotePanelContent extends React.Component {
       tokenDecimals,
     } = this.props
 
-    const { userBalance, userCanVote, changeVote, canExecute } = this.state
+    const {
+      userBalance,
+      userCanVote,
+      changeVote,
+      canExecute,
+      loadingCanExecute,
+      loadingCanVote,
+    } = this.state
 
     const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.userAccountVote)
-    const status = getVoteStatus(vote)
-    const success = getVoteSuccess(vote)
 
     if (!vote) {
       return null
@@ -164,9 +174,7 @@ class VotePanelContent extends React.Component {
                 />
               )}
             </div>
-            <div style={{ marginTop: '10px' }}>
-              <VoteSuccess success={success} />
-            </div>
+            <StyledVoteSuccess vote={vote} />
           </div>
           <div>
             <h2>
@@ -178,15 +186,12 @@ class VotePanelContent extends React.Component {
                 ({roundToDecimals(quorum * 100, 2)}% needed)
               </Text>
             </div>
-
-            <div style={{ marginTop: '10px' }}>
-              <SummaryBar
-                positiveSize={quorumProgress}
-                requiredSize={quorum}
-                show={ready}
-                compact
-              />
-            </div>
+            <StyledSummaryBar
+              positiveSize={quorumProgress}
+              requiredSize={quorum}
+              show={ready}
+              compact
+            />
           </div>
         </SidePanelSplit>
         <Part>
@@ -233,110 +238,112 @@ class VotePanelContent extends React.Component {
         <VoteSummary
           votesYea={yea}
           votesNay={nay}
-          tokenSupply={totalVoters}
-          quorum={quorum}
-          quorumProgress={quorumProgress}
           support={support}
           tokenSymbol={tokenSymbol}
           tokenDecimals={tokenDecimals}
           ready={ready}
         />
 
-        {(() => {
-          if (canExecute) {
-            return (
-              <div>
-                <SidePanelSeparator />
-                <ButtonsContainer>
-                  <Button mode="strong" wide onClick={this.handleExecuteClick}>
-                    Execute vote
-                  </Button>
-                </ButtonsContainer>
-                <Info.Action>
-                  Executing this vote is required to enact it.
-                </Info.Action>
-              </div>
-            )
-          }
-
-          if (userCanVote && hasVoted && !changeVote) {
-            return (
-              <div>
-                <SidePanelSeparator />
-                <ButtonsContainer>
-                  <Button
-                    mode="strong"
-                    wide
-                    onClick={this.handleChangeVoteClick}
-                  >
-                    Change my vote
-                  </Button>
-                </ButtonsContainer>
-                <Info.Action>
-                  <p>
-                    You voted {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'}{' '}
-                    with{' '}
-                    {userBalance === null
-                      ? '…'
-                      : pluralize(userBalance, '$ token', '$ tokens')}
-                    , since it was your balance at the beginning of the vote{' '}
-                    <SafeLink
-                      href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
-                      target="_blank"
+        {!loadingCanVote &&
+          !loadingCanExecute &&
+          (() => {
+            if (canExecute) {
+              return (
+                <div>
+                  <SidePanelSeparator />
+                  <ButtonsContainer>
+                    <Button
+                      mode="strong"
+                      wide
+                      onClick={this.handleExecuteClick}
                     >
-                      (block
-                      {snapshotBlock})
-                    </SafeLink>
-                    .
-                  </p>
-                </Info.Action>
-              </div>
-            )
-          }
+                      Execute vote
+                    </Button>
+                  </ButtonsContainer>
+                  <Info.Action>
+                    Executing this vote is required to enact it.
+                  </Info.Action>
+                </div>
+              )
+            }
 
-          if (userCanVote) {
-            return (
-              <div>
-                <SidePanelSeparator />
-                <ButtonsContainer>
-                  <VotingButton
-                    mode="strong"
-                    emphasis="positive"
-                    wide
-                    onClick={this.handleYesClick}
-                  >
-                    Yes
-                  </VotingButton>
-                  <VotingButton
-                    mode="strong"
-                    emphasis="negative"
-                    wide
-                    onClick={this.handleNoClick}
-                  >
-                    No
-                  </VotingButton>
-                </ButtonsContainer>
-                <Info.Action>
-                  <p>
-                    You will cast your vote with{' '}
-                    {userBalance === null
-                      ? '… tokens'
-                      : pluralize(userBalance, '$ token', '$ tokens')}
-                    , since it was your balance at the beginning of the vote{' '}
-                    <SafeLink
-                      href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
-                      target="_blank"
+            if (userCanVote && hasVoted && !changeVote) {
+              return (
+                <div>
+                  <SidePanelSeparator />
+                  <ButtonsContainer>
+                    <Button
+                      mode="strong"
+                      wide
+                      onClick={this.handleChangeVoteClick}
                     >
-                      (block
-                      {snapshotBlock})
-                    </SafeLink>
-                    .
-                  </p>
-                </Info.Action>
-              </div>
-            )
-          }
-        })()}
+                      Change my vote
+                    </Button>
+                  </ButtonsContainer>
+                  <Info.Action>
+                    <p>
+                      You voted{' '}
+                      {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'} with{' '}
+                      {userBalance === null
+                        ? '…'
+                        : pluralize(userBalance, '$ token', '$ tokens')}
+                      , since it was your balance at the beginning of the vote{' '}
+                      <SafeLink
+                        href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
+                        target="_blank"
+                      >
+                        (block {snapshotBlock})
+                      </SafeLink>
+                      .
+                    </p>
+                  </Info.Action>
+                </div>
+              )
+            }
+
+            if (userCanVote) {
+              return (
+                <div>
+                  <SidePanelSeparator />
+                  <ButtonsContainer>
+                    <VotingButton
+                      mode="strong"
+                      emphasis="positive"
+                      wide
+                      onClick={this.handleYesClick}
+                    >
+                      Yes
+                    </VotingButton>
+                    <VotingButton
+                      mode="strong"
+                      emphasis="negative"
+                      wide
+                      onClick={this.handleNoClick}
+                    >
+                      No
+                    </VotingButton>
+                  </ButtonsContainer>
+                  <Info.Action>
+                    <p>
+                      You will cast your vote with{' '}
+                      {userBalance === null
+                        ? '… tokens'
+                        : pluralize(userBalance, '$ token', '$ tokens')}
+                      , since it was your balance at the beginning of the vote{' '}
+                      <SafeLink
+                        href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
+                        target="_blank"
+                      >
+                        (block
+                        {snapshotBlock})
+                      </SafeLink>
+                      .
+                    </p>
+                  </Info.Action>
+                </div>
+              )
+            }
+          })()}
       </React.Fragment>
     )
   }
@@ -348,6 +355,14 @@ const Label = styled(Text).attrs({
 })`
   display: block;
   margin-bottom: 10px;
+`
+
+const StyledVoteSuccess = styled(VoteSuccess)`
+  margin-top: 10px;
+`
+
+const StyledSummaryBar = styled(SummaryBar)`
+  margin-top: 10px;
 `
 
 const Part = styled.div`
@@ -371,6 +386,7 @@ const Creator = styled.div`
   display: flex;
   align-items: center;
 `
+
 const CreatorImg = styled.div`
   margin-right: 20px;
   canvas {

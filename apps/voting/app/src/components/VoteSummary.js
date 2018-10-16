@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Text, theme, springs } from '@aragon/ui'
+import { Text, theme } from '@aragon/ui'
 import { safeDiv, percentageList, tokenAmount } from '../math-utils'
 import SummaryBar from './SummaryBar'
 import SummaryRows from './SummaryRows'
@@ -8,7 +8,6 @@ import SummaryRows from './SummaryRows'
 const VoteSummary = ({
   votesYea,
   votesNay,
-  tokenSupply,
   quorum,
   quorumProgress,
   support,

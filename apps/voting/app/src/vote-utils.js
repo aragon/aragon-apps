@@ -29,8 +29,8 @@ export function getVoteSuccess(vote) {
   const { yea, nay } = vote.data
 
   const totalVotes = yea + nay
-  const hasSupport = yea / totalVotes >= support
-  const hasMinQuorum = getQuorumProgress(vote.data) >= quorum
+  const hasSupport = yea / totalVotes > support
+  const hasMinQuorum = getQuorumProgress(vote) > quorum
 
   return hasSupport && hasMinQuorum
 }
@@ -47,5 +47,5 @@ export function voteTypeFromContractEnum(value) {
   return VOTE_ABSENT
 }
 
-export const getQuorumProgress = ({ yea, totalVoters }) =>
+export const getQuorumProgress = ({ data: { yea, totalVoters } }) =>
   safeDiv(yea, totalVoters)

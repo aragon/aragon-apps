@@ -178,7 +178,7 @@ class App extends React.Component {
             // Open if not executed and now is still before end date
             open: !vote.data.executed && isBefore(new Date(), endDate),
             quorum: safeDiv(vote.data.minAcceptQuorum, pctBase),
-            quorumProgress: getQuorumProgress(vote.data),
+            quorumProgress: getQuorumProgress(vote),
             support: supportRequired,
             userAccountVote: voteTypeFromContractEnum(
               userAccountVotes.get(vote.voteId)
