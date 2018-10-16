@@ -17,31 +17,20 @@ import AppLayout from './components/AppLayout'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import { hasLoadedTokenSettings } from './token-settings'
 
+const initialAssignTokensConfig = { mode: null }
+
 class App extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
   }
   static defaultProps = {
-    tokenDecimals: null,
-    tokenSupply: null,
-    tokenSymbol: null,
-    tokenAddress: '',
+    appStateReady: false,
     holders: [],
     userAccount: '',
   }
   state = {
-    assignTokensConfig: { mode: null },
+    assignTokensConfig: initialAssignTokensConfig,
     sidepanelOpened: false,
-    tokenSettingsLoaded: false,
-  }
-  componentWillReceiveProps(nextProps) {
-    const { tokenSettingsLoaded } = this.state
-    // Is this the first time we've loaded the token settings?
-    if (!tokenSettingsLoaded && hasLoadedTokenSettings(nextProps)) {
-      this.setState({
-        tokenSettingsLoaded: true,
-      })
-    }
   }
   handleUpdateTokens = ({ mode, amount, holder }) => {
     const { app, tokenDecimalsBase } = this.props
@@ -75,22 +64,24 @@ class App extends React.Component {
   handleSidepanelClose = () => {
     this.setState({ sidepanelOpened: false })
   }
+  handleSidepanelTransitionEnd = open => {
+    if (!open) {
+      this.setState({ assignTokensConfig: initialAssignTokensConfig })
+    }
+  }
   render() {
     const {
+      appStateReady,
+      holders,
       tokenAddress,
       tokenSymbol,
       tokenName,
       tokenSupply,
       tokenDecimalsBase,
       tokenTransfersEnabled,
-      holders,
       userAccount,
     } = this.props
-    const {
-      assignTokensConfig,
-      sidepanelOpened,
-      tokenSettingsLoaded,
-    } = this.state
+    const { assignTokensConfig, sidepanelOpened } = this.state
     return (
       <AragonApp publicUrl="./aragon-ui/">
         <AppLayout>
@@ -114,7 +105,7 @@ class App extends React.Component {
           </AppLayout.Header>
           <AppLayout.ScrollWrapper>
             <AppLayout.Content>
-              {tokenSettingsLoaded && holders.length > 0 ? (
+              {appStateReady && holders.length > 0 ? (
                 <Holders
                   holders={holders}
                   tokenAddress={tokenAddress}
@@ -141,13 +132,16 @@ class App extends React.Component {
           }
           opened={sidepanelOpened}
           onClose={this.handleSidepanelClose}
+          onTransitionEnd={this.handleSidepanelTransitionEnd}
         >
-          <AssignVotePanelContent
-            opened={sidepanelOpened}
-            tokenDecimalsBase={tokenDecimalsBase}
-            onUpdateTokens={this.handleUpdateTokens}
-            {...assignTokensConfig}
-          />
+          {appStateReady && (
+            <AssignVotePanelContent
+              opened={sidepanelOpened}
+              tokenDecimalsBase={tokenDecimalsBase}
+              onUpdateTokens={this.handleUpdateTokens}
+              {...assignTokensConfig}
+            />
+          )}
         </SidePanel>
       </AragonApp>
     )
@@ -169,15 +163,23 @@ export default observe(
   // and calculate tokenDecimalsBase.
   observable =>
     observable.map(state => {
+      const appStateReady = hasLoadedTokenSettings(state)
+      if (!appStateReady) {
+        return {
+          ...state,
+          appStateReady,
+        }
+      }
       const { tokenSupply, holders, tokenDecimals } = state
       const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
       return {
         ...state,
-        tokenSupply: new BN(tokenSupply),
+        appStateReady,
         tokenDecimalsBase,
         holders: holders
           .map(holder => ({ ...holder, balance: new BN(holder.balance) }))
           .sort((a, b) => b.balance.cmp(a.balance)),
+        tokenSupply: new BN(tokenSupply),
       }
     }),
   {}

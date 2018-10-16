@@ -1,8 +1,8 @@
 const tokenSettings = [
-  ['decimals', 'tokenDecimals', 'number'],
+  ['decimals', 'tokenDecimals', 'bignumber'],
   ['symbol', 'tokenSymbol', 'string'],
   ['name', 'tokenName', 'string'],
-  ['totalSupply', 'tokenSupply', 'number'],
+  ['totalSupply', 'tokenSupply', 'bignumber'],
   ['transfersEnabled', 'tokenTransfersEnabled', 'bool'],
 ]
 

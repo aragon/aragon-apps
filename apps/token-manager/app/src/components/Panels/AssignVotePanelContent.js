@@ -8,7 +8,7 @@ const initialState = {
   amount: '',
   mode: 'assign',
   holder: {
-    error: null,
+    error: false,
     value: '',
   },
 }
@@ -26,8 +26,8 @@ class AssignVotePanelContent extends React.Component {
   }
   componentWillReceiveProps({ opened, holder = '', mode }) {
     if (opened && !this.props.opened) {
-      // setTimeout is needed as a small hack to wait until the input's on
-      // screen until we call focus
+      // setTimeout is needed as a small hack to wait until the input is
+      // on-screen before we call focus
       this.holderInput && setTimeout(() => this.holderInput.focus(), 0)
 
       // Holder override passed in from props
@@ -50,7 +50,7 @@ class AssignVotePanelContent extends React.Component {
   handleHolderChange = event => {
     this.setState({
       holder: {
-        error: null,
+        error: false,
         value: event.target.value,
       },
     })
