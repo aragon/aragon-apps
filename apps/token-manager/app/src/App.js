@@ -32,16 +32,14 @@ class App extends React.Component {
     assignTokensConfig: initialAssignTokensConfig,
     sidepanelOpened: false,
   }
-  handleUpdateTokens = ({ mode, amount, holder }) => {
-    const { app, tokenDecimalsBase } = this.props
-    const amountRounded = Math.floor(parseFloat(amount) * tokenDecimalsBase)
-    const amountValue = new BN(`${amountRounded}`, 10).toString()
+  handleUpdateTokens = ({ amount, holder, mode }) => {
+    const { app } = this.props
 
     if (mode === 'assign') {
-      app.mint(holder, amountValue)
+      app.mint(holder, amount)
     }
     if (mode === 'remove') {
-      app.burn(holder, amountValue)
+      app.burn(holder, amount)
     }
 
     this.handleSidepanelClose()
@@ -73,6 +71,7 @@ class App extends React.Component {
     const {
       appStateReady,
       holders,
+      numData,
       tokenAddress,
       tokenSymbol,
       tokenName,
@@ -137,7 +136,7 @@ class App extends React.Component {
           {appStateReady && (
             <AssignVotePanelContent
               opened={sidepanelOpened}
-              tokenDecimalsBase={tokenDecimalsBase}
+              tokenDecimals={numData.tokenDecimals}
               onUpdateTokens={this.handleUpdateTokens}
               {...assignTokensConfig}
             />
@@ -170,18 +169,25 @@ export default observe(
           appStateReady,
         }
       }
-      const { tokenSupply, holders, tokenDecimals } = state
+      const { holders, tokenDecimals, tokenSupply } = state
       const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
       return {
         ...state,
         appStateReady,
         tokenDecimalsBase,
-        tokenSupply: new BN(tokenSupply),
+        // Note that numbers in `numData` are not safe for accurate computations
+        // (but are useful for making divisions easier)
+        numData: {
+          tokenDecimals: parseInt(tokenDecimals, 10),
+          tokenSupply: parseInt(tokenSupply, 10),
+        },
         holders: holders
           ? holders
               .map(holder => ({ ...holder, balance: new BN(holder.balance) }))
               .sort((a, b) => b.balance.cmp(a.balance))
           : [],
+        tokenDecimals: new BN(tokenDecimals),
+        tokenSupply: new BN(tokenSupply),
       }
     }),
   {}
