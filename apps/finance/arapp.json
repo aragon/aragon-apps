@@ -45,7 +45,7 @@
     {
       "name": "Execute payments",
       "id": "EXECUTE_PAYMENTS_ROLE",
-      "params": ["Payment ID"]
+      "params": ["Payment ID", "Payment amount"]
     },
     {
       "name": "Disable payments",
