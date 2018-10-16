@@ -71,7 +71,7 @@ contract('Vault app', (accounts) => {
       const value = 1
 
       // Deposit without data param
-      await vault.deposit(ETH, accounts[0], value, { value })
+      await vault.deposit(ETH, value, { value: value, from: accounts[0] })
       assert.equal((await getBalance(vault.address)).toString(), value, `should hold ${value} wei`)
       assert.equal((await vault.balance(ETH)).toString(), value, `should return ${value} wei balance`)
 
@@ -115,7 +115,7 @@ contract('Vault app', (accounts) => {
       const value = 1
 
       return assertRevert(async () => {
-        await vault.deposit(ETH, accounts[0], value, { value: value * 2 })
+        await vault.deposit(ETH, value, { value: value * 2, from: accounts[0] })
       })
     })
   })
@@ -131,7 +131,7 @@ contract('Vault app', (accounts) => {
       await token.approve(vault.address, 10)
 
       // Deposit half without data param
-      await vault.deposit(token.address, accounts[0], 5)
+      await vault.deposit(token.address, 5, { from: accounts[0] })
 
       assert.equal(await token.balanceOf(vault.address), 5, "token accounting should be correct")
       assert.equal(await vault.balance(token.address), 5, "vault should know its balance")
@@ -167,7 +167,7 @@ contract('Vault app', (accounts) => {
       await token.approve(vault.address, approvedAmount)
 
       return assertRevert(async () => {
-          await vault.deposit(token.address, accounts[0], approvedAmount * 2)
+        await vault.deposit(token.address, approvedAmount * 2, { from: accounts[0] })
       })
     })
   })

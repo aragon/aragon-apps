@@ -99,7 +99,7 @@ contract('Finance App', accounts => {
         await token1.generateTokens(accounts[0], 10)
         token2 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token2.generateTokens(vault.address, 200)
-        await vault.deposit(ETH, accounts[0], VAULT_INITIAL_ETH_BALANCE, { value: VAULT_INITIAL_ETH_BALANCE });
+        await vault.deposit(ETH, VAULT_INITIAL_ETH_BALANCE, { value: VAULT_INITIAL_ETH_BALANCE, from: accounts[0] });
 
         await finance.mock_setTimestamp(START_TIME)
         await finance.initialize(vault.address, PERIOD_DURATION)
