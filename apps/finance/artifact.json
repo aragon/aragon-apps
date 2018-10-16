@@ -206,7 +206,7 @@
 					"type": "string"
 				},
 				{
-					"name": "disabled",
+					"name": "inactive",
 					"type": "bool"
 				},
 				{
@@ -683,11 +683,11 @@
 					"type": "uint256"
 				},
 				{
-					"name": "_disabled",
+					"name": "_active",
 					"type": "bool"
 				}
 			],
-			"name": "setPaymentDisabled",
+			"name": "setPaymentStatus",
 			"outputs": [],
 			"payable": false,
 			"stateMutability": "nonpayable",
@@ -890,7 +890,7 @@
 				},
 				{
 					"indexed": false,
-					"name": "disabled",
+					"name": "inactive",
 					"type": "bool"
 				}
 			],
@@ -984,11 +984,11 @@
 			"notice": "Execute pending payment #`_paymentId`"
 		},
 		{
-			"sig": "setPaymentDisabled(uint256,bool)",
+			"sig": "setPaymentStatus(uint256,bool)",
 			"roles": [
 				"DISABLE_PAYMENTS_ROLE"
 			],
-			"notice": "`_disabled ? 'Disable' : 'Enable'` payment `_paymentId`"
+			"notice": "`_active ? 'Active' : 'Inactive'` payment `_paymentId`"
 		},
 		{
 			"sig": "depositToVault(address)",
