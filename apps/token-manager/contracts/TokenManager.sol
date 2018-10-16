@@ -36,8 +36,8 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     string private constant ERROR_TOO_MANY_VESTINGS = "TM_TOO_MANY_VESTINGS";
     string private constant ERROR_WRONG_CLIFF_DATE = "TM_WRONG_CLIFF_DATE";
     string private constant ERROR_VESTING_NOT_REVOKABLE = "TM_VESTING_NOT_REVOKABLE";
-    string private constant REVOKE_TRANSFER_FROM_REVERTED = "TM_REVOKE_TRANSFER_FROM_REVERTED";
-    string private constant ASSIGN_TRANSFER_FROM_REVERTED = "TM_ASSIGN_TRANSFER_FROM_REVERTED";
+    string private constant ERROR_REVOKE_TRANSFER_FROM_REVERTED = "TM_REVOKE_TRANSFER_FROM_REVERTED";
+    string private constant ERROR_ASSIGN_TRANSFER_FROM_REVERTED = "TM_ASSIGN_TRANSFER_FROM_REVERTED";
     string private constant ERROR_CAN_NOT_FORWARD = "TM_CAN_NOT_FORWARD";
     string private constant ERROR_ON_TRANSFER_WRONG_SENDER = "TM_TRANSFER_WRONG_SENDER";
     string private constant ERROR_PROXY_PAYMENT_WRONG_SENDER = "TM_PROXY_PAYMENT_WRONG_SENDER";
@@ -198,7 +198,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
         // transferFrom always works as controller
         // onTransfer hook always allows if transfering to token controller
-        require(token.transferFrom(_holder, address(this), nonVested), REVOKE_TRANSFER_FROM_REVERTED);
+        require(token.transferFrom(_holder, address(this), nonVested), ERROR_REVOKE_TRANSFER_FROM_REVERTED);
 
         emit RevokeVesting(_holder, _vestingId, nonVested);
     }
@@ -388,7 +388,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     function _assign(address _receiver, uint256 _amount) internal {
         require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_ASSIGN_BALANCE_INCREASE_NOT_ALLOWED);
         // Must use transferFrom() as transfer() does not give the token controller full control
-        require(token.transferFrom(this, _receiver, _amount), ASSIGN_TRANSFER_FROM_REVERTED);
+        require(token.transferFrom(this, _receiver, _amount), ERROR_ASSIGN_TRANSFER_FROM_REVERTED);
     }
 
     function _mint(address _receiver, uint256 _amount) internal {

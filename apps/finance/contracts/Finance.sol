@@ -46,7 +46,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_EXECUTE_PAYMENT_TIME = "FINANCE_EXECUTE_PAYMENT_TIME";
     string private constant ERROR_RECEIVER_EXECUTE_PAYMENT_TIME = "FINANCE_RCVR_EXEC_PAYMENT_TIME";
     string private constant ERROR_PAYMENT_RECEIVER = "FINANCE_PAYMENT_RECEIVER";
-    string private constant TOKEN_TRANSFER_FROM_REVERTED = "FINANCE_TKN_TRANSFER_FROM_REVERT";
+    string private constant ERROR_TOKEN_TRANSFER_FROM_REVERTED = "FINANCE_TKN_TRANSFER_FROM_REVERT";
     string private constant ERROR_VALUE_MISMATCH = "FINANCE_VALUE_MISMATCH";
     string private constant ERROR_PAYMENT_DISABLED = "FINANCE_PAYMENT_DISABLED";
     string private constant ERROR_REMAINING_BUDGET = "FINANCE_REMAINING_BUDGET";
@@ -541,7 +541,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         if (_isExternalDeposit) {
             if (_token != ETH) {
                 // Get the tokens to Finance
-                require(ERC20(_token).transferFrom(msg.sender, this, _amount), TOKEN_TRANSFER_FROM_REVERTED);
+                require(ERC20(_token).transferFrom(msg.sender, this, _amount), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
             } else {
                 // Ensure that the ETH sent with the transaction equals the amount in the deposit
                 require(msg.value == _amount, ERROR_VALUE_MISMATCH);

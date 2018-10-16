@@ -30,8 +30,9 @@ contract Voting is IForwarder, AragonApp {
     string private constant ERROR_INIT_SUPPORT_TOO_BIG = "VOTING_INIT_SUPPORT_TOO_BIG";
     string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPP_TOO_BIG";
     string private constant ERROR_CAN_NOT_VOTE = "VOTING_CAN_NOT_VOTE";
-    string private constant ERROR_CAN_NOT_EXCUTE = "VOTING_CAN_NOT_EXECUTE";
+    string private constant ERROR_CAN_NOT_EXECUTE = "VOTING_CAN_NOT_EXECUTE";
     string private constant ERROR_CAN_NOT_FORWARD = "VOTING_CAN_NOT_FORWARD";
+    string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
 
     enum VoterState { Absent, Yea, Nay }
 
@@ -172,7 +173,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external voteExists(_voteId) {
-        require(canExecute(_voteId), ERROR_CAN_NOT_EXCUTE);
+        require(canExecute(_voteId), ERROR_CAN_NOT_EXECUTE);
         _executeVote(_voteId);
     }
 
@@ -284,7 +285,7 @@ contract Voting is IForwarder, AragonApp {
         vote_.metadata = _metadata;
         vote_.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote_.totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
-        require(vote_.totalVoters > 0);
+        require(vote_.totalVoters > 0, ERROR_NO_VOTING_POWER);
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
 
