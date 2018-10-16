@@ -30,10 +30,7 @@
     {
       "name": "Change period duration",
       "id": "CHANGE_PERIOD_ROLE",
-      "params": [
-        "New period duration",
-        "Old period duration"
-      ]
+      "params": ["New period duration", "Old period duration"]
     },
     {
       "name": "Change budgets",
@@ -48,17 +45,12 @@
     {
       "name": "Execute payments",
       "id": "EXECUTE_PAYMENTS_ROLE",
-      "params": [
-        "Payment ID",
-        "Payment amount"
-      ]
+      "params": ["Payment ID"]
     },
     {
       "name": "Disable payments",
-      "id": "DISABLE_PAYMENTS_ROLE",
-      "params": [
-        "Payment ID"
-      ]
+      "id": "MANAGE_PAYMENTS_ROLE",
+      "params": ["Payment ID", "Payment active"]
     }
   ],
   "path": "contracts/Finance.sol"
