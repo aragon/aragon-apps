@@ -164,15 +164,16 @@ async function loadVoteDescription(vote) {
   }
 
   const path = await app.describeScript(vote.script).toPromise()
-
   vote.description = path
-    .map(step => {
-      const identifier = step.identifier ? ` (${step.identifier})` : ''
-      const app = step.name ? `${step.name}${identifier}` : `${step.to}`
+    ? path
+        .map(step => {
+          const identifier = step.identifier ? ` (${step.identifier})` : ''
+          const app = step.name ? `${step.name}${identifier}` : `${step.to}`
 
-      return `${app}: ${step.description || 'No description'}`
-    })
-    .join('\n')
+          return `${app}: ${step.description || 'No description'}`
+        })
+        .join('\n')
+    : ''
 
   return vote
 }
