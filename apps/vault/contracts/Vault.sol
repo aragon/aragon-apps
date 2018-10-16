@@ -39,17 +39,6 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
         _deposit(_token, _value);
     }
 
-    /*
-    * TODO: Function could be brought back when https://github.com/ethereum/solidity/issues/526 is fixed
-    * @notice Deposit `_value` `_token` to the vault
-    * @param _token Address of the token being transferred
-    * @param _value Amount of tokens being transferred
-    * @param _data Extra data associated with the deposit (currently unused)
-    function deposit(address _token, uint256 _value, bytes _data) external payable isInitialized {
-        _deposit(_token, _value);
-    }
-    */
-
     /**
     * @notice Transfer `_value` `_token` from the Vault to `_to`
     * @param _token Address of the token being transferred
@@ -61,21 +50,15 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
         external
         authP(TRANSFER_ROLE, arr(_token, _to, _value))
     {
-        _transfer(_token, _to, _value, new bytes(0));
-    }
+        require(_value > 0);
 
-    /**
-    * @notice Transfer `_value` `_token` from the Vault to `_to`
-    * @param _token Address of the token being transferred
-    * @param _to Address of the recipient of tokens
-    * @param _value Amount of tokens being transferred
-    * @param _data Extra data associated with the transfer (only used for ETH)
-    */
-    function transfer(address _token, address _to, uint256 _value, bytes _data)
-        external
-        authP(TRANSFER_ROLE, arr(_token, _to, _value))
-    {
-        _transfer(_token, _to, _value, _data);
+        if (_token == ETH) {
+            _to.transfer(_value);
+        } else {
+            require(ERC20(_token).transfer(_to, _value));
+        }
+
+        emit Transfer(_token, _to, _value);
     }
 
     function balance(address _token) public view returns (uint256) {
@@ -106,17 +89,5 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
         }
 
         emit Deposit(_token, msg.sender, _value);
-    }
-
-    function _transfer(address _token, address _to, uint256 _value, bytes _data) internal {
-        require(_value > 0);
-
-        if (_token == ETH) {
-            require(_to.call.value(_value)(_data));
-        } else {
-            require(ERC20(_token).transfer(_to, _value));
-        }
-
-        emit Transfer(_token, _to, _value);
     }
 }
