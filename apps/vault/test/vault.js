@@ -15,6 +15,8 @@ const Vault = artifacts.require('Vault')
 
 const SimpleERC20 = artifacts.require('tokens/SimpleERC20')
 
+const DestinationMock = artifacts.require('DestinationMock')
+
 const NULL_ADDRESS = '0x00'
 
 contract('Vault app', (accounts) => {
@@ -100,6 +102,18 @@ contract('Vault app', (accounts) => {
 
       assert.equal((await getBalance(testAccount)).toString(), initialBalance.add(transferValue).toString(), "should have sent eth")
       assert.equal((await getBalance(vault.address)).toString(), depositValue - transferValue, "should have remaining balance")
+    })
+
+    it('fails transfering ETH if uses more than 2.3k gas', async () => {
+      const transferValue = 10
+
+      const destination = await DestinationMock.new()
+      await vault.sendTransaction( { value: transferValue })
+
+      // Transfer
+      return assertRevert(async () => {
+        await vault.transfer(ETH, destination.address, transferValue)
+      })
     })
 
     it('fails if depositing a different amount of ETH than sent', async () => {
