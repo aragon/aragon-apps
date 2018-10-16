@@ -50,7 +50,7 @@
     {
       "name": "Disable payments",
       "id": "MANAGE_PAYMENTS_ROLE",
-      "params": ["Payment ID"]
+      "params": ["Payment ID", "Payment active"]
     }
   ],
   "path": "contracts/Finance.sol"
