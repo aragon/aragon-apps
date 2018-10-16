@@ -4,8 +4,7 @@ import { isBefore } from 'date-fns/esm'
 import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
-import tokenBalanceOfAtAbi from './abi/token-balanceOfAt.json'
-import tokenDecimalsAbi from './abi/token-decimals.json'
+import tokenAbi from './abi/token-balanceOfAt.json'
 import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
 import AppLayout from './components/AppLayout'
@@ -19,8 +18,6 @@ import {
   voteTypeFromContractEnum,
 } from './vote-utils'
 
-const tokenAbi = [].concat(tokenBalanceOfAtAbi, tokenDecimalsAbi)
-
 class App extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
@@ -32,6 +29,8 @@ class App extends React.Component {
     },
     pctBase: -1,
     tokenAddress: null,
+    tokenDecimals: 18,
+    tokenSymbol: '',
     supportRequiredPct: -1,
     userAccount: '',
     votes: [],
@@ -46,6 +45,7 @@ class App extends React.Component {
 
   constructor(props) {
     super(props)
+
     this.state = {
       createVoteVisible: false,
       currentVoteId: -1,
@@ -151,6 +151,8 @@ class App extends React.Component {
       userAccount,
       votes,
       voteTime,
+      tokenDecimals,
+      tokenSymbol,
     } = this.props
 
     const {
@@ -176,7 +178,7 @@ class App extends React.Component {
             // Open if not executed and now is still before end date
             open: !vote.data.executed && isBefore(new Date(), endDate),
             quorum: safeDiv(vote.data.minAcceptQuorum, pctBase),
-            quorumProgress: getQuorumProgress(vote.data),
+            quorumProgress: getQuorumProgress(vote),
             support: supportRequired,
             userAccountVote: voteTypeFromContractEnum(
               userAccountVotes.get(vote.voteId)
@@ -235,6 +237,8 @@ class App extends React.Component {
                 user={userAccount}
                 ready={voteSidebarOpened}
                 tokenContract={tokenContract}
+                tokenDecimals={tokenDecimals}
+                tokenSymbol={tokenSymbol}
                 onVote={this.handleVote}
                 onExecute={this.handleExecute}
               />
