@@ -18,7 +18,7 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
     */
     function () external payable isInitialized {
         require(msg.data.length == 0);
-        _deposit(ETH, msg.sender, msg.value);
+        _deposit(ETH, msg.value);
     }
 
     /**
@@ -33,22 +33,20 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
     /**
     * @notice Deposit `_value` `_token` to the vault
     * @param _token Address of the token being transferred
-    * @param _from Entity that currently owns the tokens
     * @param _value Amount of tokens being transferred
     */
-    function deposit(address _token, address _from, uint256 _value) external payable isInitialized {
-        _deposit(_token, _from, _value);
+    function deposit(address _token, uint256 _value) external payable isInitialized {
+        _deposit(_token, _value);
     }
 
     /*
     * TODO: Function could be brought back when https://github.com/ethereum/solidity/issues/526 is fixed
     * @notice Deposit `_value` `_token` to the vault
     * @param _token Address of the token being transferred
-    * @param _from Entity that currently owns the tokens
     * @param _value Amount of tokens being transferred
     * @param _data Extra data associated with the deposit (currently unused)
-    function deposit(address _token, address _from, uint256 _value, bytes _data) external payable isInitialized {
-        _deposit(_token, _from, _value);
+    function deposit(address _token, uint256 _value, bytes _data) external payable isInitialized {
+        _deposit(_token, _value);
     }
     */
 
@@ -96,19 +94,18 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
         return false;
     }
 
-    function _deposit(address _token, address _from, uint256 _value) internal {
+    function _deposit(address _token, uint256 _value) internal {
         require(isDepositable());
         require(_value > 0);
-        require(msg.sender == _from);
 
         if (_token == ETH) {
             // Deposit is implicit in this case
             require(msg.value == _value);
         } else {
-            require(ERC20(_token).transferFrom(_from, this, _value));
+            require(ERC20(_token).transferFrom(msg.sender, this, _value));
         }
 
-        emit Deposit(_token, _from, _value);
+        emit Deposit(_token, msg.sender, _value);
     }
 
     function _transfer(address _token, address _to, uint256 _value, bytes _data) internal {
