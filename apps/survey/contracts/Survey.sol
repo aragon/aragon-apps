@@ -19,8 +19,8 @@ contract Survey is AragonApp {
     bytes32 public constant CREATE_SURVEYS_ROLE = keccak256("CREATE_SURVEYS_ROLE");
     bytes32 public constant MODIFY_PARTICIPATION_ROLE = keccak256("MODIFY_PARTICIPATION_ROLE");
 
-    uint64 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
-    uint64 public constant ABSTAIN_VOTE = 0;
+    uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
+    uint256 public constant ABSTAIN_VOTE = 0;
 
     struct OptionCast {
         uint256 optionId;
@@ -116,7 +116,7 @@ contract Survey is AragonApp {
     * @notice Create a new non-binding survey about "`_metadata`"
     * @param _metadata Survey metadata
     * @param _options Number of options voters can decide between
-    * @return surveyId id for newly created survey
+    * x@return surveyId id for newly created survey
     */
     function newSurvey(string _metadata, uint256 _options) external auth(CREATE_SURVEYS_ROLE) returns (uint256 surveyId) {
         surveyId = surveysLength++;
