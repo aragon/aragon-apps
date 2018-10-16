@@ -344,7 +344,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function setPaymentStatus(uint256 _paymentId, bool _active)
         external
-        authP(MANAGE_PAYMENTS_ROLE, arr(_paymentId, uint256(_active)))
+        authP(MANAGE_PAYMENTS_ROLE, arr(_paymentId, uint256(_active ? 1 : 0)))
         paymentExists(_paymentId)
     {
         payments[_paymentId].inactive = !_active;
