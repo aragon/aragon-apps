@@ -176,10 +176,12 @@ export default observe(
         ...state,
         appStateReady,
         tokenDecimalsBase,
-        holders: holders
-          .map(holder => ({ ...holder, balance: new BN(holder.balance) }))
-          .sort((a, b) => b.balance.cmp(a.balance)),
         tokenSupply: new BN(tokenSupply),
+        holders: holders
+          ? holders
+              .map(holder => ({ ...holder, balance: new BN(holder.balance) }))
+              .sort((a, b) => b.balance.cmp(a.balance))
+          : [],
       }
     }),
   {}
