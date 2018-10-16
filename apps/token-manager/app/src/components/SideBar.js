@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { Text, theme } from '@aragon/ui'
 import { formatBalance, stakesPercentages } from '../utils'
+import TokenBadge from './TokenBadge'
 
 const DISTRIBUTION_ITEMS_MAX = 7
 const DISTRIBUTION_COLORS = [
@@ -15,12 +16,11 @@ const DISTRIBUTION_COLORS = [
 ]
 
 const displayedStakes = (accounts, total) => {
-  const positiveAccounts = accounts.filter(({ balance }) => balance > 0)
-  return stakesPercentages(positiveAccounts.map(({ balance }) => balance), {
+  return stakesPercentages(accounts.map(({ balance }) => balance), {
     total,
     maxIncluded: DISTRIBUTION_ITEMS_MAX,
   }).map((stake, index) => ({
-    name: stake.index === -1 ? 'Rest' : positiveAccounts[index].address,
+    name: stake.index === -1 ? 'Rest' : accounts[index].address,
     stake: stake.percentage,
     color: DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length],
   }))
@@ -30,8 +30,22 @@ class SideBar extends React.Component {
   static defaultProps = {
     holders: [],
   }
+  transferableLabel() {
+    const { tokenTransfersEnabled } = this.props
+    if (tokenTransfersEnabled === undefined) {
+      return 'Unknown'
+    }
+    return tokenTransfersEnabled ? 'Yes' : 'No'
+  }
   render() {
-    const { holders, tokenDecimalsBase, tokenSupply } = this.props
+    const {
+      holders,
+      tokenAddress,
+      tokenDecimalsBase,
+      tokenName,
+      tokenSupply,
+      tokenSymbol,
+    } = this.props
     const stakes = displayedStakes(holders, tokenSupply)
     return (
       <Main>
@@ -46,6 +60,20 @@ class SideBar extends React.Component {
               <span>Total Supply</span>
               <span>:</span>
               <strong>{formatBalance(tokenSupply, tokenDecimalsBase)}</strong>
+            </InfoRow>
+            <InfoRow>
+              <span>Transferable</span>
+              <span>:</span>
+              <strong>{this.transferableLabel()}</strong>
+            </InfoRow>
+            <InfoRow>
+              <span>Token</span>
+              <span>:</span>
+              <TokenBadge
+                address={tokenAddress}
+                name={tokenName}
+                symbol={tokenSymbol}
+              />
             </InfoRow>
           </ul>
         </Part>
@@ -98,7 +126,7 @@ const Main = styled.aside`
   min-height: 100%;
 `
 
-const Part = styled.div`
+const Part = styled.section`
   margin-bottom: 55px;
   h1 {
     margin-bottom: 15px;
