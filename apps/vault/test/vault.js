@@ -23,7 +23,6 @@ contract('Vault app', (accounts) => {
   let ETH, ANY_ENTITY, APP_MANAGER_ROLE, TRANSFER_ROLE
 
   const root = accounts[0]
-  const NO_DATA = '0x'
 
   before(async () => {
     const kernelBase = await Kernel.new(true) // petrify immediately
@@ -96,19 +95,11 @@ contract('Vault app', (accounts) => {
       const testAccount = '0xbeef000000000000000000000000000000000000'
       const initialBalance = await getBalance(testAccount)
 
-      // Transfer with data param
-      await vault.transfer(ETH, testAccount, transferValue, NO_DATA)
+      // Transfer
+      await vault.transfer(ETH, testAccount, transferValue)
 
       assert.equal((await getBalance(testAccount)).toString(), initialBalance.add(transferValue).toString(), "should have sent eth")
       assert.equal((await getBalance(vault.address)).toString(), depositValue - transferValue, "should have remaining balance")
-
-      // Transfer without data param
-      /* Waiting for truffle to get overloading...
-      await vault.transfer(ETH, testAccount, transferValue)
-
-      assert.equal((await getBalance(testAccount)).toString(), initialBalance.add(transferValue * 2).toString(), "should have sent eth")
-      assert.equal((await getBalance(vault.address)).toString(), depositValue - transferValue * 2, "should have remaining balance")
-      */
     })
 
     it('fails if depositing a different amount of ETH than sent', async () => {
@@ -149,17 +140,10 @@ contract('Vault app', (accounts) => {
       const tokenReceiver = accounts[2]
       await token.transfer(vault.address, 10)
 
-      // Transfer half with data param
-      await vault.transfer(token.address, tokenReceiver, 5, '')
-
-      assert.equal(await token.balanceOf(tokenReceiver), 5, "receiver should have correct token balance")
-
-      // Transfer half without data param
-      /* Waiting for truffle to get overloading...
+      // Transfer half
       await vault.transfer(token.address, tokenReceiver, 5)
 
-      assert.equal(await token.balanceOf(tokenReceiver), 10, "receiver should have correct token balance")
-      */
+      assert.equal(await token.balanceOf(tokenReceiver), 5, "receiver should have correct token balance")
     })
 
     it('fails if not sufficient token balance available', async () => {
