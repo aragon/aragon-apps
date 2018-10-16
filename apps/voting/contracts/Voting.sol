@@ -23,6 +23,17 @@ contract Voting is IForwarder, AragonApp {
 
     uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
 
+    string private constant ERROR_NO_VOTE = "VOTING_NO_VOTE";
+    string private constant ERROR_INIT_PCTS = "VOTING_INIT_PCTS";
+    string private constant ERROR_CHANGE_SUPPORT_PCTS = "VOTING_CHANGE_SUPPORT_PCTS";
+    string private constant ERROR_CHANGE_QUORUM_PCTS = "VOTING_CHANGE_QUORUM_PCTS";
+    string private constant ERROR_INIT_SUPPORT_TOO_BIG = "VOTING_INIT_SUPPORT_TOO_BIG";
+    string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPP_TOO_BIG";
+    string private constant ERROR_CAN_NOT_VOTE = "VOTING_CAN_NOT_VOTE";
+    string private constant ERROR_CAN_NOT_EXECUTE = "VOTING_CAN_NOT_EXECUTE";
+    string private constant ERROR_CAN_NOT_FORWARD = "VOTING_CAN_NOT_FORWARD";
+    string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
+
     enum VoterState { Absent, Yea, Nay }
 
     struct Vote {
@@ -56,7 +67,7 @@ contract Voting is IForwarder, AragonApp {
     event ChangeMinQuorum(uint256 minAcceptQuorumPct);
 
     modifier voteExists(uint256 _voteId) {
-        require(_voteId < votesLength);
+        require(_voteId < votesLength, ERROR_NO_VOTE);
         _;
     }
 
@@ -78,8 +89,8 @@ contract Voting is IForwarder, AragonApp {
     {
         initialized();
 
-        require(_minAcceptQuorumPct <= _supportRequiredPct);
-        require(_supportRequiredPct < PCT_BASE);
+        require(_minAcceptQuorumPct <= _supportRequiredPct, ERROR_INIT_PCTS);
+        require(_supportRequiredPct < PCT_BASE, ERROR_INIT_SUPPORT_TOO_BIG);
 
         token = _token;
         supportRequiredPct = _supportRequiredPct;
@@ -95,8 +106,8 @@ contract Voting is IForwarder, AragonApp {
         external
         authP(MODIFY_SUPPORT_ROLE, arr(_supportRequiredPct, supportRequiredPct))
     {
-        require(minAcceptQuorumPct <= _supportRequiredPct);
-        require(_supportRequiredPct < PCT_BASE);
+        require(minAcceptQuorumPct <= _supportRequiredPct, ERROR_CHANGE_SUPPORT_PCTS);
+        require(_supportRequiredPct < PCT_BASE, ERROR_CHANGE_SUPPORT_TOO_BIG);
         supportRequiredPct = _supportRequiredPct;
 
         emit ChangeSupportRequired(_supportRequiredPct);
@@ -110,7 +121,7 @@ contract Voting is IForwarder, AragonApp {
         external
         authP(MODIFY_QUORUM_ROLE, arr(_minAcceptQuorumPct, minAcceptQuorumPct))
     {
-        require(_minAcceptQuorumPct <= supportRequiredPct);
+        require(_minAcceptQuorumPct <= supportRequiredPct, ERROR_CHANGE_QUORUM_PCTS);
         minAcceptQuorumPct = _minAcceptQuorumPct;
 
         emit ChangeMinQuorum(_minAcceptQuorumPct);
@@ -151,7 +162,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
     */
     function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external voteExists(_voteId) {
-        require(canVote(_voteId, msg.sender));
+        require(canVote(_voteId, msg.sender), ERROR_CAN_NOT_VOTE);
         _vote(_voteId, _supports, msg.sender, _executesIfDecided);
     }
 
@@ -162,7 +173,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external voteExists(_voteId) {
-        require(canExecute(_voteId));
+        require(canExecute(_voteId), ERROR_CAN_NOT_EXECUTE);
         _executeVote(_voteId);
     }
 
@@ -176,7 +187,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _evmScript Start vote with script
     */
     function forward(bytes _evmScript) public {
-        require(canForward(msg.sender, _evmScript));
+        require(canForward(msg.sender, _evmScript), ERROR_CAN_NOT_FORWARD);
         _newVote(_evmScript, "", true, true);
     }
 
@@ -274,7 +285,7 @@ contract Voting is IForwarder, AragonApp {
         vote_.metadata = _metadata;
         vote_.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote_.totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
-        require(vote_.totalVoters > 0);
+        require(vote_.totalVoters > 0, ERROR_NO_VOTING_POWER);
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
 
