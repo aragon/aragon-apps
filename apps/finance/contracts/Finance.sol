@@ -530,11 +530,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         }
 
         if (_token == ETH) {
-            vault.deposit.value(_amount)(ETH, this, _amount);
+            vault.deposit.value(_amount)(ETH, _amount);
         } else {
             ERC20(_token).approve(vault, _amount);
             // finally we can deposit them
-            vault.deposit(_token, this, _amount);
+            vault.deposit(_token, _amount);
         }
     }
 
