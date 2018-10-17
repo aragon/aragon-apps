@@ -102,13 +102,6 @@ contract('Voting App', accounts => {
             assert.isTrue(await voting.isForwarder())
         })
 
-        it('forwarding creates vote', async () => {
-            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-            const script = encodeCallScript([action])
-            const voteId = createdVoteId(await voting.forward(script, { from: holder51 }))
-            assert.equal(voteId, 0, 'voting should have been created')
-        })
-
         it('can change required support', async () => {
             const receipt = await voting.changeSupportRequiredPct(neededSupport.add(1))
             const events = receipt.logs.filter(x => x.event == 'ChangeSupportRequired')
@@ -202,6 +195,13 @@ contract('Voting App', accounts => {
                 return assertRevert(async () => {
                     await voting.newVote(script, '', { from: holder51 })
                 })
+            })
+
+            it('forwarding creates vote', async () => {
+                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                const script = encodeCallScript([action])
+                const voteId = createdVoteId(await voting.forward(script, { from: holder51 }))
+                assert.equal(voteId, 0, 'voting should have been created')
             })
 
             context('creating vote', () => {
@@ -383,6 +383,23 @@ contract('Voting App', accounts => {
             })
             return assertRevert(async() => {
                 await voting.initialize(token.address, pct16(100), minimumAcceptanceQuorum, votingTime)
+            })
+        })
+    })
+
+    context('empty token', () => {
+        const neededSupport = pct16(50)
+        const minimumAcceptanceQuorum = pct16(20)
+
+        beforeEach(async() => {
+            token = await MiniMeToken.new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
+
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+        })
+
+        it('fails creating a survey if token has no holder', async () => {
+            return assertRevert(async () => {
+              await voting.newVote(EMPTY_SCRIPT, 'metadata')
             })
         })
     })

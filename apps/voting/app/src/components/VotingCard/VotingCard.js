@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import color from 'onecolor'
 import { format } from 'date-fns'
-import { Countdown, Text, Button, Badge, theme } from '@aragon/ui'
+import { Countdown, Text, Button, theme } from '@aragon/ui'
 import VotingOptions from './VotingOptions'
 
 class VotingCard extends React.Component {
@@ -104,13 +104,6 @@ const Question = styled.h1`
 const PastDate = styled.time`
   font-size: 13px;
   color: #98a0a2;
-`
-
-const More = styled.div`
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
 `
 
 const Footer = styled.div`
