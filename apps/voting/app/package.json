@@ -45,12 +45,10 @@
     "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url '.'",
     "build:script": "parcel build src/script.js --out-dir build/"
   },
-  "proxy": "http://localhost:3001",
   "browserslist": [
     ">2%",
     "last 1 edge versions",
     "not ie > 0",
     "not op_mini all"
-  ],
-  "homepage": "."
+  ]
 }

@@ -7,9 +7,9 @@
  *
  * @param {number} num Number to round
  * @param {number} [places=2] Number of places to round to
- * @param {number} Rounded number
+ * @returns {number} Rounded number
  */
 export function round(num, places = 2) {
-  const rounded = +(Math.round(num + 'e+' + places) + 'e-' + places)
-  return Number.isNaN(rounded) ? +num.toFixed(places) : rounded
+  const rounded = Number(Math.round(num + 'e+' + places) + 'e-' + places)
+  return Number.isNaN(rounded) ? Number(num.toFixed(places)) : rounded
 }

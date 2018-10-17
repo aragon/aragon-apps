@@ -34,7 +34,10 @@ class TransferRow extends React.Component {
     })
   }
   handleViewTransaction = () => {
-    const { network: { etherscanBaseUrl }, transactionHash } = this.props
+    const {
+      network: { etherscanBaseUrl },
+      transactionHash,
+    } = this.props
     window.open(`${etherscanBaseUrl}/tx/${transactionHash}`, '_blank')
   }
   handleConfirmMessageDone = () => {
