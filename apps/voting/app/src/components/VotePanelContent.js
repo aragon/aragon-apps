@@ -14,8 +14,9 @@ import {
 } from '@aragon/ui'
 import provideNetwork from '../utils/provideNetwork'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
-import { roundToDecimals } from '../math-utils'
+import { round } from '../math-utils'
 import { pluralize } from '../utils'
+import { getQuorumProgress } from '../vote-utils'
 import VoteSummary from './VoteSummary'
 import VoteStatus from './VoteStatus'
 import VoteSuccess from './VoteSuccess'
@@ -145,16 +146,16 @@ class VotePanelContent extends React.Component {
       return null
     }
 
-    const { endDate, open, quorum, quorumProgress, support } = vote
     const {
       creator,
-      metadata,
-      nay,
-      yea,
-      totalVoters,
       description,
+      endDate,
+      metadata,
+      open,
       snapshotBlock,
     } = vote.data
+    const { minAcceptQuorum } = vote.numData
+    const quorumProgress = getQuorumProgress(vote)
 
     return (
       <React.Fragment>
@@ -164,15 +165,7 @@ class VotePanelContent extends React.Component {
               <Label>{open ? 'Time Remaining:' : 'Status'}</Label>
             </h2>
             <div>
-              {open ? (
-                <Countdown end={endDate} />
-              ) : (
-                <VoteStatus
-                  vote={vote}
-                  support={support}
-                  tokenSupply={totalVoters}
-                />
-              )}
+              {open ? <Countdown end={endDate} /> : <VoteStatus vote={vote} />}
             </div>
             <StyledVoteSuccess vote={vote} />
           </div>
@@ -181,14 +174,14 @@ class VotePanelContent extends React.Component {
               <Label>Total support</Label>
             </h2>
             <div>
-              {roundToDecimals(quorumProgress * 100, 2)}%{' '}
+              {round(quorumProgress * 100, 2)}%{' '}
               <Text size="small" color={theme.textSecondary}>
-                ({roundToDecimals(quorum * 100, 2)}% needed)
+                ({round(minAcceptQuorum * 100, 2)}% needed)
               </Text>
             </div>
             <StyledSummaryBar
               positiveSize={quorumProgress}
-              requiredSize={quorum}
+              requiredSize={minAcceptQuorum}
               show={ready}
               compact
             />
@@ -236,9 +229,7 @@ class VotePanelContent extends React.Component {
         <SidePanelSeparator />
 
         <VoteSummary
-          votesYea={yea}
-          votesNay={nay}
-          support={support}
+          vote={vote}
           tokenSymbol={tokenSymbol}
           tokenDecimals={tokenDecimals}
           ready={ready}
