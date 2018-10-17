@@ -7,6 +7,8 @@ const MiniMeToken = artifacts.require('MiniMeToken')
 
 const getContract = name => artifacts.require(name)
 
+const getEventData = (receipt, event, arg) => receipt.logs.filter(log => log.event == event)[0].args[arg]
+
 contract('Finance App', accounts => {
     let daoFact, financeBase, finance, vaultBase, vault, token1, token2, executionTarget, etherToken = {}
 
@@ -162,9 +164,9 @@ contract('Finance App', accounts => {
 
     it('records ERC20 deposits', async () => {
         await token1.approve(finance.address, 5)
-        await finance.deposit(token1.address, 5, 'ref')
+        const receipt = await finance.deposit(token1.address, 5, 'ref')
 
-        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(1)
+        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date] = await finance.getTransaction(1)
 
         // vault has 100 token1 initially
         assert.equal((await token1.balanceOf(vault.address)).toString(), 100 + 5, 'deposited tokens must be in vault')
@@ -176,7 +178,7 @@ contract('Finance App', accounts => {
         assert.equal(entity, accounts[0], 'entity should be correct')
         assert.isTrue(incoming, 'tx should be incoming')
         assert.equal(date, 1, 'date should be correct')
-        assert.equal(ref, 'ref', 'ref should be correct')
+        assert.equal(getEventData(receipt, 'NewTransaction', 'reference'), 'ref', 'ref should be correct')
     })
 
     it('fails on no value ERC20 deposits', async () => {
@@ -192,7 +194,7 @@ contract('Finance App', accounts => {
 
         const transactionId = receipt.logs.filter(log => log.event == 'NewTransaction')[0].args.transactionId
 
-        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(transactionId)
+        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date] = await finance.getTransaction(transactionId)
 
         assert.equal(await vault.balance(ETH), VAULT_INITIAL_ETH_BALANCE + sentWei, 'deposited ETH must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
@@ -203,7 +205,7 @@ contract('Finance App', accounts => {
         assert.equal(entity, accounts[0], 'entity should be correct')
         assert.isTrue(incoming, 'tx should be incoming')
         assert.equal(date, 1, 'date should be correct')
-        assert.equal(ref, reference, 'ref should be correct')
+        assert.equal(getEventData(receipt, 'NewTransaction', 'reference'), reference, 'ref should be correct')
     })
 
     it('records ETH deposits using fallback', async () => {
@@ -211,7 +213,7 @@ contract('Finance App', accounts => {
         const receipt = await finance.send(sentWei)
         const transactionId = receipt.logs.filter(log => log.event == 'NewTransaction')[0].args.transactionId
 
-        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(transactionId)
+        const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date] = await finance.getTransaction(transactionId)
 
         assert.equal(await vault.balance(ETH), VAULT_INITIAL_ETH_BALANCE + sentWei, 'deposited ETH must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
@@ -222,7 +224,7 @@ contract('Finance App', accounts => {
         assert.equal(entity, accounts[0], 'entity should be correct')
         assert.isTrue(incoming, 'tx should be incoming')
         assert.equal(date, 1, 'date should be correct')
-        assert.equal(ref, 'Ether transfer to Finance app', 'ref should be correct')
+        assert.equal(getEventData(receipt, 'NewTransaction', 'reference'), 'Ether transfer to Finance app', 'ref should be correct')
     })
 
     context('locked tokens', () => {
@@ -239,9 +241,9 @@ contract('Finance App', accounts => {
         })
 
         it('are recovered using Finance#recoverToVault', async () => {
-            await finance.recoverToVault(token1.address)
+            const receipt = await finance.recoverToVault(token1.address)
 
-            const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(1)
+            const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date] = await finance.getTransaction(1)
 
             let finalBalance = await token1.balanceOf(vault.address)
             assert.equal(finalBalance.toString(), initialBalance.plus(5).toString(), 'deposited tokens must be in vault')
@@ -254,7 +256,7 @@ contract('Finance App', accounts => {
             assert.equal(entity, finance.address, 'entity should be correct')
             assert.isTrue(incoming, 'tx should be incoming')
             assert.equal(date, 1, 'date should be correct')
-            assert.equal(ref, 'Recover to Vault', 'ref should be correct')
+            assert.equal(getEventData(receipt, 'NewTransaction', 'reference'), 'Recover to Vault', 'ref should be correct')
         })
 
         it('fail to be recovered using AragonApp#transferToVault', async () => {
@@ -284,9 +286,9 @@ contract('Finance App', accounts => {
         })
 
         it('is recovered using Finance#recoverToVault', async () => {
-            await finance.recoverToVault(ETH)
+            const receipt = await finance.recoverToVault(ETH)
 
-            const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(1)
+            const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date] = await finance.getTransaction(1)
 
             assert.equal(await vault.balance(ETH), VAULT_INITIAL_ETH_BALANCE + lockedETH, 'recovered ETH must be in vault')
             assert.equal((await getBalance(finance.address)).toNumber(), 0, 'finance shouldn\'t have ETH')
@@ -298,7 +300,7 @@ contract('Finance App', accounts => {
             assert.equal(entity, finance.address, 'entity should be correct')
             assert.isTrue(incoming, 'tx should be incoming')
             assert.equal(date, 1, 'date should be correct')
-            assert.equal(ref, 'Recover to Vault', 'ref should be correct')
+            assert.equal(getEventData(receipt, 'NewTransaction', 'reference'), 'Recover to Vault', 'ref should be correct')
         })
 
         it('fails to be recovered using AragonApp#transferToVault', async () => {
@@ -370,9 +372,9 @@ contract('Finance App', accounts => {
         it('records payment', async () => {
             const amount = 10
             // repeats up to 10 times every 2 seconds
-            await finance.newPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
+            const receipt = await finance.newPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
 
-            const [token, receiver, txAmount, initialTime, interval, maxRepeats, ref, disabled, repeats, createdBy] = await finance.getPayment(1)
+            const [token, receiver, txAmount, initialTime, interval, maxRepeats, disabled, repeats, createdBy] = await finance.getPayment(1)
 
             assert.equal(token, token1.address, 'token address should match')
             assert.equal(receiver, recipient, 'receiver should match')
@@ -380,7 +382,7 @@ contract('Finance App', accounts => {
             assert.equal(initialTime, time, 'time should match')
             assert.equal(interval, 2, 'interval should match')
             assert.equal(maxRepeats, 10, 'max repeats should match')
-            assert.equal(ref, 'ref', 'ref should match')
+            assert.equal(getEventData(receipt, 'NewPayment', 'reference'), 'ref', 'ref should match')
             assert.isFalse(disabled, 'should be enabled')
             assert.equal(repeats, 1, 'should be on repeat 1')
             assert.equal(createdBy, accounts[0], 'should have correct creator')
@@ -413,11 +415,11 @@ contract('Finance App', accounts => {
             const amount = 10
 
             // interval 0, repeat 1 (single payment)
-            await finance.newPayment(token1.address, recipient, amount, time, 0, 1, 'ref')
+            const receipt = await finance.newPayment(token1.address, recipient, amount, time, 0, 1, 'ref')
 
             assert.equal((await token1.balanceOf(recipient)).toString(), amount, 'recipient should have received tokens')
 
-            const [periodId, txAmount, paymentId, paymentRepeatNumber, token, entity, isIncoming, date, ref] = await finance.getTransaction(1)
+            const [periodId, txAmount, paymentId, paymentRepeatNumber, token, entity, isIncoming, date] = await finance.getTransaction(1)
             assert.equal(periodId, 0, 'period id should be correct')
             assert.equal(txAmount, amount, 'amount should match')
             assert.equal(paymentId, 0, 'payment id should be 0 for single payment')
@@ -426,7 +428,7 @@ contract('Finance App', accounts => {
             assert.equal(entity, recipient, 'receiver should match')
             assert.isFalse(isIncoming, 'single payment should be outgoing')
             assert.equal(date.toNumber(), time, 'date should be correct')
-            assert.equal(ref, 'ref', 'ref should match')
+            assert.equal(getEventData(receipt, 'NewTransaction', 'reference'), 'ref', 'ref should match')
         })
 
         it('can decrease budget after spending', async () => {
@@ -473,7 +475,7 @@ contract('Finance App', accounts => {
               const repeatNum = index + 1
 
               const transactionId = receipt.logs.filter(log => log.event == 'NewTransaction')[0].args.transactionId
-              const [periodId, txAmount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(transactionId)
+              const [periodId, txAmount, paymentId, paymentRepeatNumber, token, entity, incoming, date] = await finance.getTransaction(transactionId)
 
               assert.equal(txAmount, amount, 'amount should be correct')
               assert.equal(paymentId, 1, 'payment id should be 1')
@@ -584,7 +586,7 @@ contract('Finance App', accounts => {
 
                 const receipt = await finance.send(sentWei, { gas: 3e5 })
                 const transactionId = receipt.logs.filter(log => log.event == 'NewTransaction')[0].args.transactionId
-                const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date, ref] = await finance.getTransaction(transactionId)
+                const [periodId, amount, paymentId, paymentRepeatNumber, token, entity, incoming, date] = await finance.getTransaction(transactionId)
 
                 assert.equal(amount, sentWei, 'app should have received ETH and sent it to vault')
                 assert.equal((await getBalance(vault.address)).toNumber(), prevVaultBalance + sentWei, 'app should have received ETH and sent it to vault')

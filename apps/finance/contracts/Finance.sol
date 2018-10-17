@@ -43,7 +43,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint64 interval;
         uint64 maxRepeats;
         uint64 repeats;
-        string reference;
     }
 
     // Order optimized for storage
@@ -56,7 +55,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint64 paymentRepeatNumber;
         uint64 date;
         uint64 periodId;
-        string reference;
     }
 
     struct TokenStatement {
@@ -96,8 +94,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     event NewPeriod(uint64 indexed periodId, uint64 periodStarts, uint64 periodEnds);
     event SetBudget(address indexed token, uint256 amount, bool hasBudget);
-    event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxRepeats);
-    event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity, uint256 amount);
+    event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxRepeats, string reference);
+    event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity, uint256 amount, string reference);
     event ChangePaymentState(uint256 indexed paymentId, bool disabled);
     event ChangePeriodDuration(uint64 newDuration);
     event PaymentFailure(uint256 paymentId);
@@ -225,7 +223,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         require(settings.budgets[_token] >= _amount || !settings.hasBudget[_token]);
 
         paymentId = paymentsNextIndex++;
-        emit NewPayment(paymentId, _receiver, _maxRepeats);
+        emit NewPayment(paymentId, _receiver, _maxRepeats, _reference);
 
         Payment storage payment = payments[paymentId];
         payment.token = _token;
@@ -234,7 +232,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         payment.initialPaymentTime = _initialPaymentTime;
         payment.interval = _interval;
         payment.maxRepeats = _maxRepeats;
-        payment.reference = _reference;
         payment.createdBy = msg.sender;
 
         if (nextPaymentTime(paymentId) <= getTimestamp64()) {
@@ -387,7 +384,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             uint64 initialPaymentTime,
             uint64 interval,
             uint64 maxRepeats,
-            string reference,
             bool disabled,
             uint64 repeats,
             address createdBy
@@ -403,7 +399,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         maxRepeats = payment.maxRepeats;
         repeats = payment.repeats;
         disabled = payment.disabled;
-        reference = payment.reference;
         createdBy = payment.createdBy;
     }
 
@@ -419,8 +414,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             address token,
             address entity,
             bool isIncoming,
-            uint64 date,
-            string reference
+            uint64 date
         )
     {
         Transaction storage transaction = transactions[_transactionId];
@@ -433,7 +427,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         amount = transaction.amount;
         paymentId = transaction.paymentId;
         paymentRepeatNumber = transaction.paymentRepeatNumber;
-        reference = transaction.reference;
     }
 
     function getPeriod(uint64 _periodId)
@@ -579,7 +572,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 payment.amount,
                 _paymentId,
                 payment.repeats,
-                "" // since paymentId is saved, the payment reference can be fetched
+                ""
             );
         }
     }
@@ -656,14 +649,13 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         transaction.token = _token;
         transaction.entity = _entity;
         transaction.date = getTimestamp64();
-        transaction.reference = _reference;
 
         Period storage period = periods[periodId];
         if (period.firstTransactionId == NO_TRANSACTION) {
             period.firstTransactionId = transactionId;
         }
 
-        emit NewTransaction(transactionId, _incoming, _entity, _amount);
+        emit NewTransaction(transactionId, _incoming, _entity, _amount, _reference);
     }
 
     function _tryTransitionAccountingPeriod(uint256 _maxTransitions) internal returns (bool success) {
