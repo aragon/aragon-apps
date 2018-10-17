@@ -43,7 +43,7 @@ export function percentageList(values, digits = 0) {
  * @returns {number} Rounded number
  */
 export function round(num, decimals = 2) {
-  const rounded = +(Math.round(num + 'e+' + decimals) + 'e-' + decimals)
+  const rounded = Number(Math.round(num + 'e+' + decimals) + 'e-' + decimals)
   return Number.isNaN(rounded) ? +num.toFixed(decimals) : rounded
 }
 
