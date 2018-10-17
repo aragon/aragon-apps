@@ -1,16 +1,17 @@
 import React from 'react'
 import styled from 'styled-components'
 import { theme, IconCross, IconCheck } from '@aragon/ui'
+import provideSettings from '../utils/provideSettings'
 import { getVoteSuccess } from '../vote-utils'
 
-const VoteSuccess = ({ vote, ...props }) => (
+const VoteSuccess = ({ settings, vote, ...props }) => (
   <Main {...props}>
     {(() => {
       if (!vote.open) {
         return 'Voting has ended'
       }
 
-      const success = getVoteSuccess(vote)
+      const success = getVoteSuccess(vote, settings.pctBase)
       const Icon = success ? IconCheck : IconCross
       return (
         <React.Fragment>
@@ -42,4 +43,4 @@ const StatusLabel = styled.span`
   margin-left: 15px;
 `
 
-export default VoteSuccess
+export default provideSettings(VoteSuccess)

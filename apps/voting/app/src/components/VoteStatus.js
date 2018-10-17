@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { theme, IconTime, IconCross, IconCheck } from '@aragon/ui'
+import provideSettings from '../utils/provideSettings'
 import {
   VOTE_STATUS_ONGOING,
   VOTE_STATUS_REJECTED,
@@ -36,8 +37,8 @@ const ATTRIBUTES = {
   },
 }
 
-const VoteStatus = ({ vote, cardStyle }) => {
-  const status = getVoteStatus(vote)
+const VoteStatus = ({ cardStyle, settings, vote }) => {
+  const status = getVoteStatus(vote, settings.pctBase)
   const { label, Icon, color, bold } = ATTRIBUTES[status]
   return (
     <Main
@@ -62,4 +63,4 @@ const StatusLabel = styled.span`
   margin-left: ${({ spaced }) => (spaced ? '5px' : '0')};
 `
 
-export default VoteStatus
+export default provideSettings(VoteStatus)

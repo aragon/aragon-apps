@@ -19,7 +19,7 @@ class VotingCard extends React.Component {
       options,
       endDate,
       question,
-      opened,
+      open,
       totalVoters,
       status,
       id,
@@ -27,7 +27,7 @@ class VotingCard extends React.Component {
     return (
       <Main>
         <Header>
-          {opened ? (
+          {open ? (
             <Countdown end={endDate} />
           ) : (
             <PastDate dateTime={format(endDate, 'yyyy-MM-dd[T]HH:mm:ss')}>

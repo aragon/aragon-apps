@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { isBefore } from 'date-fns/esm'
 import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
+import BN from 'bn.js'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
 import tokenAbi from './abi/token-balanceOfAt.json'
@@ -9,12 +9,12 @@ import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
 import AppLayout from './components/AppLayout'
 import { networkContextType } from './utils/provideNetwork'
-import { safeDiv } from './math-utils'
+import { settingsContextType } from './utils/provideSettings'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
 import {
   EMPTY_CALLSCRIPT,
-  getQuorumProgress,
+  isVoteOpen,
   voteTypeFromContractEnum,
 } from './vote-utils'
 
@@ -23,24 +23,27 @@ class App extends React.Component {
     app: PropTypes.object.isRequired,
   }
   static defaultProps = {
+    appStateReady: false,
     network: {
       etherscanBaseUrl: 'https://rinkeby.etherscan.io',
       name: 'rinkeby',
     },
-    pctBase: -1,
-    tokenAddress: null,
-    tokenDecimals: 18,
     tokenSymbol: '',
-    supportRequiredPct: -1,
     userAccount: '',
     votes: [],
-    voteTime: -1,
   }
   static childContextTypes = {
     network: networkContextType,
+    settings: settingsContextType,
   }
   getChildContext() {
-    return { network: this.props.network }
+    return {
+      network: this.props.network,
+      settings: {
+        pctBase: this.props.pctBase,
+        voteTime: this.props.voteTime,
+      },
+    }
   }
 
   constructor(props) {
@@ -49,7 +52,6 @@ class App extends React.Component {
     this.state = {
       createVoteVisible: false,
       currentVoteId: -1,
-      settingsLoaded: false,
       tokenContract: this.getTokenContract(props.tokenAddress),
       voteVisible: false,
       voteSidebarOpened: false,
@@ -57,15 +59,6 @@ class App extends React.Component {
     }
   }
   componentWillReceiveProps(nextProps) {
-    const { settingsLoaded } = this.state
-
-    // Is this the first time we've loaded the settings?
-    if (!settingsLoaded && hasLoadedVoteSettings(nextProps)) {
-      this.setState({
-        settingsLoaded: true,
-      })
-    }
-
     // Refresh the token contract if its address changes
     if (nextProps.tokenAddress !== this.props.tokenAddress) {
       this.setState({
@@ -146,51 +139,43 @@ class App extends React.Component {
   render() {
     const {
       app,
-      pctBase,
-      supportRequiredPct,
-      userAccount,
-      votes,
-      voteTime,
+      appStateReady,
       tokenDecimals,
       tokenSymbol,
+      userAccount,
+      votes,
     } = this.props
 
     const {
       createVoteVisible,
       currentVoteId,
-      settingsLoaded,
       tokenContract,
       voteSidebarOpened,
       voteVisible,
       userAccountVotes,
     } = this.state
 
-    const displayVotes = settingsLoaded && votes.length > 0
-    const supportRequired = settingsLoaded ? supportRequiredPct / pctBase : -1
+    const now = new Date()
 
     // Add useful properties to the votes
-    const preparedVotes = displayVotes
-      ? votes.map(vote => {
-          const endDate = new Date(vote.data.startDate + voteTime)
-          return {
-            ...vote,
-            endDate,
-            // Open if not executed and now is still before end date
-            open: !vote.data.executed && isBefore(new Date(), endDate),
-            quorum: safeDiv(vote.data.minAcceptQuorum, pctBase),
-            quorumProgress: getQuorumProgress(vote),
-            support: supportRequired,
-            userAccountVote: voteTypeFromContractEnum(
-              userAccountVotes.get(vote.voteId)
-            ),
-          }
-        })
+    const preparedVotes = appStateReady
+      ? votes.map(vote => ({
+          ...vote,
+          data: {
+            ...vote.data,
+            open: isVoteOpen(vote, now),
+          },
+          userAccountVote: voteTypeFromContractEnum(
+            userAccountVotes.get(vote.voteId)
+          ),
+        }))
       : votes
 
     const currentVote =
       currentVoteId === -1
         ? null
         : preparedVotes.find(vote => vote.voteId === currentVoteId)
+    const hasCurrentVote = appStateReady && Boolean(currentVote)
 
     return (
       <AragonApp publicUrl="./aragon-ui/">
@@ -207,7 +192,7 @@ class App extends React.Component {
           </AppLayout.Header>
           <AppLayout.ScrollWrapper>
             <AppLayout.Content>
-              {displayVotes ? (
+              {appStateReady && votes.length > 0 ? (
                 <Votes
                   votes={preparedVotes}
                   onSelectVote={this.handleVoteOpen}
@@ -223,26 +208,23 @@ class App extends React.Component {
           title={`Vote #${currentVoteId} (${
             currentVote && currentVote.open ? 'Open' : 'Closed'
           })`}
-          opened={
-            currentVote && displayVotes && !createVoteVisible && voteVisible
-          }
+          opened={hasCurrentVote && !createVoteVisible && voteVisible}
           onClose={this.handleVoteClose}
           onTransitionEnd={this.handleVoteTransitionEnd}
         >
-          {displayVotes &&
-            currentVote && (
-              <VotePanelContent
-                app={app}
-                vote={currentVote}
-                user={userAccount}
-                ready={voteSidebarOpened}
-                tokenContract={tokenContract}
-                tokenDecimals={tokenDecimals}
-                tokenSymbol={tokenSymbol}
-                onVote={this.handleVote}
-                onExecute={this.handleExecute}
-              />
-            )}
+          {hasCurrentVote && (
+            <VotePanelContent
+              app={app}
+              vote={currentVote}
+              user={userAccount}
+              ready={voteSidebarOpened}
+              tokenContract={tokenContract}
+              tokenDecimals={tokenDecimals}
+              tokenSymbol={tokenSymbol}
+              onVote={this.handleVote}
+              onExecute={this.handleExecute}
+            />
+          )}
         </SidePanel>
 
         <SidePanel
@@ -261,6 +243,66 @@ class App extends React.Component {
 }
 
 export default observe(
-  observable => observable.map(state => ({ ...state })),
+  observable =>
+    observable.map(state => {
+      const appStateReady = hasLoadedVoteSettings(state)
+      if (!appStateReady) {
+        return {
+          ...state,
+          appStateReady,
+        }
+      }
+
+      const { pctBase, supportRequiredPct, tokenDecimals, voteTime } = state
+
+      const pctBaseNum = parseInt(pctBase, 10)
+      const supportRequiredPctNum = parseInt(supportRequiredPct, 10)
+      const tokenDecimalsNum = parseInt(tokenDecimals, 10)
+      const tokenDecimalsBaseNum = Math.pow(10, tokenDecimalsNum)
+
+      return {
+        ...state,
+
+        appStateReady,
+        pctBase: new BN(pctBase),
+        supportRequiredPct: new BN(supportRequiredPct),
+        tokenDecimals: new BN(tokenDecimals),
+
+        numData: {
+          pctBase: pctBaseNum,
+          supportRequiredPct: supportRequiredPctNum,
+          tokenDecimals: tokenDecimalsNum,
+        },
+
+        // Transform the vote data for the frontend
+        votes:
+          state && state.votes
+            ? state.votes.map(vote => {
+                const { data } = vote
+                return {
+                  ...vote,
+                  data: {
+                    ...data,
+                    endDate: new Date(data.startDate + voteTime),
+                    minAcceptQuorum: new BN(data.minAcceptQuorum),
+                    nay: new BN(data.nay),
+                    totalVoters: new BN(data.totalVoters),
+                    yea: new BN(data.yea),
+                    supportRequiredPct: new BN(supportRequiredPct),
+                  },
+                  numData: {
+                    minAcceptQuorum:
+                      parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
+                    nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
+                    totalVoters:
+                      parseInt(data.totalVoters, 10) / tokenDecimalsBaseNum,
+                    yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,
+                    supportRequiredPct: supportRequiredPctNum / pctBaseNum,
+                  },
+                }
+              })
+            : [],
+      }
+    }),
   {}
 )(App)

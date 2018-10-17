@@ -19,6 +19,7 @@
   },
   "plugins": ["prettier", "react"],
   "rules": {
+    "valid-jsdoc": "error",
     "react/prop-types": 0,
     "prettier/prettier": [
       "error",
