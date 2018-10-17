@@ -1,4 +1,13 @@
-export function formatNumber(num, decimals = 2) {
+/**
+ * Format numbers for a given number of decimal places
+ *
+ * @param {number} num Number to round
+ * @param {number} [decimals=2] Number of decimals to round to
+ * @param {Object} [options] Options object
+ * @param {bool} [options.truncate=true] Whether to truncate the trailing decimals (if they're 0)
+ * @returns {String} Formatted number
+ */
+export function formatNumber(num, decimals = 2, { truncate = true } = {}) {
   const multiplicator = Math.pow(10, decimals)
   const roundedNum = Math.round(num * multiplicator) / multiplicator
   const numString = String(roundedNum)
@@ -8,11 +17,14 @@ export function formatNumber(num, decimals = 2) {
   }
 
   const [whole, decimal = ''] = numString.split('.')
-  return `${whole}.${
-    decimal.length > decimal
-      ? decimal.slice(0, decimals)
-      : decimal.padEnd(decimals, '0')
-  }`
+  const trimmedDecimals = truncate ? decimal.replace(/0+$/, '') : decimals
+  return trimmedDecimals.length
+    ? `${whole}.${
+        trimmedDecimals.length > decimals
+          ? trimmedDecimals.slice(0, decimals)
+          : trimmedDecimals
+      }`
+    : whole
 }
 
 export function percentageList(values, digits = 0) {
@@ -27,12 +39,12 @@ export function percentageList(values, digits = 0) {
  * Fixed for NaNs on really small values
  *
  * @param {number} num Number to round
- * @param {number} [places=2] Number of places to round to
- * @param {number} Rounded number
+ * @param {number} [decimals=2] Number of decimals to round to
+ * @returns {number} Rounded number
  */
-export function round(num, places = 2) {
-  const rounded = +(Math.round(num + 'e+' + places) + 'e-' + places)
-  return Number.isNaN(rounded) ? +num.toFixed(places) : rounded
+export function round(num, decimals = 2) {
+  const rounded = +(Math.round(num + 'e+' + decimals) + 'e-' + decimals)
+  return Number.isNaN(rounded) ? +num.toFixed(decimals) : rounded
 }
 
 // Return 0 if denominator is 0 to avoid NaNs
