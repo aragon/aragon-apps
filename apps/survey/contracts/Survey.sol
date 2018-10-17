@@ -127,7 +127,7 @@ contract Survey is AragonApp {
     * @notice Create a new non-binding survey about "`_metadata`"
     * @param _metadata Survey metadata
     * @param _options Number of options voters can decide between
-    * x@return surveyId id for newly created survey
+    * @return surveyId id for newly created survey
     */
     function newSurvey(string _metadata, uint256 _options) external auth(CREATE_SURVEYS_ROLE) returns (uint256 surveyId) {
         surveyId = surveysLength++;
