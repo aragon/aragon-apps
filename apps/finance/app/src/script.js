@@ -276,6 +276,7 @@ function marshallTransactionDetails({
  * RINKEBY TEST STATE *
  *                    *
  **********************/
+
 function loadTestnetState(nextState, settings) {
   // Reload all the test tokens' balances for this DAO's vault
   return loadTestnetTokenBalances(nextState, settings)
