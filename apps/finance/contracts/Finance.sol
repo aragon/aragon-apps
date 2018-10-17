@@ -25,12 +25,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     bytes32 public constant EXECUTE_PAYMENTS_ROLE = keccak256("EXECUTE_PAYMENTS_ROLE");
     bytes32 public constant MANAGE_PAYMENTS_ROLE = keccak256("MANAGE_PAYMENTS_ROLE");
 
-    uint64 public constant MAX_PAYMENTS_PER_TX = 20;
-
-    uint256 internal constant MAX_UINT = uint256(-1);
-    uint64 internal constant MAX_UINT64 = uint64(-1);
     uint256 internal constant NO_PAYMENT = 0;
     uint256 internal constant NO_TRANSACTION = 0;
+    uint256 internal constant MAX_PAYMENTS_PER_TX = 20;
+    uint256 internal constant MAX_UINT = uint256(-1);
+    uint64 internal constant MAX_UINT64 = uint64(-1);
 
     string private constant ERROR_COMPLETE_TRANSITION = "FINANCE_COMPLETE_TRANSITION";
     string private constant ERROR_NO_PAYMENT = "FINANCE_NO_PAYMENT";
