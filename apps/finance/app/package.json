@@ -4,7 +4,7 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@aragon/client": "^1.0.0-beta.8",
+    "@aragon/client": "^1.0.0",
     "@aragon/templates-tokens": "^1.1.1",
     "@aragon/ui": "^0.21.0",
     "copy-to-clipboard": "^3.0.8",
