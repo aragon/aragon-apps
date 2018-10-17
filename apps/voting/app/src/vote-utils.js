@@ -36,18 +36,29 @@ export function getVoteStatus(vote, pctBase) {
 }
 
 export function getVoteSuccess(vote, pctBase) {
-  const { yea, nay, minAcceptQuorum, supportRequiredPct } = vote.data
+  const {
+    yea,
+    minAcceptQuorum,
+    nay,
+    supportRequiredPct,
+    totalVoters,
+  } = vote.data
 
-  // Mirror on-chain calculation
   const totalVotes = yea.add(nay)
   if (totalVotes.isZero()) {
     return false
   }
   const yeaPct = yea.mul(pctBase).div(totalVotes)
+  const yeaOfTotalPowerPct = yea.mul(pctBase).div(totalVoters)
 
-  // yea / totalVotes > supportRequiredPct
-  // yea / totalVotes > minAcceptQuorum
-  return yeaPct.gt(supportRequiredPct) && yeaPct.gt(minAcceptQuorum)
+  // Mirror on-chain calculation
+  // yea / votingPower > supportRequiredPct ||
+  //   (yea / totalVotes > supportRequiredPct &&
+  //    yea / votingPower > minAcceptQuorum)
+  return (
+    yeaOfTotalPowerPct.gt(supportRequiredPct) ||
+    (yeaPct.gt(supportRequiredPct) && yeaOfTotalPowerPct.gt(minAcceptQuorum))
+  )
 }
 
 // Enums are not supported by the ABI yet:
