@@ -253,7 +253,13 @@ export default observe(
         }
       }
 
-      const { pctBase, supportRequiredPct, tokenDecimals, voteTime } = state
+      const {
+        pctBase,
+        supportRequiredPct,
+        tokenDecimals,
+        voteTime,
+        votes,
+      } = state
 
       const pctBaseNum = parseInt(pctBase, 10)
       const supportRequiredPctNum = parseInt(supportRequiredPct, 10)
@@ -275,33 +281,32 @@ export default observe(
         },
 
         // Transform the vote data for the frontend
-        votes:
-          state && state.votes
-            ? state.votes.map(vote => {
-                const { data } = vote
-                return {
-                  ...vote,
-                  data: {
-                    ...data,
-                    endDate: new Date(data.startDate + voteTime),
-                    minAcceptQuorum: new BN(data.minAcceptQuorum),
-                    nay: new BN(data.nay),
-                    totalVoters: new BN(data.totalVoters),
-                    yea: new BN(data.yea),
-                    supportRequiredPct: new BN(supportRequiredPct),
-                  },
-                  numData: {
-                    minAcceptQuorum:
-                      parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
-                    nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
-                    totalVoters:
-                      parseInt(data.totalVoters, 10) / tokenDecimalsBaseNum,
-                    yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,
-                    supportRequiredPct: supportRequiredPctNum / pctBaseNum,
-                  },
-                }
-              })
-            : [],
+        votes: votes
+          ? votes.map(vote => {
+              const { data } = vote
+              return {
+                ...vote,
+                data: {
+                  ...data,
+                  endDate: new Date(data.startDate + voteTime),
+                  minAcceptQuorum: new BN(data.minAcceptQuorum),
+                  nay: new BN(data.nay),
+                  totalVoters: new BN(data.totalVoters),
+                  yea: new BN(data.yea),
+                  supportRequiredPct: new BN(supportRequiredPct),
+                },
+                numData: {
+                  minAcceptQuorum:
+                    parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
+                  nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
+                  totalVoters:
+                    parseInt(data.totalVoters, 10) / tokenDecimalsBaseNum,
+                  yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,
+                  supportRequiredPct: supportRequiredPctNum / pctBaseNum,
+                },
+              }
+            })
+          : [],
       }
     }),
   {}
