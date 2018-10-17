@@ -10,19 +10,28 @@ import {
   TextInput,
   theme,
 } from '@aragon/ui'
-import { addressPattern, isAddress } from '../web3-utils'
+import { toDecimals } from '../lib/math-utils'
+import { addressPattern, isAddress } from '../lib/web3-utils'
+
+const NO_ERROR = Symbol('NO_ERROR')
+const RECEIPIENT_NOT_ADDRESS_ERROR = Symbol('RECEIPIENT_NOT_ADDRESS_ERROR')
+const BALANCE_NOT_ENOUGH_ERROR = Symbol('BALANCE_NOT_ENOUGH_ERROR')
+const DECIMALS_TOO_MANY_ERROR = Symbol('DECIMALS_TOO_MANY_ERROR')
 
 const initialState = {
-  selectedToken: 0,
+  amount: {
+    error: NO_ERROR,
+    value: '',
+  },
   recipient: {
-    error: null,
+    error: NO_ERROR,
     value: '',
   },
   reference: '',
-  amount: '',
+  selectedToken: 0,
 }
 
-class NewTransfer extends React.Component {
+class NewTransferPanelContent extends React.Component {
   static defaultProps = {
     onTransfer: () => {},
   }
@@ -39,13 +48,21 @@ class NewTransfer extends React.Component {
       this.setState({ ...initialState })
     }
   }
+  handleAmountUpdate = event => {
+    this.setState({
+      amount: {
+        error: NO_ERROR,
+        value: event.target.value,
+      },
+    })
+  }
   handleSelectToken = index => {
     this.setState({ selectedToken: index })
   }
   handleRecipientUpdate = event => {
     this.setState({
       recipient: {
-        error: null,
+        error: NO_ERROR,
         value: event.target.value,
       },
     })
@@ -53,34 +70,54 @@ class NewTransfer extends React.Component {
   handleReferenceUpdate = event => {
     this.setState({ reference: event.target.value })
   }
-  handleAmountUpdate = event => {
-    this.setState({ amount: event.target.value })
-  }
   handleTransfer = event => {
     event.preventDefault()
     const { onTransfer, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
+
+    const token = tokens[selectedToken]
     const recipientAddress = recipient.value.trim()
-    if (isAddress(recipientAddress)) {
-      onTransfer(
-        tokens[selectedToken],
-        recipientAddress,
-        Number(amount),
-        reference
-      )
-    } else {
+    // Adjust but without truncation in case the user entered a value with more
+    // decimals than possible
+    const adjustedAmount = toDecimals(amount.value, token.decimals, {
+      truncate: false,
+    })
+    const amountTooBig = Number(adjustedAmount) > token.amount
+
+    if (!isAddress(recipientAddress)) {
       this.setState(({ recipient }) => ({
         recipient: {
           ...recipient,
-          error: true,
+          error: RECEIPIENT_NOT_ADDRESS_ERROR,
         },
       }))
+    } else if (amountTooBig || adjustedAmount.indexOf('.') !== -1) {
+      this.setState(({ amount }) => ({
+        amount: {
+          ...amount,
+          error: amountTooBig
+            ? BALANCE_NOT_ENOUGH_ERROR
+            : DECIMALS_TOO_MANY_ERROR,
+        },
+      }))
+    } else {
+      onTransfer(token.address, recipientAddress, adjustedAmount, reference)
     }
   }
   render() {
     const { onClose, title, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
     const symbols = tokens.map(({ symbol }) => symbol)
+
+    let errorMessage
+    if (recipient.error === RECEIPIENT_NOT_ADDRESS_ERROR) {
+      errorMessage = 'Recipient must be a valid Ethereum address'
+    } else if (amount.error === BALANCE_NOT_ENOUGH_ERROR) {
+      errorMessage = 'Amount is greater than balance held by vault'
+    } else if (amount.error === DECIMALS_TOO_MANY_ERROR) {
+      errorMessage = 'Amount contains too many decimal places'
+    }
+
     return tokens.length ? (
       <form onSubmit={this.handleTransfer}>
         <h1>{title}</h1>
@@ -105,7 +142,7 @@ class NewTransfer extends React.Component {
           </label>
           <CombinedInput>
             <TextInput.Number
-              value={amount}
+              value={amount.value}
               onChange={this.handleAmountUpdate}
               min={0}
               step="any"
@@ -131,9 +168,7 @@ class NewTransfer extends React.Component {
             Submit Transfer
           </Button>
         </ButtonWrapper>
-        {recipient.error && (
-          <ValidationError message="Recipient must be a valid Ethereum address" />
-        )}
+        {errorMessage && <ValidationError message={errorMessage} />}
       </form>
     ) : (
       <div>
@@ -176,7 +211,7 @@ const ValidationError = ({ message }) => (
   <ValidationErrorBlock>
     <IconCross />
     <Text size="small" style={{ marginLeft: '10px' }}>
-      Recipient must be a valid Ethereum address
+      {message}
     </Text>
   </ValidationErrorBlock>
 )
@@ -185,4 +220,4 @@ const ValidationErrorBlock = styled.p`
   margin-top: 15px;
 `
 
-export default NewTransfer
+export default NewTransferPanelContent

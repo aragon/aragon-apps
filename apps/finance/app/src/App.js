@@ -1,9 +1,10 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
+import BN from 'bn.js'
 import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
 import Balances from './components/Balances'
-import NewTransfer from './components/NewTransfer'
+import NewTransferPanelContent from './components/NewTransferPanelContent'
 import Transfers from './components/Transfers'
 import { networkContextType } from './lib/provideNetwork'
 
@@ -34,17 +35,12 @@ class App extends React.Component {
   handleNewTransferClose = () => {
     this.setState({ newTransferOpened: false })
   }
-  handleSubmitTransfer = (
-    { decimals, address: tokenAddress },
-    recipient,
-    amount,
-    reference
-  ) => {
+  handleSubmitTransfer = (tokenAddress, recipient, amount, reference) => {
     // Immediate, one-time payment
     this.props.app.newPayment(
       tokenAddress,
       recipient,
-      amount * Math.pow(10, decimals),
+      amount,
       0, // initial payment time
       0, // interval
       1, // max repeats
@@ -55,12 +51,15 @@ class App extends React.Component {
   render() {
     const { balances, transactions } = this.props
     const { newTransferOpened } = this.state
-    const tokens = balances.map(({ address, symbol, decimals }) => ({
-      address,
-      symbol,
-      decimals,
-    }))
-    const paymentPossibleTokens = balances.filter(({ amount }) => amount)
+    const tokens = balances.map(
+      ({ address, symbol, numData: { amount, decimals } }) => ({
+        address,
+        amount,
+        decimals,
+        symbol,
+      })
+    )
+    const paymentPossibleTokens = tokens.filter(({ amount }) => amount)
     return (
       <AragonApp publicUrl="./aragon-ui/">
         <Layout>
@@ -90,7 +89,7 @@ class App extends React.Component {
           onClose={this.handleNewTransferClose}
           title="New Transfer"
         >
-          <NewTransfer
+          <NewTransferPanelContent
             opened={newTransferOpened}
             tokens={paymentPossibleTokens}
             onClose={this.handleNewTransferClose}
@@ -134,6 +133,34 @@ Layout.ScrollWrapper = styled.div`
 `
 
 export default observe(
-  observable => observable.map(state => ({ ...state })),
+  observable =>
+    observable.map(state => {
+      const { balances, transactions } = state || {}
+      // Note that numbers in `numData` are not safe for accurate computations
+      // (but are useful for making divisions easier)
+      return {
+        ...state,
+        balances: balances
+          ? balances.map(balance => ({
+              ...balance,
+              amount: new BN(balance.amount),
+              decimals: new BN(balance.decimals),
+              numData: {
+                amount: parseInt(balance.amount, 10),
+                decimals: parseInt(balance.decimals, 10),
+              },
+            }))
+          : [],
+        transactions: transactions
+          ? transactions.map(transaction => ({
+              ...transaction,
+              amount: new BN(transaction.amount),
+              numData: {
+                amount: parseInt(transaction.amount, 10),
+              },
+            }))
+          : [],
+      }
+    }),
   {}
 )(App)
