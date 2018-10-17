@@ -1,4 +1,4 @@
-import { safeDiv } from './math-utils'
+import { isBefore } from 'date-fns'
 import {
   VOTE_ABSENT,
   VOTE_YEA,
@@ -14,25 +14,51 @@ export const EMPTY_CALLSCRIPT = '0x00000001'
 export const getAccountVote = (account, voters) =>
   voters[account] || VOTE_ABSENT
 
-export const getVoteStatus = vote => {
-  const { open, support, quorum } = vote
-  const { yea, nay, executed } = vote.data
+export function isVoteOpen(vote, date) {
+  const { executed, endDate } = vote.data
+  // Open if not executed and date is still before end date
+  return !executed && isBefore(date, endDate)
+}
 
-  if (executed) {
+export const getQuorumProgress = ({ numData: { yea, totalVoters } }) =>
+  yea / totalVoters
+
+export function getVoteStatus(vote, pctBase) {
+  if (vote.data.executed) {
     return VOTE_STATUS_EXECUTED
   }
-
-  const totalVotes = yea + nay
-  const hasSupport = yea / totalVotes >= support
-  const hasMinQuorum = getQuorumProgress(vote.data) >= quorum
-
-  if (open) {
+  if (vote.open) {
     return VOTE_STATUS_ONGOING
   }
-
-  return hasSupport && hasMinQuorum
+  return getVoteSuccess(vote, pctBase)
     ? VOTE_STATUS_ACCEPTED
     : VOTE_STATUS_REJECTED
+}
+
+export function getVoteSuccess(vote, pctBase) {
+  const {
+    yea,
+    minAcceptQuorum,
+    nay,
+    supportRequiredPct,
+    totalVoters,
+  } = vote.data
+
+  const totalVotes = yea.add(nay)
+  if (totalVotes.isZero()) {
+    return false
+  }
+  const yeaPct = yea.mul(pctBase).div(totalVotes)
+  const yeaOfTotalPowerPct = yea.mul(pctBase).div(totalVoters)
+
+  // Mirror on-chain calculation
+  // yea / votingPower > supportRequiredPct ||
+  //   (yea / totalVotes > supportRequiredPct &&
+  //    yea / votingPower > minAcceptQuorum)
+  return (
+    yeaOfTotalPowerPct.gt(supportRequiredPct) ||
+    (yeaPct.gt(supportRequiredPct) && yeaOfTotalPowerPct.gt(minAcceptQuorum))
+  )
 }
 
 // Enums are not supported by the ABI yet:
@@ -46,6 +72,3 @@ export function voteTypeFromContractEnum(value) {
   }
   return VOTE_ABSENT
 }
-
-export const getQuorumProgress = ({ yea, totalVoters }) =>
-  safeDiv(yea, totalVoters)

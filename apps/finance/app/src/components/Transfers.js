@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { compareDesc } from 'date-fns/esm'
+import { compareDesc } from 'date-fns'
 import {
   Button,
   Table,
@@ -10,7 +10,7 @@ import {
   theme,
 } from '@aragon/ui'
 import * as TransferTypes from '../transfer-types'
-import { addressesEqual, toChecksumAddress } from '../web3-utils'
+import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import TransferRow from './TransferRow'
 
 const TRANSFER_TYPES = [
@@ -148,8 +148,8 @@ class Transfers extends React.Component {
                 .map(transfer => (
                   <TransferRow
                     key={transfer.transactionHash}
-                    {...tokenDetails[toChecksumAddress(transfer.token)]}
-                    {...transfer}
+                    token={tokenDetails[toChecksumAddress(transfer.token)]}
+                    transaction={transfer}
                   />
                 ))}
             </FixedTable>

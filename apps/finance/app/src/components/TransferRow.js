@@ -1,14 +1,13 @@
 import React from 'react'
 import styled from 'styled-components'
 import copy from 'copy-to-clipboard'
-import { format } from 'date-fns/esm'
+import { format } from 'date-fns'
 import {
   TableRow,
   TableCell,
   ContextMenu,
   ContextMenuItem,
   SafeLink,
-  formatHtmlDatetime,
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
@@ -25,7 +24,7 @@ class TransferRow extends React.Component {
       'https://app.aragon.one/#/finance/finance?params=' +
         encodeURIComponent(
           JSON.stringify({
-            transaction: this.props.transactionHash,
+            transaction: this.props.transaction.transactionHash,
           })
         )
     )
@@ -34,7 +33,10 @@ class TransferRow extends React.Component {
     })
   }
   handleViewTransaction = () => {
-    const { network: { etherscanBaseUrl }, transactionHash } = this.props
+    const {
+      network: { etherscanBaseUrl },
+      transaction: { transactionHash },
+    } = this.props
     window.open(`${etherscanBaseUrl}/tx/${transactionHash}`, '_blank')
   }
   handleConfirmMessageDone = () => {
@@ -44,16 +46,19 @@ class TransferRow extends React.Component {
   }
   render() {
     const {
-      amount,
-      date,
-      decimals,
-      entity,
-      isIncoming,
       network: { etherscanBaseUrl },
-      reference,
-      symbol,
+      token,
+      transaction,
     } = this.props
     const { showCopyTransferMessage } = this.state
+    const {
+      date,
+      entity,
+      isIncoming,
+      numData: { amount },
+      reference,
+    } = transaction
+    const { decimals, symbol } = token
     const formattedAmount = formatTokenAmount(
       amount,
       isIncoming,
@@ -61,12 +66,12 @@ class TransferRow extends React.Component {
       true,
       { rounding: 5 }
     )
-    const formattedDate = formatHtmlDatetime(date)
+    const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
     return (
       <TableRow>
         <NoWrapCell>
           <time dateTime={formattedDate} title={formattedDate}>
-            {format(date, 'DD/MM/YY')}
+            {format(date, 'dd/MM/yy')}
           </time>
         </NoWrapCell>
         <NoWrapCell>

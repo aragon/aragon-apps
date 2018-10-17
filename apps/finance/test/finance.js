@@ -13,7 +13,7 @@ contract('Finance App', accounts => {
     let daoFact, financeBase, finance, vaultBase, vault, token1, token2, executionTarget, etherToken = {}
 
     let ETH, MAX_UINT64, ANY_ENTITY, APP_MANAGER_ROLE
-    let CREATE_PAYMENTS_ROLE, CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, DISABLE_PAYMENTS_ROLE
+    let CREATE_PAYMENTS_ROLE, CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, MANAGE_PAYMENTS_ROLE
     let TRANSFER_ROLE
 
     const root = accounts[0]
@@ -41,7 +41,7 @@ contract('Finance App', accounts => {
         CHANGE_PERIOD_ROLE = await financeBase.CHANGE_PERIOD_ROLE()
         CHANGE_BUDGETS_ROLE = await financeBase.CHANGE_BUDGETS_ROLE()
         EXECUTE_PAYMENTS_ROLE = await financeBase.EXECUTE_PAYMENTS_ROLE()
-        DISABLE_PAYMENTS_ROLE = await financeBase.DISABLE_PAYMENTS_ROLE()
+        MANAGE_PAYMENTS_ROLE = await financeBase.MANAGE_PAYMENTS_ROLE()
         TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
     })
 
@@ -72,7 +72,7 @@ contract('Finance App', accounts => {
         await acl.createPermission(ANY_ENTITY, financeApp.address, CHANGE_PERIOD_ROLE, root, { from: root })
         await acl.createPermission(ANY_ENTITY, financeApp.address, CHANGE_BUDGETS_ROLE, root, { from: root })
         await acl.createPermission(ANY_ENTITY, financeApp.address, EXECUTE_PAYMENTS_ROLE, root, { from: root })
-        await acl.createPermission(ANY_ENTITY, financeApp.address, DISABLE_PAYMENTS_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ENTITY, financeApp.address, MANAGE_PAYMENTS_ROLE, root, { from: root })
 
         const recoveryVault = await setupRecoveryVault(dao)
 
@@ -101,7 +101,7 @@ contract('Finance App', accounts => {
         await token1.generateTokens(accounts[0], 10)
         token2 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token2.generateTokens(vault.address, 200)
-        await vault.deposit(ETH, accounts[0], VAULT_INITIAL_ETH_BALANCE, { value: VAULT_INITIAL_ETH_BALANCE });
+        await vault.deposit(ETH, VAULT_INITIAL_ETH_BALANCE, { value: VAULT_INITIAL_ETH_BALANCE, from: accounts[0] });
 
         await finance.mock_setTimestamp(START_TIME)
         await finance.initialize(vault.address, PERIOD_DURATION)
@@ -669,13 +669,20 @@ contract('Finance App', accounts => {
                 })
             })
 
-            it('fails executing disabled payment', async () => {
-                await finance.setPaymentDisabled(1, true)
+            it('fails executing inactive payment', async () => {
+                await finance.setPaymentStatus(1, false)
                 await finance.mock_setTimestamp(time + 1)
 
                 return assertRevert(async () => {
                     await finance.executePayment(1, { from: recipient })
                 })
+            })
+
+            it('succeeds payment after setting payment status to active', async () => {
+                await finance.setPaymentStatus(1, true)
+                await finance.mock_setTimestamp(time + 1)
+
+                await finance.executePayment(1, { from: recipient })
             })
         })
 
