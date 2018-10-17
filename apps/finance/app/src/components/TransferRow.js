@@ -24,7 +24,7 @@ class TransferRow extends React.Component {
       'https://app.aragon.one/#/finance/finance?params=' +
         encodeURIComponent(
           JSON.stringify({
-            transaction: this.props.transactionHash,
+            transaction: this.props.transaction.transactionHash,
           })
         )
     )
@@ -35,7 +35,7 @@ class TransferRow extends React.Component {
   handleViewTransaction = () => {
     const {
       network: { etherscanBaseUrl },
-      transactionHash,
+      transaction: { transactionHash },
     } = this.props
     window.open(`${etherscanBaseUrl}/tx/${transactionHash}`, '_blank')
   }
@@ -46,16 +46,19 @@ class TransferRow extends React.Component {
   }
   render() {
     const {
-      amount,
-      date,
-      decimals,
-      entity,
-      isIncoming,
       network: { etherscanBaseUrl },
-      reference,
-      symbol,
+      token,
+      transaction,
     } = this.props
     const { showCopyTransferMessage } = this.state
+    const {
+      date,
+      entity,
+      isIncoming,
+      numData: { amount },
+      reference,
+    } = transaction
+    const { decimals, symbol } = token
     const formattedAmount = formatTokenAmount(
       amount,
       isIncoming,
