@@ -7,7 +7,6 @@
     "standard",
     "standard-react",
     "prettier",
-    "prettier/flowtype",
     "prettier/react"
   ],
   "parser": "babel-eslint",
@@ -20,6 +19,7 @@
   },
   "plugins": ["prettier", "react"],
   "rules": {
+    "valid-jsdoc": "error",
     "react/prop-types": 0,
     "prettier/prettier": [
       "error",
@@ -28,8 +28,7 @@
         "semi": false,
         "trailingComma": "es5",
         "bracketSpacing": true,
-        "jsxBracketSameLine": false,
-        "parser": "flow"
+        "jsxBracketSameLine": false
       }
     ],
     "linebreak-style": ["error", "unix"]
