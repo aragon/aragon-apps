@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import copy from 'copy-to-clipboard'
-import { format } from 'date-fns/esm'
+import { format } from 'date-fns'
 import {
   TableRow,
   TableCell,
