@@ -84,7 +84,7 @@ DateInput.propTypes = {
 }
 
 DateInput.defaultProps = {
-  format: 'LL/dd/YYYY',
+  format: 'LL/dd/yyyy',
   onChange: () => {}
 }
 

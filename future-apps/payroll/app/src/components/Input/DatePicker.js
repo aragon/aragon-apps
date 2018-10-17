@@ -251,9 +251,9 @@ DatePicker.defaultProps = {
   onSelect: () => {},
   dayFormat: 'd',
   monthFormat: 'MMMM',
-  monthYearFormat: 'MMMM YYYY',
+  monthYearFormat: 'MMMM yyyy',
   weekDayFormat: 'eee',
-  yearFormat: 'YYYY'
+  yearFormat: 'yyyy'
 }
 
 export default DatePicker
