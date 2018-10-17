@@ -30,8 +30,10 @@ class VotingCard extends React.Component {
           {open ? (
             <Countdown end={endDate} />
           ) : (
-            <PastDate dateTime={format(endDate, 'yyyy-MM-dd[T]HH:mm:ss')}>
-              {format(endDate, 'dd MMM yyyy HH:mm')}
+            <PastDate
+              dateTime={format(endDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")}
+            >
+              {format(endDate, 'EEEEEE MMM yyyy HH:mm')}
             </PastDate>
           )}
 

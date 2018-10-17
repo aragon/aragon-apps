@@ -8,7 +8,6 @@ import {
   ContextMenu,
   ContextMenuItem,
   SafeLink,
-  formatHtmlDatetime,
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
@@ -61,12 +60,12 @@ class TransferRow extends React.Component {
       true,
       { rounding: 5 }
     )
-    const formattedDate = formatHtmlDatetime(date)
+    const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
     return (
       <TableRow>
         <NoWrapCell>
           <time dateTime={formattedDate} title={formattedDate}>
-            {format(date, 'DD/MM/YY')}
+            {format(date, 'dd/MM/yy')}
           </time>
         </NoWrapCell>
         <NoWrapCell>
