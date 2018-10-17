@@ -1,7 +1,7 @@
 import Aragon from '@aragon/client'
-import { combineLatest, of } from './rxjs'
-import { testTokenAddresses } from './testnet'
-import { addressesEqual } from './web3-utils'
+import { of } from './rxjs'
+import { getTestTokenAddresses } from './testnet'
+import { addressesEqual } from './lib/web3-utils'
 import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
@@ -11,28 +11,72 @@ const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
 
 const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const tokenContracts = new Map() // Addr -> External contract
+const tokenDecimals = new Map() // External contract -> decimals
 const tokenSymbols = new Map() // External contract -> symbol
+
+/**
+ * app.call('ETH')
+ *
+ * Is how we should be getting the ETH token, but aragon-cli doesn't extract
+ * public constants in contracts into the artifact :(
+ */
+const ETH_ADDRESS = '0x0000000000000000000000000000000000000000'
+const ETH_CONTRACT = Symbol('ETH_CONTRACT')
 
 const app = new Aragon()
 
-combineLatest(
-  app.call('vault'),
-  /**
-   * app.call('ETH')
-   *
-   * Is how we should be getting the ETH token, but aragon-dev-cli doesn't know
-   * about public constants on contracts :(
-   */
-  of('0x0000000000000000000000000000000000000000')
-)
-  .first()
-  .subscribe(addresses => initialize(...addresses))
+/*
+ * Calls `callback` exponentially, everytime `retry()` is called.
+ *
+ * Usage:
+ *
+ * retryEvery(retry => {
+ *  // do something
+ *
+ *  if (condition) {
+ *    // retry in 1, 2, 4, 8 seconds… as long as the condition passes.
+ *    retry()
+ *  }
+ * }, 1000, 2)
+ *
+ */
+const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
+  const attempt = (retryTimer = initialRetryTimer) => {
+    // eslint-disable-next-line standard/no-callback-literal
+    callback(() => {
+      console.error(`Retrying in ${retryTimer / 1000}s...`)
+
+      // Exponentially backoff attempts
+      setTimeout(() => attempt(retryTimer * increaseFactor), retryTimer)
+    })
+  }
+  attempt()
+}
+
+// Get the token address to initialize ourselves
+retryEvery(retry => {
+  app
+    .call('vault')
+    .first()
+    .subscribe(
+      vaultAddress => initialize(vaultAddress, ETH_ADDRESS),
+      err => {
+        console.error(
+          'Could not start background script execution due to the contract not loading the token:',
+          err
+        )
+        retry()
+      }
+    )
+})
 
 async function initialize(vaultAddress, ethAddress) {
   const vaultContract = app.external(vaultAddress, vaultBalanceAbi)
 
-  // Place dummy contract for ETH
-  tokenContracts.set(ethAddress, null)
+  // Set up ETH placeholders
+  tokenContracts.set(ethAddress, ETH_CONTRACT)
+  tokenDecimals.set(ETH_CONTRACT, '18')
+  tokenSymbols.set(ETH_CONTRACT, 'ETH')
 
   return createStore({
     ethToken: {
@@ -179,11 +223,10 @@ function updateTransactions({ transactions = [] }, transactionDetails) {
 }
 
 async function newBalanceEntry(tokenContract, tokenAddress, settings) {
-  const isEthToken = tokenAddress === settings.ethToken.address
   const [balance, decimals, symbol] = await Promise.all([
     loadTokenBalance(tokenAddress, settings),
-    isEthToken ? Promise.resolve(18) : loadTokenDecimals(tokenContract),
-    isEthToken ? Promise.resolve('ETH') : loadTokenSymbol(tokenContract),
+    loadTokenDecimals(tokenContract),
+    loadTokenSymbol(tokenContract),
   ])
 
   return {
@@ -206,18 +249,23 @@ function loadTokenBalance(tokenAddress, { vault }) {
     vault.contract
       .balance(tokenAddress)
       .first()
-      .map(val => parseInt(val, 10))
       .subscribe(resolve, reject)
   })
 }
 
 function loadTokenDecimals(tokenContract) {
   return new Promise((resolve, reject) => {
-    tokenContract
-      .decimals()
-      .first()
-      .map(val => parseInt(val, 10))
-      .subscribe(resolve, reject)
+    if (tokenDecimals.has(tokenContract)) {
+      resolve(tokenDecimals.get(tokenContract))
+    } else {
+      tokenContract
+        .decimals()
+        .first()
+        .subscribe(decimals => {
+          tokenDecimals.set(tokenContract, decimals)
+          resolve(decimals)
+        }, reject)
+    }
   })
 }
 
@@ -260,15 +308,21 @@ function marshallTransactionDetails({
   token,
 }) {
   return {
+    amount,
     entity,
     isIncoming,
+    paymentId,
+    periodId,
     reference,
     token,
-    amount: parseInt(amount, 10),
-    date: parseInt(date, 10) * 1000, // adjust for JS time (in ms vs s)
-    paymentId: parseInt(paymentId, 10),
-    periodId: parseInt(periodId, 10),
+    date: marshallDate(date),
   }
+}
+
+function marshallDate(date) {
+  // Represent dates as real numbers, as it's very unlikely they'll hit the limit...
+  // Adjust for js time (in ms vs s)
+  return parseInt(date, 10) * 1000
 }
 
 /**********************
@@ -284,7 +338,7 @@ function loadTestnetState(nextState, settings) {
 
 async function loadTestnetTokenBalances(nextState, settings) {
   let reducedState = nextState
-  for (let tokenAddress of testTokenAddresses) {
+  for (const tokenAddress of getTestTokenAddresses()) {
     reducedState = {
       ...reducedState,
       balances: await updateBalances(reducedState, tokenAddress, settings),
