@@ -1,91 +1,103 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Button, Field, IconCross, Text, TextInput } from '@aragon/ui'
-import BN from 'bn.js'
 import { addressPattern, isAddress } from '../../web3-utils'
+import { fromDecimals, toDecimals } from '../../utils'
+
+// Any more and the number input field starts to put numbers in scientific notation
+const MAX_INPUT_DECIMAL_BASE = 6
 
 const initialState = {
   amount: '',
-  recipient: {
-    error: null,
+  mode: 'assign',
+  holder: {
+    error: false,
     value: '',
   },
 }
 
 class AssignVotePanelContent extends React.Component {
   static defaultProps = {
-    onAssignTokens: () => {},
+    onUpdateTokens: () => {},
   }
   constructor(props) {
     super(props)
     this.state = {
       ...initialState,
-      ...props.recipient,
+      ...props.holder,
     }
   }
-  componentWillReceiveProps({ opened, recipient = '' }) {
+  componentWillReceiveProps({ opened, holder = '', mode }) {
     if (opened && !this.props.opened) {
-      // setTimeout is needed as a small hack to wait until the input's on
-      // screen until we call focus
-      this.recipientInput && setTimeout(() => this.recipientInput.focus(), 0)
-    }
+      // setTimeout is needed as a small hack to wait until the input is
+      // on-screen before we call focus
+      this.holderInput && setTimeout(() => this.holderInput.focus(), 0)
 
-    if (recipient !== this.props.recipient && opened) {
-      // Recipient override passed in from props
+      // Holder override passed in from props
       this.setState({
-        recipient: {
-          ...initialState.recipient,
-          value: recipient,
+        holder: {
+          ...initialState.holder,
+          value: holder,
         },
       })
-    } else if (!opened && this.props.opened) {
-      // Finished closing the panel, so reset its state
+    }
+
+    // Finished closing the panel, its state can be reset
+    if (!opened && this.props.opened) {
       this.setState({ ...initialState })
     }
   }
   handleAmountChange = event => {
     this.setState({ amount: event.target.value })
   }
-  handleRecipientChange = event => {
+  handleHolderChange = event => {
     this.setState({
-      recipient: {
-        error: null,
+      holder: {
+        error: false,
         value: event.target.value,
       },
     })
   }
   handleSubmit = event => {
     event.preventDefault()
-    const { amount, recipient } = this.state
-    const recipientAddress = recipient.value.trim()
-    if (isAddress(recipientAddress)) {
-      this.props.onAssignTokens({
-        amount: amount,
-        recipient: recipientAddress,
+    const { amount, holder } = this.state
+    const { mode, tokenDecimals } = this.props
+    const holderAddress = holder.value.trim()
+    if (isAddress(holderAddress)) {
+      this.props.onUpdateTokens({
+        mode,
+        amount: toDecimals(amount, tokenDecimals),
+        holder: holderAddress,
       })
     } else {
-      this.setState(({ recipient }) => ({
-        recipient: {
-          ...recipient,
+      this.setState(({ holder }) => ({
+        holder: {
+          ...holder,
           error: true,
         },
       }))
     }
   }
   render() {
-    const { amount, recipient } = this.state
-    const { tokenDecimalsBase } = this.props
-    const tokenBase = tokenDecimalsBase
-      ? new BN(1).div(tokenDecimalsBase).toNumber()
-      : 0
+    const { amount, holder } = this.state
+    const { mode, tokenDecimals } = this.props
+    const minTokenStep = fromDecimals(
+      '1',
+      Math.min(MAX_INPUT_DECIMAL_BASE, tokenDecimals)
+    )
     return (
       <div>
         <form onSubmit={this.handleSubmit}>
-          <Field label="Recipient (must be a valid Ethereum address)">
+          <Field
+            label={`
+              ${mode === 'assign' ? 'Recipient' : 'Account'}
+              (must be a valid Ethereum address)
+            `}
+          >
             <TextInput
-              innerRef={recipient => (this.recipientInput = recipient)}
-              value={recipient.value}
-              onChange={this.handleRecipientChange}
+              innerRef={holder => (this.holderInput = holder)}
+              value={holder.value}
+              onChange={this.handleHolderChange}
               pattern={
                 // Allow spaces to be trimmable
                 ` *${addressPattern} *`
@@ -94,21 +106,30 @@ class AssignVotePanelContent extends React.Component {
               wide
             />
           </Field>
-          <Field label="Number of tokens">
+          <Field
+            label={`
+              Number of tokens to ${mode === 'assign' ? 'assign' : 'remove'}
+            `}
+          >
             <TextInput.Number
               value={amount}
               onChange={this.handleAmountChange}
-              min={tokenBase}
-              step={tokenBase}
+              min={minTokenStep}
+              step={minTokenStep}
               required
               wide
             />
           </Field>
           <Button mode="strong" type="submit" wide>
-            Assign Tokens
+            {mode === 'assign' ? 'Assign' : 'Remove'} Tokens
           </Button>
-          {recipient.error && (
-            <ValidationError message="Recipient must be a valid Ethereum address" />
+          {holder.error && (
+            <ValidationError
+              message={`
+                ${mode === 'assign' ? 'Recipient' : 'Account'}
+                must be a valid Ethereum address
+              `}
+            />
           )}
         </form>
       </div>
@@ -120,7 +141,7 @@ const ValidationError = ({ message }) => (
   <ValidationErrorBlock>
     <IconCross />
     <Text size="small" style={{ marginLeft: '10px' }}>
-      Recipient must be a valid Ethereum address
+      {message}
     </Text>
   </ValidationErrorBlock>
 )

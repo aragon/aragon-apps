@@ -1,6 +1,25 @@
+import BN from 'bn.js'
+
 // Return 0 if denominator is 0 to avoid NaNs
 export function safeDiv(num, denom) {
   return denom ? num / denom : 0
+}
+
+// Make a token amount human readable
+export function tokenAmount(value, decimals = 18) {
+  if (decimals === 0) {
+    return String(value)
+  }
+  const amount = new BN(value)
+  const divisor = new BN(10).pow(new BN(decimals))
+  const left = amount.div(divisor).toString()
+  const right = amount.mod(divisor).toString()
+  return `${left}.${right.padEnd(decimals, '0')}`
+}
+
+export function roundToDecimals(value, decimals = 2) {
+  const multiplicator = Math.pow(10, decimals)
+  return Math.round(value * multiplicator) / multiplicator
 }
 
 export function percentageList(values, digits = 0) {

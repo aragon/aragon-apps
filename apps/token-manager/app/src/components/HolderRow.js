@@ -6,24 +6,31 @@ import {
   ContextMenu,
   ContextMenuItem,
   IconAdd,
+  IconRemove,
   Badge,
+  theme,
 } from '@aragon/ui'
 import { formatBalance } from '../utils'
 
 class HolderRow extends React.Component {
   static defaultProps = {
-    name: '',
+    address: '',
     balance: 0,
     groupMode: false,
     onAssignTokens: () => {},
+    onRemoveTokens: () => {},
   }
   handleAssignTokens = () => {
-    const { name, onAssignTokens } = this.props
-    onAssignTokens(name)
+    const { address, onAssignTokens } = this.props
+    onAssignTokens(address)
+  }
+  handleRemoveTokens = () => {
+    const { address, onRemoveTokens } = this.props
+    onRemoveTokens(address)
   }
   render() {
     const {
-      name,
+      address,
       balance,
       groupMode,
       tokenDecimalsBase,
@@ -33,7 +40,7 @@ class HolderRow extends React.Component {
       <TableRow>
         <TableCell>
           <Owner>
-            <span>{name}</span>
+            <span>{address}</span>
             {isCurrentUser && (
               <Badge.Identity
                 style={{ fontVariant: 'small-caps' }}
@@ -52,8 +59,16 @@ class HolderRow extends React.Component {
         <TableCell align="right">
           <ContextMenu>
             <ContextMenuItem onClick={this.handleAssignTokens}>
-              <IconAdd />
+              <IconWrapper>
+                <IconAdd />
+              </IconWrapper>
               <ActionLabel>Assign Tokens</ActionLabel>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={this.handleRemoveTokens}>
+              <IconWrapper>
+                <IconRemove />
+              </IconWrapper>
+              <ActionLabel>Remove Tokens</ActionLabel>
             </ContextMenuItem>
           </ContextMenu>
         </TableCell>
@@ -72,6 +87,13 @@ const Owner = styled.div`
   & > span:first-child {
     margin-right: 10px;
   }
+`
+
+const IconWrapper = styled.span`
+  display: flex;
+  align-content: center;
+  margin-top: -3px;
+  color: ${theme.textSecondary};
 `
 
 export default HolderRow
