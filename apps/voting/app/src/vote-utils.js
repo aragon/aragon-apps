@@ -1,4 +1,4 @@
-import { isBefore } from 'date-fns/esm'
+import { isBefore } from 'date-fns'
 import {
   VOTE_ABSENT,
   VOTE_YEA,

@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { compareDesc } from 'date-fns/esm'
+import { compareDesc } from 'date-fns'
 import {
   Button,
   Table,
