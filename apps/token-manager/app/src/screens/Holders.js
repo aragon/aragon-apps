@@ -12,6 +12,7 @@ class Holders extends React.Component {
     const {
       groupMode,
       holders,
+      maxAccountTokens,
       onAssignTokens,
       onRemoveTokens,
       tokenAddress,
@@ -41,8 +42,9 @@ class Holders extends React.Component {
                 address={address}
                 balance={balance}
                 groupMode={groupMode}
-                tokenDecimalsBase={tokenDecimalsBase}
                 isCurrentUser={userAccount && userAccount === address}
+                maxAccountTokens={maxAccountTokens}
+                tokenDecimalsBase={tokenDecimalsBase}
                 onAssignTokens={onAssignTokens}
                 onRemoveTokens={onRemoveTokens}
               />

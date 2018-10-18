@@ -17,8 +17,9 @@ import AppLayout from './components/AppLayout'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import { hasLoadedTokenSettings } from './token-settings'
 import { hasOneTokenPerHolder } from './app-utils'
+import { formatBalance } from './utils'
 
-const initialAssignTokensConfig = { mode: null }
+const initialAssignTokensConfig = { mode: null, maxAmount: '-1' }
 
 class App extends React.Component {
   static propTypes = {
@@ -33,6 +34,11 @@ class App extends React.Component {
   state = {
     assignTokensConfig: initialAssignTokensConfig,
     sidepanelOpened: false,
+  }
+  getHolderBalance(address) {
+    const { holders } = this.props
+    const holder = holders.find(holder => holder.address === address)
+    return holder ? holder.balance : new BN('-1')
   }
   handleUpdateTokens = ({ amount, holder, mode }) => {
     const { app } = this.props
@@ -50,14 +56,30 @@ class App extends React.Component {
     this.handleLaunchAssignTokens('')
   }
   handleLaunchAssignTokens = holder => {
+    const { maxAccountTokens, tokenDecimals, tokenDecimalsBase } = this.props
+    const maxAmount = formatBalance(
+      maxAccountTokens.sub(this.getHolderBalance(holder)),
+      tokenDecimalsBase,
+      tokenDecimals
+    )
     this.setState({
-      assignTokensConfig: { mode: 'assign', holder },
+      assignTokensConfig: {
+        mode: 'assign',
+        holder,
+        maxAmount,
+      },
       sidepanelOpened: true,
     })
   }
   handleLaunchRemoveTokens = holder => {
+    const { tokenDecimals, tokenDecimalsBase } = this.props
+    const maxAmount = formatBalance(
+      this.getHolderBalance(holder),
+      tokenDecimalsBase,
+      tokenDecimals
+    )
     this.setState({
-      assignTokensConfig: { mode: 'remove', holder },
+      assignTokensConfig: { mode: 'remove', holder, maxAmount },
       sidepanelOpened: true,
     })
   }
@@ -74,12 +96,13 @@ class App extends React.Component {
       appStateReady,
       groupMode,
       holders,
+      maxAccountTokens,
       numData,
       tokenAddress,
-      tokenSymbol,
+      tokenDecimalsBase,
       tokenName,
       tokenSupply,
-      tokenDecimalsBase,
+      tokenSymbol,
       tokenTransfersEnabled,
       userAccount,
     } = this.props
@@ -111,6 +134,7 @@ class App extends React.Component {
                 <Holders
                   holders={holders}
                   groupMode={groupMode}
+                  maxAccountTokens={maxAccountTokens}
                   tokenAddress={tokenAddress}
                   tokenDecimalsBase={tokenDecimalsBase}
                   tokenName={tokenName}
@@ -173,7 +197,7 @@ export default observe(
           appStateReady,
         }
       }
-      const { holders, tokenDecimals, tokenSupply } = state
+      const { holders, tokenDecimals, tokenSupply, maxAccountTokens } = state
       const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
 
       const updatedHolders = holders
@@ -195,6 +219,7 @@ export default observe(
         holders: updatedHolders,
         tokenDecimals: new BN(tokenDecimals),
         tokenSupply: new BN(tokenSupply),
+        maxAccountTokens: new BN(maxAccountTokens),
         groupMode: hasOneTokenPerHolder(updatedHolders, tokenDecimalsBase),
       }
     }),

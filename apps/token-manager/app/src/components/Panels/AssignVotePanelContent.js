@@ -80,7 +80,7 @@ class AssignVotePanelContent extends React.Component {
   }
   render() {
     const { amount, holder } = this.state
-    const { mode, tokenDecimals } = this.props
+    const { mode, tokenDecimals, maxAmount } = this.props
     const minTokenStep = fromDecimals(
       '1',
       Math.min(MAX_INPUT_DECIMAL_BASE, tokenDecimals)
@@ -115,6 +115,8 @@ class AssignVotePanelContent extends React.Component {
               value={amount}
               onChange={this.handleAmountChange}
               min={minTokenStep}
+              {...(maxAmount === '-1' ? {} : { max: maxAmount })}
+              {...(maxAmount === '0' ? { disabled: true } : {})}
               step={minTokenStep}
               required
               wide
