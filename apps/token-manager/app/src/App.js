@@ -16,6 +16,7 @@ import Holders from './screens/Holders'
 import AppLayout from './components/AppLayout'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import { hasLoadedTokenSettings } from './token-settings'
+import { hasOneTokenPerHolder } from './app-utils'
 
 const initialAssignTokensConfig = { mode: null }
 
@@ -27,6 +28,7 @@ class App extends React.Component {
     appStateReady: false,
     holders: [],
     userAccount: '',
+    groupMode: false,
   }
   state = {
     assignTokensConfig: initialAssignTokensConfig,
@@ -70,6 +72,7 @@ class App extends React.Component {
   render() {
     const {
       appStateReady,
+      groupMode,
       holders,
       numData,
       tokenAddress,
@@ -107,6 +110,7 @@ class App extends React.Component {
               {appStateReady && holders.length > 0 ? (
                 <Holders
                   holders={holders}
+                  groupMode={groupMode}
                   tokenAddress={tokenAddress}
                   tokenDecimalsBase={tokenDecimalsBase}
                   tokenName={tokenName}
@@ -171,6 +175,13 @@ export default observe(
       }
       const { holders, tokenDecimals, tokenSupply } = state
       const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
+
+      const updatedHolders = holders
+        ? holders
+            .map(holder => ({ ...holder, balance: new BN(holder.balance) }))
+            .sort((a, b) => b.balance.cmp(a.balance))
+        : []
+
       return {
         ...state,
         appStateReady,
@@ -181,13 +192,10 @@ export default observe(
           tokenDecimals: parseInt(tokenDecimals, 10),
           tokenSupply: parseInt(tokenSupply, 10),
         },
-        holders: holders
-          ? holders
-              .map(holder => ({ ...holder, balance: new BN(holder.balance) }))
-              .sort((a, b) => b.balance.cmp(a.balance))
-          : [],
+        holders: updatedHolders,
         tokenDecimals: new BN(tokenDecimals),
         tokenSupply: new BN(tokenSupply),
+        groupMode: hasOneTokenPerHolder(updatedHolders, tokenDecimalsBase),
       }
     }),
   {}
