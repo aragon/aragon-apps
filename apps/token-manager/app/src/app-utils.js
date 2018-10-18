@@ -1,4 +1,4 @@
-export function hasSameTokenPerHolder(holders, tokenDecimalsBase) {
+export function hasEveryHolderSameBalance(holders, tokenDecimalsBase) {
   // We assume that a token is liquid if a single holder
   // has more than one token.
   const singleHolder =
