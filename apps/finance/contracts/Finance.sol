@@ -659,14 +659,14 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
         uint256 transactionId = transactionsNextIndex++;
         Transaction storage transaction = transactions[transactionId];
-        transaction.periodId = periodId;
+        transaction.token = _token;
+        transaction.entity = _entity;
+        transaction.isIncoming = _incoming;
         transaction.amount = _amount;
         transaction.paymentId = _paymentId;
         transaction.paymentRepeatNumber = _paymentRepeatNumber;
-        transaction.isIncoming = _incoming;
-        transaction.token = _token;
-        transaction.entity = _entity;
         transaction.date = getTimestamp64();
+        transaction.periodId = periodId;
 
         Period storage period = periods[periodId];
         if (period.firstTransactionId == NO_TRANSACTION) {
