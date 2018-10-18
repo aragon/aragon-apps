@@ -16,7 +16,7 @@ import Holders from './screens/Holders'
 import AppLayout from './components/AppLayout'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import { hasLoadedTokenSettings } from './token-settings'
-import { hasOneTokenPerHolder } from './app-utils'
+import { hasSameTokenPerHolder } from './app-utils'
 import { formatBalance } from './utils'
 
 const initialAssignTokensConfig = { mode: null, maxAmount: '-1' }
@@ -220,7 +220,7 @@ export default observe(
         tokenDecimals: new BN(tokenDecimals),
         tokenSupply: new BN(tokenSupply),
         maxAccountTokens: new BN(maxAccountTokens),
-        groupMode: hasOneTokenPerHolder(updatedHolders, tokenDecimalsBase),
+        groupMode: hasSameTokenPerHolder(updatedHolders, tokenDecimalsBase),
       }
     }),
   {}
