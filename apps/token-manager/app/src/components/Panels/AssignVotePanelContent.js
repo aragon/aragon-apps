@@ -60,22 +60,14 @@ class AssignVotePanelContent extends React.Component {
     } = this.props
 
     const holderBalance = getHolderBalance(value.trim())
+    const maxAmount =
+      mode === 'assign' ? maxAccountTokens.sub(holderBalance) : holderBalance
 
     this.setState(({ holderField, amountField }) => ({
-      holderField: {
-        ...holderField,
-        value,
-        error: false,
-      },
+      holderField: { ...holderField, value, error: false },
       amountField: {
         ...amountField,
-        max: formatBalance(
-          mode === 'assign'
-            ? maxAccountTokens.sub(holderBalance)
-            : holderBalance,
-          tokenDecimalsBase,
-          tokenDecimals
-        ),
+        max: formatBalance(maxAmount, tokenDecimalsBase, tokenDecimals),
       },
     }))
   }
@@ -137,21 +129,26 @@ class AssignVotePanelContent extends React.Component {
 
           <Field
             label={`
-              Number of tokens to ${mode === 'assign' ? 'assign' : 'remove'}
+              Tokens to ${mode === 'assign' ? 'assign' : 'remove'}
             `}
           >
             <TextInput.Number
               value={amountField.value}
               onChange={this.handleAmountChange}
               min={minTokenStep}
-              {...(amountField.max === '-1' ? {} : { max: amountField.max })}
-              {...(amountField.max === '0' ? { disabled: true } : {})}
+              max={amountField.max}
+              disabled={amountField.max === '0'}
               step={minTokenStep}
               required
               wide
             />
           </Field>
-          <Button mode="strong" type="submit" wide>
+          <Button
+            mode="strong"
+            type="submit"
+            disabled={amountField.max === '0'}
+            wide
+          >
             {mode === 'assign' ? 'Assign' : 'Remove'} Tokens
           </Button>
           {holderField.error && (

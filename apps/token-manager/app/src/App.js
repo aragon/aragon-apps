@@ -42,7 +42,7 @@ class App extends React.Component {
     const holder = holders.find(holder =>
       addressesEqual(holder.address, address)
     )
-    return holder ? holder.balance : new BN('-1')
+    return holder ? holder.balance : new BN('0')
   }
   handleUpdateTokens = ({ amount, holder, mode }) => {
     const { app } = this.props
