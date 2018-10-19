@@ -81,6 +81,7 @@ async function createStore(token, tokenAddr) {
         nextState = {
           ...nextState,
           tokenAddress: tokenAddr,
+          maxAccountTokens: await loadMaxAccountTokens(),
         }
       } else if (addressesEqual(address, tokenAddr)) {
         switch (event) {
@@ -164,6 +165,15 @@ function updateHolders(holders, changed) {
     nextHolders[holderIndex] = changed
     return nextHolders
   }
+}
+
+function loadMaxAccountTokens() {
+  return new Promise((resolve, reject) =>
+    app
+      .call('maxAccountTokens')
+      .first()
+      .subscribe(resolve, reject)
+  )
 }
 
 function loadNewBalances(token, ...addresses) {

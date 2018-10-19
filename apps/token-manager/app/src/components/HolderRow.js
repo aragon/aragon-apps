@@ -33,9 +33,14 @@ class HolderRow extends React.Component {
       address,
       balance,
       groupMode,
-      tokenDecimalsBase,
       isCurrentUser,
+      maxAccountTokens,
+      tokenDecimalsBase,
     } = this.props
+
+    const singleToken = balance.eq(tokenDecimalsBase)
+    const canAssign = balance.lt(maxAccountTokens)
+
     return (
       <TableRow>
         <TableCell>
@@ -58,17 +63,22 @@ class HolderRow extends React.Component {
         )}
         <TableCell align="right">
           <ContextMenu>
-            <ContextMenuItem onClick={this.handleAssignTokens}>
-              <IconWrapper>
-                <IconAdd />
-              </IconWrapper>
-              <ActionLabel>Assign Tokens</ActionLabel>
-            </ContextMenuItem>
+            {canAssign && (
+              <ContextMenuItem onClick={this.handleAssignTokens}>
+                <IconWrapper>
+                  <IconAdd />
+                </IconWrapper>
+                <ActionLabel>Assign Tokens</ActionLabel>
+              </ContextMenuItem>
+            )}
             <ContextMenuItem onClick={this.handleRemoveTokens}>
               <IconWrapper>
                 <IconRemove />
               </IconWrapper>
-              <ActionLabel>Remove Tokens</ActionLabel>
+              <ActionLabel>
+                Remove Token
+                {singleToken ? '' : 's'}
+              </ActionLabel>
             </ContextMenuItem>
           </ContextMenu>
         </TableCell>
