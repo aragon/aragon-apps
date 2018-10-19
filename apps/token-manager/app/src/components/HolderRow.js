@@ -38,7 +38,7 @@ class HolderRow extends React.Component {
       tokenDecimalsBase,
     } = this.props
 
-    const oneToken = formatBalance(balance, tokenDecimalsBase) === '1'
+    const singleToken = balance.eq(tokenDecimalsBase)
     const canAssign = balance.lt(maxAccountTokens)
 
     return (
@@ -77,7 +77,7 @@ class HolderRow extends React.Component {
               </IconWrapper>
               <ActionLabel>
                 Remove Token
-                {oneToken ? '' : 's'}
+                {singleToken ? '' : 's'}
               </ActionLabel>
             </ContextMenuItem>
           </ContextMenu>
