@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Button, Field, IconCross, Text, TextInput } from '@aragon/ui'
+import { Button, Field, IconCross, Text, TextInput, Info } from '@aragon/ui'
 import { addressPattern, isAddress } from '../../web3-utils'
 import { fromDecimals, toDecimals, formatBalance } from '../../utils'
 
@@ -10,11 +10,13 @@ const MAX_INPUT_DECIMAL_BASE = 6
 const initialState = {
   mode: 'assign',
   holderField: {
-    error: false,
+    error: null,
+    warning: null,
     value: '',
   },
   amountField: {
-    error: false,
+    error: null,
+    warning: null,
     value: '',
     max: '',
   },
@@ -64,10 +66,20 @@ class AssignVotePanelContent extends React.Component {
       mode === 'assign' ? maxAccountTokens.sub(holderBalance) : holderBalance
 
     this.setState(({ holderField, amountField }) => ({
-      holderField: { ...holderField, value, error: false },
+      holderField: { ...holderField, value, error: null },
       amountField: {
         ...amountField,
         max: formatBalance(maxAmount, tokenDecimalsBase, tokenDecimals),
+        warning:
+          maxAmount.isZero() &&
+          (mode === 'assign'
+            ? `
+              The maximum amount of tokens that can be assigned is already
+              reached.
+            `
+            : `
+              This account doesn’t have any token to remove.
+            `),
       },
     }))
   }
@@ -84,6 +96,15 @@ class AssignVotePanelContent extends React.Component {
     event.preventDefault()
     const { mode } = this.props
     const holderAddress = this.filteredHolderAddress()
+    const amount = this.filteredAmount()
+
+    const holderError =
+      !isAddress(holderAddress) &&
+      `
+        ${mode === 'assign' ? 'Recipient' : 'Account'}
+        must be a valid Ethereum address.
+      `
+
     if (isAddress(holderAddress)) {
       this.props.onUpdateTokens({
         mode,
@@ -92,7 +113,10 @@ class AssignVotePanelContent extends React.Component {
       })
     } else {
       this.setState(({ holderField }) => ({
-        holderField: { ...holderField, error: true },
+        holderField: {
+          ...holderField,
+          error: holderError,
+        },
       }))
     }
   }
@@ -104,6 +128,9 @@ class AssignVotePanelContent extends React.Component {
       '1',
       Math.min(MAX_INPUT_DECIMAL_BASE, tokenDecimals)
     )
+
+    const errorMessage = holderField.error || amountField.error
+    const warningMessage = holderField.warning || amountField.warning
 
     return (
       <div>
@@ -118,11 +145,6 @@ class AssignVotePanelContent extends React.Component {
               innerRef={element => (this.holderInput = element)}
               value={holderField.value}
               onChange={this.handleHolderChange}
-              pattern={
-                // Allow spaces to be trimmable
-                ` *${addressPattern} *`
-              }
-              required
               wide
             />
           </Field>
@@ -151,31 +173,29 @@ class AssignVotePanelContent extends React.Component {
           >
             {mode === 'assign' ? 'Assign' : 'Remove'} Tokens
           </Button>
-          {holderField.error && (
-            <ValidationError
-              message={`
-                ${mode === 'assign' ? 'Recipient' : 'Account'}
-                must be a valid Ethereum address
-              `}
-            />
-          )}
+          <Messages>
+            {errorMessage && <ErrorMessage message={errorMessage} />}
+            {warningMessage && <WarningMessage message={warningMessage} />}
+          </Messages>
         </form>
       </div>
     )
   }
 }
 
-const ValidationError = ({ message }) => (
-  <ValidationErrorBlock>
+const Messages = styled.div`
+  margin-top: 15px;
+`
+
+const WarningMessage = ({ message }) => <Info.Action>{message}</Info.Action>
+
+const ErrorMessage = ({ message }) => (
+  <p>
     <IconCross />
     <Text size="small" style={{ marginLeft: '10px' }}>
       {message}
     </Text>
-  </ValidationErrorBlock>
+  </p>
 )
-
-const ValidationErrorBlock = styled.p`
-  margin-top: 15px;
-`
 
 export default AssignVotePanelContent
