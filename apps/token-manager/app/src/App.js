@@ -18,6 +18,7 @@ import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import { hasLoadedTokenSettings } from './token-settings'
 import { hasEveryHolderSameBalance } from './app-utils'
 import { formatBalance } from './utils'
+import { addressesEqual } from './web3-utils'
 
 const initialAssignTokensConfig = { mode: null, maxAmount: '-1' }
 
@@ -37,7 +38,9 @@ class App extends React.Component {
   }
   getHolderBalance(address) {
     const { holders } = this.props
-    const holder = holders.find(holder => holder.address === address)
+    const holder = holders.find(holder =>
+      addressesEqual(holder.address, address)
+    )
     return holder ? holder.balance : new BN('-1')
   }
   handleUpdateTokens = ({ amount, holder, mode }) => {
