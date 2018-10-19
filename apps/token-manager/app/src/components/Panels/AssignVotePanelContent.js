@@ -74,11 +74,11 @@ class AssignVotePanelContent extends React.Component {
           maxAmount.isZero() &&
           (mode === 'assign'
             ? `
-              The maximum amount of tokens that can be assigned is already
+              The maximum amount of tokens that can be assigned has already been
               reached.
             `
             : `
-              This account doesn’t have any token to remove.
+              This account doesn’t have any tokens to remove.
             `),
       },
     }))
