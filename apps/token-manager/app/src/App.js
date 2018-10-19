@@ -44,7 +44,7 @@ class App extends React.Component {
 
     this.handleSidepanelClose()
   }
-  handleAppBarLaunchAssignTokens = () => {
+  handleLaunchAssignTokensNoHolder = () => {
     this.handleLaunchAssignTokens('')
   }
   handleLaunchAssignTokens = holder => {
@@ -95,7 +95,7 @@ class App extends React.Component {
               endContent={
                 <Button
                   mode="strong"
-                  onClick={this.handleAppBarLaunchAssignTokens}
+                  onClick={this.handleLaunchAssignTokensNoHolder}
                 >
                   Assign Tokens
                 </Button>
@@ -118,7 +118,9 @@ class App extends React.Component {
                   onRemoveTokens={this.handleLaunchRemoveTokens}
                 />
               ) : (
-                <EmptyState onActivate={this.handleLaunchAssignTokens} />
+                <EmptyState
+                  onActivate={this.handleLaunchAssignTokensNoHolder}
+                />
               )}
             </AppLayout.Content>
           </AppLayout.ScrollWrapper>
