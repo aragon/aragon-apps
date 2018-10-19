@@ -1,10 +1,10 @@
-import { toChecksumAddress } from 'web3-utils'
+import { toChecksumAddress, isAddress } from 'web3-utils'
 
 // Check address equality without checksums
 export function addressesEqual(first, second) {
-  first = first && toChecksumAddress(first)
-  second = second && toChecksumAddress(second)
-  return first === second
+  return isAddress(first) && isAddress(second)
+    ? toChecksumAddress(first) === toChecksumAddress(second)
+    : false
 }
 
 export const addressPattern = '(0x)?[0-9a-fA-F]{40}'
