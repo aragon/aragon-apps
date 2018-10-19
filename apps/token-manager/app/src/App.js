@@ -16,7 +16,6 @@ import Holders from './screens/Holders'
 import AppLayout from './components/AppLayout'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import { hasLoadedTokenSettings } from './token-settings'
-import { hasEveryHolderSameBalance } from './app-utils'
 import { formatBalance } from './utils'
 import { addressesEqual } from './web3-utils'
 
@@ -200,14 +199,16 @@ export default observe(
           appStateReady,
         }
       }
-      const { holders, tokenDecimals, tokenSupply, maxAccountTokens } = state
-      const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
 
-      const updatedHolders = holders
-        ? holders
-            .map(holder => ({ ...holder, balance: new BN(holder.balance) }))
-            .sort((a, b) => b.balance.cmp(a.balance))
-        : []
+      const {
+        holders,
+        maxAccountTokens,
+        tokenDecimals,
+        tokenSupply,
+        tokenTransfersEnabled,
+      } = state
+
+      const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
 
       return {
         ...state,
@@ -219,11 +220,15 @@ export default observe(
           tokenDecimals: parseInt(tokenDecimals, 10),
           tokenSupply: parseInt(tokenSupply, 10),
         },
-        holders: updatedHolders,
+        holders: holders
+          ? holders
+              .map(holder => ({ ...holder, balance: new BN(holder.balance) }))
+              .sort((a, b) => b.balance.cmp(a.balance))
+          : [],
         tokenDecimals: new BN(tokenDecimals),
         tokenSupply: new BN(tokenSupply),
         maxAccountTokens: new BN(maxAccountTokens),
-        groupMode: hasEveryHolderSameBalance(updatedHolders, tokenDecimalsBase),
+        groupMode: tokenTransfersEnabled && maxAccountTokens === '1',
       }
     }),
   {}
