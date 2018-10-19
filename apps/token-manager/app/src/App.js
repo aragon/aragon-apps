@@ -16,8 +16,12 @@ import Holders from './screens/Holders'
 import AppLayout from './components/AppLayout'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import { hasLoadedTokenSettings } from './token-settings'
+import { addressesEqual } from './web3-utils'
 
-const initialAssignTokensConfig = { mode: null }
+const initialAssignTokensConfig = {
+  mode: null,
+  holderAddress: '',
+}
 
 class App extends React.Component {
   static propTypes = {
@@ -27,10 +31,18 @@ class App extends React.Component {
     appStateReady: false,
     holders: [],
     userAccount: '',
+    groupMode: false,
   }
   state = {
     assignTokensConfig: initialAssignTokensConfig,
     sidepanelOpened: false,
+  }
+  getHolderBalance = address => {
+    const { holders } = this.props
+    const holder = holders.find(holder =>
+      addressesEqual(holder.address, address)
+    )
+    return holder ? holder.balance : new BN('0')
   }
   handleUpdateTokens = ({ amount, holder, mode }) => {
     const { app } = this.props
@@ -47,15 +59,15 @@ class App extends React.Component {
   handleLaunchAssignTokensNoHolder = () => {
     this.handleLaunchAssignTokens('')
   }
-  handleLaunchAssignTokens = holder => {
+  handleLaunchAssignTokens = address => {
     this.setState({
-      assignTokensConfig: { mode: 'assign', holder },
+      assignTokensConfig: { mode: 'assign', holderAddress: address },
       sidepanelOpened: true,
     })
   }
-  handleLaunchRemoveTokens = holder => {
+  handleLaunchRemoveTokens = address => {
     this.setState({
-      assignTokensConfig: { mode: 'remove', holder },
+      assignTokensConfig: { mode: 'remove', holderAddress: address },
       sidepanelOpened: true,
     })
   }
@@ -70,13 +82,15 @@ class App extends React.Component {
   render() {
     const {
       appStateReady,
+      groupMode,
       holders,
+      maxAccountTokens,
       numData,
       tokenAddress,
-      tokenSymbol,
+      tokenDecimalsBase,
       tokenName,
       tokenSupply,
-      tokenDecimalsBase,
+      tokenSymbol,
       tokenTransfersEnabled,
       userAccount,
     } = this.props
@@ -107,6 +121,8 @@ class App extends React.Component {
               {appStateReady && holders.length > 0 ? (
                 <Holders
                   holders={holders}
+                  groupMode={groupMode}
+                  maxAccountTokens={maxAccountTokens}
                   tokenAddress={tokenAddress}
                   tokenDecimalsBase={tokenDecimalsBase}
                   tokenName={tokenName}
@@ -139,7 +155,10 @@ class App extends React.Component {
             <AssignVotePanelContent
               opened={sidepanelOpened}
               tokenDecimals={numData.tokenDecimals}
+              tokenDecimalsBase={tokenDecimalsBase}
               onUpdateTokens={this.handleUpdateTokens}
+              getHolderBalance={this.getHolderBalance}
+              maxAccountTokens={maxAccountTokens}
               {...assignTokensConfig}
             />
           )}
@@ -171,8 +190,17 @@ export default observe(
           appStateReady,
         }
       }
-      const { holders, tokenDecimals, tokenSupply } = state
+
+      const {
+        holders,
+        maxAccountTokens,
+        tokenDecimals,
+        tokenSupply,
+        tokenTransfersEnabled,
+      } = state
+
       const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
+
       return {
         ...state,
         appStateReady,
@@ -190,6 +218,8 @@ export default observe(
           : [],
         tokenDecimals: new BN(tokenDecimals),
         tokenSupply: new BN(tokenSupply),
+        maxAccountTokens: new BN(maxAccountTokens),
+        groupMode: tokenTransfersEnabled && maxAccountTokens === '1',
       }
     }),
   {}
