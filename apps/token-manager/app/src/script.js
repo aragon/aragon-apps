@@ -172,9 +172,7 @@ function loadMaxAccountTokens() {
     app
       .call('maxAccountTokens')
       .first()
-      .subscribe(value => {
-        resolve(value)
-      }, reject)
+      .subscribe(resolve, reject)
   )
 }
 
