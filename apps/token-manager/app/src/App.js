@@ -16,10 +16,12 @@ import Holders from './screens/Holders'
 import AppLayout from './components/AppLayout'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import { hasLoadedTokenSettings } from './token-settings'
-import { formatBalance } from './utils'
 import { addressesEqual } from './web3-utils'
 
-const initialAssignTokensConfig = { mode: null, maxAmount: '-1' }
+const initialAssignTokensConfig = {
+  mode: null,
+  holderAddress: '',
+}
 
 class App extends React.Component {
   static propTypes = {
@@ -35,7 +37,7 @@ class App extends React.Component {
     assignTokensConfig: initialAssignTokensConfig,
     sidepanelOpened: false,
   }
-  getHolderBalance(address) {
+  getHolderBalance = address => {
     const { holders } = this.props
     const holder = holders.find(holder =>
       addressesEqual(holder.address, address)
@@ -57,31 +59,15 @@ class App extends React.Component {
   handleAppBarLaunchAssignTokens = () => {
     this.handleLaunchAssignTokens('')
   }
-  handleLaunchAssignTokens = holder => {
-    const { maxAccountTokens, tokenDecimals, tokenDecimalsBase } = this.props
-    const maxAmount = formatBalance(
-      maxAccountTokens.sub(this.getHolderBalance(holder)),
-      tokenDecimalsBase,
-      tokenDecimals
-    )
+  handleLaunchAssignTokens = address => {
     this.setState({
-      assignTokensConfig: {
-        mode: 'assign',
-        holder,
-        maxAmount,
-      },
+      assignTokensConfig: { mode: 'assign', holderAddress: address },
       sidepanelOpened: true,
     })
   }
-  handleLaunchRemoveTokens = holder => {
-    const { tokenDecimals, tokenDecimalsBase } = this.props
-    const maxAmount = formatBalance(
-      this.getHolderBalance(holder),
-      tokenDecimalsBase,
-      tokenDecimals
-    )
+  handleLaunchRemoveTokens = address => {
     this.setState({
-      assignTokensConfig: { mode: 'remove', holder, maxAmount },
+      assignTokensConfig: { mode: 'remove', holderAddress: address },
       sidepanelOpened: true,
     })
   }
@@ -167,7 +153,10 @@ class App extends React.Component {
             <AssignVotePanelContent
               opened={sidepanelOpened}
               tokenDecimals={numData.tokenDecimals}
+              tokenDecimalsBase={tokenDecimalsBase}
               onUpdateTokens={this.handleUpdateTokens}
+              getHolderBalance={this.getHolderBalance}
+              maxAccountTokens={maxAccountTokens}
               {...assignTokensConfig}
             />
           )}

@@ -2,17 +2,21 @@ import React from 'react'
 import styled from 'styled-components'
 import { Button, Field, IconCross, Text, TextInput } from '@aragon/ui'
 import { addressPattern, isAddress } from '../../web3-utils'
-import { fromDecimals, toDecimals } from '../../utils'
+import { fromDecimals, toDecimals, formatBalance } from '../../utils'
 
 // Any more and the number input field starts to put numbers in scientific notation
 const MAX_INPUT_DECIMAL_BASE = 6
 
 const initialState = {
-  amount: '',
   mode: 'assign',
-  holder: {
+  holderField: {
     error: false,
     value: '',
+  },
+  amountField: {
+    error: false,
+    value: '',
+    max: '',
   },
 }
 
@@ -20,26 +24,17 @@ class AssignVotePanelContent extends React.Component {
   static defaultProps = {
     onUpdateTokens: () => {},
   }
-  constructor(props) {
-    super(props)
-    this.state = {
-      ...initialState,
-      ...props.holder,
-    }
+  state = {
+    ...initialState,
   }
-  componentWillReceiveProps({ opened, holder = '', mode }) {
+  componentWillReceiveProps({ opened, mode, holderAddress }) {
     if (opened && !this.props.opened) {
       // setTimeout is needed as a small hack to wait until the input is
       // on-screen before we call focus
       this.holderInput && setTimeout(() => this.holderInput.focus(), 0)
 
-      // Holder override passed in from props
-      this.setState({
-        holder: {
-          ...initialState.holder,
-          value: holder,
-        },
-      })
+      // Upadte holder address from the props
+      this.updateHolderAddress(mode, holderAddress)
     }
 
     // Finished closing the panel, its state can be reset
@@ -47,44 +42,92 @@ class AssignVotePanelContent extends React.Component {
       this.setState({ ...initialState })
     }
   }
+  filteredHolderAddress() {
+    const { holderField } = this.state
+    return holderField.value.trim()
+  }
+  filteredAmount() {
+    const { tokenDecimals } = this.props
+    const { amountField } = this.state
+    return toDecimals(amountField.value.trim(), tokenDecimals)
+  }
+  updateHolderAddress(mode, value) {
+    const { holderField } = this.state
+    const {
+      maxAccountTokens,
+      tokenDecimalsBase,
+      tokenDecimals,
+      getHolderBalance,
+    } = this.props
+
+    const holderBalance = getHolderBalance(value.trim())
+
+    this.setState(({ holderField, amountField }) => ({
+      holderField: {
+        ...holderField,
+        value,
+        error: false,
+      },
+      amountField: {
+        ...amountField,
+        max: formatBalance(
+          mode === 'assign'
+            ? maxAccountTokens.sub(holderBalance)
+            : holderBalance,
+          tokenDecimalsBase,
+          tokenDecimals
+        ),
+      },
+    }))
+  }
   handleAmountChange = event => {
-    this.setState({ amount: event.target.value })
+    const { amountField } = this.state
+    this.setState({
+      amountField: { ...amountField, value: event.target.value },
+    })
   }
   handleHolderChange = event => {
-    this.setState({
-      holder: {
-        error: false,
-        value: event.target.value,
-      },
-    })
+    this.updateHolderAddress(this.props.mode, event.target.value)
   }
   handleSubmit = event => {
     event.preventDefault()
-    const { amount, holder } = this.state
+    const { amountField, holderField } = this.state
     const { mode, tokenDecimals } = this.props
-    const holderAddress = holder.value.trim()
+    const holderAddress = this.filteredHolderAddress()
     if (isAddress(holderAddress)) {
       this.props.onUpdateTokens({
         mode,
-        amount: toDecimals(amount, tokenDecimals),
+        amount: this.filteredAmount(),
         holder: holderAddress,
       })
     } else {
-      this.setState(({ holder }) => ({
-        holder: {
-          ...holder,
-          error: true,
-        },
+      this.setState(({ holderField }) => ({
+        holderField: { ...holderField, error: true },
       }))
     }
   }
   render() {
-    const { amount, holder } = this.state
-    const { mode, tokenDecimals, maxAmount } = this.props
+    const { holderField, amountField } = this.state
+    const {
+      mode,
+      tokenDecimals,
+      tokenDecimalsBase,
+      getHolderBalance,
+    } = this.props
+
+    const holderBalance = getHolderBalance(this.filteredHolderAddress())
+
+    const holderBalanceFormatted = formatBalance(
+      holderBalance,
+      tokenDecimalsBase,
+      tokenDecimals
+    )
+
     const minTokenStep = fromDecimals(
       '1',
       Math.min(MAX_INPUT_DECIMAL_BASE, tokenDecimals)
     )
+
     return (
       <div>
         <form onSubmit={this.handleSubmit}>
@@ -95,8 +138,8 @@ class AssignVotePanelContent extends React.Component {
             `}
           >
             <TextInput
-              innerRef={holder => (this.holderInput = holder)}
-              value={holder.value}
+              innerRef={element => (this.holderInput = element)}
+              value={holderField.value}
               onChange={this.handleHolderChange}
               pattern={
                 // Allow spaces to be trimmable
@@ -106,17 +149,18 @@ class AssignVotePanelContent extends React.Component {
               wide
             />
           </Field>
+
           <Field
             label={`
               Number of tokens to ${mode === 'assign' ? 'assign' : 'remove'}
             `}
           >
             <TextInput.Number
-              value={amount}
+              value={amountField.value}
               onChange={this.handleAmountChange}
               min={minTokenStep}
-              {...(maxAmount === '-1' ? {} : { max: maxAmount })}
-              {...(maxAmount === '0' ? { disabled: true } : {})}
+              {...(amountField.max === '-1' ? {} : { max: amountField.max })}
+              {...(amountField.max === '0' ? { disabled: true } : {})}
               step={minTokenStep}
               required
               wide
@@ -125,7 +169,7 @@ class AssignVotePanelContent extends React.Component {
           <Button mode="strong" type="submit" wide>
             {mode === 'assign' ? 'Assign' : 'Remove'} Tokens
           </Button>
-          {holder.error && (
+          {holderField.error && (
             <ValidationError
               message={`
                 ${mode === 'assign' ? 'Recipient' : 'Account'}
