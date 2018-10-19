@@ -1,4 +1,4 @@
-import { toChecksumAddress, isAddress } from 'web3-utils'
+import { isAddress } from 'web3-utils'
 
 // Check address equality
 export function addressesEqual(first, second) {

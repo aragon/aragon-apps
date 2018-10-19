@@ -52,7 +52,6 @@ class AssignVotePanelContent extends React.Component {
     return toDecimals(amountField.value.trim(), tokenDecimals)
   }
   updateHolderAddress(mode, value) {
-    const { holderField } = this.state
     const {
       maxAccountTokens,
       tokenDecimalsBase,
@@ -91,8 +90,7 @@ class AssignVotePanelContent extends React.Component {
   }
   handleSubmit = event => {
     event.preventDefault()
-    const { amountField, holderField } = this.state
-    const { mode, tokenDecimals } = this.props
+    const { mode } = this.props
     const holderAddress = this.filteredHolderAddress()
     if (isAddress(holderAddress)) {
       this.props.onUpdateTokens({
@@ -108,20 +106,7 @@ class AssignVotePanelContent extends React.Component {
   }
   render() {
     const { holderField, amountField } = this.state
-    const {
-      mode,
-      tokenDecimals,
-      tokenDecimalsBase,
-      getHolderBalance,
-    } = this.props
-
-    const holderBalance = getHolderBalance(this.filteredHolderAddress())
-
-    const holderBalanceFormatted = formatBalance(
-      holderBalance,
-      tokenDecimalsBase,
-      tokenDecimals
-    )
+    const { mode, tokenDecimals } = this.props
 
     const minTokenStep = fromDecimals(
       '1',
