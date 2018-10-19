@@ -44,6 +44,7 @@ class AddEmployee extends React.PureComponent {
         default: startOfDay(new Date())
       },
       entity: {
+        type: 'object',
         properties: {
           name: {
             type: 'string'
@@ -144,7 +145,10 @@ class AddEmployee extends React.PureComponent {
         onClose={this.props.onClose}
         onTransitionEnd={this.handlePanelToggle}
       >
-        <Form onSubmit={this.handleFormSubmit}>
+        <Form
+          onSubmit={this.handleFormSubmit}
+          data-testid='add-employee-form'
+        >
           <Field label='Entity'>
             <Input.Entity
               ref={el => this.entitySearch = el}
@@ -172,19 +176,25 @@ class AddEmployee extends React.PureComponent {
 
           <Field label='Name'>
             <Input.Static>
-              {entity && entity.name || ' '}
+              <span data-testid='entity-name'>
+                {entity && entity.name || ' '}
+              </span>
             </Input.Static>
           </Field>
 
           <Field label='Role'>
             <Input.Static>
-              {entity && entity.role || ' '}
+              <span data-testid='entity-role'>
+                {entity && entity.role || ' '}
+              </span>
             </Input.Static>
           </Field>
 
           <Field label='Account Address'>
             <Input.Static>
-              {entity && entity.accountAddress || ' '}
+              <span data-testid='entity-account-address'>
+                {entity && entity.accountAddress || ' '}
+              </span>
             </Input.Static>
           </Field>
 

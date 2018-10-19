@@ -1,18 +1,18 @@
 import React from 'react'
 
-import TwoColumn from '../components/Layout/TwoColumn'
+import Section from '../components/Layout/Section'
 
 class TeamPayroll extends React.Component {
   render () {
     return (
-      <TwoColumn>
-        <TwoColumn.Left>
+      <Section {...this.props}>
+        <Section.Left>
           Team Payroll
-        </TwoColumn.Left>
-        <TwoColumn.Right>
+        </Section.Left>
+        <Section.Right>
           Side content
-        </TwoColumn.Right>
-      </TwoColumn>
+        </Section.Right>
+      </Section>
     )
   }
 }

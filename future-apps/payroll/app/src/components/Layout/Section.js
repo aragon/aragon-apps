@@ -1,20 +1,20 @@
 import styled from 'styled-components'
 
-const TwoColumn = styled.div`
+const Section = styled.section`
   display: grid;
   grid-template-columns: 2fr auto;
   grid-gap: 30px;
 `
 
-TwoColumn.Left = styled.article`
+Section.Left = styled.article`
   display: flex;
   flex-direction: column;
 `
 
-TwoColumn.Right = styled.aside`
+Section.Right = styled.aside`
   display: flex;
   flex-direction: column;
   min-width: 310px; 
 `
 
-export default TwoColumn
+export default Section

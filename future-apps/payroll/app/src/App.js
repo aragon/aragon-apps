@@ -43,19 +43,25 @@ export default class App extends React.Component {
   render () {
     const header = (
       <React.Fragment>
-        <AppBar title='Payroll' endContent={this.renderActionButtons()}/>
+        <AppBar
+          title='Payroll'
+          endContent={this.renderActionButtons()}
+          data-testid='app-bar'
+        />
 
         <Tab.Container>
           <Tab
             title='My payroll'
             active={this.state.activeTab === 'my-payroll'}
             onClick={() => this.setState({ activeTab: 'my-payroll' })}
+            data-testid='my-payroll-tab'
           />
 
           <Tab
             title='Team payroll'
             active={this.state.activeTab === 'team-payroll'}
             onClick={() => this.setState({ activeTab: 'team-payroll' })}
+            data-testid='team-payroll-tab'
           />
         </Tab.Container>
       </React.Fragment>
@@ -65,11 +71,17 @@ export default class App extends React.Component {
       <AragonApp publicUrl='./aragon-ui/'>
         <AppView appBar={header}>
           {this.state.activeTab === 'my-payroll' && (
-            <MyPayroll {...this.props}/>
+            <MyPayroll
+              {...this.props}
+              data-testid='my-payroll-section'
+            />
           )}
 
           {this.state.activeTab === 'team-payroll' && (
-            <TeamPayroll {...this.props}/>
+            <TeamPayroll
+              {...this.props}
+              data-testid='team-payroll-section'
+            />
           )}
         </AppView>
 

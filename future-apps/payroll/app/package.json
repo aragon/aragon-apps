@@ -9,7 +9,9 @@
     "build:script": "parcel build src/script.js --no-cache",
     "lint": "standard src/**/*.js",
     "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve src/index.html --port 8001 --open",
-    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./dist"
+    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./dist",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@aragon/client": "^1.0.0",
@@ -29,8 +31,17 @@
     "@babel/core": "^7.1.2",
     "@babel/plugin-proposal-class-properties": "^7.1.0",
     "@babel/plugin-transform-runtime": "^7.1.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-react": "^7.0.0",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-jest": "^23.6.0",
+    "babel-plugin-react-remove-properties": "^0.2.5",
     "babel-plugin-styled-components": "^1.8.0",
+    "jest": "^23.6.0",
+    "jest-dom": "^2.1.0",
     "parcel-bundler": "^1.10.3",
+    "react-testing-library": "^5.2.0",
+    "regenerator-runtime": "^0.12.1",
     "standard": "*"
   }
 }

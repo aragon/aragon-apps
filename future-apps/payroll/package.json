@@ -23,8 +23,10 @@
     "postinstall": "cd app && npm install",
     "lint": "solium --dir ./contracts",
     "start": "aragon run --network rpc --kit PayrollKit --kit-init @ARAGON_ENS",
-    "test": "TRUFFLE_TEST=true ./node_modules/@aragon/os/scripts/ganache-cli.sh",
-    "test:gas": "GAS_REPORTER=true npm test"
+    "test": "npm run test:ui && npm run test:contracts",
+    "test:ui": "cd app && npm test",
+    "test:contracts": "TRUFFLE_TEST=true ./node_modules/@aragon/os/scripts/ganache-cli.sh",
+    "test:contracts:gas": "GAS_REPORTER=true npm test"
   },
   "dependencies": {
     "@aragon/apps-finance": "^2.0.0-beta.2",
