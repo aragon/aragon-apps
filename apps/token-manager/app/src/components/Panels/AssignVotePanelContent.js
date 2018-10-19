@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Button, Field, IconCross, Text, TextInput, Info } from '@aragon/ui'
-import { addressPattern, isAddress } from '../../web3-utils'
+import { isAddress } from '../../web3-utils'
 import { fromDecimals, toDecimals, formatBalance } from '../../utils'
 
 // Any more and the number input field starts to put numbers in scientific notation
@@ -96,7 +96,6 @@ class AssignVotePanelContent extends React.Component {
     event.preventDefault()
     const { mode } = this.props
     const holderAddress = this.filteredHolderAddress()
-    const amount = this.filteredAmount()
 
     const holderError =
       !isAddress(holderAddress) &&
