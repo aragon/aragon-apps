@@ -1,6 +1,6 @@
 import { toChecksumAddress, isAddress } from 'web3-utils'
 
-// Check address equality without checksums
+// Check address equality with checksums
 export function addressesEqual(first, second) {
   return isAddress(first) && isAddress(second)
     ? toChecksumAddress(first) === toChecksumAddress(second)
