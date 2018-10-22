@@ -35,7 +35,7 @@ contract('Payroll, price feed,', function(accounts) {
   let etherExchangeRate
 
   let payroll
-  let ayrollBase
+  let payrollBase
   let priceFeed
   let employeeId
   let dao

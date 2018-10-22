@@ -74,74 +74,71 @@ contract PayrollKit is KitBase {
         tokenFactory = new MiniMeTokenFactory();
     }
 
-    function newInstance()
-      public
-      returns (Kernel dao, Payroll payroll)
-    {
-      address root = msg.sender;
-      address employer = msg.sender;
+    function newInstance() public returns (Kernel dao, Payroll payroll) {
+        address root = msg.sender;
+        address employer = msg.sender;
 
-      dao = fac.newDAO(this);
-      ACL acl = ACL(dao.acl());
+        dao = fac.newDAO(this);
+        ACL acl = ACL(dao.acl());
 
-      PPFMock priceFeed = new PPFMock();
+        PPFMock priceFeed = new PPFMock();
 
-      MiniMeToken denominationToken = tokenFactory.createCloneToken(MiniMeToken(0), 0, "USD Dolar", 18, "USD", true);
+        MiniMeToken denominationToken = tokenFactory.createCloneToken(MiniMeToken(0), 0, "US Dollar", 18, "USD", true);
 
-      acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
+        acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
-      Vault vault;
-      Finance finance;
-      (vault, finance, payroll) = deployApps(dao);
+        Vault vault;
+        Finance finance;
+        (vault, finance, payroll) = deployApps(dao);
 
-      finance.initialize(vault, financePeriodDuration);
-      payroll.initialize(finance, denominationToken, priceFeed, rateExpiryTime);
+        finance.initialize(vault, financePeriodDuration);
+        payroll.initialize(finance, denominationToken, priceFeed, rateExpiryTime);
 
-      // Payroll permissions
-      acl.createPermission(employer, payroll, payroll.ADD_EMPLOYEE_ROLE(), root);
-      acl.createPermission(employer, payroll, payroll.TERMINATE_EMPLOYEE_ROLE(), root);
-      acl.createPermission(employer, payroll, payroll.ALLOWED_TOKENS_MANAGER_ROLE(), root);
-      acl.createPermission(employer, payroll, payroll.SET_EMPLOYEE_SALARY_ROLE(), root);
-      acl.createPermission(employer, payroll, payroll.ADD_ACCRUED_VALUE_ROLE(), root);
-      acl.createPermission(root, payroll, payroll.CHANGE_PRICE_FEED_ROLE(), root);
-      acl.createPermission(root, payroll, payroll.MODIFY_RATE_EXPIRY_ROLE(), root);
+        // Payroll permissions
+        acl.createPermission(employer, payroll, payroll.ADD_EMPLOYEE_ROLE(), root);
+        acl.createPermission(employer, payroll, payroll.TERMINATE_EMPLOYEE_ROLE(), root);
+        acl.createPermission(employer, payroll, payroll.ALLOWED_TOKENS_MANAGER_ROLE(), root);
+        acl.createPermission(employer, payroll, payroll.SET_EMPLOYEE_SALARY_ROLE(), root);
+        acl.createPermission(employer, payroll, payroll.ADD_ACCRUED_VALUE_ROLE(), root);
+        acl.createPermission(root, payroll, payroll.CHANGE_PRICE_FEED_ROLE(), root);
+        acl.createPermission(root, payroll, payroll.MODIFY_RATE_EXPIRY_ROLE(), root);
 
-      // Finance permissions
-      acl.createPermission(payroll, finance, finance.CREATE_PAYMENTS_ROLE(), root);
+        // Finance permissions
+        acl.createPermission(payroll, finance, finance.CREATE_PAYMENTS_ROLE(), root);
 
-      // Vault permissions
-      setVaultPermissions(acl, vault, finance, root);
+        // Vault permissions
+        setVaultPermissions(acl, vault, finance, root);
 
-      // EVMScriptRegistry permissions
-      // EVMScriptRegistry reg = EVMScriptRegistry(dao.getApp(dao.APP_ADDR_NAMESPACE(), EVMSCRIPT_REGISTRY_APP_ID));
-      // acl.createBurnedPermission(reg, reg.REGISTRY_ADD_EXECUTOR_ROLE());
-      // acl.createBurnedPermission(reg, reg.REGISTRY_MANAGER_ROLE());
+        // EVMScriptRegistry permissions
+        // EVMScriptRegistry reg = EVMScriptRegistry(dao.getApp(dao.APP_ADDR_NAMESPACE(), EVMSCRIPT_REGISTRY_APP_ID));
+        // acl.createBurnedPermission(reg, reg.REGISTRY_ADD_EXECUTOR_ROLE());
+        // acl.createBurnedPermission(reg, reg.REGISTRY_MANAGER_ROLE());
 
-      cleanupDAOPermissions(dao, acl, root);
+        cleanupDAOPermissions(dao, acl, root);
 
-      emit DeployInstance(dao);
+        emit DeployInstance(dao);
     }
 
     function deployApps(Kernel dao) internal returns (Vault, Finance, Payroll) {
-      bytes32 vaultAppId = apmNamehash("vault");
-      bytes32 financeAppId = apmNamehash("finance");
-      bytes32 payrollAppId = apmNamehash("payroll");
+        bytes32 vaultAppId = apmNamehash("vault");
+        bytes32 financeAppId = apmNamehash("finance");
+        bytes32 payrollAppId = apmNamehash("payroll");
 
-      Vault vault = Vault(dao.newAppInstance(vaultAppId, latestVersionAppBase(vaultAppId)));
-      Finance finance = Finance(dao.newAppInstance(financeAppId, latestVersionAppBase(financeAppId)));
-      Payroll payroll = Payroll(dao.newAppInstance(payrollAppId, latestVersionAppBase(payrollAppId)));
+        Vault vault = Vault(dao.newAppInstance(vaultAppId, latestVersionAppBase(vaultAppId)));
+        Finance finance = Finance(dao.newAppInstance(financeAppId, latestVersionAppBase(financeAppId)));
+        Payroll payroll = Payroll(dao.newAppInstance(payrollAppId, latestVersionAppBase(payrollAppId)));
 
-      emit InstalledApp(vault, vaultAppId);
-      emit InstalledApp(finance, financeAppId);
-      emit InstalledApp(payroll, payrollAppId);
+        emit InstalledApp(vault, vaultAppId);
+        emit InstalledApp(finance, financeAppId);
+        emit InstalledApp(payroll, payrollAppId);
 
-      return (vault, finance, payroll);
+        return (vault, finance, payroll);
     }
 
     function setVaultPermissions(ACL acl, Vault vault, Finance finance, address root) internal {
-      bytes32 vaultTransferRole = vault.TRANSFER_ROLE();
-      acl.createPermission(finance, vault, vaultTransferRole, this); // manager is this to allow 2 grants
-      acl.grantPermission(root, vault, vaultTransferRole);
-      acl.setPermissionManager(root, vault, vaultTransferRole); // set root as the final manager for the role
+        bytes32 vaultTransferRole = vault.TRANSFER_ROLE();
+        acl.createPermission(finance, vault, vaultTransferRole, this); // manager is this to allow 2 grants
+        acl.grantPermission(root, vault, vaultTransferRole);
+        acl.setPermissionManager(root, vault, vaultTransferRole); // set root as the final manager for the role
     }
 }

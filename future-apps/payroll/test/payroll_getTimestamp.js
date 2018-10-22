@@ -81,8 +81,8 @@ contract('Payroll Timestamp', function(accounts) {
     let name = ''
     let salary1 = 100000 * USD_PRECISION
 
-    const r = await payroll.addEmployee(employee1, salary1)
-    let employeeId1 = getEvent(r, 'AddEmployee', 'employeeId')
+    const receipt = await payroll.addEmployee(employee1, salary1)
+    let employeeId1 = getEvent(receipt, 'AddEmployee', 'employeeId')
 
     let employee = await payroll.getEmployee(employeeId1)
     assert.equal(employee[0], employee1, "Employee account doesn't match")
@@ -94,8 +94,8 @@ contract('Payroll Timestamp', function(accounts) {
     let name = 'employee2'
     let salary2 = 100000 * USD_PRECISION
 
-    const r = await payroll.addEmployeeWithName(employee2, salary2, name)
-    let employeeId2 = getEvent(r, 'AddEmployee', 'employeeId')
+    const receipt = await payroll.addEmployeeWithName(employee2, salary2, name)
+    let employeeId2 = getEvent(receipt, 'AddEmployee', 'employeeId')
 
     let employee = await payroll.getEmployee(employeeId2)
     assert.equal(employee[0], employee2, "Employee account doesn't match")

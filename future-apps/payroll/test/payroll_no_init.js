@@ -24,7 +24,7 @@ contract('Payroll, without init,', function(accounts) {
   const erc20Token1Decimals = 18
 
   let payroll
-  let ayrollBase
+  let payrollBase
   let priceFeed
   let usdToken
   let erc20Token1

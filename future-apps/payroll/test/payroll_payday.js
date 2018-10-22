@@ -35,7 +35,7 @@ contract('Payroll, allocation and payday,', function(accounts) {
   let etherExchangeRate
 
   let payroll
-  let ayrollBase
+  let payrollBase
   let priceFeed
   let employeeId
   let dao
@@ -84,8 +84,14 @@ contract('Payroll, allocation and payday,', function(accounts) {
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
 
     // add employee
-    const r = await payroll.addEmployeeWithNameAndStartDate(employee, salary, "", parseInt(await payroll.getTimestampPublic.call(), 10) - 2628005) // now minus 1/12 year
-    employeeId = getEvent(r, 'AddEmployee', 'employeeId')
+    const receipt = await payroll.addEmployeeWithNameAndStartDate(
+      employee,
+      salary,
+      "",
+      parseInt(await payroll.getTimestampPublic.call(), 10) - 2628005 // now minus 1/12 year
+    )
+    
+    employeeId = getEvent(receipt, 'AddEmployee', 'employeeId')
   })
 
   it("fails on payday with no token allocation", async () => {

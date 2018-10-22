@@ -65,8 +65,8 @@ contract('PayrollForward', function(accounts) {
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
 
     // add employee
-    const r = await payroll.addEmployee(employee1, 100000)
-    employeeId1 = getEvent(r, 'AddEmployee', 'employeeId')
+    const receipt = await payroll.addEmployee(employee1, 100000)
+    employeeId1 = getEvent(receipt, 'AddEmployee', 'employeeId')
   });
 
   it("checks that it's forwarder", async () => {

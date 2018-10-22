@@ -55,8 +55,8 @@ module.exports = (owner) => ({
     const DISABLE_PAYMENTS_ROLE = await financeBase.DISABLE_PAYMENTS_ROLE()
     const TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
 
-    const r = await daoFact.newDAO(owner)
-    const dao = getContract('Kernel').at(getEvent(r, 'DeployDAO', 'dao'))
+    const receipt1 = await daoFact.newDAO(owner)
+    const dao = getContract('Kernel').at(getEvent(receipt1, 'DeployDAO', 'dao'))
     const acl = getContract('ACL').at(await dao.acl())
 
     await acl.createPermission(owner, dao.address, APP_MANAGER_ROLE, owner, { from: owner })
@@ -71,8 +71,8 @@ module.exports = (owner) => ({
     await acl.createPermission(ANY_ENTITY, finance.address, EXECUTE_PAYMENTS_ROLE, owner, { from: owner })
     await acl.createPermission(ANY_ENTITY, finance.address, DISABLE_PAYMENTS_ROLE, owner, { from: owner })
 
-    const receipt1 = await dao.newAppInstance('0x1234', vaultBase.address, { from: owner })
-    vault = getContract('Vault').at(getEvent(receipt1, 'NewAppProxy', 'proxy'))
+    const receipt3 = await dao.newAppInstance('0x1234', vaultBase.address, { from: owner })
+    vault = getContract('Vault').at(getEvent(receipt3, 'NewAppProxy', 'proxy'))
     await acl.createPermission(finance.address, vault.address, TRANSFER_ROLE, owner, { from: owner })
     await vault.initialize()
 

@@ -22,7 +22,7 @@ contract('Payroll, accrued value,', async (accounts) => {
   const erc20Token1Decimals = 18
 
   let payroll
-  let ayrollBase
+  let payrollBase
   let priceFeed
   let usdToken
   let erc20Token1
@@ -58,8 +58,8 @@ contract('Payroll, accrued value,', async (accounts) => {
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
 
     // add employee
-    const r = await payroll.addEmployee(employee1, salary1)
-    employeeId1 = getEvent(r, 'AddEmployee', 'employeeId')
+    const receipt = await payroll.addEmployee(employee1, salary1)
+    employeeId1 = getEvent(receipt, 'AddEmployee', 'employeeId')
   })
 
   it('adds accrued Value manually', async () => {

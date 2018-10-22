@@ -34,7 +34,7 @@ contract("Payroll, modifying employees,", function(accounts) {
   const erc20Token1Decimals = 18
 
   let payroll
-  let ayrollBase
+  let payrollBase
   let priceFeed
   let employeeId1
   let dao
@@ -86,8 +86,8 @@ contract("Payroll, modifying employees,", function(accounts) {
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
 
     // add employee
-    const r = await payroll.addEmployee(employee1_1, salary1)
-    employeeId1 = getEvent(r, "AddEmployee", "employeeId")
+    const receipt = await payroll.addEmployee(employee1_1, salary1)
+    employeeId1 = getEvent(receipt, "AddEmployee", "employeeId")
   })
 
   it("modifies employee salary", async () => {
