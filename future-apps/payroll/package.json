@@ -18,7 +18,7 @@
   "scripts": {
     "build": "cd app && npm run build",
     "coverage": "SOLIDITY_COVERAGE=true npm test",
-    "dev": "aragon run --network rpc --http localhost:8001 --http-served-from ./app/dist",
+    "dev": "npm start -- --http localhost:8001 --http-served-from ./app/dist",
     "dev:reset": "npm run dev -- --reset",
     "postinstall": "cd app && npm install",
     "lint": "solhint contracts/**/*.sol",
@@ -37,7 +37,7 @@
     "@aragon/apps-shared-migrations": "^1.0.0",
     "@aragon/apps-shared-minime": "^1.0.0",
     "@aragon/apps-vault": "^3.0.0-beta.2",
-    "@aragon/cli": "^5.1.0",
+    "@aragon/cli": "^5.1.1",
     "@aragon/test-helpers": "^1.0.1",
     "eth-gas-reporter": "^0.1.12",
     "ethereumjs-abi": "^0.6.5",
