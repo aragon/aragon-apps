@@ -7,7 +7,7 @@ import { getVoteSuccess } from '../vote-utils'
 const VoteSuccess = ({ settings, vote, ...props }) => (
   <Main {...props}>
     {(() => {
-      if (!vote.open) {
+      if (!vote.data.open) {
         return 'Voting has ended'
       }
 

@@ -27,7 +27,7 @@ export function getVoteStatus(vote, pctBase) {
   if (vote.data.executed) {
     return VOTE_STATUS_EXECUTED
   }
-  if (vote.open) {
+  if (vote.data.open) {
     return VOTE_STATUS_ONGOING
   }
   return getVoteSuccess(vote, pctBase)
