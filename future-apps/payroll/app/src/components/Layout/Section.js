@@ -17,4 +17,11 @@ Section.Right = styled.aside`
   min-width: 310px; 
 `
 
+Section.Title = styled.h1`
+  margin-top: 10px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  font-weight: 600;
+`
+
 export default Section
