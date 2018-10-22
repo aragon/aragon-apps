@@ -8,6 +8,6 @@ import "@aragon/os/contracts/acl/ACL.sol";
 import "@aragon/apps-shared-migrations/contracts/Migrations.sol";
 import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
-contract TestImports {
 
+contract TestImports {
 }

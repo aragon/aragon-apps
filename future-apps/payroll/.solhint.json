@@ -1,0 +1,16 @@
+{
+  "extends": "default",
+  "rules": {
+    "imports-on-top": ["error"],
+    "use-forbidden-name": ["error"],
+    "array-declaration-spaces": ["error"],
+    "contract-name-camelcase": ["error"],
+    "event-name-camelcase": ["error"],
+    "no-empty-blocks": ["error"],
+    "no-unused-vars": ["error"],
+    "quotes": ["error"],
+    "no-mix-tabs-and-spaces": ["error"],
+    "avoid-suicide": ["error"],
+    "func-visibility": ["error"]
+  }
+}
