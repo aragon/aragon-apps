@@ -206,7 +206,7 @@ class App extends React.Component {
 
         <SidePanel
           title={`Vote #${currentVoteId} (${
-            currentVote && currentVote.open ? 'Open' : 'Closed'
+            currentVote && currentVote.data.open ? 'Open' : 'Closed'
           })`}
           opened={hasCurrentVote && !createVoteVisible && voteVisible}
           onClose={this.handleVoteClose}
