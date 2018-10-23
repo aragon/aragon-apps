@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 import Section from '../components/Layout/Section'
 import EmployeeTable from './components/EmployeeTable'
@@ -10,17 +11,21 @@ class TeamPayroll extends React.Component {
   }
 
   componentDidMount () {
-    this.subscription = this.props.app.state()
-      .subscribe(async state => {
-        const employees = await Promise.all(
-          state.employees.map(async employee => {
-            const [{ name, role }] = await idm.getIdentity(employee.domain)
+    const { app } = this.props
 
-            return { ...employee, name, role }
-          })
-        )
-        this.setState({ employees })
-      })
+    if (app && typeof app.state === 'function') {
+      this.subscription = app.state()
+        .subscribe(async state => {
+          const employees = await Promise.all(
+            state.employees.map(async employee => {
+              const [{ name, role }] = await idm.getIdentity(employee.domain)
+
+              return { ...employee, name, role }
+            })
+          )
+          this.setState({ employees })
+        })
+    }
   }
 
   componentWillUnmount () {
@@ -42,6 +47,12 @@ class TeamPayroll extends React.Component {
       </Section>
     )
   }
+}
+
+TeamPayroll.propTypes = {
+  app: PropTypes.shape({
+    state: PropTypes.func.isRequired
+  })
 }
 
 export default TeamPayroll

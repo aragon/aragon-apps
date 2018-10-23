@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Table, TableHeader, TableRow, TableCell, Text } from '@aragon/ui'
 
 import Panel from '../../components/Panel/Panel'
@@ -8,12 +9,12 @@ class EmployeeTable extends React.Component {
   renderHeader () {
     return (
       <TableRow>
-        <TableHeader title='Name' />
-        <TableHeader title='Start Date' />
-        <TableHeader title='End Date' />
-        <TableHeader title='Role' />
-        <TableHeader title='Salary' />
-        <TableHeader title='Total Paid This Year' />
+        <TableHeader title='Name'/>
+        <TableHeader title='Start Date'/>
+        <TableHeader title='End Date'/>
+        <TableHeader title='Role'/>
+        <TableHeader title='Salary'/>
+        <TableHeader title='Total Paid This Year'/>
       </TableRow>
     )
   }
@@ -58,6 +59,20 @@ class EmployeeTable extends React.Component {
       </Table>
     )
   }
+}
+
+EmployeeTable.propTypes = {
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      startDate: PropTypes.instanceOf(Date),
+      endDate: PropTypes.instanceOf(Date),
+      role: PropTypes.string,
+      salary: PropTypes.number,
+      accruedValue: PropTypes.number,
+    })
+  )
 }
 
 export default EmployeeTable
