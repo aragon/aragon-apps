@@ -1,7 +1,9 @@
 const tokenSettings = [
-  ['decimals', 'tokenDecimals', 'number'],
-  ['symbol', 'tokenSymbol'],
-  ['totalSupply', 'tokenSupply', 'number'],
+  ['decimals', 'tokenDecimals', 'bignumber'],
+  ['symbol', 'tokenSymbol', 'string'],
+  ['name', 'tokenName', 'string'],
+  ['totalSupply', 'tokenSupply', 'bignumber'],
+  ['transfersEnabled', 'tokenTransfersEnabled', 'bool'],
 ]
 
 export function hasLoadedTokenSettings(state) {

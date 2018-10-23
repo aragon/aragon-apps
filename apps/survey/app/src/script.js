@@ -89,7 +89,10 @@ async function initialize(tokenAddr) {
 async function createStore(token, tokenSettings) {
   const { decimals: tokenDecimals, symbol: tokenSymbol } = tokenSettings
   return app.store(
-    async (state, { blockNumber, event, returnValues, transactionIndex }) => {
+    async (
+      state,
+      { blockNumber, event, logIndex, returnValues, transactionIndex }
+    ) => {
       let nextState = {
         ...state,
         // Fetch the app's settings, if we haven't already
@@ -108,11 +111,30 @@ async function createStore(token, tokenSettings) {
             nextState = await startSurvey(nextState, returnValues)
             break
           case 'CastVote':
-            nextState = await castVote(
+            nextState = await processVote(
               nextState,
               returnValues,
               blockNumber,
-              transactionIndex
+              transactionIndex,
+              logIndex
+            )
+            break
+          case 'ResetVote':
+            // We have to manually calculate the option power left when a vote is reset
+            returnValues = {
+              ...returnValues,
+              // TODO: use BN.js instead
+              optionPower: String(
+                returnValues.optionPower - returnValues.previousStake
+              ),
+            }
+
+            nextState = await processVote(
+              nextState,
+              returnValues,
+              blockNumber,
+              transactionIndex,
+              logIndex
             )
             break
           default:
@@ -141,11 +163,12 @@ async function startSurvey(state, { surveyId }) {
   return updateState(state, surveyId, transform)
 }
 
-async function castVote(
+async function processVote(
   state,
   { optionPower, surveyId, voter, option: optionId },
   blockNumber,
-  transactionIndex
+  transactionIndex,
+  logIndex
 ) {
   const transform = async ({ data, options, ...survey }) => {
     // Reload the contract data, mostly so we can get updated participation numbers
@@ -160,7 +183,8 @@ async function castVote(
         newData,
         state.surveyTime,
         blockNumber,
-        transactionIndex
+        transactionIndex,
+        logIndex
       ),
 
       // Update power for option
@@ -226,15 +250,18 @@ async function updateHistoryForOption(
   surveyData,
   surveyTime,
   blockNumber,
-  transactionIndex
+  transactionIndex,
+  logIndex
 ) {
   let newHistory = history
   const { lastUpdated } = history
 
   if (
     lastUpdated.blockNumber < blockNumber ||
-    (lastUpdated.blockNumber === blockNumber &&
-      lastUpdated.transactionIndex <= transactionIndex)
+    ((lastUpdated.blockNumber === blockNumber &&
+      lastUpdated.transactionIndex < transactionIndex) ||
+      (lastUpdated.transactionIndex === transactionIndex &&
+        lastUpdated.logIndex < logIndex))
   ) {
     // We haven't encountered this event before! Let's update our history!
     const { startDate } = surveyData
@@ -259,6 +286,7 @@ async function updateHistoryForOption(
       options,
       lastUpdated: {
         blockNumber,
+        logIndex,
         transactionIndex,
       },
     }
@@ -301,11 +329,12 @@ async function createNewSurvey(surveyId) {
     optionsHistory: {
       lastUpdated: {
         blockNumber: 0,
+        logIndex: 0,
         transactionIndex: 0,
       },
-      // Initialize each option's history with an empty zeroed array
-      // matching the number of time slices
-      options: options.map(() => new Array(DURATION_SLICES).fill(0)),
+      // Initialize each option's history with a "sparse" -1 filled array
+      // whose length matches the number of time slices
+      options: options.map(() => new Array(DURATION_SLICES).fill(-1)),
     },
   }
 }

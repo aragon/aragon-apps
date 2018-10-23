@@ -3,15 +3,13 @@ import styled from 'styled-components'
 import { EmptyStateCard } from '@aragon/ui'
 import emptyIcon from '../assets/empty-card-icon.svg'
 
-const EmptyIcon = () => <img src={emptyIcon} alt="" />
-
 const EmptyState = ({ onActivate }) => (
   <Main>
     <EmptyStateCard
-      icon={EmptyIcon}
       title="Nothing here."
       text="Create a new vote to start using the app."
       actionText="New Vote"
+      icon={() => <img src={emptyIcon} alt="" />}
       onActivate={onActivate}
     />
   </Main>

@@ -35,22 +35,17 @@ class Balances extends React.Component {
     const { balances } = this.props
     const { convertRates } = this.state
     const balanceItems = balances
-      .map(({ amount, decimals, ...token }) => ({
-        ...token,
-        amount: amount / Math.pow(10, decimals),
-      }))
-      .map(({ amount, symbol }) => ({
-        amount,
-        symbol,
-        convertedAmount: convertRates[symbol]
-          ? amount / convertRates[symbol]
-          : -1,
-      }))
-      .map(({ amount, convertedAmount, ...balance }) => ({
-        ...balance,
-        amount: round(amount, 5),
-        convertedAmount: round(convertedAmount, 5),
-      }))
+      .map(({ numData: { amount, decimals }, symbol }) => {
+        const adjustedAmount = amount / Math.pow(10, decimals)
+        const convertedAmount = convertRates[symbol]
+          ? adjustedAmount / convertRates[symbol]
+          : -1
+        return {
+          symbol,
+          amount: round(adjustedAmount, 5),
+          convertedAmount: round(convertedAmount, 5),
+        }
+      })
       .sort(
         (balanceA, balanceB) =>
           balanceB.convertedAmount - balanceA.convertedAmount
@@ -61,11 +56,11 @@ class Balances extends React.Component {
         <ScrollView>
           <List>
             {balanceItems.length > 0 ? (
-              balanceItems.map(({ symbol, amount, convertedAmount }) => (
+              balanceItems.map(({ amount, convertedAmount, symbol }) => (
                 <ListItem key={symbol}>
                   <BalanceToken
-                    symbol={symbol}
                     amount={amount}
+                    symbol={symbol}
                     convertedAmount={convertedAmount}
                   />
                 </ListItem>
@@ -82,7 +77,7 @@ class Balances extends React.Component {
 
 const EmptyListItem = () => (
   <ListItem style={{ opacity: '0' }}>
-    <BalanceToken symbol=" " amount={0} convertedAmount={0} />
+    <BalanceToken amount={0} convertedAmount={0} />
   </ListItem>
 )
 

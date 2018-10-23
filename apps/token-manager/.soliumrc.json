@@ -18,6 +18,7 @@
     "arg-overflow": ["error", 8],
     "pragma-on-top": ["error"],
     "security/enforce-explicit-visibility": ["error"],
-    "consequent": 0
+    "consequent": 0,
+    "error-reason": 0
   }
 }
