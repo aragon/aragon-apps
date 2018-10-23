@@ -46,10 +46,15 @@ class Balances extends React.Component {
           convertedAmount: round(convertedAmount, 5),
         }
       })
-      .sort(
-        (balanceA, balanceB) =>
-          balanceB.convertedAmount - balanceA.convertedAmount
-      )
+      .sort((balanceA, balanceB) => {
+        if (balanceA.symbol === 'ETH') {
+          return -1
+        }
+        if (balanceB.symbol === 'ETH') {
+          return 1
+        }
+        return balanceB.convertedAmount - balanceA.convertedAmount
+      })
     return (
       <section>
         <Title>Token Balances</Title>
