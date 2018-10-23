@@ -52,7 +52,8 @@ function highestValueIndex(values) {
 // Scale to `total` a set of values summing to 1.
 export function scaleBigNumberValuesSet(
   values = [],
-  total = new BigNumber(100)
+  total = new BigNumber(100),
+  correctionLimit = 0.001
 ) {
   if (values.length === 0) {
     return []
@@ -61,18 +62,30 @@ export function scaleBigNumberValuesSet(
   values = values.map(v => new BigNumber(v))
   let remaining = new BigNumber(total)
 
-  // Correct 0 => 1 values due to the Number => BigNumber() conversion
-  const valuesCorrection = new BigNumber(1).minus(
-    values.reduce((total, v) => v.plus(total), 0)
-  )
-  const correctionIndex = highestValueIndex(values)
-  values[correctionIndex] = values[correctionIndex].plus(valuesCorrection)
+  const accumulatedTotal = values.reduce((total, v) => v.plus(total), 0)
 
-  if (
-    values[correctionIndex].isGreaterThan(1) ||
-    values[correctionIndex].isLessThan(0)
-  ) {
-    throw new Error('The values are too far from 1 to be corrected.')
+  if (accumulatedTotal.isNegative()) {
+    throw new Error('The sum of the values has to be a positive number.')
+  }
+
+  if (accumulatedTotal.minus(correctionLimit).isGreaterThan(1)) {
+    throw new Error('The sum of the values has to be equal to or less than 1.')
+  }
+
+  // Get the difference to correct
+  const valuesCorrection = new BigNumber(1).minus(accumulatedTotal)
+
+  const shouldCorrect =
+    !valuesCorrection.isZero() &&
+    // Negative & out of limit have already thrown at this point,
+    // so we should correct if it’s negative.
+    (valuesCorrection.isNegative() ||
+      valuesCorrection.isLessThanOrEqualTo(correctionLimit))
+
+  // We always correct (up or down) the highest value
+  const correctionIndex = shouldCorrect ? highestValueIndex(values) : -1
+  if (correctionIndex > -1) {
+    values[correctionIndex] = values[correctionIndex].plus(valuesCorrection)
   }
 
   // First pass, all numbers are rounded down
