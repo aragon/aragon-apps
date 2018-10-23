@@ -23,6 +23,12 @@
     "prepublishOnly": "truffle compile --all"
   },
   "keywords": [],
+  "files": [
+    "/build",
+    "/contracts",
+    "/scripts",
+    "/test"
+  ],
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "contributors": [
     "Jorge Izquierdo <jorge@aragon.one>",
