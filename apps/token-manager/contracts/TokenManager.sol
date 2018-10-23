@@ -69,7 +69,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Initialize Token Manager for `_token.symbol(): string`, with `transferable ? 'T' : 'Not t'`ransferable tokens`_maxAccountTokens > 0 ? ', and a maximum of ' + @tokenAmount(_token, _maxAccountTokens, false) + ' per account' : ''`
+    * @notice Initialize Token Manager for `_token.symbol(): string`, whose tokens are `transferable ? 'not' : ''` transferable`_maxAccountTokens > 0 ? ' and limited to a maximum of ' + @tokenAmount(_token, _maxAccountTokens, false) + ' per account' : ''`
     * @param _token MiniMeToken address for the managed token (Token Manager instance must be already set as the token controller)
     * @param _transferable whether the token can be transferred by holders
     * @param _maxAccountTokens Maximum amount of tokens an account can have (0 for infinite tokens)
@@ -173,7 +173,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Revoke vesting `_vestingId` from `_holder`, returning unvested tokens to the Token Manager
+    * @notice Revoke vesting #`_vestingId` from `_holder`, returning unvested tokens to the Token Manager
     * @param _holder Address whose vesting to revoke
     * @param _vestingId Numeric id of the vesting
     */
