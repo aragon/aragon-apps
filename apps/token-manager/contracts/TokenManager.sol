@@ -69,7 +69,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Initializes Token Manager for `_token.symbol(): string`, `transerable ? 'T' : 'Not t'`ransferable`_maxAccountTokens > 0 ? ', with a maximum of ' _maxAccountTokens ' per account' : ''`.
+    * @notice Initialize Token Manager for `_token.symbol(): string`, whose tokens are `transferable ? 'not' : ''` transferable`_maxAccountTokens > 0 ? ' and limited to a maximum of ' + @tokenAmount(_token, _maxAccountTokens, false) + ' per account' : ''`
     * @param _token MiniMeToken address for the managed token (Token Manager instance must be already set as the token controller)
     * @param _transferable whether the token can be transferred by holders
     * @param _maxAccountTokens Maximum amount of tokens an account can have (0 for infinite tokens)
@@ -95,7 +95,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Mint `_amount / 10^18` tokens for `_receiver`
+    * @notice Mint `@tokenAmount(self.token(), _amount, false)` tokens for `_receiver`
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens minted
     */
@@ -105,7 +105,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Mint `_amount / 10^18` tokens for the Token Manager
+    * @notice Mint `@tokenAmount(self.token(), _amount, false)` tokens for the Token Manager
     * @param _amount Number of tokens minted
     */
     function issue(uint256 _amount) external authP(ISSUE_ROLE, arr(_amount)) {
@@ -113,7 +113,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Assign `_amount / 10^18` tokens to `_receiver` from Token Manager's holdings
+    * @notice Assign `@tokenAmount(self.token(), _amount, false)` tokens to `_receiver` from the Token Manager's holdings
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transferred
     */
@@ -122,8 +122,8 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Burn `_amount / 10^18` tokens from `_holder`
-    * @param _holder Holder being removed tokens
+    * @notice Burn `@tokenAmount(self.token(), _amount, false)` tokens from `_holder`
+    * @param _holder Holder of tokens being burned
     * @param _amount Number of tokens being burned
     */
     function burn(address _holder, uint256 _amount) external authP(BURN_ROLE, arr(_holder, _amount)) {
@@ -132,7 +132,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Assign `_amount / 10^18` tokens to `_receiver` from the Token Manager's holdings with a `_revokable : 'revokable' : ''` vesting starting at `_start`, cliff at `_cliff` (first portion of tokens transferable), and completed vesting at `_vesting` (all tokens transferable)
+    * @notice Assign `@tokenAmount(self.token(), _amount, false)` tokens to `_receiver` from the Token Manager's holdings with a `_revokable : 'revokable' : ''` vesting starting at `@formatDate(_start)`, cliff at `@formatDate(_cliff)` (first portion of tokens transferable), and completed vesting at `@formatDate(_vested)` (all tokens transferable)
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens vested
     * @param _start Date the vesting calculations start
@@ -173,8 +173,8 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Revoke vesting `_vestingId` from `_holder`, returning unvested tokens to Token Manager
-    * @param _holder Address getting vesting revoked
+    * @notice Revoke vesting #`_vestingId` from `_holder`, returning unvested tokens to the Token Manager
+    * @param _holder Address whose vesting to revoke
     * @param _vestingId Numeric id of the vesting
     */
     function revokeVesting(address _holder, uint256 _vestingId)

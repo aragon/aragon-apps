@@ -72,7 +72,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Initializes Voting app with `_token.symbol(): string` for governance, minimum support of `(_supportRequiredPct - _supportRequiredPct % 10^16) / 10^14`, minimum acceptance quorum of `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^16) / 10^14` and vote duations of `(_voteTime - _voteTime % 86400) / 86400` day `_voteTime >= 172800 ? 's' : ''`
+    * @notice Initialize Voting app with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, and a voting duration of `@transformTime(_voteTime)`
     * @param _token MiniMeToken Address that will be used as governance token
     * @param _supportRequiredPct Percentage of yeas in casted votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
     * @param _minAcceptQuorumPct Percentage of yeas in total possible votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
@@ -99,7 +99,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Change required support to `(_supportRequiredPct - _supportRequiredPct % 10^16) / 10^14`%
+    * @notice Change required support to `@formatPct(_supportRequiredPct)`%
     * @param _supportRequiredPct New required support
     */
     function changeSupportRequiredPct(uint64 _supportRequiredPct)
@@ -114,7 +114,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Change minimum acceptance quorum to `(_minAcceptQuorumPct - _minAcceptQuorumPct % 10^16) / 10^14`%
+    * @notice Change minimum acceptance quorum to `@formatPct(_minAcceptQuorumPct)`%
     * @param _minAcceptQuorumPct New acceptance quorum
     */
     function changeMinAcceptQuorumPct(uint64 _minAcceptQuorumPct)
@@ -138,13 +138,13 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @notice Create a new vote about "`_metadata`"
-     * @param _executionScript EVM script to be executed on approval
-     * @param _metadata Vote metadata
-     * @param _castVote Whether to also cast newly created vote
-     * @param _executesIfDecided Whether to also immediately execute newly created vote if decided
-     * @return voteId id for newly created vote
-     */
+    * @notice Create a new vote about "`_metadata`"
+    * @param _executionScript EVM script to be executed on approval
+    * @param _metadata Vote metadata
+    * @param _castVote Whether to also cast newly created vote
+    * @param _executesIfDecided Whether to also immediately execute newly created vote if decided
+    * @return voteId id for newly created vote
+    */
     function newVote(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided)
         external
         auth(CREATE_VOTES_ROLE)
@@ -167,7 +167,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Execute the result of vote #`_voteId`
+    * @notice Execute vote #`_voteId`
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote(),` which requires initialization
     * @param _voteId Id for vote
