@@ -50,14 +50,12 @@ contract Survey is AragonApp {
     }
 
     struct SurveyStruct {
-        address creator;
         uint64 startDate;
         uint64 snapshotBlock;
         uint64 minParticipationPct;
         uint256 options;
         uint256 votingPower;                    // total tokens that can cast a vote
         uint256 participation;                  // tokens that casted a vote
-        string metadata;
 
         // Note that option IDs are from 1 to `options`, due to ABSTAIN_VOTE taking 0
         mapping (uint256 => uint256) optionPower;       // option ID -> voting power for option
@@ -72,7 +70,7 @@ contract Survey is AragonApp {
     mapping (uint256 => SurveyStruct) internal surveys;
     uint256 public surveysLength;
 
-    event StartSurvey(uint256 indexed surveyId);
+    event StartSurvey(uint256 indexed surveyId, address indexed creator, string metadata);
     event CastVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 stake, uint256 optionPower);
     event ResetVote(uint256 indexed surveyId, address indexed voter, uint256 option, uint256 previousStake, uint256 optionPower);
     event ChangeMinParticipation(uint64 minParticipationPct);
@@ -130,18 +128,18 @@ contract Survey is AragonApp {
     * @return surveyId id for newly created survey
     */
     function newSurvey(string _metadata, uint256 _options) external auth(CREATE_SURVEYS_ROLE) returns (uint256 surveyId) {
+        uint256 votingPower = token.totalSupplyAt(survey.snapshotBlock);
+        require(votingPower > 0, ERROR_NO_VOTING_POWER);
+
         surveyId = surveysLength++;
         SurveyStruct storage survey = surveys[surveyId];
-        survey.creator = msg.sender;
         survey.startDate = getTimestamp64();
-        survey.options = _options;
-        survey.metadata = _metadata;
         survey.snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
-        survey.votingPower = token.totalSupplyAt(survey.snapshotBlock);
-        require(survey.votingPower > 0, ERROR_NO_VOTING_POWER);
         survey.minParticipationPct = minParticipationPct;
+        survey.options = _options;
+        survey.votingPower = votingPower;
 
-        emit StartSurvey(surveyId);
+        emit StartSurvey(surveyId, msg.sender, _metadata);
     }
 
     /**
@@ -262,7 +260,6 @@ contract Survey is AragonApp {
         surveyExists(_surveyId)
         returns (
             bool _open,
-            address _creator,
             uint64 _startDate,
             uint64 _snapshotBlock,
             uint64 _minParticipationPct,
@@ -274,17 +271,12 @@ contract Survey is AragonApp {
         SurveyStruct storage survey = surveys[_surveyId];
 
         _open = _isSurveyOpen(survey);
-        _creator = survey.creator;
         _startDate = survey.startDate;
         _snapshotBlock = survey.snapshotBlock;
         _minParticipationPct = survey.minParticipationPct;
         _votingPower = survey.votingPower;
         _participation = survey.participation;
         _options = survey.options;
-    }
-
-    function getSurveyMetadata(uint256 _surveyId) public view surveyExists(_surveyId) returns (string) {
-        return surveys[_surveyId].metadata;
     }
 
     /* solium-disable-next-line function-order */
