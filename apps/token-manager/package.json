@@ -3,7 +3,6 @@
   "version": "2.0.0-rc.1",
   "main": "index.js",
   "scripts": {
-    "postinstall": "cd app && npm install",
     "compile": "truffle compile",
     "build": "cd app && npm run build",
     "deploy:rpc": "truffle exec scripts/deploy.js --network rpc",
@@ -20,6 +19,7 @@
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "truffle:dev": "node_modules/.bin/truffle dev",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
+    "prepare": "cd app && npm install",
     "prepublishOnly": "truffle compile --all"
   },
   "keywords": [],
