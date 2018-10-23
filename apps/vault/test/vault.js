@@ -41,7 +41,7 @@ contract('Vault app', (accounts) => {
     TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
 
     const ethConstant = await EtherTokenConstantMock.new()
-    ETH = await ethConstant.ETH()
+    ETH = await ethConstant.getETHConstant()
   })
 
   beforeEach(async () => {

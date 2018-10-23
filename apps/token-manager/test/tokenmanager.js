@@ -46,7 +46,7 @@ contract('Token Manager', accounts => {
         BURN_ROLE = await tokenManagerBase.BURN_ROLE()
 
         const ethConstant = await EtherTokenConstantMock.new()
-        ETH = await ethConstant.ETH()
+        ETH = await ethConstant.getETHConstant()
     })
 
     beforeEach(async () => {
