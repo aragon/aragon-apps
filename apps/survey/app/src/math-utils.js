@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js'
 
-// Get a list of rounded 0 => `total` numbers, from a list of 0 => 1 values.
+// Get a list of rounded [0, `total`] numbers, from a list of [0, 1] values.
 // If the total of the values is exactly 1, the total of the resulting values
 // will be exactly `total`.
 export function scaleValuesSet(values, digits = 0, total = 100) {
