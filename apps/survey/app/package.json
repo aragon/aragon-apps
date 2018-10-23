@@ -18,8 +18,9 @@
     "styled-components": "3.2.6"
   },
   "devDependencies": {
-    "babel-core": "^6.26.0",
+    "babel-core": "^6.26.3",
     "babel-eslint": "^8.0.3",
+    "babel-jest": "^23.0.1",
     "babel-plugin-styled-components": "^1.5.1",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.1",
@@ -43,7 +44,7 @@
   "scripts": {
     "lint": "eslint ./src",
     "lint:fix": "eslint --fix ./src",
-    "test": "npm run lint",
+    "test": "npm run lint && jest",
     "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./public && rsync -rtu ./public/ ./dist",
     "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve index.html -p 3004 --out-dir dist/",
     "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir dist/ --public-url '.'",
