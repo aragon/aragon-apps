@@ -146,7 +146,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     /**
      * @dev Sends ETH to Vault. Sends all the available balance.
-     * @notice Allows to send ETH from this contract to Vault, to avoid locking them in contract forever.
+     * @notice Deposit ETH to the Vault, to avoid locking them in this Finance app forever
      */
     function () external payable isInitialized transitionsPeriod {
         _deposit(
@@ -159,7 +159,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice Initialize Finance app for Vault at `_vault` with period length of `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ''`
+    * @notice Initialize Finance app for Vault at `_vault` with period length of `@transformTime(_periodDuration)`
     * @param _vault Address of the vault Finance will rely on (non changeable)
     * @param _periodDuration Duration in seconds of each period
     */
@@ -185,7 +185,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     /**
     * @dev Deposit for approved ERC20 tokens or ETH
-    * @notice Deposit `_amount / 10^18` `_token.symbol(): string`
+    * @notice Deposit `@tokenAmount(_token, _amount)`
     * @param _token Address of deposited token
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
@@ -201,7 +201,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice Create a new payment of `_amount / 10^18` `_token.symbol(): string` to `_receiver`. `_maxRepeats > 0 ? 'It will be executed ' + _maxRepeats + ' times at intervals of ' + (_interval - _interval % 86400) / 86400 + ' days' : ''`
+    * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver``_maxRepeats > 0 ? ', executing ' + _maxRepeats + ' times at intervals of ' + @transformTime(_interval) : ''`
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment
     * @param _amount Tokens that are payed every time the payment is due
@@ -261,7 +261,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice Change period duration to `(_periodDuration - _periodDuration % 86400) / 86400` day`_periodDuration >= 172800 ? 's' : ''`, effective for next accounting period.
+    * @notice Change period duration to `@transformTime(_periodDuration)`, effective for next accounting period.
     * @param _periodDuration Duration in seconds for accounting periods
     */
     function setPeriodDuration(uint64 _periodDuration)
@@ -275,7 +275,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice Set budget for `_token.symbol(): string` to `_amount / 10^18`, effective immediately.
+    * @notice Set budget for `_token.symbol(): string` to `@tokenAmount(_token, _amount, false)`, effective immediately.
     * @param _token Address for token
     * @param _amount New budget amount
     */
@@ -309,7 +309,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @dev Withdraws any payment (requires certain status)
+    * @dev Executes any payment (requires role)
     * @notice Execute pending payment #`_paymentId`
     * @param _paymentId Identifier for payment
     */
@@ -337,7 +337,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice `_active ? 'Active' : 'Inactive'` payment `_paymentId`
+    * @notice `_active ? 'Activate' : 'Disable'` payment #`_paymentId`
     * @param _paymentId Identifier for payment
     * @param _active Whether it will be active or inactive
     */
