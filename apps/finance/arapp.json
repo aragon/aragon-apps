@@ -1,6 +1,31 @@
 {
-  "appName": "finance.aragonpm.eth",
-  "version": "3.0.1",
+  "environments": {
+    "default": {
+      "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1",
+      "appName": "finance.aragonpm.eth",
+      "network": "rpc"
+    },
+    "rinkeby": {
+      "registry": "",
+      "appName": "finance.aragonpm.eth",
+      "network": "rinkeby"
+    },
+    "staging": {
+      "registry": "",
+      "appName": "finance.aragonpm.eth",
+      "network": "rinkeby"
+    },
+    "mainnet": {
+      "registry": "0x314159265dd8dbb310642f98f50c066173c1259b",
+      "appName": "finance.aragonpm.eth",
+      "network": "mainnet"
+    },
+    "rinkeby-old": {
+      "registry": "0xfbae32d1cde62858bc45f51efc8cc4fa1415447e",
+      "appName": "finance.aragonpm.eth",
+      "network": "rinkeby"
+    },
+  },
   "dependencies": [
     {
       "appName": "vault.aragonpm.eth",
@@ -30,7 +55,10 @@
     {
       "name": "Change period duration",
       "id": "CHANGE_PERIOD_ROLE",
-      "params": ["New period duration", "Old period duration"]
+      "params": [
+        "New period duration",
+        "Old period duration"
+      ]
     },
     {
       "name": "Change budgets",
@@ -45,12 +73,18 @@
     {
       "name": "Execute payments",
       "id": "EXECUTE_PAYMENTS_ROLE",
-      "params": ["Payment ID", "Payment amount"]
+      "params": [
+        "Payment ID",
+        "Payment amount"
+      ]
     },
     {
       "name": "Disable payments",
       "id": "MANAGE_PAYMENTS_ROLE",
-      "params": ["Payment ID", "Payment active"]
+      "params": [
+        "Payment ID",
+        "Payment active"
+      ]
     }
   ],
   "path": "contracts/Finance.sol"

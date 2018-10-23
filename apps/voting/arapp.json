@@ -1,6 +1,31 @@
 {
-  "appName": "voting.aragonpm.eth",
-  "version": "1.0.18",
+  "environments": {
+    "default": {
+      "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1",
+      "appName": "voting.aragonpm.eth",
+      "network": "rpc"
+    },
+    "rinkeby": {
+      "registry": "",
+      "appName": "voting.aragonpm.eth",
+      "network": "rinkeby"
+    },
+    "staging": {
+      "registry": "",
+      "appName": "voting.aragonpm.eth",
+      "network": "rinkeby"
+    },
+    "mainnet": {
+      "registry": "0x314159265dd8dbb310642f98f50c066173c1259b",
+      "appName": "voting.aragonpm.eth",
+      "network": "mainnet"
+    },
+    "rinkeby-old": {
+      "registry": "0xfbae32d1cde62858bc45f51efc8cc4fa1415447e",
+      "appName": "voting.aragonpm.eth",
+      "network": "rinkeby"
+    },
+  },
   "roles": [
     {
       "name": "Create new votes",
