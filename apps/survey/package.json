@@ -23,6 +23,12 @@
     "prepublishOnly": "truffle compile --all"
   },
   "keywords": [],
+  "files": [
+    "/build",
+    "/contracts",
+    "/scripts",
+    "/test"
+  ],
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "description": "",
