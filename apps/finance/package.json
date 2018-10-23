@@ -23,6 +23,7 @@
     "prepublishOnly": "truffle compile --all"
   },
   "files": [
+    "/arapp.json",
     "/build",
     "/contracts",
     "/scripts",
