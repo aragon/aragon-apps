@@ -137,7 +137,7 @@ contract Survey is AragonApp {
         survey.snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
         survey.minParticipationPct = minParticipationPct;
         survey.options = _options;
-        survey.votingPower = votingPower
+        survey.votingPower = votingPower;
 
         emit StartSurvey(surveyId, msg.sender, _metadata);
     }
