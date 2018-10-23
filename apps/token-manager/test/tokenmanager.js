@@ -13,6 +13,8 @@ const EVMScriptRegistryFactory = artifacts.require('@aragon/core/contracts/facto
 const ACL = artifacts.require('@aragon/core/contracts/acl/ACL')
 const Kernel = artifacts.require('@aragon/core/contracts/kernel/Kernel')
 
+const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
+
 const getContract = name => artifacts.require(name)
 
 const n = '0x00'
@@ -42,7 +44,9 @@ contract('Token Manager', accounts => {
         ASSIGN_ROLE = await tokenManagerBase.ASSIGN_ROLE()
         REVOKE_VESTINGS_ROLE = await tokenManagerBase.REVOKE_VESTINGS_ROLE()
         BURN_ROLE = await tokenManagerBase.BURN_ROLE()
-        ETH = await tokenManagerBase.ETH()
+
+        const ethConstant = await EtherTokenConstantMock.new()
+        ETH = await ethConstant.getETHConstant()
     })
 
     beforeEach(async () => {
@@ -52,7 +56,7 @@ contract('Token Manager', accounts => {
 
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
-        const receipt = await dao.newAppInstance('0x1234', tokenManagerBase.address, { from: root })
+        const receipt = await dao.newAppInstance('0x1234', tokenManagerBase.address, '0x', false, { from: root })
         tokenManager = TokenManager.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
 
         await acl.createPermission(ANY_ADDR, tokenManager.address, MINT_ROLE, root, { from: root })

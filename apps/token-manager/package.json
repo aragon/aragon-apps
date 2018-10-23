@@ -1,6 +1,6 @@
 {
   "name": "@aragon/apps-token-manager",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-rc.1",
   "main": "index.js",
   "scripts": {
     "postinstall": "cd app && npm install",
@@ -46,6 +46,6 @@
   },
   "dependencies": {
     "@aragon/apps-shared-minime": "1.0.0",
-    "@aragon/os": "4.0.0-beta.2"
+    "@aragon/os": "4.0.0-rc.1"
   }
 }

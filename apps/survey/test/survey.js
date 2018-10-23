@@ -43,7 +43,7 @@ contract('Survey app', accounts => {
 
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
-    const receipt = await dao.newAppInstance('0x1234', surveyBase.address, { from: root })
+    const receipt = await dao.newAppInstance('0x1234', surveyBase.address, '0x', false, { from: root })
     survey = getContract('Survey').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
 
     await acl.createPermission(ANY_ENTITY, survey.address, CREATE_SURVEYS_ROLE, root, { from: root })

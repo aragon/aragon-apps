@@ -9,6 +9,8 @@ const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 const DAOFactory = artifacts.require('DAOFactory')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
+
+const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
 const Vault = artifacts.require('Vault')
@@ -34,10 +36,12 @@ contract('Vault app', (accounts) => {
     vaultBase = await Vault.new()
 
     // Setup constants
-    ETH = await vaultBase.ETH()
     ANY_ENTITY = await aclBase.ANY_ENTITY()
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
+
+    const ethConstant = await EtherTokenConstantMock.new()
+    ETH = await ethConstant.getETHConstant()
   })
 
   beforeEach(async () => {
@@ -50,7 +54,7 @@ contract('Vault app', (accounts) => {
     // vault
     vaultId = hash('vault.aragonpm.test')
 
-    const vaultReceipt = await dao.newAppInstance(vaultId, vaultBase.address)
+    const vaultReceipt = await dao.newAppInstance(vaultId, vaultBase.address, '0x', false)
     const vaultProxyAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
     vault = Vault.at(vaultProxyAddress)
 
@@ -191,7 +195,7 @@ contract('Vault app', (accounts) => {
         await acl.createPermission(root, kernel.address, APP_MANAGER_ROLE, root, { from: root })
 
         // Create a new vault and set that vault as the default vault in the kernel
-        const defaultVaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '', true)
+        const defaultVaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '0x', true)
         const defaultVaultAddress = getEvent(defaultVaultReceipt, 'NewAppProxy', 'proxy')
         defaultVault = Vault.at(defaultVaultAddress)
         await defaultVault.initialize()
