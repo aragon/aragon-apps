@@ -51,7 +51,7 @@ contract('Finance App', accounts => {
 
     const setupRecoveryVault = async (dao) => {
         const recoveryVaultAppId = '0x90ab'
-        const vaultReceipt = await dao.newAppInstance(recoveryVaultAppId, vaultBase.address, { from: root })
+        const vaultReceipt = await dao.newAppInstance(recoveryVaultAppId, vaultBase.address, '0x', false, { from: root })
         const recoveryVault = Vault.at(vaultReceipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
         await recoveryVault.initialize()
         await dao.setApp(await dao.APP_ADDR_NAMESPACE(), recoveryVaultAppId, recoveryVault.address)
@@ -68,7 +68,7 @@ contract('Finance App', accounts => {
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
         // finance
-        const receipt2 = await dao.newAppInstance('0x5678', financeBase.address, { from: root })
+        const receipt2 = await dao.newAppInstance('0x5678', financeBase.address, '0x', false, { from: root })
         const financeApp = Finance.at(receipt2.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
         await financeApp.mock_setMaxPeriodTransitions(MAX_UINT64)
 
@@ -94,7 +94,7 @@ contract('Finance App', accounts => {
         finance = financeApp
 
         // vault
-        const receipt1 = await dao.newAppInstance('0x1234', vaultBase.address, { from: root })
+        const receipt1 = await dao.newAppInstance('0x1234', vaultBase.address, '0x', false, { from: root })
         vault = getContract('Vault').at(receipt1.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
         const acl = getContract('ACL').at(await dao.acl())
         await acl.createPermission(finance.address, vault.address, TRANSFER_ROLE, root, { from: root })

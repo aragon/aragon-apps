@@ -54,7 +54,7 @@ contract('Vault app', (accounts) => {
     // vault
     vaultId = hash('vault.aragonpm.test')
 
-    const vaultReceipt = await dao.newAppInstance(vaultId, vaultBase.address)
+    const vaultReceipt = await dao.newAppInstance(vaultId, vaultBase.address, '0x', false)
     const vaultProxyAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
     vault = Vault.at(vaultProxyAddress)
 
@@ -195,7 +195,7 @@ contract('Vault app', (accounts) => {
         await acl.createPermission(root, kernel.address, APP_MANAGER_ROLE, root, { from: root })
 
         // Create a new vault and set that vault as the default vault in the kernel
-        const defaultVaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '', true)
+        const defaultVaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '0x', true)
         const defaultVaultAddress = getEvent(defaultVaultReceipt, 'NewAppProxy', 'proxy')
         defaultVault = Vault.at(defaultVaultAddress)
         await defaultVault.initialize()
