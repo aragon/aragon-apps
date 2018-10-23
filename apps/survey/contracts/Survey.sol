@@ -88,7 +88,7 @@ contract Survey is AragonApp {
     }
 
     /**
-    * @notice Initializes Survey app with `_token.symbol(): string` for governance, minimum acceptance participation of `(_minParticipationPct - _minParticipationPct % 10^16) / 10^14` and durations of `(_surveyTime - _surveyTime % 86400) / 86400` day `_surveyTime >= 172800 ? 's' : ''`
+    * @notice Initialize Survey app with `_token.symbol(): string` for governance, minimum acceptance participation of `@formatPct(_minParticipationPct)`%, and a voting duration of `@transformTime(_surveyTime)`
     * @param _token MiniMeToken address that will be used as governance token
     * @param _minParticipationPct Percentage of total voting power that must participate in a survey for it to be taken into account (expressed as a 10^18 percentage, (eg 10^16 = 1%, 10^18 = 100%)
     * @param _surveyTime Seconds that a survey will be open for token holders to vote
@@ -110,7 +110,7 @@ contract Survey is AragonApp {
     }
 
     /**
-    * @notice Change minimum acceptance participation to `(_minParticipationPct - _minParticipationPct % 10^16) / 10^14`%
+    * @notice Change minimum acceptance participation to `@formatPct(_minParticipationPct)`%
     * @param _minParticipationPct New acceptance participation
     */
     function changeMinAcceptParticipationPct(uint64 _minParticipationPct)
@@ -145,9 +145,9 @@ contract Survey is AragonApp {
     }
 
     /**
-     * @notice Reset previously casted vote in survey #`_surveyId`, if any.
-     * @param _surveyId Id for survey
-     */
+    * @notice Reset previously casted vote in survey #`_surveyId`, if any.
+    * @param _surveyId Id for survey
+    */
     function resetVote(uint256 _surveyId) public isInitialized surveyExists(_surveyId) {
         require(canVote(_surveyId, msg.sender), ERROR_CAN_NOT_VOTE);
 
