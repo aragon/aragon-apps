@@ -218,7 +218,7 @@ contract('Voting App', accounts => {
                 })
 
                 it('has correct state', async () => {
-                    const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, totalVoters, execScript] = await voting.getVote(voteId)
+                    const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower, execScript] = await voting.getVote(voteId)
 
                     assert.isTrue(isOpen, 'vote should be open')
                     assert.isFalse(isExecuted, 'vote should not be executed')
@@ -228,7 +228,7 @@ contract('Voting App', accounts => {
                     assert.equal(minQuorum.toNumber(), minimumAcceptanceQuorum.toNumber(), 'min quorum should be app min quorum')
                     assert.equal(y, 0, 'initial yea should be 0')
                     assert.equal(n, 0, 'initial nay should be 0')
-                    assert.equal(totalVoters.toString(), bigExp(100, decimals).toString(), 'total voters should be 100')
+                    assert.equal(votingPower.toString(), bigExp(100, decimals).toString(), 'total voters should be 100')
                     assert.equal(execScript, script, 'script should be correct')
                     assert.equal(metadata, 'metadata', 'should have returned correct metadata')
                     assert.equal(await voting.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')

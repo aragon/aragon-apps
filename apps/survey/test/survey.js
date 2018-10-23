@@ -109,13 +109,13 @@ contract('Survey app', accounts => {
       })
 
       it('has correct state', async () => {
-        const [isOpen, startDate, snapshotBlock, minParticipationPct, totalVoters, participation, options] = await survey.getSurvey(surveyId)
+        const [isOpen, startDate, snapshotBlock, minParticipationPct, votingPower, participation, options] = await survey.getSurvey(surveyId)
 
         assert.isTrue(isOpen, 'survey should be open')
         assert.equal(creator, nonHolder, 'creator should be correct')
         assert.equal(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
         assert.deepEqual(minParticipationPct, minimumAcceptanceParticipationPct, 'min participation should be survey min participation')
-        assert.equal(totalVoters, 100, 'total voters should be 100')
+        assert.equal(votingPower, 100, 'total voters should be 100')
         assert.equal(participation, 0, 'initial participation should be 0') // didn't vote even though creator was holder
         assert.equal(options, optionsCount, 'number of options should be correct')
         assert.equal(metadata, 'metadata', 'should have returned correct metadata')
