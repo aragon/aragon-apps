@@ -20,7 +20,7 @@ class VotingCard extends React.Component {
       endDate,
       question,
       open,
-      totalVoters,
+      votingPower,
       status,
       id,
     } = this.props
@@ -45,7 +45,7 @@ class VotingCard extends React.Component {
               <Text color={theme.textTertiary}>#{id} </Text>
               <span>{question}</span>
             </Question>
-            <VotingOptions totalVoters={totalVoters} options={options} />
+            <VotingOptions options={options} votingPower={votingPower} />
           </Content>
           <Footer>
             <SecondaryButton onClick={this.handleOpen}>

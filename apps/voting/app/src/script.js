@@ -271,7 +271,7 @@ function loadTokenSymbol(tokenContract) {
   })
 }
 
-// Apply transmations to a vote received from web3
+// Apply transformations to a vote received from web3
 // Note: ignores the 'open' field as we calculate that locally
 function marshallVote({
   creator,
@@ -280,7 +280,7 @@ function marshallVote({
   nay,
   snapshotBlock,
   startDate,
-  totalVoters,
+  votingPower,
   yea,
   script,
   description,
@@ -292,7 +292,7 @@ function marshallVote({
     minAcceptQuorum,
     nay,
     script,
-    totalVoters,
+    votingPower,
     yea,
     // Like times, blocks should be safe to represent as real numbers
     snapshotBlock: parseInt(snapshotBlock, 10),

@@ -20,8 +20,8 @@ export function isVoteOpen(vote, date) {
   return !executed && isBefore(date, endDate)
 }
 
-export const getQuorumProgress = ({ numData: { yea, totalVoters } }) =>
-  yea / totalVoters
+export const getQuorumProgress = ({ numData: { yea, votingPower } }) =>
+  yea / votingPower
 
 export function getVoteStatus(vote, pctBase) {
   if (vote.data.executed) {
@@ -41,7 +41,7 @@ export function getVoteSuccess(vote, pctBase) {
     minAcceptQuorum,
     nay,
     supportRequiredPct,
-    totalVoters,
+    votingPower,
   } = vote.data
 
   const totalVotes = yea.add(nay)
@@ -49,7 +49,7 @@ export function getVoteSuccess(vote, pctBase) {
     return false
   }
   const yeaPct = yea.mul(pctBase).div(totalVotes)
-  const yeaOfTotalPowerPct = yea.mul(pctBase).div(totalVoters)
+  const yeaOfTotalPowerPct = yea.mul(pctBase).div(votingPower)
 
   // Mirror on-chain calculation
   // yea / votingPower > supportRequiredPct ||

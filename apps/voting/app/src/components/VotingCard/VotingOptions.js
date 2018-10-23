@@ -26,11 +26,11 @@ class VotingOptions extends React.Component {
   }
   render() {
     const { delay } = this.state
-    const { options, totalVoters } = this.props
+    const { options, votingPower } = this.props
 
     const percentages =
-      totalVoters > 0
-        ? percentageList(options.map(o => o.power / totalVoters), 2)
+      votingPower > 0
+        ? percentageList(options.map(o => o.power / votingPower), 2)
         : [0, 0]
 
     return (
@@ -41,7 +41,7 @@ class VotingOptions extends React.Component {
             delay={delay}
             config={springs.stiff}
             from={{ value: 0 }}
-            to={{ value: totalVoters > 0 ? option.power / totalVoters : 0 }}
+            to={{ value: votingPower > 0 ? option.power / votingPower : 0 }}
             native
           >
             {({ value }) => (
