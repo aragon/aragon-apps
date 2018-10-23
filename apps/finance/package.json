@@ -22,6 +22,12 @@
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
     "prepublishOnly": "truffle compile --all"
   },
+  "files": [
+    "/build",
+    "/contracts",
+    "/scripts",
+    "/test"
+  ],
   "keywords": [],
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "contributors": [
