@@ -1,15 +1,54 @@
 import Aragon from '@aragon/client'
+import { of } from './rxjs'
 import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
 import { addressesEqual } from './web3-utils'
 import tokenAbi from './abi/minimeToken.json'
 
+const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
+
 const app = new Aragon()
 
+/*
+ * Calls `callback` exponentially, everytime `retry()` is called.
+ *
+ * Usage:
+ *
+ * retryEvery(retry => {
+ *  // do something
+ *
+ *  if (condition) {
+ *    // retry in 1, 2, 4, 8 seconds… as long as the condition passes.
+ *    retry()
+ *  }
+ * }, 1000, 2)
+ *
+ */
+const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
+  const attempt = (retryTimer = initialRetryTimer) => {
+    // eslint-disable-next-line standard/no-callback-literal
+    callback(() => {
+      console.error(`Retrying in ${retryTimer / 1000}s...`)
+
+      // Exponentially backoff attempts
+      setTimeout(() => attempt(retryTimer * increaseFactor), retryTimer)
+    })
+  }
+  attempt()
+}
+
 // Get the token address to initialize ourselves
-app
-  .call('token')
-  .first()
-  .subscribe(initialize)
+retryEvery(retry => {
+  app
+    .call('token')
+    .first()
+    .subscribe(initialize, err => {
+      console.error(
+        'Could not start background script execution due to the contract not loading the token:',
+        err
+      )
+      retry()
+    })
+})
 
 async function initialize(tokenAddr) {
   const token = app.external(tokenAddr, tokenAbi)
@@ -38,7 +77,12 @@ async function createStore(token, tokenAddr) {
           : {}),
       }
 
-      if (addressesEqual(address, tokenAddr)) {
+      if (event === INITIALIZATION_TRIGGER) {
+        nextState = {
+          ...nextState,
+          tokenAddress: tokenAddr,
+        }
+      } else if (addressesEqual(address, tokenAddr)) {
         switch (event) {
           case 'ClaimedTokens':
             if (addressesEqual(returnValues._token, tokenAddr)) {
@@ -57,8 +101,12 @@ async function createStore(token, tokenAddr) {
 
       return nextState
     },
-    // Merge in the token's events into the app's own events for the store
-    [token.events()]
+    [
+      // Always initialize the store with our own home-made event
+      of({ event: INITIALIZATION_TRIGGER }),
+      // Merge in the token's events into the app's own events for the store
+      token.events(),
+    ]
   )
 }
 
@@ -126,7 +174,6 @@ function loadNewBalances(token, ...addresses) {
           token
             .balanceOf(address)
             .first()
-            .map(balance => parseInt(balance, 10))
             .subscribe(balance => resolve({ address, balance }), reject)
         )
     )
@@ -146,7 +193,6 @@ function loadTokenSupply(token) {
     token
       .totalSupply()
       .first()
-      .map(totalSupply => parseInt(totalSupply, 10))
       .subscribe(resolve, reject)
   )
 }
@@ -158,7 +204,6 @@ function loadTokenSettings(token) {
         new Promise((resolve, reject) =>
           token[name]()
             .first()
-            .map(val => (type === 'number' ? parseInt(val, 10) : val))
             .subscribe(value => {
               resolve({ [key]: value })
             }, reject)

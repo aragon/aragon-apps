@@ -1,5 +1,5 @@
 {
-	"version": "1.0.3",
+	"version": "1.0.0",
 	"dependencies": [
 		{
 			"appName": "vault.aragonpm.eth",
@@ -870,11 +870,6 @@
 					"indexed": true,
 					"name": "entity",
 					"type": "address"
-				},
-				{
-					"indexed": false,
-					"name": "amount",
-					"type": "uint256"
 				}
 			],
 			"name": "NewTransaction",

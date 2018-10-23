@@ -6,49 +6,69 @@ import {
   ContextMenu,
   ContextMenuItem,
   IconAdd,
+  IconRemove,
   Badge,
+  theme,
 } from '@aragon/ui'
-import { round } from '../math-utils'
+import { formatBalance } from '../utils'
 
 class HolderRow extends React.Component {
   static defaultProps = {
-    name: '',
+    address: '',
     balance: 0,
     groupMode: false,
     onAssignTokens: () => {},
+    onRemoveTokens: () => {},
   }
   handleAssignTokens = () => {
-    const { name, onAssignTokens } = this.props
-    onAssignTokens(name)
+    const { address, onAssignTokens } = this.props
+    onAssignTokens(address)
+  }
+  handleRemoveTokens = () => {
+    const { address, onRemoveTokens } = this.props
+    onRemoveTokens(address)
   }
   render() {
     const {
-      name,
+      address,
       balance,
       groupMode,
       tokenDecimalsBase,
       isCurrentUser,
     } = this.props
-    // Rounding their balance to 5 decimals should be enough... right?
-    const adjustedBalance = round(balance / tokenDecimalsBase, 5)
     return (
       <TableRow>
         <TableCell>
           <Owner>
-            <span>{name}</span>
+            <span>{address}</span>
             {isCurrentUser && (
-              <Badge.Identity style={{ fontVariant: 'small-caps' }} title='This is your Ethereum address'>
+              <Badge.Identity
+                style={{ fontVariant: 'small-caps' }}
+                title="This is your Ethereum address"
+              >
                 you
               </Badge.Identity>
             )}
           </Owner>
         </TableCell>
-        {!groupMode && <TableCell align="right">{adjustedBalance}</TableCell>}
+        {!groupMode && (
+          <TableCell align="right">
+            {formatBalance(balance, tokenDecimalsBase)}
+          </TableCell>
+        )}
         <TableCell align="right">
           <ContextMenu>
             <ContextMenuItem onClick={this.handleAssignTokens}>
-              <IconAdd />
+              <IconWrapper>
+                <IconAdd />
+              </IconWrapper>
               <ActionLabel>Assign Tokens</ActionLabel>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={this.handleRemoveTokens}>
+              <IconWrapper>
+                <IconRemove />
+              </IconWrapper>
+              <ActionLabel>Remove Tokens</ActionLabel>
             </ContextMenuItem>
           </ContextMenu>
         </TableCell>
@@ -67,6 +87,13 @@ const Owner = styled.div`
   & > span:first-child {
     margin-right: 10px;
   }
+`
+
+const IconWrapper = styled.span`
+  display: flex;
+  align-content: center;
+  margin-top: -3px;
+  color: ${theme.textSecondary};
 `
 
 export default HolderRow

@@ -12,11 +12,15 @@ import {
   Text,
   theme,
 } from '@aragon/ui'
-import { combineLatest } from '../rxjs'
 import provideNetwork from '../utils/provideNetwork'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
+import { round } from '../math-utils'
+import { pluralize } from '../utils'
+import { getQuorumProgress } from '../vote-utils'
 import VoteSummary from './VoteSummary'
 import VoteStatus from './VoteStatus'
+import VoteSuccess from './VoteSuccess'
+import SummaryBar from './SummaryBar'
 
 class VotePanelContent extends React.Component {
   static propTypes = {
@@ -25,53 +29,87 @@ class VotePanelContent extends React.Component {
   state = {
     userCanVote: false,
     userBalance: null,
+    canExecute: false,
+    changeVote: false,
+    loadingCanExecute: true,
+    loadingCanVote: true,
   }
   componentDidMount() {
-    this.loadUserCanVote()
-    this.loadUserBalance()
+    const { user, vote, tokenContract } = this.props
+    this.loadUserBalance(user, vote, tokenContract)
+    this.loadUserCanVote(user, vote)
+    this.loadCanExecute(vote)
   }
   componentWillReceiveProps(nextProps) {
-    if (nextProps.user !== this.props.user) {
-      this.loadUserCanVote()
+    const { user, vote, tokenContract } = this.props
+
+    const userUpdate = nextProps.user !== user
+    const voteUpdate = nextProps.vote.voteId !== vote.voteId
+    const contractUpdate = nextProps.tokenContract !== tokenContract
+
+    if (userUpdate || contractUpdate || voteUpdate) {
+      this.loadUserBalance(
+        nextProps.user,
+        nextProps.vote,
+        nextProps.tokenContract
+      )
+      this.loadUserCanVote(nextProps.user, nextProps.vote)
     }
-    if (nextProps.tokenContract !== this.props.tokenContract) {
-      this.loadUserBalance()
+
+    if (contractUpdate || voteUpdate) {
+      this.loadCanExecute(vote)
     }
+  }
+  handleChangeVoteClick = () => {
+    this.setState({ changeVote: true })
   }
   handleNoClick = () => {
     this.props.onVote(this.props.vote.voteId, VOTE_NAY)
   }
   handleYesClick = () => {
-    // TODO: add a manual execute button and checkboxes to let user select if
-    // they want to auto execute
     this.props.onVote(this.props.vote.voteId, VOTE_YEA)
   }
-  loadUserBalance = () => {
-    const { tokenContract, user } = this.props
+  handleExecuteClick = () => {
+    this.props.onExecute(this.props.vote.voteId)
+  }
+  loadUserBalance = (user, vote, tokenContract) => {
+    const { tokenDecimals } = this.props
     if (tokenContract && user) {
-      combineLatest(tokenContract.balanceOf(user), tokenContract.decimals())
+      tokenContract
+        .balanceOfAt(user, vote.data.snapshotBlock)
         .first()
-        .subscribe(([balance, decimals]) => {
+        .subscribe(balance => {
           const adjustedBalance = Math.floor(
-            parseInt(balance, 10) / Math.pow(10, decimals)
+            parseInt(balance, 10) / Math.pow(10, tokenDecimals)
           )
-          this.setState({
-            userBalance: adjustedBalance,
-          })
+          this.setState({ userBalance: adjustedBalance })
         })
     }
   }
-  loadUserCanVote = () => {
-    const { app, user, vote } = this.props
+  loadUserCanVote = (user, vote) => {
+    const { app } = this.props
     if (user && vote) {
+      this.setState({ loadingCanVote: true })
+
       // Get if user can vote
       app
         .call('canVote', vote.voteId, user)
         .first()
         .subscribe(canVote => {
-          this.setState({
-            userCanVote: canVote,
-          })
+          this.setState({ loadingCanVote: false, userCanVote: canVote })
+        })
+    }
+  }
+  loadCanExecute = vote => {
+    const { app } = this.props
+    if (vote) {
+      this.setState({ loadingCanExecute: true })
+
+      app
+        .call('canExecute', vote.voteId)
+        .first()
+        .subscribe(canExecute => {
+          this.setState({ canExecute, loadingCanExecute: false })
         })
     }
   }
@@ -85,41 +123,68 @@ class VotePanelContent extends React.Component {
     ))
   }
   render() {
-    const { network: { etherscanBaseUrl }, vote, ready } = this.props
-    const { userBalance, userCanVote } = this.state
+    const {
+      network: { etherscanBaseUrl },
+      vote,
+      ready,
+      tokenSymbol,
+      tokenDecimals,
+    } = this.props
+
+    const {
+      userBalance,
+      userCanVote,
+      changeVote,
+      canExecute,
+      loadingCanExecute,
+      loadingCanVote,
+    } = this.state
+
+    const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.userAccountVote)
+
     if (!vote) {
       return null
     }
 
-    const { endDate, open, quorum, quorumProgress, support } = vote
-    const { creator, metadata, nay, totalVoters, yea, description } = vote.data
-
-    // const creatorName = 'Robert Johnson' // TODO: get creator name
+    const {
+      creator,
+      description,
+      endDate,
+      metadata,
+      open,
+      snapshotBlock,
+    } = vote.data
+    const { minAcceptQuorum } = vote.numData
+    const quorumProgress = getQuorumProgress(vote)
 
     return (
-      <div>
+      <React.Fragment>
         <SidePanelSplit>
           <div>
             <h2>
               <Label>{open ? 'Time Remaining:' : 'Status'}</Label>
             </h2>
             <div>
-              {open ? (
-                <Countdown end={endDate} />
-              ) : (
-                <VoteStatus
-                  vote={vote}
-                  support={support}
-                  tokenSupply={totalVoters}
-                />
-              )}
+              {open ? <Countdown end={endDate} /> : <VoteStatus vote={vote} />}
             </div>
+            <StyledVoteSuccess vote={vote} />
           </div>
           <div>
             <h2>
-              <Label>Quorum</Label>
+              <Label>Total support</Label>
             </h2>
-            <div>{quorum * 100}%</div>
+            <div>
+              {round(quorumProgress * 100, 2)}%{' '}
+              <Text size="small" color={theme.textSecondary}>
+                ({round(minAcceptQuorum * 100, 2)}% needed)
+              </Text>
+            </div>
+            <StyledSummaryBar
+              positiveSize={quorumProgress}
+              requiredSize={minAcceptQuorum}
+              show={ready}
+              compact
+            />
           </div>
         </SidePanelSplit>
         <Part>
@@ -150,9 +215,6 @@ class VotePanelContent extends React.Component {
               <Blockies seed={creator} size={8} />
             </CreatorImg>
             <div>
-              {/* <p>
-                <strong>{creatorName}</strong>
-              </p> */}
               <p>
                 <SafeLink
                   href={`${etherscanBaseUrl}/address/${creator}`}
@@ -167,40 +229,113 @@ class VotePanelContent extends React.Component {
         <SidePanelSeparator />
 
         <VoteSummary
-          votesYea={yea}
-          votesNay={nay}
-          tokenSupply={totalVoters}
-          quorum={quorum}
-          quorumProgress={quorumProgress}
-          support={support}
+          vote={vote}
+          tokenSymbol={tokenSymbol}
+          tokenDecimals={tokenDecimals}
           ready={ready}
         />
 
-        {userCanVote && (
-          <div>
-            <SidePanelSeparator />
-            <VotingButtons>
-              <Button
-                mode="strong"
-                emphasis="positive"
-                wide
-                onClick={this.handleYesClick}
-              >
-                Yes
-              </Button>
-              <Button
-                mode="strong"
-                emphasis="negative"
-                wide
-                onClick={this.handleNoClick}
-              >
-                No
-              </Button>
-            </VotingButtons>
-            <Info title={`You will cast ${userBalance || '...'} votes`} />
-          </div>
-        )}
-      </div>
+        {!loadingCanVote &&
+          !loadingCanExecute &&
+          (() => {
+            if (canExecute) {
+              return (
+                <div>
+                  <SidePanelSeparator />
+                  <ButtonsContainer>
+                    <Button
+                      mode="strong"
+                      wide
+                      onClick={this.handleExecuteClick}
+                    >
+                      Execute vote
+                    </Button>
+                  </ButtonsContainer>
+                  <Info.Action>
+                    Executing this vote is required to enact it.
+                  </Info.Action>
+                </div>
+              )
+            }
+
+            if (userCanVote && hasVoted && !changeVote) {
+              return (
+                <div>
+                  <SidePanelSeparator />
+                  <ButtonsContainer>
+                    <Button
+                      mode="strong"
+                      wide
+                      onClick={this.handleChangeVoteClick}
+                    >
+                      Change my vote
+                    </Button>
+                  </ButtonsContainer>
+                  <Info.Action>
+                    <p>
+                      You voted{' '}
+                      {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'} with{' '}
+                      {userBalance === null
+                        ? '…'
+                        : pluralize(userBalance, '$ token', '$ tokens')}
+                      , since it was your balance at the beginning of the vote{' '}
+                      <SafeLink
+                        href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
+                        target="_blank"
+                      >
+                        (block {snapshotBlock})
+                      </SafeLink>
+                      .
+                    </p>
+                  </Info.Action>
+                </div>
+              )
+            }
+
+            if (userCanVote) {
+              return (
+                <div>
+                  <SidePanelSeparator />
+                  <ButtonsContainer>
+                    <VotingButton
+                      mode="strong"
+                      emphasis="positive"
+                      wide
+                      onClick={this.handleYesClick}
+                    >
+                      Yes
+                    </VotingButton>
+                    <VotingButton
+                      mode="strong"
+                      emphasis="negative"
+                      wide
+                      onClick={this.handleNoClick}
+                    >
+                      No
+                    </VotingButton>
+                  </ButtonsContainer>
+                  <Info.Action>
+                    <p>
+                      You will cast your vote with{' '}
+                      {userBalance === null
+                        ? '… tokens'
+                        : pluralize(userBalance, '$ token', '$ tokens')}
+                      , since it was your balance at the beginning of the vote{' '}
+                      <SafeLink
+                        href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
+                        target="_blank"
+                      >
+                        (block
+                        {snapshotBlock})
+                      </SafeLink>
+                      .
+                    </p>
+                  </Info.Action>
+                </div>
+              )
+            }
+          })()}
+      </React.Fragment>
     )
   }
 }
@@ -211,6 +346,14 @@ const Label = styled(Text).attrs({
 })`
   display: block;
   margin-bottom: 10px;
+`
+
+const StyledVoteSuccess = styled(VoteSuccess)`
+  margin-top: 10px;
+`
+
+const StyledSummaryBar = styled(SummaryBar)`
+  margin-top: 10px;
 `
 
 const Part = styled.div`
@@ -234,6 +377,7 @@ const Creator = styled.div`
   display: flex;
   align-items: center;
 `
+
 const CreatorImg = styled.div`
   margin-right: 20px;
   canvas {
@@ -248,14 +392,15 @@ const CreatorImg = styled.div`
   }
 `
 
-const VotingButtons = styled.div`
+const ButtonsContainer = styled.div`
   display: flex;
   padding: 30px 0 20px;
-  & > * {
-    width: 50%;
-    &:first-child {
-      margin-right: 10px;
-    }
+`
+
+const VotingButton = styled(Button)`
+  width: 50%;
+  &:first-child {
+    margin-right: 10px;
   }
 `
 
