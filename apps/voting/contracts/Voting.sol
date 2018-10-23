@@ -37,7 +37,6 @@ contract Voting is IForwarder, AragonApp {
     enum VoterState { Absent, Yea, Nay }
 
     struct Vote {
-        address creator;
         bool executed;
         uint64 startDate;
         uint64 snapshotBlock;
@@ -46,7 +45,6 @@ contract Voting is IForwarder, AragonApp {
         uint256 yea;
         uint256 nay;
         uint256 totalVoters;
-        string metadata;
         bytes executionScript;
         mapping (address => VoterState) voters;
     }
@@ -60,7 +58,7 @@ contract Voting is IForwarder, AragonApp {
     mapping (uint256 => Vote) internal votes;
     uint256 public votesLength;
 
-    event StartVote(uint256 indexed voteId);
+    event StartVote(uint256 indexed voteId, address indexed creator, string metadata);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
     event ChangeSupportRequired(uint64 supportRequiredPct);
@@ -239,7 +237,6 @@ contract Voting is IForwarder, AragonApp {
         returns (
             bool open,
             bool executed,
-            address creator,
             uint64 startDate,
             uint64 snapshotBlock,
             uint64 supportRequired,
@@ -254,7 +251,6 @@ contract Voting is IForwarder, AragonApp {
 
         open = _isVoteOpen(vote_);
         executed = vote_.executed;
-        creator = vote_.creator;
         startDate = vote_.startDate;
         snapshotBlock = vote_.snapshotBlock;
         supportRequired = vote_.supportRequiredPct;
@@ -265,10 +261,6 @@ contract Voting is IForwarder, AragonApp {
         script = vote_.executionScript;
     }
 
-    function getVoteMetadata(uint256 _voteId) public view voteExists(_voteId) returns (string) {
-        return votes[_voteId].metadata;
-    }
-
     function getVoterState(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (VoterState) {
         return votes[_voteId].voters[_voter];
     }
@@ -277,19 +269,19 @@ contract Voting is IForwarder, AragonApp {
         internal
         returns (uint256 voteId)
     {
+        uint256 totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
+        require(totalVoters > 0, ERROR_NO_VOTING_POWER);
+
         voteId = votesLength++;
         Vote storage vote_ = votes[voteId];
-        vote_.executionScript = _executionScript;
-        vote_.creator = msg.sender;
         vote_.startDate = getTimestamp64();
-        vote_.metadata = _metadata;
         vote_.snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
-        vote_.totalVoters = token.totalSupplyAt(vote_.snapshotBlock);
-        require(vote_.totalVoters > 0, ERROR_NO_VOTING_POWER);
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
+        vote_.totalVoters = totalVoters;
+        vote_.executionScript = _executionScript;
 
-        emit StartVote(voteId);
+        emit StartVote(voteId, msg.sender, _metadata);
 
         if (_castVote && canVote(voteId, msg.sender)) {
             _vote(voteId, true, msg.sender, _executesIfDecided);

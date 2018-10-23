@@ -18,7 +18,8 @@ const Voting = artifacts.require('VotingMock')
 const getContract = name => artifacts.require(name)
 const bigExp = (x, y) => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(y))
 const pct16 = x => bigExp(x, 16)
-const createdVoteId = receipt => receipt.logs.filter(x => x.event == 'StartVote')[0].args.voteId
+const startVoteEvent = receipt => receipt.logs.filter(x => x.event == 'StartVote')[0].args
+const createdVoteId = receipt => startVoteEvent(receipt).voteId
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const NULL_ADDRESS = '0x00'
@@ -205,16 +206,19 @@ contract('Voting App', accounts => {
             })
 
             context('creating vote', () => {
-                let script, voteId
+                let script, voteId, creator, metadata
 
                 beforeEach(async () => {
                     const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                     script = encodeCallScript([action, action])
-                    voteId = createdVoteId(await voting.newVoteExt(script, 'metadata', false, false, { from: holder51 }))
+                    const startVote = startVoteEvent(await voting.newVoteExt(script, 'metadata', false, false, { from: holder51 }))
+                    voteId = startVote.voteId
+                    creator = startVote.creator
+                    metadata = startVote.metadata
                 })
 
                 it('has correct state', async () => {
-                    const [isOpen, isExecuted, creator, startDate, snapshotBlock, supportRequired, minQuorum, y, n, totalVoters, execScript] = await voting.getVote(voteId)
+                    const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, totalVoters, execScript] = await voting.getVote(voteId)
 
                     assert.isTrue(isOpen, 'vote should be open')
                     assert.isFalse(isExecuted, 'vote should not be executed')
@@ -226,7 +230,7 @@ contract('Voting App', accounts => {
                     assert.equal(n, 0, 'initial nay should be 0')
                     assert.equal(totalVoters.toString(), bigExp(100, decimals).toString(), 'total voters should be 100')
                     assert.equal(execScript, script, 'script should be correct')
-                    assert.equal(await voting.getVoteMetadata(voteId), 'metadata', 'should have returned correct metadata')
+                    assert.equal(metadata, 'metadata', 'should have returned correct metadata')
                     assert.equal(await voting.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')
                 })
 
@@ -249,7 +253,7 @@ contract('Voting App', accounts => {
                     await timeTravel(votingTime + 1)
 
                     const state = await voting.getVote(voteId)
-                    assert.equal(state[5].toNumber(), neededSupport.toNumber(), 'required support in vote should stay equal')
+                    assert.equal(state[4].toNumber(), neededSupport.toNumber(), 'required support in vote should stay equal')
                     await voting.executeVote(voteId) // exec doesn't fail
                 })
 
@@ -264,7 +268,7 @@ contract('Voting App', accounts => {
                     await timeTravel(votingTime + 1)
 
                     const state = await voting.getVote(voteId)
-                    assert.equal(state[6].toNumber(), minimumAcceptanceQuorum.toNumber(), 'acceptance quorum in vote should stay equal')
+                    assert.equal(state[5].toNumber(), minimumAcceptanceQuorum.toNumber(), 'acceptance quorum in vote should stay equal')
                     await voting.executeVote(voteId) // exec doesn't fail
                 })
 
@@ -273,7 +277,7 @@ contract('Voting App', accounts => {
                     const state = await voting.getVote(voteId)
                     const voterState = await voting.getVoterState(voteId, holder29)
 
-                    assert.equal(state[8].toString(), bigExp(29, decimals).toString(), 'nay vote should have been counted')
+                    assert.equal(state[7].toString(), bigExp(29, decimals).toString(), 'nay vote should have been counted')
                     assert.equal(voterState, VOTER_STATE.NAY, 'holder29 should have nay voter status')
                 })
 
@@ -283,8 +287,8 @@ contract('Voting App', accounts => {
                     await voting.vote(voteId, true, true, { from: holder29 })
                     const state = await voting.getVote(voteId)
 
-                    assert.equal(state[7].toString(), bigExp(29, decimals).toString(), 'yea vote should have been counted')
-                    assert.equal(state[8], 0, 'nay vote should have been removed')
+                    assert.equal(state[6].toString(), bigExp(29, decimals).toString(), 'yea vote should have been counted')
+                    assert.equal(state[7], 0, 'nay vote should have been removed')
                 })
 
                 it('token transfers dont affect voting', async () => {
@@ -293,7 +297,7 @@ contract('Voting App', accounts => {
                     await voting.vote(voteId, true, true, { from: holder29 })
                     const state = await voting.getVote(voteId)
 
-                    assert.equal(state[7].toString(), bigExp(29, decimals).toString(), 'yea vote should have been counted')
+                    assert.equal(state[6].toString(), bigExp(29, decimals).toString(), 'yea vote should have been counted')
                     assert.equal(await token.balanceOf(holder29), 0, 'balance should be 0 at current block')
                 })
 
