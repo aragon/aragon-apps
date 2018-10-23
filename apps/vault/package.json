@@ -22,6 +22,7 @@
   },
   "keywords": [],
   "files": [
+    "/arapp.json",
     "/build",
     "/contracts",
     "/scripts",
