@@ -280,6 +280,7 @@ function marshallVote({
   nay,
   snapshotBlock,
   startDate,
+  supportRequired,
   votingPower,
   yea,
   script,
@@ -289,6 +290,7 @@ function marshallVote({
     minAcceptQuorum,
     nay,
     script,
+    supportRequired,
     votingPower,
     yea,
     // Like times, blocks should be safe to represent as real numbers

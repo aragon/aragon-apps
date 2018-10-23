@@ -40,7 +40,7 @@ export function getVoteSuccess(vote, pctBase) {
     yea,
     minAcceptQuorum,
     nay,
-    supportRequiredPct,
+    supportRequired,
     votingPower,
   } = vote.data
 
@@ -52,12 +52,12 @@ export function getVoteSuccess(vote, pctBase) {
   const yeaOfTotalPowerPct = yea.mul(pctBase).div(votingPower)
 
   // Mirror on-chain calculation
-  // yea / votingPower > supportRequiredPct ||
-  //   (yea / totalVotes > supportRequiredPct &&
+  // yea / votingPower > supportRequired ||
+  //   (yea / totalVotes > supportRequired &&
   //    yea / votingPower > minAcceptQuorum)
   return (
-    yeaOfTotalPowerPct.gt(supportRequiredPct) ||
-    (yeaPct.gt(supportRequiredPct) && yeaOfTotalPowerPct.gt(minAcceptQuorum))
+    yeaOfTotalPowerPct.gt(supportRequired) ||
+    (yeaPct.gt(supportRequired) && yeaOfTotalPowerPct.gt(minAcceptQuorum))
   )
 }
 
