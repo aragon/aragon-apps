@@ -9,6 +9,8 @@ const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 const DAOFactory = artifacts.require('DAOFactory')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
+
+const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
 const Vault = artifacts.require('Vault')
@@ -34,10 +36,12 @@ contract('Vault app', (accounts) => {
     vaultBase = await Vault.new()
 
     // Setup constants
-    ETH = await vaultBase.ETH()
     ANY_ENTITY = await aclBase.ANY_ENTITY()
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
+
+    const ethConstant = await EtherTokenConstantMock.new()
+    ETH = await ethConstant.ETH()
   })
 
   beforeEach(async () => {

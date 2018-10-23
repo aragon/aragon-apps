@@ -5,6 +5,8 @@ const Finance = artifacts.require('FinanceMock')
 const Vault = artifacts.require('Vault')
 const MiniMeToken = artifacts.require('MiniMeToken')
 
+const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
+
 const getContract = name => artifacts.require(name)
 
 const getEventData = (receipt, event, arg) => receipt.logs.filter(log => log.event == event)[0].args[arg]
@@ -32,7 +34,6 @@ contract('Finance App', accounts => {
         financeBase = await Finance.new()
 
         // Setup constants
-        ETH = await financeBase.ETH()
         MAX_UINT64 = await financeBase.getMaxUint64()
         ANY_ENTITY = await aclBase.ANY_ENTITY()
         APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
@@ -43,6 +44,9 @@ contract('Finance App', accounts => {
         EXECUTE_PAYMENTS_ROLE = await financeBase.EXECUTE_PAYMENTS_ROLE()
         MANAGE_PAYMENTS_ROLE = await financeBase.MANAGE_PAYMENTS_ROLE()
         TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
+
+        const ethConstant = await EtherTokenConstantMock.new()
+        ETH = await ethConstant.ETH()
     })
 
     const setupRecoveryVault = async (dao) => {

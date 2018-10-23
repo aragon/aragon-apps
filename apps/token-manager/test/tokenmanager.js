@@ -13,6 +13,8 @@ const EVMScriptRegistryFactory = artifacts.require('@aragon/core/contracts/facto
 const ACL = artifacts.require('@aragon/core/contracts/acl/ACL')
 const Kernel = artifacts.require('@aragon/core/contracts/kernel/Kernel')
 
+const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
+
 const getContract = name => artifacts.require(name)
 
 const n = '0x00'
@@ -42,7 +44,9 @@ contract('Token Manager', accounts => {
         ASSIGN_ROLE = await tokenManagerBase.ASSIGN_ROLE()
         REVOKE_VESTINGS_ROLE = await tokenManagerBase.REVOKE_VESTINGS_ROLE()
         BURN_ROLE = await tokenManagerBase.BURN_ROLE()
-        ETH = await tokenManagerBase.ETH()
+
+        const ethConstant = await EtherTokenConstantMock.new()
+        ETH = await ethConstant.ETH()
     })
 
     beforeEach(async () => {
