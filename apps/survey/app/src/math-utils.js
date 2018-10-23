@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js'
 
-// Get a list of rounded 0 => `total` numbers, from a list of 0 => 1 values.
+// Get a list of rounded [0, `total`] numbers, from a list of [0, 1] values.
 // If the total of the values is exactly 1, the total of the resulting values
 // will be exactly `total`.
 export function scaleValuesSet(values, digits = 0, total = 100) {
@@ -49,21 +49,44 @@ function highestValueIndex(values) {
     .sort((v1, v2) => v2.value.minus(v1.value))[0].index
 }
 
-export function scaleBigNumberValuesSet(values, total = new BigNumber(100)) {
+// Scale to `total` a set of values summing to 1.
+export function scaleBigNumberValuesSet(
+  values = [],
+  total = new BigNumber(100),
+  correctionLimit = 0.001
+) {
   if (values.length === 0) {
     return []
   }
 
   values = values.map(v => new BigNumber(v))
-
-  // Required correction of the 0 => 1 values due to the BigNumber conversion
-  const valuesCorrection = new BigNumber(1).minus(
-    values.reduce((total, v) => v.plus(total), 0)
-  )
-  const correctionIndex = highestValueIndex(values)
-  values[correctionIndex] = values[correctionIndex].plus(valuesCorrection)
-
   let remaining = new BigNumber(total)
+
+  const accumulatedTotal = values.reduce((total, v) => v.plus(total), 0)
+
+  if (accumulatedTotal.isNegative()) {
+    throw new Error('The sum of the values has to be a positive number.')
+  }
+
+  if (accumulatedTotal.minus(correctionLimit).isGreaterThan(1)) {
+    throw new Error('The sum of the values has to be equal to or less than 1.')
+  }
+
+  // Get the difference to correct
+  const valuesCorrection = new BigNumber(1).minus(accumulatedTotal)
+
+  const shouldCorrect =
+    !valuesCorrection.isZero() &&
+    // Negative & out of limit have already thrown at this point,
+    // so we should correct if it’s negative.
+    (valuesCorrection.isNegative() ||
+      valuesCorrection.isLessThanOrEqualTo(correctionLimit))
+
+  // We always correct (up or down) the highest value
+  const correctionIndex = shouldCorrect ? highestValueIndex(values) : -1
+  if (correctionIndex > -1) {
+    values[correctionIndex] = values[correctionIndex].plus(valuesCorrection)
+  }
 
   // First pass, all numbers are rounded down
   const scaledValues = values.map(value => {
