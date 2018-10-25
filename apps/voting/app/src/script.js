@@ -1,5 +1,5 @@
 import Aragon from '@aragon/client'
-import { combineLatest, of } from './rxjs'
+import { of } from './rxjs'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
 import { EMPTY_CALLSCRIPT } from './vote-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -135,7 +135,10 @@ async function castVote(state, { voteId }) {
   // cause do we really want more than one source of truth with a blockchain?
   const transform = async vote => ({
     ...vote,
-    data: await loadVoteData(voteId),
+    data: {
+      ...vote.data,
+      ...(await loadVoteData(voteId)),
+    },
   })
   return updateState(state, voteId, transform)
 }
@@ -148,8 +151,15 @@ async function executeVote(state, { voteId }) {
   return updateState(state, voteId, transform)
 }
 
-async function startVote(state, { voteId }) {
-  return updateState(state, voteId, vote => vote)
+async function startVote(state, { creator, metadata, voteId }) {
+  return updateState(state, voteId, vote => ({
+    ...vote,
+    data: {
+      ...vote.data,
+      creator,
+      metadata,
+    },
+  }))
 }
 
 /***********************
@@ -180,19 +190,10 @@ async function loadVoteDescription(vote) {
 
 function loadVoteData(voteId) {
   return new Promise(resolve => {
-    combineLatest(
-      app.call('getVote', voteId),
-      app.call('getVoteMetadata', voteId)
-    )
+    app
+      .call('getVote', voteId)
       .first()
-      .subscribe(([vote, metadata]) => {
-        loadVoteDescription(vote).then(vote => {
-          resolve({
-            ...marshallVote(vote),
-            metadata,
-          })
-        })
-      })
+      .subscribe(vote => resolve(loadVoteDescription(marshallVote(vote))))
   })
 }
 
@@ -274,24 +275,22 @@ function loadTokenSymbol(tokenContract) {
 // Apply transformations to a vote received from web3
 // Note: ignores the 'open' field as we calculate that locally
 function marshallVote({
-  creator,
   executed,
   minAcceptQuorum,
   nay,
   snapshotBlock,
   startDate,
+  supportRequired,
   votingPower,
   yea,
   script,
-  description,
 }) {
   return {
-    creator,
     executed,
-    description,
     minAcceptQuorum,
     nay,
     script,
+    supportRequired,
     votingPower,
     yea,
     // Like times, blocks should be safe to represent as real numbers

@@ -158,11 +158,12 @@ async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
 
 async function newTransaction(
   state,
-  { transactionHash, returnValues: { transactionId } },
+  { transactionHash, returnValues: { reference, transactionId } },
   settings
 ) {
   const transactionDetails = {
     ...(await loadTransactionDetails(transactionId)),
+    reference,
     transactionHash,
     id: transactionId,
   }
@@ -304,7 +305,6 @@ function marshallTransactionDetails({
   isIncoming,
   paymentId,
   periodId,
-  reference,
   token,
 }) {
   return {
@@ -313,7 +313,6 @@ function marshallTransactionDetails({
     isIncoming,
     paymentId,
     periodId,
-    reference,
     token,
     date: marshallDate(date),
   }

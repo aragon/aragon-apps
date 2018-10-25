@@ -253,16 +253,9 @@ export default observe(
         }
       }
 
-      const {
-        pctBase,
-        supportRequiredPct,
-        tokenDecimals,
-        voteTime,
-        votes,
-      } = state
+      const { pctBase, tokenDecimals, voteTime, votes } = state
 
       const pctBaseNum = parseInt(pctBase, 10)
-      const supportRequiredPctNum = parseInt(supportRequiredPct, 10)
       const tokenDecimalsNum = parseInt(tokenDecimals, 10)
       const tokenDecimalsBaseNum = Math.pow(10, tokenDecimalsNum)
 
@@ -271,12 +264,10 @@ export default observe(
 
         appStateReady,
         pctBase: new BN(pctBase),
-        supportRequiredPct: new BN(supportRequiredPct),
         tokenDecimals: new BN(tokenDecimals),
 
         numData: {
           pctBase: pctBaseNum,
-          supportRequiredPct: supportRequiredPctNum,
           tokenDecimals: tokenDecimalsNum,
         },
 
@@ -291,7 +282,7 @@ export default observe(
                   endDate: new Date(data.startDate + voteTime),
                   minAcceptQuorum: new BN(data.minAcceptQuorum),
                   nay: new BN(data.nay),
-                  supportRequiredPct: new BN(supportRequiredPct),
+                  supportRequired: new BN(data.supportRequired),
                   votingPower: new BN(data.votingPower),
                   yea: new BN(data.yea),
                 },
@@ -299,7 +290,8 @@ export default observe(
                   minAcceptQuorum:
                     parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
                   nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
-                  supportRequiredPct: supportRequiredPctNum / pctBaseNum,
+                  supportRequired:
+                    parseInt(data.supportRequired, 10) / pctBaseNum,
                   votingPower:
                     parseInt(data.votingPower, 10) / tokenDecimalsBaseNum,
                   yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,
