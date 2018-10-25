@@ -99,6 +99,11 @@ function createStore(settings) {
         ...state,
       }
 
+      // Get the proxy address once
+      if (eventName === 'NewPeriod' && !state.proxyAddress) {
+        nextState.proxyAddress = eventAddress
+      }
+
       if (eventName === INITIALIZATION_TRIGGER) {
         nextState = await initializeState(nextState, settings)
       } else if (addressesEqual(eventAddress, vault.address)) {
