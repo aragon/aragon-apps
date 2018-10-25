@@ -4,7 +4,7 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@aragon/client": "^1.0.0",
+    "@aragon/client": "^1.1.0",
     "@aragon/ui": "^0.22.0",
     "bn.js": "^4.11.6",
     "prop-types": "^15.6.0",
