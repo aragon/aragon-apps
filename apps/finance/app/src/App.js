@@ -141,15 +141,27 @@ export default observe(
       return {
         ...state,
         balances: balances
-          ? balances.map(balance => ({
-              ...balance,
-              amount: new BN(balance.amount),
-              decimals: new BN(balance.decimals),
-              numData: {
-                amount: parseInt(balance.amount, 10),
-                decimals: parseInt(balance.decimals, 10),
-              },
-            }))
+          ? balances
+              .map(balance => ({
+                ...balance,
+                amount: new BN(balance.amount),
+                decimals: new BN(balance.decimals),
+                numData: {
+                  amount: parseInt(balance.amount, 10),
+                  decimals: parseInt(balance.decimals, 10),
+                },
+              }))
+
+              // ETH is always first
+              .sort((balanceA, balanceB) => {
+                if (balanceA.symbol === 'ETH') {
+                  return -1
+                }
+                if (balanceB.symbol === 'ETH') {
+                  return 1
+                }
+                return balanceB.convertedAmount - balanceA.convertedAmount
+              })
           : [],
         transactions: transactions
           ? transactions.map(transaction => ({
