@@ -76,12 +76,16 @@ class TransferRow extends React.Component {
         </NoWrapCell>
         <NoWrapCell>
           <TextOverflow>
-            <SafeLink
-              href={`${etherscanBaseUrl}/address/${entity}`}
-              target="_blank"
-            >
-              {entity}
-            </SafeLink>
+            {etherscanBaseUrl ? (
+              <SafeLink
+                href={`${etherscanBaseUrl}/address/${entity}`}
+                target="_blank"
+              >
+                {entity}
+              </SafeLink>
+            ) : (
+              entity
+            )}
           </TextOverflow>
         </NoWrapCell>
         <NoWrapCell title={reference} style={{ position: 'relative' }}>
@@ -101,10 +105,12 @@ class TransferRow extends React.Component {
                 <IconShare />
                 <ActionLabel>Copy Transfer URL</ActionLabel>
               </ContextMenuItem> */}
-              <ContextMenuItem onClick={this.handleViewTransaction}>
-                <IconTokens />
-                <ActionLabel>View Transaction</ActionLabel>
-              </ContextMenuItem>
+              {etherscanBaseUrl && (
+                <ContextMenuItem onClick={this.handleViewTransaction}>
+                  <IconTokens />
+                  <ActionLabel>View Transaction</ActionLabel>
+                </ContextMenuItem>
+              )}
             </ContextMenu>
             {showCopyTransferMessage && (
               <ConfirmMessageWrapper>

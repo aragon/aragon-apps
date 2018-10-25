@@ -16,8 +16,6 @@ import { hasLoadedSurveySettings, DURATION_SLICES } from './survey-settings'
 import { getTimeBucket } from './time-utils'
 import { makeEtherscanBaseUrl } from './utils'
 
-const { ETHEREUM_NETWORK = 'mainnet' } = process.env
-
 const tokenAbi = [].concat(tokenBalanceOfAtAbi, tokenDecimalsAbi)
 
 class App extends React.Component {
@@ -26,10 +24,7 @@ class App extends React.Component {
     userAccount: PropTypes.string.isRequired,
   }
   static defaultProps = {
-    network: {
-      etherscanBaseUrl: makeEtherscanBaseUrl(ETHEREUM_NETWORK),
-      name: ETHEREUM_NETWORK,
-    },
+    network: {},
     minParticipationPct: null,
     pctBase: null,
     surveys: [],
@@ -57,7 +52,14 @@ class App extends React.Component {
     this.prepareSurveys(props.userAccount, props.surveys)
   }
   getChildContext() {
-    return { network: this.props.network }
+    const { network } = this.props
+
+    return {
+      network: {
+        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
+        type: network.type,
+      },
+    }
   }
   componentWillReceiveProps(nextProps) {
     const { settingsLoaded } = this.state
