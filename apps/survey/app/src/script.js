@@ -157,8 +157,62 @@ async function createStore(token, tokenSettings) {
  *                     *
  ***********************/
 
-async function startSurvey(state, { surveyId }) {
-  const transform = survey => survey
+async function startSurvey(state, { creator, metadata, surveyId }) {
+  // Set up the survey options to allow the script to keep track of their voting history
+  const transform = async survey => {
+    let parsedMetadata = {}
+    try {
+      parsedMetadata = marshallMetadata(metadata).metadata || {}
+    } catch (err) {
+      console.error(
+        `Failed to load survey ${surveyId}'s metadata (${metadata})`,
+        err
+      )
+    }
+
+    const { options: optionLabels = [] } = parsedMetadata
+
+    // Add generic labels if not provided in the metadata
+    while (survey.data.options > optionLabels.length) {
+      optionLabels.push(`Option ${optionLabels.length + 1}`)
+    }
+
+    // Load initial voting powers for the options
+    const options = await Promise.all(
+      optionLabels.map(async (label, optionIndex) => {
+        // Add one to optionIndex as optionId always starts from 1
+        const optionId = optionIndex + 1
+        const power = await loadSurveyOptionPower(surveyId, optionId)
+
+        return {
+          label,
+          optionId,
+          power,
+        }
+      })
+    )
+
+    return {
+      ...survey,
+      data: {
+        ...survey.data,
+        creator,
+        metadata,
+      },
+      metadata: parsedMetadata,
+      options,
+      optionsHistory: {
+        lastUpdated: {
+          blockNumber: 0,
+          logIndex: 0,
+          transactionIndex: 0,
+        },
+        // Initialize each option's history with a "sparse" -1 filled array
+        // whose length matches the number of time slices
+        options: options.map(() => new Array(DURATION_SLICES).fill(-1)),
+      },
+    }
+  }
 
   return updateState(state, surveyId, transform)
 }
@@ -175,7 +229,10 @@ async function processVote(
     const newData = await loadSurveyData(surveyId)
     return {
       ...survey,
-      data: newData,
+      data: {
+        ...survey.data,
+        ...newData,
+      },
       optionsHistory: await updateHistoryForOption(
         survey.optionsHistory,
         optionId,
@@ -296,46 +353,9 @@ async function updateHistoryForOption(
 }
 
 async function createNewSurvey(surveyId) {
-  const surveyData = await loadSurveyData(surveyId)
-  const surveyMetadata = await loadSurveyMetadata(surveyId)
-  const {
-    metadata: { options: optionLabels = [], ...metadata } = {},
-  } = surveyMetadata
-
-  while (surveyData.options > optionLabels.length) {
-    optionLabels.push(`Option ${optionLabels.length + 1}`)
-  }
-
-  // Load initial voting powers for the options
-  const options = await Promise.all(
-    optionLabels.map(async (label, optionIndex) => {
-      // Add one to optionIndex as optionId always starts from 1
-      const optionId = optionIndex + 1
-      const power = await loadSurveyOptionPower(surveyId, optionId)
-
-      return {
-        label,
-        power,
-        optionId,
-      }
-    })
-  )
-
   return {
-    metadata,
-    options,
     surveyId,
-    data: surveyData,
-    optionsHistory: {
-      lastUpdated: {
-        blockNumber: 0,
-        logIndex: 0,
-        transactionIndex: 0,
-      },
-      // Initialize each option's history with a "sparse" -1 filled array
-      // whose length matches the number of time slices
-      options: options.map(() => new Array(DURATION_SLICES).fill(-1)),
-    },
+    data: await loadSurveyData(surveyId),
   }
 }
 
@@ -380,22 +400,6 @@ function loadSurveyData(surveyId) {
       .first()
       .subscribe(survey => {
         resolve(marshallSurvey(survey))
-      })
-  })
-}
-
-function loadSurveyMetadata(surveyId) {
-  return new Promise(resolve => {
-    app
-      .call('getSurveyMetadata', surveyId)
-      .first()
-      .subscribe(metadata => {
-        try {
-          resolve(marshallMetadata(metadata))
-        } catch (err) {
-          console.error(`Failed to load survey ${surveyId}'s metadata`, err)
-          resolve({})
-        }
       })
   })
 }
@@ -449,7 +453,6 @@ function loadTokenSymbol(tokenContract) {
 // Apply transmations to a survey received from web3
 // Note: ignores the 'open' field as we calculate that locally
 function marshallSurvey({
-  creator,
   startDate,
   snapshotBlock,
   minParticipationPct,
@@ -458,7 +461,6 @@ function marshallSurvey({
   options,
 }) {
   return {
-    creator,
     startDate: parseInt(startDate, 10) * 1000, // adjust for js time (in ms vs s)
     minParticipationPct: parseInt(minParticipationPct, 10),
     snapshotBlock: parseInt(snapshotBlock, 10),
