@@ -7,6 +7,7 @@ import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransferPanelContent'
 import Transfers from './components/Transfers'
 import { networkContextType } from './lib/provideNetwork'
+import { makeEtherscanBaseUrl } from './lib/utils'
 
 class App extends React.Component {
   static propTypes = {
@@ -15,10 +16,7 @@ class App extends React.Component {
   static defaultProps = {
     balances: [],
     transactions: [],
-    network: {
-      etherscanBaseUrl: 'https://rinkeby.etherscan.io',
-      name: 'rinkeby',
-    },
+    network: {},
   }
   static childContextTypes = {
     network: networkContextType,
@@ -27,7 +25,13 @@ class App extends React.Component {
     newTransferOpened: false,
   }
   getChildContext() {
-    return { network: this.props.network }
+    const { network } = this.props
+    return {
+      network: {
+        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
+        type: network.type,
+      },
+    }
   }
   handleNewTransferOpen = () => {
     this.setState({ newTransferOpened: true })
