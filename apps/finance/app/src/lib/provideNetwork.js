@@ -4,7 +4,7 @@ import getDisplayName from 'react-display-name'
 
 export const networkContextType = PropTypes.shape({
   etherscanBaseUrl: PropTypes.string,
-  name: PropTypes.string,
+  type: PropTypes.string,
 })
 
 const provideNetwork = Component => {

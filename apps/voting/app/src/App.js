@@ -10,6 +10,7 @@ import NewVotePanelContent from './components/NewVotePanelContent'
 import AppLayout from './components/AppLayout'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
+import { makeEtherscanBaseUrl } from './utils'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
 import {
@@ -24,10 +25,7 @@ class App extends React.Component {
   }
   static defaultProps = {
     appStateReady: false,
-    network: {
-      etherscanBaseUrl: 'https://rinkeby.etherscan.io',
-      name: 'rinkeby',
-    },
+    network: {},
     tokenSymbol: '',
     userAccount: '',
     votes: [],
@@ -37,11 +35,16 @@ class App extends React.Component {
     settings: settingsContextType,
   }
   getChildContext() {
+    const { network, pctBase, voteTime } = this.props
+
     return {
-      network: this.props.network,
+      network: {
+        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
+        type: network.type,
+      },
       settings: {
-        pctBase: this.props.pctBase,
-        voteTime: this.props.voteTime,
+        pctBase,
+        voteTime,
       },
     }
   }
