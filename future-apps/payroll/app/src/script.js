@@ -51,14 +51,12 @@ function marshallCurrency (value) {
   return parseInt(value || 0, 10)
 }
 
-function marshallDate (date) {
-  const epoch = parseInt(date, 10)
-
-  if (!epoch || epoch > Number.MAX_SAFE_INTEGER) {
-    return
+function marshallDate (epoch) {
+  if (!epoch || BigInt(epoch) > Number.MAX_SAFE_INTEGER) {
+    return null
   }
 
-  return epoch * 1000
+  return parseInt(epoch, 10) * 1000
 }
 
 function marshallEmployeeData (data) {
