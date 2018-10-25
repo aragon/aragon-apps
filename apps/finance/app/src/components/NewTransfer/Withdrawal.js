@@ -10,8 +10,8 @@ import {
   TextInput,
   theme,
 } from '@aragon/ui'
-import { toDecimals } from '../lib/math-utils'
-import { addressPattern, isAddress } from '../lib/web3-utils'
+import { toDecimals } from '../../lib/math-utils'
+import { addressPattern, isAddress } from '../../lib/web3-utils'
 
 const NO_ERROR = Symbol('NO_ERROR')
 const RECEIPIENT_NOT_ADDRESS_ERROR = Symbol('RECEIPIENT_NOT_ADDRESS_ERROR')
@@ -31,22 +31,12 @@ const initialState = {
   selectedToken: 0,
 }
 
-class NewTransferPanelContent extends React.Component {
+class Withdrawal extends React.Component {
   static defaultProps = {
-    onTransfer: () => {},
+    onWithdraw: () => {},
   }
   state = {
     ...initialState,
-  }
-  componentWillReceiveProps({ opened }) {
-    if (opened && !this.props.opened) {
-      // setTimeout is needed as a small hack to wait until the input's on
-      // screen until we call focus
-      this.recipientInput && setTimeout(() => this.recipientInput.focus(), 0)
-    } else if (!opened && this.props.opened) {
-      // Finished closing the panel, so reset its state
-      this.setState({ ...initialState })
-    }
   }
   handleAmountUpdate = event => {
     this.setState({
@@ -70,9 +60,9 @@ class NewTransferPanelContent extends React.Component {
   handleReferenceUpdate = event => {
     this.setState({ reference: event.target.value })
   }
-  handleTransfer = event => {
+  handleSubmit = event => {
     event.preventDefault()
-    const { onTransfer, tokens } = this.props
+    const { onWithdraw, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
 
     const token = tokens[selectedToken]
@@ -101,13 +91,16 @@ class NewTransferPanelContent extends React.Component {
         },
       }))
     } else {
-      onTransfer(token.address, recipientAddress, adjustedAmount, reference)
+      onWithdraw(token.address, recipientAddress, adjustedAmount, reference)
     }
   }
+
   render() {
     const { onClose, title, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
-    const symbols = tokens.map(({ symbol }) => symbol)
+
+    const nonZeroTokens = tokens.filter(({ amount }) => amount > 0)
+    const symbols = nonZeroTokens.map(({ symbol }) => symbol)
 
     let errorMessage
     if (recipient.error === RECEIPIENT_NOT_ADDRESS_ERROR) {
@@ -118,8 +111,8 @@ class NewTransferPanelContent extends React.Component {
       errorMessage = 'Amount contains too many decimal places'
     }
 
-    return tokens.length ? (
-      <form onSubmit={this.handleTransfer}>
+    return nonZeroTokens.length ? (
+      <form onSubmit={this.handleSubmit}>
         <h1>{title}</h1>
         <Field label="Recipient (must be a valid Ethereum address)">
           <TextInput
@@ -165,7 +158,7 @@ class NewTransferPanelContent extends React.Component {
         </Field>
         <ButtonWrapper>
           <Button mode="strong" type="submit" wide>
-            Submit Transfer
+            Submit withdrawal
           </Button>
         </ButtonWrapper>
         {errorMessage && <ValidationError message={errorMessage} />}
@@ -173,8 +166,7 @@ class NewTransferPanelContent extends React.Component {
     ) : (
       <div>
         <Info.Permissions title="Action impossible">
-          You cannot create any payments. The DAO does not have any tokens
-          available to transfer.
+          The organization doesn’t have any tokens available to withdraw.
         </Info.Permissions>
         <ButtonWrapper>
           <Button mode="strong" wide onClick={onClose}>
@@ -220,4 +212,4 @@ const ValidationErrorBlock = styled.p`
   margin-top: 15px;
 `
 
-export default NewTransferPanelContent
+export default Withdrawal

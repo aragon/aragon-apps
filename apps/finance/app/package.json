@@ -12,6 +12,7 @@
     "copy-to-clipboard": "^3.0.8",
     "date-fns": "2.0.0-alpha.22",
     "prop-types": "^15.6.0",
+    "qrcode.react": "^0.8.0",
     "react": "^16.2.0",
     "react-display-name": "^0.2.3",
     "react-dom": "^16.2.0",

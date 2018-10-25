@@ -4,13 +4,14 @@ import styled from 'styled-components'
 import BN from 'bn.js'
 import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
 import Balances from './components/Balances'
-import NewTransferPanelContent from './components/NewTransferPanelContent'
+import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
 import { networkContextType } from './lib/provideNetwork'
 
 class App extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
+    proxyAddress: PropTypes.string,
   }
   static defaultProps = {
     balances: [],
@@ -35,7 +36,20 @@ class App extends React.Component {
   handleNewTransferClose = () => {
     this.setState({ newTransferOpened: false })
   }
-  handleSubmitTransfer = (tokenAddress, recipient, amount, reference) => {
+  handleWithdraw = (tokenAddress, recipient, amount, reference) => {
+    // Immediate, one-time payment
+    this.props.app.newPayment(
+      tokenAddress,
+      recipient,
+      amount,
+      0, // initial payment time
+      0, // interval
+      1, // max repeats
+      reference
+    )
+    this.handleNewTransferClose()
+  }
+  handleDeposit = (tokenAddress, recipient, amount, reference) => {
     // Immediate, one-time payment
     this.props.app.newPayment(
       tokenAddress,
@@ -49,8 +63,9 @@ class App extends React.Component {
     this.handleNewTransferClose()
   }
   render() {
-    const { balances, transactions } = this.props
+    const { balances, transactions, proxyAddress } = this.props
     const { newTransferOpened } = this.state
+
     const tokens = balances.map(
       ({ address, symbol, numData: { amount, decimals } }) => ({
         address,
@@ -59,7 +74,7 @@ class App extends React.Component {
         symbol,
       })
     )
-    const paymentPossibleTokens = tokens.filter(({ amount }) => amount)
+
     return (
       <AragonApp publicUrl="./aragon-ui/">
         <Layout>
@@ -91,9 +106,11 @@ class App extends React.Component {
         >
           <NewTransferPanelContent
             opened={newTransferOpened}
-            tokens={paymentPossibleTokens}
+            tokens={tokens}
             onClose={this.handleNewTransferClose}
-            onTransfer={this.handleSubmitTransfer}
+            onWithdraw={this.handleWithdraw}
+            onDeposit={this.handleDeposit}
+            proxyAddress={proxyAddress}
           />
         </SidePanel>
       </AragonApp>
