@@ -258,7 +258,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice Change period duration to `@transformTime(_periodDuration)`, effective for next accounting period.
+    * @notice Change period duration to `@transformTime(_periodDuration)`, effective for next accounting period
     * @param _periodDuration Duration in seconds for accounting periods
     */
     function setPeriodDuration(uint64 _periodDuration)
@@ -272,7 +272,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice Set budget for `_token.symbol(): string` to `@tokenAmount(_token, _amount, false)`, effective immediately.
+    * @notice Set budget for `_token.symbol(): string` to `@tokenAmount(_token, _amount, false)`, effective immediately
     * @param _token Address for token
     * @param _amount New budget amount
     */
@@ -292,7 +292,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice Remove spending limit for `_token.symbol(): string`.
+    * @notice Remove spending limit for `_token.symbol(): string`, effective immediately
     * @param _token Address for token
     */
     function removeBudget(address _token)
