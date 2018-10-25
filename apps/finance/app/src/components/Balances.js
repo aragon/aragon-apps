@@ -87,6 +87,12 @@ const EmptyListItem = () => (
 )
 
 const ScrollView = styled.div`
+  /*
+   * translate3d() fixes an issue on recent Firefox versions where the
+   * scrollbar would briefly appear on top of everything (including the
+   * sidepanel overlay).
+   */
+  transform: translate3d(0, 0, 0);
   overflow-x: auto;
   background: ${theme.contentBackground};
   border: 1px solid ${theme.contentBorder};
