@@ -335,6 +335,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     /**
     * @notice `_active ? 'Activate' : 'Disable'` payment #`_paymentId`
+    * @dev Note that we do not require this action to transition periods, as it doesn't directly
+    *      impact any accounting periods.
+    *      Not having to transition periods also makes disabling payments easier to prevent funds
+    *      from being pulled out in the event of a breach.
     * @param _paymentId Identifier for payment
     * @param _active Whether it will be active or inactive
     */
@@ -342,10 +346,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         external
         authP(MANAGE_PAYMENTS_ROLE, arr(_paymentId, uint256(_active ? 1 : 0)))
         paymentExists(_paymentId)
-        // Note that we do not require this action to transition periods, as it doesn't directly
-        // impact any accounting periods.
-        // Not having to transition periods also makes disabling payments easier to prevent funds
-        // from being pulled out in the event of a breach.
     {
         payments[_paymentId].inactive = !_active;
         emit ChangePaymentState(_paymentId, _active);
