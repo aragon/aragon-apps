@@ -21,21 +21,19 @@ class Balances extends React.Component {
   }
   async updateConvertedRates({ balances }) {
     const symbols = balances.map(({ symbol }) => symbol)
-
-    if (symbols.length) {
-      // Uncomment the next line to simulate a delay
-      // await new Promise(r => setTimeout(r, 2000))
-
-      const res = await fetch(convertApiUrl(symbols))
-      const convertRates = await res.json()
-      this.setState({ convertRates })
+    if (!symbols.length) {
+      return
     }
+
+    const res = await fetch(convertApiUrl(symbols))
+    const convertRates = await res.json()
+    this.setState({ convertRates })
   }
   render() {
     const { balances } = this.props
     const { convertRates } = this.state
-    const balanceItems = balances
-      .map(({ numData: { amount, decimals }, symbol }) => {
+    const balanceItems = balances.map(
+      ({ numData: { amount, decimals }, symbol }) => {
         const adjustedAmount = amount / Math.pow(10, decimals)
         const convertedAmount = convertRates[symbol]
           ? adjustedAmount / convertRates[symbol]
@@ -45,7 +43,8 @@ class Balances extends React.Component {
           amount: round(adjustedAmount, 5),
           convertedAmount: round(convertedAmount, 5),
         }
-      })
+      }
+    )
     return (
       <section>
         <Title>Token Balances</Title>
