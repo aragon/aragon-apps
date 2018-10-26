@@ -38,7 +38,7 @@ class SurveyCard extends React.Component {
             <PastDate
               dateTime={format(endDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")}
             >
-              {format(endDate, 'EEEEEE MMM yyyy HH:mm')}
+              {format(endDate, 'EEE MMM dd yyyy HH:mm')}
             </PastDate>
           )}
         </Header>
