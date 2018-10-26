@@ -162,7 +162,7 @@ describe('Add new employee panel', () => {
 
 function renderAddEmployeePanel (props) {
   const panel = render(
-    <AddEmployeePanel opened={true} {...props} />
+    <AddEmployeePanel opened {...props} />
   )
 
   const form = panel.getByTestId('add-employee-form')
@@ -180,7 +180,7 @@ function renderAddEmployeePanel (props) {
 
   const buttons = {
     close: panel.container.querySelector('button'),
-    submit: panel.container.querySelector('button[type="submit"]'),
+    submit: panel.container.querySelector('button[type="submit"]')
   }
 
   const searchEntity = (searchText) => {
