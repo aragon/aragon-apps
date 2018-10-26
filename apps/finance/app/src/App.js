@@ -69,9 +69,14 @@ class App extends React.Component {
   }
   handleDeposit = async (tokenAddress, amount, reference) => {
     const { app, proxyAddress } = this.props
-    app.deposit(tokenAddress, amount, reference, {
-      token: { address: tokenAddress, value: amount },
-    })
+    app.deposit(
+      tokenAddress,
+      amount,
+      reference,
+      tokenAddress === ETH_ADDRESS
+        ? { value: amount }
+        : { token: { address: tokenAddress, value: amount } }
+    )
     this.handleNewTransferClose()
   }
   render() {
