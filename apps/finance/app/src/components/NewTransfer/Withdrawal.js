@@ -96,7 +96,7 @@ class Withdrawal extends React.Component {
   }
 
   render() {
-    const { onClose, title, tokens } = this.props
+    const { title, tokens } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
 
     const nonZeroTokens = tokens.filter(({ amount }) => amount > 0)
@@ -164,16 +164,9 @@ class Withdrawal extends React.Component {
         {errorMessage && <ValidationError message={errorMessage} />}
       </form>
     ) : (
-      <div>
-        <Info.Permissions title="Action impossible">
-          The organization doesn’t have any tokens available to withdraw.
-        </Info.Permissions>
-        <ButtonWrapper>
-          <Button mode="strong" wide onClick={onClose}>
-            Close
-          </Button>
-        </ButtonWrapper>
-      </div>
+      <Info.Permissions title="Action impossible">
+        The organization doesn’t have any tokens available to withdraw.
+      </Info.Permissions>
     )
   }
 }
