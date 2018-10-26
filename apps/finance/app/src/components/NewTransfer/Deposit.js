@@ -52,7 +52,7 @@ class Withdrawal extends React.Component {
   }
   handleSubmit = event => {
     event.preventDefault()
-    const { onTransfer, tokens } = this.props
+    const { onDeposit, tokens } = this.props
     const { amount, reference, selectedToken } = this.state
     const token = tokens[selectedToken]
 
@@ -69,7 +69,7 @@ class Withdrawal extends React.Component {
       return
     }
 
-    onTransfer(token.address, adjustedAmount, reference)
+    onDeposit(token.address, adjustedAmount, reference)
   }
 
   render() {

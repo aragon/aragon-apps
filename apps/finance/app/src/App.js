@@ -62,17 +62,11 @@ class App extends React.Component {
     )
     this.handleNewTransferClose()
   }
-  handleDeposit = (tokenAddress, recipient, amount, reference) => {
-    // Immediate, one-time payment
-    this.props.app.newPayment(
-      tokenAddress,
-      recipient,
-      amount,
-      0, // initial payment time
-      0, // interval
-      1, // max repeats
-      reference
-    )
+  handleDeposit = async (tokenAddress, amount, reference) => {
+    const { app, proxyAddress } = this.props
+    app.deposit(tokenAddress, amount, reference, {
+      token: { address: tokenAddress, value: amount },
+    })
     this.handleNewTransferClose()
   }
   render() {
