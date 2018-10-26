@@ -17,6 +17,9 @@ import Transfers from './components/Transfers'
 import { networkContextType } from './lib/provideNetwork'
 import addFundsIcon from './components/assets/add-funds-icon.svg'
 
+// Address representing ETH (see background script)
+const ETH_ADDRESS = '0x0000000000000000000000000000000000000000'
+
 class App extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
@@ -25,6 +28,7 @@ class App extends React.Component {
   static defaultProps = {
     balances: [],
     transactions: [],
+    tokens: [],
     network: {
       etherscanBaseUrl: 'https://rinkeby.etherscan.io',
       name: 'rinkeby',
@@ -72,17 +76,8 @@ class App extends React.Component {
     this.handleNewTransferClose()
   }
   render() {
-    const { balances, transactions, proxyAddress } = this.props
+    const { balances, transactions, tokens, proxyAddress } = this.props
     const { newTransferOpened } = this.state
-
-    const tokens = balances.map(
-      ({ address, symbol, numData: { amount, decimals } }) => ({
-        address,
-        amount,
-        decimals,
-        symbol,
-      })
-    )
 
     return (
       <AragonApp publicUrl="./aragon-ui/">
@@ -158,66 +153,62 @@ const SpacedBlock = styled.div`
   }
 `
 
-const Layout = styled.div`
-  display: flex;
-  height: 100vh;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: stretch;
-`
-
-Layout.FixedHeader = styled.div`
-  flex-shrink: 0;
-`
-
-Layout.ScrollWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-  overflow: auto;
-  flex-grow: 1;
-`
-
 export default observe(
   observable =>
     observable.map(state => {
       const { balances, transactions } = state || {}
-      // Note that numbers in `numData` are not safe for accurate computations
-      // (but are useful for making divisions easier)
-      return {
-        ...state,
-        balances: balances
-          ? balances
-              .map(balance => ({
-                ...balance,
-                amount: new BN(balance.amount),
-                decimals: new BN(balance.decimals),
-                numData: {
-                  amount: parseInt(balance.amount, 10),
-                  decimals: parseInt(balance.decimals, 10),
-                },
-              }))
 
-              // ETH is always first
-              .sort((balanceA, balanceB) => {
-                if (balanceA.symbol === 'ETH') {
-                  return -1
-                }
-                if (balanceB.symbol === 'ETH') {
-                  return 1
-                }
-                return balanceB.convertedAmount - balanceA.convertedAmount
-              })
-          : [],
-        transactions: transactions
-          ? transactions.map(transaction => ({
-              ...transaction,
-              amount: new BN(transaction.amount),
+      const balancesBn = balances
+        ? balances
+            .map(balance => ({
+              ...balance,
+              amount: new BN(balance.amount),
+              decimals: new BN(balance.decimals),
+              // Note that numbers in `numData` are not safe for accurate
+              // computations (but are useful for making divisions easier).
               numData: {
-                amount: parseInt(transaction.amount, 10),
+                amount: parseInt(balance.amount, 10),
+                decimals: parseInt(balance.decimals, 10),
               },
             }))
-          : [],
+            // Always ETH first
+            .sort((balanceA, balanceB) => {
+              if (balanceA.address === ETH_ADDRESS) {
+                return -1
+              }
+              if (balanceB.address === ETH_ADDRESS) {
+                return 1
+              }
+              return balanceB.convertedAmount - balanceA.convertedAmount
+            })
+        : []
+
+      const transactionsBn = transactions
+        ? transactions.map(transaction => ({
+            ...transaction,
+            amount: new BN(transaction.amount),
+            numData: {
+              amount: parseInt(transaction.amount, 10),
+            },
+          }))
+        : []
+
+      return {
+        ...state,
+
+        tokens: balancesBn.map(
+          ({ address, symbol, numData: { amount, decimals } }) => ({
+            address,
+            amount,
+            decimals,
+            symbol,
+          })
+        ),
+
+        // Filter out empty balances
+        balances: balancesBn.filter(balance => !balance.amount.isZero()),
+
+        transactions: transactionsBn,
       }
     }),
   {}
