@@ -96,24 +96,26 @@ class Transfers extends React.Component {
       <section>
         <Header>
           <Title>Transfers</Title>
-          <div>
-            <label>
-              <Label>Token:</Label>
-              <DropDown
-                items={['All', ...symbols]}
-                active={selectedToken}
-                onChange={this.handleTokenChange}
-              />
-            </label>
-            <label>
-              <Label>Transfer type:</Label>
-              <DropDown
-                items={TRANSFER_TYPES_STRING}
-                active={selectedTransferType}
-                onChange={this.handleTransferTypeChange}
-              />
-            </label>
-          </div>
+          {filteredTransfers.length > 0 && (
+            <div>
+              <label>
+                <Label>Token:</Label>
+                <DropDown
+                  items={['All', ...symbols]}
+                  active={selectedToken}
+                  onChange={this.handleTokenChange}
+                />
+              </label>
+              <label>
+                <Label>Transfer type:</Label>
+                <DropDown
+                  items={TRANSFER_TYPES_STRING}
+                  active={selectedTransferType}
+                  onChange={this.handleTransferTypeChange}
+                />
+              </label>
+            </div>
+          )}
         </Header>
         {filteredTransfers.length === 0 ? (
           <NoTransfers>
