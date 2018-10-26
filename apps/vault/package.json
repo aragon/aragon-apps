@@ -1,6 +1,6 @@
 {
   "name": "@aragon/apps-vault",
-  "version": "3.0.0-beta.2",
+  "version": "3.0.0",
   "main": "index.js",
   "scripts": {
     "compile": "truffle compile",
@@ -21,6 +21,13 @@
     "prepublishOnly": "truffle compile --all"
   },
   "keywords": [],
+  "files": [
+    "/arapp.json",
+    "/build",
+    "/contracts",
+    "/scripts",
+    "/test"
+  ],
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "contributors": [
     "Jorge Izquierdo <jorge@aragon.one>",
@@ -31,7 +38,7 @@
   "license": "GPL-3.0-or-later",
   "description": "",
   "devDependencies": {
-    "@aragon/cli": "^2.0.4",
+    "@aragon/cli": "^5.2.0-beta.1",
     "@aragon/test-helpers": "^1.0.1",
     "@aragon/apps-shared-migrations": "1.0.0",
     "eth-ens-namehash": "^2.0.8",
@@ -43,6 +50,6 @@
     "truffle-hdwallet-provider": "0.0.3"
   },
   "dependencies": {
-    "@aragon/os": "4.0.0-beta.2"
+    "@aragon/os": "4.0.0"
   }
 }

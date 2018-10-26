@@ -10,6 +10,7 @@ import vaultBalanceAbi from './abi/vault-balance.json'
 const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
 
 const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
+const TEST_TOKEN_ADDRESSES = []
 const tokenContracts = new Map() // Addr -> External contract
 const tokenDecimals = new Map() // External contract -> decimals
 const tokenSymbols = new Map() // External contract -> symbol
@@ -72,6 +73,12 @@ retryEvery(retry => {
 
 async function initialize(vaultAddress, ethAddress) {
   const vaultContract = app.external(vaultAddress, vaultBalanceAbi)
+
+  const network = await app
+    .network()
+    .take(1)
+    .toPromise()
+  TEST_TOKEN_ADDRESSES.push(...getTestTokenAddresses(network.type))
 
   // Set up ETH placeholders
   tokenContracts.set(ethAddress, ETH_CONTRACT)
@@ -163,11 +170,12 @@ async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
 
 async function newTransaction(
   state,
-  { transactionHash, returnValues: { transactionId } },
+  { transactionHash, returnValues: { reference, transactionId } },
   settings
 ) {
   const transactionDetails = {
     ...(await loadTransactionDetails(transactionId)),
+    reference,
     transactionHash,
     id: transactionId,
   }
@@ -309,7 +317,6 @@ function marshallTransactionDetails({
   isIncoming,
   paymentId,
   periodId,
-  reference,
   token,
 }) {
   return {
@@ -318,7 +325,6 @@ function marshallTransactionDetails({
     isIncoming,
     paymentId,
     periodId,
-    reference,
     token,
     date: marshallDate(date),
   }
@@ -343,7 +349,7 @@ function loadTestnetState(nextState, settings) {
 
 async function loadTestnetTokenBalances(nextState, settings) {
   let reducedState = nextState
-  for (const tokenAddress of getTestTokenAddresses()) {
+  for (const tokenAddress of TEST_TOKEN_ADDRESSES) {
     reducedState = {
       ...reducedState,
       balances: await updateBalances(reducedState, tokenAddress, settings),

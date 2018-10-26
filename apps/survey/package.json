@@ -1,9 +1,8 @@
 {
   "name": "@aragon/apps-survey",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "postinstall": "cd app && npm install",
     "compile": "truffle compile",
     "build": "cd app && npm run build",
     "deploy:rpc": "truffle exec scripts/deploy.js --network rpc",
@@ -20,15 +19,23 @@
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "console": "node_modules/.bin/truffle console",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
+    "prepare": "cd app && npm install",
     "prepublishOnly": "truffle compile --all"
   },
   "keywords": [],
+  "files": [
+    "/arapp.json",
+    "/build",
+    "/contracts",
+    "/scripts",
+    "/test"
+  ],
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "description": "",
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
-    "@aragon/cli": "^2.0.4",
+    "@aragon/cli": "^5.2.0-beta.1",
     "@aragon/test-helpers": "^1.0.1",
     "babel-helpers": "^6.24.1",
     "babel-polyfill": "^6.26.0",
@@ -48,6 +55,6 @@
   },
   "dependencies": {
     "@aragon/apps-shared-minime": "1.0.0",
-    "@aragon/os": "4.0.0-beta.2"
+    "@aragon/os": "4.0.0"
   }
 }

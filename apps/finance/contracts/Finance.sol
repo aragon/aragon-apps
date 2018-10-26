@@ -258,7 +258,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice Change period duration to `@transformTime(_periodDuration)`, effective for next accounting period.
+    * @notice Change period duration to `@transformTime(_periodDuration)`, effective for next accounting period
     * @param _periodDuration Duration in seconds for accounting periods
     */
     function setPeriodDuration(uint64 _periodDuration)
@@ -272,7 +272,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice Set budget for `_token.symbol(): string` to `@tokenAmount(_token, _amount, false)`, effective immediately.
+    * @notice Set budget for `_token.symbol(): string` to `@tokenAmount(_token, _amount, false)`, effective immediately
     * @param _token Address for token
     * @param _amount New budget amount
     */
@@ -292,7 +292,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice Remove spending limit for `_token.symbol(): string`.
+    * @notice Remove spending limit for `_token.symbol(): string`, effective immediately
     * @param _token Address for token
     */
     function removeBudget(address _token)
@@ -335,6 +335,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     /**
     * @notice `_active ? 'Activate' : 'Disable'` payment #`_paymentId`
+    * @dev Note that we do not require this action to transition periods, as it doesn't directly
+    *      impact any accounting periods.
+    *      Not having to transition periods also makes disabling payments easier to prevent funds
+    *      from being pulled out in the event of a breach.
     * @param _paymentId Identifier for payment
     * @param _active Whether it will be active or inactive
     */

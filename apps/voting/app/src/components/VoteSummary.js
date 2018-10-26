@@ -6,7 +6,7 @@ import SummaryBar from './SummaryBar'
 import SummaryRows from './SummaryRows'
 
 const VoteSummary = ({ vote, tokenSymbol, tokenDecimals, ready }) => {
-  const { yea, nay, supportRequiredPct } = vote.numData
+  const { yea, nay, supportRequired } = vote.numData
   const totalVotes = yea + nay
   const votesYeaVotersSize = safeDiv(yea, totalVotes)
   const votesNayVotersSize = safeDiv(nay, totalVotes)
@@ -24,7 +24,7 @@ const VoteSummary = ({ vote, tokenSymbol, tokenDecimals, ready }) => {
             Current votes{' '}
           </Text>
           <Text size="xsmall" color={theme.textSecondary}>
-            ({Math.round(supportRequiredPct * 100)}% needed)
+            ({Math.round(supportRequired * 100)}% needed)
           </Text>
         </span>
       </Header>
@@ -32,7 +32,7 @@ const VoteSummary = ({ vote, tokenSymbol, tokenDecimals, ready }) => {
       <SummaryBar
         positiveSize={votesYeaVotersSize}
         negativeSize={votesNayVotersSize}
-        requiredSize={supportRequiredPct}
+        requiredSize={supportRequired}
         show={ready}
       />
 

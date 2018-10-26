@@ -60,7 +60,7 @@ contract('Voting App', accounts => {
 
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
-        const receipt = await dao.newAppInstance('0x1234', votingBase.address, { from: root })
+        const receipt = await dao.newAppInstance('0x1234', votingBase.address, '0x', false, { from: root })
         voting = Voting.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
 
         await acl.createPermission(ANY_ADDR, voting.address, CREATE_VOTES_ROLE, root, { from: root })

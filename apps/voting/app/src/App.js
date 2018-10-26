@@ -10,6 +10,7 @@ import NewVotePanelContent from './components/NewVotePanelContent'
 import AppLayout from './components/AppLayout'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
+import { makeEtherscanBaseUrl } from './utils'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
 import {
@@ -24,10 +25,7 @@ class App extends React.Component {
   }
   static defaultProps = {
     appStateReady: false,
-    network: {
-      etherscanBaseUrl: 'https://rinkeby.etherscan.io',
-      name: 'rinkeby',
-    },
+    network: {},
     tokenSymbol: '',
     userAccount: '',
     votes: [],
@@ -37,11 +35,16 @@ class App extends React.Component {
     settings: settingsContextType,
   }
   getChildContext() {
+    const { network, pctBase, voteTime } = this.props
+
     return {
-      network: this.props.network,
+      network: {
+        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
+        type: network.type,
+      },
       settings: {
-        pctBase: this.props.pctBase,
-        voteTime: this.props.voteTime,
+        pctBase,
+        voteTime,
       },
     }
   }
@@ -253,16 +256,9 @@ export default observe(
         }
       }
 
-      const {
-        pctBase,
-        supportRequiredPct,
-        tokenDecimals,
-        voteTime,
-        votes,
-      } = state
+      const { pctBase, tokenDecimals, voteTime, votes } = state
 
       const pctBaseNum = parseInt(pctBase, 10)
-      const supportRequiredPctNum = parseInt(supportRequiredPct, 10)
       const tokenDecimalsNum = parseInt(tokenDecimals, 10)
       const tokenDecimalsBaseNum = Math.pow(10, tokenDecimalsNum)
 
@@ -271,12 +267,10 @@ export default observe(
 
         appStateReady,
         pctBase: new BN(pctBase),
-        supportRequiredPct: new BN(supportRequiredPct),
         tokenDecimals: new BN(tokenDecimals),
 
         numData: {
           pctBase: pctBaseNum,
-          supportRequiredPct: supportRequiredPctNum,
           tokenDecimals: tokenDecimalsNum,
         },
 
@@ -291,7 +285,7 @@ export default observe(
                   endDate: new Date(data.startDate + voteTime),
                   minAcceptQuorum: new BN(data.minAcceptQuorum),
                   nay: new BN(data.nay),
-                  supportRequiredPct: new BN(supportRequiredPct),
+                  supportRequired: new BN(data.supportRequired),
                   votingPower: new BN(data.votingPower),
                   yea: new BN(data.yea),
                 },
@@ -299,7 +293,8 @@ export default observe(
                   minAcceptQuorum:
                     parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
                   nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
-                  supportRequiredPct: supportRequiredPctNum / pctBaseNum,
+                  supportRequired:
+                    parseInt(data.supportRequired, 10) / pctBaseNum,
                   votingPower:
                     parseInt(data.votingPower, 10) / tokenDecimalsBaseNum,
                   yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,

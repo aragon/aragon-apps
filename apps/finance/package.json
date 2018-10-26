@@ -1,9 +1,8 @@
 {
   "name": "@aragon/apps-finance",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0",
   "main": "index.js",
   "scripts": {
-    "postinstall": "cd app && npm install",
     "compile": "truffle compile",
     "build": "cd app && npm run build",
     "deploy:rpc": "truffle exec scripts/deploy.js --network rpc",
@@ -20,8 +19,16 @@
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "truffle:dev": "node_modules/.bin/truffle dev",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
+    "prepare": "cd app && npm install",
     "prepublishOnly": "truffle compile --all"
   },
+  "files": [
+    "/arapp.json",
+    "/build",
+    "/contracts",
+    "/scripts",
+    "/test"
+  ],
   "keywords": [],
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "contributors": [
@@ -35,7 +42,7 @@
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/apps-shared-minime": "1.0.0",
-    "@aragon/cli": "^2.0.4",
+    "@aragon/cli": "^5.2.0-beta.1",
     "@aragon/test-helpers": "^1.0.1",
     "eth-gas-reporter": "^0.1.1",
     "ganache-cli": "^6.0.3",
@@ -46,7 +53,7 @@
     "webpack": "3.10.0"
   },
   "dependencies": {
-    "@aragon/apps-vault": "^3.0.0-beta.2",
-    "@aragon/os": "4.0.0-beta.2"
+    "@aragon/apps-vault": "^3.0.0",
+    "@aragon/os": "4.0.0"
   }
 }

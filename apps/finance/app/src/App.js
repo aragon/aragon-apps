@@ -15,6 +15,8 @@ import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
 import { networkContextType } from './lib/provideNetwork'
+import { makeEtherscanBaseUrl } from './lib/utils'
+
 import addFundsIcon from './components/assets/add-funds-icon.svg'
 
 // Address representing ETH (see background script)
@@ -29,10 +31,7 @@ class App extends React.Component {
     balances: [],
     transactions: [],
     tokens: [],
-    network: {
-      etherscanBaseUrl: 'https://rinkeby.etherscan.io',
-      name: 'rinkeby',
-    },
+    network: {},
   }
   static childContextTypes = {
     network: networkContextType,
@@ -41,7 +40,13 @@ class App extends React.Component {
     newTransferOpened: false,
   }
   getChildContext() {
-    return { network: this.props.network }
+    const { network } = this.props
+    return {
+      network: {
+        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
+        type: network.type,
+      },
+    }
   }
   handleNewTransferOpen = () => {
     this.setState({ newTransferOpened: true })

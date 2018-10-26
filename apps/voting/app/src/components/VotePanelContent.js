@@ -113,6 +113,23 @@ class VotePanelContent extends React.Component {
         })
     }
   }
+  renderBlockLink = snapshotBlock => {
+    const {
+      network: { etherscanBaseUrl },
+    } = this.props
+    const text = `(block ${snapshotBlock})`
+
+    return etherscanBaseUrl ? (
+      <SafeLink
+        href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
+        target="_blank"
+      >
+        {text}
+      </SafeLink>
+    ) : (
+      text
+    )
+  }
   renderDescription = (description = '') => {
     // Make '\n's real breaks
     return description.split('\n').map((line, i) => (
@@ -216,12 +233,16 @@ class VotePanelContent extends React.Component {
             </CreatorImg>
             <div>
               <p>
-                <SafeLink
-                  href={`${etherscanBaseUrl}/address/${creator}`}
-                  target="_blank"
-                >
-                  {creator}
-                </SafeLink>
+                {etherscanBaseUrl ? (
+                  <SafeLink
+                    href={`${etherscanBaseUrl}/address/${creator}`}
+                    target="_blank"
+                  >
+                    {creator}
+                  </SafeLink>
+                ) : (
+                  creator
+                )}
               </p>
             </div>
           </Creator>
@@ -279,13 +300,7 @@ class VotePanelContent extends React.Component {
                         ? '…'
                         : pluralize(userBalance, '$ token', '$ tokens')}
                       , since it was your balance at the beginning of the vote{' '}
-                      <SafeLink
-                        href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
-                        target="_blank"
-                      >
-                        (block {snapshotBlock})
-                      </SafeLink>
-                      .
+                      {this.renderBlockLink(snapshotBlock)}.
                     </p>
                   </Info.Action>
                 </div>
@@ -321,14 +336,7 @@ class VotePanelContent extends React.Component {
                         ? '… tokens'
                         : pluralize(userBalance, '$ token', '$ tokens')}
                       , since it was your balance at the beginning of the vote{' '}
-                      <SafeLink
-                        href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
-                        target="_blank"
-                      >
-                        (block
-                        {snapshotBlock})
-                      </SafeLink>
-                      .
+                      {this.renderBlockLink(snapshotBlock)}.
                     </p>
                   </Info.Action>
                 </div>
