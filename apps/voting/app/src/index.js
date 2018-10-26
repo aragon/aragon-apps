@@ -6,6 +6,7 @@ import App from './App'
 class ConnectedApp extends React.Component {
   state = {
     app: new Aragon(new providers.WindowMessage(window.parent)),
+    network: {},
     observable: null,
     userAccount: '',
   }
@@ -25,6 +26,9 @@ class ConnectedApp extends React.Component {
       this.setState({ observable: app.state() })
       app.accounts().subscribe(accounts => {
         this.setState({ userAccount: accounts[0] || '' })
+      })
+      app.network().subscribe(network => {
+        this.setState({ network })
       })
     }
   }

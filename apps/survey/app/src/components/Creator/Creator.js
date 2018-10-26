@@ -10,16 +10,20 @@ class Creator extends React.Component {
       address,
       network: { etherscanBaseUrl },
     } = this.props
-    const url = `${etherscanBaseUrl}/address/${address}`
+    const url = etherscanBaseUrl ? `${etherscanBaseUrl}/address/${address}` : ''
     return (
       <Main>
         <Img>
           <Blockies seed={address} size={8} />
         </Img>
         <Address title={url}>
-          <SafeLink href={url} target="_blank">
-            {address}
-          </SafeLink>
+          {url ? (
+            <SafeLink href={url} target="_blank">
+              {address}
+            </SafeLink>
+          ) : (
+            address
+          )}
         </Address>
       </Main>
     )
