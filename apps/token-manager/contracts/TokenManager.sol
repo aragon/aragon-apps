@@ -95,7 +95,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Mint `@tokenAmount(self.token(), _amount, false)` tokens for `_receiver`
+    * @notice Mint `@tokenAmount(self.token(): address, _amount, false)` tokens for `_receiver`
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens minted
     */
@@ -105,7 +105,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Mint `@tokenAmount(self.token(), _amount, false)` tokens for the Token Manager
+    * @notice Mint `@tokenAmount(self.token(): address, _amount, false)` tokens for the Token Manager
     * @param _amount Number of tokens minted
     */
     function issue(uint256 _amount) external authP(ISSUE_ROLE, arr(_amount)) {
@@ -113,7 +113,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Assign `@tokenAmount(self.token(), _amount, false)` tokens to `_receiver` from the Token Manager's holdings
+    * @notice Assign `@tokenAmount(self.token(): address, _amount, false)` tokens to `_receiver` from the Token Manager's holdings
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transferred
     */
@@ -122,7 +122,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Burn `@tokenAmount(self.token(), _amount, false)` tokens from `_holder`
+    * @notice Burn `@tokenAmount(self.token(): address, _amount, false)` tokens from `_holder`
     * @param _holder Holder of tokens being burned
     * @param _amount Number of tokens being burned
     */
@@ -132,7 +132,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Assign `@tokenAmount(self.token(), _amount, false)` tokens to `_receiver` from the Token Manager's holdings with a `_revokable : 'revokable' : ''` vesting starting at `@formatDate(_start)`, cliff at `@formatDate(_cliff)` (first portion of tokens transferable), and completed vesting at `@formatDate(_vested)` (all tokens transferable)
+    * @notice Assign `@tokenAmount(self.token(): address, _amount, false)` tokens to `_receiver` from the Token Manager's holdings with a `_revokable : 'revokable' : ''` vesting starting at `@formatDate(_start)`, cliff at `@formatDate(_cliff)` (first portion of tokens transferable), and completed vesting at `@formatDate(_vested)` (all tokens transferable)
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens vested
     * @param _start Date the vesting calculations start
