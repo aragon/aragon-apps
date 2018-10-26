@@ -2,11 +2,20 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import BN from 'bn.js'
-import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
+import {
+  AppBar,
+  AppView,
+  AragonApp,
+  Button,
+  EmptyStateCard,
+  SidePanel,
+  observe,
+} from '@aragon/ui'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
 import { networkContextType } from './lib/provideNetwork'
+import addFundsIcon from './components/assets/add-funds-icon.svg'
 
 class App extends React.Component {
   static propTypes = {
@@ -77,8 +86,8 @@ class App extends React.Component {
 
     return (
       <AragonApp publicUrl="./aragon-ui/">
-        <Layout>
-          <Layout.FixedHeader>
+        <AppView
+          appBar={
             <AppBar
               title="Finance"
               endContent={
@@ -87,18 +96,31 @@ class App extends React.Component {
                 </Button>
               }
             />
-          </Layout.FixedHeader>
-          <Layout.ScrollWrapper>
-            <Content>
-              <SpacedBlock>
-                <Balances balances={balances} />
-              </SpacedBlock>
-              <SpacedBlock>
-                <Transfers transactions={transactions} tokens={tokens} />
-              </SpacedBlock>
-            </Content>
-          </Layout.ScrollWrapper>
-        </Layout>
+          }
+        >
+          {balances.length > 0 && (
+            <SpacedBlock>
+              <Balances balances={balances} />
+            </SpacedBlock>
+          )}
+          {transactions.length > 0 && (
+            <SpacedBlock>
+              <Transfers transactions={transactions} tokens={tokens} />
+            </SpacedBlock>
+          )}
+          {balances.length === 0 &&
+            transactions.length === 0 && (
+              <EmptyScreen>
+                <EmptyStateCard
+                  icon={<img src={addFundsIcon} alt="" />}
+                  title="Add funds to your organization"
+                  text="There are no funds yet - add funds easily"
+                  actionText="Add funds"
+                  onActivate={this.handleNewTransferOpen}
+                />
+              </EmptyScreen>
+            )}
+        </AppView>
         <SidePanel
           opened={newTransferOpened}
           onClose={this.handleNewTransferClose}
@@ -118,8 +140,15 @@ class App extends React.Component {
   }
 }
 
-const Content = styled.div`
-  padding: 30px;
+const EmptyScreen = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 `
 
 const SpacedBlock = styled.div`
