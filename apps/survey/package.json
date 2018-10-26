@@ -1,6 +1,6 @@
 {
   "name": "@aragon/apps-survey",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "compile": "truffle compile",
@@ -55,6 +55,6 @@
   },
   "dependencies": {
     "@aragon/apps-shared-minime": "1.0.0",
-    "@aragon/os": "4.0.0-rc.1"
+    "@aragon/os": "4.0.0"
   }
 }

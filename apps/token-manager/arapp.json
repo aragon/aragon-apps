@@ -6,7 +6,7 @@
       "network": "rpc"
     },
     "rinkeby": {
-      "registry": "",
+      "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
       "appName": "token-manager.aragonpm.eth",
       "network": "rinkeby"
     },
