@@ -9,7 +9,7 @@ const EmptyState = ({ onActivate }) => (
       title="Nothing here."
       text="Create a new vote to start using the app."
       actionText="New Vote"
-      icon={() => <img src={emptyIcon} alt="" />}
+      icon={<img src={emptyIcon} alt="" />}
       onActivate={onActivate}
     />
   </Main>
