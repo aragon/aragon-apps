@@ -33,10 +33,15 @@ const initialState = {
 
 class Withdrawal extends React.Component {
   static defaultProps = {
+    tokens: [],
     onWithdraw: () => {},
   }
   state = {
     ...initialState,
+  }
+
+  nonZeroTokens() {
+    return this.props.tokens.filter(({ amount }) => amount > 0)
   }
   handleAmountUpdate = event => {
     this.setState({
@@ -62,9 +67,10 @@ class Withdrawal extends React.Component {
   }
   handleSubmit = event => {
     event.preventDefault()
-    const { onWithdraw, tokens } = this.props
+    const { onWithdraw } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
 
+    const tokens = this.nonZeroTokens()
     const token = tokens[selectedToken]
     const recipientAddress = recipient.value.trim()
     // Adjust but without truncation in case the user entered a value with more
@@ -81,7 +87,10 @@ class Withdrawal extends React.Component {
           error: RECEIPIENT_NOT_ADDRESS_ERROR,
         },
       }))
-    } else if (amountTooBig || adjustedAmount.indexOf('.') !== -1) {
+      return
+    }
+
+    if (amountTooBig || adjustedAmount.indexOf('.') !== -1) {
       this.setState(({ amount }) => ({
         amount: {
           ...amount,
@@ -90,17 +99,18 @@ class Withdrawal extends React.Component {
             : DECIMALS_TOO_MANY_ERROR,
         },
       }))
-    } else {
-      onWithdraw(token.address, recipientAddress, adjustedAmount, reference)
+      return
     }
+
+    onWithdraw(token.address, recipientAddress, adjustedAmount, reference)
   }
 
   render() {
-    const { title, tokens } = this.props
+    const { title } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
 
-    const nonZeroTokens = tokens.filter(({ amount }) => amount > 0)
-    const symbols = nonZeroTokens.map(({ symbol }) => symbol)
+    const tokens = this.nonZeroTokens()
+    const symbols = tokens.map(({ symbol }) => symbol)
 
     let errorMessage
     if (recipient.error === RECEIPIENT_NOT_ADDRESS_ERROR) {
@@ -111,7 +121,7 @@ class Withdrawal extends React.Component {
       errorMessage = 'Amount contains too many decimal places'
     }
 
-    return nonZeroTokens.length ? (
+    return tokens.length ? (
       <form onSubmit={this.handleSubmit}>
         <h1>{title}</h1>
         <Field label="Recipient (must be a valid Ethereum address)">
