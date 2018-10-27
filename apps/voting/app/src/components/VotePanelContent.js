@@ -179,7 +179,7 @@ class VotePanelContent extends React.Component {
         <SidePanelSplit>
           <div>
             <h2>
-              <Label>{open ? 'Time Remaining:' : 'Status'}</Label>
+              <Label>{open ? 'Time Remaining' : 'Status'}</Label>
             </h2>
             <div>
               {open ? <Countdown end={endDate} /> : <VoteStatus vote={vote} />}
@@ -208,7 +208,7 @@ class VotePanelContent extends React.Component {
           {metadata && (
             <React.Fragment>
               <h2>
-                <Label>Question:</Label>
+                <Label>Question</Label>
               </h2>
               <Question>{metadata}</Question>
             </React.Fragment>
@@ -216,7 +216,7 @@ class VotePanelContent extends React.Component {
           {description && (
             <React.Fragment>
               <h2>
-                <Label>Description:</Label>
+                <Label>Description</Label>
               </h2>
               <p>{this.renderDescription(description)}</p>
             </React.Fragment>
@@ -225,7 +225,7 @@ class VotePanelContent extends React.Component {
         <SidePanelSeparator />
         <Part>
           <h2>
-            <Label>Created By:</Label>
+            <Label>Created By</Label>
           </h2>
           <Creator>
             <CreatorImg>
