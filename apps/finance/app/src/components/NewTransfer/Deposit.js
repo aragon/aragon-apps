@@ -124,10 +124,17 @@ class Withdrawal extends React.Component {
         {errorMessage && <ValidationError message={errorMessage} />}
 
         <VSpace size={6} />
-        <Info.Action title="Depositing funds to your DAO">
-          Configure your deposit above, and sign the transaction with your
-          wallet after clicking “Submit Transfer”. It will then show up in your
-          Finance app once processed.
+        <Info.Action title="Depositing funds to your organization">
+          <p>
+            Remember, Mainnet organizations use real (not test) funds. Learn
+            more about the risks and what's been done to mitigate them here.
+          </p>
+          <VSpace size={2} />
+          <p>
+            Configure your deposit above, and sign the transaction with your
+            wallet after clicking “Submit Transfer”. It will then show up in
+            your Finance app once processed.
+          </p>
         </Info.Action>
 
         {proxyAddress && (
@@ -148,8 +155,8 @@ class Withdrawal extends React.Component {
               <VSpace size={4} />
               <Info>
                 Use the above address or QR code to transfer ETH directly to
-                your DAO’s Finance app. Note that ERC-20 tokens cannot be
-                transferred with the QR code.
+                your organization’s Finance app. Note that ERC-20 tokens cannot
+                be transferred with the QR code.
               </Info>
             </ToggleContent>
           </div>
