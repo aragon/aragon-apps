@@ -2,7 +2,14 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import BN from 'bn.js'
-import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
+import {
+  AppBar,
+  AppView,
+  AragonApp,
+  Button,
+  SidePanel,
+  observe,
+} from '@aragon/ui'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransferPanelContent'
 import Transfers from './components/Transfers'
@@ -66,8 +73,8 @@ class App extends React.Component {
     const paymentPossibleTokens = tokens.filter(({ amount }) => amount)
     return (
       <AragonApp publicUrl="./aragon-ui/">
-        <Layout>
-          <Layout.FixedHeader>
+        <AppView
+          appBar={
             <AppBar
               title="Finance"
               endContent={
@@ -76,18 +83,15 @@ class App extends React.Component {
                 </Button>
               }
             />
-          </Layout.FixedHeader>
-          <Layout.ScrollWrapper>
-            <Content>
-              <SpacedBlock>
-                <Balances balances={balances} />
-              </SpacedBlock>
-              <SpacedBlock>
-                <Transfers transactions={transactions} tokens={tokens} />
-              </SpacedBlock>
-            </Content>
-          </Layout.ScrollWrapper>
-        </Layout>
+          }
+        >
+          <SpacedBlock>
+            <Balances balances={balances} />
+          </SpacedBlock>
+          <SpacedBlock>
+            <Transfers transactions={transactions} tokens={tokens} />
+          </SpacedBlock>
+        </AppView>
         <SidePanel
           opened={newTransferOpened}
           onClose={this.handleNewTransferClose}
@@ -105,35 +109,11 @@ class App extends React.Component {
   }
 }
 
-const Content = styled.div`
-  padding: 30px;
-`
-
 const SpacedBlock = styled.div`
   margin-top: 30px;
   &:first-child {
     margin-top: 0;
   }
-`
-
-const Layout = styled.div`
-  display: flex;
-  height: 100vh;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: stretch;
-`
-
-Layout.FixedHeader = styled.div`
-  flex-shrink: 0;
-`
-
-Layout.ScrollWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-  overflow: auto;
-  flex-grow: 1;
 `
 
 export default observe(

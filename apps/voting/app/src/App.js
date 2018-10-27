@@ -1,6 +1,13 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { AragonApp, AppBar, Button, SidePanel, observe } from '@aragon/ui'
+import {
+  AppBar,
+  AppView,
+  AragonApp,
+  Button,
+  SidePanel,
+  observe,
+} from '@aragon/ui'
 import BN from 'bn.js'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
@@ -182,8 +189,8 @@ class App extends React.Component {
 
     return (
       <AragonApp publicUrl="./aragon-ui/">
-        <AppLayout>
-          <AppLayout.Header>
+        <AppView
+          appBar={
             <AppBar
               title="Vote"
               endContent={
@@ -192,21 +199,14 @@ class App extends React.Component {
                 </Button>
               }
             />
-          </AppLayout.Header>
-          <AppLayout.ScrollWrapper>
-            <AppLayout.Content>
-              {appStateReady && votes.length > 0 ? (
-                <Votes
-                  votes={preparedVotes}
-                  onSelectVote={this.handleVoteOpen}
-                />
-              ) : (
-                <EmptyState onActivate={this.handleCreateVoteOpen} />
-              )}
-            </AppLayout.Content>
-          </AppLayout.ScrollWrapper>
-        </AppLayout>
-
+          }
+        >
+          {appStateReady && votes.length > 0 ? (
+            <Votes votes={preparedVotes} onSelectVote={this.handleVoteOpen} />
+          ) : (
+            <EmptyState onActivate={this.handleCreateVoteOpen} />
+          )}
+        </AppView>
         <SidePanel
           title={`Vote #${currentVoteId} (${
             currentVote && currentVote.data.open ? 'Open' : 'Closed'
