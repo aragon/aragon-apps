@@ -3,12 +3,10 @@ import styled from 'styled-components'
 import { EmptyStateCard } from '@aragon/ui'
 import emptyIcon from '../assets/empty-card-icon.svg'
 
-const EmptyIcon = () => <img src={emptyIcon} alt="" />
-
 const EmptyState = ({ onActivate }) => (
   <Main>
     <EmptyStateCard
-      icon={EmptyIcon}
+      icon={<img src={emptyIcon} alt="" />}
       title="Nothing here."
       text="Assign tokens to start using the app."
       actionText="Assign Tokens"
