@@ -167,6 +167,17 @@ const SpacedBlock = styled.div`
   }
 `
 
+// Use this function to sort by ETH
+const compareEthereumAddresses = (addressA, addressB) => {
+  if (addressA === ETH_ADDRESS) {
+    return -1
+  }
+  if (addressB === ETH_ADDRESS) {
+    return 1
+  }
+  return 0
+}
+
 export default observe(
   observable =>
     observable.map(state => {
@@ -185,16 +196,9 @@ export default observe(
                 decimals: parseInt(balance.decimals, 10),
               },
             }))
-            // Always ETH first
-            .sort((balanceA, balanceB) => {
-              if (balanceA.address === ETH_ADDRESS) {
-                return -1
-              }
-              if (balanceB.address === ETH_ADDRESS) {
-                return 1
-              }
-              return balanceB.convertedAmount - balanceA.convertedAmount
-            })
+            .sort((balanceA, balanceB) =>
+              compareEthereumAddresses(balanceA.address, balanceB.address)
+            )
         : []
 
       const transactionsBn = transactions
@@ -210,14 +214,18 @@ export default observe(
       return {
         ...state,
 
-        tokens: balancesBn.map(
-          ({ address, symbol, numData: { amount, decimals } }) => ({
+        tokens: balancesBn
+          .map(({ address, symbol, numData: { amount, decimals } }) => ({
             address,
             amount,
             decimals,
             symbol,
-          })
-        ),
+          }))
+          .sort(
+            (tokenA, tokenB) =>
+              compareEthereumAddresses(tokenA.address, tokenB.address) ||
+              tokenA.symbol.localeCompare(tokenB.symbol)
+          ),
 
         // Filter out empty balances
         balances: balancesBn.filter(balance => !balance.amount.isZero()),
