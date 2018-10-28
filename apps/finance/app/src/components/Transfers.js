@@ -19,11 +19,12 @@ const TRANSFER_TYPES = [
   TransferTypes.Outgoing,
 ]
 const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
+const TRANSFERS_PER_PAGE = 10
 
 const initialState = {
   selectedToken: 0,
   selectedTransferType: 0,
-  displayedTransfers: 10,
+  displayedTransfers: TRANSFERS_PER_PAGE,
 }
 
 class Transfers extends React.Component {
@@ -31,12 +32,15 @@ class Transfers extends React.Component {
     ...initialState,
   }
   handleTokenChange = index => {
-    this.setState({ selectedToken: index, displayedTransfers: 10 })
+    this.setState({
+      selectedToken: index,
+      displayedTransfers: TRANSFERS_PER_PAGE,
+    })
   }
   handleTransferTypeChange = index => {
     this.setState({
       selectedTransferType: index,
-      displayedTransfers: 10,
+      displayedTransfers: TRANSFERS_PER_PAGE,
     })
   }
   handleResetFilters = () => {
@@ -46,7 +50,7 @@ class Transfers extends React.Component {
   }
   showMoreTransfers = () => {
     this.setState(prevState => ({
-      displayedTransfers: prevState.displayedTransfers + 10,
+      displayedTransfers: prevState.displayedTransfers + TRANSFERS_PER_PAGE,
     }))
   }
 
@@ -142,11 +146,11 @@ class Transfers extends React.Component {
               }
             >
               {filteredTransfers
-                .slice(0, displayedTransfers)
                 .sort(({ date: dateLeft }, { date: dateRight }) =>
                   // Sort by date descending
                   compareDesc(dateLeft, dateRight)
                 )
+                .slice(0, displayedTransfers)
                 .map(transfer => (
                   <TransferRow
                     key={transfer.transactionHash}
