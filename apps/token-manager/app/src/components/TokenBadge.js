@@ -8,7 +8,7 @@ class TokenBadge extends React.PureComponent {
       <Main title={`${name} (${address})`}>
         <Label>
           <Icon src={`https://chasing-coins.com/coin/logo/${symbol}`} />
-          {name === symbol ? name : `${name} (${symbol})`}
+          <Name>{name === symbol ? name : `${name} (${symbol})`}</Name>
         </Label>
       </Main>
     )
@@ -23,18 +23,27 @@ const Main = styled.div`
   background: #daeaef;
   border-radius: 3px;
   cursor: default;
+  padding: 0 8px;
 `
 
 const Label = styled.span`
   display: flex;
   align-items: center;
-  padding: 0 8px;
   white-space: nowrap;
   font-size: 15px;
+  min-width: 0;
+  flex-shrink: 1;
 `
 
 const Icon = styled.img.attrs({ alt: '', width: '16', height: '16' })`
   margin-right: 10px;
+`
+
+const Name = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
 `
 
 export default TokenBadge
