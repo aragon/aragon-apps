@@ -3,10 +3,11 @@ import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import BN from 'bn.js'
 import {
-  AragonApp,
   AppBar,
-  Button,
+  AppView,
+  AragonApp,
   Badge,
+  Button,
   SidePanel,
   font,
   observe,
@@ -97,8 +98,7 @@ class App extends React.Component {
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
       <AragonApp publicUrl="./aragon-ui/">
-        <AppLayout>
-          <AppLayout.Header>
+        <AppView appBar={
             <AppBar
               title={
                 <Title>
@@ -115,9 +115,7 @@ class App extends React.Component {
                 </Button>
               }
             />
-          </AppLayout.Header>
-          <AppLayout.ScrollWrapper>
-            <AppLayout.Content>
+        }>
               {appStateReady && holders.length > 0 ? (
                 <Holders
                   holders={holders}
@@ -138,9 +136,7 @@ class App extends React.Component {
                   onActivate={this.handleLaunchAssignTokensNoHolder}
                 />
               )}
-            </AppLayout.Content>
-          </AppLayout.ScrollWrapper>
-        </AppLayout>
+        </AppView>
         <SidePanel
           title={
             assignTokensConfig.mode === 'assign'
