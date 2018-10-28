@@ -69,13 +69,23 @@ class App extends React.Component {
   }
   handleDeposit = async (tokenAddress, amount, reference) => {
     const { app, proxyAddress } = this.props
+
+    const intentParams = tokenAddress === ETH_ADDRESS
+      ? { value: amount }
+      : {
+          token: { address: tokenAddress, value: amount },
+          // Generally a bad idea to hardcode gas in intents, but it prevents metamask from doing
+          // the gas estimation and telling the user that their transaction will fail (before approve is mined).
+          // The actual gas cost is around ~180k + 20k per 32 chars of text.
+          // Estimation with some breathing room in case it is being forwarded (unlikely in deposit)
+          gas: 400000 + 20000 * Math.ceil(reference.length / 32),
+        }
+
     app.deposit(
       tokenAddress,
       amount,
       reference,
-      tokenAddress === ETH_ADDRESS
-        ? { value: amount }
-        : { token: { address: tokenAddress, value: amount } }
+      intentParams
     )
     this.handleNewTransferClose()
   }
