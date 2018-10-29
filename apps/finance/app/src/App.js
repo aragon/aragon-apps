@@ -161,7 +161,7 @@ const SpacedBlock = styled.div`
 `
 
 // Use this function to sort by ETH
-const compareEthereumAddresses = (addressA, addressB) => {
+const compareTokenAddresses = (addressA, addressB) => {
   if (addressA === ETHER_TOKEN_FAKE_ADDRESS) {
     return -1
   }
@@ -190,7 +190,7 @@ export default observe(
               },
             }))
             .sort((balanceA, balanceB) =>
-              compareEthereumAddresses(balanceA.address, balanceB.address)
+              compareTokenAddresses(balanceA.address, balanceB.address)
             )
         : []
 
@@ -216,7 +216,7 @@ export default observe(
           }))
           .sort(
             (tokenA, tokenB) =>
-              compareEthereumAddresses(tokenA.address, tokenB.address) ||
+              compareTokenAddresses(tokenA.address, tokenB.address) ||
               tokenA.symbol.localeCompare(tokenB.symbol)
           ),
 
