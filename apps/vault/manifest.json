@@ -1,8 +1,10 @@
 {
   "name": "Vault",
   "description": "Securely owns and manages tokens on behalf of a DAO.",
-  "icons": [{
-    "src": "assets/icon.svg",
-    "sizes": "192x192"
-  }]
+  "icons": [
+    {
+      "src": "assets/images/icon.svg",
+      "sizes": "192x192"
+    }
+  ]
 }
