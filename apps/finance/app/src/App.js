@@ -203,12 +203,15 @@ export default observe(
         ...state,
 
         tokens: balancesBn
-          .map(({ address, symbol, numData: { amount, decimals } }) => ({
-            address,
-            amount,
-            decimals,
-            symbol,
-          }))
+          .map(
+            ({ address, symbol, numData: { amount, decimals }, verified }) => ({
+              address,
+              amount,
+              decimals,
+              symbol,
+              verified,
+            })
+          )
           .sort(
             (tokenA, tokenB) =>
               compareTokenAddresses(tokenA.address, tokenB.address) ||

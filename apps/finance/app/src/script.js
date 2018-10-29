@@ -1,7 +1,7 @@
 import Aragon from '@aragon/client'
 import { of } from './rxjs'
 import { getTestTokenAddresses } from './testnet'
-import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
+import { ETHER_TOKEN_FAKE_ADDRESS, isTokenVerified } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
 import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -80,6 +80,7 @@ async function initialize(vaultAddress, ethAddress) {
   tokenSymbols.set(ETH_CONTRACT, 'ETH')
 
   return createStore({
+    network,
     ethToken: {
       address: ethAddress,
     },
@@ -242,6 +243,7 @@ async function newBalanceEntry(tokenContract, tokenAddress, settings) {
     symbol,
     address: tokenAddress,
     amount: balance,
+    verified: isTokenVerified(tokenAddress, settings.network.type),
   }
 }
 
