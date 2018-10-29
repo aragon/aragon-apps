@@ -1,11 +1,13 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import Section from '../components/Layout/Section'
+import { AppContext } from '../App'
 import EmployeeTable from './components/EmployeeTable'
-import * as idm from '../services/idm'
+import Section from '../components/Layout/Section'
 
 class TeamPayroll extends React.Component {
+  static contextType = AppContext
+
   state = {
     employees: []
   }
@@ -15,14 +17,7 @@ class TeamPayroll extends React.Component {
 
     if (app && typeof app.state === 'function') {
       this.subscription = app.state()
-        .subscribe(async state => {
-          const employees = await Promise.all(
-            state.employees.map(async employee => {
-              const [{ name, role }] = await idm.getIdentity(employee.domain)
-
-              return { ...employee, name, role }
-            })
-          )
+        .subscribe(({ employees }) => {
           this.setState({ employees })
         })
     }

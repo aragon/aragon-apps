@@ -1,78 +1,75 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Table, TableHeader, TableRow, TableCell, Text } from '@aragon/ui'
 
-import Panel from '../../components/Panel/Panel'
+import Table from '../../components/Table'
+import { employeeType } from '../../types'
 import { formatCurrency, formatDate } from '../../utils/formatting'
 
 class EmployeeTable extends React.Component {
-  renderHeader () {
-    return (
-      <TableRow>
-        <TableHeader title='Name'/>
-        <TableHeader title='Start Date'/>
-        <TableHeader title='End Date'/>
-        <TableHeader title='Role'/>
-        <TableHeader title='Salary'/>
-        <TableHeader title='Total Paid This Year'/>
-      </TableRow>
-    )
-  }
-
   render () {
-    const { data: employees } = this.props
-
-    if (!employees.length) {
-      return (
-        <Panel>
-          <p>
-            No employees found
-          </p>
-        </Panel>
-      )
-    }
+    const { columns, data: employees, sortable } = this.props
 
     return (
-      <Table header={this.renderHeader()}>
-        {employees.map(employee => (
-          <TableRow key={employee.id}>
-            <TableCell>
-              <Text>{employee.name}</Text>
-            </TableCell>
-            <TableCell>
-              <Text>{employee.startDate ? formatDate(employee.startDate) : '-'}</Text>
-            </TableCell>
-            <TableCell>
-              <Text>{employee.endDate ? formatDate(employee.endDate) : 'Active'}</Text>
-            </TableCell>
-            <TableCell>
-              <Text>{employee.role}</Text>
-            </TableCell>
-            <TableCell>
-              <Text>{formatCurrency(employee.salary || 0)}</Text>
-            </TableCell>
-            <TableCell>
-              <Text>{formatCurrency(employee.accruedValue || 0)}</Text>
-            </TableCell>
-          </TableRow>
-        ))}
-      </Table>
+      <Table
+        columns={columns}
+        data={employees}
+        sortable={sortable}
+        noDataMessage='No employees found'
+      />
     )
   }
 }
 
 EmployeeTable.propTypes = {
-  data: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number,
-      name: PropTypes.string,
-      startDate: PropTypes.instanceOf(Date),
-      endDate: PropTypes.instanceOf(Date),
-      role: PropTypes.string,
-      salary: PropTypes.number,
-      accruedValue: PropTypes.number,
-    })
-  )
+  columns: Table.propTypes.columns,
+  data: PropTypes.arrayOf(employeeType).isRequired,
+  sortable: Table.propTypes.sortable
+}
+
+EmployeeTable.defaultProps = {
+  columns: [
+    {
+      name: 'name',
+      title: 'Name',
+      value: data => data.name
+    },
+    {
+      name: 'start-date',
+      title: 'Start Date',
+      value: data => data.startDate,
+      formatter: formatDate
+    },
+    {
+      name: 'end-date',
+      title: 'End Date',
+      value: data => data.endDate,
+      formatter: formatDate,
+      defaultValue: 'Active'
+    },
+    {
+      name: 'role',
+      title: 'Role',
+      value: data => data.role
+    },
+    {
+      name: 'salary',
+      title: 'Salary',
+      value: data => data.salary,
+      formatter: formatCurrency,
+      cellProps: {
+        align: 'right'
+      }
+    },
+    {
+      name: 'annual-total-payment',
+      title: 'Total Paid This Year',
+      value: data => data.accruedValue,
+      formatter: formatCurrency,
+      cellProps: {
+        align: 'right'
+      }
+    }
+  ]
 }
 
 export default EmployeeTable

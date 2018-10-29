@@ -1,5 +1,7 @@
 import Aragon from '@aragon/client'
 
+import * as idm from './services/idm'
+
 const app = new Aragon()
 
 app.store(async (state, { event }) => {
@@ -27,6 +29,11 @@ function getEmployeeById (id) {
   return app.call('getEmployee', id)
     .first()
     .map(data => marshallEmployeeData({ id, ...data }))
+    .flatMap(async employee => {
+      const [{ name, role }] = await idm.getIdentity(employee.domain)
+
+      return { ...employee, name, role }
+    })
     .toPromise()
 }
 
