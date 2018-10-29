@@ -8,6 +8,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   SafeLink,
+  IdentityBadge,
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
@@ -45,12 +46,9 @@ class TransferRow extends React.Component {
     })
   }
   render() {
-    const {
-      network: { etherscanBaseUrl },
-      token,
-      transaction,
-    } = this.props
+    const { network, token, transaction, wideMode } = this.props
     const { showCopyTransferMessage } = this.state
+    const { etherscanBaseUrl } = network
     const {
       date,
       entity,
@@ -75,18 +73,11 @@ class TransferRow extends React.Component {
           </time>
         </NoWrapCell>
         <NoWrapCell>
-          <TextOverflow>
-            {etherscanBaseUrl ? (
-              <SafeLink
-                href={`${etherscanBaseUrl}/address/${entity}`}
-                target="_blank"
-              >
-                {entity}
-              </SafeLink>
-            ) : (
-              entity
-            )}
-          </TextOverflow>
+          <IdentityBadge
+            networkType={network.type}
+            entity={entity}
+            shorten={!wideMode}
+          />
         </NoWrapCell>
         <NoWrapCell title={reference} style={{ position: 'relative' }}>
           <TextOverflow style={{ position: 'absolute', left: '0', right: '0' }}>
