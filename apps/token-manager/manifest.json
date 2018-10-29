@@ -2,7 +2,7 @@
   "name": "Token Manager",
   "description": "Controls an organization token allowing to mint new tokens, assign them and create vestings",
   "icons": [{
-    "src": "images/icon.png",
+    "src": "images/icon.svg",
     "sizes": "192x192"
   }],
   "script": "/script.js",

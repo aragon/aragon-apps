@@ -2,7 +2,7 @@
   "name": "Finance",
   "description": "Manage organization assets: budget spending and record financial transactions",
   "icons": [{
-    "src": "images/icon.png",
+    "src": "images/icon.svg",
     "sizes": "192x192"
   }],
   "script": "/script.js",
