@@ -3,7 +3,7 @@
     "constant": true,
     "inputs": [
       {
-        "name": "token",
+        "name": "_token",
         "type": "address"
       }
     ],

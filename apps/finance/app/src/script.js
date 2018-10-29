@@ -6,8 +6,10 @@ import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
 import vaultBalanceAbi from './abi/vault-balance.json'
+import vaultEventAbi from './abi/vault-events.json'
 
 const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
+const vaultAbi = [].concat(vaultBalanceAbi, vaultEventAbi)
 
 const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const TEST_TOKEN_ADDRESSES = []
@@ -72,7 +74,7 @@ retryEvery(retry => {
 })
 
 async function initialize(vaultAddress, ethAddress) {
-  const vaultContract = app.external(vaultAddress, vaultBalanceAbi)
+  const vaultContract = app.external(vaultAddress, vaultAbi)
 
   const network = await app
     .network()
@@ -110,8 +112,6 @@ function createStore(settings) {
         nextState = await initializeState(nextState, settings)
       } else if (addressesEqual(eventAddress, vault.address)) {
         // Vault event
-        // Note: it looks like vault events don't have a defined `event.event` or anything in the
-        // `event.returnValues`... so let's just refetch its ETH balance.
         nextState = await vaultLoadBalance(nextState, event, settings)
       } else {
         // Finance event
