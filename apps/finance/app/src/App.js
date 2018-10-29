@@ -15,12 +15,10 @@ import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
 import { networkContextType } from './lib/provideNetwork'
+import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
 import { makeEtherscanBaseUrl } from './lib/utils'
 
 import addFundsIcon from './components/assets/add-funds-icon.svg'
-
-// Address representing ETH (see background script)
-const ETH_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 class App extends React.Component {
   static propTypes = {
@@ -68,25 +66,21 @@ class App extends React.Component {
     this.handleNewTransferClose()
   }
   handleDeposit = async (tokenAddress, amount, reference) => {
-    const { app, proxyAddress } = this.props
+    const { app } = this.props
 
-    const intentParams = tokenAddress === ETH_ADDRESS
-      ? { value: amount }
-      : {
-          token: { address: tokenAddress, value: amount },
-          // Generally a bad idea to hardcode gas in intents, but it prevents metamask from doing
-          // the gas estimation and telling the user that their transaction will fail (before approve is mined).
-          // The actual gas cost is around ~180k + 20k per 32 chars of text.
-          // Estimation with some breathing room in case it is being forwarded (unlikely in deposit)
-          gas: 400000 + 20000 * Math.ceil(reference.length / 32),
-        }
+    const intentParams =
+      tokenAddress === ETHER_TOKEN_FAKE_ADDRESS
+        ? { value: amount }
+        : {
+            token: { address: tokenAddress, value: amount },
+            // Generally a bad idea to hardcode gas in intents, but it prevents metamask from doing
+            // the gas estimation and telling the user that their transaction will fail (before approve is mined).
+            // The actual gas cost is around ~180k + 20k per 32 chars of text.
+            // Estimation with some breathing room in case it is being forwarded (unlikely in deposit)
+            gas: 400000 + 20000 * Math.ceil(reference.length / 32),
+          }
 
-    app.deposit(
-      tokenAddress,
-      amount,
-      reference,
-      intentParams
-    )
+    app.deposit(tokenAddress, amount, reference, intentParams)
     this.handleNewTransferClose()
   }
   render() {
@@ -138,7 +132,6 @@ class App extends React.Component {
           <NewTransferPanelContent
             opened={newTransferOpened}
             tokens={tokens}
-            onClose={this.handleNewTransferClose}
             onWithdraw={this.handleWithdraw}
             onDeposit={this.handleDeposit}
             proxyAddress={proxyAddress}
@@ -153,11 +146,6 @@ const EmptyScreen = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
 `
 
 const SpacedBlock = styled.div`
@@ -168,11 +156,11 @@ const SpacedBlock = styled.div`
 `
 
 // Use this function to sort by ETH
-const compareEthereumAddresses = (addressA, addressB) => {
-  if (addressA === ETH_ADDRESS) {
+const compareTokenAddresses = (addressA, addressB) => {
+  if (addressA === ETHER_TOKEN_FAKE_ADDRESS) {
     return -1
   }
-  if (addressB === ETH_ADDRESS) {
+  if (addressB === ETHER_TOKEN_FAKE_ADDRESS) {
     return 1
   }
   return 0
@@ -197,7 +185,7 @@ export default observe(
               },
             }))
             .sort((balanceA, balanceB) =>
-              compareEthereumAddresses(balanceA.address, balanceB.address)
+              compareTokenAddresses(balanceA.address, balanceB.address)
             )
         : []
 
@@ -215,15 +203,18 @@ export default observe(
         ...state,
 
         tokens: balancesBn
-          .map(({ address, symbol, numData: { amount, decimals } }) => ({
-            address,
-            amount,
-            decimals,
-            symbol,
-          }))
+          .map(
+            ({ address, symbol, numData: { amount, decimals }, verified }) => ({
+              address,
+              amount,
+              decimals,
+              symbol,
+              verified,
+            })
+          )
           .sort(
             (tokenA, tokenB) =>
-              compareEthereumAddresses(tokenA.address, tokenB.address) ||
+              compareTokenAddresses(tokenA.address, tokenB.address) ||
               tokenA.symbol.localeCompare(tokenB.symbol)
           ),
 
