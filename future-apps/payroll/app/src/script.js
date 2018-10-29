@@ -1,49 +1,112 @@
 import Aragon from '@aragon/client'
+import tokenDecimalsAbi from './abi/token-decimals.json'
+import tokenSymbolAbi from './abi/token-symbol.json'
+
+const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
+
+const allowedTokens = new Map();
 
 import * as idm from './services/idm'
 
 const app = new Aragon()
 
-app.store(async (state, { event, ...data }) => {
-  let nexState = {
-    ...state
+app.store(async (state, { event, ...eventData }) => {
+  if (state === null) {
+    const initialState = {
+      employees: await getAllEmployees()
+    }
+
+    state = initialState
   }
 
-  try {
-    if (event === 'AddEmployee') {
-      const { returnValues: { employeeId } } = data
-      const { employees = [] } = nexState
+  let nextState = {
+    ...state,
+  }
 
-      if (!employees.find(e => e.id === employeeId)) {
-        const newEmployee = await getEmployeeById(employeeId, data)
+  switch (event) {
+    case 'AddEmployee':
+      const employees = await getAllEmployees()
 
-        if (newEmployee) {
-          employees.push(newEmployee)
-        }
-      }
-
-      nexState = {
-        ...nexState,
+      nextState = {
+        ...state,
         employees
       }
-    }
-  } catch (e) {
-    console.log('ERROR', e)
+      break
+    case 'AddAllowedToken':
+      nextState = await addAllowedToken(nextState, eventData)
+      break
+    default:
+      break
   }
 
-
-  return nexState
+  return nextState
 })
 
-function getEmployeeById (id, event) {
+function getEmployeeById (id) {
   return app.call('getEmployee', id)
     .first()
-    .map(data => marshallEmployeeData({ ...data, ...event, id }))
+    .map(data => marshallEmployeeData({ id, ...data }))
     .flatMap(async employee => {
       const [{ name, role }] = await idm.getIdentity(employee.domain)
 
       return { ...employee, name, role }
     })
+    .toPromise()
+}
+
+async function getAllEmployees () {
+  const employee = []
+
+  const lastEmployeeId = await app.call('nextEmployee')
+    .first()
+    .map(value => parseInt(value, 10))
+    .toPromise()
+
+  for (let id = 1; id < lastEmployeeId; id++) {
+    employee.push(
+      getEmployeeById(id)
+    )
+  }
+
+  return Promise.all(employee)
+}
+
+async function addAllowedToken (state, { returnValues: { token: tokenAddress }}) {
+  if (!allowedTokens.has(tokenAddress)) {
+    const tokenContract = app.external(tokenAddress, tokenAbi)
+    const [decimals, symbol] = await Promise.all([
+      loadTokenDecimals(tokenContract),
+      loadTokenSymbol(tokenContract)
+    ])
+
+    allowedTokens.set(
+      tokenAddress,
+      {
+        tokenContract,
+        decimals,
+        symbol
+      }
+    )
+  }
+
+  return {
+    ...state,
+    allowedTokens: marshallAllowedTokens(allowedTokens)
+  }
+}
+
+function loadTokenDecimals(tokenContract) {
+  return tokenContract
+    .decimals()
+    .first()
+    .map(value => parseInt(value, 10))
+    .toPromise()
+}
+
+function loadTokenSymbol(tokenContract) {
+  return tokenContract
+    .symbol()
+    .first()
     .toPromise()
 }
 
@@ -78,4 +141,13 @@ function marshallEmployeeData (data) {
   }
 
   return result
+}
+
+function marshallAllowedTokens(allowedTokens) {
+  let result = {};
+  for (const [address, {decimals, symbol}] of allowedTokens) {
+    result[address] = {decimals, symbol}
+  }
+
+  return result;
 }
