@@ -18,8 +18,8 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
     string private constant ERROR_TOKEN_TRANSFER_FROM_REVERTED = "VAULT_TOKEN_TRANSFER_FROM_REVERT";
     string private constant ERROR_TOKEN_TRANSFER_REVERTED = "VAULT_TOKEN_TRANSFER_REVERTED";
 
-    event Transfer(address indexed token, address indexed to, uint256 amount);
-    event Deposit(address indexed token, address indexed sender, uint256 amount);
+    event VaultTransfer(address indexed token, address indexed to, uint256 amount);
+    event VaultDeposit(address indexed token, address indexed sender, uint256 amount);
 
     /**
     * @dev On a normal send() or transfer() this fallback is never executed as it will be
@@ -67,7 +67,7 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
             require(ERC20(_token).transfer(_to, _value), ERROR_TOKEN_TRANSFER_REVERTED);
         }
 
-        emit Transfer(_token, _to, _value);
+        emit VaultTransfer(_token, _to, _value);
     }
 
     function balance(address _token) public view returns (uint256) {
@@ -97,6 +97,6 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
             require(ERC20(_token).transferFrom(msg.sender, this, _value), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
         }
 
-        emit Deposit(_token, msg.sender, _value);
+        emit VaultDeposit(_token, msg.sender, _value);
     }
 }
