@@ -3,7 +3,7 @@
   "description": "Securely owns and manages tokens on behalf of a DAO.",
   "icons": [
     {
-      "src": "assets/images/icon.svg",
+      "src": "images/icon.svg",
       "sizes": "192x192"
     }
   ]
