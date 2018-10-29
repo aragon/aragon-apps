@@ -29,9 +29,9 @@ const initialState = {
   selectedToken: 0,
 }
 
-class Withdrawal extends React.Component {
+class Deposit extends React.Component {
   static defaultProps = {
-    onTransfer: () => {},
+    onDeposit: () => {},
   }
   state = {
     ...initialState,
@@ -203,4 +203,4 @@ const ValidationError = ({ message }) => (
   </div>
 )
 
-export default Withdrawal
+export default Deposit
