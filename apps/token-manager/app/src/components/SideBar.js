@@ -151,9 +151,13 @@ const InfoRow = styled.li`
     color: ${theme.textSecondary};
   }
   > span:nth-child(2) {
-    display: none;
+    opacity: 0;
+    width: 10px;
   }
-  strong {
+  > span:nth-child(3) {
+    flex-shrink: 1;
+  }
+  > strong {
     text-transform: uppercase;
   }
 `
