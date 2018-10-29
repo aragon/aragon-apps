@@ -8,19 +8,49 @@
   {
     "domain": "leolower.protofire.eth",
     "name": "Leonardo Lower",
-    "accountAddress": "0xd5e6e7901143dd7ebfca5dd61fa27ec26583c664",
+    "accountAddress": "0x8401Eb5ff34cc943f096A32EF3d5113FEbE8D4Eb",
     "role": "Project Manager"
   },
   {
     "domain": "lmcorbalan.protofire.eth",
     "name": "Lisandro Corbalan",
-    "accountAddress": "0xc9cc726f88d0e2a173bbda5bb1f5ce02195e9b1c",
+    "accountAddress": "0x306469457266CBBe7c0505e8Aad358622235e768",
     "role": "Developer"
   },
   {
     "domain": "sistemico.protofire.eth",
     "name": "Sebastián Galiano",
-    "accountAddress": "0xa578c9a3ad706ff4979af06411f2600772d7391f",
+    "accountAddress": "0xd873F6DC68e3057e4B7da74c6b304d0eF0B484C7",
     "role": "Developer"
+  },
+  {
+    "domain": "fernando.greco.protofire.eth",
+    "name": "Fernando Greco",
+    "accountAddress": "0xDcC5dD922fb1D0fd0c450a0636a8cE827521f0eD",
+    "role": "Developer"
+  },
+  {
+    "domain": "armando.andini.protofire.eth",
+    "name": "Armando Andini",
+    "accountAddress": "0x27E9727FD9b8CdDdd0854F56712AD9DF647FaB74",
+    "role": "Developer"
+  },
+  {
+    "domain": "franco.aguilera.protofire.eth",
+    "name": "Franco Aguilera",
+    "accountAddress": "0x9766D2e7FFde358AD0A40BB87c4B88D9FAC3F4dd",
+    "role": "Developer"
+  },
+  {
+    "domain": "gerardo.nardelli.protofire.eth",
+    "name": "Gerardo Nardelli",
+    "accountAddress": "0xBd7055AB500cD1b0b0B14c82BdBe83ADCc2e8D06",
+    "role": "Developer"
+  },
+  {
+    "domain": "manuel.garcia.protofire.eth",
+    "name": "Manuel Garcia",
+    "accountAddress": "0xe8898A4E589457D979Da4d1BDc35eC2aaf5a3f8E",
+    "role": "Project Manager"
   }
 ]

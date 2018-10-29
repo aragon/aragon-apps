@@ -53,7 +53,7 @@ contract('Payroll, initialization,', function(accounts) {
   })
 
   it("fails to initialize with empty finance", async () => {
-    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, { from: owner })
+    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
     payroll = getContract('PayrollMock').at(getEvent(receipt, 'NewAppProxy', 'proxy'))
 
     return assertRevert(async () => {
