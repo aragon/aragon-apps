@@ -15,12 +15,10 @@ import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
 import { networkContextType } from './lib/provideNetwork'
+import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
 import { makeEtherscanBaseUrl } from './lib/utils'
 
 import addFundsIcon from './components/assets/add-funds-icon.svg'
-
-// Address representing ETH (see background script)
-const ETH_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 class App extends React.Component {
   static propTypes = {
@@ -70,7 +68,7 @@ class App extends React.Component {
   handleDeposit = async (tokenAddress, amount, reference) => {
     const { app, proxyAddress } = this.props
 
-    const intentParams = tokenAddress === ETH_ADDRESS
+    const intentParams = tokenAddress === ETHER_TOKEN_FAKE_ADDRESS
       ? { value: amount }
       : {
           token: { address: tokenAddress, value: amount },
@@ -164,10 +162,10 @@ const SpacedBlock = styled.div`
 
 // Use this function to sort by ETH
 const compareEthereumAddresses = (addressA, addressB) => {
-  if (addressA === ETH_ADDRESS) {
+  if (addressA === ETHER_TOKEN_FAKE_ADDRESS) {
     return -1
   }
-  if (addressB === ETH_ADDRESS) {
+  if (addressB === ETHER_TOKEN_FAKE_ADDRESS) {
     return 1
   }
   return 0
