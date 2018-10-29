@@ -1,16 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import {
-  Button,
-  DropDown,
-  IconCross,
-  Info,
-  Field,
-  Text,
-  TextInput,
-  TabBar,
-  theme,
-} from '@aragon/ui'
+import { TabBar } from '@aragon/ui'
 
 import Deposit from './Deposit'
 import Withdrawal from './Withdrawal'
@@ -45,7 +35,6 @@ class PanelContent extends React.Component {
     const {
       opened,
       tokens,
-      onClose,
       onWithdraw,
       onDeposit,
       proxyAddress,
