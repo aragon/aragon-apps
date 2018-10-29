@@ -100,11 +100,6 @@ function createStore(settings) {
         ...state,
       }
 
-      // Get the proxy address once
-      if (eventName === 'NewPeriod' && !state.proxyAddress) {
-        nextState.proxyAddress = eventAddress
-      }
-
       if (eventName === INITIALIZATION_TRIGGER) {
         nextState = await initializeState(nextState, settings)
       } else if (addressesEqual(eventAddress, vault.address)) {
@@ -115,6 +110,12 @@ function createStore(settings) {
       } else {
         // Finance event
         switch (eventName) {
+          case 'NewPeriod':
+            // A new period is always started as part of the Finance app's initialization,
+            // so this is just a handy way to get information about the app we're running
+            // (e.g. its own address)
+            nextState.proxyAddress = eventAddress
+            break
           case 'NewTransaction':
             nextState = await newTransaction(nextState, event, settings)
             break
