@@ -12,6 +12,7 @@ import {
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import TransferRow from './TransferRow'
+import GetWindowSize from './GetWindowSize'
 
 const TRANSFER_TYPES = [
   TransferTypes.All,
@@ -31,6 +32,7 @@ class Transfers extends React.Component {
   state = {
     ...initialState,
   }
+
   handleTokenChange = index => {
     this.setState({
       selectedToken: index,
@@ -101,24 +103,24 @@ class Transfers extends React.Component {
         <Header>
           <Title>Transfers</Title>
           {filteredTransfers.length > 0 && (
-            <div>
-              <label>
+            <Filters>
+              <FilterLabel>
                 <Label>Token:</Label>
                 <DropDown
                   items={['All', ...symbols]}
                   active={selectedToken}
                   onChange={this.handleTokenChange}
                 />
-              </label>
-              <label>
+              </FilterLabel>
+              <FilterLabel>
                 <Label>Transfer type:</Label>
                 <DropDown
                   items={TRANSFER_TYPES_STRING}
                   active={selectedTransferType}
                   onChange={this.handleTransferTypeChange}
                 />
-              </label>
-            </div>
+              </FilterLabel>
+            </Filters>
           )}
         </Header>
         {filteredTransfers.length === 0 ? (
@@ -134,31 +136,36 @@ class Transfers extends React.Component {
           </NoTransfers>
         ) : (
           <div>
-            <FixedTable
-              header={
-                <TableRow>
-                  <DateHeader title="Date" />
-                  <SourceRecipientHeader title="Source / Recipient" />
-                  <ReferenceHeader title="Reference" />
-                  <AmountHeader title="Amount" align="right" />
-                  <TableHeader />
-                </TableRow>
-              }
-            >
-              {filteredTransfers
-                .sort(({ date: dateLeft }, { date: dateRight }) =>
-                  // Sort by date descending
-                  compareDesc(dateLeft, dateRight)
-                )
-                .slice(0, displayedTransfers)
-                .map(transfer => (
-                  <TransferRow
-                    key={transfer.transactionHash}
-                    token={tokenDetails[toChecksumAddress(transfer.token)]}
-                    transaction={transfer}
-                  />
-                ))}
-            </FixedTable>
+            <GetWindowSize>
+              {({ width }) => (
+                <FixedTable
+                  header={
+                    <TableRow>
+                      <DateHeader title="Date" />
+                      <SourceRecipientHeader title="Source / Recipient" />
+                      <ReferenceHeader title="Reference" />
+                      <AmountHeader title="Amount" align="right" />
+                      <TableHeader />
+                    </TableRow>
+                  }
+                >
+                  {filteredTransfers
+                    .sort(({ date: dateLeft }, { date: dateRight }) =>
+                      // Sort by date descending
+                      compareDesc(dateLeft, dateRight)
+                    )
+                    .slice(0, displayedTransfers)
+                    .map(transfer => (
+                      <TransferRow
+                        key={transfer.transactionHash}
+                        token={tokenDetails[toChecksumAddress(transfer.token)]}
+                        transaction={transfer}
+                        wideMode={width > 800}
+                      />
+                    ))}
+                </FixedTable>
+              )}
+            </GetWindowSize>
             {displayedTransfers < filteredTransfers.length && (
               <Footer>
                 <Button mode="secondary" onClick={this.showMoreTransfers}>
@@ -176,7 +183,20 @@ class Transfers extends React.Component {
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
+  flex-wrap: nowrap;
   margin-bottom: 10px;
+`
+
+const Filters = styled.div`
+  display: flex;
+  flex-wrap: nowrap;
+`
+
+const FilterLabel = styled.label`
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  white-space: nowrap;
 `
 
 const Title = styled.h1`
