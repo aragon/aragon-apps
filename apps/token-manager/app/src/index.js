@@ -26,6 +26,9 @@ class ConnectedApp extends React.Component {
       app.accounts().subscribe(([userAccount]) => {
         this.setState({ userAccount })
       })
+      app.network().subscribe(network => {
+        this.setState({ network })
+      })
     }
   }
   sendMessageToWrapper = (name, value) => {
