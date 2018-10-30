@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 
 import Section from '../../components/Layout/Section'
+import AragonContext from '../../context/AragonContext'
 import EmployeeTable from './EmployeeTable'
 import RoleFilter from './RoleFilter'
 import StatusFilter from './StatusFilter'
@@ -27,9 +28,32 @@ const Filters = styled.div`
 `
 
 class EmployeeList extends React.Component {
+  static contextType = AragonContext
+
   state = {
+    employees: [],
     roleFilter: null,
     statusFilter: null
+  }
+
+  componentDidMount () {
+    const app = this.context
+
+    if (app && typeof app.state === 'function') {
+      this.subscription = app.state()
+        .pluck('employees')
+        .subscribe(employees => {
+          if (employees) {
+            this.setState({ employees })
+          }
+        })
+    }
+  }
+
+  componentWillUnmount () {
+    if (this.subscription) {
+      this.subscription.unsubscribe()
+    }
   }
 
   handleClearFilters = () => {
@@ -48,8 +72,7 @@ class EmployeeList extends React.Component {
   }
 
   render () {
-    const { employees } = this.props
-    const { roleFilter, statusFilter } = this.state
+    const { employees, roleFilter, statusFilter } = this.state
 
     const filters = [
       ...(roleFilter && roleFilter.filter ? [roleFilter.filter] : []),

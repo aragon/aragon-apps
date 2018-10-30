@@ -2,6 +2,7 @@ import React from 'react'
 import { AppBar, AppView, AragonApp, Button } from '@aragon/ui'
 import Tab from './components/Tab'
 
+import { AragonProvider } from './context/AragonContext'
 import { MyPayroll, TeamPayroll } from './screens'
 import { AddEmployee } from './panels'
 
@@ -9,6 +10,17 @@ export default class App extends React.Component {
   state = {
     activeTab: 'my-payroll',
     showAddEmployeePanel: false
+  }
+
+  componentDidMount () {
+    // If using Parcel, reload instead of using HMR.
+    // HMR makes the app disconnect from the wrapper and the state is empty until a reload
+    // See: https://github.com/parcel-bundler/parcel/issues/289
+    if (module.hot) {
+      module.hot.dispose(() => {
+        window.location.reload()
+      })
+    }
   }
 
   showAddEmployeePanel = () => {
@@ -42,7 +54,7 @@ export default class App extends React.Component {
 
   render () {
     const header = (
-      <React.Fragment>
+      <AragonProvider>
         <AppBar
           title='Payroll'
           endContent={this.renderActionButtons()}
@@ -64,7 +76,7 @@ export default class App extends React.Component {
             data-testid='team-payroll-tab'
           />
         </Tab.Container>
-      </React.Fragment>
+      </AragonProvider>
     )
 
     return (
@@ -72,21 +84,18 @@ export default class App extends React.Component {
         <AppView appBar={header}>
           {this.state.activeTab === 'my-payroll' && (
             <MyPayroll
-              {...this.props}
               data-testid='my-payroll-section'
             />
           )}
 
           {this.state.activeTab === 'team-payroll' && (
             <TeamPayroll
-              {...this.props}
               data-testid='team-payroll-section'
             />
           )}
         </AppView>
 
         <AddEmployee
-          {...this.props}
           opened={this.state.showAddEmployeePanel}
           onClose={this.hidePanels}
         />

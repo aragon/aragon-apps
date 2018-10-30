@@ -5,6 +5,7 @@ import { Button, Field, SidePanel } from '@aragon/ui'
 import { startOfDay } from 'date-fns'
 
 import Input from '../components/Input'
+import AragonContext from '../context/AragonContext'
 import validator from '../data/validation'
 
 const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
@@ -24,7 +25,7 @@ const Form = styled.form`
 `
 
 class AddEmployee extends React.PureComponent {
-  state = AddEmployee.initialState
+  static contextType = AragonContext
 
   static initialState = {
     entity: null,
@@ -63,6 +64,8 @@ class AddEmployee extends React.PureComponent {
     required: ['salary', 'startDate', 'entity']
   })
 
+  state = AddEmployee.initialState
+
   componentDidUpdate (prevProps, prevState) {
     if (this.state !== prevState) {
       const state = { ...this.state }
@@ -93,7 +96,7 @@ class AddEmployee extends React.PureComponent {
   handleFormSubmit = (event) => {
     event.preventDefault()
 
-    const { app } = this.props
+    const app = this.context
 
     if (app) {
       const accountAddress = this.state.entity.accountAddress
@@ -213,7 +216,6 @@ class AddEmployee extends React.PureComponent {
 }
 
 AddEmployee.propsType = {
-  app: PropTypes.any.isRequired,
   onClose: PropTypes.func,
   opened: PropTypes.bool
 }
