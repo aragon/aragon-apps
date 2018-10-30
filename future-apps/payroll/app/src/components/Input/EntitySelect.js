@@ -4,6 +4,7 @@ import { Text, theme } from '@aragon/ui'
 import Autocomplete from 'react-autocomplete'
 
 import BaseInput from './BaseInput'
+import AragonContext from '../../context/AragonContext'
 import * as idm from '../../services/idm'
 
 const EntityList = styled.ul`
@@ -29,6 +30,8 @@ const styles = {
 }
 
 class EntitySelect extends React.Component {
+  static contextType = AragonContext
+
   state = {
     matches: [],
     value: this.props.value || ''
@@ -39,7 +42,7 @@ class EntitySelect extends React.Component {
 
     if (value !== prevState.value) {
       if (value) {
-        idm.getIdentity(value).then(matches => {
+        this.getSuggestions(value).then((matches = []) => {
           this.setState({ matches })
         })
       } else if (typeof this.props.onChange === 'function') {
@@ -47,6 +50,17 @@ class EntitySelect extends React.Component {
         this.props.onChange()
       }
     }
+  }
+
+  getSuggestions = async searchText => {
+    const [suggestions, employees] = await Promise.all([
+      idm.getIdentity(searchText),
+      this.context.state().first().pluck('employees').toPromise()
+    ])
+
+    return suggestions.filter(s =>
+      employees.every(e => e.domain !== s.domain)
+    )
   }
 
   getItemValue = (entity) => {
@@ -60,11 +74,11 @@ class EntitySelect extends React.Component {
   }
 
   renderInput = ({ ref, ...props }) => (
-    <BaseInput type='search' innerRef={ref} {...props}/>
+    <BaseInput type='search' innerRef={ref} {...props} />
   )
 
   renderMenu = (entities) => (
-    <EntityList children={entities}/>
+    <EntityList children={entities} />
   )
 
   renderItem = (entity, isHighlighted) => (
