@@ -12,6 +12,7 @@ import {
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import TransferRow from './TransferRow'
+import GetWindowSize from './GetWindowSize'
 
 const TRANSFER_TYPES = [
   TransferTypes.All,
@@ -19,24 +20,29 @@ const TRANSFER_TYPES = [
   TransferTypes.Outgoing,
 ]
 const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
+const TRANSFERS_PER_PAGE = 10
 
 const initialState = {
   selectedToken: 0,
   selectedTransferType: 0,
-  displayedTransfers: 10,
+  displayedTransfers: TRANSFERS_PER_PAGE,
 }
 
 class Transfers extends React.Component {
   state = {
     ...initialState,
   }
+
   handleTokenChange = index => {
-    this.setState({ selectedToken: index, displayedTransfers: 10 })
+    this.setState({
+      selectedToken: index,
+      displayedTransfers: TRANSFERS_PER_PAGE,
+    })
   }
   handleTransferTypeChange = index => {
     this.setState({
       selectedTransferType: index,
-      displayedTransfers: 10,
+      displayedTransfers: TRANSFERS_PER_PAGE,
     })
   }
   handleResetFilters = () => {
@@ -46,7 +52,7 @@ class Transfers extends React.Component {
   }
   showMoreTransfers = () => {
     this.setState(prevState => ({
-      displayedTransfers: prevState.displayedTransfers + 10,
+      displayedTransfers: prevState.displayedTransfers + TRANSFERS_PER_PAGE,
     }))
   }
 
@@ -96,24 +102,26 @@ class Transfers extends React.Component {
       <section>
         <Header>
           <Title>Transfers</Title>
-          <div>
-            <label>
-              <Label>Token:</Label>
-              <DropDown
-                items={['All', ...symbols]}
-                active={selectedToken}
-                onChange={this.handleTokenChange}
-              />
-            </label>
-            <label>
-              <Label>Transfer type:</Label>
-              <DropDown
-                items={TRANSFER_TYPES_STRING}
-                active={selectedTransferType}
-                onChange={this.handleTransferTypeChange}
-              />
-            </label>
-          </div>
+          {filteredTransfers.length > 0 && (
+            <Filters>
+              <FilterLabel>
+                <Label>Token:</Label>
+                <DropDown
+                  items={['All', ...symbols]}
+                  active={selectedToken}
+                  onChange={this.handleTokenChange}
+                />
+              </FilterLabel>
+              <FilterLabel>
+                <Label>Transfer type:</Label>
+                <DropDown
+                  items={TRANSFER_TYPES_STRING}
+                  active={selectedTransferType}
+                  onChange={this.handleTransferTypeChange}
+                />
+              </FilterLabel>
+            </Filters>
+          )}
         </Header>
         {filteredTransfers.length === 0 ? (
           <NoTransfers>
@@ -128,31 +136,36 @@ class Transfers extends React.Component {
           </NoTransfers>
         ) : (
           <div>
-            <FixedTable
-              header={
-                <TableRow>
-                  <DateHeader title="Date" />
-                  <SourceRecipientHeader title="Source / Recipient" />
-                  <ReferenceHeader title="Reference" />
-                  <AmountHeader title="Amount" align="right" />
-                  <TableHeader />
-                </TableRow>
-              }
-            >
-              {filteredTransfers
-                .slice(0, displayedTransfers)
-                .sort(({ date: dateLeft }, { date: dateRight }) =>
-                  // Sort by date descending
-                  compareDesc(dateLeft, dateRight)
-                )
-                .map(transfer => (
-                  <TransferRow
-                    key={transfer.transactionHash}
-                    token={tokenDetails[toChecksumAddress(transfer.token)]}
-                    transaction={transfer}
-                  />
-                ))}
-            </FixedTable>
+            <GetWindowSize>
+              {({ width }) => (
+                <FixedTable
+                  header={
+                    <TableRow>
+                      <DateHeader title="Date" />
+                      <SourceRecipientHeader title="Source / Recipient" />
+                      <ReferenceHeader title="Reference" />
+                      <AmountHeader title="Amount" align="right" />
+                      <TableHeader />
+                    </TableRow>
+                  }
+                >
+                  {filteredTransfers
+                    .sort(({ date: dateLeft }, { date: dateRight }) =>
+                      // Sort by date descending
+                      compareDesc(dateLeft, dateRight)
+                    )
+                    .slice(0, displayedTransfers)
+                    .map(transfer => (
+                      <TransferRow
+                        key={transfer.transactionHash}
+                        token={tokenDetails[toChecksumAddress(transfer.token)]}
+                        transaction={transfer}
+                        wideMode={width > 800}
+                      />
+                    ))}
+                </FixedTable>
+              )}
+            </GetWindowSize>
             {displayedTransfers < filteredTransfers.length && (
               <Footer>
                 <Button mode="secondary" onClick={this.showMoreTransfers}>
@@ -170,7 +183,20 @@ class Transfers extends React.Component {
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
+  flex-wrap: nowrap;
   margin-bottom: 10px;
+`
+
+const Filters = styled.div`
+  display: flex;
+  flex-wrap: nowrap;
+`
+
+const FilterLabel = styled.label`
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  white-space: nowrap;
 `
 
 const Title = styled.h1`

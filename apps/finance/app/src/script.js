@@ -1,6 +1,7 @@
 import Aragon from '@aragon/client'
 import { of } from './rxjs'
 import { getTestTokenAddresses } from './testnet'
+import { ETHER_TOKEN_FAKE_ADDRESS, isTokenVerified } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
 import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -17,13 +18,6 @@ const tokenContracts = new Map() // Addr -> External contract
 const tokenDecimals = new Map() // External contract -> decimals
 const tokenSymbols = new Map() // External contract -> symbol
 
-/**
- * app.call('ETH')
- *
- * Is how we should be getting the ETH token, but aragon-cli doesn't extract
- * public constants in contracts into the artifact :(
- */
-const ETH_ADDRESS = '0x0000000000000000000000000000000000000000'
 const ETH_CONTRACT = Symbol('ETH_CONTRACT')
 
 const app = new Aragon()
@@ -62,7 +56,7 @@ retryEvery(retry => {
     .call('vault')
     .first()
     .subscribe(
-      vaultAddress => initialize(vaultAddress, ETH_ADDRESS),
+      vaultAddress => initialize(vaultAddress, ETHER_TOKEN_FAKE_ADDRESS),
       err => {
         console.error(
           'Could not start background script execution due to the contract not loading the token:',
@@ -88,6 +82,7 @@ async function initialize(vaultAddress, ethAddress) {
   tokenSymbols.set(ETH_CONTRACT, 'ETH')
 
   return createStore({
+    network,
     ethToken: {
       address: ethAddress,
     },
@@ -116,6 +111,12 @@ function createStore(settings) {
       } else {
         // Finance event
         switch (eventName) {
+          case 'NewPeriod':
+            // A new period is always started as part of the Finance app's initialization,
+            // so this is just a handy way to get information about the app we're running
+            // (e.g. its own address)
+            nextState.proxyAddress = eventAddress
+            break
           case 'NewTransaction':
             nextState = await newTransaction(nextState, event, settings)
             break
@@ -242,6 +243,7 @@ async function newBalanceEntry(tokenContract, tokenAddress, settings) {
     symbol,
     address: tokenAddress,
     amount: balance,
+    verified: isTokenVerified(tokenAddress, settings.network.type),
   }
 }
 
