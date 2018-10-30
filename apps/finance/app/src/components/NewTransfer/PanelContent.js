@@ -33,11 +33,13 @@ class PanelContent extends React.Component {
   render() {
     const { screenIndex } = this.state
     const {
+      app,
       opened,
       tokens,
       onWithdraw,
       onDeposit,
       proxyAddress,
+      userAccount,
     } = this.props
     return (
       <div>
@@ -51,9 +53,11 @@ class PanelContent extends React.Component {
 
         {screenIndex === 0 && (
           <Deposit
+            app={app}
             tokens={tokens}
             proxyAddress={proxyAddress}
             onDeposit={onDeposit}
+            userAccount={userAccount}
           />
         )}
         {screenIndex === 1 && (

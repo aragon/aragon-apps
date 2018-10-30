@@ -30,6 +30,7 @@ class App extends React.Component {
     transactions: [],
     tokens: [],
     network: {},
+    userAccount: '',
   }
   static childContextTypes = {
     network: networkContextType,
@@ -84,7 +85,14 @@ class App extends React.Component {
     this.handleNewTransferClose()
   }
   render() {
-    const { balances, transactions, tokens, proxyAddress } = this.props
+    const {
+      app,
+      balances,
+      transactions,
+      tokens,
+      proxyAddress,
+      userAccount
+    } = this.props
     const { newTransferOpened } = this.state
 
     return (
@@ -130,11 +138,13 @@ class App extends React.Component {
           title="New Transfer"
         >
           <NewTransferPanelContent
+            app={app}
             opened={newTransferOpened}
             tokens={tokens}
             onWithdraw={this.handleWithdraw}
             onDeposit={this.handleDeposit}
             proxyAddress={proxyAddress}
+            userAccount={userAccount}
           />
         </SidePanel>
       </AragonApp>
@@ -204,10 +214,17 @@ export default observe(
 
         tokens: balancesBn
           .map(
-            ({ address, symbol, numData: { amount, decimals }, verified }) => ({
+            ({
+              address,
+              name,
+              symbol,
+              numData: { amount, decimals },
+              verified,
+            }) => ({
               address,
               amount,
               decimals,
+              name,
               symbol,
               verified,
             })
