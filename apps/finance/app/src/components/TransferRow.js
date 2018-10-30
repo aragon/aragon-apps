@@ -7,7 +7,6 @@ import {
   TableCell,
   ContextMenu,
   ContextMenuItem,
-  SafeLink,
   IdentityBadge,
   theme,
 } from '@aragon/ui'
