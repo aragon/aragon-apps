@@ -3,19 +3,20 @@ import { of } from './rxjs'
 import { getTestTokenAddresses } from './testnet'
 import { ETHER_TOKEN_FAKE_ADDRESS, isTokenVerified } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
-import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
+import tokenNameAbi from './abi/token-name.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
 import vaultBalanceAbi from './abi/vault-balance.json'
 import vaultEventAbi from './abi/vault-events.json'
 
-const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
+const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi)
 const vaultAbi = [].concat(vaultBalanceAbi, vaultEventAbi)
 
 const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const TEST_TOKEN_ADDRESSES = []
 const tokenContracts = new Map() // Addr -> External contract
 const tokenDecimals = new Map() // External contract -> decimals
+const tokenName = new Map() // External contract -> name
 const tokenSymbols = new Map() // External contract -> symbol
 
 const ETH_CONTRACT = Symbol('ETH_CONTRACT')
@@ -79,6 +80,7 @@ async function initialize(vaultAddress, ethAddress) {
   // Set up ETH placeholders
   tokenContracts.set(ethAddress, ETH_CONTRACT)
   tokenDecimals.set(ETH_CONTRACT, '18')
+  tokenName.set(ETH_CONTRACT, 'Ether')
   tokenSymbols.set(ETH_CONTRACT, 'ETH')
 
   return createStore({
@@ -232,14 +234,16 @@ function updateTransactions({ transactions = [] }, transactionDetails) {
 }
 
 async function newBalanceEntry(tokenContract, tokenAddress, settings) {
-  const [balance, decimals, symbol] = await Promise.all([
+  const [balance, decimals, name, symbol] = await Promise.all([
     loadTokenBalance(tokenAddress, settings),
     loadTokenDecimals(tokenContract),
+    loadTokenName(tokenContract),
     loadTokenSymbol(tokenContract),
   ])
 
   return {
     decimals,
+    name,
     symbol,
     address: tokenAddress,
     amount: balance,
@@ -271,10 +275,38 @@ function loadTokenDecimals(tokenContract) {
       tokenContract
         .decimals()
         .first()
-        .subscribe(decimals => {
-          tokenDecimals.set(tokenContract, decimals)
-          resolve(decimals)
-        }, reject)
+        .subscribe(
+          decimals => {
+            tokenDecimals.set(tokenContract, decimals)
+            resolve(decimals)
+          },
+          () => {
+            // Decimals is optional
+            resolve('0')
+          }
+        )
+    }
+  })
+}
+
+function loadTokenName(tokenContract) {
+  return new Promise((resolve, reject) => {
+    if (tokenName.has(tokenContract)) {
+      resolve(tokenName.get(tokenContract))
+    } else {
+      tokenContract
+        .name()
+        .first()
+        .subscribe(
+          name => {
+            tokenName.set(tokenContract, name)
+            resolve(name)
+          },
+          () => {
+            // Name is optional
+            resolve('')
+          }
+        )
     }
   })
 }
@@ -287,10 +319,16 @@ function loadTokenSymbol(tokenContract) {
       tokenContract
         .symbol()
         .first()
-        .subscribe(symbol => {
-          tokenSymbols.set(tokenContract, symbol)
-          resolve(symbol)
-        }, reject)
+        .subscribe(
+          symbol => {
+            tokenSymbols.set(tokenContract, symbol)
+            resolve(symbol)
+          },
+          () => {
+            // Symbol is optional
+            resolve('')
+          }
+        )
     }
   })
 }
