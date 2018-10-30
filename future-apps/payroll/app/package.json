@@ -14,8 +14,8 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
-    "@aragon/client": "^1.0.0",
-    "@aragon/ui": "^0.21.0",
+    "@aragon/client": "^1.1.0",
+    "@aragon/ui": "^0.26.0",
     "@babel/runtime": "^7.1.2",
     "ajv": "^6.5.4",
     "ajv-keywords": "^3.2.0",
