@@ -79,7 +79,7 @@
       ]
     },
     {
-      "name": "Disable payments",
+      "name": "Manage payments",
       "id": "MANAGE_PAYMENTS_ROLE",
       "params": [
         "Payment ID",
