@@ -247,7 +247,9 @@ async function newBalanceEntry(tokenContract, tokenAddress, settings) {
     symbol,
     address: tokenAddress,
     amount: balance,
-    verified: isTokenVerified(tokenAddress, settings.network.type),
+    verified:
+      isTokenVerified(tokenAddress, settings.network.type) ||
+      addressesEqual(tokenAddress, settings.ethToken.address),
   }
 }
 
