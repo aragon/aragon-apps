@@ -15,7 +15,7 @@ import {
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
-import { networkContextType } from './provideNetwork'
+import { networkContextType } from './provide-network'
 import { hasLoadedTokenSettings } from './token-settings'
 import { makeEtherscanBaseUrl } from './utils'
 import { addressesEqual } from './web3-utils'

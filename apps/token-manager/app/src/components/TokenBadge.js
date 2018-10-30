@@ -1,15 +1,19 @@
 import React from 'react'
 import styled from 'styled-components'
+import { SafeLink } from '@aragon/ui'
+import provideNetwork from '../provide-network'
 
 import { ETHER_TOKEN_VERIFIED_ADDRESSES } from '../verified-tokens'
 
 class TokenBadge extends React.PureComponent {
   render() {
-    const { address, name, symbol } = this.props
+    const { address, name, symbol, network } = this.props
     const verified = ETHER_TOKEN_VERIFIED_ADDRESSES.has(address.toLowerCase())
-
     return (
-      <Main title={`${name} (${address})`}>
+      <Main
+        title={`${name} (${address})`}
+        href={`${network.etherscanBaseUrl}/token/${address}`}
+      >
         <Label>
           {verified && (
             <Icon src={`https://chasing-coins.com/coin/logo/${symbol}`} />
@@ -24,14 +28,15 @@ class TokenBadge extends React.PureComponent {
   }
 }
 
-const Main = styled.div`
+const Main = styled(SafeLink).attrs({ target: '_blank' })`
   overflow: hidden;
   display: flex;
   align-items: center;
   height: 24px;
   background: #daeaef;
   border-radius: 3px;
-  cursor: default;
+  cursor: pointer;
+  text-decoration: none;
   padding: 0 8px;
 `
 
@@ -66,4 +71,4 @@ const Symbol = styled.span`
   margin-left: 5px;
 `
 
-export default TokenBadge
+export default provideNetwork(TokenBadge)
