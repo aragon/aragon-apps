@@ -1,13 +1,10 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import { AppContext } from '../App'
-import EmployeeTable from './components/EmployeeTable'
+import EmployeeList from './components/EmployeeList'
 import Section from '../components/Layout/Section'
 
 class TeamPayroll extends React.Component {
-  static contextType = AppContext
-
   state = {
     employees: []
   }
@@ -33,8 +30,7 @@ class TeamPayroll extends React.Component {
     return (
       <Section {...this.props}>
         <Section.Left>
-          <Section.Title>Employees</Section.Title>
-          <EmployeeTable data={this.state.employees} />
+          <EmployeeList employees={this.state.employees} />
         </Section.Left>
         <Section.Right>
           {/* Side content */}

@@ -3,6 +3,7 @@ import { theme } from '@aragon/ui'
 
 const Panel = styled.div`
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 200px;

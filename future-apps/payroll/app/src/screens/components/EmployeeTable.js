@@ -5,25 +5,16 @@ import Table from '../../components/Table'
 import { employeeType } from '../../types'
 import { formatCurrency, formatDate } from '../../utils/formatting'
 
-class EmployeeTable extends React.Component {
-  render () {
-    const { columns, data: employees, sortable } = this.props
-
-    return (
-      <Table
-        columns={columns}
-        data={employees}
-        sortable={sortable}
-        noDataMessage='No employees found'
-      />
-    )
-  }
-}
+const EmployeeTable = (props) => (
+  <Table
+    noDataMessage='No employees found'
+    {...props}
+  />
+)
 
 EmployeeTable.propTypes = {
-  columns: Table.propTypes.columns,
-  data: PropTypes.arrayOf(employeeType).isRequired,
-  sortable: Table.propTypes.sortable
+  ...Table.propTypes,
+  data: PropTypes.arrayOf(employeeType).isRequired
 }
 
 EmployeeTable.defaultProps = {

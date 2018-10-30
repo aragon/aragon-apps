@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Table as BaseTable, Text } from '@aragon/ui'
+import { Button, Table as BaseTable, Text } from '@aragon/ui'
 
 import TableCell from './TableCell'
 import TableHeader from './TableHeader'
@@ -17,6 +17,7 @@ class Table extends React.Component {
   shouldComponentUpdate (nextProps, nextState) {
     return (nextProps.data.sortable !== this.props.sortable)
       || (nextProps.data.length !== this.props.data.length)
+      || (nextProps.filters.length !== this.props.filters.length)
       || (nextState.sortColumnIndex !== this.state.sortColumnIndex)
       || (nextState.sortDirection !== this.state.sortDirection)
   }
@@ -39,16 +40,28 @@ class Table extends React.Component {
   }
 
   render () {
-    const { columns, data, sortable, noDataMessage } = this.props
+    const { columns, data, filters, onClearFilters, sortable, noDataMessage } = this.props
     const { sortColumnIndex, sortDirection } = this.state
 
-    if (!data.length) {
+    const filteredData = data.filter(i => filters.every(f => !f || f(i)))
+
+    if (!filteredData.length) {
       return (
         <Panel>
-          <p>{noDataMessage || 'No data available'}</p>
+          <Text.Paragraph>
+            {noDataMessage || 'No data available'}
+          </Text.Paragraph>
+
+          {filteredData.length === 0 && filters.length > 0 && (
+            <Button mode='text' size='small' onClick={onClearFilters}>
+              Clear filters
+            </Button>
+          )}
         </Panel>
       )
     }
+
+    sort(filteredData, columns[sortColumnIndex].value, sortDirection)
 
     const header = (
       <TableRow>
@@ -70,10 +83,7 @@ class Table extends React.Component {
       </TableRow>
     )
 
-    const sortColumn = columns[sortColumnIndex]
-    const sortedData = sort(data, sortColumn.value, sortDirection)
-
-    const body = sortedData.map(item => (
+    const body = filteredData.map(item => (
       <TableRow key={`row-${item.id}`}>
         {columns.map(column => {
           const rawValue = column.value(item)
@@ -115,14 +125,19 @@ Table.propTypes = {
       sortable: PropTypes.bool
     })
   ),
-  data: PropTypes.arrayOf(PropTypes.object),
+  data: PropTypes.arrayOf(
+    PropTypes.shape({ id: PropTypes.any })
+  ),
+  filters: PropTypes.arrayOf(PropTypes.func),
   noDataMessage: PropTypes.string,
+  onClearFilters: PropTypes.func,
   sortable: PropTypes.bool
 }
 
 Table.defaultProps = {
   columns: [{ name: 'id', title: 'ID', value: data => data.id }],
   data: [],
+  filters: [],
   sortable: true
 }
 
