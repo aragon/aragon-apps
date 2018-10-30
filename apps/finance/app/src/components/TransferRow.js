@@ -90,18 +90,18 @@ class TransferRow extends React.Component {
         </NoWrapCell>
         <NoWrapCell>
           <ActionsWrapper>
-            <ContextMenu>
-              {/* <ContextMenuItem onClick={this.handleCopyTransferUrl}>
+            {etherscanBaseUrl && (
+              <ContextMenu>
+                {/* <ContextMenuItem onClick={this.handleCopyTransferUrl}>
                 <IconShare />
                 <ActionLabel>Copy Transfer URL</ActionLabel>
               </ContextMenuItem> */}
-              {etherscanBaseUrl && (
                 <ContextMenuItem onClick={this.handleViewTransaction}>
                   <IconTokens />
                   <ActionLabel>View Transaction</ActionLabel>
                 </ContextMenuItem>
-              )}
-            </ContextMenu>
+              </ContextMenu>
+            )}
             {showCopyTransferMessage && (
               <ConfirmMessageWrapper>
                 <ConfirmMessage onDone={this.handleConfirmMessageDone}>
