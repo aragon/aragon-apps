@@ -36,23 +36,25 @@ class TokenSelector extends React.Component {
   handleCustomTokenChange = event => {
     const { value } = event.target
     const { network } = this.props
+
+    // Use the verified token address if provided a symbol and it matches
     // The symbols in the verified map are all capitalized
     const resolvedAddress =
       !isAddress(value) && network.type === 'mainnet'
         ? ETHER_TOKEN_VERIFIED_BY_SYMBOL.get(value.toUpperCase()) || ''
         : value
+
     this.setState({
       customToken: {
         value,
         address: resolvedAddress,
       },
-    })
-
-    this.props.onChange({
-      value,
-      index: 1,
-      // Use the verified token address if provided a symbol and it matches
-      address: resolvedAddress,
+    }, () => {
+      this.props.onChange({
+        value,
+        index: 1,
+        address: resolvedAddress,
+      })
     })
   }
   getAddressFromTokens(index) {

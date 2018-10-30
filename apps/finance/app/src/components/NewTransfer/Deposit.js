@@ -43,6 +43,7 @@ const initialState = {
   },
   reference: '',
   selectedToken: {
+    coerced: false, // whether the token was coerced from a symbol to an address
     data: {
       loading: false,
     },
@@ -50,7 +51,6 @@ const initialState = {
     index: 0,
     value: '',
   },
-  showTokenBadge: false,
 }
 
 class Deposit extends React.Component {
@@ -65,10 +65,9 @@ class Deposit extends React.Component {
       amount: {
         value: event.target.value,
       },
-      selectedToken: this.state.selectedToken,
     })
   }
-  handleSelectToken = async ({ address, index, value }) => {
+  handleSelectToken = ({ address, index, value }) => {
     const tokenIsAddress = isAddress(address)
     const selectedToken = {
       index,
@@ -78,32 +77,28 @@ class Deposit extends React.Component {
     }
 
     if (!tokenIsAddress) {
-      this.validateInputs({
-        selectedToken,
-        amount: this.state.amount,
-      })
+      this.validateInputs({ selectedToken })
       return
     }
 
     // Set the initial loading state before we go async
-    this.setState({ selectedToken })
+    this.setState({ selectedToken }, async () => {
+      const tokenData = await this.loadTokenData(address)
 
-    const tokenData = await this.loadTokenData(address)
-
-    // Make sure we still want the information about this token after the async call,
-    // in case the token was changed before this finished loading
-    if (this.state.selectedToken.value === address) {
-      this.validateInputs({
-        amount: this.state.amount,
-        selectedToken: {
-          ...this.state.selectedToken,
-          data: {
-            ...tokenData,
-            loading: false,
+      // Make sure we still want the information about this token after the async call,
+      // in case the token was changed before this finished loading
+      if (this.state.selectedToken.value === address) {
+        this.validateInputs({
+          selectedToken: {
+            ...this.state.selectedToken,
+            data: {
+              ...tokenData,
+              loading: false,
+            },
           },
-        },
-      })
-    }
+        })
+      }
+    })
   }
   handleReferenceUpdate = event => {
     this.setState({ reference: event.target.value })
@@ -113,7 +108,7 @@ class Deposit extends React.Component {
     const { onDeposit } = this.props
     const { amount, reference, selectedToken } = this.state
 
-    if (this.validateInputs({ amount, selectedToken })) {
+    if (this.validateInputs()) {
       const adjustedAmount = toDecimals(
         amount.value,
         selectedToken.data.decimals
@@ -169,7 +164,10 @@ class Deposit extends React.Component {
         )
     )
   }
-  validateInputs({ amount, selectedToken }) {
+  validateInputs({ amount, selectedToken } = {}) {
+    amount = amount || this.state.amount
+    selectedToken = selectedToken || this.state.selectedToken
+
     if (selectedToken.value && !isAddress(selectedToken.value)) {
       this.setState(({ amount }) => ({
         amount: { ...amount },
@@ -267,11 +265,7 @@ class Deposit extends React.Component {
           />
         )}
         <TokenBalance>
-          <Text
-            size="small"
-            color={theme.textSecondary}
-            style={{ opacity: selectedToken.data.userBalance ? 1 : 0 }}
-          >
+          <Text size="small" color={theme.textSecondary}>
             {tokenBalanceMessage}
           </Text>
         </TokenBalance>

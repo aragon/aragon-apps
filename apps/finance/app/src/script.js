@@ -282,7 +282,7 @@ function loadTokenDecimals(tokenContract) {
           },
           () => {
             // Decimals is optional
-            resolve('1')
+            resolve('0')
           }
         )
     }

@@ -1,7 +1,5 @@
 import { toChecksumAddress } from 'web3-utils'
 
-export const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000'
-
 // Check address equality without checksums
 export function addressesEqual(first, second) {
   first = first && toChecksumAddress(first)
