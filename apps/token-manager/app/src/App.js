@@ -97,7 +97,8 @@ class App extends React.Component {
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
       <AragonApp publicUrl="./aragon-ui/">
-        <AppView appBar={
+        <AppView
+          appBar={
             <AppBar
               title={
                 <Title>
@@ -114,27 +115,26 @@ class App extends React.Component {
                 </Button>
               }
             />
-        }>
-              {appStateReady && holders.length > 0 ? (
-                <Holders
-                  holders={holders}
-                  groupMode={groupMode}
-                  maxAccountTokens={maxAccountTokens}
-                  tokenAddress={tokenAddress}
-                  tokenDecimalsBase={tokenDecimalsBase}
-                  tokenName={tokenName}
-                  tokenSupply={tokenSupply}
-                  tokenSymbol={tokenSymbol}
-                  tokenTransfersEnabled={tokenTransfersEnabled}
-                  userAccount={userAccount}
-                  onAssignTokens={this.handleLaunchAssignTokens}
-                  onRemoveTokens={this.handleLaunchRemoveTokens}
-                />
-              ) : (
-                <EmptyState
-                  onActivate={this.handleLaunchAssignTokensNoHolder}
-                />
-              )}
+          }
+        >
+          {appStateReady && holders.length > 0 ? (
+            <Holders
+              holders={holders}
+              groupMode={groupMode}
+              maxAccountTokens={maxAccountTokens}
+              tokenAddress={tokenAddress}
+              tokenDecimalsBase={tokenDecimalsBase}
+              tokenName={tokenName}
+              tokenSupply={tokenSupply}
+              tokenSymbol={tokenSymbol}
+              tokenTransfersEnabled={tokenTransfersEnabled}
+              userAccount={userAccount}
+              onAssignTokens={this.handleLaunchAssignTokens}
+              onRemoveTokens={this.handleLaunchRemoveTokens}
+            />
+          ) : (
+            <EmptyState onActivate={this.handleLaunchAssignTokensNoHolder} />
+          )}
         </AppView>
         <SidePanel
           title={

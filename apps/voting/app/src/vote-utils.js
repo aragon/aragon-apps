@@ -36,13 +36,7 @@ export function getVoteStatus(vote, pctBase) {
 }
 
 export function getVoteSuccess(vote, pctBase) {
-  const {
-    yea,
-    minAcceptQuorum,
-    nay,
-    supportRequired,
-    votingPower,
-  } = vote.data
+  const { yea, minAcceptQuorum, nay, supportRequired, votingPower } = vote.data
 
   const totalVotes = yea.add(nay)
   if (totalVotes.isZero()) {
