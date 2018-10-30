@@ -1,13 +1,21 @@
 import React from 'react'
 import styled from 'styled-components'
 
+import { ETHER_TOKEN_VERIFIED_BY_SYMBOL } from '../verified-tokens'
+
 class TokenBadge extends React.PureComponent {
   render() {
     const { address, name, symbol } = this.props
+
+    const verifiedAddress = ETHER_TOKEN_VERIFIED_BY_SYMBOL.get(symbol)
+    const isVerified = verifiedAddress === address
+
     return (
       <Main title={`${name} (${address})`}>
         <Label>
-          <Icon src={`https://chasing-coins.com/coin/logo/${symbol}`} />
+          {isVerified && (
+            <Icon src={`https://chasing-coins.com/coin/logo/${symbol}`} />
+          )}
           <NameWrapper>
             <Name>{name}</Name>
             {name !== symbol && <Symbol>({symbol})</Symbol>}
