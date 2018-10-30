@@ -40,7 +40,7 @@ class TokenSelector extends React.Component {
     // Use the verified token address if provided a symbol and it matches
     // The symbols in the verified map are all capitalized
     const resolvedAddress =
-      !isAddress(value) && network.type === 'mainnet'
+      !isAddress(value) && network.type === 'main'
         ? ETHER_TOKEN_VERIFIED_BY_SYMBOL.get(value.toUpperCase()) || ''
         : value
 
