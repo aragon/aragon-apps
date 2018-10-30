@@ -19,11 +19,11 @@
     "@babel/runtime": "^7.1.2",
     "ajv": "^6.5.4",
     "ajv-keywords": "^3.2.0",
-    "date-fns": "^2.0.0-alpha.22",
+    "date-fns": "^2.0.0-alpha.25",
     "prop-types": "^15.6.2",
-    "react": "^16.5.2",
+    "react": "^16.6.0",
     "react-autocomplete": "^1.8.1",
-    "react-dom": "^16.5.2",
+    "react-dom": "^16.6.0",
     "styled-components": "^3.4.10",
     "web3-utils": "^1.0.0-beta.36"
   },
@@ -41,7 +41,7 @@
     "jest": "^23.6.0",
     "jest-dom": "^2.1.0",
     "parcel-bundler": "^1.10.3",
-    "react-testing-library": "^5.2.0",
+    "react-testing-library": "^5.2.3",
     "regenerator-runtime": "^0.12.1",
     "standard": "*"
   }
