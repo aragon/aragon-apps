@@ -44,18 +44,21 @@ class TokenSelector extends React.Component {
         ? ETHER_TOKEN_VERIFIED_BY_SYMBOL.get(value.toUpperCase()) || ''
         : value
 
-    this.setState({
-      customToken: {
-        value,
-        address: resolvedAddress,
+    this.setState(
+      {
+        customToken: {
+          value,
+          address: resolvedAddress,
+        },
       },
-    }, () => {
-      this.props.onChange({
-        value,
-        index: 1,
-        address: resolvedAddress,
-      })
-    })
+      () => {
+        this.props.onChange({
+          value,
+          index: 1,
+          address: resolvedAddress,
+        })
+      }
+    )
   }
   getAddressFromTokens(index) {
     if (index === 0) {
