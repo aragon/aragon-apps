@@ -20,51 +20,53 @@ class Balances extends React.Component {
     this.updateConvertedRates(nextProps)
   }
   async updateConvertedRates({ balances }) {
-    const symbols = balances.map(({ symbol }) => symbol)
+    const verifiedSymbols = balances
+      .filter(({ verified }) => verified)
+      .map(({ symbol }) => symbol)
 
-    if (symbols.length) {
-      // Uncomment the next line to simulate a delay
-      // await new Promise(r => setTimeout(r, 2000))
-
-      const res = await fetch(convertApiUrl(symbols))
-      const convertRates = await res.json()
-      this.setState({ convertRates })
+    if (!verifiedSymbols.length) {
+      return
     }
+
+    const res = await fetch(convertApiUrl(verifiedSymbols))
+    const convertRates = await res.json()
+    this.setState({ convertRates })
   }
   render() {
     const { balances } = this.props
     const { convertRates } = this.state
-    const balanceItems = balances
-      .map(({ numData: { amount, decimals }, symbol }) => {
+    const balanceItems = balances.map(
+      ({ numData: { amount, decimals }, symbol, verified }) => {
         const adjustedAmount = amount / Math.pow(10, decimals)
-        const convertedAmount = convertRates[symbol]
-          ? adjustedAmount / convertRates[symbol]
-          : -1
+        const convertedAmount =
+          verified && convertRates[symbol]
+            ? adjustedAmount / convertRates[symbol]
+            : -1
         return {
           symbol,
           amount: round(adjustedAmount, 5),
           convertedAmount: round(convertedAmount, 5),
         }
-      })
-      .sort(
-        (balanceA, balanceB) =>
-          balanceB.convertedAmount - balanceA.convertedAmount
-      )
+      }
+    )
     return (
       <section>
         <Title>Token Balances</Title>
         <ScrollView>
           <List>
             {balanceItems.length > 0 ? (
-              balanceItems.map(({ amount, convertedAmount, symbol }) => (
-                <ListItem key={symbol}>
-                  <BalanceToken
-                    amount={amount}
-                    symbol={symbol}
-                    convertedAmount={convertedAmount}
-                  />
-                </ListItem>
-              ))
+              balanceItems.map(
+                ({ amount, convertedAmount, symbol, verified }) => (
+                  <ListItem key={symbol}>
+                    <BalanceToken
+                      amount={amount}
+                      convertedAmount={convertedAmount}
+                      symbol={symbol}
+                      verified={verified}
+                    />
+                  </ListItem>
+                )
+              )
             ) : (
               <EmptyListItem />
             )}
@@ -82,6 +84,12 @@ const EmptyListItem = () => (
 )
 
 const ScrollView = styled.div`
+  /*
+   * translate3d() fixes an issue on recent Firefox versions where the
+   * scrollbar would briefly appear on top of everything (including the
+   * sidepanel overlay).
+   */
+  transform: translate3d(0, 0, 0);
   overflow-x: auto;
   background: ${theme.contentBackground};
   border: 1px solid ${theme.contentBorder};

@@ -10,8 +10,8 @@ import {
   TextInput,
   theme,
 } from '@aragon/ui'
-import { toDecimals } from '../lib/math-utils'
-import { addressPattern, isAddress } from '../lib/web3-utils'
+import { toDecimals } from '../../lib/math-utils'
+import { addressPattern, isAddress } from '../../lib/web3-utils'
 
 const NO_ERROR = Symbol('NO_ERROR')
 const RECEIPIENT_NOT_ADDRESS_ERROR = Symbol('RECEIPIENT_NOT_ADDRESS_ERROR')
@@ -31,22 +31,17 @@ const initialState = {
   selectedToken: 0,
 }
 
-class NewTransferPanelContent extends React.Component {
+class Withdrawal extends React.Component {
   static defaultProps = {
-    onTransfer: () => {},
+    tokens: [],
+    onWithdraw: () => {},
   }
   state = {
     ...initialState,
   }
-  componentWillReceiveProps({ opened }) {
-    if (opened && !this.props.opened) {
-      // setTimeout is needed as a small hack to wait until the input's on
-      // screen until we call focus
-      this.recipientInput && setTimeout(() => this.recipientInput.focus(), 0)
-    } else if (!opened && this.props.opened) {
-      // Finished closing the panel, so reset its state
-      this.setState({ ...initialState })
-    }
+
+  nonZeroTokens() {
+    return this.props.tokens.filter(({ amount }) => amount > 0)
   }
   handleAmountUpdate = event => {
     this.setState({
@@ -70,11 +65,12 @@ class NewTransferPanelContent extends React.Component {
   handleReferenceUpdate = event => {
     this.setState({ reference: event.target.value })
   }
-  handleTransfer = event => {
+  handleSubmit = event => {
     event.preventDefault()
-    const { onTransfer, tokens } = this.props
+    const { onWithdraw } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
 
+    const tokens = this.nonZeroTokens()
     const token = tokens[selectedToken]
     const recipientAddress = recipient.value.trim()
     // Adjust but without truncation in case the user entered a value with more
@@ -91,7 +87,10 @@ class NewTransferPanelContent extends React.Component {
           error: RECEIPIENT_NOT_ADDRESS_ERROR,
         },
       }))
-    } else if (amountTooBig || adjustedAmount.indexOf('.') !== -1) {
+      return
+    }
+
+    if (amountTooBig || adjustedAmount.indexOf('.') !== -1) {
       this.setState(({ amount }) => ({
         amount: {
           ...amount,
@@ -100,13 +99,17 @@ class NewTransferPanelContent extends React.Component {
             : DECIMALS_TOO_MANY_ERROR,
         },
       }))
-    } else {
-      onTransfer(token.address, recipientAddress, adjustedAmount, reference)
+      return
     }
+
+    onWithdraw(token.address, recipientAddress, adjustedAmount, reference)
   }
+
   render() {
-    const { onClose, title, tokens } = this.props
+    const { title } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
+
+    const tokens = this.nonZeroTokens()
     const symbols = tokens.map(({ symbol }) => symbol)
 
     let errorMessage
@@ -119,7 +122,7 @@ class NewTransferPanelContent extends React.Component {
     }
 
     return tokens.length ? (
-      <form onSubmit={this.handleTransfer}>
+      <form onSubmit={this.handleSubmit}>
         <h1>{title}</h1>
         <Field label="Recipient (must be a valid Ethereum address)">
           <TextInput
@@ -165,23 +168,15 @@ class NewTransferPanelContent extends React.Component {
         </Field>
         <ButtonWrapper>
           <Button mode="strong" type="submit" wide>
-            Submit Transfer
+            Submit withdrawal
           </Button>
         </ButtonWrapper>
         {errorMessage && <ValidationError message={errorMessage} />}
       </form>
     ) : (
-      <div>
-        <Info.Permissions title="Action impossible">
-          You cannot create any payments. The DAO does not have any tokens
-          available to transfer.
-        </Info.Permissions>
-        <ButtonWrapper>
-          <Button mode="strong" wide onClick={onClose}>
-            Close
-          </Button>
-        </ButtonWrapper>
-      </div>
+      <Info.Permissions title="Action impossible">
+        The organization doesn’t have any tokens available to withdraw.
+      </Info.Permissions>
     )
   }
 }
@@ -220,4 +215,4 @@ const ValidationErrorBlock = styled.p`
   margin-top: 15px;
 `
 
-export default NewTransferPanelContent
+export default Withdrawal
