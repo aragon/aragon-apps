@@ -248,7 +248,7 @@ class Deposit extends React.Component {
       selectedTokenIsAddress &&
       addressesEqual(selectedToken.value, ETHER_TOKEN_FAKE_ADDRESS)
     const tokenSelected = selectedToken.value && !ethSelected
-    const isMainnet = network.type === 'mainnet'
+    const isMainnet = network.type === 'main'
 
     return (
       <form onSubmit={this.handleSubmit}>

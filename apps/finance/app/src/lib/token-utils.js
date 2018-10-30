@@ -5,6 +5,6 @@ export const ETHER_TOKEN_FAKE_ADDRESS =
 
 export const isTokenVerified = (tokenAddress, networkType) =>
   // The verified list is without checksums
-  networkType === 'mainnet'
+  networkType === 'main'
     ? ETHER_TOKEN_VERIFIED_ADDRESSES.has(tokenAddress.toLowerCase())
     : true
