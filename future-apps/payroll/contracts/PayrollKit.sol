@@ -72,6 +72,8 @@ contract PayrollKit is KitBase {
     uint64 rateExpiryTime = 1000;
     uint64 amount = uint64(-1);
     address constant ANY_ENTITY = address(-1);
+    address[] allowedTokens;
+    uint8[] distribution;
 
     constructor(ENS ens) KitBase(DAOFactory(0), ens) public {
         tokenFactory = new MiniMeTokenFactory();
@@ -90,7 +92,6 @@ contract PayrollKit is KitBase {
       PPFMock priceFeed = new PPFMock();
 
       MiniMeToken denominationToken = newToken("USD Dolar", "USD");
-      // MiniMeToken token = newToken("DevToken", "XDT");
 
       acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
@@ -125,6 +126,18 @@ contract PayrollKit is KitBase {
 
       addEmployees(payroll, root);
 
+      // set salary allocation for this then change protofire.aragon.eth address to root so it can be used
+      allowedTokens.push(address(token1));
+      allowedTokens.push(address(token2));
+      allowedTokens.push(address(token3));
+
+      distribution.push(uint8(45));
+      distribution.push(uint8(30));
+      distribution.push(uint8(25));
+
+      payroll.determineAllocation(allowedTokens, distribution);
+      payroll.changeAddressByEmployee(root);
+
       cleanupDAOPermissions(dao, acl, root);
 
       emit DeployInstance(dao);
@@ -156,11 +169,6 @@ contract PayrollKit is KitBase {
 
     function setFinancePermissions(ACL acl, Finance finance, Payroll payroll, address root) internal {
       acl.createPermission(payroll, finance, finance.CREATE_PAYMENTS_ROLE(), root);
-
-      // acl.createPermission(root, finance, finance.CHANGE_PERIOD_ROLE(), root);
-      // acl.createPermission(root, finance, finance.CHANGE_BUDGETS_ROLE(), root);
-      // acl.createPermission(root, finance, finance.EXECUTE_PAYMENTS_ROLE(), root);
-      // acl.createPermission(root, finance, finance.MANAGE_PAYMENTS_ROLE(), root);
     }
 
     function setPayrollPermissions(ACL acl, Payroll payroll, address root) internal {
@@ -171,12 +179,6 @@ contract PayrollKit is KitBase {
       acl.createPermission(this, payroll, payroll.ALLOWED_TOKENS_MANAGER_ROLE(), this);
       acl.grantPermission(root, payroll, payroll.ALLOWED_TOKENS_MANAGER_ROLE());
       acl.setPermissionManager(root, payroll, payroll.ALLOWED_TOKENS_MANAGER_ROLE());
-
-      // acl.createPermission(employer, payroll, payroll.TERMINATE_EMPLOYEE_ROLE(), root);
-      // acl.createPermission(employer, payroll, payroll.SET_EMPLOYEE_SALARY_ROLE(), root);
-      // acl.createPermission(employer, payroll, payroll.ADD_ACCRUED_VALUE_ROLE(), root);
-      // acl.createPermission(employer, payroll, payroll.CHANGE_PRICE_FEED_ROLE(), root);
-      // acl.createPermission(root, payroll, payroll.MODIFY_RATE_EXPIRY_ROLE(), root);
     }
 
     function deployTokens(Kernel dao, Finance finance, ACL acl, address root) internal {
@@ -222,15 +224,14 @@ contract PayrollKit is KitBase {
 
     function setTokenManagerPermissions(ACL acl, TokenManager tokenManager, address root) internal {
       acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), root);
-      // acl.createPermission(root, tokenManager, tokenManager.ISSUE_ROLE(), root);
-      // acl.createPermission(root, tokenManager, tokenManager.ASSIGN_ROLE(), root);
-      // acl.createPermission(root, tokenManager, tokenManager.REVOKE_VESTINGS_ROLE(), root);
-      // acl.createPermission(root, tokenManager, tokenManager.BURN_ROLE(), root);
     }
 
     function addEmployees(Payroll payroll, address root) internal {
-        payroll.addEmployeeWithNameAndStartDate(address(0), 10, 'protofire.aragonid.eth', uint64(now));
-        payroll.addEmployeeWithNameAndStartDate(this, 20, 'leolower.protofire.eth', uint64(now- 86400));
-        payroll.addEmployeeWithNameAndStartDate(root, 30, 'lmcorbalan.protofire.eth',  uint64(now - 172800));
+        address account2 = 0x8401Eb5ff34cc943f096A32EF3d5113FEbE8D4Eb;
+        address account3 = 0x306469457266CBBe7c0505e8Aad358622235e768;
+
+        payroll.addEmployeeWithNameAndStartDate(this, 10, 'protofire.aragonid.eth', uint64(now));
+        payroll.addEmployeeWithNameAndStartDate(account2, 20, 'leolower.protofire.eth', uint64(now- 86400));
+        payroll.addEmployeeWithNameAndStartDate(account3, 30, 'lmcorbalan.protofire.eth',  uint64(now - 172800));
     }
 }

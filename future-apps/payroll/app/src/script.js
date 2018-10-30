@@ -4,46 +4,93 @@ import tokenSymbolAbi from './abi/token-symbol.json'
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
 
-const allowedTokens = new Map();
+const allowedTokens = new Map()
+let allowedTokensAddresses = []
 
 import * as idm from './services/idm'
 
 const app = new Aragon()
 
-app.store(async (state, { event, ...eventData }) => {
-  if (state === null) {
-    const initialState = {
-      employees: await getAllEmployees()
+app.store(
+  async (state, { event, ...eventData }) => {
+    console.log('store', event, eventData)
+
+    let nextState = {
+      ...state
     }
 
-    state = initialState
-  }
+    try {
+      if (state === null) {
+        const [account] = await app
+          .accounts()
+          .first()
+          .map(result => result)
+          .toPromise()
 
-  let nextState = {
-    ...state,
-  }
+        const initialState = {
+          account,
+          employees: await getAllEmployees()
+        }
 
-  switch (event) {
-    case 'AddEmployee':
-      const employees = await getAllEmployees()
-
-      nextState = {
-        ...state,
-        employees
+        nextState = initialState
       }
-      break
-    case 'AddAllowedToken':
-      nextState = await addAllowedToken(nextState, eventData)
-      break
-    default:
-      break
-  }
 
-  return nextState
-})
+      switch (event) {
+        case 'AddEmployee':
+          const employees = await getAllEmployees()
+
+          nextState = {
+            ...nextState,
+            employees
+          }
+          break
+        case 'AddAllowedToken':
+          nextState = await addAllowedToken(nextState, eventData)
+          break
+        case 'ChangeAddressByEmployee':
+          console.log('ChangeAddressByEmployee', eventData)
+          nextState = await loadSalaryAllocation(
+            nextState,
+            eventData.returnValues.employeeAddress
+          )
+          break
+        case 'DetermineAllocation':
+          console.log('DetermineAllocation', eventData)
+          nextState = await loadSalaryAllocation(
+            nextState,
+            eventData.returnValues.employee
+          )
+          break
+        case 'ACCOUNT_CHANGED':
+          const { account } = eventData
+          nextState = {
+            ...nextState,
+            account
+          }
+
+          nextState = await loadSalaryAllocation(nextState, account)
+          break
+        default:
+          break
+      }
+    } catch (e) {
+      console.error(e)
+    }
+
+    console.log('nextState', nextState)
+    return nextState
+  },
+  [
+    app.accounts().map(result => {
+      const [account] = result
+      return { event: 'ACCOUNT_CHANGED', account }
+    })
+  ]
+)
 
 function getEmployeeById (id) {
-  return app.call('getEmployee', id)
+  return app
+    .call('getEmployee', id)
     .first()
     .map(data => marshallEmployeeData({ id, ...data }))
     .flatMap(async employee => {
@@ -57,45 +104,80 @@ function getEmployeeById (id) {
 async function getAllEmployees () {
   const employee = []
 
-  const lastEmployeeId = await app.call('nextEmployee')
+  const lastEmployeeId = await app
+    .call('nextEmployee')
     .first()
     .map(value => parseInt(value, 10))
     .toPromise()
 
   for (let id = 1; id < lastEmployeeId; id++) {
-    employee.push(
-      getEmployeeById(id)
-    )
+    employee.push(getEmployeeById(id))
   }
 
   return Promise.all(employee)
 }
 
-async function addAllowedToken (state, { returnValues: { token: tokenAddress }}) {
+async function addAllowedToken (
+  state,
+  { returnValues: { token: tokenAddress } }
+) {
   if (!allowedTokens.has(tokenAddress)) {
+    allowedTokensAddresses = [...allowedTokensAddresses, tokenAddress]
+
     const tokenContract = app.external(tokenAddress, tokenAbi)
     const [decimals, symbol] = await Promise.all([
       loadTokenDecimals(tokenContract),
       loadTokenSymbol(tokenContract)
     ])
 
-    allowedTokens.set(
-      tokenAddress,
-      {
-        tokenContract,
-        decimals,
-        symbol
-      }
-    )
+    allowedTokens.set(tokenAddress, {
+      tokenContract,
+      decimals,
+      symbol
+    })
   }
+
+  const salaryAllocation = await getAllocation()
 
   return {
     ...state,
+    salaryAllocation,
     allowedTokens: marshallAllowedTokens(allowedTokens)
   }
 }
 
-function loadTokenDecimals(tokenContract) {
+async function loadSalaryAllocation (state, employeeAddress) {
+  let { salaryAllocation } = state
+
+  if (employeeAddress === state.account) {
+    let salaryAllocation = await getAllocation()
+  }
+
+  return {
+    ...state,
+    salaryAllocation
+  }
+}
+
+async function getAllocation () {
+  const tokensAllocation = await Promise.all(
+    allowedTokensAddresses.map(tokenAddress => {
+      return app
+        .call('getAllocation', tokenAddress)
+        .first()
+        .map(allocation => {
+          return { tokenAddress, allocation }
+        })
+        .toPromise()
+    })
+  )
+
+  console.log('getAllocation', tokensAllocation)
+
+  return marshallTokensAllocation(tokensAllocation)
+}
+
+function loadTokenDecimals (tokenContract) {
   return tokenContract
     .decimals()
     .first()
@@ -103,7 +185,7 @@ function loadTokenDecimals(tokenContract) {
     .toPromise()
 }
 
-function loadTokenSymbol(tokenContract) {
+function loadTokenSymbol (tokenContract) {
   return tokenContract
     .symbol()
     .first()
@@ -143,11 +225,20 @@ function marshallEmployeeData (data) {
   return result
 }
 
-function marshallAllowedTokens(allowedTokens) {
-  let result = {};
-  for (const [address, {decimals, symbol}] of allowedTokens) {
-    result[address] = {decimals, symbol}
+function marshallAllowedTokens (allowedTokens) {
+  let result = {}
+  for (const [address, { decimals, symbol }] of allowedTokens) {
+    result[address] = { decimals, symbol }
   }
 
-  return result;
+  return result
+}
+
+function marshallTokensAllocation (tokensAllocation) {
+  let result = {}
+  for (const { tokenAddress, allocation } of tokensAllocation) {
+    result[tokenAddress] = allocation
+  }
+
+  return result
 }
