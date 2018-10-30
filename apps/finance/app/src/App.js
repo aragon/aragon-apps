@@ -91,7 +91,7 @@ class App extends React.Component {
       transactions,
       tokens,
       proxyAddress,
-      userAccount
+      userAccount,
     } = this.props
     const { newTransferOpened } = this.state
 
