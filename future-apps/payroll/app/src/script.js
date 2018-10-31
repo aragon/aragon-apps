@@ -137,7 +137,7 @@ async function addAllowedToken (
     })
   }
 
-  const salaryAllocation = await getAllocation()
+  const salaryAllocation = await getAllocation(state.account)
 
   return {
     ...state,
@@ -150,7 +150,7 @@ async function loadSalaryAllocation (state, employeeAddress) {
   let { salaryAllocation } = state
 
   if (employeeAddress === state.account) {
-    let salaryAllocation = await getAllocation()
+    salaryAllocation = await getAllocation(state.account)
   }
 
   return {
@@ -159,11 +159,11 @@ async function loadSalaryAllocation (state, employeeAddress) {
   }
 }
 
-async function getAllocation () {
+async function getAllocation (account) {
   const tokensAllocation = await Promise.all(
     allowedTokensAddresses.map(tokenAddress => {
       return app
-        .call('getAllocation', tokenAddress)
+        .call('getAllocation', tokenAddress, {from: account})
         .first()
         .map(allocation => {
           return { tokenAddress, allocation }
