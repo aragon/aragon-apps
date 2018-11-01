@@ -13,8 +13,6 @@ const app = new Aragon()
 
 app.store(
   async (state, { event, ...eventData }) => {
-    console.log('store', event, eventData)
-
     let nextState = {
       ...state
     }
@@ -48,14 +46,12 @@ app.store(
           nextState = await addAllowedToken(nextState, eventData)
           break
         case 'ChangeAddressByEmployee':
-          console.log('ChangeAddressByEmployee', eventData)
           nextState = await loadSalaryAllocation(
             nextState,
             eventData.returnValues.employeeAddress
           )
           break
         case 'DetermineAllocation':
-          console.log('DetermineAllocation', eventData)
           nextState = await loadSalaryAllocation(
             nextState,
             eventData.returnValues.employee
@@ -77,7 +73,6 @@ app.store(
       console.error(e)
     }
 
-    console.log('nextState', nextState)
     return nextState
   },
   [
@@ -166,15 +161,13 @@ async function getAllocation (account) {
         .call('getAllocation', tokenAddress, {from: account})
         .first()
         .map(allocation => {
-          return { tokenAddress, allocation }
+          return marshallTokensAllocation(tokenAddress, allocation)
         })
         .toPromise()
     })
   )
 
-  console.log('getAllocation', tokensAllocation)
-
-  return marshallTokensAllocation(tokensAllocation)
+  return tokensAllocation;
 }
 
 function loadTokenDecimals (tokenContract) {
@@ -234,11 +227,11 @@ function marshallAllowedTokens (allowedTokens) {
   return result
 }
 
-function marshallTokensAllocation (tokensAllocation) {
-  let result = {}
-  for (const { tokenAddress, allocation } of tokensAllocation) {
-    result[tokenAddress] = allocation
-  }
+function marshallTokensAllocation (tokenAddress, allocation) {
+  const token = allowedTokens.get(tokenAddress);
 
-  return result
+  return {
+    symbol: token.symbol,
+    allocation: parseInt(allocation || 0, 10)
+  }
 }

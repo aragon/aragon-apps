@@ -11,6 +11,7 @@ export class AragonProvider extends React.Component {
   }
 
   componentDidMount () {
+    console.log('AragonContext componentDidMount')
     window.addEventListener('message', this.handleWrapperMessage)
   }
 
@@ -21,6 +22,7 @@ export class AragonProvider extends React.Component {
   // Handshake between Aragon Core and the iframe,
   // since iframes can lose messages that were sent before they were ready
   handleWrapperMessage = ({ data }) => {
+    console.log('AragonContext handleWrapperMessage', data)
     if (data.from !== 'wrapper') {
       return
     }
