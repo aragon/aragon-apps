@@ -2,7 +2,6 @@ import React from 'react'
 import { AppBar, AppView, AragonApp, Button } from '@aragon/ui'
 import Tab from './components/Tab'
 
-import { AragonProvider } from './context/AragonContext'
 import { MyPayroll, TeamPayroll } from './screens'
 import { AddEmployee } from './panels'
 
@@ -54,7 +53,7 @@ export default class App extends React.Component {
 
   render () {
     const header = (
-      <AragonProvider>
+      <React.Fragment>
         <AppBar
           title='Payroll'
           endContent={this.renderActionButtons()}
@@ -76,7 +75,7 @@ export default class App extends React.Component {
             data-testid='team-payroll-tab'
           />
         </Tab.Container>
-      </AragonProvider>
+      </React.Fragment>
     )
 
     return (
