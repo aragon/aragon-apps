@@ -6,6 +6,7 @@ import 'jest-dom/extend-expect'
 import { format as formatDate } from 'date-fns'
 
 import AddEmployeePanel from './AddEmployee'
+import AragonContext from '../context/AragonContext'
 
 afterEach(cleanup)
 
@@ -161,8 +162,28 @@ describe('Add new employee panel', () => {
 })
 
 function renderAddEmployeePanel (props) {
+  const mockApp = {
+    state () {
+      return this
+    },
+
+    first () {
+      return this
+    },
+
+    pluck () {
+      return this
+    },
+
+    toPromise () {
+      return []
+    }
+  }
+
   const panel = render(
-    <AddEmployeePanel opened {...props} />
+    <AragonContext.Provider value={mockApp}>
+      <AddEmployeePanel opened {...props} />
+    </AragonContext.Provider>
   )
 
   const form = panel.getByTestId('add-employee-form')

@@ -46,6 +46,7 @@ describe('App', () => {
 
   // Check navigation between tabs
   describe('"Team payroll" section', () => {
+
     beforeAll(() => {
       fireEvent.click(app.getByTestId('team-payroll-tab'))
     })
@@ -82,6 +83,7 @@ describe('App', () => {
   })
 
   describe('"My payroll" section', () => {
+
     beforeAll(() => {
       fireEvent.click(app.getByTestId('my-payroll-tab'))
     })

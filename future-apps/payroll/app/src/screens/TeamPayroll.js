@@ -4,7 +4,7 @@ import EmployeeList from './components/EmployeeList'
 import Section from '../components/Layout/Section'
 
 const TeamPayroll = () => (
-  <Section>
+  <Section data-testid='team-payroll-section'>
     <Section.Left>
       <EmployeeList />
     </Section.Left>

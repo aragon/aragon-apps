@@ -83,15 +83,11 @@ export default class App extends React.Component {
       <AragonApp publicUrl='./aragon-ui/'>
         <AppView appBar={header}>
           {this.state.activeTab === 'my-payroll' && (
-            <MyPayroll
-              data-testid='my-payroll-section'
-            />
+            <MyPayroll />
           )}
 
           {this.state.activeTab === 'team-payroll' && (
-            <TeamPayroll
-              data-testid='team-payroll-section'
-            />
+            <TeamPayroll />
           )}
         </AppView>
 

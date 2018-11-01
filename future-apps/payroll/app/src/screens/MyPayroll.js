@@ -3,7 +3,7 @@ import React from 'react'
 import Section from '../components/Layout/Section'
 
 const MyPayroll = () => (
-  <Section>
+  <Section data-testid='my-payroll-section'>
     <Section.Left>
       My Payroll
     </Section.Left>
