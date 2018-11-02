@@ -27,7 +27,8 @@ class SalaryAllocation extends React.Component {
     const app = this.context
 
     if (app && typeof app.state === 'function') {
-      this.subscription = app.state()
+      this.subscription = app
+        .state()
         .pluck('currentAccount', 'salaryAllocation')
         .subscribe(salaryAllocation => {
           if (salaryAllocation) {
@@ -58,9 +59,12 @@ class SalaryAllocation extends React.Component {
       <Container>
         <Section.Title>Salary allocation</Section.Title>
 
-        <PartitionBar data={salaryAllocation}/>
+        <PartitionBar data={salaryAllocation} />
 
-        <EditButton onClick={this.startEditing}>
+        <EditButton
+          onClick={this.startEditing}
+          data-testid='salary-allocation-edit-btn'
+        >
           Edit salary allocation
         </EditButton>
 
