@@ -1,11 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Button, SidePanel, Text } from '@aragon/ui'
+import { Button, SidePanel } from '@aragon/ui'
 
 import AragonContext from '../../context/AragonContext'
 import PartitionBar from '../../components/Bar/PartitionBar'
-
-// import { getSalaryAllocation } from '../../data'
+import Section from '../../components/Layout/Section'
 
 const Container = styled.section`
   display: flex;
@@ -20,10 +19,7 @@ class SalaryAllocation extends React.Component {
   static contextType = AragonContext
 
   state = {
-    salaryAllocation: [{
-      symbol: 'test',
-      allocation: 0
-    }],
+    salaryAllocation: [],
     isEditing: false
   }
 
@@ -32,9 +28,8 @@ class SalaryAllocation extends React.Component {
 
     if (app && typeof app.state === 'function') {
       this.subscription = app.state()
-        .pluck('salaryAllocation')
+        .pluck('currentAccount', 'salaryAllocation')
         .subscribe(salaryAllocation => {
-          console.log('SalaryAllocation subscription', salaryAllocation)
           if (salaryAllocation) {
             this.setState({ salaryAllocation })
           }
@@ -49,11 +44,11 @@ class SalaryAllocation extends React.Component {
   }
 
   startEditing = () => {
-    // this.setState({ isEditing: true })
+    // TODO: this.setState({ isEditing: true })
   }
 
   endEditing = () => {
-    // this.setState({ isEditing: false })
+    // TODO: this.setState({ isEditing: false })
   }
 
   render () {
@@ -61,9 +56,7 @@ class SalaryAllocation extends React.Component {
 
     return (
       <Container>
-        <Text size='large'>
-          Salary allocation
-        </Text>
+        <Section.Title>Salary allocation</Section.Title>
 
         <PartitionBar data={salaryAllocation}/>
 

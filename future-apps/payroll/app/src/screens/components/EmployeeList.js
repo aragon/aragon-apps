@@ -43,9 +43,7 @@ class EmployeeList extends React.Component {
       this.subscription = app.state()
         .pluck('employees')
         .subscribe(employees => {
-          if (employees) {
-            this.setState({ employees })
-          }
+          this.setState({ employees })
         })
     }
   }

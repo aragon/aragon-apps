@@ -6,7 +6,7 @@ import SalaryAllocation from './components/SalaryAllocation'
 const MyPayroll = () => (
   <Section data-testid='my-payroll-section'>
     <Section.Left>
-      My Payroll
+      {/* My Payroll */}
     </Section.Left>
     <Section.Right>
       <SalaryAllocation />
