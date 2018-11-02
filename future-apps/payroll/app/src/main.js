@@ -8,5 +8,5 @@ render(
   <AragonProvider>
     <App />
   </AragonProvider>,
-  document.getElementById('root')
+  document.getElementById('app-root')
 )

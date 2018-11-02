@@ -1,4 +1,5 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Button, Field, SidePanel } from '@aragon/ui'
@@ -144,13 +145,14 @@ class AddEmployee extends React.PureComponent {
   }
 
   render () {
+    const { opened, onClose } = this.props
     const { entity, salary, startDate, isValid } = this.state
 
-    return (
+    const panel = (
       <SidePanel
         title='Add new employee'
-        opened={this.props.opened}
-        onClose={this.props.onClose}
+        opened={opened}
+        onClose={onClose}
         onTransitionEnd={this.handlePanelToggle}
       >
         <Form
@@ -211,6 +213,11 @@ class AddEmployee extends React.PureComponent {
           </Button>
         </Form>
       </SidePanel>
+    )
+
+    return createPortal(
+      panel,
+      document.getElementById('modal-root')
     )
   }
 }
