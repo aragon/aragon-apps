@@ -3,7 +3,7 @@ export function currency (value) {
 }
 
 export function date (epoch) {
-  if (!epoch || BigInt(epoch) > Number.MAX_SAFE_INTEGER) {
+  if (!epoch || BigInt(epoch) > Number.MAX_SAFE_INTEGER) { // eslint-disable-line
     return null
   }
 
@@ -30,6 +30,6 @@ export function tokenAllocation (data) {
   return {
     address: data.address,
     symbol: data.symbol,
-    allocation: parseInt(data.allocation) || 0,
+    allocation: parseInt(data.allocation) || 0
   }
 }
