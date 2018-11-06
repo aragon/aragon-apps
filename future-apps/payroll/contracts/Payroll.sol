@@ -2,6 +2,7 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/EtherTokenConstant.sol";
+import "@aragon/os/contracts/common/IsContract.sol";
 // import "@aragon/os/contracts/common/IForwarder.sol";
 
 import "@aragon/os/contracts/lib/token/ERC20.sol";
@@ -17,7 +18,7 @@ import "@aragon/apps-finance/contracts/Finance.sol";
 /**
  * @title Payroll in multiple currencies
  */
-contract Payroll is EtherTokenConstant, AragonApp { //, IForwarder { // makes coverage crash (removes pure and interface doesnt match)
+contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder { // makes coverage crash (removes pure and interface doesnt match)
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeMath8 for uint8;
@@ -118,7 +119,7 @@ contract Payroll is EtherTokenConstant, AragonApp { //, IForwarder { // makes co
     ) external
         onlyInit
     {
-        require(address(_finance) != address(0), ERROR_FINANCE_NOT_CONTRACT);
+        require(isContract(_finance), ERROR_FINANCE_NOT_CONTRACT);
 
         initialized();
 
@@ -557,7 +558,7 @@ contract Payroll is EtherTokenConstant, AragonApp { //, IForwarder { // makes co
     }
 
     function _setPriceFeed(IFeed _feed) internal {
-        require(_feed != address(0), ERROR_FINANCE_NOT_CONTRACT);
+        require(isContract(_feed), ERROR_FINANCE_NOT_CONTRACT);
         feed = _feed;
         emit SetPriceFeed(feed);
     }
