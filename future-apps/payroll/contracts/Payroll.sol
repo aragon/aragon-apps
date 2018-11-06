@@ -524,7 +524,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         string name,
         uint64 startDate
     )
-        isInitialized
         internal
     {
         // check that account doesn't exist
