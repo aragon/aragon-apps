@@ -35,6 +35,23 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     uint64 constant public MAX_UINT64 = uint64(-1);
     uint256 constant public MAX_ACCRUED_VALUE = 2**128;
 
+    string private constant ERROR_NO_EMPLOYEE = "PAYROLL_NO_EMPLOYEE";
+    string private constant ERROR_EMPLOYEE_DOES_NOT_MATCH = "PAYROLL_EMPLOYEE_DOES_NOT_MATCH";
+    string private constant ERROR_FINANCE_NOT_CONTRACT = "PAYROLL_FINANCE_NOT_CONTRACT";
+    string private constant ERROR_TOKEN_ALREADY_ALLOWED = "PAYROLL_TOKEN_ALREADY_ALLOWED";
+    string private constant ERROR_ACCRUED_VALUE_TOO_BIG = "PAYROLL_ACCRUED_VALUE_TOO_BIG";
+    string private constant ERROR_TOKEN_ALLOCATION_MISMATCH = "PAYROLL_TOKEN_ALLOCATION_MISMATCH";
+    string private constant ERROR_NO_ALLOWED_TOKEN = "PAYROLL_NO_ALLOWED_TOKEN";
+    string private constant ERROR_DISTRIBUTION_NO_COMPLETE = "PAYROLL_DISTRIBUTION_NO_COMPLETE";
+    string private constant ERROR_NOTHING_PAID = "PAYROLL_NOTHING_PAID";
+    string private constant ERROR_EMPLOYEE_ALREADY_EXIST = "PAYROLL_EMPLOYEE_ALREADY_EXIST";
+    string private constant ERROR_NULL_ADDRESS = "PAYROLL_NULL_ADDRESS";
+    string private constant ERROR_NO_FORWARD = "PAYROLL_NO_FORWARD";
+    string private constant ERROR_RATE_EXPIRY_TIME_ZERO = "PAYROLL_RATE_EXPIRE_TIME_ZERO";
+    string private constant ERROR_EXCHANGE_RATE_ZERO = "PAYROLL_EXCHANGE_RATE_ZERO";
+    string private constant ERROR_PAST_TERMINATION_DATE = "PAYROLL_PAST_TERMINATION_DATE";
+
+
     struct Employee {
         address accountAddress; // unique, but can be changed over time
         mapping(address => uint8) allocation;
@@ -76,13 +93,13 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     modifier employeeExists(uint128 employeeId) {
         /* check that employee exists and is active */
-        require(employeeIds[employees[employeeId].accountAddress] != 0 && !employees[employeeId].terminated);
+        require(employeeIds[employees[employeeId].accountAddress] != 0 && !employees[employeeId].terminated, ERROR_NO_EMPLOYEE);
         _;
     }
 
     modifier employeeMatches {
         // check that employee exists (and matches)
-        require(employees[employeeIds[msg.sender]].accountAddress == msg.sender);
+        require(employees[employeeIds[msg.sender]].accountAddress == msg.sender, ERROR_EMPLOYEE_DOES_NOT_MATCH);
         _;
     }
 
@@ -99,7 +116,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     ) external
         onlyInit
     {
-        require(address(_finance) != address(0));
+        require(address(_finance) != address(0), ERROR_FINANCE_NOT_CONTRACT);
 
         initialized();
 
@@ -133,7 +150,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @param _allowedToken New token allowed for payment
      */
     function addAllowedToken(address _allowedToken) external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
-        require(!allowedTokens[_allowedToken]);
+        require(!allowedTokens[_allowedToken], ERROR_TOKEN_ALREADY_ALLOWED);
         allowedTokens[_allowedToken] = true;
         allowedTokensArray.push(_allowedToken);
 
@@ -288,7 +305,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         external
         authP(ADD_ACCRUED_VALUE_ROLE, arr(uint256(employeeId), amount))
     {
-        require(amount <= MAX_ACCRUED_VALUE);
+        require(amount <= MAX_ACCRUED_VALUE, ERROR_ACCRUED_VALUE_TOO_BIG);
 
         _addAccruedValue(employeeId, amount);
     }
@@ -331,7 +348,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         Employee storage employee = employees[employeeIds[msg.sender]];
 
         // check arrays match
-        require(tokens.length == distribution.length);
+        require(tokens.length == distribution.length, ERROR_TOKEN_ALLOCATION_MISMATCH);
 
         // delete previous allocation
         for (uint32 j = 0; j < allowedTokensArray.length; j++) {
@@ -342,12 +359,12 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint8 sum = 0;
         for (uint32 i = 0; i < distribution.length; i++) {
             // check token is allowed
-            require(allowedTokens[tokens[i]]);
+            require(allowedTokens[tokens[i]], ERROR_NO_ALLOWED_TOKEN);
             // set distribution
             employee.allocation[tokens[i]] = distribution[i];
             sum = sum.add(distribution[i]);
         }
-        require(sum == 100);
+        require(sum == 100, ERROR_DISTRIBUTION_NO_COMPLETE);
 
         emit DetermineAllocation(employeeIds[msg.sender], msg.sender);
     }
@@ -360,7 +377,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         Employee storage employee = employees[employeeIds[msg.sender]];
 
         bool somethingPaid = _payTokens(employeeIds[msg.sender]);
-        require(somethingPaid);
+        require(somethingPaid, ERROR_NOTHING_PAID);
     }
 
     /**
@@ -370,9 +387,9 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      */
     function changeAddressByEmployee(address newAddress) isInitialized employeeMatches external {
         // check that account doesn't exist
-        require(employeeIds[newAddress] == 0);
+        require(employeeIds[newAddress] == 0, ERROR_EMPLOYEE_ALREADY_EXIST);
         // check it's non-null address
-        require(newAddress != address(0));
+        require(newAddress != address(0), ERROR_NULL_ADDRESS);
 
         uint128 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
@@ -480,7 +497,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      * @param _evmScript script being executed
      */
     function forward(bytes _evmScript) public {
-        require(canForward(msg.sender, _evmScript));
+        require(canForward(msg.sender, _evmScript), ERROR_NO_FORWARD);
         bytes memory input = new bytes(0); // TODO: Consider input for this
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(finance);
@@ -506,7 +523,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         internal
     {
         // check that account doesn't exist
-        require(employeeIds[accountAddress] == 0);
+        require(employeeIds[accountAddress] == 0, ERROR_EMPLOYEE_ALREADY_EXIST);
 
         uint128 employeeId = nextEmployee;
         employees[employeeId] = Employee({
@@ -538,13 +555,13 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     }
 
     function _setPriceFeed(IFeed _feed) internal {
-        require(_feed != address(0));
+        require(_feed != address(0), ERROR_FINANCE_NOT_CONTRACT);
         feed = _feed;
         emit SetPriceFeed(feed);
     }
 
     function _setRateExpiryTime(uint64 _time) internal {
-        require(_time > 0);
+        require(_time > 0, ERROR_RATE_EXPIRY_TIME_ZERO);
         rateExpiryTime = _time;
         emit SetRateExpiryTime(rateExpiryTime);
     }
@@ -582,7 +599,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             if (employee.allocation[token] == 0)
                 continue;
             uint128 exchangeRate = getExchangeRate(token);
-            require(exchangeRate > 0);
+            require(exchangeRate > 0, ERROR_EXCHANGE_RATE_ZERO);
             // salary converted to token and applied allocation percentage
             uint256 tokenAmount = owed.mul(exchangeRate).mul(employee.allocation[token]);
             // dividing by 100 for the allocation and by ONE for the exchange rate
@@ -612,7 +629,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     function _terminateEmployee(uint128 employeeId, uint64 endDate) internal {
         // prevent past termination dates
-        require(endDate >= getTimestamp64());
+        require(endDate >= getTimestamp64(), ERROR_PAST_TERMINATION_DATE);
 
         employees[employeeId].terminated = true;
         employees[employeeId].endDate = endDate;
