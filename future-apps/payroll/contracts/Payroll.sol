@@ -104,9 +104,11 @@ contract Payroll is EtherTokenConstant, AragonApp { //, IForwarder { // makes co
     }
 
     /**
-     * @notice Initialize Payroll app for `_finance`. Set ETH and Denomination tokens
+     * @notice Initialize Payroll app for `_finance`. Set Denomination token, Pricefeed and Exchange rate expiry time.
      * @param _finance Address of the finance Payroll will rely on (non changeable)
      * @param _denominationToken Address of Denomination Token
+     * @param _priceFeed Address of Pricefeed contract
+     * @param _rateExpiryTime Exchange rate expiry time, in seconds
      */
     function initialize(
         Finance _finance,
