@@ -51,7 +51,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_REMAINING_BUDGET = "FINANCE_REMAINING_BUDGET";
 
     // Order optimized for storage
-    struct Payment {
+    struct RecurringPayment {
         address token;
         address receiver;
         address createdBy;
@@ -85,7 +85,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint64 endTime;
         uint256 firstTransactionId;
         uint256 lastTransactionId;
-
         mapping (address => TokenStatement) tokenStatement;
     }
 
@@ -99,8 +98,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     Settings internal settings;
 
     // We are mimicing arrays, we use mappings instead to make app upgrade more graceful
-    mapping (uint256 => Payment) internal payments;
-    // Payments start at index 1, to allow us to use payments[0] for transactions that are not
+    mapping (uint256 => RecurringPayment) internal recurringPayments;
+    // Payments start at index 1, to allow us to use recurringPayments[0] for transactions that are not
     // linked to a recurring payment
     uint256 public paymentsNextIndex;
 
@@ -171,7 +170,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         settings.periodDuration = _periodDuration;
 
         // Reserve the first recurring payment index as an unused index for transactions not linked to a payment
-        payments[0].inactive = true;
+        recurringPayments[0].inactive = true;
         paymentsNextIndex = 1;
 
         // Reserve the first transaction index as an unused index for periods with no transactions
@@ -243,7 +242,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         paymentId = paymentsNextIndex++;
         emit NewPayment(paymentId, _receiver, _maxRepeats, _reference);
 
-        Payment storage payment = payments[paymentId];
+        RecurringPayment storage payment = recurringPayments[paymentId];
         payment.token = _token;
         payment.receiver = _receiver;
         payment.amount = _amount;
@@ -312,7 +311,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function executePayment(uint256 _paymentId)
         external
-        authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, payments[_paymentId].amount))
+        authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, recurringPayments[_paymentId].amount))
         paymentExists(_paymentId)
         transitionsPeriod
     {
@@ -328,7 +327,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function receiverExecutePayment(uint256 _paymentId) external isInitialized paymentExists(_paymentId) transitionsPeriod {
         require(nextPaymentTime(_paymentId) <= getTimestamp64(), ERROR_RECEIVER_EXECUTE_PAYMENT_TIME);
-        require(payments[_paymentId].receiver == msg.sender, ERROR_PAYMENT_RECEIVER);
+        require(recurringPayments[_paymentId].receiver == msg.sender, ERROR_PAYMENT_RECEIVER);
 
         _executePayment(_paymentId);
     }
@@ -347,7 +346,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         authP(MANAGE_PAYMENTS_ROLE, arr(_paymentId, uint256(_active ? 1 : 0)))
         paymentExists(_paymentId)
     {
-        payments[_paymentId].inactive = !_active;
+        recurringPayments[_paymentId].inactive = !_active;
         emit ChangePaymentState(_paymentId, _active);
     }
 
@@ -411,7 +410,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             address createdBy
         )
     {
-        Payment storage payment = payments[_paymentId];
+        RecurringPayment storage payment = recurringPayments[_paymentId];
 
         token = payment.token;
         receiver = payment.receiver;
@@ -485,7 +484,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     function nextPaymentTime(uint256 _paymentId) public view paymentExists(_paymentId) returns (uint64) {
-        Payment memory payment = payments[_paymentId];
+        RecurringPayment memory payment = recurringPayments[_paymentId];
 
         if (payment.repeats >= payment.maxRepeats) {
             return MAX_UINT64; // re-executes in some billions of years time... should not need to worry
@@ -574,7 +573,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     function _executePayment(uint256 _paymentId) internal {
-        Payment storage payment = payments[_paymentId];
+        RecurringPayment storage payment = recurringPayments[_paymentId];
         require(!payment.inactive, ERROR_PAYMENT_INACTIVE);
 
         uint64 payed = 0;
