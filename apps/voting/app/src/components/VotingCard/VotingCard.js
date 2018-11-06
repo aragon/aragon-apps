@@ -41,7 +41,7 @@ class VotingCard extends React.Component {
         </Header>
         <Card>
           <Content>
-            <Question>
+            <Question title={`ID: ${id}`}>
               <Text color={theme.textTertiary}>#{id} </Text>
               <span>{question}</span>
             </Question>
