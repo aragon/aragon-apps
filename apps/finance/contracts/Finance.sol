@@ -11,6 +11,8 @@ import "@aragon/os/contracts/common/IsContract.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
+// Ideally: import "@aragon/os/contracts/lib/crypto/ECDSA.sol";
+import { ECDSA } from "./ECDSA.sol";
 
 import "@aragon/apps-vault/contracts/Vault.sol";
 
@@ -49,6 +51,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_VALUE_MISMATCH = "FINANCE_VALUE_MISMATCH";
     string private constant ERROR_PAYMENT_INACTIVE = "FINANCE_PAYMENT_INACTIVE";
     string private constant ERROR_REMAINING_BUDGET = "FINANCE_REMAINING_BUDGET";
+    string private constant ERROR_SIGNATURE_USED = "FINANCE_SIGNATURE_USED";
 
     // Order optimized for storage
     struct Payment {
@@ -97,6 +100,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     Vault public vault;
     Settings internal settings;
+
+    mapping (bytes => bool) internal _signatures;
 
     // We are mimicing arrays, we use mappings instead to make app upgrade more graceful
     mapping (uint256 => Payment) internal payments;
@@ -196,6 +201,43 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             msg.sender,
             true
         );
+    }
+
+    /**
+    * @dev Deposit for approved ERC20 tokens or ETH on behalf of another account
+    * @notice Deposit `@tokenAmount(_token, _amount)`
+    * @param _token Address of deposited token
+    * @param _amount Amount of tokens sent
+    * @param _reference Reason for payment
+    * @param _signature Signature of depositing account
+    */
+    function assistedDeposit(
+        address _token,
+        uint256 _amount,
+        string _reference,
+        uint256 _nonce,
+        bytes _signature
+    )
+        external
+        payable
+        isInitialized
+        transitionsPeriod
+    {
+        require(_signatures[_signature] == false, ERROR_SIGNATURE_USED);
+        // Hash parameters
+        bytes32 parameterHash = keccak256(abi.encodePacked(_token, _amount, _reference, _nonce));
+        // Recover account from signature
+        // TODO: import ECDSA
+        address recoveredAccount = ECDSA.recover(parameterHash, _signature);
+        _deposit(
+            _token,
+            _amount,
+            _reference,
+            recoveredAccount,
+            true
+        );
+        // Record this signature 
+        _signatures[_signature] = true;
     }
 
     /**
