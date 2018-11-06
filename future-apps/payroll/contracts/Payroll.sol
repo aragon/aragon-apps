@@ -1,6 +1,7 @@
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
+import "@aragon/os/contracts/common/EtherTokenConstant.sol";
 // import "@aragon/os/contracts/common/IForwarder.sol";
 
 import "@aragon/os/contracts/lib/token/ERC20.sol";
@@ -16,7 +17,7 @@ import "@aragon/apps-finance/contracts/Finance.sol";
 /**
  * @title Payroll in multiple currencies
  */
-contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (removes pure and interface doesnt match)
+contract Payroll is EtherTokenConstant, AragonApp { //, IForwarder { // makes coverage crash (removes pure and interface doesnt match)
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeMath8 for uint8;
@@ -30,7 +31,6 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("CHANGE_PRICE_FEED_ROLE");
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
 
-    address constant public ETH = address(0);
     uint128 constant public ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
     uint64 constant public MAX_UINT64 = uint64(-1);
     uint256 constant public MAX_ACCRUED_VALUE = 2**128;
@@ -64,13 +64,13 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     }
 
     uint128 public nextEmployee; // starts at 1
-    mapping(uint128 => Employee) private employees;
-    mapping(address => uint128) private employeeIds;
-
+    uint64 public rateExpiryTime;
     Finance public finance;
     address public denominationToken;
     IFeed public feed;
-    uint64 public rateExpiryTime;
+
+    mapping(uint128 => Employee) private employees;
+    mapping(address => uint128) private employeeIds;
     mapping(address => bool) private allowedTokens;
     address[] private allowedTokensArray;
 
