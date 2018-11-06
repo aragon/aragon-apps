@@ -377,8 +377,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @notice To withdraw payment by employee (the caller). The amount owed since last call will be transferred.
      */
     function payday() isInitialized employeeMatches external {
-        Employee storage employee = employees[employeeIds[msg.sender]];
-
         bool somethingPaid = _payTokens(employeeIds[msg.sender]);
         require(somethingPaid, ERROR_NOTHING_PAID);
     }
