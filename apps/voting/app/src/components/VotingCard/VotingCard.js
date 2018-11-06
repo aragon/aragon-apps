@@ -23,6 +23,7 @@ class VotingCard extends React.Component {
       votingPower,
       status,
       id,
+      description,
     } = this.props
     return (
       <Main>
@@ -41,7 +42,7 @@ class VotingCard extends React.Component {
         </Header>
         <Card>
           <Content>
-            <Question title={`ID: ${id}`}>
+            <Question title={`${description} (ID: ${id})`}>
               <Text color={theme.textTertiary}>#{id} </Text>
               <span>{question}</span>
             </Question>
