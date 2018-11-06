@@ -396,11 +396,13 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
 
         uint128 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
+        address oldAddress = employee.accountAddress;
 
-        emit ChangeAddressByEmployee(employeeId, employee.accountAddress, newAddress);
         employee.accountAddress = newAddress;
         employeeIds[newAddress] = employeeId;
         delete employeeIds[msg.sender];
+
+        emit ChangeAddressByEmployee(employeeId, oldAddress, newAddress);
     }
 
     /**
