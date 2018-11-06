@@ -347,7 +347,10 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @param tokens Array with the tokens to receive, they must belong to allowed tokens for employee
      * @param distribution Array (correlated to tokens) with the proportions (integers summing to 100)
      */
-    function determineAllocation(address[] tokens, uint8[] distribution) isInitialized employeeMatches external {
+    function determineAllocation(address[] tokens, uint8[] distribution) employeeMatches external {
+        // no needs to check for isInitialized since employeeMatches will only pass after adding
+        // an employee and therefore having had the contract initialized
+
         Employee storage employee = employees[employeeIds[msg.sender]];
 
         // check arrays match
@@ -376,7 +379,10 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @dev To withdraw payment by employee (the caller). The amount owed since last call will be transferred.
      * @notice To withdraw payment by employee (the caller). The amount owed since last call will be transferred.
      */
-    function payday() isInitialized employeeMatches external {
+    function payday() employeeMatches external {
+        // no needs to check for isInitialized since employeeMatches will only pass after adding
+        // an employee and therefore having had the contract initialized
+
         bool somethingPaid = _payTokens(employeeIds[msg.sender]);
         require(somethingPaid, ERROR_NOTHING_PAID);
     }
@@ -386,7 +392,10 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @notice Change employee account address to `newAddress`
      * @param newAddress New address to receive payments
      */
-    function changeAddressByEmployee(address newAddress) isInitialized employeeMatches external {
+    function changeAddressByEmployee(address newAddress) employeeMatches external {
+        // no needs to check for isInitialized since employeeMatches will only pass after adding
+        // an employee and therefore having had the contract initialized
+
         // check that account doesn't exist
         require(employeeIds[newAddress] == 0, ERROR_EMPLOYEE_ALREADY_EXIST);
         // check it's non-null address
