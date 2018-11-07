@@ -391,7 +391,9 @@ contract('Finance App', accounts => {
     );
     const bufferedV = new Buffer(1);
     bufferedV.writeUInt8(v);
-    const signature = Buffer.concat([r, s, bufferedV]).toString('hex');
+    const signature = ethUtil.addHexPrefix(
+      Buffer.concat([r, s, bufferedV]).toString('hex')
+    );
     const receipt = await finance.assistedDeposit(
       ETH,
       sentWei,
@@ -428,7 +430,7 @@ contract('Finance App', accounts => {
     assert.equal(paymentId, 0, 'payment id should be 0');
     assert.equal(paymentRepeatNumber, 0, 'payment repeat number should be 0');
     assert.equal(token, ETH, 'token should be ETH token');
-    assert.notEqual(entity, assistedAddress, 'entity should not be equal');
+    assert.equal(entity, assistedAddress, 'entity should be equal');
     assert.isTrue(incoming, 'tx should be incoming');
     assert.equal(date, 1, 'date should be correct');
     assert.equal(
