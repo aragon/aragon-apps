@@ -27,9 +27,9 @@
     "test:gas": "GAS_REPORTER=true npm test"
   },
   "dependencies": {
-    "@aragon/apps-finance": "^2.0.0-beta.2",
-    "@aragon/os": "^4.0.0-beta.3",
-    "@aragon/ppf-contracts": "^1.0.2"
+    "@aragon/apps-finance": "2.1.0",
+    "@aragon/os": "4.0.1",
+    "@aragon/ppf-contracts": "1.0.2"
   },
   "devDependencies": {
     "@aragon/apps-shared-migrations": "^1.0.0",

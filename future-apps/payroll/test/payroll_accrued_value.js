@@ -69,7 +69,7 @@ contract('Payroll, accrued value,', async (accounts) => {
   })
 
   it('fails adding an accrued Value too large', async () => {
-    const accruedValue = new web3.BigNumber(await payroll.MAX_ACCRUED_VALUE()).plus(1)
+    const accruedValue = new web3.BigNumber(await payroll.getMaxAccruedValue()).plus(1)
     return assertRevert(async () => {
       await payroll.addAccruedValue(employeeId1, accruedValue)
     })

@@ -57,7 +57,7 @@ contract('Payroll Timestamp', function(accounts) {
     const CHANGE_PRICE_FEED_ROLE = await payrollBase.CHANGE_PRICE_FEED_ROLE()
     const MODIFY_RATE_EXPIRY_ROLE = await payrollBase.MODIFY_RATE_EXPIRY_ROLE()
 
-    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, { from: owner })
+    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
     payroll = getContract('Payroll').at(getEvent(receipt, 'NewAppProxy', 'proxy'))
 
     const acl = await getContract('ACL').at(await dao.acl())

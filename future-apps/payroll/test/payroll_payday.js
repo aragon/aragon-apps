@@ -90,7 +90,7 @@ contract('Payroll, allocation and payday,', function(accounts) {
       "",
       parseInt(await payroll.getTimestampPublic.call(), 10) - 2628005 // now minus 1/12 year
     )
-    
+
     employeeId = getEvent(receipt, 'AddEmployee', 'employeeId')
   })
 
@@ -284,9 +284,9 @@ contract('Payroll, allocation and payday,', function(accounts) {
     // we need to forward time in price feed, or rate will be obsolete
     await priceFeed.mockAddTimestamp(timePassed3)
     await payroll.determineAllocation([ETH, usdToken.address, erc20Token1.address], [15, 60, 25], {from: employee})
-    assert.equal((await payroll.getAllocation(ETH, {from: employee})).valueOf(), 15, "ETH allocation doesn't match")
-    assert.equal((await payroll.getAllocation(usdToken.address, {from: employee})).valueOf(), 60, "USD allocation doesn't match")
-    assert.equal((await payroll.getAllocation(erc20Token1.address, {from: employee})).valueOf(), 25, "ERC 20 Token 1 allocation doesn't match")
+    assert.equal((await payroll.getAllocation(employeeId, ETH)).valueOf(), 15, "ETH allocation doesn't match")
+    assert.equal((await payroll.getAllocation(employeeId, usdToken.address)).valueOf(), 60, "USD allocation doesn't match")
+    assert.equal((await payroll.getAllocation(employeeId, erc20Token1.address)).valueOf(), 25, "ERC 20 Token 1 allocation doesn't match")
   })
 
   it("determining allocation deletes previous entries", async () => {
@@ -296,7 +296,7 @@ contract('Payroll, allocation and payday,', function(accounts) {
     const currencies = [ETH].concat(tokens.map(c => c.address))
     let totalAllocation = 0
     for (let tokenAddress of currencies) {
-      totalAllocation += parseInt(await payroll.getAllocation(tokenAddress, {from: employee}), 10)
+      totalAllocation += parseInt(await payroll.getAllocation(employeeId, tokenAddress), 10)
     }
     assert.equal(totalAllocation, 100, "Total allocation should remain 100")
   })

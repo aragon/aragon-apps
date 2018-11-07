@@ -162,19 +162,4 @@ contract('Payroll, allocation and payday,', function(accounts) {
       await payroll.sendTransaction({ from: owner, value: web3.toWei(200, 'wei') });
     });
   });
-
-  it("escapes hatch, recovers ETH", async () => {
-    // Payroll doesn't accept ETH funds, so we use a self destructing contract
-    // as a trick to be able to send ETH to it.
-    let zombie = await getContract('Zombie').new(payroll.address);
-    await zombie.sendTransaction({ from: owner, value: web3.toWei(200, 'wei') });
-    await zombie.escapeHatch();
-    let vaultInitialBalance = await getBalance(vault.address);
-    let payrollInitialBalance = await getBalance(payroll.address);
-    await payroll.escapeHatch();
-    let vaultFinalBalance = await getBalance(vault.address);
-    let payrollFinalBalance = await getBalance(payroll.address);
-    assert.equal(payrollFinalBalance.valueOf(), 0, "Funds not recovered (Payroll)!");
-    assert.equal(vaultFinalBalance.toString(), vaultInitialBalance.add(payrollInitialBalance).toString(), "Funds not recovered (Vault)!");
-  });
 })

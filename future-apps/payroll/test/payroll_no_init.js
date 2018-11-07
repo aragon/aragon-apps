@@ -48,7 +48,7 @@ contract('Payroll, without init,', function(accounts) {
     // Deploy ERC 20 Tokens
     erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 1", erc20Token1Decimals)
 
-    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, { from: owner })
+    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
     payroll = getContract('PayrollMock').at(getEvent(receipt, 'NewAppProxy', 'proxy'))
   })
 
@@ -85,12 +85,6 @@ contract('Payroll, without init,', function(accounts) {
   it('fails to call terminateEmployee', async () => {
     return assertRevert(async () => {
       await payroll.terminateEmployee(1, await payroll.getTimestampPublic.call())
-    })
-  })
-
-  it('fails to call escapeHatch', async () => {
-    return assertRevert(async () => {
-      await payroll.escapeHatch()
     })
   })
 
