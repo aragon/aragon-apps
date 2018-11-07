@@ -227,7 +227,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         // Hash parameters
         bytes32 parameterHash = keccak256(abi.encodePacked(_token, _amount, _reference, _nonce));
         // Recover account from signature
-        // TODO: import ECDSA
         address recoveredAccount = ECDSA.recover(parameterHash, _signature);
         _deposit(
             _token,
@@ -579,7 +578,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         if (_isExternalDeposit) {
             if (_token != ETH) {
                 // Get the tokens to Finance
-                require(ERC20(_token).transferFrom(msg.sender, this, _amount), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
+                require(ERC20(_token).transferFrom(_sender, this, _amount), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
             } else {
                 // Ensure that the ETH sent with the transaction equals the amount in the deposit
                 require(msg.value == _amount, ERROR_VALUE_MISMATCH);

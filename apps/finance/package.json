@@ -50,7 +50,8 @@
     "solium": "^1.0.4",
     "truffle": "4.1.14",
     "truffle-hdwallet-provider": "0.0.3",
-    "webpack": "3.10.0"
+    "webpack": "3.10.0",
+    "ethereumjs-util": "^5.2.0"
   },
   "dependencies": {
     "@aragon/apps-vault": "^4.0.0",
