@@ -1,15 +1,16 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
-import "@aragon/os/contracts/common/Initializable.sol";
-import "@aragon/os/contracts/common/IForwarder.sol";
+// import "@aragon/os/contracts/common/IForwarder.sol";
 
-import "@aragon/os/contracts/lib/zeppelin/token/ERC20.sol";
-import "@aragon/os/contracts/lib/zeppelin/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/token/ERC20.sol";
+import "@aragon/os/contracts/lib/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/math/SafeMath64.sol";
+import "@aragon/os/contracts/lib/math/SafeMath8.sol";
+
+import "@aragon/ppf-contracts/contracts/IFeed.sol";
 
 import "@aragon/apps-finance/contracts/Finance.sol";
-
-import "./DenominationToken.sol";
 
 
 /**
@@ -17,20 +18,31 @@ import "./DenominationToken.sol";
  */
 contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (removes pure and interface doesnt match)
     using SafeMath for uint256;
-    using DenominationToken for uint256;
+    using SafeMath64 for uint64;
+    using SafeMath8 for uint8;
 
     // kernel roles
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
-    bytes32 constant public REMOVE_EMPLOYEE_ROLE = keccak256("REMOVE_EMPLOYEE_ROLE");
+    bytes32 constant public TERMINATE_EMPLOYEE_ROLE = keccak256("TERMINATE_EMPLOYEE_ROLE");
+    bytes32 constant public SET_EMPLOYEE_SALARY_ROLE = keccak256("SET_EMPLOYEE_SALARY_ROLE");
+    bytes32 constant public ADD_ACCRUED_VALUE_ROLE = keccak256("ADD_ACCRUED_VALUE_ROLE");
     bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
-    bytes32 constant public ORACLE_ROLE = keccak256("ORACLE_ROLE");
+    bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("CHANGE_PRICE_FEED_ROLE");
+    bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
+
     address constant public ETH = address(0);
+    uint128 constant public ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
+    uint64 constant public MAX_UINT64 = uint64(-1);
+    uint256 constant public MAX_ACCRUED_VALUE = 2**128;
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
         mapping(address => uint8) allocation;
-        uint256 denominationTokenSalary; // per second
-        uint256 lastPayroll;
+        uint256 denominationTokenSalary; // per second in denomination Token
+        uint256 accruedValue;
+        uint64 lastPayroll;
+        uint64 endDate;
+        bool terminated;
         string name;
     }
 
@@ -40,21 +52,39 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     Finance public finance;
     address public denominationToken;
-    mapping(address => uint256) private exchangeRates;
+    IFeed public feed;
+    uint64 public rateExpiryTime;
     mapping(address => bool) private allowedTokens;
     address[] private allowedTokensArray;
 
-    event EmployeeAdded(
-        uint128 employeeId,
-        address accountAddress,
-        uint256 initialYearlyDenominationSalary,
+    event AddAllowedToken(address token);
+    event AddEmployee(
+        uint128 indexed employeeId,
+        address indexed accountAddress,
+        uint256 initialDenominationSalary,
         string name,
-        uint256 startDate
+        uint64 startDate
     );
+    event SetEmployeeSalary(uint128 indexed employeeId, uint256 denominationSalary);
+    event AddEmployeeAccruedValue(uint128 indexed employeeId, uint256 amount);
+    event TerminateEmployee(uint128 indexed employeeId, address accountAddress, uint64 endDate);
+    event ChangeAddressByEmployee(uint128 indexed employeeId, address oldAddress, address newAddress);
+    event DetermineAllocation(uint128 indexed employeeId, address indexed employee);
+    event SendPayroll(address indexed employee, address indexed token, uint amount);
+    event SetPriceFeed(address feed);
+    event SetRateExpiryTime(uint64 time);
 
-    event Fund(address sender, address token, uint amount, uint balance, bytes data);
-    event SendPayroll(address employee, address token, uint amount);
-    event ExchangeRateSet(address token, uint rate);
+    modifier employeeExists(uint128 employeeId) {
+        /* check that employee exists and is active */
+        require(employeeIds[employees[employeeId].accountAddress] != 0 && !employees[employeeId].terminated);
+        _;
+    }
+
+    modifier employeeMatches {
+        // check that employee exists (and matches)
+        require(employees[employeeIds[msg.sender]].accountAddress == msg.sender);
+        _;
+    }
 
     /**
      * @notice Initialize Payroll app for `_finance`. Set ETH and Denomination tokens
@@ -63,46 +93,51 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      */
     function initialize(
         Finance _finance,
-        address _denominationToken
+        address _denominationToken,
+        IFeed _priceFeed,
+        uint64 _rateExpiryTime
     ) external
         onlyInit
     {
+        require(address(_finance) != address(0));
+
         initialized();
 
         nextEmployee = 1; // leave 0 to check null address mapping
         finance = _finance;
         denominationToken = _denominationToken;
-        exchangeRates[address(denominationToken)] = 1;
+        _setPriceFeed(_priceFeed);
+        _setRateExpiryTime(_rateExpiryTime);
     }
 
     /**
-     * @dev Set the Denomination exchange rate for a token. Uses decimals from token
-     * @notice Sets the Denomination exchange rate for a token
-     * @param token The token address
-     * @param denominationExchangeRate The exchange rate
+     * @notice Sets the Price Feed for exchange rates to `_feed`.
+     * @param _feed The Price Feed address
      */
-    function setExchangeRate(
-        address token,
-        uint256 denominationExchangeRate
-    )
-        external
-        authP(ORACLE_ROLE, arr(token, denominationExchangeRate, exchangeRates[token]))
-    {
-        // Denomination Token is a special one, so we can not allow its exchange rate to be changed
-        require(token != denominationToken);
-        exchangeRates[token] = denominationExchangeRate;
-        ExchangeRateSet(token, denominationExchangeRate);
+    function setPriceFeed(IFeed _feed) external authP(CHANGE_PRICE_FEED_ROLE, arr(feed, _feed)) {
+        _setPriceFeed(_feed);
+    }
+
+    /**
+     * @dev Set the exchange rate expiry time, in seconds. Exchange rates older than it won't be accepted for payments.
+     * @notice Sets the exchange rate expiry time to `_time`.
+     * @param _time The expiration time in seconds for exchange rates
+     */
+    function setRateExpiryTime(uint64 _time) external authP(MODIFY_RATE_EXPIRY_ROLE, arr(uint256(_time))) {
+        _setRateExpiryTime(_time);
     }
 
     /**
      * @dev Add token to the allowed set
-     * @notice Add token to the allowed set
+     * @notice Add `_allowedToken` to the set of allowed tokens
      * @param _allowedToken New token allowed for payment
      */
     function addAllowedToken(address _allowedToken) external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
         require(!allowedTokens[_allowedToken]);
         allowedTokens[_allowedToken] = true;
         allowedTokensArray.push(_allowedToken);
+
+        emit AddAllowedToken(_allowedToken);
     }
 
     /*
@@ -112,70 +147,69 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      */
 
     /**
-     * @dev Add employee to Payroll
-     * @notice Add employee to Payroll. See addEmployeeWithNameAndStartDate
+     * @dev Add employee to Payroll. See addEmployeeWithNameAndStartDate
+     * @notice Add employee with address `accountAddress` to Payroll with a salary of `initialDenominationSalary` per second.
      * @param accountAddress Employee's address to receive Payroll
-     * @param initialYearlyDenominationSalary Employee's salary
+     * @param initialDenominationSalary Employee's salary, per second in denomination Token
      */
     function addEmployee(
         address accountAddress,
-        uint256 initialYearlyDenominationSalary
+        uint256 initialDenominationSalary
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(initialYearlyDenominationSalary, getTimestamp()))
+        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialDenominationSalary, getTimestamp64()))
     {
         _addEmployee(
             accountAddress,
-            initialYearlyDenominationSalary,
+            initialDenominationSalary,
             "",
-            getTimestamp()
+            getTimestamp64()
         );
     }
 
     /**
-     * @dev Add employee to Payroll
-     * @notice Add employee to Payroll. See addEmployeeWithNameAndStartDate
+     * @dev Add employee to Payroll. See addEmployeeWithNameAndStartDate
+     * @notice Add employee `name` with address `accountAddress` to Payroll with a salary of `initialDenominationSalary` per second.
      * @param accountAddress Employee's address to receive Payroll
-     * @param initialYearlyDenominationSalary Employee's salary
+     * @param initialDenominationSalary Employee's salary, per second in denomination Token
      * @param name Employee's name
      */
     function addEmployeeWithName(
         address accountAddress,
-        uint256 initialYearlyDenominationSalary,
+        uint256 initialDenominationSalary,
         string name
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(initialYearlyDenominationSalary, getTimestamp()))
+        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialDenominationSalary, getTimestamp64()))
     {
         _addEmployee(
             accountAddress,
-            initialYearlyDenominationSalary,
+            initialDenominationSalary,
             name,
-            getTimestamp()
+            getTimestamp64()
         );
     }
 
     /**
      * @dev Add employee to Payroll
-     * @notice Creates employee, adds it to mappings, initializes values.
-               Updates also global Payroll salary sum.
+     * @notice Add employee `name` with address `accountAddress` to Payroll with a salary of `initialDenominationSalary` per second, starting on `startDate`.
      * @param accountAddress Employee's address to receive Payroll
-     * @param initialYearlyDenominationSalary Employee's salary
+     * @param initialDenominationSalary Employee's salary, per second in denomintation Token
      * @param name Employee's name
      * @param startDate It will actually set initial lastPayroll value
      */
     function addEmployeeWithNameAndStartDate(
         address accountAddress,
-        uint256 initialYearlyDenominationSalary,
+        uint256 initialDenominationSalary,
         string name,
-        uint256 startDate
+        uint64 startDate
     )
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(initialYearlyDenominationSalary, startDate))
+        authP(ADD_EMPLOYEE_ROLE, arr(accountAddress, initialDenominationSalary, startDate))
     {
         _addEmployee(
             accountAddress,
-            initialYearlyDenominationSalary,
+            initialDenominationSalary,
             name,
             startDate
         );
@@ -183,40 +217,80 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     /**
      * @dev Set employee's annual salary
-     * @notice Updates also global Payroll salary sum
+     * @notice Set employee #`employeeId` annual salary to `denominationSalary` per second.
      * @param employeeId Employee's identifier
-     * @param yearlyDenominationSalary Employee's new salary
+     * @param denominationSalary Employee's new salary, per second in denomintation Token
      */
     function setEmployeeSalary(
         uint128 employeeId,
-        uint256 yearlyDenominationSalary
+        uint256 denominationSalary
     )
+        employeeExists(employeeId)
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(yearlyDenominationSalary, 0))
+        authP(SET_EMPLOYEE_SALARY_ROLE, arr(uint256(employeeId), denominationSalary))
     {
-        /* check that employee exists */
-        require(employeeIds[employees[employeeId].accountAddress] != 0);
+        uint64 timestamp = getTimestamp64();
 
-        employees[employeeId].denominationTokenSalary = yearlyDenominationSalary.toSecondDenominationToken();
+        // Add owed salary to employee's accrued value
+        uint256 owed = _getOwedSalary(employeeId, timestamp);
+
+        employees[employeeId].lastPayroll = timestamp;
+        _addAccruedValue(employeeId, owed);
+
+        // set new salary
+        employees[employeeId].denominationTokenSalary = denominationSalary;
+
+        emit SetEmployeeSalary(employeeId, denominationSalary);
     }
 
     /**
-     * @dev Remove employee from Payroll
-     * @notice Updates also global Payroll salary sum
+     * @dev Terminate employee from Payroll
+     * @notice Terminate employee #`employeeId` from Payroll
      * @param employeeId Employee's identifier
      */
-    function removeEmployee(uint128 employeeId) external auth(REMOVE_EMPLOYEE_ROLE) {
-        /* check that employee exists */
-        require(employeeIds[employees[employeeId].accountAddress] != 0);
+    function terminateEmployeeNow(
+        uint128 employeeId
+    )
+        employeeExists(employeeId)
+        external
+        authP(TERMINATE_EMPLOYEE_ROLE, arr(uint256(employeeId)))
+    {
+        _terminateEmployee(employeeId, getTimestamp64());
+    }
 
-        // Pay owed salary to employee
-        // get time that has gone by (seconds)
-        uint256 time = getTimestamp().sub(employees[employeeId].lastPayroll);
-        if (time > 0)
-            _payTokens(employeeId, time);
+    /**
+     * @dev Terminate employee from Payroll
+     * @notice Terminate employee #`employeeId` from Payroll
+     * @param employeeId Employee's identifier
+     * @param endDate Termination date
+     */
+    function terminateEmployee(
+        uint128 employeeId,
+        uint64 endDate
+    )
+        employeeExists(employeeId)
+        external
+        authP(TERMINATE_EMPLOYEE_ROLE, arr(uint256(employeeId)))
+    {
+        _terminateEmployee(employeeId, endDate);
+    }
 
-        delete employeeIds[employees[employeeId].accountAddress];
-        delete employees[employeeId];
+    /**
+     * @notice Adds `amount` to accrued value for employee with id `employeeId`
+     * @param employeeId Id of the employee
+     * @param amount Added amount
+     */
+    function addAccruedValue(
+        uint128 employeeId,
+        uint256 amount
+    )
+        employeeExists(employeeId)
+        external
+        authP(ADD_ACCRUED_VALUE_ROLE, arr(uint256(employeeId), amount))
+    {
+        require(amount <= MAX_ACCRUED_VALUE);
+
+        _addAccruedValue(employeeId, amount);
     }
 
     /**
@@ -224,7 +298,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
      *      but in case it happens, this function allows to recover them.
      * @notice Allows to send ETH from this contract to Finance, to avoid locking them in contract forever.
      */
-    function escapeHatch() external {
+    function escapeHatch() isInitialized external {
         finance.call.value(this.balance)();
     }
 
@@ -235,7 +309,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
             but in case it happens, this function allows to recover them.
      * @notice Allows to send tokens from this contract to Finance, to avoid locked tokens in contract forever
      */
-    function depositToFinance(address token) external {
+    function depositToFinance(address token) isInitialized external {
         ERC20 tokenContract = ERC20(token);
         uint256 value = tokenContract.balanceOf(this);
         if (value == 0)
@@ -250,121 +324,159 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     /**
      * @dev Set token distribution for payments to an employee (the caller)
      * @notice Set token distribution for payments to an employee (the caller).
-     *         Only callable once every 6 months
      * @param tokens Array with the tokens to receive, they must belong to allowed tokens for employee
-     * @param distribution Array (correlated to tokens) with the proportions (integers over 100)
+     * @param distribution Array (correlated to tokens) with the proportions (integers summing to 100)
      */
-    function determineAllocation(address[] tokens, uint8[] distribution) external {
+    function determineAllocation(address[] tokens, uint8[] distribution) isInitialized employeeMatches external {
         Employee storage employee = employees[employeeIds[msg.sender]];
-        // check that employee exists (and matches)
-        require(employee.accountAddress == msg.sender);
 
         // check arrays match
         require(tokens.length == distribution.length);
 
+        // delete previous allocation
+        for (uint32 j = 0; j < allowedTokensArray.length; j++) {
+            delete employee.allocation[allowedTokensArray[j]];
+        }
+
         // check distribution is right
         uint8 sum = 0;
-        uint32 i;
-        for (i = 0; i < distribution.length; i++) {
+        for (uint32 i = 0; i < distribution.length; i++) {
             // check token is allowed
             require(allowedTokens[tokens[i]]);
             // set distribution
             employee.allocation[tokens[i]] = distribution[i];
-            sum += distribution[i];
-            require(sum >= distribution[i]);
+            sum = sum.add(distribution[i]);
         }
         require(sum == 100);
+
+        emit DetermineAllocation(employeeIds[msg.sender], msg.sender);
     }
 
     /**
      * @dev To withdraw payment by employee (the caller). The amount owed since last call will be transferred.
      * @notice To withdraw payment by employee (the caller). The amount owed since last call will be transferred.
      */
-    function payday() external {
+    function payday() isInitialized employeeMatches external {
         Employee storage employee = employees[employeeIds[msg.sender]];
-        // check that employee exists (and matches)
-        require(employees[employeeIds[msg.sender]].accountAddress == msg.sender);
-        // get time that has gone by (seconds)
-        uint256 time = getTimestamp().sub(employees[employeeIds[msg.sender]].lastPayroll);
-        require(time > 0);
 
-        bool somethingPaid = _payTokens(employeeIds[msg.sender], time);
+        bool somethingPaid = _payTokens(employeeIds[msg.sender]);
         require(somethingPaid);
-
-        // finally update last payroll date
-        employee.lastPayroll = getTimestamp();
     }
 
     /**
      * @dev Change employee account address. To be called by Employee
-     * @notice Change employee account address
+     * @notice Change employee account address to `newAddress`
      * @param newAddress New address to receive payments
      */
-    function changeAddressByEmployee(address newAddress) external {
+    function changeAddressByEmployee(address newAddress) isInitialized employeeMatches external {
         // check that account doesn't exist
         require(employeeIds[newAddress] == 0);
         // check it's non-null address
         require(newAddress != address(0));
-        // check that employee exists (and matches)
+
         uint128 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
-        // check that employee exists (and matches)
-        require(employee.accountAddress == msg.sender);
 
+        emit ChangeAddressByEmployee(employeeId, employee.accountAddress, newAddress);
         employee.accountAddress = newAddress;
         employeeIds[newAddress] = employeeId;
-        employeeIds[msg.sender] = 0;
+        delete employeeIds[msg.sender];
     }
 
     /**
-     * @dev Return all important info too through employees mapping
+     * @dev Return all Employee's important info
      * @notice Return all Employee's important info
-     * @param employeeId Employee's identifier
-     * @return Employee's address to receive payments
-     * @return Employee's annual salary
+     * @param accountAddress Employee's address to receive payments
+     * @return Employee's identifier
+     * @return Employee's annual salary, per second in denomination Token
+     * @return Employee's accrued value
      * @return Employee's name
-     * @return Employee's last call to payment distribution date
      * @return Employee's last payment received date
+     * @return Employee's termination date (max uint64 if none)
+     * @return Bool indicating if employee is terminated
      */
-    function getEmployee(uint128 employeeId)
+    function getEmployeeByAddress(address accountAddress)
         external
         view
         returns (
-            address accountAddress,
-            uint256 yearlyDenominationSalary,
+            uint128 employeeId,
+            uint256 denominationSalary,
+            uint256 accruedValue,
             string name,
-            uint256 lastPayroll
+            uint64 lastPayroll,
+            uint64 endDate,
+            bool terminated
         )
     {
-        Employee storage employee = employees[employeeId];
+        employeeId = employeeIds[accountAddress];
 
-        accountAddress = employee.accountAddress;
-        yearlyDenominationSalary = employee.denominationTokenSalary.toYearlyDenomination();
+        Employee memory employee = employees[employeeId];
+
+        denominationSalary = employee.denominationTokenSalary;
+        accruedValue = employee.accruedValue;
         name = employee.name;
         lastPayroll = employee.lastPayroll;
+        endDate = employee.endDate;
+        terminated = employee.terminated;
+    }
+
+    /**
+     * @dev Return all Employee's important info
+     * @notice Return all Employee's important info
+     * @param employeeId Employee's identifier
+     * @return Employee's address to receive payments
+     * @return Employee's annual salary, per second in denomination Token
+     * @return Employee's accrued value
+     * @return Employee's name
+     * @return Employee's last payment received date
+     * @return Employee's termination date (max uint64 if none)
+     * @return Bool indicating if employee is terminated
+     */
+    function getEmployee(uint128 employeeId)
+        public
+        view
+        returns (
+            address accountAddress,
+            uint256 denominationSalary,
+            uint256 accruedValue,
+            string name,
+            uint64 lastPayroll,
+            uint64 endDate,
+            bool terminated
+        )
+    {
+        Employee memory employee = employees[employeeId];
+
+        accountAddress = employee.accountAddress;
+        denominationSalary = employee.denominationTokenSalary;
+        accruedValue = employee.accruedValue;
+        name = employee.name;
+        lastPayroll = employee.lastPayroll;
+        endDate = employee.endDate;
+        terminated = employee.terminated;
     }
 
     /**
      * @dev Get payment proportion for a token and an employee (the caller)
      * @notice Get payment proportion for a token and an employee (the caller)
      * @param token The token address
+     * @return Allocation for token and employee
      */
     function getAllocation(address token) external view returns (uint8 allocation) {
         return employees[employeeIds[msg.sender]].allocation[token];
     }
 
     /**
-     * @dev Get the Denomination exchange rate of a Token
-     * @notice Get the Denomination exchange rate of a Token
-     * @param token The token address
-     * @return denominationExchangeRate The exchange rate
+     * @dev Check if a token is allowed
+     * @param _token Address of token to check
+     * @return True if it's in the list of allowed tokens, False otherwise
      */
-    function getExchangeRate(address token) external view returns (uint256 rate) {
-        rate = exchangeRates[token];
+    function isTokenAllowed(address _token) external view returns (bool) {
+        return allowedTokens[_token];
     }
 
     /**
-     * @dev IForwarder interface conformance. Forwards any token holder action.
+     * @dev IForwarder interface conformance. Forwards any employee action.
      * @param _evmScript script being executed
      */
     function forward(bytes _evmScript) public {
@@ -386,10 +498,11 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
 
     function _addEmployee(
         address accountAddress,
-        uint256 initialYearlyDenominationSalary,
+        uint256 initialDenominationSalary,
         string name,
-        uint256 startDate
+        uint64 startDate
     )
+        isInitialized
         internal
     {
         // check that account doesn't exist
@@ -398,16 +511,19 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         uint128 employeeId = nextEmployee;
         employees[employeeId] = Employee({
             accountAddress: accountAddress,
-            denominationTokenSalary: initialYearlyDenominationSalary.toSecondDenominationToken(),
+            denominationTokenSalary: initialDenominationSalary,
+            accruedValue: 0,
             lastPayroll: startDate,
+            endDate: MAX_UINT64,
+            terminated: false,
             name: name
         });
         // Ids mapping
         employeeIds[accountAddress] = employeeId;
-        EmployeeAdded(
+        emit AddEmployee(
             employeeId,
             accountAddress,
-            initialYearlyDenominationSalary,
+            initialDenominationSalary,
             name,
             startDate
         );
@@ -415,25 +531,62 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
         nextEmployee++;
     }
 
+    function _addAccruedValue(uint128 employeeId, uint256 amount) internal {
+        employees[employeeId].accruedValue = employees[employeeId].accruedValue.add(amount);
+
+        emit AddEmployeeAccruedValue(employeeId, amount);
+    }
+
+    function _setPriceFeed(IFeed _feed) internal {
+        require(_feed != address(0));
+        feed = _feed;
+        emit SetPriceFeed(feed);
+    }
+
+    function _setRateExpiryTime(uint64 _time) internal {
+        require(_time > 0);
+        rateExpiryTime = _time;
+        emit SetRateExpiryTime(rateExpiryTime);
+    }
+
     /**
      * @dev Loop over tokens and send Payroll to employee
      * @param employeeId Id of employee receiving payroll
-     * @param time Time owed to employee (since last payroll)
      * @return True if something has been paid
      */
-    function _payTokens(uint128 employeeId, uint256 time) internal returns (bool somethingPaid) {
+    function _payTokens(uint128 employeeId) internal returns (bool somethingPaid) {
         Employee storage employee = employees[employeeId];
+
+        // get the min of current date and termination date
+        uint64 timestamp = getTimestamp64();
+        uint64 toDate;
+        if (employee.terminated && employee.endDate < timestamp) {
+            toDate = employee.endDate;
+        } else {
+            toDate = timestamp;
+        }
+
+        // compute owed amount
+        uint256 owed = employee.accruedValue.add(_getOwedSalary(employeeId, toDate));
+        if (owed == 0) {
+            return false;
+        }
+
+        // update last payroll date and accrued value first thing (to avoid re-entrancy)
+        employee.lastPayroll = timestamp;
+        employee.accruedValue = 0;
+
         // loop over allowed tokens
-        somethingPaid = false;
         for (uint32 i = 0; i < allowedTokensArray.length; i++) {
             address token = allowedTokensArray[i];
             if (employee.allocation[token] == 0)
                 continue;
-            require(checkExchangeRate(token));
+            uint128 exchangeRate = getExchangeRate(token);
+            require(exchangeRate > 0);
             // salary converted to token and applied allocation percentage
-            uint256 tokenAmount = employee.denominationTokenSalary
-                .mul(exchangeRates[token]).mul(employee.allocation[token]) / 100;
-            tokenAmount = tokenAmount.mul(time);
+            uint256 tokenAmount = owed.mul(exchangeRate).mul(employee.allocation[token]);
+            // dividing by 100 for the allocation and by ONE for the exchange rate
+            tokenAmount = tokenAmount / (100 * ONE);
             finance.newPayment(
                 token,
                 employee.accountAddress,
@@ -443,24 +596,62 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
                 1,
                 ""
             );
-            SendPayroll(employee.accountAddress, token, tokenAmount);
+            emit SendPayroll(employee.accountAddress, token, tokenAmount);
             somethingPaid = true;
         }
+
+        // try to remove employee
+        if (employees[employeeId].terminated &&
+            employees[employeeId].endDate <= getTimestamp64() &&
+            employees[employeeId].accruedValue == 0
+        ) {
+            delete employeeIds[employees[employeeId].accountAddress];
+            delete employees[employeeId];
+        }
+    }
+
+    function _terminateEmployee(uint128 employeeId, uint64 endDate) internal {
+        // prevent past termination dates
+        require(endDate >= getTimestamp64());
+
+        employees[employeeId].terminated = true;
+        employees[employeeId].endDate = endDate;
+
+        emit TerminateEmployee(employeeId, employees[employeeId].accountAddress, endDate);
+    }
+
+    function _getOwedSalary(uint128 employeeId, uint64 date) internal view returns (uint256) {
+        // get time that has gone by (seconds)
+        uint64 time = date.sub(employees[employeeId].lastPayroll);
+        if (time == 0) {
+            return 0;
+        }
+
+        return employees[employeeId].denominationTokenSalary.mul(time);
     }
 
     /**
-     * @dev Check that a token has the exchange rate already set
-     *      Internal function, needed to ensure that we have the rate before making a payment.
+     * @dev Check that a token gets a correct exchange rate.
+     *      Internal function, needed to ensure that we have a recent rate before making a payment.
      * @param token The token address
      * @return True if we have the exchange rate, false otherwise
      */
-    function checkExchangeRate(address token) internal view returns (bool) {
-        if (exchangeRates[token] == 0) {
-            return false;
+    function getExchangeRate(address token) internal view returns (uint128) {
+        uint128 xrt;
+        uint64 when;
+
+        // denomination token has always exchange rate of 1
+        if (token == denominationToken) {
+            return ONE;
         }
-        return true;
+
+        (xrt, when) = feed.get(denominationToken, token);
+
+        // check it's recent enough
+        if (when < getTimestamp64().sub(rateExpiryTime)) {
+            return 0;
+        }
+
+        return xrt;
     }
-
-    function getTimestamp() internal view returns (uint256) { return now; }
-
 }

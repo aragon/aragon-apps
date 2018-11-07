@@ -1,11 +1,11 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 contract ExecutionTarget {
     uint public counter;
 
     function execute() external {
         counter += 1;
-        Executed(counter);
+        emit Executed(counter);
     }
 
     function setCounter(uint x) external {
