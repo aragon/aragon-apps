@@ -24,6 +24,25 @@ export async function getToken (address) {
   return tokenCache.get(address)
 }
 
+export async function loadDenominationTokenInfo (address) {
+  const denominationTokenAddress = await app
+    .call('denominationToken')
+    .first()
+    .map(result => {
+      console.log('loadDenominationTokenInfo getDenominationToke', result)
+      return result
+    })
+    .toPromise()
+
+  console.log('loadDenominationTokenInfo denominationTokenAddress', denominationTokenAddress)
+
+  // const denominationToken = await loadTokenInfo(denominationTokenAddress)
+
+  // console.log('loadDenominationTokenInfo denominationToken', denominationToken)
+
+  return loadTokenInfo(denominationTokenAddress)
+}
+
 function loadTokenDecimals (address) {
   return app.external(address, tokenDecimalsAbi)
     .decimals()

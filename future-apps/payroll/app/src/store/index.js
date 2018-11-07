@@ -40,7 +40,8 @@ const eventMapping = ({
   [Event.AddAllowedToken]: onAddAllowedToken,
   [Event.AddEmployee]: onAddNewEmployee,
   [Event.ChangeAddressByEmployee]: onChangeEmployeeAddress,
-  [Event.DetermineAllocation]: onChangeSalaryAllocation
+  [Event.DetermineAllocation]: onChangeSalaryAllocation,
+  [Event.SetPriceFeed]: onSetPriceFeed
 })
 
 async function onInit (state) {
@@ -120,3 +121,11 @@ async function onChangeSalaryAllocation (state, event) {
 
   return { ...state, salaryAllocation }
 }
+
+function onSetPriceFeed (state, event) {
+  const { returnValues: { feed: priceFeedAddress } } = event
+
+  return { ...state, priceFeedAddress }
+}
+
+export default configureStore
