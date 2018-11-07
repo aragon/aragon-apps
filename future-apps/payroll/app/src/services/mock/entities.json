@@ -1,0 +1,26 @@
+[
+  {
+    "domain": "protofire.aragonid.eth",
+    "name": "ProtoFire",
+    "accountAddress": "0xb4124cEB3451635DAcedd11767f004d8a28c6eE7",
+    "role": "Organization"
+  },
+  {
+    "domain": "leolower.protofire.eth",
+    "name": "Leonardo Lower",
+    "accountAddress": "0xd5e6e7901143dd7ebfca5dd61fa27ec26583c664",
+    "role": "Project Manager"
+  },
+  {
+    "domain": "lmcorbalan.protofire.eth",
+    "name": "Lisandro Corbalan",
+    "accountAddress": "0xc9cc726f88d0e2a173bbda5bb1f5ce02195e9b1c",
+    "role": "Developer"
+  },
+  {
+    "domain": "sistemico.protofire.eth",
+    "name": "Sebastián Galiano",
+    "accountAddress": "0xa578c9a3ad706ff4979af06411f2600772d7391f",
+    "role": "Developer"
+  }
+]
