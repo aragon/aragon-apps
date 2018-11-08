@@ -135,7 +135,7 @@ export function stakesPercentages(
   // convert the percentage back to a number
   const stakePercentageAsNumber = stake => ({
     ...stake,
-    percentage: (stake.percentage.toNumber() / pctPrecision) * 100,
+    percentage: stake.percentage.toNumber() / pctPrecision * 100,
   })
 
   // Add the “Rest” item
@@ -169,7 +169,7 @@ export function stakesPercentages(
   )
   const stakesToAdjust = includedStakes
     .map((stake, index) => [index, stake.percentage])
-    .sort((a, b) => (b[1] % 1) - (a[1] % 1))
+    .sort((a, b) => b[1] % 1 - a[1] % 1)
     .slice(0, missingPct)
     .map(([index]) => index)
 
