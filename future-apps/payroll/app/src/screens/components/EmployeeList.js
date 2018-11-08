@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 
 import Section from '../../components/Layout/Section'
-import AragonContext from '../../context/AragonContext'
+import { connect } from '../../context/AragonContext'
 import EmployeeTable from './EmployeeTable'
 import RoleFilter from './RoleFilter'
 import StatusFilter from './StatusFilter'
@@ -28,30 +28,13 @@ const Filters = styled.div`
 `
 
 class EmployeeList extends React.Component {
-  static contextType = AragonContext
+  static defaultProps = {
+    employees: []
+  }
 
   state = {
-    employees: [],
     roleFilter: null,
     statusFilter: null
-  }
-
-  componentDidMount () {
-    const app = this.context
-
-    if (app && typeof app.state === 'function') {
-      this.subscription = app.state()
-        .pluck('employees')
-        .subscribe(employees => {
-          this.setState({ employees })
-        })
-    }
-  }
-
-  componentWillUnmount () {
-    if (this.subscription) {
-      this.subscription.unsubscribe()
-    }
   }
 
   handleClearFilters = () => {
@@ -70,7 +53,8 @@ class EmployeeList extends React.Component {
   }
 
   render () {
-    const { employees, roleFilter, statusFilter } = this.state
+    const { employees } = this.props
+    const { roleFilter, statusFilter } = this.state
 
     const filters = [
       ...(roleFilter && roleFilter.filter ? [roleFilter.filter] : []),
@@ -107,4 +91,10 @@ class EmployeeList extends React.Component {
   }
 }
 
-export default EmployeeList
+function mapStateToProps ({ employees = [] }) {
+  return {
+    employees
+  }
+}
+
+export default connect(mapStateToProps)(EmployeeList)

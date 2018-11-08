@@ -4,7 +4,7 @@ import { Text, theme } from '@aragon/ui'
 import Autocomplete from 'react-autocomplete'
 
 import BaseInput from './BaseInput'
-import AragonContext from '../../context/AragonContext'
+import { connect } from '../../context/AragonContext'
 import * as idm from '../../services/idm'
 
 const EntityList = styled.ul`
@@ -30,8 +30,6 @@ const styles = {
 }
 
 class EntitySelect extends React.Component {
-  static contextType = AragonContext
-
   state = {
     matches: [],
     value: this.props.value || ''
@@ -52,11 +50,9 @@ class EntitySelect extends React.Component {
     }
   }
 
-  getSuggestions = async searchText => {
-    const [suggestions, employees] = await Promise.all([
-      idm.getIdentity(searchText),
-      this.context.state().first().pluck('employees').toPromise()
-    ])
+  getSuggestions = async (searchText) => {
+    const { employees = [] } = this.props
+    const suggestions = await idm.getIdentity(searchText)
 
     return suggestions.filter(s =>
       employees.every(e => e.domain !== s.domain)
@@ -109,4 +105,10 @@ class EntitySelect extends React.Component {
   }
 }
 
-export default EntitySelect
+function mapStateToProps ({ employees = [] }) {
+  return {
+    employees
+  }
+}
+
+export default connect(mapStateToProps)(EntitySelect)

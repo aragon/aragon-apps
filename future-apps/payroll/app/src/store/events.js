@@ -2,19 +2,36 @@
 // Event Types
 //
 
-export const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
+const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 
-// From Payroll
-export const ADD_ALLOWED_TOKEN = 'AddAllowedToken'
-export const ADD_EMPLOYEE = 'AddEmployee'
-export const SET_EMPLOYEE_SALARY = 'SetEmployeeSalary'
-export const ADD_EMPLOYEE_ACCRUED_VALUE = 'AddEmployeeAccruedValue'
-export const TERMINATE_EMPLOYEE = 'TerminateEmployee'
-export const CHANGE_EMPLOYEE_ADDRESS = 'ChangeAddressByEmployee'
-export const DETERMINE_ALLOCATION = 'DetermineAllocation'
-export const SEND_PAYROLL = 'SendPayroll'
-export const SET_PRICE_FEED = 'SetPriceFeed'
-export const SET_RATE_EXPIRY_TIME = 'SetRateExpiryTime'
+// User account
+const ACCOUNT_CHANGED = Symbol('ACCOUNT_CHANGED')
 
-// Other events
-export const ACCOUNT_CHANGED = 'AccountChange'
+// Payroll app
+const ADD_ALLOWED_TOKEN = Symbol('ADD_ALLOWED_TOKEN')
+const ADD_EMPLOYEE = Symbol('ADD_EMPLOYEE')
+const ADD_EMPLOYEE_ACCRUED_VALUE = Symbol('ADD_EMPLOYEE_ACCRUED_VALUE')
+const CHANGE_EMPLOYEE_ADDRESS = Symbol('CHANGE_EMPLOYEE_ADDRESS')
+const DETERMINE_ALLOCATION = Symbol('DETERMINE_ALLOCATION')
+const SET_EMPLOYEE_SALARY = Symbol('SET_EMPLOYEE_SALARY')
+const SEND_PAYROLL = Symbol('SEND_PAYROLL')
+const SET_PRICE_FEED = Symbol('SET_PRICE_FEED')
+const SET_RATE_EXPIRY_TIME = Symbol('SET_RATE_EXPIRY_TIME')
+const TERMINATE_EMPLOYEE = Symbol('TERMINATE_EMPLOYEE')
+
+export default {
+  'Init': INITIALIZATION_TRIGGER,
+
+  'AccountChange': ACCOUNT_CHANGED,
+
+  'AddAllowedToken': ADD_ALLOWED_TOKEN,
+  'AddEmployee': ADD_EMPLOYEE,
+  // TODO: 'AddEmployeeAccruedValue': ADD_EMPLOYEE_ACCRUED_VALUE
+  'ChangeAddressByEmployee': CHANGE_EMPLOYEE_ADDRESS,
+  'DetermineAllocation': DETERMINE_ALLOCATION
+  // TODO: 'SetEmployeeSalary': SET_EMPLOYEE_SALARY
+  // TODO: 'SendPayroll': SEND_PAYROLL
+  // TODO: 'SetPriceFeed': SET_PRICE_FEED
+  // TODO: 'SetRateExpiryTime': SET_RATE_EXPIRY_TIME
+  // TODO: 'TerminateEmployee': TERMINATE_EMPLOYEE
+}

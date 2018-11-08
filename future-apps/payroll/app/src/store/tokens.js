@@ -2,13 +2,26 @@ import app from './app'
 import tokenDecimalsAbi from './abi/token-decimals'
 import tokenSymbolAbi from './abi/token-symbol'
 
-export async function loadTokenInfo (address) {
-  const [decimals, symbol] = await Promise.all([
-    loadTokenDecimals(address),
-    loadTokenSymbol(address)
-  ])
+const tokenCache = new Map()
 
-  return { address, decimals, symbol }
+export function getDenominationToken () {
+  return app.call('denominationToken')
+    .first()
+    .map(getToken)
+    .toPromise()
+}
+
+export async function getToken (address) {
+  if (!tokenCache.has(address)) {
+    const [decimals, symbol] = await Promise.all([
+      loadTokenDecimals(address),
+      loadTokenSymbol(address)
+    ])
+
+    tokenCache.set(address, { address, decimals, symbol })
+  }
+
+  return tokenCache.get(address)
 }
 
 function loadTokenDecimals (address) {

@@ -1,70 +1,86 @@
 import { of } from '../rxjs'
 
-import { EventType, instance as app } from './app'
-import { getCurrentAccount } from './accounts'
-import { getEmployeeById, getTokenAllocation } from './employees'
-import { loadTokenInfo } from './tokens'
+import app from './app'
+import Event from './events'
+import { getAccountAddress } from './account'
+import { getEmployeeById, getSalaryAllocation } from './employees'
+import { getDenominationToken, getToken } from './tokens'
 
-function configureStore () {
-  return app.store(async (state, { event: eventName, ...event }) => {
-    const eventProcessor = eventMapping[eventName] || (state => state)
-    const nextState = state === null ? await getInitialState() : { ...state }
+export default function configureStore () {
+  return app.store(async (state, { event, ...data }) => {
+    const eventType = Event[event] || event
+    const eventProcessor = eventMapping[eventType] || (state => state)
 
-    return eventProcessor(nextState, event)
+    try {
+      const newState = await eventProcessor({ ...state }, data)
+
+      return newState
+    } catch (err) {
+      console.error(`Error occurred processing '${event}' event`, err)
+    }
+
+    return state
   }, [
-    // Always initialize the store with our own home-made event
-    of({ event: EventType.INITIALIZATION_TRIGGER }),
+    of({ event: Event.Init }),
 
-    // User account events
-    app.accounts().map(([account]) => {
+    // Handle account change
+    app.accounts().map(([accountAddress]) => {
       return {
-        event: EventType.ACCOUNT_CHANGED,
-        account
+        event: Event.AccountChange,
+        accountAddress
       }
     })
   ])
 }
 
 const eventMapping = ({
-  [EventType.ACCOUNT_CHANGED]: onAccountChange,
-  [EventType.ADD_ALLOWED_TOKEN]: onAddAllowedToken,
-  [EventType.ADD_EMPLOYEE]: onAddNewEmployee,
-  [EventType.CHANGE_EMPLOYEE_ADDRESS]: onChangeEmployeeAddress,
-  [EventType.DETERMINE_ALLOCATION]: onDetermineAllocation
+  [Event.Init]: onInit,
+  [Event.AccountChange]: onChangeAccount,
+  [Event.AddAllowedToken]: onAddAllowedToken,
+  [Event.AddEmployee]: onAddNewEmployee,
+  [Event.ChangeAddressByEmployee]: onChangeEmployeeAddress,
+  [Event.DetermineAllocation]: onChangeSalaryAllocation
 })
 
-async function getInitialState () {
-  const address = await getCurrentAccount()
+async function onInit (state) {
+  const [accountAddress, denominationToken] = await Promise.all([
+    getAccountAddress(),
+    getDenominationToken()
+  ])
 
-  return {
-    currentAccount: {
-      address
-    }
-  }
+  return { ...state, accountAddress, denominationToken }
 }
 
-function onAccountChange (state, event) {
-  return state // TODO
+async function onChangeAccount (state, event) {
+  const { accountAddress } = event
+  const { tokens = [] } = state
+
+  const salaryAllocation = await getSalaryAllocation(
+    accountAddress,
+    tokens
+  )
+
+  return { ...state, accountAddress, salaryAllocation }
 }
 
 async function onAddAllowedToken (state, event) {
-  const { allowedTokens = [] } = state
   const { returnValues: { token: tokenAddress } } = event
+  const { tokens = [] } = state
 
-  if (!allowedTokens.find(t => t.address === tokenAddress)) {
-    const token = await loadTokenInfo(tokenAddress)
+  if (!tokens.find(t => t.address === tokenAddress)) {
+    const token = await getToken(tokenAddress)
 
     if (token) {
-      allowedTokens.push(token)
+      tokens.push(token)
     }
   }
 
-  return { ...state, allowedTokens }
+  return { ...state, tokens }
 }
 
 async function onAddNewEmployee (state, event) {
-  const { employees = [] } = state
   const { returnValues: { employeeId } } = event
+  const { employees = [] } = state
 
   if (!employees.find(e => e.id === employeeId)) {
     const newEmployee = await getEmployeeById(employeeId)
@@ -78,31 +94,25 @@ async function onAddNewEmployee (state, event) {
 }
 
 async function onChangeEmployeeAddress (state, event) {
-  const { allowedTokens, currentAccount } = state
-  const { returnValues: { newAddress: employeeAddress } } = event
+  const { returnValues: { newAddress: accountAddress } } = event
+  const { tokens = [] } = state
 
-  if (employeeAddress === currentAccount.address) {
-    currentAccount.salaryAllocation = await getTokenAllocation(
-      currentAccount.address,
-      allowedTokens
-    )
-  }
+  const salaryAllocation = await getSalaryAllocation(
+    accountAddress,
+    tokens
+  )
 
-  return { ...state, currentAccount }
+  return { ...state, accountAddress, salaryAllocation }
 }
 
-async function onDetermineAllocation (state, event) {
-  const { allowedTokens, currentAccount } = state
-  const { returnValues: { employee: employeeAddress } } = event
+async function onChangeSalaryAllocation (state, event) {
+  const { returnValues: { employee: accountAddress } } = event
+  const { tokens = [] } = state
 
-  if (employeeAddress === currentAccount.address) {
-    currentAccount.salaryAllocation = await getTokenAllocation(
-      currentAccount.address,
-      allowedTokens
-    )
-  }
+  const salaryAllocation = await getSalaryAllocation(
+    accountAddress,
+    tokens
+  )
 
-  return { ...state, currentAccount }
+  return { ...state, salaryAllocation }
 }
-
-export default configureStore

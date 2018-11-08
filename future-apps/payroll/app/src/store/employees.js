@@ -16,13 +16,15 @@ export function getEmployeeById (id) {
     .toPromise()
 }
 
-export function getTokenAllocation (account, tokens) {
-  const salaryAllocation = tokens.map(token =>
-    app.call('getAllocation', token.address, { from: account })
-      .first()
-      .map(allocation => tokenAllocation({ ...token, allocation }))
-      .toPromise()
+export async function getSalaryAllocation (accountAddress, tokens) {
+  const salaryAllocation = await Promise.all(
+    tokens.map(token =>
+      app.call('getAllocation', token.address, { from: accountAddress })
+        .first()
+        .map(allocation => tokenAllocation({ ...token, allocation }))
+        .toPromise()
+    )
   )
 
-  return Promise.all(salaryAllocation)
+  return salaryAllocation.filter(({ allocation }) => allocation)
 }

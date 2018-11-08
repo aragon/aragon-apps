@@ -3,16 +3,23 @@ import Aragon, { providers } from '@aragon/client'
 
 const AragonContext = React.createContext()
 
-export class AragonProvider extends React.Component {
-  app = new Aragon(new providers.WindowMessage(window.parent))
+const APP_LOADING_DELAY = 700
 
-  state = {
-    userAccount: ''
-  }
+export class AragonProvider extends React.Component {
+  state = {}
 
   componentDidMount () {
-    console.log('AragonContext componentDidMount')
-    window.addEventListener('message', this.handleWrapperMessage)
+    const { loadingDelay = APP_LOADING_DELAY } = this.props
+
+    setTimeout(() => {
+      this.setState(() => {
+        const app = new Aragon(new providers.WindowMessage(window.parent))
+
+        return { app }
+      }, () => {
+        window.addEventListener('message', this.handleWrapperMessage)
+      })
+    }, loadingDelay)
   }
 
   componentWillUnmount () {
@@ -22,17 +29,12 @@ export class AragonProvider extends React.Component {
   // Handshake between Aragon Core and the iframe,
   // since iframes can lose messages that were sent before they were ready
   handleWrapperMessage = ({ data }) => {
-    console.log('AragonContext handleWrapperMessage', data)
     if (data.from !== 'wrapper') {
       return
     }
 
     if (data.name === 'ready') {
       this.sendMessageToWrapper('ready', true)
-
-      this.app.accounts().subscribe(accounts => {
-        this.setState({ userAccount: accounts[0] })
-      })
     }
   }
 
@@ -41,21 +43,68 @@ export class AragonProvider extends React.Component {
   }
 
   render () {
+    if (!this.state.app) {
+      return null // TODO: Loading message
+    }
+
     return (
-      <AragonContext.Provider value={this.app}>
+      <AragonContext.Provider value={this.state.app}>
         {this.props.children}
       </AragonContext.Provider>
     )
   }
 }
 
+export function connect (mapStateToProps) {
+  return WrappedComponent => {
+    class ConnectedComponent extends React.Component {
+      static contextType = AragonContext
+
+      constructor (props) {
+        super(props)
+        this.state = {}
+      }
+
+      componentDidMount () {
+        const app = this.context
+
+        if (app) {
+          this.subscription = app.state()
+            .map(mapStateToProps || (state => state))
+            .subscribe(state => this.setState({ ...state }))
+        }
+      }
+
+      componentWillUnmount () {
+        if (this.subscription) {
+          this.subscription.unsubscribe()
+        }
+      }
+
+      render () {
+        const { forwardedRef, ...props } = this.props
+
+        return (
+          <WrappedComponent ref={forwardedRef} {...props} {...this.state} />
+        )
+      }
+    }
+
+    return React.forwardRef(
+      (props, ref) => <ConnectedComponent {...props} forwardedRef={ref} />
+    )
+  }
+}
+
 export function withAragon (WrappedComponent) {
-  return (props) => (
-    <AragonContext.Consumer>
-      {app => (
-        <WrappedComponent app={app} {...props} />
-      )}
-    </AragonContext.Consumer>
+  return React.forwardRef(
+    (props, ref) => (
+      <AragonContext.Consumer>
+        {app => (
+          <WrappedComponent ref={ref} app={app} {...props} />
+        )}
+      </AragonContext.Consumer>
+    )
   )
 }
 
