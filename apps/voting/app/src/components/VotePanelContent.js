@@ -114,9 +114,7 @@ class VotePanelContent extends React.Component {
     }
   }
   renderBlockLink = snapshotBlock => {
-    const {
-      network: { etherscanBaseUrl },
-    } = this.props
+    const { network: { etherscanBaseUrl } } = this.props
     const text = `(block ${snapshotBlock})`
 
     return etherscanBaseUrl ? (
