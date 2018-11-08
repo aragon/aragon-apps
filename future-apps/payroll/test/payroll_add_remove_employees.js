@@ -3,6 +3,7 @@ const getBalance = require('@aragon/test-helpers/balance')(web3)
 const getTransaction = require('@aragon/test-helpers/transaction')(web3)
 
 const getContract = name => artifacts.require(name)
+const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 contract('Payroll, adding and removing employees,', function(accounts) {
   const [owner, employee1, employee2] = accounts
@@ -59,13 +60,14 @@ contract('Payroll, adding and removing employees,', function(accounts) {
   it("adds employee", async () => {
     let name = ''
     let employeeId = 1
-    await payroll.addEmployee(employee1, salary1)
+    const receipt = await payroll.addEmployee(employee1, salary1)
+    const employeeName = getEvent(receipt, 'AddEmployee', 'name')
     let employee = await payroll.getEmployee(employeeId)
     assert.equal(employee[0], employee1, "Employee account doesn't match")
     assert.equal(employee[1].toString(), salary1.toString(), "Employee salary doesn't match")
     assert.equal(employee[2].toString(), 0, "Employee accrued value doesn't match")
-    assert.equal(employee[3], name, "Employee name doesn't match")
-    assert.equal(employee[4].toString(), (await payroll.getTimestampPublic()).toString(), "last payroll should match")
+    assert.equal(employee[3].toString(), (await payroll.getTimestampPublic()).toString(), "last payroll should match")
+    assert.equal(employeeName, name, "Employee name doesn't match")
   })
 
   it('get employee by its address', async () => {
@@ -75,8 +77,7 @@ contract('Payroll, adding and removing employees,', function(accounts) {
     assert.equal(employee[0], employeeId, "Employee Id doesn't match")
     assert.equal(employee[1].toString(), salary1.toString(), "Employee salary doesn't match")
     assert.equal(employee[2].toString(), 0, "Employee accrued value doesn't match")
-    assert.equal(employee[3], name, "Employee name doesn't match")
-    assert.equal(employee[4].toString(), (await payroll.getTimestampPublic()).toString(), "last payroll should match")
+    assert.equal(employee[3].toString(), (await payroll.getTimestampPublic()).toString(), "last payroll should match")
   })
 
   it("fails adding again same employee", async () => {
@@ -88,12 +89,13 @@ contract('Payroll, adding and removing employees,', function(accounts) {
   it("adds employee with name", async () => {
     let name = 'Joe'
     let employeeId = 2
-    await payroll.addEmployeeWithName(employee2, salary2_1, name)
+    const receipt = await payroll.addEmployeeWithName(employee2, salary2_1, name)
+    const employeeName = getEvent(receipt, 'AddEmployee', 'name')
     salary2 = salary2_1
     let employee = await payroll.getEmployee(employeeId)
     assert.equal(employee[0], employee2, "Employee account doesn't match")
     assert.equal(employee[1].toString(), salary2_1.toString(), "Employee salary doesn't match")
-    assert.equal(employee[3], name, "Employee name doesn't match")
+    assert.equal(employeeName, name, "Employee name doesn't match")
   })
 
   it("terminates employee with remaining payroll", async () => {
@@ -123,11 +125,12 @@ contract('Payroll, adding and removing employees,', function(accounts) {
   it("adds removed employee again (with name and start date)", async () => {
     let name = 'John'
     let employeeId = 3
-    let transaction = await payroll.addEmployeeWithNameAndStartDate(employee2, salary2_2, name, Math.floor((new Date()).getTime() / 1000) - 2628600)
+    const receipt = await payroll.addEmployeeWithNameAndStartDate(employee2, salary2_2, name, Math.floor((new Date()).getTime() / 1000) - 2628600)
+    const employeeName = getEvent(receipt, 'AddEmployee', 'name')
     let employee = await payroll.getEmployee(employeeId)
     assert.equal(employee[0], employee2, "Employee account doesn't match")
     assert.equal(employee[1].toString(), salary2_2.toString(), "Employee salary doesn't match")
-    assert.equal(employee[3], name, "Employee name doesn't match")
+    assert.equal(employeeName, name, "Employee name doesn't match")
     salary2 = salary2_2
   })
 })

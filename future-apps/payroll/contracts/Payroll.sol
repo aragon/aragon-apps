@@ -60,7 +60,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         uint64 lastPayroll;
         uint64 endDate;
         bool terminated;
-        string name;
     }
 
     uint256 public nextEmployee; // starts at 1
@@ -411,7 +410,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @return Employee's identifier
      * @return Employee's annual salary, per second in denomination Token
      * @return Employee's accrued value
-     * @return Employee's name
      * @return Employee's last payment received date
      * @return Employee's termination date (max uint64 if none)
      * @return Bool indicating if employee is terminated
@@ -423,7 +421,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
             uint256 employeeId,
             uint256 denominationSalary,
             uint256 accruedValue,
-            string name,
             uint64 lastPayroll,
             uint64 endDate,
             bool terminated
@@ -435,7 +432,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
 
         denominationSalary = employee.denominationTokenSalary;
         accruedValue = employee.accruedValue;
-        name = employee.name;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
         terminated = employee.terminated;
@@ -448,7 +444,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @return Employee's address to receive payments
      * @return Employee's annual salary, per second in denomination Token
      * @return Employee's accrued value
-     * @return Employee's name
      * @return Employee's last payment received date
      * @return Employee's termination date (max uint64 if none)
      * @return Bool indicating if employee is terminated
@@ -460,7 +455,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
             address accountAddress,
             uint256 denominationSalary,
             uint256 accruedValue,
-            string name,
             uint64 lastPayroll,
             uint64 endDate,
             bool terminated
@@ -471,7 +465,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         accountAddress = employee.accountAddress;
         denominationSalary = employee.denominationTokenSalary;
         accruedValue = employee.accruedValue;
-        name = employee.name;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
         terminated = employee.terminated;
@@ -536,7 +529,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         employee.denominationTokenSalary = _initialDenominationSalary;
         employee.lastPayroll = _startDate;
         employee.endDate = MAX_UINT64;
-        employee.name = _name;
 
         // Ids mapping
         employeeIds[_accountAddress] = employeeId;

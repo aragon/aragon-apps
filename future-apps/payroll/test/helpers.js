@@ -20,10 +20,11 @@ module.exports = (owner) => ({
   },
 
   async getTimePassed (payroll, employeeId) {
-    let employee = await payroll.getEmployee.call(employeeId)
-    let currentTime = await payroll.getTimestampPublic.call()
+    const employee = await payroll.getEmployee.call(employeeId)
+    const lastPayroll = employee[3]
+    const currentTime = await payroll.getTimestampPublic.call()
 
-    return currentTime - employee[4]
+    return currentTime - lastPayroll
   },
 
   async redistributeEth (accounts, finance) {

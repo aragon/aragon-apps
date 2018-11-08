@@ -83,11 +83,12 @@ contract('Payroll Timestamp', function(accounts) {
 
     const receipt = await payroll.addEmployee(employee1, salary1)
     let employeeId1 = getEvent(receipt, 'AddEmployee', 'employeeId')
+    let employeeName = getEvent(receipt, 'AddEmployee', 'name')
 
     let employee = await payroll.getEmployee(employeeId1)
     assert.equal(employee[0], employee1, "Employee account doesn't match")
     assert.equal(employee[1].toString(), convertAndRoundSalary(salary1), "Employee salary doesn't match")
-    assert.equal(employee[3], name, "Employee name doesn't match")
+    assert.equal(employeeName, name, "Employee name doesn't match")
   })
 
   it("adds employee with name", async () => {
@@ -96,10 +97,11 @@ contract('Payroll Timestamp', function(accounts) {
 
     const receipt = await payroll.addEmployeeWithName(employee2, salary2, name)
     let employeeId2 = getEvent(receipt, 'AddEmployee', 'employeeId')
+    let employeeName = getEvent(receipt, 'AddEmployee', 'name')
 
     let employee = await payroll.getEmployee(employeeId2)
     assert.equal(employee[0], employee2, "Employee account doesn't match")
     assert.equal(employee[1].toString(), convertAndRoundSalary(salary2), "Employee salary doesn't match")
-    assert.equal(employee[3], name, "Employee name doesn't match")
+    assert.equal(employeeName, name, "Employee name doesn't match")
   })
 })
