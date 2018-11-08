@@ -313,25 +313,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     }
 
     /**
-     * @dev Allows to make a simple payment from this contract to Finance,
-            to avoid locked tokens in contract forever.
-            This contract should never receive tokens with a simple transfer call,
-            but in case it happens, this function allows to recover them.
-     * @notice Allows to send tokens from this contract to Finance, to avoid locked tokens in contract forever
-     */
-    function depositToFinance(address _token) isInitialized external {
-        ERC20 tokenContract = ERC20(_token);
-        uint256 value = tokenContract.balanceOf(this);
-        if (value == 0)
-            return;
-
-        // make an approvement for the same value to Finance
-        tokenContract.approve(address(finance), value);
-        // finally deposit those tokens to Finance
-        finance.deposit(tokenContract, value, "Adding Funds");
-    }
-
-    /**
      * @dev Set token distribution for payments to an employee (the caller)
      * @notice Set token distribution for payments to an employee (the caller).
      * @param _tokens Array with the tokens to receive, they must belong to allowed tokens for employee

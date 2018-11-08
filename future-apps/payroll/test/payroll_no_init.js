@@ -88,12 +88,6 @@ contract('Payroll, without init,', function(accounts) {
     })
   })
 
-  it('fails to call depositToFinance', async () => {
-    return assertRevert(async () => {
-      await payroll.depositToFinance(erc20Token1.address)
-    })
-  })
-
   it('fails to call determineAllocation', async () => {
     return assertRevert(async () => {
       await payroll.determineAllocation([erc20Token1.address], [100], { from: employee1 })
