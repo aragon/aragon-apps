@@ -85,7 +85,7 @@ export function connect (mapStateToProps) {
         const { forwardedRef, ...props } = this.props
 
         return (
-          <WrappedComponent ref={forwardedRef} {...props} {...this.state} />
+          <WrappedComponent ref={forwardedRef} app={this.context} {...props} {...this.state} />
         )
       }
     }

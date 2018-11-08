@@ -1,10 +1,11 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Button, SidePanel } from '@aragon/ui'
+import { Button } from '@aragon/ui'
 
-import AragonContext from '../../context/AragonContext'
+import { connect } from '../../context/AragonContext'
 import PartitionBar from '../../components/Bar/PartitionBar'
 import Section from '../../components/Layout/Section'
+import EditSalaryAllocation from '../../panels/EditSalaryAllocation'
 
 const Container = styled.section`
   display: flex;
@@ -15,51 +16,30 @@ const EditButton = styled(Button).attrs({ mode: 'secondary' })`
   align-self: flex-end;
 `
 
-class SalaryAllocation extends React.Component {
-  static contextType = AragonContext
-
+class SalaryAllocation extends React.PureComponent {
   state = {
-    salaryAllocation: [],
     isEditing: false
   }
 
-  componentDidMount () {
-    const app = this.context
-
-    if (app && typeof app.state === 'function') {
-      this.subscription = app
-        .state()
-        .pluck('currentAccount', 'salaryAllocation')
-        .subscribe(salaryAllocation => {
-          if (salaryAllocation) {
-            this.setState({ salaryAllocation })
-          }
-        })
-    }
-  }
-
-  componentWillUnmount () {
-    if (this.subscription) {
-      this.subscription.unsubscribe()
-    }
-  }
-
   startEditing = () => {
-    // TODO: this.setState({ isEditing: true })
+    this.setState({ isEditing: true })
   }
 
   endEditing = () => {
-    // TODO: this.setState({ isEditing: false })
+    this.setState({ isEditing: false })
   }
 
   render () {
-    const { salaryAllocation, isEditing } = this.state
+    const { salaryAllocation } = this.props
+    const { isEditing } = this.state
 
     return (
       <Container>
         <Section.Title>Salary allocation</Section.Title>
 
-        <PartitionBar data={salaryAllocation} />
+        {salaryAllocation && (
+          <PartitionBar data={salaryAllocation} />
+        )}
 
         <EditButton
           onClick={this.startEditing}
@@ -68,8 +48,7 @@ class SalaryAllocation extends React.Component {
           Edit salary allocation
         </EditButton>
 
-        <SidePanel
-          title='Edit salary allocation'
+        <EditSalaryAllocation
           opened={isEditing}
           onClose={this.endEditing}
         />
@@ -78,4 +57,10 @@ class SalaryAllocation extends React.Component {
   }
 }
 
-export default SalaryAllocation
+function mapStateToProps ({ salaryAllocation }) {
+  return {
+    salaryAllocation
+  }
+}
+
+export default connect(mapStateToProps)(SalaryAllocation)
