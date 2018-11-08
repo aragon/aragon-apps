@@ -58,7 +58,7 @@ contract('Payroll, accrued value,', async (accounts) => {
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
 
     // add employee
-    const receipt = await payroll.addEmployee(employee1, salary1)
+    const receipt = await payroll.addEmployee(employee1, salary1, 'Kakaroto')
     employeeId1 = getEvent(receipt, 'AddEmployee', 'employeeId')
   })
 

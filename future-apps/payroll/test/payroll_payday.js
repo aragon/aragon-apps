@@ -83,13 +83,9 @@ contract('Payroll, allocation and payday,', function(accounts) {
     // adds allowed tokens
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
 
+    const startDate = parseInt(await payroll.getTimestampPublic.call(), 10) - 2628005 // now minus 1/12 year
     // add employee
-    const receipt = await payroll.addEmployeeWithNameAndStartDate(
-      employee,
-      salary,
-      "",
-      parseInt(await payroll.getTimestampPublic.call(), 10) - 2628005 // now minus 1/12 year
-    )
+    const receipt = await payroll.addEmployeeWithStartDate(employee, salary, "Kakaroto", startDate)
 
     employeeId = getEvent(receipt, 'AddEmployee', 'employeeId')
   })

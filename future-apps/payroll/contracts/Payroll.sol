@@ -169,33 +169,12 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
 
     /**
      * @dev Add employee to Payroll. See addEmployeeWithNameAndStartDate
-     * @notice Add employee with address `_accountAddress` to Payroll with a salary of `_initialDenominationSalary` per second.
-     * @param _accountAddress Employee's address to receive Payroll
-     * @param _initialDenominationSalary Employee's salary, per second in denomination Token
-     */
-    function addEmployee(
-        address _accountAddress,
-        uint256 _initialDenominationSalary
-    )
-        external
-        authP(ADD_EMPLOYEE_ROLE, arr(_accountAddress, _initialDenominationSalary, getTimestamp64()))
-    {
-        _addEmployee(
-            _accountAddress,
-            _initialDenominationSalary,
-            "",
-            getTimestamp64()
-        );
-    }
-
-    /**
-     * @dev Add employee to Payroll. See addEmployeeWithNameAndStartDate
      * @notice Add employee `_name` with address `_accountAddress` to Payroll with a salary of `_initialDenominationSalary` per second.
      * @param _accountAddress Employee's address to receive Payroll
      * @param _initialDenominationSalary Employee's salary, per second in denomination Token
      * @param _name Employee's name
      */
-    function addEmployeeWithName(
+    function addEmployee(
         address _accountAddress,
         uint256 _initialDenominationSalary,
         string _name
@@ -219,7 +198,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @param _name Employee's name
      * @param _startDate It will actually set initial lastPayroll value
      */
-    function addEmployeeWithNameAndStartDate(
+    function addEmployeeWithStartDate(
         address _accountAddress,
         uint256 _initialDenominationSalary,
         string _name,

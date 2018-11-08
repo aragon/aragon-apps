@@ -72,7 +72,7 @@ contract('Payroll, without init,', function(accounts) {
 
   it('fails to call addEmployee', async () => {
     return assertRevert(async () => {
-      await payroll.addEmployee(employee1, 10000)
+      await payroll.addEmployee(employee1, 10000, 'Kakaroto')
     })
   })
 

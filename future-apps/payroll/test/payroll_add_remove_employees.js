@@ -58,20 +58,23 @@ contract('Payroll, adding and removing employees,', function(accounts) {
   })
 
   it("adds employee", async () => {
-    let name = ''
+    let name = 'Kakaroto'
     let employeeId = 1
-    const receipt = await payroll.addEmployee(employee1, salary1)
+    let payrollTimestamp = (await payroll.getTimestampPublic()).toString()
+
+    const receipt = await payroll.addEmployee(employee1, salary1, name)
     const employeeName = getEvent(receipt, 'AddEmployee', 'name')
+    const employeeStartDate = getEvent(receipt, 'AddEmployee', 'startDate')
     let employee = await payroll.getEmployee(employeeId)
     assert.equal(employee[0], employee1, "Employee account doesn't match")
     assert.equal(employee[1].toString(), salary1.toString(), "Employee salary doesn't match")
     assert.equal(employee[2].toString(), 0, "Employee accrued value doesn't match")
-    assert.equal(employee[3].toString(), (await payroll.getTimestampPublic()).toString(), "last payroll should match")
+    assert.equal(employee[3].toString(), payrollTimestamp, "last payroll should match")
     assert.equal(employeeName, name, "Employee name doesn't match")
+    assert.equal(employeeStartDate, payrollTimestamp, "Employee start date doesn't match")
   })
 
   it('get employee by its address', async () => {
-    let name = ''
     let employeeId = 1
     let employee = await payroll.getEmployeeByAddress(employee1)
     assert.equal(employee[0], employeeId, "Employee Id doesn't match")
@@ -81,25 +84,16 @@ contract('Payroll, adding and removing employees,', function(accounts) {
   })
 
   it("fails adding again same employee", async () => {
+    let name = 'Joe'
     return assertRevert(async () => {
-      await payroll.addEmployee(employee1, salary1)
+      await payroll.addEmployee(employee1, salary1, name)
     })
   })
 
-  it("adds employee with name", async () => {
+  it("terminates employee with remaining payroll", async () => {
     let name = 'Joe'
     let employeeId = 2
-    const receipt = await payroll.addEmployeeWithName(employee2, salary2_1, name)
-    const employeeName = getEvent(receipt, 'AddEmployee', 'name')
-    salary2 = salary2_1
-    let employee = await payroll.getEmployee(employeeId)
-    assert.equal(employee[0], employee2, "Employee account doesn't match")
-    assert.equal(employee[1].toString(), salary2_1.toString(), "Employee salary doesn't match")
-    assert.equal(employeeName, name, "Employee name doesn't match")
-  })
-
-  it("terminates employee with remaining payroll", async () => {
-    let employeeId = 2
+    const receipt = await payroll.addEmployee(employee2, salary2_1, name)
     await payroll.determineAllocation([usdToken.address], [100], {from: employee2})
     let initialBalance = await usdToken.balanceOf(employee2)
     let timePassed = 1000
@@ -122,15 +116,22 @@ contract('Payroll, adding and removing employees,', function(accounts) {
     })
   })
 
-  it("adds removed employee again (with name and start date)", async () => {
+  it("adds removed employee with specific start date", async () => {
     let name = 'John'
     let employeeId = 3
-    const receipt = await payroll.addEmployeeWithNameAndStartDate(employee2, salary2_2, name, Math.floor((new Date()).getTime() / 1000) - 2628600)
+    let startDate = Math.floor((new Date()).getTime() / 1000) - 2628600
+
+    const receipt = await payroll.addEmployeeWithStartDate(employee2, salary2_2, name, startDate)
     const employeeName = getEvent(receipt, 'AddEmployee', 'name')
+    const employeeStartDate = getEvent(receipt, 'AddEmployee', 'startDate')
+
+
+
     let employee = await payroll.getEmployee(employeeId)
     assert.equal(employee[0], employee2, "Employee account doesn't match")
     assert.equal(employee[1].toString(), salary2_2.toString(), "Employee salary doesn't match")
     assert.equal(employeeName, name, "Employee name doesn't match")
+    assert.equal(employeeStartDate, startDate.toString(), "Employee start date doesn't match")
     salary2 = salary2_2
   })
 })
