@@ -70,7 +70,6 @@ contract('Payroll, adding and removing employees,', function(accounts) {
     assert.equal(employee[2].toString(), 0, "Employee accrued value doesn't match")
     assert.equal(employee[3], name, "Employee name doesn't match")
     assert.equal(employee[4].toString(), payrollTimestamp, "last payroll should match")
-    assert.equal(employee[5].toString(), payrollTimestamp, "start date should match")
   })
 
   it('get employee by its address', async () => {
@@ -85,7 +84,6 @@ contract('Payroll, adding and removing employees,', function(accounts) {
     assert.equal(employee[2].toString(), 0, "Employee accrued value doesn't match")
     assert.equal(employee[3], name, "Employee name doesn't match")
     assert.equal(employee[4].toString(), payrollTimestamp, "last payroll should match")
-    assert.equal(employee[5].toString(), payrollTimestamp, "start date should match")
   })
 
   it("fails adding again same employee", async () => {
@@ -142,6 +140,5 @@ contract('Payroll, adding and removing employees,', function(accounts) {
     assert.equal(employee[1].toString(), salary2_2.toString(), "Employee salary doesn't match")
     assert.equal(employee[3], name, "Employee name doesn't match")
     assert.equal(employee[4].toString(), startDate, "last payroll should match")
-    assert.equal(employee[5].toString(), startDate, "start date should match")
   })
 })

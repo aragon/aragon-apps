@@ -4,54 +4,51 @@ import * as idm from './services/idm'
 
 const app = new Aragon()
 
-app.store(async (state, { event }) => {
-  if (state === null) {
-    const initialState = {
-      employees: await getAllEmployees()
-    }
-
-    state = initialState
+app.store(async (state, { event, ...data }) => {
+  let nexState = {
+    ...state
   }
 
-  if (event === 'AddEmployee') {
-    const employees = await getAllEmployees()
+  try {
 
-    state = {
-      ...state,
-      employees
+    console.log(event, data)
+    if (event === 'AddEmployee') {
+      const { returnValues: { employeeId } } = data
+      const { employees = [] } = nexState
+
+      if (!employees.find(e => e.id === employeeId)) {
+        const newEmployee = await getEmployeeById(employeeId, data)
+
+        if (newEmployee) {
+          employees.push(newEmployee)
+        }
+      }
+
+      nexState = {
+        ...nexState,
+        employees
+      }
     }
+
+    console.log('nexState', nexState )
+  } catch (e) {
+    console.log('ERROR', e)
   }
 
-  return state
+
+  return nexState
 })
 
-function getEmployeeById (id) {
+function getEmployeeById (id, event) {
   return app.call('getEmployee', id)
     .first()
-    .map(data => marshallEmployeeData({ id, ...data }))
+    .map(data => marshallEmployeeData({ ...data, ...event, id }))
     .flatMap(async employee => {
       const [{ name, role }] = await idm.getIdentity(employee.domain)
 
       return { ...employee, name, role }
     })
     .toPromise()
-}
-
-async function getAllEmployees () {
-  const employee = []
-
-  const lastEmployeeId = await app.call('nextEmployee')
-    .first()
-    .map(value => parseInt(value, 10))
-    .toPromise()
-
-  for (let id = 1; id < lastEmployeeId; id++) {
-    employee.push(
-      getEmployeeById(id)
-    )
-  }
-
-  return Promise.all(employee)
 }
 
 function marshallCurrency (value) {
