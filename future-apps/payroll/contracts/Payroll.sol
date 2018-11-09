@@ -288,6 +288,8 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         external
         authP(ADD_ACCRUED_VALUE_ROLE, arr(_employeeId, _amount))
     {
+        require(_amount <= MAX_ACCRUED_VALUE, ERROR_ACCRUED_VALUE_TOO_BIG);
+
         _addAccruedValue(_employeeId, _amount);
     }
 
@@ -503,8 +505,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     }
 
     function _addAccruedValue(uint256 _employeeId, uint256 _amount) internal {
-        require(_amount <= MAX_ACCRUED_VALUE, ERROR_ACCRUED_VALUE_TOO_BIG);
-
         employees[_employeeId].accruedValue = employees[_employeeId].accruedValue.add(_amount);
 
         emit AddEmployeeAccruedValue(_employeeId, _amount);
