@@ -8,7 +8,7 @@ import RoleFilter from './RoleFilter'
 import StatusFilter from './StatusFilter'
 
 import { formatCurrency } from '../../utils/formatting'
-const customFormatCurrency = (amount) => formatCurrency(amount, 'OO', 2, 18 )
+
 
 const Container = styled.article`
   display: flex;
@@ -59,12 +59,11 @@ class EmployeeList extends React.Component {
   render () {
     const { employees, denominationToken } = this.props
     const { roleFilter, statusFilter } = this.state
-    console.log(employees, denominationToken)
     const filters = [
       ...(roleFilter && roleFilter.filter ? [roleFilter.filter] : []),
       ...(statusFilter && statusFilter.filter ? [statusFilter.filter] : [])
     ]
-
+    const customCurrencyFormat = (amount) => formatCurrency(amount, denominationToken.symbol, 10, denominationToken.decimals )
     const roles = new Set(
       employees.map(e => e.role)
     )

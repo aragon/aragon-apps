@@ -5,21 +5,8 @@ import Table from '../../components/Table'
 import { employeeType } from '../../types'
 import { formatDate } from '../../utils/formatting'
 
-const EmployeeTable = (props) => (
-  <Table
-    noDataMessage='No employees found'
-    {...props}
-  />
-)
-
-EmployeeTable.propTypes = {
-  ...Table.propTypes,
-  data: PropTypes.arrayOf(employeeType).isRequired,
-  formatCurrency: PropTypes.func
-}
-
-EmployeeTable.defaultProps = {
-  columns: [
+const initializeColumns = (data, currencyFormat) => {
+  return [
     {
       name: 'name',
       title: 'Name',
@@ -47,7 +34,7 @@ EmployeeTable.defaultProps = {
       name: 'salary',
       title: 'Salary',
       value: data => data.salary,
-      formatter: formatCurrency,
+      formatter: currencyFormat,
       cellProps: {
         align: 'right'
       }
@@ -56,12 +43,29 @@ EmployeeTable.defaultProps = {
       name: 'annual-total-payment',
       title: 'Total Paid This Year',
       value: data => data.accruedValue,
-      formatter: formatCurrency,
+      formatter: currencyFormat,
       cellProps: {
         align: 'right'
       }
     }
   ]
+}
+
+const EmployeeTable = (props) => {
+  const columns = initializeColumns(props.data, props.formatCurrency)
+  return (
+    <Table
+      noDataMessage='No employees found'
+      columns={columns}
+      {...props}
+    />
+  )
+}
+
+EmployeeTable.propTypes = {
+  ...Table.propTypes,
+  data: PropTypes.arrayOf(employeeType).isRequired,
+  formatCurrency: PropTypes.func
 }
 
 export default EmployeeTable
