@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 
 import Table from '../../components/Table'
 import { employeeType } from '../../types'
-import { formatCurrency, formatDate } from '../../utils/formatting'
+import { formatDate } from '../../utils/formatting'
 
 const EmployeeTable = (props) => (
   <Table
@@ -14,7 +14,8 @@ const EmployeeTable = (props) => (
 
 EmployeeTable.propTypes = {
   ...Table.propTypes,
-  data: PropTypes.arrayOf(employeeType).isRequired
+  data: PropTypes.arrayOf(employeeType).isRequired,
+  formatCurrency: PropTypes.func
 }
 
 EmployeeTable.defaultProps = {
