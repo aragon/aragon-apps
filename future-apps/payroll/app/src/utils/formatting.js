@@ -9,6 +9,10 @@ export function formatDate (date, format = DEFAULT_DATE_FORMAT) {
   return dateFormatter(date, format)
 }
 
+const formatter = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 0
+})
+
 export function formatCurrency (
   amount,
   symbol,
@@ -16,5 +20,7 @@ export function formatCurrency (
   pow = 18,
   rounding = 2
 ) {
-  return round(((amount / Math.pow(decimals, pow)) * SECONDS_IN_A_YEAR), 2) + ' ' + symbol
+  const number = round(((amount / Math.pow(decimals, pow)) * SECONDS_IN_A_YEAR), rounding)
+  const formattedNumber = formatter.format(number)
+  return  `${formattedNumber} ${symbol}`
 }
