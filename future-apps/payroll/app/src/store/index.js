@@ -127,5 +127,3 @@ function onSetPriceFeed (state, event) {
 
   return { ...state, priceFeedAddress }
 }
-
-export default configureStore

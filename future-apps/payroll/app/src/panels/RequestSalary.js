@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Button, SidePanel, IconAttention, Info, theme, Text } from '@aragon/ui'
 
-import AragonContext from '../context/AragonContext'
+import { connect } from '../context/AragonContext'
 import Section from '../components/Layout/Section'
 import PartitionBar from '../components/Bar/PartitionBar'
 import priceFeedAbi from './abi/price-feed'
@@ -61,87 +61,44 @@ const RequestButton = styled(Button).attrs({ mode: 'strong', wide: true })`
   margin-top: 20px;
 `
 
-class RequestSalary extends React.PureComponent {
-  static contextType = AragonContext
-
-  static initialState = {
-    salaryAllocation: []
+class RequestSalary extends React.Component {
+  state = {
+    salaryAllocation: this.props.salaryAllocation,
+    priceFeedAddress: this.props.priceFeedAddress,
+    currentAccount: this.props.currentAccount,
+    denominationToken: this.props.denominationToken,
+    employees: this.props.employee
   }
-
-  state = RequestSalary.initialState
 
   componentDidMount () {
-console.log('RequestSalary componentDidMount')
-    const app = this.context
-
-    if (app && typeof app.state === 'function') {
-      this.subscription = app
-        .state()
-        .subscribe(this.handleStateSubscribe)
-        //  => {
-
-
-        //   console.log('FEEDs', feeds)
-
-        //   const salaryAllocation = currentAccount.salaryAllocation.map((tokeAllocation) => {
-        //     const description = (
-        //       <AllocationDescription>
-        //           <Text weight='bolder'>
-        //             3.12314{tokeAllocation.symbol}
-        //           </Text>
-        //           <Text color={theme.textTertiary}>
-        //             $123123123123
-        //           </Text>
-        //       </AllocationDescription>
-        //     )
-        //     return {
-        //       ...tokeAllocation,
-        //       description
-        //     }
-        //   })
-        //   this.setState({ salaryAllocation })
-        // })
-    }
+    console.log('RequestSalary componentDidMount', this)
+    // const salaryAllocation = await this.loadSalaryAllocationXRT();
   }
 
-  handleStateSubscribe = async (appState)  => {
-    console.log('appState', appState)
-    const salaryAllocation = await this.loadSalaryAllocationXRT(appState);
-    console.log('handleStateSubscribe', salaryAllocation)
-  }
+  // loadSalaryAllocationXRT = () => {
+  //   const {
+  //     priceFeedAddress,
+  //     currentAccount: { salaryAllocation },
+  //     denominationToken: { address: denominationTokenAddress }
+  //   } = this.steta;
 
-  loadSalaryAllocationXRT = (appState) => {
-    const app = this.context
+  //   const priceFeed = app.external(priceFeedAddress, priceFeedAbi)
 
-    const {
-      priceFeedAddress,
-      currentAccount: { salaryAllocation },
-      denominationToken: { address: denominationTokenAddress }
-    } = appState;
-
-    const priceFeed = app.external(priceFeedAddress, priceFeedAbi)
-
-    return Promise.all(
-      salaryAllocation.map(tokenAllocation => {
-        return priceFeed
-          .get(denominationTokenAddress, tokenAllocation.address)
-          .first()
-          .map(({xrt}) => {
-            return {
-              ...tokenAllocation,
-              xrt
-            }
-          })
-          .toPromise()
-      })
-    )
-  }
-
-  componentWillUnmount () {
-    if (this.subscription) {
-      this.subscription.unsubscribe()
-    }
-  }
+  //   return Promise.all(
+  //     salaryAllocation.map(tokenAllocation => {
+  //       return priceFeed
+  //         .get(denominationTokenAddress, tokenAllocation.address)
+  //         .first()
+  //         .map(({xrt}) => {
+  //           return {
+  //             ...tokenAllocation,
+  //             xrt
+  //           }
+  //         })
+  //         .toPromise()
+  //     })
+  //   )
+  // }
 
   handlePanelToggle = (opened) => {
     console.log('handlePanelToggle', opened)
@@ -259,4 +216,20 @@ RequestSalary.propsType = {
   opened: PropTypes.bool
 }
 
-export default RequestSalary
+function mapStateToProps ({
+    salaryAllocation,
+    priceFeedAddress,
+    currentAccount,
+    denominationToken,
+    employees
+}) {
+  return {
+    salaryAllocation,
+    priceFeedAddress,
+    currentAccount,
+    denominationToken,
+    employees
+  }
+}
+
+export default connect(mapStateToProps)(RequestSalary)
