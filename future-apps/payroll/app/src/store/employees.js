@@ -2,11 +2,11 @@ import app from './app'
 import { employee, tokenAllocation } from './marshalling'
 import { getIdentity } from '../services/idm'
 
-export function getEmployeeById (id) {
+export function getEmployeeById (id, event) {
   return app.call('getEmployee', id)
     .first()
     .map(data => {
-      return employee({ id, ...data })
+      return employee({ id, ...event, ...data })
     })
     .flatMap(async employee => {
       const [{ name, role }] = await getIdentity(employee.domain)
