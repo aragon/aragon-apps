@@ -129,11 +129,9 @@ contract PayrollKit is KitBase {
       // set salary allocation for this then change protofire.aragon.eth address to root so it can be used
       allowedTokens.push(address(token1));
       allowedTokens.push(address(token2));
-      allowedTokens.push(address(token3));
 
       distribution.push(uint8(45));
-      distribution.push(uint8(30));
-      distribution.push(uint8(25));
+      distribution.push(uint8(55));
 
       payroll.determineAllocation(allowedTokens, distribution);
       payroll.changeAddressByEmployee(root);
