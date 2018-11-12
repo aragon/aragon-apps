@@ -103,10 +103,10 @@ class AddEmployee extends React.PureComponent {
 
     if (app) {
       const accountAddress = this.state.entity.accountAddress
-      const initialDenominationSalary = this.state.salary / SECONDS_IN_A_YEAR
+      const initialDenominationSalary = salary / SECONDS_IN_A_YEAR
 
       const adjustedAmount = toDecimals(initialDenominationSalary.toString(), denominationToken.decimals, {
-        truncate: true,
+        truncate: true
       })
 
       const name = this.state.entity.domain

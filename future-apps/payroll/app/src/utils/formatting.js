@@ -22,5 +22,5 @@ export function formatCurrency (
 ) {
   const number = round(((amount / Math.pow(decimals, pow)) * SECONDS_IN_A_YEAR), rounding)
   const formattedNumber = formatter.format(number)
-  return  `${formattedNumber} ${symbol}`
+  return `${formattedNumber} ${symbol}`
 }
