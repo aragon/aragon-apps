@@ -79,11 +79,12 @@ async function onAddAllowedToken (state, event) {
 }
 
 async function onAddNewEmployee (state, event) {
-  const { returnValues: { employeeId } } = event
+  const { returnValues: eventData } = event
+  const { employeeId } = eventData
   const { employees = [] } = state
 
   if (!employees.find(e => e.id === employeeId)) {
-    const newEmployee = await getEmployeeById(employeeId)
+    const newEmployee = await getEmployeeById(employeeId, eventData)
 
     if (newEmployee) {
       employees.push(newEmployee)
