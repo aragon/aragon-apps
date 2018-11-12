@@ -10,8 +10,6 @@ app.store(async (state, { event, ...data }) => {
   }
 
   try {
-
-    console.log(event, data)
     if (event === 'AddEmployee') {
       const { returnValues: { employeeId } } = data
       const { employees = [] } = nexState
@@ -29,8 +27,6 @@ app.store(async (state, { event, ...data }) => {
         employees
       }
     }
-
-    console.log('nexState', nexState )
   } catch (e) {
     console.log('ERROR', e)
   }
