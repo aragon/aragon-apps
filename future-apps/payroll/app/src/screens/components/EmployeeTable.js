@@ -5,7 +5,7 @@ import Table from '../../components/Table'
 import { employeeType } from '../../types'
 import { formatDate } from '../../utils/formatting'
 
-const initializeColumns = (data, currencyFormat) => {
+const initializeColumns = (data, formatCurrency) => {
   return [
     {
       name: 'name',
@@ -34,7 +34,7 @@ const initializeColumns = (data, currencyFormat) => {
       name: 'salary',
       title: 'Salary',
       value: data => data.salary,
-      formatter: currencyFormat,
+      formatter: formatCurrency,
       cellProps: {
         align: 'right'
       }
@@ -43,7 +43,7 @@ const initializeColumns = (data, currencyFormat) => {
       name: 'annual-total-payment',
       title: 'Total Paid This Year',
       value: data => data.accruedValue,
-      formatter: currencyFormat,
+      formatter: formatCurrency,
       cellProps: {
         align: 'right'
       }
