@@ -26,12 +26,12 @@ export default {
 
   'AddAllowedToken': ADD_ALLOWED_TOKEN,
   'AddEmployee': ADD_EMPLOYEE,
-  // TODO: 'AddEmployeeAccruedValue': ADD_EMPLOYEE_ACCRUED_VALUE
+  'AddEmployeeAccruedValue': ADD_EMPLOYEE_ACCRUED_VALUE,
   'ChangeAddressByEmployee': CHANGE_EMPLOYEE_ADDRESS,
-  'DetermineAllocation': DETERMINE_ALLOCATION
-  // TODO: 'SetEmployeeSalary': SET_EMPLOYEE_SALARY
-  // TODO: 'SendPayroll': SEND_PAYROLL
-  // TODO: 'SetPriceFeed': SET_PRICE_FEED
-  // TODO: 'SetRateExpiryTime': SET_RATE_EXPIRY_TIME
-  // TODO: 'TerminateEmployee': TERMINATE_EMPLOYEE
+  'DetermineAllocation': DETERMINE_ALLOCATION,
+  'SetEmployeeSalary': SET_EMPLOYEE_SALARY,
+  'SendPayroll': SEND_PAYROLL,
+  'SetPriceFeed': SET_PRICE_FEED,
+  'SetRateExpiryTime': SET_RATE_EXPIRY_TIME,
+  'TerminateEmployee': TERMINATE_EMPLOYEE
 }

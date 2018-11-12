@@ -19,8 +19,8 @@ class EditSalaryAllocation extends React.Component {
       return false
     }
 
-    return this.state.addresses.every((a, i) => this.props.addresses[i] === a)
-      && this.state.distribution.every((d, i) => this.props.distribution[i] === d)
+    return this.state.addresses.every((a, i) => this.props.addresses[i] === a) &&
+      this.state.distribution.every((d, i) => this.props.distribution[i] === d)
   }
 
   get isValid () {
@@ -202,7 +202,7 @@ class EditSalaryAllocation extends React.Component {
                   />
 
                   <Percentage>
-                    <Input value={allocation} readOnly={true} />
+                    <Input value={allocation} readOnly />
                     <label>%</label>
                   </Percentage>
 
