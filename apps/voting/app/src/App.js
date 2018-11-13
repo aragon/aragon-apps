@@ -16,14 +16,11 @@ import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
-import { makeEtherscanBaseUrl } from './utils'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
-import {
-  EMPTY_CALLSCRIPT,
-  isVoteOpen,
-  voteTypeFromContractEnum,
-} from './vote-utils'
+import { makeEtherscanBaseUrl } from './utils'
+import { EMPTY_CALLSCRIPT } from './evmscript-utils'
+import { isVoteOpen, voteTypeFromContractEnum } from './vote-utils'
 
 class App extends React.Component {
   static propTypes = {
