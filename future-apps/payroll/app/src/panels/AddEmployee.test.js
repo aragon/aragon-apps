@@ -1,9 +1,17 @@
 /* eslint-env jest */
 
 import React from 'react'
-import { cleanup, fireEvent, render, waitForElement } from 'react-testing-library'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  waitForElement
+} from 'react-testing-library'
+import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
 import { format as formatDate } from 'date-fns'
+
+const bodyUtils = bindElementToQueries(document.body)
 
 import AddEmployeePanel from './AddEmployee'
 import AragonContext from '../context/AragonContext'
@@ -57,7 +65,9 @@ describe('Add new employee panel', () => {
         )
 
         expect(suggestion).not.toBeNull()
-        expect(suggestion).toHaveTextContent('ProtoFire (protofire.aragonid.eth)')
+        expect(suggestion).toHaveTextContent(
+          'ProtoFire (protofire.aragonid.eth)'
+        )
 
         // Select first suggestion
         fireEvent.click(suggestion)
@@ -65,7 +75,9 @@ describe('Add new employee panel', () => {
         // Verify that the data for the selected entity is shown
         expect(fields.name).toHaveTextContent('ProtoFire')
         expect(fields.role).toHaveTextContent('Organization')
-        expect(fields.accountAddress).toHaveTextContent('xb4124cEB3451635DAcedd11767f004d8a28c6eE7')
+        expect(fields.accountAddress).toHaveTextContent(
+          'xb4124cEB3451635DAcedd11767f004d8a28c6eE7'
+        )
       })
     })
 
@@ -134,7 +146,9 @@ describe('Add new employee panel', () => {
         target: { value: '' }
       })
 
-      expect(fields.accountAddress).toHaveTextContent('xb4124cEB3451635DAcedd11767f004d8a28c6eE7')
+      expect(fields.accountAddress).toHaveTextContent(
+        'xb4124cEB3451635DAcedd11767f004d8a28c6eE7'
+      )
       expect(buttons.submit).toHaveAttribute('disabled')
 
       // Try with negative salary
@@ -167,25 +181,27 @@ function renderAddEmployeePanel (props) {
       return this
     },
 
-    first () {
-      return this
-    },
-
-    pluck () {
+    map () {
       return this
     },
 
     toPromise () {
       return []
+    },
+
+    subscribe (cb) {
+      return { unsubscribe: jest.fn() }
     }
   }
 
-  const panel = render(
+  render(
     <AragonContext.Provider value={mockApp}>
       <AddEmployeePanel opened {...props} />
     </AragonContext.Provider>
   )
 
+  const modalRoot = bodyUtils.getByTestId('modal-root')
+  const panel = bindElementToQueries(modalRoot)
   const form = panel.getByTestId('add-employee-form')
 
   const fields = {
@@ -200,18 +216,16 @@ function renderAddEmployeePanel (props) {
   }
 
   const buttons = {
-    close: panel.container.querySelector('button'),
-    submit: panel.container.querySelector('button[type="submit"]')
+    close: modalRoot.querySelector('button'),
+    submit: modalRoot.querySelector('button[type="submit"]')
   }
 
-  const searchEntity = (searchText) => {
+  const searchEntity = searchText => {
     fireEvent.change(fields.entity, {
       target: { value: searchText }
     })
 
-    return waitForElement(() =>
-      form.querySelector('ul > li:first-child')
-    )
+    return waitForElement(() => form.querySelector('ul > li:first-child'))
   }
 
   return { form, fields, buttons, searchEntity }
