@@ -11,10 +11,10 @@ import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
 import { format as formatDate } from 'date-fns'
 
-const bodyUtils = bindElementToQueries(document.body)
-
 import AddEmployeePanel from './AddEmployee'
 import AragonContext from '../context/AragonContext'
+
+const bodyUtils = bindElementToQueries(document.body)
 
 afterEach(cleanup)
 
