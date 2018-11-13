@@ -5,9 +5,9 @@ import { fireEvent, render } from 'react-testing-library'
 import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
 
-const bodyUtils = bindElementToQueries(document.body)
-
 import App from './App'
+
+const bodyUtils = bindElementToQueries(document.body)
 
 describe('App', () => {
   const app = render(<App />)
