@@ -5,6 +5,7 @@ import Event from './events'
 import { getAccountAddress } from './account'
 import { getEmployeeById, getSalaryAllocation } from './employees'
 import { getDenominationToken, getToken } from './tokens'
+import { employee } from './marshalling'
 
 export default function configureStore () {
   return app.store(async (state, { event, ...data }) => {
@@ -84,10 +85,10 @@ async function onAddNewEmployee (state, event) {
   const { employees = [] } = state
 
   if (!employees.find(e => e.id === employeeId)) {
-    const newEmployee = await getEmployeeById(employeeId, eventData)
+    const newEmployee = await getEmployeeById(employeeId)
 
     if (newEmployee) {
-      employees.push(newEmployee)
+      employees.push(employee({ ...eventData, ...newEmployee }))
     }
   }
 
