@@ -2,7 +2,10 @@
 
 import React from 'react'
 import { fireEvent, render } from 'react-testing-library'
+import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
+
+const bodyUtils = bindElementToQueries(document.body)
 
 import App from './App'
 
@@ -46,7 +49,6 @@ describe('App', () => {
 
   // Check navigation between tabs
   describe('"Team payroll" section', () => {
-
     beforeAll(() => {
       fireEvent.click(app.getByTestId('team-payroll-tab'))
     })
@@ -71,7 +73,9 @@ describe('App', () => {
     })
 
     it('shows "Add new employee" panel when click on add new employee button', async () => {
-      const panel = app.container.querySelector('aside > header')
+      const panel = bodyUtils
+        .getByTestId('modal-root')
+        .querySelector('aside > header')
 
       fireEvent.click(app.getByTestId('team-payroll-tab'))
       fireEvent.click(appBar.querySelector('button'))
@@ -83,7 +87,6 @@ describe('App', () => {
   })
 
   describe('"My payroll" section', () => {
-
     beforeAll(() => {
       fireEvent.click(app.getByTestId('my-payroll-tab'))
     })
