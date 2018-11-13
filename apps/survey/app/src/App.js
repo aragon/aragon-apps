@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import BigNumber from 'bignumber.js'
 import { isBefore } from 'date-fns'
-import { AppView, AragonApp, observe } from '@aragon/ui'
+import { AppView, BaseStyles, PublicUrl, observe } from '@aragon/ui'
 import { Transition, animated } from 'react-spring'
 import tokenBalanceOfAtAbi from './abi/token-balanceOfAt.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -166,7 +166,8 @@ class App extends React.Component {
     const openedSurvey = this.getSurvey(openedSurveyId)
     const votingPanelSurvey = this.getSurvey(votingPanelSurveyId)
     return (
-      <AragonApp publicUrl="/aragon-ui/">
+      <PublicUrl.Provider url="./aragon-ui/">
+        <BaseStyles />
         <AppView
           appBar={
             <AppBar
@@ -209,7 +210,7 @@ class App extends React.Component {
           onClose={this.handlePanelClose}
           app={app}
         />
-      </AragonApp>
+      </PublicUrl.Provider>
     )
   }
 }

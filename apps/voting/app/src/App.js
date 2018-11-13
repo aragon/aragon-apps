@@ -3,8 +3,9 @@ import PropTypes from 'prop-types'
 import {
   AppBar,
   AppView,
-  AragonApp,
   Button,
+  BaseStyles,
+  PublicUrl,
   SidePanel,
   observe,
 } from '@aragon/ui'
@@ -187,7 +188,8 @@ class App extends React.Component {
     const hasCurrentVote = appStateReady && Boolean(currentVote)
 
     return (
-      <AragonApp publicUrl="./aragon-ui/">
+      <PublicUrl.Provider url="./aragon-ui/">
+        <BaseStyles />
         <AppView
           appBar={
             <AppBar
@@ -239,7 +241,7 @@ class App extends React.Component {
             onCreateVote={this.handleCreateVote}
           />
         </SidePanel>
-      </AragonApp>
+      </PublicUrl.Provider>
     )
   }
 }

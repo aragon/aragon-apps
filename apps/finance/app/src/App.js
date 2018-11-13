@@ -5,9 +5,10 @@ import BN from 'bn.js'
 import {
   AppBar,
   AppView,
-  AragonApp,
+  BaseStyles,
   Button,
   EmptyStateCard,
+  PublicUrl,
   SidePanel,
   observe,
 } from '@aragon/ui'
@@ -96,7 +97,8 @@ class App extends React.Component {
     const { newTransferOpened } = this.state
 
     return (
-      <AragonApp publicUrl="./aragon-ui/">
+      <PublicUrl.Provider url="./aragon-ui/">
+        <BaseStyles />
         <AppView
           appBar={
             <AppBar
@@ -147,7 +149,7 @@ class App extends React.Component {
             userAccount={userAccount}
           />
         </SidePanel>
-      </AragonApp>
+      </PublicUrl.Provider>
     )
   }
 }
