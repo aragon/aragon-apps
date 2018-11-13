@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { Card } from '@aragon/ui'
 import { Button, Table as BaseTable, Text } from '@aragon/ui'
 
 import TableCell from './TableCell'
@@ -8,10 +9,14 @@ import TableRow from './TableRow'
 import Panel from '../Panel/Panel'
 import { sort, SORT_DIRECTION } from '../../utils/sorting'
 
+
 class Table extends React.Component {
+  dataPerPage = 2
+
   state = {
     sortColumnIndex: 0,
-    sortDirection: SORT_DIRECTION.ASC
+    sortDirection: SORT_DIRECTION.ASC,
+    currentPage: 1
   }
 
   shouldComponentUpdate (nextProps, nextState) {
@@ -39,6 +44,20 @@ class Table extends React.Component {
     })
   }
 
+  paginateData = (data) => {
+    const { currentPage } = this.state
+    const lastDataIndex = currentPage * this.dataPerPage
+    const firstDataIndex = lastDataIndex - this.dataPerPage
+    const currentData = data.slice(firstDataIndex, lastDataIndex)
+    return currentData
+  }
+
+  handlePageChange = (pageNumber) => {
+    this.setState({
+      currentPage: pageNumber
+    })
+  }
+
   render () {
     const { columns, data, filters, onClearFilters, sortable, noDataMessage } = this.props
     const { sortColumnIndex, sortDirection } = this.state
@@ -63,6 +82,18 @@ class Table extends React.Component {
 
     sort(filteredData, columns[sortColumnIndex].value, sortDirection)
 
+    // TODO: use dynamic page buttons
+    const paginatedData = this.paginateData(filteredData)
+    const footer = (
+      <Card
+        height="100%"
+        width="100%"
+      >
+        <Button onClick={() => { this.handlePageChange(1) }}>1</Button>
+        <Button onClick={() => { this.handlePageChange(2) }}>2</Button>
+      </Card>
+    )
+
     const header = (
       <TableRow>
         {columns.map((column, index) => {
@@ -83,7 +114,7 @@ class Table extends React.Component {
       </TableRow>
     )
 
-    const body = filteredData.map(item => (
+    const body = paginatedData.map(item => (
       <TableRow key={`row-${item.id}`}>
         {columns.map(column => {
           const rawValue = column.value(item)
@@ -109,10 +140,19 @@ class Table extends React.Component {
     ))
 
     return (
-      <BaseTable header={header} children={body} />
+      <React.Fragment>
+        <BaseTable header={header} children={body} />
+        <TableFooter content={footer} />
+      </React.Fragment>
     )
   }
 }
+
+const TableFooter = (props) => (
+  <div>
+    {props.content}
+  </div>
+)
 
 Table.propTypes = {
   columns: PropTypes.arrayOf(
