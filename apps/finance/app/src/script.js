@@ -7,10 +7,15 @@ import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenNameAbi from './abi/token-name.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
 import vaultBalanceAbi from './abi/vault-balance.json'
+import vaultGetInitializationBlockAbi from './abi/vault-getinitializationblock.json'
 import vaultEventAbi from './abi/vault-events.json'
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi)
-const vaultAbi = [].concat(vaultBalanceAbi, vaultEventAbi)
+const vaultAbi = [].concat(
+  vaultBalanceAbi,
+  vaultGetInitializationBlockAbi,
+  vaultEventAbi
+)
 
 const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const TEST_TOKEN_ADDRESSES = []
@@ -96,7 +101,21 @@ async function initialize(vaultAddress, ethAddress) {
 }
 
 // Hook up the script as an aragon.js store
-function createStore(settings) {
+async function createStore(settings) {
+  let vaultInitializationBlock
+
+  try {
+    vaultInitializationBlock = await settings.vault.contract
+      .getInitializationBlock()
+      .first()
+      .toPromise()
+  } catch (err) {
+    console.error(
+      "Could not get attached vault's initialization block:",
+      err
+    )
+  }
+
   return app.store(
     async (state, event) => {
       const { vault } = settings
@@ -133,7 +152,7 @@ function createStore(settings) {
       // Always initialize the store with our own home-made event
       of({ event: INITIALIZATION_TRIGGER }),
       // Handle Vault events in case they're not always controlled by this Finance app
-      settings.vault.contract.events(),
+      settings.vault.contract.events(vaultInitializationBlock),
     ]
   )
 }
