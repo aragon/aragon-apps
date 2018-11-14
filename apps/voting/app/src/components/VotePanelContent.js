@@ -130,15 +130,6 @@ class VotePanelContent extends React.Component {
       text
     )
   }
-  renderDescription = (description = '') => {
-    // Make '\n's real breaks
-    return description.split('\n').map((line, i) => (
-      <React.Fragment key={i}>
-        {line}
-        <br />
-      </React.Fragment>
-    ))
-  }
   render() {
     const {
       network: { etherscanBaseUrl },
