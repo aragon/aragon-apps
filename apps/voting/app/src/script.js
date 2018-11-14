@@ -1,7 +1,7 @@
 import Aragon from '@aragon/client'
 import { of } from './rxjs'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
-import { EMPTY_CALLSCRIPT } from './vote-utils'
+import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
 
@@ -59,10 +59,16 @@ async function initialize(tokenAddr) {
   let tokenSymbol
   try {
     tokenSymbol = await loadTokenSymbol(token)
-    app.identify(tokenSymbol)
+    const pctBase = parseInt(await app.call('PCT_BASE').toPromise(), 10)
+    const supportRequiredPct = parseInt(
+      await app.call('supportRequiredPct').toPromise(),
+      10
+    )
+    const supportRequired = Math.round((supportRequiredPct / pctBase) * 100)
+    app.identify(`${tokenSymbol} (${supportRequired}%)`)
   } catch (err) {
     console.error(
-      `Failed to load token symbol for token at ${tokenAddr} due to:`,
+      `Failed to load information to identify voting app due to:`,
       err
     )
   }

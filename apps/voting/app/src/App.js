@@ -17,15 +17,12 @@ import NewVotePanelContent from './components/NewVotePanelContent'
 import AutoLinks from './components/AutoLinks'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
-import { makeEtherscanBaseUrl } from './utils'
-import { shortenAddress, transformAddresses } from './web3-utils'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
-import {
-  EMPTY_CALLSCRIPT,
-  isVoteOpen,
-  voteTypeFromContractEnum,
-} from './vote-utils'
+import { EMPTY_CALLSCRIPT } from './evmscript-utils'
+import { makeEtherscanBaseUrl } from './utils'
+import { isVoteOpen, voteTypeFromContractEnum } from './vote-utils'
+import { shortenAddress, transformAddresses } from './web3-utils'
 
 class App extends React.Component {
   static propTypes = {
