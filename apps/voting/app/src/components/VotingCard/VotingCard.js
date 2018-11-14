@@ -18,12 +18,11 @@ class VotingCard extends React.Component {
     const {
       options,
       endDate,
-      question,
+      label,
       open,
       votingPower,
       status,
       id,
-      description,
     } = this.props
     return (
       <Main>
@@ -42,10 +41,10 @@ class VotingCard extends React.Component {
         </Header>
         <Card>
           <Content>
-            <Question title={`${description} (ID: ${id})`}>
+            <Label>
               <Text color={theme.textTertiary}>#{id} </Text>
-              <span>{question}</span>
-            </Question>
+              <span>{label}</span>
+            </Label>
             <VotingOptions options={options} votingPower={votingPower} />
           </Content>
           <Footer>
@@ -94,7 +93,7 @@ const Content = styled.div`
   height: 100%;
 `
 
-const Question = styled.h1`
+const Label = styled.h1`
   display: -webkit-box;
   overflow: hidden;
   -webkit-line-clamp: 2;

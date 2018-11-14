@@ -130,15 +130,6 @@ class VotePanelContent extends React.Component {
       text
     )
   }
-  renderDescription = (description = '') => {
-    // Make '\n's real breaks
-    return description.split('\n').map((line, i) => (
-      <React.Fragment key={i}>
-        {line}
-        <br />
-      </React.Fragment>
-    ))
-  }
   render() {
     const {
       network: { etherscanBaseUrl },
@@ -165,9 +156,10 @@ class VotePanelContent extends React.Component {
 
     const {
       creator,
-      description,
       endDate,
       metadata,
+      metadataNode,
+      descriptionNode,
       open,
       snapshotBlock,
     } = vote.data
@@ -210,15 +202,15 @@ class VotePanelContent extends React.Component {
               <h2>
                 <Label>Question</Label>
               </h2>
-              <Question>{metadata}</Question>
+              <Question>{metadataNode}</Question>
             </React.Fragment>
           )}
-          {description && (
+          {descriptionNode && (
             <React.Fragment>
               <h2>
                 <Label>Description</Label>
               </h2>
-              <p>{this.renderDescription(description)}</p>
+              <p>{descriptionNode}</p>
             </React.Fragment>
           )}
         </Part>
