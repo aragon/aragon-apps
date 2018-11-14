@@ -14,7 +14,7 @@ import Votes from './screens/Votes'
 import tokenAbi from './abi/token-balanceOfAt.json'
 import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
-import AutoLinks from './components/AutoLinks'
+import AutoLink from './components/AutoLink'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
 import { hasLoadedVoteSettings } from './vote-settings'
@@ -156,6 +156,21 @@ class App extends React.Component {
       )
     )
   }
+  // Shorten addresses, render line breaks, auto link
+  renderVoteText(description) {
+    return (
+      description && (
+        <AutoLink>
+          {description.split('\n').map((line, i) => (
+            <React.Fragment key={i}>
+              {this.shortenAddresses(line)}
+              <br />
+            </React.Fragment>
+          ))}
+        </AutoLink>
+      )
+    )
+  }
   render() {
     const {
       app,
@@ -185,20 +200,9 @@ class App extends React.Component {
             ...vote.data,
             open: isVoteOpen(vote, now),
 
-            // Metadata: shorten addresses
-            metadataNode: this.shortenAddresses(vote.data.metadata),
-
-            // Description: shorten addresses, render line breaks, auto link
-            descriptionNode: vote.data.description ? (
-              <AutoLinks>
-                {vote.data.description.split('\n').map((line, i) => (
-                  <React.Fragment key={i}>
-                    {this.shortenAddresses(line)}
-                    <br />
-                  </React.Fragment>
-                ))}
-              </AutoLinks>
-            ) : null,
+            // Render text fields
+            descriptionNode: this.renderVoteText(vote.data.description),
+            metadataNode: this.renderVoteText(vote.data.metadata),
           },
           userAccountVote: voteTypeFromContractEnum(
             userAccountVotes.get(vote.voteId)
