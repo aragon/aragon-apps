@@ -6,7 +6,7 @@ import { Button, Field, SidePanel } from '@aragon/ui'
 import { startOfDay } from 'date-fns'
 
 import Input from '../components/Input'
-import AragonContext, { connect } from '../context/AragonContext'
+import { connect } from '../context/AragonContext'
 import validator from '../data/validation'
 import { toDecimals } from '../utils/math-utils'
 import { SECONDS_IN_A_YEAR } from '../utils/formatting'
@@ -26,8 +26,6 @@ const Form = styled.form`
 `
 
 class AddEmployee extends React.PureComponent {
-  static contextType = AragonContext
-
   static initialState = {
     entity: null,
     salary: null,
@@ -97,9 +95,8 @@ class AddEmployee extends React.PureComponent {
   handleFormSubmit = (event) => {
     event.preventDefault()
 
-    const { denominationToken } = this.props
+    const { denominationToken, app } = this.props
     const { salary } = this.state
-    const app = this.context
 
     if (app) {
       const accountAddress = this.state.entity.accountAddress
