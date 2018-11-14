@@ -188,7 +188,7 @@ class VotePanelContent extends React.Component {
           </div>
           <div>
             <h2>
-              <Label>Total support</Label>
+              <Label>Quorum progress</Label>
             </h2>
             <div>
               {round(quorumProgress * 100, 2)}%{' '}
