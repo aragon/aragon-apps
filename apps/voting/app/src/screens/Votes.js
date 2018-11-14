@@ -45,7 +45,11 @@ class Votes extends React.Component {
                   }
                   endDate={vote.data.endDate}
                   open={vote.data.open}
-                  question={vote.data.questionNode}
+                  description={
+                    vote.data.metadata
+                      ? vote.data.metadataNode
+                      : vote.data.descriptionNode
+                  }
                   votingPower={vote.numData.votingPower}
                   onOpen={onSelectVote}
                   options={[

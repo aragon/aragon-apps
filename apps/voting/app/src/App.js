@@ -188,8 +188,8 @@ class App extends React.Component {
             ...vote.data,
             open: isVoteOpen(vote, now),
 
-            // Question: shorten addresses
-            questionNode: this.shortenAddresses(vote.data.metadata),
+            // Metadata: shorten addresses
+            metadataNode: this.shortenAddresses(vote.data.metadata),
 
             // Description: shorten addresses, render line breaks, auto link
             descriptionNode: vote.data.description ? (
