@@ -45,7 +45,7 @@ class Votes extends React.Component {
                   }
                   endDate={vote.data.endDate}
                   open={vote.data.open}
-                  description={
+                  label={
                     vote.data.metadata
                       ? vote.data.metadataNode
                       : vote.data.descriptionNode
