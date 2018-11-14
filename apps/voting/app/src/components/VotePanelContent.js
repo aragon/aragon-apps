@@ -165,9 +165,9 @@ class VotePanelContent extends React.Component {
 
     const {
       creator,
-      description,
       endDate,
-      metadata,
+      questionNode,
+      descriptionNode,
       open,
       snapshotBlock,
     } = vote.data
@@ -205,20 +205,18 @@ class VotePanelContent extends React.Component {
           </div>
         </SidePanelSplit>
         <Part>
-          {metadata && (
-            <React.Fragment>
-              <h2>
-                <Label>Question</Label>
-              </h2>
-              <Question>{metadata}</Question>
-            </React.Fragment>
-          )}
-          {description && (
+          <React.Fragment>
+            <h2>
+              <Label>Question</Label>
+            </h2>
+            <Question>{questionNode}</Question>
+          </React.Fragment>
+          {descriptionNode && (
             <React.Fragment>
               <h2>
                 <Label>Description</Label>
               </h2>
-              <p>{this.renderDescription(description)}</p>
+              <p>{descriptionNode}</p>
             </React.Fragment>
           )}
         </Part>
