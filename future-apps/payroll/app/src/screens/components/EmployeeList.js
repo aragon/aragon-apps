@@ -7,8 +7,7 @@ import EmployeeTable from './EmployeeTable'
 import RoleFilter from './RoleFilter'
 import StatusFilter from './StatusFilter'
 
-import { formatCurrency } from '../../utils/formatting'
-
+import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
 
 const Container = styled.article`
   display: flex;
@@ -63,7 +62,7 @@ class EmployeeList extends React.Component {
       ...(roleFilter && roleFilter.filter ? [roleFilter.filter] : []),
       ...(statusFilter && statusFilter.filter ? [statusFilter.filter] : [])
     ]
-    const customCurrencyFormat = (amount) => formatCurrency(amount, denominationToken.symbol, 10, denominationToken.decimals )
+    const customCurrencyFormat = (amount) => formatCurrency(amount, denominationToken.symbol, 10, denominationToken.decimals, SECONDS_IN_A_YEAR)
     const roles = new Set(
       employees.map(e => e.role)
     )

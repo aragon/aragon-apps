@@ -18,9 +18,10 @@ export function formatCurrency (
   symbol,
   decimals = 10,
   pow = 18,
+  multiplier = 1,
   rounding = 2
 ) {
-  const number = round(((amount / Math.pow(decimals, pow)) * SECONDS_IN_A_YEAR), rounding)
+  const number = round(((amount / Math.pow(decimals, pow)) * multiplier), rounding)
   const formattedNumber = formatter.format(number)
   return `${formattedNumber} ${symbol}`
 }
