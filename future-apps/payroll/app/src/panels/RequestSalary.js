@@ -11,56 +11,6 @@ import priceFeedAbi from './abi/price-feed'
 
 const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
 
-const Container = styled.section`
-  display: flex;
-  flex-direction: column;
-`
-
-const AllocationWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding-bottom: 20px;
-  border-bottom: 1px solid ${theme.contentBorder};
-`
-
-const TotalAllocationWrapper = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 6fr 1fr;
-
-  > :nth-child(2) {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    justify-items: end;
-  }
-
-  > :last-child {
-    justify-self: end;
-  }
-`
-
-const AllocationDescription = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  justify-items: end;
-`
-
-const SalaryWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-`
-
-const EditButton = styled(Button).attrs({ mode: 'text' })`
-  align-self: flex-end;
-`
-
-const ButtonWrapper = styled.div`
-  flex-grow: 1;
-`
-
-const RequestButton = styled(Button).attrs({ mode: 'strong', wide: true })`
-  margin-top: 20px;
-`
-
 class RequestSalary extends React.Component {
   state = {
     salaryAllocation: this.props.salaryAllocation,
@@ -216,6 +166,55 @@ RequestSalary.propsType = {
   opened: PropTypes.bool
 }
 
+const Container = styled.section`
+  display: flex;
+  flex-direction: column;
+`
+
+const AllocationWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 20px;
+  border-bottom: 1px solid ${theme.contentBorder};
+`
+
+const TotalAllocationWrapper = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 6fr 1fr;
+
+  > :nth-child(2) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-items: end;
+  }
+
+  > :last-child {
+    justify-self: end;
+  }
+`
+
+const AllocationDescription = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-items: end;
+`
+
+const SalaryWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+`
+
+const EditButton = styled(Button).attrs({ mode: 'text' })`
+  align-self: flex-end;
+`
+
+const ButtonWrapper = styled.div`
+  flex-grow: 1;
+`
+
+const RequestButton = styled(Button).attrs({ mode: 'strong', wide: true })`
+  margin-top: 20px;
+`
 function mapStateToProps ({
     salaryAllocation,
     priceFeedAddress,
