@@ -13,6 +13,7 @@
     "react": "^16.5.2",
     "react-blockies": "^1.2.2",
     "react-dom": "^16.2.0",
+    "react-linkify": "^0.2.2",
     "react-spring": "^5.7.2",
     "seed-random": "^2.2.0",
     "styled-components": "3.4.6"

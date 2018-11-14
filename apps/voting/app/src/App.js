@@ -14,13 +14,15 @@ import Votes from './screens/Votes'
 import tokenAbi from './abi/token-balanceOfAt.json'
 import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
+import AutoLink from './components/AutoLink'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
-import { makeEtherscanBaseUrl } from './utils'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
+import { makeEtherscanBaseUrl } from './utils'
 import { isVoteOpen, voteTypeFromContractEnum } from './vote-utils'
+import { shortenAddress, transformAddresses } from './web3-utils'
 
 class App extends React.Component {
   static propTypes = {
@@ -142,6 +144,33 @@ class App extends React.Component {
   handleVoteTransitionEnd = opened => {
     this.setState(opened ? { voteSidebarOpened: true } : { currentVoteId: -1 })
   }
+
+  shortenAddresses(label) {
+    return transformAddresses(label, (part, isAddress, index) =>
+      isAddress ? (
+        <span title={part} key={index}>
+          {shortenAddress(part)}
+        </span>
+      ) : (
+        <span key={index}>{part}</span>
+      )
+    )
+  }
+  // Shorten addresses, render line breaks, auto link
+  renderVoteText(description) {
+    return (
+      description && (
+        <AutoLink>
+          {description.split('\n').map((line, i) => (
+            <React.Fragment key={i}>
+              {this.shortenAddresses(line)}
+              <br />
+            </React.Fragment>
+          ))}
+        </AutoLink>
+      )
+    )
+  }
   render() {
     const {
       app,
@@ -170,6 +199,10 @@ class App extends React.Component {
           data: {
             ...vote.data,
             open: isVoteOpen(vote, now),
+
+            // Render text fields
+            descriptionNode: this.renderVoteText(vote.data.description),
+            metadataNode: this.renderVoteText(vote.data.metadata),
           },
           userAccountVote: voteTypeFromContractEnum(
             userAccountVotes.get(vote.voteId)
