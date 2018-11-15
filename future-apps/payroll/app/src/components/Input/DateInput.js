@@ -5,6 +5,7 @@ import { isDate, format as formatDate } from 'date-fns'
 
 import BaseInput from './BaseInput'
 import DatePicker from './DatePicker'
+import { IconSettings } from '@aragon/ui'
 
 const Container = styled.div`
   position: relative;
@@ -62,6 +63,7 @@ class DateInput extends React.PureComponent {
         onClick={this.handleClick}
       >
         <BaseInput
+          {...this.props}
           value={this.formattedValue}
           readOnly={true}
         />
