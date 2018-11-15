@@ -6,10 +6,10 @@ import { Button, Field, SidePanel } from '@aragon/ui'
 import { startOfDay } from 'date-fns'
 
 import Input from '../components/Input'
-import AragonContext from '../context/AragonContext'
+import { connect } from '../context/AragonContext'
 import validator from '../data/validation'
-
-const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
+import { toDecimals } from '../utils/math-utils'
+import { SECONDS_IN_A_YEAR } from '../utils/formatting'
 
 const Form = styled.form`
   display: grid;
@@ -26,8 +26,6 @@ const Form = styled.form`
 `
 
 class AddEmployee extends React.PureComponent {
-  static contextType = AragonContext
-
   static initialState = {
     entity: null,
     salary: null,
@@ -97,17 +95,23 @@ class AddEmployee extends React.PureComponent {
   handleFormSubmit = (event) => {
     event.preventDefault()
 
-    const app = this.context
+    const { denominationToken, app } = this.props
+    const { salary } = this.state
 
     if (app) {
       const accountAddress = this.state.entity.accountAddress
-      const initialDenominationSalary = this.state.salary / SECONDS_IN_A_YEAR
+      const initialDenominationSalary = salary / SECONDS_IN_A_YEAR
+
+      const adjustedAmount = toDecimals(initialDenominationSalary.toString(), denominationToken.decimals, {
+        truncate: true
+      })
+
       const name = this.state.entity.domain
       const startDate = Math.floor(this.state.startDate.getTime() / 1000)
 
       app.addEmployeeWithNameAndStartDate(
         accountAddress,
-        initialDenominationSalary,
+        adjustedAmount,
         name,
         startDate
       ).subscribe(employee => {
@@ -227,4 +231,10 @@ AddEmployee.propsType = {
   opened: PropTypes.bool
 }
 
-export default AddEmployee
+function mapStateToProps ({ denominationToken = {} }) {
+  return {
+    denominationToken
+  }
+}
+
+export default connect(mapStateToProps)(AddEmployee)

@@ -227,9 +227,12 @@ contract PayrollKit is KitBase {
     function addEmployees(Payroll payroll, address root) internal {
         address account2 = 0x8401Eb5ff34cc943f096A32EF3d5113FEbE8D4Eb;
         address account3 = 0x306469457266CBBe7c0505e8Aad358622235e768;
+        uint256 salary1 = 2535047025122316; // 80000
+        uint256 salary2 = 2851927903262605; // 90000
+        uint256 salary3 = 3168808781402895; // 100000
 
-        payroll.addEmployeeWithNameAndStartDate(this, 10, 'protofire.aragonid.eth', uint64(now));
-        payroll.addEmployeeWithNameAndStartDate(account2, 20, 'leolower.protofire.eth', uint64(now- 86400));
-        payroll.addEmployeeWithNameAndStartDate(account3, 30, 'lmcorbalan.protofire.eth',  uint64(now - 172800));
+        payroll.addEmployeeWithNameAndStartDate(this, salary1, 'protofire.aragonid.eth', uint64(now));
+        payroll.addEmployeeWithNameAndStartDate(account2, salary2, 'leolower.protofire.eth', uint64(now- 86400));
+        payroll.addEmployeeWithNameAndStartDate(account3, salary3, 'lmcorbalan.protofire.eth',  uint64(now - 172800));
     }
 }
