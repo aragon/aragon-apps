@@ -64,7 +64,7 @@ async function initialize(tokenAddr) {
       await app.call('supportRequiredPct').toPromise(),
       10
     )
-    const supportRequired = Math.round((supportRequiredPct / pctBase) * 100)
+    const supportRequired = Math.round(supportRequiredPct / pctBase * 100)
     app.identify(`${tokenSymbol} (${supportRequired}%)`)
   } catch (err) {
     console.error(

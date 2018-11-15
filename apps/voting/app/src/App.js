@@ -146,14 +146,16 @@ class App extends React.Component {
   }
 
   shortenAddresses(label) {
-    return transformAddresses(label, (part, isAddress, index) =>
-      isAddress ? (
-        <span title={part} key={index}>
-          {shortenAddress(part)}
-        </span>
-      ) : (
-        <span key={index}>{part}</span>
-      )
+    return transformAddresses(
+      label,
+      (part, isAddress, index) =>
+        isAddress ? (
+          <span title={part} key={index}>
+            {shortenAddress(part)}
+          </span>
+        ) : (
+          <span key={index}>{part}</span>
+        )
     )
   }
   // Shorten addresses, render line breaks, auto link
