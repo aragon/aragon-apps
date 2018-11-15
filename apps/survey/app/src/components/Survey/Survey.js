@@ -1,28 +1,28 @@
-import React from 'react'
-import styled from 'styled-components'
-import { Spring, animated } from 'react-spring'
-import springs from '../../springs'
-import SurveyDetails from './SurveyDetails'
-import SurveySidebar from './SurveySidebar'
+import React from "react";
+import styled from "styled-components";
+import { Spring, animated } from "react-spring";
+import springs from "../../springs";
+import SurveyDetails from "./SurveyDetails";
+import SurveySidebar from "./SurveySidebar";
 
-const CONTENT_PADDING = 30
-const SIDEBAR_WIDTH = 300 + CONTENT_PADDING
-const SIDEBAR_TRANSITION_DELAY = 400
+const CONTENT_PADDING = 30;
+const SIDEBAR_WIDTH = 300 + CONTENT_PADDING;
+const SIDEBAR_TRANSITION_DELAY = 400;
 
 function lerp(progress, value1, value2) {
-  return (value2 - value1) * progress + value1
+  return (value2 - value1) * progress + value1;
 }
 
 class Survey extends React.Component {
   static defaultProps = {
-    onOpenVotingPanel: () => {},
-  }
+    onOpenVotingPanel: () => {}
+  };
   state = {
-    transitionTo: {},
-  }
+    transitionTo: {}
+  };
   handleOpenVotingPanel = () => {
-    this.props.onOpenVotingPanel(this.props.survey.surveyId)
-  }
+    this.props.onOpenVotingPanel(this.props.survey.surveyId);
+  };
   componentDidUpdate(prevProps) {
     // React's new `getDerivedStateFromProps()` hook forces us to store the
     // information we want to compare from `prevProps` in state... so we
@@ -32,25 +32,25 @@ class Survey extends React.Component {
     if (prevProps.survey !== this.props.survey && this.props.survey) {
       // eslint-disable-next-line react/no-did-update-set-state
       this.setState({
-        transitionTo: this._detailsWrapperEl.getBoundingClientRect(),
-      })
+        transitionTo: this._detailsWrapperEl.getBoundingClientRect()
+      });
       this._detailsWrapperEl.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      })
+        behavior: "smooth",
+        block: "start"
+      });
     }
   }
   handleDetailsWrapperRef = el => {
-    this._detailsWrapperEl = el
-  }
+    this._detailsWrapperEl = el;
+  };
   getTransform = t => {
-    const to = this.state.transitionTo
+    const to = this.state.transitionTo;
     const from = this.props.transitionFrom || {
       x: to.x + to.w / 4,
       y: to.y + to.y / 4,
       w: to.w / 2,
-      h: to.h / 2,
-    }
+      h: to.h / 2
+    };
     return `
       translate3d(
         ${lerp(t, -to.x + from.x, 0)}px,
@@ -62,11 +62,11 @@ class Survey extends React.Component {
         ${lerp(t, from.height / to.height, 1)},
         1
       )
-    `
-  }
+    `;
+  };
   render() {
-    const { survey } = this.props
-    if (!survey) return null
+    const { survey } = this.props;
+    if (!survey) return null;
 
     return (
       <Main>
@@ -81,8 +81,8 @@ class Survey extends React.Component {
               <animated.div
                 style={{
                   opacity: styles.show,
-                  transformOrigin: '0 0',
-                  transform: styles.show.interpolate(this.getTransform),
+                  transformOrigin: "0 0",
+                  transform: styles.show.interpolate(this.getTransform)
                 }}
               >
                 <SurveyDetails
@@ -108,7 +108,7 @@ class Survey extends React.Component {
                   opacity: progress,
                   transform: progress.interpolate(
                     t => `translate3d(${(1 - t) * 100}%, 0, 0)`
-                  ),
+                  )
                 }}
               >
                 <SurveySidebar survey={survey} />
@@ -117,7 +117,7 @@ class Survey extends React.Component {
           </Spring>
         </SidebarWrapper>
       </Main>
-    )
+    );
   }
 }
 
@@ -126,12 +126,12 @@ const DetailsWrapper = styled.div`
   margin-top: -30px;
   padding-top: 30px;
   padding-right: ${CONTENT_PADDING}px;
-`
+`;
 
 const SidebarWrapper = styled.div`
   overflow: hidden;
   margin-top: 30px;
-`
+`;
 
 const Main = styled.div`
   position: absolute;
@@ -148,6 +148,6 @@ const Main = styled.div`
       flex-shrink: 0;
     }
   }
-`
+`;
 
-export default Survey
+export default Survey;

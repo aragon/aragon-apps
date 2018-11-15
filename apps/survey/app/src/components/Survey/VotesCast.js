@@ -1,18 +1,18 @@
-import React from 'react'
-import styled from 'styled-components'
-import { Trail, animated } from 'react-spring'
-import { theme, unselectable } from '@aragon/ui'
-import { getOptionColor } from '../../option-utils'
-import springs from '../../springs'
+import React from "react";
+import styled from "styled-components";
+import { Trail, animated } from "react-spring";
+import { theme, unselectable } from "@aragon/ui";
+import { getOptionColor } from "../../option-utils";
+import springs from "../../springs";
 
-const ANIM_DELAY = 400
+const ANIM_DELAY = 400;
 
 class VotesCast extends React.Component {
   getTransform(t) {
-    return `translate3d(${20 * (1 - t)}%, 0, 0)`
+    return `translate3d(${20 * (1 - t)}%, 0, 0)`;
   }
   render() {
-    const { survey } = this.props
+    const { survey } = this.props;
     return (
       <Main>
         <h1>Votes cast so far</h1>
@@ -31,7 +31,7 @@ class VotesCast extends React.Component {
                   key={optionId}
                   style={{
                     opacity: progress,
-                    transform: progress.interpolate(this.getTransform),
+                    transform: progress.interpolate(this.getTransform)
                   }}
                 >
                   <DiscLabel color={getOptionColor(optionId)} label={label} />
@@ -42,7 +42,7 @@ class VotesCast extends React.Component {
           </Trail>
         </ul>
       </Main>
-    )
+    );
   }
 }
 
@@ -52,7 +52,7 @@ const Main = styled.section`
     font-size: 16px;
     ${unselectable};
   }
-`
+`;
 
 const AnimatedLi = styled(animated.li)`
   list-style: none;
@@ -63,7 +63,7 @@ const AnimatedLi = styled(animated.li)`
   strong {
     color: ${theme.textPrimary};
   }
-`
+`;
 
 const Disc = styled.span`
   display: inline-block;
@@ -72,9 +72,9 @@ const Disc = styled.span`
   margin-right: 15px;
   border-radius: 50%;
   background: ${({ color }) => color};
-`
+`;
 
-const DiscContainer = styled.span``
+const DiscContainer = styled.span``;
 
 const DiscLabelContainer = styled.span`
   display: flex;
@@ -82,7 +82,7 @@ const DiscLabelContainer = styled.span`
   ${DiscContainer} {
     flex-shrink: 0;
   }
-`
+`;
 
 const DiscLabel = ({ color, label }) => (
   <DiscLabelContainer>
@@ -91,6 +91,6 @@ const DiscLabel = ({ color, label }) => (
     </DiscContainer>
     <span>{label}</span>
   </DiscLabelContainer>
-)
+);
 
-export default VotesCast
+export default VotesCast;

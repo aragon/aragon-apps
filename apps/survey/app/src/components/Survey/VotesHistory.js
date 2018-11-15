@@ -1,50 +1,52 @@
-import React from 'react'
-import styled from 'styled-components'
-import { Spring } from 'react-spring'
-import { unselectable } from '@aragon/ui'
-import { getOptionColor } from '../../option-utils'
-import springs from '../../springs'
-import { DURATION_SLICES } from '../../survey-settings'
+import React from "react";
+import styled from "styled-components";
+import { Spring } from "react-spring";
+import { unselectable } from "@aragon/ui";
+import { getOptionColor } from "../../option-utils";
+import springs from "../../springs";
+import { DURATION_SLICES } from "../../survey-settings";
 
-const WIDTH = 300
-const HEIGHT = 200
-const CAPTIONS_HEIGHT = 20
-const DOT_RADIUS = 7 / 2
+const WIDTH = 300;
+const HEIGHT = 200;
+const CAPTIONS_HEIGHT = 20;
+const DOT_RADIUS = 7 / 2;
 
-const ANIM_DELAY = 500
+const ANIM_DELAY = 500;
 
-const BORDER_COLOR = 'rgba(209, 209, 209, 0.5)'
+const BORDER_COLOR = "rgba(209, 209, 209, 0.5)";
 
 class VotesHistory extends React.Component {
   state = {
-    animate: false,
-  }
+    animate: false
+  };
   componentDidMount() {
     // animate after a delay
     this._transitionTimer = setTimeout(() => {
-      this.setState({ animate: true })
-    }, ANIM_DELAY)
+      this.setState({ animate: true });
+    }, ANIM_DELAY);
   }
   componentWillUnmount() {
-    clearTimeout(this._transitionTimer)
+    clearTimeout(this._transitionTimer);
   }
   getX(voteIndex) {
-    const slice = WIDTH / (DURATION_SLICES - 1)
-    return slice * voteIndex
+    const slice = WIDTH / (DURATION_SLICES - 1);
+    return slice * voteIndex;
   }
   getY(votePercentage, progress) {
-    const padding = DOT_RADIUS + 2
-    return HEIGHT - padding - (HEIGHT - padding * 2) * votePercentage * progress
+    const padding = DOT_RADIUS + 2;
+    return (
+      HEIGHT - padding - (HEIGHT - padding * 2) * votePercentage * progress
+    );
   }
   render() {
-    const { survey } = this.props
-    const { animate } = this.state
+    const { survey } = this.props;
+    const { animate } = this.state;
     const options = survey.options.map((option, i) => ({
       ...option,
-      history: survey.optionsHistory.options[i],
-    }))
+      history: survey.optionsHistory.options[i]
+    }));
     // All the options' histories have already been reduced to the same length
-    const historyLength = options[0].history.length
+    const historyLength = options[0].history.length;
     return (
       <Main>
         <h1>Votes</h1>
@@ -70,7 +72,7 @@ class VotesHistory extends React.Component {
                   d={`
                     M 0,${HEIGHT}
                     ${[...new Array(DURATION_SLICES)].reduce(
-                      (path = '', _, i) =>
+                      (path = "", _, i) =>
                         `${path} M ${this.getX(i)},${HEIGHT} l 0,-8`
                     )}
                   `}
@@ -78,7 +80,7 @@ class VotesHistory extends React.Component {
                   strokeWidth="1"
                 />
                 {options.map(({ history, optionId }) => {
-                  const color = getOptionColor(optionId)
+                  const color = getOptionColor(optionId);
                   return (
                     <g key={optionId}>
                       <path
@@ -96,28 +98,26 @@ class VotesHistory extends React.Component {
                                  ${this.getY(val, progress)}
                                 `
                             )
-                            .join('')}
+                            .join("")}
                         `}
                         fill="transparent"
                         stroke={color}
                         strokeWidth="2"
                         strokeOpacity="0.7"
                       />
-                      {history
-                        .slice(1, -1)
-                        .map((val, i) => (
-                          <circle
-                            key={i}
-                            cx={this.getX(i + 1) * progress}
-                            cy={this.getY(val, progress)}
-                            r={DOT_RADIUS}
-                            fill="white"
-                            stroke={color}
-                            strokeWidth="1"
-                          />
-                        ))}
+                      {history.slice(1, -1).map((val, i) => (
+                        <circle
+                          key={i}
+                          cx={this.getX(i + 1) * progress}
+                          cy={this.getY(val, progress)}
+                          r={DOT_RADIUS}
+                          fill="white"
+                          stroke={color}
+                          strokeWidth="1"
+                        />
+                      ))}
                     </g>
-                  )
+                  );
                 })}
                 <line
                   x1={this.getX(historyLength - 1) * progress}
@@ -139,7 +139,7 @@ class VotesHistory extends React.Component {
           </Spring>
         </SvgWrapper>
       </Main>
-    )
+    );
   }
 }
 
@@ -149,7 +149,7 @@ const Main = styled.section`
     font-size: 16px;
     ${unselectable};
   }
-`
+`;
 
 const SvgWrapper = styled.div`
   svg {
@@ -161,6 +161,6 @@ const SvgWrapper = styled.div`
       ${unselectable};
     }
   }
-`
+`;
 
-export default VotesHistory
+export default VotesHistory;

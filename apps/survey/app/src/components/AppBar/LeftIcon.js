@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 
 const LeftIcon = () => (
   <svg width="24" height="19" viewBox="0 0 24 19">
@@ -12,6 +12,6 @@ const LeftIcon = () => (
       strokeLinejoin="round"
     />
   </svg>
-)
+);
 
-export default LeftIcon
+export default LeftIcon;

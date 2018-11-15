@@ -1,28 +1,28 @@
-import React from 'react'
-import PropTypes from 'prop-types'
-import BigNumber from 'bignumber.js'
-import { isBefore } from 'date-fns'
-import { AppView, AragonApp, observe } from '@aragon/ui'
-import { Transition, animated } from 'react-spring'
-import tokenBalanceOfAtAbi from './abi/token-balanceOfAt.json'
-import tokenDecimalsAbi from './abi/token-decimals.json'
-import NewSurveyPanel from './components/NewSurveyPanel/NewSurveyPanel'
-import VotingPanel from './components/VotingPanel/VotingPanel'
-import Survey from './components/Survey/Survey'
-import Surveys from './components/Surveys/Surveys'
-import AppBar from './components/AppBar/AppBar'
-import { networkContextType } from './provide-network'
-import { hasLoadedSurveySettings, DURATION_SLICES } from './survey-settings'
-import { getTimeBucket } from './time-utils'
-import { makeEtherscanBaseUrl } from './utils'
+import React from "react";
+import PropTypes from "prop-types";
+import BigNumber from "bignumber.js";
+import { isBefore } from "date-fns";
+import { AppView, AragonApp, observe } from "@aragon/ui";
+import { Transition, animated } from "react-spring";
+import tokenBalanceOfAtAbi from "./abi/token-balanceOfAt.json";
+import tokenDecimalsAbi from "./abi/token-decimals.json";
+import NewSurveyPanel from "./components/NewSurveyPanel/NewSurveyPanel";
+import VotingPanel from "./components/VotingPanel/VotingPanel";
+import Survey from "./components/Survey/Survey";
+import Surveys from "./components/Surveys/Surveys";
+import AppBar from "./components/AppBar/AppBar";
+import { networkContextType } from "./provide-network";
+import { hasLoadedSurveySettings, DURATION_SLICES } from "./survey-settings";
+import { getTimeBucket } from "./time-utils";
+import { makeEtherscanBaseUrl } from "./utils";
 
-const tokenAbi = [].concat(tokenBalanceOfAtAbi, tokenDecimalsAbi)
+const tokenAbi = [].concat(tokenBalanceOfAtAbi, tokenDecimalsAbi);
 
 class App extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
-    userAccount: PropTypes.string.isRequired,
-  }
+    userAccount: PropTypes.string.isRequired
+  };
   static defaultProps = {
     network: {},
     minParticipationPct: null,
@@ -31,13 +31,13 @@ class App extends React.Component {
     surveyTime: null,
     tokenAddress: null,
     tokenDecimals: 18,
-    tokenSymbol: '',
-  }
+    tokenSymbol: ""
+  };
   static childContextTypes = {
-    network: networkContextType,
-  }
+    network: networkContextType
+  };
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       openedSurveyId: null,
       openedSurveyRect: {},
@@ -46,41 +46,41 @@ class App extends React.Component {
       newSurveyPanelOpened: false,
       settingsLoaded: false,
       surveys: [],
-      tokenContract: this.getTokenContract(props.tokenAddress),
-    }
+      tokenContract: this.getTokenContract(props.tokenAddress)
+    };
 
-    this.prepareSurveys(props.userAccount, props.surveys)
+    this.prepareSurveys(props.userAccount, props.surveys);
   }
   getChildContext() {
-    const { network } = this.props
+    const { network } = this.props;
 
     return {
       network: {
         etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
-        type: network.type,
-      },
-    }
+        type: network.type
+      }
+    };
   }
   componentWillReceiveProps(nextProps) {
-    const { settingsLoaded } = this.state
-    const { surveys, userAccount } = this.props
+    const { settingsLoaded } = this.state;
+    const { surveys, userAccount } = this.props;
 
     // Is this the first time we've loaded the settings?
     if (!settingsLoaded && hasLoadedSurveySettings(nextProps)) {
       this.setState({
-        settingsLoaded: true,
-      })
+        settingsLoaded: true
+      });
     }
 
     // Update the token contract
     if (nextProps.tokenAddress !== this.props.tokenAddress) {
-      const tokenContract = this.getTokenContract(nextProps.tokenAddress)
-      this.setState({ tokenContract })
+      const tokenContract = this.getTokenContract(nextProps.tokenAddress);
+      this.setState({ tokenContract });
       this.prepareSurveys(
         nextProps.surveys,
         nextProps.userAccount,
         tokenContract
-      )
+      );
     }
 
     if (
@@ -91,86 +91,86 @@ class App extends React.Component {
         nextProps.surveys,
         nextProps.userAccount,
         this.getTokenContract(nextProps.tokenAddress)
-      )
+      );
     }
   }
 
   // Add user-related data to every survey object
   async prepareSurveys(surveys, userAccount, tokenContract) {
     if (!tokenContract) {
-      return surveys
+      return surveys;
     }
     const preparedSurveys = await Promise.all(
       surveys.map(async survey => {
-        const { snapshotBlock } = survey.data
+        const { snapshotBlock } = survey.data;
         const userBalance = await new Promise((resolve, reject) => {
           tokenContract
             .balanceOfAt(userAccount, snapshotBlock)
             .first()
-            .subscribe(resolve, reject)
-        })
-        return { ...survey, userBalance: new BigNumber(userBalance) }
+            .subscribe(resolve, reject);
+        });
+        return { ...survey, userBalance: new BigNumber(userBalance) };
       })
-    )
+    );
 
-    this.setState({ surveys: preparedSurveys })
+    this.setState({ surveys: preparedSurveys });
   }
   getSurvey(id) {
-    return this.state.surveys.find(survey => survey.surveyId === id)
+    return this.state.surveys.find(survey => survey.surveyId === id);
   }
   getTokenContract(tokenAddress) {
-    return tokenAddress && this.props.app.external(tokenAddress, tokenAbi)
+    return tokenAddress && this.props.app.external(tokenAddress, tokenAbi);
   }
   handleOpenSurveyDetails = id => {
     // Try to get the card rectangle before opening it
     // So we can animate from the card to the expanded view
-    const cardElt = this._cardRefs.get(id)
-    const rect = cardElt ? cardElt.getBoundingClientRect() : null
-    this.setState({ openedSurveyId: id, openedSurveyRect: rect })
-  }
+    const cardElt = this._cardRefs.get(id);
+    const rect = cardElt ? cardElt.getBoundingClientRect() : null;
+    this.setState({ openedSurveyId: id, openedSurveyRect: rect });
+  };
   handlePanelClose = () => {
     this.setState({
       openedSurveyId: false,
       votingPanelOpened: false,
-      newSurveyPanelOpened: false,
-    })
-  }
+      newSurveyPanelOpened: false
+    });
+  };
   handleOpenVotingPanel = id => {
     this.setState({
       votingPanelOpened: true,
-      votingPanelSurveyId: id,
-    })
-  }
+      votingPanelSurveyId: id
+    });
+  };
   handleOpenNewSurveyPanel = () => {
     // this.setState({ newSurveyPanelOpened: true })
-  }
+  };
   handleCloseSurveyDetails = () => {
-    this.setState({ openedSurveyId: null })
-  }
+    this.setState({ openedSurveyId: null });
+  };
   handleCardRef = ({ id, element }) => {
     if (!this._cardRefs) {
-      this._cardRefs = new Map()
+      this._cardRefs = new Map();
     }
-    this._cardRefs.set(id, element)
-  }
+    this._cardRefs.set(id, element);
+  };
   render() {
-    const { tokenSymbol, tokenDecimals, app } = this.props
+    const { tokenSymbol, tokenDecimals, app } = this.props;
     const {
       surveys,
       openedSurveyId,
       openedSurveyRect,
       votingPanelSurveyId,
       votingPanelOpened,
-      newSurveyPanelOpened,
-    } = this.state
-    const openedSurvey = this.getSurvey(openedSurveyId)
-    const votingPanelSurvey = this.getSurvey(votingPanelSurveyId)
+      newSurveyPanelOpened
+    } = this.state;
+    const openedSurvey = this.getSurvey(openedSurveyId);
+    const votingPanelSurvey = this.getSurvey(votingPanelSurveyId);
     return (
       <AragonApp publicUrl="/aragon-ui/">
         <AppView
           appBar={
             <AppBar
-              view={openedSurvey ? 'survey' : 'surveys'}
+              view={openedSurvey ? "survey" : "surveys"}
               tokenSymbol={tokenSymbol}
               tokenDecimals={tokenDecimals}
               onOpenNewSurveyPanel={this.handleOpenNewSurveyPanel}
@@ -210,7 +210,7 @@ class App extends React.Component {
           app={app}
         />
       </AragonApp>
-    )
+    );
   }
 }
 
@@ -220,7 +220,7 @@ const SurveysWrapper = ({
   onOpenSurveyDetails,
   onOpenVotingPanel,
   onCloseVotingPanel,
-  onCardRef,
+  onCardRef
 }) => (
   <animated.div style={{ opacity: showProgress }}>
     <Surveys
@@ -231,28 +231,28 @@ const SurveysWrapper = ({
       onCardRef={onCardRef}
     />
   </animated.div>
-)
+);
 
 export default observe(observable => {
-  const now = new Date()
+  const now = new Date();
   return observable.map(state => ({
     ...state,
     // Transform the survey data for the frontend
     surveys:
       state && state.surveys
         ? state.surveys.map(survey => {
-            const { pctBase, surveyTime, tokenDecimals } = state
-            const { data, options, optionsHistory } = survey
-            const tokenMultiplier = Math.pow(10, tokenDecimals)
-            const endDate = new Date(data.startDate + surveyTime)
-            const startDate = new Date(data.startDate)
+            const { pctBase, surveyTime, tokenDecimals } = state;
+            const { data, options, optionsHistory } = survey;
+            const tokenMultiplier = Math.pow(10, tokenDecimals);
+            const endDate = new Date(data.startDate + surveyTime);
+            const startDate = new Date(data.startDate);
 
             const nowBucket = getTimeBucket(
               Date.now(),
               data.startDate,
               surveyTime,
               DURATION_SLICES
-            )
+            );
 
             return {
               ...survey,
@@ -263,11 +263,11 @@ export default observe(observable => {
                 open: isBefore(now, endDate),
                 minParticipationPct: data.minParticipationPct / pctBase,
                 participation: data.participation / tokenMultiplier,
-                votingPower: data.votingPower / tokenMultiplier,
+                votingPower: data.votingPower / tokenMultiplier
               },
               options: options.map(({ power, ...option }) => ({
                 ...option,
-                power: power / tokenMultiplier,
+                power: power / tokenMultiplier
               })),
               optionsHistory: {
                 ...optionsHistory,
@@ -283,14 +283,14 @@ export default observe(observable => {
                           : index === 0
                             ? 0
                             : powers[index - 1]
-                      )
+                      );
                     }
-                    return powers
+                    return powers;
                   }, [])
-                ),
-              },
-            }
+                )
+              }
+            };
           })
-        : [],
-  }))
-}, {})(App)
+        : []
+  }));
+}, {})(App);

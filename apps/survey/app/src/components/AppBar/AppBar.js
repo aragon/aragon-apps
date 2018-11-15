@@ -1,8 +1,8 @@
-import React from 'react'
-import styled from 'styled-components'
-import { AppBar, Badge, Button } from '@aragon/ui'
-import { Transition, animated } from 'react-spring'
-import LeftIcon from './LeftIcon'
+import React from "react";
+import styled from "styled-components";
+import { AppBar, Badge, Button } from "@aragon/ui";
+import { Transition, animated } from "react-spring";
+import LeftIcon from "./LeftIcon";
 
 const AppBarWrapper = ({ tokenSymbol, onOpenNewSurveyPanel, view, onBack }) => (
   <AppBar
@@ -15,7 +15,7 @@ const AppBarWrapper = ({ tokenSymbol, onOpenNewSurveyPanel, view, onBack }) => (
           leave={{ opacity: 0, position: -1 }}
           tokenSymbol={tokenSymbol}
         >
-          {view === 'surveys' && TitleSurveys}
+          {view === "surveys" && TitleSurveys}
         </Transition>
         <Transition
           native
@@ -25,7 +25,7 @@ const AppBarWrapper = ({ tokenSymbol, onOpenNewSurveyPanel, view, onBack }) => (
           tokenSymbol={tokenSymbol}
           onBack={onBack}
         >
-          {view === 'survey' && TitleSurvey}
+          {view === "survey" && TitleSurvey}
         </Transition>
       </Container>
     }
@@ -35,13 +35,13 @@ const AppBarWrapper = ({ tokenSymbol, onOpenNewSurveyPanel, view, onBack }) => (
       </Button>
     }
   />
-)
+);
 
 const TitleSurveys = ({ opacity, position, tokenSymbol }) => (
   <animated.span
     style={{
       opacity,
-      transform: position.interpolate(p => `translate(${p * 20}px, -50%)`),
+      transform: position.interpolate(p => `translate(${p * 20}px, -50%)`)
     }}
   >
     <Title>
@@ -49,13 +49,13 @@ const TitleSurveys = ({ opacity, position, tokenSymbol }) => (
       {tokenSymbol && <SpacedBadge>{tokenSymbol}</SpacedBadge>}
     </Title>
   </animated.span>
-)
+);
 
 const TitleSurvey = ({ opacity, position, tokenSymbol, onBack }) => (
   <animated.span
     style={{
       opacity,
-      transform: position.interpolate(p => `translate(${p * 20 - 30}px, -50%)`),
+      transform: position.interpolate(p => `translate(${p * 20 - 30}px, -50%)`)
     }}
   >
     <Title>
@@ -66,17 +66,17 @@ const TitleSurvey = ({ opacity, position, tokenSymbol, onBack }) => (
       {tokenSymbol && <SpacedBadge>{tokenSymbol}</SpacedBadge>}
     </Title>
   </animated.span>
-)
+);
 
 const Container = styled.span`
   display: flex;
   position: relative;
   height: 100%;
-`
+`;
 
 const SpacedBadge = styled(Badge)`
   margin-left: 10px;
-`
+`;
 
 const BackButton = styled.span`
   display: flex;
@@ -90,7 +90,7 @@ const BackButton = styled.span`
   :active svg path {
     stroke: hsl(179, 76%, 63%);
   }
-`
+`;
 
 const Title = styled.span`
   display: flex;
@@ -99,6 +99,6 @@ const Title = styled.span`
   left: 0;
   top: 0;
   transform: translateY(-50%);
-`
+`;
 
-export default AppBarWrapper
+export default AppBarWrapper;

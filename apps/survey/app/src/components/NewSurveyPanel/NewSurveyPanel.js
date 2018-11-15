@@ -1,46 +1,46 @@
-import React from 'react'
-import styled from 'styled-components'
-import { SidePanel, Info, Field, TextInput, Button } from '@aragon/ui'
+import React from "react";
+import styled from "styled-components";
+import { SidePanel, Info, Field, TextInput, Button } from "@aragon/ui";
 
 const initialState = {
-  question: '',
-  description: '',
-  url: '',
-}
+  question: "",
+  description: "",
+  url: ""
+};
 
 class NewSurveyPanel extends React.Component {
   static defaultProps = {
-    onCreateSurvey: () => {},
-  }
+    onCreateSurvey: () => {}
+  };
   state = {
-    ...initialState,
-  }
+    ...initialState
+  };
   componentWillReceiveProps({ opened }) {
     if (opened && !this.props.opened) {
       // setTimeout is needed as a small hack to wait until
       // the input's on screen until we call focus.
-      this._questionInput && setTimeout(() => this._questionInput.focus(), 0)
+      this._questionInput && setTimeout(() => this._questionInput.focus(), 0);
     } else if (!opened && this.props.opened) {
       // Finished closing the panel, so reset its state
-      this.setState({ ...initialState })
+      this.setState({ ...initialState });
     }
   }
   handleQuestionChange = ({ target: { value } }) => {
-    this.setState({ question: value })
-  }
+    this.setState({ question: value });
+  };
   handleDescriptionChange = ({ target: { value } }) => {
-    this.setState({ description: value })
-  }
+    this.setState({ description: value });
+  };
   handleUrlChange = ({ target: { value } }) => {
-    this.setState({ url: value })
-  }
+    this.setState({ url: value });
+  };
   handleSubmit = event => {
-    event.preventDefault()
-    this.props.onCreateSurvey(this.state.question.trim())
-  }
+    event.preventDefault();
+    this.props.onCreateSurvey(this.state.question.trim());
+  };
   render() {
-    const { question, description, url } = this.state
-    const { opened, onClose } = this.props
+    const { question, description, url } = this.state;
+    const { opened, onClose } = this.props;
     return (
       <SidePanel title="New Survey" opened={opened} onClose={onClose}>
         <Info.Action title="Surveys are informative">
@@ -80,12 +80,12 @@ class NewSurveyPanel extends React.Component {
           </Button>
         </Form>
       </SidePanel>
-    )
+    );
   }
 }
 
 const Form = styled.form`
   margin-top: 20px;
-`
+`;
 
-export default NewSurveyPanel
+export default NewSurveyPanel;

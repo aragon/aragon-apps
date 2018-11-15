@@ -1,33 +1,33 @@
-import React from 'react'
-import styled from 'styled-components'
-import color from 'onecolor'
-import { format } from 'date-fns'
-import { Countdown, Text, Button, Badge, theme } from '@aragon/ui'
-import SurveyCardGroup from './SurveyCardGroup'
-import SurveyOptions from '../SurveyOptions/SurveyOptions'
+import React from "react";
+import styled from "styled-components";
+import color from "onecolor";
+import { format } from "date-fns";
+import { Countdown, Text, Button, Badge, theme } from "@aragon/ui";
+import SurveyCardGroup from "./SurveyCardGroup";
+import SurveyOptions from "../SurveyOptions/SurveyOptions";
 
-const OPTIONS_DISPLAYED = 3
+const OPTIONS_DISPLAYED = 3;
 
 class SurveyCard extends React.Component {
   static defaultProps = {
-    options: [],
-  }
+    options: []
+  };
   handleVote = () => {
-    this.props.onVote(this.props.survey.surveyId)
-  }
+    this.props.onVote(this.props.survey.surveyId);
+  };
   handleOpenDetails = () => {
-    this.props.onOpenDetails(this.props.survey.surveyId)
-  }
+    this.props.onOpenDetails(this.props.survey.surveyId);
+  };
   handleCardRef = element => {
-    this.props.onCardRef({ id: this.props.survey.surveyId, element })
-  }
+    this.props.onCardRef({ id: this.props.survey.surveyId, element });
+  };
   render() {
-    const { survey } = this.props
+    const { survey } = this.props;
     const {
       data: { endDate, open, votingPower },
       metadata: { question },
-      options,
-    } = survey
+      options
+    } = survey;
 
     return (
       <Main>
@@ -38,7 +38,7 @@ class SurveyCard extends React.Component {
             <PastDate
               dateTime={format(endDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")}
             >
-              {format(endDate, 'EEE MMM dd yyyy HH:mm')}
+              {format(endDate, "EEE MMM dd yyyy HH:mm")}
             </PastDate>
           )}
         </Header>
@@ -79,28 +79,28 @@ class SurveyCard extends React.Component {
           )}
         </Card>
       </Main>
-    )
+    );
   }
 }
 
 const Main = styled.section`
   display: flex;
   flex-direction: column;
-`
+`;
 
 const Header = styled.div`
   margin-bottom: 10px;
   padding-left: 5px;
-`
+`;
 
 const SecondaryButton = styled(Button).attrs({
-  mode: 'secondary',
-  compact: true,
+  mode: "secondary",
+  compact: true
 })`
   background: ${color(theme.secondaryBackground)
     .alpha(0.8)
     .cssa()};
-`
+`;
 
 const Card = styled.div`
   display: flex;
@@ -110,11 +110,11 @@ const Card = styled.div`
   background: #ffffff;
   border: 1px solid rgba(209, 209, 209, 0.5);
   border-radius: 3px;
-`
+`;
 
 const Content = styled.div`
   height: 100%;
-`
+`;
 
 const Question = styled.h1`
   display: -webkit-box;
@@ -124,48 +124,48 @@ const Question = styled.h1`
   line-height: 25px;
   height: 50px;
   margin-bottom: 10px;
-`
+`;
 
 const PastDate = styled.time`
   font-size: 13px;
   color: #98a0a2;
-`
+`;
 
 const More = styled.div`
   display: flex;
   width: 100%;
   align-items: center;
   justify-content: center;
-`
+`;
 
 const Footer = styled.div`
   display: flex;
   justify-content: ${({ alignRight }) =>
-    alignRight ? 'flex-end' : 'space-between'};
+    alignRight ? "flex-end" : "space-between"};
   flex-shrink: 0;
-`
+`;
 
 const ActiveFooter = ({ onOpenDetails, onVote }) => (
   <Footer>
     <Button.Anchor
       mode="text"
       compact
-      style={{ paddingLeft: '0' }}
+      style={{ paddingLeft: "0" }}
       onClick={onOpenDetails}
     >
       View details
     </Button.Anchor>
     <SecondaryButton onClick={onVote}>Vote</SecondaryButton>
   </Footer>
-)
+);
 
 const PastFooter = ({ onOpenDetails }) => (
   <Footer alignRight>
     <SecondaryButton onClick={onOpenDetails}>View details</SecondaryButton>
   </Footer>
-)
+);
 
-SurveyCard.Group = SurveyCardGroup
-SurveyCard.Card = Card
+SurveyCard.Group = SurveyCardGroup;
+SurveyCard.Card = Card;
 
-export default SurveyCard
+export default SurveyCard;

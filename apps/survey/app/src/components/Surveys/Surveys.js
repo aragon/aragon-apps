@@ -1,34 +1,34 @@
-import React from 'react'
-import SurveyCard from '../SurveyCard/SurveyCard'
+import React from "react";
+import SurveyCard from "../SurveyCard/SurveyCard";
 
 class Surveys extends React.PureComponent {
   static defaultProps = {
     onOpenSurveyDetails: () => {},
     onOpenVotingPanel: () => {},
-    onCardRef: () => {},
-  }
+    onCardRef: () => {}
+  };
   getSurveyGroups() {
-    const { surveys } = this.props
+    const { surveys } = this.props;
     return surveys.reduce(
       (groups, survey) => {
-        const group = survey.data.open ? 'opened' : 'closed'
-        return { ...groups, [group]: [...groups[group], survey] }
+        const group = survey.data.open ? "opened" : "closed";
+        return { ...groups, [group]: [...groups[group], survey] };
       },
       { opened: [], closed: [] }
-    )
+    );
   }
   render() {
-    const surveys = this.getSurveyGroups()
+    const surveys = this.getSurveyGroups();
     return (
       <React.Fragment>
-        {this.renderGroup('Open Surveys', surveys.opened)}
-        {this.renderGroup('Past Surveys', surveys.closed)}
+        {this.renderGroup("Open Surveys", surveys.opened)}
+        {this.renderGroup("Past Surveys", surveys.closed)}
       </React.Fragment>
-    )
+    );
   }
   renderGroup(title, surveys) {
     if (surveys.length === 0) {
-      return null
+      return null;
     }
     return (
       <SurveyCard.Group title={title} count={surveys.length}>
@@ -42,8 +42,8 @@ class Surveys extends React.PureComponent {
           />
         ))}
       </SurveyCard.Group>
-    )
+    );
   }
 }
 
-export default Surveys
+export default Surveys;

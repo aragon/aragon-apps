@@ -1,21 +1,21 @@
-import React from 'react'
-import styled from 'styled-components'
-import { theme, Countdown, Button, unselectable, SafeLink } from '@aragon/ui'
-import { Spring, Trail, animated } from 'react-spring'
-import color from 'onecolor'
-import SurveyCard from '../SurveyCard/SurveyCard'
-import SurveyOptions from '../SurveyOptions/SurveyOptions'
-import Creator from '../Creator/Creator'
+import React from "react";
+import styled from "styled-components";
+import { theme, Countdown, Button, unselectable, SafeLink } from "@aragon/ui";
+import { Spring, Trail, animated } from "react-spring";
+import color from "onecolor";
+import SurveyCard from "../SurveyCard/SurveyCard";
+import SurveyOptions from "../SurveyOptions/SurveyOptions";
+import Creator from "../Creator/Creator";
 
-const ANIM_DELAY = 300
+const ANIM_DELAY = 300;
 
 class SurveyDetails extends React.Component {
   static defaultProps = {
     survey: {},
-    onOpenVotingPanel: () => {},
-  }
+    onOpenVotingPanel: () => {}
+  };
   render() {
-    const { survey } = this.props
+    const { survey } = this.props;
     return (
       <Card>
         <Spring
@@ -34,7 +34,7 @@ class SurveyDetails extends React.Component {
         <Cols>
           <div>
             <Trail
-              keys={['options', 'time']}
+              keys={["options", "time"]}
               from={{ progress: 0 }}
               to={{ progress: 1 }}
               delay={ANIM_DELAY}
@@ -55,13 +55,13 @@ class SurveyDetails extends React.Component {
                     <SectionTitle>Time Remaining</SectionTitle>
                     <Countdown end={survey.data.endDate} />
                   </animated.section>
-                ),
+                )
               ]}
             </Trail>
           </div>
           <div>
             <Trail
-              keys={['description', 'url', 'creator', 'vote']}
+              keys={["description", "url", "creator", "vote"]}
               from={{ progress: 0 }}
               to={{ progress: 1 }}
               delay={ANIM_DELAY}
@@ -105,7 +105,7 @@ class SurveyDetails extends React.Component {
                       {survey.data.open && (
                         <Button
                           mode="strong"
-                          style={{ width: '50%' }}
+                          style={{ width: "50%" }}
                           onClick={this.props.onOpenVotingPanel}
                         >
                           Vote
@@ -113,13 +113,13 @@ class SurveyDetails extends React.Component {
                       )}
                     </VoteButtonWrapper>
                   </animated.section>
-                ),
+                )
               ]}
             </Trail>
           </div>
         </Cols>
       </Card>
-    )
+    );
   }
 }
 
@@ -129,12 +129,12 @@ const Card = styled(SurveyCard.Card)`
   a {
     color: ${theme.accent};
   }
-`
+`;
 
 const Question = styled.h1`
   margin-bottom: 15px;
   font-size: 22px;
-`
+`;
 
 const SectionTitle = styled.h1`
   margin-top: 35px;
@@ -148,21 +148,21 @@ const SectionTitle = styled.h1`
   font-weight: 600;
   font-size: 16px;
   ${unselectable};
-`
+`;
 
 const VoteButtonWrapper = styled.div`
   padding-top: 150px;
   padding-bottom: 10px;
   display: flex;
   justify-content: flex-end;
-`
+`;
 
 const UrlBlock = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   color: ${theme.accent};
-`
+`;
 
 const Cols = styled.div`
   @media (min-width: 1100px) {
@@ -175,6 +175,6 @@ const Cols = styled.div`
       margin-right: 30px;
     }
   }
-`
+`;
 
-export default SurveyDetails
+export default SurveyDetails;

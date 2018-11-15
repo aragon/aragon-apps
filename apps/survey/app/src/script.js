@@ -1,18 +1,18 @@
-import Aragon from '@aragon/client'
-import { of } from './rxjs'
+import Aragon from "@aragon/client";
+import { of } from "./rxjs";
 import surveySettings, {
   DURATION_SLICES,
-  hasLoadedSurveySettings,
-} from './survey-settings'
-import { getTimeBucket } from './time-utils'
-import tokenDecimalsAbi from './abi/token-decimals.json'
-import tokenSymbolAbi from './abi/token-symbol.json'
+  hasLoadedSurveySettings
+} from "./survey-settings";
+import { getTimeBucket } from "./time-utils";
+import tokenDecimalsAbi from "./abi/token-decimals.json";
+import tokenSymbolAbi from "./abi/token-symbol.json";
 
-const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
+const INITIALIZATION_TRIGGER = Symbol("INITIALIZATION_TRIGGER");
 
-const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
+const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi);
 
-const app = new Aragon()
+const app = new Aragon();
 
 /*
  * Calls `callback` exponentially, everytime `retry()` is called.
@@ -33,61 +33,61 @@ const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
   const attempt = (retryTimer = initialRetryTimer) => {
     // eslint-disable-next-line standard/no-callback-literal
     callback(() => {
-      console.error(`Retrying in ${retryTimer / 1000}s...`)
+      console.error(`Retrying in ${retryTimer / 1000}s...`);
 
       // Exponentially backoff attempts
-      setTimeout(() => attempt(retryTimer * increaseFactor), retryTimer)
-    })
-  }
-  attempt()
-}
+      setTimeout(() => attempt(retryTimer * increaseFactor), retryTimer);
+    });
+  };
+  attempt();
+};
 
 // Get the token address to initialize ourselves
 retryEvery(retry => {
   app
-    .call('token')
+    .call("token")
     .first()
     .subscribe(initialize, err => {
       console.error(
-        'Could not start background script execution due to the contract not loading the token:',
+        "Could not start background script execution due to the contract not loading the token:",
         err
-      )
-      retry()
-    })
-})
+      );
+      retry();
+    });
+});
 
 async function initialize(tokenAddr) {
-  const token = app.external(tokenAddr, tokenAbi)
+  const token = app.external(tokenAddr, tokenAbi);
 
-  let tokenSymbol
+  let tokenSymbol;
   try {
-    tokenSymbol = await loadTokenSymbol(token)
-    app.identify(tokenSymbol)
+    tokenSymbol = await loadTokenSymbol(token);
+    app.identify(tokenSymbol);
   } catch (err) {
     console.error(
       `Failed to load token symbol for token at ${tokenAddr} due to:`,
       err
-    )
+    );
   }
 
-  let tokenDecimals
+  let tokenDecimals;
   try {
-    tokenDecimals = await loadTokenDecimals(token)
+    tokenDecimals = await loadTokenDecimals(token);
   } catch (err) {
     console.err(
       `Failed to load token decimals for token at ${tokenAddr} due to:`,
       err
-    )
-    console.err('Defaulting to 18...')
-    tokenDecimals = 18
+    );
+    console.err("Defaulting to 18...");
+    tokenDecimals = 18;
   }
 
-  return createStore(token, { decimals: tokenDecimals, symbol: tokenSymbol })
+  return createStore(token, { decimals: tokenDecimals, symbol: tokenSymbol });
 }
 
 // Hook up the script as an aragon.js store
 async function createStore(token, tokenSettings) {
-  const { decimals: tokenDecimals, symbol: tokenSymbol } = tokenSettings
+  const { decimals: tokenDecimals, symbol: tokenSymbol } = tokenSettings;
   return app.store(
     async (
       state,
@@ -96,38 +96,38 @@ async function createStore(token, tokenSettings) {
       let nextState = {
         ...state,
         // Fetch the app's settings, if we haven't already
-        ...(!hasLoadedSurveySettings(state) ? await loadSurveySettings() : {}),
-      }
+        ...(!hasLoadedSurveySettings(state) ? await loadSurveySettings() : {})
+      };
 
       if (event === INITIALIZATION_TRIGGER) {
         nextState = {
           ...nextState,
           tokenDecimals,
-          tokenSymbol,
-        }
+          tokenSymbol
+        };
       } else {
         switch (event) {
-          case 'StartSurvey':
-            nextState = await startSurvey(nextState, returnValues)
-            break
-          case 'CastVote':
+          case "StartSurvey":
+            nextState = await startSurvey(nextState, returnValues);
+            break;
+          case "CastVote":
             nextState = await processVote(
               nextState,
               returnValues,
               blockNumber,
               transactionIndex,
               logIndex
-            )
-            break
-          case 'ResetVote':
+            );
+            break;
+          case "ResetVote":
             // We have to manually calculate the option power left when a vote is reset
             returnValues = {
               ...returnValues,
               // TODO: use BN.js instead
               optionPower: String(
                 returnValues.optionPower - returnValues.previousStake
-              ),
-            }
+              )
+            };
 
             nextState = await processVote(
               nextState,
@@ -135,20 +135,20 @@ async function createStore(token, tokenSettings) {
               blockNumber,
               transactionIndex,
               logIndex
-            )
-            break
+            );
+            break;
           default:
-            break
+            break;
         }
       }
 
-      return nextState
+      return nextState;
     },
     [
       // Always initialize the store with our own home-made event
-      of({ event: INITIALIZATION_TRIGGER }),
+      of({ event: INITIALIZATION_TRIGGER })
     ]
-  )
+  );
 }
 
 /***********************
@@ -160,44 +160,44 @@ async function createStore(token, tokenSettings) {
 async function startSurvey(state, { creator, metadata, surveyId }) {
   // Set up the survey options to allow the script to keep track of their voting history
   const transform = async survey => {
-    let parsedMetadata = {}
+    let parsedMetadata = {};
     try {
-      parsedMetadata = marshallMetadata(metadata).metadata || {}
+      parsedMetadata = marshallMetadata(metadata).metadata || {};
     } catch (err) {
       console.error(
         `Failed to load survey ${surveyId}'s metadata (${metadata})`,
         err
-      )
+      );
     }
 
-    const { options: optionLabels = [] } = parsedMetadata
+    const { options: optionLabels = [] } = parsedMetadata;
 
     // Add generic labels if not provided in the metadata
     while (survey.data.options > optionLabels.length) {
-      optionLabels.push(`Option ${optionLabels.length + 1}`)
+      optionLabels.push(`Option ${optionLabels.length + 1}`);
     }
 
     // Load initial voting powers for the options
     const options = await Promise.all(
       optionLabels.map(async (label, optionIndex) => {
         // Add one to optionIndex as optionId always starts from 1
-        const optionId = optionIndex + 1
-        const power = await loadSurveyOptionPower(surveyId, optionId)
+        const optionId = optionIndex + 1;
+        const power = await loadSurveyOptionPower(surveyId, optionId);
 
         return {
           label,
           optionId,
-          power,
-        }
+          power
+        };
       })
-    )
+    );
 
     return {
       ...survey,
       data: {
         ...survey.data,
         creator,
-        metadata,
+        metadata
       },
       metadata: parsedMetadata,
       options,
@@ -205,16 +205,16 @@ async function startSurvey(state, { creator, metadata, surveyId }) {
         lastUpdated: {
           blockNumber: 0,
           logIndex: 0,
-          transactionIndex: 0,
+          transactionIndex: 0
         },
         // Initialize each option's history with a "sparse" -1 filled array
         // whose length matches the number of time slices
-        options: options.map(() => new Array(DURATION_SLICES).fill(-1)),
-      },
-    }
-  }
+        options: options.map(() => new Array(DURATION_SLICES).fill(-1))
+      }
+    };
+  };
 
-  return updateState(state, surveyId, transform)
+  return updateState(state, surveyId, transform);
 }
 
 async function processVote(
@@ -226,12 +226,12 @@ async function processVote(
 ) {
   const transform = async ({ data, options, ...survey }) => {
     // Reload the contract data, mostly so we can get updated participation numbers
-    const newData = await loadSurveyData(surveyId)
+    const newData = await loadSurveyData(surveyId);
     return {
       ...survey,
       data: {
         ...survey.data,
-        ...newData,
+        ...newData
       },
       optionsHistory: await updateHistoryForOption(
         survey.optionsHistory,
@@ -249,10 +249,10 @@ async function processVote(
         options,
         surveyId,
         parseInt(optionId, 10)
-      ),
-    }
-  }
-  return updateState(state, surveyId, transform)
+      )
+    };
+  };
+  return updateState(state, surveyId, transform);
 }
 
 /***********************
@@ -262,41 +262,41 @@ async function processVote(
  ***********************/
 
 async function updateState(state, surveyId, transform) {
-  const { surveys = [] } = state
+  const { surveys = [] } = state;
 
   return {
     ...state,
-    surveys: await updateSurveys(surveys, surveyId, transform),
-  }
+    surveys: await updateSurveys(surveys, surveyId, transform)
+  };
 }
 
 async function updateSurveys(surveys, surveyId, transform) {
-  const surveyIndex = surveys.findIndex(survey => survey.surveyId === surveyId)
+  const surveyIndex = surveys.findIndex(survey => survey.surveyId === surveyId);
 
   if (surveyIndex === -1) {
     // If we can't find it, load its data, perform the transformation, and concat
-    return surveys.concat(await transform(await createNewSurvey(surveyId)))
+    return surveys.concat(await transform(await createNewSurvey(surveyId)));
   } else {
-    const nextSurveys = Array.from(surveys)
-    nextSurveys[surveyIndex] = await transform(nextSurveys[surveyIndex])
-    return nextSurveys
+    const nextSurveys = Array.from(surveys);
+    nextSurveys[surveyIndex] = await transform(nextSurveys[surveyIndex]);
+    return nextSurveys;
   }
 }
 
 async function updatePowerForOption(options, surveyId, optionId) {
-  const optionIndex = options.findIndex(option => option.optionId === optionId)
+  const optionIndex = options.findIndex(option => option.optionId === optionId);
 
   if (optionIndex !== -1) {
-    const nextOptions = Array.from(options)
+    const nextOptions = Array.from(options);
     nextOptions[optionIndex] = {
       ...nextOptions[optionIndex],
-      power: await loadSurveyOptionPower(surveyId, optionId),
-    }
-    return nextOptions
+      power: await loadSurveyOptionPower(surveyId, optionId)
+    };
+    return nextOptions;
   } else {
     console.error(
       `Tried to update option #${optionId} in survey #${surveyId} that shouldn't exist!`
-    )
+    );
   }
 }
 
@@ -310,8 +310,8 @@ async function updateHistoryForOption(
   transactionIndex,
   logIndex
 ) {
-  let newHistory = history
-  const { lastUpdated } = history
+  let newHistory = history;
+  const { lastUpdated } = history;
 
   if (
     lastUpdated.blockNumber < blockNumber ||
@@ -321,64 +321,64 @@ async function updateHistoryForOption(
         lastUpdated.logIndex < logIndex))
   ) {
     // We haven't encountered this event before! Let's update our history!
-    const { startDate } = surveyData
+    const { startDate } = surveyData;
 
-    const blockTimestamp = await loadBlockTime(blockNumber)
+    const blockTimestamp = await loadBlockTime(blockNumber);
     const timeBucket = getTimeBucket(
       blockTimestamp,
       startDate,
       surveyTime,
       DURATION_SLICES
-    )
+    );
 
     // OptionId always starts at 1, so we need to adjust for our history arrays
-    const optionIndex = optionId - 1
-    const options = Array.from(history.options)
-    const optionHistory = Array.from(options[optionIndex])
+    const optionIndex = optionId - 1;
+    const options = Array.from(history.options);
+    const optionHistory = Array.from(options[optionIndex]);
 
-    optionHistory[timeBucket] = optionPower
-    options[optionIndex] = optionHistory
+    optionHistory[timeBucket] = optionPower;
+    options[optionIndex] = optionHistory;
 
     newHistory = {
       options,
       lastUpdated: {
         blockNumber,
         logIndex,
-        transactionIndex,
-      },
-    }
+        transactionIndex
+      }
+    };
   }
 
-  return newHistory
+  return newHistory;
 }
 
 async function createNewSurvey(surveyId) {
   return {
     surveyId,
-    data: await loadSurveyData(surveyId),
-  }
+    data: await loadSurveyData(surveyId)
+  };
 }
 
 function loadSurveySettings() {
   return Promise.all(
     surveySettings.map(
-      ([name, key, type = 'string']) =>
+      ([name, key, type = "string"]) =>
         new Promise((resolve, reject) =>
           app
             .call(name)
             .first()
             .map(val => {
-              if (type === 'number') {
-                return parseInt(val, 10)
+              if (type === "number") {
+                return parseInt(val, 10);
               }
-              if (type === 'time') {
+              if (type === "time") {
                 // Adjust for js time (in ms vs s)
-                return parseInt(val, 10) * 1000
+                return parseInt(val, 10) * 1000;
               }
-              return val
+              return val;
             })
             .subscribe(value => {
-              resolve({ [key]: value })
+              resolve({ [key]: value });
             }, reject)
         )
     )
@@ -387,48 +387,48 @@ function loadSurveySettings() {
       settings.reduce((acc, setting) => ({ ...acc, ...setting }), {})
     )
     .catch(err => {
-      console.error('Failed to load Survey settings', err)
+      console.error("Failed to load Survey settings", err);
       // Return an empty object to try again later
-      return {}
-    })
+      return {};
+    });
 }
 
 function loadSurveyData(surveyId) {
   return new Promise(resolve => {
     app
-      .call('getSurvey', surveyId)
+      .call("getSurvey", surveyId)
       .first()
       .subscribe(survey => {
-        resolve(marshallSurvey(survey))
-      })
-  })
+        resolve(marshallSurvey(survey));
+      });
+  });
 }
 
 function loadSurveyOptionPower(surveyId, optionId) {
   return new Promise(resolve =>
     app
-      .call('getOptionPower', surveyId, optionId)
+      .call("getOptionPower", surveyId, optionId)
       .first()
       .map(power => parseInt(power, 10))
       .subscribe(resolve, err => {
         console.error(
           `Failed to get option power for option #${optionId} in survey #${surveyId}`,
           err
-        )
-        resolve(0)
+        );
+        resolve(0);
       })
-  )
+  );
 }
 
 function loadBlockTime(blockNumber) {
   return new Promise((resolve, reject) =>
     app
-      .web3Eth('getBlock', blockNumber)
+      .web3Eth("getBlock", blockNumber)
       .first()
       // Adjust for solidity time (s => ms)
       .map(({ timestamp }) => timestamp * 1000)
       .subscribe(resolve, reject)
-  )
+  );
 }
 
 function loadTokenDecimals(tokenContract) {
@@ -437,8 +437,8 @@ function loadTokenDecimals(tokenContract) {
       .decimals()
       .first()
       .map(val => parseInt(val, 10))
-      .subscribe(resolve, reject)
-  })
+      .subscribe(resolve, reject);
+  });
 }
 
 function loadTokenSymbol(tokenContract) {
@@ -446,8 +446,8 @@ function loadTokenSymbol(tokenContract) {
     tokenContract
       .symbol()
       .first()
-      .subscribe(resolve, reject)
-  })
+      .subscribe(resolve, reject);
+  });
 }
 
 // Apply transmations to a survey received from web3
@@ -458,7 +458,7 @@ function marshallSurvey({
   minParticipationPct,
   votingPower,
   participation,
-  options,
+  options
 }) {
   return {
     startDate: parseInt(startDate, 10) * 1000, // adjust for js time (in ms vs s)
@@ -466,10 +466,10 @@ function marshallSurvey({
     snapshotBlock: parseInt(snapshotBlock, 10),
     votingPower: parseInt(votingPower, 10),
     participation: parseInt(participation, 10),
-    options: parseInt(options, 10),
-  }
+    options: parseInt(options, 10)
+  };
 }
 
 function marshallMetadata(metadata) {
-  return JSON.parse(metadata)
+  return JSON.parse(metadata);
 }
