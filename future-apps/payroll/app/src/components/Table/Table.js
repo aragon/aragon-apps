@@ -99,7 +99,7 @@ class Table extends React.Component {
               key={`row-${item.id}-${column.name}`}
               {...column.cellProps}
               children={column.render
-                ? column.render(formattedValue, rawValue)
+                ? column.render(formattedValue, rawValue, item)
                 : (<Text>{formattedValue}</Text>)
               }
             />
