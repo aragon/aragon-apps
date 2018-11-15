@@ -5,9 +5,10 @@ import BN from 'bn.js'
 import {
   AppBar,
   AppView,
-  AragonApp,
   Badge,
+  BaseStyles,
   Button,
+  PublicUrl,
   SidePanel,
   font,
   observe,
@@ -112,7 +113,8 @@ class App extends React.Component {
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
-      <AragonApp publicUrl="./aragon-ui/">
+      <PublicUrl.Provider url="./aragon-ui/">
+        <BaseStyles />
         <AppView
           appBar={
             <AppBar
@@ -174,7 +176,7 @@ class App extends React.Component {
             />
           )}
         </SidePanel>
-      </AragonApp>
+      </PublicUrl.Provider>
     )
   }
 }
