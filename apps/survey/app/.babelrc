@@ -13,6 +13,7 @@
     "stage-2"
   ],
   "plugins": [
+    "babel-plugin-transform-react-jsx",
     ["styled-components", { "displayName": true }],
     "transform-class-properties",
     "transform-runtime"
