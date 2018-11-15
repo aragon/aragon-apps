@@ -232,7 +232,7 @@ class EditSalaryAllocation extends React.Component {
 
     return createPortal(
       panel,
-      document.getElementById('modal-root')
+      document.getElementById(this.props.modalRootId || 'modal-root')
     )
   }
 }
@@ -268,7 +268,7 @@ const Percentage = styled.div`
     font-size: 15px;
     text-align: right;
   }
-  
+
   label {
     position: absolute;
     color: ${theme.textTertiary};

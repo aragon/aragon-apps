@@ -2,101 +2,199 @@ import React from 'react'
 import { createPortal } from 'react-dom'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { Button, SidePanel, IconAttention, Info, theme, Text } from '@aragon/ui'
+import {
+  Button,
+  SidePanel,
+  IconAttention,
+  Info,
+  theme,
+  Text,
+  IconFundraising
+} from '@aragon/ui'
+import { differenceInSeconds } from 'date-fns'
 
 import { connect } from '../context/AragonContext'
+import priceFeedAbi from './abi/price-feed'
+import { formatCurrency } from '../utils/formatting'
+
 import Section from '../components/Layout/Section'
 import PartitionBar from '../components/Bar/PartitionBar'
-import priceFeedAbi from './abi/price-feed'
-
-const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
+import EditSalaryAllocation from './EditSalaryAllocation'
 
 class RequestSalary extends React.Component {
   state = {
-    salaryAllocation: this.props.salaryAllocation,
-    priceFeedAddress: this.props.priceFeedAddress,
-    currentAccount: this.props.currentAccount,
-    denominationToken: this.props.denominationToken,
-    employees: this.props.employee
+    isEditing: false
   }
 
-  componentDidMount () {
-    console.log('RequestSalary componentDidMount', this)
-    // const salaryAllocation = await this.loadSalaryAllocationXRT();
+  async componentDidUpdate (prevProps) {
+    if (!this.state.balance || this.hasAllocationChanged(prevProps)) {
+      try {
+        const balance = await this.getBalance()
+        this.setState({ balance })
+      } catch (err) {
+        console.error('Error occurred', err)
+      }
+    }
   }
 
-  // loadSalaryAllocationXRT = () => {
-  //   const {
-  //     priceFeedAddress,
-  //     currentAccount: { salaryAllocation },
-  //     denominationToken: { address: denominationTokenAddress }
-  //   } = this.steta;
+  hasAllocationChanged = prevProps => {
+    const { salaryAllocation } = this.props
+    const { salaryAllocation: prevSalaryAllocation } = prevProps
 
-  //   const priceFeed = app.external(priceFeedAddress, priceFeedAbi)
+    let result = false
 
-  //   return Promise.all(
-  //     salaryAllocation.map(tokenAllocation => {
-  //       return priceFeed
-  //         .get(denominationTokenAddress, tokenAllocation.address)
-  //         .first()
-  //         .map(({xrt}) => {
-  //           return {
-  //             ...tokenAllocation,
-  //             xrt
-  //           }
-  //         })
-  //         .toPromise()
-  //     })
-  //   )
-  // }
+    if (prevSalaryAllocation) {
+      result = !prevSalaryAllocation.every((prev, i) => {
+        const current = salaryAllocation[i]
 
-  handlePanelToggle = (opened) => {
+        return (
+          prev.address === current.address &&
+          prev.symbol === current.symbol &&
+          prev.allocation === current.allocation
+        )
+      })
+    }
+
+    return result
+  }
+
+  getBalance = async () => {
+    const { accountAddress, employees, denominationToken, tokens } = this.props
+
+    const employee = employees.find(
+      employee => employee.accountAddress === accountAddress
+    )
+
+    let balance = {
+      accruedTime: 0,
+      accruedSalary: 0,
+      formatedAccruedSalary: '',
+      accruedAllocation: []
+    }
+
+    if (employee) {
+      const salaryAllocationXRT = await this.loadSalaryAllocationXRT()
+
+      const accruedTime = differenceInSeconds(
+        new Date(),
+        new Date(employee.lastPayroll)
+      )
+      const accruedSalary = accruedTime * employee.salary
+
+      const accruedAllocation = salaryAllocationXRT.map(tokenAllocation => {
+        const token = tokens.find(
+          token => token.address === tokenAllocation.address
+        )
+        const proportion = accruedSalary * tokenAllocation.allocation / 100
+        const formatedProportion = formatCurrency(
+          proportion,
+          denominationToken.symbol,
+          10,
+          denominationToken.decimals
+        )
+        const tokenAmount = proportion * tokenAllocation.xrt
+        const formatedTokenAmount = formatCurrency(
+          tokenAmount,
+          token.symbol,
+          10,
+          token.decimals
+        )
+
+        return {
+          ...tokenAllocation,
+          proportion,
+          formatedProportion,
+          tokenAmount,
+          formatedTokenAmount
+        }
+      })
+
+      const formatedAccruedSalary = formatCurrency(
+        accruedSalary,
+        denominationToken.symbol,
+        10,
+        denominationToken.decimals
+      )
+
+      balance = {
+        accruedTime,
+        accruedSalary,
+        formatedAccruedSalary,
+        accruedAllocation
+      }
+    }
+
+    return balance
+  }
+
+  loadSalaryAllocationXRT = () => {
+    const {
+      app,
+      priceFeedAddress,
+      salaryAllocation,
+      denominationToken
+    } = this.props
+
+    const priceFeed = app.external(priceFeedAddress, priceFeedAbi)
+
+    return Promise.all(
+      salaryAllocation.map(tokenAllocation => {
+        return priceFeed
+          .get(denominationToken.address, tokenAllocation.address)
+          .first()
+          .map(({ xrt }) => {
+            return {
+              ...tokenAllocation,
+              xrt
+            }
+          })
+          .toPromise()
+      })
+    )
+  }
+
+  handlePanelToggle = opened => {
     console.log('handlePanelToggle', opened)
-    console.log(this.state)
-    // if (opened) { // When side panel is shown
-    //   // this.focusFirstEmptyField()
-    // }
+    console.log(this)
   }
 
-  handleRequestClick = (event) => {
+  handleRequestClick = event => {
     event.preventDefault()
-
-    // const app = this.context
-
-    // if (app) {
-    //   const accountAddress = this.state.entity.accountAddress
-    //   const initialDenominationSalary = this.state.salary / SECONDS_IN_A_YEAR
-    //   const name = this.state.entity.domain
-    //   const startDate = Math.floor(this.state.startDate.getTime() / 1000)
-
-    //   app.addEmployeeWithNameAndStartDate(
-    //     accountAddress,
-    //     initialDenominationSalary,
-    //     name,
-    //     startDate
-    //   ).subscribe(employee => {
-    //     if (employee) {
-    //       // Reset form data
-    //       this.setState(AddEmployee.initialState)
-
-    //       // Close side panel
-    //       this.props.onClose()
-    //     }
-    //   })
-    // }
   }
 
   startEditing = () => {
-    // TODO: this.setState({ isEditing: true })
+    this.setState({ isEditing: true })
   }
 
   endEditing = () => {
-    // TODO: this.setState({ isEditing: false })
+    this.setState({ isEditing: false })
   }
 
   render () {
     const { opened, onClose } = this.props
-    const { salaryAllocation } = this.state
+    const { balance, isEditing } = this.state
+
+    const accruedAllocation = balance
+      ? balance.accruedAllocation.map(tokenAllocation => {
+        const description = (
+          <AllocationDescription>
+            <div>
+              <Text weight='bold'>{tokenAllocation.formatedTokenAmount}</Text>
+            </div>
+            <div>
+              <Text color='textSecondary'>
+                {tokenAllocation.formatedProportion}
+              </Text>
+            </div>
+          </AllocationDescription>
+        )
+
+        return {
+          ...tokenAllocation,
+          description
+        }
+      })
+      : []
 
     const panel = (
       <SidePanel
@@ -107,23 +205,19 @@ class RequestSalary extends React.Component {
       >
         <Container>
           <AllocationWrapper>
-            <Section.Title>Salary Allocation</Section.Title>
+            <SectionTitle>Salary Allocation</SectionTitle>
 
-            <PartitionBar data={salaryAllocation} />
+            {accruedAllocation && <PartitionBar data={accruedAllocation} />}
 
             <TotalAllocationWrapper>
-              <Text weight='bolder'>
-                Total salary
-              </Text>
+              <Text weight='bolder'>Total salary</Text>
               <div>
                 <span />
                 <Text weight='bolder'>
-                  $6,245.52
+                  {balance && balance.formatedAccruedSalary}
                 </Text>
               </div>
-              <Text weight='bolder'>
-                100%
-              </Text>
+              <Text weight='bolder'>100%</Text>
             </TotalAllocationWrapper>
 
             <EditButton
@@ -136,11 +230,23 @@ class RequestSalary extends React.Component {
 
           <SalaryWrapper>
             <Section.Title>Total Salary</Section.Title>
+            <Info>
+              <InfoTotalItem>
+                <IconFundraising />
+                <Text color={theme.textSecondary}>Total salary to be paid</Text>
+              </InfoTotalItem>
+              <InfoTotalItem>
+                {balance && (
+                  <Text size='xxlarge'>{balance.formatedAccruedSalary}</Text>
+                )}
+              </InfoTotalItem>
+            </Info>
           </SalaryWrapper>
 
           <ButtonWrapper>
             <Info.Permissions icon={<IconAttention />}>
-              The actual exchange reate might change once the transaction takes place
+              The actual exchange reate might change once the transaction takes
+              place
             </Info.Permissions>
 
             <RequestButton onClick={this.handleRequestClick}>
@@ -148,16 +254,16 @@ class RequestSalary extends React.Component {
             </RequestButton>
           </ButtonWrapper>
 
+          <EditSalaryAllocation
+            opened={isEditing}
+            onClose={this.endEditing}
+            modalRootId='edit-allocation'
+          />
         </Container>
-
       </SidePanel>
     )
 
-    return panel
-    // return createPortal(
-    //   panel,
-    //   document.getElementById('modal-root')
-    // )
+    return createPortal(panel, document.getElementById('modal-root'))
   }
 }
 
@@ -169,6 +275,11 @@ RequestSalary.propsType = {
 const Container = styled.section`
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
+`
+
+const SectionTitle = styled(Section.Title)`
+  margin-bottom: 0;
 `
 
 const AllocationWrapper = styled.div`
@@ -200,34 +311,41 @@ const AllocationDescription = styled.div`
 `
 
 const SalaryWrapper = styled.div`
+  flex: 1;
   display: flex;
   flex-direction: column;
+`
+
+const InfoTotalItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `
 
 const EditButton = styled(Button).attrs({ mode: 'text' })`
   align-self: flex-end;
 `
 
-const ButtonWrapper = styled.div`
-  flex-grow: 1;
-`
+const ButtonWrapper = styled.div``
 
 const RequestButton = styled(Button).attrs({ mode: 'strong', wide: true })`
   margin-top: 20px;
 `
 function mapStateToProps ({
-    salaryAllocation,
-    priceFeedAddress,
-    currentAccount,
-    denominationToken,
-    employees
+  accountAddress = '',
+  denominationToken = {},
+  employees = [],
+  priceFeedAddress = '',
+  salaryAllocation = [],
+  tokens = []
 }) {
   return {
-    salaryAllocation,
-    priceFeedAddress,
-    currentAccount,
+    accountAddress,
     denominationToken,
-    employees
+    employees,
+    priceFeedAddress,
+    salaryAllocation,
+    tokens
   }
 }
 

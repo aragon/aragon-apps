@@ -149,7 +149,6 @@ class AddEmployee extends React.PureComponent {
   }
 
   render () {
-    console.log('AddEmployee RENDER', this.state)
     const { opened, onClose } = this.props
     const { entity, salary, startDate, isValid } = this.state
 
