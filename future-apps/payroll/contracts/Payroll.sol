@@ -62,10 +62,10 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         bool terminated;
     }
 
-    uint64 public rateExpiryTime;
     Finance public finance;
     address public denominationToken;
     IFeed public feed;
+    uint64 public rateExpiryTime;
 
     mapping(uint256 => Employee) private employees;     // employee ID -> employee
     // Employees start at index 1, to allow us to use employees[0] to check for non-existent address
