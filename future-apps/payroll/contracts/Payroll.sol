@@ -439,7 +439,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @param _token Token to check
      * @return True if it's in the list of allowed tokens, false otherwise
      */
-    function isTokenAllowed(address _token) external view returns (bool) {
+    function isTokenAllowed(address _token) public view returns (bool) {
         return allowedTokens[_token];
     }
 
