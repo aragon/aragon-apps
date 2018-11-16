@@ -166,7 +166,7 @@ class AddEmployee extends React.PureComponent {
               value={entity && entity.domain}
               onChange={this.handleEntityChange}
               inputProps={{
-                iconPosition: 'right',
+                iconposition: 'right',
                 icon: <IconBlank />
               }}
             />
@@ -187,7 +187,7 @@ class AddEmployee extends React.PureComponent {
               value={startDate}
               onChange={this.handleStartDateChange}
               icon={<IconBlank />}
-              iconPosition='right'
+              iconposition='right'
             />
           </Field>
 
