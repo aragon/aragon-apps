@@ -49,6 +49,7 @@
     "@aragon/cli": "^5.1.0",
     "@aragon/test-helpers": "^1.0.1",
     "eth-gas-reporter": "^0.1.12",
+    "ganache-cli": "^6.0.3",
     "ethereumjs-abi": "^0.6.5",
     "solidity-coverage": "0.5.11",
     "solium": "^1.1.8"
