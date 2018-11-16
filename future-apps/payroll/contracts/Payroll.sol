@@ -225,8 +225,8 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         uint256 _employeeId,
         uint256 _denominationSalary
     )
-        employeeExists(_employeeId)
         external
+        employeeExists(_employeeId)
         authP(SET_EMPLOYEE_SALARY_ROLE, arr(_employeeId, _denominationSalary))
     {
         uint64 timestamp = getTimestamp64();
@@ -250,8 +250,8 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     function terminateEmployeeNow(
         uint256 _employeeId
     )
-        employeeExists(_employeeId)
         external
+        employeeExists(_employeeId)
         authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
     {
         _terminateEmployee(_employeeId, getTimestamp64());
@@ -266,8 +266,8 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         uint256 _employeeId,
         uint64 _endDate
     )
-        employeeExists(_employeeId)
         external
+        employeeExists(_employeeId)
         authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
     {
         _terminateEmployee(_employeeId, _endDate);
@@ -282,8 +282,8 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         uint256 _employeeId,
         uint256 _amount
     )
-        employeeExists(_employeeId)
         external
+        employeeExists(_employeeId)
         authP(ADD_ACCRUED_VALUE_ROLE, arr(_employeeId, _amount))
     {
         require(_amount <= MAX_ACCRUED_VALUE, ERROR_ACCRUED_VALUE_TOO_BIG);
@@ -298,7 +298,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @param _tokens Array with the tokens to receive, they must belong to allowed tokens for employee
      * @param _distribution Array (correlated to tokens) with the proportions (integers summing to 100)
      */
-    function determineAllocation(address[] _tokens, uint8[] _distribution) employeeMatches external {
+    function determineAllocation(address[] _tokens, uint8[] _distribution) external employeeMatches {
         // Check arrays match
         require(_tokens.length == _distribution.length, ERROR_TOKEN_ALLOCATION_MISMATCH);
 
@@ -330,7 +330,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      *      only be added via `addEmployee(),` which requires initialization.
      * @notice Withdraw your own payroll.
      */
-    function payday() employeeMatches external {
+    function payday() external employeeMatches {
         bool somethingPaid = _payTokens(employeeIds[msg.sender]);
         require(somethingPaid, ERROR_NOTHING_PAID);
     }
@@ -342,7 +342,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @notice Change your employee account address to `_newAddress`
      * @param _newAddress New address to receive payments
      */
-    function changeAddressByEmployee(address _newAddress) employeeMatches external {
+    function changeAddressByEmployee(address _newAddress) external employeeMatches {
         // Check address is non-null
         require(_newAddress != address(0), ERROR_EMPLOYEE_NULL_ADDRESS);
         // Check address isn't already being used
