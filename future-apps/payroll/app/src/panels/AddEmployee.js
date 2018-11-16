@@ -84,7 +84,7 @@ class AddEmployee extends React.PureComponent {
     if (!entity) {
       this.entitySearch.input.focus()
     } else if (!salary) {
-      this.salaryInput.focus()
+      this.salaryInput.input.focus()
     }
   }
 
