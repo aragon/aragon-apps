@@ -48,7 +48,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     string private constant ERROR_EMPLOYEE_NULL_ADDRESS = "PAYROLL_EMPLOYEE_NULL_ADDRESS";
     string private constant ERROR_NO_FORWARD = "PAYROLL_NO_FORWARD";
     string private constant ERROR_FEED_NOT_CONTRACT = "PAYROLL_FEED_NOT_CONTRACT";
-    string private constant ERROR_RATE_EXPIRY_TIME_TOO_SHORT = "PAYROLL_RATE_EXPIRE_TIME_TOO_SHORT";
+    string private constant ERROR_EXPIRY_TIME_TOO_SHORT = "PAYROLL_EXPIRY_TIME_TOO_SHORT";
     string private constant ERROR_EXCHANGE_RATE_ZERO = "PAYROLL_EXCHANGE_RATE_ZERO";
     string private constant ERROR_PAST_TERMINATION_DATE = "PAYROLL_PAST_TERMINATION_DATE";
 
@@ -510,7 +510,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     function _setRateExpiryTime(uint64 _time) internal {
         // Require a sane minimum for the rate expiry time
         // (1 min == ~4 block window to mine both a pricefeed update and a payout)
-        require(_time > 1 minutes, ERROR_RATE_EXPIRY_TIME_TOO_SHORT);
+        require(_time > 1 minutes, ERROR_EXPIRY_TIME_TOO_SHORT);
         rateExpiryTime = _time;
         emit SetRateExpiryTime(rateExpiryTime);
     }
