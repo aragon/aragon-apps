@@ -1,4 +1,3 @@
-// Test that Actor is a fully functioning Actor by running the same tests against the Actor app
 const Actor = artifacts.require('Actor')
 
 const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
@@ -6,6 +5,8 @@ const { hash } = require('eth-ens-namehash')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
 const web3Call = require('@aragon/test-helpers/call')(web3)
 const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
+const assertEvent = require('@aragon/test-helpers/assertEvent')
+const ethABI = require('web3-eth-abi')
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 const ACL = artifacts.require('ACL')
@@ -17,8 +18,6 @@ const KernelProxy = artifacts.require('KernelProxy')
 
 const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
-
-const SimpleERC20 = artifacts.require('tokens/SimpleERC20')
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
@@ -84,10 +83,10 @@ contract('Actor app', (accounts) => {
       assert.equal(await executionTarget.counter(), 0)
 
       const { to, data } = encodeFunctionCall(executionTarget, 'setCounter', N)
-      await actor.execute(to, 0, data, { from: executor })
+      const receipt = await actor.execute(to, 0, data, { from: executor })
 
-      // TODO: assert Execute event
       assert.equal(await executionTarget.counter(), N)
+      assertEvent(receipt, 'Execute')
     })
 
     it('fails to execute without permissions', async () => {
@@ -121,10 +120,7 @@ contract('Actor app', (accounts) => {
       const call = encodeFunctionCall(actor, 'execute', to, 0, data, { from: executor })
       const returnData = await web3Call(call)
 
-      const N = 1
-
-      // TODO: Add decoding for the return data
-      assert.equal(returnData, `0x000000000000000000000000000000000000000000000000000000000000000${N}`)
+      assert.equal(ethABI.decodeParameter('uint256', returnData), 1)
     })
 
     it('it reverts if executed action reverts', async () => {
@@ -193,9 +189,10 @@ contract('Actor app', (accounts) => {
       assert.isTrue(await actor.canForward(scriptRunner, script))
       assert.equal(await executionTarget.counter(), 0)
 
-      await actor.forward(script, { from: scriptRunner })
+      const receipt = await actor.forward(script, { from: scriptRunner })
 
       assert.equal(await executionTarget.counter(), 2)
+      assertEvent(receipt, 'ScriptResult')
     })
 
     it('fails to run script without permissions', async () => {

@@ -62,6 +62,7 @@ contract Actor is Vault, IForwarder {
         bytes memory input = ""; // no input
         address[] memory blacklist = new address[](0); // no addr blacklist, can interact with anything
         runScript(_evmScript, input, blacklist);
+        // We don't need to emit an event here as EVMScriptRunner will emit ScriptResult if successful
     }
 
     function canForward(address sender, bytes evmScript) public view returns (bool) {
