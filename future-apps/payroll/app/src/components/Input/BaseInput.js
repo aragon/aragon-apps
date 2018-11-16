@@ -17,11 +17,11 @@ const IconStyled = styled(
   position: absolute;
   top: 5px;
   color: ${theme.textSecondary};
-  ${props => iconPositionCss(props.iconPosition)}
+  ${props => props.icon && iconPositionCss(props.iconPosition)}
 `
 
 const BaseInputStyled = styled(BaseInput)`
-  ${props => inputPaddingCss(props.iconPosition)}
+  ${props => props.icon && inputPaddingCss(props.iconPosition)}
 `
 
 const iconPositionCss = (position = 'left') => {
@@ -42,17 +42,13 @@ const inputPaddingCss = (position = 'left') => {
 
 class  WrapperBaseInput extends React.Component {
   render () {
-    if (this.props.icon) {
-      const { iconPosition, icon } = this.props;
-      return (
-        <Container>
-          <BaseInputStyled {...this.props} iconPosition={this.props.iconPosition} />
-          <IconStyled component={this.props.icon} iconPosition={this.props.iconPosition} />
-        </Container>
-      )
-    }
-
-    return <BaseInput {...this.props} />
+    const { icon } = this.props;
+    return (
+      <Container>
+        <BaseInputStyled {...this.props} />
+        { icon && <IconStyled component={icon} {...this.props} /> }
+      </Container>
+    )
   }
 }
 
