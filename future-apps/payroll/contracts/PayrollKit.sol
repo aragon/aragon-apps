@@ -129,11 +129,9 @@ contract PayrollKit is KitBase {
       // set salary allocation for this then change protofire.aragon.eth address to root so it can be used
       allowedTokens.push(address(token1));
       allowedTokens.push(address(token2));
-      allowedTokens.push(address(token3));
 
       distribution.push(uint8(45));
-      distribution.push(uint8(30));
-      distribution.push(uint8(25));
+      distribution.push(uint8(55));
 
       payroll.determineAllocation(allowedTokens, distribution);
       payroll.changeAddressByEmployee(root);
@@ -232,10 +230,16 @@ contract PayrollKit is KitBase {
         address account4 = 0xd873F6DC68e3057e4B7da74c6b304d0eF0B484C7;
         address account5 = 0xDcC5dD922fb1D0fd0c450a0636a8cE827521f0eD;
 
-        payroll.addEmployeeWithNameAndStartDate(this, 10, 'protofire.aragonid.eth', uint64(now));
-        payroll.addEmployeeWithNameAndStartDate(account2, 20, 'leolower.protofire.eth', uint64(now- 86400));
-        payroll.addEmployeeWithNameAndStartDate(account3, 30, 'lmcorbalan.protofire.eth',  uint64(now - 172800));
-        payroll.addEmployeeWithNameAndStartDate(account4, 40, 'sistemico.protofire.eth',  uint64(now - 172800));
-        payroll.addEmployeeWithNameAndStartDate(account5, 50, 'fernando.greco.protofire.eth',  uint64(now - 172800));
+        uint256 salary1 = 2535047025122316; // 80000
+        uint256 salary2 = 2851927903262605; // 90000
+        uint256 salary3 = 3168808781402895; // 100000
+        uint256 salary4 = 2218166146982026; // 70000
+        uint256 salary5 = 1901285268841737; // 60000
+
+        payroll.addEmployeeWithNameAndStartDate(this, salary1, 'protofire.aragonid.eth', uint64(now));
+        payroll.addEmployeeWithNameAndStartDate(account2, salary2, 'leolower.protofire.eth', uint64(now- 86400));
+        payroll.addEmployeeWithNameAndStartDate(account3, salary3, 'lmcorbalan.protofire.eth',  uint64(now - 172800));
+        payroll.addEmployeeWithNameAndStartDate(account4, salary4, 'sistemico.protofire.eth',  uint64(now - 172800));
+        payroll.addEmployeeWithNameAndStartDate(account5, salary5, 'fernando.greco.protofire.eth',  uint64(now - 172800));
     }
 }

@@ -14,11 +14,11 @@ export default function configureStore () {
     try {
       const newState = await eventProcessor({ ...state }, data)
 
+      console.log('State', newState)
       return newState
     } catch (err) {
       console.error(`Error occurred processing '${event}' event`, err)
     }
-
     return state
   }, [
     of({ event: Event.Init }),

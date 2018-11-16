@@ -5,7 +5,7 @@ import { Button } from '@aragon/ui'
 import { connect } from '../../context/AragonContext'
 import PartitionBar from '../../components/Bar/PartitionBar'
 import Section from '../../components/Layout/Section'
-import EditSalaryAllocation from '../../panels/EditSalaryAllocation'
+import { EditSalaryAllocation } from '../../panels'
 
 const Container = styled.section`
   display: flex;
