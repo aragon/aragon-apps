@@ -16,7 +16,8 @@ const data = [
     amount: {
       amount: 9000,
       isIncoming: true,
-      displaySign: true
+      displaySign: true,
+      token: '0xa0b8084BFa960F50E309c242e19417375b4c427c'
     },
     exchangeRate: 6234.98
   },
@@ -27,7 +28,8 @@ const data = [
     amount: {
       amount: 1000,
       isIncoming: true,
-      displaySign: true
+      displaySign: true,
+      token: '0xa0b8084BFa960F50E309c242e19417375b4c427c'
     },
     exchangeRate: 6234.98
   },
@@ -38,7 +40,8 @@ const data = [
     amount: {
       amount: 1000,
       isIncoming: true,
-      displaySign: true
+      displaySign: true,
+      token: '0xa0b8084BFa960F50E309c242e19417375b4c427c'
     },
     exchangeRate: 6234.98
   },
@@ -49,7 +52,8 @@ const data = [
     amount: {
       amount: 1000,
       isIncoming: true,
-      displaySign: true
+      displaySign: true,
+      token: '0xb5c994DBaC8c086f574867D6791eb6F356141BA5'
     },
     exchangeRate: 6234.98
   },
@@ -60,7 +64,8 @@ const data = [
     amount: {
       amount: 1000,
       isIncoming: true,
-      displaySign: true
+      displaySign: true,
+      token: '0xb5c994DBaC8c086f574867D6791eb6F356141BA5'
     },
     exchangeRate: 6234.98
   },
@@ -71,7 +76,8 @@ const data = [
     amount: {
       amount: 1000,
       isIncoming: true,
-      displaySign: true
+      displaySign: true,
+      token: '0xb5c994DBaC8c086f574867D6791eb6F356141BA5'
     },
     exchangeRate: 6234.98
   },
@@ -82,7 +88,8 @@ const data = [
     amount: {
       amount: 1000,
       isIncoming: true,
-      displaySign: true
+      displaySign: true,
+      token: '0x6d8c9dE9b200cd050Cb0072CD24325c01DFddb4f'
     },
     exchangeRate: 6234.98
   },
@@ -93,7 +100,8 @@ const data = [
     amount: {
       amount: 1000,
       isIncoming: true,
-      displaySign: true
+      displaySign: true,
+      token: '0x6d8c9dE9b200cd050Cb0072CD24325c01DFddb4f'
     },
     exchangeRate: 6234.98
   }
@@ -122,7 +130,8 @@ const Filters = styled.div`
 
 class PreviousSalary extends React.PureComponent {
   static defaultProps = {
-    salaries: []
+    salaries: [],
+    salaryAllocation: []
   }
 
   state = {
@@ -137,10 +146,8 @@ class PreviousSalary extends React.PureComponent {
     })
   }
 
-  handleTokenFilterChange = () => {
-    this.setState({
-      tokenFilter: null
-    })
+  handleTokenFilterChange = (tokenFilter) => {
+    this.setState({ tokenFilter })
   }
 
   handleDateRangeFilterChange = (dateRangeFilter) => {
@@ -148,7 +155,14 @@ class PreviousSalary extends React.PureComponent {
   }
 
   render () {
+    const { salaryAllocation } = this.props
     const { tokenFilter, dateRangeFilter } = this.state
+
+    const tokenFilterOptions = salaryAllocation.map((option) => {
+      return {
+        label: option.symbol, filter: salary => salary.amount.token  === option.address
+      }
+    })
 
     const filters = [
       ...(tokenFilter && tokenFilter.filter ? [tokenFilter.filter] : []),
@@ -167,6 +181,7 @@ class PreviousSalary extends React.PureComponent {
             <TokenFilter
               active={tokenFilter}
               onChange={this.handleTokenFilterChange}
+              options={tokenFilterOptions}
             />
           </Filters>
         </Header>
@@ -180,7 +195,7 @@ class PreviousSalary extends React.PureComponent {
   }
 }
 
-function mapStateToProps ({ salaryAllocation }) {
+function mapStateToProps ({ salaryAllocation = [] }) {
   return {
     salaryAllocation
   }

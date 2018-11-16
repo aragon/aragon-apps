@@ -4,29 +4,33 @@ import { DropDown } from '@aragon/ui'
 
 import InlineField from '../../../components/Field/InlineField'
 
-const options = [
-  { label: 'All', filter: null }
-  // { label: 'Active', filter: employee => !employee.terminated },
-  // { label: 'Inactive', filter: employee => employee.terminated }
-]
+class TokenFilter extends React.Component {
 
-const TokenFilter = ({ active, onChange }) => {
-  const activeIndex = active &&
-    options.indexOf(options.find(f => f.label === active.label))
+  render() {
+    const { active, onChange, options } = this.props
 
-  return (
-    <InlineField label='Token:'>
-      <DropDown
-        items={options.map(opt => opt.label)}
-        active={activeIndex || 0}
-        onChange={index => {
-          if (typeof onChange === 'function') {
-            onChange(options[index])
-          }
-        }}
-      />
-    </InlineField>
-  )
+    const _options = [
+      { label: 'All', filter: null },
+      ...options
+    ]
+
+    const activeIndex = active &&
+    _options.indexOf(_options.find(f => f.label === active.label))
+
+    return (
+      <InlineField label='Token:'>
+        <DropDown
+          items={_options.map(opt => opt.label)}
+          active={activeIndex || 0}
+          onChange={index => {
+            if (typeof onChange === 'function') {
+              onChange(_options[index])
+            }
+          }}
+          />
+      </InlineField>
+    )
+  }
 }
 
 TokenFilter.propTypes = {
@@ -34,7 +38,8 @@ TokenFilter.propTypes = {
     label: PropTypes.string.isRequired,
     filter: PropTypes.func
   }),
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
+  options: PropTypes.array.isRequired
 }
 
 export default TokenFilter
