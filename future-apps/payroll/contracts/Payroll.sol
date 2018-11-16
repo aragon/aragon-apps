@@ -233,12 +233,12 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
 
         // Add owed salary to employee's accrued value
         uint256 owed = _getOwedSalary(_employeeId, timestamp);
-
-        employees[_employeeId].lastPayroll = timestamp;
         _addAccruedValue(_employeeId, owed);
 
-        // set new salary
-        employees[_employeeId].denominationTokenSalary = _denominationSalary;
+        // Update employee to track the new salary and payment date
+        Employee storage employee = employees[_employeeId];
+        employee.lastPayroll = timestamp;
+        employee.denominationTokenSalary = _denominationSalary;
 
         emit SetEmployeeSalary(_employeeId, _denominationSalary);
     }
@@ -581,25 +581,28 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         // Prevent past termination dates
         require(_endDate >= getTimestamp64(), ERROR_PAST_TERMINATION_DATE);
 
-        employees[_employeeId].terminated = true;
-        employees[_employeeId].endDate = _endDate;
+        Employee storage employee = employees[_employeeId];
+        employee.terminated = true;
+        employee.endDate = _endDate;
 
-        emit TerminateEmployee(_employeeId, employees[_employeeId].accountAddress, _endDate);
+        emit TerminateEmployee(_employeeId, employee.accountAddress, _endDate);
     }
 
     function _getOwedSalary(uint256 _employeeId, uint64 _date) internal view returns (uint256) {
+        Employee storage employee = employees[_employeeId];
+
         // Make sure we don't revert if we try to get the owed salary for an employee whose start
         // date is in the future (necessary in case we need to change their salary before their
         // start date)
-        if (_date <= employees[_employeeId].lastPayroll) {
+        if (_date <= employee.lastPayroll) {
             return 0;
         }
 
         // Get time that has gone by (seconds)
         // No need to use safe math as the underflow was covered by the previous check
-        uint64 time = _date - employees[_employeeId].lastPayroll;
+        uint64 time = _date - employee.lastPayroll;
 
-        return employees[_employeeId].denominationTokenSalary.mul(time);
+        return employee.denominationTokenSalary.mul(time);
     }
 
     /**
