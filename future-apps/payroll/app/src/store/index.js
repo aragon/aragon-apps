@@ -6,9 +6,13 @@ import { getAccountAddress } from './account'
 import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './employees'
 import { getDenominationToken, getToken } from './tokens'
 import { date } from './marshalling'
+import financeEvents from './abi/finance-events'
 
-export default function configureStore () {
+export default function configureStore (financeAddress) {
+  const financeApp = app.external(financeAddress, financeEvents)
+
   return app.store(async (state, { event, ...data }) => {
+    console.log(event, data)
     const eventType = Event[event] || event
     const eventProcessor = eventMapping[eventType] || (state => state)
 
@@ -30,7 +34,10 @@ export default function configureStore () {
         event: Event.AccountChange,
         accountAddress
       }
-    })
+    }),
+
+    // Handle Finance eventes
+    financeApp.events()
   ])
 }
 
@@ -130,12 +137,11 @@ function onSetPriceFeed (state, event) {
 }
 
 async function onSendPayroll (state, event) {
-  console.log('onSendPayroll', event)
   const { returnValues: { employee: employeeAddress } } = event
   const prevEmployees = state.employees
   const newEmployeeData = await getEmployeeByAddress(employeeAddress)
 
-  const employees = prevEmployees.map(async (employee) => {
+  const employees = prevEmployees.map(employee => {
     if (employee.accountAddress === employeeAddress) {
       return {
         ...newEmployeeData,

@@ -27,7 +27,10 @@ class RequestSalary extends React.Component {
   }
 
   async componentDidUpdate (prevProps) {
-    if (!this.state.balance || this.hasAllocationChanged(prevProps)) {
+    if (!this.state.balance ||
+        this.hasAccountChanged(prevProps) ||
+        this.hasAllocationChanged(prevProps)
+    ) {
       try {
         const balance = await this.getBalance()
         this.setState({ balance })
@@ -37,25 +40,35 @@ class RequestSalary extends React.Component {
     }
   }
 
+  hasAccountChanged = prevProps => {
+    const { accountAddress } = this.props
+    const { accountAddress: prevSalaryAllocation } = prevProps
+
+    return (accountAddress !== prevSalaryAllocation)
+  }
+
   hasAllocationChanged = prevProps => {
     const { salaryAllocation } = this.props
     const { salaryAllocation: prevSalaryAllocation } = prevProps
-
-    let result = false
+    let hasChanged = false
 
     if (prevSalaryAllocation) {
-      result = !prevSalaryAllocation.every((prev, i) => {
+      const lengthNotMatch = prevSalaryAllocation.length !== salaryAllocation.length
+      const distributionNotMatch = !prevSalaryAllocation.every((prev, i) => {
         const current = salaryAllocation[i]
 
         return (
+          current &&
           prev.address === current.address &&
           prev.symbol === current.symbol &&
           prev.allocation === current.allocation
         )
       })
+
+      hasChanged = (lengthNotMatch || distributionNotMatch)
     }
 
-    return result
+    return hasChanged
   }
 
   getBalance = async () => {
@@ -165,6 +178,7 @@ class RequestSalary extends React.Component {
 
     if (app) {
       app.payday().subscribe(() => {
+        this.setState({ balance: null })
         this.props.onClose()
       })
     }

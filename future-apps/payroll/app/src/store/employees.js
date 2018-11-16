@@ -16,11 +16,11 @@ export function getEmployeeById (id) {
     .toPromise()
 }
 
-export function getEmployeeByAddress (address) {
-  return app.call('getEmployeeByA', getEmployeeByAddress)
+export function getEmployeeByAddress (accountAddress) {
+  return app.call('getEmployeeByAddress', accountAddress)
     .first()
     .map(data => {
-      return employee(data)
+      return employee({ accountAddress, ...data })
     })
     .flatMap(async employee => {
       const [{ name, role }] = await getIdentity(employee.domain)

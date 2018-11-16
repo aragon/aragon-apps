@@ -1,7 +1,14 @@
+import app from './store/app'
 import initialize from './store'
 
 retryEvery(async retry => {
-  initialize()
+  const financeAddress = await app
+    .call('finance')
+    .first()
+    .map(financeAddress => financeAddress)
+    .toPromise()
+
+  initialize(financeAddress)
     .catch(err => {
       console.error('Could not start background script execution due:', err)
       retry()
