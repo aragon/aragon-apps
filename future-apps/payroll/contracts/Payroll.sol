@@ -569,7 +569,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
 
         // Try to remove employee
         if (employee.terminated &&
-            employee.endDate <= getTimestamp64() &&
+            employee.endDate <= timestamp &&
             employee.accruedValue == 0
         ) {
             delete employeeIds[employee.accountAddress];
