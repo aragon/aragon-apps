@@ -231,8 +231,8 @@ contract PayrollKit is KitBase {
         uint256 salary2 = 2851927903262605; // 90000
         uint256 salary3 = 3168808781402895; // 100000
 
-        payroll.addEmployeeWithNameAndStartDate(this, salary1, 'protofire.aragonid.eth', uint64(now));
+        payroll.addEmployeeWithNameAndStartDate(this, salary1, 'protofire.aragonid.eth', uint64(now - 172800));
         payroll.addEmployeeWithNameAndStartDate(account2, salary2, 'leolower.protofire.eth', uint64(now- 86400));
-        payroll.addEmployeeWithNameAndStartDate(account3, salary3, 'lmcorbalan.protofire.eth',  uint64(now - 172800));
+        payroll.addEmployeeWithNameAndStartDate(account3, salary3, 'lmcorbalan.protofire.eth',  uint64(now));
     }
 }

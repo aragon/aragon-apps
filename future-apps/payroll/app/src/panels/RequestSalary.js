@@ -160,6 +160,14 @@ class RequestSalary extends React.Component {
 
   handleRequestClick = event => {
     event.preventDefault()
+
+    const { app } = this.props
+
+    if (app) {
+      app.payday().subscribe(() => {
+        this.props.onClose()
+      })
+    }
   }
 
   startEditing = () => {

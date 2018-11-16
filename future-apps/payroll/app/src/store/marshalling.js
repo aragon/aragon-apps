@@ -13,7 +13,7 @@ export function date (epoch) {
 
 export function employee (data) {
   const result = {
-    id: data.id,
+    id: data.id || data.employeeId,
     accountAddress: data.accountAddress,
     domain: data.name,
     salary: currency(data.denominationSalary),

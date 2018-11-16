@@ -3,7 +3,7 @@ import { of } from '../rxjs'
 import app from './app'
 import Event from './events'
 import { getAccountAddress } from './account'
-import { getEmployeeById, getSalaryAllocation } from './employees'
+import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './employees'
 import { getDenominationToken, getToken } from './tokens'
 import { date } from './marshalling'
 
@@ -41,7 +41,8 @@ const eventMapping = ({
   [Event.AddEmployee]: onAddNewEmployee,
   [Event.ChangeAddressByEmployee]: onChangeEmployeeAddress,
   [Event.DetermineAllocation]: onChangeSalaryAllocation,
-  [Event.SetPriceFeed]: onSetPriceFeed
+  [Event.SetPriceFeed]: onSetPriceFeed,
+  [Event.SendPayroll]: onSendPayroll
 })
 
 async function onInit (state) {
@@ -126,4 +127,24 @@ function onSetPriceFeed (state, event) {
   const { returnValues: { feed: priceFeedAddress } } = event
 
   return { ...state, priceFeedAddress }
+}
+
+async function onSendPayroll (state, event) {
+  console.log('onSendPayroll', event)
+  const { returnValues: { employee: employeeAddress } } = event
+  const prevEmployees = state.employees
+  const newEmployeeData = await getEmployeeByAddress(employeeAddress)
+
+  const employees = prevEmployees.map(async (employee) => {
+    if (employee.accountAddress === employeeAddress) {
+      return {
+        ...newEmployeeData,
+        startDate: employee.startDate
+      }
+    }
+
+    return employee
+  })
+
+  return { ...state, employees }
 }
