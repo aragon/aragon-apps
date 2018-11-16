@@ -45,8 +45,9 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     string private constant ERROR_DISTRIBUTION_NO_COMPLETE = "PAYROLL_DISTRIBUTION_NO_COMPLETE";
     string private constant ERROR_NOTHING_PAID = "PAYROLL_NOTHING_PAID";
     string private constant ERROR_EMPLOYEE_ALREADY_EXIST = "PAYROLL_EMPLOYEE_ALREADY_EXIST";
-    string private constant ERROR_NULL_ADDRESS = "PAYROLL_NULL_ADDRESS";
+    string private constant ERROR_EMPLOYEE_NULL_ADDRESS = "PAYROLL_EMPLOYEE_NULL_ADDRESS";
     string private constant ERROR_NO_FORWARD = "PAYROLL_NO_FORWARD";
+    string private constant ERROR_FEED_NOT_CONTRACT = "PAYROLL_FEED_NOT_CONTRACT";
     string private constant ERROR_RATE_EXPIRY_TIME_TOO_SHORT = "PAYROLL_RATE_EXPIRE_TIME_TOO_SHORT";
     string private constant ERROR_EXCHANGE_RATE_ZERO = "PAYROLL_EXCHANGE_RATE_ZERO";
     string private constant ERROR_PAST_TERMINATION_DATE = "PAYROLL_PAST_TERMINATION_DATE";
@@ -343,7 +344,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      */
     function changeAddressByEmployee(address _newAddress) employeeMatches external {
         // Check address is non-null
-        require(_newAddress != address(0), ERROR_NULL_ADDRESS);
+        require(_newAddress != address(0), ERROR_EMPLOYEE_NULL_ADDRESS);
         // Check address isn't already being used
         require(employeeIds[_newAddress] == 0, ERROR_EMPLOYEE_ALREADY_EXIST);
 
@@ -501,7 +502,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     }
 
     function _setPriceFeed(IFeed _feed) internal {
-        require(isContract(_feed), ERROR_FINANCE_NOT_CONTRACT);
+        require(isContract(_feed), ERROR_FEED_NOT_CONTRACT);
         feed = _feed;
         emit SetPriceFeed(feed);
     }
