@@ -5,6 +5,7 @@ const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/asse
 const { hash } = require('eth-ens-namehash')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
 const web3Call = require('@aragon/test-helpers/call')(web3)
+const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 const ACL = artifacts.require('ACL')
@@ -26,7 +27,7 @@ const NULL_ADDRESS = '0x00'
 contract('Actor app', (accounts) => {
   let daoFact, actorBase, acl, actor, actorId
 
-  let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE
+  let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, RUN_SCRIPT_ROLE
 
   const root = accounts[0]
 
@@ -44,6 +45,7 @@ contract('Actor app', (accounts) => {
     ANY_ENTITY = await aclBase.ANY_ENTITY()
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     EXECUTE_ROLE = await actorBase.EXECUTE_ROLE()
+    RUN_SCRIPT_ROLE = await actorBase.RUN_SCRIPT_ROLE()
 
     const ethConstant = await EtherTokenConstantMock.new()
     ETH = await ethConstant.getETHConstant()
@@ -84,6 +86,7 @@ contract('Actor app', (accounts) => {
       const { to, data } = encodeFunctionCall(executionTarget, 'setCounter', N)
       await actor.execute(to, 0, data, { from: executor })
 
+      // TODO: assert Execute event
       assert.equal(await executionTarget.counter(), N)
     })
 
@@ -170,6 +173,37 @@ contract('Actor app', (accounts) => {
           actor.execute(to, depositValue, '0x', { from: executor })
         )
       })
+    })
+  })
+
+  context('running scripts', () => {
+    let executionTarget, script
+    const [nonScriptRunner, scriptRunner] = accounts
+
+    beforeEach(async () => {
+      executionTarget = await ExecutionTarget.new()
+      // prepare script
+      const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+      script = encodeCallScript([action, action]) // perform action twice
+
+      await acl.createPermission(scriptRunner, actor.address, RUN_SCRIPT_ROLE, root, { from: root })
+    })
+
+    it('runs script', async () => {
+      assert.isTrue(await actor.canForward(scriptRunner, script))
+      assert.equal(await executionTarget.counter(), 0)
+
+      await actor.forward(script, { from: scriptRunner })
+
+      assert.equal(await executionTarget.counter(), 2)
+    })
+
+    it('fails to run script without permissions', async () => {
+      assert.isFalse(await actor.canForward(nonScriptRunner, script))
+
+      await assertRevert(() =>
+        actor.forward(script, { from: nonScriptRunner })
+      )
     })
   })
 })

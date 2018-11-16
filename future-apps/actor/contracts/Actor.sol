@@ -6,9 +6,12 @@ pragma solidity 0.4.24;
 
 import "@aragon/apps-vault/contracts/Vault.sol";
 
+import "@aragon/os/contracts/common/IForwarder.sol";
 
-contract Actor is Vault {
+
+contract Actor is Vault, IForwarder {
     bytes32 public constant EXECUTE_ROLE = keccak256("EXECUTE_ROLE");
+    bytes32 public constant RUN_SCRIPT_ROLE = keccak256("RUN_SCRIPT_ROLE");
 
     string private constant ERROR_EXECUTE_ETH_NO_DATA = "VAULT_EXECUTE_ETH_NO_DATA";
     string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "VAULT_EXECUTE_TARGET_NOT_CONTRACT";
@@ -46,6 +49,29 @@ contract Actor is Vault {
             switch result case 0 { revert(ptr, size) }
             default { return(ptr, size) }
         }
+    }
+
+    function isForwarder() external pure returns (bool) {
+        return true;
+    }
+
+    function forward(bytes _evmScript)
+        authP(RUN_SCRIPT_ROLE, arr(getScriptACLParam(_evmScript)))
+        public
+    {
+        bytes memory input = ""; // no input
+        address[] memory blacklist = new address[](0); // no addr blacklist, can interact with anything
+        runScript(_evmScript, input, blacklist);
+    }
+
+    function canForward(address sender, bytes evmScript) public view returns (bool) {
+        uint256[] memory params = new uint256[](1);
+        params[0] = getScriptACLParam(evmScript);
+        return canPerform(sender, RUN_SCRIPT_ROLE, params);
+    }
+
+    function getScriptACLParam(bytes evmScript) internal pure returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(evmScript)));
     }
 
     function getSig(bytes data) internal pure returns (bytes4 sig) {
