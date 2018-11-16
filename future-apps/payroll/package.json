@@ -17,15 +17,26 @@
   ],
   "scripts": {
     "build": "cd app && npm run build",
-    "coverage": "SOLIDITY_COVERAGE=true npm test",
+    "compile": "truffle compile",
     "dev": "aragon run --network rpc --http localhost:8001 --http-served-from ./app/dist",
     "dev:reset": "npm run dev -- --reset",
-    "postinstall": "cd app && npm install",
     "lint": "solium --dir ./contracts",
     "start": "aragon run --network rpc --kit PayrollKit --kit-init @ARAGON_ENS",
-    "test": "TRUFFLE_TEST=true ./node_modules/@aragon/os/scripts/ganache-cli.sh",
-    "test:gas": "GAS_REPORTER=true npm test"
+    "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
+    "test:gas": "GAS_REPORTER=true npm test",
+    "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
+    "truffle:dev": "node_modules/.bin/truffle dev",
+    "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
+    "prepare": "cd app && npm install",
+    "prepublishOnly": "truffle compile --all"
   },
+  "files": [
+    "/arapp.json",
+    "/build",
+    "/contracts",
+    "/scripts",
+    "/test"
+  ],
   "dependencies": {
     "@aragon/apps-finance": "2.1.0",
     "@aragon/os": "4.0.1",
@@ -39,7 +50,7 @@
     "@aragon/test-helpers": "^1.0.1",
     "eth-gas-reporter": "^0.1.12",
     "ethereumjs-abi": "^0.6.5",
-    "solidity-coverage": "^0.5.11",
+    "solidity-coverage": "0.5.11",
     "solium": "^1.1.8"
   }
 }
