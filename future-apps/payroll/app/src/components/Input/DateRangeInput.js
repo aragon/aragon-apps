@@ -125,10 +125,10 @@ class DateRangeInput extends React.PureComponent {
 }
 
 DateRangeInput.propTypes = {
-  endDate: PropTypes.object,
+  endDate: PropTypes.instanceOf(Date),
   format: PropTypes.string,
   onChange: PropTypes.func,
-  startDate: PropTypes.object
+  startDate: PropTypes.instanceOf(Date)
 }
 
 DateRangeInput.defaultProps = {

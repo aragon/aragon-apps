@@ -53,14 +53,14 @@ DateRangeFilter.propTypes = {
   active: PropTypes.shape({
     filter: PropTypes.func
   }),
-  endDate: PropTypes.string,
+  endDate: PropTypes.instanceOf(Date),
   onChange: PropTypes.func,
-  startDate: PropTypes.string
+  startDate: PropTypes.instanceOf(Date)
 }
 
 DateRangeFilter.defaultProps = {
-  startDate: startOfDay(new Date()),
-  endDate: startOfDay(new Date())
+  startDate: startOfDay((new Date().getTime())),
+  endDate: startOfDay((new Date()).getTime())
 }
 
 export default DateRangeFilter

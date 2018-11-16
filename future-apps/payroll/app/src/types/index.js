@@ -14,6 +14,6 @@ export const salaryType = PropTypes.shape({
   date: PropTypes.number,
   status: PropTypes.string,
   transactionAddress: PropTypes.string,
-  amount: PropTypes.number,
+  amount: PropTypes.object,
   exchangeRate: PropTypes.number
 })
