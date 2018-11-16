@@ -75,7 +75,7 @@ class Table extends React.Component {
               title={column.title}
               sortable={isSortable}
               sortDirection={isSortColumn ? sortDirection : 0}
-              onClick={isSortable && this.handleHeaderClick}
+              onClick={isSortable ? this.handleHeaderClick : () => {}}
               data-column-index={index}
             />
           )
@@ -83,8 +83,8 @@ class Table extends React.Component {
       </TableRow>
     )
 
-    const body = filteredData.map(item => (
-      <TableRow key={`row-${item.id}`}>
+    const body = filteredData.map((item, index) => (
+      <TableRow key={`row-${item.id}-${index}`}>
         {columns.map(column => {
           const rawValue = column.value(item)
           const formattedValue = rawValue != null
