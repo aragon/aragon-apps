@@ -27,11 +27,13 @@ env:
   - TASK=test:token-manager:app
   - TASK=test:vault
   - TASK=test:voting
+  - TASK=test:actor
   - TASK=coverage:finance
   - TASK=coverage:survey
   - TASK=coverage:token-manager
   - TASK=coverage:vault
   - TASK=coverage:voting
+  - TASK=coverage:actor
   - TASK=test:shared
 matrix:
   allow_failures:

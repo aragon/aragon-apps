@@ -1,8 +1,9 @@
 pragma solidity ^0.4.18;
 
 // From github.com/DexyProject/protocol
-
 // This should probably be moved into aOS: https://github.com/aragon/aragonOS/pull/442
+
+
 library SignatureValidator {
     // Maybe use 0x's IDs
     enum SignatureMode {

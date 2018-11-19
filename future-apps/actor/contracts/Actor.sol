@@ -40,8 +40,8 @@ contract Actor is Vault, IERC165, IERC1271, IForwarder {
     * @return Exits call frame forwarding the return data of the executed call (either error or success data)
     */
     function execute(address _target, uint256 _ethValue, bytes _data)
-        authP(EXECUTE_ROLE, arr(_target, _ethValue, uint256(getSig(_data)))) // TODO: Test that sig bytes are the least significant bytes
         external // This function MUST always be external as the function performs a low level return, exiting the Actor app execution context
+        authP(EXECUTE_ROLE, arr(_target, _ethValue, uint256(getSig(_data)))) // TODO: Test that sig bytes are the least significant bytes
     {
         require(_ethValue == 0 || _data.length > 0, ERROR_EXECUTE_ETH_NO_DATA); // if ETH value is sent, there must be data
         require(isContract(_target), ERROR_EXECUTE_TARGET_NOT_CONTRACT);
@@ -65,8 +65,8 @@ contract Actor is Vault, IERC165, IERC1271, IForwarder {
     }
 
     function setDesignatedSigner(address _designatedSigner)
-        authP(DESIGNATE_SIGNER_ROLE, arr(_designatedSigner))
         external
+        authP(DESIGNATE_SIGNER_ROLE, arr(_designatedSigner))
     {
         address oldDesignatedSigner = designatedSigner;
         designatedSigner = _designatedSigner;
@@ -75,8 +75,8 @@ contract Actor is Vault, IERC165, IERC1271, IForwarder {
     }
 
     function presignHash(bytes32 _hash)
-        authP(PRESIGN_HASH_ROLE, arr(_hash))
         external
+        authP(PRESIGN_HASH_ROLE, arr(_hash))
     {
         isPresigned[_hash] = true;
 
@@ -92,8 +92,8 @@ contract Actor is Vault, IERC165, IERC1271, IForwarder {
     }
 
     function forward(bytes _evmScript)
-        authP(RUN_SCRIPT_ROLE, arr(getScriptACLParam(_evmScript)))
         public
+        authP(RUN_SCRIPT_ROLE, arr(getScriptACLParam(_evmScript)))
     {
         bytes memory input = ""; // no input
         address[] memory blacklist = new address[](0); // no addr blacklist, can interact with anything
