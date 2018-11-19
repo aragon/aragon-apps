@@ -36,6 +36,8 @@ env:
 matrix:
   allow_failures:
     - env: TASK=coverage:finance
+install:
+  - travis_wait 60 npm install
 before_script:
   - npm prune
 script:
