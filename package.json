@@ -12,6 +12,7 @@
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "devDependencies": {
     "coveralls": "^3.0.1",
+    "ethereumjs-util": "^6.0.0",
     "ganache-cli": "^6.1.0",
     "lcov-result-merger": "^1.2.0",
     "lerna": "^2.8.0"
