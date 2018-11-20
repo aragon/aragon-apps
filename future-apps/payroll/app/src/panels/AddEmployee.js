@@ -100,7 +100,7 @@ class AddEmployee extends React.PureComponent {
       const name = this.state.entity.domain
       const startDate = Math.floor(this.state.startDate.getTime() / 1000)
 
-      app.addEmployeeWithNameAndStartDate(
+      app.addEmployee(
         accountAddress,
         initialDenominationSalary,
         name,

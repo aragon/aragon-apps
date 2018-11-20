@@ -199,7 +199,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @param _name Employee's name
      * @param _startDate Employee's starting date (it actually sets their initial lastPayroll value)
      */
-    function addEmployeeWithStartDate(
+    function addEmployee(
         address _accountAddress,
         uint256 _initialDenominationSalary,
         string _name,
