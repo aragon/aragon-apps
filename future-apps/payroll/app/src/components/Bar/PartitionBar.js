@@ -37,9 +37,12 @@ const Bullet = styled.span`
 `
 
 const Label = styled.li`
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 2fr 6fr 1fr;
+
+  > :last-child {
+    justify-self: end;
+  }
 
   ${Bullet} {
     margin-right: 10px;
@@ -77,12 +80,15 @@ const PartitionBar = ({ data, legend, colors = DEFAULT_COLORS }) => {
         </Bar>
         {legend && (
           <Legend>
-            {partitions.map(({ symbol, allocation }, index) => (
+            {partitions.map(({ symbol, description, allocation }, index) => (
               <Label key={symbol + index}>
                 <Text color={theme.textSecondary}>
                   <Bullet color={colors[index]}/>
                   {symbol}
                 </Text>
+                <div>
+                  {description}
+                </div>
                 <Text weight='bolder'>
                   {allocation}%
                 </Text>
@@ -101,7 +107,8 @@ PartitionBar.propTypes = {
   data: PropTypes.arrayOf(
     PropTypes.shape({
       symbol: PropTypes.string.isRequired,
-      allocation: PropTypes.number.isRequired
+      allocation: PropTypes.number.isRequired,
+      description: PropTypes.node
     })
   ).isRequired,
   colors: PropTypes.arrayOf(PropTypes.string),

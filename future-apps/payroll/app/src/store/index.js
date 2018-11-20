@@ -3,11 +3,16 @@ import { of } from '../rxjs'
 import app from './app'
 import Event from './events'
 import { getAccountAddress } from './account'
-import { getEmployeeById, getSalaryAllocation } from './employees'
+import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './employees'
 import { getDenominationToken, getToken } from './tokens'
+import { date } from './marshalling'
+import financeEvents from './abi/finance-events'
 
-export default function configureStore () {
+export default function configureStore (financeAddress) {
+  const financeApp = app.external(financeAddress, financeEvents)
+
   return app.store(async (state, { event, ...data }) => {
+    console.log(event, data)
     const eventType = Event[event] || event
     const eventProcessor = eventMapping[eventType] || (state => state)
 
@@ -29,7 +34,10 @@ export default function configureStore () {
         event: Event.AccountChange,
         accountAddress
       }
-    })
+    }),
+
+    // Handle Finance eventes
+    financeApp.events()
   ])
 }
 
@@ -39,7 +47,9 @@ const eventMapping = ({
   [Event.AddAllowedToken]: onAddAllowedToken,
   [Event.AddEmployee]: onAddNewEmployee,
   [Event.ChangeAddressByEmployee]: onChangeEmployeeAddress,
-  [Event.DetermineAllocation]: onChangeSalaryAllocation
+  [Event.DetermineAllocation]: onChangeSalaryAllocation,
+  [Event.SetPriceFeed]: onSetPriceFeed,
+  [Event.SendPayroll]: onSendPayroll
 })
 
 async function onInit (state) {
@@ -79,14 +89,17 @@ async function onAddAllowedToken (state, event) {
 }
 
 async function onAddNewEmployee (state, event) {
-  const { returnValues: { employeeId } } = event
+  const { returnValues: { employeeId, startDate } } = event
   const { employees = [] } = state
 
   if (!employees.find(e => e.id === employeeId)) {
     const newEmployee = await getEmployeeById(employeeId)
 
     if (newEmployee) {
-      employees.push(newEmployee)
+      employees.push({
+        ...newEmployee,
+        startDate: date(startDate)
+      })
     }
   }
 
@@ -115,4 +128,29 @@ async function onChangeSalaryAllocation (state, event) {
   )
 
   return { ...state, salaryAllocation }
+}
+
+function onSetPriceFeed (state, event) {
+  const { returnValues: { feed: priceFeedAddress } } = event
+
+  return { ...state, priceFeedAddress }
+}
+
+async function onSendPayroll (state, event) {
+  const { returnValues: { employee: employeeAddress } } = event
+  const prevEmployees = state.employees
+  const newEmployeeData = await getEmployeeByAddress(employeeAddress)
+
+  const employees = prevEmployees.map(employee => {
+    if (employee.accountAddress === employeeAddress) {
+      return {
+        ...newEmployeeData,
+        startDate: employee.startDate
+      }
+    }
+
+    return employee
+  })
+
+  return { ...state, employees }
 }

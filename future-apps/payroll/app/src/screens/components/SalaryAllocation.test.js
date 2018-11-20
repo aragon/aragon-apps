@@ -13,14 +13,16 @@ import 'jest-dom/extend-expect'
 import SalaryAllocation from './SalaryAllocation'
 import AragonContext from '../../context/AragonContext'
 
-const dataMock = [
-  { symbol: 'TK1', allocation: 30 },
-  { symbol: 'TK2', allocation: 70 }
-]
+const dataMock = {
+  salaryAllocation: [
+    { symbol: 'TK1', allocation: 30 },
+    { symbol: 'TK2', allocation: 70 }
+  ]
+}
 
 afterEach(cleanup)
 
-fdescribe('Salary allocation side panel', () => {
+describe('Salary allocation side panel', () => {
   const { salaryAllocation } = renderSalaryAllocation()
 
   it('should render salary allocation legends', async () => {
@@ -28,7 +30,7 @@ fdescribe('Salary allocation side panel', () => {
     const list = await salaryAllocation.container.querySelectorAll('li')
     expect(list).toHaveLength(2)
 
-    dataMock.forEach(({ symbol, allocation }) => {
+    dataMock.salaryAllocation.forEach(({ symbol, allocation }) => {
       const bySymbol = salaryAllocation.queryByText(symbol)
       const byAllocation = salaryAllocation.queryByText(`${allocation}%`)
       expect(bySymbol).not.toBeNull()
@@ -52,11 +54,7 @@ function renderSalaryAllocation (props) {
       return this
     },
 
-    first () {
-      return this
-    },
-
-    pluck () {
+    map () {
       return this
     },
 

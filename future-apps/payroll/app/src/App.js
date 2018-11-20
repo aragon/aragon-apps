@@ -3,12 +3,13 @@ import { AppBar, AppView, AragonApp, Button } from '@aragon/ui'
 import Tab from './components/Tab'
 
 import { MyPayroll, TeamPayroll } from './screens'
-import { AddEmployee } from './panels'
+import { AddEmployee, RequestSalary } from './panels'
 
 export default class App extends React.Component {
   state = {
     activeTab: 'my-payroll',
-    showAddEmployeePanel: false
+    showAddEmployeePanel: false,
+    showRequestSalaryPanel: false
   }
 
   componentDidMount () {
@@ -26,15 +27,23 @@ export default class App extends React.Component {
     this.setState({ showAddEmployeePanel: true })
   }
 
-  hidePanels = () => {
+  showRequestSalaryPanel = () => {
+    this.setState({ showRequestSalaryPanel: true })
+  }
+
+  hideAddEmployeePanel = () => {
     this.setState({ showAddEmployeePanel: false })
+  }
+
+  hideRequestSalaryPanel = () => {
+    this.setState({ showRequestSalaryPanel: false })
   }
 
   renderActionButtons () {
     switch (this.state.activeTab) {
       case 'my-payroll':
         return (
-          <Button mode='strong'>
+          <Button mode='strong' onClick={this.showRequestSalaryPanel}>
             Request salary
           </Button>
         )
@@ -92,8 +101,14 @@ export default class App extends React.Component {
 
         <AddEmployee
           opened={this.state.showAddEmployeePanel}
-          onClose={this.hidePanels}
+          onClose={this.hideAddEmployeePanel}
         />
+
+        {this.state.activeTab === 'my-payroll' && (<RequestSalary
+          opened={this.state.showRequestSalaryPanel}
+          onClose={this.hideRequestSalaryPanel}
+        />
+        )}
       </AragonApp>
     )
   }

@@ -3,16 +3,17 @@ export function currency (value) {
 }
 
 export function date (epoch) {
-  if (!epoch || BigInt(epoch) > Number.MAX_SAFE_INTEGER) { // eslint-disable-line
+  const epochInt = parseInt(epoch)
+  if (!epoch || !Number.isSafeInteger(epochInt)) {
     return null
   }
 
-  return parseInt(epoch) * 1000
+  return epochInt * 1000
 }
 
 export function employee (data) {
   const result = {
-    id: data.id,
+    id: data.id || data.employeeId,
     accountAddress: data.accountAddress,
     domain: data.name,
     salary: currency(data.denominationSalary),

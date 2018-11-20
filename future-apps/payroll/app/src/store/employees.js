@@ -16,6 +16,20 @@ export function getEmployeeById (id) {
     .toPromise()
 }
 
+export function getEmployeeByAddress (accountAddress) {
+  return app.call('getEmployeeByAddress', accountAddress)
+    .first()
+    .map(data => {
+      return employee({ accountAddress, ...data })
+    })
+    .flatMap(async employee => {
+      const [{ name, role }] = await getIdentity(employee.domain)
+
+      return { ...employee, name, role }
+    })
+    .toPromise()
+}
+
 export async function getSalaryAllocation (accountAddress, tokens) {
   const salaryAllocation = await Promise.all(
     tokens.map(token =>
