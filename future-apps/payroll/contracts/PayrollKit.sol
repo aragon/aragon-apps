@@ -19,7 +19,7 @@ import "./Payroll.sol";
 
 contract PPFMock is IFeed {
   function get(address base, address quote) external view returns (uint128 xrt, uint64 when) {
-      xrt = 1;
+      xrt = 7500000000000000;
       when = uint64(now);
   }
 }
@@ -166,7 +166,9 @@ contract PayrollKit is KitBase {
     }
 
     function setFinancePermissions(ACL acl, Finance finance, Payroll payroll, address root) internal {
-      acl.createPermission(payroll, finance, finance.CREATE_PAYMENTS_ROLE(), root);
+      acl.createPermission(payroll, finance, finance.CREATE_PAYMENTS_ROLE(), this); // manager is this to allow 2 grants
+      acl.grantPermission(root, finance, finance.CREATE_PAYMENTS_ROLE());
+      acl.setPermissionManager(root, finance, finance.CREATE_PAYMENTS_ROLE()); // set root as the
     }
 
     function setPayrollPermissions(ACL acl, Payroll payroll, address root) internal {

@@ -99,13 +99,18 @@ class RequestSalary extends React.Component {
           token => token.address === tokenAllocation.address
         )
         const proportion = accruedSalary * tokenAllocation.allocation / 100
+
         const formatedProportion = formatCurrency(
           proportion,
           denominationToken.symbol,
           10,
           denominationToken.decimals
         )
-        const tokenAmount = proportion * tokenAllocation.xrt
+
+        const tokenAmount = proportion * (tokenAllocation.xrt / Math.pow(10, token.decimals))
+
+        console.log(tokenAmount)
+
         const formatedTokenAmount = formatCurrency(
           tokenAmount,
           token.symbol,
