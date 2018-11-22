@@ -37,7 +37,7 @@ const initializeColumns = (data, formatExchangeRate) => {
       formatter: formatTokenAmount,
       render: (formattedAmount, rawAmount, item) => (
         <Amount positive={item.amount.isIncoming}>
-          {formattedAmount}
+          {formattedAmount} {item.amount.token.symbol}
         </Amount>
       )
     },
