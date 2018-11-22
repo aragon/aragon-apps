@@ -7,6 +7,7 @@ import Section from '../../components/Layout/Section'
 import SalaryTable from './SalaryTable'
 import TokenFilter from './filters/TokenFilter'
 import DateRangeFilter from './filters/DateRangeFilter'
+import { formatCurrency } from '../../utils/formatting'
 
 const data = [
   {
@@ -130,8 +131,10 @@ const Filters = styled.div`
 
 class PreviousSalary extends React.PureComponent {
   static defaultProps = {
-    salaries: [],
-    salaryAllocation: []
+    payments: [],
+    salaryAllocation: [],
+    employees: [],
+    accountAddress: {}
   }
 
   state = {
@@ -155,8 +158,11 @@ class PreviousSalary extends React.PureComponent {
   }
 
   render () {
-    const { salaryAllocation } = this.props
+    const { salaryAllocation, employees, accountAddress, payments, denominationToken } = this.props
     const { tokenFilter, dateRangeFilter } = this.state
+    const filteredPayments = payments.filter(payment => payment.accountAddress === accountAddress)
+
+    const customExchangeRateFormat = (exchangeRate) => formatCurrency(exchangeRate.amount, denominationToken.symbol, 10, denominationToken.decimals)
 
     const tokenFilterOptions = salaryAllocation.map((option) => {
       return {
@@ -186,17 +192,22 @@ class PreviousSalary extends React.PureComponent {
           </Filters>
         </Header>
         <SalaryTable
-          data={data}
+          data={filteredPayments}
           filters={filters}
           onClearFilters={this.handleClearFilters}
+          formatExchangeRate={customExchangeRateFormat}
         />
       </Container>
     )
   }
 }
 
-function mapStateToProps ({ salaryAllocation = [] }) {
+function mapStateToProps ({ salaryAllocation = [], employees = [], accountAddress = {}, payments = [], denominationToken = [] }) {
   return {
+    accountAddress,
+    denominationToken,
+    employees,
+    payments,
     salaryAllocation
   }
 }
