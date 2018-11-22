@@ -42,14 +42,17 @@ export function payment (data) {
       amount: data.returnValues.amount,
       isIncoming: true, // FIXME: Assumption: all salaries are incoming - sgobotta
       displaySign: true, // FIXME: The send payroll event should provide the displaysign option
-      token: data.token.symbol,
+      token: {
+        address: data.token.address,
+        symbol: data.token.symbol
+      },
       decimals: data.token.decimals
     },
     transactionAddress: data.transactionHash,
-    date: (new Date()).getTime(), // FIXME: The send payroll event should provide the payment transaction timestamp - - sgobotta
+    date: date(data.returnValues.paymentDate),
     status: 'Pending...', // FIXME: Find out how the status is calculated - - sgobotta
-    exchangeRate: { // FIXME: Get the exchange rate from the contract - - sgobotta
-      amount: 123456789
+    exchangeRate: {
+      amount: data.returnValues.exchangeRate
     }
   }
 }
