@@ -4,30 +4,12 @@ import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import Table from '../../components/Table'
 import { salaryType } from '../../types'
-import { formatCurrency, formatDate, formatTokenAmount } from '../../utils/formatting'
+import { formatDate, formatTokenAmount } from '../../utils/formatting'
 
 import { Button, theme } from '@aragon/ui'
 
-const Amount = styled.span`
-  font-weight: 600;
-  color: ${({ positive }) => (positive ? theme.positive : theme.negative)};
-`
-
-const SalaryTable = (props) => (
-  <Table
-    noDataMessage='No salaries found'
-    sortable={false}
-    {...props}
-  />
-)
-
-SalaryTable.propTypes = {
-  ...Table.propTypes,
-  data: PropTypes.arrayOf(salaryType).isRequired
-}
-
-SalaryTable.defaultProps = {
-  columns: [
+const initializeColumns = (data, formatExchangeRate) => {
+  return [
     {
       name: 'date',
       title: 'Date',
@@ -53,7 +35,7 @@ SalaryTable.defaultProps = {
         align: 'right'
       },
       formatter: formatTokenAmount,
-      render: (formattedAmount, a, item) => (
+      render: (formattedAmount, rawAmount, item) => (
         <Amount positive={item.amount.isIncoming}>
           {formattedAmount}
         </Amount>
@@ -63,12 +45,35 @@ SalaryTable.defaultProps = {
       name: 'exchange-rate',
       title: 'Exchange Rate',
       value: data => data.exchangeRate,
-      formatter: formatCurrency,
+      formatter: formatExchangeRate,
       cellProps: {
         align: 'right'
       }
     }
   ]
+}
+
+const Amount = styled.span`
+  font-weight: 600;
+  color: ${({ positive }) => (positive ? theme.positive : theme.negative)};
+`
+
+const SalaryTable = (props) => {
+  const columns = initializeColumns(props.data, props.formatExchangeRate)
+  return (
+    <Table
+      noDataMessage='No salaries found'
+      sortable={false}
+      columns={columns}
+      {...props}
+    />
+  )
+}
+
+
+SalaryTable.propTypes = {
+  ...Table.propTypes,
+  data: PropTypes.arrayOf(salaryType).isRequired
 }
 
 export default SalaryTable
