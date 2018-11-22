@@ -5,7 +5,7 @@ import Event from './events'
 import { getAccountAddress } from './account'
 import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './employees'
 import { getDenominationToken, getToken } from './tokens'
-import { date } from './marshalling'
+import { date, payment } from './marshalling'
 import financeEvents from './abi/finance-events'
 
 export default function configureStore (financeAddress) {
@@ -137,9 +137,24 @@ function onSetPriceFeed (state, event) {
 }
 
 async function onSendPayroll (state, event) {
-  const { returnValues: { employee: employeeAddress } } = event
+  const { tokens } = state
+  const { returnValues: { employee: employeeAddress, token }, transactionHash } = event
   const prevEmployees = state.employees
+  const payments = state.payments || []
   const newEmployeeData = await getEmployeeByAddress(employeeAddress)
+  const paymentExists = payments.some(payment => {
+    const { transactionAddress, amount } = payment
+
+    const transactionExists = transactionAddress === transactionHash
+    const withSameToken = amount.token === token
+    return transactionExists && withSameToken
+  })
+
+  if (!paymentExists) {
+    const transactionToken = tokens.find((_token) => _token.address === token)
+    const currentPayment = payment({ ...event, token: transactionToken })
+    payments.push(currentPayment)
+  }
 
   const employees = prevEmployees.map(employee => {
     if (employee.accountAddress === employeeAddress) {
@@ -152,5 +167,5 @@ async function onSendPayroll (state, event) {
     return employee
   })
 
-  return { ...state, employees }
+  return { ...state, employees, payments }
 }
