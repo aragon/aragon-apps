@@ -23,60 +23,37 @@ import EditSalaryAllocation from './EditSalaryAllocation'
 
 class RequestSalary extends React.Component {
   state = {
-    isEditing: false
+    isEditing: false,
+    opened: false,
+    balance: null
   }
 
   async componentDidUpdate (prevProps) {
-    if (!this.state.balance ||
-        this.hasAccountChanged(prevProps) ||
-        this.hasAllocationChanged(prevProps)
-    ) {
+    const { opened } = this.props
+    let balance
+
+    if (opened && !this.state.balance) {
       try {
-        const balance = await this.getBalance()
-        this.setState({ balance })
+        balance = await this.getBalance()
+        this.setState({
+          balance,
+          opened
+        })
       } catch (err) {
         console.error('Error occurred', err)
       }
-    }
-  }
-
-  hasAccountChanged = prevProps => {
-    const { accountAddress } = this.props
-    const { accountAddress: prevSalaryAllocation } = prevProps
-
-    return (accountAddress !== prevSalaryAllocation)
-  }
-
-  hasAllocationChanged = prevProps => {
-    const { salaryAllocation } = this.props
-    const { salaryAllocation: prevSalaryAllocation } = prevProps
-    let hasChanged = false
-
-    if (prevSalaryAllocation) {
-      const lengthNotMatch = prevSalaryAllocation.length !== salaryAllocation.length
-      const distributionNotMatch = !prevSalaryAllocation.every((prev, i) => {
-        const current = salaryAllocation[i]
-
-        return (
-          current &&
-          prev.address === current.address &&
-          prev.symbol === current.symbol &&
-          prev.allocation === current.allocation
-        )
+    } else if (!opened && this.state.balance) {
+      this.setState({
+        balance,
+        opened
       })
-
-      hasChanged = (lengthNotMatch || distributionNotMatch)
     }
-
-    return hasChanged
   }
 
   getBalance = async () => {
     const { accountAddress, employees, denominationToken, tokens } = this.props
 
-    const employee = employees.find(
-      employee => employee.accountAddress === accountAddress
-    )
+    const employee = this.getEmployee()
 
     let balance = {
       accruedTime: 0,
@@ -108,8 +85,6 @@ class RequestSalary extends React.Component {
         )
 
         const tokenAmount = proportion * (tokenAllocation.xrt / Math.pow(10, token.decimals))
-
-        console.log(tokenAmount)
 
         const formatedTokenAmount = formatCurrency(
           tokenAmount,
@@ -145,6 +120,14 @@ class RequestSalary extends React.Component {
     return balance
   }
 
+  getEmployee = () => {
+    const { accountAddress, employees } = this.props
+
+    return employees.find(
+      employee => employee.accountAddress === accountAddress
+    )
+  }
+
   loadSalaryAllocationXRT = () => {
     const {
       app,
@@ -171,11 +154,6 @@ class RequestSalary extends React.Component {
     )
   }
 
-  handlePanelToggle = opened => {
-    console.log('handlePanelToggle', opened)
-    console.log(this)
-  }
-
   handleRequestClick = event => {
     event.preventDefault()
 
@@ -198,8 +176,8 @@ class RequestSalary extends React.Component {
   }
 
   render () {
-    const { opened, onClose } = this.props
-    const { balance, isEditing } = this.state
+    const { onClose } = this.props
+    const { balance, isEditing, opened } = this.state
 
     const accruedAllocation = balance
       ? balance.accruedAllocation.map(tokenAllocation => {
@@ -228,7 +206,6 @@ class RequestSalary extends React.Component {
         title='Request salary'
         opened={opened}
         onClose={onClose}
-        onTransitionEnd={this.handlePanelToggle}
       >
         <Container>
           <AllocationWrapper>
@@ -297,6 +274,10 @@ class RequestSalary extends React.Component {
 RequestSalary.propsType = {
   onClose: PropTypes.func,
   opened: PropTypes.bool
+}
+
+const Panel = () => {
+
 }
 
 const Container = styled.section`
