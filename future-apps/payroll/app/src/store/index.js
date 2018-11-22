@@ -6,7 +6,7 @@ import { getAccountAddress } from './account'
 import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './employees'
 import { getDenominationToken, getToken } from './tokens'
 import { date } from './marshalling'
-import financeEvents from './abi/finance-events'
+// import financeEvents from './abi/finance-events'
 
 export default function configureStore (financeAddress) {
   // const financeApp = app.external(financeAddress, financeEvents)
@@ -33,7 +33,8 @@ export default function configureStore (financeAddress) {
         event: Event.AccountChange,
         accountAddress
       }
-    }),
+    })
+    // ,
 
     // Handle Finance eventes
     // financeApp.events()
@@ -161,7 +162,7 @@ async function updateEmployeeByAddress (state, event) {
   const { employees: prevEmployees } = state
   const employeeData = await getEmployeeByAddress(employeeAddress)
 
-  const byAddress = (employee) =>  (employee.accountAddress === employeeAddress)
+  const byAddress = (employee) => (employee.accountAddress === employeeAddress)
   return updateEmployeeBy(prevEmployees, employeeData, byAddress)
 }
 
@@ -170,15 +171,15 @@ async function updateEmployeeById (state, event) {
   const { employees: prevEmployees } = state
   const employeeData = await getEmployeeById(employeeId)
 
-  const byId = (employee) =>  (employee.id === employeeId)
+  const byId = (employee) => (employee.id === employeeId)
   return updateEmployeeBy(prevEmployees, employeeData, byId)
 }
 
-function updateEmployeeBy(employees, employeeData, by) {
+function updateEmployeeBy (employees, employeeData, by) {
   let nextEmployees = [...employees]
 
   if (!nextEmployees.find(by)) {
-    nextEmployees.push(newEmployee)
+    nextEmployees.push(employeeData)
   } else {
     nextEmployees = nextEmployees.map(employee => {
       let nextEmployee = {

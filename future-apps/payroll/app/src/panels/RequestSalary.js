@@ -51,7 +51,7 @@ class RequestSalary extends React.Component {
   }
 
   getBalance = async () => {
-    const { accountAddress, employees, denominationToken, tokens } = this.props
+    const { denominationToken } = this.props
 
     const employee = this.getEmployee()
 
@@ -70,38 +70,7 @@ class RequestSalary extends React.Component {
         new Date(employee.lastPayroll)
       )
       const accruedSalary = accruedTime * employee.salary
-
-      const accruedAllocation = salaryAllocationXRT.map(tokenAllocation => {
-        const token = tokens.find(
-          token => token.address === tokenAllocation.address
-        )
-        const proportion = accruedSalary * tokenAllocation.allocation / 100
-
-        const formatedProportion = formatCurrency(
-          proportion,
-          denominationToken.symbol,
-          10,
-          denominationToken.decimals
-        )
-
-        const tokenAmount = proportion * (tokenAllocation.xrt / Math.pow(10, token.decimals))
-
-        const formatedTokenAmount = formatCurrency(
-          tokenAmount,
-          token.symbol,
-          10,
-          token.decimals
-        )
-
-        return {
-          ...tokenAllocation,
-          proportion,
-          formatedProportion,
-          tokenAmount,
-          formatedTokenAmount
-        }
-      })
-
+      const accruedAllocation = salaryAllocationXRT.map(this.getTokenBalance(accruedSalary))
       const formatedAccruedSalary = formatCurrency(
         accruedSalary,
         denominationToken.symbol,
@@ -126,6 +95,39 @@ class RequestSalary extends React.Component {
     return employees.find(
       employee => employee.accountAddress === accountAddress
     )
+  }
+
+  getTokenBalance = (accruedSalary) => (tokenAllocation) => {
+    const { denominationToken, tokens } = this.props
+
+    const token = tokens.find(
+      token => token.address === tokenAllocation.address
+    )
+    const proportion = accruedSalary * tokenAllocation.allocation / 100
+
+    const formatedProportion = formatCurrency(
+      proportion,
+      denominationToken.symbol,
+      10,
+      denominationToken.decimals
+    )
+
+    const tokenAmount = proportion * (tokenAllocation.xrt / Math.pow(10, token.decimals))
+
+    const formatedTokenAmount = formatCurrency(
+      tokenAmount,
+      token.symbol,
+      10,
+      token.decimals
+    )
+
+    return {
+      ...tokenAllocation,
+      proportion,
+      formatedProportion,
+      tokenAmount,
+      formatedTokenAmount
+    }
   }
 
   loadSalaryAllocationXRT = () => {
@@ -274,10 +276,6 @@ class RequestSalary extends React.Component {
 RequestSalary.propsType = {
   onClose: PropTypes.func,
   opened: PropTypes.bool
-}
-
-const Panel = () => {
-
 }
 
 const Container = styled.section`
