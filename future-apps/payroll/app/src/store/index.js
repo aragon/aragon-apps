@@ -9,10 +9,9 @@ import { date } from './marshalling'
 import financeEvents from './abi/finance-events'
 
 export default function configureStore (financeAddress) {
-  const financeApp = app.external(financeAddress, financeEvents)
+  // const financeApp = app.external(financeAddress, financeEvents)
 
   return app.store(async (state, { event, ...data }) => {
-    console.log(event, data)
     const eventType = Event[event] || event
     const eventProcessor = eventMapping[eventType] || (state => state)
 
@@ -37,7 +36,7 @@ export default function configureStore (financeAddress) {
     }),
 
     // Handle Finance eventes
-    financeApp.events()
+    // financeApp.events()
   ])
 }
 
@@ -49,7 +48,10 @@ const eventMapping = ({
   [Event.ChangeAddressByEmployee]: onChangeEmployeeAddress,
   [Event.DetermineAllocation]: onChangeSalaryAllocation,
   [Event.SetPriceFeed]: onSetPriceFeed,
-  [Event.SendPayroll]: onSendPayroll
+  [Event.SendPayroll]: onSendPayroll,
+  [Event.SetEmployeeSalary]: onSetEmployeeSalary,
+  [Event.AddEmployeeAccruedValue]: onAddEmployeeAccruedValue,
+  [Event.TerminateEmployee]: onTerminateEmployee
 })
 
 async function onInit (state) {
@@ -137,20 +139,61 @@ function onSetPriceFeed (state, event) {
 }
 
 async function onSendPayroll (state, event) {
-  const { returnValues: { employee: employeeAddress } } = event
-  const prevEmployees = state.employees
-  const newEmployeeData = await getEmployeeByAddress(employeeAddress)
-
-  const employees = prevEmployees.map(employee => {
-    if (employee.accountAddress === employeeAddress) {
-      return {
-        ...newEmployeeData,
-        startDate: employee.startDate
-      }
-    }
-
-    return employee
-  })
-
+  const employees = await updateEmployeeByAddress(state, event)
   return { ...state, employees }
+}
+
+async function onSetEmployeeSalary (state, event) {
+  const employees = await updateEmployeeById(state, event)
+  return { ...state, employees }
+}
+async function onAddEmployeeAccruedValue (state, event) {
+  const employees = await updateEmployeeById(state, event)
+  return { ...state, employees }
+}
+async function onTerminateEmployee (state, event) {
+  const employees = await updateEmployeeById(state, event)
+  return { ...state, employees }
+}
+
+async function updateEmployeeByAddress (state, event) {
+  const { returnValues: { employee: employeeAddress } } = event
+  const { employees: prevEmployees } = state
+  const employeeData = await getEmployeeByAddress(employeeAddress)
+
+  const byAddress = (employee) =>  (employee.accountAddress === employeeAddress)
+  return updateEmployeeBy(prevEmployees, employeeData, byAddress)
+}
+
+async function updateEmployeeById (state, event) {
+  const { returnValues: { employeeId } } = event
+  const { employees: prevEmployees } = state
+  const employeeData = await getEmployeeById(employeeId)
+
+  const byId = (employee) =>  (employee.id === employeeId)
+  return updateEmployeeBy(prevEmployees, employeeData, byId)
+}
+
+function updateEmployeeBy(employees, employeeData, by) {
+  let nextEmployees = [...employees]
+
+  if (!nextEmployees.find(by)) {
+    nextEmployees.push(newEmployee)
+  } else {
+    nextEmployees = nextEmployees.map(employee => {
+      let nextEmployee = {
+        ...employee
+      }
+
+      if (by(employee)) {
+        nextEmployee = {
+          ...employeeData,
+          startDate: employee.startDate
+        }
+      }
+      return nextEmployee
+    })
+  }
+
+  return nextEmployees
 }
