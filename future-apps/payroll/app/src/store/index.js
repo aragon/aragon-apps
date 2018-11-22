@@ -146,7 +146,7 @@ async function onSendPayroll (state, event) {
     const { transactionAddress, amount } = payment
 
     const transactionExists = transactionAddress === transactionHash
-    const withSameToken = amount.token === token
+    const withSameToken = amount.token.address === token
     return transactionExists && withSameToken
   })
 
