@@ -25,7 +25,12 @@ const initializeColumns = (data, formatExchangeRate) => {
       name: 'transaction-address',
       title: 'Transaction Address',
       value: data => data.transactionAddress,
-      defaultValue: 'Active'
+      defaultValue: 'Active',
+      render: (formattedValue, rawValue, item) => (
+        <TransactionAddress>
+          {rawValue}
+        </TransactionAddress>
+      )
     },
     {
       name: 'amount',
@@ -56,6 +61,13 @@ const initializeColumns = (data, formatExchangeRate) => {
 const Amount = styled.span`
   font-weight: 600;
   color: ${({ positive }) => (positive ? theme.positive : theme.negative)};
+`
+
+const TransactionAddress = styled.span`
+  width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `
 
 const SalaryTable = (props) => {

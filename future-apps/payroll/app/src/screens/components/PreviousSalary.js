@@ -14,6 +14,7 @@ const Container = styled.section`
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  margin-bottom: 120px;
 `
 
 const Header = styled.div`
