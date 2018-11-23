@@ -3,8 +3,9 @@
 import React from 'react'
 import {
   cleanup,
-  fireEvent,
-  render
+  // fireEvent,
+  render,
+  waitForElement
 } from 'react-testing-library'
 import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
@@ -18,16 +19,49 @@ const bodyUtils = bindElementToQueries(document.body)
 afterEach(cleanup)
 
 describe('Request Salary panel', () => {
-  it('can be closed with the "X" button', () => {
+  it('should have the right title', async () => {
     const onClose = jest.fn()
-    const { buttons } = renderRequestPanel({ onClose })
+    const { title } = await renderRequestPanel({ onClose })
 
-    expect(buttons.close).not.toBeNull()
-    expect(buttons.close).toBeVisible()
+    expect(title).not.toBeNull()
+    expect(title).toBeVisible()
+    expect(title).toHaveTextContent('Request salary')
+  })
 
-    fireEvent.click(buttons.close)
+  it('should show token amount and propotion for each token in salary allocation', async () => {
+    const onClose = jest.fn()
+    const { requestSalary } = await renderRequestPanel({ onClose })
 
-    expect(onClose).toHaveBeenCalledTimes(1)
+    const tokens = ['TK1', 'TK2']
+
+    tokens.forEach(token => {
+      const tokenAmount = requestSalary.getByTestId(`token-allocation-${token}`)
+      const propotion = requestSalary.getByTestId(
+        `proportion-allocation-${token}`
+      )
+
+      expect(tokenAmount).not.toBeNull()
+      expect(tokenAmount).toHaveTextContent(new RegExp(`.*${token}$`))
+
+      expect(propotion).not.toBeNull()
+      expect(propotion).toHaveTextContent(/.*USD$/)
+    })
+  })
+
+  it('should show an Edit salary allocation btn', async () => {
+    const onClose = jest.fn()
+    const { buttons } = await renderRequestPanel({ onClose })
+
+    expect(buttons.edit).not.toBeNull()
+    expect(buttons.edit).toBeVisible()
+  })
+
+  it('should show Request Salary btn', async () => {
+    const onClose = jest.fn()
+    const { buttons } = await renderRequestPanel({ onClose })
+
+    expect(buttons.request).not.toBeNull()
+    expect(buttons.request).toBeVisible()
   })
 })
 
@@ -67,9 +101,21 @@ const mockState = {
     }
   ],
   tokens: [
-    { address: '0xa0b8084BFa960F50E309c242e19417375b4c427c', decimals: 18, symbol: 'TK1' },
-    { address: '0xb5c994DBaC8c086f574867D6791eb6F356141BA5', decimals: 18, symbol: 'TK2' },
-    { address: '0x6d8c9dE9b200cd050Cb0072CD24325c01DFddb4f', decimals: 18, symbol: 'TK3' }
+    {
+      address: '0xa0b8084BFa960F50E309c242e19417375b4c427c',
+      decimals: 18,
+      symbol: 'TK1'
+    },
+    {
+      address: '0xb5c994DBaC8c086f574867D6791eb6F356141BA5',
+      decimals: 18,
+      symbol: 'TK2'
+    },
+    {
+      address: '0x6d8c9dE9b200cd050Cb0072CD24325c01DFddb4f',
+      decimals: 18,
+      symbol: 'TK3'
+    }
   ]
 }
 
@@ -81,7 +127,7 @@ const mockApp = {
   external () {
     return {
       get () {
-        return of(7500000000000000)
+        return of({ xrt: 7500000000000000 })
       }
     }
   },
@@ -91,19 +137,25 @@ const mockApp = {
   }
 }
 
-function renderRequestPanel (props) {
-  render(
+async function renderRequestPanel (props) {
+  const requestSalary = render(
     <AragonContext.Provider value={mockApp}>
       <RequestSalaryPanel opened {...props} />
     </AragonContext.Provider>
   )
 
   const modalRoot = bodyUtils.getByTestId('modal-root')
-  // const panel = bindElementToQueries(modalRoot)
+  const panel = bindElementToQueries(modalRoot)
+
+  await waitForElement(() => panel.getByTestId('total-salary'))
 
   const buttons = {
-    close: modalRoot.querySelector('button')
+    close: modalRoot.querySelector('button'),
+    edit: panel.getByTestId('salary-allocation-edit-btn'),
+    request: panel.getByTestId('request-payment-btn')
   }
 
-  return { buttons }
+  const title = modalRoot.querySelector('h1')
+
+  return { requestSalary, buttons, title }
 }

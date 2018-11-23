@@ -69,8 +69,11 @@ class RequestSalary extends React.Component {
         new Date(),
         new Date(employee.lastPayroll)
       )
-      const accruedSalary = accruedTime * employee.salary
-      const accruedAllocation = salaryAllocationXRT.map(this.getTokenBalance(accruedSalary))
+      const accruedSalary =
+        employee.accruedValue + accruedTime * employee.salary
+      const accruedAllocation = salaryAllocationXRT.map(
+        this.getTokenBalance(accruedSalary)
+      )
       const formatedAccruedSalary = formatCurrency(
         accruedSalary,
         denominationToken.symbol,
@@ -97,7 +100,7 @@ class RequestSalary extends React.Component {
     )
   }
 
-  getTokenBalance = (accruedSalary) => (tokenAllocation) => {
+  getTokenBalance = accruedSalary => tokenAllocation => {
     const { denominationToken, tokens } = this.props
 
     const token = tokens.find(
@@ -112,7 +115,8 @@ class RequestSalary extends React.Component {
       denominationToken.decimals
     )
 
-    const tokenAmount = proportion * (tokenAllocation.xrt / Math.pow(10, token.decimals))
+    const tokenAmount =
+      proportion * (tokenAllocation.xrt / Math.pow(10, token.decimals))
 
     const formatedTokenAmount = formatCurrency(
       tokenAmount,
@@ -186,10 +190,20 @@ class RequestSalary extends React.Component {
         const description = (
           <AllocationDescription>
             <div>
-              <Text weight='bold'>{tokenAllocation.formatedTokenAmount}</Text>
+              <Text
+                weight='bold'
+                data-testid={`token-allocation-${tokenAllocation.symbol}`}
+              >
+                {tokenAllocation.formatedTokenAmount}
+              </Text>
             </div>
             <div>
-              <Text color='textSecondary'>
+              <Text
+                color='textSecondary'
+                data-testid={`proportion-allocation-${
+                  tokenAllocation.symbol
+                }`}
+              >
                 {tokenAllocation.formatedProportion}
               </Text>
             </div>
@@ -205,11 +219,7 @@ class RequestSalary extends React.Component {
 
     const panel = (
       <React.Fragment>
-        <SidePanel
-          title='Request salary'
-          opened={opened}
-          onClose={onClose}
-        >
+        <SidePanel title='Request salary' opened={opened} onClose={onClose}>
           <Container>
             <AllocationWrapper>
               <SectionTitle>Salary Allocation</SectionTitle>
@@ -240,11 +250,15 @@ class RequestSalary extends React.Component {
               <Info>
                 <InfoTotalItem>
                   <IconFundraising />
-                  <Text color={theme.textSecondary}>Total salary to be paid</Text>
+                  <Text color={theme.textSecondary}>
+                    Total salary to be paid
+                  </Text>
                 </InfoTotalItem>
                 <InfoTotalItem>
                   {balance && (
-                    <Text size='xxlarge'>{balance.formatedAccruedSalary}</Text>
+                    <Text size='xxlarge' data-testid='total-salary'>
+                      {balance.formatedAccruedSalary}
+                    </Text>
                   )}
                 </InfoTotalItem>
               </Info>
@@ -252,21 +266,20 @@ class RequestSalary extends React.Component {
 
             <ButtonWrapper>
               <Info.Permissions icon={<IconAttention />}>
-                The actual exchange reate might change once the transaction takes
-                place
+                The actual exchange reate might change once the transaction
+                takes place
               </Info.Permissions>
 
-              <RequestButton onClick={this.handleRequestClick}>
+              <RequestButton
+                onClick={this.handleRequestClick}
+                data-testid='request-payment-btn'
+              >
                 Request Salary
               </RequestButton>
             </ButtonWrapper>
-
           </Container>
         </SidePanel>
-        <EditSalaryAllocation
-          opened={isEditing}
-          onClose={this.endEditing}
-        />
+        <EditSalaryAllocation opened={isEditing} onClose={this.endEditing} />
       </React.Fragment>
     )
 
