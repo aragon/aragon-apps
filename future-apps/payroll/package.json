@@ -27,7 +27,7 @@
     "start": "aragon run --accounts 9 --network rpc --kit PayrollKit --kit-init @ARAGON_ENS",
     "test": "npm run lint && npm run test:ui && npm run test:contracts",
     "test:ui": "cd app && npm test",
-    "test:contracts": "TRUFFLE_TEST=true ./node_modules/@aragon/os/scripts/ganache-cli.sh",
+    "test:contracts": "TRUFFLE_TEST=true ./node_modules/@aragon/os/scripts/ganache-cli.sh --network rpc",
     "test:contracts:gas": "GAS_REPORTER=true npm test"
   },
   "dependencies": {

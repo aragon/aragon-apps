@@ -19,7 +19,7 @@ import "./Payroll.sol";
 
 contract PPFMock is IFeed {
   function get(address base, address quote) external view returns (uint128 xrt, uint64 when) {
-      xrt = 1;
+      xrt = 7500000000000000;
       when = uint64(now);
   }
 }
@@ -166,7 +166,9 @@ contract PayrollKit is KitBase {
     }
 
     function setFinancePermissions(ACL acl, Finance finance, Payroll payroll, address root) internal {
-      acl.createPermission(payroll, finance, finance.CREATE_PAYMENTS_ROLE(), root);
+      acl.createPermission(payroll, finance, finance.CREATE_PAYMENTS_ROLE(), this); // manager is this to allow 2 grants
+      acl.grantPermission(root, finance, finance.CREATE_PAYMENTS_ROLE());
+      acl.setPermissionManager(root, finance, finance.CREATE_PAYMENTS_ROLE()); // set root as the
     }
 
     function setPayrollPermissions(ACL acl, Payroll payroll, address root) internal {
@@ -236,7 +238,7 @@ contract PayrollKit is KitBase {
         uint256 salary4 = 2218166146982026; // 70000
         uint256 salary5 = 1901285268841737; // 60000
 
-        payroll.addEmployeeWithNameAndStartDate(this, salary1, 'protofire.aragonid.eth', uint64(now));
+        payroll.addEmployeeWithNameAndStartDate(this, salary1, 'protofire.aragonid.eth', uint64(now - 172800));
         payroll.addEmployeeWithNameAndStartDate(account2, salary2, 'leolower.protofire.eth', uint64(now- 86400));
         payroll.addEmployeeWithNameAndStartDate(account3, salary3, 'lmcorbalan.protofire.eth',  uint64(now - 172800));
         payroll.addEmployeeWithNameAndStartDate(account4, salary4, 'sistemico.protofire.eth',  uint64(now - 172800));
