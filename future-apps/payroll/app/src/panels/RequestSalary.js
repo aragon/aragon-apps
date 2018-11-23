@@ -204,69 +204,70 @@ class RequestSalary extends React.Component {
       : []
 
     const panel = (
-      <SidePanel
-        title='Request salary'
-        opened={opened}
-        onClose={onClose}
-      >
-        <Container>
-          <AllocationWrapper>
-            <SectionTitle>Salary Allocation</SectionTitle>
+      <React.Fragment>
+        <SidePanel
+          title='Request salary'
+          opened={opened}
+          onClose={onClose}
+        >
+          <Container>
+            <AllocationWrapper>
+              <SectionTitle>Salary Allocation</SectionTitle>
 
-            {accruedAllocation && <PartitionBar data={accruedAllocation} />}
+              {accruedAllocation && <PartitionBar data={accruedAllocation} />}
 
-            <TotalAllocationWrapper>
-              <Text weight='bolder'>Total salary</Text>
-              <div>
-                <span />
-                <Text weight='bolder'>
-                  {balance && balance.formatedAccruedSalary}
-                </Text>
-              </div>
-              <Text weight='bolder'>100%</Text>
-            </TotalAllocationWrapper>
+              <TotalAllocationWrapper>
+                <Text weight='bolder'>Total salary</Text>
+                <div>
+                  <span />
+                  <Text weight='bolder'>
+                    {balance && balance.formatedAccruedSalary}
+                  </Text>
+                </div>
+                <Text weight='bolder'>100%</Text>
+              </TotalAllocationWrapper>
 
-            <EditButton
-              onClick={this.startEditing}
-              data-testid='salary-allocation-edit-btn'
-            >
-              Edit salary allocation
-            </EditButton>
-          </AllocationWrapper>
+              <EditButton
+                onClick={this.startEditing}
+                data-testid='salary-allocation-edit-btn'
+              >
+                Edit salary allocation
+              </EditButton>
+            </AllocationWrapper>
 
-          <SalaryWrapper>
-            <Section.Title>Total Salary</Section.Title>
-            <Info>
-              <InfoTotalItem>
-                <IconFundraising />
-                <Text color={theme.textSecondary}>Total salary to be paid</Text>
-              </InfoTotalItem>
-              <InfoTotalItem>
-                {balance && (
-                  <Text size='xxlarge'>{balance.formatedAccruedSalary}</Text>
-                )}
-              </InfoTotalItem>
-            </Info>
-          </SalaryWrapper>
+            <SalaryWrapper>
+              <Section.Title>Total Salary</Section.Title>
+              <Info>
+                <InfoTotalItem>
+                  <IconFundraising />
+                  <Text color={theme.textSecondary}>Total salary to be paid</Text>
+                </InfoTotalItem>
+                <InfoTotalItem>
+                  {balance && (
+                    <Text size='xxlarge'>{balance.formatedAccruedSalary}</Text>
+                  )}
+                </InfoTotalItem>
+              </Info>
+            </SalaryWrapper>
 
-          <ButtonWrapper>
-            <Info.Permissions icon={<IconAttention />}>
-              The actual exchange reate might change once the transaction takes
-              place
-            </Info.Permissions>
+            <ButtonWrapper>
+              <Info.Permissions icon={<IconAttention />}>
+                The actual exchange reate might change once the transaction takes
+                place
+              </Info.Permissions>
 
-            <RequestButton onClick={this.handleRequestClick}>
-              Request Salary
-            </RequestButton>
-          </ButtonWrapper>
+              <RequestButton onClick={this.handleRequestClick}>
+                Request Salary
+              </RequestButton>
+            </ButtonWrapper>
 
-          <EditSalaryAllocation
-            opened={isEditing}
-            onClose={this.endEditing}
-            modalRootId='edit-allocation'
-          />
-        </Container>
-      </SidePanel>
+          </Container>
+        </SidePanel>
+        <EditSalaryAllocation
+          opened={isEditing}
+          onClose={this.endEditing}
+        />
+      </React.Fragment>
     )
 
     return createPortal(panel, document.getElementById('modal-root'))

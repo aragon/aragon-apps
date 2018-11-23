@@ -239,7 +239,7 @@ class EditSalaryAllocation extends React.Component {
 
     return createPortal(
       panel,
-      document.getElementById(this.props.modalRootId || 'modal-root')
+      document.getElementById('modal-root')
     )
   }
 }
