@@ -10,9 +10,6 @@ import {
 import BaseInput from './BaseInput'
 import DatePicker from './DatePicker'
 
-const Container = styled.div`
-  position: relative;
-`
 
 class DateRangeInput extends React.PureComponent {
   state = {
@@ -83,31 +80,20 @@ class DateRangeInput extends React.PureComponent {
   render () {
     const { startDate, endDate } = this.state
     return (
-      <Container
+      <StyledContainer
         innerRef={el => this.rootRef = el}
         onClick={this.handleClick}
       >
-        <BaseInput
-          style={{ fontWeight: 'bold', color: '#000000' }}
+        <StyledBaseInput
           value={`${this.formattedStartDate} - ${this.formattedEndDate}`}
           readOnly={true}
         />
         {this.state.showPicker && (
           <React.Fragment>
-            <div
-              style={{
-                position: 'absolute',
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'baseline',
-                left: '-250px',
-                zIndex: 1
-              }}
-            >
+            <StyledDatePickersContainer>
               <DatePicker
                 key={`start-picker-${startDate}`}
                 name="start-date-picker"
-                style={{ display: 'inline' }}
                 currentDate={startDate}
                 onSelect={this.handleSelectStartDate}
                 overlay={false}
@@ -115,15 +101,14 @@ class DateRangeInput extends React.PureComponent {
               <DatePicker
                 key={`end-picker-${endDate}`}
                 name="end-date-picker"
-                style={{ display: 'inline' }}
                 currentDate={endDate}
                 onSelect={this.handleSelectEndDate}
                 overlay={false}
               />
-            </div>
+          </StyledDatePickersContainer>
           </React.Fragment>
         )}
-      </Container>
+      </StyledContainer>
     )
   }
 }
@@ -139,5 +124,22 @@ DateRangeInput.defaultProps = {
   format: 'LL/dd/yyyy',
   onChange: () => {}
 }
+
+const StyledContainer = styled.div`
+  position: relative;
+`
+
+const StyledBaseInput = styled(BaseInput)`
+  color: #000000 !important;
+`
+
+const StyledDatePickersContainer = styled.div`
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  left: -250px;
+  z-index: 1;
+`
 
 export default DateRangeInput

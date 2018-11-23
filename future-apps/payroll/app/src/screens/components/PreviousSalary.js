@@ -10,28 +10,6 @@ import DateRangeFilter from './filters/DateRangeFilter'
 import { formatCurrency } from '../../utils/formatting'
 
 
-const Container = styled.section`
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  margin-bottom: 120px;
-`
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-`
-
-const Filters = styled.div`
-  display: flex;
-  justify-content: space-between;
-  text-align: right;
-  > * {
-    margin-left: 1rem
-  }
-`
-
-
 class PreviousSalary extends React.PureComponent {
   static defaultProps = {
     payments: [],
@@ -53,7 +31,6 @@ class PreviousSalary extends React.PureComponent {
   }
 
   handleTokenFilterChange = (tokenFilter) => {
-    console.log('token filter', tokenFilter)
     this.setState({ tokenFilter })
   }
 
@@ -83,10 +60,10 @@ class PreviousSalary extends React.PureComponent {
     ]
 
     return (
-      <Container>
-        <Header>
+      <StyledContainer>
+        <StyledHeader>
           <Section.Title>Previous Salary</Section.Title>
-          <Filters>
+          <StyledFilters>
             <DateRangeFilter
               active={dateRangeFilter}
               onChange={this.handleDateRangeFilterChange}
@@ -96,18 +73,41 @@ class PreviousSalary extends React.PureComponent {
               onChange={this.handleTokenFilterChange}
               options={tokenFilterOptions}
             />
-          </Filters>
-        </Header>
+          </StyledFilters>
+        </StyledHeader>
         <SalaryTable
           data={filteredPayments}
           filters={filters}
           onClearFilters={this.handleClearFilters}
           formatExchangeRate={customExchangeRateFormat}
         />
-      </Container>
+      </StyledContainer>
     )
   }
 }
+
+
+const StyledContainer = styled.section`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 120px;
+`
+
+const StyledHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+`
+
+const StyledFilters = styled.div`
+  display: flex;
+  justify-content: space-between;
+  text-align: right;
+  > * {
+    margin-left: 1rem
+  }
+`
+
 
 function mapStateToProps ({ salaryAllocation = [], employees = [], accountAddress = {}, payments = [], denominationToken = [] }) {
   return {
