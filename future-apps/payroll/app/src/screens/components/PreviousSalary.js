@@ -43,10 +43,8 @@ class PreviousSalary extends React.PureComponent {
     const { tokenFilter, dateRangeFilter } = this.state
     const filteredPayments = payments.filter(payment => payment.accountAddress === accountAddress)
 
-    // const customExchangeRateFormat = (exchangeRate) => formatCurrency(exchangeRate.amount, denominationToken.symbol, 10, denominationToken.decimals)
-
     // FIXME: we need better understanding of the exchangeRate value from the contract before using a formatting function - sgobotta
-    const customExchangeRateFormat = (exchangeRate) => `${exchangeRate.amount} ${denominationToken.symbol}`
+    const customExchangeRateFormat = (exchangeRate) => formatCurrency(exchangeRate.amount, denominationToken.symbol, 10, denominationToken.decimals)
 
     const tokenFilterOptions = salaryAllocation.map((option) => {
       return {

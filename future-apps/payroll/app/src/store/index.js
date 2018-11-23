@@ -6,13 +6,12 @@ import { getAccountAddress } from './account'
 import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './employees'
 import { getDenominationToken, getToken } from './tokens'
 import { date, payment } from './marshalling'
-import financeEvents from './abi/finance-events'
+// import financeEvents from './abi/finance-events'
 
 export default function configureStore (financeAddress) {
-  const financeApp = app.external(financeAddress, financeEvents)
+  // const financeApp = app.external(financeAddress, financeEvents)
 
   return app.store(async (state, { event, ...data }) => {
-    console.log(event, data)
     const eventType = Event[event] || event
     const eventProcessor = eventMapping[eventType] || (state => state)
 
@@ -34,10 +33,11 @@ export default function configureStore (financeAddress) {
         event: Event.AccountChange,
         accountAddress
       }
-    }),
+    })
+    // ,
 
     // Handle Finance eventes
-    financeApp.events()
+    // financeApp.events()
   ])
 }
 
@@ -49,7 +49,10 @@ const eventMapping = ({
   [Event.ChangeAddressByEmployee]: onChangeEmployeeAddress,
   [Event.DetermineAllocation]: onChangeSalaryAllocation,
   [Event.SetPriceFeed]: onSetPriceFeed,
-  [Event.SendPayroll]: onSendPayroll
+  [Event.SendPayroll]: onSendPayroll,
+  [Event.SetEmployeeSalary]: onSetEmployeeSalary,
+  [Event.AddEmployeeAccruedValue]: onAddEmployeeAccruedValue,
+  [Event.TerminateEmployee]: onTerminateEmployee
 })
 
 async function onInit (state) {
@@ -137,14 +140,13 @@ function onSetPriceFeed (state, event) {
 }
 
 async function onSendPayroll (state, event) {
+  const employees = await updateEmployeeByAddress(state, event)
   const { tokens } = state
-  const { returnValues: { employee: employeeAddress, token }, transactionHash } = event
-  const prevEmployees = state.employees
+  const { returnValues: { token }, transactionHash } = event
   const payments = state.payments || []
-  const newEmployeeData = await getEmployeeByAddress(employeeAddress)
+
   const paymentExists = payments.some(payment => {
     const { transactionAddress, amount } = payment
-
     const transactionExists = transactionAddress === transactionHash
     const withSameToken = amount.token.address === token
     return transactionExists && withSameToken
@@ -156,16 +158,60 @@ async function onSendPayroll (state, event) {
     payments.push(currentPayment)
   }
 
-  const employees = prevEmployees.map(employee => {
-    if (employee.accountAddress === employeeAddress) {
-      return {
-        ...newEmployeeData,
-        startDate: employee.startDate
-      }
-    }
-
-    return employee
-  })
-
   return { ...state, employees, payments }
+}
+
+async function onSetEmployeeSalary (state, event) {
+  const employees = await updateEmployeeById(state, event)
+  return { ...state, employees }
+}
+async function onAddEmployeeAccruedValue (state, event) {
+  const employees = await updateEmployeeById(state, event)
+  return { ...state, employees }
+}
+async function onTerminateEmployee (state, event) {
+  const employees = await updateEmployeeById(state, event)
+  return { ...state, employees }
+}
+
+async function updateEmployeeByAddress (state, event) {
+  const { returnValues: { employee: employeeAddress } } = event
+  const { employees: prevEmployees } = state
+  const employeeData = await getEmployeeByAddress(employeeAddress)
+
+  const byAddress = (employee) => (employee.accountAddress === employeeAddress)
+  return updateEmployeeBy(prevEmployees, employeeData, byAddress)
+}
+
+async function updateEmployeeById (state, event) {
+  const { returnValues: { employeeId } } = event
+  const { employees: prevEmployees } = state
+  const employeeData = await getEmployeeById(employeeId)
+
+  const byId = (employee) => (employee.id === employeeId)
+  return updateEmployeeBy(prevEmployees, employeeData, byId)
+}
+
+function updateEmployeeBy (employees, employeeData, by) {
+  let nextEmployees = [...employees]
+
+  if (!nextEmployees.find(by)) {
+    nextEmployees.push(employeeData)
+  } else {
+    nextEmployees = nextEmployees.map(employee => {
+      let nextEmployee = {
+        ...employee
+      }
+
+      if (by(employee)) {
+        nextEmployee = {
+          ...employeeData,
+          startDate: employee.startDate
+        }
+      }
+      return nextEmployee
+    })
+  }
+
+  return nextEmployees
 }
