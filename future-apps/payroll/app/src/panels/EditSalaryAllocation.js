@@ -1,7 +1,7 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
 import styled from 'styled-components'
-import { Button, DropDown, Info, SidePanel, Slider, theme } from '@aragon/ui'
+import { Button, DropDown, Info, SidePanel, Slider, theme, Text } from '@aragon/ui'
 
 import { connect } from '../context/AragonContext'
 import Input from '../components/Input'
@@ -177,6 +177,9 @@ class EditSalaryAllocation extends React.Component {
 
               return (
                 <TokenAllocation key={`${index}-${tokenAddress}}`}>
+                  <TokenAllocationLabel>TOKEN</TokenAllocationLabel>
+                  <div />
+                  <TokenAllocationLabel>PERCENTAGE</TokenAllocationLabel>
                   <TokenSelector
                     active={activeIndex + 1}
                     items={[
@@ -189,8 +192,12 @@ class EditSalaryAllocation extends React.Component {
                       this.setState(() => {
                         const tokens = addresses.slice()
                         tokens[index] = selectedToken
+                        const distribution = this.state.distribution || this.props.distribution
 
-                        return { addresses: tokens }
+                        return {
+                          addresses: tokens,
+                          distribution
+                        }
                       })
                     }}
                   />
@@ -252,7 +259,14 @@ const TokenAllocation = styled.div`
   display: grid;
   grid-template-columns: 70px 1fr 70px;
   align-items: center;
-  margin-top: 2em;
+  margin-top: 1em;
+`
+
+const TokenAllocationLabel = styled(Text).attrs({
+  size: 'xsmall',
+  color: theme.textTertiary
+})`
+  margin-bottom: 1em;
 `
 
 const TokenSelector = styled(DropDown)``

@@ -19,7 +19,7 @@
     "@babel/runtime": "^7.1.2",
     "ajv": "^6.5.4",
     "ajv-keywords": "^3.2.0",
-    "date-fns": "^2.0.0-alpha.25",
+    "date-fns": "2.0.0-alpha.22",
     "prop-types": "^15.6.2",
     "react": "^16.6.0",
     "react-autocomplete": "^1.8.1",
