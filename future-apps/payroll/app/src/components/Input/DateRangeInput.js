@@ -1,7 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { isAfter, isBefore, isEqual, isDate, format as formatDate } from 'date-fns'
+import {
+  isAfter, isBefore, isEqual, isDate,
+  format as formatDate,
+  startOfDay, endOfDay
+} from 'date-fns'
 
 import BaseInput from './BaseInput'
 import DatePicker from './DatePicker'
@@ -62,8 +66,8 @@ class DateRangeInput extends React.PureComponent {
     const { endDate } = this.state
     const isValidDate = isBefore(date, endDate) || isEqual(date, endDate)
     if (typeof this.props.onStartDateChange === 'function' && isValidDate) {
-      this.props.onStartDateChange(date)
-      this.setState({ startDateSelected: true, startDate: date })
+      this.props.onStartDateChange(startOfDay(date))
+      this.setState({ startDateSelected: true, startDate: startOfDay(date) })
     }
   }
 
@@ -71,8 +75,8 @@ class DateRangeInput extends React.PureComponent {
     const { startDate } = this.state
     const isValidDate = isAfter(date, startDate) || isEqual(date, startDate)
     if (typeof this.props.onEndDateChange === 'function' && isValidDate) {
-      this.props.onEndDateChange(date)
-      this.setState({ endDateSelected: true, endDate: date })
+      this.props.onEndDateChange(endOfDay(date))
+      this.setState({ endDateSelected: true, endDate: endOfDay(date) })
     }
   }
 

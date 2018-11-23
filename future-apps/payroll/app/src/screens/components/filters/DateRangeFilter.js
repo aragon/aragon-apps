@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import { isWithinInterval, startOfDay } from 'date-fns'
+import { isWithinInterval, startOfDay, endOfDay } from 'date-fns'
 
 import { DropDown, Field } from '@aragon/ui'
 import InlineField from '../../../components/Field/InlineField'
@@ -60,7 +60,7 @@ DateRangeFilter.propTypes = {
 
 DateRangeFilter.defaultProps = {
   startDate: startOfDay((new Date().getTime())),
-  endDate: startOfDay((new Date()).getTime())
+  endDate: endOfDay((new Date()).getTime())
 }
 
 export default DateRangeFilter

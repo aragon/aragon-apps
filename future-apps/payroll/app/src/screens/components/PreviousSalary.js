@@ -53,6 +53,7 @@ class PreviousSalary extends React.PureComponent {
   }
 
   handleTokenFilterChange = (tokenFilter) => {
+    console.log('token filter', tokenFilter)
     this.setState({ tokenFilter })
   }
 
@@ -72,7 +73,7 @@ class PreviousSalary extends React.PureComponent {
 
     const tokenFilterOptions = salaryAllocation.map((option) => {
       return {
-        label: option.symbol, filter: salary => salary.amount.token  === option.address
+        label: option.symbol, filter: salary => salary.amount.token.address  === option.address
       }
     })
 
