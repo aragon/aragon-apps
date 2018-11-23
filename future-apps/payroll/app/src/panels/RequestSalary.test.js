@@ -10,8 +10,10 @@ import {
 import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
 import { format as formatDate } from 'date-fns'
+import { of } from '../rxjs'
 
-import RequestSalaryPanel from './AddEmployee'
+
+import RequestSalaryPanel from './RequestSalary'
 import AragonContext from '../context/AragonContext'
 
 const bodyUtils = bindElementToQueries(document.body)
@@ -75,39 +77,20 @@ const mockState = {
 }
 
 const mockApp = {
-  state () {
-    return {
-      map (mapStateToProps) {
-        const stateToProps = mapStateToProps(mockState)
-        return {
-          subscribe (fn) {
-            fn(stateToProps)
-            return { unsubscribe: jest.fn() }
-          }
-        }
-      }
-    }
+  state() {
+    return of(mockState)
   },
 
   external () {
-    return this
-  },
-
-  map (fn) {
-    const cbResult = fn(7500000000000000)
     return {
-      toPromise () {
-        return cbResult
+      get () {
+        return of(7500000000000000)
       }
     }
   },
 
   payday () {
-    return this
-  },
-
-  subscribe (cb) {
-    return { unsubscribe: jest.fn() }
+    return of(true)
   }
 }
 
