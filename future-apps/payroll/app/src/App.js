@@ -1,6 +1,6 @@
 import React from 'react'
-import { AppBar, AppView, AragonApp, Button } from '@aragon/ui'
-import Tab from './components/Tab'
+import styled, { css } from 'styled-components'
+import { AppBar, AppView, AragonApp, Button, TabBar, theme } from '@aragon/ui'
 
 import { MyPayroll, TeamPayroll } from './screens'
 import { AddEmployee, RequestSalary } from './panels'
@@ -8,6 +8,7 @@ import { AddEmployee, RequestSalary } from './panels'
 export default class App extends React.Component {
   state = {
     activeTab: 'my-payroll',
+    selectedTab: 0,
     showAddEmployeePanel: false,
     showRequestSalaryPanel: false
   }
@@ -69,21 +70,22 @@ export default class App extends React.Component {
           data-testid='app-bar'
         />
 
-        <Tab.Container>
-          <Tab
-            title='My payroll'
-            active={this.state.activeTab === 'my-payroll'}
-            onClick={() => this.setState({ activeTab: 'my-payroll' })}
-            data-testid='my-payroll-tab'
-          />
+        <TabContainer>
+          <TabBar
+            items={['My payroll', 'Team payroll']}
+            selected={this.state.selectedTab}
+            onSelect={
+              (index) => {
+                const activeTab = ['my-payroll', 'team-payroll']
 
-          <Tab
-            title='Team payroll'
-            active={this.state.activeTab === 'team-payroll'}
-            onClick={() => this.setState({ activeTab: 'team-payroll' })}
-            data-testid='team-payroll-tab'
+                this.setState({
+                  activeTab: activeTab[index],
+                  selectedTab: index
+                })
+              }
+            }
           />
-        </Tab.Container>
+        </TabContainer>
       </React.Fragment>
     )
 
@@ -104,12 +106,18 @@ export default class App extends React.Component {
           onClose={this.hideAddEmployeePanel}
         />
 
-        {this.state.activeTab === 'my-payroll' && (<RequestSalary
+        <RequestSalary
           opened={this.state.showRequestSalaryPanel}
           onClose={this.hideRequestSalaryPanel}
         />
-        )}
       </AragonApp>
     )
   }
 }
+
+const TabContainer = styled.div.attrs({'data-testid': 'tab-container'})`
+  margin: 0;
+  list-style-type: none;
+  background: ${theme.contentBackground};
+  margin-top: -1px; // Overlap AppBar border
+`
