@@ -2,7 +2,7 @@ import React from 'react'
 import { createPortal } from 'react-dom'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { Button, Field, SidePanel } from '@aragon/ui'
+import { Button, Field, SidePanel, IconBlank } from '@aragon/ui'
 import { startOfDay } from 'date-fns'
 
 import Input from '../components/Input'
@@ -82,7 +82,7 @@ class AddEmployee extends React.PureComponent {
     if (!entity) {
       this.entitySearch.input.focus()
     } else if (!salary) {
-      this.salaryInput.focus()
+      this.salaryInput.input.focus()
     }
   }
 
@@ -169,6 +169,10 @@ class AddEmployee extends React.PureComponent {
               key={entity && entity.domain}
               value={entity && entity.domain}
               onChange={this.handleEntityChange}
+              inputProps={{
+                iconposition: 'right',
+                icon: <IconBlank />
+              }}
             />
           </Field>
 
@@ -177,6 +181,7 @@ class AddEmployee extends React.PureComponent {
               innerRef={this.setSalaryInputRef}
               value={salary || ''}
               onChange={this.handleSalaryChange}
+              icon={<IconBlank />}
             />
           </Field>
 
@@ -185,6 +190,8 @@ class AddEmployee extends React.PureComponent {
               key={startDate}
               value={startDate}
               onChange={this.handleStartDateChange}
+              icon={<IconBlank />}
+              iconposition='right'
             />
           </Field>
 
