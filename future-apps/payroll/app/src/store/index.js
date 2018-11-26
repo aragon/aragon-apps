@@ -92,14 +92,17 @@ async function onAddAllowedToken (state, event) {
 }
 
 async function onAddNewEmployee (state, event) {
-  const { returnValues: { employeeId } } = event
+  const { returnValues: { employeeId, startDate } } = event
   const { employees = [] } = state
 
   if (!employees.find(e => e.id === employeeId)) {
     const newEmployee = await getEmployeeById(employeeId)
 
     if (newEmployee) {
-      employees.push(newEmployee)
+      employees.push({
+        ...newEmployee,
+        startDate: date(startDate)
+      })
     }
   }
 
