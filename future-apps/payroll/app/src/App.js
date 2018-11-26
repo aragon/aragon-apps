@@ -5,10 +5,18 @@ import { AppBar, AppView, AragonApp, Button, TabBar, theme } from '@aragon/ui'
 import { MyPayroll, TeamPayroll } from './screens'
 import { AddEmployee, RequestSalary } from './panels'
 
+const appBarTitle = 'Payroll'
+const tabTitles = [ 'My payroll', 'Team payroll' ]
+const tabNames =  [ 'my-payroll', 'team-payroll' ]
+
+const [ MY_PAYROLL, TEAM_PAYROLL ] = tabNames
+const activeTab = MY_PAYROLL
+const selectedTab = 0
+
 export default class App extends React.Component {
   state = {
-    activeTab: 'my-payroll',
-    selectedTab: 0,
+    activeTab,
+    selectedTab,
     showAddEmployeePanel: false,
     showRequestSalaryPanel: false
   }
@@ -42,14 +50,14 @@ export default class App extends React.Component {
 
   renderActionButtons () {
     switch (this.state.activeTab) {
-      case 'my-payroll':
+      case MY_PAYROLL:
         return (
           <Button mode='strong' onClick={this.showRequestSalaryPanel}>
             Request salary
           </Button>
         )
 
-      case 'team-payroll':
+      case TEAM_PAYROLL:
         return (
           <Button mode='strong' onClick={this.showAddEmployeePanel}>
             Add new employee
@@ -65,21 +73,21 @@ export default class App extends React.Component {
     const header = (
       <React.Fragment>
         <AppBar
-          title='Payroll'
+          title={appBarTitle}
           endContent={this.renderActionButtons()}
           data-testid='app-bar'
         />
 
         <TabContainer>
           <TabBar
-            items={['My payroll', 'Team payroll']}
+            items={tabTitles}
             selected={this.state.selectedTab}
             onSelect={
               (index) => {
-                const activeTab = ['my-payroll', 'team-payroll']
+                const activeTab = tabNames[index]
 
                 this.setState({
-                  activeTab: activeTab[index],
+                  activeTab,
                   selectedTab: index
                 })
               }
@@ -92,11 +100,11 @@ export default class App extends React.Component {
     return (
       <AragonApp publicUrl='./aragon-ui/'>
         <AppView appBar={header}>
-          {this.state.activeTab === 'my-payroll' && (
+          {this.state.activeTab === MY_PAYROLL && (
             <MyPayroll />
           )}
 
-          {this.state.activeTab === 'team-payroll' && (
+          {this.state.activeTab === TEAM_PAYROLL && (
             <TeamPayroll />
           )}
         </AppView>
