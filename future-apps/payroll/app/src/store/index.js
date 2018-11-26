@@ -5,7 +5,6 @@ import Event from './events'
 import { getAccountAddress } from './account'
 import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './employees'
 import { getDenominationToken, getToken } from './tokens'
-import { date } from './marshalling'
 // import financeEvents from './abi/finance-events'
 
 export default function configureStore (financeAddress) {
