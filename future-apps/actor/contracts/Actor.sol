@@ -24,6 +24,8 @@ contract Actor is Vault, IERC165, IERC1271, IForwarder {
     string private constant ERROR_EXECUTE_ETH_NO_DATA = "VAULT_EXECUTE_ETH_NO_DATA";
     string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "VAULT_EXECUTE_TARGET_NOT_CONTRACT";
 
+    uint256 internal constant STATICCALL_MAX_GAS = 50000;
+
     mapping (bytes32 => bool) public isPresigned;
     address public designatedSigner;
 
@@ -143,9 +145,12 @@ contract Actor is Vault, IERC165, IERC1271, IForwarder {
     }
 
     function safeBoolStaticCall(address target, bytes calldata) internal view returns (bool) {
+        uint256 gasLeft = gasleft();
+
+        uint256 callGas = gasLeft > STATICCALL_MAX_GAS ? STATICCALL_MAX_GAS : gasLeft;
         bool ok;
         assembly {
-            ok := staticcall(gas, target, add(calldata, 0x20), mload(calldata), 0, 0)
+            ok := staticcall(callGas, target, add(calldata, 0x20), mload(calldata), 0, 0)
         }
 
         if (!ok) {
