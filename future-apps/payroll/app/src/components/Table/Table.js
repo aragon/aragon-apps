@@ -1,7 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Card } from '@aragon/ui'
-import { Button, Table as BaseTable, Text } from '@aragon/ui'
+import { Button, Table as BaseTable, Text, Card } from '@aragon/ui'
 
 import TableCell from './TableCell'
 import TableHeader from './TableHeader'
