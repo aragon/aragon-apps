@@ -204,7 +204,9 @@ class RequestSalary extends React.Component {
                   tokenAllocation.symbol
                 }`}
               >
-                {tokenAllocation.formatedProportion}
+                <StyledFormattedProportion>
+                  {tokenAllocation.formatedProportion}
+                </StyledFormattedProportion>
               </Text>
             </div>
           </AllocationDescription>
@@ -231,7 +233,9 @@ class RequestSalary extends React.Component {
                 <div>
                   <span />
                   <Text weight='bolder'>
-                    {balance && balance.formatedAccruedSalary}
+                    <StyledFormattedAccruedSalary>
+                      {balance && balance.formatedAccruedSalary}
+                    </StyledFormattedAccruedSalary>
                   </Text>
                 </div>
                 <Text weight='bolder'>100%</Text>
@@ -328,6 +332,10 @@ const AllocationDescription = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   justify-items: end;
+
+  div {
+    padding-right: 30px;
+  }
 `
 
 const SalaryWrapper = styled.div`
@@ -368,5 +376,13 @@ function mapStateToProps ({
     tokens
   }
 }
+
+const StyledFormattedProportion = styled.span`
+  color: #b0b0b0;
+`
+
+const StyledFormattedAccruedSalary = styled.span`
+  padding-right: 30px;
+`
 
 export default connect(mapStateToProps)(RequestSalary)
