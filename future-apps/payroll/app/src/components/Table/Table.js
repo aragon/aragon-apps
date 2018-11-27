@@ -49,14 +49,12 @@ class Table extends React.Component {
     const firstDataIndex = lastDataIndex - rowsPerPage
     const paginatedData = data.slice(firstDataIndex, lastDataIndex)
     const emptyRows = rowsPerPage - paginatedData.length
-    const totalPages = Math.ceil(data.length / rowsPerPage)
 
     if (paginatedData.length === 0) this.setState({ currentPage: 1 })
 
     return {
       emptyRows,
-      paginatedData,
-      totalPages
+      paginatedData
     }
   }
 
@@ -157,7 +155,7 @@ class Table extends React.Component {
     sort(filteredData, columns[sortColumnIndex].value, sortDirection)
 
     // Pagination begins after processing the filters
-    const { paginatedData, emptyRows, totalPages } = this.paginateData(filteredData)
+    const { paginatedData, emptyRows } = this.paginateData(filteredData)
 
     const header = (
       <TableRow>
@@ -179,29 +177,41 @@ class Table extends React.Component {
       </TableRow>
     )
 
-    const body = filteredData.map((item, index) => (
-      <TableRow key={`row-${item.id}-${index}`}>
-        {columns.map(column => {
-          const rawValue = column.value(item)
-          const formattedValue = rawValue != null
-            ? (column.formatter
+    const body = (
+      <React.Fragment>
+        {paginatedData.map(item => (
+          <TableRow key={`row-${item.id}`} style={{ height: `${tableRowHeight}px` }}>
+            {columns.map(column => {
+              const rawValue = column.value(item)
+              const formattedValue = rawValue != null
+              ? (column.formatter
                 ? column.formatter(rawValue)
                 : rawValue.toString()
               )
               : column.defaultValue
-          return (
-            <TableCell
-              key={`row-${item.id}-${column.name}`}
-              {...column.cellProps}
-              children={column.render
-                ? column.render(formattedValue, rawValue, item)
-                : (<Text>{formattedValue}</Text>)
-              }
-            />
-          )
-        })}
-      </TableRow>
-    ))
+
+              return (
+                <TableCell
+                  key={`row-${item.id}-${column.name}`}
+                  {...column.cellProps}
+                  children={column.render
+                    ? column.render(formattedValue, rawValue, item)
+                    : (<Text>{formattedValue}</Text>)
+                  }
+                  />
+              )
+            })}
+          </TableRow>
+        ))}
+        {this.renderEmptyRows(emptyRows)}
+      </React.Fragment>
+    )
+
+    const footer = (
+      <StyledCard>
+        {this.renderPageButtons(filteredData)}
+      </StyledCard>
+    )
 
     return (
       <React.Fragment>

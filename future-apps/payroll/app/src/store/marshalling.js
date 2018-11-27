@@ -44,9 +44,9 @@ export function payment (data) {
       displaySign: true, // FIXME: The send payroll event should provide the displaysign option
       token: {
         address: data.token.address,
-        symbol: data.token.symbol
-      },
-      decimals: data.token.decimals
+        symbol: data.token.symbol,
+        decimals: data.token.decimals
+      }
     },
     transactionAddress: data.transactionHash,
     date: date(data.returnValues.paymentDate),

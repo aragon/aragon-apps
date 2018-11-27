@@ -3,12 +3,14 @@ import PropTypes from 'prop-types'
 
 import styled from 'styled-components'
 import Table from '../../components/Table'
+import { SafeLink } from '@aragon/ui'
 import { salaryType } from '../../types'
-import { formatDate, formatTokenAmount } from '../../utils/formatting'
+import { formatDate } from '../../utils/formatting'
 
 import { Button, theme } from '@aragon/ui'
 
-const initializeColumns = (data, formatExchangeRate) => {
+
+const initializeColumns = (data, formatExchangeRate, formatTokenAmount) => {
   return [
     {
       name: 'date',
@@ -28,7 +30,9 @@ const initializeColumns = (data, formatExchangeRate) => {
       defaultValue: 'Active',
       render: (formattedValue, rawValue, item) => (
         <TransactionAddress>
-          {rawValue}
+          <SafeLink href={`https://rinkeby.etherscan.io/tx/${item.transactionAddress}`} target="_blank">
+            {rawValue}
+          </SafeLink>
         </TransactionAddress>
       )
     },
@@ -70,8 +74,9 @@ const TransactionAddress = styled.span`
   text-overflow: ellipsis;
 `
 
+
 const SalaryTable = (props) => {
-  const columns = initializeColumns(props.data, props.formatExchangeRate)
+  const columns = initializeColumns(props.data, props.formatExchangeRate, props.formatTokenAmount)
   return (
     <Table
       noDataMessage='No salaries found'
