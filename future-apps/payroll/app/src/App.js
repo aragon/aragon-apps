@@ -1,13 +1,22 @@
 import React from 'react'
-import { AppBar, AppView, AragonApp, Button } from '@aragon/ui'
-import Tab from './components/Tab'
+import styled, { css } from 'styled-components'
+import { AppBar, AppView, AragonApp, Button, TabBar, theme } from '@aragon/ui'
 
 import { MyPayroll, TeamPayroll } from './screens'
 import { AddEmployee, RequestSalary } from './panels'
 
+const appBarTitle = 'Payroll'
+const tabTitles = [ 'My payroll', 'Team payroll' ]
+const tabNames =  [ 'my-payroll', 'team-payroll' ]
+
+const [ MY_PAYROLL, TEAM_PAYROLL ] = tabNames
+const activeTab = MY_PAYROLL
+const selectedTab = 0
+
 export default class App extends React.Component {
   state = {
-    activeTab: 'my-payroll',
+    activeTab,
+    selectedTab,
     showAddEmployeePanel: false,
     showRequestSalaryPanel: false
   }
@@ -41,14 +50,14 @@ export default class App extends React.Component {
 
   renderActionButtons () {
     switch (this.state.activeTab) {
-      case 'my-payroll':
+      case MY_PAYROLL:
         return (
           <Button mode='strong' onClick={this.showRequestSalaryPanel}>
             Request salary
           </Button>
         )
 
-      case 'team-payroll':
+      case TEAM_PAYROLL:
         return (
           <Button mode='strong' onClick={this.showAddEmployeePanel}>
             Add new employee
@@ -64,37 +73,38 @@ export default class App extends React.Component {
     const header = (
       <React.Fragment>
         <AppBar
-          title='Payroll'
+          title={appBarTitle}
           endContent={this.renderActionButtons()}
           data-testid='app-bar'
         />
 
-        <Tab.Container>
-          <Tab
-            title='My payroll'
-            active={this.state.activeTab === 'my-payroll'}
-            onClick={() => this.setState({ activeTab: 'my-payroll' })}
-            data-testid='my-payroll-tab'
-          />
+        <TabContainer>
+          <TabBar
+            items={tabTitles}
+            selected={this.state.selectedTab}
+            onSelect={
+              (index) => {
+                const activeTab = tabNames[index]
 
-          <Tab
-            title='Team payroll'
-            active={this.state.activeTab === 'team-payroll'}
-            onClick={() => this.setState({ activeTab: 'team-payroll' })}
-            data-testid='team-payroll-tab'
+                this.setState({
+                  activeTab,
+                  selectedTab: index
+                })
+              }
+            }
           />
-        </Tab.Container>
+        </TabContainer>
       </React.Fragment>
     )
 
     return (
       <AragonApp publicUrl='./aragon-ui/'>
         <AppView appBar={header}>
-          {this.state.activeTab === 'my-payroll' && (
+          {this.state.activeTab === MY_PAYROLL && (
             <MyPayroll />
           )}
 
-          {this.state.activeTab === 'team-payroll' && (
+          {this.state.activeTab === TEAM_PAYROLL && (
             <TeamPayroll />
           )}
         </AppView>
@@ -104,12 +114,18 @@ export default class App extends React.Component {
           onClose={this.hideAddEmployeePanel}
         />
 
-        {this.state.activeTab === 'my-payroll' && (<RequestSalary
+        <RequestSalary
           opened={this.state.showRequestSalaryPanel}
           onClose={this.hideRequestSalaryPanel}
         />
-        )}
       </AragonApp>
     )
   }
 }
+
+const TabContainer = styled.div.attrs({'data-testid': 'tab-container'})`
+  margin: 0;
+  list-style-type: none;
+  background: ${theme.contentBackground};
+  margin-top: -1px; // Overlap AppBar border
+`

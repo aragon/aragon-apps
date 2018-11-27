@@ -62,6 +62,7 @@ class DateInput extends React.PureComponent {
         onClick={this.handleClick}
       >
         <BaseInput
+          {...this.props}
           value={this.formattedValue}
           readOnly={true}
         />

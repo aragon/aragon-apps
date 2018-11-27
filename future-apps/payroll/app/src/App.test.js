@@ -1,7 +1,7 @@
 /* eslint-env jest */
 
 import React from 'react'
-import { fireEvent, render } from 'react-testing-library'
+import { fireEvent, render, waitForElement } from 'react-testing-library'
 import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
 
@@ -12,6 +12,10 @@ const bodyUtils = bindElementToQueries(document.body)
 describe('App', () => {
   const app = render(<App />)
   const appBar = app.getByTestId('app-bar')
+  const tabContainer = bindElementToQueries(app.getByTestId('tab-container'))
+  const myPayrollTab = tabContainer.getByText('My payroll')
+  const teamPayrollTab = tabContainer.getByText('Team payroll')
+
 
   it('renders a header', () => {
     const title = appBar.querySelector('h1')
@@ -21,17 +25,13 @@ describe('App', () => {
 
   // Tabs
   it('renders "My payroll" tab', () => {
-    const tab = app.getByTestId('my-payroll-tab')
-
-    expect(tab).toBeVisible()
-    expect(tab).toHaveTextContent('My payroll')
+    expect(myPayrollTab).toBeVisible()
+    expect(myPayrollTab).toHaveTextContent('My payroll')
   })
 
   it('renders "Team payroll" tab', () => {
-    const tab = app.getByTestId('team-payroll-tab')
-
-    expect(tab).toBeVisible()
-    expect(tab).toHaveTextContent('Team payroll')
+    expect(teamPayrollTab).toBeVisible()
+    expect(teamPayrollTab).toHaveTextContent('Team payroll')
   })
 
   // Check default tab
@@ -50,7 +50,7 @@ describe('App', () => {
   // Check navigation between tabs
   describe('"Team payroll" section', () => {
     beforeAll(() => {
-      fireEvent.click(app.getByTestId('team-payroll-tab'))
+      fireEvent.mouseDown(teamPayrollTab) // Aragou UI TabBar component is using onMouseDown event
     })
 
     it('section content is visible', () => {
@@ -77,7 +77,7 @@ describe('App', () => {
         .getByTestId('modal-root')
         .querySelector('aside > header')
 
-      fireEvent.click(app.getByTestId('team-payroll-tab'))
+      fireEvent.mouseDown(teamPayrollTab) // Aragou UI TabBar component is using onMouseDown event
       fireEvent.click(appBar.querySelector('button'))
 
       expect(panel).not.toBeNull()
@@ -87,8 +87,10 @@ describe('App', () => {
   })
 
   describe('"My payroll" section', () => {
+    const myPayrollTab = tabContainer.getByText('My payroll')
+
     beforeAll(() => {
-      fireEvent.click(app.getByTestId('my-payroll-tab'))
+      fireEvent.mouseDown(myPayrollTab)
     })
 
     it('section content is visible', () => {

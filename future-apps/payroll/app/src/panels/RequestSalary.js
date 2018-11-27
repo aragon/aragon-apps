@@ -69,8 +69,11 @@ class RequestSalary extends React.Component {
         new Date(),
         new Date(employee.lastPayroll)
       )
-      const accruedSalary = accruedTime * employee.salary
-      const accruedAllocation = salaryAllocationXRT.map(this.getTokenBalance(accruedSalary))
+      const accruedSalary =
+        employee.accruedValue + accruedTime * employee.salary
+      const accruedAllocation = salaryAllocationXRT.map(
+        this.getTokenBalance(accruedSalary)
+      )
       const formatedAccruedSalary = formatCurrency(
         accruedSalary,
         denominationToken.symbol,
@@ -97,7 +100,7 @@ class RequestSalary extends React.Component {
     )
   }
 
-  getTokenBalance = (accruedSalary) => (tokenAllocation) => {
+  getTokenBalance = accruedSalary => tokenAllocation => {
     const { denominationToken, tokens } = this.props
 
     const token = tokens.find(
@@ -112,7 +115,8 @@ class RequestSalary extends React.Component {
       denominationToken.decimals
     )
 
-    const tokenAmount = proportion * (tokenAllocation.xrt / Math.pow(10, token.decimals))
+    const tokenAmount =
+      proportion * (tokenAllocation.xrt / Math.pow(10, token.decimals))
 
     const formatedTokenAmount = formatCurrency(
       tokenAmount,
@@ -186,11 +190,23 @@ class RequestSalary extends React.Component {
         const description = (
           <AllocationDescription>
             <div>
-              <Text weight='bold'>{tokenAllocation.formatedTokenAmount}</Text>
+              <Text
+                weight='bold'
+                data-testid={`token-allocation-${tokenAllocation.symbol}`}
+              >
+                {tokenAllocation.formatedTokenAmount}
+              </Text>
             </div>
             <div>
-              <Text color='textSecondary'>
-                {tokenAllocation.formatedProportion}
+              <Text
+                color='textSecondary'
+                data-testid={`proportion-allocation-${
+                  tokenAllocation.symbol
+                }`}
+              >
+                <StyledFormattedProportion>
+                  {tokenAllocation.formatedProportion}
+                </StyledFormattedProportion>
               </Text>
             </div>
           </AllocationDescription>
@@ -204,69 +220,71 @@ class RequestSalary extends React.Component {
       : []
 
     const panel = (
-      <SidePanel
-        title='Request salary'
-        opened={opened}
-        onClose={onClose}
-      >
-        <Container>
-          <AllocationWrapper>
-            <SectionTitle>Salary Allocation</SectionTitle>
+      <React.Fragment>
+        <SidePanel title='Request salary' opened={opened} onClose={onClose}>
+          <Container>
+            <AllocationWrapper>
+              <SectionTitle>Salary Allocation</SectionTitle>
 
-            {accruedAllocation && <PartitionBar data={accruedAllocation} />}
+              {accruedAllocation && <PartitionBar data={accruedAllocation} />}
 
-            <TotalAllocationWrapper>
-              <Text weight='bolder'>Total salary</Text>
-              <div>
-                <span />
-                <Text weight='bolder'>
-                  {balance && balance.formatedAccruedSalary}
-                </Text>
-              </div>
-              <Text weight='bolder'>100%</Text>
-            </TotalAllocationWrapper>
+              <TotalAllocationWrapper>
+                <Text weight='bolder'>Total salary</Text>
+                <div>
+                  <span />
+                  <Text weight='bolder'>
+                    <StyledFormattedAccruedSalary>
+                      {balance && balance.formatedAccruedSalary}
+                    </StyledFormattedAccruedSalary>
+                  </Text>
+                </div>
+                <Text weight='bolder'>100%</Text>
+              </TotalAllocationWrapper>
 
-            <EditButton
-              onClick={this.startEditing}
-              data-testid='salary-allocation-edit-btn'
-            >
-              Edit salary allocation
-            </EditButton>
-          </AllocationWrapper>
+              <EditButton
+                onClick={this.startEditing}
+                data-testid='salary-allocation-edit-btn'
+              >
+                Edit salary allocation
+              </EditButton>
+            </AllocationWrapper>
 
-          <SalaryWrapper>
-            <Section.Title>Total Salary</Section.Title>
-            <Info>
-              <InfoTotalItem>
-                <IconFundraising />
-                <Text color={theme.textSecondary}>Total salary to be paid</Text>
-              </InfoTotalItem>
-              <InfoTotalItem>
-                {balance && (
-                  <Text size='xxlarge'>{balance.formatedAccruedSalary}</Text>
-                )}
-              </InfoTotalItem>
-            </Info>
-          </SalaryWrapper>
+            <SalaryWrapper>
+              <Section.Title>Total Salary</Section.Title>
+              <Info>
+                <InfoTotalItem>
+                  <IconFundraising />
+                  <Text color={theme.textSecondary}>
+                    Total salary to be paid
+                  </Text>
+                </InfoTotalItem>
+                <InfoTotalItem>
+                  {balance && (
+                    <Text size='xxlarge' data-testid='total-salary'>
+                      {balance.formatedAccruedSalary}
+                    </Text>
+                  )}
+                </InfoTotalItem>
+              </Info>
+            </SalaryWrapper>
 
-          <ButtonWrapper>
-            <Info.Permissions icon={<IconAttention />}>
-              The actual exchange reate might change once the transaction takes
-              place
-            </Info.Permissions>
+            <ButtonWrapper>
+              <Info.Permissions icon={<IconAttention />}>
+                The actual exchange reate might change once the transaction
+                takes place
+              </Info.Permissions>
 
-            <RequestButton onClick={this.handleRequestClick}>
-              Request Salary
-            </RequestButton>
-          </ButtonWrapper>
-
-          <EditSalaryAllocation
-            opened={isEditing}
-            onClose={this.endEditing}
-            modalRootId='edit-allocation'
-          />
-        </Container>
-      </SidePanel>
+              <RequestButton
+                onClick={this.handleRequestClick}
+                data-testid='request-payment-btn'
+              >
+                Request Salary
+              </RequestButton>
+            </ButtonWrapper>
+          </Container>
+        </SidePanel>
+        <EditSalaryAllocation opened={isEditing} onClose={this.endEditing} />
+      </React.Fragment>
     )
 
     return createPortal(panel, document.getElementById('modal-root'))
@@ -314,6 +332,10 @@ const AllocationDescription = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   justify-items: end;
+
+  div {
+    padding-right: 30px;
+  }
 `
 
 const SalaryWrapper = styled.div`
@@ -354,5 +376,13 @@ function mapStateToProps ({
     tokens
   }
 }
+
+const StyledFormattedProportion = styled.span`
+  color: #b0b0b0;
+`
+
+const StyledFormattedAccruedSalary = styled.span`
+  padding-right: 30px;
+`
 
 export default connect(mapStateToProps)(RequestSalary)

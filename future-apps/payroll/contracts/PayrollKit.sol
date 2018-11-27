@@ -229,12 +229,19 @@ contract PayrollKit is KitBase {
     function addEmployees(Payroll payroll, address root) internal {
         address account2 = 0x8401Eb5ff34cc943f096A32EF3d5113FEbE8D4Eb;
         address account3 = 0x306469457266CBBe7c0505e8Aad358622235e768;
+        address account4 = 0xd873F6DC68e3057e4B7da74c6b304d0eF0B484C7;
+        address account5 = 0xDcC5dD922fb1D0fd0c450a0636a8cE827521f0eD;
+
         uint256 salary1 = 2535047025122316; // 80000
         uint256 salary2 = 2851927903262605; // 90000
         uint256 salary3 = 3168808781402895; // 100000
+        uint256 salary4 = 2218166146982026; // 70000
+        uint256 salary5 = 1901285268841737; // 60000
 
         payroll.addEmployeeWithNameAndStartDate(this, salary1, 'protofire.aragonid.eth', uint64(now - 172800));
         payroll.addEmployeeWithNameAndStartDate(account2, salary2, 'leolower.protofire.eth', uint64(now- 86400));
-        payroll.addEmployeeWithNameAndStartDate(account3, salary3, 'lmcorbalan.protofire.eth',  uint64(now));
+        payroll.addEmployeeWithNameAndStartDate(account3, salary3, 'lmcorbalan.protofire.eth',  uint64(now - 172800));
+        payroll.addEmployeeWithNameAndStartDate(account4, salary4, 'sistemico.protofire.eth',  uint64(now - 172800));
+        payroll.addEmployeeWithNameAndStartDate(account5, salary5, 'fernando.greco.protofire.eth',  uint64(now - 172800));
     }
 }
