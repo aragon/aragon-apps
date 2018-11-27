@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Card } from '@aragon/ui'
-import { Button, Table as BaseTable, Text } from '@aragon/ui'
+import { Button, Card, Table as BaseTable, Text } from '@aragon/ui'
+import styled from 'styled-components'
 
 import TableCell from './TableCell'
 import TableHeader from './TableHeader'
@@ -9,23 +9,6 @@ import TableRow from './TableRow'
 import Panel from '../Panel/Panel'
 import { sort, SORT_DIRECTION } from '../../utils/sorting'
 
-const footerStyles = {
-  card: {
-    textAlign: 'center'
-  },
-  activeNavigationButton: {
-    color: '#FFFFFF'
-  },
-  inactiveNavigationButton: {
-    color: '#707070'
-  },
-  activePageButton: {
-    color: '#000000'
-  },
-  inactivePageButton: {
-    color: '#FFFFFF'
-  }
-}
 
 class Table extends React.Component {
   state = {
@@ -90,13 +73,17 @@ class Table extends React.Component {
     )
   }
 
+  renderButton(props) {
+    return (
+      <StyledButton {...props}>
+        { props.text }
+      </StyledButton>
+    )
+  }
+
   renderPageButtons (data) {
     const { currentPage } = this.state
     const { navigationNextText, navigationPreviousText, rowsPerPage } = this.props
-    const {
-      activeNavigationButton, inactiveNavigationButton,
-      activePageButton, inactivePageButton
-    } = footerStyles
 
     const pageNumbers = Array(Math.ceil(data.length / rowsPerPage))
       .fill()
@@ -106,39 +93,41 @@ class Table extends React.Component {
     const isLastPage = currentPage === pageNumbers.length
     return (
       <React.Fragment>
-        <Button
-          name={`pagination-button-previous`}
-          disabled={isFirstPage}
-          mode={isFirstPage ? '' : 'strong'}
-          style={isFirstPage ? inactiveNavigationButton : activeNavigationButton }
-          onClick={this.handlePageChange(currentPage - 1)}
-        >
-          { navigationPreviousText }
-        </Button>
+        {
+          this.renderButton({
+            disabled: isFirstPage,
+            mode: isFirstPage ? '' : 'strong',
+            name: 'pagination-button-previous',
+            onClick: this.handlePageChange(currentPage - 1),
+            text: navigationPreviousText,
+            type: 'navigation'
+          })
+        }
         {pageNumbers.map((pageNumber) => {
           const isCurrentPageButton = pageNumber === currentPage
+          const mode = isCurrentPageButton ? 'strong' : ''
           const name = `pagination-button-${pageNumber}`
-          return (
-            <Button
-              key={name}
-              name={name}
-              mode={isCurrentPageButton ? 'strong' : ''}
-              style={isCurrentPageButton ? inactivePageButton : activePageButton}
-              onClick={this.handlePageChange(pageNumber)}
-              >
-              {pageNumber}
-            </Button>
-          )
+          const pageButton = this.renderButton({
+            disabled: isCurrentPageButton,
+            key: name,
+            mode,
+            name,
+            onClick: this.handlePageChange(pageNumber),
+            text: pageNumber,
+            type: 'page'
+          })
+          return pageButton
         })}
-        <Button
-          name={`pagination-button-next`}
-          disabled={isLastPage}
-          mode={isLastPage ? '' : 'strong'}
-          style={isLastPage ? inactiveNavigationButton : activeNavigationButton }
-          onClick={this.handlePageChange(currentPage + 1)}
-        >
-          { navigationNextText }
-        </Button>
+        {
+          this.renderButton({
+            disabled: isLastPage,
+            mode: isLastPage ? '' : 'strong',
+            name: 'pagination-button-next',
+            onClick: this.handlePageChange(currentPage + 1),
+            text: navigationNextText,
+            type: 'navigation'
+          })
+        }
       </React.Fragment>
     )
   }
@@ -221,13 +210,9 @@ class Table extends React.Component {
     )
 
     const footer = (
-      <Card
-        height="100%"
-        width="100%"
-        style={footerStyles.card}
-      >
+      <StyledCard>
         {this.renderPageButtons(filteredData)}
-      </Card>
+      </StyledCard>
     )
 
     return (
@@ -277,5 +262,20 @@ Table.defaultProps = {
   sortable: true,
   tableRowHeight: 86,
 }
+
+const StyledCard = styled(Card)`
+  height: 100%;
+  width: 100%;
+  text-align: center;
+`
+
+const StyledButton = styled(Button)`
+  ${({ type, disabled }) => (
+    ({
+      page: () => disabled ? 'color: #FFFFFF' : 'color: #000000',
+      navigation: () => disabled ? 'color: #707070' : 'color: #FFFFFF'
+    })[type]()
+  )}
+`
 
 export default Table
