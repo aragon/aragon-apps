@@ -90,6 +90,7 @@ module.exports = (owner) => ({
     const ADD_ACCRUED_VALUE_ROLE = await payrollBase.ADD_ACCRUED_VALUE_ROLE()
     const CHANGE_PRICE_FEED_ROLE = await payrollBase.CHANGE_PRICE_FEED_ROLE()
     const MODIFY_RATE_EXPIRY_ROLE = await payrollBase.MODIFY_RATE_EXPIRY_ROLE()
+    const MANAGE_EMPLOYEE_TITLE_ROLE = await payrollBase.MANAGE_EMPLOYEE_TITLE_ROLE()
 
     const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
     const payroll = getContract('PayrollMock').at(getEvent(receipt, 'NewAppProxy', 'proxy'))
@@ -103,6 +104,7 @@ module.exports = (owner) => ({
     await acl.createPermission(ANY_ENTITY, payroll.address, ADD_ACCRUED_VALUE_ROLE, owner, { from: owner })
     await acl.createPermission(ANY_ENTITY, payroll.address, CHANGE_PRICE_FEED_ROLE, owner, { from: owner })
     await acl.createPermission(ANY_ENTITY, payroll.address, MODIFY_RATE_EXPIRY_ROLE, owner, { from: owner })
+    await acl.createPermission(ANY_ENTITY, payroll.address, MANAGE_EMPLOYEE_TITLE_ROLE, owner, { from: owner })
 
     // inits payroll
     await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, rateExpiryTime)

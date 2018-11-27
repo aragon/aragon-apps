@@ -94,6 +94,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     event SendPayroll(address indexed employee, address indexed token, uint amount);
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
+    event SetEmployeeRole(uint256 indexed employeeId, string role);
 
     modifier employeeExists(uint256 employeeId) {
         // Check employee exists and is active
@@ -177,6 +178,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @param _accountAddress Employee's address to receive payroll
      * @param _initialDenominationSalary Employee's salary, per second in denomination token
      * @param _name Employee's name
+     * @param _role Employee's role
      */
     function addEmployee(
         address _accountAddress,
@@ -201,6 +203,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @param _accountAddress Employee's address to receive payroll
      * @param _initialDenominationSalary Employee's salary, per second in denomination token
      * @param _name Employee's name
+     * @param _role Employee's role
      * @param _startDate Employee's starting date (it actually sets their initial lastPayroll value)
      */
     function addEmployee(
@@ -329,6 +332,23 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
 
         emit DetermineAllocation(employeeIds[msg.sender], msg.sender);
     }
+
+    /**
+     * @notice Set employee #`_employeeId`'s role to `_role`.
+     * @param _employeeId Employee's identifier
+     * @param _role Employee's role
+     */
+    function setEmployeeRole(
+        uint256 _employeeId,
+        string _role
+    )
+        external
+        employeeExists(_employeeId)
+        authP(MANAGE_EMPLOYEE_TITLE_ROLE, arr(_employeeId))
+    {
+        emit SetEmployeeRole(_employeeId, _role);
+    }
+
 
     /**
      * @dev Withdraw payment by employee (the caller). The amount owed since last call will be transferred.
