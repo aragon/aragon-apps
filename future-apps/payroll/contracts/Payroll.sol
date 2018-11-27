@@ -30,6 +30,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
     bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("CHANGE_PRICE_FEED_ROLE");
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
+    bytes32 constant public MANAGE_EMPLOYEE_TITLE_ROLE = keccak256("MANAGE_EMPLOYEE_TITLE_ROLE");
 
     uint128 internal constant ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
     uint64 internal constant MAX_UINT64 = uint64(-1);
@@ -82,6 +83,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         address indexed accountAddress,
         uint256 initialDenominationSalary,
         string name,
+        string role,
         uint64 startDate
     );
     event SetEmployeeSalary(uint256 indexed employeeId, uint256 denominationSalary);
@@ -179,7 +181,8 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     function addEmployee(
         address _accountAddress,
         uint256 _initialDenominationSalary,
-        string _name
+        string _name,
+        string _role
     )
         external
         authP(ADD_EMPLOYEE_ROLE, arr(_accountAddress, _initialDenominationSalary, getTimestamp64()))
@@ -188,6 +191,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
             _accountAddress,
             _initialDenominationSalary,
             _name,
+            _role,
             getTimestamp64()
         );
     }
@@ -203,6 +207,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         address _accountAddress,
         uint256 _initialDenominationSalary,
         string _name,
+        string _role,
         uint64 _startDate
     )
         external
@@ -212,6 +217,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
             _accountAddress,
             _initialDenominationSalary,
             _name,
+            _role,
             _startDate
         );
     }
@@ -468,6 +474,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         address _accountAddress,
         uint256 _initialDenominationSalary,
         string _name,
+        string _role,
         uint64 _startDate
     )
         internal
@@ -491,6 +498,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
             _accountAddress,
             _initialDenominationSalary,
             _name,
+            _role,
             _startDate
         );
     }

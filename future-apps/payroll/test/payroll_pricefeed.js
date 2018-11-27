@@ -79,8 +79,8 @@ contract('Payroll, price feed,', function(accounts) {
   it('fails to pay if rates are obsolete', async () => {
     // add employee
     const startDate = parseInt(await payroll.getTimestampPublic.call(), 10) - 2628005 // now minus 1/12 year
-    const r = await payroll.addEmployee(employee, salary, "Kakaroto", startDate)
-    const employeeId = getEvent(r, 'AddEmployee', 'employeeId')
+    const receipt = await payroll.addEmployee(employee, salary, "Kakaroto", 'Saiyajin', startDate)
+    const employeeId = getEvent(receipt, 'AddEmployee', 'employeeId')
 
     const usdTokenAllocation = 50
     const erc20Token1Allocation = 20

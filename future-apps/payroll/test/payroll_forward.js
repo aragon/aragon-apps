@@ -65,7 +65,7 @@ contract('PayrollForward', function(accounts) {
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
 
     // add employee
-    const receipt = await payroll.addEmployeeShort(employee1, 100000, 'Kakaroto')
+    const receipt = await payroll.addEmployeeShort(employee1, 100000, 'Kakaroto', 'Saiyajin')
     employeeId1 = getEvent(receipt, 'AddEmployee', 'employeeId')
   });
 

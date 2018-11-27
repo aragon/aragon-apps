@@ -73,7 +73,7 @@ contract('Payroll, without init,', function(accounts) {
   it('fails to call addEmployee', async () => {
     return assertRevert(async () => {
       const startDate = Math.floor((new Date()).getTime() / 1000)
-      await payroll.addEmployee(employee1, 10000, 'Kakaroto', startDate)
+      await payroll.addEmployee(employee1, 10000, 'Kakaroto', 'Saiyajin', startDate)
     })
   })
 

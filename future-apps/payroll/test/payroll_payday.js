@@ -85,7 +85,7 @@ contract('Payroll, allocation and payday,', function(accounts) {
 
     const startDate = parseInt(await payroll.getTimestampPublic.call(), 10) - 2628005 // now minus 1/12 year
     // add employee
-    const receipt = await payroll.addEmployee(employee, salary, "Kakaroto", startDate)
+    const receipt = await payroll.addEmployee(employee, salary, "Kakaroto", 'Saiyajin', startDate)
 
     employeeId = getEvent(receipt, 'AddEmployee', 'employeeId')
   })

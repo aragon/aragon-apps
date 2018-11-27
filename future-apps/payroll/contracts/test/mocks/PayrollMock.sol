@@ -13,7 +13,8 @@ contract PayrollMock is Payroll {
     function addEmployeeShort(
         address _accountAddress,
         uint256 _initialDenominationSalary,
-        string _name
+        string _name,
+        string _role
     )
         external
     {
@@ -21,6 +22,7 @@ contract PayrollMock is Payroll {
             _accountAddress,
             _initialDenominationSalary,
             _name,
+            _role,
             getTimestamp64()
         );
     }
