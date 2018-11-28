@@ -4,7 +4,6 @@ import styled from 'styled-components'
 import { Button, DropDown, Info, SidePanel, Slider, theme, Text } from '@aragon/ui'
 
 import { connect } from '../context/AragonContext'
-import Input from '../components/Input'
 
 class EditSalaryAllocation extends React.Component {
   changeHandlers = new Map()
