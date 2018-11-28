@@ -9,3 +9,12 @@ export const employeeType = PropTypes.shape({
   salary: PropTypes.number,
   accruedValue: PropTypes.number
 })
+
+export const salaryType = PropTypes.shape({
+  accountAddress: PropTypes.string,
+  amount: PropTypes.object,
+  date: PropTypes.number,
+  exchangeRate: PropTypes.object,
+  status: PropTypes.string,
+  transactionAddress: PropTypes.string
+})

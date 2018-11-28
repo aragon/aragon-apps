@@ -5,7 +5,7 @@ import Event from './events'
 import { getAccountAddress } from './account'
 import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './employees'
 import { getDenominationToken, getToken } from './tokens'
-import { date } from './marshalling'
+import { date, payment } from './marshalling'
 // import financeEvents from './abi/finance-events'
 
 export default function configureStore (financeAddress) {
@@ -141,7 +141,24 @@ function onSetPriceFeed (state, event) {
 
 async function onSendPayroll (state, event) {
   const employees = await updateEmployeeByAddress(state, event)
-  return { ...state, employees }
+  const { tokens } = state
+  const { returnValues: { token }, transactionHash } = event
+  const payments = state.payments || []
+
+  const paymentExists = payments.some(payment => {
+    const { transactionAddress, amount } = payment
+    const transactionExists = transactionAddress === transactionHash
+    const withSameToken = amount.token.address === token
+    return transactionExists && withSameToken
+  })
+
+  if (!paymentExists) {
+    const transactionToken = tokens.find((_token) => _token.address === token)
+    const currentPayment = payment({ ...event, token: transactionToken })
+    payments.push(currentPayment)
+  }
+
+  return { ...state, employees, payments }
 }
 
 async function onSetEmployeeSalary (state, event) {

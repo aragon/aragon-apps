@@ -70,7 +70,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
     event TerminateEmployee(uint128 indexed employeeId, address accountAddress, uint64 endDate);
     event ChangeAddressByEmployee(uint128 indexed employeeId, address oldAddress, address newAddress);
     event DetermineAllocation(uint128 indexed employeeId, address indexed employee);
-    event SendPayroll(address indexed employee, address indexed token, uint amount);
+    event SendPayroll(address indexed employee, address indexed token, uint amount, uint64 paymentDate, uint128 exchangeRate);
     event SetPriceFeed(address feed);
     event SetRateExpiryTime(uint64 time);
 
@@ -597,7 +597,7 @@ contract Payroll is AragonApp { //, IForwarder { // makes coverage crash (remove
                 1,
                 ""
             );
-            emit SendPayroll(employee.accountAddress, token, tokenAmount);
+            emit SendPayroll(employee.accountAddress, token, tokenAmount, toDate, exchangeRate);
             somethingPaid = true;
         }
 

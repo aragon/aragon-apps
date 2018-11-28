@@ -34,3 +34,25 @@ export function tokenAllocation (data) {
     allocation: parseInt(data.allocation) || 0
   }
 }
+
+export function payment (data) {
+  return {
+    accountAddress: data.returnValues.employee,
+    amount: {
+      amount: data.returnValues.amount,
+      isIncoming: true, // FIXME: Assumption: all salaries are incoming - sgobotta
+      displaySign: true, // FIXME: The send payroll event should provide the displaysign option
+      token: {
+        address: data.token.address,
+        symbol: data.token.symbol,
+        decimals: data.token.decimals
+      }
+    },
+    transactionAddress: data.transactionHash,
+    date: date(data.returnValues.paymentDate),
+    status: 'Pending...', // FIXME: Find out how the status is calculated - - sgobotta
+    exchangeRate: {
+      amount: data.returnValues.exchangeRate
+    }
+  }
+}
