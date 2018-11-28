@@ -9,22 +9,6 @@ export function formatDate (date, format = DEFAULT_DATE_FORMAT) {
   return dateFormatter(date, format)
 }
 
-export const formatTokenAmount = ({
-  amount,
-  isIncoming,
-  decimals = 0,
-  displaySign = false,
-  rounding = 2
-}) =>
-  (displaySign ? (isIncoming ? '+' : '-') : '') +
-  Number(round(amount / Math.pow(10, decimals), rounding)).toLocaleString(
-    'latn',
-    {
-      style: 'decimal',
-      maximumFractionDigits: 18
-    }
-  )
-
 const formatter = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 0
 })
@@ -35,9 +19,12 @@ export function formatCurrency (
   decimals = 10,
   pow = 18,
   multiplier = 1,
-  rounding = 2
+  rounding = 2,
+  isIncoming = true,
+  displaySign = false
 ) {
   const number = round(((amount / Math.pow(decimals, pow)) * multiplier), rounding)
   const formattedNumber = formatter.format(number)
-  return `${formattedNumber} ${symbol}`
+  const sign = (displaySign ? (isIncoming ? '+' : '-') : '')
+  return `${sign}${formattedNumber} ${symbol}`
 }
