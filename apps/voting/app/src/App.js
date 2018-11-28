@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import styled from 'styled-components'
 import {
   AppBar,
   AppView,
@@ -220,61 +221,67 @@ class App extends React.Component {
     return (
       <PublicUrl.Provider url="./aragon-ui/">
         <BaseStyles />
-        <AppView
-          appBar={
-            <AppBar
-              title="Vote"
-              endContent={
-                <Button mode="strong" onClick={this.handleCreateVoteOpen}>
-                  New Vote
-                </Button>
-              }
-            />
-          }
-        >
-          {appStateReady && votes.length > 0 ? (
-            <Votes votes={preparedVotes} onSelectVote={this.handleVoteOpen} />
-          ) : (
-            <EmptyState onActivate={this.handleCreateVoteOpen} />
-          )}
-        </AppView>
-        <SidePanel
-          title={`Vote #${currentVoteId} (${
-            currentVote && currentVote.data.open ? 'Open' : 'Closed'
-          })`}
-          opened={hasCurrentVote && !createVoteVisible && voteVisible}
-          onClose={this.handleVoteClose}
-          onTransitionEnd={this.handleVoteTransitionEnd}
-        >
-          {hasCurrentVote && (
-            <VotePanelContent
-              app={app}
-              vote={currentVote}
-              user={userAccount}
-              ready={voteSidebarOpened}
-              tokenContract={tokenContract}
-              tokenDecimals={tokenDecimals}
-              tokenSymbol={tokenSymbol}
-              onVote={this.handleVote}
-              onExecute={this.handleExecute}
-            />
-          )}
-        </SidePanel>
+        <Main>
+          <AppView
+            appBar={
+              <AppBar
+                title="Vote"
+                endContent={
+                  <Button mode="strong" onClick={this.handleCreateVoteOpen}>
+                    New Vote
+                  </Button>
+                }
+              />
+            }
+          >
+            {false && appStateReady && votes.length > 0 ? (
+              <Votes votes={preparedVotes} onSelectVote={this.handleVoteOpen} />
+            ) : (
+              <EmptyState onActivate={this.handleCreateVoteOpen} />
+            )}
+          </AppView>
+          <SidePanel
+            title={`Vote #${currentVoteId} (${
+              currentVote && currentVote.data.open ? 'Open' : 'Closed'
+            })`}
+            opened={hasCurrentVote && !createVoteVisible && voteVisible}
+            onClose={this.handleVoteClose}
+            onTransitionEnd={this.handleVoteTransitionEnd}
+          >
+            {hasCurrentVote && (
+              <VotePanelContent
+                app={app}
+                vote={currentVote}
+                user={userAccount}
+                ready={voteSidebarOpened}
+                tokenContract={tokenContract}
+                tokenDecimals={tokenDecimals}
+                tokenSymbol={tokenSymbol}
+                onVote={this.handleVote}
+                onExecute={this.handleExecute}
+              />
+            )}
+          </SidePanel>
 
-        <SidePanel
-          title="New Vote"
-          opened={createVoteVisible}
-          onClose={this.handleCreateVoteClose}
-        >
-          <NewVotePanelContent
+          <SidePanel
+            title="New Vote"
             opened={createVoteVisible}
-            onCreateVote={this.handleCreateVote}
-          />
-        </SidePanel>
+            onClose={this.handleCreateVoteClose}
+          >
+            <NewVotePanelContent
+              opened={createVoteVisible}
+              onCreateVote={this.handleCreateVote}
+            />
+          </SidePanel>
+        </Main>
       </PublicUrl.Provider>
     )
   }
 }
+
+const Main = styled.div`
+  height: 100vh;
+`
 
 export default observe(
   observable =>
