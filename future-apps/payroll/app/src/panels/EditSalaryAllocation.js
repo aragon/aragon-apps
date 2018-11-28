@@ -209,8 +209,7 @@ class EditSalaryAllocation extends React.Component {
                   />
 
                   <Percentage>
-                    <Input value={allocation} readOnly />
-                    <label>%</label>
+                    {`${allocation} %`}
                   </Percentage>
 
                 </TokenAllocation>
@@ -273,21 +272,15 @@ const TokenSelector = styled(DropDown)``
 
 const TokenDistribution = styled(Slider)``
 
-const Percentage = styled.div`
+const Percentage = styled(Text).attrs({
+  color: theme.textTertiary
+})`
   position: relative;
-
-  input {
-    padding: 8px 15px;
-    padding-right: 30px;
-    font-size: 15px;
-    text-align: right;
-  }
-
-  label {
-    position: absolute;
-    color: ${theme.textTertiary};
-    margin: 9px 0 9px -25px;
-  }
+  border: 1px solid #E6E6E6;
+  border-radius: 3px;
+  padding: 8px 15px;
+  font-size: 15px;
+  text-align: right;
 `
 
 const AddTokenButton = styled(Button).attrs({ mode: 'secondary' })`
