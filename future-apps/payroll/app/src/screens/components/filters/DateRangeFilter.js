@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 
 import { isWithinInterval, startOfDay, endOfDay } from 'date-fns'
 
-import { DropDown, Field } from '@aragon/ui'
+import { DropDown, Field, IconBlank } from '@aragon/ui'
 import InlineField from '../../../components/Field/InlineField'
 import Input from '../../../components/Input'
 
@@ -42,6 +42,8 @@ class DateRangeFilter extends React.Component {
             endDate={endDate}
             onStartDateChange={this.handleStartDateChange}
             onEndDateChange={this.handleEndDateChange}
+            icon={<IconBlank />}
+            iconposition='right'
           />
         </Field>
       </InlineField>

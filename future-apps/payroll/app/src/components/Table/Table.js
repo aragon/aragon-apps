@@ -131,7 +131,8 @@ class Table extends React.Component {
   }
 
   render () {
-    const { columns, data, filters, onClearFilters, paginated, sortable, noDataMessage, tableRowHeight } = this.props
+    const { columns, data, filters, onClearFilters, paginated, sortable, noDataMessage, tableRowHeight, rowsPerPage } = this.props
+
     const { sortColumnIndex, sortDirection } = this.state
 
     let filteredData = data.filter(i => filters.every(f => !f || f(i)))
@@ -153,6 +154,8 @@ class Table extends React.Component {
     }
 
     sort(filteredData, columns[sortColumnIndex].value, sortDirection)
+
+    const shouldShowPagination = paginated && Math.ceil(filteredData.length / rowsPerPage) > 1
 
     // Pagination begins after processing the filters
     let _emptyRows = 0
@@ -208,7 +211,8 @@ class Table extends React.Component {
             })}
           </TableRow>
         ))}
-        {paginated && this.renderEmptyRows(_emptyRows)}
+
+        {shouldShowPagination && this.renderEmptyRows(_emptyRows)}
       </React.Fragment>
     )
 
@@ -221,7 +225,7 @@ class Table extends React.Component {
     return (
       <React.Fragment>
         <BaseTable header={header} children={body} />
-        {paginated && <TableFooter content={footer} />}
+        {shouldShowPagination && <TableFooter content={footer} />}
       </React.Fragment>
     )
   }
@@ -272,9 +276,12 @@ const StyledCard = styled(Card)`
   height: 100%;
   width: 100%;
   text-align: center;
+  margin-top: 10px;
+  padding: 10px;
 `
 
 const StyledButton = styled(Button)`
+  margin: 0 1px;
   ${({ type, disabled }) => (
     ({
       page: () => disabled ? 'color: #FFFFFF' : 'color: #000000',

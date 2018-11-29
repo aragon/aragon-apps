@@ -50,7 +50,7 @@ export function payment (data) {
     },
     transactionAddress: data.transactionHash,
     date: date(data.returnValues.paymentDate),
-    status: 'Pending...', // FIXME: Find out how the status is calculated - - sgobotta
+    status: 'Complete', // FIXME: Find out how the status is calculated - - sgobotta
     exchangeRate: {
       amount: data.returnValues.exchangeRate
     }

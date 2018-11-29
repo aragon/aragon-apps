@@ -71,14 +71,13 @@ const TransactionAddress = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
 `
-      
+
 const SalaryTable = (props) => {
   const columns = initializeColumns(props.data, props.formatExchangeRate, props.formatTokenAmount)
   return (
     <Table
       paginated
       noDataMessage='No salaries found'
-      sortable={false}
       columns={columns}
       {...props}
     />
