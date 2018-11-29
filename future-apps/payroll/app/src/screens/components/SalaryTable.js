@@ -3,12 +3,10 @@ import PropTypes from 'prop-types'
 
 import styled from 'styled-components'
 import Table from '../../components/Table'
-import { SafeLink } from '@aragon/ui'
+
 import { salaryType } from '../../types'
 import { formatDate } from '../../utils/formatting'
-
-import { Button, theme } from '@aragon/ui'
-
+import { Button, theme, SafeLink } from '@aragon/ui'
 
 const initializeColumns = (data, formatExchangeRate, formatTokenAmount) => {
   return [
@@ -73,12 +71,12 @@ const TransactionAddress = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
 `
-
-
+      
 const SalaryTable = (props) => {
   const columns = initializeColumns(props.data, props.formatExchangeRate, props.formatTokenAmount)
   return (
     <Table
+      paginated
       noDataMessage='No salaries found'
       sortable={false}
       columns={columns}

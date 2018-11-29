@@ -55,6 +55,8 @@ const EmployeeTable = (props) => {
   const columns = initializeColumns(props.data, props.formatCurrency)
   return (
     <Table
+      paginated
+      rowsPerPage={4}
       noDataMessage='No employees found'
       columns={columns}
       {...props}
