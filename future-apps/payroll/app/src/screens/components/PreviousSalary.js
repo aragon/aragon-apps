@@ -107,17 +107,6 @@ const StyledFilters = styled.div`
   }
 `
 
-function getExchangedAmount (payment) {
-  return (payment.amount.amount / payment.exchangeRate.amount)
-}
-
-function parsePayments (payments) {
-  return payments.map((payment) => {
-    const exchanged = getExchangedAmount(payment)
-    return { ...payment, exchanged }
-  })
-}
-
 function mapStateToProps ({
   salaryAllocation = [],
   employees = [],
@@ -125,7 +114,6 @@ function mapStateToProps ({
   payments = [],
   denominationToken = []
 }) {
-  payments = parsePayments(payments)
   return {
     accountAddress,
     denominationToken,
