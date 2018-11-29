@@ -65,7 +65,7 @@ class EmployeeList extends React.Component {
       ...(statusFilter && statusFilter.filter ? [statusFilter.filter] : [])
     ]
     const customSalaryFormat = (amount) => formatCurrency(amount, denominationToken.symbol, 10, denominationToken.decimals, SECONDS_IN_A_YEAR)
-    const customCurrencyFormat = (amount) => formatCurrency(amount, denominationToken.symbol, 10, denominationToken.decimals)
+    const customCurrencyFormat = (amount) => formatCurrency(amount, denominationToken.symbol, 10, 0)
     const roles = new Set(
       employees.map(e => e.role)
     )
@@ -99,8 +99,8 @@ class EmployeeList extends React.Component {
 }
 
 function totalPaidThisYear (payments, accountAddress) {
-  const init = new BN(0)
-  const reducer = (acc, payment) => acc.add(new BN(payment.exchangeRate.amount))
+  const init = 0
+  const reducer = (acc, payment) => acc + payment.exchanged
   const filter = (p) => {
     const yearDiff = differenceInYears(
       new Date(p.date),
@@ -112,7 +112,7 @@ function totalPaidThisYear (payments, accountAddress) {
     )
   }
   const totalPaid = payments.filter(filter).reduce(reducer, init)
-  return totalPaid.toString()
+  return totalPaid
 }
 
 function parseEmployees (payments, employees) {
