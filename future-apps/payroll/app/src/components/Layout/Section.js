@@ -1,3 +1,4 @@
+import { theme, unselectable } from '@aragon/ui'
 import styled from 'styled-components'
 
 const Section = styled.section`
@@ -14,7 +15,7 @@ Section.Left = styled.article`
 Section.Right = styled.aside`
   display: flex;
   flex-direction: column;
-  min-width: 310px; 
+  min-width: 310px;
 `
 
 Section.Title = styled.h1`
@@ -22,6 +23,17 @@ Section.Title = styled.h1`
   margin-bottom: 20px;
   font-size: 16px;
   font-weight: 600;
+`
+Section.SideBarTitle = styled.div`
+  margin-bottom: 15px;
+  color: ${theme.textSecondary};
+  text-transform: lowercase;
+  line-height: 30px;
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: 16px;
+  border-bottom: 1px solid ${theme.contentBorder};
+  ${unselectable};
 `
 
 export default Section
