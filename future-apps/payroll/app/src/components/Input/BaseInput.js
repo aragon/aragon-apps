@@ -5,17 +5,25 @@ import { TextInput, theme } from '@aragon/ui'
 
 const BaseInput = styled(TextInput).attrs({
   wide: true
-})``
+})`
+  height: ${({ height }) => `${height}px` || '39px'}
+`
 
 const Container = styled.div`
   position: relative;
 `
 
 const IconStyled = styled(
-    ({ component, ...props }) => React.cloneElement(component, props)
+  ({ component, ...props }) => React.cloneElement(component, props)
 )`
   position: absolute;
-  top: 5px;
+  top: ${({ parentHeight }) => {
+    if (!parentHeight) return '5px';
+    const svgHeight = 22
+    const defaultInputPadding = 1
+    const topHeight = (parentHeight / 2) - (svgHeight / 2) - defaultInputPadding
+    return `${topHeight}px`
+  }};
   color: ${theme.textSecondary};
   ${props => props.icon && iconPositionCss(props.iconposition)}
 `
@@ -40,15 +48,15 @@ const inputPaddingCss = (position = 'left') => {
   }
 }
 
-class  WrapperBaseInput extends React.Component {
+class WrapperBaseInput extends React.Component {
   render () {
-    const { icon, iconposition, innerRef, ...rest } = this.props;
+    const { icon, iconposition, innerRef, height, ...rest } = this.props;
     const f = x => { this.input = x }
 
     return (
       <Container>
-        <BaseInputStyled {...this.props} innerRef={innerRef || f} />
-        { icon && <IconStyled component={icon} icon={icon} iconposition={iconposition} /> }
+        <BaseInputStyled {...this.props} innerRef={innerRef || f} height={height} />
+        { icon && <IconStyled component={icon} icon={icon} iconposition={iconposition} parentHeight={height} /> }
       </Container>
     )
   }

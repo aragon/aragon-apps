@@ -8,7 +8,7 @@ import { salaryType } from '../../types'
 import { formatDate } from '../../utils/formatting'
 import { Button, theme, SafeLink } from '@aragon/ui'
 
-const initializeColumns = (data, formatExchangeRate, formatTokenAmount) => {
+const initializeColumns = (data, formatExchanged, formatTokenAmount) => {
   return [
     {
       name: 'date',
@@ -49,10 +49,10 @@ const initializeColumns = (data, formatExchangeRate, formatTokenAmount) => {
       )
     },
     {
-      name: 'exchange-rate',
-      title: 'Exchange Rate',
-      value: data => data.exchangeRate,
-      formatter: formatExchangeRate,
+      name: 'exchanged-amount',
+      title: 'Exchanged Amount',
+      value: data => data.exchanged,
+      formatter: formatExchanged,
       cellProps: {
         align: 'right'
       }
@@ -71,14 +71,13 @@ const TransactionAddress = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
 `
-      
+
 const SalaryTable = (props) => {
-  const columns = initializeColumns(props.data, props.formatExchangeRate, props.formatTokenAmount)
+  const columns = initializeColumns(props.data, props.formatExchanged, props.formatTokenAmount)
   return (
     <Table
       paginated
       noDataMessage='No salaries found'
-      sortable={false}
       columns={columns}
       {...props}
     />

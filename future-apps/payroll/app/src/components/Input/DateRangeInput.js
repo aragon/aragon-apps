@@ -79,6 +79,7 @@ class DateRangeInput extends React.PureComponent {
 
   render () {
     const { startDate, endDate } = this.state
+    const { icon, iconposition } = this.props
     return (
       <StyledContainer
         innerRef={el => this.rootRef = el}
@@ -87,6 +88,9 @@ class DateRangeInput extends React.PureComponent {
         <StyledBaseInput
           value={`${this.formattedStartDate} - ${this.formattedEndDate}`}
           readOnly={true}
+          icon={icon}
+          iconposition={iconposition}
+          height={39}
         />
         {this.state.showPicker && (
           <React.Fragment>

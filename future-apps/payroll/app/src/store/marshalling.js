@@ -36,6 +36,7 @@ export function tokenAllocation (data) {
 }
 
 export function payment (data) {
+  const exchanged = (data.returnValues.amount / data.returnValues.exchangeRate)
   return {
     accountAddress: data.returnValues.employee,
     amount: {
@@ -50,9 +51,10 @@ export function payment (data) {
     },
     transactionAddress: data.transactionHash,
     date: date(data.returnValues.paymentDate),
-    status: 'Pending...', // FIXME: Find out how the status is calculated - - sgobotta
+    status: 'Complete', // FIXME: Find out how the status is calculated - - sgobotta
     exchangeRate: {
       amount: data.returnValues.exchangeRate
-    }
+    },
+    exchanged
   }
 }
