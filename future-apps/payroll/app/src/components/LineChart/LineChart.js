@@ -105,7 +105,7 @@ class LineChart extends React.Component {
                   strokeWidth="1"
                 />
                 {settings.map(({ id, color, values }) => {
-                  return (
+                  return valuesLength && (
                     <g key={`line-plot-${id}`}>
                       <path
                         d={`
