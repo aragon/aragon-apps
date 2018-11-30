@@ -2,11 +2,9 @@ import React from 'react'
 import styled from 'styled-components'
 import { Text, DropDown } from '@aragon/ui'
 
-import { connect } from '../../context/AragonContext'
+import MonthlySalariesChart from './MonthlySalariesChart'
 
-import PaidSalariesChart from './PaidSalariesChart'
-
-const options = [
+const filterOptions = [
   { label: 'Monthly' },
   { label: 'Quarterly' },
   { label: 'Yearly' }
@@ -14,18 +12,16 @@ const options = [
 
 class PaidSalaries extends React.Component {
   render() {
-    const { payments } = this.props
-
     return (
       <React.Fragment>
         { /* FIXME - Move filter to component*/ }
         <FilteWrapper>
           <FilterLabel>Paid Salaries</FilterLabel>
           <DropDown
-            items={options.map(opt => opt.label)}
+            items={filterOptions.map(opt => opt.label)}
           />
         </FilteWrapper>
-        <PaidSalariesChart />
+        <MonthlySalariesChart />
         <ChartLabels>
           <div>SEP</div>
           <div>NOV</div>
@@ -39,13 +35,7 @@ class PaidSalaries extends React.Component {
   }
 }
 
-function mapStateToProps ({ payments }) {
-  return {
-    payments
-  }
-}
-
-export default connect(mapStateToProps)(PaidSalaries)
+export default PaidSalaries
 
 const FilteWrapper = styled.div`
   display: flex;

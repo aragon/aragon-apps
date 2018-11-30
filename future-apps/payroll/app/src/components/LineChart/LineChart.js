@@ -17,7 +17,7 @@ class LineChart extends React.Component {
     dotRadius: PropTypes.number,
     animDelay: PropTypes.number,
     borderColor: PropTypes.string,
-    options: PropTypes.arrayOf(
+    settings: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.number,
         color: PropTypes.string,
@@ -69,10 +69,10 @@ class LineChart extends React.Component {
 
   render() {
     const { animate } = this.state
-    const { options, width, height, captionsHeight, borderColor, durationSlices, dotRadius, springConfig } = this.props
+    const { settings, width, height, captionsHeight, borderColor, durationSlices, dotRadius, springConfig } = this.props
 
-    // All the options' values shuold have same length
-    const valuesLength = options[0].values.length
+    // All the settings' values shuold have same length
+    const valuesLength = settings[0].values.length
 
     return (
       <div>
@@ -104,7 +104,7 @@ class LineChart extends React.Component {
                   stroke={borderColor}
                   strokeWidth="1"
                 />
-                {options.map(({ id, color, values }) => {
+                {settings.map(({ id, color, values }) => {
                   return (
                     <g key={`line-plot-${id}`}>
                       <path
