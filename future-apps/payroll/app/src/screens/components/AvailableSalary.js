@@ -1,6 +1,5 @@
 import React from 'react'
 import styled from 'styled-components'
-import BN from 'bn.js'
 import AvailableSalaryTable from './AvailableSalaryTable'
 import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
 import { differenceInSeconds } from 'date-fns'
@@ -32,12 +31,12 @@ class AvailableSalary extends React.PureComponent {
     ))
   }
 
-  sumExchangeRates (payments, accountAddress) {
-    const init = new BN(0)
-    const reducer = (acc, payment) => acc.add(new BN(payment.exchangeRate.amount))
+  sumExchanged (payments, accountAddress) {
+    const init = 0
+    const reducer = (acc, payment) => acc + payment.exchanged
     const filter = e => e.accountAddress === accountAddress
     const totalTransferred = payments.filter(filter).reduce(reducer, init)
-    return totalTransferred.toString()
+    return totalTransferred
   }
 
   getAvailableBalance (employee, denominationToken) {
@@ -55,7 +54,7 @@ class AvailableSalary extends React.PureComponent {
     const availableBalance = this.getAvailableBalance(employee, denominationToken)
 
     const totalTransferred = (updateAll) ?
-      this.sumExchangeRates(payments, accountAddress) :
+      this.sumExchanged(payments, accountAddress) :
       state.data[0].totalTransferred
 
     const { lastPayroll, salary } = employee
@@ -93,7 +92,7 @@ class AvailableSalary extends React.PureComponent {
   render () {
     const { data, denominationToken } = this.state
     const formatSalary = (amount) => formatCurrency(amount, denominationToken.symbol, 10, denominationToken.decimals, SECONDS_IN_A_YEAR)
-    const customFormatCurrency = (amount) => formatCurrency(amount, denominationToken.symbol, 10, denominationToken.decimals)
+    const customFormatCurrency = (amount) => formatCurrency(amount, denominationToken.symbol, 10, 0)
     const formatTokenAmount = (amount) => formatCurrency(amount, denominationToken.symbol, 10, denominationToken.decimals, 1, 2, true, true)
     return (
       <Container>
