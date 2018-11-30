@@ -4,24 +4,53 @@ import { Text, DropDown } from '@aragon/ui'
 
 import MonthlySalariesChart from './MonthlySalariesChart'
 
-const filterOptions = [
-  { label: 'Monthly' },
-  { label: 'Quarterly' },
-  { label: 'Yearly' }
-]
+const FILTER_OPTIONS = ['Monthly', 'Quarterly', 'Yearly']
+const [MONTHLY, QUARTERLY, YEARLY] = FILTER_OPTIONS
 
 class PaidSalaries extends React.Component {
+  state = {
+    activeFilter: 0
+  }
+
+  renderChart = (chartType) => {
+    switch (chartType) {
+      case MONTHLY:
+        return (
+           <MonthlySalariesChart />
+        )
+
+      case QUARTERLY:
+        return (
+          <div>QUARTERLY CHART</div>
+        )
+
+      case YEARLY:
+        return (
+          <div>YEARLY CHART</div>
+        )
+
+      default:
+        return null
+    }
+  }
+
   render() {
+    const { activeFilter } = this.state
+
     return (
       <React.Fragment>
         { /* FIXME - Move filter to component*/ }
         <FilteWrapper>
           <FilterLabel>Paid Salaries</FilterLabel>
           <DropDown
-            items={filterOptions.map(opt => opt.label)}
+            items={FILTER_OPTIONS}
+            active={activeFilter}
+            onChange={activeFilter => {
+              this.setState({ activeFilter })
+            }}
           />
         </FilteWrapper>
-        <MonthlySalariesChart />
+        {this.renderChart(FILTER_OPTIONS[activeFilter])}
         <ChartLabels>
           <div>SEP</div>
           <div>NOV</div>
