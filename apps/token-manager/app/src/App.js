@@ -115,71 +115,77 @@ class App extends React.Component {
     return (
       <PublicUrl.Provider url="./aragon-ui/">
         <BaseStyles />
-        <AppView
-          appBar={
-            <AppBar
-              title={
-                <Title>
-                  <TitleLabel>Token</TitleLabel>
-                  {tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
-                </Title>
-              }
-              endContent={
-                <Button
-                  mode="strong"
-                  onClick={this.handleLaunchAssignTokensNoHolder}
-                >
-                  Assign Tokens
-                </Button>
-              }
-            />
-          }
-        >
-          {appStateReady && holders.length > 0 ? (
-            <Holders
-              holders={holders}
-              groupMode={groupMode}
-              maxAccountTokens={maxAccountTokens}
-              tokenAddress={tokenAddress}
-              tokenDecimalsBase={tokenDecimalsBase}
-              tokenName={tokenName}
-              tokenSupply={tokenSupply}
-              tokenSymbol={tokenSymbol}
-              tokenTransfersEnabled={tokenTransfersEnabled}
-              userAccount={userAccount}
-              onAssignTokens={this.handleLaunchAssignTokens}
-              onRemoveTokens={this.handleLaunchRemoveTokens}
-            />
-          ) : (
-            <EmptyState onActivate={this.handleLaunchAssignTokensNoHolder} />
-          )}
-        </AppView>
-        <SidePanel
-          title={
-            assignTokensConfig.mode === 'assign'
-              ? 'Assign tokens'
-              : 'Remove tokens'
-          }
-          opened={sidepanelOpened}
-          onClose={this.handleSidepanelClose}
-          onTransitionEnd={this.handleSidepanelTransitionEnd}
-        >
-          {appStateReady && (
-            <AssignVotePanelContent
-              opened={sidepanelOpened}
-              tokenDecimals={numData.tokenDecimals}
-              tokenDecimalsBase={tokenDecimalsBase}
-              onUpdateTokens={this.handleUpdateTokens}
-              getHolderBalance={this.getHolderBalance}
-              maxAccountTokens={maxAccountTokens}
-              {...assignTokensConfig}
-            />
-          )}
-        </SidePanel>
+        <Main>
+          <AppView
+            appBar={
+              <AppBar
+                title={
+                  <Title>
+                    <TitleLabel>Token</TitleLabel>
+                    {tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
+                  </Title>
+                }
+                endContent={
+                  <Button
+                    mode="strong"
+                    onClick={this.handleLaunchAssignTokensNoHolder}
+                  >
+                    Assign Tokens
+                  </Button>
+                }
+              />
+            }
+          >
+            {appStateReady && holders.length > 0 ? (
+              <Holders
+                holders={holders}
+                groupMode={groupMode}
+                maxAccountTokens={maxAccountTokens}
+                tokenAddress={tokenAddress}
+                tokenDecimalsBase={tokenDecimalsBase}
+                tokenName={tokenName}
+                tokenSupply={tokenSupply}
+                tokenSymbol={tokenSymbol}
+                tokenTransfersEnabled={tokenTransfersEnabled}
+                userAccount={userAccount}
+                onAssignTokens={this.handleLaunchAssignTokens}
+                onRemoveTokens={this.handleLaunchRemoveTokens}
+              />
+            ) : (
+              <EmptyState onActivate={this.handleLaunchAssignTokensNoHolder} />
+            )}
+          </AppView>
+          <SidePanel
+            title={
+              assignTokensConfig.mode === 'assign'
+                ? 'Assign tokens'
+                : 'Remove tokens'
+            }
+            opened={sidepanelOpened}
+            onClose={this.handleSidepanelClose}
+            onTransitionEnd={this.handleSidepanelTransitionEnd}
+          >
+            {appStateReady && (
+              <AssignVotePanelContent
+                opened={sidepanelOpened}
+                tokenDecimals={numData.tokenDecimals}
+                tokenDecimalsBase={tokenDecimalsBase}
+                onUpdateTokens={this.handleUpdateTokens}
+                getHolderBalance={this.getHolderBalance}
+                maxAccountTokens={maxAccountTokens}
+                {...assignTokensConfig}
+              />
+            )}
+          </SidePanel>
+        </Main>
       </PublicUrl.Provider>
     )
   }
 }
+
+const Main = styled.div`
+  height: 100vh;
+`
 
 const Title = styled.span`
   display: flex;
