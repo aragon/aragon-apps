@@ -174,15 +174,15 @@ const SpacedBlock = styled.div`
   }
 `
 
-// Use this function to sort by ETH
-const compareTokenAddresses = (addressA, addressB) => {
-  if (addressA === ETHER_TOKEN_FAKE_ADDRESS) {
+// Use this function to sort by ETH and then token symbol
+const orderBalancesByEthAndSymbol = (tokenA, tokenB) => {
+  if (tokenA.address === ETHER_TOKEN_FAKE_ADDRESS) {
     return -1
   }
-  if (addressB === ETHER_TOKEN_FAKE_ADDRESS) {
+  if (tokenB.address === ETHER_TOKEN_FAKE_ADDRESS) {
     return 1
   }
-  return 0
+  return tokenA.symbol.localeCompare(tokenB.symbol)
 }
 
 export default observe(
@@ -203,9 +203,7 @@ export default observe(
                 decimals: parseInt(balance.decimals, 10),
               },
             }))
-            .sort((balanceA, balanceB) =>
-              compareTokenAddresses(balanceA.address, balanceB.address)
-            )
+            .sort(orderBalancesByEthAndSymbol)
         : []
 
       const transactionsBn = transactions
@@ -221,28 +219,22 @@ export default observe(
       return {
         ...state,
 
-        tokens: balancesBn
-          .map(
-            ({
-              address,
-              name,
-              symbol,
-              numData: { amount, decimals },
-              verified,
-            }) => ({
-              address,
-              amount,
-              decimals,
-              name,
-              symbol,
-              verified,
-            })
-          )
-          .sort(
-            (tokenA, tokenB) =>
-              compareTokenAddresses(tokenA.address, tokenB.address) ||
-              tokenA.symbol.localeCompare(tokenB.symbol)
-          ),
+        tokens: balancesBn.map(
+          ({
+            address,
+            name,
+            symbol,
+            numData: { amount, decimals },
+            verified,
+          }) => ({
+            address,
+            amount,
+            decimals,
+            name,
+            symbol,
+            verified,
+          })
+        ),
 
         // Filter out empty balances
         balances: balancesBn.filter(balance => !balance.amount.isZero()),
