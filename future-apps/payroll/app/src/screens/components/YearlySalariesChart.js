@@ -1,56 +1,47 @@
 import React from 'react'
-import styled from 'styled-components'
-import { subMonths, format } from 'date-fns'
+import styled, { css } from 'styled-components'
+import { subQuarters, format } from 'date-fns'
 
 import { connect } from '../../context/AragonContext'
 import { LineChart } from '../../components/LineChart'
 
-const MONTHS_AGO = 12
 const MAX_PROPORTION = 4/5
 
-class MonthlySalariesChart extends React.Component {
+class YearlySalariesChart extends React.Component {
   state = {
     settings : [
       {
-        optionId: 'monthly',
+        optionId: 'yearly',
         color: '#028CD1',
         values: []
       }
-    ]
+    ],
+    labels: []
   }
 
-  getHistoryKey = (date) => (format(date, 'YYYYMM', { awareOfUnicodeTokens: true }))
+  getHistoryKey = (date) => (format(date, 'YYYY', { awareOfUnicodeTokens: true }))
 
   calculateProportion = (max, value) => {
     return value * MAX_PROPORTION / max
   }
 
-  getInitialHistory = () => {
-    const months = Array(MONTHS_AGO + 1)
-      .fill()
-      .map((_, index) => index)
-
-    const toDay = new Date()
-    return months.reduce((acc, ago) => {
-      const monthAgo = subMonths(toDay, ago)
-      acc[this.getHistoryKey(monthAgo)] = {
-        label: format(monthAgo, 'MMM').toUpperCase(),
-        amount: 0
-      }
-
-      return acc
-    }, {});
-  }
-
   groupPayments = () => {
     const { payments } = this.props
-    const history = this.getInitialHistory()
+    let history = {}
     let max = 0
 
     payments.forEach((payment) => {
       const date = new Date(payment.date)
       const { exchanged } = payment
       const key = this.getHistoryKey(date)
+
+      if (!history[key]) {
+        history[key] = {
+          label: key,
+          amount: 0
+        }
+      }
+
       const newAmount = history[key].amount + exchanged
       history[key].amount = newAmount
       max = newAmount > max ? newAmount : max
@@ -73,17 +64,18 @@ class MonthlySalariesChart extends React.Component {
     ) {
       const { max, history } = this.groupPayments()
 
-      const sortedMonths = Object.keys(history).sort() // The default sort order is built upon converting the elements into strings, then comparing their sequences of UTF-16 code units values.
+      const sortedYears = Object.keys(history).sort() // The default sort order is built upon converting the elements into strings, then comparing their sequences of UTF-16 code units values.
 
       const settings = [
         {
-          optionId: 'monthly',
+          optionId: 'yearly',
           color: '#028CD1',
-          values: sortedMonths.map((key) => this.calculateProportion(max, history[key].amount))
+          values: [0].concat(sortedYears.map((key) => this.calculateProportion(max, history[key].amount)))
         }
       ]
 
-      const labels = sortedMonths.map((key, i) => i % 2 ? history[key].label : '')
+      // const labels = [''].concat(sortedYears.map((key, i) => history[key].label).slice(1))
+      const labels = [''].concat(sortedYears.map((key, i) => history[key].label))
 
       this.setState({ settings, labels })
     }
@@ -91,10 +83,11 @@ class MonthlySalariesChart extends React.Component {
 
   render() {
     const { settings, labels } = this.state
+    const durationSlices = labels.length ? labels.length + 1 : 2
 
     return (
       <ChartWrapper>
-        <LineChart settings={settings} durationSlices={14} labels={labels} captionsHeight={50} />
+        <LineChart settings={settings} durationSlices={durationSlices}  labels={labels} captionsHeight={50} />
       </ChartWrapper>
     )
   }
@@ -102,12 +95,12 @@ class MonthlySalariesChart extends React.Component {
 
 const ChartWrapper = styled.div`
   padding: 20px 0;
+  dispplay: flex:
 `
-
 function mapStateToProps ({ payments = [] }) {
   return {
     payments
   }
 }
 
-export default connect(mapStateToProps)(MonthlySalariesChart)
+export default connect(mapStateToProps)(YearlySalariesChart)

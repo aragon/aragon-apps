@@ -3,6 +3,8 @@ import styled from 'styled-components'
 import { Text, DropDown } from '@aragon/ui'
 
 import MonthlySalariesChart from './MonthlySalariesChart'
+import QuarterlySalariesChart from './QuarterlySalariesChart'
+import YearlySalariesChart from './YearlySalariesChart'
 
 const FILTER_OPTIONS = ['Monthly', 'Quarterly', 'Yearly']
 const [MONTHLY, QUARTERLY, YEARLY] = FILTER_OPTIONS
@@ -21,12 +23,12 @@ class PaidSalaries extends React.Component {
 
       case QUARTERLY:
         return (
-          <div>QUARTERLY CHART</div>
+          <QuarterlySalariesChart />
         )
 
       case YEARLY:
         return (
-          <div>YEARLY CHART</div>
+          <YearlySalariesChart />
         )
 
       default:
@@ -51,14 +53,6 @@ class PaidSalaries extends React.Component {
           />
         </FilteWrapper>
         {this.renderChart(FILTER_OPTIONS[activeFilter])}
-        <ChartLabels>
-          <div>SEP</div>
-          <div>NOV</div>
-          <div>JAN</div>
-          <div>MAR</div>
-          <div>JUN</div>
-          <div>SEP</div>
-        </ChartLabels>
       </React.Fragment>
     )
   }
@@ -75,11 +69,4 @@ const FilteWrapper = styled.div`
 const FilterLabel = styled(Text)`
   font-size: 16px;
   font-weight: 600;
-`
-
-const ChartLabels = styled.div`
-  display: flex;
-  flex-direction: row;
-  text-align: center;
-  justify-content: space-around;
 `
