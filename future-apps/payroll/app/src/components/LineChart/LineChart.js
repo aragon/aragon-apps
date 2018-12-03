@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import { Spring } from 'react-spring'
 import { unselectable } from '@aragon/ui'
 
@@ -23,7 +23,8 @@ class LineChart extends React.Component {
         color: PropTypes.string,
         values: PropTypes.arrayOf(PropTypes.number) // numbers between 0 and 1
       })
-    )
+    ),
+    labels: PropTypes.array
   }
 
   static defaultProps = {
@@ -69,7 +70,7 @@ class LineChart extends React.Component {
 
   render() {
     const { animate } = this.state
-    const { settings, width, height, captionsHeight, borderColor, durationSlices, dotRadius, springConfig } = this.props
+    const { settings, width, height, captionsHeight, borderColor, durationSlices, dotRadius, springConfig, labels } = this.props
 
     // All the settings' values shuold have same length
     const valuesLength = settings[0].values.length
@@ -153,13 +154,15 @@ class LineChart extends React.Component {
                   stroke="#DAEAEF"
                   strokeWidth="3"
                 />
-                {/*<g transform={`translate(0,${HEIGHT + CAPTIONS_HEIGHT * 0.7})`}>
-                                  {[...new Array(DURATION_SLICES - 1)].map((_, i) => (
-                                    <text key={i} x={this.getX(i) + (i === 0 ? 2 : 0)}>
-                                      {labels[i]}
-                                    </text>
-                                  ))}
-                                </g>*/}
+                { labels &&
+                  <g transform={`translate(0,${height + 20})`}>
+                    {[...new Array(durationSlices - 1)].map((_, i) => (
+                      <LabelText key={i} x={this.getX(i) + (i === 0 ? 2 : 0)} transform={`rotate(45, ${this.getX(i) + (i === 0 ? 2 : 0)},0) translate(-6)`}>
+                        {labels[i]}
+                      </LabelText>
+                    ))}
+                  </g>
+                }
               </svg>
             )}
           </Spring>
@@ -172,13 +175,14 @@ class LineChart extends React.Component {
 const SvgWrapper = styled.div`
   svg {
     display: block;
-    text {
-      font-size: 12px;
-      font-weight: 300;
-      fill: #6d777b;
-      ${unselectable};
-    }
   }
+`
+
+const LabelText = styled.text`
+  font-size: 12px;
+  font-weight: 300;
+  fill: #6d777b;
+  ${unselectable};
 `
 
 export default LineChart
