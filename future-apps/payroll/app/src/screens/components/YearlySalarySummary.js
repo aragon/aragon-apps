@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import { Spring, config } from 'react-spring'
 import { subYears, isWithinInterval, format } from 'date-fns'
 import { zip } from '../../rxjs'
 
@@ -85,9 +86,7 @@ class YearlySalarySummary extends React.Component {
         return acc + balance.exchangedAmount
       }, 0)
 
-      this.setState({
-        cashReserves: formatCurrency(cashReserves, denominationToken.symbol, 10, 0, 1, 2, true, true)
-      })
+      this.setState({ cashReserves })
     }
   }
 
@@ -134,7 +133,7 @@ class YearlySalarySummary extends React.Component {
           <SummaryItem>Cash reserves</SummaryItem>
           {
             cashReserves
-              ? (<CashReserves>{cashReserves}</CashReserves>)
+              ? (<AnimatedCashReserves cashReserves={cashReserves} symbol={denominationToken.symbol} />)
               : (<Loading />)
           }
         </SummaryRow>
@@ -168,10 +167,6 @@ const SummaryAmount = styled(Text).attrs({ size: 'normal' })`
   font-weight: 600;
 `
 
-const CashReserves = styled(SummaryAmount)`
-  color: ${theme.positive};
-`
-
 const Line = styled.div`
   padding-top: 20px;
   margin-bottom: 10px;
@@ -184,6 +179,26 @@ const Loading = styled(Text).attrs({ size: 'normal', color: theme.textTertiary }
     content: 'Loading. . .'
   }
 `
+
+const CashReserves = styled(SummaryAmount)`
+  color: ${theme.positive};
+`
+
+const AnimatedCashReserves = (props) => {
+  const { symbol } = props
+  const format = amount => formatCurrency(amount, symbol, 10, 0, 1, 2, true, true)
+
+  return (
+    <Spring
+      from={{ number: 0 }}
+      to={{ number: props.cashReserves }}
+      config={config.stiff}
+    >
+      {props => <CashReserves>{format(props.number)}</CashReserves>}
+    </Spring>
+  )
+}
+
 
 function mapStateToProps ({
   employees = [],
