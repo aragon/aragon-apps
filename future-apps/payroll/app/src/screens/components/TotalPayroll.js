@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import TotalPayrollTable from './TotalPayrollTable'
 import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
-import { differenceInYears } from 'date-fns'
+import { totalPaidThisYear, summation, MONTHS_IN_A_YEAR } from '../../utils/calculations'
 
 import { connect } from '../../context/AragonContext'
 import Section from '../../components/Layout/Section'
@@ -78,23 +78,6 @@ const Title = styled.h1`
   font-weight: 600;
 `
 
-function totalPaidThisYear (payments, accountAddress) {
-  const init = 0
-  const reducer = (acc, payment) => acc + payment.exchanged
-  const filter = (p) => {
-    const yearDiff = differenceInYears(
-      new Date(p.date),
-      new Date()
-    )
-    return (
-      p.accountAddress === accountAddress &&
-      yearDiff === 0
-    )
-  }
-  const totalPaid = payments.filter(filter).reduce(reducer, init)
-  return totalPaid
-}
-
 function parseEmployees (payments, employees) {
   return employees.map((e) => {
     const totalPaid = totalPaidThisYear(payments, e.accountAddress)
@@ -103,20 +86,17 @@ function parseEmployees (payments, employees) {
 }
 
 function getAverageSalary (employees) {
-  const init = 0
-  const reducer = (acc, employee) => acc + employee.salary
-  const sum = employees.reduce(reducer, init)
+  const field = 'salary'
+  const sum = summation(employees, field)
   return (sum / employees.length)
 }
 
 function getTotalPaidThisYear (employees) {
-  const init = 0
-  const reducer = (acc, employee) => acc + employee.totalPaid
-  return employees.reduce(reducer, init)
+  const field = 'totalPaid'
+  return summation(employees, field)
 }
 
 function getMonthlyBurnRate (total) {
-  const MONTHS_IN_A_YEAR = 12
   return total / MONTHS_IN_A_YEAR
 }
 
