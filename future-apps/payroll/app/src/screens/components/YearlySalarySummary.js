@@ -78,25 +78,6 @@ class YearlySalarySummary extends React.Component {
             }
           })
           .toPromise()
-
-          // return vault
-          //   .balance(token.address)
-          //   .first()
-          //   .map(async amount => {
-          //     const feed = await priceFeed
-          //       .get(denominationToken.address, token.address)
-          //       .first()
-          //       .map(({ xrt }) => xrt)
-          //       .toPromise()
-
-          //     const exchangedAmount = amount / feed
-
-          //     return {
-          //       ...token,
-          //       exchangedAmount
-          //     }
-          //   })
-          //   .toPromise()
         })
       )
 
