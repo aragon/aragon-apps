@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { subYears, isWithinInterval, format } from 'date-fns'
+import { zip } from '../../rxjs'
 
 import { theme, Text } from '@aragon/ui'
 
@@ -42,9 +43,9 @@ class YearlySalarySummary extends React.Component {
     const remainingThisYear = totalYearSalaryBill - totalPaidThisYear
 
     return {
-      totalYearSalaryBill,
-      totalPaidThisYear,
-      remainingThisYear
+      totalYearSalaryBill: this.formatAmount(totalYearSalaryBill),
+      totalPaidThisYear: this.formatAmount(totalPaidThisYear),
+      remainingThisYear: this.formatAmount(remainingThisYear)
     }
   }
 
@@ -64,24 +65,38 @@ class YearlySalarySummary extends React.Component {
 
       const balances = await Promise.all(
         tokens.map(token => {
-          return vault
-            .balance(token.address)
-            .first()
-            .map(async amount => {
-              const feed = await priceFeed
-                .get(denominationToken.address, token.address)
-                .first()
-                .map(({ xrt }) => xrt)
-                .toPromise()
+          return zip(
+            vault.balance(token.address).first(),
+            priceFeed.get(denominationToken.address, token.address).first()
+          )
+          .first()
+          .map(([amount, { xrt }]) => {
+            const exchangedAmount = amount / xrt
+            return {
+              ...token,
+              exchangedAmount
+            }
+          })
+          .toPromise()
 
-              const exchangedAmount = amount / feed
+          // return vault
+          //   .balance(token.address)
+          //   .first()
+          //   .map(async amount => {
+          //     const feed = await priceFeed
+          //       .get(denominationToken.address, token.address)
+          //       .first()
+          //       .map(({ xrt }) => xrt)
+          //       .toPromise()
 
-              return {
-                ...token,
-                exchangedAmount
-              }
-            })
-            .toPromise()
+          //     const exchangedAmount = amount / feed
+
+          //     return {
+          //       ...token,
+          //       exchangedAmount
+          //     }
+          //   })
+          //   .toPromise()
         })
       )
 
@@ -89,7 +104,9 @@ class YearlySalarySummary extends React.Component {
         return acc + balance.exchangedAmount
       }, 0)
 
-      this.setState({ cashReserves })
+      this.setState({
+        cashReserves: formatCurrency(cashReserves, denominationToken.symbol, 10, 0, 1, 2, true, true)
+      })
     }
   }
 
@@ -109,7 +126,7 @@ class YearlySalarySummary extends React.Component {
           <SummaryItem>Salary paid this year</SummaryItem>
           {summary && (
             <SummaryAmount>
-              {this.formatAmount(summary.totalPaidThisYear)}
+              {summary.totalPaidThisYear}
             </SummaryAmount>
           )}
         </SummaryRow>
@@ -117,7 +134,7 @@ class YearlySalarySummary extends React.Component {
           <SummaryItem>Remaining salary this year</SummaryItem>
           {summary && (
             <SummaryAmount>
-              {this.formatAmount(summary.remainingThisYear)}
+              {summary.remainingThisYear}
             </SummaryAmount>
           )}
         </SummaryRow>
@@ -128,7 +145,7 @@ class YearlySalarySummary extends React.Component {
           <SummaryItem>Total year salary bill</SummaryItem>
           {summary && (
             <SummaryAmount>
-              {this.formatAmount(summary.totalYearSalaryBill)}
+              {summary.totalYearSalaryBill}
             </SummaryAmount>
           )}
         </SummaryRow>
@@ -136,16 +153,7 @@ class YearlySalarySummary extends React.Component {
           <SummaryItem>Cash reserves</SummaryItem>
           {cashReserves && (
             <CashReserves>
-              {formatCurrency(
-                cashReserves,
-                denominationToken.symbol,
-                10,
-                0,
-                1,
-                2,
-                true,
-                true
-              )}
+              {cashReserves}
             </CashReserves>
           )}
         </SummaryRow>

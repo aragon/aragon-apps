@@ -7,15 +7,9 @@ import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './em
 import { getDenominationToken, getToken } from './tokens'
 import { date, payment } from './marshalling'
 // import financeEvents from './abi/finance-events'
-import vaultAbi from '../abi/vault-balance'
-
-let vaultAddress
 
 export default function configureStore (financeAddress, vaultAddress) {
   // const financeApp = app.external(financeAddress, financeEvents)
-  const vault = app.external(vaultAddress, vaultAbi)
-
-  console.log(vault)
 
   return app.store(async (state, { event, ...data }) => {
     const eventType = Event[event] || event
