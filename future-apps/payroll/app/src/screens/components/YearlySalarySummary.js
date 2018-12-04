@@ -105,38 +105,38 @@ class YearlySalarySummary extends React.Component {
         <SummaryTitle>Yearly salary summary</SummaryTitle>
         <SummaryRow>
           <SummaryItem>Salary paid this year</SummaryItem>
-          {summary && (
-            <SummaryAmount>
-              {summary.totalPaidThisYear}
-            </SummaryAmount>
-          )}
+          {
+            summary
+              ? (<SummaryAmount>{summary.totalPaidThisYear}</SummaryAmount>)
+              : (<Loading />)
+          }
         </SummaryRow>
         <SummaryRow>
           <SummaryItem>Remaining salary this year</SummaryItem>
-          {summary && (
-            <SummaryAmount>
-              {summary.remainingThisYear}
-            </SummaryAmount>
-          )}
+          {
+            summary
+              ? (<SummaryAmount>{summary.remainingThisYear}</SummaryAmount>)
+              : (<Loading />)
+          }
         </SummaryRow>
 
         <Line />
 
         <SummaryRow>
           <SummaryItem>Total year salary bill</SummaryItem>
-          {summary && (
-            <SummaryAmount>
-              {summary.totalYearSalaryBill}
-            </SummaryAmount>
-          )}
+          {
+            summary
+            ? (<SummaryAmount>{summary.totalYearSalaryBill}</SummaryAmount>)
+            : (<Loading />)
+          }
         </SummaryRow>
         <SummaryRow>
           <SummaryItem>Cash reserves</SummaryItem>
-          {cashReserves && (
-            <CashReserves>
-              {cashReserves}
-            </CashReserves>
-          )}
+          {
+            cashReserves
+              ? (<CashReserves>{cashReserves}</CashReserves>)
+              : (<Loading />)
+          }
         </SummaryRow>
       </Container>
     )
@@ -177,6 +177,12 @@ const Line = styled.div`
   margin-bottom: 10px;
   border-bottom: 1px solid ${theme.contentBorder};
   width: 100%;
+`
+
+const Loading = styled(Text).attrs({ size: 'normal', color: theme.textTertiary })`
+  :before {
+    content: 'Loading. . .'
+  }
 `
 
 function mapStateToProps ({
