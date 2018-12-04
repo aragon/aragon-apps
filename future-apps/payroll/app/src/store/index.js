@@ -6,7 +6,7 @@ import { getAccountAddress } from './account'
 import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './employees'
 import { getDenominationToken, getToken } from './tokens'
 import { date, payment } from './marshalling'
-// import financeEvents from './abi/finance-events'
+// import financeEvents from '../abi/finance-events'
 
 export default function configureStore (financeAddress, vaultAddress) {
   // const financeApp = app.external(financeAddress, financeEvents)

@@ -14,7 +14,7 @@ import {
 import { differenceInSeconds } from 'date-fns'
 
 import { connect } from '../context/AragonContext'
-import priceFeedAbi from './abi/price-feed'
+import priceFeedAbi from '../abi/price-feed'
 import { formatCurrency } from '../utils/formatting'
 
 import Section from '../components/Layout/Section'

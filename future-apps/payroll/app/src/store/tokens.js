@@ -1,6 +1,6 @@
 import app from './app'
-import tokenDecimalsAbi from './abi/token-decimals'
-import tokenSymbolAbi from './abi/token-symbol'
+import tokenDecimalsAbi from '../abi/token-decimals'
+import tokenSymbolAbi from '../abi/token-symbol'
 
 const tokenCache = new Map()
 
