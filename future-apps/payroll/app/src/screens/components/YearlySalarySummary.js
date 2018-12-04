@@ -70,15 +70,15 @@ class YearlySalarySummary extends React.Component {
             vault.balance(token.address).first(),
             priceFeed.get(denominationToken.address, token.address).first()
           )
-          .first()
-          .map(([amount, { xrt }]) => {
-            const exchangedAmount = amount / xrt
-            return {
-              ...token,
-              exchangedAmount
-            }
-          })
-          .toPromise()
+            .first()
+            .map(([amount, { xrt }]) => {
+              const exchangedAmount = amount / xrt
+              return {
+                ...token,
+                exchangedAmount
+              }
+            })
+            .toPromise()
         })
       )
 
@@ -101,41 +101,60 @@ class YearlySalarySummary extends React.Component {
 
     return (
       <Container>
-        <SummaryTitle>Yearly salary summary</SummaryTitle>
+        <SummaryTitle data-testid='salary-summary-title'>
+          Yearly salary summary
+        </SummaryTitle>
         <SummaryRow>
-          <SummaryItem>Salary paid this year</SummaryItem>
-          {
-            summary
-              ? (<SummaryAmount>{summary.totalPaidThisYear}</SummaryAmount>)
-              : (<Loading />)
-          }
+          <SummaryItem data-testid='salary-paid-year-title'>
+            Salary paid this year
+          </SummaryItem>
+          {summary ? (
+            <SummaryAmount data-testid='salary-paid-year-amount'>
+              {summary.totalPaidThisYear}
+            </SummaryAmount>
+          ) : (
+            <Loading />
+          )}
         </SummaryRow>
         <SummaryRow>
-          <SummaryItem>Remaining salary this year</SummaryItem>
-          {
-            summary
-              ? (<SummaryAmount>{summary.remainingThisYear}</SummaryAmount>)
-              : (<Loading />)
-          }
+          <SummaryItem data-testid='salary-remaining-title'>
+            Remaining salary this year
+          </SummaryItem>
+          {summary ? (
+            <SummaryAmount data-testid='salary-remaining-amount'>
+              {summary.remainingThisYear}
+            </SummaryAmount>
+          ) : (
+            <Loading />
+          )}
         </SummaryRow>
 
         <Line />
 
         <SummaryRow>
-          <SummaryItem>Total year salary bill</SummaryItem>
-          {
-            summary
-            ? (<SummaryAmount>{summary.totalYearSalaryBill}</SummaryAmount>)
-            : (<Loading />)
-          }
+          <SummaryItem data-testid='salary-bill-title'>
+            Total year salary bill
+          </SummaryItem>
+          {summary ? (
+            <SummaryAmount data-testid='salary-bill-amount'>
+              {summary.totalYearSalaryBill}
+            </SummaryAmount>
+          ) : (
+            <Loading />
+          )}
         </SummaryRow>
         <SummaryRow>
-          <SummaryItem>Cash reserves</SummaryItem>
-          {
-            cashReserves
-              ? (<AnimatedCashReserves cashReserves={cashReserves} symbol={denominationToken.symbol} />)
-              : (<Loading />)
-          }
+          <SummaryItem data-testid='salary-reserves-title'>
+            Cash reserves
+          </SummaryItem>
+          {cashReserves ? (
+            <AnimatedCashReserves
+              cashReserves={cashReserves}
+              symbol={denominationToken.symbol}
+            />
+          ) : (
+            <Loading />
+          )}
         </SummaryRow>
       </Container>
     )
@@ -174,9 +193,12 @@ const Line = styled.div`
   width: 100%;
 `
 
-const Loading = styled(Text).attrs({ size: 'normal', color: theme.textTertiary })`
+const Loading = styled(Text).attrs({
+  size: 'normal',
+  color: theme.textTertiary
+})`
   :before {
-    content: 'Loading. . .'
+    content: 'Loading. . .';
   }
 `
 
@@ -184,21 +206,29 @@ const CashReserves = styled(SummaryAmount)`
   color: ${theme.positive};
 `
 
-const AnimatedCashReserves = (props) => {
-  const { symbol } = props
-  const format = amount => formatCurrency(amount, symbol, 10, 0, 1, 2, true, true)
+const AnimatedCashReserves = props => {
+  const { symbol, cashReserves } = props
+  const format = amount =>
+    formatCurrency(amount, symbol, 10, 0, 1, 2, true, true)
 
   return (
     <Spring
       from={{ number: 0 }}
-      to={{ number: props.cashReserves }}
+      to={{ number: cashReserves }}
       config={config.stiff}
     >
-      {props => <CashReserves>{format(props.number)}</CashReserves>}
+      {props => (
+        <CashReserves
+          data-testid={
+            cashReserves === props.number ? 'salary-reserves-amount' : ''
+          }
+        >
+          {format(props.number)}
+        </CashReserves>
+      )}
     </Spring>
   )
 }
-
 
 function mapStateToProps ({
   employees = [],
