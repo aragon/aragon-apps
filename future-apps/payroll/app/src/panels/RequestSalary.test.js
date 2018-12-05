@@ -11,9 +11,9 @@ import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
 
 import RequestSalaryPanel from './RequestSalary'
-import AragonContext from '../context/AragonContext'
+import AragonContext from '/context/AragonContext'
 
-import mockApp from '../../mocks'
+import mockApp from 'mocks'
 
 const bodyUtils = bindElementToQueries(document.body)
 
@@ -67,8 +67,10 @@ describe('Request Salary panel', () => {
 })
 
 async function renderRequestPanel (props) {
+  const app = mockApp()
+
   const requestSalary = render(
-    <AragonContext.Provider value={mockApp}>
+    <AragonContext.Provider value={app}>
       <RequestSalaryPanel opened {...props} />
     </AragonContext.Provider>
   )

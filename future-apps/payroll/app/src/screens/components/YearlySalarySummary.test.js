@@ -13,7 +13,7 @@ import 'jest-dom/extend-expect'
 import YearlySalarySummary from './YearlySalarySummary'
 import AragonContext from '/context/AragonContext'
 
-import mockApp from 'mocks'
+import mockApp, { state } from 'mocks'
 
 const bodyUtils = bindElementToQueries(document.body)
 
@@ -42,49 +42,82 @@ describe('Request Salary panel', () => {
     expect(titles.reserves).toHaveTextContent('Cash reserves')
   })
 
+  it('should show loading status when there is no data', async () => {
+    const emptyState = true
+    const { loadings } = await renderSummary(emptyState)
+
+    // ; ASI workarround
+    ;['year','remaining','bill'].forEach(row => {
+      expect(loadings[row]).not.toBeNull()
+      expect(loadings[row]).toBeVisible()
+    })
+  })
+
   it('should have the right amounts', async () => {
     const { amounts } = await renderSummary()
 
-    expect(amounts.year).not.toBeNull()
-    expect(amounts.remaining).not.toBeNull()
-    expect(amounts.bill).not.toBeNull()
-    expect(amounts.reserves).not.toBeNull()
-
-    expect(amounts.year).toBeVisible()
-    expect(amounts.remaining).toBeVisible()
-    expect(amounts.bill).toBeVisible()
-    expect(amounts.reserves).toBeVisible()
-
-    expect(amounts.year).toHaveTextContent('440.72 USD')
-    expect(amounts.remaining).toHaveTextContent('399,559.28 USD')
-    expect(amounts.bill).toHaveTextContent('400,000 USD')
-    expect(amounts.reserves).toHaveTextContent('+6,937.98 USD')
+    // ; ASI workarround
+    ;[
+      { name: 'year', amount: '440.72 USD' },
+      { name:'remaining', amount: '399,559.28 USD' },
+      { name:'bill', amount: '400,000 USD' },
+      { name:'reserves', amount: '+6,937.98 USD' }
+    ].forEach(row => {
+      expect(amounts[row.name]).not.toBeNull()
+      expect(amounts[row.name]).toBeVisible()
+      expect(amounts[row.name]).toHaveTextContent(row.amount)
+    })
   })
 })
 
-async function renderSummary (props) {
+async function renderSummary (emptyState = false) {
+  let app = mockApp()
+
+  if (emptyState) {
+    const emptyState = {
+      ...state,
+      employees: null,
+      payments: null
+    }
+    app = mockApp(emptyState) // empty state
+  }
+
   const summary = render(
-    <AragonContext.Provider value={mockApp}>
-      <YearlySalarySummary {...props} />
+    <AragonContext.Provider value={app}>
+      <YearlySalarySummary />
     </AragonContext.Provider>
   )
 
+  const year = summary.getByTestId('salary-paid-year')
+  const remaining = summary.getByTestId('salary-remaining')
+  const bill = summary.getByTestId('salary-bill')
+  const reserves = summary.getByTestId('salary-reserves')
+
   const titles = {
     summary: summary.getByTestId('salary-summary-title'),
-    year: summary.getByTestId('salary-paid-year-title'),
-    remaining: summary.getByTestId('salary-remaining-title'),
-    bill: summary.getByTestId('salary-bill-title'),
-    reserves: summary.getByTestId('salary-reserves-title'),
+    year: year.querySelector('span:first-of-type'),
+    remaining: remaining.querySelector('span:first-of-type'),
+    bill: bill.querySelector('span:first-of-type'),
+    reserves: reserves.querySelector('span:first-of-type')
   }
 
-  await waitForElement(() => summary.getByTestId('salary-reserves-amount'))
-
-  const amounts = {
-    year: summary.getByTestId('salary-paid-year-amount'),
-    remaining: summary.getByTestId('salary-remaining-amount'),
-    bill: summary.getByTestId('salary-bill-amount'),
-    reserves: summary.getByTestId('salary-reserves-amount'),
+  let amounts
+  let loadings
+  if (!emptyState) {
+    await waitForElement(() => summary.getByTestId('final-reserves'))
+    amounts = {
+      year: year.querySelector('span:last-of-type'),
+      remaining: remaining.querySelector('span:last-of-type'),
+      bill: bill.querySelector('span:last-of-type'),
+      reserves: reserves.querySelector('span:last-of-type'),
+    }
+  } else {
+    loadings = {
+      year: summary.getByTestId('loading-year'),
+      remaining: summary.getByTestId('loading-remaining'),
+      bill: summary.getByTestId('loading-bill'),
+    }
   }
 
-  return { summary, titles, amounts }
+  return { summary, titles, amounts, loadings }
 }

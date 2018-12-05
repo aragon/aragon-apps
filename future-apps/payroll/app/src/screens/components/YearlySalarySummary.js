@@ -104,47 +104,47 @@ class YearlySalarySummary extends React.Component {
         <SummaryTitle data-testid='salary-summary-title'>
           Yearly salary summary
         </SummaryTitle>
-        <SummaryRow>
-          <SummaryItem data-testid='salary-paid-year-title'>
+        <SummaryRow data-testid='salary-paid-year'>
+          <SummaryItem>
             Salary paid this year
           </SummaryItem>
           {summary ? (
-            <SummaryAmount data-testid='salary-paid-year-amount'>
+            <SummaryAmount>
               {summary.totalPaidThisYear}
             </SummaryAmount>
           ) : (
-            <Loading />
+            <Loading data-testid='loading-year'/>
           )}
         </SummaryRow>
-        <SummaryRow>
-          <SummaryItem data-testid='salary-remaining-title'>
+        <SummaryRow data-testid='salary-remaining'>
+          <SummaryItem>
             Remaining salary this year
           </SummaryItem>
           {summary ? (
-            <SummaryAmount data-testid='salary-remaining-amount'>
+            <SummaryAmount>
               {summary.remainingThisYear}
             </SummaryAmount>
           ) : (
-            <Loading />
+            <Loading data-testid='loading-remaining' />
           )}
         </SummaryRow>
 
         <Line />
 
-        <SummaryRow>
-          <SummaryItem data-testid='salary-bill-title'>
+        <SummaryRow data-testid='salary-bill'>
+          <SummaryItem>
             Total year salary bill
           </SummaryItem>
           {summary ? (
-            <SummaryAmount data-testid='salary-bill-amount'>
+            <SummaryAmount>
               {summary.totalYearSalaryBill}
             </SummaryAmount>
           ) : (
-            <Loading />
+            <Loading data-testid='loading-bill' />
           )}
         </SummaryRow>
-        <SummaryRow>
-          <SummaryItem data-testid='salary-reserves-title'>
+        <SummaryRow data-testid='salary-reserves'>
+          <SummaryItem>
             Cash reserves
           </SummaryItem>
           {cashReserves ? (
@@ -153,7 +153,7 @@ class YearlySalarySummary extends React.Component {
               symbol={denominationToken.symbol}
             />
           ) : (
-            <Loading />
+            <Loading data-testid='loading-reserves' />
           )}
         </SummaryRow>
       </Container>
@@ -197,8 +197,8 @@ const Loading = styled(Text).attrs({
   size: 'normal',
   color: theme.textTertiary
 })`
-  :before {
-    content: 'Loading. . .';
+  &::before {
+    content: 'Loading ...';
   }
 `
 
@@ -220,7 +220,7 @@ const AnimatedCashReserves = props => {
       {props => (
         <CashReserves
           data-testid={
-            cashReserves === props.number ? 'salary-reserves-amount' : ''
+            cashReserves === props.number ? 'final-reserves' : ''
           }
         >
           {format(props.number)}

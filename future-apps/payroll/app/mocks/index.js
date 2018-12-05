@@ -189,35 +189,38 @@ export const priceFeed = {
   }
 }
 
-export default {
-  state () {
-    return of(state)
-  },
+export default function (stateToReturn) {
+  const currentState = stateToReturn || state
+  return {
+    state () {
+      return of(currentState)
+    },
 
-  external (address, abi) {
-    let externalApp = {}
+    external (address, abi) {
+      let externalApp = {}
 
-    switch (address) {
-      case vaultAddress:
-        externalApp = vault
-        break
-      case priceFeedAddress:
-        externalApp = priceFeed
-        break
+      switch (address) {
+        case currentState.vaultAddress:
+          externalApp = vault
+          break
+        case currentState.priceFeedAddress:
+          externalApp = priceFeed
+          break
+      }
+
+      return externalApp
+    },
+
+    addEmployeeWithNameAndStartDate () {
+      return of(true)
+    },
+
+    determineAllocation () {
+      return of(true)
+    },
+
+    payday () {
+      return of(true)
     }
-
-    return externalApp
-  },
-
-  addEmployeeWithNameAndStartDate () {
-    return of(true)
-  },
-
-  determineAllocation () {
-    return of(true)
-  },
-
-  payday () {
-    return of(true)
   }
 }
