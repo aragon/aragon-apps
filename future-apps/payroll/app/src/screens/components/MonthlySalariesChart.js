@@ -2,8 +2,8 @@ import React from 'react'
 import styled from 'styled-components'
 import { subMonths, format } from 'date-fns'
 
-import { connect } from '../../context/AragonContext'
-import { LineChart } from '../../components/LineChart'
+import { connect } from '/context/AragonContext'
+import { LineChart } from '/components/LineChart'
 
 const MONTHS_AGO = 12
 const MAX_PROPORTION = 4/5

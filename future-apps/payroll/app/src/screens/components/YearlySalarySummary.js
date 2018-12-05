@@ -2,15 +2,15 @@ import React from 'react'
 import styled from 'styled-components'
 import { Spring, config } from 'react-spring'
 import { subYears, isWithinInterval, format } from 'date-fns'
-import { zip } from '../../rxjs'
+import { zip } from '/rxjs'
 
 import { theme, Text } from '@aragon/ui'
 
-import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
-import vaultAbi from '../../abi/vault-balance'
-import priceFeedAbi from '../../abi/price-feed'
-import { toDecimals } from '../../utils/math-utils'
-import { connect } from '../../context/AragonContext'
+import { formatCurrency, SECONDS_IN_A_YEAR } from '/utils/formatting'
+import vaultAbi from '/abi/vault-balance'
+import priceFeedAbi from '/abi/price-feed'
+import { toDecimals } from '/utils/math-utils'
+import { connect } from '/context/AragonContext'
 
 class YearlySalarySummary extends React.Component {
   state = {

@@ -41,7 +41,6 @@ class PaidSalaries extends React.Component {
 
     return (
       <React.Fragment>
-        { /* FIXME - Move filter to component*/ }
         <FilteWrapper>
           <FilterLabel>Paid Salaries</FilterLabel>
           <DropDown

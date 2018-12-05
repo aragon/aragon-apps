@@ -11,9 +11,9 @@ import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
 
 import YearlySalarySummary from './YearlySalarySummary'
-import AragonContext from '../../context/AragonContext'
+import AragonContext from '/context/AragonContext'
 
-import mockApp from '../../../mocks'
+import mockApp from 'mocks'
 
 const bodyUtils = bindElementToQueries(document.body)
 

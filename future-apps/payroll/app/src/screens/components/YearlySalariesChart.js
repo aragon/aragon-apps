@@ -2,8 +2,8 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { subQuarters, format } from 'date-fns'
 
-import { connect } from '../../context/AragonContext'
-import { LineChart } from '../../components/LineChart'
+import { connect } from '/context/AragonContext'
+import { LineChart } from '/components/LineChart'
 
 const MAX_PROPORTION = 4/5
 
