@@ -1,12 +1,13 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-
 import styled from 'styled-components'
-import Table from '../../components/Table'
 
-import { salaryType } from '../../types'
-import { formatDate } from '../../utils/formatting'
-import { Button, theme, SafeLink } from '@aragon/ui'
+import { theme } from '@aragon/ui'
+import Table from '/components/Table'
+import { TransactionBadge } from '/components/Badge'
+
+import { salaryType } from '/types'
+import { formatDate } from '/utils/formatting'
 
 const initializeColumns = (data, formatExchanged, formatTokenAmount) => {
   return [
@@ -27,11 +28,12 @@ const initializeColumns = (data, formatExchanged, formatTokenAmount) => {
       value: data => data.transactionAddress,
       defaultValue: 'Active',
       render: (formattedValue, rawValue, item) => (
-        <TransactionAddress>
-          <SafeLink href={`https://rinkeby.etherscan.io/tx/${item.transactionAddress}`} target="_blank">
-            {rawValue}
-          </SafeLink>
-        </TransactionAddress>
+        <TransactionBadge
+          tx={rawValue}
+          networkType="rinkeby"
+        >
+          {rawValue}
+        </TransactionBadge>
       )
     },
     {
@@ -63,13 +65,6 @@ const initializeColumns = (data, formatExchanged, formatTokenAmount) => {
 const Amount = styled.span`
   font-weight: 600;
   color: ${({ positive }) => (positive ? theme.positive : theme.negative)};
-`
-
-const TransactionAddress = styled.span`
-  width: 100px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 `
 
 const SalaryTable = (props) => {
