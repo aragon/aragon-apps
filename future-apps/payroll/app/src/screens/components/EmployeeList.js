@@ -1,15 +1,15 @@
 import React from 'react'
 import styled from 'styled-components'
 import BN from 'bn.js'
-import { totalPaidThisYear } from '../../utils/calculations'
+import { totalPaidThisYear } from '~/utils/calculations'
 
-import Section from '../../components/Layout/Section'
-import { connect } from '../../context/AragonContext'
+import Section from '~/components/Layout/Section'
+import { connect } from '~/context/AragonContext'
 import EmployeeTable from './EmployeeTable'
 import RoleFilter from './RoleFilter'
 import StatusFilter from './StatusFilter'
 
-import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
+import { formatCurrency, SECONDS_IN_A_YEAR } from '~/utils/formatting'
 
 const Container = styled.article`
   display: flex;

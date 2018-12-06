@@ -1,12 +1,12 @@
 import React from 'react'
 import styled from 'styled-components'
 import AvailableSalaryTable from './AvailableSalaryTable'
-import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
+import { formatCurrency, SECONDS_IN_A_YEAR } from '~/utils/formatting'
 import { differenceInSeconds } from 'date-fns'
-import { summation } from '../../utils/calculations'
+import { summation } from '~/utils/calculations'
 
-import { connect } from '../../context/AragonContext'
-import Section from '../../components/Layout/Section'
+import { connect } from '~/context/AragonContext'
+import Section from '~/components/Layout/Section'
 
 const AVAILABLE_BALANCE_TICK = 10000
 

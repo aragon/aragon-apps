@@ -1,11 +1,11 @@
 import React from 'react'
 import styled from 'styled-components'
 import TotalPayrollTable from './TotalPayrollTable'
-import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
-import { totalPaidThisYear, summation, MONTHS_IN_A_YEAR } from '../../utils/calculations'
+import { formatCurrency, SECONDS_IN_A_YEAR } from '~/utils/formatting'
+import { totalPaidThisYear, summation, MONTHS_IN_A_YEAR } from '~/utils/calculations'
 
-import { connect } from '../../context/AragonContext'
-import Section from '../../components/Layout/Section'
+import { connect } from '~/context/AragonContext'
+import Section from '~/components/Layout/Section'
 
 class TotalPayroll extends React.PureComponent {
   static defaultProps = {

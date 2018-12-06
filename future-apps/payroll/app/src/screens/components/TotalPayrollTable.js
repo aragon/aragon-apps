@@ -1,9 +1,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import Table from '../../components/Table'
-import { employeeType } from '../../types'
-import { formatDate } from '../../utils/formatting'
+import Table from '~/components/Table'
+import { employeeType } from '~/types'
+import { formatDate } from '~/utils/formatting'
 
 import { theme } from '@aragon/ui'
 
