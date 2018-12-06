@@ -17,6 +17,7 @@ class LineChart extends React.Component {
     dotRadius: PropTypes.number,
     animDelay: PropTypes.number,
     borderColor: PropTypes.string,
+    reset: PropTypes.bool,
     settings: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.number,
@@ -35,7 +36,9 @@ class LineChart extends React.Component {
     captionsHeight: 20,
     dotRadius: 7/2,
     animDelay: 500,
-    borderColor: 'rgba(209, 209, 209, 0.5)'
+    reset: false,
+    borderColor: 'rgba(209, 209, 209, 0.5)',
+    settings: []
   }
 
   state = {
@@ -70,10 +73,21 @@ class LineChart extends React.Component {
 
   render() {
     const { animate } = this.state
-    const { settings, width, height, captionsHeight, borderColor, durationSlices, dotRadius, springConfig, labels } = this.props
+    const {
+      settings,
+      width,
+      height,
+      captionsHeight,
+      borderColor,
+      durationSlices,
+      dotRadius,
+      springConfig,
+      labels,
+      reset
+    } = this.props
 
     // All the settings' values shuold have same length
-    const valuesLength = settings[0].values.length
+    const valuesLength = settings.length ? settings[0].values.length : 0
 
     return (
       <div>
@@ -82,6 +96,7 @@ class LineChart extends React.Component {
             from={{ progress: 0 }}
             to={{ progress: Number(animate) }}
             config={springConfig}
+            reset={reset}
           >
             {({ progress }) => (
               <svg viewBox={`0 0 ${width} ${height + captionsHeight}`}>

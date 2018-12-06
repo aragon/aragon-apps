@@ -2,38 +2,15 @@ import React from 'react'
 import styled from 'styled-components'
 import { Text, DropDown } from '@aragon/ui'
 
-import MonthlySalariesChart from './MonthlySalariesChart'
-import QuarterlySalariesChart from './QuarterlySalariesChart'
-import YearlySalariesChart from './YearlySalariesChart'
+import SalariesChart from './SalariesChart'
 
-const FILTER_OPTIONS = ['Monthly', 'Quarterly', 'Yearly']
-const [MONTHLY, QUARTERLY, YEARLY] = FILTER_OPTIONS
+import { CHART_TYPES } from './utils'
+
+const [MONTHLY, QUARTERLY, YEARLY] = CHART_TYPES
 
 class PaidSalaries extends React.Component {
   state = {
     activeFilter: 0
-  }
-
-  renderChart = (chartType) => {
-    switch (chartType) {
-      case MONTHLY:
-        return (
-           <MonthlySalariesChart />
-        )
-
-      case QUARTERLY:
-        return (
-          <QuarterlySalariesChart />
-        )
-
-      case YEARLY:
-        return (
-          <YearlySalariesChart />
-        )
-
-      default:
-        return null
-    }
   }
 
   render() {
@@ -44,14 +21,14 @@ class PaidSalaries extends React.Component {
         <FilteWrapper>
           <FilterLabel>Paid Salaries</FilterLabel>
           <DropDown
-            items={FILTER_OPTIONS}
+            items={CHART_TYPES}
             active={activeFilter}
             onChange={activeFilter => {
               this.setState({ activeFilter })
             }}
           />
         </FilteWrapper>
-        {this.renderChart(FILTER_OPTIONS[activeFilter])}
+        <SalariesChart type={CHART_TYPES[activeFilter]} />
       </React.Fragment>
     )
   }
