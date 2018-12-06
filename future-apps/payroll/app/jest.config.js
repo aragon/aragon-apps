@@ -80,8 +80,8 @@ module.exports = {
     "^/utils(.*)$": "<rootDir>/src/utils/$1",
     "^/context(.*)$": "<rootDir>/src/context/$1",
     "^/abi(.*)$": "<rootDir>/src/abi/$1",
+    "^/types(.*)$": "<rootDir>/src/types/$1",
     "^mocks$": "<rootDir>/mocks"
-
   },
 
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
