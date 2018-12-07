@@ -56,12 +56,13 @@ const eventMapping = ({
 })
 
 async function onInit (state) {
-  const [accountAddress, denominationToken] = await Promise.all([
+  const [accountAddress, denominationToken, network] = await Promise.all([
     getAccountAddress(),
-    getDenominationToken()
+    getDenominationToken(),
+    app.network().take(1).toPromise()
   ])
 
-  return { ...state, accountAddress, denominationToken }
+  return { ...state, accountAddress, denominationToken, network }
 }
 
 async function onChangeAccount (state, event) {

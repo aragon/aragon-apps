@@ -39,7 +39,7 @@ class PreviousSalary extends React.PureComponent {
   }
 
   render () {
-    const { salaryAllocation, employees, accountAddress, payments, denominationToken } = this.props
+    const { salaryAllocation, employees, accountAddress, payments, denominationToken, network } = this.props
     const { tokenFilter, dateRangeFilter } = this.state
     const filteredPayments = payments.filter(payment => payment.accountAddress === accountAddress)
 
@@ -79,6 +79,7 @@ class PreviousSalary extends React.PureComponent {
           onClearFilters={this.handleClearFilters}
           formatExchanged={customExchangedFormat}
           formatTokenAmount={customTokenAmountFormat}
+          network={network}
         />
       </StyledContainer>
     )
@@ -112,14 +113,16 @@ function mapStateToProps ({
   employees = [],
   accountAddress = {},
   payments = [],
-  denominationToken = []
+  denominationToken = [],
+  network = {}
 }) {
   return {
     accountAddress,
     denominationToken,
     employees,
     payments,
-    salaryAllocation
+    salaryAllocation,
+    network
   }
 }
 
