@@ -27,7 +27,7 @@ class YearlySalarySummary extends React.Component {
     )
   }
 
-  getSymmary = () => {
+  getSummary = () => {
     const { employees, payments, denominationToken } = this.props
 
     const totalYearSalaryBill =
@@ -96,7 +96,7 @@ class YearlySalarySummary extends React.Component {
 
     let summary
     if (employees && payments) {
-      summary = this.getSymmary()
+      summary = this.getSummary()
     }
 
     return (

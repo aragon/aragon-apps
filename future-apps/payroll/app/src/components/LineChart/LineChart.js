@@ -86,7 +86,7 @@ class LineChart extends React.Component {
       reset
     } = this.props
 
-    // All the settings' values shuold have same length
+    // All the settings' values should have same length
     const valuesLength = settings.length ? settings[0].values.length : 0
 
     return (
