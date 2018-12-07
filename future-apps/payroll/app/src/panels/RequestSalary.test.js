@@ -9,10 +9,11 @@ import {
 } from 'react-testing-library'
 import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
-import { of } from '../rxjs'
 
 import RequestSalaryPanel from './RequestSalary'
-import AragonContext from '../context/AragonContext'
+import AragonContext from '/context/AragonContext'
+
+import mockApp from 'mocks'
 
 const bodyUtils = bindElementToQueries(document.body)
 
@@ -65,81 +66,11 @@ describe('Request Salary panel', () => {
   })
 })
 
-const mockState = {
-  accountAddress: '0xb4124cEB3451635DAcedd11767f004d8a28c6eE7',
-  denominationToken: {
-    address: '0x3dEAc930Db4b27422Dce9Ee3F258DB9089C5c98e',
-    decimals: 18,
-    symbol: 'USD'
-  },
-  employees: [
-    {
-      accountAddress: '0xb4124cEB3451635DAcedd11767f004d8a28c6eE7',
-      accruedValue: 0,
-      domain: 'protofire.aragonid.eth',
-      endDate: null,
-      id: '1',
-      lastPayroll: 1542736089000,
-      name: 'ProtoFire',
-      role: 'Organization',
-      salary: 2535047025122316,
-      startDate: 1542736089000,
-      terminated: false
-    }
-  ],
-  priceFeedAddress: '0x79a8F61b0043f73DFD07A76c1f565332c9c4AfdC',
-  salaryAllocation: [
-    {
-      address: '0xa0b8084BFa960F50E309c242e19417375b4c427c',
-      allocation: 45,
-      symbol: 'TK1'
-    },
-    {
-      address: '0xb5c994DBaC8c086f574867D6791eb6F356141BA5',
-      allocation: 55,
-      symbol: 'TK2'
-    }
-  ],
-  tokens: [
-    {
-      address: '0xa0b8084BFa960F50E309c242e19417375b4c427c',
-      decimals: 18,
-      symbol: 'TK1'
-    },
-    {
-      address: '0xb5c994DBaC8c086f574867D6791eb6F356141BA5',
-      decimals: 18,
-      symbol: 'TK2'
-    },
-    {
-      address: '0x6d8c9dE9b200cd050Cb0072CD24325c01DFddb4f',
-      decimals: 18,
-      symbol: 'TK3'
-    }
-  ]
-}
-
-const mockApp = {
-  state () {
-    return of(mockState)
-  },
-
-  external () {
-    return {
-      get () {
-        return of({ xrt: 7500000000000000 })
-      }
-    }
-  },
-
-  payday () {
-    return of(true)
-  }
-}
-
 async function renderRequestPanel (props) {
+  const app = mockApp()
+
   const requestSalary = render(
-    <AragonContext.Provider value={mockApp}>
+    <AragonContext.Provider value={app}>
       <RequestSalaryPanel opened {...props} />
     </AragonContext.Provider>
   )

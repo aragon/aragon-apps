@@ -1,6 +1,7 @@
 import React from 'react'
 
 import EmployeeList from './components/EmployeeList'
+import KeyStats from './components/KeyStats'
 import Section from '../components/Layout/Section'
 
 const TeamPayroll = () => (
@@ -9,7 +10,7 @@ const TeamPayroll = () => (
       <EmployeeList />
     </Section.Left>
     <Section.Right>
-      {/* Side content */}
+      <KeyStats />
     </Section.Right>
   </Section>
 )
