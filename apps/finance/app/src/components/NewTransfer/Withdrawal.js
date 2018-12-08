@@ -141,6 +141,7 @@ class Withdrawal extends React.Component {
           <label>
             <Text.Block color={theme.textSecondary} smallcaps>
               Amount
+              <StyledAsterisk />
             </Text.Block>
           </label>
           <CombinedInput>
@@ -200,6 +201,16 @@ const CombinedInput = styled.div`
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
+`
+
+const StyledAsterisk = styled.span.attrs({
+  children: '*',
+  title: 'Required',
+})`
+  color: ${theme.accent};
+  float: right;
+  padding-top: 3px;
+  font-size: 12px;
 `
 
 const ValidationError = ({ message }) => (
