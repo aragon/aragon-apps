@@ -52,7 +52,7 @@ class NewVotePanelContent extends React.Component {
           </Button>
           <Warning>
             If you are allowed to directly create this vote, you will
-            automatically vote yay for it.
+            automatically vote yes for it.
           </Warning>
         </Form>
       </div>
