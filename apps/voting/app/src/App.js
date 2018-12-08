@@ -225,7 +225,7 @@ class App extends React.Component {
           <AppView
             appBar={
               <AppBar
-                title="Vote"
+                title="Voting"
                 endContent={
                   <Button mode="strong" onClick={this.handleCreateVoteOpen}>
                     New Vote
