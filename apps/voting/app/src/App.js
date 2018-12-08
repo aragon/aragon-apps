@@ -234,7 +234,7 @@ class App extends React.Component {
               />
             }
           >
-            {false && appStateReady && votes.length > 0 ? (
+            {appStateReady && votes.length > 0 ? (
               <Votes votes={preparedVotes} onSelectVote={this.handleVoteOpen} />
             ) : (
               <EmptyState onActivate={this.handleCreateVoteOpen} />
