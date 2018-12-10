@@ -8,6 +8,7 @@ import {
   BaseStyles,
   PublicUrl,
   SidePanel,
+  font,
   observe,
 } from '@aragon/ui'
 import BN from 'bn.js'
@@ -22,13 +23,14 @@ import { settingsContextType } from './utils/provideSettings'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
-import { makeEtherscanBaseUrl } from './utils'
+import { makeEtherscanBaseUrl, isMobile } from './utils'
 import { isVoteOpen, voteTypeFromContractEnum } from './vote-utils'
 import { shortenAddress, transformAddresses } from './web3-utils'
 
 class App extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
+    sendMessageToWrapper: PropTypes.func.isRequired,
   }
   static defaultProps = {
     appStateReady: false,
@@ -147,15 +149,21 @@ class App extends React.Component {
     this.setState(opened ? { voteSidebarOpened: true } : { currentVoteId: -1 })
   }
 
+  handleMenuPanelOpen = () => {
+    this.props.sendMessageToWrapper('menuPanel', true)
+  }
+
   shortenAddresses(label) {
-    return transformAddresses(label, (part, isAddress, index) =>
-      isAddress ? (
-        <span title={part} key={index}>
-          {shortenAddress(part)}
-        </span>
-      ) : (
-        <span key={index}>{part}</span>
-      )
+    return transformAddresses(
+      label,
+      (part, isAddress, index) =>
+        isAddress ? (
+          <span title={part} key={index}>
+            {shortenAddress(part)}
+          </span>
+        ) : (
+          <span key={index}>{part}</span>
+        )
     )
   }
   // Shorten addresses, render line breaks, auto link
@@ -225,7 +233,14 @@ class App extends React.Component {
           <AppView
             appBar={
               <AppBar
-                title="Voting"
+                title={
+                  <Title>
+                    {isMobile() && (
+                      <button onClick={this.handleMenuPanelOpen}>M</button>
+                    )}
+                    <TitleLabel>Voting</TitleLabel>
+                  </Title>
+                }
                 endContent={
                   <Button mode="strong" onClick={this.handleCreateVoteOpen}>
                     New Vote
@@ -278,6 +293,16 @@ class App extends React.Component {
     )
   }
 }
+
+const Title = styled.span`
+  display: flex;
+  align-items: center;
+`
+
+const TitleLabel = styled.span`
+  margin-right: 10px;
+  ${font({ size: 'xxlarge' })};
+`
 
 const Main = styled.div`
   height: 100vh;
