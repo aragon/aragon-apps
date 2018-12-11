@@ -3,7 +3,6 @@ import { Text } from '@aragon/ui'
 
 import Input from './BaseInput'
 import DateInput from './DateInput'
-import EntitySelect from './EntitySelect'
 import DateRangeInput from './DateRangeInput'
 
 // Text
@@ -24,9 +23,6 @@ Input.Currency = styled(Input.Number).attrs({
 Input.Date = DateInput
 
 Input.DateRange = DateRangeInput
-
-// Entity
-Input.Entity = EntitySelect
 
 // Static
 Input.Static = styled(Text).attrs({

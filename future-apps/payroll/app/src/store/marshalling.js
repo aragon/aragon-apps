@@ -15,13 +15,14 @@ export function employee (data) {
   const result = {
     id: data.id || data.employeeId,
     accountAddress: data.accountAddress,
-    domain: data.name,
+    name: data.name,
     salary: currency(data.denominationSalary),
     accruedValue: currency(data.accruedValue),
     lastPayroll: date(data.lastPayroll),
     startDate: date(data.startDate),
     endDate: date(data.endDate),
-    terminated: !!data.terminated
+    terminated: !!data.terminated,
+    role: data.role
   }
 
   return result

@@ -14,7 +14,7 @@ const Container = styled.div`
 `
 
 const IconStyled = styled(
-  ({ component, ...props }) => React.cloneElement(component, props)
+  ({ component, parentHeight, ...props }) => React.cloneElement(component, props)
 )`
   position: absolute;
   top: ${({ parentHeight }) => {

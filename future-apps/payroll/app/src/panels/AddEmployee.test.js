@@ -4,8 +4,7 @@ import React from 'react'
 import {
   cleanup,
   fireEvent,
-  render,
-  waitForElement
+  render
 } from 'react-testing-library'
 import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
@@ -13,6 +12,8 @@ import { format as formatDate } from 'date-fns'
 
 import AddEmployeePanel from './AddEmployee'
 import AragonContext from '../context/AragonContext'
+
+import Factory from '../../test/factory'
 
 const bodyUtils = bindElementToQueries(document.body)
 
@@ -41,43 +42,33 @@ describe('Add new employee panel', () => {
   })
 
   describe('Fields', () => {
-    describe('Entity field', () => {
-      it('renders a search input', () => {
+    describe('Address field', () => {
+      it('renders an alphanumeric input', () => {
         const { fields } = renderAddEmployeePanel()
 
-        expect(fields.entity).not.toBeNull()
-        expect(fields.entity).toBeVisible()
-        expect(fields.entity.type).toBe('search')
+        expect(fields.address).not.toBeNull()
+        expect(fields.address).toBeVisible()
+        expect(fields.address.type).toBe('text')
       })
+    })
 
-      it('allows to search for an entity', async () => {
-        const { form, fields } = renderAddEmployeePanel()
-        const searchText = 'protofire'
+    describe('Name field', () => {
+      it('renders an alphanumeric input', () => {
+        const { fields } = renderAddEmployeePanel()
 
-        expect(fields.entity.value).toBe('')
+        expect(fields.name).not.toBeNull()
+        expect(fields.name).toBeVisible()
+        expect(fields.name.type).toBe('text')
+      })
+    })
 
-        // Enter search text into the field
-        fireEvent.change(fields.entity, { target: { value: searchText } })
+    describe('Role field', () => {
+      it('renders an alphanumeric input', () => {
+        const { fields } = renderAddEmployeePanel()
 
-        // Wait until the suggestions appear
-        const suggestion = await waitForElement(() =>
-          form.querySelector('ul > li:first-child')
-        )
-
-        expect(suggestion).not.toBeNull()
-        expect(suggestion).toHaveTextContent(
-          'ProtoFire (protofire.aragonid.eth)'
-        )
-
-        // Select first suggestion
-        fireEvent.click(suggestion)
-
-        // Verify that the data for the selected entity is shown
-        expect(fields.name).toHaveTextContent('ProtoFire')
-        expect(fields.role).toHaveTextContent('Organization')
-        expect(fields.accountAddress).toHaveTextContent(
-          'xb4124cEB3451635DAcedd11767f004d8a28c6eE7'
-        )
+        expect(fields.role).not.toBeNull()
+        expect(fields.role).toBeVisible()
+        expect(fields.role.type).toBe('text')
       })
     })
 
@@ -109,67 +100,168 @@ describe('Add new employee panel', () => {
   })
 
   describe('Validations', () => {
-    it('entity field is required', async () => {
-      const { fields, buttons, searchEntity } = renderAddEmployeePanel()
+    it('address field is required', async () => {
+      const { fields, buttons } = renderAddEmployeePanel()
+      const { address, name, role, salary } = fields
+
+      const account = Factory.createAccountArgs()
 
       expect(buttons.submit).toHaveAttribute('disabled')
+
+      // Fill in the Name field with a valid value
+      fireEvent.change(name, { target: { value: account.name } })
+
+      expect(name.value).toBe(account.name)
+      expect(buttons.submit).toHaveAttribute('disabled')
+
+      // Fill in the Role field with a valid value
+      fireEvent.change(role, { target: { value: account.role } })
+
+      expect(buttons.submit).toHaveAttribute('disabled')
+      expect(role.value).toBe(account.role)
 
       // Fill in Salary field with a valid value
-      fireEvent.change(fields.salary, {
-        target: { value: '40000' }
-      })
+      const salaryAmount = '40000'
+      fireEvent.change(salary, { target: { value: salaryAmount } })
 
-      // Empty value for entity field
-      expect(fields.entity.value).toBe('')
+      expect(buttons.submit).toHaveAttribute('disabled')
+      expect(salary.value).toBe(salaryAmount)
+
+      // Empty value for address field
+      expect(address.value).toBe('')
       expect(buttons.submit).toHaveAttribute('disabled')
 
-      // Valid value for entity field
-      const suggestion = await searchEntity('protofire.aragonid.eth')
-      fireEvent.click(suggestion)
+      // Fill in Address field with a valid value
+      fireEvent.change(address, { target: { value: account.address } })
 
+      expect(address.value).toBe(account.address)
       expect(buttons.submit).not.toHaveAttribute('disabled')
     })
 
     it('allows only positive salaries', async () => {
-      const { fields, buttons, searchEntity } = renderAddEmployeePanel()
+      const { fields, buttons } = renderAddEmployeePanel()
+      const { address, name, role, salary } = fields
 
+      const account = Factory.createAccountArgs()
+      let salaryAmount
+
+      // When the form initializes, the submit button is disabled
       expect(buttons.submit).toHaveAttribute('disabled')
 
-      // Fill in Entity field with a valid value
-      const suggestion = await searchEntity('protofire.aragonid.eth')
-      fireEvent.click(suggestion)
+      // Fill in the Name field with a valid value
+      fireEvent.change(name, { target: { value: account.name } })
 
+      expect(name.value).toBe(account.name)
+      expect(buttons.submit).toHaveAttribute('disabled')
+
+      // Fill in the Role field with a valid value
+      fireEvent.change(role, { target: { value: account.role } })
+
+      expect(buttons.submit).toHaveAttribute('disabled')
+      expect(role.value).toBe(account.role)
+
+      // Fill in Address field with a valid value
+      fireEvent.change(address, { target: { value: account.address } })
+
+      expect(address.value).toBe(account.address)
       expect(buttons.submit).toHaveAttribute('disabled')
 
       // Try with empty salary
-      fireEvent.change(fields.salary, {
-        target: { value: '' }
-      })
+      salaryAmount = ''
+      fireEvent.change(salary, { target: { value: salaryAmount } })
 
-      expect(fields.accountAddress).toHaveTextContent(
-        'xb4124cEB3451635DAcedd11767f004d8a28c6eE7'
-      )
+      expect(salary.value).toBe('')
       expect(buttons.submit).toHaveAttribute('disabled')
 
       // Try with negative salary
-      fireEvent.change(fields.salary, {
-        target: { value: '-40000' }
-      })
+      salaryAmount = '-40000'
+      fireEvent.change(salary, { target: { value: salaryAmount } })
 
+      expect(salary.value).toBe(salaryAmount)
       expect(buttons.submit).toHaveAttribute('disabled')
 
       // Try with salary equal to 0
-      fireEvent.change(fields.salary, {
-        target: { value: '0' }
-      })
+      salaryAmount = '0'
+      fireEvent.change(salary, { target: { value: salaryAmount } })
 
+      expect(salary.value).toBe(salaryAmount)
       expect(buttons.submit).toHaveAttribute('disabled')
 
       // Try with positive salary
-      fireEvent.change(fields.salary, {
-        target: { value: '40000' }
-      })
+      salaryAmount = '40000'
+      fireEvent.change(salary, { target: { value: salaryAmount } })
 
+      expect(salary.value).toBe(salaryAmount)
+      expect(buttons.submit).not.toHaveAttribute('disabled')
+    })
+
+    it('name field is required', async () => {
+      const { fields, buttons } = renderAddEmployeePanel()
+      const { address, name, role, salary } = fields
+
+      const account = Factory.createAccountArgs()
+
+      // When the form initializes, the submit button is disabled
+      expect(buttons.submit).toHaveAttribute('disabled')
+
+      // Fill in the Address field with a valid value
+      fireEvent.change(address, { target: { value: account.address } })
+
+      expect(address.value).toBe(account.address)
+      expect(buttons.submit).toHaveAttribute('disabled')
+
+      // Fill in the Role field with a valid value
+      fireEvent.change(role, { target: { value: account.role } })
+
+      expect(role.value).toBe(account.role)
+      expect(buttons.submit).toHaveAttribute('disabled')
+
+      // Fill in Salary field with a valid value
+      const salaryAmount = '40000'
+      fireEvent.change(salary, { target: { value: salaryAmount } })
+
+      expect(salary.value).toBe(salaryAmount)
+      expect(buttons.submit).toHaveAttribute('disabled')
+
+      // Fill in Name field with a valid value
+      fireEvent.change(name, { target: { value: account.name } })
+
+      expect(name.value).toBe(account.name)
+      expect(buttons.submit).not.toHaveAttribute('disabled')
+    })
+
+    it('role field is required', async () => {
+      const { fields, buttons } = renderAddEmployeePanel()
+      const { address, name, role, salary } = fields
+
+      const account = Factory.createAccountArgs()
+
+      // When the form initializes, the submit button is disabled
+      expect(buttons.submit).toHaveAttribute('disabled')
+
+      // Fill in the Name field with a valid value
+      fireEvent.change(name, { target: { value: account.name } })
+
+      expect(name.value).toBe(account.name)
+      expect(buttons.submit).toHaveAttribute('disabled')
+
+      // Fill in the Address field with a valid value
+      fireEvent.change(address, { target: { value: account.address } })
+
+      expect(address.value).toBe(account.address)
+      expect(buttons.submit).toHaveAttribute('disabled')
+
+      // Fill in Salary field with a valid value
+      const salaryAmount = '40000'
+      fireEvent.change(salary, { target: { value: salaryAmount } })
+
+      expect(salary.value).toBe(salaryAmount)
+      expect(buttons.submit).toHaveAttribute('disabled')
+
+      // Fill in Role field with a valid value
+      fireEvent.change(role, { target: { value: account.role } })
+
+      expect(role.value).toBe(account.role)
       expect(buttons.submit).not.toHaveAttribute('disabled')
     })
   })
@@ -205,14 +297,11 @@ function renderAddEmployeePanel (props) {
   const form = panel.getByTestId('add-employee-form')
 
   const fields = {
-    entity: panel.queryByLabelText('Entity'),
+    address: panel.queryByLabelText('Address'),
+    name: panel.queryByLabelText('Name'),
+    role: panel.queryByLabelText('Role'),
     salary: panel.queryByLabelText('Salary'),
-    startDate: panel.queryByLabelText('Start Date'),
-
-    // Static
-    name: panel.queryByTestId('entity-name'),
-    role: panel.queryByTestId('entity-role'),
-    accountAddress: panel.queryByTestId('entity-account-address')
+    startDate: panel.queryByLabelText('Start Date')
   }
 
   const buttons = {
@@ -220,13 +309,5 @@ function renderAddEmployeePanel (props) {
     submit: modalRoot.querySelector('button[type="submit"]')
   }
 
-  const searchEntity = searchText => {
-    fireEvent.change(fields.entity, {
-      target: { value: searchText }
-    })
-
-    return waitForElement(() => form.querySelector('ul > li:first-child'))
-  }
-
-  return { form, fields, buttons, searchEntity }
+  return { form, fields, buttons }
 }
