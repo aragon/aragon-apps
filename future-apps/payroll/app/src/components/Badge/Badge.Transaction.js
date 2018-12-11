@@ -11,28 +11,28 @@ export const TransactionBadge = ({
   tx,
   shape
 }) => {
-  const networkTypes = ["rinkeby", "mainnet", "rpc"]
+  const networkTypes = ['main', 'kovan', 'rinkeby', 'ropsten']
   if (networkTypes.indexOf(networkType) === -1) {
-    console.error(`Network ${networkType} is not valid. Please use one of the following: ${networkTypes.join(', ')}`)
-    return null;
+    console.warn(`Network ${networkType} is not valid. Please use one of the following: ${networkTypes.join(', ')}`)
   }
 
-  const url = `https://${networkType}.etherscan.io/tx/${tx}`
+  // FIXME - Wehn we move this to aragon-ui, I think this should be similar to https://github.com/aragon/aragon-ui/blob/master/src/components/IdentityBadge/IdentityBadge.js#L41
+  const url = `https://${networkType === 'main' ? '' : `${networkType}.`}etherscan.io/tx/${tx}`
 
   return (
-    <SafeLink
-      href={url}
-      target="_blank"
+    <StyledBadge
+      background={background}
+      foreground={foreground}
+      shorten={shorten}
+      fontSize={fontSize}
     >
-      <StyledBadge
-        background={background}
-        foreground={foreground}
-        shorten={shorten}
-        fontSize={fontSize}
+      <SafeLink
+        href={url}
+        target="_blank"
       >
         {tx}
-      </StyledBadge>
-    </SafeLink>
+      </SafeLink>
+    </StyledBadge>
   )
 }
 

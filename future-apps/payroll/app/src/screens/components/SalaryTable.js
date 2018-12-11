@@ -9,7 +9,7 @@ import { TransactionBadge } from '/components/Badge'
 import { salaryType } from '/types'
 import { formatDate } from '/utils/formatting'
 
-const initializeColumns = (data, formatExchanged, formatTokenAmount) => {
+const initializeColumns = (data, formatExchanged, formatTokenAmount, network) => {
   return [
     {
       name: 'date',
@@ -30,7 +30,7 @@ const initializeColumns = (data, formatExchanged, formatTokenAmount) => {
       render: (formattedValue, rawValue, item) => (
         <TransactionBadge
           tx={rawValue}
-          networkType="rinkeby"
+          networkType={network.type}
         >
           {rawValue}
         </TransactionBadge>
@@ -68,7 +68,9 @@ const Amount = styled.span`
 `
 
 const SalaryTable = (props) => {
-  const columns = initializeColumns(props.data, props.formatExchanged, props.formatTokenAmount)
+  const { data, formatExchanged, formatTokenAmount, network } = props
+  const columns = initializeColumns(data, formatExchanged, formatTokenAmount, network)
+
   return (
     <Table
       paginated

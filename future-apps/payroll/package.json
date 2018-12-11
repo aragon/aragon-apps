@@ -40,7 +40,7 @@
     "@aragon/apps-shared-minime": "^1.0.0",
     "@aragon/apps-token-manager": "^2.0.0",
     "@aragon/apps-vault": "^4.0.0",
-    "@aragon/cli": "git+https://github.com/aragon/aragon-cli.git#003578c34ae41198f3c746c9e38c92562dfcced7",
+    "@aragon/cli": "5.2.1",
     "@aragon/test-helpers": "^1.0.1",
     "eth-gas-reporter": "^0.1.12",
     "ethereumjs-abi": "^0.6.5",
