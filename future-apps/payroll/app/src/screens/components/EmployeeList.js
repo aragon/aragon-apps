@@ -1,15 +1,15 @@
 import React from 'react'
 import styled from 'styled-components'
 import BN from 'bn.js'
-import { differenceInYears } from 'date-fns'
+import { totalPaidThisYear } from '~/utils/calculations'
 
-import Section from '../../components/Layout/Section'
-import { connect } from '../../context/AragonContext'
+import Section from '~/components/Layout/Section'
+import { connect } from '~/context/AragonContext'
 import EmployeeTable from './EmployeeTable'
 import RoleFilter from './RoleFilter'
 import StatusFilter from './StatusFilter'
 
-import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
+import { formatCurrency, SECONDS_IN_A_YEAR } from '~/utils/formatting'
 
 const Container = styled.article`
   display: flex;
@@ -96,23 +96,6 @@ class EmployeeList extends React.Component {
       </Container>
     )
   }
-}
-
-function totalPaidThisYear (payments, accountAddress) {
-  const init = 0
-  const reducer = (acc, payment) => acc + payment.exchanged
-  const filter = (p) => {
-    const yearDiff = differenceInYears(
-      new Date(p.date),
-      new Date()
-    )
-    return (
-      p.accountAddress === accountAddress &&
-      yearDiff === 0
-    )
-  }
-  const totalPaid = payments.filter(filter).reduce(reducer, init)
-  return totalPaid
 }
 
 function parseEmployees (payments, employees) {

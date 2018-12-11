@@ -6,9 +6,9 @@ import { getAccountAddress } from './account'
 import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './employees'
 import { getDenominationToken, getToken } from './tokens'
 import { date, payment } from './marshalling'
-// import financeEvents from './abi/finance-events'
+// import financeEvents from '../abi/finance-events'
 
-export default function configureStore (financeAddress) {
+export default function configureStore (financeAddress, vaultAddress) {
   // const financeApp = app.external(financeAddress, financeEvents)
 
   return app.store(async (state, { event, ...data }) => {
@@ -25,7 +25,7 @@ export default function configureStore (financeAddress) {
 
     return state
   }, [
-    of({ event: Event.Init }),
+    of({ event: Event.Init, vaultAddress }),
 
     // Handle account change
     app.accounts().map(([accountAddress]) => {
@@ -55,14 +55,14 @@ const eventMapping = ({
   [Event.TerminateEmployee]: onTerminateEmployee
 })
 
-async function onInit (state) {
+async function onInit (state, { vaultAddress }) {
   const [accountAddress, denominationToken, network] = await Promise.all([
     getAccountAddress(),
     getDenominationToken(),
     app.network().take(1).toPromise()
   ])
 
-  return { ...state, accountAddress, denominationToken, network }
+  return { ...state, vaultAddress, accountAddress, denominationToken, network }
 }
 
 async function onChangeAccount (state, event) {

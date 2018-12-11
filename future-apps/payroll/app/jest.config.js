@@ -77,10 +77,14 @@ module.exports = {
   moduleNameMapper: {
     "^/rxjs$": "<rootDir>/src/rxjs.js",
     "^/components(.*)$": "<rootDir>/src/components/$1",
+    "^~/components(.*)$": "<rootDir>/src/components/$1",
     "^/utils(.*)$": "<rootDir>/src/utils/$1",
+    "^~/utils(.*)$": "<rootDir>/src/utils/$1",
     "^/context(.*)$": "<rootDir>/src/context/$1",
+    "^~/context(.*)$": "<rootDir>/src/context/$1",
     "^/abi(.*)$": "<rootDir>/src/abi/$1",
     "^/types(.*)$": "<rootDir>/src/types/$1",
+    "^~/types(.*)$": "<rootDir>/src/types/$1",
     "^mocks$": "<rootDir>/mocks"
   },
 
