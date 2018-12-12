@@ -143,17 +143,4 @@ contract("Payroll, modifying employees,", function(accounts) {
     assert.equal(employee[0], account_new, "Employee account doesn't match")
   })
 
-  it("modifies employee role", async () => {
-    const newRole = 'Super Saiyajin'
-    const receipt = await payroll.setEmployeeRole(employeeId1, newRole)
-    let employeeRole = employeeId1 = getEvent(receipt, "SetEmployeeRole", "role")
-    assert.equal(employeeRole, newRole, "Employee role doesn't match")
-  })
-
-  it("fails modifying non-existent employee role", async () => {
-    return assertRevert(async () => {
-      await payroll.setEmployeeRole(employeeId1 + 10, 'New Role')
-    })
-  })
-
 })

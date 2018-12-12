@@ -30,7 +30,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
     bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("CHANGE_PRICE_FEED_ROLE");
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
-    bytes32 constant public MANAGE_EMPLOYEE_TITLE_ROLE = keccak256("MANAGE_EMPLOYEE_TITLE_ROLE");
 
     uint128 internal constant ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
     uint64 internal constant MAX_UINT64 = uint64(-1);
@@ -94,7 +93,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     event SendPayroll(address indexed employee, address indexed token, uint amount);
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
-    event SetEmployeeRole(uint256 indexed employeeId, string role);
 
     modifier employeeExists(uint256 employeeId) {
         // Check employee exists and is active
@@ -332,23 +330,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
 
         emit DetermineAllocation(employeeIds[msg.sender], msg.sender);
     }
-
-    /**
-     * @notice Set employee #`_employeeId`'s role to `_role`.
-     * @param _employeeId Employee's identifier
-     * @param _role Employee's role
-     */
-    function setEmployeeRole(
-        uint256 _employeeId,
-        string _role
-    )
-        external
-        employeeExists(_employeeId)
-        authP(MANAGE_EMPLOYEE_TITLE_ROLE, arr(_employeeId))
-    {
-        emit SetEmployeeRole(_employeeId, _role);
-    }
-
 
     /**
      * @dev Withdraw payment by employee (the caller). The amount owed since last call will be transferred.

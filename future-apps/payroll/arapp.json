@@ -70,11 +70,6 @@
       "name": "Modify Rate Expiry Time",
       "id": "MODIFY_RATE_EXPIRY_ROLE",
       "params": ["New rate expiry time", "Old rate expiry time"]
-    },
-    {
-      "name": "Set employee role",
-      "id": "MANAGE_EMPLOYEE_TITLE_ROLE",
-      "params": ["Employee Id"]
     }
   ],
   "path": "contracts/Payroll.sol"
