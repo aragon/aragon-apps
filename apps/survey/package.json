@@ -30,7 +30,7 @@
     "/scripts",
     "/test"
   ],
-  "author": "Aragon Institution MTU <contact@aragon.one>",
+  "author": "Aragon Association <legal@aragon.org>",
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "description": "",
   "devDependencies": {

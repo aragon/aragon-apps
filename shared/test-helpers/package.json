@@ -1,6 +1,8 @@
 {
   "name": "@aragon/test-helpers",
   "version": "1.0.1",
+  "author": "Aragon Assocation <legal@aragon.org>",
+  "license": "AGPL-3.0-or-later",
   "devDependencies": {
     "ethereumjs-abi": "^0.6.4"
   }
