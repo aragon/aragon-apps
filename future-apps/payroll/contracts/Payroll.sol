@@ -52,7 +52,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     string private constant ERROR_EXCHANGE_RATE_ZERO = "PAYROLL_EXCHANGE_RATE_ZERO";
     string private constant ERROR_PAST_TERMINATION_DATE = "PAYROLL_PAST_TERMINATION_DATE";
 
-
     struct Employee {
         address accountAddress; // unique, but can be changed over time
         mapping(address => uint8) allocation;
@@ -118,7 +117,8 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         address _denominationToken,
         IFeed _priceFeed,
         uint64 _rateExpiryTime
-    ) external
+    )
+        external
         onlyInit
     {
         require(isContract(_finance), ERROR_FINANCE_NOT_CONTRACT);
