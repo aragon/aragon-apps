@@ -13,6 +13,7 @@ import {
   font,
   observe,
   BreakPoint,
+  breakpoint,
 } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
@@ -105,6 +106,7 @@ class App extends React.Component {
   render() {
     const {
       appStateReady,
+      contentPadding,
       groupMode,
       holders,
       maxAccountTokens,
@@ -123,6 +125,7 @@ class App extends React.Component {
         <BaseStyles />
         <Main>
           <AppView
+            padding={contentPadding}
             appBar={
               <AppBar
                 title={
@@ -192,8 +195,27 @@ class App extends React.Component {
   }
 }
 
+const ResponsiveApp = props => (
+  <React.Fragment>
+    <BreakPoint to="medium">
+      <App contentPadding={0} {...props} />
+    </BreakPoint>
+    <BreakPoint from="medium">
+      <App contentPadding={30} {...props} />
+    </BreakPoint>
+  </React.Fragment>
+)
+
 const Main = styled.div`
   height: 100vh;
+  width: 100vw;
+
+  ${breakpoint(
+    'medium',
+    `
+      width: auto;
+    `
+  )};
 `
 
 const Title = styled.span`
@@ -251,4 +273,4 @@ export default observe(
       }
     }),
   {}
-)(App)
+)(ResponsiveApp)
