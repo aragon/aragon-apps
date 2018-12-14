@@ -54,21 +54,7 @@ module.exports = async (cb) => {
       throw err
     }
 
-    const proccessedVotes = await Promise.all(votes.map(async ({ transactionHash, args }) => {
-      const { voter, supports, stake } = args
-      const { blockNumber, input } = await getTransaction(transactionHash)
-
-      return {
-        voter,
-        supports,
-        stake: formatNumber(stake, decimals),
-        blockNumber,
-        transactionHash,
-        clientVote: input.endsWith('1')
-      }
-    }))
-
-    const keys = [
+    const headerKeys = [
       'Voter address',
       'Supports',
       'Stake',
@@ -77,13 +63,24 @@ module.exports = async (cb) => {
       'Used Aragon client'
     ]
 
-    const csvHeader = keys.join(',') + '\n'
-    const csvBody = proccessedVotes.map(
-      vote => Object.values(vote).join(',')
-    ).join('\n')
+    const proccessedVotes = await Promise.all(votes.map(async ({ transactionHash, args }) => {
+      const { voter, supports, stake } = args
+      const { blockNumber, input } = await getTransaction(transactionHash)
+      return [
+        voter,
+        supports,
+        formatNumber(stake, decimals),
+        blockNumber,
+        transactionHash,
+        input.endsWith('1') // Did they use the client to vote?
+      ]
+    }))
+
+    const csvData = [headerKeys, ...proccessedVotes]
+    const csvText = csvData.map(data => data.join(',')).join('\n')
 
     const filename = `vote-${voteId}.csv`
-    fs.appendFile(filename, csvHeader + csvBody, function (err) {
+    fs.appendFile(filename, csvText, function (err) {
       if (err) {
         throw err
       }
