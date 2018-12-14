@@ -25,14 +25,14 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     bytes32 public constant EXECUTE_PAYMENTS_ROLE = keccak256("EXECUTE_PAYMENTS_ROLE");
     bytes32 public constant MANAGE_PAYMENTS_ROLE = keccak256("MANAGE_PAYMENTS_ROLE");
 
-    uint256 internal constant NO_PAYMENT = 0;
+    uint256 internal constant NO_RECURRING_PAYMENT = 0;
     uint256 internal constant NO_TRANSACTION = 0;
-    uint256 internal constant MAX_PAYMENTS_PER_TX = 20;
+    uint256 internal constant MAX_RECURRING_PAYMENTS_PER_TX = 20;
     uint256 internal constant MAX_UINT = uint256(-1);
     uint64 internal constant MAX_UINT64 = uint64(-1);
 
     string private constant ERROR_COMPLETE_TRANSITION = "FINANCE_COMPLETE_TRANSITION";
-    string private constant ERROR_NO_PAYMENT = "FINANCE_NO_PAYMENT";
+    string private constant ERROR_NO_RECURRING_PAYMENT = "FINANCE_NO_RECURRING_PAYMENT";
     string private constant ERROR_NO_TRANSACTION = "FINANCE_NO_TRANSACTION";
     string private constant ERROR_NO_PERIOD = "FINANCE_NO_PERIOD";
     string private constant ERROR_VAULT_NOT_CONTRACT = "FINANCE_VAULT_NOT_CONTRACT";
@@ -47,7 +47,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_PAYMENT_RECEIVER = "FINANCE_PAYMENT_RECEIVER";
     string private constant ERROR_TOKEN_TRANSFER_FROM_REVERTED = "FINANCE_TKN_TRANSFER_FROM_REVERT";
     string private constant ERROR_VALUE_MISMATCH = "FINANCE_VALUE_MISMATCH";
-    string private constant ERROR_PAYMENT_INACTIVE = "FINANCE_PAYMENT_INACTIVE";
+    string private constant ERROR_RECURRING_PAYMENT_INACTIVE = "FINANCE_RECURRING_PAYMENT_INACTIVE";
     string private constant ERROR_REMAINING_BUDGET = "FINANCE_REMAINING_BUDGET";
 
     // Order optimized for storage
@@ -230,7 +230,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 _token,
                 _receiver,
                 _amount,
-                NO_PAYMENT,   // unrelated to any payment id; it isn't created
+                NO_RECURRING_PAYMENT,   // unrelated to any payment id; it isn't created
                 0,   // also unrelated to any payment repeats
                 _reference
             );
@@ -575,10 +575,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     function _executePayment(uint256 _paymentId) internal {
         RecurringPayment storage payment = recurringPayments[_paymentId];
-        require(!payment.inactive, ERROR_PAYMENT_INACTIVE);
+        require(!payment.inactive, ERROR_RECURRING_PAYMENT_INACTIVE);
 
         uint64 payed = 0;
-        while (nextPaymentTime(_paymentId) <= getTimestamp64() && payed < MAX_PAYMENTS_PER_TX) {
+        while (nextPaymentTime(_paymentId) <= getTimestamp64() && payed < MAX_RECURRING_PAYMENTS_PER_TX) {
             if (!_canMakePayment(payment.token, payment.amount)) {
                 emit PaymentFailure(_paymentId);
                 return;
@@ -636,7 +636,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _token,
             _sender,
             _amount,
-            NO_PAYMENT, // unrelated to any existing payment
+            NO_RECURRING_PAYMENT, // unrelated to any existing payment
             0, // and no payment repeats
             _reference
         );
