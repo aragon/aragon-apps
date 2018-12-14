@@ -36,7 +36,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     uint8 internal constant MAX_ALLOWED_TOKENS = 25; // for loop in `payday()` uses ~220k gas per available token
     uint256 internal constant MAX_ACCRUED_VALUE = 2**128;
 
-    string private constant ERROR_NO_EMPLOYEE = "PAYROLL_NO_EMPLOYEE";
+    string private constant ERROR_NON_ACTIVE_EMPLOYEE = "PAYROLL_NON_ACTIVE_EMPLOYEE";
     string private constant ERROR_EMPLOYEE_DOES_NOT_MATCH = "PAYROLL_EMPLOYEE_DOES_NOT_MATCH";
     string private constant ERROR_FINANCE_NOT_CONTRACT = "PAYROLL_FINANCE_NOT_CONTRACT";
     string private constant ERROR_TOKEN_ALREADY_ALLOWED = "PAYROLL_TOKEN_ALREADY_ALLOWED";
@@ -61,7 +61,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         uint256 accruedValue;
         uint64 lastPayroll;
         uint64 endDate;
-        bool terminated;
     }
 
     Finance public finance;
@@ -95,9 +94,10 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
 
-    modifier employeeExists(uint256 employeeId) {
+    modifier employeeActive(uint256 employeeId) {
+        Employee storage employee = employees[employeeId];
         // Check employee exists and is active
-        require(employeeIds[employees[employeeId].accountAddress] != 0 && !employees[employeeId].terminated, ERROR_NO_EMPLOYEE);
+        require(employeeIds[employee.accountAddress] != 0 && employee.endDate > getTimestamp64(), ERROR_NON_ACTIVE_EMPLOYEE);
         _;
     }
 
@@ -236,7 +236,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         uint256 _denominationSalary
     )
         external
-        employeeExists(_employeeId)
+        employeeActive(_employeeId)
         authP(SET_EMPLOYEE_SALARY_ROLE, arr(_employeeId, _denominationSalary))
     {
         uint64 timestamp = getTimestamp64();
@@ -261,7 +261,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         uint256 _employeeId
     )
         external
-        employeeExists(_employeeId)
+        employeeActive(_employeeId)
         authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
     {
         _terminateEmployee(_employeeId, getTimestamp64());
@@ -277,7 +277,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         uint64 _endDate
     )
         external
-        employeeExists(_employeeId)
+        employeeActive(_employeeId)
         authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
     {
         _terminateEmployee(_employeeId, _endDate);
@@ -293,7 +293,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         uint256 _amount
     )
         external
-        employeeExists(_employeeId)
+        employeeActive(_employeeId)
         authP(ADD_ACCRUED_VALUE_ROLE, arr(_employeeId, _amount))
     {
         require(_amount <= MAX_ACCRUED_VALUE, ERROR_ACCRUED_VALUE_TOO_BIG);
@@ -377,7 +377,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @return Employee's accrued value
      * @return Employee's last payment date
      * @return Employee's termination date (max uint64 if none)
-     * @return Bool indicating if employee is terminated
      */
     function getEmployeeByAddress(address _accountAddress)
         public
@@ -387,8 +386,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
             uint256 denominationSalary,
             uint256 accruedValue,
             uint64 lastPayroll,
-            uint64 endDate,
-            bool terminated
+            uint64 endDate
         )
     {
         employeeId = employeeIds[_accountAddress];
@@ -399,7 +397,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         accruedValue = employee.accruedValue;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
-        terminated = employee.terminated;
     }
 
     /**
@@ -410,7 +407,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @return Employee's accrued value
      * @return Employee's last payment date
      * @return Employee's termination date (max uint64 if none)
-     * @return Bool indicating if employee is terminated
      */
     function getEmployee(uint256 _employeeId)
         public
@@ -420,8 +416,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
             uint256 denominationSalary,
             uint256 accruedValue,
             uint64 lastPayroll,
-            uint64 endDate,
-            bool terminated
+            uint64 endDate
         )
     {
         Employee storage employee = employees[_employeeId];
@@ -431,7 +426,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         accruedValue = employee.accruedValue;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
-        terminated = employee.terminated;
     }
 
     /**
@@ -580,10 +574,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         }
 
         // Try to remove employee
-        if (employee.terminated &&
-            employee.endDate <= timestamp &&
-            employee.accruedValue == 0
-        ) {
+        if (employee.endDate <= timestamp && employee.accruedValue == 0) {
             delete employeeIds[employee.accountAddress];
             delete employees[_employeeId];
         }
@@ -594,7 +585,6 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         require(_endDate >= getTimestamp64(), ERROR_PAST_TERMINATION_DATE);
 
         Employee storage employee = employees[_employeeId];
-        employee.terminated = true;
         employee.endDate = _endDate;
 
         emit TerminateEmployee(_employeeId, employee.accountAddress, _endDate);
