@@ -21,7 +21,7 @@ const VoteSummary = ({ vote, tokenSymbol, tokenDecimals, ready }) => {
       <Header>
         <span>
           <Text color={theme.textSecondary} smallcaps>
-            Current votes{' '}
+            Current support{' '}
           </Text>
           <Text size="xsmall" color={theme.textSecondary}>
             ({Math.round(supportRequired * 100)}% needed)
