@@ -1,6 +1,7 @@
 {
   "name": "@aragon/apps-shared-minime",
   "version": "1.0.0",
+  "author": "Jordi Baylina",
   "license": "GPL-3.0-or-later",
   "scripts": {
     "compile": "truffle compile",

@@ -1,10 +1,10 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 
 contract Zombie {
     address public owner;
 
-    function Zombie(address _owner) public {
+    constructor(address _owner) public {
         owner = _owner;
     }
 

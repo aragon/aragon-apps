@@ -485,7 +485,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     function nextPaymentTime(uint256 _paymentId) public view recurringPaymentExists(_paymentId) returns (uint64) {
-        RecurringPayment memory payment = recurringPayments[_paymentId];
+        RecurringPayment storage payment = recurringPayments[_paymentId];
 
         if (payment.repeats >= payment.maxRepeats) {
             return MAX_UINT64; // re-executes in some billions of years time... should not need to worry
