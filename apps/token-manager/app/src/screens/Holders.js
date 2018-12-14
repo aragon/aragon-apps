@@ -42,7 +42,10 @@ class Holders extends React.Component {
             selected={selectedTab === 0}
             header={
               <TableRow>
-                <StyledTableHeader title={groupMode ? 'Owner' : 'Holder'} />
+                <StyledTableHeader
+                  title={groupMode ? 'Owner' : 'Holder'}
+                  groupmode={groupMode}
+                />
                 {!groupMode && (
                   <StyledTableHeader title="Balance" align="right" />
                 )}
@@ -86,7 +89,7 @@ class Holders extends React.Component {
 }
 
 const StyledTableHeader = styled(TableHeader)`
-  width: 50%;
+  width: ${({ groupmode }) => (groupmode ? 100 : 50)}%;
 
   ${breakpoint(
     'medium',
