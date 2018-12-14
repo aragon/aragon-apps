@@ -175,7 +175,7 @@ const SpacedBlock = styled.div`
 `
 
 // Use this function to sort by ETH and then token symbol
-const orderBalancesByEthAndSymbol = (tokenA, tokenB) => {
+const compareBalancesByEthAndSymbol = (tokenA, tokenB) => {
   if (tokenA.address === ETHER_TOKEN_FAKE_ADDRESS) {
     return -1
   }
@@ -203,7 +203,7 @@ export default observe(
                 decimals: parseInt(balance.decimals, 10),
               },
             }))
-            .sort(orderBalancesByEthAndSymbol)
+            .sort(compareBalancesByEthAndSymbol)
         : []
 
       const transactionsBn = transactions
