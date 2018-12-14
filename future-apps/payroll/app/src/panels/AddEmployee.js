@@ -2,7 +2,7 @@ import React from 'react'
 import { createPortal } from 'react-dom'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { Button, Field, SidePanel, IconBlank } from '@aragon/ui'
+import { Button, Field, IconBlank, SidePanel, Text } from '@aragon/ui'
 import { startOfDay } from 'date-fns'
 
 import Input from '../components/Input'
@@ -11,9 +11,16 @@ import validator from '../data/validation'
 import { toDecimals } from '../utils/math-utils'
 import { SECONDS_IN_A_YEAR } from '../utils/formatting'
 
+const NO_ERROR = Symbol('NO_ERROR')
+const ADDRESS_NOT_AVAILABLE_ERROR = Symbol('ADDRESS_NOT_AVAILABLE_ERROR')
+const ADDRESS_INVALID_FORMAT = Symbol('ADDRESS_INVALID_FORMAT')
+
 class AddEmployee extends React.PureComponent {
   static initialState = {
-    address: '',
+    address: {
+      value: '',
+      error: NO_ERROR
+    },
     name: '',
     role: '',
     salary: '',
@@ -23,16 +30,11 @@ class AddEmployee extends React.PureComponent {
   static validate = validator.compile({
     type: 'object',
     properties: {
-      address: {
-        format: 'address'
-      },
       name: {
-        type: 'string',
-        minLength: 3
+        type: 'string'
       },
       role: {
-        type: 'string',
-        minLength: 3
+        type: 'string'
       },
       salary: {
         type: 'number',
@@ -42,26 +44,25 @@ class AddEmployee extends React.PureComponent {
         format: 'date'
       }
     },
-    required: ['salary', 'startDate', 'name', 'role', 'address']
+    required: ['salary', 'startDate', 'name', 'role']
+  })
+
+  static validateAddress = validator.compile({
+    type: 'object',
+    properties: {
+      value: {
+        format: 'address'
+      }
+    },
+    required: ['value']
   })
 
   state = AddEmployee.initialState
 
-  componentDidUpdate (prevProps, prevState) {
-    if (this.state !== prevState) {
-      this.setState((state) => {
-        const isValid = AddEmployee.validate(state)
-        return {
-          isValid
-        }
-      })
-    }
-  }
-
   focusFirstEmptyField = () => {
     const { address, name, role, salary } = this.state
 
-    if (!address) {
+    if (!address.value) {
       this.address.input.focus()
     } else if (!name) {
       this.nameInput.input.focus()
@@ -73,7 +74,14 @@ class AddEmployee extends React.PureComponent {
   }
 
   handleAddressChange = (event) => {
-    this.setState({ address: event.target.value })
+    const error = NO_ERROR
+    const value = event.target.value
+    this.setState({
+      address: {
+        value,
+        error
+      }
+    })
   }
 
   handleNameChange = (event) => {
@@ -84,13 +92,45 @@ class AddEmployee extends React.PureComponent {
     this.setState({ role: event.target.value })
   }
 
+  handleSalaryChange = (event) => {
+    this.setState({ salary: event.target.value })
+  }
+
+  handleStartDateChange = (date) => {
+    this.setState({ startDate: date })
+  }
+
   handleFormSubmit = (event) => {
     event.preventDefault()
     const { denominationToken, app, isAddressAvailable } = this.props
     const { address, name, salary, startDate } = this.state
-    const _isAddressAvailable = isAddressAvailable(address)
+    const _address = address.value
+    const _isValidAddress = AddEmployee.validateAddress(address)
+    const _isAddressAvailable = isAddressAvailable(_address)
 
-    if (app && _isAddressAvailable) {
+    if (!_isValidAddress) {
+      this.setState(({ address }) => ({
+        address: {
+          ...address,
+          error: ADDRESS_INVALID_FORMAT
+        }
+      }))
+      return
+    }
+
+    if (!_isAddressAvailable) {
+      this.setState(({ address }) => ({
+        address: {
+          ...address,
+          error: ADDRESS_NOT_AVAILABLE_ERROR
+        }
+      }))
+      return
+    }
+
+    const isValidForm = AddEmployee.validate(this.state)
+
+    if (app && isValidForm) {
       const initialDenominationSalary = salary / SECONDS_IN_A_YEAR
 
       const adjustedAmount = toDecimals(initialDenominationSalary.toString(), denominationToken.decimals, {
@@ -100,7 +140,7 @@ class AddEmployee extends React.PureComponent {
       const _startDate = Math.floor(startDate.getTime() / 1000)
 
       app.addEmployeeWithNameAndStartDate(
-        address,
+        _address,
         adjustedAmount,
         name,
         _startDate
@@ -114,14 +154,6 @@ class AddEmployee extends React.PureComponent {
         }
       })
     }
-  }
-
-  handleSalaryChange = (event) => {
-    this.setState({ salary: event.target.value })
-  }
-
-  handleStartDateChange = (date) => {
-    this.setState({ startDate: date })
   }
 
   handlePanelToggle = (opened) => {
@@ -148,7 +180,15 @@ class AddEmployee extends React.PureComponent {
 
   render () {
     const { opened, onClose } = this.props
-    const { address, name, role, salary, startDate, isValid } = this.state
+    const { address, name, role, salary, startDate } = this.state
+
+    let errorMessage
+    if (address.error === ADDRESS_INVALID_FORMAT) {
+      errorMessage = 'Address must be a valid ethereum address'
+    } else if (address.error === ADDRESS_NOT_AVAILABLE_ERROR) {
+      errorMessage = 'Address is taken'
+    }
+
     const panel = (
       <SidePanel
         title='Add new employee'
@@ -164,10 +204,9 @@ class AddEmployee extends React.PureComponent {
           <Field label='Address'>
             <Input.Text
               innerRef={this.setAddressRef}
-              value={address}
+              value={address.value}
               onChange={this.handleAddressChange}
-              icon={<IconBlank />}
-              iconposition='right'
+              required
             />
           </Field>
 
@@ -176,7 +215,7 @@ class AddEmployee extends React.PureComponent {
               innerRef={this.setNameInputRef}
               value={name}
               onChange={this.handleNameChange}
-              icon={<IconBlank />}
+              required
             />
           </Field>
 
@@ -185,8 +224,7 @@ class AddEmployee extends React.PureComponent {
               innerRef={this.setRoleInputRef}
               value={role}
               onChange={this.handleRoleChange}
-              icon={<IconBlank />}
-              iconposition='right'
+              required
             />
           </Field>
 
@@ -196,6 +234,7 @@ class AddEmployee extends React.PureComponent {
               value={salary}
               onChange={this.handleSalaryChange}
               icon={<IconBlank />}
+              required
             />
           </Field>
 
@@ -206,12 +245,16 @@ class AddEmployee extends React.PureComponent {
               onChange={this.handleStartDateChange}
               icon={<IconBlank />}
               iconposition='right'
+              required
             />
           </Field>
 
-          <Button type='submit' mode='strong' disabled={!isValid}>
+          <Button type='submit' mode='strong'>
             Add new employee
           </Button>
+          <Messages>
+            {errorMessage && <ValidationError message={errorMessage} />}
+          </Messages>
         </Form>
       </SidePanel>
     )
@@ -228,12 +271,40 @@ AddEmployee.propsType = {
   opened: PropTypes.bool
 }
 
+// TODO: replace IconBlank with IconCross - sgobotta
+const ValidationError = ({ message }) => (
+  <ValidationErrorBlock name='validation-error-block'>
+    <StyledIconBlank />
+    <StyledText size='small'>
+      {message}
+    </StyledText>
+  </ValidationErrorBlock>
+)
+
+const StyledIconBlank = styled(IconBlank)`
+  color: red;
+`
+
+const StyledText = styled(Text)`
+  position: relative;
+  bottom: 6px;
+  margin-left: 10px;
+`
+
+const Messages = styled.div`
+  margin-top: 15px;
+`
+
+const ValidationErrorBlock = styled.div`
+  margin-top: 15px;
+`
+
 const Form = styled.form`
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 20px;
 
-  > :first-child, > :nth-last-child(-n+1) {
+  > :first-child, > :nth-last-child(-n+2) {
     grid-column: span 2;
   }
 

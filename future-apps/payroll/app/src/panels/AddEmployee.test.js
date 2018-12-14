@@ -16,6 +16,7 @@ import AragonContext from '../context/AragonContext'
 import Factory from '../../test/factory'
 
 const bodyUtils = bindElementToQueries(document.body)
+const modalRoot = bodyUtils.getByTestId('modal-root')
 
 afterEach(cleanup)
 
@@ -99,170 +100,68 @@ describe('Add new employee panel', () => {
     })
   })
 
-  describe('Validations', () => {
-    it('address field is required', async () => {
+  describe('Errors', () => {
+    it('address is not valid message should be shown on invalid addresses input', () => {
       const { fields, buttons } = renderAddEmployeePanel()
       const { address, name, role, salary } = fields
 
       const account = Factory.createAccountArgs()
 
-      expect(buttons.submit).toHaveAttribute('disabled')
-
       // Fill in the Name field with a valid value
       fireEvent.change(name, { target: { value: account.name } })
-
       expect(name.value).toBe(account.name)
-      expect(buttons.submit).toHaveAttribute('disabled')
 
       // Fill in the Role field with a valid value
       fireEvent.change(role, { target: { value: account.role } })
-
-      expect(buttons.submit).toHaveAttribute('disabled')
       expect(role.value).toBe(account.role)
 
       // Fill in Salary field with a valid value
       const salaryAmount = '40000'
       fireEvent.change(salary, { target: { value: salaryAmount } })
-
-      expect(buttons.submit).toHaveAttribute('disabled')
       expect(salary.value).toBe(salaryAmount)
 
-      // Empty value for address field
-      expect(address.value).toBe('')
-      expect(buttons.submit).toHaveAttribute('disabled')
+      // Fill in Address field with a valid value
+      fireEvent.change(address, { target: { value: 'an invalid address' } })
+      expect(address.value).toBe('an invalid address')
+
+      fireEvent.click(buttons.submit)
+
+      const errorBlock = modalRoot.querySelector('div[name="validation-error-block"] span')
+
+      // Asserts the error message is shown
+      expect(errorBlock).toHaveTextContent('Address must be a valid ethereum address')
+    })
+
+    it('address is taken message should be shown on an already used address input', () => {
+      const { fields, buttons } = renderAddEmployeePanel()
+      const { address, name, role, salary } = fields
+
+      const account = Factory.createAccountArgs()
+
+      // Fill in the Name field with a valid value
+      fireEvent.change(name, { target: { value: account.name } })
+      expect(name.value).toBe(account.name)
+
+      // Fill in the Role field with a valid value
+      fireEvent.change(role, { target: { value: account.role } })
+      expect(role.value).toBe(account.role)
+
+      // Fill in Salary field with a valid value
+      const salaryAmount = '40000'
+      fireEvent.change(salary, { target: { value: salaryAmount } })
+      expect(salary.value).toBe(salaryAmount)
 
       // Fill in Address field with a valid value
       fireEvent.change(address, { target: { value: account.address } })
-
       expect(address.value).toBe(account.address)
-      expect(buttons.submit).not.toHaveAttribute('disabled')
-    })
 
-    it('allows only positive salaries', async () => {
-      const { fields, buttons } = renderAddEmployeePanel()
-      const { address, name, role, salary } = fields
+      // Submits the form
+      fireEvent.click(buttons.submit)
 
-      const account = Factory.createAccountArgs()
-      let salaryAmount
+      const errorBlock = modalRoot.querySelector('div[name="validation-error-block"] span')
 
-      // When the form initializes, the submit button is disabled
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Fill in the Name field with a valid value
-      fireEvent.change(name, { target: { value: account.name } })
-
-      expect(name.value).toBe(account.name)
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Fill in the Role field with a valid value
-      fireEvent.change(role, { target: { value: account.role } })
-
-      expect(buttons.submit).toHaveAttribute('disabled')
-      expect(role.value).toBe(account.role)
-
-      // Fill in Address field with a valid value
-      fireEvent.change(address, { target: { value: account.address } })
-
-      expect(address.value).toBe(account.address)
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Try with empty salary
-      salaryAmount = ''
-      fireEvent.change(salary, { target: { value: salaryAmount } })
-
-      expect(salary.value).toBe('')
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Try with negative salary
-      salaryAmount = '-40000'
-      fireEvent.change(salary, { target: { value: salaryAmount } })
-
-      expect(salary.value).toBe(salaryAmount)
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Try with salary equal to 0
-      salaryAmount = '0'
-      fireEvent.change(salary, { target: { value: salaryAmount } })
-
-      expect(salary.value).toBe(salaryAmount)
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Try with positive salary
-      salaryAmount = '40000'
-      fireEvent.change(salary, { target: { value: salaryAmount } })
-
-      expect(salary.value).toBe(salaryAmount)
-      expect(buttons.submit).not.toHaveAttribute('disabled')
-    })
-
-    it('name field is required', async () => {
-      const { fields, buttons } = renderAddEmployeePanel()
-      const { address, name, role, salary } = fields
-
-      const account = Factory.createAccountArgs()
-
-      // When the form initializes, the submit button is disabled
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Fill in the Address field with a valid value
-      fireEvent.change(address, { target: { value: account.address } })
-
-      expect(address.value).toBe(account.address)
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Fill in the Role field with a valid value
-      fireEvent.change(role, { target: { value: account.role } })
-
-      expect(role.value).toBe(account.role)
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Fill in Salary field with a valid value
-      const salaryAmount = '40000'
-      fireEvent.change(salary, { target: { value: salaryAmount } })
-
-      expect(salary.value).toBe(salaryAmount)
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Fill in Name field with a valid value
-      fireEvent.change(name, { target: { value: account.name } })
-
-      expect(name.value).toBe(account.name)
-      expect(buttons.submit).not.toHaveAttribute('disabled')
-    })
-
-    it('role field is required', async () => {
-      const { fields, buttons } = renderAddEmployeePanel()
-      const { address, name, role, salary } = fields
-
-      const account = Factory.createAccountArgs()
-
-      // When the form initializes, the submit button is disabled
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Fill in the Name field with a valid value
-      fireEvent.change(name, { target: { value: account.name } })
-
-      expect(name.value).toBe(account.name)
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Fill in the Address field with a valid value
-      fireEvent.change(address, { target: { value: account.address } })
-
-      expect(address.value).toBe(account.address)
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Fill in Salary field with a valid value
-      const salaryAmount = '40000'
-      fireEvent.change(salary, { target: { value: salaryAmount } })
-
-      expect(salary.value).toBe(salaryAmount)
-      expect(buttons.submit).toHaveAttribute('disabled')
-
-      // Fill in Role field with a valid value
-      fireEvent.change(role, { target: { value: account.role } })
-
-      expect(role.value).toBe(account.role)
-      expect(buttons.submit).not.toHaveAttribute('disabled')
+      // Asserts the error message is shown
+      expect(errorBlock).toHaveTextContent('Address is taken')
     })
   })
 })
@@ -288,20 +187,19 @@ function renderAddEmployeePanel (props) {
 
   render(
     <AragonContext.Provider value={mockApp}>
-      <AddEmployeePanel opened {...props} />
+      <AddEmployeePanel opened {...props} isAddressAvailable={(address) => Factory.createInitialAccounts().every(e => e.address !== address)} />
     </AragonContext.Provider>
   )
 
-  const modalRoot = bodyUtils.getByTestId('modal-root')
   const panel = bindElementToQueries(modalRoot)
   const form = panel.getByTestId('add-employee-form')
 
   const fields = {
-    address: panel.queryByLabelText('Address'),
-    name: panel.queryByLabelText('Name'),
-    role: panel.queryByLabelText('Role'),
-    salary: panel.queryByLabelText('Salary'),
-    startDate: panel.queryByLabelText('Start Date')
+    address: panel.queryByLabelText('Address*'),
+    name: panel.queryByLabelText('Name*'),
+    role: panel.queryByLabelText('Role*'),
+    salary: panel.queryByLabelText('Salary*'),
+    startDate: panel.queryByLabelText('Start Date*')
   }
 
   const buttons = {
