@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   theme,
+  unselectable,
 } from '@aragon/ui'
 import { toDecimals } from '../../lib/math-utils'
 import { addressPattern, isAddress } from '../../lib/web3-utils'
@@ -139,9 +140,10 @@ class Withdrawal extends React.Component {
         </Field>
         <AmountField>
           <label>
-            <Text.Block color={theme.textSecondary} smallcaps>
+            <StyledTextBlock>
               Amount
-            </Text.Block>
+              <StyledAsterisk />
+            </StyledTextBlock>
           </label>
           <CombinedInput>
             <TextInput.Number
@@ -200,6 +202,24 @@ const CombinedInput = styled.div`
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
+`
+
+const StyledTextBlock = styled(Text.Block).attrs({
+  color: theme.textSecondary,
+  smallcaps: true,
+})`
+  ${unselectable()};
+  display: flex;
+`
+
+const StyledAsterisk = styled.span.attrs({
+  children: '*',
+  title: 'Required',
+})`
+  color: ${theme.accent};
+  margin-left: auto;
+  padding-top: 3px;
+  font-size: 12px;
 `
 
 const ValidationError = ({ message }) => (

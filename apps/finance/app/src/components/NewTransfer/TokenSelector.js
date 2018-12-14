@@ -98,6 +98,7 @@ class TokenSelector extends React.Component {
             items={items}
             active={activeIndex}
             onChange={this.handleChange}
+            required
             wide
           />
         </Field>
@@ -108,6 +109,7 @@ class TokenSelector extends React.Component {
               placeholder="SYM…"
               value={customToken.value}
               onChange={this.handleCustomTokenChange}
+              required
               wide
             />
           </Field>
