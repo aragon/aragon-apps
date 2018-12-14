@@ -20,10 +20,11 @@ module.exports = (owner) => ({
   },
 
   async getTimePassed (payroll, employeeId) {
-    let employee = await payroll.getEmployee.call(employeeId)
-    let currentTime = await payroll.getTimestampPublic.call()
+    const employee = await payroll.getEmployee.call(employeeId)
+    const lastPayroll = employee[3]
+    const currentTime = await payroll.getTimestampPublic.call()
 
-    return currentTime - employee[4]
+    return currentTime - lastPayroll
   },
 
   async redistributeEth (accounts, finance) {
@@ -52,7 +53,7 @@ module.exports = (owner) => ({
     const CHANGE_PERIOD_ROLE = await financeBase.CHANGE_PERIOD_ROLE()
     const CHANGE_BUDGETS_ROLE = await financeBase.CHANGE_BUDGETS_ROLE()
     const EXECUTE_PAYMENTS_ROLE = await financeBase.EXECUTE_PAYMENTS_ROLE()
-    const DISABLE_PAYMENTS_ROLE = await financeBase.DISABLE_PAYMENTS_ROLE()
+    const MANAGE_PAYMENTS_ROLE = await financeBase.MANAGE_PAYMENTS_ROLE()
     const TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
 
     const receipt1 = await daoFact.newDAO(owner)
@@ -62,16 +63,16 @@ module.exports = (owner) => ({
     await acl.createPermission(owner, dao.address, APP_MANAGER_ROLE, owner, { from: owner })
 
     // finance
-    const receipt2 = await dao.newAppInstance('0x5678', financeBase.address, { from: owner })
+    const receipt2 = await dao.newAppInstance('0x5678', financeBase.address, '0x', false, { from: owner })
     const finance = getContract('Finance').at(getEvent(receipt2, 'NewAppProxy', 'proxy'))
 
     await acl.createPermission(ANY_ENTITY, finance.address, CREATE_PAYMENTS_ROLE, owner, { from: owner })
     await acl.createPermission(ANY_ENTITY, finance.address, CHANGE_PERIOD_ROLE, owner, { from: owner })
     await acl.createPermission(ANY_ENTITY, finance.address, CHANGE_BUDGETS_ROLE, owner, { from: owner })
     await acl.createPermission(ANY_ENTITY, finance.address, EXECUTE_PAYMENTS_ROLE, owner, { from: owner })
-    await acl.createPermission(ANY_ENTITY, finance.address, DISABLE_PAYMENTS_ROLE, owner, { from: owner })
+    await acl.createPermission(ANY_ENTITY, finance.address, MANAGE_PAYMENTS_ROLE, owner, { from: owner })
 
-    const receipt3 = await dao.newAppInstance('0x1234', vaultBase.address, { from: owner })
+    const receipt3 = await dao.newAppInstance('0x1234', vaultBase.address, '0x', false, { from: owner })
     vault = getContract('Vault').at(getEvent(receipt3, 'NewAppProxy', 'proxy'))
     await acl.createPermission(finance.address, vault.address, TRANSFER_ROLE, owner, { from: owner })
     await vault.initialize()
@@ -90,7 +91,7 @@ module.exports = (owner) => ({
     const CHANGE_PRICE_FEED_ROLE = await payrollBase.CHANGE_PRICE_FEED_ROLE()
     const MODIFY_RATE_EXPIRY_ROLE = await payrollBase.MODIFY_RATE_EXPIRY_ROLE()
 
-    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, { from: owner })
+    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
     const payroll = getContract('PayrollMock').at(getEvent(receipt, 'NewAppProxy', 'proxy'))
 
     const acl = await getContract('ACL').at(await dao.acl())

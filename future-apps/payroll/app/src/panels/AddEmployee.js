@@ -98,12 +98,14 @@ class AddEmployee extends React.PureComponent {
       const accountAddress = this.state.entity.accountAddress
       const initialDenominationSalary = this.state.salary / SECONDS_IN_A_YEAR
       const name = this.state.entity.domain
+      const role = this.state.entity.role
       const startDate = Math.floor(this.state.startDate.getTime() / 1000)
 
-      app.addEmployeeWithNameAndStartDate(
+      app.addEmployee(
         accountAddress,
         initialDenominationSalary,
         name,
+        role,
         startDate
       ).subscribe(employee => {
           if (employee) {

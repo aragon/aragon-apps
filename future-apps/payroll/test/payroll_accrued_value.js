@@ -3,12 +3,6 @@ const getContract = name => artifacts.require(name)
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 contract('Payroll, accrued value,', async (accounts) => {
-  const USD_DECIMALS= 18
-  const USD_PRECISION = 10**USD_DECIMALS
-  const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
-  const ETH = '0x0'
-  const rateExpiryTime = 1000
-
   const [owner, employee1, _] = accounts
   const {
     deployErc20TokenAndDeposit,
@@ -18,6 +12,13 @@ contract('Payroll, accrued value,', async (accounts) => {
     getDaoFinanceVault,
     initializePayroll
   } = require('./helpers.js')(owner)
+
+  const USD_DECIMALS = 18
+  const USD_PRECISION = 10**USD_DECIMALS
+  const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
+  const ETH = '0x0'
+  const rateExpiryTime = 1000
+
   const salary1 = 1000
   const erc20Token1Decimals = 18
 
@@ -50,7 +51,6 @@ contract('Payroll, accrued value,', async (accounts) => {
     await redistributeEth(accounts, finance)
   })
 
-
   beforeEach(async () => {
     payroll = await initializePayroll(dao, payrollBase, finance, usdToken, priceFeed, rateExpiryTime)
 
@@ -58,7 +58,7 @@ contract('Payroll, accrued value,', async (accounts) => {
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
 
     // add employee
-    const receipt = await payroll.addEmployee(employee1, salary1)
+    const receipt = await payroll.addEmployeeShort(employee1, salary1, 'Kakaroto', 'Saiyajin')
     employeeId1 = getEvent(receipt, 'AddEmployee', 'employeeId')
   })
 
@@ -69,29 +69,9 @@ contract('Payroll, accrued value,', async (accounts) => {
   })
 
   it('fails adding an accrued Value too large', async () => {
-    const accruedValue = new web3.BigNumber(await payroll.MAX_ACCRUED_VALUE()).plus(1)
+    const accruedValue = new web3.BigNumber(await payroll.getMaxAccruedValue()).plus(1)
     return assertRevert(async () => {
       await payroll.addAccruedValue(employeeId1, accruedValue)
-    })
-  })
-
-  it('fails trying to terminate an employee in the past', async () => {
-    const nowMock = new Date().getTime()
-    const terminationDate = nowMock - 1
-
-    await payroll.mockSetTimestamp(nowMock)
-
-    return assertRevert(async () => {
-      await payroll.terminateEmployee(employeeId1, terminationDate)
-    })
-  })
-
-  it('fails trying to re-enable employee', async () => {
-    const timestamp = parseInt(await payroll.getTimestampPublic.call(), 10)
-    await payroll.terminateEmployeeNow(employeeId1)
-    await payroll.mockSetTimestamp(timestamp + 500);
-    return assertRevert(async () => {
-      await payroll.terminateEmployee(employeeId1, timestamp + SECONDS_IN_A_YEAR)
     })
   })
 

@@ -1,6 +1,26 @@
 {
-  "appName": "payroll.aragonpm.eth",
-  "version": "0.1.0",
+  "environments": {
+    "default": {
+      "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1",
+      "appName": "payroll.aragonpm.eth",
+      "network": "rpc"
+    },
+    "rinkeby": {
+      "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
+      "appName": "payroll.aragonpm.eth",
+      "network": "rinkeby"
+    },
+    "staging": {
+      "registry": "0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939",
+      "appName": "payroll.aragonpm.eth",
+      "network": "rinkeby"
+    },
+    "mainnet": {
+      "registry": "0x314159265dd8dbb310642f98f50c066173c1259b",
+      "appName": "payroll.aragonpm.eth",
+      "network": "mainnet"
+    }
+  },
   "dependencies": [
     {
       "appName": "finance.aragonpm.eth",
@@ -9,7 +29,7 @@
       "state": "finance",
       "requiredPermissions": [
         {
-          "name": "TRANSFER_ROLE",
+          "name": "CREATE_PAYMENTS_ROLE",
           "params": "*"
         }
       ]
@@ -19,7 +39,7 @@
     {
       "name": "Add employees",
       "id": "ADD_EMPLOYEE_ROLE",
-      "params": ["Account address", "Initial yearly payroll", "Start date"]
+      "params": ["Account address", "Initial yearly salary", "Start date"]
     },
     {
       "name": "Terminate employees",
@@ -29,7 +49,7 @@
     {
       "name": "Set employee salary",
       "id": "SET_EMPLOYEE_SALARY_ROLE",
-      "params": ["Employee Id", "Amount"]
+      "params": ["Employee Id", "Yearly salary"]
     },
     {
       "name": "Add accrued value for employee",
@@ -39,17 +59,17 @@
     {
       "name": "Allowed Tokens Manager",
       "id": "ALLOWED_TOKENS_MANAGER_ROLE",
-      "params": "Token"
+      "params": ["Token"]
     },
     {
       "name": "Change Price Feed",
       "id": "CHANGE_PRICE_FEED_ROLE",
-      "params": ["Old Price Feed", "New Price Feed"]
+      "params": ["New price feed", "Old price feed"]
     },
     {
       "name": "Modify Rate Expiry Time",
       "id": "MODIFY_RATE_EXPIRY_ROLE",
-      "params": ["Rate expiry time"]
+      "params": ["New rate expiry time", "Old rate expiry time"]
     }
   ],
   "path": "contracts/Payroll.sol"
