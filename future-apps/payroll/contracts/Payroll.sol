@@ -405,13 +405,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      * @return Employee's address to receive payments
      * @return Employee's annual salary, per second in denomination token
      * @return Employee's accrued value
-<<<<<<< HEAD
-     * @return Employee's name
-     * @return Employee's last payment received date
-     * @return Employee's start date
-=======
      * @return Employee's last payment date
->>>>>>> master
      * @return Employee's termination date (max uint64 if none)
      * @return Bool indicating if employee is terminated
      */
