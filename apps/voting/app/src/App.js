@@ -1,10 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import styled from 'styled-components'
 import {
   AppBar,
   AppView,
-  AragonApp,
   Button,
+  BaseStyles,
+  PublicUrl,
   SidePanel,
   observe,
 } from '@aragon/ui'
@@ -14,16 +16,15 @@ import Votes from './screens/Votes'
 import tokenAbi from './abi/token-balanceOfAt.json'
 import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
+import AutoLink from './components/AutoLink'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
-import { makeEtherscanBaseUrl } from './utils'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
-import {
-  EMPTY_CALLSCRIPT,
-  isVoteOpen,
-  voteTypeFromContractEnum,
-} from './vote-utils'
+import { EMPTY_CALLSCRIPT } from './evmscript-utils'
+import { makeEtherscanBaseUrl } from './utils'
+import { isVoteOpen, voteTypeFromContractEnum } from './vote-utils'
+import { shortenAddress, transformAddresses } from './web3-utils'
 
 class App extends React.Component {
   static propTypes = {
@@ -145,6 +146,33 @@ class App extends React.Component {
   handleVoteTransitionEnd = opened => {
     this.setState(opened ? { voteSidebarOpened: true } : { currentVoteId: -1 })
   }
+
+  shortenAddresses(label) {
+    return transformAddresses(label, (part, isAddress, index) =>
+      isAddress ? (
+        <span title={part} key={index}>
+          {shortenAddress(part)}
+        </span>
+      ) : (
+        <span key={index}>{part}</span>
+      )
+    )
+  }
+  // Shorten addresses, render line breaks, auto link
+  renderVoteText(description) {
+    return (
+      description && (
+        <AutoLink>
+          {description.split('\n').map((line, i) => (
+            <React.Fragment key={i}>
+              {this.shortenAddresses(line)}
+              <br />
+            </React.Fragment>
+          ))}
+        </AutoLink>
+      )
+    )
+  }
   render() {
     const {
       app,
@@ -173,6 +201,10 @@ class App extends React.Component {
           data: {
             ...vote.data,
             open: isVoteOpen(vote, now),
+
+            // Render text fields
+            descriptionNode: this.renderVoteText(vote.data.description),
+            metadataNode: this.renderVoteText(vote.data.metadata),
           },
           userAccountVote: voteTypeFromContractEnum(
             userAccountVotes.get(vote.voteId)
@@ -187,62 +219,69 @@ class App extends React.Component {
     const hasCurrentVote = appStateReady && Boolean(currentVote)
 
     return (
-      <AragonApp publicUrl="./aragon-ui/">
-        <AppView
-          appBar={
-            <AppBar
-              title="Vote"
-              endContent={
-                <Button mode="strong" onClick={this.handleCreateVoteOpen}>
-                  New Vote
-                </Button>
-              }
-            />
-          }
-        >
-          {appStateReady && votes.length > 0 ? (
-            <Votes votes={preparedVotes} onSelectVote={this.handleVoteOpen} />
-          ) : (
-            <EmptyState onActivate={this.handleCreateVoteOpen} />
-          )}
-        </AppView>
-        <SidePanel
-          title={`Vote #${currentVoteId} (${
-            currentVote && currentVote.data.open ? 'Open' : 'Closed'
-          })`}
-          opened={hasCurrentVote && !createVoteVisible && voteVisible}
-          onClose={this.handleVoteClose}
-          onTransitionEnd={this.handleVoteTransitionEnd}
-        >
-          {hasCurrentVote && (
-            <VotePanelContent
-              app={app}
-              vote={currentVote}
-              user={userAccount}
-              ready={voteSidebarOpened}
-              tokenContract={tokenContract}
-              tokenDecimals={tokenDecimals}
-              tokenSymbol={tokenSymbol}
-              onVote={this.handleVote}
-              onExecute={this.handleExecute}
-            />
-          )}
-        </SidePanel>
+      <PublicUrl.Provider url="./aragon-ui/">
+        <BaseStyles />
+        <Main>
+          <AppView
+            appBar={
+              <AppBar
+                title="Vote"
+                endContent={
+                  <Button mode="strong" onClick={this.handleCreateVoteOpen}>
+                    New Vote
+                  </Button>
+                }
+              />
+            }
+          >
+            {false && appStateReady && votes.length > 0 ? (
+              <Votes votes={preparedVotes} onSelectVote={this.handleVoteOpen} />
+            ) : (
+              <EmptyState onActivate={this.handleCreateVoteOpen} />
+            )}
+          </AppView>
+          <SidePanel
+            title={`Vote #${currentVoteId} (${
+              currentVote && currentVote.data.open ? 'Open' : 'Closed'
+            })`}
+            opened={hasCurrentVote && !createVoteVisible && voteVisible}
+            onClose={this.handleVoteClose}
+            onTransitionEnd={this.handleVoteTransitionEnd}
+          >
+            {hasCurrentVote && (
+              <VotePanelContent
+                app={app}
+                vote={currentVote}
+                user={userAccount}
+                ready={voteSidebarOpened}
+                tokenContract={tokenContract}
+                tokenDecimals={tokenDecimals}
+                tokenSymbol={tokenSymbol}
+                onVote={this.handleVote}
+                onExecute={this.handleExecute}
+              />
+            )}
+          </SidePanel>
 
-        <SidePanel
-          title="New Vote"
-          opened={createVoteVisible}
-          onClose={this.handleCreateVoteClose}
-        >
-          <NewVotePanelContent
+          <SidePanel
+            title="New Vote"
             opened={createVoteVisible}
-            onCreateVote={this.handleCreateVote}
-          />
-        </SidePanel>
-      </AragonApp>
+            onClose={this.handleCreateVoteClose}
+          >
+            <NewVotePanelContent
+              opened={createVoteVisible}
+              onCreateVote={this.handleCreateVote}
+            />
+          </SidePanel>
+        </Main>
+      </PublicUrl.Provider>
     )
   }
 }
+
+const Main = styled.div`
+  height: 100vh;
+`
 
 export default observe(
   observable =>

@@ -9,8 +9,6 @@ import {
   VOTE_STATUS_EXECUTED,
 } from './vote-types'
 
-export const EMPTY_CALLSCRIPT = '0x00000001'
-
 export const getAccountVote = (account, voters) =>
   voters[account] || VOTE_ABSENT
 
