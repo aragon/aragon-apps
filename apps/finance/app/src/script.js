@@ -110,10 +110,7 @@ async function createStore(settings) {
       .first()
       .toPromise()
   } catch (err) {
-    console.error(
-      "Could not get attached vault's initialization block:",
-      err
-    )
+    console.error("Could not get attached vault's initialization block:", err)
   }
 
   return app.store(
