@@ -5,9 +5,10 @@ import BN from 'bn.js'
 import {
   AppBar,
   AppView,
-  AragonApp,
+  BaseStyles,
   Button,
   EmptyStateCard,
+  PublicUrl,
   SidePanel,
   observe,
 } from '@aragon/ui'
@@ -96,66 +97,74 @@ class App extends React.Component {
     const { newTransferOpened } = this.state
 
     return (
-      <AragonApp publicUrl="./aragon-ui/">
-        <AppView
-          appBar={
-            <AppBar
-              title="Finance"
-              endContent={
-                <Button mode="strong" onClick={this.handleNewTransferOpen}>
-                  New Transfer
-                </Button>
-              }
-            />
-          }
-        >
-          {balances.length > 0 && (
-            <SpacedBlock>
-              <Balances balances={balances} />
-            </SpacedBlock>
-          )}
-          {transactions.length > 0 && (
-            <SpacedBlock>
-              <Transfers transactions={transactions} tokens={tokens} />
-            </SpacedBlock>
-          )}
-          {balances.length === 0 &&
-            transactions.length === 0 && (
-              <EmptyScreen>
-                <EmptyStateCard
-                  icon={<img src={addFundsIcon} alt="" />}
-                  title="Add funds to your organization"
-                  text="There are no funds yet - add funds easily"
-                  actionText="Add funds"
-                  onActivate={this.handleNewTransferOpen}
-                />
-              </EmptyScreen>
+      <PublicUrl.Provider url="./aragon-ui/">
+        <BaseStyles />
+        <Main>
+          <AppView
+            appBar={
+              <AppBar
+                title="Finance"
+                endContent={
+                  <Button mode="strong" onClick={this.handleNewTransferOpen}>
+                    New Transfer
+                  </Button>
+                }
+              />
+            }
+          >
+            {balances.length > 0 && (
+              <SpacedBlock>
+                <Balances balances={balances} />
+              </SpacedBlock>
             )}
-        </AppView>
-        <SidePanel
-          opened={newTransferOpened}
-          onClose={this.handleNewTransferClose}
-          title="New Transfer"
-        >
-          <NewTransferPanelContent
-            app={app}
+            {transactions.length > 0 && (
+              <SpacedBlock>
+                <Transfers transactions={transactions} tokens={tokens} />
+              </SpacedBlock>
+            )}
+            {balances.length === 0 &&
+              transactions.length === 0 && (
+                <EmptyScreen>
+                  <EmptyStateCard
+                    icon={<img src={addFundsIcon} alt="" />}
+                    title="Add funds to your organization"
+                    text="There are no funds yet - add funds easily"
+                    actionText="Add funds"
+                    onActivate={this.handleNewTransferOpen}
+                  />
+                </EmptyScreen>
+              )}
+          </AppView>
+          <SidePanel
             opened={newTransferOpened}
-            tokens={tokens}
-            onWithdraw={this.handleWithdraw}
-            onDeposit={this.handleDeposit}
-            proxyAddress={proxyAddress}
-            userAccount={userAccount}
-          />
-        </SidePanel>
-      </AragonApp>
+            onClose={this.handleNewTransferClose}
+            title="New Transfer"
+          >
+            <NewTransferPanelContent
+              app={app}
+              opened={newTransferOpened}
+              tokens={tokens}
+              onWithdraw={this.handleWithdraw}
+              onDeposit={this.handleDeposit}
+              proxyAddress={proxyAddress}
+              userAccount={userAccount}
+            />
+          </SidePanel>
+        </Main>
+      </PublicUrl.Provider>
     )
   }
 }
+
+const Main = styled.div`
+  height: 100vh;
+`
 
 const EmptyScreen = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-grow: 1;
 `
 
 const SpacedBlock = styled.div`

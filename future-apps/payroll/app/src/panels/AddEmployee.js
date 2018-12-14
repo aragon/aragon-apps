@@ -103,7 +103,7 @@ class AddEmployee extends React.PureComponent {
   handleFormSubmit = (event) => {
     event.preventDefault()
     const { denominationToken, app, isAddressAvailable } = this.props
-    const { address, name, salary, startDate } = this.state
+    const { address, name, salary, role, startDate } = this.state
     const _address = address.value
     const _isValidAddress = AddEmployee.validateAddress(address)
     const _isAddressAvailable = isAddressAvailable(_address)
@@ -139,10 +139,11 @@ class AddEmployee extends React.PureComponent {
 
       const _startDate = Math.floor(startDate.getTime() / 1000)
 
-      app.addEmployeeWithNameAndStartDate(
+      app.addEmployee(
         _address,
         adjustedAmount,
         name,
+        role,
         _startDate
       ).subscribe(employee => {
         if (employee) {

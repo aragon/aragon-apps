@@ -2,12 +2,15 @@
   "name": "@aragon/monorepo-apps",
   "version": "1.0.0",
   "private": true,
-  "author": "Aragon Institution MTU <contact@aragon.one>",
+  "author": "Aragon Assocation <legal@aragon.org>",
   "contributors": [
     "Jorge Izquierdo <jorge@aragon.one>",
     "Pierre Bertet <pierre@aragon.one>",
     "Oliver Nordbjerg <oliver@aragon.one>",
-    "Brett Sun <brett@aragon.one>"
+    "Brett Sun <brett@aragon.one>",
+    "ßingen <bingen@aragon.one>",
+    "Lisandro Corbalán <lisandro.corbalan@altoros.com>",
+    "Sebastián Galiano <sebastian.galiano@altoros.com>"
   ],
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "devDependencies": {

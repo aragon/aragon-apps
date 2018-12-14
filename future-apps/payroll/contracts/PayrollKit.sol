@@ -238,10 +238,10 @@ contract PayrollKit is KitBase {
         uint256 salary4 = 2218166146982026; // 70000
         uint256 salary5 = 1901285268841737; // 60000
 
-        payroll.addEmployeeWithNameAndStartDate(this, salary1, 'Protofire', uint64(now - 172800));
-        payroll.addEmployeeWithNameAndStartDate(account2, salary2, 'Leonardo Lower', uint64(now- 86400));
-        payroll.addEmployeeWithNameAndStartDate(account3, salary3, 'Lisandro Corbalan',  uint64(now - 172800));
-        payroll.addEmployeeWithNameAndStartDate(account4, salary4, 'Sebastián Galiano',  uint64(now - 172800));
-        payroll.addEmployeeWithNameAndStartDate(account5, salary5, 'Fernando Greco',  uint64(now - 172800));
+        payroll.addEmployee(this, salary1, 'Protofire', 'Organization', uint64(now - 172800));
+        payroll.addEmployee(account2, salary2, 'Leonardo Lower', 'Project Manager',  uint64(now- 86400));
+        payroll.addEmployee(account3, salary3, 'Lisandro Corbalan', 'Developer', uint64(now - 172800));
+        payroll.addEmployee(account4, salary4, 'Sebastián Galiano', 'Developer', uint64(now - 172800));
+        payroll.addEmployee(account5, salary5, 'Fernando Greco', 'Developer', uint64(now - 172800));
     }
 }

@@ -67,12 +67,17 @@ async function onInit (state, { vaultAddress }) {
 
 async function onChangeAccount (state, event) {
   const { accountAddress } = event
-  const { tokens = [] } = state
+  const { tokens = [], employees = [] } = state
+  let salaryAllocation = []
 
-  const salaryAllocation = await getSalaryAllocation(
-    accountAddress,
-    tokens
-  )
+  const employee = employees.find(employee => employee.accountAddress === accountAddress)
+
+  if (employee) {
+    salaryAllocation = await getSalaryAllocation(
+      employee.id,
+      tokens
+    )
+  }
 
   return { ...state, accountAddress, salaryAllocation }
 }
@@ -93,7 +98,7 @@ async function onAddAllowedToken (state, event) {
 }
 
 async function onAddNewEmployee (state, event) {
-  const { returnValues: { employeeId, startDate } } = event
+  const { returnValues: { employeeId, name, role, startDate } } = event
   const { employees = [] } = state
 
   if (!employees.find(e => e.id === employeeId)) {
@@ -102,6 +107,8 @@ async function onAddNewEmployee (state, event) {
     if (newEmployee) {
       employees.push({
         ...newEmployee,
+        name: name,
+        role: role,
         startDate: date(startDate)
       })
     }
@@ -112,24 +119,34 @@ async function onAddNewEmployee (state, event) {
 
 async function onChangeEmployeeAddress (state, event) {
   const { returnValues: { newAddress: accountAddress } } = event
-  const { tokens = [] } = state
+  const { tokens = [], employees = [] } = state
+  let salaryAllocation = []
 
-  const salaryAllocation = await getSalaryAllocation(
-    accountAddress,
-    tokens
-  )
+  const employee = employees.find(employee => employee.accountAddress === accountAddress)
+
+  if (employee) {
+    salaryAllocation = await getSalaryAllocation(
+      employee.id,
+      tokens
+    )
+  }
 
   return { ...state, accountAddress, salaryAllocation }
 }
 
 async function onChangeSalaryAllocation (state, event) {
   const { returnValues: { employee: accountAddress } } = event
-  const { tokens = [] } = state
+  const { tokens = [], employees = [] } = state
+  let salaryAllocation = []
 
-  const salaryAllocation = await getSalaryAllocation(
-    accountAddress,
-    tokens
-  )
+  const employee = employees.find(employee => employee.accountAddress === accountAddress)
+
+  if (employee) {
+    salaryAllocation = await getSalaryAllocation(
+      employee.id,
+      tokens
+    )
+  }
 
   return { ...state, salaryAllocation }
 }
@@ -207,6 +224,8 @@ function updateEmployeeBy (employees, employeeData, by) {
       if (by(employee)) {
         nextEmployee = {
           ...employeeData,
+          name: employee.name,
+          role: employee.role,
           startDate: employee.startDate
         }
       }
