@@ -32,6 +32,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
 
     uint128 internal constant ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
+    uint256 internal constant MAX_UINT256 = uint256(-1);
     uint64 internal constant MAX_UINT64 = uint64(-1);
     uint8 internal constant MAX_ALLOWED_TOKENS = 20; // for loop in `payday()` uses ~260k gas per available token
     uint256 internal constant MAX_ACCRUED_VALUE = 2**128;
@@ -296,8 +297,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         employeeActive(_employeeId)
         authP(ADD_ACCRUED_VALUE_ROLE, arr(_employeeId, _amount))
     {
-        require(_amount <= MAX_ACCRUED_VALUE, ERROR_ACCRUED_VALUE_TOO_BIG);
-
         _addAccruedValue(_employeeId, _amount);
     }
 
@@ -339,9 +338,21 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      *      Initialization check is implicitly provided by `employeeMatches()` as new employees can
      *      only be added via `addEmployee(),` which requires initialization.
      * @notice Withdraw your own payroll.
+     * @param _amount Amount of owed salary requested. Must be less or equal than total owed so far.
+     */
+    function partialPayday(uint256 _amount) external employeeMatches {
+        bool somethingPaid = _payTokens(employeeIds[msg.sender], _amount);
+        require(somethingPaid, ERROR_NOTHING_PAID);
+    }
+
+    /**
+     * @dev Withdraw payment by employee (the caller). The amount owed since last call will be transferred.
+     *      Initialization check is implicitly provided by `employeeMatches()` as new employees can
+     *      only be added via `addEmployee(),` which requires initialization.
+     * @notice Withdraw your own payroll.
      */
     function payday() external employeeMatches {
-        bool somethingPaid = _payTokens(employeeIds[msg.sender]);
+        bool somethingPaid = _payTokens(employeeIds[msg.sender], 0);
         require(somethingPaid, ERROR_NOTHING_PAID);
     }
 
@@ -506,7 +517,15 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     function _addAccruedValue(uint256 _employeeId, uint256 _amount) internal {
-        employees[_employeeId].accruedValue = employees[_employeeId].accruedValue.add(_amount);
+        Employee storage employee = employees[_employeeId];
+
+        // if the result would overflow, set it to max int
+        uint256 result = employee.accruedValue +_amount;
+        if (result >= _amount) {
+            employee.accruedValue = result;
+        } else {
+            employee.accruedValue = MAX_UINT256;
+        }
 
         emit AddEmployeeAccruedValue(_employeeId, _amount);
     }
@@ -528,9 +547,10 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @dev Loop over tokens and send Payroll to employee
      * @param _employeeId Employee's identifier
+     * @param _amount Amount of owed salary requested. Must be less or equal than total owed so far.
      * @return True if something has been paid
      */
-    function _payTokens(uint256 _employeeId) internal returns (bool somethingPaid) {
+    function _payTokens(uint256 _employeeId, uint256 _amount) internal returns (bool somethingPaid) {
         Employee storage employee = employees[_employeeId];
 
         // Get the min of current date and termination date
@@ -544,13 +564,21 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         // Compute owed amount
         uint256 owed = employee.accruedValue.add(_getOwedSalary(_employeeId, toDate));
-        if (owed == 0) {
+        if (owed == 0 || owed < _amount) {
             return false;
         }
 
         // Update last payroll date and accrued value first thing (to avoid re-entrancy)
         employee.lastPayroll = timestamp;
-        employee.accruedValue = 0;
+        uint256 toPay;
+        if (_amount > 0 && owed > _amount) {
+            // no need for safemath as here we know owed >= _amount
+            employee.accruedValue = owed - _amount;
+            toPay = _amount;
+        } else {
+            employee.accruedValue = 0;
+            toPay = owed;
+        }
 
         // Loop over allowed tokens
         for (uint32 i = 0; i < allowedTokensArray.length; i++) {
@@ -561,7 +589,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             uint128 exchangeRate = _getExchangeRate(token);
             require(exchangeRate > 0, ERROR_EXCHANGE_RATE_ZERO);
             // Salary converted to token and applied allocation percentage
-            uint256 tokenAmount = owed.mul(exchangeRate).mul(employee.allocation[token]);
+            uint256 tokenAmount = toPay.mul(exchangeRate).mul(employee.allocation[token]);
             // Divide by 100 for the allocation and by ONE for the exchange rate
             tokenAmount = tokenAmount / (100 * ONE);
             finance.newPayment(
@@ -608,7 +636,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // No need to use safe math as the underflow was covered by the previous check
         uint64 time = _date - employee.lastPayroll;
 
-        return employee.denominationTokenSalary.mul(time);
+        // if the result would overflow, set it to max int
+        uint256 result = employee.denominationTokenSalary * time;
+        if (result / time != employee.denominationTokenSalary) {
+            return MAX_UINT256;
+        }
+
+        return result;
     }
 
     /**
