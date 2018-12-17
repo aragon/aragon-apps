@@ -152,7 +152,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Vote `_supports ? 'yea' : 'nay'` in vote #`_voteId`
+    * @notice Vote `_supports ? 'yes' : 'no'` in vote #`_voteId`
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote(),` which requires initialization
     * @param _voteId Id for vote

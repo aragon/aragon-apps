@@ -121,7 +121,7 @@ class App extends React.Component {
               <AppBar
                 title={
                   <Title>
-                    <TitleLabel>Token</TitleLabel>
+                    <TitleLabel>Token Manager</TitleLabel>
                     {tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
                   </Title>
                 }

@@ -225,7 +225,7 @@ class App extends React.Component {
           <AppView
             appBar={
               <AppBar
-                title="Vote"
+                title="Voting"
                 endContent={
                   <Button mode="strong" onClick={this.handleCreateVoteOpen}>
                     New Vote
@@ -234,7 +234,7 @@ class App extends React.Component {
               />
             }
           >
-            {false && appStateReady && votes.length > 0 ? (
+            {appStateReady && votes.length > 0 ? (
               <Votes votes={preparedVotes} onSelectVote={this.handleVoteOpen} />
             ) : (
               <EmptyState onActivate={this.handleCreateVoteOpen} />
