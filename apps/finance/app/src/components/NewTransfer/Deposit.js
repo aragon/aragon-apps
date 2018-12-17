@@ -349,8 +349,8 @@ class Deposit extends React.Component {
                   your organization’s Finance app. You should specify a gas limit
                   of 350,000 for this transfer.
                   <Text.Paragraph size="xsmall" style={{ marginTop: '10px' }}>
-                    <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH (e.g. ERC-20)
-                    tokens directly to this address.
+                    <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
+                    (e.g. ERC-20) tokens directly to this address.
                   </Text.Paragraph>
                 </Info>
               </ToggleContent>
