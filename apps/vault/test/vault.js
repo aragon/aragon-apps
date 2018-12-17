@@ -15,7 +15,9 @@ const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
 const Vault = artifacts.require('Vault')
 
-const SimpleERC20 = artifacts.require('tokens/SimpleERC20')
+const TokenMock = artifacts.require('TokenMock')
+const TokenReturnFalseMock = artifacts.require('TokenReturnFalseMock')
+const TokenReturnMissingMock = artifacts.require('TokenReturnMissingMock')
 
 const DestinationMock = artifacts.require('DestinationMock')
 
@@ -63,7 +65,7 @@ contract('Vault app', (accounts) => {
     await vault.initialize()
   })
 
-  context('ETH:', async () => {
+  context('ETH:', () => {
     it('cannot initialize base app', async () => {
       const newVault = await Vault.new()
       assert.isTrue(await newVault.isPetrified())
@@ -75,22 +77,16 @@ contract('Vault app', (accounts) => {
     it('deposits ETH', async () => {
       const value = 1
 
-      // Deposit without data param
-      await vault.deposit(ETH, value, { value: value, from: accounts[0] })
-      assert.equal((await getBalance(vault.address)).toString(), value, `should hold ${value} wei`)
-      assert.equal((await vault.balance(ETH)).toString(), value, `should return ${value} wei balance`)
+      await vault.deposit(ETH, value, { value: value })
 
-      // Deposit with data param
-      /* Waiting for truffle to get overloading...
-      await vault.deposit(ETH, accounts[0], value, [0], { value })
-      assert.equal((await getBalance(vault.address)).toString(), value * 2, `should hold ${value * 2} wei`)
-      assert.equal((await vault.balance(ETH)).toString(), value * 2, `should return ${value * 2} wei balance`)
-      */
+      const vaultBalance = (await getBalance(vault.address)).valueOf()
+      assert.equal(vaultBalance, value, `vault should hold ${value} wei`)
+      assert.equal(await vault.balance(ETH), vaultBalance, "vault should know its balance")
     })
 
     it('deposits ETH through callback', async () => {
       await vault.sendTransaction( { value: 1 })
-      assert.equal((await getBalance(vault.address)).toString(), 1, "should hold 1 wei")
+      assert.equal((await getBalance(vault.address)).valueOf(), 1, "should hold 1 wei")
     })
 
     it('transfers ETH', async () => {
@@ -104,8 +100,8 @@ contract('Vault app', (accounts) => {
       // Transfer
       await vault.transfer(ETH, testAccount, transferValue)
 
-      assert.equal((await getBalance(testAccount)).toString(), initialBalance.add(transferValue).toString(), "should have sent eth")
-      assert.equal((await getBalance(vault.address)).toString(), depositValue - transferValue, "should have remaining balance")
+      assert.equal((await getBalance(testAccount)).valueOf(), initialBalance.add(transferValue), "should have sent eth")
+      assert.equal((await getBalance(vault.address)).valueOf(), depositValue - transferValue, "should have remaining balance")
     })
 
     it('fails transfering ETH if uses more than 2.3k gas', async () => {
@@ -124,114 +120,146 @@ contract('Vault app', (accounts) => {
       const value = 1
 
       return assertRevert(async () => {
-        await vault.deposit(ETH, value, { value: value * 2, from: accounts[0] })
+        await vault.deposit(ETH, value, { value: value * 2 })
       })
     })
   })
 
-  context('ERC20:', async () => {
-    let token
+  // Tests for different token interfaces
+  const tokenTestGroups = [
+    {
+      title: 'standards compliant, reverting token',
+      tokenContract: TokenMock,
+    },
+    {
+      title: 'standards compliant, non-reverting token',
+      tokenContract: TokenReturnFalseMock,
+    },
+    {
+      title: 'non-standards compliant, missing return token',
+      tokenContract: TokenReturnMissingMock,
+    },
+  ]
+  for ({ title, tokenContract} of tokenTestGroups) {
+		context(`ERC20 (${title}):`, () => {
+			let token
+
+			beforeEach(async () => {
+				token = await tokenContract.new(accounts[0], 10000)
+			})
+
+			it('deposits ERC20s', async () => {
+				await token.approve(vault.address, 10)
+
+				await vault.deposit(token.address, 5)
+
+        const vaultBalance = (await token.balanceOf(vault.address)).valueOf()
+				assert.equal(vaultBalance, 5, "token accounting should be correct")
+				assert.equal(await vault.balance(token.address), vaultBalance, "vault should know its balance")
+			})
+
+			it('transfers tokens', async () => {
+				const tokenReceiver = accounts[2]
+				await token.transfer(vault.address, 10)
+
+				// Transfer half
+				await vault.transfer(token.address, tokenReceiver, 5)
+
+				assert.equal(await token.balanceOf(tokenReceiver), 5, "receiver should have correct token balance")
+			})
+
+			it('fails if not sufficient token balance available', async () => {
+				const approvedAmount = 10
+				await token.approve(vault.address, approvedAmount)
+
+				return assertRevert(async () => {
+					await vault.deposit(token.address, approvedAmount * 2)
+				})
+				assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
+			})
+
+      it('fails deposits if token transfer fails', async () => {
+				await token.approve(vault.address, 10)
+
+        // Disable transfers
+        await token.setAllowTransfer(false)
+
+        // Attempt to deposit
+        await assertRevert(() =>
+          vault.deposit(token.address, 5)
+        )
+				assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
+      })
+
+      it('fails transfers if token transfer fails', async () => {
+				const tokenReceiver = accounts[2]
+				await token.transfer(vault.address, 10)
+
+        // Disable transfers
+        await token.setAllowTransfer(false)
+
+				// Attempt to transfer
+        await assertRevert(() =>
+          vault.transfer(token.address, tokenReceiver, 5)
+        )
+				assert.equal(await token.balanceOf(tokenReceiver), 0, "receiver should have initial token balance")
+				assert.equal(await token.balanceOf(vault.address), 10, "vault should have initial token balance")
+      })
+		})
+	}
+
+  context('recovering assets', () => {
+    let kernel, defaultVault, token
 
     beforeEach(async () => {
-      token = await SimpleERC20.new()
+      const kernelBase = await KernelDepositableMock.new(true) // petrify immediately
+      const kernelProxy = await KernelProxy.new(kernelBase.address)
+      const aclBase = await ACL.new()
+      kernel = KernelDepositableMock.at(kernelProxy.address)
+      await kernel.initialize(aclBase.address, root)
+      await kernel.enableDepositable()
+      const acl = ACL.at(await kernel.acl())
+      await acl.createPermission(root, kernel.address, APP_MANAGER_ROLE, root, { from: root })
+
+      // Create a new vault and set that vault as the default vault in the kernel
+      const defaultVaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '0x', true)
+      const defaultVaultAddress = getEvent(defaultVaultReceipt, 'NewAppProxy', 'proxy')
+      defaultVault = Vault.at(defaultVaultAddress)
+      await defaultVault.initialize()
+
+      await kernel.setRecoveryVaultAppId(vaultId)
+
+      token = await TokenMock.new(accounts[0], 10000)
     })
 
-    it('deposits ERC20s', async () => {
-      await token.approve(vault.address, 10)
+    it('set up the default vault correctly to recover ETH from the kernel', async () => {
+      await kernel.sendTransaction({ value: 1, gas: 31000 })
+      assert.equal((await getBalance(kernel.address)).valueOf(), 1, 'kernel should have 1 balance')
 
-      // Deposit half without data param
-      await vault.deposit(token.address, 5, { from: accounts[0] })
-
-      assert.equal(await token.balanceOf(vault.address), 5, "token accounting should be correct")
-      assert.equal(await vault.balance(token.address), 5, "vault should know its balance")
-
-      // Deposit half with data param
-      /* Waiting for truffle to get overloading...
-      await vault.deposit(token.address, accounts[0], 5, '')
-
-      assert.equal(await token.balanceOf(vault.address), 10, "token accounting should be correct")
-      assert.equal(await vault.balance(token.address), 10, "vault should know its balance")
-      */
+      await kernel.transferToVault(ETH)
+      assert.equal((await getBalance(kernel.address)).valueOf(), 0, 'kernel should have 0 balance')
+      assert.equal((await getBalance(defaultVault.address)).valueOf(), 1, 'default value should have 1 balance')
     })
 
-    it('transfers tokens', async () => {
-      const tokenReceiver = accounts[2]
+    it('set up the default vault correctly to recover tokens from the kernel', async () => {
+      await token.transfer(kernel.address, 10)
+      assert.equal((await token.balanceOf(kernel.address)), 10, 'kernel should have 10 balance')
+
+      await kernel.transferToVault(token.address)
+      assert.equal((await token.balanceOf(kernel.address)), 0, 'kernel should have 0 balance')
+      assert.equal((await token.balanceOf(defaultVault.address)), 10, 'default value should have 10 balance')
+    })
+
+    it('fails when attempting to recover ETH out of the vault', async () => {
+      await vault.sendTransaction({ value: 1, gas: 31000 })
+      assert.equal((await getBalance(vault.address)).valueOf(), 1, 'vault should have 1 balance')
+      await assertRevert(() => vault.transferToVault(ETH))
+    })
+
+    it('fails when attempting to recover tokens out of the vault', async () => {
       await token.transfer(vault.address, 10)
-
-      // Transfer half
-      await vault.transfer(token.address, tokenReceiver, 5)
-
-      assert.equal(await token.balanceOf(tokenReceiver), 5, "receiver should have correct token balance")
-    })
-
-    it('fails if not sufficient token balance available', async () => {
-      const approvedAmount = 10
-      await token.approve(vault.address, approvedAmount)
-
-      return assertRevert(async () => {
-        await vault.deposit(token.address, approvedAmount * 2, { from: accounts[0] })
-      })
-    })
-  })
-
-  context('using Vault behind proxy', async () => {
-    let token
-
-    beforeEach(async () => {
-      token = await SimpleERC20.new()
-    })
-
-    context('disallows recovering assets', async () => {
-      let kernel, defaultVault
-
-      beforeEach(async () => {
-        const kernelBase = await KernelDepositableMock.new(true) // petrify immediately
-        const kernelProxy = await KernelProxy.new(kernelBase.address)
-        const aclBase = await ACL.new()
-        kernel = KernelDepositableMock.at(kernelProxy.address)
-        await kernel.initialize(aclBase.address, root)
-        await kernel.enableDepositable()
-        const acl = ACL.at(await kernel.acl())
-        await acl.createPermission(root, kernel.address, APP_MANAGER_ROLE, root, { from: root })
-
-        // Create a new vault and set that vault as the default vault in the kernel
-        const defaultVaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '0x', true)
-        const defaultVaultAddress = getEvent(defaultVaultReceipt, 'NewAppProxy', 'proxy')
-        defaultVault = Vault.at(defaultVaultAddress)
-        await defaultVault.initialize()
-
-        await kernel.setRecoveryVaultAppId(vaultId)
-      })
-
-      it('set up the default vault correctly to recover ETH from the kernel', async () => {
-        await kernel.sendTransaction({ value: 1, gas: 31000 })
-        assert.equal((await getBalance(kernel.address)).valueOf(), 1, 'kernel should have 1 balance')
-
-        await kernel.transferToVault(ETH)
-        assert.equal((await getBalance(kernel.address)).valueOf(), 0, 'kernel should have 0 balance')
-        assert.equal((await getBalance(defaultVault.address)).valueOf(), 1, 'default value should have 1 balance')
-      })
-
-      it('set up the default vault correctly to recover tokens from the kernel', async () => {
-        await token.transfer(kernel.address, 10)
-        assert.equal((await token.balanceOf(kernel.address)), 10, 'kernel should have 10 balance')
-
-        await kernel.transferToVault(token.address)
-        assert.equal((await token.balanceOf(kernel.address)), 0, 'kernel should have 0 balance')
-        assert.equal((await token.balanceOf(defaultVault.address)), 10, 'default value should have 10 balance')
-      })
-
-      it('fails when attempting to recover ETH out of the vault', async () => {
-        await vault.sendTransaction({ value: 1, gas: 31000 })
-        assert.equal((await getBalance(vault.address)).valueOf(), 1, 'vault should have 1 balance')
-        await assertRevert(() => vault.transferToVault(ETH))
-      })
-
-      it('fails when attempting to recover tokens out of the vault', async () => {
-        await token.transfer(vault.address, 10)
-        assert.equal((await token.balanceOf(vault.address)), 10, 'vault should have 10 balance')
-        await assertRevert(() => vault.transferToVault(token.address))
-      })
+      assert.equal((await token.balanceOf(vault.address)), 10, 'vault should have 10 balance')
+      await assertRevert(() => vault.transferToVault(token.address))
     })
   })
 })
