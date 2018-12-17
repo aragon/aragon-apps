@@ -339,16 +339,18 @@ class Deposit extends React.Component {
                 <VSpace size={4} />
                 <IdentityBadge
                   entity={proxyAddress}
-                  shorten={false}
                   fontSize="small"
+                  networkType={network.type}
+                  shorten={false}
                 />
                 <VSpace size={2} />
                 <Info>
                   Use the above address or QR code to transfer ETH directly to
-                  your organization’s Finance app.
+                  your organization’s Finance app. You should specify a gas limit
+                  of 350,000 for this transfer.
                   <Text.Paragraph size="xsmall" style={{ marginTop: '10px' }}>
-                    (Note that ERC-20 tokens cannot be transferred with the QR
-                    code)
+                    <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
+                    (e.g. ERC-20) tokens directly to this address.
                   </Text.Paragraph>
                 </Info>
               </ToggleContent>
