@@ -554,8 +554,11 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             toDate = timestamp;
         }
 
-        // Compute owed amount
-        uint256 owed = employee.accruedValue.add(_getOwedSalary(_employeeId, toDate));
+        // Compute owed amount, set to max int in case of overflow
+        uint256 owed = employee.accruedValue + _getOwedSalary(_employeeId, toDate);
+        if (owed < employee.accruedValue) {
+            owed = MAX_UINT256;
+        }
         if (owed == 0 || owed < _amount) {
             return false;
         }
