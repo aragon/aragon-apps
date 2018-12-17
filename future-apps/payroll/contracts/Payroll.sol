@@ -517,15 +517,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     function _addAccruedValue(uint256 _employeeId, uint256 _amount) internal {
-        Employee storage employee = employees[_employeeId];
-
-        // if the result would overflow, set it to max int
-        uint256 result = employee.accruedValue +_amount;
-        if (result >= _amount) {
-            employee.accruedValue = result;
-        } else {
-            employee.accruedValue = MAX_UINT256;
-        }
+        employees[_employeeId].accruedValue = employees[_employeeId].accruedValue.add(_amount);
 
         emit AddEmployeeAccruedValue(_employeeId, _amount);
     }
