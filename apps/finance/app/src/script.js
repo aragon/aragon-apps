@@ -10,6 +10,23 @@ import vaultBalanceAbi from './abi/vault-balance.json'
 import vaultGetInitializationBlockAbi from './abi/vault-getinitializationblock.json'
 import vaultEventAbi from './abi/vault-events.json'
 
+// Some known tokens don’t strictly follow ERC-20 and it would be difficult to
+// adapt to every situation. The data listed in this map is used as a fallback
+// if either the name or the symbol can’t be determined from the contract only.
+const KNOWN_TOKENS_FALLBACK = new Map([
+  [
+    '0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359',
+    { symbol: 'DAI', name: 'Dai Stablecoin v1.0', decimals: '18' },
+  ],
+])
+
+const tokenFallback = (address, fieldName) => {
+  if (!KNOWN_TOKENS_FALLBACK.has(address)) {
+    return null
+  }
+  return KNOWN_TOKENS_FALLBACK.get(address)[fieldName] || null
+}
+
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi)
 const vaultAbi = [].concat(
   vaultBalanceAbi,
@@ -252,9 +269,9 @@ function updateTransactions({ transactions = [] }, transactionDetails) {
 async function newBalanceEntry(tokenContract, tokenAddress, settings) {
   const [balance, decimals, name, symbol] = await Promise.all([
     loadTokenBalance(tokenAddress, settings),
-    loadTokenDecimals(tokenContract),
-    loadTokenName(tokenContract),
-    loadTokenSymbol(tokenContract),
+    loadTokenDecimals(tokenContract, tokenAddress),
+    loadTokenName(tokenContract, tokenAddress),
+    loadTokenSymbol(tokenContract, tokenAddress),
   ])
 
   return {
@@ -285,7 +302,8 @@ function loadTokenBalance(tokenAddress, { vault }) {
   })
 }
 
-function loadTokenDecimals(tokenContract) {
+function loadTokenDecimals(tokenContract, tokenAddress) {
+  const fallback = tokenFallback(tokenAddress, 'decimals') || '0'
   return new Promise((resolve, reject) => {
     if (tokenDecimals.has(tokenContract)) {
       resolve(tokenDecimals.get(tokenContract))
@@ -296,18 +314,19 @@ function loadTokenDecimals(tokenContract) {
         .subscribe(
           decimals => {
             tokenDecimals.set(tokenContract, decimals)
-            resolve(decimals)
+            resolve(decimals || fallback)
           },
           () => {
             // Decimals is optional
-            resolve('0')
+            resolve(fallback)
           }
         )
     }
   })
 }
 
-function loadTokenName(tokenContract) {
+function loadTokenName(tokenContract, tokenAddress) {
+  const fallback = tokenFallback(tokenAddress, 'name') || ''
   return new Promise((resolve, reject) => {
     if (tokenName.has(tokenContract)) {
       resolve(tokenName.get(tokenContract))
@@ -318,18 +337,19 @@ function loadTokenName(tokenContract) {
         .subscribe(
           name => {
             tokenName.set(tokenContract, name)
-            resolve(name)
+            resolve(name || fallback)
           },
           () => {
             // Name is optional
-            resolve('')
+            resolve(fallback)
           }
         )
     }
   })
 }
 
-function loadTokenSymbol(tokenContract) {
+function loadTokenSymbol(tokenContract, tokenAddress) {
+  const fallback = tokenFallback(tokenAddress, 'symbol') || ''
   return new Promise((resolve, reject) => {
     if (tokenSymbols.has(tokenContract)) {
       resolve(tokenSymbols.get(tokenContract))
@@ -340,11 +360,11 @@ function loadTokenSymbol(tokenContract) {
         .subscribe(
           symbol => {
             tokenSymbols.set(tokenContract, symbol)
-            resolve(symbol)
+            resolve(symbol || fallback)
           },
           () => {
             // Symbol is optional
-            resolve('')
+            resolve(fallback)
           }
         )
     }
