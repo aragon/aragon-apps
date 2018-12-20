@@ -15,7 +15,7 @@ const splitAmount = amount => {
 
 const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => (
   <Main>
-    <Token>
+    <Token title={symbol || 'Unknown symbol'}>
       {verified &&
         symbol && (
           <img
@@ -25,7 +25,7 @@ const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => (
             src={`https://chasing-coins.com/coin/logo/${symbol}`}
           />
         )}
-      {symbol || ' '}
+      {symbol || '?'}
     </Token>
     <Amount>{splitAmount(amount.toFixed(3))}</Amount>
     <ConvertedAmount>
@@ -41,9 +41,8 @@ const Main = styled.div``
 const Token = styled.div`
   display: flex;
   align-items: center;
-  font-variant: small-caps;
-  text-transform: lowercase;
-  font-size: 18px;
+  text-transform: uppercase;
+  font-size: 14px;
   color: ${theme.textSecondary};
   img {
     margin-right: 10px;
