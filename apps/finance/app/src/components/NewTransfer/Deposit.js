@@ -20,7 +20,6 @@ import { fromDecimals, toDecimals } from '../../lib/math-utils'
 import provideNetwork from '../../lib/provideNetwork'
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
-  isTokenVerified,
   tokenDataFallback,
 } from '../../lib/token-utils'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
