@@ -18,7 +18,10 @@ import tokenDecimalsAbi from '../../abi/token-decimals.json'
 import tokenSymbolAbi from '../../abi/token-symbol.json'
 import { fromDecimals, toDecimals } from '../../lib/math-utils'
 import provideNetwork from '../../lib/provideNetwork'
-import { ETHER_TOKEN_FAKE_ADDRESS } from '../../lib/token-utils'
+import {
+  ETHER_TOKEN_FAKE_ADDRESS,
+  tokenDataFallback,
+} from '../../lib/token-utils'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
 import { combineLatest } from '../../rxjs'
 import ToggleContent from '../ToggleContent'
@@ -121,7 +124,7 @@ class Deposit extends React.Component {
     return selectedToken.value && !selectedToken.data.loading
   }
   loadTokenData(address) {
-    const { app, userAccount } = this.props
+    const { app, network, userAccount } = this.props
 
     // ETH
     if (addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS)) {
@@ -145,24 +148,38 @@ class Deposit extends React.Component {
     // Tokens
     const token = app.external(address, tokenAbi)
 
-    return new Promise((resolve, reject) =>
-      combineLatest(
-        token.symbol(),
-        token.decimals(),
-        token.balanceOf(userAccount)
-      )
+    return new Promise(async (resolve, reject) => {
+      const userBalance = await token
+        .balanceOf(userAccount)
+        .first()
+        .toPromise()
+
+      const decimalsFallback =
+        tokenDataFallback(address, 'decimals', network.type) || '0'
+      const symbolFallback =
+        tokenDataFallback(address, 'symbol', network.type) || ''
+
+      combineLatest(token.decimals(), token.symbol())
         .first()
         .subscribe(
-          ([symbol, decimals, userBalance]) =>
+          ([decimals = decimalsFallback, symbol = symbolFallback]) =>
             resolve({
               symbol,
               userBalance,
               decimals: parseInt(decimals, 10),
               loading: false,
             }),
-          reject
+          () => {
+            // Decimals and symbols are optional
+            resolve({
+              userBalance,
+              decimals: parseInt(decimalsFallback, 10),
+              loading: false,
+              symbol: symbolFallback,
+            })
+          }
         )
-    )
+    })
   }
   validateInputs({ amount, selectedToken } = {}) {
     amount = amount || this.state.amount
