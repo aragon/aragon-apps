@@ -1,7 +1,11 @@
 import Aragon from '@aragon/client'
 import { of } from './rxjs'
 import { getTestTokenAddresses } from './testnet'
-import { ETHER_TOKEN_FAKE_ADDRESS, isTokenVerified } from './lib/token-utils'
+import {
+  ETHER_TOKEN_FAKE_ADDRESS,
+  isTokenVerified,
+  tokenDataFallback,
+} from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenNameAbi from './abi/token-name.json'
@@ -9,23 +13,6 @@ import tokenSymbolAbi from './abi/token-symbol.json'
 import vaultBalanceAbi from './abi/vault-balance.json'
 import vaultGetInitializationBlockAbi from './abi/vault-getinitializationblock.json'
 import vaultEventAbi from './abi/vault-events.json'
-
-// Some known tokens don’t strictly follow ERC-20 and it would be difficult to
-// adapt to every situation. The data listed in this map is used as a fallback
-// if either the name or the symbol can’t be determined from the contract only.
-const KNOWN_TOKENS_FALLBACK = new Map([
-  [
-    '0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359',
-    { symbol: 'DAI', name: 'Dai Stablecoin v1.0', decimals: '18' },
-  ],
-])
-
-const tokenFallback = (address, fieldName) => {
-  if (!KNOWN_TOKENS_FALLBACK.has(address)) {
-    return null
-  }
-  return KNOWN_TOKENS_FALLBACK.get(address)[fieldName] || null
-}
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi)
 const vaultAbi = [].concat(
@@ -269,9 +256,9 @@ function updateTransactions({ transactions = [] }, transactionDetails) {
 async function newBalanceEntry(tokenContract, tokenAddress, settings) {
   const [balance, decimals, name, symbol] = await Promise.all([
     loadTokenBalance(tokenAddress, settings),
-    loadTokenDecimals(tokenContract, tokenAddress),
-    loadTokenName(tokenContract, tokenAddress),
-    loadTokenSymbol(tokenContract, tokenAddress),
+    loadTokenDecimals(tokenContract, tokenAddress, settings),
+    loadTokenName(tokenContract, tokenAddress, settings),
+    loadTokenSymbol(tokenContract, tokenAddress, settings),
   ])
 
   return {
@@ -302,19 +289,20 @@ function loadTokenBalance(tokenAddress, { vault }) {
   })
 }
 
-function loadTokenDecimals(tokenContract, tokenAddress) {
-  const fallback = tokenFallback(tokenAddress, 'decimals') || '0'
+function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
   return new Promise((resolve, reject) => {
     if (tokenDecimals.has(tokenContract)) {
       resolve(tokenDecimals.get(tokenContract))
     } else {
+      const fallback =
+        tokenDataFallback(tokenAddress, 'decimals', network.type) || '0'
       tokenContract
         .decimals()
         .first()
         .subscribe(
-          decimals => {
+          (decimals = fallback) => {
             tokenDecimals.set(tokenContract, decimals)
-            resolve(decimals || fallback)
+            resolve(decimals)
           },
           () => {
             // Decimals is optional
@@ -325,19 +313,20 @@ function loadTokenDecimals(tokenContract, tokenAddress) {
   })
 }
 
-function loadTokenName(tokenContract, tokenAddress) {
-  const fallback = tokenFallback(tokenAddress, 'name') || ''
+function loadTokenName(tokenContract, tokenAddress, { network }) {
   return new Promise((resolve, reject) => {
     if (tokenName.has(tokenContract)) {
       resolve(tokenName.get(tokenContract))
     } else {
+      const fallback =
+        tokenDataFallback(tokenAddress, 'name', network.type) || ''
       tokenContract
         .name()
         .first()
         .subscribe(
-          name => {
+          (name = fallback) => {
             tokenName.set(tokenContract, name)
-            resolve(name || fallback)
+            resolve(name)
           },
           () => {
             // Name is optional
@@ -348,19 +337,20 @@ function loadTokenName(tokenContract, tokenAddress) {
   })
 }
 
-function loadTokenSymbol(tokenContract, tokenAddress) {
-  const fallback = tokenFallback(tokenAddress, 'symbol') || ''
+function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
   return new Promise((resolve, reject) => {
     if (tokenSymbols.has(tokenContract)) {
       resolve(tokenSymbols.get(tokenContract))
     } else {
+      const fallback =
+        tokenDataFallback(tokenAddress, 'symbol', network.type) || ''
       tokenContract
         .symbol()
         .first()
         .subscribe(
-          symbol => {
+          (symbol = fallback) => {
             tokenSymbols.set(tokenContract, symbol)
-            resolve(symbol || fallback)
+            resolve(symbol)
           },
           () => {
             // Symbol is optional
