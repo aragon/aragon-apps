@@ -21,6 +21,7 @@ import provideNetwork from '../../lib/provideNetwork'
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
   tokenDataFallback,
+  getTokenSymbol
 } from '../../lib/token-utils'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
 import { combineLatest } from '../../rxjs'
@@ -158,17 +159,23 @@ class Deposit extends React.Component {
         tokenDataFallback(address, 'decimals', network.type) || '0'
       const symbolFallback =
         tokenDataFallback(address, 'symbol', network.type) || ''
-
-      combineLatest(token.decimals(), token.symbol())
+      const tokenSymbol = getTokenSymbol(app,address)
+      if (tokenSymbol){
+        combineLatest(token.decimals(), token.symbol())
         .first()
         .subscribe(
-          ([decimals = decimalsFallback, symbol = symbolFallback]) =>
+          ([decimals = decimalsFallback, symbol]) =>
             resolve({
-              symbol,
+              symbol: tokenSymbol,
               userBalance,
               decimals: parseInt(decimals, 10),
               loading: false,
-            }),
+            })
+        )
+      }else {
+        combineLatest(token.decimals(), token.symbol())
+        .first()
+        .subscribe(
           () => {
             // Decimals and symbols are optional
             resolve({
@@ -179,6 +186,7 @@ class Deposit extends React.Component {
             })
           }
         )
+      }      
     })
   }
   validateInputs({ amount, selectedToken } = {}) {
