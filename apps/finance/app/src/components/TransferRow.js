@@ -9,6 +9,8 @@ import {
   ContextMenuItem,
   IdentityBadge,
   theme,
+  BreakPoint,
+  breakpoint,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
@@ -44,7 +46,63 @@ class TransferRow extends React.Component {
       showCopyTransferMessage: false,
     })
   }
+
   render() {
+    return (
+      <React.Fragment>
+        <BreakPoint to="medium">{this.renderSmallScreens()}</BreakPoint>
+        <BreakPoint from="medium">
+          {this.renderMediumAndBiggerScreens()}
+        </BreakPoint>
+      </React.Fragment>
+    )
+  }
+
+  renderSmallScreens() {
+    const {
+      network: { type },
+      token: { decimals, symbol },
+      transaction: {
+        date,
+        entity,
+        isIncoming,
+        numData: { amount },
+        reference,
+      },
+    } = this.props
+    const formattedAmount = formatTokenAmount(
+      amount,
+      isIncoming,
+      decimals,
+      true,
+      { rounding: 5 }
+    )
+    const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
+    return (
+      <TableRow>
+        <StyledTableCell>
+          <Grid>
+            <Wrap>
+              <IdentityBadge
+                networkType={type}
+                entity={entity}
+                shorten={true}
+              />
+            </Wrap>
+            <time dateTime={formattedDate} title={formattedDate}>
+              {format(date, 'dd MMM yyyy')}
+            </time>
+            <TextOverflow>{reference}</TextOverflow>
+            <Amount positive={isIncoming}>
+              {formattedAmount} {symbol}
+            </Amount>
+          </Grid>
+        </StyledTableCell>
+      </TableRow>
+    )
+  }
+
+  renderMediumAndBiggerScreens() {
     const { network, token, transaction, wideMode } = this.props
     const { showCopyTransferMessage } = this.state
     const { etherscanBaseUrl } = network
@@ -116,6 +174,70 @@ class TransferRow extends React.Component {
   }
 }
 
+const Wrap = styled.div`
+  display: inline-flex;
+
+  ${breakpoint(
+    'medium',
+    `
+      display: block;
+    `
+  )};
+`
+
+const StyledTableCell = styled(TableCell)`
+  &&& {
+    border-left-width: 0;
+    border-right-width: 0;
+
+    :first-child,
+    :last-child {
+      border-radius: 0;
+    }
+  }
+
+  ${breakpoint(
+    'medium',
+    `
+      &&& {
+        border-left-width: 1px;
+        border-right-width: 1px;
+
+        :first-child,
+        :last-child {
+          border-radius: 3px;
+        }
+      }
+    `
+  )};
+`
+
+const Amount = styled.span`
+  font-weight: 600;
+  color: ${({ positive }) => (positive ? theme.positive : theme.negative)};
+`
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 100%;
+
+  time,
+  ${Amount} {
+    text-align: right;
+  }
+
+  ${breakpoint(
+    'medium',
+    `
+      grid-template-rows: 1fr;
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+      padding: 0 10px;
+    ,`
+  )};
+`
+
 const NoWrapCell = styled(TableCell)`
   white-space: nowrap;
 `
@@ -124,11 +246,6 @@ const TextOverflow = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-`
-
-const Amount = styled.span`
-  font-weight: 600;
-  color: ${({ positive }) => (positive ? theme.positive : theme.negative)};
 `
 
 const ActionsWrapper = styled.div`
