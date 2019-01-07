@@ -8,6 +8,8 @@ import {
   TableRow,
   DropDown,
   theme,
+  breakpoint,
+  BreakPoint,
 } from '@aragon/ui'
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
@@ -140,13 +142,15 @@ class Transfers extends React.Component {
               {({ width }) => (
                 <FixedTable
                   header={
-                    <TableRow>
-                      <DateHeader title="Date" />
-                      <SourceRecipientHeader title="Source / Recipient" />
-                      <ReferenceHeader title="Reference" />
-                      <AmountHeader title="Amount" align="right" />
-                      <TableHeader />
-                    </TableRow>
+                    <BreakPoint from="medium">
+                      <TableRow>
+                        <DateHeader title="Date" />
+                        <SourceRecipientHeader title="Source / Recipient" />
+                        <ReferenceHeader title="Reference" />
+                        <AmountHeader title="Amount" align="right" />
+                        <TableHeader />
+                      </TableRow>
+                    </BreakPoint>
                   }
                 >
                   {filteredTransfers
@@ -160,7 +164,7 @@ class Transfers extends React.Component {
                         key={transfer.transactionHash}
                         token={tokenDetails[toChecksumAddress(transfer.token)]}
                         transaction={transfer}
-                        wideMode={width > 800}
+                        wideMode={width > (768 + 219)}
                       />
                     ))}
                 </FixedTable>
@@ -188,8 +192,15 @@ const Header = styled.div`
 `
 
 const Filters = styled.div`
-  display: flex;
-  flex-wrap: nowrap;
+  display: none;
+
+  ${breakpoint(
+    'medium',
+    `
+      display: flex;
+      flex-wrap: nowrap;
+    `
+  )};
 `
 
 const FilterLabel = styled.label`
@@ -200,9 +211,16 @@ const FilterLabel = styled.label`
 `
 
 const Title = styled.h1`
-  margin-top: 10px;
-  margin-bottom: 20px;
+  margin: 20px 0 20px 30px;
   font-weight: 600;
+
+  ${breakpoint(
+    'medium',
+    `
+      margin-top: 10px;
+      margin-left: 0;
+    `
+  )};
 `
 
 const Label = styled.span`
@@ -231,6 +249,11 @@ const NoTransfers = styled.div`
 
 const FixedTable = styled(Table)`
   color: rgba(0, 0, 0, 0.75);
+  margin-bottom: 20px;
+
+  ${breakpoint('medium', `
+    margin-bottom: 0;
+  `)}
 `
 
 const DateHeader = styled(TableHeader)`
@@ -247,9 +270,17 @@ const AmountHeader = styled(TableHeader)`
 `
 
 const Footer = styled.div`
+  margin-bottom: 30px;
   display: flex;
   justify-content: center;
   margin-top: 30px;
+
+  ${breakpoint(
+    'medium',
+    `
+      margin-bottom: 0;
+    `
+  )};
 `
 
 export default Transfers
