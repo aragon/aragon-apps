@@ -13,6 +13,7 @@ import {
   observe,
   font,
   BreakPoint,
+  theme,
 } from '@aragon/ui'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
@@ -98,6 +99,7 @@ class App extends React.Component {
     const {
       app,
       balances,
+      contentPadding,
       transactions,
       tokens,
       proxyAddress,
@@ -110,6 +112,7 @@ class App extends React.Component {
         <BaseStyles />
         <Main>
           <AppView
+            padding={contentPadding}
             appBar={
               <AppBar
                 title={
@@ -121,9 +124,27 @@ class App extends React.Component {
                   </Title>
                 }
                 endContent={
-                  <Button mode="strong" onClick={this.handleNewTransferOpen}>
-                    New Transfer
-                  </Button>
+                  <React.Fragment>
+                    <BreakPoint to="medium">
+                      <Button
+                        mode="text"
+                        onClick={this.handleNewTransferOpen}
+                        style={{
+                          color: theme.accent,
+                        }}
+                      >
+                        New Transfer
+                      </Button>
+                    </BreakPoint>
+                    <BreakPoint from="medium">
+                      <Button
+                        mode="strong"
+                        onClick={this.handleNewTransferOpen}
+                      >
+                        New Transfer
+                      </Button>
+                    </BreakPoint>
+                  </React.Fragment>
                 }
               />
             }
@@ -171,6 +192,17 @@ class App extends React.Component {
     )
   }
 }
+
+const ResponsiveApp = props => (
+  <React.Fragment>
+    <BreakPoint to="medium">
+      <App {...props} contentPadding={0} />
+    </BreakPoint>
+    <BreakPoint from="medium">
+      <App {...props} contentPadding={30} />
+    </BreakPoint>
+  </React.Fragment>
+)
 
 const Title = styled.span`
   display: flex;
@@ -268,4 +300,4 @@ export default observe(
       }
     }),
   {}
-)(App)
+)(ResponsiveApp)
