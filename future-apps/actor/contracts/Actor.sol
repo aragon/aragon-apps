@@ -17,7 +17,6 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
     bytes32 public constant EXECUTE_ROLE = keccak256("EXECUTE_ROLE");
     bytes32 public constant RUN_SCRIPT_ROLE = keccak256("RUN_SCRIPT_ROLE");
     bytes32 public constant PRESIGN_HASH_ROLE = keccak256("PRESIGN_HASH_ROLE");
-    bytes32 public constant DESIGNATE_SIGNER_ROLE = keccak256("DESIGNATE_SIGNER_ROLE");
 
     bytes4 private constant EIP165_SUPPORT_INTERFACE_ID = 0x01ffc9a7;
     bytes4 public constant ISVALIDSIG_INTERFACE_ID = 0xabababab; // TODO: Add actual interfaceId
@@ -118,6 +117,14 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
             return true;
         }
 
+        address designatedSigner = addressAt(signature);
+        bytes memory designatedSignature = bytesAfter(signature,20);
+        //should return the entire signature except the address
+
+        if (!canPerform(designatedSigner,PRESIGN_HASH_ROLE)) {
+            return false;
+        }
+
         // Checks if designatedSigner is a contract, and if it supports the isValidSignature interface
         if (safeSupportsInterface(IERC165(designatedSigner), ISVALIDSIG_INTERFACE_ID)) {
             // designatedSigner.isValidSignature(hash, signature) as a staticall
@@ -130,7 +137,7 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
         // doesn't support the interface. Here we check the validity of the ECDSA sig
         // which will always fail if designatedSigner is not an EOA
 
-        return SignatureValidator.isValidSignature(hash, designatedSigner, signature);
+        return SignatureValidator.isValidSignature(hash, designatedSigner, designatedSignature);
     }
 
     function canForward(address sender, bytes evmScript) public view returns (bool) {
@@ -183,5 +190,29 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
 
     function getSig(bytes data) internal pure returns (bytes4 sig) {
         assembly { sig := add(data, 0x20) }
+    }
+
+    function addressAt(bytes data) internal pure returns (address) {
+        uint160 m = 0;
+        uint160 b = 0;
+
+        for (uint8 i = 0; i < 20; i++) {
+          m *= 256;
+          b = uint160(data[i]);
+          m += (b);
+        }
+
+        return address(m);
+    }
+
+    function bytesAfter(bytes data, uint offset) internal pure returns (bytes) {
+        uint length = data.length - offset;
+        bytes memory result = new bytes(length);
+
+        for (uint8 i = 0; i < length; i++) {
+          result[i]=data[i+offset];
+        }
+
+        return result;
     }
 }
