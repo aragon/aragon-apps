@@ -1,9 +1,8 @@
 import { ETHER_TOKEN_VERIFIED_ADDRESSES } from './verified-tokens'
 import { toUtf8 } from './web3-utils'
-import tokenSymbolBytes from '../abi/token-symbol-bytes.json'
+import tokenSymbolBytesAbi from '../abi/token-symbol-bytes.json'
 import tokenDecimalsAbi from '../abi/token-decimals.json'
 import tokenBalanceOfAbi from '../abi/token-balanceof.json'
-import tokenNameAbi from '../abi/token-name.json'
 import tokenSymbolAbi from '../abi/token-symbol.json'
 
 // Some known tokens don’t strictly follow ERC-20 and it would be difficult to
@@ -45,29 +44,23 @@ export const tokenDataFallback = (tokenAddress, fieldName, networkType) => {
   return fallbacksForNetwork.get(addressWithoutChecksum)[fieldName] || null
 }
 
-export async function getTokenSymbol (app, address){
-  const tokenAbi = [].concat(tokenBalanceOfAbi,tokenDecimalsAbi,tokenSymbolAbi)
-  const token = app.external(address,tokenAbi)
-  const tokenSymbol = await token
+export async function getTokenSymbol(app, address) {
+  let tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
+  let token = app.external(address, tokenAbi)
+  let tokenSymbol = await token
     .symbol()
     .first()
     .toPromise()
-  if (tokenSymbol){
+  if (tokenSymbol) {
     return tokenSymbol
-
-  }else{
-    // Now we try with symbol as bytes32
-    const tokenAbi = [].concat(tokenBalanceOfAbi,tokenDecimalsAbi,tokenSymbolBytes)
-    const token = app.external(address,tokenAbi)
-    const tokenSymbol = await token
+  }
+  // Now we try with symbol as bytes32
+  tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolBytesAbi)
+  token = app.external(address, tokenAbi)
+  tokenSymbol = await token
     .symbol()
     .first()
     .toPromise()
-    if (tokenSymbol){
-      return toUtf8(tokenSymbol)
 
-    }else{
-      return null
-    }
-  }
+  return tokenSymbol ? toUtf8(tokenSymbol) : null
 }

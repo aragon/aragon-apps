@@ -5,12 +5,10 @@ import {
   ETHER_TOKEN_FAKE_ADDRESS,
   isTokenVerified,
   tokenDataFallback,
-  getTokenSymbol
+  getTokenSymbol,
 } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
-import tokenSymbolBytes from './abi/token-symbol-bytes'
 import tokenDecimalsAbi from './abi/token-decimals.json'
-import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenNameAbi from './abi/token-name.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
 import vaultBalanceAbi from './abi/vault-balance.json'
@@ -333,7 +331,7 @@ function loadTokenName(tokenContract, tokenAddress, { network }) {
           },
           () => {
             // Name is optional
-             resolve(fallback)
+            resolve(fallback)
           }
         )
     }
@@ -345,15 +343,10 @@ function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
     if (tokenSymbols.has(tokenContract)) {
       resolve(tokenSymbols.get(tokenContract))
     } else {
-     const fallback =
+      const fallback =
         tokenDataFallback(tokenAddress, 'symbol', network.type) || ''
-      const tokenSymbol = getTokenSymbol(app,tokenAddress)
-
-      if (tokenSymbol){
-        resolve(tokenSymbol)
-      }else{
-        resolve(fallback)
-      }
+      const tokenSymbol = getTokenSymbol(app, tokenAddress)
+      resolve(tokenSymbol || fallback)
     }
   })
 }
