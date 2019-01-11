@@ -159,27 +159,32 @@ class Deposit extends React.Component {
         tokenDataFallback(address, 'decimals', network.type) || '0'
       const symbolFallback =
         tokenDataFallback(address, 'symbol', network.type) || ''
-      const tokenSymbol = await getTokenSymbol(app, address)
-      if (tokenSymbol) {
-        combineLatest(token.decimals())
-          .first()
-          .subscribe(([decimals = decimalsFallback]) =>
-            resolve({
-              symbol: tokenSymbol,
-              userBalance,
-              decimals: parseInt(decimals, 10),
-              loading: false,
-            })
-          )
-      } else {
-        // Decimals and symbols are optional
-        resolve({
-          userBalance,
-          decimals: parseInt(decimalsFallback, 10),
-          loading: false,
-          symbol: symbolFallback,
-        })
+
+      const tokenData = {
+        symbol: symbolFallback,
+        userBalance,
+        decimals: parseInt(decimalsFallback, 10),
+        loading: false,
       }
+
+      const [tokenSymbol, tokenDecimals] = await Promise.all([
+        getTokenSymbol(app, address),
+        token
+          .decimals()
+          .first()
+          .toPromise(),
+      ])
+
+      // no token symbol or decimals: resolve the fallback data
+      if (!tokenSymbol || !tokenDecimals) {
+        return resolve(tokenData)
+      }
+
+      resolve({
+        ...tokenData,
+        symbol: tokenSymbol,
+        decimals: parseInt(tokenDecimals, 10),
+      })
     })
   }
   validateInputs({ amount, selectedToken } = {}) {
