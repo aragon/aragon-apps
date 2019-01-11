@@ -10,6 +10,7 @@ import {
   SidePanel,
   font,
   observe,
+  BreakPoint,
 } from '@aragon/ui'
 import BN from 'bn.js'
 import EmptyState from './screens/EmptyState'
@@ -18,12 +19,13 @@ import tokenAbi from './abi/token-balanceOfAt.json'
 import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
 import AutoLink from './components/AutoLink'
+import MenuButton from './components/MenuButton/MenuButton'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
-import { makeEtherscanBaseUrl, isMobile } from './utils'
+import { makeEtherscanBaseUrl } from './utils'
 import { isVoteOpen, voteTypeFromContractEnum } from './vote-utils'
 import { shortenAddress, transformAddresses } from './web3-utils'
 
@@ -235,9 +237,9 @@ class App extends React.Component {
               <AppBar
                 title={
                   <Title>
-                    {isMobile() && (
-                      <button onClick={this.handleMenuPanelOpen}>M</button>
-                    )}
+                    <BreakPoint to="medium">
+                      <MenuButton onClick={this.handleMenuPanelOpen} />
+                    </BreakPoint>
                     <TitleLabel>Voting</TitleLabel>
                   </Title>
                 }
