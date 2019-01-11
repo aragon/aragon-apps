@@ -349,36 +349,35 @@ class Deposit extends React.Component {
           )}
         </Info.Action>
 
-        {proxyAddress &&
-          ethSelected && (
-            <div>
-              <VSpace size={6} />
-              <ToggleContent label="Show address for direct ETH transfer ">
-                <VSpace size={4} />
-                <QRCode
-                  value={proxyAddress}
-                  style={{ width: '80px', height: '80px' }}
-                />
-                <VSpace size={4} />
-                <IdentityBadge
-                  entity={proxyAddress}
-                  fontSize="small"
-                  networkType={network.type}
-                  shorten={false}
-                />
-                <VSpace size={2} />
-                <Info>
-                  Use the above address or QR code to transfer ETH directly to
-                  your organization’s Finance app. You should specify a gas limit
-                  of 350,000 for this transfer.
-                  <Text.Paragraph size="xsmall" style={{ marginTop: '10px' }}>
-                    <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
-                    (e.g. ERC-20) tokens directly to this address.
-                  </Text.Paragraph>
-                </Info>
-              </ToggleContent>
-            </div>
-          )}
+        {proxyAddress && ethSelected && (
+          <div>
+            <VSpace size={6} />
+            <ToggleContent label="Show address for direct ETH transfer ">
+              <VSpace size={4} />
+              <QRCode
+                value={proxyAddress}
+                style={{ width: '80px', height: '80px' }}
+              />
+              <VSpace size={4} />
+              <IdentityBadge
+                entity={proxyAddress}
+                fontSize="small"
+                networkType={network.type}
+                shorten={false}
+              />
+              <VSpace size={2} />
+              <Info>
+                Use the above address or QR code to transfer ETH directly to
+                your organization’s Finance app. You should specify a gas limit
+                of 350,000 for this transfer.
+                <Text.Paragraph size="xsmall" style={{ marginTop: '10px' }}>
+                  <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
+                  (e.g. ERC-20) tokens directly to this address.
+                </Text.Paragraph>
+              </Info>
+            </ToggleContent>
+          </div>
+        )}
       </form>
     )
   }
