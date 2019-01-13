@@ -28,7 +28,6 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
     uint256 internal constant EIP165_MAX_GAS = 30000;
 
     mapping (bytes32 => bool) public isPresigned;
-    address public designatedSigner;
 
     event Execute(address indexed sender, address indexed target, uint256 ethValue, bytes data);
     event PresignHash(address indexed sender, bytes32 indexed hash);
@@ -65,16 +64,6 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
             switch result case 0 { revert(ptr, size) }
             default { return(ptr, size) }
         }
-    }
-
-    function setDesignatedSigner(address _designatedSigner)
-        external
-        authP(DESIGNATE_SIGNER_ROLE, arr(_designatedSigner))
-    {
-        address oldDesignatedSigner = designatedSigner;
-        designatedSigner = _designatedSigner;
-
-        emit SetDesignatedSigner(msg.sender, oldDesignatedSigner, _designatedSigner);
     }
 
     function presignHash(bytes32 _hash)
@@ -121,7 +110,8 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
         bytes memory designatedSignature = bytesAfter(signature,20);
         //should return the entire signature except the address
 
-        if (!canPerform(designatedSigner,PRESIGN_HASH_ROLE)) {
+        uint256[] memory params = new uint256[](0);
+        if (!canPerform(designatedSigner,PRESIGN_HASH_ROLE,params)) {
             return false;
         }
 
