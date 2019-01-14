@@ -228,7 +228,7 @@ class App extends React.Component {
                 title="Voting"
                 endContent={
                   <Button mode="strong" onClick={this.handleCreateVoteOpen}>
-                    New Vote
+                    New Poll
                   </Button>
                 }
               />
@@ -264,7 +264,7 @@ class App extends React.Component {
           </SidePanel>
 
           <SidePanel
-            title="New Vote"
+            title="New Poll"
             opened={createVoteVisible}
             onClose={this.handleCreateVoteClose}
           >
