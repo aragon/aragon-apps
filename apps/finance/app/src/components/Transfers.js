@@ -185,51 +185,72 @@ class Transfers extends React.Component {
 }
 
 const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: nowrap;
   margin-bottom: 10px;
+
+  ${breakpoint(
+    'medium',
+    `
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+  `
+  )};
 `
 
 const Filters = styled.div`
-  display: none;
+  display: grid;
+  grid-template-columns: 50% 50%;
+  margin: 0 20px 20px 20px;
 
   ${breakpoint(
     'medium',
     `
       display: flex;
       flex-wrap: nowrap;
+      margin: 0;
     `
   )};
 `
 
 const FilterLabel = styled.label`
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  white-space: nowrap;
+  ${breakpoint(
+    'medium',
+    `
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      white-space: nowrap;
+    `
+  )};
 `
 
 const Title = styled.h1`
-  margin: 20px 0 20px 30px;
+  margin: 20px 0 20px 20px;
   font-weight: 600;
 
   ${breakpoint(
     'medium',
     `
-      margin-top: 10px;
-      margin-left: 0;
+      margin: 10px 30px 20px 0;
     `
   )};
 `
 
 const Label = styled.span`
+  display: block;
   margin-right: 15px;
-  margin-left: 20px;
   font-variant: small-caps;
   text-transform: lowercase;
   color: ${theme.textSecondary};
   font-weight: 600;
+
+  ${breakpoint(
+    'medium',
+    `
+      display: inline;
+      margin-left: 20px;
+    `
+  )};
 `
 
 const NoTransfers = styled.div`
@@ -251,9 +272,12 @@ const FixedTable = styled(Table)`
   color: rgba(0, 0, 0, 0.75);
   margin-bottom: 20px;
 
-  ${breakpoint('medium', `
+  ${breakpoint(
+    'medium',
+    `
     margin-bottom: 0;
-  `)}
+  `
+  )};
 `
 
 const DateHeader = styled(TableHeader)`
