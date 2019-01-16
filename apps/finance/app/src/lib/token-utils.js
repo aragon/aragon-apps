@@ -45,8 +45,7 @@ export const tokenDataFallback = (tokenAddress, fieldName, networkType) => {
 }
 
 export async function getTokenSymbol(app, address) {
-  let tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
-  let token = app.external(address, tokenAbi)
+  let token = app.external(address, tokenSymbolAbi)
   let tokenSymbol = await token
     .symbol()
     .first()
@@ -55,8 +54,7 @@ export async function getTokenSymbol(app, address) {
     return tokenSymbol
   }
   // Now we try with symbol as bytes32
-  tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolBytesAbi)
-  token = app.external(address, tokenAbi)
+  token = app.external(address, tokenSymbolBytesAbi)
   tokenSymbol = await token
     .symbol()
     .first()

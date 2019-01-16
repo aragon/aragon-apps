@@ -176,14 +176,15 @@ class Deposit extends React.Component {
       ])
 
       // no token symbol or decimals: resolve the fallback data
-      if (!tokenSymbol || !tokenDecimals) {
-        return resolve(tokenData)
+      if (tokenSymbol) {
+        tokenData.symbol = tokenSymbol
+      }
+      if (tokenDecimals) {
+        tokenData.decimals = parseInt(tokenDecimals, 10)
       }
 
       resolve({
-        ...tokenData,
-        symbol: tokenSymbol,
-        decimals: parseInt(tokenDecimals, 10),
+        ...tokenData, 
       })
     })
   }
