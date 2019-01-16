@@ -24,7 +24,6 @@ import {
   getTokenSymbol,
 } from '../../lib/token-utils'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
-import { combineLatest } from '../../rxjs'
 import ToggleContent from '../ToggleContent'
 import TokenBadge from './TokenBadge'
 import TokenSelector from './TokenSelector'
@@ -184,7 +183,7 @@ class Deposit extends React.Component {
       }
 
       resolve({
-        ...tokenData, 
+        ...tokenData,
       })
     })
   }

@@ -1,9 +1,9 @@
 import { ETHER_TOKEN_VERIFIED_ADDRESSES } from './verified-tokens'
 import { toUtf8 } from './web3-utils'
 import tokenSymbolBytesAbi from '../abi/token-symbol-bytes.json'
-import tokenDecimalsAbi from '../abi/token-decimals.json'
-import tokenBalanceOfAbi from '../abi/token-balanceof.json'
 import tokenSymbolAbi from '../abi/token-symbol.json'
+import tokenNameAbi from '../abi/token-name.json'
+import tokenNameBytesAbi from '../abi/token-name-bytes.json'
 
 // Some known tokens don’t strictly follow ERC-20 and it would be difficult to
 // adapt to every situation. The data listed in this map is used as a fallback
@@ -61,4 +61,23 @@ export async function getTokenSymbol(app, address) {
     .toPromise()
 
   return tokenSymbol ? toUtf8(tokenSymbol) : null
+}
+
+export async function getTokenName(app, address) {
+  let token = app.external(address, tokenNameAbi)
+  let tokenName = await token
+    .name()
+    .first()
+    .toPromise()
+  if (tokenName) {
+    return tokenName
+  }
+  // Now we try with symbol as bytes32
+  token = app.external(address, tokenNameBytesAbi)
+  tokenName = await token
+    .name()
+    .first()
+    .toPromise()
+
+  return tokenName ? toUtf8(tokenName) : null
 }
