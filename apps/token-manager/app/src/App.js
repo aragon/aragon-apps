@@ -12,10 +12,12 @@ import {
   SidePanel,
   font,
   observe,
+  BreakPoint,
 } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
+import MenuButton from './components/MenuButton/MenuButton'
 import { networkContextType } from './provide-network'
 import { hasLoadedTokenSettings } from './token-settings'
 import { makeEtherscanBaseUrl } from './utils'
@@ -29,6 +31,7 @@ const initialAssignTokensConfig = {
 class App extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
+    sendMessageToWrapper: PropTypes.func.isRequired,
   }
   static defaultProps = {
     appStateReady: false,
@@ -88,6 +91,9 @@ class App extends React.Component {
       sidepanelOpened: true,
     })
   }
+  handleMenuPanelOpen = () => {
+    this.props.sendMessageToWrapper('menuPanel', true)
+  }
   handleSidepanelClose = () => {
     this.setState({ sidepanelOpened: false })
   }
@@ -121,6 +127,9 @@ class App extends React.Component {
               <AppBar
                 title={
                   <Title>
+                    <BreakPoint to="medium">
+                      <MenuButton onClick={this.handleMenuPanelOpen} />
+                    </BreakPoint>
                     <TitleLabel>Token Manager</TitleLabel>
                     {tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
                   </Title>
