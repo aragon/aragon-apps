@@ -11,10 +11,13 @@ import {
   PublicUrl,
   SidePanel,
   observe,
+  font,
+  BreakPoint,
 } from '@aragon/ui'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
+import MenuButton from './components/MenuButton/MenuButton'
 import { networkContextType } from './lib/provideNetwork'
 import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
 import { makeEtherscanBaseUrl } from './lib/utils'
@@ -24,6 +27,7 @@ import addFundsIcon from './components/assets/add-funds-icon.svg'
 class App extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
+    sendMessageToWrapper: PropTypes.func.isRequired,
     proxyAddress: PropTypes.string,
   }
   static defaultProps = {
@@ -85,6 +89,11 @@ class App extends React.Component {
     app.deposit(tokenAddress, amount, reference, intentParams)
     this.handleNewTransferClose()
   }
+
+  handleMenuPanelOpen = () => {
+    this.props.sendMessageToWrapper('menuPanel', true)
+  }
+
   render() {
     const {
       app,
@@ -103,7 +112,14 @@ class App extends React.Component {
           <AppView
             appBar={
               <AppBar
-                title="Finance"
+                title={
+                  <Title>
+                    <BreakPoint to="medium">
+                      <MenuButton onClick={this.handleMenuPanelOpen} />
+                    </BreakPoint>
+                    <TitleLabel>Finance</TitleLabel>
+                  </Title>
+                }
                 endContent={
                   <Button mode="strong" onClick={this.handleNewTransferOpen}>
                     New Transfer
@@ -155,6 +171,15 @@ class App extends React.Component {
     )
   }
 }
+
+const Title = styled.span`
+  display: flex;
+  align-items: center;
+`
+
+const TitleLabel = styled.span`
+  ${font({ size: 'xxlarge' })};
+`
 
 const Main = styled.div`
   height: 100vh;
