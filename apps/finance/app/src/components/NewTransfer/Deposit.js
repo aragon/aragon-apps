@@ -182,9 +182,7 @@ class Deposit extends React.Component {
         tokenData.decimals = parseInt(tokenDecimals, 10)
       }
 
-      resolve({
-        ...tokenData,
-      })
+      resolve(tokenData)
     })
   }
   validateInputs({ amount, selectedToken } = {}) {
