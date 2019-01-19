@@ -141,45 +141,45 @@ contract('Vault app', (accounts) => {
     },
   ]
   for ({ title, tokenContract} of tokenTestGroups) {
-		context(`ERC20 (${title}):`, () => {
-			let token
+    context(`ERC20 (${title}):`, () => {
+      let token
 
-			beforeEach(async () => {
-				token = await tokenContract.new(accounts[0], 10000)
-			})
+      beforeEach(async () => {
+        token = await tokenContract.new(accounts[0], 10000)
+      })
 
-			it('deposits ERC20s', async () => {
-				await token.approve(vault.address, 10)
+      it('deposits ERC20s', async () => {
+        await token.approve(vault.address, 10)
 
-				await vault.deposit(token.address, 5)
+        await vault.deposit(token.address, 5)
 
         const vaultBalance = (await token.balanceOf(vault.address)).valueOf()
-				assert.equal(vaultBalance, 5, "token accounting should be correct")
-				assert.equal(await vault.balance(token.address), vaultBalance, "vault should know its balance")
-			})
+        assert.equal(vaultBalance, 5, "token accounting should be correct")
+        assert.equal(await vault.balance(token.address), vaultBalance, "vault should know its balance")
+      })
 
-			it('transfers tokens', async () => {
-				const tokenReceiver = accounts[2]
-				await token.transfer(vault.address, 10)
+      it('transfers tokens', async () => {
+        const tokenReceiver = accounts[2]
+        await token.transfer(vault.address, 10)
 
-				// Transfer half
-				await vault.transfer(token.address, tokenReceiver, 5)
+        // Transfer half
+        await vault.transfer(token.address, tokenReceiver, 5)
 
-				assert.equal(await token.balanceOf(tokenReceiver), 5, "receiver should have correct token balance")
-			})
+        assert.equal(await token.balanceOf(tokenReceiver), 5, "receiver should have correct token balance")
+      })
 
-			it('fails if not sufficient token balance available', async () => {
-				const approvedAmount = 10
-				await token.approve(vault.address, approvedAmount)
+      it('fails if not sufficient token balance available', async () => {
+        const approvedAmount = 10
+        await token.approve(vault.address, approvedAmount)
 
-				return assertRevert(async () => {
-					await vault.deposit(token.address, approvedAmount * 2)
-				})
-				assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
-			})
+        return assertRevert(async () => {
+          await vault.deposit(token.address, approvedAmount * 2)
+        })
+        assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
+      })
 
       it('fails deposits if token transfer fails', async () => {
-				await token.approve(vault.address, 10)
+        await token.approve(vault.address, 10)
 
         // Disable transfers
         await token.setAllowTransfer(false)
@@ -188,25 +188,25 @@ contract('Vault app', (accounts) => {
         await assertRevert(() =>
           vault.deposit(token.address, 5)
         )
-				assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
+        assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
       })
 
       it('fails transfers if token transfer fails', async () => {
-				const tokenReceiver = accounts[2]
-				await token.transfer(vault.address, 10)
+        const tokenReceiver = accounts[2]
+        await token.transfer(vault.address, 10)
 
         // Disable transfers
         await token.setAllowTransfer(false)
 
-				// Attempt to transfer
+        // Attempt to transfer
         await assertRevert(() =>
           vault.transfer(token.address, tokenReceiver, 5)
         )
-				assert.equal(await token.balanceOf(tokenReceiver), 0, "receiver should have initial token balance")
-				assert.equal(await token.balanceOf(vault.address), 10, "vault should have initial token balance")
+        assert.equal(await token.balanceOf(tokenReceiver), 0, "receiver should have initial token balance")
+        assert.equal(await token.balanceOf(vault.address), 10, "vault should have initial token balance")
       })
-		})
-	}
+    })
+  }
 
   context('recovering assets', () => {
     let kernel, defaultVault, token

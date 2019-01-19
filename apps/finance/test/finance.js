@@ -16,18 +16,18 @@ const getEventData = (receipt, event, arg) => receipt.logs.filter(log => log.eve
 
 // Tests for different token interfaces
 const tokenTestGroups = [
-  {
-    title: 'standards compliant, reverting token',
-    tokenContract: TokenMock,
-  },
-  {
-    title: 'standards compliant, non-reverting token',
-    tokenContract: TokenReturnFalseMock,
-  },
-  {
-    title: 'non-standards compliant, missing return token',
-    tokenContract: TokenReturnMissingMock,
-  },
+    {
+        title: 'standards compliant, reverting token',
+        tokenContract: TokenMock,
+    },
+    {
+        title: 'standards compliant, non-reverting token',
+        tokenContract: TokenReturnFalseMock,
+    },
+    {
+        title: 'non-standards compliant, missing return token',
+        tokenContract: TokenReturnMissingMock,
+    },
 ]
 
 contract('Finance App', accounts => {
