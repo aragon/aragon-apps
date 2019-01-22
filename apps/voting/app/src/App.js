@@ -304,7 +304,6 @@ const Title = styled.span`
 `
 
 const TitleLabel = styled.span`
-  margin-right: 10px;
   ${font({ size: 'xxlarge' })};
 `
 
