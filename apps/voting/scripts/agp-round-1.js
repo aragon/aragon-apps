@@ -3,7 +3,7 @@
 const Voting = artifacts.require('Voting')
 
 const questions = [
-    'Do you approve AGP-14?\nSHA256: dc91ce15a96abb9f1c3dc9aa3b82fd27c5e5a2dbee6c18cb4b92f998a5745f77\nLink: https://github.com/aragon/AGPs/blob/master/AGPs/AGP-14.md',
+    'Do you approve AGP-14? (Official vote, Vote #1 is void)\nSHA256: dc91ce15a96abb9f1c3dc9aa3b82fd27c5e5a2dbee6c18cb4b92f998a5745f77\nLink: https://github.com/aragon/AGPs/blob/master/AGPs/AGP-14.md',
     'Do you approve AGP-16?\nSHA256: 7a2207b6a6c9241aba0b2ba8f536c8d355db0d0d1138406632eea0f5deadca92\nLink: https://github.com/aragon/AGPs/blob/master/AGPs/AGP-16.md',
     'Do you approve AGP-5?\nSHA256: 723fc1bab8ce83d021a1c64d78d070041b10629ea78a8b9651fd89aa9a040f9b\nLink: https://github.com/aragon/AGPs/blob/master/AGPs/AGP-5.md',
     'Do you approve AGP-10?\nSHA256: ff6d4b178099608b9dde6b8a406b3bd45419e8aab4e1f9ea88f67974519f31bc\nLink: https://github.com/aragon/AGPs/blob/master/AGPs/AGP-10.md',
