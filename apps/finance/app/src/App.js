@@ -215,6 +215,7 @@ const TitleLabel = styled.span`
 
 const Main = styled.div`
   height: 100vh;
+  min-width: 320px;
 `
 
 const EmptyScreen = styled.div`
