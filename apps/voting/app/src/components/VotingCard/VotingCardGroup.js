@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Badge, Text, unselectable } from '@aragon/ui'
+import { Badge, Text, unselectable, breakpoint } from '@aragon/ui'
 
 const VotingCardGroup = ({ title, count, children }) => (
   <Main>
@@ -24,9 +24,16 @@ const Main = styled.section`
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: 1fr;
   grid-auto-rows: 270px;
   grid-gap: 30px;
+
+  ${breakpoint(
+    'medium',
+    `
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+     `,
+  )};
 `
 
 const Title = styled.h1`
