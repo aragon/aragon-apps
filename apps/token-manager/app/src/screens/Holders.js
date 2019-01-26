@@ -41,13 +41,15 @@ class Holders extends React.Component {
     return (
       <TwoPanels>
         <Main>
-          <ResponsiveTabBar>
-            <TabBar
-              items={TABS}
-              selected={selectedTab}
-              onSelect={this.handleSelectTab}
-            />
-          </ResponsiveTabBar>
+          {tabbedNavigation && (
+            <TabBarWrapper>
+              <TabBar
+                items={TABS}
+                selected={selectedTab}
+                onSelect={this.handleSelectTab}
+              />
+            </TabBarWrapper>
+          )}
           <Screen selected={!tabbedNavigation || selectedTab === 0}>
             <ResponsiveTable
               header={
@@ -113,17 +115,14 @@ const StyledTableHeader = styled(TableHeader)`
   )};
 `
 
-const ResponsiveTabBar = styled.div`
+const TabBarWrapper = styled.div`
   margin-top: 16px;
-
   & ul {
     border-bottom: none !important;
   }
   & li {
     padding: 0 20px;
   }
-
-  ${breakpoint('medium', `display: none`)};
 `
 
 const ResponsiveTable = styled(Table)`
