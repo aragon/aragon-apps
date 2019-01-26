@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Text, theme, IdentityBadge, breakpoint, BreakPoint } from '@aragon/ui'
+import { Text, theme, IdentityBadge, breakpoint } from '@aragon/ui'
 import { formatBalance, stakesPercentages } from '../utils'
 import TokenBadge from './TokenBadge'
 
@@ -207,13 +207,4 @@ const StakesListBullet = styled.span`
   }
 `
 
-export default props => (
-  <React.Fragment>
-    <BreakPoint to="medium">
-      <SideBar {...props} />
-    </BreakPoint>
-    <BreakPoint from="medium">
-      <SideBar {...props} />
-    </BreakPoint>
-  </React.Fragment>
-)
+export default SideBar

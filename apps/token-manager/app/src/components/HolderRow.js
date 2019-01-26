@@ -11,9 +11,9 @@ import {
   theme,
   IdentityBadge,
   breakpoint,
-  BreakPoint,
 } from '@aragon/ui'
 import { formatBalance } from '../utils'
+import { WindowSize } from '../WindowSizeProvider'
 
 class HolderRow extends React.Component {
   static defaultProps = {
@@ -137,12 +137,12 @@ const IconWrapper = styled.span`
 `
 
 export default props => (
-  <React.Fragment>
-    <BreakPoint to="medium">
-      <HolderRow {...props} shorten />
-    </BreakPoint>
-    <BreakPoint from="medium">
-      <HolderRow {...props} />
-    </BreakPoint>
-  </React.Fragment>
+  <WindowSize>
+    {({ width, WIDTH_MEDIUM }) => (
+      <HolderRow
+        {...props}
+        shorten={(width < 1000 && width >= WIDTH_MEDIUM) || width < 590}
+      />
+    )}
+  </WindowSize>
 )

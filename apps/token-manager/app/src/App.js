@@ -9,10 +9,10 @@ import {
   BaseStyles,
   Button,
   PublicUrl,
+  Root,
   SidePanel,
   font,
   observe,
-  BreakPoint,
   breakpoint,
 } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
@@ -20,6 +20,7 @@ import Holders from './screens/Holders'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import MenuButton from './components/MenuButton/MenuButton'
 import AssignTokensButton from './components/AssignTokensButton/AssignTokensButton'
+import { WindowSizeProvider, WindowSize } from './WindowSizeProvider'
 import { networkContextType } from './provide-network'
 import { hasLoadedTokenSettings } from './token-settings'
 import { makeEtherscanBaseUrl } from './utils'
@@ -122,88 +123,95 @@ class App extends React.Component {
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
-      <PublicUrl.Provider url="./aragon-ui/">
-        <BaseStyles />
-        <Main>
-          <AppView
-            padding={contentPadding}
-            appBar={
-              <AppBar
+      <WindowSizeProvider>
+        <Root.Provider>
+          <PublicUrl.Provider url="./aragon-ui/">
+            <BaseStyles />
+            <Main>
+              <WindowSize>
+                {({ width, WIDTH_MEDIUM }) => (
+                  <AppView
+                    padding={width < WIDTH_MEDIUM ? 0 : 30}
+                    appBar={
+                      <AppBar
+                        title={
+                          <Title>
+                            <WindowSize>
+                              {({ width, WIDTH_MEDIUM }) =>
+                                width < WIDTH_MEDIUM && (
+                                  <MenuButton
+                                    onClick={this.handleMenuPanelOpen}
+                                  />
+                                )
+                              }
+                            </WindowSize>
+                            <TitleLabel>Token Manager</TitleLabel>
+                            {tokenSymbol && (
+                              <Badge.App>{tokenSymbol}</Badge.App>
+                            )}
+                          </Title>
+                        }
+                        endContent={
+                          <AssignTokensButton
+                            title="Assign Tokens"
+                            onClick={this.handleLaunchAssignTokensNoHolder}
+                          />
+                        }
+                      />
+                    }
+                  >
+                    {appStateReady && holders.length > 0 ? (
+                      <Holders
+                        holders={holders}
+                        groupMode={groupMode}
+                        maxAccountTokens={maxAccountTokens}
+                        tokenAddress={tokenAddress}
+                        tokenDecimalsBase={tokenDecimalsBase}
+                        tokenName={tokenName}
+                        tokenSupply={tokenSupply}
+                        tokenSymbol={tokenSymbol}
+                        tokenTransfersEnabled={tokenTransfersEnabled}
+                        userAccount={userAccount}
+                        onAssignTokens={this.handleLaunchAssignTokens}
+                        onRemoveTokens={this.handleLaunchRemoveTokens}
+                      />
+                    ) : (
+                      <EmptyState
+                        onActivate={this.handleLaunchAssignTokensNoHolder}
+                      />
+                    )}
+                  </AppView>
+                )}
+              </WindowSize>
+              <SidePanel
                 title={
-                  <Title>
-                    <BreakPoint to="medium">
-                      <MenuButton onClick={this.handleMenuPanelOpen} />
-                    </BreakPoint>
-                    <TitleLabel>Token Manager</TitleLabel>
-                    {tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
-                  </Title>
+                  assignTokensConfig.mode === 'assign'
+                    ? 'Assign tokens'
+                    : 'Remove tokens'
                 }
-                endContent={
-                  <AssignTokensButton
-                    title="Assign Tokens"
-                    onClick={this.handleLaunchAssignTokensNoHolder}
-                  />
-                }
-              />
-            }
-          >
-            {appStateReady && holders.length > 0 ? (
-              <Holders
-                holders={holders}
-                groupMode={groupMode}
-                maxAccountTokens={maxAccountTokens}
-                tokenAddress={tokenAddress}
-                tokenDecimalsBase={tokenDecimalsBase}
-                tokenName={tokenName}
-                tokenSupply={tokenSupply}
-                tokenSymbol={tokenSymbol}
-                tokenTransfersEnabled={tokenTransfersEnabled}
-                userAccount={userAccount}
-                onAssignTokens={this.handleLaunchAssignTokens}
-                onRemoveTokens={this.handleLaunchRemoveTokens}
-              />
-            ) : (
-              <EmptyState onActivate={this.handleLaunchAssignTokensNoHolder} />
-            )}
-          </AppView>
-          <SidePanel
-            title={
-              assignTokensConfig.mode === 'assign'
-                ? 'Assign tokens'
-                : 'Remove tokens'
-            }
-            opened={sidepanelOpened}
-            onClose={this.handleSidepanelClose}
-            onTransitionEnd={this.handleSidepanelTransitionEnd}
-          >
-            {appStateReady && (
-              <AssignVotePanelContent
                 opened={sidepanelOpened}
-                tokenDecimals={numData.tokenDecimals}
-                tokenDecimalsBase={tokenDecimalsBase}
-                onUpdateTokens={this.handleUpdateTokens}
-                getHolderBalance={this.getHolderBalance}
-                maxAccountTokens={maxAccountTokens}
-                {...assignTokensConfig}
-              />
-            )}
-          </SidePanel>
-        </Main>
-      </PublicUrl.Provider>
+                onClose={this.handleSidepanelClose}
+                onTransitionEnd={this.handleSidepanelTransitionEnd}
+              >
+                {appStateReady && (
+                  <AssignVotePanelContent
+                    opened={sidepanelOpened}
+                    tokenDecimals={numData.tokenDecimals}
+                    tokenDecimalsBase={tokenDecimalsBase}
+                    onUpdateTokens={this.handleUpdateTokens}
+                    getHolderBalance={this.getHolderBalance}
+                    maxAccountTokens={maxAccountTokens}
+                    {...assignTokensConfig}
+                  />
+                )}
+              </SidePanel>
+            </Main>
+          </PublicUrl.Provider>
+        </Root.Provider>
+      </WindowSizeProvider>
     )
   }
 }
-
-const ResponsiveApp = props => (
-  <React.Fragment>
-    <BreakPoint to="medium">
-      <App contentPadding={0} {...props} />
-    </BreakPoint>
-    <BreakPoint from="medium">
-      <App contentPadding={30} {...props} />
-    </BreakPoint>
-  </React.Fragment>
-)
 
 const Main = styled.div`
   height: 100vh;
@@ -272,4 +280,4 @@ export default observe(
       }
     }),
   {}
-)(ResponsiveApp)
+)(App)

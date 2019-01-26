@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
-import { theme, Button, BreakPoint } from '@aragon/ui'
+import { theme, Button } from '@aragon/ui'
+import { WindowSize } from '../../WindowSizeProvider'
 import Icon from './Icon'
 
 const StyledButton = styled.button`
@@ -23,16 +24,17 @@ const StyledButton = styled.button`
 `
 
 export default props => (
-  <React.Fragment>
-    <BreakPoint to="medium">
-      <StyledButton {...props}>
-        <Icon />
-      </StyledButton>
-    </BreakPoint>
-    <BreakPoint from="medium">
-      <Button mode="strong" {...props}>
-        Assign Tokens
-      </Button>
-    </BreakPoint>
-  </React.Fragment>
+  <WindowSize>
+    {({ width, WIDTH_MEDIUM }) =>
+      width >= WIDTH_MEDIUM ? (
+        <Button mode="strong" {...props}>
+          Assign Tokens
+        </Button>
+      ) : (
+        <StyledButton {...props}>
+          <Icon />
+        </StyledButton>
+      )
+    }
+  </WindowSize>
 )

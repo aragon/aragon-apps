@@ -6,9 +6,9 @@ import {
   TableHeader,
   TableRow,
   breakpoint,
-  BreakPoint,
   springs,
 } from '@aragon/ui'
+import { WindowSize } from '../WindowSizeProvider'
 import HolderRow from '../components/HolderRow'
 import SideBar from '../components/SideBar'
 
@@ -166,19 +166,15 @@ const TwoPanels = styled.div`
   ${breakpoint(
     'medium',
     `
-      min-width: 800px;
       display: flex;
     `
   )};
 `
 
 export default props => (
-  <React.Fragment>
-    <BreakPoint to="medium">
-      <Holders {...props} tabbedNavigation />
-    </BreakPoint>
-    <BreakPoint from="medium">
-      <Holders {...props} />
-    </BreakPoint>
-  </React.Fragment>
+  <WindowSize>
+    {({ width, WIDTH_MEDIUM }) => (
+      <Holders {...props} tabbedNavigation={width < WIDTH_MEDIUM} />
+    )}
+  </WindowSize>
 )
