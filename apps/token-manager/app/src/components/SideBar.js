@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { Text, theme, IdentityBadge, breakpoint } from '@aragon/ui'
 import { formatBalance, stakesPercentages } from '../utils'
+import { WindowSize } from '../WindowSizeProvider'
 import TokenBadge from './TokenBadge'
 
 const DISTRIBUTION_ITEMS_MAX = 7
@@ -40,7 +41,6 @@ class SideBar extends React.Component {
   render() {
     const {
       holders,
-      shorten,
       tokenAddress,
       tokenDecimalsBase,
       tokenName,
@@ -101,17 +101,24 @@ class SideBar extends React.Component {
               />
             ))}
           </StakesBar>
-          <ul>
-            {stakes.map(({ name, stake, color }) => (
-              <StakesListItem key={name}>
-                <span>
-                  <StakesListBullet style={{ background: color }} />
-                  <IdentityBadge entity={name} shorten={shorten} />
-                </span>
-                <strong>{stake}%</strong>
-              </StakesListItem>
-            ))}
-          </ul>
+          <WindowSize>
+            {({ width, WIDTH_MEDIUM }) => (
+              <ul>
+                {stakes.map(({ name, stake, color }) => (
+                  <StakesListItem key={name}>
+                    <span>
+                      <StakesListBullet style={{ background: color }} />
+                      <IdentityBadge
+                        entity={name}
+                        shorten={width >= WIDTH_MEDIUM || width < 520}
+                      />
+                    </span>
+                    <strong>{stake}%</strong>
+                  </StakesListItem>
+                ))}
+              </ul>
+            )}
+          </WindowSize>
         </Part>
       </Main>
     )
