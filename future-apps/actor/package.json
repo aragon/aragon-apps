@@ -46,7 +46,7 @@
     "solium": "^1.0.4",
     "truffle": "4.1.14",
     "truffle-hdwallet-provider": "0.0.3",
-    "web3-eth-abi": "^1.0.0-beta.36",
+    "web3-eth-abi": "^1.0.0-beta.38",
     "webpack": "3.10.0"
   },
   "dependencies": {

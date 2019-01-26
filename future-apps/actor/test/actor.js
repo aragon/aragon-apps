@@ -8,7 +8,7 @@ const web3Call = require('@aragon/test-helpers/call')(web3)
 const web3Sign = require('@aragon/test-helpers/sign')(web3)
 const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
 const assertEvent = require('@aragon/test-helpers/assertEvent')
-const ethABI = require('web3-eth-abi')
+const ethABI = new (require('web3-eth-abi').AbiCoder)()
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 const ACL = artifacts.require('ACL')
