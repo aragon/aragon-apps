@@ -8,6 +8,10 @@ contract KernelDepositableMock is DepositableStorage, Kernel {
     constructor(bool _shouldPetrify) Kernel(_shouldPetrify) public {
     }
 
+    function () external payable {
+        require(isDepositable());
+    }
+
     function enableDepositable() public {
         setDepositable(true);
     }

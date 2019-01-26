@@ -26,6 +26,9 @@ const DesignatedSigner = artifacts.require('DesignatedSigner')
 
 const NULL_ADDRESS = '0x00'
 
+const EIP165_SUPPORT_INTERFACE_ID = '0x01ffc9a7'
+const EIP165_SUPPORT_INVALID_ID = '0xffffffff'
+
 contract('Actor app', (accounts) => {
   let daoFact, actorBase, acl, actor, actorId
 
@@ -222,6 +225,11 @@ contract('Actor app', (accounts) => {
       await acl.createPermission(signerDesignator, actor.address, DESIGNATE_SIGNER_ROLE, root, { from: root })
     })
 
+    it('complies to EIP165', async () => {
+      assert.isTrue(await actor.supportsInterface(EIP165_SUPPORT_INTERFACE_ID))
+      assert.isFalse(await actor.supportsInterface(EIP165_SUPPORT_INVALID_ID))
+    })
+
     it('supports ERC1271 interface', async () => {
       assert.isTrue(await actor.supportsInterface(ISVALIDSIG_INTERFACE_ID))
     })
@@ -246,13 +254,17 @@ contract('Actor app', (accounts) => {
     context('designated signer: EOAs', () => {
       let signer = accounts[7]
 
-      const sign = async (hash, signer) => {
+      const sign = async (hash, signer, useLegacySig = false, useInvalidV = false) => {
         let sig = (await web3Sign(signer, hash)).slice(2)
 
         let r = ethutil.toBuffer('0x' + sig.substring(0, 64))
         let s = ethutil.toBuffer('0x' + sig.substring(64, 128))
-        let v = ethutil.toBuffer(parseInt(sig.substring(128, 130), 16) + 27)
+        let v = ethutil.toBuffer((useLegacySig ? 0 : 27) + parseInt(sig.substring(128, 130), 16))
         let mode = ethutil.toBuffer(1)
+
+        if (useInvalidV) {
+          v = ethutil.toBuffer(2) // force set an invalid v
+        }
 
         let signature = '0x' + Buffer.concat([mode, v, r, s]).toString('hex')
         return signature
@@ -267,9 +279,19 @@ contract('Actor app', (accounts) => {
         assert.isTrue(await actor.isValidSignature(HASH, signature))
       })
 
+      it('isValidSignature returns true to a valid signature with legacy version', async () => {
+        const legacyVersionSignature = await sign(HASH, signer, true)
+        assert.isTrue(await actor.isValidSignature(HASH, legacyVersionSignature))
+      })
+
       it('isValidSignature returns false to an invalid signature', async () => {
         const badSignature = (await sign(HASH, signer)).substring(0, 132) // drop last byte
         assert.isFalse(await actor.isValidSignature(HASH, badSignature))
+      })
+
+      it('isValidSignature returns false to a signature with an invalid v', async () => {
+        const invalidVersionSignature = await sign(HASH, signer, false, true)
+        assert.isFalse(await actor.isValidSignature(HASH, invalidVersionSignature))
       })
 
       it('isValidSignature returns false to an unauthorized signer', async () => {

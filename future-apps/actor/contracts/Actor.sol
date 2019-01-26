@@ -13,18 +13,20 @@ import "@aragon/apps-vault/contracts/Vault.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
 
 
-contract Actor is Vault, IERC165, IERC1271, IForwarder {
+contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
     bytes32 public constant EXECUTE_ROLE = keccak256("EXECUTE_ROLE");
     bytes32 public constant RUN_SCRIPT_ROLE = keccak256("RUN_SCRIPT_ROLE");
     bytes32 public constant PRESIGN_HASH_ROLE = keccak256("PRESIGN_HASH_ROLE");
     bytes32 public constant DESIGNATE_SIGNER_ROLE = keccak256("DESIGNATE_SIGNER_ROLE");
 
+    bytes4 private constant EIP165_SUPPORT_INTERFACE_ID = 0x01ffc9a7;
     bytes4 public constant ISVALIDSIG_INTERFACE_ID = 0xabababab; // TODO: Add actual interfaceId
 
-    string private constant ERROR_EXECUTE_ETH_NO_DATA = "VAULT_EXECUTE_ETH_NO_DATA";
-    string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "VAULT_EXECUTE_TARGET_NOT_CONTRACT";
+    string private constant ERROR_EXECUTE_ETH_NO_DATA = "ACTOR_EXECUTE_ETH_NO_DATA";
+    string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "ACTOR_EXECUTE_TARGET_NOT_CONTRACT";
 
-    uint256 internal constant STATICCALL_MAX_GAS = 50000;
+    uint256 internal constant ISVALIDSIG_MAX_GAS = 50000;
+    uint256 internal constant EIP165_MAX_GAS = 30000;
 
     mapping (bytes32 => bool) public isPresigned;
     address public designatedSigner;
@@ -90,7 +92,8 @@ contract Actor is Vault, IERC165, IERC1271, IForwarder {
     }
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return interfaceId == ISVALIDSIG_INTERFACE_ID;
+        return interfaceId == ISVALIDSIG_INTERFACE_ID
+            || interfaceId == EIP165_SUPPORT_INTERFACE_ID;
     }
 
     function forward(bytes _evmScript)
@@ -119,7 +122,7 @@ contract Actor is Vault, IERC165, IERC1271, IForwarder {
             // designatedSigner.isValidSignature(hash, signature) as a staticall
             IERC1271 signerContract = IERC1271(designatedSigner);
             bytes memory calldata = abi.encodeWithSelector(signerContract.isValidSignature.selector, hash, signature);
-            return safeBoolStaticCall(signerContract, calldata);
+            return safeBoolStaticCall(signerContract, calldata, ISVALIDSIG_MAX_GAS);
         }
 
         // `safeSupportsInterface` returns false if designatedSigner is a contract but it
@@ -141,13 +144,13 @@ contract Actor is Vault, IERC165, IERC1271, IForwarder {
         }
 
         bytes memory calldata = abi.encodeWithSelector(target.supportsInterface.selector, interfaceId);
-        return safeBoolStaticCall(target, calldata);
+        return safeBoolStaticCall(target, calldata, EIP165_MAX_GAS);
     }
 
-    function safeBoolStaticCall(address target, bytes calldata) internal view returns (bool) {
+    function safeBoolStaticCall(address target, bytes calldata, uint256 maxGas) internal view returns (bool) {
         uint256 gasLeft = gasleft();
 
-        uint256 callGas = gasLeft > STATICCALL_MAX_GAS ? STATICCALL_MAX_GAS : gasLeft;
+        uint256 callGas = gasLeft > maxGas ? maxGas : gasLeft;
         bool ok;
         assembly {
             ok := staticcall(callGas, target, add(calldata, 0x20), mload(calldata), 0, 0)
@@ -168,7 +171,6 @@ contract Actor is Vault, IERC165, IERC1271, IForwarder {
             let ptr := mload(0x40)       // get next free memory ptr
             returndatacopy(ptr, 0, size) // copy return from above `staticcall`
             result := mload(ptr)         // read data at ptr and set it to result
-            mstore(ptr, 0)               // set pointer memory to 0 so it still is the next free ptr
         }
 
         return result;

@@ -37,10 +37,10 @@
   "description": "",
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
-    "@aragon/apps-shared-minime": "1.0.0",
     "@aragon/cli": "^5.2.0-beta.1",
     "@aragon/test-helpers": "^1.0.1",
     "eth-gas-reporter": "^0.1.1",
+    "ethereumjs-util": "^6.0.0",
     "ganache-cli": "^6.0.3",
     "solidity-coverage": "0.5.11",
     "solium": "^1.0.4",
@@ -50,7 +50,7 @@
     "webpack": "3.10.0"
   },
   "dependencies": {
-    "@aragon/apps-vault": "^4.0.0",
-    "@aragon/os": "^4.0.0"
+    "@aragon/apps-vault": "4.0.0",
+    "@aragon/os": "4.0.1"
   }
 }

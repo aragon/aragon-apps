@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity 0.4.24;
 
 // From github.com/DexyProject/protocol
 // This should probably be moved into aOS: https://github.com/aragon/aragonOS/pull/442
@@ -30,6 +30,15 @@ library SignatureValidator {
         assembly {
             r := mload(add(signature, 34))
             s := mload(add(signature, 66))
+        }
+
+        // Allow signature version to be 0 or 1
+        if (v < 27) {
+            v += 27;
+        }
+
+        if (v != 27 && v != 28) {
+            return false;
         }
 
         if (mode == SignatureMode.GETH) {
