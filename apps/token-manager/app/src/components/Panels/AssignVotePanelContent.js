@@ -141,7 +141,7 @@ class AssignVotePanelContent extends React.Component {
             `}
           >
             <TextInput
-              innerRef={element => (this.holderInput = element)}
+              ref={element => (this.holderInput = element)}
               value={holderField.value}
               onChange={this.handleHolderChange}
               wide
