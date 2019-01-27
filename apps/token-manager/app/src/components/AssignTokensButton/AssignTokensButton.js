@@ -12,7 +12,15 @@ export default props => (
           Assign Tokens
         </Button>
       ) : (
-        <ButtonIcon {...props}>
+        <ButtonIcon
+          {...props}
+          css={`
+            width: auto;
+            height: 100%;
+            padding: 0 20px 0 10px;
+            margin-left: 8px;
+          `}
+        >
           <Icon />
         </ButtonIcon>
       )

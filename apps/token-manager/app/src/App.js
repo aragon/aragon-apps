@@ -133,30 +133,27 @@ class App extends React.Component {
                   <AppView
                     padding={toMedium ? 0 : 30}
                     appBar={
-                      <AppBar
-                        title={
+                      <AppBar>
+                        <AppBarContainer
+                          style={{ padding: toMedium ? '0' : '0 30px' }}
+                        >
                           <Title>
                             {toMedium && (
-                              <MenuButton
-                                onClick={this.handleMenuPanelOpen}
-                                css={`
-                                  margin-right: 8px;
-                                `}
-                              />
+                              <MenuButton onClick={this.handleMenuPanelOpen} />
                             )}
-                            <TitleLabel>Token Manager</TitleLabel>
+                            <TitleLabel>
+                              Token Manager aaaaaaaaaaaaaaaaaaa
+                            </TitleLabel>
                             {tokenSymbol && (
                               <Badge.App>{tokenSymbol}</Badge.App>
                             )}
                           </Title>
-                        }
-                        endContent={
                           <AssignTokensButton
                             title="Assign Tokens"
                             onClick={this.handleLaunchAssignTokensNoHolder}
                           />
-                        }
-                      />
+                        </AppBarContainer>
+                      </AppBar>
                     }
                   >
                     {appStateReady && holders.length > 0 ? (
@@ -225,12 +222,29 @@ const Main = styled.div`
   )};
 `
 
-const Title = styled.span`
+const AppBarContainer = styled.div`
   display: flex;
+  width: 100%;
+  height: 100%;
+  justify-content: space-between;
   align-items: center;
+  justify-content: safe;
+  flex-wrap: nowrap;
+`
+
+const Title = styled.h1`
+  display: flex;
+  flex: 1 1 auto;
+  width: 0;
+  align-items: center;
+  height: 100%;
 `
 
 const TitleLabel = styled.span`
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   margin-right: 10px;
   ${font({ size: 'xxlarge' })};
 `
