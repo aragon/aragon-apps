@@ -11,6 +11,7 @@ import {
   PublicUrl,
   Root,
   SidePanel,
+  ToastHub,
   font,
   observe,
   breakpoint,
@@ -124,86 +125,88 @@ class App extends React.Component {
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
       <WindowSizeProvider>
-        <Root.Provider>
-          <PublicUrl.Provider url="./aragon-ui/">
-            <BaseStyles />
-            <Main>
-              <WindowSize>
-                {({ toMedium }) => (
-                  <AppView
-                    padding={toMedium ? 0 : 30}
-                    appBar={
-                      <AppBar>
-                        <AppBarContainer
-                          style={{ padding: toMedium ? '0' : '0 30px' }}
-                        >
-                          <Title>
-                            {toMedium && (
-                              <MenuButton onClick={this.handleMenuPanelOpen} />
-                            )}
-                            <TitleLabel>
-                              Token Manager
-                            </TitleLabel>
-                            {tokenSymbol && (
-                              <Badge.App>{tokenSymbol}</Badge.App>
-                            )}
-                          </Title>
-                          <AssignTokensButton
-                            title="Assign Tokens"
-                            onClick={this.handleLaunchAssignTokensNoHolder}
-                          />
-                        </AppBarContainer>
-                      </AppBar>
-                    }
-                  >
-                    {appStateReady && holders.length > 0 ? (
-                      <Holders
-                        holders={holders}
-                        groupMode={groupMode}
-                        maxAccountTokens={maxAccountTokens}
-                        tokenAddress={tokenAddress}
-                        tokenDecimalsBase={tokenDecimalsBase}
-                        tokenName={tokenName}
-                        tokenSupply={tokenSupply}
-                        tokenSymbol={tokenSymbol}
-                        tokenTransfersEnabled={tokenTransfersEnabled}
-                        userAccount={userAccount}
-                        onAssignTokens={this.handleLaunchAssignTokens}
-                        onRemoveTokens={this.handleLaunchRemoveTokens}
-                      />
-                    ) : (
-                      <EmptyState
-                        onActivate={this.handleLaunchAssignTokensNoHolder}
-                      />
-                    )}
-                  </AppView>
-                )}
-              </WindowSize>
-              <SidePanel
-                title={
-                  assignTokensConfig.mode === 'assign'
-                    ? 'Assign tokens'
-                    : 'Remove tokens'
-                }
-                opened={sidepanelOpened}
-                onClose={this.handleSidepanelClose}
-                onTransitionEnd={this.handleSidepanelTransitionEnd}
-              >
-                {appStateReady && (
-                  <AssignVotePanelContent
-                    opened={sidepanelOpened}
-                    tokenDecimals={numData.tokenDecimals}
-                    tokenDecimalsBase={tokenDecimalsBase}
-                    onUpdateTokens={this.handleUpdateTokens}
-                    getHolderBalance={this.getHolderBalance}
-                    maxAccountTokens={maxAccountTokens}
-                    {...assignTokensConfig}
-                  />
-                )}
-              </SidePanel>
-            </Main>
-          </PublicUrl.Provider>
-        </Root.Provider>
+        <ToastHub>
+          <Root.Provider>
+            <PublicUrl.Provider url="./aragon-ui/">
+              <BaseStyles />
+              <Main>
+                <WindowSize>
+                  {({ toMedium }) => (
+                    <AppView
+                      padding={toMedium ? 0 : 30}
+                      appBar={
+                        <AppBar>
+                          <AppBarContainer
+                            style={{ padding: toMedium ? '0' : '0 30px' }}
+                          >
+                            <Title>
+                              {toMedium && (
+                                <MenuButton
+                                  onClick={this.handleMenuPanelOpen}
+                                />
+                              )}
+                              <TitleLabel>Token Manager</TitleLabel>
+                              {tokenSymbol && (
+                                <Badge.App>{tokenSymbol}</Badge.App>
+                              )}
+                            </Title>
+                            <AssignTokensButton
+                              title="Assign Tokens"
+                              onClick={this.handleLaunchAssignTokensNoHolder}
+                            />
+                          </AppBarContainer>
+                        </AppBar>
+                      }
+                    >
+                      {appStateReady && holders.length > 0 ? (
+                        <Holders
+                          holders={holders}
+                          groupMode={groupMode}
+                          maxAccountTokens={maxAccountTokens}
+                          tokenAddress={tokenAddress}
+                          tokenDecimalsBase={tokenDecimalsBase}
+                          tokenName={tokenName}
+                          tokenSupply={tokenSupply}
+                          tokenSymbol={tokenSymbol}
+                          tokenTransfersEnabled={tokenTransfersEnabled}
+                          userAccount={userAccount}
+                          onAssignTokens={this.handleLaunchAssignTokens}
+                          onRemoveTokens={this.handleLaunchRemoveTokens}
+                        />
+                      ) : (
+                        <EmptyState
+                          onActivate={this.handleLaunchAssignTokensNoHolder}
+                        />
+                      )}
+                    </AppView>
+                  )}
+                </WindowSize>
+                <SidePanel
+                  title={
+                    assignTokensConfig.mode === 'assign'
+                      ? 'Assign tokens'
+                      : 'Remove tokens'
+                  }
+                  opened={sidepanelOpened}
+                  onClose={this.handleSidepanelClose}
+                  onTransitionEnd={this.handleSidepanelTransitionEnd}
+                >
+                  {appStateReady && (
+                    <AssignVotePanelContent
+                      opened={sidepanelOpened}
+                      tokenDecimals={numData.tokenDecimals}
+                      tokenDecimalsBase={tokenDecimalsBase}
+                      onUpdateTokens={this.handleUpdateTokens}
+                      getHolderBalance={this.getHolderBalance}
+                      maxAccountTokens={maxAccountTokens}
+                      {...assignTokensConfig}
+                    />
+                  )}
+                </SidePanel>
+              </Main>
+            </PublicUrl.Provider>
+          </Root.Provider>
+        </ToastHub>
       </WindowSizeProvider>
     )
   }
