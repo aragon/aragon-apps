@@ -215,6 +215,7 @@ class App extends React.Component {
 const Main = styled.div`
   height: 100vh;
   width: 100vw;
+  min-width: 320px;
 
   ${breakpoint(
     'medium',
