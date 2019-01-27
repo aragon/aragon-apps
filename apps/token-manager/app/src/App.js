@@ -137,7 +137,12 @@ class App extends React.Component {
                         title={
                           <Title>
                             {toMedium && (
-                              <MenuButton onClick={this.handleMenuPanelOpen} />
+                              <MenuButton
+                                onClick={this.handleMenuPanelOpen}
+                                css={`
+                                  margin-right: 8px;
+                                `}
+                              />
                             )}
                             <TitleLabel>Token Manager</TitleLabel>
                             {tokenSymbol && (
