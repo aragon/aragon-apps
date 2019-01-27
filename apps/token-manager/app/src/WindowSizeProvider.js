@@ -32,11 +32,15 @@ class WindowSizeProvider extends React.Component {
   }
 
   getWindowSize() {
-    const width = window.innerWidth
-    const height = window.innerHeight
+    const { width, height } = windowSize()
     return {
       ...BASE,
-      ...windowSize(),
+      width,
+      height,
+      fromMedium: width >= WIDTH_MEDIUM,
+      fromLarge: width >= WIDTH_LARGE,
+      toMedium: width < WIDTH_MEDIUM,
+      toLarge: width < WIDTH_LARGE,
     }
   }
 

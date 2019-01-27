@@ -138,10 +138,10 @@ const IconWrapper = styled.span`
 
 export default props => (
   <WindowSize>
-    {({ width, WIDTH_MEDIUM }) => (
+    {({ width, fromMedium }) => (
       <HolderRow
         {...props}
-        shorten={(width < 1000 && width >= WIDTH_MEDIUM) || width < 590}
+        shorten={(fromMedium && width < 1000) || width < 590}
       />
     )}
   </WindowSize>

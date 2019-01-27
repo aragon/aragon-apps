@@ -172,8 +172,6 @@ const TwoPanels = styled.div`
 
 export default props => (
   <WindowSize>
-    {({ width, WIDTH_MEDIUM }) => (
-      <Holders {...props} tabbedNavigation={width < WIDTH_MEDIUM} />
-    )}
+    {({ toMedium }) => <Holders {...props} tabbedNavigation={toMedium} />}
   </WindowSize>
 )

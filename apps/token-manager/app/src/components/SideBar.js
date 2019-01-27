@@ -102,7 +102,7 @@ class SideBar extends React.Component {
             ))}
           </StakesBar>
           <WindowSize>
-            {({ width, WIDTH_MEDIUM }) => (
+            {({ width, fromMedium }) => (
               <ul>
                 {stakes.map(({ name, stake, color }) => (
                   <StakesListItem key={name}>
@@ -110,7 +110,7 @@ class SideBar extends React.Component {
                       <StakesListBullet style={{ background: color }} />
                       <IdentityBadge
                         entity={name}
-                        shorten={width >= WIDTH_MEDIUM || width < 520}
+                        shorten={fromMedium || width < 520}
                       />
                     </span>
                     <strong>{stake}%</strong>

@@ -129,22 +129,16 @@ class App extends React.Component {
             <BaseStyles />
             <Main>
               <WindowSize>
-                {({ width, WIDTH_MEDIUM }) => (
+                {({ toMedium }) => (
                   <AppView
-                    padding={width < WIDTH_MEDIUM ? 0 : 30}
+                    padding={toMedium ? 0 : 30}
                     appBar={
                       <AppBar
                         title={
                           <Title>
-                            <WindowSize>
-                              {({ width, WIDTH_MEDIUM }) =>
-                                width < WIDTH_MEDIUM && (
-                                  <MenuButton
-                                    onClick={this.handleMenuPanelOpen}
-                                  />
-                                )
-                              }
-                            </WindowSize>
+                            {toMedium && (
+                              <MenuButton onClick={this.handleMenuPanelOpen} />
+                            )}
                             <TitleLabel>Token Manager</TitleLabel>
                             {tokenSymbol && (
                               <Badge.App>{tokenSymbol}</Badge.App>

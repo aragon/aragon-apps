@@ -25,8 +25,8 @@ const StyledButton = styled.button`
 
 export default props => (
   <WindowSize>
-    {({ width, WIDTH_MEDIUM }) =>
-      width >= WIDTH_MEDIUM ? (
+    {({ fromMedium }) =>
+      fromMedium ? (
         <Button mode="strong" {...props}>
           Assign Tokens
         </Button>
