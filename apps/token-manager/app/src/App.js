@@ -142,7 +142,7 @@ class App extends React.Component {
                               <MenuButton onClick={this.handleMenuPanelOpen} />
                             )}
                             <TitleLabel>
-                              Token Manager aaaaaaaaaaaaaaaaaaa
+                              Token Manager
                             </TitleLabel>
                             {tokenSymbol && (
                               <Badge.App>{tokenSymbol}</Badge.App>
