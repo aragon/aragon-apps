@@ -76,19 +76,33 @@ class App extends React.Component {
     this.handleNewTransferClose()
   }
   handleDeposit = async (tokenAddress, amount, reference) => {
-    const { app } = this.props
+    const { app, periodDuration, periods } = this.props
 
-    const intentParams =
-      tokenAddress === ETHER_TOKEN_FAKE_ADDRESS
-        ? { value: amount }
-        : {
-            token: { address: tokenAddress, value: amount },
-            // Generally a bad idea to hardcode gas in intents, but it prevents metamask from doing
-            // the gas estimation and telling the user that their transaction will fail (before approve is mined).
-            // The actual gas cost is around ~180k + 20k per 32 chars of text.
-            // Estimation with some breathing room in case it is being forwarded (unlikely in deposit)
-            gas: 400000 + 20000 * Math.ceil(reference.length / 32),
-          }
+    let intentParams
+    if (tokenAddress === ETHER_TOKEN_FAKE_ADDRESS) {
+      intentParams = { value: amount }
+    } else {
+      // Get the number of period transitions necessary; we floor because we don't need to
+      // transition the current period
+      const lastPeriodStart = periods[periods.length - 1].startTime
+      const periodTransitions = Math.floor(
+        Math.max(Date.now() - lastPeriodStart, 0) / periodDuration
+      )
+
+      intentParams = {
+        token: { address: tokenAddress, value: amount },
+        // While it's generally a bad idea to hardcode gas in intents, in the case of token deposits
+        // it prevents metamask from doing the gas estimation and telling the user that their
+        // transaction will fail (before the approve is mined).
+        // The actual gas cost is around ~180k + 20k per 32 chars of text + 80k per period
+        // transition but we do the estimation with some breathing room in case it is being
+        // forwarded (unlikely in deposit).
+        gas:
+          400000 +
+          20000 * Math.ceil(reference.length / 32) +
+          80000 * periodTransitions,
+      }
+    }
 
     app.deposit(tokenAddress, amount, reference, intentParams)
     this.handleNewTransferClose()

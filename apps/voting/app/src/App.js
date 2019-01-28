@@ -20,6 +20,7 @@ import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
 import AutoLink from './components/AutoLink'
 import MenuButton from './components/MenuButton/MenuButton'
+import NewVoteButton from './components/NewVoteButton/NewVoteButton'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
 import { hasLoadedVoteSettings } from './vote-settings'
@@ -244,9 +245,10 @@ class App extends React.Component {
                   </Title>
                 }
                 endContent={
-                  <Button mode="strong" onClick={this.handleCreateVoteOpen}>
-                    New Vote
-                  </Button>
+                  <NewVoteButton
+                    title="New Vote"
+                    onClick={this.handleCreateVoteOpen}
+                  />
                 }
               />
             }
@@ -302,12 +304,12 @@ const Title = styled.span`
 `
 
 const TitleLabel = styled.span`
-  margin-right: 10px;
   ${font({ size: 'xxlarge' })};
 `
 
 const Main = styled.div`
   height: 100vh;
+  min-width: 320px;
 `
 
 export default observe(

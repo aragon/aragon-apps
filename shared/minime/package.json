@@ -1,20 +1,30 @@
 {
   "name": "@aragon/apps-shared-minime",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Jordi Baylina",
   "license": "GPL-3.0-or-later",
+  "files": [
+    "/abi",
+    "/build",
+    "/contracts",
+    "/test",
+    "/truffle.js"
+  ],
   "scripts": {
+    "abi:extract": "truffle-extract --output abi/ --keys abi",
     "compile": "truffle compile",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
-    "truffle:dev": "npx truffle dev"
+    "truffle:dev": "npx truffle dev",
+    "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile"
   },
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/test-helpers": "^1.0.1",
     "ganache-cli": "6.1.8",
     "solidity-coverage": "0.5.8",
-    "truffle": "4.1.14"
+    "truffle": "4.1.14",
+    "truffle-extract": "^1.2.1"
   }
 }
