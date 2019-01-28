@@ -133,11 +133,17 @@ async function createStore(settings) {
       } else {
         // Finance event
         switch (eventName) {
+          case 'ChangePeriodDuration':
+            nextState.periodDuration = marshallDate(
+              event.returnValues.newDuration
+            )
+            break
           case 'NewPeriod':
             // A new period is always started as part of the Finance app's initialization,
             // so this is just a handy way to get information about the app we're running
             // (e.g. its own address)
             nextState.proxyAddress = eventAddress
+            nextState = await newPeriod(nextState, event, settings)
             break
           case 'NewTransaction':
             nextState = await newTransaction(nextState, event, settings)
@@ -167,6 +173,12 @@ async function createStore(settings) {
 async function initializeState(state, settings) {
   const nextState = {
     ...state,
+    periodDuration: marshallDate(
+      await app
+        .call('getPeriodDuration')
+        .first()
+        .toPromise()
+    ),
     vaultAddress: settings.vault.address,
   }
 
@@ -183,6 +195,20 @@ async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
       token || settings.ethToken.address,
       settings
     ),
+  }
+}
+
+async function newPeriod(
+  state,
+  { returnValues: { periodId, periodStarts, periodEnds } }
+) {
+  return {
+    ...state,
+    periods: await updatePeriods(state, {
+      id: periodId,
+      startTime: marshallDate(periodStarts),
+      endTime: marshallDate(periodEnds),
+    }),
   }
 }
 
@@ -237,6 +263,17 @@ async function updateBalances({ balances = [] }, tokenAddress, settings) {
       amount: await loadTokenBalance(tokenAddress, settings),
     }
     return newBalances
+  }
+}
+
+function updatePeriods({ periods = [] }, periodDetails) {
+  const periodsIndex = periods.findIndex(({ id }) => id === periodDetails.id)
+  if (periodsIndex === -1) {
+    return periods.concat(periodDetails)
+  } else {
+    const newPeriods = Array.from(periods)
+    newPeriods[periodsIndex] = periodDetails
+    return newPeriods
   }
 }
 
