@@ -127,7 +127,7 @@ class Withdrawal extends React.Component {
         <h1>{title}</h1>
         <Field label="Recipient (must be a valid Ethereum address)">
           <TextInput
-            innerRef={recipient => (this.recipientInput = recipient)}
+            ref={recipient => (this.recipientInput = recipient)}
             onChange={this.handleRecipientUpdate}
             pattern={
               // Allow spaces to be trimmable

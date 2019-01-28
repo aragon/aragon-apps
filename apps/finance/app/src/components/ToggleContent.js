@@ -4,6 +4,8 @@ import { font, springs } from '@aragon/ui'
 import { Transition, animated } from 'react-spring'
 import arrow from './assets/arrow.svg'
 
+const noop = () => {}
+
 class ToggleContent extends React.Component {
   state = { opened: false }
   handleClick = () => {
@@ -19,13 +21,16 @@ class ToggleContent extends React.Component {
         </Label>
 
         <Transition
+          items={opened}
           config={springs.swift}
           from={{ height: 0, opacity: 0 }}
           enter={{ height: 'auto', opacity: 1 }}
           leave={{ height: 0, opacity: 0 }}
           native
         >
-          {opened && (props => <Content style={props}>{children}</Content>)}
+          {show =>
+            show && (props => <Content style={props}>{children}</Content>)
+          }
         </Transition>
       </div>
     )
