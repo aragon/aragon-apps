@@ -5,6 +5,8 @@ import {
   ETHER_TOKEN_FAKE_ADDRESS,
   isTokenVerified,
   tokenDataFallback,
+  getTokenSymbol,
+  getTokenName,
 } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -357,19 +359,8 @@ function loadTokenName(tokenContract, tokenAddress, { network }) {
     } else {
       const fallback =
         tokenDataFallback(tokenAddress, 'name', network.type) || ''
-      tokenContract
-        .name()
-        .first()
-        .subscribe(
-          (name = fallback) => {
-            tokenName.set(tokenContract, name)
-            resolve(name)
-          },
-          () => {
-            // Name is optional
-            resolve(fallback)
-          }
-        )
+      const name = getTokenName(app, tokenAddress)
+      resolve(name || fallback)
     }
   })
 }
@@ -381,19 +372,8 @@ function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
     } else {
       const fallback =
         tokenDataFallback(tokenAddress, 'symbol', network.type) || ''
-      tokenContract
-        .symbol()
-        .first()
-        .subscribe(
-          (symbol = fallback) => {
-            tokenSymbols.set(tokenContract, symbol)
-            resolve(symbol)
-          },
-          () => {
-            // Symbol is optional
-            resolve(fallback)
-          }
-        )
+      const tokenSymbol = getTokenSymbol(app, tokenAddress)
+      resolve(tokenSymbol || fallback)
     }
   })
 }
