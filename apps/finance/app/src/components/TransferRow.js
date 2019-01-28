@@ -92,7 +92,9 @@ class TransferRow extends React.Component {
             <time dateTime={formattedDate} title={formattedDate}>
               {format(date, 'dd MMM yyyy')}
             </time>
-            <TextOverflow>{reference}</TextOverflow>
+            <TextOverflow style={{ marginTop: '10px' }}>
+              {reference}
+            </TextOverflow>
             <Amount positive={isIncoming}>
               {formattedAmount} {symbol}
             </Amount>
