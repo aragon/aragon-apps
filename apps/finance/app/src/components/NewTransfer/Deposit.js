@@ -160,10 +160,10 @@ class Deposit extends React.Component {
         tokenDataFallback(address, 'symbol', network.type) || ''
 
       const tokenData = {
-        symbol: symbolFallback,
         userBalance,
         decimals: parseInt(decimalsFallback, 10),
         loading: false,
+        symbol: symbolFallback,
       }
 
       const [tokenSymbol, tokenDecimals] = await Promise.all([
@@ -174,7 +174,7 @@ class Deposit extends React.Component {
           .toPromise(),
       ])
 
-      // no token symbol or decimals: resolve the fallback data
+      // If symbol or decimals are resolved, overwrite the fallbacks
       if (tokenSymbol) {
         tokenData.symbol = tokenSymbol
       }
