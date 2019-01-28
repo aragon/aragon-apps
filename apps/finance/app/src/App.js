@@ -8,6 +8,7 @@ import {
   BaseStyles,
   BreakPoint,
   Button,
+  ButtonIcon,
   EmptyStateCard,
   PublicUrl,
   Root,
@@ -25,6 +26,7 @@ import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
 import { makeEtherscanBaseUrl } from './lib/utils'
 
 import addFundsIcon from './components/assets/add-funds-icon.svg'
+import newTransferIcon from './components/assets/new-transfer.svg'
 
 class App extends React.Component {
   static propTypes = {
@@ -116,39 +118,41 @@ class App extends React.Component {
             <AppView
               padding={contentPadding}
               appBar={
-                <AppBar
-                  title={
-                    <Title>
-                      <BreakPoint to="medium">
+                <AppBar>
+                  <BreakPoint to="medium">
+                    <AppBarContainer>
+                      <Title>
                         <MenuButton onClick={this.handleMenuPanelOpen} />
-                      </BreakPoint>
-                      <TitleLabel>Finance</TitleLabel>
-                    </Title>
-                  }
-                  endContent={
-                    <React.Fragment>
-                      <BreakPoint to="medium">
-                        <Button
-                          mode="text"
-                          onClick={this.handleNewTransferOpen}
-                          style={{
-                            color: theme.accent,
-                          }}
-                        >
-                          New Transfer
-                        </Button>
-                      </BreakPoint>
-                      <BreakPoint from="medium">
-                        <Button
-                          mode="strong"
-                          onClick={this.handleNewTransferOpen}
-                        >
-                          New Transfer
-                        </Button>
-                      </BreakPoint>
-                    </React.Fragment>
-                  }
-                />
+                        <TitleLabel>Finance</TitleLabel>
+                      </Title>
+                      <ButtonIcon
+                        onClick={this.handleNewTransferOpen}
+                        title="New Transfer"
+                        css={`
+                          width: auto;
+                          height: 100%;
+                          padding: 0 20px 0 10px;
+                          margin-left: 8px;
+                        `}
+                      >
+                        <img src={newTransferIcon} alt="" />
+                      </ButtonIcon>
+                    </AppBarContainer>
+                  </BreakPoint>
+                  <BreakPoint from="medium">
+                    <AppBarContainer style={{ padding: '0 30px' }}>
+                      <Title>
+                        <TitleLabel>Finance</TitleLabel>
+                      </Title>
+                      <Button
+                        mode="strong"
+                        onClick={this.handleNewTransferOpen}
+                      >
+                        New Transfer
+                      </Button>
+                    </AppBarContainer>
+                  </BreakPoint>
+                </AppBar>
               }
             >
               {balances.length > 0 && (
@@ -206,12 +210,30 @@ const ResponsiveApp = props => (
   </React.Fragment>
 )
 
-const Title = styled.span`
+const AppBarContainer = styled.div`
   display: flex;
+  width: 100%;
+  height: 100%;
+  justify-content: space-between;
   align-items: center;
+  justify-content: safe;
+  flex-wrap: nowrap;
+`
+
+const Title = styled.h1`
+  display: flex;
+  flex: 1 1 auto;
+  width: 0;
+  align-items: center;
+  height: 100%;
 `
 
 const TitleLabel = styled.span`
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 10px;
   ${font({ size: 'xxlarge' })};
 `
 
