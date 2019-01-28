@@ -6,13 +6,14 @@ import {
   AppBar,
   AppView,
   BaseStyles,
+  BreakPoint,
   Button,
   EmptyStateCard,
   PublicUrl,
+  Root,
   SidePanel,
-  observe,
   font,
-  BreakPoint,
+  observe,
   theme,
 } from '@aragon/ui'
 import Balances from './components/Balances'
@@ -108,59 +109,59 @@ class App extends React.Component {
     const { newTransferOpened } = this.state
 
     return (
-      <PublicUrl.Provider url="./aragon-ui/">
-        <BaseStyles />
-        <Main>
-          <AppView
-            padding={contentPadding}
-            appBar={
-              <AppBar
-                title={
-                  <Title>
-                    <BreakPoint to="medium">
-                      <MenuButton onClick={this.handleMenuPanelOpen} />
-                    </BreakPoint>
-                    <TitleLabel>Finance</TitleLabel>
-                  </Title>
-                }
-                endContent={
-                  <React.Fragment>
-                    <BreakPoint to="medium">
-                      <Button
-                        mode="text"
-                        onClick={this.handleNewTransferOpen}
-                        style={{
-                          color: theme.accent,
-                        }}
-                      >
-                        New Transfer
-                      </Button>
-                    </BreakPoint>
-                    <BreakPoint from="medium">
-                      <Button
-                        mode="strong"
-                        onClick={this.handleNewTransferOpen}
-                      >
-                        New Transfer
-                      </Button>
-                    </BreakPoint>
-                  </React.Fragment>
-                }
-              />
-            }
-          >
-            {balances.length > 0 && (
-              <SpacedBlock>
-                <Balances balances={balances} />
-              </SpacedBlock>
-            )}
-            {transactions.length > 0 && (
-              <SpacedBlock>
-                <Transfers transactions={transactions} tokens={tokens} />
-              </SpacedBlock>
-            )}
-            {balances.length === 0 &&
-              transactions.length === 0 && (
+      <Root.Provider>
+        <PublicUrl.Provider url="./aragon-ui/">
+          <BaseStyles />
+          <Main>
+            <AppView
+              padding={contentPadding}
+              appBar={
+                <AppBar
+                  title={
+                    <Title>
+                      <BreakPoint to="medium">
+                        <MenuButton onClick={this.handleMenuPanelOpen} />
+                      </BreakPoint>
+                      <TitleLabel>Finance</TitleLabel>
+                    </Title>
+                  }
+                  endContent={
+                    <React.Fragment>
+                      <BreakPoint to="medium">
+                        <Button
+                          mode="text"
+                          onClick={this.handleNewTransferOpen}
+                          style={{
+                            color: theme.accent,
+                          }}
+                        >
+                          New Transfer
+                        </Button>
+                      </BreakPoint>
+                      <BreakPoint from="medium">
+                        <Button
+                          mode="strong"
+                          onClick={this.handleNewTransferOpen}
+                        >
+                          New Transfer
+                        </Button>
+                      </BreakPoint>
+                    </React.Fragment>
+                  }
+                />
+              }
+            >
+              {balances.length > 0 && (
+                <SpacedBlock>
+                  <Balances balances={balances} />
+                </SpacedBlock>
+              )}
+              {transactions.length > 0 && (
+                <SpacedBlock>
+                  <Transfers transactions={transactions} tokens={tokens} />
+                </SpacedBlock>
+              )}
+              {balances.length === 0 && transactions.length === 0 && (
                 <EmptyScreen>
                   <EmptyStateCard
                     icon={<img src={addFundsIcon} alt="" />}
@@ -171,24 +172,25 @@ class App extends React.Component {
                   />
                 </EmptyScreen>
               )}
-          </AppView>
-          <SidePanel
-            opened={newTransferOpened}
-            onClose={this.handleNewTransferClose}
-            title="New Transfer"
-          >
-            <NewTransferPanelContent
-              app={app}
+            </AppView>
+            <SidePanel
               opened={newTransferOpened}
-              tokens={tokens}
-              onWithdraw={this.handleWithdraw}
-              onDeposit={this.handleDeposit}
-              proxyAddress={proxyAddress}
-              userAccount={userAccount}
-            />
-          </SidePanel>
-        </Main>
-      </PublicUrl.Provider>
+              onClose={this.handleNewTransferClose}
+              title="New Transfer"
+            >
+              <NewTransferPanelContent
+                app={app}
+                opened={newTransferOpened}
+                tokens={tokens}
+                onWithdraw={this.handleWithdraw}
+                onDeposit={this.handleDeposit}
+                proxyAddress={proxyAddress}
+                userAccount={userAccount}
+              />
+            </SidePanel>
+          </Main>
+        </PublicUrl.Provider>
+      </Root.Provider>
     )
   }
 }
