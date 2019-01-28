@@ -116,11 +116,12 @@ const Title = styled.h1`
 `
 
 const List = styled.ul`
+  list-style: none;
+
   ${breakpoint(
     'medium',
     `
       display: flex;
-      list-style: none;
       padding: 0 10px;
     `
   )};
