@@ -138,7 +138,7 @@ class Transfers extends React.Component {
                   }}
                 >
                   <FilterLabel>
-                    <Label>Token:</Label>
+                    <Label>Token</Label>
                     <DropDown
                       items={['All', ...symbols]}
                       active={selectedToken}
@@ -146,7 +146,7 @@ class Transfers extends React.Component {
                     />
                   </FilterLabel>
                   <FilterLabel>
-                    <Label>Transfer type:</Label>
+                    <Label>Transfer type</Label>
                     <DropDown
                       items={TRANSFER_TYPES_STRING}
                       active={selectedTransferType}
