@@ -16,15 +16,14 @@ const splitAmount = amount => {
 const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => (
   <Main>
     <Token title={symbol || 'Unknown symbol'}>
-      {verified &&
-        symbol && (
-          <img
-            alt=""
-            width="16"
-            height="16"
-            src={`https://chasing-coins.com/coin/logo/${symbol}`}
-          />
-        )}
+      {verified && symbol && (
+        <img
+          alt=""
+          width="16"
+          height="16"
+          src={`https://chasing-coins.com/coin/logo/${symbol}`}
+        />
+      )}
       {symbol || '?'}
     </Token>
     <Amount>{splitAmount(amount.toFixed(3))}</Amount>

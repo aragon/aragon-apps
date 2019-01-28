@@ -152,18 +152,17 @@ class App extends React.Component {
                 <Transfers transactions={transactions} tokens={tokens} />
               </SpacedBlock>
             )}
-            {balances.length === 0 &&
-              transactions.length === 0 && (
-                <EmptyScreen>
-                  <EmptyStateCard
-                    icon={<img src={addFundsIcon} alt="" />}
-                    title="Add funds to your organization"
-                    text="There are no funds yet - add funds easily"
-                    actionText="Add funds"
-                    onActivate={this.handleNewTransferOpen}
-                  />
-                </EmptyScreen>
-              )}
+            {balances.length === 0 && transactions.length === 0 && (
+              <EmptyScreen>
+                <EmptyStateCard
+                  icon={<img src={addFundsIcon} alt="" />}
+                  title="Add funds to your organization"
+                  text="There are no funds yet - add funds easily"
+                  actionText="Add funds"
+                  onActivate={this.handleNewTransferOpen}
+                />
+              </EmptyScreen>
+            )}
           </AppView>
           <SidePanel
             opened={newTransferOpened}

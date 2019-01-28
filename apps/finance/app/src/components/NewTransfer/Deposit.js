@@ -21,9 +21,9 @@ import provideNetwork from '../../lib/provideNetwork'
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
   tokenDataFallback,
+  getTokenSymbol,
 } from '../../lib/token-utils'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
-import { combineLatest } from '../../rxjs'
 import ToggleContent from '../ToggleContent'
 import TokenBadge from './TokenBadge'
 import TokenSelector from './TokenSelector'
@@ -159,26 +159,30 @@ class Deposit extends React.Component {
       const symbolFallback =
         tokenDataFallback(address, 'symbol', network.type) || ''
 
-      combineLatest(token.decimals(), token.symbol())
-        .first()
-        .subscribe(
-          ([decimals = decimalsFallback, symbol = symbolFallback]) =>
-            resolve({
-              symbol,
-              userBalance,
-              decimals: parseInt(decimals, 10),
-              loading: false,
-            }),
-          () => {
-            // Decimals and symbols are optional
-            resolve({
-              userBalance,
-              decimals: parseInt(decimalsFallback, 10),
-              loading: false,
-              symbol: symbolFallback,
-            })
-          }
-        )
+      const tokenData = {
+        userBalance,
+        decimals: parseInt(decimalsFallback, 10),
+        loading: false,
+        symbol: symbolFallback,
+      }
+
+      const [tokenSymbol, tokenDecimals] = await Promise.all([
+        getTokenSymbol(app, address),
+        token
+          .decimals()
+          .first()
+          .toPromise(),
+      ])
+
+      // If symbol or decimals are resolved, overwrite the fallbacks
+      if (tokenSymbol) {
+        tokenData.symbol = tokenSymbol
+      }
+      if (tokenDecimals) {
+        tokenData.decimals = parseInt(tokenDecimals, 10)
+      }
+
+      resolve(tokenData)
     })
   }
   validateInputs({ amount, selectedToken } = {}) {
@@ -343,36 +347,35 @@ class Deposit extends React.Component {
           )}
         </Info.Action>
 
-        {proxyAddress &&
-          ethSelected && (
-            <div>
-              <VSpace size={6} />
-              <ToggleContent label="Show address for direct ETH transfer ">
-                <VSpace size={4} />
-                <QRCode
-                  value={proxyAddress}
-                  style={{ width: '80px', height: '80px' }}
-                />
-                <VSpace size={4} />
-                <IdentityBadge
-                  entity={proxyAddress}
-                  fontSize="small"
-                  networkType={network.type}
-                  shorten={false}
-                />
-                <VSpace size={2} />
-                <Info>
-                  Use the above address or QR code to transfer ETH directly to
-                  your organization’s Finance app. You should specify a gas limit
-                  of 350,000 for this transfer.
-                  <Text.Paragraph size="xsmall" style={{ marginTop: '10px' }}>
-                    <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
-                    (e.g. ERC-20) tokens directly to this address.
-                  </Text.Paragraph>
-                </Info>
-              </ToggleContent>
-            </div>
-          )}
+        {proxyAddress && ethSelected && (
+          <div>
+            <VSpace size={6} />
+            <ToggleContent label="Show address for direct ETH transfer ">
+              <VSpace size={4} />
+              <QRCode
+                value={proxyAddress}
+                style={{ width: '80px', height: '80px' }}
+              />
+              <VSpace size={4} />
+              <IdentityBadge
+                entity={proxyAddress}
+                fontSize="small"
+                networkType={network.type}
+                shorten={false}
+              />
+              <VSpace size={2} />
+              <Info>
+                Use the above address or QR code to transfer ETH directly to
+                your organization’s Finance app. You should specify a gas limit
+                of 350,000 for this transfer.
+                <Text.Paragraph size="xsmall" style={{ marginTop: '10px' }}>
+                  <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
+                  (e.g. ERC-20) tokens directly to this address.
+                </Text.Paragraph>
+              </Info>
+            </ToggleContent>
+          </div>
+        )}
       </form>
     )
   }
