@@ -1,7 +1,7 @@
 import { ETHER_TOKEN_VERIFIED_ADDRESSES } from './verified-tokens'
 import { toUtf8 } from './web3-utils'
-import tokenSymbolBytesAbi from '../abi/token-symbol-bytes.json'
 import tokenSymbolAbi from '../abi/token-symbol.json'
+import tokenSymbolBytesAbi from '../abi/token-symbol-bytes.json'
 import tokenNameAbi from '../abi/token-name.json'
 import tokenNameBytesAbi from '../abi/token-name-bytes.json'
 
@@ -47,7 +47,7 @@ export const tokenDataFallback = (tokenAddress, fieldName, networkType) => {
 export async function getTokenSymbol(app, address) {
   // Symbol is optional; note that aragon.js doesn't return an error (only an falsey value) when
   // getting this value fails
-  let token = app.external(address, [tokenSymbolAbi])
+  let token = app.external(address, tokenSymbolAbi)
   let tokenSymbol = await token
     .symbol()
     .first()
@@ -56,7 +56,7 @@ export async function getTokenSymbol(app, address) {
     return tokenSymbol
   }
   // Some tokens (e.g. DS-Token) use bytes32 as the return type for symbol().
-  token = app.external(address, [tokenSymbolBytesAbi])
+  token = app.external(address, tokenSymbolBytesAbi)
   tokenSymbol = await token
     .symbol()
     .first()
@@ -68,7 +68,7 @@ export async function getTokenSymbol(app, address) {
 export async function getTokenName(app, address) {
   // Name is optional; note that aragon.js doesn't return an error (only an falsey value) when
   // getting this value fails
-  let token = app.external(address, [tokenNameAbi])
+  let token = app.external(address, tokenNameAbi)
   let tokenName = await token
     .name()
     .first()
@@ -77,7 +77,7 @@ export async function getTokenName(app, address) {
     return tokenName
   }
   // Some tokens (e.g. DS-Token) use bytes32 as the return type for name().
-  token = app.external(address, [tokenNameBytesAbi])
+  token = app.external(address, tokenNameBytesAbi)
   tokenName = await token
     .name()
     .first()
