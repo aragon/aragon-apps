@@ -82,20 +82,18 @@ class TransferRow extends React.Component {
       <TableRow>
         <StyledTableCell>
           <Grid>
-            <Wrap>
-              <IdentityBadge
-                networkType={type}
-                entity={entity}
-                shorten={true}
-              />
-            </Wrap>
+            <div>
+              <Wrap>
+                <IdentityBadge networkType={type} entity={entity} shorten />
+              </Wrap>
+            </div>
             <time dateTime={formattedDate} title={formattedDate}>
               {format(date, 'dd MMM yyyy')}
             </time>
-            <TextOverflow style={{ marginTop: '10px' }}>
+            <TextOverflow style={{ marginTop: '5px' }}>
               {reference}
             </TextOverflow>
-            <Amount positive={isIncoming}>
+            <Amount positive={isIncoming} style={{ marginTop: '5px' }}>
               {formattedAmount} {symbol}
             </Amount>
           </Grid>
@@ -177,7 +175,7 @@ class TransferRow extends React.Component {
 }
 
 const Wrap = styled.div`
-  display: inline-flex;
+  display: flex;
 `
 
 const StyledTableCell = styled(TableCell)`

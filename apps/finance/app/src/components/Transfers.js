@@ -112,13 +112,15 @@ class Transfers extends React.Component {
       <section>
         <Header>
           <Title>
-            Transfers{' '}
-            <BreakPoint to="medium">
-              <ToggleFiltersButton
-                title="Toggle Filters"
-                onClick={this.handleToggleFiltersClick}
-              />
-            </BreakPoint>
+            <span>Transfers </span>
+            <span>
+              <BreakPoint to="medium">
+                <ToggleFiltersButton
+                  title="Toggle Filters"
+                  onClick={this.handleToggleFiltersClick}
+                />
+              </BreakPoint>
+            </span>
           </Title>
           <Spring
             native
@@ -266,7 +268,7 @@ const Title = styled.h1`
   ${breakpoint(
     'medium',
     `
-      margin: 10px 30px 20px 0;
+      margin: 30px 30px 20px 0;
     `
   )};
 `
