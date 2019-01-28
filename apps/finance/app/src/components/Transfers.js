@@ -122,22 +122,19 @@ class Transfers extends React.Component {
           </Title>
           <Spring
             native
-            config={springs.swift}
+            config={springs.smooth}
             from={{ progress: 0 }}
-            to={{ progress: filtersOpened ? 1 : 0 }}
+            to={{ progress: Number(filtersOpened) }}
             immediate={!autohide}
           >
             {({ progress }) =>
               filteredTransfers.length > 0 && (
                 <Filters
                   style={{
-                    overflow: progress.interpolate(
-                      v => (v === 1 ? 'unset' : 'hidden')
+                    overflow: progress.interpolate(v =>
+                      v === 1 ? 'unset' : 'hidden'
                     ),
-                    height: progress.interpolate(
-                      v => (v === 1 ? 'auto' : `${62 * v}px`)
-                    ),
-                    opacity: progress.interpolate(v => (v ? 1 : 0)),
+                    height: progress.interpolate(v => `${80 * v}px`),
                   }}
                 >
                   <FilterLabel>
@@ -200,7 +197,7 @@ class Transfers extends React.Component {
                         key={transfer.transactionHash}
                         token={tokenDetails[toChecksumAddress(transfer.token)]}
                         transaction={transfer}
-                        wideMode={width > (768 + 219)}
+                        wideMode={width > 768 + 219}
                       />
                     ))}
                 </FixedTable>
@@ -236,7 +233,7 @@ const Header = styled.div`
 const Filters = styled(animated.div)`
   display: grid;
   grid-template-columns: 50% 50%;
-  margin: 0 20px 20px 20px;
+  margin: 0 20px 10px 20px;
 
   ${breakpoint(
     'medium',
