@@ -124,9 +124,9 @@ class App extends React.Component {
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
-      <WindowSizeProvider>
-        <ToastHub>
-          <Root.Provider>
+      <Root.Provider>
+        <WindowSizeProvider>
+          <ToastHub>
             <PublicUrl.Provider url="./aragon-ui/">
               <BaseStyles />
               <Main>
@@ -205,9 +205,9 @@ class App extends React.Component {
                 </SidePanel>
               </Main>
             </PublicUrl.Provider>
-          </Root.Provider>
-        </ToastHub>
-      </WindowSizeProvider>
+          </ToastHub>
+        </WindowSizeProvider>
+      </Root.Provider>
     )
   }
 }
