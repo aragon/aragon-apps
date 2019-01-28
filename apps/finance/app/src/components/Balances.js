@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import throttle from 'lodash.throttle'
-import { theme } from '@aragon/ui'
+import { theme, breakpoint } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
 import { round } from '../lib/math-utils'
 
@@ -94,24 +94,54 @@ const ScrollView = styled.div`
   transform: translate3d(0, 0, 0);
   overflow-x: auto;
   background: ${theme.contentBackground};
-  border: 1px solid ${theme.contentBorder};
-  border-radius: 3px;
+  border-top: 1px solid ${theme.contentBorder};
+
+  ${breakpoint(
+    'medium',
+    `
+      border: 1px solid ${theme.contentBorder};
+      border-radius: 3px;
+    `
+  )};
 `
 
 const Title = styled.h1`
-  margin-top: 10px;
-  margin-bottom: 20px;
+  margin: 20px 0 20px 20px;
   font-weight: 600;
+
+  ${breakpoint(
+    'medium',
+    `
+      margin: 10px 30px 20px 0;
+    `
+  )};
 `
 
 const List = styled.ul`
-  display: flex;
   list-style: none;
-  padding: 0 10px;
+
+  ${breakpoint(
+    'medium',
+    `
+      display: flex;
+      padding: 0 10px;
+    `
+  )};
 `
 
 const ListItem = styled.li`
-  padding: 25px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 8px 20px;
+  border-bottom: 1px solid ${theme.contentBorder};
+
+  ${breakpoint(
+    'medium',
+    `
+      display: block;
+      padding: 25px;
+    `
+  )};
 `
 
 export default Balances
