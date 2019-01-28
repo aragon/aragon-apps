@@ -1,7 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Text, theme } from '@aragon/ui'
+import { Text, theme, IdentityBadge, breakpoint } from '@aragon/ui'
 import { formatBalance, stakesPercentages } from '../utils'
+import { WindowSize } from '../WindowSizeProvider'
 import TokenBadge from './TokenBadge'
 
 const DISTRIBUTION_ITEMS_MAX = 7
@@ -45,10 +46,11 @@ class SideBar extends React.Component {
       tokenName,
       tokenSupply,
       tokenSymbol,
+      ...rest
     } = this.props
     const stakes = displayedStakes(holders, tokenSupply)
     return (
-      <Main>
+      <Main {...rest}>
         <Part>
           <h1>
             <Text color={theme.textSecondary} smallcaps>
@@ -99,19 +101,24 @@ class SideBar extends React.Component {
               />
             ))}
           </StakesBar>
-          <ul>
-            {stakes.map(({ name, stake, color }) => (
-              <StakesListItem key={name}>
-                <span>
-                  <StakesListBullet style={{ background: color }} />
-                  <Text title={name} color={theme.textSecondary}>
-                    {name}
-                  </Text>
-                </span>
-                <strong>{stake}%</strong>
-              </StakesListItem>
-            ))}
-          </ul>
+          <WindowSize>
+            {({ width, fromMedium }) => (
+              <ul>
+                {stakes.map(({ name, stake, color }) => (
+                  <StakesListItem key={name}>
+                    <span>
+                      <StakesListBullet style={{ background: color }} />
+                      <IdentityBadge
+                        entity={name}
+                        shorten={fromMedium || width < 520}
+                      />
+                    </span>
+                    <strong>{stake}%</strong>
+                  </StakesListItem>
+                ))}
+              </ul>
+            )}
+          </WindowSize>
         </Part>
       </Main>
     )
@@ -121,9 +128,19 @@ class SideBar extends React.Component {
 const Main = styled.aside`
   flex-shrink: 0;
   flex-grow: 0;
-  width: 260px;
-  margin-left: 30px;
   min-height: 100%;
+  margin-top: 55px;
+  padding: 0 20px;
+
+  ${breakpoint(
+    'medium',
+    `
+      width: 260px;
+      margin-left: 30px;
+      margin-top: unset;
+      padding: 0;
+    `
+  )};
 `
 
 const Part = styled.section`

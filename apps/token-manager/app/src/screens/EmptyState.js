@@ -20,6 +20,7 @@ const Main = styled.div`
   align-items: center;
   justify-content: center;
   flex-grow: 1;
+  padding: 20px 0;
 `
 
 export default EmptyState
