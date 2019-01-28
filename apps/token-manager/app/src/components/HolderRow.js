@@ -9,8 +9,11 @@ import {
   IconRemove,
   Badge,
   theme,
+  IdentityBadge,
+  breakpoint,
 } from '@aragon/ui'
 import { formatBalance } from '../utils'
+import { WindowSize } from '../WindowSizeProvider'
 
 class HolderRow extends React.Component {
   static defaultProps = {
@@ -35,6 +38,7 @@ class HolderRow extends React.Component {
       groupMode,
       isCurrentUser,
       maxAccountTokens,
+      shorten,
       tokenDecimalsBase,
     } = this.props
 
@@ -43,9 +47,9 @@ class HolderRow extends React.Component {
 
     return (
       <TableRow>
-        <TableCell>
+        <StyledTableCell>
           <Owner>
-            <span>{address}</span>
+            <IdentityBadge entity={address} shorten={shorten} />
             {isCurrentUser && (
               <Badge.Identity
                 style={{ fontVariant: 'small-caps' }}
@@ -55,13 +59,13 @@ class HolderRow extends React.Component {
               </Badge.Identity>
             )}
           </Owner>
-        </TableCell>
+        </StyledTableCell>
         {!groupMode && (
           <TableCell align="right">
             {formatBalance(balance, tokenDecimalsBase)}
           </TableCell>
         )}
-        <TableCell align="right">
+        <StyledTableCell align="right">
           <ContextMenu>
             {canAssign && (
               <ContextMenuItem onClick={this.handleAssignTokens}>
@@ -81,11 +85,37 @@ class HolderRow extends React.Component {
               </ActionLabel>
             </ContextMenuItem>
           </ContextMenu>
-        </TableCell>
+        </StyledTableCell>
       </TableRow>
     )
   }
 }
+
+const StyledTableCell = styled(TableCell)`
+  &&& {
+    border-left-width: 0;
+    border-right-width: 0;
+
+    :first-child,
+    :last-child {
+      border-radius: 0;
+    }
+  }
+
+  ${breakpoint(
+    'medium',
+    `
+      &&& {
+        border-left-width: 1px;
+        border-right-width: 1px;
+
+        :first-child, :last-child {
+          border-radius: 3px;
+        }
+      }
+    `
+  )};
+`
 
 const ActionLabel = styled.span`
   margin-left: 15px;
@@ -106,4 +136,13 @@ const IconWrapper = styled.span`
   color: ${theme.textSecondary};
 `
 
-export default HolderRow
+export default props => (
+  <WindowSize>
+    {({ width, fromMedium }) => (
+      <HolderRow
+        {...props}
+        shorten={(fromMedium && width < 1000) || width < 590}
+      />
+    )}
+  </WindowSize>
+)
