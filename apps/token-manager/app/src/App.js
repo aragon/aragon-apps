@@ -24,7 +24,6 @@ import AssignTokensButton from './components/AssignTokensButton/AssignTokensButt
 import { WindowSizeProvider, WindowSize } from './WindowSizeProvider'
 import { networkContextType } from './provide-network'
 import { hasLoadedTokenSettings } from './token-settings'
-import { makeEtherscanBaseUrl } from './utils'
 import { addressesEqual } from './web3-utils'
 
 const initialAssignTokensConfig = {
@@ -56,7 +55,6 @@ class App extends React.Component {
 
     return {
       network: {
-        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
         type: network.type,
       },
     }

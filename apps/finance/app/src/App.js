@@ -23,7 +23,6 @@ import Transfers from './components/Transfers'
 import MenuButton from './components/MenuButton/MenuButton'
 import { networkContextType } from './lib/provideNetwork'
 import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
-import { makeEtherscanBaseUrl } from './lib/utils'
 
 import addFundsIcon from './components/assets/add-funds-icon.svg'
 import newTransferIcon from './components/assets/new-transfer.svg'
@@ -51,7 +50,6 @@ class App extends React.Component {
     const { network } = this.props
     return {
       network: {
-        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
         type: network.type,
       },
     }

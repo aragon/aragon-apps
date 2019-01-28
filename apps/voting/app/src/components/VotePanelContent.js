@@ -121,13 +121,13 @@ class VotePanelContent extends React.Component {
   }
   renderBlockLink = snapshotBlock => {
     const {
-      network: { etherscanBaseUrl },
+      network: { type },
     } = this.props
     const text = `(block ${snapshotBlock})`
 
-    return etherscanBaseUrl ? (
+    return type ? (
       <SafeLink
-        href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
+        href={blockExplorerUrl('block', snapshotBlock, { networkType: type })}
         target="_blank"
       >
         {text}
@@ -138,7 +138,7 @@ class VotePanelContent extends React.Component {
   }
   render() {
     const {
-      network: { etherscanBaseUrl },
+      network: { type },
       vote,
       ready,
       shortAddresses,

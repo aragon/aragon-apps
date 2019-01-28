@@ -9,8 +9,12 @@ import {
   ContextMenuItem,
   IdentityBadge,
   theme,
+<<<<<<< HEAD
   BreakPoint,
   breakpoint,
+=======
+  blockExplorerUrl
+>>>>>>> feat(): replaced `etherscanBaseUrl` with `blockExplorerUrl`
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
@@ -24,11 +28,11 @@ class TransferRow extends React.Component {
   handleCopyTransferUrl = () => {
     copy(
       'https://app.aragon.one/#/finance/finance?params=' +
-        encodeURIComponent(
-          JSON.stringify({
-            transaction: this.props.transaction.transactionHash,
-          })
-        )
+      encodeURIComponent(
+        JSON.stringify({
+          transaction: this.props.transaction.transactionHash,
+        })
+      )
     )
     this.setState({
       showCopyTransferMessage: true,
@@ -36,10 +40,10 @@ class TransferRow extends React.Component {
   }
   handleViewTransaction = () => {
     const {
-      network: { etherscanBaseUrl },
+      network: { type },
       transaction: { transactionHash },
     } = this.props
-    window.open(`${etherscanBaseUrl}/tx/${transactionHash}`, '_blank')
+    window.open(blockExplorerUrl('transaction', transactionHash, { networkType: type }), '_blank')
   }
   handleConfirmMessageDone = () => {
     this.setState({
@@ -105,7 +109,6 @@ class TransferRow extends React.Component {
   renderMediumAndBiggerScreens() {
     const { network, token, transaction, wideMode } = this.props
     const { showCopyTransferMessage } = this.state
-    const { etherscanBaseUrl } = network
     const {
       date,
       entity,
@@ -148,7 +151,7 @@ class TransferRow extends React.Component {
         </NoWrapCell>
         <NoWrapCell>
           <ActionsWrapper>
-            {etherscanBaseUrl && (
+            {network.type && (
               <ContextMenu>
                 {/* <ContextMenuItem onClick={this.handleCopyTransferUrl}>
                 <IconShare />
