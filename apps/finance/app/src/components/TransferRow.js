@@ -178,13 +178,6 @@ class TransferRow extends React.Component {
 
 const Wrap = styled.div`
   display: inline-flex;
-
-  ${breakpoint(
-    'medium',
-    `
-      display: block;
-    `
-  )};
 `
 
 const StyledTableCell = styled(TableCell)`
@@ -197,21 +190,6 @@ const StyledTableCell = styled(TableCell)`
       border-radius: 0;
     }
   }
-
-  ${breakpoint(
-    'medium',
-    `
-      &&& {
-        border-left-width: 1px;
-        border-right-width: 1px;
-
-        :first-child,
-        :last-child {
-          border-radius: 3px;
-        }
-      }
-    `
-  )};
 `
 
 const Amount = styled.span`
@@ -229,15 +207,6 @@ const Grid = styled.div`
   ${Amount} {
     text-align: right;
   }
-
-  ${breakpoint(
-    'medium',
-    `
-      grid-template-rows: 1fr;
-      grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-      padding: 0 10px;
-    ,`
-  )};
 `
 
 const NoWrapCell = styled(TableCell)`
