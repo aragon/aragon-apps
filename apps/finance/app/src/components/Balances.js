@@ -1,10 +1,12 @@
 import React from 'react'
 import styled from 'styled-components'
+import throttle from 'lodash.throttle'
 import { theme, breakpoint } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
 import { round } from '../lib/math-utils'
 
 const CONVERT_API_BASE = 'https://min-api.cryptocompare.com/data'
+const CONVERT_THROTTLE_TIME = 5000
 
 const convertApiUrl = symbols =>
   `${CONVERT_API_BASE}/price?fsym=USD&tsyms=${symbols.join(',')}`
@@ -19,7 +21,7 @@ class Balances extends React.Component {
   componentWillReceiveProps(nextProps) {
     this.updateConvertedRates(nextProps)
   }
-  async updateConvertedRates({ balances }) {
+  updateConvertedRates = throttle(async ({ balances }) => {
     const verifiedSymbols = balances
       .filter(({ verified }) => verified)
       .map(({ symbol }) => symbol)
@@ -31,7 +33,7 @@ class Balances extends React.Component {
     const res = await fetch(convertApiUrl(verifiedSymbols))
     const convertRates = await res.json()
     this.setState({ convertRates })
-  }
+  }, CONVERT_THROTTLE_TIME)
   render() {
     const { balances } = this.props
     const { convertRates } = this.state
