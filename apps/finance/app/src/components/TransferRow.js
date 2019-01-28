@@ -115,6 +115,7 @@ class TransferRow extends React.Component {
       isIncoming,
       numData: { amount },
       reference,
+      transactionHash
     } = transaction
     const { decimals, symbol } = token
     const formattedAmount = formatTokenAmount(
@@ -125,6 +126,9 @@ class TransferRow extends React.Component {
       { rounding: 5 }
     )
     const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
+    const url = blockExplorerUrl('transaction', transactionHash, {
+      networkType: network.type
+    })
     return (
       <TableRow>
         <NoWrapCell>
@@ -151,7 +155,7 @@ class TransferRow extends React.Component {
         </NoWrapCell>
         <NoWrapCell>
           <ActionsWrapper>
-            {network.type && (
+            {url && (
               <ContextMenu>
                 {/* <ContextMenuItem onClick={this.handleCopyTransferUrl}>
                 <IconShare />

@@ -1,7 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import Blockies from 'react-blockies'
 import {
   Button,
   IdentityBadge,
@@ -13,6 +12,7 @@ import {
   Text,
   theme,
   BreakPoint,
+  blockExplorerUrl
 } from '@aragon/ui'
 import provideNetwork from '../utils/provideNetwork'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
@@ -124,10 +124,10 @@ class VotePanelContent extends React.Component {
       network: { type },
     } = this.props
     const text = `(block ${snapshotBlock})`
-
-    return type ? (
+    const url = blockExplorerUrl('block', snapshotBlock, { networkType: type })
+    return url ? (
       <SafeLink
-        href={blockExplorerUrl('block', snapshotBlock, { networkType: type })}
+        href={url}
         target="_blank"
       >
         {text}
@@ -138,7 +138,6 @@ class VotePanelContent extends React.Component {
   }
   render() {
     const {
-      network: { type },
       vote,
       ready,
       shortAddresses,
