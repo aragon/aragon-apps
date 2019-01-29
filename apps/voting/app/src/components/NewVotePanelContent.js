@@ -40,7 +40,7 @@ class NewVotePanelContent extends React.Component {
         <Form onSubmit={this.handleSubmit}>
           <Field label="Question">
             <TextInput
-              innerRef={question => (this.questionInput = question)}
+              ref={question => (this.questionInput = question)}
               value={question}
               onChange={this.handleQuestionChange}
               required
