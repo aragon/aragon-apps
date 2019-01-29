@@ -11,6 +11,8 @@ import {
   font,
   observe,
   BreakPoint,
+  Root,
+  ToastHub,
 } from '@aragon/ui'
 import BN from 'bn.js'
 import EmptyState from './screens/EmptyState'
@@ -230,70 +232,77 @@ class App extends React.Component {
     const hasCurrentVote = appStateReady && Boolean(currentVote)
 
     return (
-      <PublicUrl.Provider url="./aragon-ui/">
-        <BaseStyles />
-        <Main>
-          <AppView
-            appBar={
-              <AppBar
-                title={
-                  <Title>
-                    <BreakPoint to="medium">
-                      <MenuButton onClick={this.handleMenuPanelOpen} />
-                    </BreakPoint>
-                    <TitleLabel>Voting</TitleLabel>
-                  </Title>
-                }
-                endContent={
-                  <NewVoteButton
-                    title="New Vote"
-                    onClick={this.handleCreateVoteOpen}
+      <Root.Provider>
+        <PublicUrl.Provider url="./aragon-ui/">
+          <BaseStyles />
+          <ToastHub>
+            <Main>
+              <AppView
+                appBar={
+                  <AppBar
+                    title={
+                      <Title>
+                        <BreakPoint to="medium">
+                          <MenuButton onClick={this.handleMenuPanelOpen} />
+                        </BreakPoint>
+                        <TitleLabel>Voting</TitleLabel>
+                      </Title>
+                    }
+                    endContent={
+                      <NewVoteButton
+                        title="New Vote"
+                        onClick={this.handleCreateVoteOpen}
+                      />
+                    }
                   />
                 }
-              />
-            }
-          >
-            {appStateReady && votes.length > 0 ? (
-              <Votes votes={preparedVotes} onSelectVote={this.handleVoteOpen} />
-            ) : (
-              <EmptyState onActivate={this.handleCreateVoteOpen} />
-            )}
-          </AppView>
-          <SidePanel
-            title={`Vote #${currentVoteId} (${
-              currentVote && currentVote.data.open ? 'Open' : 'Closed'
-            })`}
-            opened={hasCurrentVote && !createVoteVisible && voteVisible}
-            onClose={this.handleVoteClose}
-            onTransitionEnd={this.handleVoteTransitionEnd}
-          >
-            {hasCurrentVote && (
-              <VotePanelContent
-                app={app}
-                vote={currentVote}
-                user={userAccount}
-                ready={voteSidebarOpened}
-                tokenContract={tokenContract}
-                tokenDecimals={tokenDecimals}
-                tokenSymbol={tokenSymbol}
-                onVote={this.handleVote}
-                onExecute={this.handleExecute}
-              />
-            )}
-          </SidePanel>
+              >
+                {appStateReady && votes.length > 0 ? (
+                  <Votes
+                    votes={preparedVotes}
+                    onSelectVote={this.handleVoteOpen}
+                  />
+                ) : (
+                  <EmptyState onActivate={this.handleCreateVoteOpen} />
+                )}
+              </AppView>
+              <SidePanel
+                title={`Vote #${currentVoteId} (${
+                  currentVote && currentVote.data.open ? 'Open' : 'Closed'
+                })`}
+                opened={hasCurrentVote && !createVoteVisible && voteVisible}
+                onClose={this.handleVoteClose}
+                onTransitionEnd={this.handleVoteTransitionEnd}
+              >
+                {hasCurrentVote && (
+                  <VotePanelContent
+                    app={app}
+                    vote={currentVote}
+                    user={userAccount}
+                    ready={voteSidebarOpened}
+                    tokenContract={tokenContract}
+                    tokenDecimals={tokenDecimals}
+                    tokenSymbol={tokenSymbol}
+                    onVote={this.handleVote}
+                    onExecute={this.handleExecute}
+                  />
+                )}
+              </SidePanel>
 
-          <SidePanel
-            title="New Vote"
-            opened={createVoteVisible}
-            onClose={this.handleCreateVoteClose}
-          >
-            <NewVotePanelContent
-              opened={createVoteVisible}
-              onCreateVote={this.handleCreateVote}
-            />
-          </SidePanel>
-        </Main>
-      </PublicUrl.Provider>
+              <SidePanel
+                title="New Vote"
+                opened={createVoteVisible}
+                onClose={this.handleCreateVoteClose}
+              >
+                <NewVotePanelContent
+                  opened={createVoteVisible}
+                  onCreateVote={this.handleCreateVote}
+                />
+              </SidePanel>
+            </Main>
+          </ToastHub>
+        </PublicUrl.Provider>
+      </Root.Provider>
     )
   }
 }
