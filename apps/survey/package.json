@@ -19,7 +19,8 @@
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "console": "node_modules/.bin/truffle console",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
-    "prepare": "cd app && npm install",
+    "prepare": "./node_modules/@aragon/apps-shared-scripts/prepare.sh",
+    "install:frontend": "cd app && npm install",
     "prepublishOnly": "truffle compile --all"
   },
   "keywords": [],
@@ -35,6 +36,7 @@
   "description": "",
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
+    "@aragon/apps-shared-scripts": "1.0.0",
     "@aragon/cli": "^5.2.0-beta.1",
     "@aragon/test-helpers": "^1.0.1",
     "babel-helpers": "^6.24.1",
