@@ -92,8 +92,9 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
     }
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return interfaceId == ISVALIDSIG_INTERFACE_ID
-            || interfaceId == EIP165_SUPPORT_INTERFACE_ID;
+        return
+            interfaceId == ISVALIDSIG_INTERFACE_ID ||
+            interfaceId == EIP165_SUPPORT_INTERFACE_ID;
     }
 
     function forward(bytes _evmScript)
