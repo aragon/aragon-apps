@@ -223,9 +223,9 @@ contract('Voting App', accounts => {
                     assert.isTrue(isOpen, 'vote should be open')
                     assert.isFalse(isExecuted, 'vote should not be executed')
                     assert.equal(creator, holder51, 'creator should be correct')
-                    assert.equal(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
-                    assert.equal(supportRequired.toNumber(), neededSupport.toNumber(), 'required support should be app required support')
-                    assert.equal(minQuorum.toNumber(), minimumAcceptanceQuorum.toNumber(), 'min quorum should be app min quorum')
+                    assert.equal(snapshotBlock.toString(), await getBlockNumber() - 1, 'snapshot block should be correct')
+                    assert.equal(supportRequired.toString(), neededSupport.toString(), 'required support should be app required support')
+                    assert.equal(minQuorum.toString(), minimumAcceptanceQuorum.toString(), 'min quorum should be app min quorum')
                     assert.equal(y, 0, 'initial yea should be 0')
                     assert.equal(n, 0, 'initial nay should be 0')
                     assert.equal(votingPower.toString(), bigExp(100, decimals).toString(), 'total voters should be 100')
@@ -253,7 +253,7 @@ contract('Voting App', accounts => {
                     await timeTravel(votingTime + 1)
 
                     const state = await voting.getVote(voteId)
-                    assert.equal(state[4].toNumber(), neededSupport.toNumber(), 'required support in vote should stay equal')
+                    assert.equal(state[4].toString(), neededSupport.toString(), 'required support in vote should stay equal')
                     await voting.executeVote(voteId) // exec doesn't fail
                 })
 
@@ -268,7 +268,7 @@ contract('Voting App', accounts => {
                     await timeTravel(votingTime + 1)
 
                     const state = await voting.getVote(voteId)
-                    assert.equal(state[5].toNumber(), minimumAcceptanceQuorum.toNumber(), 'acceptance quorum in vote should stay equal')
+                    assert.equal(state[5].toString(), minimumAcceptanceQuorum.toString(), 'acceptance quorum in vote should stay equal')
                     await voting.executeVote(voteId) // exec doesn't fail
                 })
 
@@ -492,6 +492,47 @@ contract('Voting App', accounts => {
 
             assert.isFalse(isOpen, 'vote should be closed')
             assert.isTrue(isExecuted, 'vote should have been executed')
+        })
+    })
+
+    context('changing token supply', () => {
+        const holder1 = accounts[1]
+        const holder2 = accounts[2]
+
+        const neededSupport = pct16(50)
+        const minimumAcceptanceQuorum = pct16(20)
+
+        beforeEach(async () => {
+            token = await MiniMeToken.new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
+
+            await token.generateTokens(holder1, 1)
+            await token.generateTokens(holder2, 1)
+
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+        })
+
+        it('uses the correct snapshot value if tokens are minted afterwards', async () => {
+            // Create vote and afterwards generate some tokens
+            const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata'))
+            await token.generateTokens(holder2, 1)
+
+            const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower, execScript] = await voting.getVote(voteId)
+
+            // Generating tokens advanced the block by one
+            assert.equal(snapshotBlock.toString(), await getBlockNumber() - 2, 'snapshot block should be correct')
+            assert.equal(votingPower.toString(), (await token.totalSupplyAt(snapshotBlock)).toString(), 'total voters should be correct')
+        })
+
+        it('uses the correct snapshot value if tokens are minted in the same block', async () => {
+            // Create vote and generate some tokens in the same transaction
+            // Requires the voting mock to be the token's owner
+            await token.changeController(voting.address)
+            const voteId = createdVoteId(await voting.newTokenAndVote(holder2, 1, 'metadata'))
+
+            const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower, execScript] = await voting.getVote(voteId)
+
+            assert.equal(snapshotBlock.toString(), await getBlockNumber() - 1, 'snapshot block should be correct')
+            assert.equal(votingPower.toString(), (await token.totalSupplyAt(snapshotBlock)).toString(), 'total voters should be correct')
         })
     })
 
