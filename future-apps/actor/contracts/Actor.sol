@@ -106,12 +106,14 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
             return true;
         }
 
-        address designatedSigner = addressAt(signature);
-        bytes memory designatedSignature = bytesAfter(signature,20);
+        address designatedSigner;
+        bytes memory designatedSignature = new bytes(66);
+        assembly { designatedSigner := mload(signature) }
+        memcpy(designatedSignature, signature, 20, 66);
         //should return the entire signature except the address
 
         uint256[] memory params = new uint256[](0);
-        if (!canPerform(designatedSigner,PRESIGN_HASH_ROLE,params)) {
+        if (!canPerform(designatedSigner, PRESIGN_HASH_ROLE, params)) {
             return false;
         }
 
@@ -182,27 +184,25 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
         assembly { sig := add(data, 0x20) }
     }
 
-    function addressAt(bytes data) internal pure returns (address) {
-        uint160 m = 0;
-        uint160 b = 0;
-
-        for (uint8 i = 0; i < 20; i++) {
-          m *= 256;
-          b = uint160(data[i]);
-          m += (b);
+    function memcpy(bytes destination, bytes source, uint offset, uint len) private pure {
+        uint dest;
+        uint src;
+        assembly { src:= add(source, offset)}
+        assembly { dest:= source}
+        // Copy word-length chunks while possible
+        for(; len >= 32; len -= 32) {
+            assembly {
+                    mstore(dest, mload(src))
+                }
+            dest += 32;
+                src += 32;
         }
-
-        return address(m);
-    }
-
-    function bytesAfter(bytes data, uint offset) internal pure returns (bytes) {
-        uint length = data.length - offset;
-        bytes memory result = new bytes(length);
-
-        for (uint8 i = 0; i < length; i++) {
-          result[i]=data[i+offset];
-        }
-
-        return result;
+        // Copy remaining bytes
+        uint mask = 256 ** (32 - len) - 1;
+        assembly {
+            let srcpart := and(mload(src), not(mask))
+                let destpart := and(mload(dest), mask)
+            mstore(dest, or(destpart, srcpart))
+            }
     }
 }
