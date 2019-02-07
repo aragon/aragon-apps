@@ -77,7 +77,7 @@ contract('Actor app', (accounts) => {
     await actor.initialize()
   })
 
-  context('executing actions', () => {
+  context('> Executing actions', () => {
     const [_, nonExecutor, executor] = accounts
     let executionTarget
 
@@ -157,7 +157,7 @@ contract('Actor app', (accounts) => {
       )
     })
 
-    context('with ETH:', () => {
+    context('> With ETH:', () => {
       const depositValue = 3
       let to, data
 
@@ -195,7 +195,7 @@ contract('Actor app', (accounts) => {
     })
   })
 
-  context('running scripts', () => {
+  context('> Running scripts', () => {
     let executionTarget, script
     const [_, nonScriptRunner, scriptRunner] = accounts
 
@@ -230,7 +230,7 @@ contract('Actor app', (accounts) => {
     })
   })
 
-  context('signing messages', () => {
+  context('> Signing messages', () => {
     const [_, nobody, presigner, signerDesignator] = accounts
     const HASH = web3.sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
 
@@ -266,7 +266,7 @@ contract('Actor app', (accounts) => {
       assert.isFalse(await actor.isValidSignature(HASH, NO_SIG))
     })
 
-    context('designated signer: EOAs', () => {
+    context('> Designated signer: EOAs', () => {
       let signer = accounts[7]
 
       const sign = async (hash, signer, useLegacySig = false, useInvalidV = false) => {
@@ -324,7 +324,7 @@ contract('Actor app', (accounts) => {
       })
     })
 
-    context('designated signer: contracts', () => {
+    context('> Designated signer: contracts', () => {
       const setDesignatedSignerContract = async (...params) => {
         const designatedSigner = await DesignatedSigner.new(...params)
         return actor.setDesignatedSigner(designatedSigner.address, { from: signerDesignator })
