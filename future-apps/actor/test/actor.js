@@ -25,9 +25,10 @@ const ExecutionTarget = artifacts.require('ExecutionTarget')
 const DesignatedSigner = artifacts.require('DesignatedSigner')
 
 const NULL_ADDRESS = '0x00'
+const NO_SIG = '0x'
 
-const EIP165_SUPPORT_INTERFACE_ID = '0x01ffc9a7'
-const EIP165_SUPPORT_INVALID_ID = '0xffffffff'
+const ERC165_SUPPORT_INTERFACE_ID = '0x01ffc9a7'
+const ERC165_SUPPORT_INVALID_ID = '0xffffffff'
 
 contract('Actor app', (accounts) => {
   let daoFact, actorBase, acl, actor, actorId
@@ -67,7 +68,7 @@ contract('Actor app', (accounts) => {
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
     // actor
-    actorAppId = namehash('actor.aragonpm.test')
+    const actorAppId = namehash('actor.aragonpm.test')
 
     const actorReceipt = await dao.newAppInstance(actorAppId, actorBase.address, '0x', false)
     const actorProxyAddress = getEvent(actorReceipt, 'NewAppProxy', 'proxy')
@@ -77,7 +78,7 @@ contract('Actor app', (accounts) => {
   })
 
   context('executing actions', () => {
-    const [nonExecutor, executor] = accounts
+    const [_, nonExecutor, executor] = accounts
     let executionTarget
 
     beforeEach(async () => {
@@ -95,6 +96,17 @@ contract('Actor app', (accounts) => {
       const receipt = await actor.execute(to, 0, data, { from: executor })
 
       assert.equal(await executionTarget.counter(), N)
+      assertEvent(receipt, 'Execute')
+    })
+
+    it('can execute actions without data', async () => {
+      assert.equal(await executionTarget.counter(), 0)
+
+      const noData = '0x'
+      const receipt = await actor.execute(executionTarget.address, 0, noData, { from: executor })
+
+      // Fallback just runs ExecutionTarget.execute()
+      assert.equal(await executionTarget.counter(), 1)
       assertEvent(receipt, 'Execute')
     })
 
@@ -121,14 +133,16 @@ contract('Actor app', (accounts) => {
     })
 
     it('execution forwards success return data', async () => {
+      assert.equal(await executionTarget.counter(), 0)
+
       const { to, data } = encodeFunctionCall(executionTarget, 'execute')
 
       // We make a call to easily get what data could be gotten inside the EVM
       // Contract -> Actor.execute -> Target.func (would allow Contract to have access to this data)
-      assert.equal(await executionTarget.counter(), 0)
       const call = encodeFunctionCall(actor, 'execute', to, 0, data, { from: executor })
       const returnData = await web3Call(call)
 
+      // ExecutionTarget.execute() increments the counter by 1
       assert.equal(ethABI.decodeParameter('uint256', returnData), 1)
     })
 
@@ -183,7 +197,7 @@ contract('Actor app', (accounts) => {
 
   context('running scripts', () => {
     let executionTarget, script
-    const [nonScriptRunner, scriptRunner] = accounts
+    const [_, nonScriptRunner, scriptRunner] = accounts
 
     beforeEach(async () => {
       executionTarget = await ExecutionTarget.new()
@@ -200,41 +214,41 @@ contract('Actor app', (accounts) => {
 
       const receipt = await actor.forward(script, { from: scriptRunner })
 
+      // Should execute ExecutionTarget.execute() twice
       assert.equal(await executionTarget.counter(), 2)
       assertEvent(receipt, 'ScriptResult')
     })
 
     it('fails to run script without permissions', async () => {
       assert.isFalse(await actor.canForward(nonScriptRunner, script))
+      assert.equal(await executionTarget.counter(), 0)
 
       await assertRevert(() =>
         actor.forward(script, { from: nonScriptRunner })
       )
+      assert.equal(await executionTarget.counter(), 0)
     })
   })
 
   context('signing messages', () => {
-    const [nobody, presigner, signerDesignator] = accounts
-    let HASH
-    const NO_SIG = '0x'
+    const [_, nobody, presigner, signerDesignator] = accounts
+    const HASH = web3.sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
 
     beforeEach(async () => {
-      HASH = web3.sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
-
       await acl.createPermission(presigner, actor.address, PRESIGN_HASH_ROLE, root, { from: root })
       await acl.createPermission(signerDesignator, actor.address, DESIGNATE_SIGNER_ROLE, root, { from: root })
     })
 
-    it('complies to EIP165', async () => {
-      assert.isTrue(await actor.supportsInterface(EIP165_SUPPORT_INTERFACE_ID))
-      assert.isFalse(await actor.supportsInterface(EIP165_SUPPORT_INVALID_ID))
+    it('complies with ERC165', async () => {
+      assert.isTrue(await actor.supportsInterface(ERC165_SUPPORT_INTERFACE_ID))
+      assert.isFalse(await actor.supportsInterface(ERC165_SUPPORT_INVALID_ID))
     })
 
     it('supports ERC1271 interface', async () => {
       assert.isTrue(await actor.supportsInterface(ISVALIDSIG_INTERFACE_ID))
     })
 
-    it('doesnt support any other interface', async () => {
+    it("doesn't support any other interface", async () => {
       assert.isFalse(await actor.supportsInterface('0x12345678'))
       assert.isFalse(await actor.supportsInterface('0x'))
     })
@@ -249,6 +263,7 @@ contract('Actor app', (accounts) => {
       await assertRevert(() =>
         actor.presignHash(HASH, { from: nobody })
       )
+      assert.isFalse(await actor.isValidSignature(HASH, NO_SIG))
     })
 
     context('designated signer: EOAs', () => {
@@ -266,7 +281,7 @@ contract('Actor app', (accounts) => {
           v = ethutil.toBuffer(2) // force set an invalid v
         }
 
-        let signature = '0x' + Buffer.concat([mode, v, r, s]).toString('hex')
+        const signature = '0x' + Buffer.concat([mode, v, r, s]).toString('hex')
         return signature
       }
 
@@ -285,7 +300,7 @@ contract('Actor app', (accounts) => {
       })
 
       it('isValidSignature returns false to an invalid signature', async () => {
-        const badSignature = (await sign(HASH, signer)).substring(0, 132) // drop last byte
+        const badSignature = (await sign(HASH, signer)).slice(0, -2) // drop last byte
         assert.isFalse(await actor.isValidSignature(HASH, badSignature))
       })
 
@@ -300,7 +315,10 @@ contract('Actor app', (accounts) => {
       })
 
       it('isValidSignature returns true to an invalid signature iff the hash was presigned', async () => {
-        const badSignature = (await sign(HASH, signer)).substring(0, 132) // drop last byte
+        const badSignature = (await sign(HASH, signer)).substring(0, -2) // drop last byte
+        assert.isFalse(await actor.isValidSignature(HASH, badSignature))
+
+        // Now presign it
         await actor.presignHash(HASH, { from: presigner })
         assert.isTrue(await actor.isValidSignature(HASH, badSignature))
       })
@@ -313,37 +331,56 @@ contract('Actor app', (accounts) => {
       }
 
       it('isValidSignature returns true if designated signer returns true', async () => {
-        // interface compliance, sig is valid, doesn't revert and doesn't modify state
+        // true  - ERC165 interface compliant
+        // true  - any sigs are valid
+        // false - doesn't revert on checking sig
+        // false - doesn't modify state on checking sig
         await setDesignatedSignerContract(true, true, false, false)
 
         assert.isTrue(await actor.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer returns false', async () => {
-        // interface compliance, sig is invalid, doesn't revert and doesn't modify state
+        // true  - ERC165 interface compliant
+        // false - sigs are invalid
+        // false - doesn't revert on checking sig
+        // false - doesn't modify state on checking sig
         await setDesignatedSignerContract(true, false, false, false)
 
+        // Signature fails check
         assert.isFalse(await actor.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer doesnt support the interface', async () => {
-        // no interface compliance, sig is valid, doesn't revert and doesn't modify state
+        // false - not ERC165 interface compliant
+        // true  - any sigs are valid
+        // false - doesn't revert on checking sig
+        // false - doesn't modify state on checking sig
         await setDesignatedSignerContract(false, true, false, false)
 
+        // Requires ERC165 compliance before checking isValidSignature
         assert.isFalse(await actor.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer reverts', async () => {
-        // no interface compliance, sig is valid, reverts and doesn't modify state
+        // true  - ERC165 interface compliant
+        // true  - any sigs are valid
+        // true  - reverts on checking sig
+        // false - doesn't modify state on checking sig
         await setDesignatedSignerContract(true, true, true, false)
 
+        // Reverts on checking
         assert.isFalse(await actor.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer attempts to modify state', async () => {
-        // no interface compliance, sig is valid, doesn't revert and modifies state
+        // true  - ERC165 interface compliant
+        // true  - any sigs are valid
+        // false - doesn't revert on checking sig
+        // true  - modifies state on checking sig
         await setDesignatedSignerContract(true, true, false, true)
 
+        // Checking costs too much gas
         assert.isFalse(await actor.isValidSignature(HASH, NO_SIG))
       })
     })

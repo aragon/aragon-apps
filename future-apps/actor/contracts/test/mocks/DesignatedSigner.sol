@@ -4,30 +4,32 @@ import "../../standards/IERC165.sol";
 import "../../standards/IERC1271.sol";
 
 
-contract DesignatedSigner is /*IERC165,*/ IERC1271 {
-	bool isInterface;
-	bool isValid;
-	bool isValidRevert;
-	bool modifyState;
+contract DesignatedSigner /* is IERC165, IERC1271 */ {
+    bool isInterface;
+    bool isValid;
+    bool isValidRevert;
+    bool modifyState;
 
-	constructor (bool _isInterface, bool _isValid, bool _isValidRevert, bool _modifyState) {
-		isInterface = _isInterface;
-		isValid = _isValid;
-		isValidRevert = _isValidRevert;
-		modifyState = _modifyState;
-	}
+    constructor (bool _isInterface, bool _isValid, bool _isValidRevert, bool _modifyState) public {
+        isInterface = _isInterface;
+        isValid = _isValid;
+        isValidRevert = _isValidRevert;
+        modifyState = _modifyState;
+    }
 
-	function supportsInterface(bytes4 interfaceId) external view returns (bool) {
-		return isInterface;
-	}
+    // Can't be ERC165-compliant since this potentially modifies state
+    function supportsInterface(bytes4 interfaceId) external view returns (bool) {
+        return isInterface;
+    }
 
-	function isValidSignature(bytes32 hash, bytes signature) public view returns (bool) {
-		require(!isValidRevert);
+    // Can't be ERC1271-compliant since this potentially modifies state
+    function isValidSignature(bytes32 hash, bytes signature) external returns (bool) {
+        require(!isValidRevert);
 
-		if (modifyState) {
-			modifyState = false;
-		}
+        if (modifyState) {
+            modifyState = false;
+        }
 
-		return isValid;
-	}
+        return isValid;
+    }
 }

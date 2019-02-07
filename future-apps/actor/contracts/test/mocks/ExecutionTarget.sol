@@ -5,21 +5,23 @@ contract ExecutionTarget {
     uint public counter;
     string constant public REASON = "FUNDS_ARE_NOT_SAFU";
 
-    function execute() payable public returns (uint256) {
+    function execute() public payable returns (uint256) {
         counter += 1;
         emit Executed(counter);
         return counter;
     }
 
-    function setCounter(uint x) payable public {
+    function setCounter(uint x) external payable {
         counter = x;
     }
 
-    function fail() public {
-    	revert(REASON);
+    function fail() external {
+        revert(REASON);
     }
 
-    function () payable {}
+    function () external payable {
+        execute();
+    }
 
     event Executed(uint x);
 }
