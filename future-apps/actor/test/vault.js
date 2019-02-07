@@ -1,6 +1,3 @@
-// Test that Actor is a fully functioning Vault by running the same tests against the Actor app
-const Vault = artifacts.require('Actor')
-
 const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
 const { hash } = require('eth-ens-namehash')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
@@ -15,6 +12,8 @@ const KernelProxy = artifacts.require('KernelProxy')
 
 const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
+
+const Vault = artifacts.require('Actor')
 
 const SimpleERC20 = artifacts.require('tokens/SimpleERC20')
 
@@ -76,17 +75,10 @@ contract('Actor app (Vault compatibility)', (accounts) => {
     it('deposits ETH', async () => {
       const value = 1
 
-      // Deposit without data param
+      // Deposit
       await vault.deposit(ETH, value, { value: value, from: accounts[0] })
       assert.equal((await getBalance(vault.address)).toString(), value, `should hold ${value} wei`)
       assert.equal((await vault.balance(ETH)).toString(), value, `should return ${value} wei balance`)
-
-      // Deposit with data param
-      /* Waiting for truffle to get overloading...
-      await vault.deposit(ETH, accounts[0], value, [0], { value })
-      assert.equal((await getBalance(vault.address)).toString(), value * 2, `should hold ${value * 2} wei`)
-      assert.equal((await vault.balance(ETH)).toString(), value * 2, `should return ${value * 2} wei balance`)
-      */
     })
 
     it('deposits ETH through callback', async () => {
@@ -94,7 +86,7 @@ contract('Actor app (Vault compatibility)', (accounts) => {
       assert.equal((await getBalance(vault.address)).toString(), 1, "should hold 1 wei")
     })
 
-    it('transfers ETH', async () => {
+    it('transfers ETH to EOA', async () => {
       const depositValue = 100
       const transferValue = 10
 
@@ -109,10 +101,25 @@ contract('Actor app (Vault compatibility)', (accounts) => {
       assert.equal((await getBalance(vault.address)).toString(), depositValue - transferValue, "should have remaining balance")
     })
 
+    it('transfers ETH to contract', async () => {
+      const depositValue = 100
+      const transferValue = 10
+
+      const destination = await DestinationMock.new(false)
+      await vault.sendTransaction( { value: depositValue })
+      const initialBalance = await getBalance(destination.address)
+
+      // Transfer
+      await vault.transfer(ETH, destination.address, transferValue)
+
+      assert.equal((await getBalance(destination.address)).toString(), initialBalance.add(transferValue).toString(), "should have sent eth")
+      assert.equal((await getBalance(vault.address)).toString(), depositValue - transferValue, "should have remaining balance")
+    })
+
     it('fails transfering ETH if uses more than 2.3k gas', async () => {
       const transferValue = 10
 
-      const destination = await DestinationMock.new()
+      const destination = await DestinationMock.new(true)
       await vault.sendTransaction( { value: transferValue })
 
       // Transfer
@@ -140,19 +147,11 @@ contract('Actor app (Vault compatibility)', (accounts) => {
     it('deposits ERC20s', async () => {
       await token.approve(vault.address, 10)
 
-      // Deposit half without data param
+      // Deposit half
       await vault.deposit(token.address, 5, { from: accounts[0] })
 
       assert.equal(await token.balanceOf(vault.address), 5, "token accounting should be correct")
       assert.equal(await vault.balance(token.address), 5, "vault should know its balance")
-
-      // Deposit half with data param
-      /* Waiting for truffle to get overloading...
-      await vault.deposit(token.address, accounts[0], 5, '')
-
-      assert.equal(await token.balanceOf(vault.address), 10, "token accounting should be correct")
-      assert.equal(await vault.balance(token.address), 10, "vault should know its balance")
-      */
     })
 
     it('transfers tokens', async () => {

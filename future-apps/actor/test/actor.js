@@ -19,6 +19,7 @@ const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 
 const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
+const DestinationMock = artifacts.require('DestinationMock')
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
@@ -110,6 +111,26 @@ contract('Actor app', (accounts) => {
       assertEvent(receipt, 'Execute')
     })
 
+    it('can execute cheap fallback actions', async () => {
+      const cheapFallbackTarget = await DestinationMock.new(false)
+      const noData = '0x'
+      const receipt = await actor.execute(cheapFallbackTarget.address, 0, noData, { from: executor })
+
+      assertEvent(receipt, 'Execute')
+    })
+
+    it('can execute expensive fallback actions', async () => {
+      const expensiveFallbackTarget = await DestinationMock.new(true)
+      assert.equal(await expensiveFallbackTarget.counter(), 0)
+
+      const noData = '0x'
+      const receipt = await actor.execute(expensiveFallbackTarget.address, 0, noData, { from: executor })
+
+      // Fallback increments counter
+      assert.equal(await expensiveFallbackTarget.counter(), 1)
+      assertEvent(receipt, 'Execute')
+    })
+
     it('fails to execute without permissions', async () => {
       const { to, data } = encodeFunctionCall(executionTarget, 'execute')
 
@@ -173,12 +194,43 @@ contract('Actor app', (accounts) => {
         assert.equal(await getBalance(actor.address), depositValue)
       })
 
-      it('can execute actions with ETH', async () => {
+      it('can execute actions', async () => {
         await actor.execute(to, depositValue, data, { from: executor })
 
+        // ExecutionTarget.execute() increments the counter by 1
         assert.equal(await executionTarget.counter(), 1)
         assert.equal(await getBalance(executionTarget.address), depositValue)
         assert.equal(await getBalance(actor.address), 0)
+      })
+
+      it('can execute actions without data', async () => {
+        const noData = '0x'
+        await actor.execute(to, depositValue, noData, { from: executor })
+
+        // Fallback just runs ExecutionTarget.execute()
+        assert.equal(await executionTarget.counter(), 1)
+        assert.equal(await getBalance(executionTarget.address), depositValue)
+        assert.equal(await getBalance(actor.address), 0)
+      })
+
+      it('can execute cheap fallback actions', async () => {
+        const cheapFallbackTarget = await DestinationMock.new(false)
+        const noData = '0x'
+        const receipt = await actor.execute(cheapFallbackTarget.address, depositValue, noData, { from: executor })
+
+        assertEvent(receipt, 'Execute')
+      })
+
+      it('can execute expensive fallback actions', async () => {
+        const expensiveFallbackTarget = await DestinationMock.new(true)
+        assert.equal(await expensiveFallbackTarget.counter(), 0)
+
+        const noData = '0x'
+        const receipt = await actor.execute(expensiveFallbackTarget.address, depositValue, noData, { from: executor })
+
+        // Fallback increments counter
+        assert.equal(await expensiveFallbackTarget.counter(), 1)
+        assertEvent(receipt, 'Execute')
       })
 
       it('fails to execute actions with more ETH than the actor owns', async () => {

@@ -2,9 +2,16 @@ pragma solidity 0.4.24;
 
 
 contract DestinationMock {
-    uint256 test;
+    bool public expensiveFallback;
+    uint256 public counter;
+
+    constructor(bool _expensiveFallback) {
+        expensiveFallback = _expensiveFallback;
+    }
 
     function () external payable {
-        test = test + 1;
+        if (expensiveFallback) {
+            counter = counter + 1;
+        }
     }
 }
