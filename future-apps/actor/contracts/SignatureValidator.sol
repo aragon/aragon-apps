@@ -42,9 +42,9 @@ library SignatureValidator {
         }
 
         if (mode == SignatureMode.GETH) {
-            hash = keccak256("\x19Ethereum Signed Message:\n32", hash);
+            hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
         } else if (mode == SignatureMode.TREZOR) {
-            hash = keccak256("\x19Ethereum Signed Message:\n\x20", hash);
+            hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n\x20", hash));
         }
 
         return ecrecover(hash, v, r, s) == signer;
