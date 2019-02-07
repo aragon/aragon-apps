@@ -228,7 +228,7 @@ contract('Voting App', accounts => {
                     assert.equal(minQuorum.toString(), minimumAcceptanceQuorum.toString(), 'min quorum should be app min quorum')
                     assert.equal(y, 0, 'initial yea should be 0')
                     assert.equal(n, 0, 'initial nay should be 0')
-                    assert.equal(votingPower.toString(), bigExp(100, decimals).toString(), 'total voters should be 100')
+                    assert.equal(votingPower.toString(), bigExp(100, decimals).toString(), 'voting power should be 100')
                     assert.equal(execScript, script, 'script should be correct')
                     assert.equal(metadata, 'metadata', 'should have returned correct metadata')
                     assert.equal(await voting.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')
@@ -520,7 +520,8 @@ contract('Voting App', accounts => {
 
             // Generating tokens advanced the block by one
             assert.equal(snapshotBlock.toString(), await getBlockNumber() - 2, 'snapshot block should be correct')
-            assert.equal(votingPower.toString(), (await token.totalSupplyAt(snapshotBlock)).toString(), 'total voters should be correct')
+            assert.equal(votingPower.toString(), (await token.totalSupplyAt(snapshotBlock)).toString(), 'voting power should match snapshot supply')
+            assert.equal(votingPower.toString(), 2, 'voting power should be correct')
         })
 
         it('uses the correct snapshot value if tokens are minted in the same block', async () => {
@@ -532,7 +533,8 @@ contract('Voting App', accounts => {
             const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower, execScript] = await voting.getVote(voteId)
 
             assert.equal(snapshotBlock.toString(), await getBlockNumber() - 1, 'snapshot block should be correct')
-            assert.equal(votingPower.toString(), (await token.totalSupplyAt(snapshotBlock)).toString(), 'total voters should be correct')
+            assert.equal(votingPower.toString(), (await token.totalSupplyAt(snapshotBlock)).toString(), 'voting power should match snapshot supply')
+            assert.equal(votingPower.toString(), 2, 'voting power should be correct')
         })
     })
 

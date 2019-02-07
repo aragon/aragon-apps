@@ -21,7 +21,7 @@ contract VotingMock is Voting {
         return _isValuePct(_value, _total, _pct);
     }
 
-    // Create a token and a vote in the same transaction to test snapshot block valuess are correct
+    // Mint a token and create a vote in the same transaction to test snapshot block values are correct
     function newTokenAndVote(address _holder, uint256 _tokenAmount, string _metadata)
         external
         returns (uint256 voteId)
