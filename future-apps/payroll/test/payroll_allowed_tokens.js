@@ -51,11 +51,8 @@ contract('Payroll, allowed tokens,', function(accounts) {
     // make sure owner and Payroll have enough funds
     await redistributeEth(accounts, finance)
 
-    /* TODO
     const etherTokenConstantMock = await getContract("EtherTokenConstantMock").new()
     ETH = await etherTokenConstantMock.getETHConstant()
-     */
-    ETH = '0x0'
   })
 
   beforeEach(async () => {
