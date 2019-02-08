@@ -151,6 +151,7 @@ class VotePanelContent extends React.Component {
       shortAddresses,
       tokenSymbol,
       tokenDecimals,
+      user,
     } = this.props
 
     const {
@@ -319,19 +320,25 @@ class VotePanelContent extends React.Component {
                       No
                     </VotingButton>
                   </ButtonsContainer>
-                  {/* This check is until we get the connect button in the MenuPanel */
-                  userBalance !== null && (
+                  {
                     <Info.Action>
-                      <p>
-                        You will cast your vote with{' '}
-                        {userBalance === null
-                          ? '… tokens'
-                          : pluralize(userBalance, '$ token', '$ tokens')}
-                        , since it was your balance at the beginning of the vote{' '}
-                        {this.renderBlockLink(snapshotBlock)}.
-                      </p>
+                      {user ? (
+                        <p>
+                          You will cast your vote with{' '}
+                          {userBalance === null
+                            ? '… tokens'
+                            : pluralize(userBalance, '$ token', '$ tokens')}
+                          , since it was your balance at the beginning of the
+                          vote {this.renderBlockLink(snapshotBlock)}.
+                        </p>
+                      ) : (
+                        <p>
+                          You will need to connect your account in the next
+                          screen.
+                        </p>
+                      )}
                     </Info.Action>
-                  )}
+                  }
                 </div>
               )
             }
