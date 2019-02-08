@@ -362,7 +362,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
      * @param _token Token whose balance is going to be transferred.
      */
     function recoverToVault(address _token) public isInitialized transitionsPeriod {
-        uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).balanceOf(this);
+        uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).staticBalanceOf(this);
         require(amount > 0, ERROR_RECOVER_AMOUNT_ZERO);
 
         _deposit(

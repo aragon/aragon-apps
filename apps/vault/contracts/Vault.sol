@@ -77,7 +77,7 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
         if (_token == ETH) {
             return address(this).balance;
         } else {
-            return ERC20(_token).balanceOf(this);
+            return ERC20(_token).staticBalanceOf(this);
         }
     }
 
