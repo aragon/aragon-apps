@@ -98,7 +98,7 @@ class VotePanelContent extends React.Component {
     // the MenuPanel. Until then, the user need to access the signing panel
     // in order to connect, so we consider that the user can vote.
     if (vote) {
-      this.setState({ loadingCanVote: false, userCanVote: vote.open })
+      this.setState({ loadingCanVote: false, userCanVote: vote.data.open })
     }
 
     // if (user && vote) {
