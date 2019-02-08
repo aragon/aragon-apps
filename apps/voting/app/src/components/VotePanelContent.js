@@ -94,24 +94,25 @@ class VotePanelContent extends React.Component {
   }
   loadUserCanVote = (user, vote) => {
     const { app } = this.props
-    // Note: the next section is commented until we get the connect button in
-    // the MenuPanel. Until then, the user need to access the signing panel
-    // in order to connect, so we consider that the user can vote.
-    if (vote) {
-      this.setState({ loadingCanVote: false, userCanVote: vote.data.open })
+    if (!vote) {
+      return
     }
 
-    // if (user && vote) {
-    //   this.setState({ loadingCanVote: true })
+    if (user) {
+      this.setState({ loadingCanVote: true })
 
-    //   // Get if user can vote
-    //   app
-    //     .call('canVote', vote.voteId, user)
-    //     .first()
-    //     .subscribe(canVote => {
-    //       this.setState({ loadingCanVote: false, userCanVote: canVote })
-    //     })
-    // }
+      // Get if user can vote
+      app
+        .call('canVote', vote.voteId, user)
+        .first()
+        .subscribe(canVote => {
+          this.setState({ loadingCanVote: false, userCanVote: canVote })
+        })
+    } else {
+      // Note: if the account is not present, we assume the account it’s not
+      // connected.
+      this.setState({ loadingCanVote: false, userCanVote: vote.data.open })
+    }
   }
   loadCanExecute = vote => {
     const { app } = this.props
