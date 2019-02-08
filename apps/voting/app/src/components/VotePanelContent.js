@@ -94,17 +94,24 @@ class VotePanelContent extends React.Component {
   }
   loadUserCanVote = (user, vote) => {
     const { app } = this.props
-    if (user && vote) {
-      this.setState({ loadingCanVote: true })
-
-      // Get if user can vote
-      app
-        .call('canVote', vote.voteId, user)
-        .first()
-        .subscribe(canVote => {
-          this.setState({ loadingCanVote: false, userCanVote: canVote })
-        })
+    // Note: the next section is commented until we get the connect button in
+    // the MenuPanel. Until then, the user need to access the signing panel
+    // in order to connect, so we consider that the user can vote.
+    if (vote) {
+      this.setState({ loadingCanVote: false, userCanVote: vote.open })
     }
+
+    // if (user && vote) {
+    //   this.setState({ loadingCanVote: true })
+
+    //   // Get if user can vote
+    //   app
+    //     .call('canVote', vote.voteId, user)
+    //     .first()
+    //     .subscribe(canVote => {
+    //       this.setState({ loadingCanVote: false, userCanVote: canVote })
+    //     })
+    // }
   }
   loadCanExecute = vote => {
     const { app } = this.props
@@ -312,16 +319,19 @@ class VotePanelContent extends React.Component {
                       No
                     </VotingButton>
                   </ButtonsContainer>
-                  <Info.Action>
-                    <p>
-                      You will cast your vote with{' '}
-                      {userBalance === null
-                        ? '… tokens'
-                        : pluralize(userBalance, '$ token', '$ tokens')}
-                      , since it was your balance at the beginning of the vote{' '}
-                      {this.renderBlockLink(snapshotBlock)}.
-                    </p>
-                  </Info.Action>
+                  {/* This check is until we get the connect button in the MenuPanel */
+                  userBalance !== null && (
+                    <Info.Action>
+                      <p>
+                        You will cast your vote with{' '}
+                        {userBalance === null
+                          ? '… tokens'
+                          : pluralize(userBalance, '$ token', '$ tokens')}
+                        , since it was your balance at the beginning of the vote{' '}
+                        {this.renderBlockLink(snapshotBlock)}.
+                      </p>
+                    </Info.Action>
+                  )}
                 </div>
               )
             }
