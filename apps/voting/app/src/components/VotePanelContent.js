@@ -94,7 +94,11 @@ class VotePanelContent extends React.Component {
   }
   loadUserCanVote = (user, vote) => {
     const { app } = this.props
-    if (user && vote) {
+    if (!vote) {
+      return
+    }
+
+    if (user) {
       this.setState({ loadingCanVote: true })
 
       // Get if user can vote
@@ -104,6 +108,10 @@ class VotePanelContent extends React.Component {
         .subscribe(canVote => {
           this.setState({ loadingCanVote: false, userCanVote: canVote })
         })
+    } else {
+      // Note: if the account is not present, we assume the account is not
+      // connected.
+      this.setState({ loadingCanVote: false, userCanVote: vote.data.open })
     }
   }
   loadCanExecute = vote => {
@@ -144,6 +152,7 @@ class VotePanelContent extends React.Component {
       shortAddresses,
       tokenSymbol,
       tokenDecimals,
+      user,
     } = this.props
 
     const {
@@ -312,16 +321,25 @@ class VotePanelContent extends React.Component {
                       No
                     </VotingButton>
                   </ButtonsContainer>
-                  <Info.Action>
-                    <p>
-                      You will cast your vote with{' '}
-                      {userBalance === null
-                        ? '… tokens'
-                        : pluralize(userBalance, '$ token', '$ tokens')}
-                      , since it was your balance at the beginning of the vote{' '}
-                      {this.renderBlockLink(snapshotBlock)}.
-                    </p>
-                  </Info.Action>
+                  {
+                    <Info.Action>
+                      {user ? (
+                        <p>
+                          You will cast your vote with{' '}
+                          {userBalance === null
+                            ? '… tokens'
+                            : pluralize(userBalance, '$ token', '$ tokens')}
+                          , since it was your balance at the beginning of the
+                          vote {this.renderBlockLink(snapshotBlock)}.
+                        </p>
+                      ) : (
+                        <p>
+                          You will need to connect your account in the next
+                          screen.
+                        </p>
+                      )}
+                    </Info.Action>
+                  }
                 </div>
               )
             }
