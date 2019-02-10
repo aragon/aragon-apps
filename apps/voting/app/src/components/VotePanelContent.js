@@ -109,7 +109,7 @@ class VotePanelContent extends React.Component {
           this.setState({ loadingCanVote: false, userCanVote: canVote })
         })
     } else {
-      // Note: if the account is not present, we assume the account it’s not
+      // Note: if the account is not present, we assume the account is not
       // connected.
       this.setState({ loadingCanVote: false, userCanVote: vote.data.open })
     }
