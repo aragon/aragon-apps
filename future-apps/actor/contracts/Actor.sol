@@ -35,9 +35,8 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
     event PresignHash(address indexed sender, bytes32 indexed hash);
     event SetDesignatedSigner(address indexed sender, address indexed oldSigner, address indexed newSigner);
 
-    // TODO: requires the @decodeData helper to be implemented in radspec
     /**
-    * @notice Execute `@decodeData(target, data)` on `target` `ethValue == 0 ? '' : '(Sending' + @formatToken(ethValue, ETH) + ')'`.
+    * @notice Execute `@radspec(target, data)` on `target` `ethValue == 0 ? '' : '(Sending' + @tokenAmount(ethValue, ETH) + ')'`.
     * @param _target Address where the action is being executed
     * @param _ethValue Amount of ETH from the contract that is sent with the action
     * @param _data Calldata for the action
@@ -68,6 +67,10 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
         }
     }
 
+    /**
+    * @notice Set `_designatedSigner` as the designated signer of the app, which will be able to sign messages on behalf of the app
+    * @param _designatedSigner Address that will be able to sign messages on behalf of the app
+    */
     function setDesignatedSigner(address _designatedSigner)
         external
         authP(DESIGNATE_SIGNER_ROLE, arr(_designatedSigner))
@@ -78,6 +81,10 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
         emit SetDesignatedSigner(msg.sender, oldDesignatedSigner, _designatedSigner);
     }
 
+    /**
+    * @notice Pre-sign hash `_hash`
+    * @param _hash Hash that will be considered signed regardless of the signature checked with 'isValidSignature()'
+    */
     function presignHash(bytes32 _hash)
         external
         authP(PRESIGN_HASH_ROLE, arr(_hash))
@@ -97,6 +104,11 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
             interfaceId == EIP165_SUPPORT_INTERFACE_ID;
     }
 
+    /**
+    * @notice Execute the script as the Actor app
+    * @dev IForwarder interface conformance. Forwards any token holder action.
+    * @param _evmScript Script being executed
+    */
     function forward(bytes _evmScript)
         public
         authP(RUN_SCRIPT_ROLE, arr(getScriptACLParam(_evmScript)))
