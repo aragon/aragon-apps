@@ -27,7 +27,36 @@
     }
   },
   "roles": [
-    TODO
+    {
+      "name": "Execute actions",
+      "id": "EXECUTE_ROLE",
+      "params": [
+        "Target address",
+        "ETH value",
+        "Signature"
+      ]
+    },
+    {
+      "name": "Designate signer",
+      "id": "DESIGNATE_SIGNER_ROLE",
+      "params": [
+        "Designated signer address"
+      ]
+    },
+    {
+      "name": "Presign hash",
+      "id": "PRESIGN_HASH_ROLE",
+      "params": [
+        "Hash"
+      ]
+    },
+    {
+      "name": "Run EVM Script",
+      "id": "RUN_SCRIPT_ROLE",
+      "params": [
+        "EVM Script"
+      ]
+    }
   ],
   "path": "contracts/Actor.sol"
 }

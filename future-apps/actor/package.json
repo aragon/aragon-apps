@@ -4,7 +4,6 @@
   "main": "index.js",
   "scripts": {
     "compile": "truffle compile",
-    "build": "cd app && npm run build",
     "deploy:rpc": "truffle exec scripts/deploy.js --network rpc",
     "deploy:rinkeby": "truffle exec scripts/deploy.js --network rinkeby",
     "deploy:devnet": "truffle exec scripts/deploy.js --network devnet",
