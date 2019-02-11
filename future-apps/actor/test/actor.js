@@ -289,6 +289,12 @@ contract('Actor app', (accounts) => {
         await actor.setDesignatedSigner(signer, { from: signerDesignator })
       })
 
+      it('fails if setting itself as the designated signer', async () => {
+        await assertRevert(async () =>
+          await actor.setDesignatedSigner(actor.address, { from: signerDesignator })
+        )
+      })
+
       it('isValidSignature returns true to a valid signature', async () => {
         const signature = await sign(HASH, signer)
         assert.isTrue(await actor.isValidSignature(HASH, signature))

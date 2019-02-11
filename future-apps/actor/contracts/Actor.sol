@@ -24,6 +24,7 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
 
     string private constant ERROR_EXECUTE_ETH_NO_DATA = "ACTOR_EXECUTE_ETH_NO_DATA";
     string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "ACTOR_EXECUTE_TARGET_NOT_CONTRACT";
+    string private constant ERROR_DESIGNATED_TO_SELF = "ACTOR_DESIGNATED_TO_SELF";
 
     uint256 internal constant ISVALIDSIG_MAX_GAS = 50000;
     uint256 internal constant EIP165_MAX_GAS = 30000;
@@ -75,6 +76,13 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
         external
         authP(DESIGNATE_SIGNER_ROLE, arr(_designatedSigner))
     {
+        // Prevent an infinite loop by setting the app itself as its designated signer.
+        // An undetectable loop can be created by setting a different contract as the
+        // designated signer which calls back into `isValidSignature`.
+        // Given that `isValidSignature` is always called with just 50k gas, the max
+        // damage of the loop is wasting 50k gas.
+        require(_designatedSigner != address(this), ERROR_DESIGNATED_TO_SELF);
+
         address oldDesignatedSigner = designatedSigner;
         designatedSigner = _designatedSigner;
 
