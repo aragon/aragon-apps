@@ -269,13 +269,14 @@ contract Voting is IForwarder, AragonApp {
         internal
         returns (uint256 voteId)
     {
-        uint256 votingPower = token.totalSupplyAt(vote_.snapshotBlock);
+        uint64 snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
+        uint256 votingPower = token.totalSupplyAt(snapshotBlock);
         require(votingPower > 0, ERROR_NO_VOTING_POWER);
 
         voteId = votesLength++;
         Vote storage vote_ = votes[voteId];
         vote_.startDate = getTimestamp64();
-        vote_.snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
+        vote_.snapshotBlock = snapshotBlock;
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
         vote_.votingPower = votingPower;
