@@ -1,4 +1,4 @@
-const Actor = artifacts.require('Actor')
+const Agent = artifacts.require('Agent')
 
 const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
 const { hash: namehash } = require('eth-ens-namehash')
@@ -30,8 +30,8 @@ const NO_SIG = '0x'
 const ERC165_SUPPORT_INTERFACE_ID = '0x01ffc9a7'
 const ERC165_SUPPORT_INVALID_ID = '0xffffffff'
 
-contract('Actor app', (accounts) => {
-  let daoFact, actorBase, acl, actor, actorId
+contract('Agent app', (accounts) => {
+  let daoFact, agentBase, acl, agent, agentId
 
   let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, RUN_SCRIPT_ROLE, PRESIGN_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ISVALIDSIG_INTERFACE_ID
 
@@ -45,16 +45,16 @@ contract('Actor app', (accounts) => {
     const aclBase = await ACL.new()
     const regFact = await EVMScriptRegistryFactory.new()
     daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
-    actorBase = await Actor.new()
+    agentBase = await Agent.new()
 
     // Setup constants
     ANY_ENTITY = await aclBase.ANY_ENTITY()
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
-    EXECUTE_ROLE = await actorBase.EXECUTE_ROLE()
-    RUN_SCRIPT_ROLE = await actorBase.RUN_SCRIPT_ROLE()
-    PRESIGN_HASH_ROLE = await actorBase.PRESIGN_HASH_ROLE()
-    DESIGNATE_SIGNER_ROLE = await actorBase.DESIGNATE_SIGNER_ROLE()
-    ISVALIDSIG_INTERFACE_ID = await actorBase.ISVALIDSIG_INTERFACE_ID()
+    EXECUTE_ROLE = await agentBase.EXECUTE_ROLE()
+    RUN_SCRIPT_ROLE = await agentBase.RUN_SCRIPT_ROLE()
+    PRESIGN_HASH_ROLE = await agentBase.PRESIGN_HASH_ROLE()
+    DESIGNATE_SIGNER_ROLE = await agentBase.DESIGNATE_SIGNER_ROLE()
+    ISVALIDSIG_INTERFACE_ID = await agentBase.ISVALIDSIG_INTERFACE_ID()
 
     const ethConstant = await EtherTokenConstantMock.new()
     ETH = await ethConstant.getETHConstant()
@@ -67,14 +67,14 @@ contract('Actor app', (accounts) => {
 
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
-    // actor
-    const actorAppId = namehash('actor.aragonpm.test')
+    // agent
+    const agentAppId = namehash('agent.aragonpm.test')
 
-    const actorReceipt = await dao.newAppInstance(actorAppId, actorBase.address, '0x', false)
-    const actorProxyAddress = getEvent(actorReceipt, 'NewAppProxy', 'proxy')
-    actor = Actor.at(actorProxyAddress)
+    const agentReceipt = await dao.newAppInstance(agentAppId, agentBase.address, '0x', false)
+    const agentProxyAddress = getEvent(agentReceipt, 'NewAppProxy', 'proxy')
+    agent = Agent.at(agentProxyAddress)
 
-    await actor.initialize()
+    await agent.initialize()
   })
 
   context('> Executing actions', () => {
@@ -82,7 +82,7 @@ contract('Actor app', (accounts) => {
     let executionTarget
 
     beforeEach(async () => {
-      await acl.createPermission(executor, actor.address, EXECUTE_ROLE, root, { from: root })
+      await acl.createPermission(executor, agent.address, EXECUTE_ROLE, root, { from: root })
 
       executionTarget = await ExecutionTarget.new()
     })
@@ -93,7 +93,7 @@ contract('Actor app', (accounts) => {
       assert.equal(await executionTarget.counter(), 0)
 
       const { to, data } = encodeFunctionCall(executionTarget, 'setCounter', N)
-      const receipt = await actor.execute(to, 0, data, { from: executor })
+      const receipt = await agent.execute(to, 0, data, { from: executor })
 
       assert.equal(await executionTarget.counter(), N)
       assertEvent(receipt, 'Execute')
@@ -103,7 +103,7 @@ contract('Actor app', (accounts) => {
       assert.equal(await executionTarget.counter(), 0)
 
       const noData = '0x'
-      const receipt = await actor.execute(executionTarget.address, 0, noData, { from: executor })
+      const receipt = await agent.execute(executionTarget.address, 0, noData, { from: executor })
 
       // Fallback just runs ExecutionTarget.execute()
       assert.equal(await executionTarget.counter(), 1)
@@ -114,7 +114,7 @@ contract('Actor app', (accounts) => {
       const { to, data } = encodeFunctionCall(executionTarget, 'execute')
 
       await assertRevert(() =>
-        actor.execute(to, 0, data, { from: nonExecutor })
+        agent.execute(to, 0, data, { from: nonExecutor })
       )
     })
 
@@ -124,11 +124,11 @@ contract('Actor app', (accounts) => {
       const noData = '0x'
 
       await assertRevert(() =>
-        actor.execute(nonContract, 0, randomData, { from: executor })
+        agent.execute(nonContract, 0, randomData, { from: executor })
       )
 
       await assertRevert(() =>
-        actor.execute(nonContract, 0, noData, { from: executor })
+        agent.execute(nonContract, 0, noData, { from: executor })
       )
     })
 
@@ -138,8 +138,8 @@ contract('Actor app', (accounts) => {
       const { to, data } = encodeFunctionCall(executionTarget, 'execute')
 
       // We make a call to easily get what data could be gotten inside the EVM
-      // Contract -> Actor.execute -> Target.func (would allow Contract to have access to this data)
-      const call = encodeFunctionCall(actor, 'execute', to, 0, data, { from: executor })
+      // Contract -> Agent.execute -> Target.func (would allow Contract to have access to this data)
+      const call = encodeFunctionCall(agent, 'execute', to, 0, data, { from: executor })
       const returnData = await web3Call(call)
 
       // ExecutionTarget.execute() increments the counter by 1
@@ -153,7 +153,7 @@ contract('Actor app', (accounts) => {
       const { to, data } = encodeFunctionCall(executionTarget, 'fail')
 
       await assertRevert(() =>
-        actor.execute(to, 0, data, { from: executor })
+        agent.execute(to, 0, data, { from: executor })
       )
     })
 
@@ -162,7 +162,7 @@ contract('Actor app', (accounts) => {
       let to, data
 
       beforeEach(async () => {
-        await actor.deposit(ETH, depositValue, { value: depositValue })
+        await agent.deposit(ETH, depositValue, { value: depositValue })
 
         const call = encodeFunctionCall(executionTarget, 'execute')
         to = call.to
@@ -170,26 +170,26 @@ contract('Actor app', (accounts) => {
 
         assert.equal(await executionTarget.counter(), 0)
         assert.equal(await getBalance(executionTarget.address), 0)
-        assert.equal(await getBalance(actor.address), depositValue)
+        assert.equal(await getBalance(agent.address), depositValue)
       })
 
       it('can execute actions with ETH', async () => {
-        await actor.execute(to, depositValue, data, { from: executor })
+        await agent.execute(to, depositValue, data, { from: executor })
 
         assert.equal(await executionTarget.counter(), 1)
         assert.equal(await getBalance(executionTarget.address), depositValue)
-        assert.equal(await getBalance(actor.address), 0)
+        assert.equal(await getBalance(agent.address), 0)
       })
 
-      it('fails to execute actions with more ETH than the actor owns', async () => {
+      it('fails to execute actions with more ETH than the agent owns', async () => {
         await assertRevert(() =>
-          actor.execute(to, depositValue + 1, data, { from: executor })
+          agent.execute(to, depositValue + 1, data, { from: executor })
         )
       })
 
       it('fails to execute when sending ETH and no data', async () => {
         await assertRevert(() =>
-          actor.execute(to, depositValue, '0x', { from: executor })
+          agent.execute(to, depositValue, '0x', { from: executor })
         )
       })
     })
@@ -205,14 +205,14 @@ contract('Actor app', (accounts) => {
       const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
       script = encodeCallScript([action, action]) // perform action twice
 
-      await acl.createPermission(scriptRunner, actor.address, RUN_SCRIPT_ROLE, root, { from: root })
+      await acl.createPermission(scriptRunner, agent.address, RUN_SCRIPT_ROLE, root, { from: root })
     })
 
     it('runs script', async () => {
-      assert.isTrue(await actor.canForward(scriptRunner, script))
+      assert.isTrue(await agent.canForward(scriptRunner, script))
       assert.equal(await executionTarget.counter(), 0)
 
-      const receipt = await actor.forward(script, { from: scriptRunner })
+      const receipt = await agent.forward(script, { from: scriptRunner })
 
       // Should execute ExecutionTarget.execute() twice
       assert.equal(await executionTarget.counter(), 2)
@@ -220,11 +220,11 @@ contract('Actor app', (accounts) => {
     })
 
     it('fails to run script without permissions', async () => {
-      assert.isFalse(await actor.canForward(nonScriptRunner, script))
+      assert.isFalse(await agent.canForward(nonScriptRunner, script))
       assert.equal(await executionTarget.counter(), 0)
 
       await assertRevert(() =>
-        actor.forward(script, { from: nonScriptRunner })
+        agent.forward(script, { from: nonScriptRunner })
       )
       assert.equal(await executionTarget.counter(), 0)
     })
@@ -235,35 +235,35 @@ contract('Actor app', (accounts) => {
     const HASH = web3.sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
 
     beforeEach(async () => {
-      await acl.createPermission(presigner, actor.address, PRESIGN_HASH_ROLE, root, { from: root })
-      await acl.createPermission(signerDesignator, actor.address, DESIGNATE_SIGNER_ROLE, root, { from: root })
+      await acl.createPermission(presigner, agent.address, PRESIGN_HASH_ROLE, root, { from: root })
+      await acl.createPermission(signerDesignator, agent.address, DESIGNATE_SIGNER_ROLE, root, { from: root })
     })
 
     it('complies with ERC165', async () => {
-      assert.isTrue(await actor.supportsInterface(ERC165_SUPPORT_INTERFACE_ID))
-      assert.isFalse(await actor.supportsInterface(ERC165_SUPPORT_INVALID_ID))
+      assert.isTrue(await agent.supportsInterface(ERC165_SUPPORT_INTERFACE_ID))
+      assert.isFalse(await agent.supportsInterface(ERC165_SUPPORT_INVALID_ID))
     })
 
     it('supports ERC1271 interface', async () => {
-      assert.isTrue(await actor.supportsInterface(ISVALIDSIG_INTERFACE_ID))
+      assert.isTrue(await agent.supportsInterface(ISVALIDSIG_INTERFACE_ID))
     })
 
     it("doesn't support any other interface", async () => {
-      assert.isFalse(await actor.supportsInterface('0x12345678'))
-      assert.isFalse(await actor.supportsInterface('0x'))
+      assert.isFalse(await agent.supportsInterface('0x12345678'))
+      assert.isFalse(await agent.supportsInterface('0x'))
     })
 
     it('presigns a hash', async () => {
-      await actor.presignHash(HASH, { from: presigner })
+      await agent.presignHash(HASH, { from: presigner })
 
-      assert.isTrue(await actor.isValidSignature(HASH, NO_SIG))
+      assert.isTrue(await agent.isValidSignature(HASH, NO_SIG))
     })
 
     it('fails to presign a hash if not authorized', async () => {
       await assertRevert(() =>
-        actor.presignHash(HASH, { from: nobody })
+        agent.presignHash(HASH, { from: nobody })
       )
-      assert.isFalse(await actor.isValidSignature(HASH, NO_SIG))
+      assert.isFalse(await agent.isValidSignature(HASH, NO_SIG))
     })
 
     context('> Designated signer: EOAs', () => {
@@ -286,54 +286,54 @@ contract('Actor app', (accounts) => {
       }
 
       beforeEach(async () => {
-        await actor.setDesignatedSigner(signer, { from: signerDesignator })
+        await agent.setDesignatedSigner(signer, { from: signerDesignator })
       })
 
       it('fails if setting itself as the designated signer', async () => {
         await assertRevert(async () =>
-          await actor.setDesignatedSigner(actor.address, { from: signerDesignator })
+          await agent.setDesignatedSigner(agent.address, { from: signerDesignator })
         )
       })
 
       it('isValidSignature returns true to a valid signature', async () => {
         const signature = await sign(HASH, signer)
-        assert.isTrue(await actor.isValidSignature(HASH, signature))
+        assert.isTrue(await agent.isValidSignature(HASH, signature))
       })
 
       it('isValidSignature returns true to a valid signature with legacy version', async () => {
         const legacyVersionSignature = await sign(HASH, signer, true)
-        assert.isTrue(await actor.isValidSignature(HASH, legacyVersionSignature))
+        assert.isTrue(await agent.isValidSignature(HASH, legacyVersionSignature))
       })
 
       it('isValidSignature returns false to an invalid signature', async () => {
         const badSignature = (await sign(HASH, signer)).slice(0, -2) // drop last byte
-        assert.isFalse(await actor.isValidSignature(HASH, badSignature))
+        assert.isFalse(await agent.isValidSignature(HASH, badSignature))
       })
 
       it('isValidSignature returns false to a signature with an invalid v', async () => {
         const invalidVersionSignature = await sign(HASH, signer, false, true)
-        assert.isFalse(await actor.isValidSignature(HASH, invalidVersionSignature))
+        assert.isFalse(await agent.isValidSignature(HASH, invalidVersionSignature))
       })
 
       it('isValidSignature returns false to an unauthorized signer', async () => {
         const otherSignature = await sign(HASH, nobody)
-        assert.isFalse(await actor.isValidSignature(HASH, otherSignature))
+        assert.isFalse(await agent.isValidSignature(HASH, otherSignature))
       })
 
       it('isValidSignature returns true to an invalid signature iff the hash was presigned', async () => {
         const badSignature = (await sign(HASH, signer)).substring(0, -2) // drop last byte
-        assert.isFalse(await actor.isValidSignature(HASH, badSignature))
+        assert.isFalse(await agent.isValidSignature(HASH, badSignature))
 
         // Now presign it
-        await actor.presignHash(HASH, { from: presigner })
-        assert.isTrue(await actor.isValidSignature(HASH, badSignature))
+        await agent.presignHash(HASH, { from: presigner })
+        assert.isTrue(await agent.isValidSignature(HASH, badSignature))
       })
     })
 
     context('> Designated signer: contracts', () => {
       const setDesignatedSignerContract = async (...params) => {
         const designatedSigner = await DesignatedSigner.new(...params)
-        return actor.setDesignatedSigner(designatedSigner.address, { from: signerDesignator })
+        return agent.setDesignatedSigner(designatedSigner.address, { from: signerDesignator })
       }
 
       it('isValidSignature returns true if designated signer returns true', async () => {
@@ -343,7 +343,7 @@ contract('Actor app', (accounts) => {
         // false - doesn't modify state on checking sig
         await setDesignatedSignerContract(true, true, false, false)
 
-        assert.isTrue(await actor.isValidSignature(HASH, NO_SIG))
+        assert.isTrue(await agent.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer returns false', async () => {
@@ -354,7 +354,7 @@ contract('Actor app', (accounts) => {
         await setDesignatedSignerContract(true, false, false, false)
 
         // Signature fails check
-        assert.isFalse(await actor.isValidSignature(HASH, NO_SIG))
+        assert.isFalse(await agent.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer doesnt support the interface', async () => {
@@ -365,7 +365,7 @@ contract('Actor app', (accounts) => {
         await setDesignatedSignerContract(false, true, false, false)
 
         // Requires ERC165 compliance before checking isValidSignature
-        assert.isFalse(await actor.isValidSignature(HASH, NO_SIG))
+        assert.isFalse(await agent.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer reverts', async () => {
@@ -376,7 +376,7 @@ contract('Actor app', (accounts) => {
         await setDesignatedSignerContract(true, true, true, false)
 
         // Reverts on checking
-        assert.isFalse(await actor.isValidSignature(HASH, NO_SIG))
+        assert.isFalse(await agent.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer attempts to modify state', async () => {
@@ -387,7 +387,7 @@ contract('Actor app', (accounts) => {
         await setDesignatedSignerContract(true, true, false, true)
 
         // Checking costs too much gas
-        assert.isFalse(await actor.isValidSignature(HASH, NO_SIG))
+        assert.isFalse(await agent.isValidSignature(HASH, NO_SIG))
       })
     })
   })

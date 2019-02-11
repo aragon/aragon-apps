@@ -1,5 +1,5 @@
 {
-  "name": "@aragon/apps-actor",
+  "name": "@aragon/apps-agent",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {

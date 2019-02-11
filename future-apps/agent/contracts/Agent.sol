@@ -13,7 +13,7 @@ import "@aragon/apps-vault/contracts/Vault.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
 
 
-contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
+contract Agent is IERC165, IERC1271, IForwarder, IsContract, Vault {
     bytes32 public constant EXECUTE_ROLE = keccak256("EXECUTE_ROLE");
     bytes32 public constant RUN_SCRIPT_ROLE = keccak256("RUN_SCRIPT_ROLE");
     bytes32 public constant PRESIGN_HASH_ROLE = keccak256("PRESIGN_HASH_ROLE");
@@ -22,9 +22,9 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
     bytes4 private constant EIP165_SUPPORT_INTERFACE_ID = 0x01ffc9a7;
     bytes4 public constant ISVALIDSIG_INTERFACE_ID = 0xabababab; // TODO: Add actual interfaceId
 
-    string private constant ERROR_EXECUTE_ETH_NO_DATA = "ACTOR_EXECUTE_ETH_NO_DATA";
-    string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "ACTOR_EXECUTE_TARGET_NOT_CONTRACT";
-    string private constant ERROR_DESIGNATED_TO_SELF = "ACTOR_DESIGNATED_TO_SELF";
+    string private constant ERROR_EXECUTE_ETH_NO_DATA = "AGENT_EXECUTE_ETH_NO_DATA";
+    string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "AGENT_EXECUTE_TARGET_NOT_CONTRACT";
+    string private constant ERROR_DESIGNATED_TO_SELF = "AGENT_DESIGNATED_TO_SELF";
 
     uint256 internal constant ISVALIDSIG_MAX_GAS = 50000;
     uint256 internal constant EIP165_MAX_GAS = 30000;
@@ -44,7 +44,7 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
     * @return Exits call frame forwarding the return data of the executed call (either error or success data)
     */
     function execute(address _target, uint256 _ethValue, bytes _data)
-        external // This function MUST always be external as the function performs a low level return, exiting the Actor app execution context
+        external // This function MUST always be external as the function performs a low level return, exiting the Agent app execution context
         authP(EXECUTE_ROLE, arr(_target, _ethValue, uint256(getSig(_data)))) // TODO: Test that sig bytes are the least significant bytes
     {
         require(_ethValue == 0 || _data.length > 0, ERROR_EXECUTE_ETH_NO_DATA); // if ETH value is sent, there must be data
@@ -113,7 +113,7 @@ contract Actor is IERC165, IERC1271, IForwarder, IsContract, Vault {
     }
 
     /**
-    * @notice Execute the script as the Actor app
+    * @notice Execute the script as the Agent app
     * @dev IForwarder interface conformance. Forwards any token holder action.
     * @param _evmScript Script being executed
     */
