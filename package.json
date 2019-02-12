@@ -15,12 +15,13 @@
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "devDependencies": {
     "coveralls": "^3.0.1",
+    "cross-env": "^5.2.0",
     "ganache-cli": "^6.1.0",
     "lcov-result-merger": "^1.2.0",
     "lerna": "^3.11.1"
   },
   "scripts": {
-    "install": "npm run bootstrap",
+    "install": "cross-env INSTALL_FRONTEND=true npm run bootstrap",
     "install:ci": "npm run bootstrap --ignore=future-apps-*",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/os",
     "clean": "git clean -fdxi apps future-apps shared",
