@@ -33,7 +33,7 @@ const ERC165_SUPPORT_INVALID_ID = '0xffffffff'
 contract('Agent app', (accounts) => {
   let daoFact, agentBase, acl, agent, agentId
 
-  let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ISVALIDSIG_INTERFACE_ID
+  let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ERC1271_INTERFACE_ID
 
   const root = accounts[0]
 
@@ -54,7 +54,7 @@ contract('Agent app', (accounts) => {
     RUN_SCRIPT_ROLE = await agentBase.RUN_SCRIPT_ROLE()
     ADD_PRESIGNED_HASH_ROLE = await agentBase.ADD_PRESIGNED_HASH_ROLE()
     DESIGNATE_SIGNER_ROLE = await agentBase.DESIGNATE_SIGNER_ROLE()
-    ISVALIDSIG_INTERFACE_ID = await agentBase.ISVALIDSIG_INTERFACE_ID()
+    ERC1271_INTERFACE_ID = await agentBase.ERC1271_INTERFACE_ID()
 
     const ethConstant = await EtherTokenConstantMock.new()
     ETH = await ethConstant.getETHConstant()
@@ -257,7 +257,7 @@ contract('Agent app', (accounts) => {
     })
 
     it('supports ERC1271 interface', async () => {
-      assert.isTrue(await agent.supportsInterface(ISVALIDSIG_INTERFACE_ID))
+      assert.isTrue(await agent.supportsInterface(ERC1271_INTERFACE_ID))
     })
 
     it("doesn't support any other interface", async () => {

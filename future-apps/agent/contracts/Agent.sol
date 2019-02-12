@@ -19,8 +19,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     bytes32 public constant ADD_PRESIGNED_HASH_ROLE = keccak256("ADD_PRESIGNED_HASH_ROLE");
     bytes32 public constant DESIGNATE_SIGNER_ROLE = keccak256("DESIGNATE_SIGNER_ROLE");
 
-    bytes4 private constant EIP165_SUPPORT_INTERFACE_ID = 0x01ffc9a7;
-    bytes4 public constant ISVALIDSIG_INTERFACE_ID = ERC1271(0).isValidSignature.selector;
+    bytes4 private constant ERC165_INTERFACE_ID = 0x01ffc9a7;
 
     string private constant ERROR_EXECUTE_ETH_NO_DATA = "AGENT_EXEC_ETH_NO_DATA";
     string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "AGENT_EXEC_TARGET_NO_CONTRACT";
@@ -108,8 +107,8 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return
-            interfaceId == ISVALIDSIG_INTERFACE_ID ||
-            interfaceId == EIP165_SUPPORT_INTERFACE_ID;
+            interfaceId == ERC1271_INTERFACE_ID ||
+            interfaceId == ERC165_INTERFACE_ID;
     }
 
     /**
@@ -131,11 +130,11 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         // Short-circuit in case the hash was presigned. Optimization as performing calls
         // and ecrecover is more expensive than an SLOAD.
         if (isPresigned[hash]) {
-            return ERC1271_RETURN_VALID_SIGNATURE;
+            return isValidSignatureReturn(true);
         }
 
         // Checks if designatedSigner is a contract, and if it supports the isValidSignature interface
-        if (safeSupportsInterface(IERC165(designatedSigner), ISVALIDSIG_INTERFACE_ID)) {
+        if (safeSupportsInterface(IERC165(designatedSigner), ERC1271_INTERFACE_ID)) {
             // designatedSigner.isValidSignature(hash, signature) as a staticall
             ERC1271 signerContract = ERC1271(designatedSigner);
             bytes memory calldata = abi.encodeWithSelector(signerContract.isValidSignature.selector, hash, signature);
