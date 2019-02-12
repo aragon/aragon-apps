@@ -234,6 +234,18 @@ contract('Agent app', (accounts) => {
     const [_, nobody, presigner, signerDesignator] = accounts
     const HASH = web3.sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
 
+    const ERC1271_RETURN_VALID_SIGNATURE = '0x20c13b0b'
+    const ERC1271_RETURN_INVALID_SIGNATURE = '0x00000000'
+
+    const assertIsValidSignature = (isValid, erc1271Return) => {
+      const expectedReturn =
+        isValid
+          ? ERC1271_RETURN_VALID_SIGNATURE
+          : ERC1271_RETURN_INVALID_SIGNATURE
+
+      assert.equal(expectedReturn, erc1271Return, `Expected signature to be ${isValid ? '' : 'in'}valid (returned ${erc1271Return})`)
+    }
+
     beforeEach(async () => {
       await acl.createPermission(presigner, agent.address, ADD_PRESIGNED_HASH_ROLE, root, { from: root })
       await acl.createPermission(signerDesignator, agent.address, DESIGNATE_SIGNER_ROLE, root, { from: root })
@@ -256,14 +268,14 @@ contract('Agent app', (accounts) => {
     it('presigns a hash', async () => {
       await agent.presignHash(HASH, { from: presigner })
 
-      assert.isTrue(await agent.isValidSignature(HASH, NO_SIG))
+      assertIsValidSignature(true, await agent.isValidSignature(HASH, NO_SIG))
     })
 
     it('fails to presign a hash if not authorized', async () => {
       await assertRevert(() =>
         agent.presignHash(HASH, { from: nobody })
       )
-      assert.isFalse(await agent.isValidSignature(HASH, NO_SIG))
+      assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
     })
 
     context('> Designated signer: EOAs', () => {
@@ -297,36 +309,36 @@ contract('Agent app', (accounts) => {
 
       it('isValidSignature returns true to a valid signature', async () => {
         const signature = await sign(HASH, signer)
-        assert.isTrue(await agent.isValidSignature(HASH, signature))
+        assertIsValidSignature(true, await agent.isValidSignature(HASH, signature))
       })
 
       it('isValidSignature returns true to a valid signature with legacy version', async () => {
         const legacyVersionSignature = await sign(HASH, signer, true)
-        assert.isTrue(await agent.isValidSignature(HASH, legacyVersionSignature))
+        assertIsValidSignature(true, await agent.isValidSignature(HASH, legacyVersionSignature))
       })
 
       it('isValidSignature returns false to an invalid signature', async () => {
         const badSignature = (await sign(HASH, signer)).slice(0, -2) // drop last byte
-        assert.isFalse(await agent.isValidSignature(HASH, badSignature))
+        assertIsValidSignature(false, await agent.isValidSignature(HASH, badSignature))
       })
 
       it('isValidSignature returns false to a signature with an invalid v', async () => {
         const invalidVersionSignature = await sign(HASH, signer, false, true)
-        assert.isFalse(await agent.isValidSignature(HASH, invalidVersionSignature))
+        assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidVersionSignature))
       })
 
       it('isValidSignature returns false to an unauthorized signer', async () => {
         const otherSignature = await sign(HASH, nobody)
-        assert.isFalse(await agent.isValidSignature(HASH, otherSignature))
+        assertIsValidSignature(false, await agent.isValidSignature(HASH, otherSignature))
       })
 
       it('isValidSignature returns true to an invalid signature iff the hash was presigned', async () => {
         const badSignature = (await sign(HASH, signer)).substring(0, -2) // drop last byte
-        assert.isFalse(await agent.isValidSignature(HASH, badSignature))
+        assertIsValidSignature(false, await agent.isValidSignature(HASH, badSignature))
 
         // Now presign it
         await agent.presignHash(HASH, { from: presigner })
-        assert.isTrue(await agent.isValidSignature(HASH, badSignature))
+        assertIsValidSignature(true, await agent.isValidSignature(HASH, badSignature))
       })
     })
 
@@ -343,7 +355,7 @@ contract('Agent app', (accounts) => {
         // false - doesn't modify state on checking sig
         await setDesignatedSignerContract(true, true, false, false)
 
-        assert.isTrue(await agent.isValidSignature(HASH, NO_SIG))
+        assertIsValidSignature(true, await agent.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer returns false', async () => {
@@ -354,7 +366,7 @@ contract('Agent app', (accounts) => {
         await setDesignatedSignerContract(true, false, false, false)
 
         // Signature fails check
-        assert.isFalse(await agent.isValidSignature(HASH, NO_SIG))
+        assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer doesnt support the interface', async () => {
@@ -365,7 +377,7 @@ contract('Agent app', (accounts) => {
         await setDesignatedSignerContract(false, true, false, false)
 
         // Requires ERC165 compliance before checking isValidSignature
-        assert.isFalse(await agent.isValidSignature(HASH, NO_SIG))
+        assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer reverts', async () => {
@@ -376,7 +388,7 @@ contract('Agent app', (accounts) => {
         await setDesignatedSignerContract(true, true, true, false)
 
         // Reverts on checking
-        assert.isFalse(await agent.isValidSignature(HASH, NO_SIG))
+        assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
       })
 
       it('isValidSignature returns false if designated signer attempts to modify state', async () => {
@@ -387,7 +399,7 @@ contract('Agent app', (accounts) => {
         await setDesignatedSignerContract(true, true, false, true)
 
         // Checking costs too much gas
-        assert.isFalse(await agent.isValidSignature(HASH, NO_SIG))
+        assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
       })
     })
   })

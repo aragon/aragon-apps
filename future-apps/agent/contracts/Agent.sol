@@ -6,14 +6,14 @@ pragma solidity 0.4.24;
 
 import "./SignatureValidator.sol";
 import "./standards/IERC165.sol";
-import "./standards/IERC1271.sol";
+import "./standards/ERC1271.sol";
 
 import "@aragon/apps-vault/contracts/Vault.sol";
 
 import "@aragon/os/contracts/common/IForwarder.sol";
 
 
-contract Agent is IERC165, IERC1271, IForwarder, IsContract, Vault {
+contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     bytes32 public constant EXECUTE_ROLE = keccak256("EXECUTE_ROLE");
     bytes32 public constant RUN_SCRIPT_ROLE = keccak256("RUN_SCRIPT_ROLE");
     bytes32 public constant ADD_PRESIGNED_HASH_ROLE = keccak256("ADD_PRESIGNED_HASH_ROLE");
@@ -26,7 +26,7 @@ contract Agent is IERC165, IERC1271, IForwarder, IsContract, Vault {
     string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "AGENT_EXEC_TARGET_NO_CONTRACT";
     string private constant ERROR_DESIGNATED_TO_SELF = "AGENT_DESIGNATED_TO_SELF";
 
-    uint256 internal constant ISVALIDSIG_MAX_GAS = 50000;
+    uint256 internal constant ISVALIDSIG_MAX_GAS = 250000;
     uint256 internal constant EIP165_MAX_GAS = 30000;
 
     mapping (bytes32 => bool) public isPresigned;
@@ -127,30 +127,26 @@ contract Agent is IERC165, IERC1271, IForwarder, IsContract, Vault {
         // We don't need to emit an event here as EVMScriptRunner will emit ScriptResult if successful
     }
 
-    function isValidSignature(bytes data, bytes signature) public view returns (bool) {
-        return isValidSignature(keccak256(data), signature);
-    }
-
-    function isValidSignature(bytes32 hash, bytes signature) public view returns (bool) {
+    function isValidSignature(bytes32 hash, bytes signature) public view returns (bytes4) {
         // Short-circuit in case the hash was presigned. Optimization as performing calls
         // and ecrecover is more expensive than an SLOAD.
         if (isPresigned[hash]) {
-            return true;
+            return ERC1271_RETURN_VALID_SIGNATURE;
         }
 
         // Checks if designatedSigner is a contract, and if it supports the isValidSignature interface
         if (safeSupportsInterface(IERC165(designatedSigner), ISVALIDSIG_INTERFACE_ID)) {
             // designatedSigner.isValidSignature(hash, signature) as a staticall
-            IERC1271 signerContract = IERC1271(designatedSigner);
+            ERC1271 signerContract = ERC1271(designatedSigner);
             bytes memory calldata = abi.encodeWithSelector(signerContract.isValidSignature.selector, hash, signature);
-            return safeBoolStaticCall(signerContract, calldata, ISVALIDSIG_MAX_GAS);
+            return isValidSignatureReturn(safeBoolStaticCall(signerContract, calldata, ISVALIDSIG_MAX_GAS));
         }
 
         // `safeSupportsInterface` returns false if designatedSigner is a contract but it
         // doesn't support the interface. Here we check the validity of the ECDSA sig
         // which will always fail if designatedSigner is not an EOA
 
-        return SignatureValidator.isValidSignature(hash, designatedSigner, signature);
+        return isValidSignatureReturn(SignatureValidator.isValidSignature(hash, designatedSigner, signature));
     }
 
     function canForward(address sender, bytes evmScript) public view returns (bool) {
