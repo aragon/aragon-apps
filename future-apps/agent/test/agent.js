@@ -278,24 +278,8 @@ contract('Agent app', (accounts) => {
       assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
     })
 
-    context('> Designated signer: EOAs', () => {
+    context.only('> Designated signer: EOAs', () => {
       let signer = accounts[7]
-
-      const sign = async (hash, signer, useLegacySig = false, useInvalidV = false) => {
-        let sig = (await web3Sign(signer, hash)).slice(2)
-
-        let r = ethutil.toBuffer('0x' + sig.substring(0, 64))
-        let s = ethutil.toBuffer('0x' + sig.substring(64, 128))
-        let v = ethutil.toBuffer((useLegacySig ? 0 : 27) + parseInt(sig.substring(128, 130), 16))
-        let mode = ethutil.toBuffer(1)
-
-        if (useInvalidV) {
-          v = ethutil.toBuffer(2) // force set an invalid v
-        }
-
-        const signature = '0x' + Buffer.concat([mode, v, r, s]).toString('hex')
-        return signature
-      }
 
       beforeEach(async () => {
         await agent.setDesignatedSigner(signer, { from: signerDesignator })
@@ -307,38 +291,60 @@ contract('Agent app', (accounts) => {
         )
       })
 
-      it('isValidSignature returns true to a valid signature', async () => {
-        const signature = await sign(HASH, signer)
-        assertIsValidSignature(true, await agent.isValidSignature(HASH, signature))
-      })
-
-      it('isValidSignature returns true to a valid signature with legacy version', async () => {
-        const legacyVersionSignature = await sign(HASH, signer, true)
-        assertIsValidSignature(true, await agent.isValidSignature(HASH, legacyVersionSignature))
-      })
-
-      it('isValidSignature returns false to an invalid signature', async () => {
-        const badSignature = (await sign(HASH, signer)).slice(0, -2) // drop last byte
-        assertIsValidSignature(false, await agent.isValidSignature(HASH, badSignature))
-      })
-
-      it('isValidSignature returns false to a signature with an invalid v', async () => {
-        const invalidVersionSignature = await sign(HASH, signer, false, true)
-        assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidVersionSignature))
-      })
-
-      it('isValidSignature returns false to an unauthorized signer', async () => {
-        const otherSignature = await sign(HASH, nobody)
-        assertIsValidSignature(false, await agent.isValidSignature(HASH, otherSignature))
-      })
-
       it('isValidSignature returns true to an invalid signature iff the hash was presigned', async () => {
-        const badSignature = (await sign(HASH, signer)).substring(0, -2) // drop last byte
-        assertIsValidSignature(false, await agent.isValidSignature(HASH, badSignature))
+        const invalidSignature = "0x00"
+        assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidSignature))
 
         // Now presign it
         await agent.presignHash(HASH, { from: presigner })
-        assertIsValidSignature(true, await agent.isValidSignature(HASH, badSignature))
+        assertIsValidSignature(true, await agent.isValidSignature(HASH, invalidSignature))
+      })
+
+      const ethSign = async (hash, signer, useLegacySig = false, useInvalidV = false) => {
+        let sig = (await web3Sign(signer, hash)).slice(2)
+
+        let r = ethutil.toBuffer('0x' + sig.substring(0, 64))
+        let s = ethutil.toBuffer('0x' + sig.substring(64, 128))
+        let v = ethutil.toBuffer((useLegacySig ? 0 : 27) + parseInt(sig.substring(128, 130), 16))
+        let mode = ethutil.toBuffer(2)
+
+        if (useInvalidV) {
+          v = ethutil.toBuffer(2) // force set an invalid v
+        }
+
+        const signature = '0x' + Buffer.concat([mode, r, s, v]).toString('hex')
+        return signature
+      }
+
+
+      // TODO: Test EIP712 signatures
+
+
+      context('> EthSign', () => {
+        it('isValidSignature returns true to a valid signature', async () => {
+          const signature = await ethSign(HASH, signer)
+          assertIsValidSignature(true, await agent.isValidSignature(HASH, signature))
+        })
+
+        it('isValidSignature returns true to a valid signature with legacy version', async () => {
+          const legacyVersionSignature = await ethSign(HASH, signer, true)
+          assertIsValidSignature(true, await agent.isValidSignature(HASH, legacyVersionSignature))
+        })
+
+        it('isValidSignature returns false to an invalid signature', async () => {
+          const badSignature = (await ethSign(HASH, signer)).slice(0, -2) // drop last byte
+          assertIsValidSignature(false, await agent.isValidSignature(HASH, badSignature))
+        })
+
+        it('isValidSignature returns false to a signature with an invalid v', async () => {
+          const invalidVersionSignature = await ethSign(HASH, signer, false, true)
+          assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidVersionSignature))
+        })
+
+        it('isValidSignature returns false to an unauthorized signer', async () => {
+          const otherSignature = await ethSign(HASH, nobody)
+          assertIsValidSignature(false, await agent.isValidSignature(HASH, otherSignature))
+        })
       })
     })
 
