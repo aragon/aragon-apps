@@ -20,7 +20,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     bytes32 public constant DESIGNATE_SIGNER_ROLE = keccak256("DESIGNATE_SIGNER_ROLE");
 
     bytes4 private constant EIP165_SUPPORT_INTERFACE_ID = 0x01ffc9a7;
-    bytes4 public constant ISVALIDSIG_INTERFACE_ID = 0xabababab; // TODO: Add actual interfaceId
+    bytes4 public constant ISVALIDSIG_INTERFACE_ID = ERC1271(0).isValidSignature.selector;
 
     string private constant ERROR_EXECUTE_ETH_NO_DATA = "AGENT_EXEC_ETH_NO_DATA";
     string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "AGENT_EXEC_TARGET_NO_CONTRACT";
