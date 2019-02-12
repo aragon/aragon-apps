@@ -19,7 +19,7 @@
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "truffle:dev": "node_modules/.bin/truffle dev",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
-    "prepare": "./node_modules/@aragon/apps-shared-scripts/prepare.sh",
+    "prepare": "npx apps-shared-scripts-prepare",
     "install:frontend": "cd app && npm install",
     "prepublishOnly": "truffle compile --all"
   },
