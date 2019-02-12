@@ -137,8 +137,8 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         if (safeSupportsInterface(IERC165(designatedSigner), ERC1271_INTERFACE_ID)) {
             // designatedSigner.isValidSignature(hash, signature) as a staticall
             ERC1271 signerContract = ERC1271(designatedSigner);
-            bytes memory calldata = abi.encodeWithSelector(signerContract.isValidSignature.selector, hash, signature);
-            return isValidSignatureReturn(safeBoolStaticCall(signerContract, calldata, ISVALIDSIG_MAX_GAS));
+            bytes memory data = abi.encodeWithSelector(signerContract.isValidSignature.selector, hash, signature);
+            return isValidSignatureReturn(safeBoolStaticCall(signerContract, data, ISVALIDSIG_MAX_GAS));
         }
 
         // `safeSupportsInterface` returns false if designatedSigner is a contract but it
@@ -159,17 +159,17 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
             return false;
         }
 
-        bytes memory calldata = abi.encodeWithSelector(target.supportsInterface.selector, interfaceId);
-        return safeBoolStaticCall(target, calldata, EIP165_MAX_GAS);
+        bytes memory data = abi.encodeWithSelector(target.supportsInterface.selector, interfaceId);
+        return safeBoolStaticCall(target, data, EIP165_MAX_GAS);
     }
 
-    function safeBoolStaticCall(address target, bytes calldata, uint256 maxGas) internal view returns (bool) {
+    function safeBoolStaticCall(address target, bytes data, uint256 maxGas) internal view returns (bool) {
         uint256 gasLeft = gasleft();
 
         uint256 callGas = gasLeft > maxGas ? maxGas : gasLeft;
         bool ok;
         assembly {
-            ok := staticcall(callGas, target, add(calldata, 0x20), mload(calldata), 0, 0)
+            ok := staticcall(callGas, target, add(data, 0x20), mload(data), 0, 0)
         }
 
         if (!ok) {
