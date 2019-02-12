@@ -18,6 +18,10 @@ library SignatureValidator {
     /// @param signature ECDSA signature along with the mode (0 = Invalid, 1 = EIP712, 2 = EthSign) {mode}{r}{s}{v}.
     /// @return Returns whether signature is from a specified user.
     function isValidSignature(bytes32 hash, address signer, bytes signature) internal pure returns (bool) {
+        if (signature.length == 0) {
+            return false;
+        }
+
         SignatureMode mode = SignatureMode(uint8(signature[0]));
 
         if (mode == SignatureMode.Invalid || signature.length != 66) {
@@ -47,7 +51,7 @@ library SignatureValidator {
         } else if (mode == SignatureMode.EIP712) {
             signedHash = hash;
         } else {
-            assert(false);
+            return false;
         }
 
         return ecrecover(signedHash, v, r, s) == signer;
