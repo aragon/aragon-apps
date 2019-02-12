@@ -16,7 +16,7 @@ contract BadToken is MiniMeToken {
         MiniMeToken(_tokenFactory, _parentToken, _parentSnapShotBlock,
                     _tokenName, _decimalUnits, _tokenSymbol, _transfersEnabled)
     {
-
+        // solium-disable-previous-line no-empty-blocks
     }
 
     // should be changed to view when MiniMe is updated
