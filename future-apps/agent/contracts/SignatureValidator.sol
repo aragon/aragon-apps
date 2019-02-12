@@ -20,11 +20,7 @@ library SignatureValidator {
     function isValidSignature(bytes32 hash, address signer, bytes signature) internal pure returns (bool) {
         SignatureMode mode = SignatureMode(uint8(signature[0]));
 
-        if (mode == SignatureMode.Invalid) {
-            return false;
-        }
-
-        if (signature.length != 66) {
+        if (mode == SignatureMode.Invalid || signature.length != 66) {
             return false;
         }
 

@@ -2,7 +2,7 @@ const Agent = artifacts.require('Agent')
 
 const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
 const { hash: namehash } = require('eth-ens-namehash')
-const ethutil = require('ethereumjs-util')
+const ethUtil = require('ethereumjs-util')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
 const web3Call = require('@aragon/test-helpers/call')(web3)
 const web3Sign = require('@aragon/test-helpers/sign')(web3)
@@ -243,7 +243,7 @@ contract('Agent app', (accounts) => {
           ? ERC1271_RETURN_VALID_SIGNATURE
           : ERC1271_RETURN_INVALID_SIGNATURE
 
-      assert.equal(expectedReturn, erc1271Return, `Expected signature to be ${isValid ? '' : 'in'}valid (returned ${erc1271Return})`)
+      assert.equal(erc1271Return, expectedReturn, `Expected signature to be ${isValid ? '' : 'in'}valid (returned ${erc1271Return})`)
     }
 
     beforeEach(async () => {
@@ -278,72 +278,107 @@ contract('Agent app', (accounts) => {
       assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
     })
 
-    context.only('> Designated signer: EOAs', () => {
-      let signer = accounts[7]
-
-      beforeEach(async () => {
-        await agent.setDesignatedSigner(signer, { from: signerDesignator })
-      })
-
-      it('fails if setting itself as the designated signer', async () => {
-        await assertRevert(async () =>
-          await agent.setDesignatedSigner(agent.address, { from: signerDesignator })
+    context('> Designated signer: EOAs', () => {
+      const eip712Sign = async (hash, key) =>
+        ethUtil.ecsign(
+          Buffer.from(hash.slice(2), 'hex'),
+          Buffer.from(key, 'hex')
         )
-      })
 
-      it('isValidSignature returns true to an invalid signature iff the hash was presigned', async () => {
-        const invalidSignature = "0x00"
-        assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidSignature))
+      const ethSign = async (hash, signer) => {
+        const packedSig = await web3Sign(signer, hash)
 
-        // Now presign it
-        await agent.presignHash(HASH, { from: presigner })
-        assertIsValidSignature(true, await agent.isValidSignature(HASH, invalidSignature))
-      })
-
-      const ethSign = async (hash, signer, useLegacySig = false, useInvalidV = false) => {
-        let sig = (await web3Sign(signer, hash)).slice(2)
-
-        let r = ethutil.toBuffer('0x' + sig.substring(0, 64))
-        let s = ethutil.toBuffer('0x' + sig.substring(64, 128))
-        let v = ethutil.toBuffer((useLegacySig ? 0 : 27) + parseInt(sig.substring(128, 130), 16))
-        let mode = ethutil.toBuffer(2)
-
-        if (useInvalidV) {
-          v = ethutil.toBuffer(2) // force set an invalid v
+        return {
+          r: ethUtil.toBuffer('0x' + packedSig.substring(2, 66)),
+          s: ethUtil.toBuffer('0x' + packedSig.substring(66, 130)),
+          v: parseInt(packedSig.substring(130, 132), 16) + 27
         }
+      }
+      
+      const signFunctionGenerator = (signFunction, modeId) => (
+        async (hash, signerOrKey, useLegacySig = false, useInvalidV = false) => {
+          const sig = await signFunction(hash, signerOrKey)
 
-        const signature = '0x' + Buffer.concat([mode, r, s, v]).toString('hex')
-        return signature
+          // console.log(modeId, sig)
+
+          const mode = ethUtil.toBuffer(modeId)
+          const v =
+            useInvalidV
+            ? ethUtil.toBuffer(2) // force set an invalid v
+            : ethUtil.toBuffer(sig.v - (useLegacySig ? 0 : 27))
+          
+          return '0x' + Buffer.concat([mode, sig.r, sig.s, v]).toString('hex')
+        }
+      )
+
+      const signatureTests = [
+        {
+          name: 'EIP712',
+          mode: 1,
+          signFunction: eip712Sign,
+          signer: '0x93070b307c373D7f9344859E909e3EEeF6E4Fd5a',
+          signerOrKey: '11bc31e7fef59610dfd6f95d2f78d2396c7b5477e4a9a54d72d9c1b76930e5c1',
+          notSignerOrKey: '7224b5bc510e01f75b10e3b6d6c903861ca91adb95a26406d1603e2d28a29e7f',
+        },
+        {
+          name: 'EthSign',
+          mode: 2,
+          signFunction: ethSign,
+          signer: accounts[7],
+          signerOrKey: accounts[7],
+          notSignerOrKey: accounts[8]
+        }
+      ]
+
+      for (let { name, mode, signFunction, signer, signerOrKey, notSignerOrKey } of signatureTests) {
+        const sign = signFunctionGenerator(signFunction, mode)
+
+        context(`> Signature mode: ${name}`, () => {
+          beforeEach(async () => {
+            await agent.setDesignatedSigner(signer, { from: signerDesignator })
+          })
+
+          it('isValidSignature returns true to a valid signature', async () => {
+            const signature = await sign(HASH, signerOrKey)
+            assertIsValidSignature(true, await agent.isValidSignature(HASH, signature))
+          })
+  
+          it('isValidSignature returns true to a valid signature with legacy version', async () => {
+            const legacyVersionSignature = await sign(HASH, signerOrKey, true)
+            assertIsValidSignature(true, await agent.isValidSignature(HASH, legacyVersionSignature))
+          })
+  
+          it('isValidSignature returns false to an invalid signature', async () => {
+            const badSignature = (await sign(HASH, signerOrKey)).slice(0, -2) // drop last byte
+            assertIsValidSignature(false, await agent.isValidSignature(HASH, badSignature))
+          })
+  
+          it('isValidSignature returns false to a signature with an invalid v', async () => {
+            const invalidVersionSignature = await sign(HASH, signerOrKey, false, true)
+            assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidVersionSignature))
+          })
+  
+          it('isValidSignature returns false to an unauthorized signer', async () => {
+            const otherSignature = await sign(HASH, notSignerOrKey)
+            assertIsValidSignature(false, await agent.isValidSignature(HASH, otherSignature))
+          })
+        })
       }
 
+      context(`> Signature mode: Invalid`, () => {
+        const randomAccount = accounts[9]
 
-      // TODO: Test EIP712 signatures
-
-
-      context('> EthSign', () => {
-        it('isValidSignature returns true to a valid signature', async () => {
-          const signature = await ethSign(HASH, signer)
-          assertIsValidSignature(true, await agent.isValidSignature(HASH, signature))
+        beforeEach(async () => {
+          await agent.setDesignatedSigner(randomAccount, { from: signerDesignator })
         })
 
-        it('isValidSignature returns true to a valid signature with legacy version', async () => {
-          const legacyVersionSignature = await ethSign(HASH, signer, true)
-          assertIsValidSignature(true, await agent.isValidSignature(HASH, legacyVersionSignature))
-        })
+        it('isValidSignature returns true to an invalid signature iff the hash was presigned', async () => {
+          const invalidSignature = "0x00"
+          assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidSignature))
 
-        it('isValidSignature returns false to an invalid signature', async () => {
-          const badSignature = (await ethSign(HASH, signer)).slice(0, -2) // drop last byte
-          assertIsValidSignature(false, await agent.isValidSignature(HASH, badSignature))
-        })
-
-        it('isValidSignature returns false to a signature with an invalid v', async () => {
-          const invalidVersionSignature = await ethSign(HASH, signer, false, true)
-          assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidVersionSignature))
-        })
-
-        it('isValidSignature returns false to an unauthorized signer', async () => {
-          const otherSignature = await ethSign(HASH, nobody)
-          assertIsValidSignature(false, await agent.isValidSignature(HASH, otherSignature))
+          // Now presign it
+          await agent.presignHash(HASH, { from: presigner })
+          assertIsValidSignature(true, await agent.isValidSignature(HASH, invalidSignature))
         })
       })
     })
