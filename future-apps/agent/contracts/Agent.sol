@@ -16,14 +16,14 @@ import "@aragon/os/contracts/common/IForwarder.sol";
 contract Agent is IERC165, IERC1271, IForwarder, IsContract, Vault {
     bytes32 public constant EXECUTE_ROLE = keccak256("EXECUTE_ROLE");
     bytes32 public constant RUN_SCRIPT_ROLE = keccak256("RUN_SCRIPT_ROLE");
-    bytes32 public constant PRESIGN_HASH_ROLE = keccak256("PRESIGN_HASH_ROLE");
+    bytes32 public constant ADD_PRESIGNED_HASH_ROLE = keccak256("ADD_PRESIGNED_HASH_ROLE");
     bytes32 public constant DESIGNATE_SIGNER_ROLE = keccak256("DESIGNATE_SIGNER_ROLE");
 
     bytes4 private constant EIP165_SUPPORT_INTERFACE_ID = 0x01ffc9a7;
     bytes4 public constant ISVALIDSIG_INTERFACE_ID = 0xabababab; // TODO: Add actual interfaceId
 
-    string private constant ERROR_EXECUTE_ETH_NO_DATA = "AGENT_EXECUTE_ETH_NO_DATA";
-    string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "AGENT_EXECUTE_TARGET_NOT_CONTRACT";
+    string private constant ERROR_EXECUTE_ETH_NO_DATA = "AGENT_EXEC_ETH_NO_DATA";
+    string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "AGENT_EXEC_TARGET_NO_CONTRACT";
     string private constant ERROR_DESIGNATED_TO_SELF = "AGENT_DESIGNATED_TO_SELF";
 
     uint256 internal constant ISVALIDSIG_MAX_GAS = 50000;
@@ -95,7 +95,7 @@ contract Agent is IERC165, IERC1271, IForwarder, IsContract, Vault {
     */
     function presignHash(bytes32 _hash)
         external
-        authP(PRESIGN_HASH_ROLE, arr(_hash))
+        authP(ADD_PRESIGNED_HASH_ROLE, arr(_hash))
     {
         isPresigned[_hash] = true;
 

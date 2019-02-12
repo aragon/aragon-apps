@@ -33,7 +33,7 @@ const ERC165_SUPPORT_INVALID_ID = '0xffffffff'
 contract('Agent app', (accounts) => {
   let daoFact, agentBase, acl, agent, agentId
 
-  let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, RUN_SCRIPT_ROLE, PRESIGN_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ISVALIDSIG_INTERFACE_ID
+  let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ISVALIDSIG_INTERFACE_ID
 
   const root = accounts[0]
 
@@ -52,7 +52,7 @@ contract('Agent app', (accounts) => {
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     EXECUTE_ROLE = await agentBase.EXECUTE_ROLE()
     RUN_SCRIPT_ROLE = await agentBase.RUN_SCRIPT_ROLE()
-    PRESIGN_HASH_ROLE = await agentBase.PRESIGN_HASH_ROLE()
+    ADD_PRESIGNED_HASH_ROLE = await agentBase.ADD_PRESIGNED_HASH_ROLE()
     DESIGNATE_SIGNER_ROLE = await agentBase.DESIGNATE_SIGNER_ROLE()
     ISVALIDSIG_INTERFACE_ID = await agentBase.ISVALIDSIG_INTERFACE_ID()
 
@@ -235,7 +235,7 @@ contract('Agent app', (accounts) => {
     const HASH = web3.sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
 
     beforeEach(async () => {
-      await acl.createPermission(presigner, agent.address, PRESIGN_HASH_ROLE, root, { from: root })
+      await acl.createPermission(presigner, agent.address, ADD_PRESIGNED_HASH_ROLE, root, { from: root })
       await acl.createPermission(signerDesignator, agent.address, DESIGNATE_SIGNER_ROLE, root, { from: root })
     })
 
