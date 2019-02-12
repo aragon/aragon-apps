@@ -22,7 +22,7 @@ import "@aragon/apps-shared-migrations/contracts/Migrations.sol";
 
 
 contract TestImports {
-  constructor() public {
-    // to avoid lint error
-  }
+    constructor() public {
+        // solium-disable-previous-line no-empty-blocks
+    }
 }

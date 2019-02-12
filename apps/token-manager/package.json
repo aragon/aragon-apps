@@ -46,7 +46,7 @@
     "eth-gas-reporter": "^0.1.1",
     "ganache-cli": "^6.1.0",
     "solidity-coverage": "0.5.11",
-    "solium": "^1.0.4",
+    "solium": "^1.2.3",
     "truffle": "4.1.14",
     "truffle-hdwallet-provider": "0.0.3",
     "webpack": "3.10.0"
