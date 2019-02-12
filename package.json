@@ -21,9 +21,9 @@
     "lerna": "^3.11.1"
   },
   "scripts": {
-    "install": "cross-env INSTALL_FRONTEND=true npm run bootstrap",
-    "install:ci": "npm run bootstrap --ignore=future-apps-*",
+    "install": "node scripts/install",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/os",
+    "bootstrap:ci": "npm run bootstrap --ignore=future-apps-*",
     "clean": "git clean -fdxi apps future-apps shared",
     "test": "npm run test:all",
     "test:all": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream test",

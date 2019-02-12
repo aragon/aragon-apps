@@ -39,8 +39,6 @@ env:
 matrix:
   allow_failures:
     - env: TASK=coverage:finance
-install:
-  - npm install:ci
 before_script:
   - npm prune
 script:
