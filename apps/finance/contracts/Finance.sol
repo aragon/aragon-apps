@@ -7,6 +7,7 @@ pragma solidity 0.4.24;
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/EtherTokenConstant.sol";
 import "@aragon/os/contracts/common/IsContract.sol";
+import "@aragon/os/contracts/common/SafeERC20.sol";
 
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
@@ -18,6 +19,7 @@ import "@aragon/apps-vault/contracts/Vault.sol";
 contract Finance is EtherTokenConstant, IsContract, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
+    using SafeERC20 for ERC20;
 
     bytes32 public constant CREATE_PAYMENTS_ROLE = keccak256("CREATE_PAYMENTS_ROLE");
     bytes32 public constant CHANGE_PERIOD_ROLE = keccak256("CHANGE_PERIOD_ROLE");
@@ -47,6 +49,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_PAYMENT_RECEIVER = "FINANCE_PAYMENT_RECEIVER";
     string private constant ERROR_TOKEN_TRANSFER_FROM_REVERTED = "FINANCE_TKN_TRANSFER_FROM_REVERT";
     string private constant ERROR_VALUE_MISMATCH = "FINANCE_VALUE_MISMATCH";
+    string private constant ERROR_TOKEN_APPROVE_FAILED = "FINANCE_TKN_APPROVE_FAILED";
     string private constant ERROR_RECURRING_PAYMENT_INACTIVE = "FINANCE_RECURRING_PAYMENT_INACTIVE";
     string private constant ERROR_REMAINING_BUDGET = "FINANCE_REMAINING_BUDGET";
 
@@ -359,7 +362,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
      * @param _token Token whose balance is going to be transferred.
      */
     function recoverToVault(address _token) public isInitialized transitionsPeriod {
-        uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).balanceOf(this);
+        uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).staticBalanceOf(this);
         require(amount > 0, ERROR_RECOVER_AMOUNT_ZERO);
 
         _deposit(
@@ -537,7 +540,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         if (_isExternalDeposit) {
             if (_token != ETH) {
                 // Get the tokens to Finance
-                require(ERC20(_token).transferFrom(msg.sender, this, _amount), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
+                require(ERC20(_token).safeTransferFrom(msg.sender, this, _amount), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
             } else {
                 // Ensure that the ETH sent with the transaction equals the amount in the deposit
                 require(msg.value == _amount, ERROR_VALUE_MISMATCH);
@@ -547,7 +550,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         if (_token == ETH) {
             vault.deposit.value(_amount)(ETH, _amount);
         } else {
-            ERC20(_token).approve(vault, _amount);
+            require(ERC20(_token).safeApprove(vault, _amount), ERROR_TOKEN_APPROVE_FAILED);
             // finally we can deposit them
             vault.deposit(_token, _amount);
         }
