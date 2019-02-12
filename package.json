@@ -21,6 +21,7 @@
   },
   "scripts": {
     "install": "npm run bootstrap",
+    "install:ci": "npm run bootstrap --ignore=future-apps-*",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/os",
     "clean": "git clean -fdxi apps future-apps shared",
     "test": "npm run test:all",
