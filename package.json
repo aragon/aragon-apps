@@ -17,7 +17,7 @@
     "coveralls": "^3.0.1",
     "ganache-cli": "^6.1.0",
     "lcov-result-merger": "^1.2.0",
-    "lerna": "^2.8.0"
+    "lerna": "^3.11.1"
   },
   "scripts": {
     "install": "npm run bootstrap",
