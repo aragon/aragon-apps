@@ -89,7 +89,7 @@ contract('Vault app', (accounts) => {
       assert.equal((await getBalance(vault.address)).valueOf(), 1, "should hold 1 wei")
     })
 
-    it('transfers ETH', async () => {
+    it('transfers ETH to EOA', async () => {
       const depositValue = 100
       const transferValue = 10
 
@@ -104,10 +104,25 @@ contract('Vault app', (accounts) => {
       assert.equal((await getBalance(vault.address)).valueOf(), depositValue - transferValue, "should have remaining balance")
     })
 
+    it('transfers ETH to contract', async () => {
+      const depositValue = 100
+      const transferValue = 10
+
+      const destination = await DestinationMock.new(false)
+      await vault.sendTransaction( { value: depositValue })
+      const initialBalance = await getBalance(destination.address)
+
+      // Transfer
+      await vault.transfer(ETH, destination.address, transferValue)
+
+      assert.equal((await getBalance(destination.address)).toString(), initialBalance.add(transferValue).toString(), "should have sent eth")
+      assert.equal((await getBalance(vault.address)).toString(), depositValue - transferValue, "should have remaining balance")
+    })
+
     it('fails transfering ETH if uses more than 2.3k gas', async () => {
       const transferValue = 10
 
-      const destination = await DestinationMock.new()
+      const destination = await DestinationMock.new(true)
       await vault.sendTransaction( { value: transferValue })
 
       // Transfer
