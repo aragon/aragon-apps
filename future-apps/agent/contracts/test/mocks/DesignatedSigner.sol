@@ -22,7 +22,7 @@ contract DesignatedSigner /* is IERC165, ERC1271 */ {
     }
 
     // Can't be ERC165-compliant since this potentially modifies state
-    function supportsInterface(bytes4 interfaceId) external view returns (bool) {
+    function supportsInterface(bytes4) external view returns (bool) {
         return isInterface;
     }
 

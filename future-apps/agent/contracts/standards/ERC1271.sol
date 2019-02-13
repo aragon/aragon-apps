@@ -5,7 +5,7 @@ pragma solidity 0.4.24;
 // Rationale: https://github.com/ethereum/EIPs/issues/1271#issuecomment-462719728
 
 contract ERC1271 {
-    bytes4 constant public ERC1271_INTERFACE_ID = this.isValidSignature.selector;
+    bytes4 constant public ERC1271_INTERFACE_ID = 0xfb855dc9; // this.isValidSignature.selector
 
     bytes4 constant public ERC1271_RETURN_VALID_SIGNATURE =   0x20c13b0b; // TODO: Likely needs to be updated
     bytes4 constant public ERC1271_RETURN_INVALID_SIGNATURE = 0x00000000;

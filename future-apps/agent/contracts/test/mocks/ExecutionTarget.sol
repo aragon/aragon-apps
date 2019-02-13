@@ -15,7 +15,7 @@ contract ExecutionTarget {
         counter = x;
     }
 
-    function fail() external {
+    function fail() external pure {
         revert(REASON);
     }
 
