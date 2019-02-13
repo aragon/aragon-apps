@@ -42,9 +42,8 @@ env:
     - TASK=test:shared
 matrix:
   allow_failures:
-    - env:
-      - TASK=coverage:agent
-      - TASK=coverage:finance
+    - env: TASK=coverage:agent
+    - env: TASK=coverage:finance
 install:
   - travis_wait 60 npm install
 before_script:
