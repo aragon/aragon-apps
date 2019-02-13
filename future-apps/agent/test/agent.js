@@ -19,6 +19,7 @@ const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 
 const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
+const DestinationMock = artifacts.require('DestinationMock')
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
@@ -81,118 +82,131 @@ contract('Agent app', (accounts) => {
     const [_, nonExecutor, executor] = accounts
     let executionTarget
 
-    beforeEach(async () => {
-      await acl.createPermission(executor, agent.address, EXECUTE_ROLE, root, { from: root })
+    for (const depositAmount of [0, 3]) {
+      context(depositAmount ? '> With ETH' : '> Without ETH', () => {
+        beforeEach(async () => {
+          await acl.createPermission(executor, agent.address, EXECUTE_ROLE, root, { from: root })
 
-      executionTarget = await ExecutionTarget.new()
-    })
+          executionTarget = await ExecutionTarget.new()
+          assert.equal(await executionTarget.counter(), 0, 'expected starting counter of execution target to be be 0')
+          assert.equal((await getBalance(executionTarget.address)).toString(), 0, 'expected starting balance of execution target to be be 0')
 
-    it('can execute actions', async () => {
-      const N = 1102
+          if (depositAmount) {
+            await agent.deposit(ETH, depositAmount, { value: depositAmount })
+          }
+          assert.equal((await getBalance(agent.address)).toString(), depositAmount, `expected starting balance of agent to be ${depositAmount}`)
+        })
 
-      assert.equal(await executionTarget.counter(), 0)
+        it('can execute actions', async () => {
+          const N = 1102
 
-      const { to, data } = encodeFunctionCall(executionTarget, 'setCounter', N)
-      const receipt = await agent.execute(to, 0, data, { from: executor })
+          const data = executionTarget.contract.setCounter.getData(N)
+          const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: executor })
 
-      assert.equal(await executionTarget.counter(), N)
-      assertEvent(receipt, 'Execute')
-    })
+          assertEvent(receipt, 'Execute')
+          assert.equal(await executionTarget.counter(), N, `expected counter to be ${N}`)
+          assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
+          assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+        })
 
-    it('can execute actions without data', async () => {
-      assert.equal(await executionTarget.counter(), 0)
+        it('can execute actions without data', async () => {
+          const noData = '0x'
+          const receipt = await agent.execute(executionTarget.address, depositAmount, noData, { from: executor })
 
-      const noData = '0x'
-      const receipt = await agent.execute(executionTarget.address, 0, noData, { from: executor })
+          assertEvent(receipt, 'Execute')
+          // Fallback just runs ExecutionTarget.execute()
+          assert.equal(await executionTarget.counter(), 1, 'expected counter to be 1')
+          assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
+          assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+        })
 
-      // Fallback just runs ExecutionTarget.execute()
-      assert.equal(await executionTarget.counter(), 1)
-      assertEvent(receipt, 'Execute')
-    })
+        it('can execute cheap fallback actions', async () => {
+          const cheapFallbackTarget = await DestinationMock.new(false)
+          const noData = '0x'
+          const receipt = await agent.execute(cheapFallbackTarget.address, depositAmount, noData, { from: executor })
 
-    it('fails to execute without permissions', async () => {
-      const { to, data } = encodeFunctionCall(executionTarget, 'execute')
+          assertEvent(receipt, 'Execute')
+          assert.equal((await getBalance(cheapFallbackTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
+          assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+        })
 
-      await assertRevert(() =>
-        agent.execute(to, 0, data, { from: nonExecutor })
-      )
-    })
+        it('can execute expensive fallback actions', async () => {
+          const expensiveFallbackTarget = await DestinationMock.new(true)
+          assert.equal(await expensiveFallbackTarget.counter(), 0)
 
-    it('fails to execute when target is not a contract', async () => {
-      const nonContract = accounts[8] // random account
-      const randomData = '0x12345678'
-      const noData = '0x'
+          const noData = '0x'
+          const receipt = await agent.execute(expensiveFallbackTarget.address, depositAmount, noData, { from: executor })
 
-      await assertRevert(() =>
-        agent.execute(nonContract, 0, randomData, { from: executor })
-      )
+          assertEvent(receipt, 'Execute')
+          // Fallback increments counter
+          assert.equal(await expensiveFallbackTarget.counter(), 1)
+          assert.equal((await getBalance(expensiveFallbackTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
+          assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+        })
 
-      await assertRevert(() =>
-        agent.execute(nonContract, 0, noData, { from: executor })
-      )
-    })
+        it('can execute with data when target is not a contract', async () => {
+          const nonContract = accounts[8] // random account
+          const nonContractBalance = await getBalance(nonContract)
+          const randomData = '0x12345678'
 
-    it('execution forwards success return data', async () => {
-      assert.equal(await executionTarget.counter(), 0)
+          const receipt = await agent.execute(nonContract, depositAmount, randomData, { from: executor })
 
-      const { to, data } = encodeFunctionCall(executionTarget, 'execute')
+          assertEvent(receipt, 'Execute')
+          assert.equal((await getBalance(nonContract)).toString(), nonContractBalance.add(depositAmount).toString(), 'expected ending balance of non-contract to be correct')
+          assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+        })
 
-      // We make a call to easily get what data could be gotten inside the EVM
-      // Contract -> Agent.execute -> Target.func (would allow Contract to have access to this data)
-      const call = encodeFunctionCall(agent, 'execute', to, 0, data, { from: executor })
-      const returnData = await web3Call(call)
+        it('can execute without data when target is not a contract', async () => {
+          const nonContract = accounts[8] // random account
+          const nonContractBalance = await getBalance(nonContract)
+          const noData = '0x'
 
-      // ExecutionTarget.execute() increments the counter by 1
-      assert.equal(ethABI.decodeParameter('uint256', returnData), 1)
-    })
+          const receipt = await agent.execute(nonContract, depositAmount, noData, { from: executor })
 
-    it('it reverts if executed action reverts', async () => {
-      // TODO: Check revert data was correctly forwarded
-      // ganache currently doesn't support fetching this data
+          assertEvent(receipt, 'Execute')
+          assert.equal((await getBalance(nonContract)).toString(), nonContractBalance.add(depositAmount).toString(), 'expected ending balance of non-contract to be correct')
+          assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+        })
 
-      const { to, data } = encodeFunctionCall(executionTarget, 'fail')
+        it('fails to execute without permissions', async () => {
+          const data = executionTarget.contract.execute.getData()
 
-      await assertRevert(() =>
-        agent.execute(to, 0, data, { from: executor })
-      )
-    })
+          await assertRevert(() =>
+            agent.execute(executionTarget.address, depositAmount, data, { from: nonExecutor })
+          )
+        })
 
-    context('> With ETH:', () => {
-      const depositValue = 3
-      let to, data
+        it('fails to execute actions with more ETH than the agent owns', async () => {
+          const data = executionTarget.contract.execute.getData()
 
-      beforeEach(async () => {
-        await agent.deposit(ETH, depositValue, { value: depositValue })
+          await assertRevert(() =>
+            agent.execute(executionTarget.address, depositAmount + 1, data, { from: executor })
+          )
+        })
 
-        const call = encodeFunctionCall(executionTarget, 'execute')
-        to = call.to
-        data = call.data
+        it('execution forwards success return data', async () => {
+          const { to, data } = encodeFunctionCall(executionTarget, 'execute')
 
-        assert.equal(await executionTarget.counter(), 0)
-        assert.equal(await getBalance(executionTarget.address), 0)
-        assert.equal(await getBalance(agent.address), depositValue)
+          // We make a call to easily get what data could be gotten inside the EVM
+          // Contract -> agent.execute -> Target.func (would allow Contract to have access to this data)
+          const call = encodeFunctionCall(agent, 'execute', to, depositAmount, data, { from: executor })
+          const returnData = await web3Call(call)
+
+          // ExecutionTarget.execute() increments the counter by 1
+          assert.equal(ethABI.decodeParameter('uint256', returnData), 1)
+        })
+
+        it('it reverts if executed action reverts', async () => {
+          // TODO: Check revert data was correctly forwarded
+          // ganache currently doesn't support fetching this data
+
+          const data = executionTarget.contract.fail.getData()
+          await assertRevert(() =>
+            agent.execute(executionTarget.address, depositAmount, data, { from: executor })
+          )
+        })
       })
-
-      it('can execute actions with ETH', async () => {
-        await agent.execute(to, depositValue, data, { from: executor })
-
-        assert.equal(await executionTarget.counter(), 1)
-        assert.equal(await getBalance(executionTarget.address), depositValue)
-        assert.equal(await getBalance(agent.address), 0)
-      })
-
-      it('fails to execute actions with more ETH than the agent owns', async () => {
-        await assertRevert(() =>
-          agent.execute(to, depositValue + 1, data, { from: executor })
-        )
-      })
-
-      it('fails to execute when sending ETH and no data', async () => {
-        await assertRevert(() =>
-          agent.execute(to, depositValue, '0x', { from: executor })
-        )
-      })
-    })
+    }
   })
 
   context('> Running scripts', () => {

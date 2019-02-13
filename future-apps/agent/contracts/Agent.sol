@@ -43,9 +43,6 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         external // This function MUST always be external as the function performs a low level return, exiting the Agent app execution context
         authP(EXECUTE_ROLE, arr(_target, _ethValue, uint256(getSig(_data)))) // TODO: Test that sig bytes are the least significant bytes
     {
-        require(_ethValue == 0 || _data.length > 0, ERROR_EXECUTE_ETH_NO_DATA); // if ETH value is sent, there must be data
-        require(isContract(_target), ERROR_EXECUTE_TARGET_NOT_CONTRACT);
-
         bool result = _target.call.value(_ethValue)(_data);
 
         if (result) {
