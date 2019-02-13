@@ -21,7 +21,7 @@ contract ERC1271 {
     */ 
     function isValidSignature(bytes32 _hash, bytes memory _signature) public view returns (bytes4);
 
-    function isValidSignatureReturn(bool isValid) internal pure returns (bytes4) {
+    function returnIsValidSignatureMagicNumber(bool isValid) internal pure returns (bytes4) {
         return isValid ? ERC1271_RETURN_VALID_SIGNATURE : ERC1271_RETURN_INVALID_SIGNATURE;
     }
 }
