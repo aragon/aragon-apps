@@ -75,7 +75,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     uint256 public nextEmployee;
     mapping(address => uint256) private employeeIds;    // employee address -> employee ID
     mapping(address => bool) private allowedTokens;
-    address[] private allowedTokensArray;
+    address[] internal allowedTokensArray;
 
     event AddAllowedToken(address token);
     event AddEmployee(

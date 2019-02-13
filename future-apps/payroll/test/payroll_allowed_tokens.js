@@ -42,7 +42,7 @@ contract('Payroll, allowed tokens,', function(accounts) {
     priceFeed = await getContract("PriceFeedMock").new()
     priceFeed.mockSetTimestamp(NOW_MOCK)
 
-    MAX_ALLOWED_TOKENS = await payrollBase.getMaxAllowedTokens()
+    MAX_ALLOWED_TOKENS = (await payrollBase.getMaxAllowedTokens()).valueOf()
     // Deploy ERC 20 Tokens (0 is for ETH)
     for (let i = 1; i < MAX_ALLOWED_TOKENS; i++) {
       erc20Tokens.push(await deployErc20TokenAndDeposit(owner, finance, vault, `Token ${i}`, ERC20_TOKEN_DECIMALS))
@@ -69,6 +69,8 @@ contract('Payroll, allowed tokens,', function(accounts) {
 
     // adds allowed tokens
     await addAllowedTokens(payroll, erc20Tokens)
+    // check that it's at max capacity
+    assert.equal((await payroll.getAllowedTokensArrayLength()).valueOf(), MAX_ALLOWED_TOKENS)
 
     const startDate = parseInt(await payroll.getTimestampPublic.call(), 10) - 2628005 // now minus 1/12 year
     // add employee
