@@ -1,12 +1,12 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Badge } from '@aragon/ui'
+import { Badge, BreakPoint } from '@aragon/ui'
 import { ETHER_TOKEN_FAKE_ADDRESS } from '../../lib/token-utils'
 import { addressesEqual, shortenAddress } from '../../lib/web3-utils'
 
 class TokenSelectorInstance extends React.PureComponent {
   render() {
-    const { address, name, symbol, showIcon = true } = this.props
+    const { address, name, shorten, symbol, showIcon = true } = this.props
     return (
       <Main>
         {showIcon ? (
@@ -17,7 +17,9 @@ class TokenSelectorInstance extends React.PureComponent {
         {symbol && <TokenSymbol>{symbol}</TokenSymbol>}
         {name && <TokenName>({name})</TokenName>}
         {!addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS) && (
-          <StyledAddressBadge>{shortenAddress(address, 10)}</StyledAddressBadge>
+          <StyledAddressBadge>
+            {shortenAddress(address, shorten ? 5 : 10)}
+          </StyledAddressBadge>
         )}
       </Main>
     )
@@ -53,4 +55,13 @@ const StyledAddressBadge = styled(Badge.Identity)`
   margin-left: auto;
 `
 
-export default TokenSelectorInstance
+export default props => (
+  <React.Fragment>
+    <BreakPoint to="medium">
+      <TokenSelectorInstance {...props} shorten />
+    </BreakPoint>
+    <BreakPoint from="medium">
+      <TokenSelectorInstance {...props} />
+    </BreakPoint>
+  </React.Fragment>
+)

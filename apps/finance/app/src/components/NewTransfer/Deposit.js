@@ -18,9 +18,12 @@ import tokenDecimalsAbi from '../../abi/token-decimals.json'
 import tokenSymbolAbi from '../../abi/token-symbol.json'
 import { fromDecimals, toDecimals } from '../../lib/math-utils'
 import provideNetwork from '../../lib/provideNetwork'
-import { ETHER_TOKEN_FAKE_ADDRESS } from '../../lib/token-utils'
+import {
+  ETHER_TOKEN_FAKE_ADDRESS,
+  tokenDataFallback,
+  getTokenSymbol,
+} from '../../lib/token-utils'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
-import { combineLatest } from '../../rxjs'
 import ToggleContent from '../ToggleContent'
 import TokenBadge from './TokenBadge'
 import TokenSelector from './TokenSelector'
@@ -121,7 +124,7 @@ class Deposit extends React.Component {
     return selectedToken.value && !selectedToken.data.loading
   }
   loadTokenData(address) {
-    const { app, userAccount } = this.props
+    const { app, network, userAccount } = this.props
 
     // ETH
     if (addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS)) {
@@ -145,24 +148,42 @@ class Deposit extends React.Component {
     // Tokens
     const token = app.external(address, tokenAbi)
 
-    return new Promise((resolve, reject) =>
-      combineLatest(
-        token.symbol(),
-        token.decimals(),
-        token.balanceOf(userAccount)
-      )
+    return new Promise(async (resolve, reject) => {
+      const userBalance = await token
+        .balanceOf(userAccount)
         .first()
-        .subscribe(
-          ([symbol, decimals, userBalance]) =>
-            resolve({
-              symbol,
-              userBalance,
-              decimals: parseInt(decimals, 10),
-              loading: false,
-            }),
-          reject
-        )
-    )
+        .toPromise()
+
+      const decimalsFallback =
+        tokenDataFallback(address, 'decimals', network.type) || '0'
+      const symbolFallback =
+        tokenDataFallback(address, 'symbol', network.type) || ''
+
+      const tokenData = {
+        userBalance,
+        decimals: parseInt(decimalsFallback, 10),
+        loading: false,
+        symbol: symbolFallback,
+      }
+
+      const [tokenSymbol, tokenDecimals] = await Promise.all([
+        getTokenSymbol(app, address),
+        token
+          .decimals()
+          .first()
+          .toPromise(),
+      ])
+
+      // If symbol or decimals are resolved, overwrite the fallbacks
+      if (tokenSymbol) {
+        tokenData.symbol = tokenSymbol
+      }
+      if (tokenDecimals) {
+        tokenData.decimals = parseInt(tokenDecimals, 10)
+      }
+
+      resolve(tokenData)
+    })
   }
   validateInputs({ amount, selectedToken } = {}) {
     amount = amount || this.state.amount
@@ -326,34 +347,35 @@ class Deposit extends React.Component {
           )}
         </Info.Action>
 
-        {proxyAddress &&
-          ethSelected && (
-            <div>
-              <VSpace size={6} />
-              <ToggleContent label="Show address for direct ETH transfer ">
-                <VSpace size={4} />
-                <QRCode
-                  value={proxyAddress}
-                  style={{ width: '80px', height: '80px' }}
-                />
-                <VSpace size={4} />
-                <IdentityBadge
-                  entity={proxyAddress}
-                  shorten={false}
-                  fontSize="small"
-                />
-                <VSpace size={2} />
-                <Info>
-                  Use the above address or QR code to transfer ETH directly to
-                  your organization’s Finance app.
-                  <Text.Paragraph size="xsmall" style={{ marginTop: '10px' }}>
-                    (Note that ERC-20 tokens cannot be transferred with the QR
-                    code)
-                  </Text.Paragraph>
-                </Info>
-              </ToggleContent>
-            </div>
-          )}
+        {proxyAddress && ethSelected && (
+          <div>
+            <VSpace size={6} />
+            <ToggleContent label="Show address for direct ETH transfer ">
+              <VSpace size={4} />
+              <QRCode
+                value={proxyAddress}
+                style={{ width: '80px', height: '80px' }}
+              />
+              <VSpace size={4} />
+              <IdentityBadge
+                entity={proxyAddress}
+                fontSize="small"
+                networkType={network.type}
+                shorten={false}
+              />
+              <VSpace size={2} />
+              <Info>
+                Use the above address or QR code to transfer ETH directly to
+                your organization’s Finance app. You should specify a gas limit
+                of 350,000 for this transfer.
+                <Text.Paragraph size="xsmall" style={{ marginTop: '10px' }}>
+                  <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
+                  (e.g. ERC-20) tokens directly to this address.
+                </Text.Paragraph>
+              </Info>
+            </ToggleContent>
+          </div>
+        )}
       </form>
     )
   }

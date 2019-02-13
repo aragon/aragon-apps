@@ -1,16 +1,27 @@
 import Aragon from '@aragon/client'
 import { of } from './rxjs'
 import { getTestTokenAddresses } from './testnet'
-import { ETHER_TOKEN_FAKE_ADDRESS, isTokenVerified } from './lib/token-utils'
+import {
+  ETHER_TOKEN_FAKE_ADDRESS,
+  isTokenVerified,
+  tokenDataFallback,
+  getTokenSymbol,
+  getTokenName,
+} from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenNameAbi from './abi/token-name.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
 import vaultBalanceAbi from './abi/vault-balance.json'
+import vaultGetInitializationBlockAbi from './abi/vault-getinitializationblock.json'
 import vaultEventAbi from './abi/vault-events.json'
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi)
-const vaultAbi = [].concat(vaultBalanceAbi, vaultEventAbi)
+const vaultAbi = [].concat(
+  vaultBalanceAbi,
+  vaultGetInitializationBlockAbi,
+  vaultEventAbi
+)
 
 const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const TEST_TOKEN_ADDRESSES = []
@@ -96,7 +107,18 @@ async function initialize(vaultAddress, ethAddress) {
 }
 
 // Hook up the script as an aragon.js store
-function createStore(settings) {
+async function createStore(settings) {
+  let vaultInitializationBlock
+
+  try {
+    vaultInitializationBlock = await settings.vault.contract
+      .getInitializationBlock()
+      .first()
+      .toPromise()
+  } catch (err) {
+    console.error("Could not get attached vault's initialization block:", err)
+  }
+
   return app.store(
     async (state, event) => {
       const { vault } = settings
@@ -113,11 +135,17 @@ function createStore(settings) {
       } else {
         // Finance event
         switch (eventName) {
+          case 'ChangePeriodDuration':
+            nextState.periodDuration = marshallDate(
+              event.returnValues.newDuration
+            )
+            break
           case 'NewPeriod':
             // A new period is always started as part of the Finance app's initialization,
             // so this is just a handy way to get information about the app we're running
             // (e.g. its own address)
             nextState.proxyAddress = eventAddress
+            nextState = await newPeriod(nextState, event, settings)
             break
           case 'NewTransaction':
             nextState = await newTransaction(nextState, event, settings)
@@ -133,7 +161,7 @@ function createStore(settings) {
       // Always initialize the store with our own home-made event
       of({ event: INITIALIZATION_TRIGGER }),
       // Handle Vault events in case they're not always controlled by this Finance app
-      settings.vault.contract.events(),
+      settings.vault.contract.events(vaultInitializationBlock),
     ]
   )
 }
@@ -147,6 +175,12 @@ function createStore(settings) {
 async function initializeState(state, settings) {
   const nextState = {
     ...state,
+    periodDuration: marshallDate(
+      await app
+        .call('getPeriodDuration')
+        .first()
+        .toPromise()
+    ),
     vaultAddress: settings.vault.address,
   }
 
@@ -163,6 +197,20 @@ async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
       token || settings.ethToken.address,
       settings
     ),
+  }
+}
+
+async function newPeriod(
+  state,
+  { returnValues: { periodId, periodStarts, periodEnds } }
+) {
+  return {
+    ...state,
+    periods: await updatePeriods(state, {
+      id: periodId,
+      startTime: marshallDate(periodStarts),
+      endTime: marshallDate(periodEnds),
+    }),
   }
 }
 
@@ -220,6 +268,17 @@ async function updateBalances({ balances = [] }, tokenAddress, settings) {
   }
 }
 
+function updatePeriods({ periods = [] }, periodDetails) {
+  const periodsIndex = periods.findIndex(({ id }) => id === periodDetails.id)
+  if (periodsIndex === -1) {
+    return periods.concat(periodDetails)
+  } else {
+    const newPeriods = Array.from(periods)
+    newPeriods[periodsIndex] = periodDetails
+    return newPeriods
+  }
+}
+
 function updateTransactions({ transactions = [] }, transactionDetails) {
   const transactionsIndex = transactions.findIndex(
     ({ id }) => id === transactionDetails.id
@@ -236,9 +295,9 @@ function updateTransactions({ transactions = [] }, transactionDetails) {
 async function newBalanceEntry(tokenContract, tokenAddress, settings) {
   const [balance, decimals, name, symbol] = await Promise.all([
     loadTokenBalance(tokenAddress, settings),
-    loadTokenDecimals(tokenContract),
-    loadTokenName(tokenContract),
-    loadTokenSymbol(tokenContract),
+    loadTokenDecimals(tokenContract, tokenAddress, settings),
+    loadTokenName(tokenContract, tokenAddress, settings),
+    loadTokenSymbol(tokenContract, tokenAddress, settings),
   ])
 
   return {
@@ -269,68 +328,52 @@ function loadTokenBalance(tokenAddress, { vault }) {
   })
 }
 
-function loadTokenDecimals(tokenContract) {
+function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
   return new Promise((resolve, reject) => {
     if (tokenDecimals.has(tokenContract)) {
       resolve(tokenDecimals.get(tokenContract))
     } else {
+      const fallback =
+        tokenDataFallback(tokenAddress, 'decimals', network.type) || '0'
       tokenContract
         .decimals()
         .first()
         .subscribe(
-          decimals => {
+          (decimals = fallback) => {
             tokenDecimals.set(tokenContract, decimals)
             resolve(decimals)
           },
           () => {
             // Decimals is optional
-            resolve('0')
+            resolve(fallback)
           }
         )
     }
   })
 }
 
-function loadTokenName(tokenContract) {
+function loadTokenName(tokenContract, tokenAddress, { network }) {
   return new Promise((resolve, reject) => {
     if (tokenName.has(tokenContract)) {
       resolve(tokenName.get(tokenContract))
     } else {
-      tokenContract
-        .name()
-        .first()
-        .subscribe(
-          name => {
-            tokenName.set(tokenContract, name)
-            resolve(name)
-          },
-          () => {
-            // Name is optional
-            resolve('')
-          }
-        )
+      const fallback =
+        tokenDataFallback(tokenAddress, 'name', network.type) || ''
+      const name = getTokenName(app, tokenAddress)
+      resolve(name || fallback)
     }
   })
 }
 
-function loadTokenSymbol(tokenContract) {
+function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
   return new Promise((resolve, reject) => {
     if (tokenSymbols.has(tokenContract)) {
       resolve(tokenSymbols.get(tokenContract))
     } else {
-      tokenContract
-        .symbol()
-        .first()
-        .subscribe(
-          symbol => {
-            tokenSymbols.set(tokenContract, symbol)
-            resolve(symbol)
-          },
-          () => {
-            // Symbol is optional
-            resolve('')
-          }
-        )
+      const fallback =
+        tokenDataFallback(tokenAddress, 'symbol', network.type) || ''
+      const tokenSymbol = getTokenSymbol(app, tokenAddress)
+      resolve(tokenSymbol || fallback)
     }
   })
 }
