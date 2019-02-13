@@ -31,7 +31,7 @@ const ERC165_SUPPORT_INTERFACE_ID = '0x01ffc9a7'
 const ERC165_SUPPORT_INVALID_ID = '0xffffffff'
 
 contract('Agent app', (accounts) => {
-  let daoFact, agentBase, acl, agent, agentId
+  let daoFact, agentBase, dao, acl, agent, agentAppId
 
   let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ERC1271_INTERFACE_ID
 
@@ -62,13 +62,13 @@ contract('Agent app', (accounts) => {
 
   beforeEach(async () => {
     const r = await daoFact.newDAO(root)
-    const dao = Kernel.at(getEvent(r, 'DeployDAO', 'dao'))
+    dao = Kernel.at(getEvent(r, 'DeployDAO', 'dao'))
     acl = ACL.at(await dao.acl())
 
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
     // agent
-    const agentAppId = namehash('agent.aragonpm.test')
+    agentAppId = namehash('agent.aragonpm.test')
 
     const agentReceipt = await dao.newAppInstance(agentAppId, agentBase.address, '0x', false)
     const agentProxyAddress = getEvent(agentReceipt, 'NewAppProxy', 'proxy')
@@ -286,61 +286,94 @@ contract('Agent app', (accounts) => {
       assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
     })
 
-    context('> Designated signer: EOAs', () => {
-      const eip712Sign = async (hash, key) =>
-        ethUtil.ecsign(
-          Buffer.from(hash.slice(2), 'hex'),
-          Buffer.from(key, 'hex')
-        )
-
+    context('> Designated signer', () => {
       const ethSign = async (hash, signer) => {
         const packedSig = await web3Sign(signer, hash)
 
         return {
           r: ethUtil.toBuffer('0x' + packedSig.substring(2, 66)),
           s: ethUtil.toBuffer('0x' + packedSig.substring(66, 130)),
-          v: parseInt(packedSig.substring(130, 132), 16) + 27
+          v: parseInt(packedSig.substring(130, 132), 16) + 27,
+          mode: ethUtil.toBuffer(SIGNATURE_MODES.EthSign)
         }
       }
+
+      const eip712Sign = async (hash, key) => ({
+          mode: ethUtil.toBuffer(SIGNATURE_MODES.EIP712),
+          ...ethUtil.ecsign(
+            Buffer.from(hash.slice(2), 'hex'),
+            Buffer.from(key, 'hex')
+          )
+      })
       
-      const signFunctionGenerator = (signFunction, modeId) => (
+      const signFunctionGenerator = (signFunction, signatureModifier) => (
         async (hash, signerOrKey, useLegacySig = false, useInvalidV = false) => {
           const sig = await signFunction(hash, signerOrKey)
-
-          // console.log(modeId, sig)
-
-          const mode = ethUtil.toBuffer(modeId)
           const v =
             useInvalidV
             ? ethUtil.toBuffer(2) // force set an invalid v
             : ethUtil.toBuffer(sig.v - (useLegacySig ? 0 : 27))
           
-          return '0x' + Buffer.concat([mode, sig.r, sig.s, v]).toString('hex')
+          const signature = '0x' + Buffer.concat([sig.mode, sig.r, sig.s, v]).toString('hex')
+          return signatureModifier(signature)
         }
       )
 
-      const signatureTests = [
+      const addERC1271ModePrefix = (signature) =>
+        `${SIGNATURE_MODES.ERC1271}${signature.slice(2)}`
+
+      const createChildAgentGenerator = (designatedSigner) => 
+        async () => {
+          const agentReceipt = await dao.newAppInstance(agentAppId, agentBase.address, '0x', false)
+          const agentProxyAddress = getEvent(agentReceipt, 'NewAppProxy', 'proxy')
+          const childAgent = Agent.at(agentProxyAddress)
+
+          await childAgent.initialize()
+          await acl.createPermission(signerDesignator, childAgent.address, DESIGNATE_SIGNER_ROLE, root, { from: root })
+          await childAgent.setDesignatedSigner(designatedSigner, { from: signerDesignator })
+
+          return childAgent.address
+        }
+
+      const directSignatureTests = [
         {
           name: 'EIP712',
           signFunction: eip712Sign,
-          signer: '0x93070b307c373D7f9344859E909e3EEeF6E4Fd5a',
+          getSigner: () => '0x93070b307c373D7f9344859E909e3EEeF6E4Fd5a',
           signerOrKey: '11bc31e7fef59610dfd6f95d2f78d2396c7b5477e4a9a54d72d9c1b76930e5c1',
           notSignerOrKey: '7224b5bc510e01f75b10e3b6d6c903861ca91adb95a26406d1603e2d28a29e7f',
         },
         {
           name: 'EthSign',
           signFunction: ethSign,
-          signer: accounts[7],
+          getSigner: () => accounts[7],
           signerOrKey: accounts[7],
           notSignerOrKey: accounts[8]
-        }
+        },
       ]
 
-      for (let { name, signFunction, signer, signerOrKey, notSignerOrKey } of signatureTests) {
-        const sign = signFunctionGenerator(signFunction, SIGNATURE_MODES[name])
+      const wrappedSignatureTests = directSignatureTests.map(signatureTest => ({
+        ...signatureTest,
+        name: `ERC1271 -> ${signatureTest.name}`,
+        signatureModifier: addERC1271ModePrefix,
+        getSigner: createChildAgentGenerator(signatureTest.getSigner()),
+      }))
+
+      const signatureTests = directSignatureTests.concat(wrappedSignatureTests)
+
+      for (const {
+        name,
+        signFunction,
+        getSigner,
+        signerOrKey,
+        notSignerOrKey,
+        signatureModifier = sig => sig // defaults to identity function (returns input)
+      } of signatureTests) {
+        const sign = signFunctionGenerator(signFunction, signatureModifier)
 
         context(`> Signature mode: ${name}`, () => {
           beforeEach(async () => {
+            const signer = await getSigner()
             await agent.setDesignatedSigner(signer, { from: signerDesignator })
           })
 
@@ -371,11 +404,79 @@ contract('Agent app', (accounts) => {
         })
       }
 
+      context('> Signature mode: ERC1271', () => {
+        const ERC1271_SIG = SIGNATURE_MODES.ERC1271
+  
+        const setDesignatedSignerContract = async (...params) => {
+          const designatedSigner = await DesignatedSigner.new(...params)
+          return agent.setDesignatedSigner(designatedSigner.address, { from: signerDesignator })
+        }
+  
+        it('isValidSignature returns true if designated signer returns true', async () => {
+          // true  - ERC165 interface compliant
+          // true  - any sigs are valid
+          // false - doesn't revert on checking sig
+          // false - doesn't modify state on checking sig
+          await setDesignatedSignerContract(true, true, false, false)
+  
+          assertIsValidSignature(true, await agent.isValidSignature(HASH, ERC1271_SIG))
+        })
+  
+        it('isValidSignature returns false if designated signer returns false', async () => {
+          // true  - ERC165 interface compliant
+          // false - sigs are invalid
+          // false - doesn't revert on checking sig
+          // false - doesn't modify state on checking sig
+          await setDesignatedSignerContract(true, false, false, false)
+  
+          // Signature fails check
+          assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
+        })
+  
+        it('isValidSignature returns true even if the designated signer doesnt support the interface', async () => {
+          // false - not ERC165 interface compliant
+          // true  - any sigs are valid
+          // false - doesn't revert on checking sig
+          // false - doesn't modify state on checking sig
+          await setDesignatedSignerContract(false, true, false, false)
+  
+          // Requires ERC165 compliance before checking isValidSignature
+          assertIsValidSignature(true, await agent.isValidSignature(HASH, ERC1271_SIG))
+        })
+  
+        it('isValidSignature returns false if designated signer reverts', async () => {
+          // true  - ERC165 interface compliant
+          // true  - any sigs are valid
+          // true  - reverts on checking sig
+          // false - doesn't modify state on checking sig
+          await setDesignatedSignerContract(true, true, true, false)
+  
+          // Reverts on checking
+          assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
+        })
+  
+        it('isValidSignature returns false if designated signer attempts to modify state', async () => {
+          // true  - ERC165 interface compliant
+          // true  - any sigs are valid
+          // false - doesn't revert on checking sig
+          // true  - modifies state on checking sig
+          await setDesignatedSignerContract(true, true, false, true)
+  
+          // Checking costs too much gas
+          assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
+        })
+      })
+
       context(`> Signature mode: invalid modes`, () => {
         const randomAccount = accounts[9]
 
         beforeEach(async () => {
           await agent.setDesignatedSigner(randomAccount, { from: signerDesignator })
+        })
+
+        it('isValidSignature returns false to an empty signature', async () => {
+          const emptySig = '0x'
+          assertIsValidSignature(false, await agent.isValidSignature(HASH, emptySig))
         })
 
         it('isValidSignature returns false to an invalid mode signature', async () => {
@@ -396,69 +497,6 @@ contract('Agent app', (accounts) => {
           await agent.presignHash(HASH, { from: presigner })
           assertIsValidSignature(true, await agent.isValidSignature(HASH, invalidSignature))
         })
-      })
-    })
-
-    context('> Designated signer: contracts', () => {
-      const ERC1271_SIG = SIGNATURE_MODES.ERC1271
-
-      const setDesignatedSignerContract = async (...params) => {
-        const designatedSigner = await DesignatedSigner.new(...params)
-        return agent.setDesignatedSigner(designatedSigner.address, { from: signerDesignator })
-      }
-
-      it('isValidSignature returns true if designated signer returns true', async () => {
-        // true  - ERC165 interface compliant
-        // true  - any sigs are valid
-        // false - doesn't revert on checking sig
-        // false - doesn't modify state on checking sig
-        await setDesignatedSignerContract(true, true, false, false)
-
-        assertIsValidSignature(true, await agent.isValidSignature(HASH, ERC1271_SIG))
-      })
-
-      it('isValidSignature returns false if designated signer returns false', async () => {
-        // true  - ERC165 interface compliant
-        // false - sigs are invalid
-        // false - doesn't revert on checking sig
-        // false - doesn't modify state on checking sig
-        await setDesignatedSignerContract(true, false, false, false)
-
-        // Signature fails check
-        assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
-      })
-
-      it('isValidSignature returns true even if the designated signer doesnt support the interface', async () => {
-        // false - not ERC165 interface compliant
-        // true  - any sigs are valid
-        // false - doesn't revert on checking sig
-        // false - doesn't modify state on checking sig
-        await setDesignatedSignerContract(false, true, false, false)
-
-        // Requires ERC165 compliance before checking isValidSignature
-        assertIsValidSignature(true, await agent.isValidSignature(HASH, ERC1271_SIG))
-      })
-
-      it('isValidSignature returns false if designated signer reverts', async () => {
-        // true  - ERC165 interface compliant
-        // true  - any sigs are valid
-        // true  - reverts on checking sig
-        // false - doesn't modify state on checking sig
-        await setDesignatedSignerContract(true, true, true, false)
-
-        // Reverts on checking
-        assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
-      })
-
-      it('isValidSignature returns false if designated signer attempts to modify state', async () => {
-        // true  - ERC165 interface compliant
-        // true  - any sigs are valid
-        // false - doesn't revert on checking sig
-        // true  - modifies state on checking sig
-        await setDesignatedSignerContract(true, true, false, true)
-
-        // Checking costs too much gas
-        assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
       })
     })
   })

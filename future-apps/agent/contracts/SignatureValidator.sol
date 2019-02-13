@@ -46,7 +46,7 @@ library SignatureValidator {
         } else if (mode == SignatureMode.ERC1271) {
             // Pop the mode byte before sending it down the validation chain
             (bytes memory newSig,) = popFirstByte(signature); // `signature` IS CORRUPTED AFTER EXECUTING THIS
-            return safeIsValidSignature(signer, hash, signature);
+            return safeIsValidSignature(signer, hash, newSig);
         } else {
             return false;
         }
