@@ -305,7 +305,7 @@ contract('Agent app', (accounts) => {
             Buffer.from(key, 'hex')
           )
       })
-      
+
       const signFunctionGenerator = (signFunction, signatureModifier) => (
         async (hash, signerOrKey, useLegacySig = false, useInvalidV = false) => {
           const sig = await signFunction(hash, signerOrKey)
@@ -313,7 +313,7 @@ contract('Agent app', (accounts) => {
             useInvalidV
             ? ethUtil.toBuffer(2) // force set an invalid v
             : ethUtil.toBuffer(sig.v - (useLegacySig ? 0 : 27))
-          
+
           const signature = '0x' + Buffer.concat([sig.mode, sig.r, sig.s, v]).toString('hex')
           return signatureModifier(signature)
         }
@@ -322,7 +322,7 @@ contract('Agent app', (accounts) => {
       const addERC1271ModePrefix = (signature) =>
         `${SIGNATURE_MODES.ERC1271}${signature.slice(2)}`
 
-      const createChildAgentGenerator = (designatedSigner) => 
+      const createChildAgentGenerator = (designatedSigner) =>
         async () => {
           const agentReceipt = await dao.newAppInstance(agentAppId, agentBase.address, '0x', false)
           const agentProxyAddress = getEvent(agentReceipt, 'NewAppProxy', 'proxy')
@@ -381,22 +381,22 @@ contract('Agent app', (accounts) => {
             const signature = await sign(HASH, signerOrKey)
             assertIsValidSignature(true, await agent.isValidSignature(HASH, signature))
           })
-  
+
           it('isValidSignature returns true to a valid signature with legacy version', async () => {
             const legacyVersionSignature = await sign(HASH, signerOrKey, true)
             assertIsValidSignature(true, await agent.isValidSignature(HASH, legacyVersionSignature))
           })
-  
+
           it('isValidSignature returns false to an invalid signature', async () => {
             const badSignature = (await sign(HASH, signerOrKey)).slice(0, -2) // drop last byte
             assertIsValidSignature(false, await agent.isValidSignature(HASH, badSignature))
           })
-  
+
           it('isValidSignature returns false to a signature with an invalid v', async () => {
             const invalidVersionSignature = await sign(HASH, signerOrKey, false, true)
             assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidVersionSignature))
           })
-  
+
           it('isValidSignature returns false to an unauthorized signer', async () => {
             const otherSignature = await sign(HASH, notSignerOrKey)
             assertIsValidSignature(false, await agent.isValidSignature(HASH, otherSignature))
@@ -406,62 +406,62 @@ contract('Agent app', (accounts) => {
 
       context('> Signature mode: ERC1271', () => {
         const ERC1271_SIG = SIGNATURE_MODES.ERC1271
-  
+
         const setDesignatedSignerContract = async (...params) => {
           const designatedSigner = await DesignatedSigner.new(...params)
           return agent.setDesignatedSigner(designatedSigner.address, { from: signerDesignator })
         }
-  
+
         it('isValidSignature returns true if designated signer returns true', async () => {
           // true  - ERC165 interface compliant
           // true  - any sigs are valid
           // false - doesn't revert on checking sig
           // false - doesn't modify state on checking sig
           await setDesignatedSignerContract(true, true, false, false)
-  
+
           assertIsValidSignature(true, await agent.isValidSignature(HASH, ERC1271_SIG))
         })
-  
+
         it('isValidSignature returns false if designated signer returns false', async () => {
           // true  - ERC165 interface compliant
           // false - sigs are invalid
           // false - doesn't revert on checking sig
           // false - doesn't modify state on checking sig
           await setDesignatedSignerContract(true, false, false, false)
-  
+
           // Signature fails check
           assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
         })
-  
+
         it('isValidSignature returns true even if the designated signer doesnt support the interface', async () => {
           // false - not ERC165 interface compliant
           // true  - any sigs are valid
           // false - doesn't revert on checking sig
           // false - doesn't modify state on checking sig
           await setDesignatedSignerContract(false, true, false, false)
-  
+
           // Requires ERC165 compliance before checking isValidSignature
           assertIsValidSignature(true, await agent.isValidSignature(HASH, ERC1271_SIG))
         })
-  
+
         it('isValidSignature returns false if designated signer reverts', async () => {
           // true  - ERC165 interface compliant
           // true  - any sigs are valid
           // true  - reverts on checking sig
           // false - doesn't modify state on checking sig
           await setDesignatedSignerContract(true, true, true, false)
-  
+
           // Reverts on checking
           assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
         })
-  
+
         it('isValidSignature returns false if designated signer attempts to modify state', async () => {
           // true  - ERC165 interface compliant
           // true  - any sigs are valid
           // false - doesn't revert on checking sig
           // true  - modifies state on checking sig
           await setDesignatedSignerContract(true, true, false, true)
-  
+
           // Checking costs too much gas
           assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
         })
