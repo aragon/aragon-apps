@@ -1,9 +1,9 @@
 pragma solidity 0.4.24;
 
-
-// ERC1271 on Feb 12th, 2019: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1271.md
+// ERC1271 on Feb 12th, 2019: https://github.com/ethereum/EIPs/blob/a97dc434930d0ccc4461c97d8c7a920dc585adf2/EIPS/eip-1271.md
 // Using `isValidSignature(bytes32,bytes)` even though the standard still hasn't been modified
 // Rationale: https://github.com/ethereum/EIPs/issues/1271#issuecomment-462719728
+
 contract ERC1271 {
     bytes4 constant public ERC1271_INTERFACE_ID = this.isValidSignature.selector;
 
@@ -18,7 +18,7 @@ contract ERC1271 {
     *
     * MUST NOT modify state (using STATICCALL for solc < 0.5, view modifier for solc > 0.5)
     * MUST allow external calls
-    */ 
+    */
     function isValidSignature(bytes32 _hash, bytes memory _signature) public view returns (bytes4);
 
     function returnIsValidSignatureMagicNumber(bool isValid) internal pure returns (bytes4) {
@@ -35,7 +35,7 @@ contract ERC1271Bytes is ERC1271 {
     *
     * MUST NOT modify state (using STATICCALL for solc < 0.5, view modifier for solc > 0.5)
     * MUST allow external calls
-    */ 
+    */
     function isValidSignature(bytes _data, bytes _signature) public view returns (bytes4) {
         return isValidSignature(keccak256(_data), _signature);
     }

@@ -16,7 +16,7 @@ library SignatureValidator {
     }
 
     // bytes4(keccak256("isValidSignature(bytes,bytes)")
-    bytes4 constant public ERC1271_RETURN_VALID_SIGNATURE = 0x20c13b0b;
+    bytes4 public constant ERC1271_RETURN_VALID_SIGNATURE = 0x20c13b0b;
     uint256 internal constant ERC1271_ISVALIDSIG_MAX_GAS = 250000;
 
     /// @dev Validates that a hash was signed by a specified signer.
