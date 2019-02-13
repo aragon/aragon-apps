@@ -1,10 +1,9 @@
 {
-  "name": "@aragon/apps-actor",
+  "name": "@aragon/apps-agent",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "compile": "truffle compile",
-    "build": "cd app && npm run build",
     "deploy:rpc": "truffle exec scripts/deploy.js --network rpc",
     "deploy:rinkeby": "truffle exec scripts/deploy.js --network rinkeby",
     "deploy:devnet": "truffle exec scripts/deploy.js --network devnet",
@@ -40,7 +39,7 @@
     "@aragon/cli": "^5.2.0-beta.1",
     "@aragon/test-helpers": "^1.0.1",
     "eth-gas-reporter": "^0.1.1",
-    "ethereumjs-util": "^6.0.0",
+    "ethereumjs-util": "^6.1.0",
     "ganache-cli": "^6.0.3",
     "solidity-coverage": "0.5.11",
     "solium": "^1.0.4",

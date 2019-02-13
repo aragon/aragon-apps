@@ -1,3 +1,6 @@
+// Test that Agent is a fully functioning Vault by running the same tests against the Agent app
+const Vault = artifacts.require('Agent')
+
 const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
 const { hash } = require('eth-ens-namehash')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
@@ -13,15 +16,13 @@ const KernelProxy = artifacts.require('KernelProxy')
 const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
-const Vault = artifacts.require('Actor')
-
 const SimpleERC20 = artifacts.require('tokens/SimpleERC20')
 
 const DestinationMock = artifacts.require('DestinationMock')
 
 const NULL_ADDRESS = '0x00'
 
-contract('Actor app (Vault compatibility)', (accounts) => {
+contract('Agent app (Vault compatibility)', (accounts) => {
   let daoFact, vaultBase, vault, vaultId
 
   let ETH, ANY_ENTITY, APP_MANAGER_ROLE, TRANSFER_ROLE
