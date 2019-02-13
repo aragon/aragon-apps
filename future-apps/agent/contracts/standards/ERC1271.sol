@@ -4,6 +4,7 @@ pragma solidity 0.4.24;
 // Using `isValidSignature(bytes32,bytes)` even though the standard still hasn't been modified
 // Rationale: https://github.com/ethereum/EIPs/issues/1271#issuecomment-462719728
 
+
 contract ERC1271 {
     bytes4 constant public ERC1271_INTERFACE_ID = 0xfb855dc9; // this.isValidSignature.selector
 
@@ -25,6 +26,7 @@ contract ERC1271 {
         return isValid ? ERC1271_RETURN_VALID_SIGNATURE : ERC1271_RETURN_INVALID_SIGNATURE;
     }
 }
+
 
 contract ERC1271Bytes is ERC1271 {
     /**
