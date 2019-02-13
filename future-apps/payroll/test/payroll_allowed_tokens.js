@@ -28,7 +28,7 @@ contract('Payroll, allowed tokens,', function(accounts) {
   let ETH
   let MAX_ALLOWED_TOKENS
 
-  const MAX_GAS_USED = 6e6
+  const MAX_GAS_USED = 6.5e6
 
   before(async () => {
     payrollBase = await getContract("PayrollMock").new()
