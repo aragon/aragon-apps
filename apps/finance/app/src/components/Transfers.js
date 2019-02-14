@@ -10,13 +10,12 @@ import {
   DropDown,
   theme,
   breakpoint,
-  BreakPoint,
+  Viewport,
   springs,
 } from '@aragon/ui'
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import TransferRow from './TransferRow'
-import GetWindowSize from './GetWindowSize'
 import ToggleFiltersButton from './ToggleFiltersButton'
 
 const TRANSFER_TYPES = [
@@ -114,12 +113,16 @@ class Transfers extends React.Component {
           <Title>
             <span>Transfers </span>
             <span>
-              <BreakPoint to="medium">
-                <ToggleFiltersButton
-                  title="Toggle Filters"
-                  onClick={this.handleToggleFiltersClick}
-                />
-              </BreakPoint>
+              <Viewport>
+                {({ below }) =>
+                  below('medium') && (
+                    <ToggleFiltersButton
+                      title="Toggle Filters"
+                      onClick={this.handleToggleFiltersClick}
+                    />
+                  )
+                }
+              </Viewport>
             </span>
           </Title>
           <Spring
@@ -173,19 +176,23 @@ class Transfers extends React.Component {
           </NoTransfers>
         ) : (
           <div>
-            <GetWindowSize>
-              {({ width }) => (
+            <Viewport>
+              {({ width, breakpoints }) => (
                 <FixedTable
                   header={
-                    <BreakPoint from="medium">
-                      <TableRow>
-                        <DateHeader title="Date" />
-                        <SourceRecipientHeader title="Source / Recipient" />
-                        <ReferenceHeader title="Reference" />
-                        <AmountHeader title="Amount" align="right" />
-                        <TableHeader />
-                      </TableRow>
-                    </BreakPoint>
+                    <Viewport>
+                      {({ above }) =>
+                        above('medium') && (
+                          <TableRow>
+                            <DateHeader title="Date" />
+                            <SourceRecipientHeader title="Source / Recipient" />
+                            <ReferenceHeader title="Reference" />
+                            <AmountHeader title="Amount" align="right" />
+                            <TableHeader />
+                          </TableRow>
+                        )
+                      }
+                    </Viewport>
                   }
                 >
                   {filteredTransfers
@@ -199,12 +206,12 @@ class Transfers extends React.Component {
                         key={transfer.transactionHash}
                         token={tokenDetails[toChecksumAddress(transfer.token)]}
                         transaction={transfer}
-                        wideMode={width > 768 + 219}
+                        wideMode={width > breakpoints.medium + 219}
                       />
                     ))}
                 </FixedTable>
               )}
-            </GetWindowSize>
+            </Viewport>
             {displayedTransfers < filteredTransfers.length && (
               <Footer>
                 <Button mode="secondary" onClick={this.showMoreTransfers}>
@@ -345,12 +352,7 @@ const Footer = styled.div`
 `
 
 export default props => (
-  <React.Fragment>
-    <BreakPoint to="medium">
-      <Transfers {...props} autohide />
-    </BreakPoint>
-    <BreakPoint from="medium">
-      <Transfers {...props} />
-    </BreakPoint>
-  </React.Fragment>
+  <Viewport>
+    {({ below }) => <Transfers {...props} autohide={below('medium')} />}
+  </Viewport>
 )
