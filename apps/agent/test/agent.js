@@ -454,7 +454,6 @@ contract('Agent app', (accounts) => {
           // false - doesn't modify state on checking sig
           await setDesignatedSignerContract(false, true, false, false)
 
-          // Requires ERC165 compliance before checking isValidSignature
           assertIsValidSignature(true, await agent.isValidSignature(HASH, ERC1271_SIG))
         })
 

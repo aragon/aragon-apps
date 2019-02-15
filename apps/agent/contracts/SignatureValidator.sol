@@ -88,7 +88,7 @@ library SignatureValidator {
         require(inputLength > 0);
 
         output = new bytes(inputLength - 1);
-        
+
         uint256 inputPointer;
         uint256 outputPointer;
         assembly {
