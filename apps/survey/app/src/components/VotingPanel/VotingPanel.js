@@ -46,9 +46,8 @@ class VotingPanel extends React.Component {
 
     // Distribute the remaining between the others
     if (othersTotal === 0) {
-      return distribution.map(
-        (_, i) =>
-          i === index ? value : (1 - value) / (distribution.length - 1)
+      return distribution.map((_, i) =>
+        i === index ? value : (1 - value) / (distribution.length - 1)
       )
     }
 
@@ -59,8 +58,8 @@ class VotingPanel extends React.Component {
         : prevValue - ((othersTotal + value - 1) * prevValue) / othersTotal
     }
 
-    return distribution.map(
-      (prevValue, i) => (i === index ? value : updateOtherValue(prevValue))
+    return distribution.map((prevValue, i) =>
+      i === index ? value : updateOtherValue(prevValue)
     )
   }
 

@@ -70,7 +70,7 @@ class Survey extends React.Component {
 
     return (
       <Main>
-        <DetailsWrapper innerRef={this.handleDetailsWrapperRef}>
+        <DetailsWrapper ref={this.handleDetailsWrapperRef}>
           <Spring
             from={{ show: 0 }}
             to={{ show: 1 }}

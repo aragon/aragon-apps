@@ -282,8 +282,8 @@ export default observe(observable => {
                         power !== -1
                           ? power / data.participation // no need to adjust for decimals
                           : index === 0
-                            ? 0
-                            : powers[index - 1]
+                          ? 0
+                          : powers[index - 1]
                       )
                     }
                     return powers
