@@ -32,6 +32,9 @@ const initialState = {
   displayedTransfers: TRANSFERS_PER_PAGE,
 }
 
+// viewport width from which the wide mode gets activated
+const WIDE_MODE_FROM = 987
+
 class Transfers extends React.PureComponent {
   state = {
     ...initialState,
@@ -202,7 +205,7 @@ class Transfers extends React.PureComponent {
                         key={transfer.transactionHash}
                         token={tokenDetails[toChecksumAddress(transfer.token)]}
                         transaction={transfer}
-                        wideMode={width > breakpoints.medium + 219}
+                        wideMode={width > WIDE_MODE_FROM}
                       />
                     ))}
                 </FixedTable>
