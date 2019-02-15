@@ -60,10 +60,8 @@ class TransferRow extends React.PureComponent {
               <time dateTime={formattedDate} title={formattedDate}>
                 {format(date, 'dd MMM yyyy')}
               </time>
-              <TextOverflow style={{ marginTop: '5px' }}>
-                {reference}
-              </TextOverflow>
-              <Amount positive={isIncoming} style={{ marginTop: '5px' }}>
+              <TextOverflow css="margin-top: 5px">{reference}</TextOverflow>
+              <Amount positive={isIncoming} css="margin-top: 5px">
                 {formattedAmount} {token.symbol}
               </Amount>
             </Grid>
@@ -82,9 +80,13 @@ class TransferRow extends React.PureComponent {
         <NoWrapCell>
           <IdentityBadge networkType={network.type} entity={entity} />
         </NoWrapCell>
-        <NoWrapCell title={reference} style={{ position: 'relative' }}>
+        <NoWrapCell title={reference} css="position: relative">
           <TextOverflow
-            style={{ position: 'absolute', left: '20px', right: '20px' }}
+            css={`
+              position: absolute;
+              left: 20px;
+              right: 20px;
+            `}
           >
             {reference}
           </TextOverflow>
