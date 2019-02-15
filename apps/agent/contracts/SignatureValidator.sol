@@ -45,14 +45,13 @@ library SignatureValidator {
             );
         } else if (mode == SignatureMode.ERC1271) {
             // Pop the mode byte before sending it down the validation chain
-            (bytes memory newSig,) = popFirstByte(signature); // `signature` IS CORRUPTED AFTER EXECUTING THIS
-            return safeIsValidSignature(signer, hash, newSig);
+            return safeIsValidSignature(signer, hash, popFirstByte(signature));
         } else {
             return false;
         }
     }
 
-    function ecVerify(bytes32 hash, address signer, bytes memory signature) internal pure returns (bool) {
+    function ecVerify(bytes32 hash, address signer, bytes memory signature) private pure returns (bool) {
         (bool badSig, bytes32 r, bytes32 s, uint8 v) = unpackEcSig(signature);
 
         if (badSig) {
@@ -62,7 +61,7 @@ library SignatureValidator {
         return signer == ecrecover(hash, v, r, s);
     }
 
-    function unpackEcSig(bytes memory signature) internal pure returns (bool badSig, bytes32 r, bytes32 s, uint8 v) {
+    function unpackEcSig(bytes memory signature) private pure returns (bool badSig, bytes32 r, bytes32 s, uint8 v) {
         if (signature.length != 66) {
             badSig = true;
             return;
@@ -84,30 +83,28 @@ library SignatureValidator {
         }
     }
 
-    /**
-     * @dev DANGEROUS FUNCTION: Modifies input in place, making it invalid after using this function
-     * Memory layout: bytes in parenthesis are returned
-     * L = l - 1
-     * Input:  ([l1][l2]....[l32][b1][b2]....[bn])
-     * Output: [00]([L1][L2]....[L32][b2]....[bn])
-     */
-    function popFirstByte(bytes memory input) internal pure returns (bytes memory output, byte firstByte) {
+    function popFirstByte(bytes memory input) private pure returns (bytes memory output) {
+        uint256 inputLength = input.length;
+        require(inputLength > 0);
+
+        output = new bytes(inputLength - 1);
+        
+        uint256 inputPointer;
+        uint256 outputPointer;
         assembly {
-            let length := mload(input)
-            firstByte := mload(add(input, 0x20))
-            output := add(input, 0x01)
-            mstore8(input, 0x00) // Probably safe to remove, as it will most already likely be 0
-            mstore(output, sub(length, 0x01))
+            inputPointer := add(input, 0x21)
+            outputPointer := add(output, 0x20)
         }
+        memcpy(outputPointer, inputPointer, inputLength);
     }
 
-    function safeIsValidSignature(address validator, bytes32 hash, bytes memory signature) internal view returns (bool) {
+    function safeIsValidSignature(address validator, bytes32 hash, bytes memory signature) private view returns (bool) {
         bytes memory data = abi.encodeWithSelector(ERC1271(validator).isValidSignature.selector, hash, signature);
         bytes4 erc1271Return = safeBytes4StaticCall(validator, data, ERC1271_ISVALIDSIG_MAX_GAS);
         return erc1271Return == ERC1271_RETURN_VALID_SIGNATURE;
     }
 
-    function safeBytes4StaticCall(address target, bytes data, uint256 maxGas) internal view returns (bytes4 ret) {
+    function safeBytes4StaticCall(address target, bytes data, uint256 maxGas) private view returns (bytes4 ret) {
         uint256 gasLeft = gasleft();
 
         uint256 callGas = gasLeft > maxGas ? maxGas : gasLeft;
@@ -133,5 +130,25 @@ library SignatureValidator {
         }
 
         return ret;
+    }
+
+    // From: https://github.com/Arachnid/solidity-stringutils/blob/master/src/strings.sol
+    function memcpy(uint dest, uint src, uint len) private pure {
+        // Copy word-length chunks while possible
+        for(; len >= 32; len -= 32) {
+            assembly {
+                mstore(dest, mload(src))
+            }
+            dest += 32;
+            src += 32;
+        }
+
+        // Copy remaining bytes
+        uint mask = 256 ** (32 - len) - 1;
+        assembly {
+            let srcpart := and(mload(src), not(mask))
+            let destpart := and(mload(dest), mask)
+            mstore(dest, or(destpart, srcpart))
+        }
     }
 }
