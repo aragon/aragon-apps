@@ -45,10 +45,10 @@
     "lint": "eslint ./src",
     "lint:fix": "eslint --fix ./src",
     "test": "npm run lint && jest",
-    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./public && rsync -rtu ./public/ ./dist",
-    "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve index.html -p 3004 --out-dir dist/",
-    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir dist/ --public-url '.'",
-    "build:script": "parcel build src/script.js --out-dir dist/"
+    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./public && rsync -rtu ./public/ ./build",
+    "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve index.html -p 3004 --out-dir build/",
+    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url '.'",
+    "build:script": "parcel build src/script.js --out-dir build/"
   },
   "browserslist": [
     ">2%, last 1 edge versions, not ie > 0, not op_mini all"
