@@ -1,6 +1,5 @@
 import React from 'react'
 import styled from 'styled-components'
-import copy from 'copy-to-clipboard'
 import { format } from 'date-fns'
 import {
   TableRow,
@@ -15,36 +14,14 @@ import {
 import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
 import IconTokens from './icons/IconTokens'
-import ConfirmMessage from './ConfirmMessage'
 
 class TransferRow extends React.PureComponent {
-  state = {
-    showCopyTransferMessage: false,
-  }
-  handleCopyTransferUrl = () => {
-    copy(
-      'https://app.aragon.one/#/finance/finance?params=' +
-        encodeURIComponent(
-          JSON.stringify({
-            transaction: this.props.transaction.transactionHash,
-          })
-        )
-    )
-    this.setState({
-      showCopyTransferMessage: true,
-    })
-  }
   handleViewTransaction = () => {
     const {
       network: { etherscanBaseUrl },
       transaction: { transactionHash },
     } = this.props
     window.open(`${etherscanBaseUrl}/tx/${transactionHash}`, '_blank')
-  }
-  handleConfirmMessageDone = () => {
-    this.setState({
-      showCopyTransferMessage: false,
-    })
   }
 
   render() {
@@ -60,7 +37,6 @@ class TransferRow extends React.PureComponent {
         reference,
       },
     } = this.props
-    const { showCopyTransferMessage } = this.state
 
     const formattedAmount = formatTokenAmount(
       amount,
@@ -128,13 +104,6 @@ class TransferRow extends React.PureComponent {
                 </ContextMenuItem>
               </ContextMenu>
             )}
-            {showCopyTransferMessage && (
-              <ConfirmMessageWrapper>
-                <ConfirmMessage onDone={this.handleConfirmMessageDone}>
-                  Transaction URL copied to clipboard
-                </ConfirmMessage>
-              </ConfirmMessageWrapper>
-            )}
           </ActionsWrapper>
         </NoWrapCell>
       </TableRow>
@@ -187,13 +156,6 @@ const ActionsWrapper = styled.div`
 
 const ActionLabel = styled.span`
   margin-left: 15px;
-`
-
-const ConfirmMessageWrapper = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2;
 `
 
 export default provideNetwork(TransferRow)
