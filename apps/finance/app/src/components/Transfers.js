@@ -32,7 +32,7 @@ const initialState = {
   displayedTransfers: TRANSFERS_PER_PAGE,
 }
 
-class Transfers extends React.Component {
+class Transfers extends React.PureComponent {
   state = {
     ...initialState,
     filtersOpened: !this.props.autohide,
@@ -177,22 +177,18 @@ class Transfers extends React.Component {
         ) : (
           <div>
             <Viewport>
-              {({ width, breakpoints }) => (
+              {({ above, width, breakpoints }) => (
                 <FixedTable
                   header={
-                    <Viewport>
-                      {({ above }) =>
-                        above('medium') && (
-                          <TableRow>
-                            <DateHeader title="Date" />
-                            <SourceRecipientHeader title="Source / Recipient" />
-                            <ReferenceHeader title="Reference" />
-                            <AmountHeader title="Amount" align="right" />
-                            <TableHeader />
-                          </TableRow>
-                        )
-                      }
-                    </Viewport>
+                    above('medium') && (
+                      <TableRow>
+                        <DateHeader title="Date" />
+                        <SourceRecipientHeader title="Source / Recipient" />
+                        <ReferenceHeader title="Reference" />
+                        <AmountHeader title="Amount" align="right" />
+                        <TableHeader />
+                      </TableRow>
+                    )
                   }
                 >
                   {filteredTransfers
