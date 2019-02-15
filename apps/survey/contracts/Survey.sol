@@ -113,7 +113,7 @@ contract Survey is AragonApp {
     */
     function changeMinAcceptParticipationPct(uint64 _minParticipationPct)
         external
-        authP(MODIFY_PARTICIPATION_ROLE, arr(uint256(_minParticipationPct)))
+        authP(MODIFY_PARTICIPATION_ROLE, arr(uint256(_minParticipationPct), uint256(minParticipationPct)))
         acceptableMinParticipationPct(_minParticipationPct)
     {
         minParticipationPct = _minParticipationPct;
