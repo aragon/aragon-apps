@@ -12,6 +12,8 @@ cache:
     - apps/vault/node_modules
     - apps/voting/node_modules
     - apps/voting/app/node_modules
+    - future-apps/agent/node_modules
+    - future-apps/payroll/node_modules
     - shared/migrations/node_modules
     - shared/minime/node_modules
     - shared/test-helpers/node_modules
@@ -24,12 +26,14 @@ env:
     - INSTALL_FRONTEND=false
   matrix:
     - TASK=lint
+    - TASK=test:agent
     - TASK=test:finance
     - TASK=test:survey
     - TASK=test:token-manager
     - TASK=test:token-manager:app INSTALL_FRONTEND=true
     - TASK=test:vault
     - TASK=test:voting
+    - TASK=coverage:agent
     - TASK=coverage:finance
     - TASK=coverage:survey
     - TASK=coverage:token-manager
@@ -38,7 +42,10 @@ env:
     - TASK=test:shared
 matrix:
   allow_failures:
+    - env: TASK=coverage:agent
     - env: TASK=coverage:finance
+install:
+  - travis_wait 60 npm install
 before_script:
   - npm prune
 script:
