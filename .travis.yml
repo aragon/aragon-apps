@@ -3,6 +3,7 @@ language: node_js
 cache:
   directories:
     - node_modules
+    - apps/agent/node_modules
     - apps/finance/node_modules
     - apps/finance/app/node_modules
     - apps/survey/node_modules
@@ -12,7 +13,6 @@ cache:
     - apps/vault/node_modules
     - apps/voting/node_modules
     - apps/voting/app/node_modules
-    - future-apps/agent/node_modules
     - future-apps/payroll/node_modules
     - shared/migrations/node_modules
     - shared/minime/node_modules
