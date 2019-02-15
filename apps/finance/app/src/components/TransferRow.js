@@ -95,16 +95,16 @@ class TransferRow extends React.PureComponent {
           </Amount>
         </NoWrapCell>
         <NoWrapCell>
-          <ActionsWrapper>
+          <div css="position: relative">
             {network.etherscanBaseUrl && (
               <ContextMenu>
                 <ContextMenuItem onClick={this.handleViewTransaction}>
                   <IconTokens />
-                  <ActionLabel>View Transaction</ActionLabel>
+                  <div css="margin-left: 15px">View Transaction</div>
                 </ContextMenuItem>
               </ContextMenu>
             )}
-          </ActionsWrapper>
+          </div>
         </NoWrapCell>
       </TableRow>
     )
@@ -148,14 +148,6 @@ const TextOverflow = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-`
-
-const ActionsWrapper = styled.div`
-  position: relative;
-`
-
-const ActionLabel = styled.span`
-  margin-left: 15px;
 `
 
 export default provideNetwork(TransferRow)
