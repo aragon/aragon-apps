@@ -8,8 +8,6 @@ import {
   ContextMenuItem,
   IdentityBadge,
   theme,
-  breakpoint,
-  Viewport,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
