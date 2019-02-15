@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import BN from 'BN.js'
 import {
   theme,
   Button,
@@ -13,7 +14,11 @@ import {
   Info,
 } from '@aragon/ui'
 import Creator from '../Creator/Creator'
-import { percentageList, scaleBigNumberValuesSet } from '../../math-utils'
+import {
+  formatNumber,
+  percentageList,
+  scaleBNValuesSet,
+} from '../../math-utils'
 
 class VotingPanel extends React.Component {
   state = {
@@ -76,7 +81,7 @@ class VotingPanel extends React.Component {
   canVote() {
     const { survey } = this.props
     const { distribution } = this.state
-    if (!survey || survey.userBalance.isZero()) {
+    if (!survey || survey.userBalance === 0) {
       return false
     }
     return distribution.reduce((total, v) => total + v, 0) > 0
@@ -100,23 +105,20 @@ class VotingPanel extends React.Component {
     const { app, survey } = this.props
     const { distribution } = this.state
 
-    const optionVotes = scaleBigNumberValuesSet(
+    const optionVotes = scaleBNValuesSet(
       distribution,
-      survey.userBalance
+      new BN(survey.userBalance)
     )
       .map((stake, i) => ({
         id: survey.options[i].optionId,
         stake,
       }))
-      .filter(({ stake }) => stake > 0)
+      .filter(({ stake }) => stake.gt(new BN(0)))
 
     // Transforms [ { id: 'foo', stake: 123 }, { id: 'bar', stake: 456 } ]
     // into [ ['foo', 'bar'], ['123', '456'] ]
     const [ids, stakes] = optionVotes.reduce(
-      ([ids, stakes], { id, stake }) => [
-        [...ids, id],
-        [...stakes, stake.toFixed(0)],
-      ],
+      ([ids, stakes], { id, stake }) => [[...ids, id], [...stakes, stake]],
       [[], []]
     )
 
@@ -124,7 +126,7 @@ class VotingPanel extends React.Component {
       app.voteOptions(
         "${survey.surveyId}",
         [${ids.map(s => `"${s}"`)}],
-        [${stakes.map(s => `"${s}"`)}]
+        [${stakes.map(s => `"${s.toString()}"`)}]
       )
     `)
 
@@ -135,7 +137,7 @@ class VotingPanel extends React.Component {
     const { opened, onClose, survey, tokenSymbol, tokenDecimals } = this.props
     const distributionPairs = this.getDistributionPairs()
     const balance = survey
-      ? survey.userBalance.div(Math.pow(10, tokenDecimals))
+      ? parseInt(survey.userBalance, 10) / Math.pow(10, tokenDecimals)
       : 0
 
     const enableSubmit = this.canVote()
@@ -208,7 +210,7 @@ class VotingPanel extends React.Component {
 
               {balance > 0 ? (
                 <Info.Action>
-                  Voting with your {balance.toFixed(2)} {tokenSymbol}
+                  Voting with your {formatNumber(balance, 2)} {tokenSymbol}
                 </Info.Action>
               ) : (
                 <Info.Action>

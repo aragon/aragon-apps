@@ -1,6 +1,5 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import BigNumber from 'bignumber.js'
 import { isBefore } from 'date-fns'
 import { AppView, BaseStyles, PublicUrl, observe } from '@aragon/ui'
 import { Transition, animated } from 'react-spring'
@@ -109,7 +108,7 @@ class App extends React.Component {
             .first()
             .subscribe(resolve, reject)
         })
-        return { ...survey, userBalance: new BigNumber(userBalance) }
+        return { ...survey, userBalance }
       })
     )
 
