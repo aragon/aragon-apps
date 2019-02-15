@@ -9,6 +9,7 @@ const AppLayout = ({
   title,
   afterTitle,
   smallViewPadding,
+  largeViewPadding,
   onMenuOpen,
   mainButton,
 }) => {
@@ -16,7 +17,7 @@ const AppLayout = ({
     <Viewport>
       {({ below }) => (
         <AppView
-          padding={below('medium') ? smallViewPadding : 30}
+          padding={below('medium') ? smallViewPadding : largeViewPadding}
           appBar={
             <AppBar>
               <AppBarContainer
@@ -59,6 +60,7 @@ const AppLayout = ({
 
 AppLayout.defaultProps = {
   smallViewPadding: 20,
+  largeViewPadding: 30,
 }
 
 AppLayout.propTypes = {
@@ -67,6 +69,7 @@ AppLayout.propTypes = {
   afterTitle: PropTypes.node,
   onMenuOpen: PropTypes.func.isRequired,
   smallViewPadding: PropTypes.number,
+  largeViewPadding: PropTypes.number,
   mainButton: PropTypes.shape({
     icon: PropTypes.node.isRequired,
     label: PropTypes.node.isRequired,
