@@ -19,6 +19,8 @@ library SignatureValidator {
     bytes4 public constant ERC1271_RETURN_VALID_SIGNATURE = 0x20c13b0b;
     uint256 internal constant ERC1271_ISVALIDSIG_MAX_GAS = 250000;
 
+    string private constant ERROR_INVALID_LENGTH_POP_BYTE = "SIGVAL_INVALID_LENGTH_POP_BYTE";
+
     /// @dev Validates that a hash was signed by a specified signer.
     /// @param hash Hash which was signed.
     /// @param signer Address of the signer.
@@ -85,7 +87,7 @@ library SignatureValidator {
 
     function popFirstByte(bytes memory input) private pure returns (bytes memory output) {
         uint256 inputLength = input.length;
-        require(inputLength > 0);
+        require(inputLength > 0, ERROR_INVALID_LENGTH_POP_BYTE);
 
         output = new bytes(inputLength - 1);
 
@@ -133,7 +135,7 @@ library SignatureValidator {
     }
 
     // From: https://github.com/Arachnid/solidity-stringutils/blob/master/src/strings.sol
-    function memcpy(uint dest, uint src, uint len) private pure {
+    function memcpy(uint256 dest, uint256 src, uint256 len) private pure {
         // Copy word-length chunks while possible
         for (; len >= 32; len -= 32) {
             assembly {
