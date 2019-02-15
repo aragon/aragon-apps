@@ -17,7 +17,7 @@ import { formatTokenAmount } from '../lib/utils'
 import IconTokens from './icons/IconTokens'
 import ConfirmMessage from './ConfirmMessage'
 
-class TransferRow extends React.Component {
+class TransferRow extends React.PureComponent {
   state = {
     showCopyTransferMessage: false,
   }
@@ -51,6 +51,7 @@ class TransferRow extends React.Component {
     const {
       network,
       token,
+      smallViewMode,
       transaction: {
         date,
         entity,
@@ -58,7 +59,6 @@ class TransferRow extends React.Component {
         numData: { amount },
         reference,
       },
-      wideMode,
     } = this.props
     const { showCopyTransferMessage } = this.state
 
@@ -71,83 +71,73 @@ class TransferRow extends React.Component {
     )
     const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
 
+    if (smallViewMode) {
+      return (
+        <TableRow>
+          <StyledTableCell>
+            <Grid>
+              <div>
+                <div css="display: flex">
+                  <IdentityBadge networkType={network.type} entity={entity} />
+                </div>
+              </div>
+              <time dateTime={formattedDate} title={formattedDate}>
+                {format(date, 'dd MMM yyyy')}
+              </time>
+              <TextOverflow style={{ marginTop: '5px' }}>
+                {reference}
+              </TextOverflow>
+              <Amount positive={isIncoming} style={{ marginTop: '5px' }}>
+                {formattedAmount} {token.symbol}
+              </Amount>
+            </Grid>
+          </StyledTableCell>
+        </TableRow>
+      )
+    }
+
     return (
-      <Viewport>
-        {({ below }) =>
-          below('medium') ? (
-            <TableRow>
-              <StyledTableCell>
-                <Grid>
-                  <div>
-                    <div css="display: flex">
-                      <IdentityBadge
-                        networkType={network.type}
-                        entity={entity}
-                        shorten
-                      />
-                    </div>
-                  </div>
-                  <time dateTime={formattedDate} title={formattedDate}>
-                    {format(date, 'dd MMM yyyy')}
-                  </time>
-                  <TextOverflow style={{ marginTop: '5px' }}>
-                    {reference}
-                  </TextOverflow>
-                  <Amount positive={isIncoming} style={{ marginTop: '5px' }}>
-                    {formattedAmount} {token.symbol}
-                  </Amount>
-                </Grid>
-              </StyledTableCell>
-            </TableRow>
-          ) : (
-            <TableRow>
-              <NoWrapCell>
-                <time dateTime={formattedDate} title={formattedDate}>
-                  {format(date, 'dd/MM/yy')}
-                </time>
-              </NoWrapCell>
-              <NoWrapCell>
-                <IdentityBadge
-                  networkType={network.type}
-                  entity={entity}
-                  shorten={!wideMode}
-                />
-              </NoWrapCell>
-              <NoWrapCell title={reference} style={{ position: 'relative' }}>
-                <TextOverflow
-                  style={{ position: 'absolute', left: '20px', right: '20px' }}
-                >
-                  {reference}
-                </TextOverflow>
-              </NoWrapCell>
-              <NoWrapCell align="right">
-                <Amount positive={isIncoming}>
-                  {formattedAmount} {token.symbol}
-                </Amount>
-              </NoWrapCell>
-              <NoWrapCell>
-                <ActionsWrapper>
-                  {network.etherscanBaseUrl && (
-                    <ContextMenu>
-                      <ContextMenuItem onClick={this.handleViewTransaction}>
-                        <IconTokens />
-                        <ActionLabel>View Transaction</ActionLabel>
-                      </ContextMenuItem>
-                    </ContextMenu>
-                  )}
-                  {showCopyTransferMessage && (
-                    <ConfirmMessageWrapper>
-                      <ConfirmMessage onDone={this.handleConfirmMessageDone}>
-                        Transaction URL copied to clipboard
-                      </ConfirmMessage>
-                    </ConfirmMessageWrapper>
-                  )}
-                </ActionsWrapper>
-              </NoWrapCell>
-            </TableRow>
-          )
-        }
-      </Viewport>
+      <TableRow>
+        <NoWrapCell>
+          <time dateTime={formattedDate} title={formattedDate}>
+            {format(date, 'dd/MM/yy')}
+          </time>
+        </NoWrapCell>
+        <NoWrapCell>
+          <IdentityBadge networkType={network.type} entity={entity} />
+        </NoWrapCell>
+        <NoWrapCell title={reference} style={{ position: 'relative' }}>
+          <TextOverflow
+            style={{ position: 'absolute', left: '20px', right: '20px' }}
+          >
+            {reference}
+          </TextOverflow>
+        </NoWrapCell>
+        <NoWrapCell align="right">
+          <Amount positive={isIncoming}>
+            {formattedAmount} {token.symbol}
+          </Amount>
+        </NoWrapCell>
+        <NoWrapCell>
+          <ActionsWrapper>
+            {network.etherscanBaseUrl && (
+              <ContextMenu>
+                <ContextMenuItem onClick={this.handleViewTransaction}>
+                  <IconTokens />
+                  <ActionLabel>View Transaction</ActionLabel>
+                </ContextMenuItem>
+              </ContextMenu>
+            )}
+            {showCopyTransferMessage && (
+              <ConfirmMessageWrapper>
+                <ConfirmMessage onDone={this.handleConfirmMessageDone}>
+                  Transaction URL copied to clipboard
+                </ConfirmMessage>
+              </ConfirmMessageWrapper>
+            )}
+          </ActionsWrapper>
+        </NoWrapCell>
+      </TableRow>
     )
   }
 }
