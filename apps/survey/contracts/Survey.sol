@@ -128,13 +128,14 @@ contract Survey is AragonApp {
     * @return surveyId id for newly created survey
     */
     function newSurvey(string _metadata, uint256 _options) external auth(CREATE_SURVEYS_ROLE) returns (uint256 surveyId) {
-        uint256 votingPower = token.totalSupplyAt(survey.snapshotBlock);
+        uint64 snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
+        uint256 votingPower = token.totalSupplyAt(snapshotBlock);
         require(votingPower > 0, ERROR_NO_VOTING_POWER);
 
         surveyId = surveysLength++;
         SurveyStruct storage survey = surveys[surveyId];
         survey.startDate = getTimestamp64();
-        survey.snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
+        survey.snapshotBlock = snapshotBlock; // avoid double voting in this very block
         survey.minParticipationPct = minParticipationPct;
         survey.options = _options;
         survey.votingPower = votingPower;
