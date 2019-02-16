@@ -19,6 +19,7 @@ import {
   percentageList,
   scaleBNValuesSet,
 } from '../../math-utils'
+import provideNetwork from '../../provide-network'
 
 class VotingPanel extends React.Component {
   state = {
@@ -233,7 +234,7 @@ class VotingPanel extends React.Component {
   }
 
   render() {
-    const { opened, onClose, tokenSymbol, tokenDecimals } = this.props
+    const { network, opened, onClose, tokenSymbol, tokenDecimals } = this.props
     const { survey, userBalance, userCanVote } = this.state
     const distributionPairs = this.getDistributionPairs()
     const balance = userBalance
@@ -283,7 +284,10 @@ class VotingPanel extends React.Component {
                   <Label>Created By</Label>
                 </h2>
                 <Creator>
-                  <IdentityBadge entity={survey.data.creator} />
+                  <IdentityBadge
+                    entity={survey.data.creator}
+                    networkType={network.type}
+                  />
                 </Creator>
               </Part>
 
@@ -481,4 +485,4 @@ const Footer = styled.div`
   margin-top: 80px;
 `
 
-export default VotingPanel
+export default provideNetwork(VotingPanel)

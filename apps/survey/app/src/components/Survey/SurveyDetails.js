@@ -10,6 +10,7 @@ import {
 } from '@aragon/ui'
 import { Spring, Trail, animated } from 'react-spring'
 import color from 'onecolor'
+import provideNetwork from '../../provide-network'
 import SurveyCard from '../SurveyCard/SurveyCard'
 import SurveyOptions from '../SurveyOptions/SurveyOptions'
 
@@ -21,7 +22,7 @@ class SurveyDetails extends React.Component {
     onOpenVotingPanel: () => {},
   }
   render() {
-    const { survey } = this.props
+    const { network, survey } = this.props
     return (
       <Card>
         <Spring
@@ -103,7 +104,10 @@ class SurveyDetails extends React.Component {
                   <animated.section key="creator" style={{ opacity: progress }}>
                     <SectionTitle>Created By</SectionTitle>
                     <Creator>
-                      <IdentityBadge entity={survey.data.creator} />
+                      <IdentityBadge
+                        entity={survey.data.creator}
+                        networType={network.type}
+                      />
                     </Creator>
                   </animated.section>
                 ),
@@ -190,4 +194,4 @@ const Cols = styled.div`
   }
 `
 
-export default SurveyDetails
+export default provideNetwork(SurveyDetails)
