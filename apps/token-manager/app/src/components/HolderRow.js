@@ -12,6 +12,7 @@ import {
   IdentityBadge,
   breakpoint,
 } from '@aragon/ui'
+import provideNetwork from '../provide-network'
 import { formatBalance } from '../utils'
 import { WindowSize } from '../WindowSizeProvider'
 
@@ -38,6 +39,7 @@ class HolderRow extends React.Component {
       groupMode,
       isCurrentUser,
       maxAccountTokens,
+      network,
       shorten,
       tokenDecimalsBase,
     } = this.props
@@ -49,7 +51,11 @@ class HolderRow extends React.Component {
       <TableRow>
         <StyledTableCell>
           <Owner>
-            <IdentityBadge entity={address} shorten={shorten} />
+            <IdentityBadge
+              entity={address}
+              networkType={network.type}
+              shorten={shorten}
+            />
             {isCurrentUser && (
               <Badge.Identity
                 style={{ fontVariant: 'small-caps' }}
@@ -136,7 +142,7 @@ const IconWrapper = styled.span`
   color: ${theme.textSecondary};
 `
 
-export default props => (
+export default provideNetwork(props => (
   <WindowSize>
     {({ width, fromMedium }) => (
       <HolderRow
@@ -145,4 +151,4 @@ export default props => (
       />
     )}
   </WindowSize>
-)
+))

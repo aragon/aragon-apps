@@ -146,7 +146,7 @@ class VotePanelContent extends React.Component {
   }
   render() {
     const {
-      network: { etherscanBaseUrl },
+      network,
       vote,
       ready,
       shortAddresses,
@@ -236,7 +236,11 @@ class VotePanelContent extends React.Component {
             <Label>Created By</Label>
           </h2>
           <Creator>
-            <IdentityBadge entity={creator} shorten={shortAddresses} />
+            <IdentityBadge
+              entity={creator}
+              networkType={network.type}
+              shorten={shortAddresses}
+            />
           </Creator>
         </Part>
         <SidePanelSeparator />
