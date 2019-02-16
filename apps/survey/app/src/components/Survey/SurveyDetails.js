@@ -1,11 +1,17 @@
 import React from 'react'
 import styled from 'styled-components'
-import { theme, Countdown, Button, unselectable, SafeLink } from '@aragon/ui'
+import {
+  Countdown,
+  Button,
+  IdentityBadge,
+  SafeLink,
+  unselectable,
+  theme,
+} from '@aragon/ui'
 import { Spring, Trail, animated } from 'react-spring'
 import color from 'onecolor'
 import SurveyCard from '../SurveyCard/SurveyCard'
 import SurveyOptions from '../SurveyOptions/SurveyOptions'
-import Creator from '../Creator/Creator'
 
 const ANIM_DELAY = 300
 
@@ -96,7 +102,9 @@ class SurveyDetails extends React.Component {
                 ({ progress }) => (
                   <animated.section key="creator" style={{ opacity: progress }}>
                     <SectionTitle>Created By</SectionTitle>
-                    <Creator address={survey.data.creator} />
+                    <Creator>
+                      <IdentityBadge entity={survey.data.creator} />
+                    </Creator>
                   </animated.section>
                 ),
                 ({ progress }) => (
@@ -148,6 +156,11 @@ const SectionTitle = styled.h1`
   font-weight: 600;
   font-size: 16px;
   ${unselectable};
+`
+
+const Creator = styled.div`
+  display: flex;
+  align-items: center;
 `
 
 const VoteButtonWrapper = styled.div`

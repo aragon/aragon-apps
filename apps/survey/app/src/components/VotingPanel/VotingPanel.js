@@ -5,15 +5,15 @@ import {
   theme,
   Button,
   Countdown,
+  IdentityBadge,
+  Info,
   RadioButton,
   SidePanel,
   SidePanelSeparator,
   Slider,
   Text,
   TextInput,
-  Info,
 } from '@aragon/ui'
-import Creator from '../Creator/Creator'
 import {
   formatNumber,
   percentageList,
@@ -282,7 +282,9 @@ class VotingPanel extends React.Component {
                 <h2>
                   <Label>Created By</Label>
                 </h2>
-                <Creator address={survey.data.creator} />
+                <Creator>
+                  <IdentityBadge entity={survey.data.creator} />
+                </Creator>
               </Part>
 
               <SidePanelSeparator />
@@ -404,6 +406,11 @@ const Part = styled.div`
       margin-top: 0;
     }
   }
+`
+
+const Creator = styled.div`
+  display: flex;
+  align-items: center;
 `
 
 const OptionRow = styled.div`
