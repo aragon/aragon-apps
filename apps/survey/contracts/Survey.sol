@@ -288,11 +288,12 @@ contract Survey is AragonApp {
         surveyExists(_surveyId)
         returns (uint256[] options, uint256[] stakes)
     {
-        if (surveys[_surveyId].votes[_voter].optionsCastedLength == 0) {
+        MultiOptionVote storage vote = surveys[_surveyId].votes[_voter];
+
+        if (vote.optionsCastedLength == 0) {
             return (new uint256[](0), new uint256[](0));
         }
 
-        MultiOptionVote storage vote = surveys[_surveyId].votes[_voter];
         options = new uint256[](vote.optionsCastedLength + 1);
         stakes = new uint256[](vote.optionsCastedLength + 1);
         for (uint256 i = 0; i <= vote.optionsCastedLength; i++) {
