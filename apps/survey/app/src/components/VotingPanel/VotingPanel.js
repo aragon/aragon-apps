@@ -22,18 +22,45 @@ import {
 
 class VotingPanel extends React.Component {
   state = {
-    surveyId: null,
     distribution: [],
+    loadingCanVote: true,
+    survey: null,
+    tokenContract: null,
+    user: null,
+    userCanVote: false,
+    userBalance: null,
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (!props.survey || props.survey.surveyId === state.surveyId) {
+    const userUpdate = props.user !== state.user
+    const surveyUpdate =
+      props.survey &&
+      (!state.survey || props.survey.surveyId !== state.survey.surveyId)
+    const contractUpdate = props.tokenContract !== state.tokenContract
+
+    if (!userUpdate && !surveyUpdate && !contractUpdate) {
       return null
     }
-    return {
-      surveyId: props.survey.surveyId,
-      distribution: [...new Array(props.survey.options.length)].fill(0),
+
+    const stateUpdate = {
+      survey: props.survey,
+      tokenContract: props.tokenContract,
+      user: props.user,
     }
+    if (userUpdate || surveyUpdate) {
+      stateUpdate.loadingCanVote = true
+      stateUpdate.userBalance = null
+    }
+    if (surveyUpdate) {
+      stateUpdate.distribution = [
+        ...new Array(props.survey.options.length),
+      ].fill(0)
+    }
+    if (contractUpdate) {
+      stateUpdate.userBalance = null
+    }
+
+    return stateUpdate
   }
 
   // Update the distribution by changing one of the values
@@ -68,6 +95,29 @@ class VotingPanel extends React.Component {
     )
   }
 
+  componentDidMount() {
+    const { survey, tokenContract, user } = this.state
+    this.loadUserBalance(user, survey, tokenContract)
+    this.loadUserCanVote(user, survey)
+  }
+
+  componentDidUpdate() {
+    const {
+      loadingCanVote,
+      survey,
+      tokenContract,
+      user,
+      userBalance,
+    } = this.state
+
+    if (loadingCanVote) {
+      this.loadUserCanVote(user, survey)
+    }
+    if (userBalance === null) {
+      this.loadUserBalance(user, survey, tokenContract)
+    }
+  }
+
   getDistributionPairs() {
     const { distribution } = this.state
     const percentages = percentageList(distribution)
@@ -78,17 +128,13 @@ class VotingPanel extends React.Component {
     }))
   }
 
-  canVote() {
-    const { survey } = this.props
-    const { distribution } = this.state
-    if (!survey || survey.userBalance === 0) {
-      return false
-    }
-    return distribution.reduce((total, v) => total + v, 0) > 0
+  canSubmitVote() {
+    const { distribution, userCanVote } = this.state
+    return userCanVote && distribution.reduce((total, v) => total + v, 0) > 0
   }
 
   handleOptionUpdate = (id, value) => {
-    const { survey } = this.props
+    const { survey } = this.state
     const index = survey.options.findIndex(o => o.optionId === id)
     this.setState({
       distribution: VotingPanel.updateDistributionValue(
@@ -102,13 +148,10 @@ class VotingPanel extends React.Component {
   handleSubmit = event => {
     event.preventDefault()
 
-    const { app, survey } = this.props
-    const { distribution } = this.state
+    const { app } = this.props
+    const { distribution, survey, userBalance } = this.state
 
-    const optionVotes = scaleBNValuesSet(
-      distribution,
-      new BN(survey.userBalance)
-    )
+    const optionVotes = scaleBNValuesSet(distribution, new BN(userBalance))
       .map((stake, i) => ({
         id: survey.options[i].optionId,
         stake,
@@ -133,14 +176,58 @@ class VotingPanel extends React.Component {
     app.voteOptions(survey.surveyId, ids, stakes)
   }
 
+  loadUserBalance = async (user, survey, tokenContract) => {
+    const { tokenDecimals } = this.props
+    if (survey && tokenContract && user) {
+      try {
+        const balance = await tokenContract
+          .balanceOfAt(user, survey.data.snapshotBlock)
+          .toPromise()
+        const adjustedBalance = Math.floor(
+          parseInt(balance, 10) / Math.pow(10, tokenDecimals)
+        )
+        this.setState({ userBalance: adjustedBalance })
+      } catch (err) {
+        this.setState({ userBalance: 0 })
+      }
+    }
+  }
+
+  loadUserCanVote = async (user, survey) => {
+    const { app } = this.props
+
+    if (!survey) {
+      return
+    }
+
+    if (!user) {
+      // Note: if the account is not present, we assume the account is not connected.
+      this.setState({
+        loadingCanVote: false,
+        userCanVote: Boolean(survey) && survey.data.open,
+      })
+    }
+
+    try {
+      // Get if user can vote
+      const userCanVote = await app
+        .call('canVote', survey.surveyId, user)
+        .toPromise()
+      this.setState({ userCanVote, loadingCanVote: false })
+    } catch (err) {
+      this.setState({ loadingCanVote: false, userCanVote: false })
+    }
+  }
+
   render() {
-    const { opened, onClose, survey, tokenSymbol, tokenDecimals } = this.props
+    const { opened, onClose, tokenSymbol, tokenDecimals } = this.props
+    const { survey, userBalance, userCanVote } = this.state
     const distributionPairs = this.getDistributionPairs()
-    const balance = survey
-      ? parseInt(survey.userBalance, 10) / Math.pow(10, tokenDecimals)
+    const balance = userBalance
+      ? parseInt(userBalance, 10) / Math.pow(10, tokenDecimals)
       : 0
 
-    const enableSubmit = this.canVote()
+    const enableSubmit = this.canSubmitVote()
 
     return (
       <SidePanel
@@ -208,16 +295,33 @@ class VotingPanel extends React.Component {
                 })}
               </Part>
 
-              {balance > 0 ? (
-                <Info.Action>
-                  Voting with your {formatNumber(balance, 2)} {tokenSymbol}
-                </Info.Action>
-              ) : (
-                <Info.Action>
-                  Your account needed to have some {tokenSymbol} by the time
-                  this survey was created in order to cast a valid vote.
-                </Info.Action>
-              )}
+              {(() => {
+                if (survey.userAccountVoted) {
+                  return (
+                    <Info.Action>
+                      You have already voted with your{' '}
+                      {formatNumber(balance, 2)} {tokenSymbol}, but you can
+                      still redo your vote until the survey closes.
+                    </Info.Action>
+                  )
+                }
+                if (userCanVote && balance) {
+                  return (
+                    <Info.Action>
+                      Voting with your {formatNumber(balance, 2)} {tokenSymbol}
+                    </Info.Action>
+                  )
+                }
+                if (userCanVote) {
+                  return <Info.Action>You may be able to vote</Info.Action>
+                }
+                return (
+                  <Info.Action>
+                    Your account needed to have some {tokenSymbol} by the time
+                    this survey was created in order to cast a valid vote.
+                  </Info.Action>
+                )
+              })()}
 
               <Footer>
                 <Button
