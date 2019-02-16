@@ -136,8 +136,10 @@ class App extends React.Component {
                       // Voter has voted if the number of options (first array in result) is
                       // non-empty
                       resolve([
-                        survey.Id,
-                        Array.isArray(result) && result[0].length > 0,
+                        survey.surveyId,
+                        result &&
+                          Array.isArray(result.options) &&
+                          result.options.length > 0,
                       ]),
                     reject
                   )
