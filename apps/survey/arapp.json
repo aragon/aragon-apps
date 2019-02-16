@@ -36,8 +36,8 @@
       "name": "Modify quorum",
       "id": "MODIFY_PARTICIPATION_ROLE",
       "params": [
-        "New quorum",
-        "Current quorum"
+        "New participation rate",
+        "Current participation rate"
       ]
     }
   ],
