@@ -123,10 +123,7 @@ async function createStore(token, tokenSettings) {
             // We have to manually calculate the option power left when a vote is reset
             returnValues = {
               ...returnValues,
-              // TODO: use BN.js instead
-              optionPower: String(
-                returnValues.optionPower - returnValues.previousStake
-              ),
+              optionPower: returnValues.optionPower,
             }
 
             nextState = await processVote(
