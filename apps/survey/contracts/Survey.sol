@@ -261,24 +261,24 @@ contract Survey is AragonApp {
         view
         surveyExists(_surveyId)
         returns (
-            bool _open,
-            uint64 _startDate,
-            uint64 _snapshotBlock,
-            uint64 _minParticipationPct,
-            uint256 _votingPower,
-            uint256 _participation,
-            uint256 _options
+            bool open,
+            uint64 startDate,
+            uint64 snapshotBlock,
+            uint64 minParticipationPct,
+            uint256 votingPower,
+            uint256 participation,
+            uint256 options
         )
     {
         SurveyStruct storage survey = surveys[_surveyId];
 
-        _open = _isSurveyOpen(survey);
-        _startDate = survey.startDate;
-        _snapshotBlock = survey.snapshotBlock;
-        _minParticipationPct = survey.minParticipationPct;
-        _votingPower = survey.votingPower;
-        _participation = survey.participation;
-        _options = survey.options;
+        open = _isSurveyOpen(survey);
+        startDate = survey.startDate;
+        snapshotBlock = survey.snapshotBlock;
+        minParticipationPct = survey.minParticipationPct;
+        votingPower = survey.votingPower;
+        participation = survey.participation;
+        options = survey.options;
     }
 
     /* solium-disable-next-line function-order */
