@@ -33,7 +33,7 @@
       "params": []
     },
     {
-      "name": "Modify quorum",
+      "name": "Modify minimum participation rate",
       "id": "MODIFY_PARTICIPATION_ROLE",
       "params": [
         "New participation rate",
