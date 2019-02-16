@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { isBefore } from 'date-fns'
-import { AppView, BaseStyles, PublicUrl, observe } from '@aragon/ui'
+import { AppView, Main, observe } from '@aragon/ui'
 import { Transition, animated } from 'react-spring'
 import tokenBalanceOfAtAbi from './abi/token-balanceOfAt.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -112,6 +112,9 @@ class App extends React.Component {
     }
     this._cardRefs.set(id, element)
   }
+  handleMenuPanelOpen = () => {
+    this.props.sendMessageToWrapper('menuPanel', true)
+  }
   async loadUserAccountVotes(userAccount, surveys) {
     const { app } = this.props
 
@@ -167,53 +170,53 @@ class App extends React.Component {
     )
 
     return (
-      <PublicUrl.Provider url="./aragon-ui/">
-        <BaseStyles />
-        <AppView
-          appBar={
-            <AppBar
-              view={openedSurvey ? 'survey' : 'surveys'}
-              onBack={this.handleCloseSurveyDetails}
-              onOpenNewSurveyPanel={this.handleOpenNewSurveyPanel}
-              tokenSymbol={tokenSymbol}
-              tokenDecimals={tokenDecimals}
-            />
-          }
-        >
-          <Transition
-            native
-            from={{ showProgress: 0 }}
-            enter={{ showProgress: 1 }}
-            leave={{ showProgress: 0 }}
-            surveys={preparedSurveys}
-            onCardRef={this.handleCardRef}
-            onOpenVotingPanel={this.handleOpenVotingPanel}
-            onCloseVotingPanel={this.handleCloseVotingPanel}
-            onOpenSurveyDetails={this.handleOpenSurveyDetails}
+      <div css="min-width: 320px">
+        <Main>
+          <AppView
+            appBar={
+              <AppBar
+                view={openedSurvey ? 'survey' : 'surveys'}
+                onBack={this.handleCloseSurveyDetails}
+                onOpenNewSurveyPanel={this.handleOpenNewSurveyPanel}
+                tokenSymbol={tokenSymbol}
+              />
+            }
           >
-            {!openedSurvey && SurveysWrapper}
-          </Transition>
-          <Survey
-            onOpenVotingPanel={this.handleOpenVotingPanel}
-            survey={openedSurvey}
-            transitionFrom={openedSurveyRect}
+            <Transition
+              native
+              from={{ showProgress: 0 }}
+              enter={{ showProgress: 1 }}
+              leave={{ showProgress: 0 }}
+              surveys={preparedSurveys}
+              onCardRef={this.handleCardRef}
+              onOpenVotingPanel={this.handleOpenVotingPanel}
+              onCloseVotingPanel={this.handleCloseVotingPanel}
+              onOpenSurveyDetails={this.handleOpenSurveyDetails}
+            >
+              {!openedSurvey && SurveysWrapper}
+            </Transition>
+            <Survey
+              onOpenVotingPanel={this.handleOpenVotingPanel}
+              survey={openedSurvey}
+              transitionFrom={openedSurveyRect}
+            />
+          </AppView>
+          <NewSurveyPanel
+            onClose={this.handlePanelClose}
+            opened={newSurveyPanelOpened}
           />
-        </AppView>
-        <NewSurveyPanel
-          onClose={this.handlePanelClose}
-          opened={newSurveyPanelOpened}
-        />
-        <VotingPanel
-          app={app}
-          onClose={this.handlePanelClose}
-          opened={votingPanelOpened}
-          survey={votingPanelSurvey}
-          tokenContract={tokenContract}
-          tokenSymbol={tokenSymbol}
-          tokenDecimals={tokenDecimals}
-          user={userAccount}
-        />
-      </PublicUrl.Provider>
+          <VotingPanel
+            app={app}
+            onClose={this.handlePanelClose}
+            opened={votingPanelOpened}
+            survey={votingPanelSurvey}
+            tokenContract={tokenContract}
+            tokenSymbol={tokenSymbol}
+            tokenDecimals={tokenDecimals}
+            user={userAccount}
+          />
+        </Main>
+      </div>
     )
   }
 }
