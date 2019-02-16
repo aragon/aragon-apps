@@ -1,34 +1,67 @@
 import React from 'react'
 import styled from 'styled-components'
+import BN from 'BN.js'
 import {
   theme,
   Button,
   Countdown,
+  IdentityBadge,
+  Info,
   RadioButton,
   SidePanel,
   SidePanelSeparator,
   Slider,
   Text,
   TextInput,
-  Info,
 } from '@aragon/ui'
-import Creator from '../Creator/Creator'
-import { percentageList, scaleBigNumberValuesSet } from '../../math-utils'
+import {
+  formatNumber,
+  percentageList,
+  scaleBNValuesSet,
+} from '../../math-utils'
+import provideNetwork from '../../provide-network'
 
 class VotingPanel extends React.Component {
   state = {
-    surveyId: null,
     distribution: [],
+    loadingCanVote: true,
+    survey: null,
+    tokenContract: null,
+    user: null,
+    userCanVote: false,
+    userBalance: null,
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (!props.survey || props.survey.surveyId === state.surveyId) {
+    const userUpdate = props.user !== state.user
+    const surveyUpdate =
+      props.survey &&
+      (!state.survey || props.survey.surveyId !== state.survey.surveyId)
+    const contractUpdate = props.tokenContract !== state.tokenContract
+
+    if (!userUpdate && !surveyUpdate && !contractUpdate) {
       return null
     }
-    return {
-      surveyId: props.survey.surveyId,
-      distribution: [...new Array(props.survey.options.length)].fill(0),
+
+    const stateUpdate = {
+      survey: props.survey,
+      tokenContract: props.tokenContract,
+      user: props.user,
     }
+    if (userUpdate || surveyUpdate) {
+      stateUpdate.loadingCanVote = true
+      stateUpdate.userBalance = null
+    }
+    if (surveyUpdate) {
+      stateUpdate.distribution = [
+        ...new Array(props.survey.options.length),
+      ].fill(0)
+    }
+    if (contractUpdate) {
+      stateUpdate.userBalance = null
+    }
+
+    return stateUpdate
   }
 
   // Update the distribution by changing one of the values
@@ -46,9 +79,8 @@ class VotingPanel extends React.Component {
 
     // Distribute the remaining between the others
     if (othersTotal === 0) {
-      return distribution.map(
-        (_, i) =>
-          i === index ? value : (1 - value) / (distribution.length - 1)
+      return distribution.map((_, i) =>
+        i === index ? value : (1 - value) / (distribution.length - 1)
       )
     }
 
@@ -59,9 +91,32 @@ class VotingPanel extends React.Component {
         : prevValue - ((othersTotal + value - 1) * prevValue) / othersTotal
     }
 
-    return distribution.map(
-      (prevValue, i) => (i === index ? value : updateOtherValue(prevValue))
+    return distribution.map((prevValue, i) =>
+      i === index ? value : updateOtherValue(prevValue)
     )
+  }
+
+  componentDidMount() {
+    const { survey, tokenContract, user } = this.state
+    this.loadUserBalance(user, survey, tokenContract)
+    this.loadUserCanVote(user, survey)
+  }
+
+  componentDidUpdate() {
+    const {
+      loadingCanVote,
+      survey,
+      tokenContract,
+      user,
+      userBalance,
+    } = this.state
+
+    if (loadingCanVote) {
+      this.loadUserCanVote(user, survey)
+    }
+    if (userBalance === null) {
+      this.loadUserBalance(user, survey, tokenContract)
+    }
   }
 
   getDistributionPairs() {
@@ -74,17 +129,13 @@ class VotingPanel extends React.Component {
     }))
   }
 
-  canVote() {
-    const { survey } = this.props
-    const { distribution } = this.state
-    if (!survey || survey.userBalance.isZero()) {
-      return false
-    }
-    return distribution.reduce((total, v) => total + v, 0) > 0
+  canSubmitVote() {
+    const { distribution, userCanVote } = this.state
+    return userCanVote && distribution.reduce((total, v) => total + v, 0) > 0
   }
 
   handleOptionUpdate = (id, value) => {
-    const { survey } = this.props
+    const { survey } = this.state
     const index = survey.options.findIndex(o => o.optionId === id)
     this.setState({
       distribution: VotingPanel.updateDistributionValue(
@@ -98,26 +149,24 @@ class VotingPanel extends React.Component {
   handleSubmit = event => {
     event.preventDefault()
 
-    const { app, survey } = this.props
-    const { distribution } = this.state
+    const { app, tokenDecimals } = this.props
+    const { distribution, survey, userBalance } = this.state
 
-    const optionVotes = scaleBigNumberValuesSet(
-      distribution,
-      survey.userBalance
-    )
+    const optionVotes = scaleBNValuesSet(distribution, new BN(userBalance))
       .map((stake, i) => ({
         id: survey.options[i].optionId,
         stake,
       }))
-      .filter(({ stake }) => stake > 0)
+      .filter(({ stake }) => stake.gt(new BN(0)))
+      .map(({ stake, ...option }) => ({
+        ...option,
+        stake: stake.mul(new BN(10).pow(new BN(tokenDecimals))).toString(),
+      }))
 
     // Transforms [ { id: 'foo', stake: 123 }, { id: 'bar', stake: 456 } ]
     // into [ ['foo', 'bar'], ['123', '456'] ]
     const [ids, stakes] = optionVotes.reduce(
-      ([ids, stakes], { id, stake }) => [
-        [...ids, id],
-        [...stakes, stake.toFixed(0)],
-      ],
+      ([ids, stakes], { id, stake }) => [[...ids, id], [...stakes, stake]],
       [[], []]
     )
 
@@ -125,21 +174,75 @@ class VotingPanel extends React.Component {
       app.voteOptions(
         "${survey.surveyId}",
         [${ids.map(s => `"${s}"`)}],
-        [${stakes.map(s => `"${s}"`)}]
+        [${stakes.map(s => `"${s.toString()}"`)}]
       )
     `)
+
+    // Detect if only one option is being voted on
+    if (stakes.filter(stake => stake > 0).length === 1) {
+      const singleOptionIndex = stakes.findIndex(stake => stake > 0)
+      if (singleOptionIndex !== -1) {
+        app.voteOption(
+          survey.surveyId,
+          ids[singleOptionIndex],
+          stakes[singleOptionIndex]
+        )
+        return
+      }
+    }
 
     app.voteOptions(survey.surveyId, ids, stakes)
   }
 
-  render() {
-    const { opened, onClose, survey, tokenSymbol, tokenDecimals } = this.props
-    const distributionPairs = this.getDistributionPairs()
-    const balance = survey
-      ? survey.userBalance.div(Math.pow(10, tokenDecimals))
-      : 0
+  loadUserBalance = async (user, survey, tokenContract) => {
+    const { tokenDecimals } = this.props
+    if (survey && tokenContract && user) {
+      try {
+        const balance = await tokenContract
+          .balanceOfAt(user, survey.data.snapshotBlock)
+          .toPromise()
+        const adjustedBalance = Math.floor(
+          parseInt(balance, 10) / Math.pow(10, tokenDecimals)
+        )
+        this.setState({ userBalance: adjustedBalance })
+      } catch (err) {
+        this.setState({ userBalance: 0 })
+      }
+    }
+  }
 
-    const enableSubmit = this.canVote()
+  loadUserCanVote = async (user, survey) => {
+    const { app } = this.props
+
+    if (!survey) {
+      return
+    }
+
+    if (!user) {
+      // Note: if the account is not present, we assume the account is not connected.
+      this.setState({
+        loadingCanVote: false,
+        userCanVote: Boolean(survey) && survey.data.open,
+      })
+    }
+
+    try {
+      // Get if user can vote
+      const userCanVote = await app
+        .call('canVote', survey.surveyId, user)
+        .toPromise()
+      this.setState({ userCanVote, loadingCanVote: false })
+    } catch (err) {
+      this.setState({ loadingCanVote: false, userCanVote: false })
+    }
+  }
+
+  render() {
+    const { network, opened, onClose, tokenSymbol } = this.props
+    const { survey, userBalance, userCanVote } = this.state
+    const distributionPairs = this.getDistributionPairs()
+
+    const enableSubmit = this.canSubmitVote()
 
     return (
       <SidePanel
@@ -181,7 +284,12 @@ class VotingPanel extends React.Component {
                 <h2>
                   <Label>Created By</Label>
                 </h2>
-                <Creator address={survey.data.creator} />
+                <Creator>
+                  <IdentityBadge
+                    entity={survey.data.creator}
+                    networkType={network.type}
+                  />
+                </Creator>
               </Part>
 
               <SidePanelSeparator />
@@ -207,16 +315,34 @@ class VotingPanel extends React.Component {
                 })}
               </Part>
 
-              {balance > 0 ? (
-                <Info.Action>
-                  Voting with your {balance.toFixed(2)} {tokenSymbol}
-                </Info.Action>
-              ) : (
-                <Info.Action>
-                  Your account needed to have some {tokenSymbol} by the time
-                  this survey was created in order to cast a valid vote.
-                </Info.Action>
-              )}
+              {(() => {
+                if (survey.userAccountVoted) {
+                  return (
+                    <Info.Action>
+                      You have already voted with your{' '}
+                      {formatNumber(userBalance, 2)} {tokenSymbol}, but you can
+                      still redo your vote until the survey closes.
+                    </Info.Action>
+                  )
+                }
+                if (userCanVote && userBalance) {
+                  return (
+                    <Info.Action>
+                      Voting with your {formatNumber(userBalance, 2)}{' '}
+                      {tokenSymbol}
+                    </Info.Action>
+                  )
+                }
+                if (userCanVote) {
+                  return <Info.Action>You may be able to vote</Info.Action>
+                }
+                return (
+                  <Info.Action>
+                    This account cannot cast a vote because it did not hold any{' '}
+                    {tokenSymbol} at the time this survey was created.
+                  </Info.Action>
+                )
+              })()}
 
               <Footer>
                 <Button
@@ -288,6 +414,11 @@ const Part = styled.div`
   }
 `
 
+const Creator = styled.div`
+  display: flex;
+  align-items: center;
+`
+
 const OptionRow = styled.div`
   display: flex;
   align-items: center;
@@ -356,4 +487,4 @@ const Footer = styled.div`
   margin-top: 80px;
 `
 
-export default VotingPanel
+export default provideNetwork(VotingPanel)

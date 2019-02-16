@@ -227,7 +227,7 @@ async function processVote(
     return {
       ...survey,
       data: {
-        ...survey.data,
+        ...data,
         ...newData,
       },
       optionsHistory: await updateHistoryForOption(
