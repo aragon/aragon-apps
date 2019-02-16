@@ -238,12 +238,9 @@ class VotingPanel extends React.Component {
   }
 
   render() {
-    const { network, opened, onClose, tokenSymbol, tokenDecimals } = this.props
+    const { network, opened, onClose, tokenSymbol } = this.props
     const { survey, userBalance, userCanVote } = this.state
     const distributionPairs = this.getDistributionPairs()
-    const balance = userBalance
-      ? parseInt(userBalance, 10) / Math.pow(10, tokenDecimals)
-      : 0
 
     const enableSubmit = this.canSubmitVote()
 
@@ -323,15 +320,16 @@ class VotingPanel extends React.Component {
                   return (
                     <Info.Action>
                       You have already voted with your{' '}
-                      {formatNumber(balance, 2)} {tokenSymbol}, but you can
+                      {formatNumber(userBalance, 2)} {tokenSymbol}, but you can
                       still redo your vote until the survey closes.
                     </Info.Action>
                   )
                 }
-                if (userCanVote && balance) {
+                if (userCanVote && userBalance) {
                   return (
                     <Info.Action>
-                      Voting with your {formatNumber(balance, 2)} {tokenSymbol}
+                      Voting with your {formatNumber(userBalance, 2)}{' '}
+                      {tokenSymbol}
                     </Info.Action>
                   )
                 }
@@ -340,8 +338,8 @@ class VotingPanel extends React.Component {
                 }
                 return (
                   <Info.Action>
-                    Your account needed to have some {tokenSymbol} by the time
-                    this survey was created in order to cast a valid vote.
+                    This account cannot cast a vote because it did not hold any{' '}
+                    {tokenSymbol} at the time this survey was created.
                   </Info.Action>
                 )
               })()}
