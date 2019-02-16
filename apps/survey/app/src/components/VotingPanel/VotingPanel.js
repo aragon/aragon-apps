@@ -173,6 +173,19 @@ class VotingPanel extends React.Component {
       )
     `)
 
+    // Detect if only one option is being voted on
+    if (stakes.filter(stake => !stake.isZero()).length === 1) {
+      const singleOptionIndex = stakes.findIndex(stake => !stake.isZero())
+      if (singleOptionIndex !== -1) {
+        app.voteOption(
+          survey.surveyId,
+          ids[singleOptionIndex],
+          stakes[singleOptionIndex]
+        )
+        return
+      }
+    }
+
     app.voteOptions(survey.surveyId, ids, stakes)
   }
 
