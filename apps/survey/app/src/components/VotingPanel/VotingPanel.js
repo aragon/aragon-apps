@@ -149,7 +149,7 @@ class VotingPanel extends React.Component {
   handleSubmit = event => {
     event.preventDefault()
 
-    const { app } = this.props
+    const { app, tokenDecimals } = this.props
     const { distribution, survey, userBalance } = this.state
 
     const optionVotes = scaleBNValuesSet(distribution, new BN(userBalance))
@@ -158,6 +158,10 @@ class VotingPanel extends React.Component {
         stake,
       }))
       .filter(({ stake }) => stake.gt(new BN(0)))
+      .map(({ stake, ...option }) => ({
+        ...option,
+        stake: stake.mul(new BN(10).pow(new BN(tokenDecimals))).toString(),
+      }))
 
     // Transforms [ { id: 'foo', stake: 123 }, { id: 'bar', stake: 456 } ]
     // into [ ['foo', 'bar'], ['123', '456'] ]
@@ -175,8 +179,8 @@ class VotingPanel extends React.Component {
     `)
 
     // Detect if only one option is being voted on
-    if (stakes.filter(stake => !stake.isZero()).length === 1) {
-      const singleOptionIndex = stakes.findIndex(stake => !stake.isZero())
+    if (stakes.filter(stake => stake > 0).length === 1) {
+      const singleOptionIndex = stakes.findIndex(stake => stake > 0)
       if (singleOptionIndex !== -1) {
         app.voteOption(
           survey.surveyId,
