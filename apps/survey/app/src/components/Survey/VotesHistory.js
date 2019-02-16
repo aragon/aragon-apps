@@ -103,19 +103,17 @@ class VotesHistory extends React.Component {
                         strokeWidth="2"
                         strokeOpacity="0.7"
                       />
-                      {history
-                        .slice(1, -1)
-                        .map((val, i) => (
-                          <circle
-                            key={i}
-                            cx={this.getX(i + 1) * progress}
-                            cy={this.getY(val, progress)}
-                            r={DOT_RADIUS}
-                            fill="white"
-                            stroke={color}
-                            strokeWidth="1"
-                          />
-                        ))}
+                      {history.slice(1, -1).map((val, i) => (
+                        <circle
+                          key={i}
+                          cx={this.getX(i + 1) * progress}
+                          cy={this.getY(val, progress)}
+                          r={DOT_RADIUS}
+                          fill="white"
+                          stroke={color}
+                          strokeWidth="1"
+                        />
+                      ))}
                     </g>
                   )
                 })}
