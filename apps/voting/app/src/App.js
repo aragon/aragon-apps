@@ -1,19 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import {
-  AppBar,
-  AppView,
-  Button,
-  BaseStyles,
-  PublicUrl,
-  SidePanel,
-  font,
-  observe,
-  BreakPoint,
-  Root,
-  ToastHub,
-} from '@aragon/ui'
+import { Main, SidePanel, observe } from '@aragon/ui'
 import BN from 'bn.js'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
@@ -23,6 +11,8 @@ import NewVotePanelContent from './components/NewVotePanelContent'
 import AutoLink from './components/AutoLink'
 import MenuButton from './components/MenuButton/MenuButton'
 import NewVoteButton from './components/NewVoteButton/NewVoteButton'
+import AppLayout from './components/AppLayout'
+import NewVoteIcon from './components/NewVoteIcon'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
 import { hasLoadedVoteSettings } from './vote-settings'
@@ -159,16 +149,14 @@ class App extends React.Component {
   }
 
   shortenAddresses(label) {
-    return transformAddresses(
-      label,
-      (part, isAddress, index) =>
-        isAddress ? (
-          <span title={part} key={index}>
-            {shortenAddress(part)}
-          </span>
-        ) : (
-          <span key={index}>{part}</span>
-        )
+    return transformAddresses(label, (part, isAddress, index) =>
+      isAddress ? (
+        <span title={part} key={index}>
+          {shortenAddress(part)}
+        </span>
+      ) : (
+        <span key={index}>{part}</span>
+      )
     )
   }
   // Shorten addresses, render line breaks, auto link
@@ -232,94 +220,61 @@ class App extends React.Component {
     const hasCurrentVote = appStateReady && Boolean(currentVote)
 
     return (
-      <Root.Provider>
-        <PublicUrl.Provider url="./aragon-ui/">
-          <BaseStyles />
-          <ToastHub>
-            <Main>
-              <AppView
-                appBar={
-                  <AppBar
-                    title={
-                      <Title>
-                        <BreakPoint to="medium">
-                          <MenuButton onClick={this.handleMenuPanelOpen} />
-                        </BreakPoint>
-                        <TitleLabel>Voting</TitleLabel>
-                      </Title>
-                    }
-                    endContent={
-                      <NewVoteButton
-                        title="New Vote"
-                        onClick={this.handleCreateVoteOpen}
-                      />
-                    }
-                  />
-                }
-              >
-                {appStateReady && votes.length > 0 ? (
-                  <Votes
-                    votes={preparedVotes}
-                    onSelectVote={this.handleVoteOpen}
-                  />
-                ) : (
-                  <EmptyState onActivate={this.handleCreateVoteOpen} />
-                )}
-              </AppView>
-              <SidePanel
-                title={`Vote #${currentVoteId} (${
-                  currentVote && currentVote.data.open ? 'Open' : 'Closed'
-                })`}
-                opened={hasCurrentVote && !createVoteVisible && voteVisible}
-                onClose={this.handleVoteClose}
-                onTransitionEnd={this.handleVoteTransitionEnd}
-              >
-                {hasCurrentVote && (
-                  <VotePanelContent
-                    app={app}
-                    vote={currentVote}
-                    user={userAccount}
-                    ready={voteSidebarOpened}
-                    tokenContract={tokenContract}
-                    tokenDecimals={tokenDecimals}
-                    tokenSymbol={tokenSymbol}
-                    onVote={this.handleVote}
-                    onExecute={this.handleExecute}
-                  />
-                )}
-              </SidePanel>
+      <div css="min-width: 320px">
+        <Main>
+          <AppLayout
+            title="Voting"
+            onMenuOpen={this.handleMenuPanelOpen}
+            mainButton={{
+              label: 'New vote',
+              icon: <NewVoteIcon />,
+              onClick: this.handleCreateVoteOpen,
+            }}
+          >
+            {appStateReady && votes.length > 0 ? (
+              <Votes votes={preparedVotes} onSelectVote={this.handleVoteOpen} />
+            ) : (
+              <EmptyState onActivate={this.handleCreateVoteOpen} />
+            )}
+          </AppLayout>
+          <SidePanel
+            title={`Vote #${currentVoteId} (${
+              currentVote && currentVote.data.open ? 'Open' : 'Closed'
+            })`}
+            opened={hasCurrentVote && !createVoteVisible && voteVisible}
+            onClose={this.handleVoteClose}
+            onTransitionEnd={this.handleVoteTransitionEnd}
+          >
+            {hasCurrentVote && (
+              <VotePanelContent
+                app={app}
+                vote={currentVote}
+                user={userAccount}
+                ready={voteSidebarOpened}
+                tokenContract={tokenContract}
+                tokenDecimals={tokenDecimals}
+                tokenSymbol={tokenSymbol}
+                onVote={this.handleVote}
+                onExecute={this.handleExecute}
+              />
+            )}
+          </SidePanel>
 
-              <SidePanel
-                title="New Vote"
-                opened={createVoteVisible}
-                onClose={this.handleCreateVoteClose}
-              >
-                <NewVotePanelContent
-                  opened={createVoteVisible}
-                  onCreateVote={this.handleCreateVote}
-                />
-              </SidePanel>
-            </Main>
-          </ToastHub>
-        </PublicUrl.Provider>
-      </Root.Provider>
+          <SidePanel
+            title="New Vote"
+            opened={createVoteVisible}
+            onClose={this.handleCreateVoteClose}
+          >
+            <NewVotePanelContent
+              opened={createVoteVisible}
+              onCreateVote={this.handleCreateVote}
+            />
+          </SidePanel>
+        </Main>
+      </div>
     )
   }
 }
-
-const Title = styled.span`
-  display: flex;
-  align-items: center;
-`
-
-const TitleLabel = styled.span`
-  ${font({ size: 'xxlarge' })};
-`
-
-const Main = styled.div`
-  height: 100vh;
-  min-width: 320px;
-`
 
 export default observe(
   observable =>

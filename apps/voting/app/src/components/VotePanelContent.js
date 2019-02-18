@@ -12,7 +12,6 @@ import {
   Countdown,
   Text,
   theme,
-  BreakPoint,
 } from '@aragon/ui'
 import provideNetwork from '../utils/provideNetwork'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
@@ -27,10 +26,6 @@ import SummaryBar from './SummaryBar'
 class VotePanelContent extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
-    shortAddresses: PropTypes.bool.isRequired,
-  }
-  static defaultProps = {
-    shortAddresses: false,
   }
   state = {
     userCanVote: false,
@@ -149,7 +144,6 @@ class VotePanelContent extends React.Component {
       network: { etherscanBaseUrl },
       vote,
       ready,
-      shortAddresses,
       tokenSymbol,
       tokenDecimals,
       user,
@@ -236,7 +230,7 @@ class VotePanelContent extends React.Component {
             <Label>Created By</Label>
           </h2>
           <Creator>
-            <IdentityBadge entity={creator} shorten={shortAddresses} />
+            <IdentityBadge entity={creator} />
           </Creator>
         </Part>
         <SidePanelSeparator />
@@ -349,17 +343,6 @@ class VotePanelContent extends React.Component {
   }
 }
 
-const ResponsiveVotePanelContent = props => (
-  <React.Fragment>
-    <BreakPoint to="medium">
-      <VotePanelContent {...props} shortAddresses />
-    </BreakPoint>
-    <BreakPoint from="medium">
-      <VotePanelContent {...props} />
-    </BreakPoint>
-  </React.Fragment>
-)
-
 const Label = styled(Text).attrs({
   smallcaps: true,
   color: theme.textSecondary,
@@ -424,4 +407,4 @@ const VotingButton = styled(Button)`
   }
 `
 
-export default provideNetwork(ResponsiveVotePanelContent)
+export default provideNetwork(VotePanelContent)
