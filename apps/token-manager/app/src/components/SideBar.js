@@ -1,9 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Text, theme, IdentityBadge, breakpoint } from '@aragon/ui'
+import { IdentityBadge, Text, Viewport, breakpoint, theme } from '@aragon/ui'
 import provideNetwork from '../provide-network'
 import { formatBalance, stakesPercentages } from '../utils'
-import { WindowSize } from '../WindowSizeProvider'
 import TokenBadge from './TokenBadge'
 
 const DISTRIBUTION_ITEMS_MAX = 7
@@ -103,8 +102,8 @@ class SideBar extends React.Component {
               />
             ))}
           </StakesBar>
-          <WindowSize>
-            {({ width, fromMedium }) => (
+          <Viewport>
+            {({ width, above }) => (
               <ul>
                 {stakes.map(({ name, stake, color }) => (
                   <StakesListItem key={name}>
@@ -113,7 +112,7 @@ class SideBar extends React.Component {
                       <IdentityBadge
                         entity={name}
                         networkType={network.type}
-                        shorten={fromMedium || width < 520}
+                        shorten={above('medium') || width < 520}
                       />
                     </span>
                     <strong>{stake}%</strong>
@@ -121,7 +120,7 @@ class SideBar extends React.Component {
                 ))}
               </ul>
             )}
-          </WindowSize>
+          </Viewport>
         </Part>
       </Main>
     )

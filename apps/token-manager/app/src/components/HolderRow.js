@@ -1,20 +1,20 @@
 import React from 'react'
 import styled from 'styled-components'
 import {
-  TableRow,
-  TableCell,
+  Badge,
   ContextMenu,
   ContextMenuItem,
   IconAdd,
   IconRemove,
-  Badge,
-  theme,
   IdentityBadge,
+  TableCell,
+  TableRow,
+  Viewport,
   breakpoint,
+  theme,
 } from '@aragon/ui'
 import provideNetwork from '../provide-network'
 import { formatBalance } from '../utils'
-import { WindowSize } from '../WindowSizeProvider'
 
 class HolderRow extends React.Component {
   static defaultProps = {
@@ -40,8 +40,6 @@ class HolderRow extends React.Component {
       isCurrentUser,
       maxAccountTokens,
       network,
-      shorten,
-      tokenDecimalsBase,
     } = this.props
 
     const singleToken = balance.eq(tokenDecimalsBase)
@@ -51,11 +49,15 @@ class HolderRow extends React.Component {
       <TableRow>
         <StyledTableCell>
           <Owner>
-            <IdentityBadge
-              entity={address}
-              networkType={network.type}
-              shorten={shorten}
-            />
+            <Viewport>
+              {({ width, above }) => (
+                <IdentityBadge
+                  entity={address}
+                  networkType={network.type}
+                  shorten={(above('medium') && width < 1000) || width < 590}
+                />
+              )}
+            </Viewport>
             {isCurrentUser && (
               <Badge.Identity
                 style={{ fontVariant: 'small-caps' }}
@@ -142,13 +144,4 @@ const IconWrapper = styled.span`
   color: ${theme.textSecondary};
 `
 
-export default provideNetwork(props => (
-  <WindowSize>
-    {({ width, fromMedium }) => (
-      <HolderRow
-        {...props}
-        shorten={(fromMedium && width < 1000) || width < 590}
-      />
-    )}
-  </WindowSize>
-))
+export default provideNetwork(HolderRow)
