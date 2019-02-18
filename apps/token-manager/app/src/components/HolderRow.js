@@ -13,6 +13,7 @@ import {
   breakpoint,
   theme,
 } from '@aragon/ui'
+import provideNetwork from '../provide-network'
 import { formatBalance } from '../utils'
 
 class HolderRow extends React.Component {
@@ -38,6 +39,7 @@ class HolderRow extends React.Component {
       groupMode,
       isCurrentUser,
       maxAccountTokens,
+      network,
       tokenDecimalsBase,
     } = this.props
 
@@ -52,6 +54,7 @@ class HolderRow extends React.Component {
               {({ width, above }) => (
                 <IdentityBadge
                   entity={address}
+                  networkType={network.type}
                   shorten={(above('medium') && width < 1000) || width < 590}
                 />
               )}
@@ -142,4 +145,4 @@ const IconWrapper = styled.span`
   color: ${theme.textSecondary};
 `
 
-export default HolderRow
+export default provideNetwork(HolderRow)
