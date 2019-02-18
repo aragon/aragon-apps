@@ -20,6 +20,7 @@ import {
   scaleBNValuesSet,
 } from '../../math-utils'
 import provideNetwork from '../../provide-network'
+import { log } from '../../utils'
 
 class VotingPanel extends React.Component {
   state = {
@@ -170,7 +171,7 @@ class VotingPanel extends React.Component {
       [[], []]
     )
 
-    console.log(`
+    log(`
       app.voteOptions(
         "${survey.surveyId}",
         [${ids.map(s => `"${s}"`)}],
