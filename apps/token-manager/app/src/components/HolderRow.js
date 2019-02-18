@@ -40,6 +40,7 @@ class HolderRow extends React.Component {
       isCurrentUser,
       maxAccountTokens,
       network,
+      tokenDecimalsBase,
     } = this.props
 
     const singleToken = balance.eq(tokenDecimalsBase)
