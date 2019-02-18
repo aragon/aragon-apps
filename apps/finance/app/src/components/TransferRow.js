@@ -9,12 +9,7 @@ import {
   ContextMenuItem,
   IdentityBadge,
   theme,
-<<<<<<< HEAD
-  BreakPoint,
-  breakpoint,
-=======
-  blockExplorerUrl
->>>>>>> feat(): replaced `etherscanBaseUrl` with `blockExplorerUrl`
+  blockExplorerUrl,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
