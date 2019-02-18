@@ -1,6 +1,5 @@
 import React from 'react'
 import styled from 'styled-components'
-import copy from 'copy-to-clipboard'
 import { format } from 'date-fns'
 import {
   TableRow,
@@ -8,122 +7,77 @@ import {
   ContextMenu,
   ContextMenuItem,
   IdentityBadge,
-  theme,
   blockExplorerUrl,
+  theme,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
 import IconTokens from './icons/IconTokens'
-import ConfirmMessage from './ConfirmMessage'
 
-class TransferRow extends React.Component {
-  state = {
-    showCopyTransferMessage: false,
-  }
-  handleCopyTransferUrl = () => {
-    copy(
-      'https://app.aragon.one/#/finance/finance?params=' +
-      encodeURIComponent(
-        JSON.stringify({
-          transaction: this.props.transaction.transactionHash,
-        })
-      )
-    )
-    this.setState({
-      showCopyTransferMessage: true,
-    })
-  }
+class TransferRow extends React.PureComponent {
   handleViewTransaction = () => {
     const {
-      network: { type },
+      network,
       transaction: { transactionHash },
     } = this.props
-    window.open(blockExplorerUrl('transaction', transactionHash, { networkType: type }), '_blank')
-  }
-  handleConfirmMessageDone = () => {
-    this.setState({
-      showCopyTransferMessage: false,
-    })
+    window.open(
+      blockExplorerUrl('transaction', transactionHash, {
+        networkType: network.type,
+      }),
+      '_blank'
+    )
   }
 
   render() {
-    return (
-      <React.Fragment>
-        <BreakPoint to="medium">{this.renderSmallScreens()}</BreakPoint>
-        <BreakPoint from="medium">
-          {this.renderMediumAndBiggerScreens()}
-        </BreakPoint>
-      </React.Fragment>
-    )
-  }
-
-  renderSmallScreens() {
     const {
-      network: { type },
-      token: { decimals, symbol },
+      network,
+      token,
+      smallViewMode,
       transaction: {
         date,
         entity,
         isIncoming,
         numData: { amount },
         reference,
+        transactionHash,
       },
     } = this.props
-    const formattedAmount = formatTokenAmount(
-      amount,
-      isIncoming,
-      decimals,
-      true,
-      { rounding: 5 }
-    )
-    const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
-    return (
-      <TableRow>
-        <StyledTableCell>
-          <Grid>
-            <div>
-              <Wrap>
-                <IdentityBadge networkType={type} entity={entity} shorten />
-              </Wrap>
-            </div>
-            <time dateTime={formattedDate} title={formattedDate}>
-              {format(date, 'dd MMM yyyy')}
-            </time>
-            <TextOverflow style={{ marginTop: '5px' }}>
-              {reference}
-            </TextOverflow>
-            <Amount positive={isIncoming} style={{ marginTop: '5px' }}>
-              {formattedAmount} {symbol}
-            </Amount>
-          </Grid>
-        </StyledTableCell>
-      </TableRow>
-    )
-  }
 
-  renderMediumAndBiggerScreens() {
-    const { network, token, transaction, wideMode } = this.props
-    const { showCopyTransferMessage } = this.state
-    const {
-      date,
-      entity,
-      isIncoming,
-      numData: { amount },
-      reference,
-      transactionHash
-    } = transaction
-    const { decimals, symbol } = token
+    const txUrl = blockExplorerUrl('transaction', transactionHash, {
+      networkType: network.type,
+    })
     const formattedAmount = formatTokenAmount(
       amount,
       isIncoming,
-      decimals,
+      token.decimals,
       true,
       { rounding: 5 }
     )
     const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
-    const url = blockExplorerUrl('transaction', transactionHash, {
-      networkType: network.type
-    })
+
+    if (smallViewMode) {
+      return (
+        <TableRow>
+          <StyledTableCell>
+            <Grid>
+              <div>
+                <div css="display: flex">
+                  <IdentityBadge networkType={network.type} entity={entity} />
+                </div>
+              </div>
+              <time dateTime={formattedDate} title={formattedDate}>
+                {format(date, 'dd MMM yyyy')}
+              </time>
+              <TextOverflow css="margin-top: 5px">{reference}</TextOverflow>
+              <Amount positive={isIncoming} css="margin-top: 5px">
+                {formattedAmount} {token.symbol}
+              </Amount>
+            </Grid>
+          </StyledTableCell>
+        </TableRow>
+      )
+    }
+
     return (
       <TableRow>
         <NoWrapCell>
@@ -132,53 +86,40 @@ class TransferRow extends React.Component {
           </time>
         </NoWrapCell>
         <NoWrapCell>
-          <IdentityBadge
-            networkType={network.type}
-            entity={entity}
-            shorten={!wideMode}
-          />
+          <IdentityBadge networkType={network.type} entity={entity} />
         </NoWrapCell>
-        <NoWrapCell title={reference} style={{ position: 'relative' }}>
-          <TextOverflow style={{ position: 'absolute', left: '0', right: '0' }}>
+        <NoWrapCell title={reference} css="position: relative">
+          <TextOverflow
+            css={`
+              position: absolute;
+              left: 20px;
+              right: 20px;
+            `}
+          >
             {reference}
           </TextOverflow>
         </NoWrapCell>
         <NoWrapCell align="right">
           <Amount positive={isIncoming}>
-            {formattedAmount} {symbol}
+            {formattedAmount} {token.symbol}
           </Amount>
         </NoWrapCell>
         <NoWrapCell>
-          <ActionsWrapper>
-            {url && (
+          <div css="position: relative">
+            {txUrl && (
               <ContextMenu>
-                {/* <ContextMenuItem onClick={this.handleCopyTransferUrl}>
-                <IconShare />
-                <ActionLabel>Copy Transfer URL</ActionLabel>
-              </ContextMenuItem> */}
                 <ContextMenuItem onClick={this.handleViewTransaction}>
                   <IconTokens />
-                  <ActionLabel>View Transaction</ActionLabel>
+                  <div css="margin-left: 15px">View Transaction</div>
                 </ContextMenuItem>
               </ContextMenu>
             )}
-            {showCopyTransferMessage && (
-              <ConfirmMessageWrapper>
-                <ConfirmMessage onDone={this.handleConfirmMessageDone}>
-                  Transaction URL copied to clipboard
-                </ConfirmMessage>
-              </ConfirmMessageWrapper>
-            )}
-          </ActionsWrapper>
+          </div>
         </NoWrapCell>
       </TableRow>
     )
   }
 }
-
-const Wrap = styled.div`
-  display: flex;
-`
 
 const StyledTableCell = styled(TableCell)`
   &&& {
@@ -217,21 +158,6 @@ const TextOverflow = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-`
-
-const ActionsWrapper = styled.div`
-  position: relative;
-`
-
-const ActionLabel = styled.span`
-  margin-left: 15px;
-`
-
-const ConfirmMessageWrapper = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2;
 `
 
 export default provideNetwork(TransferRow)

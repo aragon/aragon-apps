@@ -10,9 +10,8 @@ import {
   SidePanelSeparator,
   Countdown,
   Text,
+  blockExplorerUrl,
   theme,
-  BreakPoint,
-  blockExplorerUrl
 } from '@aragon/ui'
 import provideNetwork from '../utils/provideNetwork'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
@@ -27,10 +26,6 @@ import SummaryBar from './SummaryBar'
 class VotePanelContent extends React.Component {
   static propTypes = {
     app: PropTypes.object.isRequired,
-    shortAddresses: PropTypes.bool.isRequired,
-  }
-  static defaultProps = {
-    shortAddresses: false,
   }
   state = {
     userCanVote: false,
@@ -94,7 +89,11 @@ class VotePanelContent extends React.Component {
   }
   loadUserCanVote = (user, vote) => {
     const { app } = this.props
-    if (user && vote) {
+    if (!vote) {
+      return
+    }
+
+    if (user) {
       this.setState({ loadingCanVote: true })
 
       // Get if user can vote
@@ -104,6 +103,10 @@ class VotePanelContent extends React.Component {
         .subscribe(canVote => {
           this.setState({ loadingCanVote: false, userCanVote: canVote })
         })
+    } else {
+      // Note: if the account is not present, we assume the account is not
+      // connected.
+      this.setState({ loadingCanVote: false, userCanVote: vote.data.open })
     }
   }
   loadCanExecute = vote => {
@@ -126,10 +129,7 @@ class VotePanelContent extends React.Component {
     const text = `(block ${snapshotBlock})`
     const url = blockExplorerUrl('block', snapshotBlock, { networkType: type })
     return url ? (
-      <SafeLink
-        href={url}
-        target="_blank"
-      >
+      <SafeLink href={url} target="_blank">
         {text}
       </SafeLink>
     ) : (
@@ -138,11 +138,12 @@ class VotePanelContent extends React.Component {
   }
   render() {
     const {
+      network,
       vote,
       ready,
-      shortAddresses,
       tokenSymbol,
       tokenDecimals,
+      user,
     } = this.props
 
     const {
@@ -226,7 +227,7 @@ class VotePanelContent extends React.Component {
             <Label>Created By</Label>
           </h2>
           <Creator>
-            <IdentityBadge entity={creator} shorten={shortAddresses} />
+            <IdentityBadge entity={creator} networkType={network.type} />
           </Creator>
         </Part>
         <SidePanelSeparator />
@@ -311,16 +312,25 @@ class VotePanelContent extends React.Component {
                       No
                     </VotingButton>
                   </ButtonsContainer>
-                  <Info.Action>
-                    <p>
-                      You will cast your vote with{' '}
-                      {userBalance === null
-                        ? '… tokens'
-                        : pluralize(userBalance, '$ token', '$ tokens')}
-                      , since it was your balance at the beginning of the vote{' '}
-                      {this.renderBlockLink(snapshotBlock)}.
-                    </p>
-                  </Info.Action>
+                  {
+                    <Info.Action>
+                      {user ? (
+                        <p>
+                          You will cast your vote with{' '}
+                          {userBalance === null
+                            ? '… tokens'
+                            : pluralize(userBalance, '$ token', '$ tokens')}
+                          , since it was your balance at the beginning of the
+                          vote {this.renderBlockLink(snapshotBlock)}.
+                        </p>
+                      ) : (
+                        <p>
+                          You will need to connect your account in the next
+                          screen.
+                        </p>
+                      )}
+                    </Info.Action>
+                  }
                 </div>
               )
             }
@@ -329,17 +339,6 @@ class VotePanelContent extends React.Component {
     )
   }
 }
-
-const ResponsiveVotePanelContent = props => (
-  <React.Fragment>
-    <BreakPoint to="medium">
-      <VotePanelContent {...props} shortAddresses />
-    </BreakPoint>
-    <BreakPoint from="medium">
-      <VotePanelContent {...props} />
-    </BreakPoint>
-  </React.Fragment>
-)
 
 const Label = styled(Text).attrs({
   smallcaps: true,
@@ -379,20 +378,6 @@ const Creator = styled.div`
   align-items: center;
 `
 
-const CreatorImg = styled.div`
-  margin-right: 20px;
-  canvas {
-    display: block;
-    border: 1px solid ${theme.contentBorder};
-    border-radius: 16px;
-  }
-  & + div {
-    a {
-      color: ${theme.accent};
-    }
-  }
-`
-
 const ButtonsContainer = styled.div`
   display: flex;
   padding: 30px 0 20px;
@@ -405,4 +390,4 @@ const VotingButton = styled(Button)`
   }
 `
 
-export default provideNetwork(ResponsiveVotePanelContent)
+export default provideNetwork(VotePanelContent)
