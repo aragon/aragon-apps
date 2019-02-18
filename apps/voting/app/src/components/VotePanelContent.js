@@ -1,7 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import Blockies from 'react-blockies'
 import {
   Button,
   IdentityBadge,
@@ -379,20 +378,6 @@ const Question = styled.p`
 const Creator = styled.div`
   display: flex;
   align-items: center;
-`
-
-const CreatorImg = styled.div`
-  margin-right: 20px;
-  canvas {
-    display: block;
-    border: 1px solid ${theme.contentBorder};
-    border-radius: 16px;
-  }
-  & + div {
-    a {
-      color: ${theme.accent};
-    }
-  }
 `
 
 const ButtonsContainer = styled.div`
