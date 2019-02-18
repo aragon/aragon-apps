@@ -207,7 +207,7 @@ class VotingPanel extends React.Component {
         )
         this.setState({ userBalance: adjustedBalance })
       } catch (err) {
-        this.setState({ userBalance: 0 })
+        this.setState({ userBalance: -1 })
       }
     }
   }
@@ -243,6 +243,7 @@ class VotingPanel extends React.Component {
     const { survey, userBalance, userCanVote } = this.state
     const distributionPairs = this.getDistributionPairs()
 
+    const hasUserBalance = userBalance && userBalance > 0
     const enableSubmit = this.canSubmitVote()
 
     return (
@@ -320,13 +321,17 @@ class VotingPanel extends React.Component {
                 if (survey.userAccountVoted) {
                   return (
                     <Info.Action>
-                      You have already voted with your{' '}
-                      {formatNumber(userBalance, 2)} {tokenSymbol}, but you can
-                      still redo your vote until the survey closes.
+                      You have already voted{' '}
+                      {hasUserBalance &&
+                        `with ${formatNumber(
+                          userBalance,
+                          2
+                        )} ${tokenSymbol}`}{' '}
+                      but you may recast your vote until the survey closes.
                     </Info.Action>
                   )
                 }
-                if (userCanVote && userBalance) {
+                if (userCanVote && hasUserBalance) {
                   return (
                     <Info.Action>
                       Voting with your {formatNumber(userBalance, 2)}{' '}
