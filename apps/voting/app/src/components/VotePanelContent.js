@@ -140,7 +140,7 @@ class VotePanelContent extends React.Component {
   }
   render() {
     const {
-      network: { etherscanBaseUrl },
+      network,
       vote,
       ready,
       tokenSymbol,
@@ -229,7 +229,10 @@ class VotePanelContent extends React.Component {
             <Label>Created By</Label>
           </h2>
           <Creator>
-            <IdentityBadge entity={creator} />
+            <IdentityBadge
+              entity={creator} 
+              networkType={network.type}
+            />
           </Creator>
         </Part>
         <SidePanelSeparator />

@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { IdentityBadge, Text, Viewport, breakpoint, theme } from '@aragon/ui'
+import provideNetwork from '../provide-network'
 import { formatBalance, stakesPercentages } from '../utils'
 import TokenBadge from './TokenBadge'
 
@@ -40,6 +41,7 @@ class SideBar extends React.Component {
   render() {
     const {
       holders,
+      network,
       tokenAddress,
       tokenDecimalsBase,
       tokenName,
@@ -109,6 +111,7 @@ class SideBar extends React.Component {
                       <StakesListBullet style={{ background: color }} />
                       <IdentityBadge
                         entity={name}
+                        networkType={network.type}
                         shorten={above('medium') || width < 520}
                       />
                     </span>
@@ -213,4 +216,4 @@ const StakesListBullet = styled.span`
   }
 `
 
-export default SideBar
+export default provideNetwork(SideBar)
