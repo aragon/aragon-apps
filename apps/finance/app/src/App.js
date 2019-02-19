@@ -184,7 +184,7 @@ class App extends React.Component {
                   <EmptyStateCard
                     icon={<img src={addFundsIcon} alt="" />}
                     title="There are no funds yet"
-                    text="Add funds to your organization to get started."
+                    text="Create a new transfer to get started."
                     actionText="New Transfer"
                     onActivate={this.handleNewTransferOpen}
                   />
