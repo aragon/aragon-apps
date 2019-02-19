@@ -19,7 +19,8 @@
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "truffle:dev": "node_modules/.bin/truffle dev",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
-    "prepare": "cd app && npm install",
+    "prepare": "npx apps-shared-scripts-prepare",
+    "install:frontend": "cd app && npm install",
     "prepublishOnly": "truffle compile --all"
   },
   "files": [
@@ -42,12 +43,13 @@
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/apps-shared-minime": "1.0.0",
+    "@aragon/apps-shared-scripts": "^1.0.0",
     "@aragon/cli": "^5.2.0-beta.1",
     "@aragon/test-helpers": "^1.0.1",
     "eth-gas-reporter": "^0.1.1",
     "ganache-cli": "^6.0.3",
     "solidity-coverage": "0.5.11",
-    "solium": "^1.0.4",
+    "solium": "^1.2.3",
     "truffle": "4.1.14",
     "truffle-hdwallet-provider": "0.0.3",
     "webpack": "3.10.0"

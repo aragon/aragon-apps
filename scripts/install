@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+
+const execute = require('child_process').execSync
+const inCI = 'TRAVIS' in process.env && 'CI' in process.env
+
+if (inCI) {
+  execute('npm run bootstrap:ci', { stdio: 'inherit' })
+} else {
+  process.env.INSTALL_FRONTEND = true
+  execute('npm run bootstrap', { stdio: 'inherit' })
+}

@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Badge, BreakPoint } from '@aragon/ui'
+import { Badge, Viewport } from '@aragon/ui'
 import { ETHER_TOKEN_FAKE_ADDRESS } from '../../lib/token-utils'
 import { addressesEqual, shortenAddress } from '../../lib/web3-utils'
 
@@ -56,12 +56,9 @@ const StyledAddressBadge = styled(Badge.Identity)`
 `
 
 export default props => (
-  <React.Fragment>
-    <BreakPoint to="medium">
-      <TokenSelectorInstance {...props} shorten />
-    </BreakPoint>
-    <BreakPoint from="medium">
-      <TokenSelectorInstance {...props} />
-    </BreakPoint>
-  </React.Fragment>
+  <Viewport>
+    {({ below }) => (
+      <TokenSelectorInstance {...props} shorten={below('medium')} />
+    )}
+  </Viewport>
 )

@@ -24,7 +24,7 @@ import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
 
 contract TestImports {
-  constructor() public {
-    // to avoid lint error
-  }
+    constructor() public {
+        // solium-disable-previous-line no-empty-blocks
+    }
 }
