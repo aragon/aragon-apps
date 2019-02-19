@@ -8,7 +8,7 @@ const EmptyState = ({ onActivate }) => (
     <EmptyStateCard
       icon={<img src={emptyIcon} alt="" />}
       title="There are no tokens assigned yet"
-      text="Assign tokens to your organization to get started."
+      text="Assign tokens to get started."
       actionText="Assign Tokens"
       onActivate={onActivate}
     />
