@@ -13,7 +13,6 @@ import AppBar from './components/AppBar/AppBar'
 import { networkContextType } from './provide-network'
 import { hasLoadedSurveySettings, DURATION_SLICES } from './survey-settings'
 import { getTimeBucket } from './time-utils'
-import { makeEtherscanBaseUrl } from './utils'
 
 const tokenAbi = [].concat(tokenBalanceOfAtAbi, tokenDecimalsAbi)
 
@@ -52,7 +51,6 @@ class App extends React.Component {
 
     return {
       network: {
-        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
         type: network.type,
       },
     }
