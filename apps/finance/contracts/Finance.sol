@@ -361,7 +361,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
      * @notice Send tokens held in this contract to the Vault
      * @param _token Token whose balance is going to be transferred.
      */
-    function recoverToVault(address _token) public isInitialized transitionsPeriod {
+    function recoverToVault(address _token) external isInitialized transitionsPeriod {
         uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).staticBalanceOf(this);
         require(amount > 0, ERROR_RECOVER_AMOUNT_ZERO);
 
@@ -383,7 +383,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @return success Boolean indicating whether the accounting period is the correct one (if false,
     *                 maxTransitions was surpased and another call is needed)
     */
-    function tryTransitionAccountingPeriod(uint64 _maxTransitions) public isInitialized returns (bool success) {
+    function tryTransitionAccountingPeriod(uint64 _maxTransitions) external isInitialized returns (bool success) {
         return _tryTransitionAccountingPeriod(_maxTransitions);
     }
 
