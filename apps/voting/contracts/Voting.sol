@@ -175,7 +175,9 @@ contract Voting is IForwarder, AragonApp {
         _executeVote(_voteId);
     }
 
-    function isForwarder() public pure returns (bool) {
+    // Forwarding fns
+
+    function isForwarder() external pure returns (bool) {
         return true;
     }
 

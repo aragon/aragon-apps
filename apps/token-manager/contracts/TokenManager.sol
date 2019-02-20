@@ -203,6 +203,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         emit RevokeVesting(_holder, _vestingId, nonVested);
     }
 
+    // Forwarding fns
+
+    function isForwarder() external pure returns (bool) {
+        return true;
+    }
+
     /**
     * @notice Execute desired action as a token holder
     * @dev IForwarder interface conformance. Forwards any token holder action.
@@ -218,10 +224,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         blacklist[0] = address(token);
 
         runScript(_evmScript, input, blacklist);
-    }
-
-    function isForwarder() public pure returns (bool) {
-        return true;
     }
 
     function canForward(address _sender, bytes) public view returns (bool) {
