@@ -19,7 +19,7 @@ contract Survey is AragonApp {
     bytes32 public constant CREATE_SURVEYS_ROLE = keccak256("CREATE_SURVEYS_ROLE");
     bytes32 public constant MODIFY_PARTICIPATION_ROLE = keccak256("MODIFY_PARTICIPATION_ROLE");
 
-    uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
+    uint64 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
     uint256 public constant ABSTAIN_VOTE = 0;
 
     string private constant ERROR_MIN_PARTICIPATION = "SURVEY_MIN_PARTICIPATION";
