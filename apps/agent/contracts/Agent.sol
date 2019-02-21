@@ -142,6 +142,10 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     }
 
     function getSig(bytes data) internal pure returns (bytes4 sig) {
-        assembly { sig := add(data, 0x20) }
+        if (data.length < 4) {
+            return;
+        }
+
+        assembly { sig := mload(add(data, 0x20)) }
     }
 }
