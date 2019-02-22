@@ -264,7 +264,7 @@ contract Survey is AragonApp {
             bool open,
             uint64 startDate,
             uint64 snapshotBlock,
-            uint64 minParticipationPct,
+            uint64 minParticipation,
             uint256 votingPower,
             uint256 participation,
             uint256 options
@@ -275,7 +275,7 @@ contract Survey is AragonApp {
         open = _isSurveyOpen(survey);
         startDate = survey.startDate;
         snapshotBlock = survey.snapshotBlock;
-        minParticipationPct = survey.minParticipationPct;
+        minParticipation = survey.minParticipationPct;
         votingPower = survey.votingPower;
         participation = survey.participation;
         options = survey.options;
