@@ -452,14 +452,14 @@ function loadTokenSymbol(tokenContract) {
 function marshallSurvey({
   startDate,
   snapshotBlock,
-  minParticipationPct,
+  minParticipation,
   votingPower,
   participation,
   options,
 }) {
   return {
     startDate: parseInt(startDate, 10) * 1000, // adjust for js time (in ms vs s)
-    minParticipationPct: parseInt(minParticipationPct, 10),
+    minParticipation: parseInt(minParticipation, 10),
     snapshotBlock: parseInt(snapshotBlock, 10),
     votingPower: parseInt(votingPower, 10),
     participation: parseInt(participation, 10),
