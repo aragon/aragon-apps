@@ -205,6 +205,63 @@ contract('Agent app', (accounts) => {
             agent.execute(executionTarget.address, depositAmount, data, { from: executor })
           )
         })
+
+        context('depending on the sig ACL param', () => {
+          const [ granteeEqualToSig, granteeUnequalToSig ] = accounts.slice(6) // random slice from accounts
+
+          beforeEach(async () => {
+            const sig = executionTarget.contract.setCounter.getData(1).slice(2, 10)
+            const argId = '0x02' // arg 2
+            const equalOp = '01'
+            const nonEqualOp = '02'
+            const value = `${'00'.repeat(30 - 4)}${sig}`
+
+            const equalParam = new web3.BigNumber(`${argId}${equalOp}${value}`)
+            const nonEqualParam = new web3.BigNumber(`${argId}${nonEqualOp}${value}`)
+
+            await acl.grantPermissionP(granteeEqualToSig, agent.address, EXECUTE_ROLE, [equalParam], { from: root })
+            await acl.grantPermissionP(granteeUnequalToSig, agent.address, EXECUTE_ROLE, [nonEqualParam], { from: root })
+          })
+
+          it('equal: can execute if the signature matches', async () => {
+            const N = 1102
+
+            const data = executionTarget.contract.setCounter.getData(N)
+            const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig })
+
+            assertEvent(receipt, 'Execute')
+            assert.equal(await executionTarget.counter(), N, `expected counter to be ${N}`)
+            assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
+            assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+          })
+
+          it('not equal: can execute if the signature doesn\'t match', async () => {
+            const data = executionTarget.contract.execute.getData()
+            const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig })
+
+            assertEvent(receipt, 'Execute')
+            assert.equal(await executionTarget.counter(), 1, `expected counter to be ${1}`)
+            assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
+            assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+          })
+
+          it('equal: fails to execute if signature doesn\'t match', async () => {
+            const data = executionTarget.contract.execute.getData()
+
+            await assertRevert(() =>
+              agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig })
+            )
+          })
+
+          it('not equal: fails to execute if the signature matches', async () => {
+            const N = 1102
+
+            const data = executionTarget.contract.setCounter.getData(N)
+            await assertRevert(() =>
+              agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig })
+            )
+          })
+        })
       })
     }
   })

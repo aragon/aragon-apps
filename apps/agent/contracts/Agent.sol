@@ -41,7 +41,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     */
     function execute(address _target, uint256 _ethValue, bytes _data)
         external // This function MUST always be external as the function performs a low level return, exiting the Agent app execution context
-        authP(EXECUTE_ROLE, arr(_target, _ethValue, uint256(getSig(_data)))) // TODO: Test that sig bytes are the least significant bytes
+        authP(EXECUTE_ROLE, arr(_target, _ethValue, uint256(getSig(_data)))) // bytes4 casted as uint256 sets the bytes as the LSBs
     {
         bool result = _target.call.value(_ethValue)(_data);
 
@@ -142,6 +142,10 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     }
 
     function getSig(bytes data) internal pure returns (bytes4 sig) {
-        assembly { sig := add(data, 0x20) }
+        if (data.length < 4) {
+            return;
+        }
+
+        assembly { sig := mload(add(data, 0x20)) }
     }
 }
