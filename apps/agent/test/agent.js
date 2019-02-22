@@ -344,7 +344,7 @@ contract('Agent app', (accounts) => {
       assert.isFalse(await agent.supportsInterface('0x'))
     })
 
-    it('isValidSignature returns false if there is not designated signer and hash isnt presigned', async () => {
+    it('isValidSignature returns false if there is not designated signer and hash isn\'t presigned', async () => {
       assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
     })
 
