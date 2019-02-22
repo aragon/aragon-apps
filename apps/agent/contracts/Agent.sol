@@ -127,7 +127,13 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
             return returnIsValidSignatureMagicNumber(true);
         }
 
-        bool isValid = SignatureValidator.isValidSignature(hash, designatedSigner, signature);
+        bool isValid;
+        if (designatedSigner == address(0)) {
+            isValid = false;
+        } else {
+            isValid = SignatureValidator.isValidSignature(hash, designatedSigner, signature);
+        }
+
         return returnIsValidSignatureMagicNumber(isValid);
     }
 
