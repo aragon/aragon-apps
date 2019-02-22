@@ -339,9 +339,13 @@ contract('Agent app', (accounts) => {
       assert.isTrue(await agent.supportsInterface(ERC1271_INTERFACE_ID))
     })
 
-    it("doesn't support any other interface", async () => {
+    it('doesn\'t support any other interface', async () => {
       assert.isFalse(await agent.supportsInterface('0x12345678'))
       assert.isFalse(await agent.supportsInterface('0x'))
+    })
+
+    it('isValidSignature returns false if there is not designated signer and hash isnt presigned', async () => {
+      assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
     })
 
     it('presigns a hash', async () => {
