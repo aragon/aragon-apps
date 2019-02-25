@@ -269,6 +269,9 @@ contract Survey is AragonApp {
 
     // Internal fns
 
+    /*
+    * @dev Assumes the survey exists and that msg.sender can vote
+    */
     function _resetVote(uint256 _surveyId) internal {
         SurveyStruct storage survey = surveys[_surveyId];
         MultiOptionVote storage previousVote = survey.votes[msg.sender];
@@ -294,6 +297,9 @@ contract Survey is AragonApp {
         }
     }
 
+    /*
+    * @dev Assumes the survey exists and that msg.sender can vote
+    */
     function _voteOptions(uint256 _surveyId, uint256[] _optionIds, uint256[] _stakes) internal {
         SurveyStruct storage survey = surveys[_surveyId];
 
