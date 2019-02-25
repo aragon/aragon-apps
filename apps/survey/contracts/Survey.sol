@@ -167,7 +167,6 @@ contract Survey is AragonApp {
         external
         surveyExists(_surveyId)
     {
-        require(_optionIds.length == _stakes.length && _optionIds.length > 0, ERROR_VOTE_WRONG_INPUT);
         require(canVote(_surveyId, msg.sender), ERROR_CAN_NOT_VOTE);
 
         _voteOptions(_surveyId, _optionIds, _stakes);
@@ -301,6 +300,8 @@ contract Survey is AragonApp {
     * @dev Assumes the survey exists and that msg.sender can vote
     */
     function _voteOptions(uint256 _surveyId, uint256[] _optionIds, uint256[] _stakes) internal {
+        require(_optionIds.length == _stakes.length && _optionIds.length > 0, ERROR_VOTE_WRONG_INPUT);
+
         SurveyStruct storage survey = surveys[_surveyId];
 
         // Revert previous votes, if any
