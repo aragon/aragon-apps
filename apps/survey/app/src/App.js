@@ -171,7 +171,7 @@ class App extends React.Component {
 
     return (
       <div css="min-width: 320px">
-        <Main>
+        <Main assetsUrl="./aragon-ui">
           <AppView
             appBar={
               <AppBar
