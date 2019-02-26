@@ -1,17 +1,14 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import styled from 'styled-components'
 import BN from 'bn.js'
-import { Badge, Main, SidePanel, font, observe } from '@aragon/ui'
+import { Badge, Main, SidePanel, observe } from '@aragon/ui'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
-import MenuButton from './components/MenuButton/MenuButton'
 import AssignTokensIcon from './components/AssignTokensIcon'
 import AppLayout from './components/AppLayout'
 import { networkContextType } from './provide-network'
 import { hasLoadedTokenSettings } from './token-settings'
-import { makeEtherscanBaseUrl } from './utils'
 import { addressesEqual } from './web3-utils'
 
 const initialAssignTokensConfig = {
@@ -43,7 +40,6 @@ class App extends React.Component {
 
     return {
       network: {
-        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
         type: network.type,
       },
     }
