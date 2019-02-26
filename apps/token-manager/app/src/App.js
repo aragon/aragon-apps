@@ -108,7 +108,7 @@ class App extends React.Component {
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
       <div css="min-width: 320px">
-        <Main>
+        <Main assetsUrl="./aragon-ui">
           <AppLayout
             title="Token Manager"
             afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
