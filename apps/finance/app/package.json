@@ -16,7 +16,6 @@
     "react": "^16.2.0",
     "react-display-name": "^0.2.3",
     "react-dom": "^16.2.0",
-    "react-motion": "^0.5.2",
     "react-spring": "^7.2.8",
     "seed-random": "^2.2.0",
     "styled-components": "4.1.3",
