@@ -7,6 +7,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   IdentityBadge,
+  blockExplorerUrl,
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
@@ -16,10 +17,15 @@ import IconTokens from './icons/IconTokens'
 class TransferRow extends React.PureComponent {
   handleViewTransaction = () => {
     const {
-      network: { etherscanBaseUrl },
+      network,
       transaction: { transactionHash },
     } = this.props
-    window.open(`${etherscanBaseUrl}/tx/${transactionHash}`, '_blank')
+    window.open(
+      blockExplorerUrl('transaction', transactionHash, {
+        networkType: network.type,
+      }),
+      '_blank'
+    )
   }
 
   render() {
@@ -33,9 +39,13 @@ class TransferRow extends React.PureComponent {
         isIncoming,
         numData: { amount },
         reference,
+        transactionHash,
       },
     } = this.props
 
+    const txUrl = blockExplorerUrl('transaction', transactionHash, {
+      networkType: network.type,
+    })
     const formattedAmount = formatTokenAmount(
       amount,
       isIncoming,
@@ -96,7 +106,7 @@ class TransferRow extends React.PureComponent {
         </NoWrapCell>
         <NoWrapCell>
           <div css="position: relative">
-            {network.etherscanBaseUrl && (
+            {txUrl && (
               <ContextMenu>
                 <ContextMenuItem onClick={this.handleViewTransaction}>
                   <IconTokens />

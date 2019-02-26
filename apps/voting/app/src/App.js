@@ -1,6 +1,5 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import styled from 'styled-components'
 import { Main, SidePanel, observe } from '@aragon/ui'
 import BN from 'bn.js'
 import EmptyState from './screens/EmptyState'
@@ -9,7 +8,6 @@ import tokenAbi from './abi/token-balanceOfAt.json'
 import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
 import AutoLink from './components/AutoLink'
-import MenuButton from './components/MenuButton/MenuButton'
 import AppLayout from './components/AppLayout'
 import NewVoteIcon from './components/NewVoteIcon'
 import { networkContextType } from './utils/provideNetwork'
@@ -17,7 +15,6 @@ import { settingsContextType } from './utils/provideSettings'
 import { hasLoadedVoteSettings } from './vote-settings'
 import { VOTE_YEA } from './vote-types'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
-import { makeEtherscanBaseUrl } from './utils'
 import { isVoteOpen, voteTypeFromContractEnum } from './vote-utils'
 import { shortenAddress, transformAddresses } from './web3-utils'
 
@@ -42,7 +39,6 @@ class App extends React.Component {
 
     return {
       network: {
-        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
         type: network.type,
       },
       settings: {

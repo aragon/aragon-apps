@@ -10,6 +10,7 @@ import {
   SidePanelSeparator,
   Countdown,
   Text,
+  blockExplorerUrl,
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../utils/provideNetwork'
@@ -123,15 +124,12 @@ class VotePanelContent extends React.Component {
   }
   renderBlockLink = snapshotBlock => {
     const {
-      network: { etherscanBaseUrl },
+      network: { type },
     } = this.props
     const text = `(block ${snapshotBlock})`
-
-    return etherscanBaseUrl ? (
-      <SafeLink
-        href={`${etherscanBaseUrl}/block/${snapshotBlock}`}
-        target="_blank"
-      >
+    const url = blockExplorerUrl('block', snapshotBlock, { networkType: type })
+    return url ? (
+      <SafeLink href={url} target="_blank">
         {text}
       </SafeLink>
     ) : (
@@ -229,10 +227,7 @@ class VotePanelContent extends React.Component {
             <Label>Created By</Label>
           </h2>
           <Creator>
-            <IdentityBadge
-              entity={creator} 
-              networkType={network.type}
-            />
+            <IdentityBadge entity={creator} networkType={network.type} />
           </Creator>
         </Part>
         <SidePanelSeparator />

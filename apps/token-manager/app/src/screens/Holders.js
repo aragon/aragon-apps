@@ -7,7 +7,6 @@ import {
   TableRow,
   Viewport,
   breakpoint,
-  springs,
 } from '@aragon/ui'
 import HolderRow from '../components/HolderRow'
 import SideBar from '../components/SideBar'

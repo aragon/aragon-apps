@@ -32,7 +32,7 @@ const Grid = styled.div`
     'medium',
     `
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-     `,
+     `
   )};
 `
 
