@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import BN from 'bn.js'
+import { map } from 'rxjs/operators'
 import { EmptyStateCard, Main, SidePanel, observe } from '@aragon/ui'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
@@ -190,60 +191,62 @@ const compareBalancesByEthAndSymbol = (tokenA, tokenB) => {
 
 export default observe(
   observable =>
-    observable.map(state => {
-      const { balances, transactions } = state || {}
+    observable.pipe(
+      map(state => {
+        const { balances, transactions } = state || {}
 
-      const balancesBn = balances
-        ? balances
-            .map(balance => ({
-              ...balance,
-              amount: new BN(balance.amount),
-              decimals: new BN(balance.decimals),
-              // Note that numbers in `numData` are not safe for accurate
-              // computations (but are useful for making divisions easier).
+        const balancesBn = balances
+          ? balances
+              .map(balance => ({
+                ...balance,
+                amount: new BN(balance.amount),
+                decimals: new BN(balance.decimals),
+                // Note that numbers in `numData` are not safe for accurate
+                // computations (but are useful for making divisions easier).
+                numData: {
+                  amount: parseInt(balance.amount, 10),
+                  decimals: parseInt(balance.decimals, 10),
+                },
+              }))
+              .sort(compareBalancesByEthAndSymbol)
+          : []
+
+        const transactionsBn = transactions
+          ? transactions.map(transaction => ({
+              ...transaction,
+              amount: new BN(transaction.amount),
               numData: {
-                amount: parseInt(balance.amount, 10),
-                decimals: parseInt(balance.decimals, 10),
+                amount: parseInt(transaction.amount, 10),
               },
             }))
-            .sort(compareBalancesByEthAndSymbol)
-        : []
+          : []
 
-      const transactionsBn = transactions
-        ? transactions.map(transaction => ({
-            ...transaction,
-            amount: new BN(transaction.amount),
-            numData: {
-              amount: parseInt(transaction.amount, 10),
-            },
-          }))
-        : []
+        return {
+          ...state,
 
-      return {
-        ...state,
+          tokens: balancesBn.map(
+            ({
+              address,
+              name,
+              symbol,
+              numData: { amount, decimals },
+              verified,
+            }) => ({
+              address,
+              amount,
+              decimals,
+              name,
+              symbol,
+              verified,
+            })
+          ),
 
-        tokens: balancesBn.map(
-          ({
-            address,
-            name,
-            symbol,
-            numData: { amount, decimals },
-            verified,
-          }) => ({
-            address,
-            amount,
-            decimals,
-            name,
-            symbol,
-            verified,
-          })
-        ),
+          // Filter out empty balances
+          balances: balancesBn.filter(balance => !balance.amount.isZero()),
 
-        // Filter out empty balances
-        balances: balancesBn.filter(balance => !balance.amount.isZero()),
-
-        transactions: transactionsBn,
-      }
-    }),
+          transactions: transactionsBn,
+        }
+      })
+    ),
   {}
 )(App)
