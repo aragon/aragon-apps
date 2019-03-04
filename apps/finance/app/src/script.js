@@ -1,5 +1,6 @@
 import Aragon from '@aragon/client'
-import { of } from './rxjs'
+import { take } from 'rxjs/operators'
+import { of } from 'rxjs'
 import { getTestTokenAddresses } from './testnet'
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
@@ -64,19 +65,16 @@ const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
 
 // Get the token address to initialize ourselves
 retryEvery(retry => {
-  app
-    .call('vault')
-    .first()
-    .subscribe(
-      vaultAddress => initialize(vaultAddress, ETHER_TOKEN_FAKE_ADDRESS),
-      err => {
-        console.error(
-          'Could not start background script execution due to the contract not loading the token:',
-          err
-        )
-        retry()
-      }
-    )
+  app.call('vault').subscribe(
+    vaultAddress => initialize(vaultAddress, ETHER_TOKEN_FAKE_ADDRESS),
+    err => {
+      console.error(
+        'Could not start background script execution due to the contract not loading the token:',
+        err
+      )
+      retry()
+    }
+  )
 })
 
 async function initialize(vaultAddress, ethAddress) {
@@ -84,7 +82,7 @@ async function initialize(vaultAddress, ethAddress) {
 
   const network = await app
     .network()
-    .take(1)
+    .pipe(take(1))
     .toPromise()
   TEST_TOKEN_ADDRESSES.push(...getTestTokenAddresses(network.type))
 
@@ -113,7 +111,6 @@ async function createStore(settings) {
   try {
     vaultInitializationBlock = await settings.vault.contract
       .getInitializationBlock()
-      .first()
       .toPromise()
   } catch (err) {
     console.error("Could not get attached vault's initialization block:", err)
@@ -176,10 +173,7 @@ async function initializeState(state, settings) {
   const nextState = {
     ...state,
     periodDuration: marshallDate(
-      await app
-        .call('getPeriodDuration')
-        .first()
-        .toPromise()
+      await app.call('getPeriodDuration').toPromise()
     ),
     vaultAddress: settings.vault.address,
   }
@@ -320,12 +314,7 @@ async function loadEthBalance(state, settings) {
 }
 
 function loadTokenBalance(tokenAddress, { vault }) {
-  return new Promise((resolve, reject) => {
-    vault.contract
-      .balance(tokenAddress)
-      .first()
-      .subscribe(resolve, reject)
-  })
+  return vault.contract.balance(tokenAddress).toPromise()
 }
 
 function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
@@ -335,19 +324,17 @@ function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
     } else {
       const fallback =
         tokenDataFallback(tokenAddress, 'decimals', network.type) || '0'
-      tokenContract
-        .decimals()
-        .first()
-        .subscribe(
-          (decimals = fallback) => {
-            tokenDecimals.set(tokenContract, decimals)
-            resolve(decimals)
-          },
-          () => {
-            // Decimals is optional
-            resolve(fallback)
-          }
-        )
+
+      tokenContract.decimals().subscribe(
+        (decimals = fallback) => {
+          tokenDecimals.set(tokenContract, decimals)
+          resolve(decimals)
+        },
+        () => {
+          // Decimals is optional
+          resolve(fallback)
+        }
+      )
     }
   })
 }
@@ -382,7 +369,6 @@ function loadTransactionDetails(id) {
   return new Promise((resolve, reject) =>
     app
       .call('getTransaction', id)
-      .first()
       .subscribe(
         transaction => resolve(marshallTransactionDetails(transaction)),
         reject
