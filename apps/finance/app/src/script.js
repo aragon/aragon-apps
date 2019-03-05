@@ -1,5 +1,5 @@
 import Aragon from '@aragon/client'
-import { take } from 'rxjs/operators'
+import { first } from 'rxjs/operators'
 import { of } from 'rxjs'
 import { getTestTokenAddresses } from './testnet'
 import {
@@ -82,7 +82,7 @@ async function initialize(vaultAddress, ethAddress) {
 
   const network = await app
     .network()
-    .pipe(take(1))
+    .pipe(first())
     .toPromise()
   TEST_TOKEN_ADDRESSES.push(...getTestTokenAddresses(network.type))
 
