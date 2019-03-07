@@ -1,10 +1,10 @@
 {
   "name": "Survey",
   "description": "Create signaling votes.",
-  "icons": [{
-    "src": "images/icon.svg",
-    "sizes": "192x192"
-  }],
+  "icons": [
+    { "src": "/meta/icon-80.svg", "sizes": "80x80" },
+    { "src": "/meta/icon-22.svg", "sizes": "22x22" }
+  ],
   "script": "/script.js",
   "start_url": "/index.html"
 }
