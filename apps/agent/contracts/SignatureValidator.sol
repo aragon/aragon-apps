@@ -91,13 +91,17 @@ library SignatureValidator {
 
         output = new bytes(inputLength - 1);
 
+        if (output.length == 0) {
+            return output;
+        }
+
         uint256 inputPointer;
         uint256 outputPointer;
         assembly {
             inputPointer := add(input, 0x21)
             outputPointer := add(output, 0x20)
         }
-        memcpy(outputPointer, inputPointer, inputLength);
+        memcpy(outputPointer, inputPointer, output.length);
     }
 
     function safeIsValidSignature(address validator, bytes32 hash, bytes memory signature) private view returns (bool) {
