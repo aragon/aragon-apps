@@ -61,6 +61,11 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
     event RevokeVesting(address indexed receiver, uint256 vestingId, uint256 nonVestedAmount);
 
+    modifier onlyToken() {
+        require(msg.sender == address(token), ERROR_ON_TRANSFER_WRONG_SENDER);
+        _;
+    }
+
     modifier vestingExists(address _holder, uint256 _vestingId) {
         // TODO: it's not checking for gaps that may appear because of deletes in revokeVesting function
         require(_vestingId < vestingsLengths[_holder], ERROR_NO_VESTING);
@@ -230,6 +235,9 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     // ITokenController fns
+    // `onTransfer()`, `onApprove()`, and `proxyPayment()` are callbacks from the MiniMe token
+    // contract and are only meant to be called through the managed MiniMe token that gets assigned
+    // during initialization.
 
     /*
     * @dev Notifies the controller about a token transfer allowing the controller to decide whether to allow it or react if desired (only callable from the token)
@@ -238,9 +246,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @param _amount The amount of the transfer
     * @return False if the controller does not authorize the transfer
     */
-    function onTransfer(address _from, address _to, uint _amount) public isInitialized returns (bool) {
-        require(msg.sender == address(token), ERROR_ON_TRANSFER_WRONG_SENDER);
-
+    function onTransfer(address _from, address _to, uint _amount) public onlyToken returns (bool) {
         bool includesTokenManager = _from == address(this) || _to == address(this);
 
         if (!includesTokenManager) {
@@ -257,7 +263,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @dev Notifies the controller about an approval allowing the controller to react if desired
     * @return False if the controller does not authorize the approval
     */
-    function onApprove(address, address, uint) public returns (bool) {
+    function onApprove(address, address, uint) public onlyToken returns (bool) {
         return true;
     }
 
@@ -265,11 +271,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @notice Called when ether is sent to the MiniMe Token contract
     * @return True if the ether is accepted, false for it to throw
     */
-    function proxyPayment(address) public payable returns (bool) {
-        // Sender check is required to avoid anyone sending ETH to the Token Manager through this method
-        // Even though it is tested, solidity-coverage doesnt get it because
-        // MiniMeToken is not instrumented and entire tx is reverted
-        require(msg.sender == address(token), ERROR_PROXY_PAYMENT_WRONG_SENDER);
+    function proxyPayment(address) public payable onlyToken returns (bool) {
         return false;
     }
 
