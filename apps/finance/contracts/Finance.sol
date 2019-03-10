@@ -546,12 +546,12 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         // External deposit will be false when the assets were already in the Finance app
         // and just need to be transferred to the vault
         if (_isExternalDeposit) {
-            if (_token != ETH) {
-                // Get the tokens to Finance
-                require(ERC20(_token).safeTransferFrom(msg.sender, this, _amount), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
-            } else {
+            if (_token == ETH) {
                 // Ensure that the ETH sent with the transaction equals the amount in the deposit
                 require(msg.value == _amount, ERROR_VALUE_MISMATCH);
+            } else {
+                // Get the tokens to Finance
+                require(ERC20(_token).safeTransferFrom(msg.sender, this, _amount), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
             }
         }
 
