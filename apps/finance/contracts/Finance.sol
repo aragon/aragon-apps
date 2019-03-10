@@ -517,6 +517,13 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
+    * @dev We have to check for initialization as budgets are only valid after initializing
+    */
+    function canMakePayment(address _token, uint256 _amount) public view isInitialized returns (bool) {
+        return _canMakePayment(_token, _amount);
+    }
+
+    /**
     * @dev Initialization check is implicitly provided by `recurringPaymentExists()` as new
     *      recurring payments can only be created via `newPayment(),` which requires initialization
     */

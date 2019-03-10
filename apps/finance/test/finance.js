@@ -741,6 +741,7 @@ contract('Finance App', accounts => {
             // to execute it
             const budget = 50
             const amountPerPayment = 50
+            assert.isTrue(await finance.canMakePayment(token1.address, amountPerPayment))
 
             // Create the budget, and use it up for the period
             await finance.setBudget(token1.address, budget)
@@ -749,19 +750,25 @@ contract('Finance App', accounts => {
             // No more budget left
             const receipt = await finance.newPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
             assertPaymentFailure(receipt)
+            assert.isFalse(await finance.canMakePayment(token1.address, amountPerPayment))
         })
 
         it('emits payment failure event when out of balance', async () => {
-            // repeats up to 3 times every 100 seconds
-            await finance.newPayment(token1.address, recipient, 40, time, 100, 3, '')
-            await finance.mock_setTimestamp(time + PERIOD_DURATION)
-            await finance.executePayment(1)
+            const amountPerPayment = 40
+            const paidInterval = 100
+            const paidTimes = Math.floor((await vault.balance(token1.address)) / amountPerPayment)
+            await finance.removeBudget(token1.address)
 
-            await finance.mock_setTimestamp(time + PERIOD_DURATION * 2)
+            assert.isTrue(await finance.canMakePayment(token1.address, amountPerPayment))
+
+            // creates a repeating payment that can be repeated one more than the vault's funds will allow
+            await finance.newPayment(token1.address, recipient, amountPerPayment, time, paidInterval, paidTimes + 1, '')
+            await finance.mock_setTimestamp(time + paidInterval * (paidTimes + 1))
             const receipt = await finance.executePayment(1)
 
             assertPaymentFailure(receipt)
-            assert.equal(await token1.balanceOf(recipient), 80, 'recipient should have received tokens')
+            assert.equal(await token1.balanceOf(recipient), amountPerPayment * paidTimes, 'recipient should have received tokens')
+            assert.isFalse(await finance.canMakePayment(token1.address, amountPerPayment))
         })
     })
 
