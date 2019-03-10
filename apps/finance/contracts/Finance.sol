@@ -205,7 +205,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver``_maxRepeats > 0 ? ', executing ' + _maxRepeats + ' times at intervals of ' + @transformTime(_interval) : ''`, for '`_reference`'
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment
-    * @param _amount Tokens that are payed every time the payment is due
+    * @param _amount Tokens that are paid every time the payment is due
     * @param _initialPaymentTime Timestamp for when the first payment is done
     * @param _interval Number of seconds that need to pass between payment transactions
     * @param _maxRepeats Maximum instances a payment can be executed
@@ -227,7 +227,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     {
         require(_amount > 0, ERROR_NEW_PAYMENT_AMOUNT_ZERO);
 
-        // Avoid saving payment data for 1 time immediate payments
+        // Avoid saving payment data for one-time immediate payments
         if (_initialPaymentTime <= getTimestamp64() && _maxRepeats == 1) {
             _makePaymentTransaction(
                 _token,
@@ -325,7 +325,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @dev Always allows receiver of a payment to trigger execution
+    * @dev Always allow receiver of a payment to trigger execution
     * @notice Execute pending payment #`_paymentId`
     * @param _paymentId Identifier for payment
     */
@@ -571,8 +571,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         RecurringPayment storage payment = recurringPayments[_paymentId];
         require(!payment.inactive, ERROR_RECURRING_PAYMENT_INACTIVE);
 
-        uint64 payed = 0;
-        while (_nextPaymentTime(_paymentId) <= getTimestamp64() && payed < MAX_RECURRING_PAYMENTS_PER_TX) {
+        uint64 paid = 0;
+        while (_nextPaymentTime(_paymentId) <= getTimestamp64() && paid < MAX_RECURRING_PAYMENTS_PER_TX) {
             if (!_canMakePayment(payment.token, payment.amount)) {
                 emit PaymentFailure(_paymentId);
                 return;
@@ -580,7 +580,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
             // The while() predicate prevents these two from ever overflowing
             payment.repeats += 1;
-            payed += 1;
+            paid += 1;
 
             _makePaymentTransaction(
                 payment.token,
