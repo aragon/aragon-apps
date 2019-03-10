@@ -149,6 +149,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
      * @notice Deposit ETH to the Vault, to avoid locking them in this Finance app forever
      */
     function () external payable isInitialized transitionsPeriod {
+        require(msg.value > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
         _deposit(
             ETH,
             msg.value,
@@ -192,6 +193,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @param _reference Reason for payment
     */
     function deposit(address _token, uint256 _amount, string _reference) external payable isInitialized transitionsPeriod {
+        require(_amount > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
         _deposit(
             _token,
             _amount,
@@ -534,7 +536,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     // Internal fns
 
     function _deposit(address _token, uint256 _amount, string _reference, address _sender, bool _isExternalDeposit) internal {
-        require(_amount > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
         _recordIncomingTransaction(
             _token,
             _sender,
