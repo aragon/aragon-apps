@@ -237,7 +237,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 _amount,
                 NO_RECURRING_PAYMENT,   // unrelated to any payment id; it isn't created
                 0,   // also unrelated to any payment repeats
-                _reference
+                _reference,
+                false
             );
             return;
         }
@@ -586,7 +587,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 payment.amount,
                 _paymentId,
                 payment.repeats,
-                ""
+                "",
+                true
             );
         }
     }
@@ -597,11 +599,15 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint256 _amount,
         uint256 _paymentId,
         uint64 _paymentRepeatNumber,
-        string _reference
+        string _reference,
+        bool _skipChecks
     )
         internal
     {
-        require(_getRemainingBudget(_token) >= _amount, ERROR_REMAINING_BUDGET);
+        if (!_skipChecks) {
+            require(_getRemainingBudget(_token) >= _amount, ERROR_REMAINING_BUDGET);
+        }
+
         _recordTransaction(
             false,
             _token,
