@@ -31,6 +31,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     string private constant ERROR_NO_VESTING = "TM_NO_VESTING";
     string private constant ERROR_TOKEN_CONTROLLER = "TM_TOKEN_CONTROLLER";
+    string private constant ERROR_ASSIGN_TO_SELF = "TM_ASSIGN_TO_SELF";
     string private constant ERROR_MINT_BALANCE_INCREASE_NOT_ALLOWED = "TM_MINT_BAL_INC_NOT_ALLOWED";
     string private constant ERROR_ASSIGN_BALANCE_INCREASE_NOT_ALLOWED = "TM_ASSIGN_BAL_INC_NOT_ALLOWED";
     string private constant ERROR_TOO_MANY_VESTINGS = "TM_TOO_MANY_VESTINGS";
@@ -71,7 +72,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @notice Initialize Token Manager for `_token.symbol(): string`, whose tokens are `transferable ? 'not' : ''` transferable`_maxAccountTokens > 0 ? ' and limited to a maximum of ' + @tokenAmount(_token, _maxAccountTokens, false) + ' per account' : ''`
     * @param _token MiniMeToken address for the managed token (Token Manager instance must be already set as the token controller)
     * @param _transferable whether the token can be transferred by holders
-    * @param _maxAccountTokens Maximum amount of tokens an account can have (0 for infinite tokens)
+    * @param _maxAccountTokens Maximum amount of tokens an account can have (0 for infinite tokens); does not apply to the Token Manager instance itself
     */
     function initialize(
         MiniMeToken _token,
@@ -317,6 +318,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     // Internal fns
 
     function _assign(address _receiver, uint256 _amount) internal {
+        require(_receiver != address(this), ERROR_ASSIGN_TO_SELF);
         require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_ASSIGN_BALANCE_INCREASE_NOT_ALLOWED);
         // Must use transferFrom() as transfer() does not give the token controller full control
         require(token.transferFrom(this, _receiver, _amount), ERROR_ASSIGN_TRANSFER_FROM_REVERTED);

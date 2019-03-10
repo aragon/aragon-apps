@@ -238,6 +238,14 @@ contract('Token Manager', accounts => {
             })
         })
 
+        it('cannot assign to self', async () => {
+            await tokenManager.issue(50)
+
+            return assertRevert(async () => {
+                await tokenManager.assign(tokenManager.address, 10)
+            })
+        })
+
         it('forwards actions only to token holders', async () => {
             const executionTarget = await ExecutionTarget.new()
             await tokenManager.mint(holder, 100)
@@ -369,6 +377,13 @@ contract('Token Manager', accounts => {
                 assert.equal(await token.balanceOf(holder), 5, 'should have kept vested tokens')
                 assert.equal(await token.balanceOf(accounts[2]), 5, 'should have kept vested tokens')
                 assert.equal(await token.balanceOf(tokenManager.address), totalTokens - 10, 'should have received unvested')
+            })
+
+            it('cannot assign vestings to self', async () => {
+                await tokenManager.issue(1)
+                return assertRevert(async () => {
+                    await tokenManager.assignVested(tokenManager.address, 1, now + start, now + cliff, now + vesting, false)
+                })
             })
 
             it('cannot revoke non-revokable vestings', async () => {
