@@ -243,7 +243,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         // Budget must allow at least one instance of this payment each period, or not be set at all
         require(settings.budgets[_token] >= _amount || !settings.hasBudget[_token], ERROR_BUDGET);
 
-        paymentId = paymentsNextIndex++;
+        paymentId = paymentsNextIndex;
+        paymentsNextIndex = paymentId.add(1);
         emit NewPayment(paymentId, _receiver, _maxRepeats, _reference);
 
         RecurringPayment storage payment = recurringPayments[paymentId];
@@ -672,7 +673,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             tokenStatement.expenses = tokenStatement.expenses.add(_amount);
         }
 
-        uint256 transactionId = transactionsNextIndex++;
+        uint256 transactionId = transactionsNextIndex;
+        transactionsNextIndex = transactionId.add(1);
+
         Transaction storage transaction = transactions[transactionId];
         transaction.token = _token;
         transaction.entity = _entity;
@@ -702,7 +705,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 // it didn't fully transition
                 return false;
             }
-            _maxTransitions = _maxTransitions.sub(1);
+            // We're already protected from underflowing above
+            _maxTransitions -= 1;
 
             // If there were any transactions in period, record which was the last
             // In case 0 transactions occured, first and last tx id will be 0
@@ -731,15 +735,17 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             return MAX_UINT;
         }
 
+        uint256 budget = settings.budgets[_token];
         uint256 spent = periods[_currentPeriodId()].tokenStatement[_token].expenses;
 
         // A budget decrease can cause the spent amount to be greater than period budget
         // If so, return 0 to not allow more spending during period
-        if (spent >= settings.budgets[_token]) {
+        if (spent >= budget) {
             return 0;
         }
 
-        return settings.budgets[_token].sub(spent);
+        // We're already protected from the overflow above
+        return budget - spent;
     }
 
     function _nextPaymentTime(uint256 _paymentId) internal view returns (uint64) {
