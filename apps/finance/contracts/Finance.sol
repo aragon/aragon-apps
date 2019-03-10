@@ -315,8 +315,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function executePayment(uint256 _paymentId)
         external
-        authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, recurringPayments[_paymentId].amount))
         recurringPaymentExists(_paymentId)
+        authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, recurringPayments[_paymentId].amount))
         transitionsPeriod
     {
         require(nextPaymentTime(_paymentId) <= getTimestamp64(), ERROR_EXECUTE_PAYMENT_TIME);
@@ -347,8 +347,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function setPaymentStatus(uint256 _paymentId, bool _active)
         external
-        authP(MANAGE_PAYMENTS_ROLE, arr(_paymentId, uint256(_active ? 1 : 0)))
         recurringPaymentExists(_paymentId)
+        authP(MANAGE_PAYMENTS_ROLE, arr(_paymentId, uint256(_active ? 1 : 0)))
     {
         recurringPayments[_paymentId].inactive = !_active;
         emit ChangePaymentState(_paymentId, _active);

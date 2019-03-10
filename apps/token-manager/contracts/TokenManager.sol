@@ -179,8 +179,8 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     */
     function revokeVesting(address _holder, uint256 _vestingId)
         external
-        authP(REVOKE_VESTINGS_ROLE, arr(_holder))
         vestingExists(_holder, _vestingId)
+        authP(REVOKE_VESTINGS_ROLE, arr(_holder))
     {
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable, ERROR_VESTING_NOT_REVOKABLE);
