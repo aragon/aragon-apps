@@ -564,26 +564,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         }
     }
 
-    function _newPeriod(uint64 _startTime) internal returns (Period storage) {
-        // There should be no way for this to overflow since each period is at least one day
-        uint64 newPeriodId = periodsLength++;
-
-        Period storage period = periods[newPeriodId];
-        period.startTime = _startTime;
-
-        // Be careful here to not overflow; if startTime + periodDuration overflows, we set endTime
-        // to MAX_UINT64 (let's assume that's the end of time for now).
-        uint64 endTime = _startTime + settings.periodDuration - 1;
-        if (endTime < _startTime) { // overflowed
-            endTime = MAX_UINT64;
-        }
-        period.endTime = endTime;
-
-        emit NewPeriod(newPeriodId, period.startTime, period.endTime);
-
-        return period;
-    }
-
     function _executePayment(uint256 _paymentId) internal {
         RecurringPayment storage payment = recurringPayments[_paymentId];
         require(!payment.inactive, ERROR_RECURRING_PAYMENT_INACTIVE);
@@ -632,6 +612,26 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         );
 
         vault.transfer(_token, _receiver, _amount);
+    }
+
+    function _newPeriod(uint64 _startTime) internal returns (Period storage) {
+        // There should be no way for this to overflow since each period is at least one day
+        uint64 newPeriodId = periodsLength++;
+
+        Period storage period = periods[newPeriodId];
+        period.startTime = _startTime;
+
+        // Be careful here to not overflow; if startTime + periodDuration overflows, we set endTime
+        // to MAX_UINT64 (let's assume that's the end of time for now).
+        uint64 endTime = _startTime + settings.periodDuration - 1;
+        if (endTime < _startTime) { // overflowed
+            endTime = MAX_UINT64;
+        }
+        period.endTime = endTime;
+
+        emit NewPeriod(newPeriodId, period.startTime, period.endTime);
+
+        return period;
     }
 
     function _recordIncomingTransaction(
