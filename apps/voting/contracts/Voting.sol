@@ -171,8 +171,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external voteExists(_voteId) {
-        require(_canExecute(_voteId), ERROR_CAN_NOT_EXECUTE);
-        _executeVote(_voteId);
+        _executeVote(_voteId, false);
     }
 
     // Forwarding fns
@@ -307,11 +306,15 @@ contract Voting is IForwarder, AragonApp {
         emit CastVote(_voteId, _voter, _supports, voterStake);
 
         if (_executesIfDecided && _canExecute(_voteId)) {
-            _executeVote(_voteId);
+            _executeVote(_voteId, true);
         }
     }
 
-    function _executeVote(uint256 _voteId) internal {
+    function _executeVote(uint256 _voteId, bool _skipChecks) internal {
+        if (!_skipChecks) {
+            require(_canExecute(_voteId), ERROR_CAN_NOT_EXECUTE);
+        }
+
         Vote storage vote_ = votes[_voteId];
 
         vote_.executed = true;
