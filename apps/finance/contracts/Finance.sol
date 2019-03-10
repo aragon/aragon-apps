@@ -240,8 +240,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             return;
         }
 
-        // Budget must allow at least one instance of this payment each period, or not be set at all
-        require(settings.budgets[_token] >= _amount || !settings.hasBudget[_token], ERROR_BUDGET);
+        // Token budget must not be set at all or allow at least one instance of this payment each period
+        require(!settings.hasBudget[_token] || settings.budgets[_token] >= _amount, ERROR_BUDGET);
 
         paymentId = paymentsNextIndex++;
         emit NewPayment(paymentId, _receiver, _maxRepeats, _reference);
