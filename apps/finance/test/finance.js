@@ -1,3 +1,4 @@
+const assertEvent = require('@aragon/test-helpers/assertEvent')
 const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
 
@@ -652,22 +653,24 @@ contract('Finance App', accounts => {
 
         context('creating payment', async () => {
             const amount = 10
+            let paymentId
 
             beforeEach(async () => {
-                await finance.newPayment(token1.address, recipient, amount, time + 1, 1, 4, '')
+                const receipt = await finance.newPayment(token1.address, recipient, amount, time + 1, 1, 4, '')
+                paymentId = getEventData(receipt, 'NewPayment', 'paymentId')
             })
 
             it('only repeats payment until max repeats', async () => {
                 await finance.mock_setTimestamp(time + 10)
-                await finance.executePayment(1)
+                await finance.executePayment(paymentId)
 
                 assert.equal((await token1.balanceOf(recipient)).valueOf(), amount * 4, 'recipient should have received tokens')
-                assert.deepEqual(await finance.nextPaymentTime(1), MAX_UINT64, 'payment should be repeated again in 2')
+                assert.deepEqual(await finance.nextPaymentTime(paymentId), MAX_UINT64, 'payment should never be repeated')
             })
 
             it('receiver can always execute a payment', async () => {
                 await finance.mock_setTimestamp(time + 1)
-                await finance.receiverExecutePayment(1, { from: recipient })
+                await finance.receiverExecutePayment(paymentId, { from: recipient })
 
                 assert.equal((await token1.balanceOf(recipient)).valueOf(), amount, 'should have received payment')
             })
@@ -706,7 +709,7 @@ contract('Finance App', accounts => {
                 await finance.mock_setTimestamp(time + 1)
 
                 return assertRevert(async () => {
-                    await finance.receiverExecutePayment(1)
+                    await finance.receiverExecutePayment(paymentId)
                 })
             })
 
@@ -715,78 +718,102 @@ contract('Finance App', accounts => {
                 await finance.setBudget(token1.address, budget)
 
                 return assertRevert(() => {
-                    const paymentAmount = budget * 10
-                    return finance.newPayment(token1.address, recipient, 50, paymentAmount, 1, 2, '')
+                    return finance.newPayment(token1.address, recipient, budget + 1, time, 1, 2, '')
                 })
             })
 
             it('fails executing a payment before time', async () => {
                 return assertRevert(async () => {
-                    await finance.executePayment(1, { from: recipient })
+                    await finance.executePayment(paymentId, { from: recipient })
+                })
+            })
+
+            it('fails executing a recurring payment without enough funds', async () => {
+                const vaultBalance = await vault.balance(token1.address)
+                await finance.removeBudget(token1.address) // clear any budget restrictions
+
+                const receipt = await finance.newPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
+                const newPaymentId = getEventData(receipt, 'NewPayment', 'paymentId')
+
+                return assertRevert(async () => {
+                    await finance.executePayment(newPaymentId, { from: recipient })
                 })
             })
 
             it('fails executing a payment by receiver before time', async () => {
                 return assertRevert(async () => {
-                    await finance.receiverExecutePayment(1, { from: recipient })
+                    await finance.receiverExecutePayment(paymentId, { from: recipient })
                 })
             })
 
             it('fails executing inactive payment', async () => {
-                await finance.setPaymentStatus(1, false)
+                await finance.setPaymentStatus(paymentId, false)
                 await finance.mock_setTimestamp(time + 1)
 
                 return assertRevert(async () => {
-                    await finance.executePayment(1, { from: recipient })
+                    await finance.executePayment(paymentId, { from: recipient })
                 })
             })
 
             it('succeeds payment after setting payment status to active', async () => {
-                await finance.setPaymentStatus(1, true)
+                await finance.setPaymentStatus(paymentId, true)
                 await finance.mock_setTimestamp(time + 1)
 
-                await finance.executePayment(1, { from: recipient })
+                await finance.executePayment(paymentId, { from: recipient })
             })
         })
 
-        const assertPaymentFailure = receipt => {
-            const filteredLogs = receipt.logs.filter(log => log.event == 'PaymentFailure')
-            assert.equal(filteredLogs.length, 1, 'should have logged payment failure')
-        }
+        context('payment failure', async () => {
+            const assertPaymentFailure = receipt => {
+                const filteredLogs = receipt.logs.filter(log => log.event == 'PaymentFailure')
+                assert.equal(filteredLogs.length, 1, 'should have logged payment failure')
+            }
 
-        it('emits payment failure event when out of budget', async () => {
-            // Enough budget to allow creation of a new payment, but not enough left in the period
-            // to execute it
-            const budget = 50
-            const amountPerPayment = 50
-            assert.isTrue(await finance.canMakePayment(token1.address, amountPerPayment))
+            it('tries to execute a new recurring payment if initially possible even without enough funds', async () => {
+                const vaultBalance = await vault.balance(token1.address)
+                await finance.removeBudget(token1.address) // clear any budget restrictions
 
-            // Create the budget, and use it up for the period
-            await finance.setBudget(token1.address, budget)
-            await finance.newPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
+                const receipt = await finance.newPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
 
-            // No more budget left
-            const receipt = await finance.newPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
-            assertPaymentFailure(receipt)
-            assert.isFalse(await finance.canMakePayment(token1.address, amountPerPayment))
-        })
+                assertPaymentFailure(receipt)
+                // Make sure no transactions were made
+                assertEvent(receipt, 'NewTransaction', 0)
+            })
 
-        it('emits payment failure event when out of balance', async () => {
-            const amountPerPayment = 40
-            const paidInterval = 100
-            const paidTimes = Math.floor((await vault.balance(token1.address)) / amountPerPayment)
-            await finance.removeBudget(token1.address)
+            it('emits payment failure event when out of budget', async () => {
+                // Enough budget to allow creation of a new payment, but not enough left in the period
+                // to execute it
+                const budget = 50
+                const amountPerPayment = 50
+                assert.isTrue(await finance.canMakePayment(token1.address, amountPerPayment))
 
-            assert.isTrue(await finance.canMakePayment(token1.address, amountPerPayment))
+                // Create the budget, and use it up for the period
+                await finance.setBudget(token1.address, budget)
+                await finance.newPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
 
-            // creates a repeating payment that can be repeated one more than the vault's funds will allow
-            await finance.newPayment(token1.address, recipient, amountPerPayment, time, paidInterval, paidTimes + 1, '')
-            await finance.mock_setTimestamp(time + paidInterval * (paidTimes + 1))
-            const receipt = await finance.executePayment(1)
+                // No more budget left
+                const receipt = await finance.newPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
+                assertPaymentFailure(receipt)
+                assert.isFalse(await finance.canMakePayment(token1.address, amountPerPayment))
+            })
 
-            assertPaymentFailure(receipt)
-            assert.equal(await token1.balanceOf(recipient), amountPerPayment * paidTimes, 'recipient should have received tokens')
-            assert.isFalse(await finance.canMakePayment(token1.address, amountPerPayment))
+            it('emits payment failure event when out of balance', async () => {
+                const amountPerPayment = 40
+                const paidInterval = 100
+                const paidTimes = Math.floor((await vault.balance(token1.address)) / amountPerPayment)
+                await finance.removeBudget(token1.address)
+
+                assert.isTrue(await finance.canMakePayment(token1.address, amountPerPayment))
+
+                // creates a repeating payment that can be repeated one more than the vault's funds will allow
+                await finance.newPayment(token1.address, recipient, amountPerPayment, time, paidInterval, paidTimes + 1, '')
+                await finance.mock_setTimestamp(time + paidInterval * (paidTimes + 1))
+                const receipt = await finance.executePayment(1)
+
+                assertPaymentFailure(receipt)
+                assert.equal(await token1.balanceOf(recipient), amountPerPayment * paidTimes, 'recipient should have received tokens')
+                assert.isFalse(await finance.canMakePayment(token1.address, amountPerPayment))
+            })
         })
     })
 

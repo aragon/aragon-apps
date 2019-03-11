@@ -44,7 +44,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_RECOVER_AMOUNT_ZERO = "FINANCE_RECOVER_AMOUNT_ZERO";
     string private constant ERROR_DEPOSIT_AMOUNT_ZERO = "FINANCE_DEPOSIT_AMOUNT_ZERO";
     string private constant ERROR_BUDGET = "FINANCE_BUDGET";
+    string private constant ERROR_EXECUTE_PAYMENT_NUM = "FINANCE_EXECUTE_PAYMENT_NUM";
     string private constant ERROR_EXECUTE_PAYMENT_TIME = "FINANCE_EXECUTE_PAYMENT_TIME";
+    string private constant ERROR_RECEIVER_EXECUTE_PAYMENT_NUM = "FINANCE_RCVR_EXEC_PAYMENT_NUM";
     string private constant ERROR_RECEIVER_EXECUTE_PAYMENT_TIME = "FINANCE_RCVR_EXEC_PAYMENT_TIME";
     string private constant ERROR_PAYMENT_RECEIVER = "FINANCE_PAYMENT_RECEIVER";
     string private constant ERROR_TOKEN_TRANSFER_FROM_REVERTED = "FINANCE_TKN_TRANSFER_FROM_REVERT";
@@ -258,9 +260,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         payment.maxRepeats = _maxRepeats;
         payment.createdBy = msg.sender;
 
-        if (_nextPaymentTime(paymentId) <= getTimestamp64()) {
-            _executePayment(paymentId);
-        }
+        // We skip checking how many times the new payment was executed to allow creating new
+        // recurring payments before having enough vault balance
+        _executePayment(paymentId);
     }
 
     /**
@@ -322,9 +324,14 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         recurringPaymentExists(_paymentId)
         transitionsPeriod
     {
-        require(_nextPaymentTime(_paymentId) <= getTimestamp64(), ERROR_EXECUTE_PAYMENT_TIME);
-
-        _executePayment(_paymentId);
+        uint256 paid = _executePayment(_paymentId);
+        if (paid == 0) {
+            if (_nextPaymentTime(_paymentId) > getTimestamp64()) {
+                revert(ERROR_EXECUTE_PAYMENT_TIME);
+            } else {
+                revert(ERROR_EXECUTE_PAYMENT_NUM);
+            }
+        }
     }
 
     /**
@@ -333,10 +340,16 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @param _paymentId Identifier for payment
     */
     function receiverExecutePayment(uint256 _paymentId) external isInitialized recurringPaymentExists(_paymentId) transitionsPeriod {
-        require(_nextPaymentTime(_paymentId) <= getTimestamp64(), ERROR_RECEIVER_EXECUTE_PAYMENT_TIME);
         require(recurringPayments[_paymentId].receiver == msg.sender, ERROR_PAYMENT_RECEIVER);
 
-        _executePayment(_paymentId);
+        uint256 paid = _executePayment(_paymentId);
+        if (paid == 0) {
+            if (_nextPaymentTime(_paymentId) > getTimestamp64()) {
+                revert(ERROR_RECEIVER_EXECUTE_PAYMENT_TIME);
+            } else {
+                revert(ERROR_RECEIVER_EXECUTE_PAYMENT_NUM);
+            }
+        }
     }
 
     /**
@@ -566,7 +579,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         }
     }
 
-    function _executePayment(uint256 _paymentId) internal {
+    function _executePayment(uint256 _paymentId) internal returns (uint256) {
         RecurringPayment storage payment = recurringPayments[_paymentId];
         require(!payment.inactive, ERROR_RECURRING_PAYMENT_INACTIVE);
 
@@ -574,7 +587,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         while (_nextPaymentTime(_paymentId) <= getTimestamp64() && paid < MAX_RECURRING_PAYMENTS_PER_TX) {
             if (!_canMakePayment(payment.token, payment.amount)) {
                 emit PaymentFailure(_paymentId);
-                return;
+                break;
             }
 
             // The while() predicate prevents these two from ever overflowing
@@ -591,6 +604,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 true
             );
         }
+
+        return paid;
     }
 
     function _makePaymentTransaction(
