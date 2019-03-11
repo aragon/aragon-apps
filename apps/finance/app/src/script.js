@@ -1,4 +1,4 @@
-import Aragon from '@aragon/client'
+import Aragon from '@aragon/api'
 import { first } from 'rxjs/operators'
 import { of } from 'rxjs'
 import { getTestTokenAddresses } from './testnet'
