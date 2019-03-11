@@ -255,7 +255,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         payment.maxRepeats = _maxRepeats;
         payment.createdBy = msg.sender;
 
-        if (nextPaymentTime(paymentId) <= getTimestamp64()) {
+        if (_nextPaymentTime(paymentId) <= getTimestamp64()) {
             _executePayment(paymentId);
         }
     }
@@ -319,7 +319,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         recurringPaymentExists(_paymentId)
         transitionsPeriod
     {
-        require(nextPaymentTime(_paymentId) <= getTimestamp64(), ERROR_EXECUTE_PAYMENT_TIME);
+        require(_nextPaymentTime(_paymentId) <= getTimestamp64(), ERROR_EXECUTE_PAYMENT_TIME);
 
         _executePayment(_paymentId);
     }
@@ -330,7 +330,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @param _paymentId Identifier for payment
     */
     function receiverExecutePayment(uint256 _paymentId) external isInitialized recurringPaymentExists(_paymentId) transitionsPeriod {
-        require(nextPaymentTime(_paymentId) <= getTimestamp64(), ERROR_RECEIVER_EXECUTE_PAYMENT_TIME);
+        require(_nextPaymentTime(_paymentId) <= getTimestamp64(), ERROR_RECEIVER_EXECUTE_PAYMENT_TIME);
         require(recurringPayments[_paymentId].receiver == msg.sender, ERROR_PAYMENT_RECEIVER);
 
         _executePayment(_paymentId);
@@ -487,11 +487,24 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         income = tokenStatement.income;
     }
 
-    function getPeriodDuration() public view returns (uint64) {
+    /**
+    * @dev We have to check for initialization as periods are only valid after initializing
+    */
+    function currentPeriodId() public view isInitialized returns (uint64) {
+        return _currentPeriodId();
+    }
+
+    /**
+    * @dev We have to check for initialization as periods are only valid after initializing
+    */
+    function getPeriodDuration() public view isInitialized returns (uint64) {
         return settings.periodDuration;
     }
 
-    function getBudget(address _token) public view returns (uint256 budget, bool hasBudget) {
+    /**
+    * @dev We have to check for initialization as budgets are only valid after initializing
+    */
+    function getBudget(address _token) public view isInitialized returns (uint256 budget, bool hasBudget) {
         budget = settings.budgets[_token];
         hasBudget = settings.hasBudget[_token];
     }
@@ -504,27 +517,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @dev We have to check for initialization as periods are only valid after initializing
-    */
-    function currentPeriodId() public view isInitialized returns (uint64) {
-        return _currentPeriodId();
-    }
-
-    /**
     * @dev Initialization check is implicitly provided by `recurringPaymentExists()` as new
     *      recurring payments can only be created via `newPayment(),` which requires initialization
     */
     function nextPaymentTime(uint256 _paymentId) public view recurringPaymentExists(_paymentId) returns (uint64) {
-        RecurringPayment storage payment = recurringPayments[_paymentId];
-
-        if (payment.repeats >= payment.maxRepeats) {
-            return MAX_UINT64; // re-executes in some billions of years time... should not need to worry
-        }
-
-        // Split in multiple lines to circunvent linter warning
-        uint64 increase = payment.repeats.mul(payment.interval);
-        uint64 nextPayment = payment.initialPaymentTime.add(increase);
-        return nextPayment;
+        return _nextPaymentTime(_paymentId);
     }
 
     // Internal fns
@@ -585,7 +582,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         require(!payment.inactive, ERROR_RECURRING_PAYMENT_INACTIVE);
 
         uint64 payed = 0;
-        while (nextPaymentTime(_paymentId) <= getTimestamp64() && payed < MAX_RECURRING_PAYMENTS_PER_TX) {
+        while (_nextPaymentTime(_paymentId) <= getTimestamp64() && payed < MAX_RECURRING_PAYMENTS_PER_TX) {
             if (!_canMakePayment(payment.token, payment.amount)) {
                 emit PaymentFailure(_paymentId);
                 return;
@@ -717,6 +714,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         return _getRemainingBudget(_token) >= _amount && vault.balance(_token) >= _amount;
     }
 
+    function _currentPeriodId() internal view returns (uint64) {
+        // There is no way for this to overflow if protected by an initialization check
+        return periodsLength - 1;
+    }
+
     function _getRemainingBudget(address _token) internal view returns (uint256) {
         if (!settings.hasBudget[_token]) {
             return MAX_UINT;
@@ -733,9 +735,17 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         return settings.budgets[_token].sub(spent);
     }
 
-    function _currentPeriodId() internal view returns (uint64) {
-        // There is no way for this to overflow if protected by an initialization check
-        return periodsLength - 1;
+    function _nextPaymentTime(uint256 _paymentId) internal view returns (uint64) {
+        RecurringPayment storage payment = recurringPayments[_paymentId];
+
+        if (payment.repeats >= payment.maxRepeats) {
+            return MAX_UINT64; // re-executes in some billions of years time... should not need to worry
+        }
+
+        // Split in multiple lines to circumvent linter warning
+        uint64 increase = payment.repeats.mul(payment.interval);
+        uint64 nextPayment = payment.initialPaymentTime.add(increase);
+        return nextPayment;
     }
 
     // Mocked fns (overrided during testing)
