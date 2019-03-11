@@ -203,6 +203,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         emit RevokeVesting(_holder, _vestingId, nonVested);
     }
 
+    // Forwarding fns
+
+    function isForwarder() external pure returns (bool) {
+        return true;
+    }
+
     /**
     * @notice Execute desired action as a token holder
     * @dev IForwarder interface conformance. Forwards any token holder action.
@@ -220,36 +226,11 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         runScript(_evmScript, input, blacklist);
     }
 
-    function isForwarder() public pure returns (bool) {
-        return true;
-    }
-
     function canForward(address _sender, bytes) public view returns (bool) {
         return hasInitialized() && token.balanceOf(_sender) > 0;
     }
 
-    function getVesting(
-        address _recipient,
-        uint256 _vestingId
-    )
-        public
-        view
-        vestingExists(_recipient, _vestingId)
-        returns (
-            uint256 amount,
-            uint64 start,
-            uint64 cliff,
-            uint64 vesting,
-            bool revokable
-        )
-    {
-        TokenVesting storage tokenVesting = vestings[_recipient][_vestingId];
-        amount = tokenVesting.amount;
-        start = tokenVesting.start;
-        cliff = tokenVesting.cliff;
-        vesting = tokenVesting.vesting;
-        revokable = tokenVesting.revokable;
-    }
+    // ITokenController fns
 
     /*
     * @dev Notifies the controller about a token transfer allowing the controller to decide whether to allow it or react if desired (only callable from the token)
@@ -274,6 +255,14 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
+    * @dev Notifies the controller about an approval allowing the controller to react if desired
+    * @return False if the controller does not authorize the approval
+    */
+    function onApprove(address, address, uint) public returns (bool) {
+        return true;
+    }
+
+    /**
     * @notice Called when ether is sent to the MiniMe Token contract
     * @return True if the ether is accepted, false for it to throw
     */
@@ -285,16 +274,29 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return false;
     }
 
-    /**
-    * @dev Notifies the controller about an approval allowing the controller to react if desired
-    * @return False if the controller does not authorize the approval
-    */
-    function onApprove(address, address, uint) public returns (bool) {
-        return true;
-    }
+    // Getter fns
 
-    function _isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
-        return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
+    function getVesting(
+        address _recipient,
+        uint256 _vestingId
+    )
+        public
+        view
+        vestingExists(_recipient, _vestingId)
+        returns (
+            uint256 amount,
+            uint64 start,
+            uint64 cliff,
+            uint64 vesting,
+            bool revokable
+        )
+    {
+        TokenVesting storage tokenVesting = vestings[_recipient][_vestingId];
+        amount = tokenVesting.amount;
+        start = tokenVesting.start;
+        cliff = tokenVesting.cliff;
+        vesting = tokenVesting.vesting;
+        revokable = tokenVesting.revokable;
     }
 
     function spendableBalanceOf(address _holder) public view returns (uint256) {
@@ -326,6 +328,22 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     */
     function allowRecoverability(address _token) public view returns (bool) {
         return _token != address(token);
+    }
+
+    // Internal fns
+
+    function _assign(address _receiver, uint256 _amount) internal {
+        require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_ASSIGN_BALANCE_INCREASE_NOT_ALLOWED);
+        // Must use transferFrom() as transfer() does not give the token controller full control
+        require(token.transferFrom(this, _receiver, _amount), ERROR_ASSIGN_TRANSFER_FROM_REVERTED);
+    }
+
+    function _mint(address _receiver, uint256 _amount) internal {
+        token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
+    }
+
+    function _isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
+        return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
     }
 
     /**
@@ -383,15 +401,5 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
         // tokens - vestedTokens
         return tokens.sub(vestedTokens);
-    }
-
-    function _assign(address _receiver, uint256 _amount) internal {
-        require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_ASSIGN_BALANCE_INCREASE_NOT_ALLOWED);
-        // Must use transferFrom() as transfer() does not give the token controller full control
-        require(token.transferFrom(this, _receiver, _amount), ERROR_ASSIGN_TRANSFER_FROM_REVERTED);
-    }
-
-    function _mint(address _receiver, uint256 _amount) internal {
-        token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
     }
 }

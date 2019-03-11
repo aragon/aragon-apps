@@ -361,7 +361,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
      * @notice Send tokens held in this contract to the Vault
      * @param _token Token whose balance is going to be transferred.
      */
-    function recoverToVault(address _token) public isInitialized transitionsPeriod {
+    function recoverToVault(address _token) external isInitialized transitionsPeriod {
         uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).staticBalanceOf(this);
         require(amount > 0, ERROR_RECOVER_AMOUNT_ZERO);
 
@@ -383,11 +383,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @return success Boolean indicating whether the accounting period is the correct one (if false,
     *                 maxTransitions was surpased and another call is needed)
     */
-    function tryTransitionAccountingPeriod(uint64 _maxTransitions) public isInitialized returns (bool success) {
+    function tryTransitionAccountingPeriod(uint64 _maxTransitions) external isInitialized returns (bool success) {
         return _tryTransitionAccountingPeriod(_maxTransitions);
     }
 
-    // consts
+    // Getter fns
 
     /**
     * @dev Disable recovery escape hatch if the app has been initialized, as it could be used
@@ -487,6 +487,33 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         income = tokenStatement.income;
     }
 
+    function getPeriodDuration() public view returns (uint64) {
+        return settings.periodDuration;
+    }
+
+    function getBudget(address _token) public view returns (uint256 budget, bool hasBudget) {
+        budget = settings.budgets[_token];
+        hasBudget = settings.hasBudget[_token];
+    }
+
+    /**
+    * @dev We have to check for initialization as budgets are only valid after initializing
+    */
+    function getRemainingBudget(address _token) public view isInitialized returns (uint256) {
+        return _getRemainingBudget(_token);
+    }
+
+    /**
+    * @dev We have to check for initialization as periods are only valid after initializing
+    */
+    function currentPeriodId() public view isInitialized returns (uint64) {
+        return _currentPeriodId();
+    }
+
+    /**
+    * @dev Initialization check is implicitly provided by `recurringPaymentExists()` as new
+    *      recurring payments can only be created via `newPayment(),` which requires initialization
+    */
     function nextPaymentTime(uint256 _paymentId) public view recurringPaymentExists(_paymentId) returns (uint64) {
         RecurringPayment storage payment = recurringPayments[_paymentId];
 
@@ -500,30 +527,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         return nextPayment;
     }
 
-    function getPeriodDuration() public view returns (uint64) {
-        return settings.periodDuration;
-    }
-
-    function getBudget(address _token) public view returns (uint256 budget, bool hasBudget) {
-        budget = settings.budgets[_token];
-        hasBudget = settings.hasBudget[_token];
-    }
-
-    /**
-    * @dev We have to check for initialization as periods are only valid after initializing
-    */
-    function getRemainingBudget(address _token) public view isInitialized returns (uint256) {
-        return _getRemainingBudget(_token);
-    }
-
-    /**
-    * @dev We have to check for initialization as periods are only valid after initializing
-    */
-    function currentPeriodId() public view isInitialized returns (uint64) {
-        return _currentPeriodId();
-    }
-
-    // internal fns
+    // Internal fns
 
     function _deposit(address _token, uint256 _amount, string _reference, address _sender, bool _isExternalDeposit) internal {
         require(_amount > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
@@ -734,6 +738,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         return periodsLength - 1;
     }
 
+    // Mocked fns (overrided during testing)
     // Must be view for mocking purposes
+
     function getMaxPeriodTransitions() internal view returns (uint64) { return MAX_UINT64; }
 }
