@@ -41,6 +41,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_INIT_PERIOD_TOO_SHORT = "FINANCE_INIT_PERIOD_TOO_SHORT";
     string private constant ERROR_SET_PERIOD_TOO_SHORT = "FINANCE_SET_PERIOD_TOO_SHORT";
     string private constant ERROR_NEW_PAYMENT_AMOUNT_ZERO = "FINANCE_NEW_PAYMENT_AMOUNT_ZERO";
+    string private constant ERROR_NEW_PAYMENT_INTERVAL_ZERO = "FINANCE_NEW_PAYMENT_INTRVL_ZERO";
+    string private constant ERROR_NEW_PAYMENT_REPEATS_ZERO = "FINANCE_NEW_PAYMENT_REPEATS_ZERO";
+    string private constant ERROR_NEW_PAYMENT_IMMEDIATE = "FINANCE_NEW_PAYMENT_IMMEDIATE";
     string private constant ERROR_RECOVER_AMOUNT_ZERO = "FINANCE_RECOVER_AMOUNT_ZERO";
     string private constant ERROR_DEPOSIT_AMOUNT_ZERO = "FINANCE_DEPOSIT_AMOUNT_ZERO";
     string private constant ERROR_BUDGET = "FINANCE_BUDGET";
@@ -230,23 +233,16 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         returns (uint256 paymentId)
     {
         require(_amount > 0, ERROR_NEW_PAYMENT_AMOUNT_ZERO);
-
-        // Avoid saving payment data for one-time immediate payments
-        if (_initialPaymentTime <= getTimestamp64() && _maxRepeats == 1) {
-            _makePaymentTransaction(
-                _token,
-                _receiver,
-                _amount,
-                NO_RECURRING_PAYMENT,   // unrelated to any payment id; it isn't created
-                0,   // also unrelated to any payment repeats
-                _reference,
-                false
-            );
-            return;
-        }
+        require(_interval > 0, ERROR_NEW_PAYMENT_INTERVAL_ZERO);
+        require(_maxRepeats > 0, ERROR_NEW_PAYMENT_REPEATS_ZERO);
 
         // Token budget must not be set at all or allow at least one instance of this payment each period
         require(!settings.hasBudget[_token] || settings.budgets[_token] >= _amount, ERROR_BUDGET);
+
+        // Don't allow creating single payments that are immediately executable
+        if (_maxRepeats == 1) {
+            require(_initialPaymentTime > getTimestamp64(), ERROR_NEW_PAYMENT_IMMEDIATE);
+        }
 
         paymentId = paymentsNextIndex++;
         emit NewPayment(paymentId, _receiver, _maxRepeats, _reference);
@@ -264,6 +260,31 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         // recurring payments before having enough vault balance
         _executePayment(paymentId);
     }
+
+    /**
+    * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver` for '`_reference`'
+    * @param _token Address of token for payment
+    * @param _receiver Address that will receive payment
+    * @param _amount Tokens that are paid every time the payment is due
+    * @param _reference String detailing payment reason
+    */
+   function newPaymentTransaction(address _token, address _receiver, uint256 _amount, string _reference)
+        external
+        authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, MAX_UINT, 1))
+        transitionsPeriod
+   {
+        require(_amount > 0, ERROR_NEW_PAYMENT_AMOUNT_ZERO);
+
+        _makePaymentTransaction(
+            _token,
+            _receiver,
+            _amount,
+            NO_RECURRING_PAYMENT,   // unrelated to any payment id; it isn't created
+            0,   // also unrelated to any payment repeats
+            _reference,
+            false
+        );
+   }
 
     /**
     * @notice Change period duration to `@transformTime(_periodDuration)`, effective for next accounting period
