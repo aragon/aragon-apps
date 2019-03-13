@@ -182,7 +182,6 @@ contract Survey is AragonApp {
     */
     function voteOption(uint256 _surveyId, uint256 _optionId) external surveyExists(_surveyId) {
         require(canVote(_surveyId, msg.sender), ERROR_CAN_NOT_VOTE);
-        require(_optionId != ABSTAIN_VOTE, ERROR_VOTE_WHOLE_WRONG_OPTION);
 
         SurveyStruct storage survey = surveys[_surveyId];
         // This could re-enter, though we can asume the governance token is not maliciuous
