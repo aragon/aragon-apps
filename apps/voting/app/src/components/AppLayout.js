@@ -32,7 +32,7 @@ const AppLayout = ({
                   (below('medium') ? (
                     <ButtonIcon
                       onClick={mainButton.onClick}
-                      title={mainButton.label}
+                      label={mainButton.label}
                       css={`
                         width: auto;
                         height: 100%;
