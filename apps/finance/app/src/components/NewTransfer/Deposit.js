@@ -129,19 +129,16 @@ class Deposit extends React.Component {
     // ETH
     if (addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS)) {
       return new Promise((resolve, reject) =>
-        app
-          .web3Eth('getBalance', userAccount)
-          .first()
-          .subscribe(
-            ethBalance =>
-              resolve({
-                decimals: 18,
-                loading: false,
-                symbol: 'ETH',
-                userBalance: ethBalance,
-              }),
-            reject
-          )
+        app.web3Eth('getBalance', userAccount).subscribe(
+          ethBalance =>
+            resolve({
+              decimals: 18,
+              loading: false,
+              symbol: 'ETH',
+              userBalance: ethBalance,
+            }),
+          reject
+        )
       )
     }
 
@@ -149,10 +146,7 @@ class Deposit extends React.Component {
     const token = app.external(address, tokenAbi)
 
     return new Promise(async (resolve, reject) => {
-      const userBalance = await token
-        .balanceOf(userAccount)
-        .first()
-        .toPromise()
+      const userBalance = await token.balanceOf(userAccount).toPromise()
 
       const decimalsFallback =
         tokenDataFallback(address, 'decimals', network.type) || '0'
@@ -168,10 +162,7 @@ class Deposit extends React.Component {
 
       const [tokenSymbol, tokenDecimals] = await Promise.all([
         getTokenSymbol(app, address),
-        token
-          .decimals()
-          .first()
-          .toPromise(),
+        token.decimals().toPromise(),
       ])
 
       // If symbol or decimals are resolved, overwrite the fallbacks
