@@ -1,4 +1,4 @@
-import Aragon from '@aragon/client'
+import Aragon from '@aragon/api'
 import { of } from './rxjs'
 import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
 import { addressesEqual } from './web3-utils'
