@@ -6,13 +6,13 @@ import {
   TableCell,
   ContextMenu,
   ContextMenuItem,
-  IdentityBadge,
   blockExplorerUrl,
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
 import IconTokens from './icons/IconTokens'
+import CustomLabelIdentityBadge from './CustomLabelIdentityBadge/CustomLabelIdentityBadge'
 
 class TransferRow extends React.PureComponent {
   handleViewTransaction = () => {
@@ -62,7 +62,11 @@ class TransferRow extends React.PureComponent {
             <Grid>
               <div>
                 <div css="display: flex">
-                  <IdentityBadge networkType={network.type} entity={entity} />
+                  <CustomLabelIdentityBadge
+                    networkType={network.type}
+                    entity={entity}
+                    address={entity}
+                  />
                 </div>
               </div>
               <time dateTime={formattedDate} title={formattedDate}>
@@ -86,7 +90,11 @@ class TransferRow extends React.PureComponent {
           </time>
         </NoWrapCell>
         <NoWrapCell>
-          <IdentityBadge networkType={network.type} entity={entity} />
+          <CustomLabelIdentityBadge
+            networkType={network.type}
+            entity={entity}
+            address={entity}
+          />
         </NoWrapCell>
         <NoWrapCell title={reference} css="position: relative">
           <TextOverflow
