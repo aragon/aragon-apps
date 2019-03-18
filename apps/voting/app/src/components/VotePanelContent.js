@@ -1,19 +1,20 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { first } from 'rxjs/operators'
 import styled from 'styled-components'
 import {
   Button,
+  Countdown,
   IdentityBadge,
   Info,
   SafeLink,
-  SidePanelSplit,
   SidePanelSeparator,
-  Countdown,
+  SidePanelSplit,
   Text,
   blockExplorerUrl,
   theme,
 } from '@aragon/ui'
-import provideNetwork from '../utils/provideNetwork'
+import { NetworkContext } from '../app-contexts'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { round } from '../math-utils'
 import { pluralize } from '../utils'
@@ -25,7 +26,7 @@ import SummaryBar from './SummaryBar'
 
 class VotePanelContent extends React.Component {
   static propTypes = {
-    app: PropTypes.object.isRequired,
+    api: PropTypes.object.isRequired,
   }
   state = {
     userCanVote: false,
@@ -78,7 +79,7 @@ class VotePanelContent extends React.Component {
     if (tokenContract && user) {
       tokenContract
         .balanceOfAt(user, vote.data.snapshotBlock)
-        .first()
+        .pipe(first())
         .subscribe(balance => {
           const adjustedBalance = Math.floor(
             parseInt(balance, 10) / Math.pow(10, tokenDecimals)
@@ -88,7 +89,7 @@ class VotePanelContent extends React.Component {
     }
   }
   loadUserCanVote = (user, vote) => {
-    const { app } = this.props
+    const { api } = this.props
     if (!vote) {
       return
     }
@@ -97,9 +98,9 @@ class VotePanelContent extends React.Component {
       this.setState({ loadingCanVote: true })
 
       // Get if user can vote
-      app
+      api
         .call('canVote', vote.voteId, user)
-        .first()
+        .pipe(first())
         .subscribe(canVote => {
           this.setState({ loadingCanVote: false, userCanVote: canVote })
         })
@@ -110,13 +111,13 @@ class VotePanelContent extends React.Component {
     }
   }
   loadCanExecute = vote => {
-    const { app } = this.props
+    const { api } = this.props
     if (vote) {
       this.setState({ loadingCanExecute: true })
 
-      app
+      api
         .call('canExecute', vote.voteId)
-        .first()
+        .pipe(first())
         .subscribe(canExecute => {
           this.setState({ canExecute, loadingCanExecute: false })
         })
@@ -138,8 +139,8 @@ class VotePanelContent extends React.Component {
   }
   render() {
     const {
-      network,
       vote,
+      network,
       ready,
       tokenSymbol,
       tokenDecimals,
@@ -390,4 +391,8 @@ const VotingButton = styled(Button)`
   }
 `
 
-export default provideNetwork(VotePanelContent)
+export default props => (
+  <NetworkContext.Consumer>
+    {network => <VotePanelContent network={network} {...props} />}
+  </NetworkContext.Consumer>
+)

@@ -1,5 +1,6 @@
-import Aragon from '@aragon/client'
-import { of } from './rxjs'
+import Aragon from '@aragon/api'
+import { of } from 'rxjs'
+import { map } from 'rxjs/operators'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -41,16 +42,13 @@ const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
 
 // Get the token address to initialize ourselves
 retryEvery(retry => {
-  app
-    .call('token')
-    .first()
-    .subscribe(initialize, err => {
-      console.error(
-        'Could not start background script execution due to the contract not loading the token:',
-        err
-      )
-      retry()
-    })
+  app.call('token').subscribe(initialize, err => {
+    console.error(
+      'Could not start background script execution due to the contract not loading the token:',
+      err
+    )
+    retry()
+  })
 })
 
 async function initialize(tokenAddr) {
@@ -198,7 +196,6 @@ function loadVoteData(voteId) {
   return new Promise(resolve => {
     app
       .call('getVote', voteId)
-      .first()
       .subscribe(vote => resolve(loadVoteDescription(marshallVote(vote))))
   })
 }
@@ -237,13 +234,14 @@ function loadVoteSettings() {
         new Promise((resolve, reject) =>
           app
             .call(name)
-            .first()
-            .map(val => {
-              if (type === 'time') {
-                return marshallDate(val)
-              }
-              return val
-            })
+            .pipe(
+              map(val => {
+                if (type === 'time') {
+                  return marshallDate(val)
+                }
+                return val
+              })
+            )
             .subscribe(value => {
               resolve({ [key]: value })
             }, reject)
@@ -262,19 +260,13 @@ function loadVoteSettings() {
 
 function loadTokenDecimals(tokenContract) {
   return new Promise((resolve, reject) => {
-    tokenContract
-      .decimals()
-      .first()
-      .subscribe(resolve, reject)
+    tokenContract.decimals().subscribe(resolve, reject)
   })
 }
 
 function loadTokenSymbol(tokenContract) {
   return new Promise((resolve, reject) => {
-    tokenContract
-      .symbol()
-      .first()
-      .subscribe(resolve, reject)
+    tokenContract.symbol().subscribe(resolve, reject)
   })
 }
 
