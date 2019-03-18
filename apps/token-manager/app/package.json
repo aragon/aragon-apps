@@ -42,8 +42,7 @@
   "scripts": {
     "test": "jest",
     "lint": "eslint ./src",
-    "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3002 --out-dir build/",
-
+    "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3003 --out-dir build/",
     "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url \".\"",
     "watch:script": "parcel watch src/script.js --out-dir build/ --no-hmr",
     "build:script": "parcel build src/script.js --out-dir build/",
