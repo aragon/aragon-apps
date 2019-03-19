@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { IdentityBadge, Text, Viewport, breakpoint, theme } from '@aragon/ui'
+import { IdentityBadge, Text, breakpoint, theme } from '@aragon/ui'
 import provideNetwork from '../provide-network'
 import { formatBalance, stakesPercentages } from '../utils'
 import TokenBadge from './TokenBadge'
