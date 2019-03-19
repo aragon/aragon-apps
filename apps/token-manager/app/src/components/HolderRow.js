@@ -58,12 +58,7 @@ class HolderRow extends React.Component {
           </Owner>
         </TableCell>
         {!groupMode && (
-          <TableCell
-            align="right"
-            css={`
-              padding-left: ${compact ? '0' : '20px'};
-            `}
-          >
+          <TableCell align={compact ? 'left' : 'right'}>
             {formatBalance(balance, tokenDecimalsBase)}
           </TableCell>
         )}

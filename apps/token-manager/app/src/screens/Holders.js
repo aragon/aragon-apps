@@ -58,17 +58,19 @@ class Holders extends React.Component {
                   <ResponsiveTable
                     header={
                       <TableRow>
-                        <StyledTableHeader
+                        <TableHeader
                           title={groupMode ? 'Owner' : 'Holder'}
                           groupmode={groupMode}
+                          colSpan={groupMode ? '2' : '1'}
                         />
                         {!groupMode && (
-                          <StyledTableHeader
-                            title={<div css="margin-left: -20px">Balance</div>}
-                            align="right"
+                          <TableHeader
+                            title="Balance"
+                            align={compactTable ? 'left' : 'right'}
+                            colSpan={compactTable ? '2' : '1'}
                           />
                         )}
-                        <TableHeader title="" />
+                        {!groupMode && !compactTable && <TableHeader />}
                       </TableRow>
                     }
                     noSideBorders={compactTable}
@@ -92,7 +94,6 @@ class Holders extends React.Component {
               </Main>
               <Screen selected={!tabbedNavigation || selectedTab === 1}>
                 <ResponsiveSideBar
-                  groupMode={groupMode}
                   holders={holders}
                   tokenAddress={tokenAddress}
                   tokenDecimalsBase={tokenDecimalsBase}
@@ -116,15 +117,6 @@ class Holders extends React.Component {
 }
 
 const Screen = ({ selected, children }) => selected && children
-
-const StyledTableHeader = styled(TableHeader)`
-  ${breakpoint(
-    'medium',
-    `
-      width: auto;
-    `
-  )};
-`
 
 const TabBarWrapper = styled.div`
   margin-top: 16px;
