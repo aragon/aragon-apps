@@ -1,10 +1,4 @@
 import { useState, useEffect } from 'react'
-import { first } from 'rxjs/operators'
-
-// transforms an observable into a promise
-function promisify(observable) {
-  return observable.pipe(first()).toPromise()
-}
 
 // when `params` are updated, call `fn` and pass the result
 function usePromiseResult(fn, params, defaultValue) {
@@ -28,9 +22,9 @@ async function getUserBalance(vote, userAccount, tokenContract, tokenDecimals) {
     return -1
   }
 
-  const balance = await promisify(
-    tokenContract.balanceOfAt(userAccount, vote.data.snapshotBlock)
-  )
+  const balance = await tokenContract
+    .balanceOfAt(userAccount, vote.data.snapshotBlock)
+    .toPromise()
 
   return Math.floor(parseInt(balance, 10) / Math.pow(10, tokenDecimals))
 }
@@ -45,14 +39,14 @@ async function getCanVote(vote, userAccount, api) {
     return vote.data.open
   }
 
-  return promisify(api.call('canVote', vote.voteId, userAccount))
+  return api.call('canVote', vote.voteId, userAccount).toPromise()
 }
 
 async function getCanExecute(vote, api) {
   if (!vote) {
     return false
   }
-  return promisify(api.call('canExecute', vote.voteId))
+  return api.call('canExecute', vote.voteId).toPromise()
 }
 
 export const useUserBalance = (...params) =>

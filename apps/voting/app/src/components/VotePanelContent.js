@@ -1,6 +1,5 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { first } from 'rxjs/operators'
 import styled from 'styled-components'
 import {
   Button,
@@ -74,54 +73,49 @@ class VotePanelContent extends React.Component {
   handleExecuteClick = () => {
     this.props.onExecute(this.props.vote.voteId)
   }
-  loadUserBalance = (user, vote, tokenContract) => {
-    const { tokenDecimals } = this.props
-    if (tokenContract && user) {
-      tokenContract
-        .balanceOfAt(user, vote.data.snapshotBlock)
-        .pipe(first())
-        .subscribe(balance => {
-          const adjustedBalance = Math.floor(
-            parseInt(balance, 10) / Math.pow(10, tokenDecimals)
-          )
-          this.setState({ userBalance: adjustedBalance })
-        })
+  loadUserBalance = async (user, vote, tokenContract) => {
+    if (!tokenContract || !user) {
+      return
     }
+
+    const { tokenDecimals } = this.props
+
+    const balance = await tokenContract
+      .balanceOfAt(user, vote.data.snapshotBlock)
+      .toPromise()
+
+    this.setState({
+      userBalance: Math.floor(
+        parseInt(balance, 10) / Math.pow(10, tokenDecimals)
+      ),
+    })
   }
-  loadUserCanVote = (user, vote) => {
+  loadUserCanVote = async (user, vote) => {
     const { api } = this.props
     if (!vote) {
       return
     }
 
-    if (user) {
-      this.setState({ loadingCanVote: true })
-
-      // Get if user can vote
-      api
-        .call('canVote', vote.voteId, user)
-        .pipe(first())
-        .subscribe(canVote => {
-          this.setState({ loadingCanVote: false, userCanVote: canVote })
-        })
-    } else {
-      // Note: if the account is not present, we assume the account is not
-      // connected.
+    // If the account is not present, we assume it is not connected.
+    if (!user) {
       this.setState({ loadingCanVote: false, userCanVote: vote.data.open })
+      return
     }
-  }
-  loadCanExecute = vote => {
-    const { api } = this.props
-    if (vote) {
-      this.setState({ loadingCanExecute: true })
 
-      api
-        .call('canExecute', vote.voteId)
-        .pipe(first())
-        .subscribe(canExecute => {
-          this.setState({ canExecute, loadingCanExecute: false })
-        })
+    // Check if the current user can vote
+    this.setState({ loadingCanVote: true })
+    const userCanVote = await api.call('canVote', vote.voteId, user).toPromise()
+    this.setState({ loadingCanVote: false, userCanVote })
+  }
+  loadCanExecute = async vote => {
+    const { api } = this.props
+    if (!vote) {
+      return
     }
+
+    this.setState({ loadingCanExecute: true })
+    const canExecute = await api.call('canExecute', vote.voteId).toPromise()
+    this.setState({ canExecute, loadingCanExecute: false })
   }
   renderBlockLink = snapshotBlock => {
     const {

@@ -56,7 +56,7 @@ async function initialize(tokenAddr) {
 
   let tokenSymbol
   try {
-    tokenSymbol = await loadTokenSymbol(token)
+    tokenSymbol = await token.symbol().toPromise()
     const pctBase = parseInt(await app.call('PCT_BASE').toPromise(), 10)
     const supportRequiredPct = parseInt(
       await app.call('supportRequiredPct').toPromise(),
@@ -73,7 +73,7 @@ async function initialize(tokenAddr) {
 
   let tokenDecimals
   try {
-    tokenDecimals = await loadTokenDecimals(token)
+    tokenDecimals = await token.decimals().toPromise()
   } catch (err) {
     console.err(
       `Failed to load token decimals for token at ${tokenAddr} due to:`,
@@ -256,18 +256,6 @@ function loadVoteSettings() {
       // Return an empty object to try again later
       return {}
     })
-}
-
-function loadTokenDecimals(tokenContract) {
-  return new Promise((resolve, reject) => {
-    tokenContract.decimals().subscribe(resolve, reject)
-  })
-}
-
-function loadTokenSymbol(tokenContract) {
-  return new Promise((resolve, reject) => {
-    tokenContract.symbol().subscribe(resolve, reject)
-  })
 }
 
 // Apply transformations to a vote received from web3
