@@ -98,19 +98,13 @@ class App extends React.Component {
   handleMenuPanelOpen = () => {
     this.props.sendMessageToWrapper('menuPanel', true)
   }
-  handleResolveCustomLabel = async address => {
-    return await this.props.app.resolveAddressIdentity(address).toPromise()
+  handleResolveCustomLabel = address => {
+    return this.props.app.resolveAddressIdentity(address).toPromise()
   }
   handleShowCustomLabelModal = address => {
-    console.log('handleShowCustomLabelModal: ', address)
-    return new Promise((resolve, reject) => {
-      try {
-        this.props.app.requestAddressIdentityModification(address)
-        resolve()
-      } catch (e) {
-        reject(e)
-      }
-    })
+    return this.props.app
+      .requestAddressIdentityModification(address)
+      .toPromise()
   }
 
   render() {
