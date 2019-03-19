@@ -49,7 +49,11 @@ class HolderRow extends React.Component {
       <TableRow>
         <TableCell css="padding-right: 0">
           <Owner>
-            <IdentityBadge entity={address} networkType={network.type} />
+            <IdentityBadge
+              entity={address}
+              networkType={network.type}
+              connectedAccount={isCurrentUser}
+            />
             {isCurrentUser && <You />}
           </Owner>
         </TableCell>
