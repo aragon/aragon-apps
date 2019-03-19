@@ -58,9 +58,12 @@ const Token = styled.div`
     margin-right: 10px;
   }
 
-  ${breakpoint('medium'), `
-    font-size: 14px;
-  `}
+  ${breakpoint(
+    'medium',
+    `
+      font-size: 14px;
+    `
+  )}
 `
 
 const Amount = styled.div`

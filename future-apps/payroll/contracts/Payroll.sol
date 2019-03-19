@@ -33,12 +33,14 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
 
     uint128 internal constant ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
     uint64 internal constant MAX_UINT64 = uint64(-1);
+    uint8 internal constant MAX_ALLOWED_TOKENS = 25; // for loop in `payday()` uses ~220k gas per available token
     uint256 internal constant MAX_ACCRUED_VALUE = 2**128;
 
     string private constant ERROR_NO_EMPLOYEE = "PAYROLL_NO_EMPLOYEE";
     string private constant ERROR_EMPLOYEE_DOES_NOT_MATCH = "PAYROLL_EMPLOYEE_DOES_NOT_MATCH";
     string private constant ERROR_FINANCE_NOT_CONTRACT = "PAYROLL_FINANCE_NOT_CONTRACT";
     string private constant ERROR_TOKEN_ALREADY_ALLOWED = "PAYROLL_TOKEN_ALREADY_ALLOWED";
+    string private constant ERROR_MAX_ALLOWED_TOKENS = "PAYROLL_MAX_ALLOWED_TOKENS";
     string private constant ERROR_ACCRUED_VALUE_TOO_BIG = "PAYROLL_ACCRUED_VALUE_TOO_BIG";
     string private constant ERROR_TOKEN_ALLOCATION_MISMATCH = "PAYROLL_TOKEN_ALLOCATION_MISMATCH";
     string private constant ERROR_NO_ALLOWED_TOKEN = "PAYROLL_NO_ALLOWED_TOKEN";
@@ -73,7 +75,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
     uint256 public nextEmployee;
     mapping(address => uint256) private employeeIds;    // employee address -> employee ID
     mapping(address => bool) private allowedTokens;
-    address[] private allowedTokensArray;
+    address[] internal allowedTokensArray;
 
     event AddAllowedToken(address token);
     event AddEmployee(
@@ -159,6 +161,7 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
      */
     function addAllowedToken(address _allowedToken) external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
         require(!allowedTokens[_allowedToken], ERROR_TOKEN_ALREADY_ALLOWED);
+        require(allowedTokensArray.length < MAX_ALLOWED_TOKENS, ERROR_MAX_ALLOWED_TOKENS);
         allowedTokens[_allowedToken] = true;
         allowedTokensArray.push(_allowedToken);
 

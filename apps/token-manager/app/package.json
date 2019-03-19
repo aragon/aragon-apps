@@ -5,7 +5,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@aragon/client": "^1.1.0",
-    "@aragon/ui": "^0.30.0",
+    "@aragon/ui": "^0.31.0",
     "bn.js": "^4.11.6",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
@@ -42,7 +42,7 @@
     "test": "jest",
     "lint": "eslint ./src",
     "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve index.html -p 3003 --out-dir build/",
-    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url '.'",
+    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url \".\"",
     "build:script": "parcel build src/script.js --out-dir build/",
     "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build"
   },
