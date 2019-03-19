@@ -40,6 +40,7 @@ class Holders extends React.Component {
       <Viewport>
         {({ below }) => {
           const tabbedNavigation = below('medium')
+          const compactTable = below('medium')
 
           return (
             <TwoPanels>
@@ -62,11 +63,15 @@ class Holders extends React.Component {
                           groupmode={groupMode}
                         />
                         {!groupMode && (
-                          <StyledTableHeader title="Balance" align="right" />
+                          <StyledTableHeader
+                            title={<div css="margin-left: -20px">Balance</div>}
+                            align="right"
+                          />
                         )}
                         <TableHeader title="" />
                       </TableRow>
                     }
+                    noSideBorders={compactTable}
                   >
                     {holders.map(({ address, balance }) => (
                       <HolderRow
@@ -79,6 +84,7 @@ class Holders extends React.Component {
                         tokenDecimalsBase={tokenDecimalsBase}
                         onAssignTokens={onAssignTokens}
                         onRemoveTokens={onRemoveTokens}
+                        compact={compactTable}
                       />
                     ))}
                   </ResponsiveTable>
@@ -111,8 +117,6 @@ class Holders extends React.Component {
 const Screen = ({ selected, children }) => selected && children
 
 const StyledTableHeader = styled(TableHeader)`
-  width: ${({ groupmode }) => (groupmode ? 100 : 50)}%;
-
   ${breakpoint(
     'medium',
     `
