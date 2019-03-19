@@ -1,7 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
 import {
-  Badge,
   ContextMenu,
   ContextMenuItem,
   IconAdd,
@@ -9,12 +8,11 @@ import {
   IdentityBadge,
   TableCell,
   TableRow,
-  Viewport,
-  breakpoint,
   theme,
 } from '@aragon/ui'
 import provideNetwork from '../provide-network'
 import { formatBalance } from '../utils'
+import You from './You'
 
 class HolderRow extends React.Component {
   static defaultProps = {
@@ -41,6 +39,7 @@ class HolderRow extends React.Component {
       maxAccountTokens,
       network,
       tokenDecimalsBase,
+      compact,
     } = this.props
 
     const singleToken = balance.eq(tokenDecimalsBase)
@@ -48,33 +47,22 @@ class HolderRow extends React.Component {
 
     return (
       <TableRow>
-        <StyledTableCell>
+        <TableCell css="padding-right: 0">
           <Owner>
-            <Viewport>
-              {({ width, above }) => (
-                <IdentityBadge
-                  entity={address}
-                  networkType={network.type}
-                  shorten={(above('medium') && width < 1000) || width < 590}
-                />
-              )}
-            </Viewport>
-            {isCurrentUser && (
-              <Badge.Identity
-                style={{ fontVariant: 'small-caps' }}
-                title="This is your Ethereum address"
-              >
-                you
-              </Badge.Identity>
-            )}
+            <IdentityBadge
+              entity={address}
+              networkType={network.type}
+              connectedAccount={isCurrentUser}
+            />
+            {isCurrentUser && <You />}
           </Owner>
-        </StyledTableCell>
+        </TableCell>
         {!groupMode && (
-          <TableCell align="right">
+          <TableCell align={compact ? 'left' : 'right'}>
             {formatBalance(balance, tokenDecimalsBase)}
           </TableCell>
         )}
-        <StyledTableCell align="right">
+        <TableCell align="right" css="padding-left: 0">
           <ContextMenu>
             {canAssign && (
               <ContextMenuItem onClick={this.handleAssignTokens}>
@@ -94,37 +82,11 @@ class HolderRow extends React.Component {
               </ActionLabel>
             </ContextMenuItem>
           </ContextMenu>
-        </StyledTableCell>
+        </TableCell>
       </TableRow>
     )
   }
 }
-
-const StyledTableCell = styled(TableCell)`
-  &&& {
-    border-left-width: 0;
-    border-right-width: 0;
-
-    :first-child,
-    :last-child {
-      border-radius: 0;
-    }
-  }
-
-  ${breakpoint(
-    'medium',
-    `
-      &&& {
-        border-left-width: 1px;
-        border-right-width: 1px;
-
-        :first-child, :last-child {
-          border-radius: 3px;
-        }
-      }
-    `
-  )};
-`
 
 const ActionLabel = styled.span`
   margin-left: 15px;
