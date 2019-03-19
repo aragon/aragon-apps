@@ -28,12 +28,12 @@ const CustomLabelIdentityBadge = ({ address, ...props }) => {
   }
   React.useEffect(() => {
     handleResolve(address)
-    modifyObservable.on('event', addr => {
+    const subscription = modifyObservable.subscribe(addr => {
       if (addr === address) {
         handleResolve(address)
       }
     })
-    return () => modifyObservable.off('event')
+    return () => subscription.unsubscribe()
   }, [])
 
   return (

@@ -1,15 +1,14 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import EventEmitter from 'events'
-
-const modifyObservable = new EventEmitter()
+import { Subject } from 'rxjs'
+const modifyObservable = new Subject()
 
 const CustomLabelModalContext = React.createContext({})
 
 const CustomLabelModalProvider = ({ onShowCustomLabelModal, children }) => {
-  const hookedShowCustomLabelModal = data => {
-    return onShowCustomLabelModal(data)
-      .then(() => modifyObservable.emit('event', data))
+  const hookedShowCustomLabelModal = address => {
+    return onShowCustomLabelModal(address)
+      .then(() => modifyObservable.next(address))
       .catch(e => null)
   }
 
