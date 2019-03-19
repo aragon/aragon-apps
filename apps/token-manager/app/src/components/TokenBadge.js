@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { SafeLink } from '@aragon/ui'
+import { SafeLink, blockExplorerUrl } from '@aragon/ui'
 import provideNetwork from '../provide-network'
 
 import { ETHER_TOKEN_VERIFIED_ADDRESSES } from '../verified-tokens'
@@ -12,7 +12,7 @@ class TokenBadge extends React.PureComponent {
     return (
       <Main
         title={`${name} (${address})`}
-        href={`${network.etherscanBaseUrl}/token/${address}`}
+        href={blockExplorerUrl('token', address, { networkType: network.type })}
       >
         <Label>
           {verified && (
