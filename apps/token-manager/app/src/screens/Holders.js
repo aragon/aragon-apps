@@ -100,6 +100,7 @@ class Holders extends React.Component {
                   tokenSupply={tokenSupply}
                   tokenSymbol={tokenSymbol}
                   tokenTransfersEnabled={tokenTransfersEnabled}
+                  userAccount={userAccount}
                 />
               </Screen>
             </TwoPanels>

@@ -1,7 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
 import {
-  Badge,
   ContextMenu,
   ContextMenuItem,
   IconAdd,
@@ -13,6 +12,7 @@ import {
 } from '@aragon/ui'
 import provideNetwork from '../provide-network'
 import { formatBalance } from '../utils'
+import You from './You'
 
 class HolderRow extends React.Component {
   static defaultProps = {
@@ -92,14 +92,6 @@ class HolderRow extends React.Component {
     )
   }
 }
-
-const You = styled(Badge.Identity).attrs({
-  title: 'This is your Ethereum address',
-  children: 'you',
-})`
-  font-variant: small-caps;
-  margin-left: 10px;
-`
 
 const ActionLabel = styled.span`
   margin-left: 15px;
