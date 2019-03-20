@@ -23,12 +23,7 @@ class App extends React.Component {
   }
   static defaultProps = {
     network: {},
-    minParticipationPct: null,
-    pctBase: null,
     surveys: [],
-    surveyTime: null,
-    tokenAddress: null,
-    tokenDecimals: 18,
     tokenSymbol: '',
   }
   static childContextTypes = {
