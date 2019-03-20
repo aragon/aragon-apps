@@ -38,7 +38,10 @@ class SurveyOptions extends React.Component {
     }
     let i = options.length
     while (i--) {
-      if (options[i].optionId !== nextOptions[i].optionId) {
+      if (
+        options[i].optionId !== nextOptions[i].optionId ||
+        options[i].power !== nextOptions[i].power
+      ) {
         return true
       }
     }

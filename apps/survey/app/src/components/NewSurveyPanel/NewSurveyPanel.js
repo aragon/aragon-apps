@@ -50,7 +50,7 @@ class NewSurveyPanel extends React.Component {
         <Form onSubmit={this.handleSubmit}>
           <Field label="Question">
             <TextInput
-              innerRef={question => (this._questionInput = question)}
+              ref={question => (this._questionInput = question)}
               value={question}
               onChange={this.handleQuestionChange}
               placeholder="Enter survey question"
