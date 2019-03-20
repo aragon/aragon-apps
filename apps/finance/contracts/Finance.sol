@@ -116,7 +116,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     event SetBudget(address indexed token, uint256 amount, bool hasBudget);
     event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxRepeats, string reference);
     event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity, uint256 amount, string reference);
-    event ChangePaymentState(uint256 indexed paymentId, bool inactive);
+    event ChangePaymentState(uint256 indexed paymentId, bool active);
     event ChangePeriodDuration(uint64 newDuration);
     event PaymentFailure(uint256 paymentId);
 
