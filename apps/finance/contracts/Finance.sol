@@ -210,6 +210,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     /**
     * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver``_maxRepeats > 0 ? ', executing ' + _maxRepeats + ' times at intervals of ' + @transformTime(_interval) : ''`, for '`_reference`'
+    * @dev See `newPaymentTransaction()` for limitations on how the interval auth parameter can be used
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment
     * @param _amount Tokens that are paid every time the payment is due
@@ -263,6 +264,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     /**
     * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver` for '`_reference`'
+    * @dev Note that this function is protected by the `CREATE_PAYMENTS_ROLE` but uses `MAX_UINT64`
+    *      as its interval auth parameter. While this protects against most cases (you typically want
+    *      to set a baseline requirement for the interval time), it does mean users can't grant a
+    *      permission that has a upperbound requirement for the interval time.
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment
     * @param _amount Tokens that are paid every time the payment is due
