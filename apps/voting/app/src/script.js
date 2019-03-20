@@ -41,13 +41,17 @@ const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
 
 // Get the token address to initialize ourselves
 retryEvery(retry => {
-  app.call('token').subscribe(initialize, err => {
-    console.error(
-      'Could not start background script execution due to the contract not loading the token:',
-      err
-    )
-    retry()
-  })
+  app
+    .call('token')
+    .toPromise()
+    .then(initialize)
+    .catch(err => {
+      console.error(
+        'Could not start background script execution due to the contract not loading the token:',
+        err
+      )
+      retry()
+    })
 })
 
 async function initialize(tokenAddr) {
