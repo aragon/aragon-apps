@@ -270,7 +270,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
    function newPaymentTransaction(address _token, address _receiver, uint256 _amount, string _reference)
         external
-        authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, uint256(MAX_UINT64), 1))
+        authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, uint256(MAX_UINT64), uint256(1)))
         transitionsPeriod
    {
         require(_amount > 0, ERROR_NEW_PAYMENT_AMOUNT_ZERO);
