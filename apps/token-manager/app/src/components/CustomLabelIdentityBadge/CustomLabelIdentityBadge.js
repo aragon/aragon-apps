@@ -27,10 +27,10 @@ const CustomLabelIdentityBadge = ({ address, ...props }) => {
       })
   }
   React.useEffect(() => {
-    handleResolve(address)
+    handleResolve()
     const subscription = updates$.subscribe(addr => {
       if (addr === address) {
-        handleResolve(address)
+        handleResolve()
       }
     })
     return () => subscription.unsubscribe()
