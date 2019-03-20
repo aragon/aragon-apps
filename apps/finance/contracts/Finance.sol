@@ -692,7 +692,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         emit NewTransaction(transactionId, _incoming, _entity, _amount, _reference);
     }
 
-    function _tryTransitionAccountingPeriod(uint256 _maxTransitions) internal returns (bool success) {
+    function _tryTransitionAccountingPeriod(uint64 _maxTransitions) internal returns (bool success) {
         Period storage currentPeriod = periods[_currentPeriodId()];
         uint64 timestamp = getTimestamp64();
 
