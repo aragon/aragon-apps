@@ -156,7 +156,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         returns (uint256)
     {
         require(vestingsLengths[_receiver] < MAX_VESTINGS_PER_ADDRESS, ERROR_TOO_MANY_VESTINGS);
-
         require(_start <= _cliff && _cliff <= _vested, ERROR_WRONG_CLIFF_DATE);
 
         uint256 vestingId = vestingsLengths[_receiver]++;

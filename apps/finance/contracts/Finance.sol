@@ -673,6 +673,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         }
 
         uint256 transactionId = transactionsNextIndex++;
+
         Transaction storage transaction = transactions[transactionId];
         transaction.token = _token;
         transaction.entity = _entity;
@@ -702,7 +703,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 // it didn't fully transition
                 return false;
             }
-            _maxTransitions = _maxTransitions.sub(1);
+            // We're already protected from underflowing above
+            _maxTransitions -= 1;
 
             // If there were any transactions in period, record which was the last
             // In case 0 transactions occured, first and last tx id will be 0
@@ -731,15 +733,17 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             return MAX_UINT;
         }
 
+        uint256 budget = settings.budgets[_token];
         uint256 spent = periods[_currentPeriodId()].tokenStatement[_token].expenses;
 
         // A budget decrease can cause the spent amount to be greater than period budget
         // If so, return 0 to not allow more spending during period
-        if (spent >= settings.budgets[_token]) {
+        if (spent >= budget) {
             return 0;
         }
 
-        return settings.budgets[_token].sub(spent);
+        // We're already protected from the overflow above
+        return budget - spent;
     }
 
     function _nextPaymentTime(uint256 _paymentId) internal view returns (uint64) {

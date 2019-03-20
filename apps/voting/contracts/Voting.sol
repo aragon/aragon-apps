@@ -260,6 +260,7 @@ contract Voting is IForwarder, AragonApp {
         require(votingPower > 0, ERROR_NO_VOTING_POWER);
 
         voteId = votesLength++;
+
         Vote storage vote_ = votes[voteId];
         vote_.startDate = getTimestamp64();
         vote_.snapshotBlock = snapshotBlock;
