@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 // when `params` are updated, call `fn` and pass the result
-function usePromiseResult(fn, params, defaultValue) {
+function usePromiseResult(fn, params, memoParams, defaultValue) {
   const [result, setResult] = useState(defaultValue)
   useEffect(() => {
     let cancelled = false
@@ -13,7 +13,7 @@ function usePromiseResult(fn, params, defaultValue) {
     return () => {
       cancelled = true
     }
-  }, params)
+  }, memoParams)
   return result
 }
 
@@ -49,15 +49,6 @@ async function getCanExecute(vote, api) {
   return api.call('canExecute', vote.voteId).toPromise()
 }
 
-export const useUserBalance = (...params) =>
-  usePromiseResult(getUserBalance, params, -1)
-
-export const useCanVote = (...params) =>
-  usePromiseResult(getCanVote, params, false)
-
-export const useCanExecute = (...params) =>
-  usePromiseResult(getCanVote, params, false)
-
 export const useCurrentVoteData = (
   vote,
   userAccount,
@@ -66,19 +57,23 @@ export const useCurrentVoteData = (
   tokenDecimals
 ) => {
   return {
-    canUserVote: useCanVote(
-      vote,
-      userAccount,
-      api,
-      tokenContract,
-      tokenDecimals
+    canUserVote: usePromiseResult(
+      getCanVote,
+      [vote, userAccount, api],
+      [vote && vote.voteId, userAccount, api],
+      false
     ),
-    canExecute: useCanExecute(vote, api),
-    userBalance: useUserBalance(
-      vote,
-      userAccount,
-      tokenContract,
-      tokenDecimals
+    canExecute: usePromiseResult(
+      getCanExecute,
+      [vote, api],
+      [vote && vote.voteId, api],
+      false
+    ),
+    userBalance: usePromiseResult(
+      getUserBalance,
+      [vote, userAccount, tokenContract, tokenDecimals],
+      [vote && vote.voteId, userAccount, tokenContract, tokenDecimals],
+      -1
     ),
   }
 }
