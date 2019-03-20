@@ -284,7 +284,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint256 _amount
     )
         external
-        authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token], settings.hasBudget[_token] ? 1 : 0))
+        authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token], uint256(settings.hasBudget[_token] ? 1 : 0)))
         transitionsPeriod
     {
         settings.budgets[_token] = _amount;
@@ -300,7 +300,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function removeBudget(address _token)
         external
-        authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token], settings.hasBudget[_token] ? 1 : 0))
+        authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token], uint256(settings.hasBudget[_token] ? 1 : 0)))
         transitionsPeriod
     {
         settings.budgets[_token] = 0;
