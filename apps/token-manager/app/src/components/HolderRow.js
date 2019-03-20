@@ -5,11 +5,11 @@ import {
   ContextMenuItem,
   IconAdd,
   IconRemove,
-  IdentityBadge,
   TableCell,
   TableRow,
   theme,
 } from '@aragon/ui'
+import CustomLabelIdentityBadge from './CustomLabelIdentityBadge/CustomLabelIdentityBadge'
 import provideNetwork from '../provide-network'
 import { formatBalance } from '../utils'
 import You from './You'
@@ -46,10 +46,11 @@ class HolderRow extends React.Component {
     const canAssign = balance.lt(maxAccountTokens)
 
     return (
-      <TableRow>
+      <StyledTableRow>
         <TableCell css="padding-right: 0">
           <Owner>
-            <IdentityBadge
+            <CustomLabelIdentityBadge
+              address={address}
               entity={address}
               networkType={network.type}
               connectedAccount={isCurrentUser}
@@ -83,10 +84,18 @@ class HolderRow extends React.Component {
             </ContextMenuItem>
           </ContextMenu>
         </TableCell>
-      </TableRow>
+      </StyledTableRow>
     )
   }
 }
+
+const StyledTableRow = styled(TableRow)`
+  td:first-child {
+    max-width: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+`
 
 const ActionLabel = styled.span`
   margin-left: 15px;
@@ -95,6 +104,7 @@ const ActionLabel = styled.span`
 const Owner = styled.div`
   display: flex;
   align-items: center;
+  overflow: hidden;
   & > span:first-child {
     margin-right: 10px;
   }
