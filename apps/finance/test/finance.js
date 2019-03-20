@@ -14,10 +14,6 @@ const TokenReturnMissingMock = artifacts.require('TokenReturnMissingMock')
 const getContract = name => artifacts.require(name)
 
 const getEventData = (receipt, event, arg) => receipt.logs.filter(log => log.event == event)[0].args[arg]
-const assertPaymentFailure = receipt => {
-    const filteredLogs = receipt.logs.filter(log => log.event == 'PaymentFailure')
-    assert.equal(filteredLogs.length, 1, 'should have logged payment failure')
-}
 
 
 // Tests for different token interfaces
@@ -831,7 +827,7 @@ contract('Finance App', accounts => {
 
                     const receipt = await finance.newPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
 
-                    assertPaymentFailure(receipt)
+                    assertEvent(receipt, 'PaymentFailure')
                     // Make sure no transactions were made
                     assertEvent(receipt, 'NewTransaction', 0)
                 })
@@ -849,7 +845,7 @@ contract('Finance App', accounts => {
 
                     // No more budget left
                     const receipt = await finance.newPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
-                    assertPaymentFailure(receipt)
+                    assertEvent(receipt, 'PaymentFailure')
                     assert.isFalse(await finance.canMakePayment(token1.address, amountPerPayment))
                 })
 
@@ -866,7 +862,7 @@ contract('Finance App', accounts => {
                     await finance.mock_setTimestamp(time + paidInterval * (paidTimes + 1))
                     const receipt = await finance.executePayment(1)
 
-                    assertPaymentFailure(receipt)
+                    assertEvent(receipt, 'PaymentFailure')
                     assert.equal(await token1.balanceOf(recipient), amountPerPayment * paidTimes, 'recipient should have received tokens')
                     assert.isFalse(await finance.canMakePayment(token1.address, amountPerPayment))
                 })
