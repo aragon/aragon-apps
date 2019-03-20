@@ -7,6 +7,10 @@ import "@aragon/os/contracts/kernel/Kernel.sol";
 import "@aragon/os/contracts/kernel/KernelProxy.sol";
 
 import "@aragon/apps-shared-migrations/contracts/Migrations.sol";
+import "@aragon/test-helpers/contracts/EtherTokenConstantMock.sol";
+import "@aragon/test-helpers/contracts/TokenMock.sol";
+import "@aragon/test-helpers/contracts/TokenReturnFalseMock.sol";
+import "@aragon/test-helpers/contracts/TokenReturnMissingMock.sol";
 
 // You might think this file is a bit odd, but let me explain.
 // We only use these contract in our tests, which means

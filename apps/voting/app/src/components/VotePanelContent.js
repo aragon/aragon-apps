@@ -115,7 +115,7 @@ class VotePanelContent extends React.Component {
 
     this.setState({ loadingCanExecute: true })
     const canExecute = await api.call('canExecute', vote.voteId).toPromise()
-    this.setState({ canExecute, loadingCanExecute: false })
+    this.setState({ loadingCanExecute: false, canExecute })
   }
   renderBlockLink = snapshotBlock => {
     const {

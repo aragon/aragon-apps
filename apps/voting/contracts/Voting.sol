@@ -175,7 +175,9 @@ contract Voting is IForwarder, AragonApp {
         _executeVote(_voteId);
     }
 
-    function isForwarder() public pure returns (bool) {
+    // Forwarding fns
+
+    function isForwarder() external pure returns (bool) {
         return true;
     }
 
@@ -194,12 +196,22 @@ contract Voting is IForwarder, AragonApp {
         return canPerform(_sender, CREATE_VOTES_ROLE, arr());
     }
 
+    // Getter fns
+
+    /**
+    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote(),` which requires initialization
+    */
     function canVote(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
 
         return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
     }
 
+    /**
+    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote(),` which requires initialization
+    */
     function canExecute(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
 
@@ -265,17 +277,20 @@ contract Voting is IForwarder, AragonApp {
         return votes[_voteId].voters[_voter];
     }
 
+    // Internal fns
+
     function _newVote(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided)
         internal
         returns (uint256 voteId)
     {
-        uint256 votingPower = token.totalSupplyAt(vote_.snapshotBlock);
+        uint64 snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
+        uint256 votingPower = token.totalSupplyAt(snapshotBlock);
         require(votingPower > 0, ERROR_NO_VOTING_POWER);
 
         voteId = votesLength++;
         Vote storage vote_ = votes[voteId];
         vote_.startDate = getTimestamp64();
-        vote_.snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
+        vote_.snapshotBlock = snapshotBlock;
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
         vote_.votingPower = votingPower;

@@ -127,13 +127,11 @@ function App() {
 
     let cancelled = false
     Promise.all(
-      votes.map(
-        vote =>
-          new Promise((resolve, reject) => {
-            api
-              .call('getVoterState', vote.voteId, userAccount)
-              .subscribe(result => resolve([vote.voteId, result]), reject)
-          })
+      votes.map(vote =>
+        api
+          .call('getVoterState', vote.voteId, userAccount)
+          .toPromise()
+          .then(result => [vote.voteId, result])
       )
     ).then(voteStates => {
       if (!cancelled) {
