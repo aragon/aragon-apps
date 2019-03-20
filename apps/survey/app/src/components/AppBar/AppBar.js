@@ -1,10 +1,17 @@
 import React from 'react'
 import styled from 'styled-components'
-import { AppBar, Badge, Button } from '@aragon/ui'
+import { AppBar, Badge, Button, Viewport } from '@aragon/ui'
 import { Transition, animated } from 'react-spring'
+import MenuButton from '../MenuButton/MenuButton'
 import LeftIcon from './LeftIcon'
 
-const AppBarWrapper = ({ tokenSymbol, onOpenNewSurveyPanel, view, onBack }) => (
+const AppBarWrapper = ({
+  onBack,
+  onMenuOpen,
+  onOpenNewSurveyPanel,
+  tokenSymbol,
+  view,
+}) => (
   <AppBar
     title={
       <Container>
@@ -14,6 +21,7 @@ const AppBarWrapper = ({ tokenSymbol, onOpenNewSurveyPanel, view, onBack }) => (
           enter={{ opacity: 1, position: 0 }}
           leave={{ opacity: 0, position: -1 }}
           tokenSymbol={tokenSymbol}
+          onMenuOpen={onMenuOpen}
         >
           {view === 'surveys' && TitleSurveys}
         </Transition>
@@ -37,21 +45,26 @@ const AppBarWrapper = ({ tokenSymbol, onOpenNewSurveyPanel, view, onBack }) => (
   />
 )
 
-const TitleSurveys = ({ opacity, position, tokenSymbol }) => (
-  <animated.span
-    style={{
-      opacity,
-      transform: position.interpolate(p => `translate(${p * 20}px, -50%)`),
-    }}
-  >
-    <Title>
-      <span>Survey</span>
-      {tokenSymbol && <SpacedBadge>{tokenSymbol}</SpacedBadge>}
-    </Title>
-  </animated.span>
+const TitleSurveys = ({ onMenuOpen, opacity, position, tokenSymbol }) => (
+  <Viewport>
+    {({ below }) => (
+      <animated.span
+        style={{
+          opacity,
+          transform: position.interpolate(p => `translate(${p * 20}px, -50%)`),
+        }}
+      >
+        <Title>
+          {below('medium') && <MenuButton onClick={onMenuOpen} />}
+          <span>Survey</span>
+          {tokenSymbol && <SpacedBadge>{tokenSymbol}</SpacedBadge>}
+        </Title>
+      </animated.span>
+    )}
+  </Viewport>
 )
 
-const TitleSurvey = ({ opacity, position, tokenSymbol, onBack }) => (
+const TitleSurvey = ({ onBack, opacity, position, tokenSymbol }) => (
   <animated.span
     style={{
       opacity,

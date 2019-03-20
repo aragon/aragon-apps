@@ -40,7 +40,7 @@
   ],
   "dependencies": {
     "@aragon/apps-finance": "2.1.0",
-    "@aragon/os": "4.0.1",
+    "@aragon/os": "4.1.0",
     "@aragon/ppf-contracts": "1.0.2"
   },
   "devDependencies": {

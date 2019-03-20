@@ -1,0 +1,63 @@
+{
+  "status": "experimental",
+  "environments": {
+    "default": {
+      "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1",
+      "appName": "agent.aragonpm.eth",
+      "network": "rpc"
+    },
+    "rinkeby": {
+      "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
+      "appName": "agent.aragonpm.eth",
+      "network": "rinkeby"
+    },
+    "staging": {
+      "registry": "0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939",
+      "appName": "agent.aragonpm.eth",
+      "network": "rinkeby"
+    },
+    "mainnet": {
+      "registry": "0x314159265dd8dbb310642f98f50c066173c1259b",
+      "appName": "agent.aragonpm.eth",
+      "network": "mainnet"
+    },
+    "rinkeby-old": {
+      "registry": "0xfbae32d1cde62858bc45f51efc8cc4fa1415447e",
+      "appName": "agent.aragonpm.eth",
+      "network": "rinkeby"
+    }
+  },
+  "roles": [
+    {
+      "name": "Execute actions",
+      "id": "EXECUTE_ROLE",
+      "params": [
+        "Target address",
+        "ETH value",
+        "Signature"
+      ]
+    },
+    {
+      "name": "Designate signer",
+      "id": "DESIGNATE_SIGNER_ROLE",
+      "params": [
+        "Designated signer address"
+      ]
+    },
+    {
+      "name": "Presign hash",
+      "id": "ADD_PRESIGNED_HASH_ROLE",
+      "params": [
+        "Hash"
+      ]
+    },
+    {
+      "name": "Run EVM Script",
+      "id": "RUN_SCRIPT_ROLE",
+      "params": [
+        "EVM Script"
+      ]
+    }
+  ],
+  "path": "contracts/Agent.sol"
+}
