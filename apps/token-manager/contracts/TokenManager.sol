@@ -245,7 +245,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
         if (!includesTokenManager) {
             bool toCanReceive = _isBalanceIncreaseAllowed(_to, _amount);
-            if (!toCanReceive || transferableBalance(_from, now) < _amount) {
+            if (!toCanReceive || _transferableBalance(_from, now) < _amount) {
                 return false;
             }
         }
@@ -298,27 +298,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         revokable = tokenVesting.revokable;
     }
 
-    function spendableBalanceOf(address _holder) public view returns (uint256) {
-        return transferableBalance(_holder, now);
+    function spendableBalanceOf(address _holder) public view isInitialized returns (uint256) {
+        return _transferableBalance(_holder, now);
     }
 
-    function transferableBalance(address _holder, uint256 _time) public view returns (uint256) {
-        uint256 vestingsCount = vestingsLengths[_holder];
-        uint256 totalNonTransferable = 0;
-
-        for (uint256 i = 0; i < vestingsCount; i++) {
-            TokenVesting storage v = vestings[_holder][i];
-            uint nonTransferable = _calculateNonVestedTokens(
-                v.amount,
-                _time.toUint64(),
-                v.start,
-                v.cliff,
-                v.vesting
-            );
-            totalNonTransferable = totalNonTransferable.add(nonTransferable);
-        }
-
-        return token.balanceOf(_holder).sub(totalNonTransferable);
+    function transferableBalance(address _holder, uint256 _time) public view isInitialized returns (uint256) {
+        return _transferableBalance(_holder, _time);
     }
 
     /**
@@ -400,5 +385,24 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
         // tokens - vestedTokens
         return tokens.sub(vestedTokens);
+    }
+
+    function _transferableBalance(address _holder, uint256 _time) internal view returns (uint256) {
+        uint256 vestingsCount = vestingsLengths[_holder];
+        uint256 totalNonTransferable = 0;
+
+        for (uint256 i = 0; i < vestingsCount; i++) {
+            TokenVesting storage v = vestings[_holder][i];
+            uint nonTransferable = _calculateNonVestedTokens(
+                v.amount,
+                _time.toUint64(),
+                v.start,
+                v.cliff,
+                v.vesting
+            );
+            totalNonTransferable = totalNonTransferable.add(nonTransferable);
+        }
+
+        return token.balanceOf(_holder).sub(totalNonTransferable);
     }
 }
