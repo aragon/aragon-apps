@@ -56,7 +56,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     // We are mimicing an array in the inner mapping, we use a mapping instead to make app upgrade more graceful
     mapping (address => mapping (uint256 => TokenVesting)) internal vestings;
     mapping (address => uint256) public vestingsLengths;
-    mapping (address => bool) public everHeld;
 
     // Other token specific events can be watched on the token address directly (avoids duplication)
     event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
