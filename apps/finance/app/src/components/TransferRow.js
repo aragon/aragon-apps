@@ -57,10 +57,10 @@ class TransferRow extends React.PureComponent {
 
     if (smallViewMode) {
       return (
-        <TableRow>
+        <StyledTableRow>
           <StyledTableCell>
             <Grid>
-              <div>
+              <div css="overflow: hidden">
                 <div css="display: flex">
                   <CustomLabelIdentityBadge
                     networkType={network.type}
@@ -78,7 +78,7 @@ class TransferRow extends React.PureComponent {
               </Amount>
             </Grid>
           </StyledTableCell>
-        </TableRow>
+        </StyledTableRow>
       )
     }
 
@@ -129,6 +129,14 @@ class TransferRow extends React.PureComponent {
   }
 }
 
+const StyledTableRow = styled(TableRow)`
+  td:first-child {
+    max-width: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+`
+
 const StyledTableCell = styled(TableCell)`
   &&& {
     border-left-width: 0;
@@ -148,8 +156,9 @@ const Amount = styled.span`
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 1fr auto;
+  grid-column-gap: 10px;
   width: 100%;
 
   time,
