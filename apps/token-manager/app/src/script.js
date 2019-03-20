@@ -50,7 +50,7 @@ retryEvery(retry => {
 async function initialize(tokenAddr) {
   const token = app.external(tokenAddr, tokenAbi)
   try {
-    const tokenSymbol = await loadTokenSymbol(token)
+    const tokenSymbol = await token.symbol().toPromise()
     app.identify(tokenSymbol)
   } catch (err) {
     console.error(
@@ -78,7 +78,7 @@ async function createStore(token, tokenAddr) {
         nextState = {
           ...nextState,
           tokenAddress: tokenAddr,
-          maxAccountTokens: await loadMaxAccountTokens(),
+          maxAccountTokens: await app.call('maxAccountTokens').toPromise(),
         }
       } else if (addressesEqual(address, tokenAddr)) {
         switch (event) {
@@ -122,7 +122,7 @@ async function claimedTokens(token, state, { _token, _controller }) {
 async function transfer(token, state, { _from, _to }) {
   const changes = await loadNewBalances(token, _from, _to)
   // The transfer may have increased the token's total supply, so let's refresh it
-  const tokenSupply = await loadTokenSupply(token)
+  const tokenSupply = await token.totalSupply().toPromise()
   return updateState(
     {
       ...state,
@@ -164,21 +164,13 @@ function updateHolders(holders, changed) {
   }
 }
 
-function loadMaxAccountTokens() {
-  return new Promise((resolve, reject) =>
-    app.call('maxAccountTokens').subscribe(resolve, reject)
-  )
-}
-
 function loadNewBalances(token, ...addresses) {
   return Promise.all(
-    addresses.map(
-      address =>
-        new Promise((resolve, reject) =>
-          token
-            .balanceOf(address)
-            .subscribe(balance => resolve({ address, balance }), reject)
-        )
+    addresses.map(address =>
+      token
+        .balanceOf(address)
+        .toPromise()
+        .then(balance => ({ address, balance }))
     )
   ).catch(err => {
     console.error(
@@ -191,21 +183,12 @@ function loadNewBalances(token, ...addresses) {
   })
 }
 
-function loadTokenSupply(token) {
-  return new Promise((resolve, reject) =>
-    token.totalSupply().subscribe(resolve, reject)
-  )
-}
-
 function loadTokenSettings(token) {
   return Promise.all(
-    tokenSettings.map(
-      ([name, key, type = 'string']) =>
-        new Promise((resolve, reject) =>
-          token[name]().subscribe(value => {
-            resolve({ [key]: value })
-          }, reject)
-        )
+    tokenSettings.map(([name, key]) =>
+      token[name]()
+        .toPromise()
+        .then(value => ({ [key]: value }))
     )
   )
     .then(settings =>
@@ -216,10 +199,4 @@ function loadTokenSettings(token) {
       // Return an empty object to try again later
       return {}
     })
-}
-
-function loadTokenSymbol(token) {
-  return new Promise((resolve, reject) =>
-    token.symbol().subscribe(resolve, reject)
-  )
 }
