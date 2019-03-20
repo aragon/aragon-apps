@@ -1,10 +1,11 @@
 import React from 'react'
 import styled from 'styled-components'
-import { IdentityBadge, Text, breakpoint, theme } from '@aragon/ui'
+import { Text, breakpoint, theme } from '@aragon/ui'
 import provideNetwork from '../provide-network'
 import { formatBalance, stakesPercentages } from '../utils'
 import TokenBadge from './TokenBadge'
 import You from './You'
+import CustomLabelIdentityBadge from './CustomLabelIdentityBadge/CustomLabelIdentityBadge'
 
 const DISTRIBUTION_ITEMS_MAX = 7
 const DISTRIBUTION_COLORS = [
@@ -109,7 +110,8 @@ class SideBar extends React.Component {
               <StakesListItem key={name}>
                 <span>
                   <StakesListBullet style={{ background: color }} />
-                  <IdentityBadge
+                  <CustomLabelIdentityBadge
+                    address={name}
                     entity={name}
                     networkType={network.type}
                     connectedAccount={name === userAccount}
