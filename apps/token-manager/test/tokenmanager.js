@@ -1,5 +1,6 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const timetravel = require('@aragon/test-helpers/timeTravel')(web3)
+const getBalance = require('@aragon/test-helpers/balance')(web3)
 const getBlock = require('@aragon/test-helpers/block')(web3)
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 
@@ -262,6 +263,28 @@ contract('Token Manager', accounts => {
 
             // Make sure the same transfer through the token's context doesn't revert
             await token.transfer(accounts[2], amount, { from: holder })
+        })
+
+        it("cannot call onApprove() from outside of the token's context", async () => {
+            const amount = 10
+            await tokenManager.mint(holder, amount)
+
+            // Make sure this callback fails when called out-of-context
+            await assertRevert(() => tokenManager.onApprove(holder, accounts[2], 10))
+
+            // Make sure no allowance was registered
+            assert.equal(await token.allowance(holder, accounts[2]), 0, 'token approval should be 0')
+        })
+
+        it("cannot call proxyPayment() from outside of the token's context", async () => {
+            const value = 10
+            const prevTokenManagerBalance = (await getBalance(tokenManager.address)).toNumber()
+
+            // Make sure this callback fails when called out-of-context
+            await assertRevert(() => tokenManager.proxyPayment(root, { value }))
+
+            // Make sure no ETH was transferred
+            assert.equal((await getBalance(tokenManager.address)).toNumber(), prevTokenManagerBalance, 'token manager ETH balance should be the same')
         })
 
         it('fails when assigning invalid vesting schedule', async () => {
