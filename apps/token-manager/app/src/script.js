@@ -1,5 +1,5 @@
-import Aragon from '@aragon/client'
-import { of } from './rxjs'
+import Aragon from '@aragon/api'
+import { of } from 'rxjs'
 import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
 import { addressesEqual } from './web3-utils'
 import tokenAbi from './abi/minimeToken.json'
@@ -38,22 +38,19 @@ const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
 
 // Get the token address to initialize ourselves
 retryEvery(retry => {
-  app
-    .call('token')
-    .first()
-    .subscribe(initialize, err => {
-      console.error(
-        'Could not start background script execution due to the contract not loading the token:',
-        err
-      )
-      retry()
-    })
+  app.call('token').subscribe(initialize, err => {
+    console.error(
+      'Could not start background script execution due to the contract not loading the token:',
+      err
+    )
+    retry()
+  })
 })
 
 async function initialize(tokenAddr) {
   const token = app.external(tokenAddr, tokenAbi)
   try {
-    const tokenSymbol = await loadTokenSymbol(token)
+    const tokenSymbol = await token.symbol().toPromise()
     app.identify(tokenSymbol)
   } catch (err) {
     console.error(
@@ -81,7 +78,7 @@ async function createStore(token, tokenAddr) {
         nextState = {
           ...nextState,
           tokenAddress: tokenAddr,
-          maxAccountTokens: await loadMaxAccountTokens(),
+          maxAccountTokens: await app.call('maxAccountTokens').toPromise(),
         }
       } else if (addressesEqual(address, tokenAddr)) {
         switch (event) {
@@ -125,7 +122,7 @@ async function claimedTokens(token, state, { _token, _controller }) {
 async function transfer(token, state, { _from, _to }) {
   const changes = await loadNewBalances(token, _from, _to)
   // The transfer may have increased the token's total supply, so let's refresh it
-  const tokenSupply = await loadTokenSupply(token)
+  const tokenSupply = await token.totalSupply().toPromise()
   return updateState(
     {
       ...state,
@@ -167,25 +164,13 @@ function updateHolders(holders, changed) {
   }
 }
 
-function loadMaxAccountTokens() {
-  return new Promise((resolve, reject) =>
-    app
-      .call('maxAccountTokens')
-      .first()
-      .subscribe(resolve, reject)
-  )
-}
-
 function loadNewBalances(token, ...addresses) {
   return Promise.all(
-    addresses.map(
-      address =>
-        new Promise((resolve, reject) =>
-          token
-            .balanceOf(address)
-            .first()
-            .subscribe(balance => resolve({ address, balance }), reject)
-        )
+    addresses.map(address =>
+      token
+        .balanceOf(address)
+        .toPromise()
+        .then(balance => ({ address, balance }))
     )
   ).catch(err => {
     console.error(
@@ -198,26 +183,12 @@ function loadNewBalances(token, ...addresses) {
   })
 }
 
-function loadTokenSupply(token) {
-  return new Promise((resolve, reject) =>
-    token
-      .totalSupply()
-      .first()
-      .subscribe(resolve, reject)
-  )
-}
-
 function loadTokenSettings(token) {
   return Promise.all(
-    tokenSettings.map(
-      ([name, key, type = 'string']) =>
-        new Promise((resolve, reject) =>
-          token[name]()
-            .first()
-            .subscribe(value => {
-              resolve({ [key]: value })
-            }, reject)
-        )
+    tokenSettings.map(([name, key]) =>
+      token[name]()
+        .toPromise()
+        .then(value => ({ [key]: value }))
     )
   )
     .then(settings =>
@@ -228,13 +199,4 @@ function loadTokenSettings(token) {
       // Return an empty object to try again later
       return {}
     })
-}
-
-function loadTokenSymbol(token) {
-  return new Promise((resolve, reject) =>
-    token
-      .symbol()
-      .first()
-      .subscribe(resolve, reject)
-  )
 }
