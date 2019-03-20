@@ -1,0 +1,10 @@
+{
+  "name": "Agent",
+  "description": "Hold assets and perform actions from DAOs",
+  "icons": [
+    {
+      "src": "images/icon.svg",
+      "sizes": "192x192"
+    }
+  ]
+}

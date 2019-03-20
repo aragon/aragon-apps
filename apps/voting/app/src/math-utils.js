@@ -16,15 +16,24 @@ export function formatNumber(num, decimals = 2, { truncate = true } = {}) {
     return numString
   }
 
-  const [whole, decimal = ''] = numString.split('.')
+  const exponentialIndex = numString.indexOf('e+')
+  const numWithoutExponents =
+    exponentialIndex > -1 ? numString.substring(0, exponentialIndex) : numString
+
+  const [whole, decimal = ''] = numWithoutExponents.split('.')
   const trimmedDecimals = truncate ? decimal.replace(/0+$/, '') : decimals
-  return trimmedDecimals.length
+  const formattedNumber = trimmedDecimals.length
     ? `${whole}.${
         trimmedDecimals.length > decimals
           ? trimmedDecimals.slice(0, decimals)
           : trimmedDecimals
       }`
     : whole
+
+  // If we were dealing with a yuge number, append the exponent suffix back
+  return exponentialIndex > -1
+    ? `${formattedNumber}${numString.substring(exponentialIndex)}`
+    : formattedNumber
 }
 
 export function percentageList(values, digits = 0) {
