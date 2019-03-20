@@ -29,6 +29,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     uint256 public constant MAX_VESTINGS_PER_ADDRESS = 50;
 
+    string private constant ERROR_CALLER_NOT_TOKEN = "TM_CALLER_NOT_TOKEN";
     string private constant ERROR_NO_VESTING = "TM_NO_VESTING";
     string private constant ERROR_TOKEN_CONTROLLER = "TM_TOKEN_CONTROLLER";
     string private constant ERROR_MINT_BALANCE_INCREASE_NOT_ALLOWED = "TM_MINT_BAL_INC_NOT_ALLOWED";
@@ -39,8 +40,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     string private constant ERROR_REVOKE_TRANSFER_FROM_REVERTED = "TM_REVOKE_TRANSFER_FROM_REVERTED";
     string private constant ERROR_ASSIGN_TRANSFER_FROM_REVERTED = "TM_ASSIGN_TRANSFER_FROM_REVERTED";
     string private constant ERROR_CAN_NOT_FORWARD = "TM_CAN_NOT_FORWARD";
-    string private constant ERROR_ON_TRANSFER_WRONG_SENDER = "TM_TRANSFER_WRONG_SENDER";
-    string private constant ERROR_PROXY_PAYMENT_WRONG_SENDER = "TM_PROXY_PAYMENT_WRONG_SENDER";
 
     struct TokenVesting {
         uint256 amount;
@@ -62,7 +61,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     event RevokeVesting(address indexed receiver, uint256 vestingId, uint256 nonVestedAmount);
 
     modifier onlyToken() {
-        require(msg.sender == address(token), ERROR_ON_TRANSFER_WRONG_SENDER);
+        require(msg.sender == address(token), ERROR_CALLER_NOT_TOKEN);
         _;
     }
 
@@ -241,6 +240,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     /*
     * @dev Notifies the controller about a token transfer allowing the controller to decide whether to allow it or react if desired (only callable from the token)
+    *      Initialization check is implicitly provided by `onlyToken()`.
     * @param _from The origin of the transfer
     * @param _to The destination of the transfer
     * @param _amount The amount of the transfer
@@ -261,6 +261,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     /**
     * @dev Notifies the controller about an approval allowing the controller to react if desired
+    *      Initialization check is implicitly provided by `onlyToken()`.
     * @return False if the controller does not authorize the approval
     */
     function onApprove(address, address, uint) public onlyToken returns (bool) {
@@ -268,7 +269,8 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     /**
-    * @notice Called when ether is sent to the MiniMe Token contract
+    * @dev Called when ether is sent to the MiniMe Token contract
+    *      Initialization check is implicitly provided by `onlyToken()`.
     * @return True if the ether is accepted, false for it to throw
     */
     function proxyPayment(address) public payable onlyToken returns (bool) {
