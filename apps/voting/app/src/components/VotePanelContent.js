@@ -78,8 +78,8 @@ class VotePanelContent extends React.Component {
     if (tokenContract && user) {
       tokenContract
         .balanceOfAt(user, vote.data.snapshotBlock)
-        .first()
-        .subscribe(balance => {
+        .toPromise()
+        .then(balance => {
           const adjustedBalance = Math.floor(
             parseInt(balance, 10) / Math.pow(10, tokenDecimals)
           )
@@ -99,8 +99,8 @@ class VotePanelContent extends React.Component {
       // Get if user can vote
       app
         .call('canVote', vote.voteId, user)
-        .first()
-        .subscribe(canVote => {
+        .toPromise()
+        .then(canVote => {
           this.setState({ loadingCanVote: false, userCanVote: canVote })
         })
     } else {
@@ -116,8 +116,8 @@ class VotePanelContent extends React.Component {
 
       app
         .call('canExecute', vote.voteId)
-        .first()
-        .subscribe(canExecute => {
+        .toPromise()
+        .then(canExecute => {
           this.setState({ canExecute, loadingCanExecute: false })
         })
     }
