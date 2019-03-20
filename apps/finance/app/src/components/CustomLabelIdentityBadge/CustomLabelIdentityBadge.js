@@ -7,7 +7,7 @@ import { IdentityContext } from '../IdentityManager/IdentityManager'
 
 const CustomLabelIdentityBadge = ({ address, ...props }) => {
   const { resolve } = React.useContext(IdentityContext)
-  const { showCustomLabelModal, modifyObservable } = React.useContext(
+  const { showCustomLabelModal, updates$ } = React.useContext(
     CustomLabelModalContext
   )
   const [label, setLabel] = React.useState()
@@ -28,7 +28,7 @@ const CustomLabelIdentityBadge = ({ address, ...props }) => {
   }
   React.useEffect(() => {
     handleResolve(address)
-    const subscription = modifyObservable.subscribe(addr => {
+    const subscription = updates$.subscribe(addr => {
       if (addr === address) {
         handleResolve(address)
       }

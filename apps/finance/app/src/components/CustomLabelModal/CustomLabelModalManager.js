@@ -1,14 +1,15 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Subject } from 'rxjs'
-const modifyObservable = new Subject()
+
+const updates$ = new Subject()
 
 const CustomLabelModalContext = React.createContext({})
 
 const CustomLabelModalProvider = ({ onShowCustomLabelModal, children }) => {
   const hookedShowCustomLabelModal = address => {
     return onShowCustomLabelModal(address)
-      .then(() => modifyObservable.next(address))
+      .then(() => updates$.next(address))
       .catch(e => null)
   }
 
@@ -16,7 +17,7 @@ const CustomLabelModalProvider = ({ onShowCustomLabelModal, children }) => {
     <CustomLabelModalContext.Provider
       value={{
         showCustomLabelModal: hookedShowCustomLabelModal,
-        modifyObservable,
+        updates$,
       }}
     >
       {children}
