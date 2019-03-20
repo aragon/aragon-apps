@@ -196,7 +196,7 @@ async function loadVoteDescription(vote) {
 }
 
 function loadVoteData(voteId) {
-  app
+  return app
     .call('getVote', voteId)
     .toPromise()
     .then(vote => loadVoteDescription(marshallVote(vote)))
