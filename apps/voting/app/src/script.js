@@ -75,14 +75,14 @@ async function initialize(tokenAddr) {
 
   let tokenDecimals
   try {
-    tokenDecimals = await loadTokenDecimals(token)
+    tokenDecimals = (await loadTokenDecimals(token)) || '0'
   } catch (err) {
     console.err(
       `Failed to load token decimals for token at ${tokenAddr} due to:`,
       err
     )
-    console.err('Defaulting to 18...')
-    tokenDecimals = '18'
+    console.err('Defaulting to 0...')
+    tokenDecimals = '0'
   }
 
   return createStore(token, { decimals: tokenDecimals, symbol: tokenSymbol })
