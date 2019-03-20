@@ -133,6 +133,7 @@ contract Survey is AragonApp {
         require(votingPower > 0, ERROR_NO_VOTING_POWER);
 
         surveyId = surveysLength++;
+
         SurveyStruct storage survey = surveys[surveyId];
         survey.startDate = getTimestamp64();
         survey.snapshotBlock = snapshotBlock; // avoid double voting in this very block
