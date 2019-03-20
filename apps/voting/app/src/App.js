@@ -89,13 +89,11 @@ class App extends React.Component {
     this.setState({
       userAccountVotes: new Map(
         await Promise.all(
-          votes.map(
-            vote =>
-              new Promise((resolve, reject) => {
-                app
-                  .call('getVoterState', vote.voteId, userAccount)
-                  .subscribe(result => resolve([vote.voteId, result]), reject)
-              })
+          votes.map(vote =>
+            app
+              .call('getVoterState', vote.voteId, userAccount)
+              .toPromise()
+              .then(result => [vote.voteId, result])
           )
         )
       ),

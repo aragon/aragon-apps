@@ -1,5 +1,5 @@
 import Aragon from '@aragon/client'
-import { of } from './rxjs'
+import { of } from 'rxjs'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -43,8 +43,9 @@ const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
 retryEvery(retry => {
   app
     .call('token')
-    .first()
-    .subscribe(initialize, err => {
+    .toPromise()
+    .then(initialize)
+    .catch(err => {
       console.error(
         'Could not start background script execution due to the contract not loading the token:',
         err
@@ -58,7 +59,7 @@ async function initialize(tokenAddr) {
 
   let tokenSymbol
   try {
-    tokenSymbol = await loadTokenSymbol(token)
+    tokenSymbol = await token.symbol().toPromise()
     const pctBase = parseInt(await app.call('PCT_BASE').toPromise(), 10)
     const supportRequiredPct = parseInt(
       await app.call('supportRequiredPct').toPromise(),
@@ -75,7 +76,7 @@ async function initialize(tokenAddr) {
 
   let tokenDecimals
   try {
-    tokenDecimals = (await loadTokenDecimals(token)) || '0'
+    tokenDecimals = (await token.decimals().toPromise()) || '0'
   } catch (err) {
     console.err(
       `Failed to load token decimals for token at ${tokenAddr} due to:`,
@@ -195,12 +196,10 @@ async function loadVoteDescription(vote) {
 }
 
 function loadVoteData(voteId) {
-  return new Promise(resolve => {
-    app
-      .call('getVote', voteId)
-      .first()
-      .subscribe(vote => resolve(loadVoteDescription(marshallVote(vote))))
-  })
+  return app
+    .call('getVote', voteId)
+    .toPromise()
+    .then(vote => loadVoteDescription(marshallVote(vote)))
 }
 
 async function updateVotes(votes, voteId, transform) {
@@ -232,22 +231,12 @@ async function updateState(state, voteId, transform) {
 
 function loadVoteSettings() {
   return Promise.all(
-    voteSettings.map(
-      ([name, key, type = 'string']) =>
-        new Promise((resolve, reject) =>
-          app
-            .call(name)
-            .first()
-            .map(val => {
-              if (type === 'time') {
-                return marshallDate(val)
-              }
-              return val
-            })
-            .subscribe(value => {
-              resolve({ [key]: value })
-            }, reject)
-        )
+    voteSettings.map(([name, key, type = 'string']) =>
+      app
+        .call(name)
+        .toPromise()
+        .then(val => (type === 'time' ? marshallDate(val) : val))
+        .then(value => ({ [key]: value }))
     )
   )
     .then(settings =>
@@ -258,24 +247,6 @@ function loadVoteSettings() {
       // Return an empty object to try again later
       return {}
     })
-}
-
-function loadTokenDecimals(tokenContract) {
-  return new Promise((resolve, reject) => {
-    tokenContract
-      .decimals()
-      .first()
-      .subscribe(resolve, reject)
-  })
-}
-
-function loadTokenSymbol(tokenContract) {
-  return new Promise((resolve, reject) => {
-    tokenContract
-      .symbol()
-      .first()
-      .subscribe(resolve, reject)
-  })
 }
 
 // Apply transformations to a vote received from web3
