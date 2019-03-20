@@ -239,7 +239,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         // Token budget must not be set at all or allow at least one instance of this payment each period
         require(!settings.hasBudget[_token] || settings.budgets[_token] >= _amount, ERROR_BUDGET);
 
-        // Don't allow creating single payments that are immediately executable
+        // Don't allow creating single payments that are immediately executable. `newPaymentTransaction()` should be used instead
         if (_maxRepeats == 1) {
             require(_initialPaymentTime > getTimestamp64(), ERROR_NEW_PAYMENT_IMMEDIATE);
         }
