@@ -151,12 +151,10 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         authP(ASSIGN_ROLE, arr(_receiver, _amount))
         returns (uint256)
     {
-        uint256 vestingId = vestingsLengths[_receiver];
-
-        require(vestingId < MAX_VESTINGS_PER_ADDRESS, ERROR_TOO_MANY_VESTINGS);
+        require(vestingsLengths[_receiver] < MAX_VESTINGS_PER_ADDRESS, ERROR_TOO_MANY_VESTINGS);
         require(_start <= _cliff && _cliff <= _vested, ERROR_WRONG_CLIFF_DATE);
 
-        vestingsLengths[_receiver] = vestingId.add(1);
+        uint256 vestingId = vestingsLengths[_receiver]++;
         vestings[_receiver][vestingId] = TokenVesting(
             _amount,
             _start,

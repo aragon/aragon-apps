@@ -243,8 +243,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         // Budget must allow at least one instance of this payment each period, or not be set at all
         require(settings.budgets[_token] >= _amount || !settings.hasBudget[_token], ERROR_BUDGET);
 
-        paymentId = paymentsNextIndex;
-        paymentsNextIndex = paymentId.add(1);
+        paymentId = paymentsNextIndex++;
         emit NewPayment(paymentId, _receiver, _maxRepeats, _reference);
 
         RecurringPayment storage payment = recurringPayments[paymentId];
@@ -673,8 +672,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             tokenStatement.expenses = tokenStatement.expenses.add(_amount);
         }
 
-        uint256 transactionId = transactionsNextIndex;
-        transactionsNextIndex = transactionId.add(1);
+        uint256 transactionId = transactionsNextIndex++;
 
         Transaction storage transaction = transactions[transactionId];
         transaction.token = _token;

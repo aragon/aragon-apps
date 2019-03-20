@@ -132,8 +132,7 @@ contract Survey is AragonApp {
         uint256 votingPower = token.totalSupplyAt(snapshotBlock);
         require(votingPower > 0, ERROR_NO_VOTING_POWER);
 
-        surveyId = surveysLength;
-        surveysLength = surveyId.add(1);
+        surveyId = surveysLength++;
 
         SurveyStruct storage survey = surveys[surveyId];
         survey.startDate = getTimestamp64();
