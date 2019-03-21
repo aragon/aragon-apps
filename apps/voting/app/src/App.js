@@ -142,7 +142,7 @@ function App() {
     return () => {
       cancelled = true
     }
-  }, [api, votes, userAccount])
+  }, [api, votes && votes.map(vote => vote.voteId).join(), userAccount])
 
   // create vote panel
   const handleCreateVoteOpen = useCallback(() => {

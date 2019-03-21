@@ -6,7 +6,7 @@ import VotingCardGroup from '../components/VotingCard/VotingCardGroup'
 import VoteStatus from '../components/VoteStatus'
 import { VOTE_YEA, VOTE_NAY } from '../vote-types'
 
-class Votes extends React.Component {
+class Votes extends React.PureComponent {
   optionLabel(label, vote, voteType) {
     return (
       <span>

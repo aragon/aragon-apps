@@ -23,7 +23,7 @@ import VoteStatus from './VoteStatus'
 import VoteSuccess from './VoteSuccess'
 import SummaryBar from './SummaryBar'
 
-class VotePanelContent extends React.Component {
+class VotePanelContent extends React.PureComponent {
   static propTypes = {
     api: PropTypes.object.isRequired,
   }
