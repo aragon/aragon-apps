@@ -265,7 +265,7 @@ function App() {
 }
 
 export default () => (
-  <ConnectAragonApi appStateReducer={appStateReducer}>
+  <ConnectAragonApi reducer={appStateReducer}>
     <App />
   </ConnectAragonApi>
 )
