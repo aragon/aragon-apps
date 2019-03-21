@@ -362,14 +362,14 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
      * @param _token Token whose balance is going to be transferred.
      */
     function recoverToVault(address _token) external isInitialized transitionsPeriod {
-        uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).staticBalanceOf(this);
+        uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).staticBalanceOf(address(this));
         require(amount > 0, ERROR_RECOVER_AMOUNT_ZERO);
 
         _deposit(
             _token,
             amount,
             "Recover to Vault",
-            this,
+            address(this),
             false
         );
     }
@@ -548,7 +548,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         if (_isExternalDeposit) {
             if (_token != ETH) {
                 // Get the tokens to Finance
-                require(ERC20(_token).safeTransferFrom(msg.sender, this, _amount), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
+                require(
+                    ERC20(_token).safeTransferFrom(msg.sender, address(this), _amount),
+                    ERROR_TOKEN_TRANSFER_FROM_REVERTED
+                );
             } else {
                 // Ensure that the ETH sent with the transaction equals the amount in the deposit
                 require(msg.value == _amount, ERROR_VALUE_MISMATCH);

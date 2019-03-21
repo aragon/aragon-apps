@@ -322,7 +322,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     function _assign(address _receiver, uint256 _amount) internal {
         require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_ASSIGN_BALANCE_INCREASE_NOT_ALLOWED);
         // Must use transferFrom() as transfer() does not give the token controller full control
-        require(token.transferFrom(this, _receiver, _amount), ERROR_ASSIGN_TRANSFER_FROM_REVERTED);
+        require(token.transferFrom(address(this), _receiver, _amount), ERROR_ASSIGN_TRANSFER_FROM_REVERTED);
     }
 
     function _mint(address _receiver, uint256 _amount) internal {
