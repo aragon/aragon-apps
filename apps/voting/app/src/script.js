@@ -1,4 +1,4 @@
-import Aragon from '@aragon/client'
+import Aragon from '@aragon/api'
 import { of } from 'rxjs'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
