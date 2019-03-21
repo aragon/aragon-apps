@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useAragonApi } from '@aragon/api-react'
+import { ConnectAragonApi, useAragonApi } from '@aragon/api-react'
 import PropTypes from 'prop-types'
 import { Main, SidePanel, observe } from '@aragon/ui'
 
@@ -54,7 +54,7 @@ function App() {
     appState,
     requestMenu,
     displayMenuButton,
-  } = useAragonApi(appStateReducer)
+  } = useAragonApi()
 
   const [createVoteVisible, setCreateVoteVisible] = useState(false)
   const [currentVoteId, setCurrentVoteId] = useState(-1)
@@ -264,4 +264,8 @@ function App() {
   )
 }
 
-export default App
+export default () => (
+  <ConnectAragonApi appStateReducer={appStateReducer}>
+    <App />
+  </ConnectAragonApi>
+)
