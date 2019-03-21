@@ -40,7 +40,7 @@ const LocalIdentityBadge = ({ address, ...props }) => {
     <IdentityBadge
       {...props}
       customLabel={label || ''}
-      address={address}
+      entity={address}
       popoverAction={{
         label: `${label ? 'Edit' : 'Add'} custom label`,
         onClick: handleClick,
