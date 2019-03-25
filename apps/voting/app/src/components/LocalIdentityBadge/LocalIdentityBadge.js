@@ -28,8 +28,8 @@ const LocalIdentityBadge = ({ address, ...props }) => {
   }
   React.useEffect(() => {
     handleResolve()
-    const subscription = updates$.subscribe(addr => {
-      if (addr === address) {
+    const subscription = updates$.subscribe(updatedAddress => {
+      if (updatedAddress.toLowerCase() === address.toLowerCase()) {
         handleResolve()
       }
     })
