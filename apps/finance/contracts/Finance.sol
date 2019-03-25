@@ -354,14 +354,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         recurringPaymentExists(_paymentId)
         transitionsPeriod
     {
-        uint256 paid = _executePayment(_paymentId);
-        if (paid == 0) {
-            if (_nextPaymentTime(_paymentId) > getTimestamp64()) {
-                revert(ERROR_EXECUTE_PAYMENT_TIME);
-            } else {
-                revert(ERROR_EXECUTE_PAYMENT_NUM);
-            }
-        }
+        _executePaymentAtLeastOnce(_paymentId);
     }
 
     /**
@@ -371,17 +364,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     *      recurring payments can only be created via `newPayment(),` which requires initialization
     * @param _paymentId Identifier for payment
     */
-    function receiverExecutePayment(uint256 _paymentId) external isInitialized recurringPaymentExists(_paymentId) transitionsPeriod {
+    function receiverExecutePayment(uint256 _paymentId) external recurringPaymentExists(_paymentId) transitionsPeriod {
         require(recurringPayments[_paymentId].receiver == msg.sender, ERROR_PAYMENT_RECEIVER);
-
-        uint256 paid = _executePayment(_paymentId);
-        if (paid == 0) {
-            if (_nextPaymentTime(_paymentId) > getTimestamp64()) {
-                revert(ERROR_RECEIVER_EXECUTE_PAYMENT_TIME);
-            } else {
-                revert(ERROR_RECEIVER_EXECUTE_PAYMENT_NUM);
-            }
-        }
+        _executePaymentAtLeastOnce(_paymentId);
     }
 
     /**
@@ -636,6 +621,17 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         }
 
         return paid;
+    }
+
+    function _executePaymentAtLeastOnce(uint256 _paymentId) internal returns (uint256) {
+        uint256 paid = _executePayment(_paymentId);
+        if (paid == 0) {
+            if (_nextPaymentTime(_paymentId) > getTimestamp64()) {
+                revert(ERROR_EXECUTE_PAYMENT_TIME);
+            } else {
+                revert(ERROR_EXECUTE_PAYMENT_NUM);
+            }
+        }
     }
 
     function _makePaymentTransaction(
