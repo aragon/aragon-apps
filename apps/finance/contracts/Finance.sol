@@ -234,7 +234,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         string _reference
     )
         external
-        authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, _interval, _maxRepeats))
+        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, uint256(_initialPaymentTime), uint256(_interval), uint256(_maxRepeats)))
         transitionsPeriod
         returns (uint256 paymentId)
     {
@@ -280,7 +280,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
    function newImmediatePayment(address _token, address _receiver, uint256 _amount, string _reference)
         external
-        authP(CREATE_PAYMENTS_ROLE, arr(_token, _receiver, _amount, uint256(MAX_UINT64), uint256(1)))
+        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, uint256(getTimestamp64()), uint256(MAX_UINT64), uint256(1)))
         transitionsPeriod
    {
         require(_amount > 0, ERROR_NEW_PAYMENT_AMOUNT_ZERO);
@@ -818,6 +818,18 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint64 increase = payment.repeats.mul(payment.interval);
         uint64 nextPayment = payment.initialPaymentTime.add(increase);
         return nextPayment;
+    }
+
+    // Syntax sugar
+
+    function _arr(address _a, address _b, uint256 _c, uint256 _d, uint256 _e, uint256 _f) internal pure returns (uint256[] r) {
+        r = new uint256[](6);
+        r[0] = uint256(_a);
+        r[1] = uint256(_b);
+        r[2] = _c;
+        r[3] = _d;
+        r[4] = _e;
+        r[5] = _f;
     }
 
     // Mocked fns (overrided during testing)
