@@ -11,7 +11,7 @@ import AppLayout from './components/AppLayout'
 import { networkContextType } from './provide-network'
 import { hasLoadedTokenSettings } from './token-settings'
 import { addressesEqual } from './web3-utils'
-import { CustomLabelModalProvider } from './components/CustomLabelModal/CustomLabelModalManager'
+import { LocalIdentityModalProvider } from './components/LocalIdentityModal/LocalIdentityModalManager'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
 const initialAssignTokensConfig = {
@@ -92,10 +92,10 @@ class App extends React.Component {
       this.setState({ assignTokensConfig: initialAssignTokensConfig })
     }
   }
-  handleResolveCustomLabel = address => {
+  handleResolveLocalIdentity = address => {
     return this.props.app.resolveAddressIdentity(address).toPromise()
   }
-  handleShowCustomLabelModal = address => {
+  handleShowLocalIdentityModal = address => {
     return this.props.app
       .requestAddressIdentityModification(address)
       .toPromise()
@@ -118,9 +118,9 @@ class App extends React.Component {
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
-      <IdentityProvider onResolve={this.handleResolveCustomLabel}>
-        <CustomLabelModalProvider
-          onShowCustomLabelModal={this.handleShowCustomLabelModal}
+      <IdentityProvider onResolve={this.handleResolveLocalIdentity}>
+        <LocalIdentityModalProvider
+          onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
         >
           <div css="min-width: 320px">
             <Main assetsUrl="./aragon-ui">
@@ -180,7 +180,7 @@ class App extends React.Component {
               </SidePanel>
             </Main>
           </div>
-        </CustomLabelModalProvider>
+        </LocalIdentityModalProvider>
       </IdentityProvider>
     )
   }

@@ -2,13 +2,13 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Badge, IdentityBadge, font } from '@aragon/ui'
-import { CustomLabelModalContext } from '../CustomLabelModal/CustomLabelModalManager'
+import { LocalIdentityModalContext } from '../LocalIdentityModal/LocalIdentityModalManager'
 import { IdentityContext } from '../IdentityManager/IdentityManager'
 
-const CustomLabelIdentityBadge = ({ address, ...props }) => {
+const LocalIdentityBadge = ({ address, ...props }) => {
   const { resolve } = React.useContext(IdentityContext)
-  const { showCustomLabelModal, updates$ } = React.useContext(
-    CustomLabelModalContext
+  const { showLocalIdentityModal, updates$ } = React.useContext(
+    LocalIdentityModalContext
   )
   const [label, setLabel] = React.useState()
   const handleResolve = async () => {
@@ -20,7 +20,7 @@ const CustomLabelIdentityBadge = ({ address, ...props }) => {
     }
   }
   const handleClick = () => {
-    showCustomLabelModal(address)
+    showLocalIdentityModal(address)
       .then(handleResolve)
       .catch(e => {
         /* user cancelled modify intent */
@@ -28,8 +28,8 @@ const CustomLabelIdentityBadge = ({ address, ...props }) => {
   }
   React.useEffect(() => {
     handleResolve()
-    const subscription = updates$.subscribe(addr => {
-      if (addr === address) {
+    const subscription = updates$.subscribe(updatedAddress => {
+      if (updatedAddress.toLowerCase() === address.toLowerCase()) {
         handleResolve()
       }
     })
@@ -59,7 +59,7 @@ const CustomLabelIdentityBadge = ({ address, ...props }) => {
   )
 }
 
-CustomLabelIdentityBadge.propTypes = {
+LocalIdentityBadge.propTypes = {
   address: PropTypes.string.isRequired,
 }
 
@@ -83,4 +83,4 @@ const StyledBadge = styled(Badge)`
   ${font({ size: 'xxsmall' })};
 `
 
-export default CustomLabelIdentityBadge
+export default LocalIdentityBadge

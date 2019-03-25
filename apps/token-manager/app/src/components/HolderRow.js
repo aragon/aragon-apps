@@ -9,7 +9,7 @@ import {
   TableRow,
   theme,
 } from '@aragon/ui'
-import CustomLabelIdentityBadge from './CustomLabelIdentityBadge/CustomLabelIdentityBadge'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import provideNetwork from '../provide-network'
 import { formatBalance } from '../utils'
 import You from './You'
@@ -49,7 +49,7 @@ class HolderRow extends React.Component {
       <StyledTableRow>
         <TableCell css="padding-right: 0">
           <Owner>
-            <CustomLabelIdentityBadge
+            <LocalIdentityBadge
               address={address}
               entity={address}
               networkType={network.type}

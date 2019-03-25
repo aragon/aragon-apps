@@ -5,7 +5,7 @@ import provideNetwork from '../provide-network'
 import { formatBalance, stakesPercentages } from '../utils'
 import TokenBadge from './TokenBadge'
 import You from './You'
-import CustomLabelIdentityBadge from './CustomLabelIdentityBadge/CustomLabelIdentityBadge'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
 const DISTRIBUTION_ITEMS_MAX = 7
 const DISTRIBUTION_COLORS = [
@@ -110,7 +110,7 @@ class SideBar extends React.Component {
               <StakesListItem key={name}>
                 <span>
                   <StakesListBullet style={{ background: color }} />
-                  <CustomLabelIdentityBadge
+                  <LocalIdentityBadge
                     address={name}
                     entity={name}
                     networkType={network.type}
