@@ -419,7 +419,7 @@ contract('Finance App', accounts => {
         it('records payment', async () => {
             const amount = 10
             // repeats up to 10 times every 2 seconds
-            const receipt = await finance.newPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
+            const receipt = await finance.newScheduledPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
 
             const [token, receiver, txAmount, initialTime, interval, maxRepeats, disabled, repeats, createdBy] = await finance.getPayment(1)
 
@@ -438,7 +438,7 @@ contract('Finance App', accounts => {
         it('fails trying to get payment out of bounds', async () => {
             const amount = 10
             // repeats up to 10 times every 2 seconds
-            await finance.newPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
+            await finance.newScheduledPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
 
             await assertRevert(async () => {
                 await finance.getPayment(0)
@@ -451,7 +451,7 @@ contract('Finance App', accounts => {
         it('fails trying to get transaction out of bounds', async () => {
             const amount = 10
             // repeats up to 10 times every 2 seconds
-            await finance.newPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
+            await finance.newScheduledPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
 
             await assertRevert(async () => {
                 await finance.getTransaction(2)
@@ -509,7 +509,7 @@ contract('Finance App', accounts => {
             const amount = 10
 
             // repeats up to 10 times every 2 seconds
-            const firstReceipt = await finance.newPayment(token1.address, recipient, amount, time, 2, 10, '')
+            const firstReceipt = await finance.newScheduledPayment(token1.address, recipient, amount, time, 2, 10, '')
             await finance.mock_setTimestamp(time + 4)
             const secondReceipt = await finance.executePayment(1)
 
@@ -532,7 +532,7 @@ contract('Finance App', accounts => {
             const amount = 10
 
             // repeats up to 10 times every 2 seconds
-            await finance.newPayment(ETH, withdrawAddr, amount, time, 2, 10, '')
+            await finance.newScheduledPayment(ETH, withdrawAddr, amount, time, 2, 10, '')
             await finance.mock_setTimestamp(time + 4)
             await finance.executePayment(1)
 
@@ -552,7 +552,7 @@ contract('Finance App', accounts => {
                 // single payment
                 await finance.newImmediatePayment(token1.address, recipient, 10, '') // will spend 10
                 // repeats up to 2 times every 1 seconds
-                await finance.newPayment(token2.address, recipient, 5, time + 1, 1, 2, '') // will spend 10
+                await finance.newScheduledPayment(token2.address, recipient, 5, time + 1, 1, 2, '') // will spend 10
                 await finance.mock_setTimestamp(time + 4)
 
                 await finance.executePayment(1) // first create payment doesn't get an id because it is simple immediate tx
@@ -689,7 +689,7 @@ contract('Finance App', accounts => {
             const amount = 10
 
             it('can create a recurring payment', async () => {
-                const receipt = await finance.newPayment(token1.address, recipient, amount, time + 1, 1, 4, '')
+                const receipt = await finance.newScheduledPayment(token1.address, recipient, amount, time + 1, 1, 4, '')
                 assertEvent(receipt, 'NewPayment')
             })
 
@@ -697,12 +697,12 @@ contract('Finance App', accounts => {
                 const vaultBalance = await vault.balance(token1.address)
                 await finance.removeBudget(token1.address) // clear any budget restrictions
 
-                const receipt = await finance.newPayment(token1.address, recipient, vaultBalance * 2, time + 1, 1, 4, '')
+                const receipt = await finance.newScheduledPayment(token1.address, recipient, vaultBalance * 2, time + 1, 1, 4, '')
                 assertEvent(receipt, 'NewPayment')
             })
 
             it('can create a single future payment', async () => {
-                const receipt = await finance.newPayment(token1.address, recipient, amount, time + 1, 1, 1, '')
+                const receipt = await finance.newScheduledPayment(token1.address, recipient, amount, time + 1, 1, 1, '')
                 assertEvent(receipt, 'NewPayment')
             })
 
@@ -710,19 +710,19 @@ contract('Finance App', accounts => {
                 const vaultBalance = await vault.balance(token1.address)
                 await finance.removeBudget(token1.address) // clear any budget restrictions
 
-                const receipt = await finance.newPayment(token1.address, recipient, vaultBalance * 2, time + 1, 1, 1, '')
+                const receipt = await finance.newScheduledPayment(token1.address, recipient, vaultBalance * 2, time + 1, 1, 1, '')
                 assertEvent(receipt, 'NewPayment')
             })
 
             it('fails to create a zero-amount payment', async () => {
                 await assertRevert(async () => {
-                    await finance.newPayment(token1.address, recipient, 0, time + 1, 1, 2, '')
+                    await finance.newScheduledPayment(token1.address, recipient, 0, time + 1, 1, 2, '')
                 })
             })
 
             it('fails to create a no-interval payment', async () => {
                 await assertRevert(async () => {
-                    await finance.newPayment(token1.address, recipient, 1, time + 1, 0, 2, '')
+                    await finance.newScheduledPayment(token1.address, recipient, 1, time + 1, 0, 2, '')
                 })
             })
 
@@ -731,7 +731,7 @@ contract('Finance App', accounts => {
                 await finance.setBudget(token1.address, budget)
 
                 return assertRevert(async () => {
-                    await finance.newPayment(token1.address, recipient, budget + 1, time, 1, 1, '')
+                    await finance.newScheduledPayment(token1.address, recipient, budget + 1, time, 1, 1, '')
                 })
             })
 
@@ -740,13 +740,13 @@ contract('Finance App', accounts => {
                 await finance.removeBudget(token1.address) // clear any budget restrictions
 
                 return assertRevert(async () => {
-                    await finance.newPayment(token1.address, recipient, vaultBalance + 1, time, 1, 1, '')
+                    await finance.newScheduledPayment(token1.address, recipient, vaultBalance + 1, time, 1, 1, '')
                 })
             })
 
             it('fails to create an immediate non-repeatable single payment', async () => {
                 await assertRevert(async () => {
-                    await finance.newPayment(token1.address, recipient, 1, time - 1, 1, 1, '')
+                    await finance.newScheduledPayment(token1.address, recipient, 1, time - 1, 1, 1, '')
                 })
             })
 
@@ -755,7 +755,7 @@ contract('Finance App', accounts => {
                 await finance.setBudget(token1.address, budget)
 
                 return assertRevert(() => {
-                    return finance.newPayment(token1.address, recipient, budget + 1, time, 1, 2, '')
+                    return finance.newScheduledPayment(token1.address, recipient, budget + 1, time, 1, 2, '')
                 })
             })
 
@@ -763,11 +763,11 @@ contract('Finance App', accounts => {
                 const vaultBalance = await vault.balance(token1.address)
                 await finance.removeBudget(token1.address) // clear any budget restrictions
 
-                const receipt = await finance.newPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
-                const newPaymentId = getEventData(receipt, 'NewPayment', 'paymentId')
+                const receipt = await finance.newScheduledPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
+                const newScheduledPaymentId = getEventData(receipt, 'NewPayment', 'paymentId')
 
                 return assertRevert(async () => {
-                    await finance.executePayment(newPaymentId, { from: recipient })
+                    await finance.executePayment(newScheduledPaymentId, { from: recipient })
                 })
             })
 
@@ -775,7 +775,7 @@ contract('Finance App', accounts => {
                 let paymentId
 
                 beforeEach(async () => {
-                    const receipt = await finance.newPayment(token1.address, recipient, amount, time + 1, 1, 4, '')
+                    const receipt = await finance.newScheduledPayment(token1.address, recipient, amount, time + 1, 1, 4, '')
                     paymentId = getEventData(receipt, 'NewPayment', 'paymentId')
                 })
 
@@ -837,7 +837,7 @@ contract('Finance App', accounts => {
                     const vaultBalance = await vault.balance(token1.address)
                     await finance.removeBudget(token1.address) // clear any budget restrictions
 
-                    const receipt = await finance.newPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
+                    const receipt = await finance.newScheduledPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
 
                     assertEvent(receipt, 'PaymentFailure')
                     // Make sure no transactions were made
@@ -853,10 +853,10 @@ contract('Finance App', accounts => {
 
                     // Create the budget, and use it up for the period
                     await finance.setBudget(token1.address, budget)
-                    await finance.newPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
+                    await finance.newScheduledPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
 
                     // No more budget left
-                    const receipt = await finance.newPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
+                    const receipt = await finance.newScheduledPayment(token1.address, recipient, amountPerPayment, time, 1, 2, '')
                     assertEvent(receipt, 'PaymentFailure')
                     assert.isFalse(await finance.canMakePayment(token1.address, amountPerPayment))
                 })
@@ -870,7 +870,7 @@ contract('Finance App', accounts => {
                     assert.isTrue(await finance.canMakePayment(token1.address, amountPerPayment))
 
                     // creates a repeating payment that can be repeated one more than the vault's funds will allow
-                    await finance.newPayment(token1.address, recipient, amountPerPayment, time, paidInterval, paidTimes + 1, '')
+                    await finance.newScheduledPayment(token1.address, recipient, amountPerPayment, time, paidInterval, paidTimes + 1, '')
                     await finance.mock_setTimestamp(time + paidInterval * (paidTimes + 1))
                     const receipt = await finance.executePayment(1)
 
@@ -899,7 +899,7 @@ contract('Finance App', accounts => {
             await nonInit.mock_setTimestamp(time)
 
             return assertRevert(async() => {
-                await nonInit.newPayment(token1.address, recipient, amount, time, 1, 2, 'ref')
+                await nonInit.newScheduledPayment(token1.address, recipient, amount, time, 1, 2, 'ref')
             })
         })
 

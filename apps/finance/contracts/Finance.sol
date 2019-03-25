@@ -224,7 +224,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @param _maxRepeats Maximum instances a payment can be executed
     * @param _reference String detailing payment reason
     */
-    function newPayment(
+    function newScheduledPayment(
         address _token,
         address _receiver,
         uint256 _amount,
@@ -361,7 +361,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @notice Execute pending payment #`_paymentId`
     * @dev Always allow receiver of a payment to trigger execution
     *      Initialization check is implicitly provided by `recurringPaymentExists()` as new
-    *      recurring payments can only be created via `newPayment(),` which requires initialization
+    *      recurring payments can only be created via `newScheduledPayment(),` which requires initialization
     * @param _paymentId Identifier for payment
     */
     function receiverExecutePayment(uint256 _paymentId) external recurringPaymentExists(_paymentId) transitionsPeriod {
@@ -558,7 +558,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     /**
     * @dev Initialization check is implicitly provided by `recurringPaymentExists()` as new
-    *      recurring payments can only be created via `newPayment(),` which requires initialization
+    *      recurring payments can only be created via `newScheduledPayment(),` which requires initialization
     */
     function nextPaymentTime(uint256 _paymentId) public view recurringPaymentExists(_paymentId) returns (uint64) {
         return _nextPaymentTime(_paymentId);
