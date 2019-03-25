@@ -46,6 +46,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_NEW_PAYMENT_IMMEDIATE = "FINANCE_NEW_PAYMENT_IMMEDIATE";
     string private constant ERROR_RECOVER_AMOUNT_ZERO = "FINANCE_RECOVER_AMOUNT_ZERO";
     string private constant ERROR_DEPOSIT_AMOUNT_ZERO = "FINANCE_DEPOSIT_AMOUNT_ZERO";
+    string private constant ERROR_ETH_VALUE_MISMATCH = "ERROR_ETH_VALUE_MISMATCH";
     string private constant ERROR_BUDGET = "FINANCE_BUDGET";
     string private constant ERROR_EXECUTE_PAYMENT_NUM = "FINANCE_EXECUTE_PAYMENT_NUM";
     string private constant ERROR_EXECUTE_PAYMENT_TIME = "FINANCE_EXECUTE_PAYMENT_TIME";
@@ -53,7 +54,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_RECEIVER_EXECUTE_PAYMENT_TIME = "FINANCE_RCVR_EXEC_PAYMENT_TIME";
     string private constant ERROR_PAYMENT_RECEIVER = "FINANCE_PAYMENT_RECEIVER";
     string private constant ERROR_TOKEN_TRANSFER_FROM_REVERTED = "FINANCE_TKN_TRANSFER_FROM_REVERT";
-    string private constant ERROR_VALUE_MISMATCH = "FINANCE_VALUE_MISMATCH";
     string private constant ERROR_TOKEN_APPROVE_FAILED = "FINANCE_TKN_APPROVE_FAILED";
     string private constant ERROR_RECURRING_PAYMENT_INACTIVE = "FINANCE_RECURRING_PAYMENT_INACTIVE";
     string private constant ERROR_REMAINING_BUDGET = "FINANCE_REMAINING_BUDGET";
@@ -121,7 +121,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     event SetBudget(address indexed token, uint256 amount, bool hasBudget);
     event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxRepeats, string reference);
     event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity, uint256 amount, string reference);
-    event ChangePaymentState(uint256 indexed paymentId, bool inactive);
+    event ChangePaymentState(uint256 indexed paymentId, bool active);
     event ChangePeriodDuration(uint64 newDuration);
     event PaymentFailure(uint256 paymentId);
 
@@ -199,6 +199,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function deposit(address _token, uint256 _amount, string _reference) external payable isInitialized transitionsPeriod {
         require(_amount > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
+        if (_token == ETH) {
+            // Ensure that the ETH sent with the transaction equals the amount in the deposit
+            require(msg.value == _amount, ERROR_ETH_VALUE_MISMATCH);
+        }
+
         _deposit(
             _token,
             _amount,
@@ -240,7 +245,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         // Token budget must not be set at all or allow at least one instance of this payment each period
         require(!settings.hasBudget[_token] || settings.budgets[_token] >= _amount, ERROR_BUDGET);
 
-        // Don't allow creating single payments that are immediately executable. `newPaymentTransaction()` should be used instead
+        // Don't allow creating single payments that are immediately executable, use `newPaymentTransaction()` instead
         if (_maxRepeats == 1) {
             require(_initialPaymentTime > getTimestamp64(), ERROR_NEW_PAYMENT_IMMEDIATE);
         }
@@ -286,8 +291,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _amount,
             NO_RECURRING_PAYMENT,   // unrelated to any payment id; it isn't created
             0,   // also unrelated to any payment repeats
-            _reference,
-            false
+            _reference
         );
    }
 
@@ -315,7 +319,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint256 _amount
     )
         external
-        authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token], settings.hasBudget[_token] ? 1 : 0))
+        authP(CHANGE_BUDGETS_ROLE, arr(_token, _amount, settings.budgets[_token], uint256(settings.hasBudget[_token] ? 1 : 0)))
         transitionsPeriod
     {
         settings.budgets[_token] = _amount;
@@ -331,7 +335,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function removeBudget(address _token)
         external
-        authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token], settings.hasBudget[_token] ? 1 : 0))
+        authP(CHANGE_BUDGETS_ROLE, arr(_token, uint256(0), settings.budgets[_token], uint256(settings.hasBudget[_token] ? 1 : 0)))
         transitionsPeriod
     {
         settings.budgets[_token] = 0;
@@ -404,14 +408,14 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
      * @param _token Token whose balance is going to be transferred.
      */
     function recoverToVault(address _token) external isInitialized transitionsPeriod {
-        uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).staticBalanceOf(this);
+        uint256 amount = _token == ETH ? address(this).balance : ERC20(_token).staticBalanceOf(address(this));
         require(amount > 0, ERROR_RECOVER_AMOUNT_ZERO);
 
         _deposit(
             _token,
             amount,
             "Recover to Vault",
-            this,
+            address(this),
             false
         );
     }
@@ -583,24 +587,22 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _reference
         );
 
-        // If it is an external deposit, check that the assets are actually transferred
-        // External deposit will be false when the assets were already in the Finance app
-        // and just need to be transferred to the vault
-        if (_isExternalDeposit) {
-            if (_token == ETH) {
-                // Ensure that the ETH sent with the transaction equals the amount in the deposit
-                require(msg.value == _amount, ERROR_VALUE_MISMATCH);
-            } else {
-                // Get the tokens to Finance
-                require(ERC20(_token).safeTransferFrom(msg.sender, this, _amount), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
-            }
-        }
-
         if (_token == ETH) {
             vault.deposit.value(_amount)(ETH, _amount);
         } else {
+            // First, transfer the tokens to Finance if necessary
+            // External deposit will be false when the assets were already in the Finance app
+            // and just need to be transferred to the Vault
+            if (_isExternalDeposit) {
+                // This assumes the sender has approved the tokens for Finance
+                require(
+                    ERC20(_token).safeTransferFrom(msg.sender, address(this), _amount),
+                    ERROR_TOKEN_TRANSFER_FROM_REVERTED
+                );
+            }
+            // Approve the tokens for the Vault (it does the actual transferring)
             require(ERC20(_token).safeApprove(vault, _amount), ERROR_TOKEN_APPROVE_FAILED);
-            // finally we can deposit them
+            // Finally, initiate the deposit
             vault.deposit(_token, _amount);
         }
     }
@@ -620,14 +622,14 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             payment.repeats += 1;
             paid += 1;
 
-            _makePaymentTransaction(
+            // We've already checked the remaining budget with `_canMakePayment()`
+            _unsafeMakePaymentTransaction(
                 payment.token,
                 payment.receiver,
                 payment.amount,
                 _paymentId,
                 payment.repeats,
-                "",
-                true
+                ""
             );
         }
 
@@ -640,15 +642,28 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint256 _amount,
         uint256 _paymentId,
         uint64 _paymentRepeatNumber,
-        string _reference,
-        bool _skipChecks
+        string _reference
     )
         internal
     {
-        if (!_skipChecks) {
-            require(_getRemainingBudget(_token) >= _amount, ERROR_REMAINING_BUDGET);
-        }
+        require(_getRemainingBudget(_token) >= _amount, ERROR_REMAINING_BUDGET);
+        _unsafeMakePaymentTransaction(_token, _receiver, _amount, _paymentId, _paymentRepeatNumber, _reference);
+    }
 
+    /**
+    * @dev Unsafe version of _makePaymentTransaction that assumes you have already checked the
+    *      remaining budget
+    */
+    function _unsafeMakePaymentTransaction(
+        address _token,
+        address _receiver,
+        uint256 _amount,
+        uint256 _paymentId,
+        uint64 _paymentRepeatNumber,
+        string _reference
+    )
+        internal
+    {
         _recordTransaction(
             false,
             _token,
@@ -721,6 +736,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         }
 
         uint256 transactionId = transactionsNextIndex++;
+
         Transaction storage transaction = transactions[transactionId];
         transaction.token = _token;
         transaction.entity = _entity;
@@ -739,7 +755,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         emit NewTransaction(transactionId, _incoming, _entity, _amount, _reference);
     }
 
-    function _tryTransitionAccountingPeriod(uint256 _maxTransitions) internal returns (bool success) {
+    function _tryTransitionAccountingPeriod(uint64 _maxTransitions) internal returns (bool success) {
         Period storage currentPeriod = periods[_currentPeriodId()];
         uint64 timestamp = getTimestamp64();
 
@@ -750,7 +766,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 // it didn't fully transition
                 return false;
             }
-            _maxTransitions = _maxTransitions.sub(1);
+            // We're already protected from underflowing above
+            _maxTransitions -= 1;
 
             // If there were any transactions in period, record which was the last
             // In case 0 transactions occured, first and last tx id will be 0
@@ -779,15 +796,17 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             return MAX_UINT;
         }
 
+        uint256 budget = settings.budgets[_token];
         uint256 spent = periods[_currentPeriodId()].tokenStatement[_token].expenses;
 
         // A budget decrease can cause the spent amount to be greater than period budget
         // If so, return 0 to not allow more spending during period
-        if (spent >= settings.budgets[_token]) {
+        if (spent >= budget) {
             return 0;
         }
 
-        return settings.budgets[_token].sub(spent);
+        // We're already protected from the overflow above
+        return budget - spent;
     }
 
     function _nextPaymentTime(uint256 _paymentId) internal view returns (uint64) {

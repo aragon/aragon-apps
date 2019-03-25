@@ -7,8 +7,8 @@ const EmptyState = ({ onActivate }) => (
   <Main>
     <EmptyStateCard
       icon={<img src={emptyIcon} alt="" />}
-      title="Nothing here."
-      text="Assign tokens to start using the app."
+      title="There are no tokens assigned yet"
+      text="Assign tokens to get started."
       actionText="Assign Tokens"
       onActivate={onActivate}
     />

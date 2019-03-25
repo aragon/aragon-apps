@@ -726,9 +726,21 @@ contract('Finance App', accounts => {
                 })
             })
 
-            it('fails to create a no-max repeat payment', async () => {
-                await assertRevert(async () => {
-                    await finance.newPayment(token1.address, recipient, 1, time + 1, 1, 0, '')
+            it('fails to create a new one-time payment without enough budget', async () => {
+                const budget = 10
+                await finance.setBudget(token1.address, budget)
+
+                return assertRevert(async () => {
+                    await finance.newPayment(token1.address, recipient, budget + 1, time, 1, 1, '')
+                })
+            })
+
+            it('fails to create a new one-time payment without enough funds', async () => {
+                const vaultBalance = await vault.balance(token1.address)
+                await finance.removeBudget(token1.address) // clear any budget restrictions
+
+                return assertRevert(async () => {
+                    await finance.newPayment(token1.address, recipient, vaultBalance + 1, time, 1, 1, '')
                 })
             })
 

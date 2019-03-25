@@ -46,7 +46,7 @@
     "test": "npm run lint && jest",
     "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./public && rsync -rtu ./public/ ./build",
     "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve index.html -p 3004 --out-dir build/",
-    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url '.'",
+    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url \".\"",
     "build:script": "parcel build src/script.js --out-dir build/"
   },
   "browserslist": [

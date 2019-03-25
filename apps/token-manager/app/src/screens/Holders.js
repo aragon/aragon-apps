@@ -5,10 +5,9 @@ import {
   Table,
   TableHeader,
   TableRow,
+  Viewport,
   breakpoint,
-  springs,
 } from '@aragon/ui'
-import { WindowSize } from '../WindowSizeProvider'
 import HolderRow from '../components/HolderRow'
 import SideBar from '../components/SideBar'
 
@@ -27,7 +26,6 @@ class Holders extends React.Component {
       maxAccountTokens,
       onAssignTokens,
       onRemoveTokens,
-      tabbedNavigation,
       tokenAddress,
       tokenDecimalsBase,
       tokenName,
@@ -39,61 +37,77 @@ class Holders extends React.Component {
     const { selectedTab } = this.state
 
     return (
-      <TwoPanels>
-        <Main>
-          {tabbedNavigation && (
-            <TabBarWrapper>
-              <TabBar
-                items={TABS}
-                selected={selectedTab}
-                onSelect={this.handleSelectTab}
-              />
-            </TabBarWrapper>
-          )}
-          <Screen selected={!tabbedNavigation || selectedTab === 0}>
-            <ResponsiveTable
-              header={
-                <TableRow>
-                  <StyledTableHeader
-                    title={groupMode ? 'Owner' : 'Holder'}
-                    groupmode={groupMode}
-                  />
-                  {!groupMode && (
-                    <StyledTableHeader title="Balance" align="right" />
-                  )}
-                  <TableHeader title="" />
-                </TableRow>
-              }
-            >
-              {holders.map(({ address, balance }) => (
-                <HolderRow
-                  key={address}
-                  address={address}
-                  balance={balance}
-                  groupMode={groupMode}
-                  isCurrentUser={userAccount && userAccount === address}
-                  maxAccountTokens={maxAccountTokens}
+      <Viewport>
+        {({ below }) => {
+          const tabbedNavigation = below('medium')
+          const compactTable = below('medium')
+
+          return (
+            <TwoPanels>
+              <Main>
+                {tabbedNavigation && (
+                  <TabBarWrapper>
+                    <TabBar
+                      items={TABS}
+                      selected={selectedTab}
+                      onSelect={this.handleSelectTab}
+                    />
+                  </TabBarWrapper>
+                )}
+                <Screen selected={!tabbedNavigation || selectedTab === 0}>
+                  <ResponsiveTable
+                    header={
+                      <TableRow>
+                        <TableHeader
+                          title={groupMode ? 'Owner' : 'Holder'}
+                          groupmode={groupMode}
+                          colSpan={groupMode ? '2' : '1'}
+                        />
+                        {!groupMode && (
+                          <TableHeader
+                            title="Balance"
+                            align={compactTable ? 'left' : 'right'}
+                            colSpan={compactTable ? '2' : '1'}
+                          />
+                        )}
+                        {!groupMode && !compactTable && <TableHeader />}
+                      </TableRow>
+                    }
+                    noSideBorders={compactTable}
+                  >
+                    {holders.map(({ address, balance }) => (
+                      <HolderRow
+                        key={address}
+                        address={address}
+                        balance={balance}
+                        groupMode={groupMode}
+                        isCurrentUser={userAccount && userAccount === address}
+                        maxAccountTokens={maxAccountTokens}
+                        tokenDecimalsBase={tokenDecimalsBase}
+                        onAssignTokens={onAssignTokens}
+                        onRemoveTokens={onRemoveTokens}
+                        compact={compactTable}
+                      />
+                    ))}
+                  </ResponsiveTable>
+                </Screen>
+              </Main>
+              <Screen selected={!tabbedNavigation || selectedTab === 1}>
+                <ResponsiveSideBar
+                  holders={holders}
+                  tokenAddress={tokenAddress}
                   tokenDecimalsBase={tokenDecimalsBase}
-                  onAssignTokens={onAssignTokens}
-                  onRemoveTokens={onRemoveTokens}
+                  tokenName={tokenName}
+                  tokenSupply={tokenSupply}
+                  tokenSymbol={tokenSymbol}
+                  tokenTransfersEnabled={tokenTransfersEnabled}
+                  userAccount={userAccount}
                 />
-              ))}
-            </ResponsiveTable>
-          </Screen>
-        </Main>
-        <Screen selected={!tabbedNavigation || selectedTab === 1}>
-          <ResponsiveSideBar
-            groupMode={groupMode}
-            holders={holders}
-            tokenAddress={tokenAddress}
-            tokenDecimalsBase={tokenDecimalsBase}
-            tokenName={tokenName}
-            tokenSupply={tokenSupply}
-            tokenSymbol={tokenSymbol}
-            tokenTransfersEnabled={tokenTransfersEnabled}
-          />
-        </Screen>
-      </TwoPanels>
+              </Screen>
+            </TwoPanels>
+          )
+        }}
+      </Viewport>
     )
   }
 
@@ -103,17 +117,6 @@ class Holders extends React.Component {
 }
 
 const Screen = ({ selected, children }) => selected && children
-
-const StyledTableHeader = styled(TableHeader)`
-  width: ${({ groupmode }) => (groupmode ? 100 : 50)}%;
-
-  ${breakpoint(
-    'medium',
-    `
-      width: auto;
-    `
-  )};
-`
 
 const TabBarWrapper = styled.div`
   margin-top: 16px;
@@ -170,8 +173,4 @@ const TwoPanels = styled.div`
   )};
 `
 
-export default props => (
-  <WindowSize>
-    {({ toMedium }) => <Holders {...props} tabbedNavigation={toMedium} />}
-  </WindowSize>
-)
+export default Holders

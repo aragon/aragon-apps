@@ -2,31 +2,17 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import BN from 'bn.js'
-import {
-  AppBar,
-  AppView,
-  BaseStyles,
-  BreakPoint,
-  Button,
-  ButtonIcon,
-  EmptyStateCard,
-  PublicUrl,
-  Root,
-  SidePanel,
-  font,
-  observe,
-  theme,
-} from '@aragon/ui'
+import { map } from 'rxjs/operators'
+import { EmptyStateCard, Main, SidePanel, observe } from '@aragon/ui'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
-import MenuButton from './components/MenuButton/MenuButton'
+import AppLayout from './components/AppLayout'
+import NewTransferIcon from './components/NewTransferIcon'
 import { networkContextType } from './lib/provideNetwork'
 import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
-import { makeEtherscanBaseUrl } from './lib/utils'
 
 import addFundsIcon from './components/assets/add-funds-icon.svg'
-import newTransferIcon from './components/assets/new-transfer.svg'
 
 class App extends React.Component {
   static propTypes = {
@@ -51,7 +37,6 @@ class App extends React.Component {
     const { network } = this.props
     return {
       network: {
-        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
         type: network.type,
       },
     }
@@ -113,7 +98,6 @@ class App extends React.Component {
     const {
       app,
       balances,
-      contentPadding,
       transactions,
       tokens,
       proxyAddress,
@@ -122,136 +106,60 @@ class App extends React.Component {
     const { newTransferOpened } = this.state
 
     return (
-      <Root.Provider>
-        <PublicUrl.Provider url="./aragon-ui/">
-          <BaseStyles />
-          <Main>
-            <AppView
-              padding={contentPadding}
-              appBar={
-                <AppBar>
-                  <BreakPoint to="medium">
-                    <AppBarContainer>
-                      <Title>
-                        <MenuButton onClick={this.handleMenuPanelOpen} />
-                        <TitleLabel>Finance</TitleLabel>
-                      </Title>
-                      <ButtonIcon
-                        onClick={this.handleNewTransferOpen}
-                        title="New Transfer"
-                        css={`
-                          width: auto;
-                          height: 100%;
-                          padding: 0 20px 0 10px;
-                          margin-left: 8px;
-                        `}
-                      >
-                        <img src={newTransferIcon} alt="" />
-                      </ButtonIcon>
-                    </AppBarContainer>
-                  </BreakPoint>
-                  <BreakPoint from="medium">
-                    <AppBarContainer style={{ padding: '0 30px' }}>
-                      <Title>
-                        <TitleLabel>Finance</TitleLabel>
-                      </Title>
-                      <Button
-                        mode="strong"
-                        onClick={this.handleNewTransferOpen}
-                      >
-                        New Transfer
-                      </Button>
-                    </AppBarContainer>
-                  </BreakPoint>
-                </AppBar>
-              }
-            >
-              {balances.length > 0 && (
-                <SpacedBlock>
-                  <Balances balances={balances} />
-                </SpacedBlock>
-              )}
-              {transactions.length > 0 && (
-                <SpacedBlock>
-                  <Transfers transactions={transactions} tokens={tokens} />
-                </SpacedBlock>
-              )}
-              {balances.length === 0 && transactions.length === 0 && (
-                <EmptyScreen>
-                  <EmptyStateCard
-                    icon={<img src={addFundsIcon} alt="" />}
-                    title="Add funds to your organization"
-                    text="There are no funds yet - add funds easily"
-                    actionText="Add funds"
-                    onActivate={this.handleNewTransferOpen}
-                  />
-                </EmptyScreen>
-              )}
-            </AppView>
-            <SidePanel
+      <div css="min-width: 320px">
+        <Main assetsUrl="./aragon-ui">
+          <AppLayout
+            title="Finance"
+            onMenuOpen={this.handleMenuPanelOpen}
+            mainButton={{
+              label: 'New transfer',
+              icon: <NewTransferIcon />,
+              onClick: this.handleNewTransferOpen,
+            }}
+            smallViewPadding={0}
+          >
+            {balances.length > 0 && (
+              <SpacedBlock>
+                <Balances balances={balances} />
+              </SpacedBlock>
+            )}
+            {transactions.length > 0 && (
+              <SpacedBlock>
+                <Transfers transactions={transactions} tokens={tokens} />
+              </SpacedBlock>
+            )}
+            {balances.length === 0 && transactions.length === 0 && (
+              <EmptyScreen>
+                <EmptyStateCard
+                  icon={<img src={addFundsIcon} alt="" />}
+                  title="There are no funds yet"
+                  text="Create a new transfer to get started."
+                  actionText="New Transfer"
+                  onActivate={this.handleNewTransferOpen}
+                />
+              </EmptyScreen>
+            )}
+          </AppLayout>
+          <SidePanel
+            opened={newTransferOpened}
+            onClose={this.handleNewTransferClose}
+            title="New Transfer"
+          >
+            <NewTransferPanelContent
+              app={app}
               opened={newTransferOpened}
-              onClose={this.handleNewTransferClose}
-              title="New Transfer"
-            >
-              <NewTransferPanelContent
-                app={app}
-                opened={newTransferOpened}
-                tokens={tokens}
-                onWithdraw={this.handleWithdraw}
-                onDeposit={this.handleDeposit}
-                proxyAddress={proxyAddress}
-                userAccount={userAccount}
-              />
-            </SidePanel>
-          </Main>
-        </PublicUrl.Provider>
-      </Root.Provider>
+              tokens={tokens}
+              onWithdraw={this.handleWithdraw}
+              onDeposit={this.handleDeposit}
+              proxyAddress={proxyAddress}
+              userAccount={userAccount}
+            />
+          </SidePanel>
+        </Main>
+      </div>
     )
   }
 }
-
-const ResponsiveApp = props => (
-  <React.Fragment>
-    <BreakPoint to="medium">
-      <App {...props} contentPadding={0} />
-    </BreakPoint>
-    <BreakPoint from="medium">
-      <App {...props} contentPadding={30} />
-    </BreakPoint>
-  </React.Fragment>
-)
-
-const AppBarContainer = styled.div`
-  display: flex;
-  width: 100%;
-  height: 100%;
-  justify-content: space-between;
-  align-items: center;
-  justify-content: safe;
-  flex-wrap: nowrap;
-`
-
-const Title = styled.h1`
-  display: flex;
-  flex: 1 1 auto;
-  width: 0;
-  align-items: center;
-  height: 100%;
-`
-
-const TitleLabel = styled.span`
-  flex: 0 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-right: 10px;
-  ${font({ size: 'xxlarge' })};
-`
-
-const Main = styled.div`
-  height: 100vh;
-  min-width: 320px;
-`
 
 const EmptyScreen = styled.div`
   display: flex;
@@ -280,60 +188,62 @@ const compareBalancesByEthAndSymbol = (tokenA, tokenB) => {
 
 export default observe(
   observable =>
-    observable.map(state => {
-      const { balances, transactions } = state || {}
+    observable.pipe(
+      map(state => {
+        const { balances, transactions } = state || {}
 
-      const balancesBn = balances
-        ? balances
-            .map(balance => ({
-              ...balance,
-              amount: new BN(balance.amount),
-              decimals: new BN(balance.decimals),
-              // Note that numbers in `numData` are not safe for accurate
-              // computations (but are useful for making divisions easier).
+        const balancesBn = balances
+          ? balances
+              .map(balance => ({
+                ...balance,
+                amount: new BN(balance.amount),
+                decimals: new BN(balance.decimals),
+                // Note that numbers in `numData` are not safe for accurate
+                // computations (but are useful for making divisions easier).
+                numData: {
+                  amount: parseInt(balance.amount, 10),
+                  decimals: parseInt(balance.decimals, 10),
+                },
+              }))
+              .sort(compareBalancesByEthAndSymbol)
+          : []
+
+        const transactionsBn = transactions
+          ? transactions.map(transaction => ({
+              ...transaction,
+              amount: new BN(transaction.amount),
               numData: {
-                amount: parseInt(balance.amount, 10),
-                decimals: parseInt(balance.decimals, 10),
+                amount: parseInt(transaction.amount, 10),
               },
             }))
-            .sort(compareBalancesByEthAndSymbol)
-        : []
+          : []
 
-      const transactionsBn = transactions
-        ? transactions.map(transaction => ({
-            ...transaction,
-            amount: new BN(transaction.amount),
-            numData: {
-              amount: parseInt(transaction.amount, 10),
-            },
-          }))
-        : []
+        return {
+          ...state,
 
-      return {
-        ...state,
+          tokens: balancesBn.map(
+            ({
+              address,
+              name,
+              symbol,
+              numData: { amount, decimals },
+              verified,
+            }) => ({
+              address,
+              amount,
+              decimals,
+              name,
+              symbol,
+              verified,
+            })
+          ),
 
-        tokens: balancesBn.map(
-          ({
-            address,
-            name,
-            symbol,
-            numData: { amount, decimals },
-            verified,
-          }) => ({
-            address,
-            amount,
-            decimals,
-            name,
-            symbol,
-            verified,
-          })
-        ),
+          // Filter out empty balances
+          balances: balancesBn.filter(balance => !balance.amount.isZero()),
 
-        // Filter out empty balances
-        balances: balancesBn.filter(balance => !balance.amount.isZero()),
-
-        transactions: transactionsBn,
-      }
-    }),
+          transactions: transactionsBn,
+        }
+      })
+    ),
   {}
-)(ResponsiveApp)
+)(App)
