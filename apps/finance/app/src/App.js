@@ -11,7 +11,7 @@ import AppLayout from './components/AppLayout'
 import NewTransferIcon from './components/NewTransferIcon'
 import { networkContextType } from './lib/provideNetwork'
 import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
-import { CustomLabelModalProvider } from './components/CustomLabelModal/CustomLabelModalManager'
+import { LocalIdentityModalProvider } from './components/LocalIdentityModal/LocalIdentityModalManager'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
 import addFundsIcon from './components/assets/add-funds-icon.svg'
@@ -98,10 +98,10 @@ class App extends React.Component {
   handleMenuPanelOpen = () => {
     this.props.sendMessageToWrapper('menuPanel', true)
   }
-  handleResolveCustomLabel = address => {
+  handleResolveLocalIdentity = address => {
     return this.props.app.resolveAddressIdentity(address).toPromise()
   }
-  handleShowCustomLabelModal = address => {
+  handleShowLocalIdentityModal = address => {
     return this.props.app
       .requestAddressIdentityModification(address)
       .toPromise()
@@ -119,9 +119,9 @@ class App extends React.Component {
     const { newTransferOpened } = this.state
 
     return (
-      <IdentityProvider onResolve={this.handleResolveCustomLabel}>
-        <CustomLabelModalProvider
-          onShowCustomLabelModal={this.handleShowCustomLabelModal}
+      <IdentityProvider onResolve={this.handleResolveLocalIdentity}>
+        <LocalIdentityModalProvider
+          onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
         >
           <div css="min-width: 320px">
             <Main assetsUrl="./aragon-ui">
@@ -174,7 +174,7 @@ class App extends React.Component {
               </SidePanel>
             </Main>
           </div>
-        </CustomLabelModalProvider>
+        </LocalIdentityModalProvider>
       </IdentityProvider>
     )
   }

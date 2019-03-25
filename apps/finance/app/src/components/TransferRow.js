@@ -12,7 +12,7 @@ import {
 import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
 import IconTokens from './icons/IconTokens'
-import CustomLabelIdentityBadge from './CustomLabelIdentityBadge/CustomLabelIdentityBadge'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
 class TransferRow extends React.PureComponent {
   handleViewTransaction = () => {
@@ -62,7 +62,7 @@ class TransferRow extends React.PureComponent {
             <Grid>
               <div css="overflow: hidden">
                 <div css="display: flex">
-                  <CustomLabelIdentityBadge
+                  <LocalIdentityBadge
                     networkType={network.type}
                     entity={entity}
                     address={entity}
@@ -90,7 +90,7 @@ class TransferRow extends React.PureComponent {
           </time>
         </NoWrapCell>
         <NoWrapCell>
-          <CustomLabelIdentityBadge
+          <LocalIdentityBadge
             networkType={network.type}
             entity={entity}
             address={entity}
