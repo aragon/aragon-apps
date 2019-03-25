@@ -27,14 +27,14 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     bytes32 public constant EXECUTE_PAYMENTS_ROLE = keccak256("EXECUTE_PAYMENTS_ROLE");
     bytes32 public constant MANAGE_PAYMENTS_ROLE = keccak256("MANAGE_PAYMENTS_ROLE");
 
-    uint256 internal constant NO_RECURRING_PAYMENT = 0;
+    uint256 internal constant NO_SCHEDULED_PAYMENT = 0;
     uint256 internal constant NO_TRANSACTION = 0;
-    uint256 internal constant MAX_RECURRING_PAYMENTS_PER_TX = 20;
+    uint256 internal constant MAX_SCHEDULED_PAYMENTS_PER_TX = 20;
     uint256 internal constant MAX_UINT = uint256(-1);
     uint64 internal constant MAX_UINT64 = uint64(-1);
 
     string private constant ERROR_COMPLETE_TRANSITION = "FINANCE_COMPLETE_TRANSITION";
-    string private constant ERROR_NO_RECURRING_PAYMENT = "FINANCE_NO_RECURRING_PAYMENT";
+    string private constant ERROR_NO_SCHEDULED_PAYMENT = "FINANCE_NO_SCHEDULED_PAYMENT";
     string private constant ERROR_NO_TRANSACTION = "FINANCE_NO_TRANSACTION";
     string private constant ERROR_NO_PERIOD = "FINANCE_NO_PERIOD";
     string private constant ERROR_VAULT_NOT_CONTRACT = "FINANCE_VAULT_NOT_CONTRACT";
@@ -57,7 +57,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_REMAINING_BUDGET = "FINANCE_REMAINING_BUDGET";
 
     // Order optimized for storage
-    struct RecurringPayment {
+    struct ScheduledPayment {
         address token;
         address receiver;
         address createdBy;
@@ -104,9 +104,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     Settings internal settings;
 
     // We are mimicing arrays, we use mappings instead to make app upgrade more graceful
-    mapping (uint256 => RecurringPayment) internal recurringPayments;
-    // Payments start at index 1, to allow us to use recurringPayments[0] for transactions that are not
-    // linked to a recurring payment
+    mapping (uint256 => ScheduledPayment) internal scheduledPayments;
+    // Payments start at index 1, to allow us to use scheduledPayments[0] for transactions that are not
+    // linked to a scheduled payment
     uint256 public paymentsNextIndex;
 
     mapping (uint256 => Transaction) internal transactions;
@@ -132,8 +132,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         _;
     }
 
-    modifier recurringPaymentExists(uint256 _paymentId) {
-        require(_paymentId > 0 && _paymentId < paymentsNextIndex, ERROR_NO_RECURRING_PAYMENT);
+    modifier scheduledPaymentExists(uint256 _paymentId) {
+        require(_paymentId > 0 && _paymentId < paymentsNextIndex, ERROR_NO_SCHEDULED_PAYMENT);
         _;
     }
 
@@ -176,9 +176,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         require(_periodDuration >= 1 days, ERROR_INIT_PERIOD_TOO_SHORT);
         settings.periodDuration = _periodDuration;
 
-        // Reserve the first recurring payment index as an unused index for transactions not linked
-        // to a payment
-        recurringPayments[0].inactive = true;
+        // Reserve the first scheduled payment index as an unused index for transactions not linked
+        // to a scheduled payment
+        scheduledPayments[0].inactive = true;
         paymentsNextIndex = 1;
 
         // Reserve the first transaction index as an unused index for periods with no transactions
@@ -236,7 +236,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _token,
             _receiver,
             _amount,
-            NO_RECURRING_PAYMENT,   // unrelated to any payment id; it isn't created
+            NO_SCHEDULED_PAYMENT,   // unrelated to any payment id; it isn't created
             0,   // also unrelated to any payment repeats
             _reference
         );
@@ -283,7 +283,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         paymentId = paymentsNextIndex++;
         emit NewPayment(paymentId, _receiver, _maxRepeats, _reference);
 
-        RecurringPayment storage payment = recurringPayments[paymentId];
+        ScheduledPayment storage payment = scheduledPayments[paymentId];
         payment.token = _token;
         payment.receiver = _receiver;
         payment.amount = _amount;
@@ -293,7 +293,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         payment.createdBy = msg.sender;
 
         // We skip checking how many times the new payment was executed to allow creating new
-        // recurring payments before having enough vault balance
+        // scheduled payments before having enough vault balance
         _executePayment(paymentId);
     }
 
@@ -352,8 +352,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function executePayment(uint256 _paymentId)
         external
-        authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, recurringPayments[_paymentId].amount))
-        recurringPaymentExists(_paymentId)
+        authP(EXECUTE_PAYMENTS_ROLE, arr(_paymentId, scheduledPayments[_paymentId].amount))
+        scheduledPaymentExists(_paymentId)
         transitionsPeriod
     {
         _executePaymentAtLeastOnce(_paymentId);
@@ -362,12 +362,12 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     /**
     * @notice Execute pending payment #`_paymentId`
     * @dev Always allow receiver of a payment to trigger execution
-    *      Initialization check is implicitly provided by `recurringPaymentExists()` as new
-    *      recurring payments can only be created via `newScheduledPayment(),` which requires initialization
+    *      Initialization check is implicitly provided by `scheduledPaymentExists()` as new
+    *      scheduled payments can only be created via `newScheduledPayment(),` which requires initialization
     * @param _paymentId Identifier for payment
     */
-    function receiverExecutePayment(uint256 _paymentId) external recurringPaymentExists(_paymentId) transitionsPeriod {
-        require(recurringPayments[_paymentId].receiver == msg.sender, ERROR_PAYMENT_RECEIVER);
+    function receiverExecutePayment(uint256 _paymentId) external scheduledPaymentExists(_paymentId) transitionsPeriod {
+        require(scheduledPayments[_paymentId].receiver == msg.sender, ERROR_PAYMENT_RECEIVER);
         _executePaymentAtLeastOnce(_paymentId);
     }
 
@@ -383,9 +383,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     function setPaymentStatus(uint256 _paymentId, bool _active)
         external
         authP(MANAGE_PAYMENTS_ROLE, arr(_paymentId, uint256(_active ? 1 : 0)))
-        recurringPaymentExists(_paymentId)
+        scheduledPaymentExists(_paymentId)
     {
-        recurringPayments[_paymentId].inactive = !_active;
+        scheduledPayments[_paymentId].inactive = !_active;
         emit ChangePaymentState(_paymentId, _active);
     }
 
@@ -436,7 +436,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     function getPayment(uint256 _paymentId)
         public
         view
-        recurringPaymentExists(_paymentId)
+        scheduledPaymentExists(_paymentId)
         returns (
             address token,
             address receiver,
@@ -449,7 +449,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             address createdBy
         )
     {
-        RecurringPayment storage payment = recurringPayments[_paymentId];
+        ScheduledPayment storage payment = scheduledPayments[_paymentId];
 
         token = payment.token;
         receiver = payment.receiver;
@@ -559,10 +559,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @dev Initialization check is implicitly provided by `recurringPaymentExists()` as new
-    *      recurring payments can only be created via `newScheduledPayment(),` which requires initialization
+    * @dev Initialization check is implicitly provided by `scheduledPaymentExists()` as new
+    *      scheduled payments can only be created via `newScheduledPayment(),` which requires initialization
     */
-    function nextPaymentTime(uint256 _paymentId) public view recurringPaymentExists(_paymentId) returns (uint64) {
+    function nextPaymentTime(uint256 _paymentId) public view scheduledPaymentExists(_paymentId) returns (uint64) {
         return _nextPaymentTime(_paymentId);
     }
 
@@ -597,11 +597,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     function _executePayment(uint256 _paymentId) internal returns (uint256) {
-        RecurringPayment storage payment = recurringPayments[_paymentId];
+        ScheduledPayment storage payment = scheduledPayments[_paymentId];
         require(!payment.inactive, ERROR_PAYMENT_INACTIVE);
 
         uint64 paid = 0;
-        while (_nextPaymentTime(_paymentId) <= getTimestamp64() && paid < MAX_RECURRING_PAYMENTS_PER_TX) {
+        while (_nextPaymentTime(_paymentId) <= getTimestamp64() && paid < MAX_SCHEDULED_PAYMENTS_PER_TX) {
             if (!_canMakePayment(payment.token, payment.amount)) {
                 emit PaymentFailure(_paymentId);
                 break;
@@ -710,7 +710,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _token,
             _sender,
             _amount,
-            NO_RECURRING_PAYMENT, // unrelated to any existing payment
+            NO_SCHEDULED_PAYMENT, // unrelated to any existing payment
             0, // and no payment repeats
             _reference
         );
@@ -810,7 +810,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     function _nextPaymentTime(uint256 _paymentId) internal view returns (uint64) {
-        RecurringPayment storage payment = recurringPayments[_paymentId];
+        ScheduledPayment storage payment = scheduledPayments[_paymentId];
 
         if (payment.repeats >= payment.maxRepeats) {
             return MAX_UINT64; // re-executes in some billions of years time... should not need to worry
