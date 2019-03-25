@@ -242,8 +242,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 _amount,
                 NO_RECURRING_PAYMENT,   // unrelated to any payment id; it isn't created
                 0,   // also unrelated to any payment repeats
-                _reference,
-                false
+                _reference
             );
             return;
         }
@@ -584,14 +583,14 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             payment.repeats += 1;
             paid += 1;
 
-            _makePaymentTransaction(
+            // We've already checked the remaining budget with `_canMakePayment()`
+            _unsafeMakePaymentTransaction(
                 payment.token,
                 payment.receiver,
                 payment.amount,
                 _paymentId,
                 payment.repeats,
-                "",
-                true
+                ""
             );
         }
     }
@@ -602,15 +601,28 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint256 _amount,
         uint256 _paymentId,
         uint64 _paymentRepeatNumber,
-        string _reference,
-        bool _skipChecks
+        string _reference
     )
         internal
     {
-        if (!_skipChecks) {
-            require(_getRemainingBudget(_token) >= _amount, ERROR_REMAINING_BUDGET);
-        }
+        require(_getRemainingBudget(_token) >= _amount, ERROR_REMAINING_BUDGET);
+        _unsafeMakePaymentTransaction(_token, _receiver, _amount, _paymentId, _paymentRepeatNumber, _reference);
+    }
 
+    /**
+    * @dev Unsafe version of _makePaymentTransaction that assumes you have already checked the
+    *      remaining budget
+    */
+    function _unsafeMakePaymentTransaction(
+        address _token,
+        address _receiver,
+        uint256 _amount,
+        uint256 _paymentId,
+        uint64 _paymentRepeatNumber,
+        string _reference
+    )
+        internal
+    {
         _recordTransaction(
             false,
             _token,
