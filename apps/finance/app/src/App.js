@@ -49,7 +49,7 @@ class App extends React.Component {
   }
   handleWithdraw = (tokenAddress, recipient, amount, reference) => {
     // Immediate, one-time payment
-    this.props.app.newPaymentTransaction(
+    this.props.app.newImmediatePayment(
       tokenAddress,
       recipient,
       amount,

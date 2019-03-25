@@ -196,7 +196,7 @@ contract('Finance App', accounts => {
 
         await finance.mock_setTimestamp(time)
 
-        await finance.newPaymentTransaction(token2.address, recipient, amount, '')
+        await finance.newImmediatePayment(token2.address, recipient, amount, '')
         assert.equal((await token2.balanceOf(recipient)).valueOf(), amount, 'recipient should have received tokens')
     })
 
@@ -461,7 +461,7 @@ contract('Finance App', accounts => {
         it('can create single payment transaction', async () => {
             const amount = 10
 
-            const receipt = await finance.newPaymentTransaction(token1.address, recipient, amount, 'ref')
+            const receipt = await finance.newImmediatePayment(token1.address, recipient, amount, 'ref')
 
             assert.equal((await token1.balanceOf(recipient)).valueOf(), amount, 'recipient should have received tokens')
 
@@ -480,7 +480,7 @@ contract('Finance App', accounts => {
         it('can decrease budget after spending', async () => {
             const amount = 10
 
-            await finance.newPaymentTransaction(token1.address, recipient, amount, '')
+            await finance.newImmediatePayment(token1.address, recipient, amount, '')
 
             const newBudgetAmount = 5
             await finance.setBudget(token1.address, newBudgetAmount)
@@ -501,7 +501,7 @@ contract('Finance App', accounts => {
             assert.isFalse(hasBudget, 'should not have budget')
 
             // budget was 100
-            await finance.newPaymentTransaction(token2.address, recipient, 190, '')
+            await finance.newImmediatePayment(token2.address, recipient, 190, '')
             assert.equal((await token2.balanceOf(recipient)).valueOf(), 190, 'recipient should have received tokens')
         })
 
@@ -540,7 +540,7 @@ contract('Finance App', accounts => {
         })
 
         it('doesnt record payment for single payment transaction', async () => {
-            const receipt = await finance.newPaymentTransaction(token1.address, recipient, 1, '')
+            const receipt = await finance.newImmediatePayment(token1.address, recipient, 1, '')
             assertEvent(receipt, 'NewPayment', 0)
             await assertRevert(async () => {
                 await finance.getPayment(1)
@@ -550,7 +550,7 @@ contract('Finance App', accounts => {
         context('multitransaction period', async () => {
             beforeEach(async () => {
                 // single payment
-                await finance.newPaymentTransaction(token1.address, recipient, 10, '') // will spend 10
+                await finance.newImmediatePayment(token1.address, recipient, 10, '') // will spend 10
                 // repeats up to 2 times every 1 seconds
                 await finance.newPayment(token2.address, recipient, 5, time + 1, 1, 2, '') // will spend 10
                 await finance.mock_setTimestamp(time + 4)
@@ -608,7 +608,7 @@ contract('Finance App', accounts => {
             it('fails when too many period transitions are needed', async () => {
                 // Normal payments
                 await assertRevert(async () => {
-                    await finance.newPaymentTransaction(token1.address, recipient, 10, '')
+                    await finance.newImmediatePayment(token1.address, recipient, 10, '')
                 })
 
                 // Direct ETH transfers
@@ -619,7 +619,7 @@ contract('Finance App', accounts => {
 
             it('can transition periods externally to remove deadlock for payments', async () => {
                 await finance.tryTransitionAccountingPeriod(maxTransitions)
-                await finance.newPaymentTransaction(token1.address, recipient, 10, '')
+                await finance.newImmediatePayment(token1.address, recipient, 10, '')
 
                 assert.equal((await token1.balanceOf(recipient)).valueOf(), 10, 'recipient should have received tokens')
             })
@@ -655,14 +655,14 @@ contract('Finance App', accounts => {
             const amount = 10
 
             it('can create a single payment', async () => {
-                const receipt = await finance.newPaymentTransaction(token1.address, recipient, amount,'')
+                const receipt = await finance.newImmediatePayment(token1.address, recipient, amount,'')
                 assertEvent(receipt, 'NewTransaction')
                 assertEvent(receipt, 'NewPeriod', 0)
             })
 
             it('fails to create a zero-amount single payment', async () => {
                 await assertRevert(async () => {
-                    await finance.newPaymentTransaction(token1.address, recipient, 0, '')
+                    await finance.newImmediatePayment(token1.address, recipient, 0, '')
                 })
             })
 
@@ -671,7 +671,7 @@ contract('Finance App', accounts => {
                 await finance.setBudget(token1.address, budget)
 
                 return assertRevert(() => {
-                    return finance.newPaymentTransaction(token1.address, recipient, budget + 1, '')
+                    return finance.newImmediatePayment(token1.address, recipient, budget + 1, '')
                 })
             })
 
@@ -680,7 +680,7 @@ contract('Finance App', accounts => {
                 await finance.removeBudget(token1.address) // clear any budget restrictions
 
                 return assertRevert(async () => {
-                    await finance.newPaymentTransaction(token1.address, recipient, vaultBalance + 1, '')
+                    await finance.newImmediatePayment(token1.address, recipient, vaultBalance + 1, '')
                 })
             })
         })
@@ -910,7 +910,7 @@ contract('Finance App', accounts => {
             await nonInit.mock_setTimestamp(time)
 
             return assertRevert(async() => {
-                await nonInit.newPaymentTransaction(token1.address, recipient, amount, 'ref')
+                await nonInit.newImmediatePayment(token1.address, recipient, amount, 'ref')
             })
         })
 
