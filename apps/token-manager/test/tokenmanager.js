@@ -176,6 +176,16 @@ contract('Token Manager', accounts => {
             assert.equal(await token.balanceOf(tokenManager.address), limit + 100000, 'should have more tokens than limit')
         })
 
+        it('can assign unlimited tokens to itself', async () => {
+            // First issue some tokens to the Token Manager
+            await tokenManager.issue(limit + 100000)
+
+            // Then assign these tokens to the Token Manager (should not actually move any tokens)
+            await tokenManager.assign(tokenManager.address, limit + 100000)
+
+            assert.equal(await token.balanceOf(tokenManager.address), limit + 100000, 'should have more tokens than limit')
+        })
+
         it('can assign up to limit', async () => {
             await tokenManager.issue(limit)
             await tokenManager.assign(holder, limit)
@@ -249,6 +259,19 @@ contract('Token Manager', accounts => {
 
             assert.equal(await token.balanceOf(holder), 50, 'holder should have assigned tokens')
             assert.equal(await token.balanceOf(tokenManager.address), 0, 'token manager should have 0 tokens')
+        })
+
+        it('can assign issued tokens to itself', async () => {
+            await tokenManager.issue(50)
+            await tokenManager.assign(tokenManager.address, 50)
+
+            assert.equal(await token.balanceOf(tokenManager.address), 50, 'token manager should not have changed token balance')
+        })
+
+        it('cannot mint tokens to itself', async () => {
+            return assertRevert(async () => {
+              await tokenManager.mint(tokenManager.address, 100)
+            })
         })
 
         it('cannot assign more tokens than owned', async () => {
@@ -412,6 +435,12 @@ contract('Token Manager', accounts => {
                 assert.equal(await token.balanceOf(holder), 5, 'should have kept vested tokens')
                 assert.equal(await token.balanceOf(holder2), 5, 'should have kept vested tokens')
                 assert.equal(await token.balanceOf(tokenManager.address), totalTokens - 10, 'should have received unvested')
+            })
+
+            it('cannot assign a vesting to itself', async () => {
+                return assertRevert(async () => {
+                  await tokenManager.assignVested(tokenManager.address, 5, startDate, cliffDate, vestingDate, revokable)
+                })
             })
 
             it('cannot revoke non-revokable vestings', async () => {
