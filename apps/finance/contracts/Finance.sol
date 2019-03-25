@@ -43,12 +43,12 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_NEW_PAYMENT_AMOUNT_ZERO = "FINANCE_NEW_PAYMENT_AMOUNT_ZERO";
     string private constant ERROR_RECOVER_AMOUNT_ZERO = "FINANCE_RECOVER_AMOUNT_ZERO";
     string private constant ERROR_DEPOSIT_AMOUNT_ZERO = "FINANCE_DEPOSIT_AMOUNT_ZERO";
+    string private constant ERROR_ETH_VALUE_MISMATCH = "ERROR_ETH_VALUE_MISMATCH";
     string private constant ERROR_BUDGET = "FINANCE_BUDGET";
     string private constant ERROR_EXECUTE_PAYMENT_TIME = "FINANCE_EXECUTE_PAYMENT_TIME";
     string private constant ERROR_RECEIVER_EXECUTE_PAYMENT_TIME = "FINANCE_RCVR_EXEC_PAYMENT_TIME";
     string private constant ERROR_PAYMENT_RECEIVER = "FINANCE_PAYMENT_RECEIVER";
     string private constant ERROR_TOKEN_TRANSFER_FROM_REVERTED = "FINANCE_TKN_TRANSFER_FROM_REVERT";
-    string private constant ERROR_VALUE_MISMATCH = "FINANCE_VALUE_MISMATCH";
     string private constant ERROR_TOKEN_APPROVE_FAILED = "FINANCE_TKN_APPROVE_FAILED";
     string private constant ERROR_RECURRING_PAYMENT_INACTIVE = "FINANCE_RECURRING_PAYMENT_INACTIVE";
     string private constant ERROR_REMAINING_BUDGET = "FINANCE_REMAINING_BUDGET";
@@ -194,6 +194,11 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
     function deposit(address _token, uint256 _amount, string _reference) external payable isInitialized transitionsPeriod {
         require(_amount > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
+        if (_token == ETH) {
+            // Ensure that the ETH sent with the transaction equals the amount in the deposit
+            require(msg.value == _amount, ERROR_ETH_VALUE_MISMATCH);
+        }
+
         _deposit(
             _token,
             _amount,
@@ -544,27 +549,22 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _reference
         );
 
-        // If it is an external deposit, check that the assets are actually transferred
-        // External deposit will be false when the assets were already in the Finance app
-        // and just need to be transferred to the vault
-        if (_isExternalDeposit) {
-            if (_token == ETH) {
-                // Ensure that the ETH sent with the transaction equals the amount in the deposit
-                require(msg.value == _amount, ERROR_VALUE_MISMATCH);
-            } else {
-                // Get the tokens to Finance
+        if (_token == ETH) {
+            vault.deposit.value(_amount)(ETH, _amount);
+        } else {
+            // First, transfer the tokens to Finance if necessary
+            // External deposit will be false when the assets were already in the Finance app
+            // and just need to be transferred to the Vault
+            if (_isExternalDeposit) {
+                // This assumes the sender has approved the tokens for Finance
                 require(
                     ERC20(_token).safeTransferFrom(msg.sender, address(this), _amount),
                     ERROR_TOKEN_TRANSFER_FROM_REVERTED
                 );
             }
-        }
-
-        if (_token == ETH) {
-            vault.deposit.value(_amount)(ETH, _amount);
-        } else {
+            // Approve the tokens for the Vault (it does the actual transferring)
             require(ERC20(_token).safeApprove(vault, _amount), ERROR_TOKEN_APPROVE_FAILED);
-            // finally we can deposit them
+            // Finally, initiate the deposit
             vault.deposit(_token, _amount);
         }
     }
