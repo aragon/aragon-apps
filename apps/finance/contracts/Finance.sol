@@ -150,8 +150,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-     * @dev Sends ETH to Vault. Sends all the available balance.
      * @notice Deposit ETH to the Vault, to avoid locking them in this Finance app forever
+     * @dev Sends ETH to Vault. Sends all the available balance.
      */
     function () external payable isInitialized transitionsPeriod {
         require(msg.value > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
@@ -191,8 +191,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @dev Deposit for approved ERC20 tokens or ETH
     * @notice Deposit `@tokenAmount(_token, _amount)`
+    * @dev Deposit for approved ERC20 tokens or ETH
     * @param _token Address of deposited token
     * @param _amount Amount of tokens sent
     * @param _reference Reason for payment
@@ -214,8 +214,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver``_maxRepeats > 0 ? ', executing ' + _maxRepeats + ' times at intervals of ' + @transformTime(_interval) : ''`, for '`_reference`'
-    * @dev See `newPaymentTransaction()` for limitations on how the interval auth parameter can be used
+    * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver` for `_reference`, executing `_maxRepeats` times at intervals of `@transformTime(_interval)`
+    * @dev See `newImmediatePayment()` for limitations on how the interval auth parameter can be used
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment
     * @param _amount Tokens that are paid every time the payment is due
@@ -344,8 +344,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @dev Executes any payment (requires role)
     * @notice Execute pending payment #`_paymentId`
+    * @dev Executes any payment (requires role)
     * @param _paymentId Identifier for payment
     */
     function executePayment(uint256 _paymentId)
@@ -365,8 +365,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @dev Always allow receiver of a payment to trigger execution
     * @notice Execute pending payment #`_paymentId`
+    * @dev Always allow receiver of a payment to trigger execution
+    *      Initialization check is implicitly provided by `recurringPaymentExists()` as new
+    *      recurring payments can only be created via `newPayment(),` which requires initialization
     * @param _paymentId Identifier for payment
     */
     function receiverExecutePayment(uint256 _paymentId) external isInitialized recurringPaymentExists(_paymentId) transitionsPeriod {
@@ -401,10 +403,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
+     * @notice Send tokens held in this contract to the Vault
      * @dev Allows making a simple payment from this contract to the Vault, to avoid locked tokens.
      *      This contract should never receive tokens with a simple transfer call, but in case it
      *      happens, this function allows for their recovery.
-     * @notice Send tokens held in this contract to the Vault
      * @param _token Token whose balance is going to be transferred.
      */
     function recoverToVault(address _token) external isInitialized transitionsPeriod {
@@ -421,10 +423,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
+    * @notice Transition accounting period if needed
     * @dev Transitions accounting periods if needed. For preventing OOG attacks, a maxTransitions
     *      param is provided. If more than the specified number of periods need to be transitioned,
     *      it will return false.
-    * @notice Transition accounting period if needed
     * @param _maxTransitions Maximum periods that can be transitioned
     * @return success Boolean indicating whether the accounting period is the correct one (if false,
     *                 maxTransitions was surpased and another call is needed)
