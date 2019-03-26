@@ -53,7 +53,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_PAYMENT_RECEIVER = "FINANCE_PAYMENT_RECEIVER";
     string private constant ERROR_TOKEN_TRANSFER_FROM_REVERTED = "FINANCE_TKN_TRANSFER_FROM_REVERT";
     string private constant ERROR_TOKEN_APPROVE_FAILED = "FINANCE_TKN_APPROVE_FAILED";
-    string private constant ERROR_RECURRING_PAYMENT_INACTIVE = "FINANCE_RECURRING_PAYMENT_INACTIVE";
+    string private constant ERROR_PAYMENT_INACTIVE = "FINANCE_PAYMENT_INACTIVE";
     string private constant ERROR_REMAINING_BUDGET = "FINANCE_REMAINING_BUDGET";
 
     // Order optimized for storage
@@ -594,7 +594,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     function _executePayment(uint256 _paymentId) internal returns (uint256) {
         RecurringPayment storage payment = recurringPayments[_paymentId];
-        require(!payment.inactive, ERROR_RECURRING_PAYMENT_INACTIVE);
+        require(!payment.inactive, ERROR_PAYMENT_INACTIVE);
 
         uint64 paid = 0;
         while (_nextPaymentTime(_paymentId) <= getTimestamp64() && paid < MAX_RECURRING_PAYMENTS_PER_TX) {
