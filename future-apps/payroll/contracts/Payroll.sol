@@ -19,9 +19,9 @@ import "@aragon/apps-finance/contracts/Finance.sol";
  * @title Payroll in multiple currencies
  */
 contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
-    using SafeMath for uint256;
-    using SafeMath64 for uint64;
     using SafeMath8 for uint8;
+    using SafeMath64 for uint64;
+    using SafeMath for uint256;
 
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
     bytes32 constant public TERMINATE_EMPLOYEE_ROLE = keccak256("TERMINATE_EMPLOYEE_ROLE");
@@ -32,9 +32,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
 
     uint128 internal constant ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
+    uint256 internal constant MAX_ALLOWED_TOKENS = 20; // for loop in `payday()` uses ~260k gas per available token
     uint256 internal constant MAX_UINT256 = uint256(-1);
     uint64 internal constant MAX_UINT64 = uint64(-1);
-    uint8 internal constant MAX_ALLOWED_TOKENS = 20; // for loop in `payday()` uses ~260k gas per available token
 
     string private constant ERROR_NON_ACTIVE_EMPLOYEE = "PAYROLL_NON_ACTIVE_EMPLOYEE";
     string private constant ERROR_EMPLOYEE_DOES_NOT_MATCH = "PAYROLL_EMPLOYEE_DOES_NOT_MATCH";
@@ -56,7 +56,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
-        mapping(address => uint8) allocation;
+        mapping(address => uint256) allocation;
         uint256 denominationTokenSalary; // per second in denomination Token
         uint256 accruedValue;
         uint64 lastPayroll;
@@ -306,7 +306,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _tokens Array with the tokens to receive, they must belong to allowed tokens for employee
      * @param _distribution Array (correlated to tokens) with the proportions (integers summing to 100)
      */
-    function determineAllocation(address[] _tokens, uint8[] _distribution) external employeeMatches {
+    function determineAllocation(address[] _tokens, uint256[] _distribution) external employeeMatches {
         // Check arrays match
         require(_tokens.length == _distribution.length, ERROR_TOKEN_ALLOCATION_MISMATCH);
 
@@ -314,13 +314,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
 
         // Delete previous allocation
-        for (uint32 j = 0; j < allowedTokensArray.length; j++) {
+        for (uint256 j = 0; j < allowedTokensArray.length; j++) {
             delete employee.allocation[allowedTokensArray[j]];
         }
 
         // Check distribution sums to 100
-        uint8 sum = 0;
-        for (uint32 i = 0; i < _distribution.length; i++) {
+        uint256 sum = 0;
+        for (uint256 i = 0; i < _distribution.length; i++) {
             // Check token is allowed
             require(allowedTokens[_tokens[i]], ERROR_NO_ALLOWED_TOKEN);
             // Set distribution
@@ -473,7 +473,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _token Payment token
      * @return Employee's payment allocation for token
      */
-    function getAllocation(uint256 _employeeId, address _token) public view returns (uint8 allocation) {
+    function getAllocation(uint256 _employeeId, address _token) public view returns (uint256 allocation) {
         return employees[_employeeId].allocation[_token];
     }
 

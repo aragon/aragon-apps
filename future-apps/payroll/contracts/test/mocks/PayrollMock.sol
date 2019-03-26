@@ -32,7 +32,7 @@ contract PayrollMock is Payroll {
     function mockAddTimestamp(uint64 i) public { _mockTime += i; require(_mockTime >= i); }
     function getTimestampPublic() public view returns (uint64) { return _mockTime; }
     function getMaxAccruedValue() public view returns (uint256) { return MAX_UINT256; }
-    function getMaxAllowedTokens() public view returns (uint8) { return MAX_ALLOWED_TOKENS; }
+    function getMaxAllowedTokens() public view returns (uint256) { return MAX_ALLOWED_TOKENS; }
     function getAllowedTokensArrayLength() public view returns (uint256) { return allowedTokensArray.length; }
     function getTimestamp64() internal view returns (uint64) { return _mockTime; }
 }
