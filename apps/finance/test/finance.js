@@ -73,6 +73,8 @@ contract('Finance App', accounts => {
     })
 
     const root = accounts[0]
+    const recipient = accounts[1]
+
     const n = '0x00'
     const START_TIME = 1
     const PERIOD_DURATION = 60 * 60 * 24 // One day in seconds
@@ -129,11 +131,11 @@ contract('Finance App', accounts => {
         await financeApp.mock_setTimestamp(START_TIME)
         await financeApp.mock_setMaxPeriodTransitions(MAX_UINT64)
 
-        await acl.createPermission(ANY_ENTITY, financeApp.address, CREATE_PAYMENTS_ROLE, root, { from: root })
-        await acl.createPermission(ANY_ENTITY, financeApp.address, CHANGE_PERIOD_ROLE, root, { from: root })
-        await acl.createPermission(ANY_ENTITY, financeApp.address, CHANGE_BUDGETS_ROLE, root, { from: root })
-        await acl.createPermission(ANY_ENTITY, financeApp.address, EXECUTE_PAYMENTS_ROLE, root, { from: root })
-        await acl.createPermission(ANY_ENTITY, financeApp.address, MANAGE_PAYMENTS_ROLE, root, { from: root })
+        await acl.createPermission(root, financeApp.address, CREATE_PAYMENTS_ROLE, root, { from: root })
+        await acl.createPermission(root, financeApp.address, CHANGE_PERIOD_ROLE, root, { from: root })
+        await acl.createPermission(root, financeApp.address, CHANGE_BUDGETS_ROLE, root, { from: root })
+        await acl.createPermission(root, financeApp.address, EXECUTE_PAYMENTS_ROLE, root, { from: root })
+        await acl.createPermission(root, financeApp.address, MANAGE_PAYMENTS_ROLE, root, { from: root })
 
         const recoveryVault = await setupRecoveryVault(dao)
 
@@ -217,7 +219,6 @@ contract('Finance App', accounts => {
     })
 
     it('before setting budget allows unlimited spending', async () => {
-        const recipient = accounts[1]
         const time = 22
         const amount = 190
 
@@ -422,7 +423,6 @@ contract('Finance App', accounts => {
     })
 
     context('setting budget', () => {
-        const recipient = accounts[1]
         const time = START_TIME + 21
 
         beforeEach(async () => {
@@ -813,10 +813,7 @@ contract('Finance App', accounts => {
                 })
 
                 it('fails to execute a scheduled payment before next available time', async () => {
-                    await assertRevert(
-                        finance.executePayment(paymentId, { from: recipient }),
-                        errors.FINANCE_EXECUTE_PAYMENT_TIME
-                    )
+                    await assertRevert(finance.executePayment(paymentId), errors.FINANCE_EXECUTE_PAYMENT_TIME)
                 })
 
                 it('fails to execute a scheduled payment by receiver before next available time', async () => {
@@ -826,7 +823,7 @@ contract('Finance App', accounts => {
                     )
                 })
 
-                it('fails to execute a recurring payment without enough funds', async () => {
+                it('fails to execute a scheduled payment without enough funds', async () => {
                     const vaultBalance = await vault.balance(token1.address)
                     await finance.removeBudget(token1.address) // clear any budget restrictions
 
@@ -836,7 +833,7 @@ contract('Finance App', accounts => {
                     await assertRevert(finance.executePayment(newScheduledPaymentId), errors.FINANCE_EXECUTE_PAYMENT_NUM)
                 })
 
-                it('fails to execute a recurring payment by receiver without enough funds', async () => {
+                it('fails to execute a scheduled payment by receiver without enough funds', async () => {
                     const vaultBalance = await vault.balance(token1.address)
                     await finance.removeBudget(token1.address) // clear any budget restrictions
 
@@ -853,17 +850,14 @@ contract('Finance App', accounts => {
                     await finance.setPaymentStatus(paymentId, false)
                     await finance.mock_setTimestamp(time + 1)
 
-                    await assertRevert(
-                        finance.executePayment(paymentId, { from: recipient }),
-                        errors.FINANCE_PAYMENT_INACTIVE
-                    )
+                    await assertRevert(finance.executePayment(paymentId), errors.FINANCE_PAYMENT_INACTIVE)
                 })
 
                 it('succeeds payment after setting payment status to active', async () => {
                     await finance.setPaymentStatus(paymentId, true)
                     await finance.mock_setTimestamp(time + 1)
 
-                    await finance.executePayment(paymentId, { from: recipient })
+                    await finance.executePayment(paymentId)
                 })
             })
 
@@ -927,7 +921,6 @@ contract('Finance App', accounts => {
         })
 
         it('fails to create new scheduled payment', async() => {
-            const recipient = accounts[1]
             const amount = 1
             const time = 22
             await nonInit.mock_setTimestamp(time)
@@ -939,7 +932,6 @@ contract('Finance App', accounts => {
         })
 
         it('fails to create new single payment transaction', async() => {
-            const recipient = accounts[1]
             const amount = 1
             const time = 22
             await nonInit.mock_setTimestamp(time)
