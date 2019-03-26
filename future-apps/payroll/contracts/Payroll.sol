@@ -33,7 +33,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     uint128 internal constant ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
     uint64 internal constant MAX_UINT64 = uint64(-1);
-    uint8 internal constant MAX_ALLOWED_TOKENS = 25; // for loop in `payday()` uses ~220k gas per available token
+    uint8 internal constant MAX_ALLOWED_TOKENS = 20; // for loop in `payday()` uses ~260k gas per available token
     uint256 internal constant MAX_ACCRUED_VALUE = 2**128;
 
     string private constant ERROR_NON_ACTIVE_EMPLOYEE = "PAYROLL_NON_ACTIVE_EMPLOYEE";

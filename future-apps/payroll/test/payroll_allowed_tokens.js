@@ -1,7 +1,6 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 
 const getContract = name => artifacts.require(name)
-const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 contract('Payroll, allowed tokens,', function(accounts) {
   const [owner, employee] = accounts
@@ -74,15 +73,13 @@ contract('Payroll, allowed tokens,', function(accounts) {
 
     const startDate = parseInt(await payroll.getTimestampPublic.call(), 10) - 2628005 // now minus 1/12 year
     // add employee
-    const receipt = await payroll.addEmployee(employee, SALARY, "Kakaroto", 'Saiyajin', startDate)
+    await payroll.addEmployee(employee, SALARY, "Kakaroto", 'Saiyajin', startDate)
   })
 
   it('fails adding one more token', async () => {
     const erc20Token = await deployErc20TokenAndDeposit(owner, finance, vault, 'Extra token', ERC20_TOKEN_DECIMALS)
 
-    return assertRevert(async () => {
-      await payroll.addAllowedToken(erc20Token.address)
-    })
+    return assertRevert(() => payroll.addAllowedToken(erc20Token.address))
   })
 
   it('tests payday and ensures that it does not run out of gas', async () => {
