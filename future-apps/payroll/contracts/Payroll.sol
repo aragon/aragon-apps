@@ -1,11 +1,11 @@
 pragma solidity 0.4.24;
 
+
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/EtherTokenConstant.sol";
 import "@aragon/os/contracts/common/IsContract.sol";
-// import "@aragon/os/contracts/common/IForwarder.sol";
+import "@aragon/os/contracts/common/IForwarder.sol";
 
-import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/lib/math/SafeMath8.sol";
@@ -18,7 +18,7 @@ import "@aragon/apps-finance/contracts/Finance.sol";
 /**
  * @title Payroll in multiple currencies
  */
-contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder { // makes coverage crash (removes pure and interface doesnt match)
+contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeMath8 for uint8;
@@ -369,6 +369,12 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         emit ChangeAddressByEmployee(employeeId, oldAddress, _newAddress);
     }
 
+    function isForwarder() external pure returns (bool) {
+        return true;
+    }
+
+    // Getter fns
+
     /**
      * @dev Return all information for employee by their address
      * @param _accountAddress Employee's address to receive payments
@@ -459,14 +465,12 @@ contract Payroll is EtherTokenConstant, IsContract, AragonApp { //, IForwarder {
         runScript(_evmScript, input, blacklist);
     }
 
-    function isForwarder() public pure returns (bool) {
-        return true;
-    }
-
     function canForward(address _sender, bytes) public view returns (bool) {
         // Check employee exists (and matches)
         return (employees[employeeIds[_sender]].accountAddress == _sender);
     }
+
+    // Internal fns
 
     function _addEmployee(
         address _accountAddress,
