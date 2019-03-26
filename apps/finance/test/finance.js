@@ -1,6 +1,7 @@
 const assertEvent = require('@aragon/test-helpers/assertEvent')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
+const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 
 const Finance = artifacts.require('FinanceMock')
 const Vault = artifacts.require('Vault')
@@ -38,6 +39,38 @@ contract('Finance App', accounts => {
     let ETH, MAX_UINT64, ANY_ENTITY, APP_MANAGER_ROLE
     let CREATE_PAYMENTS_ROLE, CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, MANAGE_PAYMENTS_ROLE
     let TRANSFER_ROLE
+
+    // Error strings
+    const errors = makeErrorMappingProxy({
+      // aragonOS errors
+      APP_AUTH_FAILED: 'APP_AUTH_FAILED',
+      INIT_ALREADY_INITIALIZED: 'INIT_ALREADY_INITIALIZED',
+      INIT_NOT_INITIALIZED: 'INIT_NOT_INITIALIZED',
+      RECOVER_DISALLOWED: 'RECOVER_DISALLOWED',
+
+      // Vault errors
+      VAULT_TOKEN_TRANSFER_REVERTED: 'VAULT_TOKEN_TRANSFER_REVERTED',
+
+      // Finance errors
+      FINANCE_BUDGET: 'FINANCE_BUDGET',
+      FINANCE_COMPLETE_TRANSITION: 'FINANCE_COMPLETE_TRANSITION',
+      FINANCE_DEPOSIT_AMOUNT_ZERO: 'FINANCE_DEPOSIT_AMOUNT_ZERO',
+      FINANCE_EXECUTE_PAYMENT_NUM: 'FINANCE_EXECUTE_PAYMENT_NUM',
+      FINANCE_EXECUTE_PAYMENT_TIME: 'FINANCE_EXECUTE_PAYMENT_TIME',
+      FINANCE_INIT_PERIOD_TOO_SHORT: 'FINANCE_INIT_PERIOD_TOO_SHORT',
+      FINANCE_NEW_PAYMENT_AMOUNT_ZERO: 'FINANCE_NEW_PAYMENT_AMOUNT_ZERO',
+      FINANCE_NEW_PAYMENT_EXECS_ZERO: 'FINANCE_NEW_PAYMENT_EXECS_ZERO',
+      FINANCE_NEW_PAYMENT_IMMEDIATE: 'FINANCE_NEW_PAYMENT_IMMEDIATE',
+      FINANCE_NEW_PAYMENT_INTRVL_ZERO: 'FINANCE_NEW_PAYMENT_INTRVL_ZERO',
+      FINANCE_NO_SCHEDULED_PAYMENT: 'FINANCE_NO_SCHEDULED_PAYMENT',
+      FINANCE_NO_PERIOD: 'FINANCE_NO_PERIOD',
+      FINANCE_NO_TRANSACTION: 'FINANCE_NO_TRANSACTION',
+      FINANCE_PAYMENT_INACTIVE: 'FINANCE_PAYMENT_INACTIVE',
+      FINANCE_PAYMENT_RECEIVER: 'FINANCE_PAYMENT_RECEIVER',
+      FINANCE_RECOVER_AMOUNT_ZERO: 'FINANCE_RECOVER_AMOUNT_ZERO',
+      FINANCE_REMAINING_BUDGET: 'FINANCE_REMAINING_BUDGET',
+      FINANCE_VAULT_NOT_CONTRACT: 'FINANCE_VAULT_NOT_CONTRACT',
+    })
 
     const root = accounts[0]
     const n = '0x00'
@@ -150,31 +183,31 @@ contract('Finance App', accounts => {
     })
 
     it('fails on reinitialization', async () => {
-        return assertRevert(async () => {
+        await assertRevert(async () => {
             await finance.initialize(vault.address, PERIOD_DURATION)
-        })
+        }, errors.INIT_ALREADY_INITIALIZED)
     })
 
     it('cannot initialize base app', async () => {
         const newFinance = await Finance.new()
         assert.isTrue(await newFinance.isPetrified())
-        return assertRevert(async () => {
+        await assertRevert(async () => {
             await newFinance.initialize(vault.address, PERIOD_DURATION)
-        })
+        }, errors.INIT_ALREADY_INITIALIZED)
     })
 
     it('fails on initializing with no vault', async () => {
         const { financeApp } = await newProxyFinance()
 
-        await assertRevert(() => financeApp.initialize(0, PERIOD_DURATION))
-        await assertRevert(() => financeApp.initialize(withdrawAddr, PERIOD_DURATION))
+        await assertRevert(() => financeApp.initialize(0, PERIOD_DURATION), errors.FINANCE_VAULT_NOT_CONTRACT)
+        await assertRevert(() => financeApp.initialize(withdrawAddr, PERIOD_DURATION), errors.FINANCE_VAULT_NOT_CONTRACT)
     })
 
     it('fails on initializing with less than one day period', async () => {
         const badPeriod = 60 * 60 * 24 - 1
         const { financeApp } = await newProxyFinance()
 
-        return assertRevert(() => financeApp.initialize(vault.address, badPeriod))
+        await assertRevert(() => financeApp.initialize(vault.address, badPeriod), errors.FINANCE_INIT_PERIOD_TOO_SHORT)
     })
 
     it('adds new token to budget', async () => {
@@ -258,7 +291,7 @@ contract('Finance App', accounts => {
             it('fails on no value deposits', async () => {
                 await assertRevert(() => {
                   return finance.deposit(tokenInstance.address, 0, 'ref')
-                })
+                }, errors.FINANCE_DEPOSIT_AMOUNT_ZERO)
             })
         })
     }
@@ -342,16 +375,16 @@ contract('Finance App', accounts => {
             })
 
             it('fail to be recovered using AragonApp#transferToVault', async () => {
-                return assertRevert(() => (
+                await assertRevert(() => (
                     finance.transferToVault(tokenInstance.address)
-                ))
+                ), errors.RECOVER_DISALLOWED)
             })
 
             it('fail to be recovered if token balance is 0', async () => {
                 // if current balance is zero, it reverts
-                return assertRevert(async () => (
+                await assertRevert(async () => (
                     finance.recoverToVault(token2.address)
-                ))
+                ), errors.FINANCE_RECOVER_AMOUNT_ZERO)
             })
         })
     }
@@ -387,18 +420,18 @@ contract('Finance App', accounts => {
         })
 
         it('fails to be recovered using AragonApp#transferToVault', async () => {
-            return assertRevert(() => (
+            await assertRevert(() => (
                 finance.transferToVault(ETH)
-            ))
+            ), errors.RECOVER_DISALLOWED)
         })
 
         it('fails to be recovered if ETH balance is 0', async () => {
             await finance.recoverToVault(ETH)
 
             // if current balance is zero, it reverts
-            return assertRevert(async () => (
+            await assertRevert(async () => (
                 finance.recoverToVault(ETH)
-            ))
+            ), errors.FINANCE_RECOVER_AMOUNT_ZERO)
         })
     })
 
@@ -440,10 +473,10 @@ contract('Finance App', accounts => {
 
             await assertRevert(async () => {
                 await finance.getPayment(0)
-            })
+            }, errors.FINANCE_NO_SCHEDULED_PAYMENT)
             await assertRevert(async () => {
                 await finance.getPayment(2)
-            })
+            }, errors.FINANCE_NO_SCHEDULED_PAYMENT)
         })
 
         it('fails trying to get transaction out of bounds', async () => {
@@ -453,7 +486,7 @@ contract('Finance App', accounts => {
 
             await assertRevert(async () => {
                 await finance.getTransaction(2)
-            })
+            }, errors.FINANCE_NO_TRANSACTION)
         })
 
         it('can create single payment transaction', async () => {
@@ -542,7 +575,7 @@ contract('Finance App', accounts => {
             assertEvent(receipt, 'NewPayment', 0)
             await assertRevert(async () => {
                 await finance.getPayment(1)
-            })
+            }, errors.FINANCE_NO_SCHEDULED_PAYMENT)
         })
 
         context('multitransaction period', async () => {
@@ -588,9 +621,9 @@ contract('Finance App', accounts => {
                 await finance.tryTransitionAccountingPeriod(1)
 
                 const currentPeriodId = await finance.currentPeriodId()
-                return assertRevert(async () => {
+                await assertRevert(async () => {
                     await finance.getPeriod(currentPeriodId + 1)
-                })
+                }, errors.FINANCE_NO_PERIOD)
             })
         })
 
@@ -607,12 +640,12 @@ contract('Finance App', accounts => {
                 // Normal payments
                 await assertRevert(async () => {
                     await finance.newImmediatePayment(token1.address, recipient, 10, '')
-                })
+                }, errors.FINANCE_COMPLETE_TRANSITION)
 
                 // Direct ETH transfers
                 await assertRevert(async () => {
                     await finance.send(10, { gas: 3e5 })
-                })
+                }, errors.FINANCE_COMPLETE_TRANSITION)
             })
 
             it('can transition periods externally to remove deadlock for payments', async () => {
@@ -661,25 +694,25 @@ contract('Finance App', accounts => {
             it('fails to create a zero-amount single payment', async () => {
                 await assertRevert(async () => {
                     await finance.newImmediatePayment(token1.address, recipient, 0, '')
-                })
+                }, errors.FINANCE_NEW_PAYMENT_AMOUNT_ZERO)
             })
 
             it('fails to create a single payment too high for the current budget', async () => {
                 const budget = 10
                 await finance.setBudget(token1.address, budget)
 
-                return assertRevert(() => {
+                await assertRevert(() => {
                     return finance.newImmediatePayment(token1.address, recipient, budget + 1, '')
-                })
+                }, errors.FINANCE_REMAINING_BUDGET)
             })
 
             it('fails to execute a single payment without enough funds', async () => {
                 const vaultBalance = await vault.balance(token1.address)
                 await finance.removeBudget(token1.address) // clear any budget restrictions
 
-                return assertRevert(async () => {
+                await assertRevert(async () => {
                     await finance.newImmediatePayment(token1.address, recipient, vaultBalance + 1, '')
-                })
+                }, errors.VAULT_TOKEN_TRANSFER_REVERTED)
             })
         })
 
@@ -715,29 +748,36 @@ contract('Finance App', accounts => {
             it('fails to create a zero-amount payment', async () => {
                 await assertRevert(async () => {
                     await finance.newScheduledPayment(token1.address, recipient, 0, time + 1, 1, 2, '')
-                })
+                }, errors.FINANCE_NEW_PAYMENT_AMOUNT_ZERO)
             })
 
             it('fails to create a no-interval payment', async () => {
                 await assertRevert(async () => {
                     await finance.newScheduledPayment(token1.address, recipient, 1, time + 1, 0, 2, '')
-                })
+                }, errors.FINANCE_NEW_PAYMENT_INTRVL_ZERO)
+            })
+
+            it('fails to create a no-executions payment', async () => {
+                await assertRevert(async () => {
+                    await finance.newScheduledPayment(token1.address, recipient, 1, time + 1, 1, 0, '')
+                }, errors.FINANCE_NEW_PAYMENT_EXECS_ZERO)
             })
 
             it('fails to create a new one-time payment without enough budget', async () => {
                 const budget = 10
                 await finance.setBudget(token1.address, budget)
 
-                return assertRevert(async () => {
+                await assertRevert(async () => {
                     await finance.newScheduledPayment(token1.address, recipient, budget + 1, time, 1, 1, '')
-                })
+                }, errors.FINANCE_BUDGET)
             })
 
             it('fails to create a new one-time payment without enough funds', async () => {
                 const vaultBalance = await vault.balance(token1.address)
                 await finance.removeBudget(token1.address) // clear any budget restrictions
 
-                return assertRevert(async () => {
+                // TODO
+                await assertRevert(async () => {
                     await finance.newScheduledPayment(token1.address, recipient, vaultBalance + 1, time, 1, 1, '')
                 })
             })
@@ -745,7 +785,7 @@ contract('Finance App', accounts => {
             it('fails to create an immediate single payment', async () => {
                 await assertRevert(async () => {
                     await finance.newScheduledPayment(token1.address, recipient, 1, time - 1, 1, 1, '')
-                })
+                }, errors.FINANCE_NEW_PAYMENT_IMMEDIATE)
             })
 
             it('fails to create a scheduled payment too high for the current budget', async () => {
@@ -754,7 +794,7 @@ contract('Finance App', accounts => {
 
                 return assertRevert(() => {
                     return finance.newScheduledPayment(token1.address, recipient, budget + 1, time, 1, 2, '')
-                })
+                }, errors.FINANCE_BUDGET)
             })
 
             it('fails to execute a scheduled payment without enough funds', async () => {
@@ -766,10 +806,10 @@ contract('Finance App', accounts => {
 
                 return assertRevert(async () => {
                     await finance.executePayment(newScheduledPaymentId, { from: recipient })
-                })
+                }, errors.FINANCE_EXECUTE_PAYMENT_NUM)
             })
 
-            context('created scheduled payment', async () => {
+            context('executing scheduled payment', async () => {
                 let paymentId
 
                 beforeEach(async () => {
@@ -796,30 +836,30 @@ contract('Finance App', accounts => {
                 it('fails when non-receiver attempts to execute a payment', async () => {
                     await finance.mock_setTimestamp(time + 1)
 
-                    return assertRevert(async () => {
+                    await assertRevert(async () => {
                         await finance.receiverExecutePayment(paymentId)
-                    })
+                    }, errors.FINANCE_PAYMENT_RECEIVER)
                 })
 
                 it('fails to execute a scheduled payment before next available time', async () => {
-                    return assertRevert(async () => {
+                    await assertRevert(async () => {
                         await finance.executePayment(paymentId, { from: recipient })
-                    })
+                    }, errors.FINANCE_EXECUTE_PAYMENT_TIME)
                 })
 
                 it('fails to execute a scheduled payment by receiver before next available time', async () => {
-                    return assertRevert(async () => {
+                    await assertRevert(async () => {
                         await finance.receiverExecutePayment(paymentId, { from: recipient })
-                    })
+                    }, errors.FINANCE_EXECUTE_PAYMENT_TIME)
                 })
 
                 it('fails to execute inactive scheduled payment', async () => {
                     await finance.setPaymentStatus(paymentId, false)
                     await finance.mock_setTimestamp(time + 1)
 
-                    return assertRevert(async () => {
+                    await assertRevert(async () => {
                         await finance.executePayment(paymentId, { from: recipient })
-                    })
+                    }, errors.FINANCE_PAYMENT_INACTIVE)
                 })
 
                 it('succeeds payment after setting payment status to active', async () => {
@@ -895,9 +935,9 @@ contract('Finance App', accounts => {
             const time = 22
             await nonInit.mock_setTimestamp(time)
 
-            return assertRevert(async() => {
+            await assertRevert(async() => {
                 await nonInit.newScheduledPayment(token1.address, recipient, amount, time, 1, 2, 'ref')
-            })
+            }, errors.APP_AUTH_FAILED)
         })
 
         it('fails to create new single payment transaction', async() => {
@@ -906,30 +946,22 @@ contract('Finance App', accounts => {
             const time = 22
             await nonInit.mock_setTimestamp(time)
 
-            return assertRevert(async() => {
+            await assertRevert(async() => {
                 await nonInit.newImmediatePayment(token1.address, recipient, amount, 'ref')
-            })
+            }, errors.APP_AUTH_FAILED)
         })
 
         it('fails to deposit ERC20 tokens', async() => {
             await token1.approve(nonInit.address, 5)
-            return assertRevert(async() => {
+            await assertRevert(async() => {
                 await nonInit.deposit(token1.address, 5, 'ref')
-            })
-        })
-
-        it('fails to send tokens to Vault', async() => {
-            // 'lock' tokens
-            await token1.transfer(nonInit.address, 5)
-            return assertRevert(async() => {
-                await nonInit.recoverToVault(token1.address)
-            })
+            }, errors.INIT_NOT_INITIALIZED)
         })
 
         it('fails to deposit ETH', async() => {
-            return assertRevert(async() => {
+            await assertRevert(async() => {
                 await nonInit.send(10, { gas: 3e5 })
-            })
+            }, errors.INIT_NOT_INITIALIZED)
         })
 
         context('locked ERC20', () => {
@@ -950,10 +982,10 @@ contract('Finance App', accounts => {
                 assert.equal(await recVault.balance(token1.address), lockedTokenAmount)
             })
 
-            it('fail to be recovered using Finance#recoverToVault', async () => {
-                return assertRevert(async () => (
+            it('fails to be recovered using Finance#recoverToVault', async () => {
+                await assertRevert(async () => (
                     finance.recoverToVault(token1.address)
-                ))
+                ), errors.INIT_NOT_INITIALIZED)
             })
         })
 
@@ -969,16 +1001,16 @@ contract('Finance App', accounts => {
                 assert.isTrue(await nonInit.allowRecoverability(ETH))
             })
 
-            it('fails to be recovered using Finance#recoverToVault', async () => {
-                return assertRevert(async () => (
-                    await nonInit.recoverToVault(ETH)
-                ))
-            })
-
             it('can recover ETH using AragonApp#transferToVault', async () => {
                 await nonInit.transferToVault(ETH)
 
                 assert.equal(await recVault.balance(ETH), lockedETH)
+            })
+
+            it('fails to be recovered using Finance#recoverToVault', async () => {
+                await assertRevert(async () => (
+                    await nonInit.recoverToVault(ETH)
+                ), errors.INIT_NOT_INITIALIZED)
             })
         })
     })
