@@ -11,7 +11,6 @@ import NewVotePanelContent from './components/NewVotePanelContent'
 import AutoLink from './components/AutoLink'
 import AppLayout from './components/AppLayout'
 import NewVoteIcon from './components/NewVoteIcon'
-import { LocalIdentityModalProvider } from './components/LocalIdentityModal/LocalIdentityModalManager'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
@@ -224,66 +223,65 @@ class App extends React.Component {
         : preparedVotes.find(vote => vote.voteId === currentVoteId)
     const hasCurrentVote = appStateReady && Boolean(currentVote)
     return (
-      <IdentityProvider onResolve={this.handleResolveLocalIdentity}>
-        <LocalIdentityModalProvider
-          onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
-        >
-          <div css="min-width: 320px">
-            <Main assetsUrl="./aragon-ui">
-              <AppLayout
-                title="Voting"
-                onMenuOpen={this.handleMenuPanelOpen}
-                mainButton={{
-                  label: 'New vote',
-                  icon: <NewVoteIcon />,
-                  onClick: this.handleCreateVoteOpen,
-                }}
-              >
-                {appStateReady && votes.length > 0 ? (
-                  <Votes
-                    votes={preparedVotes}
-                    onSelectVote={this.handleVoteOpen}
-                  />
-                ) : (
-                  <EmptyState onActivate={this.handleCreateVoteOpen} />
-                )}
-              </AppLayout>
-              <SidePanel
-                title={`Vote #${currentVoteId} (${
-                  currentVote && currentVote.data.open ? 'Open' : 'Closed'
-                })`}
-                opened={hasCurrentVote && !createVoteVisible && voteVisible}
-                onClose={this.handleVoteClose}
-                onTransitionEnd={this.handleVoteTransitionEnd}
-              >
-                {hasCurrentVote && (
-                  <VotePanelContent
-                    app={app}
-                    vote={currentVote}
-                    user={userAccount}
-                    ready={voteSidebarOpened}
-                    tokenContract={tokenContract}
-                    tokenDecimals={tokenDecimals}
-                    tokenSymbol={tokenSymbol}
-                    onVote={this.handleVote}
-                    onExecute={this.handleExecute}
-                  />
-                )}
-              </SidePanel>
-
-              <SidePanel
-                title="New Vote"
-                opened={createVoteVisible}
-                onClose={this.handleCreateVoteClose}
-              >
-                <NewVotePanelContent
-                  opened={createVoteVisible}
-                  onCreateVote={this.handleCreateVote}
+      <IdentityProvider
+        onResolve={this.handleResolveLocalIdentity}
+        onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
+      >
+        <div css="min-width: 320px">
+          <Main assetsUrl="./aragon-ui">
+            <AppLayout
+              title="Voting"
+              onMenuOpen={this.handleMenuPanelOpen}
+              mainButton={{
+                label: 'New vote',
+                icon: <NewVoteIcon />,
+                onClick: this.handleCreateVoteOpen,
+              }}
+            >
+              {appStateReady && votes.length > 0 ? (
+                <Votes
+                  votes={preparedVotes}
+                  onSelectVote={this.handleVoteOpen}
                 />
-              </SidePanel>
-            </Main>
-          </div>
-        </LocalIdentityModalProvider>
+              ) : (
+                <EmptyState onActivate={this.handleCreateVoteOpen} />
+              )}
+            </AppLayout>
+            <SidePanel
+              title={`Vote #${currentVoteId} (${
+                currentVote && currentVote.data.open ? 'Open' : 'Closed'
+              })`}
+              opened={hasCurrentVote && !createVoteVisible && voteVisible}
+              onClose={this.handleVoteClose}
+              onTransitionEnd={this.handleVoteTransitionEnd}
+            >
+              {hasCurrentVote && (
+                <VotePanelContent
+                  app={app}
+                  vote={currentVote}
+                  user={userAccount}
+                  ready={voteSidebarOpened}
+                  tokenContract={tokenContract}
+                  tokenDecimals={tokenDecimals}
+                  tokenSymbol={tokenSymbol}
+                  onVote={this.handleVote}
+                  onExecute={this.handleExecute}
+                />
+              )}
+            </SidePanel>
+
+            <SidePanel
+              title="New Vote"
+              opened={createVoteVisible}
+              onClose={this.handleCreateVoteClose}
+            >
+              <NewVotePanelContent
+                opened={createVoteVisible}
+                onCreateVote={this.handleCreateVote}
+              />
+            </SidePanel>
+          </Main>
+        </div>
       </IdentityProvider>
     )
   }

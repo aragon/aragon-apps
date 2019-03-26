@@ -2,15 +2,11 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Badge, IdentityBadge, font } from '@aragon/ui'
-import { LocalIdentityModalContext } from '../LocalIdentityModal/LocalIdentityModalManager'
 import { IdentityContext } from '../IdentityManager/IdentityManager'
 
 function useIdentity(address) {
   const [name, setName] = React.useState(null)
-  const { resolve } = React.useContext(IdentityContext)
-  const { updates$, showLocalIdentityModal } = React.useContext(
-    LocalIdentityModalContext
-  )
+  const { resolve, updates$, showLocalIdentityModal } = React.useContext(IdentityContext)
 
   const handleNameChange = metadata => {
     setName(metadata.name)
