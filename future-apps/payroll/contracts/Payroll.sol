@@ -197,13 +197,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         external
         authP(ADD_EMPLOYEE_ROLE, arr(_accountAddress, _initialDenominationSalary, getTimestamp64()))
     {
-        _addEmployee(
-            _accountAddress,
-            _initialDenominationSalary,
-            _name,
-            _role,
-            getTimestamp64()
-        );
+        _addEmployee(_accountAddress, _initialDenominationSalary, _name, _role, getTimestamp64());
     }
 
     /**
@@ -224,13 +218,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         external
         authP(ADD_EMPLOYEE_ROLE, arr(_accountAddress, _initialDenominationSalary, _startDate))
     {
-        _addEmployee(
-            _accountAddress,
-            _initialDenominationSalary,
-            _name,
-            _role,
-            _startDate
-        );
+        _addEmployee(_accountAddress, _initialDenominationSalary, _name, _role, _startDate);
     }
 
     /**
@@ -319,7 +307,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         Employee storage employee = employees[employeeIds[msg.sender]];
 
-
         // Delete previous allocation
         for (uint256 j = 0; j < allowedTokensArray.length; j++) {
             delete employee.allocation[allowedTokensArray[j]];
@@ -396,7 +383,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // Check address is non-null
         require(_newAddress != address(0), ERROR_EMPLOYEE_NULL_ADDRESS);
         // Check address isn't already being used
-        require(employeeIds[_newAddress] == 0, ERROR_EMPLOYEE_ALREADY_EXIST);
+        require(!_employeeExists(_newAddress), ERROR_EMPLOYEE_ALREADY_EXIST);
 
         uint256 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
@@ -539,14 +526,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // Create IDs mapping
         employeeIds[_accountAddress] = employeeId;
 
-        emit AddEmployee(
-            employeeId,
-            _accountAddress,
-            _initialDenominationSalary,
-            _name,
-            _role,
-            _startDate
-        );
+        emit AddEmployee(employeeId, _accountAddress, _initialDenominationSalary, _name, _role, _startDate);
     }
 
     function _addAccruedValue(uint256 _employeeId, uint256 _amount) internal {
