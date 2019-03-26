@@ -36,6 +36,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     uint256 internal constant MAX_UINT256 = uint256(-1);
     uint64 internal constant MAX_UINT64 = uint64(-1);
 
+    string private constant ERROR_EMPLOYEE_DOESNT_EXIST = "PAYROLL_EMPLOYEE_DOESNT_EXIST";
     string private constant ERROR_NON_ACTIVE_EMPLOYEE = "PAYROLL_NON_ACTIVE_EMPLOYEE";
     string private constant ERROR_EMPLOYEE_DOES_NOT_MATCH = "PAYROLL_EMPLOYEE_DOES_NOT_MATCH";
     string private constant ERROR_FINANCE_NOT_CONTRACT = "PAYROLL_FINANCE_NOT_CONTRACT";
@@ -94,15 +95,26 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
 
-    modifier employeeActive(uint256 employeeId) {
-        Employee storage employee = employees[employeeId];
-        // Check employee exists and is active
-        require(employeeIds[employee.accountAddress] != 0 && employee.endDate >= getTimestamp64(), ERROR_NON_ACTIVE_EMPLOYEE);
+    // Check employee exists by address
+    modifier employeeAddressExists(address _accountAddress) {
+        require(_employeeExists(_accountAddress), ERROR_EMPLOYEE_DOESNT_EXIST);
         _;
     }
 
+    // Check employee exists by ID
+    modifier employeeIdExists(uint256 _employeeId) {
+        require(_employeeExists(_employeeId), ERROR_EMPLOYEE_DOESNT_EXIST);
+        _;
+    }
+
+    // Check employee exists and is still active
+    modifier employeeActive(uint256 _employeeId) {
+        require(_employeeExists(_employeeId) && _isEmployeeActive(_employeeId), ERROR_NON_ACTIVE_EMPLOYEE);
+        _;
+    }
+
+    // Check employee exists and the sender matches
     modifier employeeMatches {
-        // Check employee exists (and matches sender)
         require(employees[employeeIds[msg.sender]].accountAddress == msg.sender, ERROR_EMPLOYEE_DOES_NOT_MATCH);
         _;
     }
@@ -162,6 +174,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     function addAllowedToken(address _allowedToken) external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
         require(!allowedTokens[_allowedToken], ERROR_TOKEN_ALREADY_ALLOWED);
         require(allowedTokensArray.length < MAX_ALLOWED_TOKENS, ERROR_MAX_ALLOWED_TOKENS);
+
         allowedTokens[_allowedToken] = true;
         allowedTokensArray.push(_allowedToken);
 
@@ -433,6 +446,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     function getEmployeeByAddress(address _accountAddress)
         public
         view
+        employeeAddressExists(_accountAddress)
         returns (
             uint256 employeeId,
             uint256 denominationSalary,
@@ -463,6 +477,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     function getEmployee(uint256 _employeeId)
         public
         view
+        employeeIdExists(_employeeId)
         returns (
             address accountAddress,
             uint256 denominationSalary,
@@ -486,7 +501,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _token Payment token
      * @return Employee's payment allocation for token
      */
-    function getAllocation(uint256 _employeeId, address _token) public view returns (uint256 allocation) {
+    function getAllocation(uint256 _employeeId, address _token) public view employeeIdExists(_employeeId) returns (uint256 allocation) {
         return employees[_employeeId].allocation[_token];
     }
 
@@ -511,7 +526,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         internal
     {
         // Check address isn't already being used
-        require(employeeIds[_accountAddress] == 0, ERROR_EMPLOYEE_ALREADY_EXIST);
+        require(!_employeeExists(_accountAddress), ERROR_EMPLOYEE_ALREADY_EXIST);
 
         uint256 employeeId = nextEmployee++;
 
@@ -564,8 +579,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         Employee storage employee = employees[_employeeId];
 
         // Get the min of current date and termination date
-        uint64 timestamp = getTimestamp64();
-        uint64 date = employee.endDate < timestamp ? employee.endDate : timestamp;
+        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64(): employee.endDate;
 
         // Compute amount to be payed
         uint256 owedAmount = _getOwedSalary(_employeeId, date);
@@ -575,7 +589,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 payingAmount = _requestedAmount > 0 ? _requestedAmount : owedAmount;
 
         // Execute payment
-        employee.lastPayroll = timestamp;
+        employee.lastPayroll = getTimestamp64();
         somethingPaid = _transferTokensAmount(_employeeId, payingAmount, "Payroll");
 
         // Try removing employee
@@ -602,8 +616,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         somethingPaid = _transferTokensAmount(_employeeId, payingAmount, "Reimbursement");
 
         // Get the min of current date and termination date
-        uint64 timestamp = getTimestamp64();
-        uint64 date = employee.endDate < timestamp ? employee.endDate : timestamp;
+        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64() : employee.endDate;
 
         // Try removing employee
         _tryRemovingEmployee(_employeeId, date);
@@ -693,19 +706,33 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @dev Try removing employee if there are no pending payments and has reached employee's end date.
      * @param _employeeId Employee's identifier
-     * @param _date Date timestamp used to evaluate if the employee can be removed from the payroll.
+     * @param _when Date timestamp used to evaluate if the employee can be removed from the payroll.
      */
-    function _tryRemovingEmployee(uint256 _employeeId, uint64 _date) private {
+    function _tryRemovingEmployee(uint256 _employeeId, uint64 _when) private {
         Employee storage employee = employees[_employeeId];
 
-        bool hasReachedEndDate = employee.endDate <= _date;
-        bool isOwedSalary = _getOwedSalary(_employeeId, _date) > 0;
-        bool isOwedAccruedValue = employees[_employeeId].accruedValue > 0;
+        bool hasReachedEndDate = employee.endDate <= _when;
+        bool isOwedSalary = _getOwedSalary(_employeeId, _when) > 0;
+        bool isOwedAccruedValue = employee.accruedValue > 0;
         bool areNoPendingPayments = !isOwedSalary && !isOwedAccruedValue;
 
         if (hasReachedEndDate && areNoPendingPayments) {
-            delete employeeIds[employees[_employeeId].accountAddress];
+            delete employeeIds[employee.accountAddress];
             delete employees[_employeeId];
         }
+    }
+
+    function _employeeExists(address _accountAddress) private returns (bool) {
+        return employeeIds[_accountAddress] != uint256(0);
+    }
+
+    function _employeeExists(uint256 _employeeId) private returns (bool) {
+        Employee storage employee = employees[_employeeId];
+        return _employeeExists(employee.accountAddress);
+    }
+
+    function _isEmployeeActive(uint256 _employeeId) private returns (bool) {
+        Employee storage employee = employees[_employeeId];
+        return employee.endDate >= getTimestamp64();
     }
 }

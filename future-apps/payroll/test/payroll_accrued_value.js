@@ -190,12 +190,7 @@ contract('Payroll, accrued value', (accounts) => {
               it('removes the employee', async () => {
                 await payroll.reimburse({ from })
 
-                const [address, employeeSalary, accruedValue, payrollTimestamp] = await payroll.getEmployee(employeeId)
-
-                assert.equal(address, 0, 'employee address does not match')
-                assert.equal(employeeSalary, 0, 'employee salary does not match')
-                assert.equal(accruedValue, 0, 'accrued value should be zero')
-                assert.equal(payrollTimestamp, 0, 'accrued value should be zero')
+                await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
               })
             })
           })
@@ -345,12 +340,7 @@ contract('Payroll, accrued value', (accounts) => {
                 it('removes the employee', async () => {
                   await payroll.partialReimburse(requestedAmount, { from })
 
-                  const [address, employeeSalary, accruedValue, payrollTimestamp] = await payroll.getEmployee(employeeId)
-
-                  assert.equal(address, 0, 'employee address does not match')
-                  assert.equal(employeeSalary, 0, 'employee salary does not match')
-                  assert.equal(accruedValue, 0, 'accrued value should be zero')
-                  assert.equal(payrollTimestamp, 0, 'accrued value should be zero')
+                  await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
                 })
               })
             })
@@ -413,12 +403,7 @@ contract('Payroll, accrued value', (accounts) => {
                 it('removes the employee', async () => {
                   await payroll.partialReimburse(requestedAmount, { from })
 
-                  const [address, employeeSalary, accruedValue, payrollTimestamp] = await payroll.getEmployee(employeeId)
-
-                  assert.equal(address, 0, 'employee address does not match')
-                  assert.equal(employeeSalary, 0, 'employee salary does not match')
-                  assert.equal(accruedValue, 0, 'accrued value should be zero')
-                  assert.equal(payrollTimestamp, 0, 'accrued value should be zero')
+                  await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
                 })
               })
             })
