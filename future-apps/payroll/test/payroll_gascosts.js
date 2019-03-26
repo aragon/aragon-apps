@@ -62,7 +62,7 @@ contract('Payroll, payday gas costs,', function(accounts) {
 
       const { receipt: { cumulativeGasUsed } } = await payroll.payday({ from: employee })
 
-      assert(cumulativeGasUsed > 312000 && cumulativeGasUsed < 317000, 'payout gas cost for a single allowed token should be ~314k')
+      assert.isBelow(cumulativeGasUsed, 317000, 'payout gas cost for a single allowed token should be ~314k')
     })
   })
 
@@ -79,7 +79,7 @@ contract('Payroll, payday gas costs,', function(accounts) {
       const { receipt: { cumulativeGasUsed: anotherEmployeePayoutGasUsed } } = await payroll.payday({ from: anotherEmployee })
 
       const gasPerAllowedToken = anotherEmployeePayoutGasUsed - employeePayoutGasUsed
-      assert.isTrue(gasPerAllowedToken > 250000 && gasPerAllowedToken < 270000, 'payout gas cost increment per allowed token should be ~260k')
+      assert.isBelow(gasPerAllowedToken, 270000, 'payout gas cost increment per allowed token should be ~260k')
     })
   })
 })
