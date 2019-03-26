@@ -34,7 +34,7 @@ const LocalIdentityBadge = ({ address, ...props }) => {
       }
     })
     return () => subscription.unsubscribe()
-  }, [])
+  }, [address])
 
   return (
     <IdentityBadge
