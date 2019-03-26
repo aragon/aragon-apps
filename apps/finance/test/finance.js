@@ -744,7 +744,7 @@ contract('Finance App', accounts => {
                 )
             })
 
-            it('fails to create a new one-time payment without enough budget', async () => {
+            it('fails to create a payment too large for budget', async () => {
                 const budget = 10
                 await finance.setBudget(token1.address, budget)
 
@@ -752,14 +752,6 @@ contract('Finance App', accounts => {
                     finance.newScheduledPayment(token1.address, recipient, budget + 1, time, 1, 1, ''),
                     errors.FINANCE_BUDGET
                 )
-            })
-
-            it('fails to create a new one-time payment without enough funds', async () => {
-                const vaultBalance = await vault.balance(token1.address)
-                await finance.removeBudget(token1.address) // clear any budget restrictions
-
-                // TODO
-                await assertRevert(finance.newScheduledPayment(token1.address, recipient, vaultBalance + 1, time, 1, 1, ''))
             })
 
             it('fails to create an immediate single payment', async () => {
@@ -841,8 +833,18 @@ contract('Finance App', accounts => {
                     const receipt = await finance.newScheduledPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
                     const newScheduledPaymentId = getEventData(receipt, 'NewPayment', 'paymentId')
 
+                    await assertRevert(finance.executePayment(newScheduledPaymentId), errors.FINANCE_EXECUTE_PAYMENT_NUM)
+                })
+
+                it('fails to execute a recurring payment by receiver without enough funds', async () => {
+                    const vaultBalance = await vault.balance(token1.address)
+                    await finance.removeBudget(token1.address) // clear any budget restrictions
+
+                    const receipt = await finance.newScheduledPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
+                    const newScheduledPaymentId = getEventData(receipt, 'NewPayment', 'paymentId')
+
                     await assertRevert(
-                        finance.executePayment(newScheduledPaymentId, { from: recipient }),
+                        finance.receiverExecutePayment(newScheduledPaymentId, { from: recipient }),
                         errors.FINANCE_EXECUTE_PAYMENT_NUM
                     )
                 })
@@ -976,7 +978,7 @@ contract('Finance App', accounts => {
             })
 
             it('fails to be recovered using Finance#recoverToVault', async () => {
-                await assertRevert(finance.recoverToVault(token1.address), errors.INIT_NOT_INITIALIZED)
+                await assertRevert(nonInit.recoverToVault(token1.address), errors.INIT_NOT_INITIALIZED)
             })
         })
 
