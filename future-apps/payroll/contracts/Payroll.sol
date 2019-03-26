@@ -396,8 +396,27 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         emit ChangeAddressByEmployee(employeeId, oldAddress, _newAddress);
     }
 
+    // Forwarding fns
+
     function isForwarder() external pure returns (bool) {
         return true;
+    }
+
+    /**
+     * @dev IForwarder interface conformance. Forwards any employee action.
+     * @param _evmScript script being executed
+     */
+    function forward(bytes _evmScript) public {
+        require(canForward(msg.sender, _evmScript), ERROR_NO_FORWARD);
+        bytes memory input = new bytes(0); // TODO: Consider input for this
+        address[] memory blacklist = new address[](1);
+        blacklist[0] = address(finance);
+        runScript(_evmScript, input, blacklist);
+    }
+
+    function canForward(address _sender, bytes) public view returns (bool) {
+        // Check employee exists (and matches)
+        return (employees[employeeIds[_sender]].accountAddress == _sender);
     }
 
     // Getter fns
@@ -478,23 +497,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function isTokenAllowed(address _token) public view returns (bool) {
         return allowedTokens[_token];
-    }
-
-    /**
-     * @dev IForwarder interface conformance. Forwards any employee action.
-     * @param _evmScript script being executed
-     */
-    function forward(bytes _evmScript) public {
-        require(canForward(msg.sender, _evmScript), ERROR_NO_FORWARD);
-        bytes memory input = new bytes(0); // TODO: Consider input for this
-        address[] memory blacklist = new address[](1);
-        blacklist[0] = address(finance);
-        runScript(_evmScript, input, blacklist);
-    }
-
-    function canForward(address _sender, bytes) public view returns (bool) {
-        // Check employee exists (and matches)
-        return (employees[employeeIds[_sender]].accountAddress == _sender);
     }
 
     // Internal fns
