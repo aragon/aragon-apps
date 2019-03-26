@@ -168,12 +168,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         emit AddAllowedToken(_allowedToken);
     }
 
-    /*
-     * TODO: removeFromAllowedTokens. It wouldn't be trivial, as employees
-     * should modifiy their allocation. They should be notified and their
-     * last allocation date should be reset.
-     */
-
     /**
      * @notice Add employee `_name` with address `_accountAddress` to Payroll with a salary of `_initialDenominationSalary` per second.
      * @param _accountAddress Employee's address to receive payroll
