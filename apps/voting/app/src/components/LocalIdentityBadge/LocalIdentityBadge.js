@@ -5,37 +5,34 @@ import { Badge, IdentityBadge, font } from '@aragon/ui'
 import { LocalIdentityModalContext } from '../LocalIdentityModal/LocalIdentityModalManager'
 import { IdentityContext } from '../IdentityManager/IdentityManager'
 
-const LocalIdentityBadge = ({ address, ...props }) => {
+function useIdentity(address) {
+  const [name, setName] = React.useState(null)
   const { resolve } = React.useContext(IdentityContext)
-  const { showLocalIdentityModal, updates$ } = React.useContext(
+  const { updates$, showLocalIdentityModal } = React.useContext(
     LocalIdentityModalContext
   )
-  const [label, setLabel] = React.useState()
-  const handleResolve = async () => {
-    try {
-      const { name = null } = await resolve(address)
-      setLabel(name)
-    } catch (e) {
-      // address does not ressolve to identity
-    }
+
+  const handleNameChange = metadata => {
+    setName(metadata.name)
   }
-  const handleClick = () => {
-    showLocalIdentityModal(address)
-      .then(handleResolve)
-      .catch(e => {
-        /* user cancelled modify intent */
-      })
-  }
+
   React.useEffect(() => {
-    handleResolve()
+    resolve(address).then(handleNameChange)
+
     const subscription = updates$.subscribe(updatedAddress => {
       if (updatedAddress.toLowerCase() === address.toLowerCase()) {
-        handleResolve()
+        resolve(address).then(handleNameChange)
       }
     })
     return () => subscription.unsubscribe()
   }, [address])
 
+  return [name, showLocalIdentityModal]
+}
+
+const LocalIdentityBadge = ({ address, ...props }) => {
+  const [label, showLocalIdentityModal] = useIdentity(address)
+  const handleClick = () => showLocalIdentityModal(address)
   return (
     <IdentityBadge
       {...props}
