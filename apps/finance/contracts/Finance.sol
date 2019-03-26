@@ -50,8 +50,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_BUDGET = "FINANCE_BUDGET";
     string private constant ERROR_EXECUTE_PAYMENT_NUM = "FINANCE_EXECUTE_PAYMENT_NUM";
     string private constant ERROR_EXECUTE_PAYMENT_TIME = "FINANCE_EXECUTE_PAYMENT_TIME";
-    string private constant ERROR_RECEIVER_EXECUTE_PAYMENT_NUM = "FINANCE_RCVR_EXEC_PAYMENT_NUM";
-    string private constant ERROR_RECEIVER_EXECUTE_PAYMENT_TIME = "FINANCE_RCVR_EXEC_PAYMENT_TIME";
     string private constant ERROR_PAYMENT_RECEIVER = "FINANCE_PAYMENT_RECEIVER";
     string private constant ERROR_TOKEN_TRANSFER_FROM_REVERTED = "FINANCE_TKN_TRANSFER_FROM_REVERT";
     string private constant ERROR_TOKEN_APPROVE_FAILED = "FINANCE_TKN_APPROVE_FAILED";
