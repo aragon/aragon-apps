@@ -19,7 +19,6 @@ import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
 contract TokenManager is ITokenController, IForwarder, AragonApp {
     using SafeMath for uint256;
-    using Uint256Helpers for uint256;
 
     bytes32 public constant MINT_ROLE = keccak256("MINT_ROLE");
     bytes32 public constant ISSUE_ROLE = keccak256("ISSUE_ROLE");
@@ -250,7 +249,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @return False if the controller does not authorize the transfer
     */
     function onTransfer(address _from, address _to, uint256 _amount) public onlyToken returns (bool) {
-        return _isBalanceIncreaseAllowed(_to, _amount) && _transferableBalance(_from, now) >= _amount;
+        return _isBalanceIncreaseAllowed(_to, _amount) && _transferableBalance(_from, getTimestamp64()) >= _amount;
     }
 
     /**
@@ -297,10 +296,10 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function spendableBalanceOf(address _holder) public view isInitialized returns (uint256) {
-        return _transferableBalance(_holder, now);
+        return _transferableBalance(_holder, getTimestamp64());
     }
 
-    function transferableBalance(address _holder, uint256 _time) public view isInitialized returns (uint256) {
+    function transferableBalance(address _holder, uint64 _time) public view isInitialized returns (uint256) {
         return _transferableBalance(_holder, _time);
     }
 
@@ -390,7 +389,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return tokens.sub(vestedTokens);
     }
 
-    function _transferableBalance(address _holder, uint256 _time) internal view returns (uint256) {
+    function _transferableBalance(address _holder, uint64 _time) internal view returns (uint256) {
         uint256 transferable = token.balanceOf(_holder);
 
         // This check is not strictly necessary for the current version of this contract, as
@@ -404,7 +403,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
                 TokenVesting storage v = vestings[_holder][i];
                 uint256 nonTransferable = _calculateNonVestedTokens(
                     v.amount,
-                    _time.toUint64(),
+                    _time,
                     v.start,
                     v.cliff,
                     v.vesting
