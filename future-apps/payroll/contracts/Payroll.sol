@@ -230,8 +230,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 _denominationSalary
     )
         external
-        employeeActive(_employeeId)
         authP(SET_EMPLOYEE_SALARY_ROLE, arr(_employeeId, _denominationSalary))
+        employeeActive(_employeeId)
     {
         uint64 timestamp = getTimestamp64();
 
@@ -255,8 +255,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 _employeeId
     )
         external
-        employeeActive(_employeeId)
         authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
+        employeeActive(_employeeId)
     {
         _terminateEmployee(_employeeId, getTimestamp64());
     }
@@ -271,8 +271,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint64 _endDate
     )
         external
-        employeeActive(_employeeId)
         authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
+        employeeActive(_employeeId)
     {
         _terminateEmployee(_employeeId, _endDate);
     }
@@ -287,8 +287,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 _amount
     )
         external
-        employeeActive(_employeeId)
         authP(ADD_ACCRUED_VALUE_ROLE, arr(_employeeId, _amount))
+        employeeActive(_employeeId)
     {
         _addAccruedValue(_employeeId, _amount);
     }
