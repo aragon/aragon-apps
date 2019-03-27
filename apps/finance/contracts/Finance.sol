@@ -233,7 +233,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     )
         external
         // Payment time parameter is left as the last param as it was added later
-        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, uint256(_interval), uint256(_maxRepeats)), uint256(_initialPaymentTime))
+        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, uint256(_interval), uint256(_maxRepeats), uint256(_initialPaymentTime)))
         transitionsPeriod
         returns (uint256 paymentId)
     {
@@ -279,8 +279,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     */
    function newImmediatePayment(address _token, address _receiver, uint256 _amount, string _reference)
         external
+        // Use MAX_UINT256 as the interval parameter, as this payment will never repeat
         // Payment time parameter is left as the last param as it was added later
-        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, uint256(MAX_UINT64), uint256(1)), uint256(getTimestamp64()))
+        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, MAX_UINT, uint256(1), getTimestamp()))
         transitionsPeriod
    {
         require(_amount > 0, ERROR_NEW_PAYMENT_AMOUNT_ZERO);
