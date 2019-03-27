@@ -624,13 +624,13 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         return paid;
     }
 
-    function _executePaymentAtLeastOnce(uint256 _paymentId) internal returns (uint256) {
+    function _executePaymentAtLeastOnce(uint256 _paymentId) internal {
         uint256 paid = _executePayment(_paymentId);
         if (paid == 0) {
-            if (_nextPaymentTime(_paymentId) > getTimestamp64()) {
-                revert(ERROR_EXECUTE_PAYMENT_TIME);
-            } else {
+            if (_nextPaymentTime(_paymentId) <= getTimestamp64()) {
                 revert(ERROR_EXECUTE_PAYMENT_NUM);
+            } else {
+                revert(ERROR_EXECUTE_PAYMENT_TIME);
             }
         }
     }
