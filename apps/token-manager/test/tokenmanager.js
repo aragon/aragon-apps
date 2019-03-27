@@ -1,7 +1,5 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
-const getBlock = require('@aragon/test-helpers/block')(web3)
-const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
@@ -26,6 +24,8 @@ contract('Token Manager', accounts => {
     let APP_MANAGER_ROLE
     let MINT_ROLE, ISSUE_ROLE, ASSIGN_ROLE, REVOKE_VESTINGS_ROLE, BURN_ROLE
     let ETH
+
+    const NOW_TIME = 1
 
     const root = accounts[0]
     const holder = accounts[1]
@@ -59,6 +59,7 @@ contract('Token Manager', accounts => {
 
         const receipt = await dao.newAppInstance('0x1234', tokenManagerBase.address, '0x', false, { from: root })
         tokenManager = TokenManager.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+        tokenManager.mock_setTimestamp(NOW_TIME)
 
         await acl.createPermission(ANY_ADDR, tokenManager.address, MINT_ROLE, root, { from: root })
         await acl.createPermission(ANY_ADDR, tokenManager.address, ISSUE_ROLE, root, { from: root })
@@ -347,24 +348,15 @@ contract('Token Manager', accounts => {
         })
 
         context('assigning vested tokens', () => {
-            let now = 0
-            let startDate, cliffDate, vestingDate
-
-            const start = 1000
-            const cliff = 2000
-            const vesting = 5000
+            const startDate = NOW_TIME + 1000
+            const cliffDate = NOW_TIME + 2000
+            const vestingDate = NOW_TIME + 5000
 
             const totalTokens = 40
             const revokable = true
 
             beforeEach(async () => {
                 await tokenManager.issue(totalTokens)
-                const block = await getBlock(await getBlockNumber())
-                now = block.timestamp
-                startDate = now + start
-                cliffDate = now + cliff
-                vestingDate = now + vesting
-
                 await tokenManager.assignVested(holder, totalTokens, startDate, cliffDate, vestingDate, revokable)
             })
 
@@ -447,7 +439,7 @@ contract('Token Manager', accounts => {
 
             it('cannot revoke non-revokable vestings', async () => {
                 await tokenManager.issue(1)
-                await tokenManager.assignVested(holder, 1, now + start, now + cliff, now + vesting, false)
+                await tokenManager.assignVested(holder, 1, startDate, cliffDate, vestingDate, false)
 
                 return assertRevert(async () => {
                     await tokenManager.revokeVesting(holder, 1)
@@ -459,17 +451,17 @@ contract('Token Manager', accounts => {
 
                 // Only create 49 new vestings as we've already created one in beforeEach()
                 for (ii = 0; ii < 49; ++ii) {
-                    await tokenManager.assignVested(holder, 1, now + start, now + cliff, now + vesting, false)
+                    await tokenManager.assignVested(holder, 1, startDate, cliffDate, vestingDate, false)
                 }
 
                 await assertRevert(async () => {
-                    await tokenManager.assignVested(holder, 1, now + start, now + cliff, now + vesting, false)
+                    await tokenManager.assignVested(holder, 1, startDate, cliffDate, vestingDate, false)
                 })
 
                 // Can't create a new vesting even after other vestings have finished
-                await tokenManager.mock_setTimestamp(now + vesting)
+                await tokenManager.mock_setTimestamp(vestingDate)
                 await assertRevert(async () => {
-                    await tokenManager.assignVested(holder, 1, now + start, now + cliff, now + vesting, false)
+                    await tokenManager.assignVested(holder, 1, startDate, cliffDate, vestingDate, false)
                 })
 
                 // But can now transfer
