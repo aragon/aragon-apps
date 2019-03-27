@@ -72,7 +72,7 @@ contract('Payroll, allowed tokens,', function(accounts) {
       let employeeId
 
       beforeEach('add employee', async () => {
-        const receipt = await payroll.addEmployeeNow(employee, 100000, 'John', 'Doe', { from: owner })
+        const receipt = await payroll.addEmployeeNow(employee, 100000, 'John', 'Boss', { from: owner })
         employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
       })
 
@@ -199,7 +199,7 @@ contract('Payroll, allowed tokens,', function(accounts) {
           await Promise.all(tokenAddresses.map(address => payroll.addAllowedToken(address, { from: owner })))
           assert.equal(await payroll.getAllowedTokensArrayLength(), MAX_ALLOWED_TOKENS, 'amount of allowed tokens does not match')
 
-          await payroll.addEmployee(employee, 100000, 'John', 'Doe', NOW - ONE_MONTH, { from: owner })
+          await payroll.addEmployee(employee, 100000, 'John', 'Boss', NOW - ONE_MONTH, { from: owner })
         })
 
         it('can not add one more token', async () => {

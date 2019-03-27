@@ -41,7 +41,7 @@ contract('PayrollForward', function(accounts) {
   beforeEach('add employee', async () => {
     const ADD_EMPLOYEE_ROLE = await payrollBase.ADD_EMPLOYEE_ROLE()
     await acl.createPermission(owner, payroll.address, ADD_EMPLOYEE_ROLE, owner, { from: owner })
-    await payroll.addEmployeeNow(employee, 100000, 'John', 'Doe', { from: owner })
+    await payroll.addEmployeeNow(employee, 100000, 'John', 'Boss', { from: owner })
   })
 
   it('is a forwarder', async () => {

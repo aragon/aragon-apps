@@ -50,100 +50,12 @@ contract('Payroll, accrued value', (accounts) => {
     const ADD_EMPLOYEE_ROLE = await payrollBase.ADD_EMPLOYEE_ROLE()
     const ADD_ACCRUED_VALUE_ROLE = await payrollBase.ADD_ACCRUED_VALUE_ROLE()
     const TERMINATE_EMPLOYEE_ROLE = await payrollBase.TERMINATE_EMPLOYEE_ROLE()
-    const SET_EMPLOYEE_SALARY_ROLE = await payrollBase.SET_EMPLOYEE_SALARY_ROLE()
     const ALLOWED_TOKENS_MANAGER_ROLE = await payrollBase.ALLOWED_TOKENS_MANAGER_ROLE()
 
     await acl.createPermission(owner, payroll.address, ADD_EMPLOYEE_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, ADD_ACCRUED_VALUE_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, TERMINATE_EMPLOYEE_ROLE, owner, { from: owner })
-    await acl.createPermission(owner, payroll.address, SET_EMPLOYEE_SALARY_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, ALLOWED_TOKENS_MANAGER_ROLE, owner, { from: owner })
-  })
-
-  describe('setEmployeeSalary', () => {
-    context('when the sender has permissions', () => {
-      const from = owner
-
-      context('when the given employee exists', () => {
-        let employeeId
-        const previousSalary = 1000
-
-        beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, previousSalary, 'John', 'Doe')
-          employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
-        })
-
-        context('when the given employee is active', () => {
-
-          const itSetsSalarySuccessfully = newSalary => {
-            it('changes the salary of the employee', async () => {
-              await payroll.setEmployeeSalary(employeeId, newSalary, { from })
-
-              const salary = (await payroll.getEmployee(employeeId))[1]
-              assert.equal(salary.toString(), newSalary, 'accrued value does not match')
-            })
-
-            it('adds previous owed salary to the accrued value', async () => {
-              await payroll.mockAddTimestamp(ONE_MONTH)
-
-              await payroll.setEmployeeSalary(employeeId, newSalary, { from })
-              await payroll.mockAddTimestamp(ONE_MONTH)
-
-              const accruedValue = (await payroll.getEmployee(employeeId))[2]
-              assert.equal(accruedValue.toString(), previousSalary * ONE_MONTH, 'accrued value does not match')
-            })
-
-            it('emits an event', async () => {
-              const receipt = await payroll.setEmployeeSalary(employeeId, newSalary, { from })
-
-              const events = getEvents(receipt, 'SetEmployeeSalary')
-              assert.equal(events.length, 1, 'number of SetEmployeeSalary emitted events does not match')
-              assert.equal(events[0].args.employeeId.toString(), employeeId, 'employee id does not match')
-              assert.equal(events[0].args.denominationSalary.toString(), newSalary, 'salary does not match')
-            })
-          }
-
-          context('when the given value greater than zero', () => {
-            const value = 1000
-
-            itSetsSalarySuccessfully(value)
-          })
-
-          context('when the given value is zero', () => {
-            const value = 0
-
-            itSetsSalarySuccessfully(value)
-          })
-        })
-
-        context('when the given employee is not active', () => {
-          beforeEach('terminate employee', async () => {
-            await payroll.terminateEmployeeNow(employeeId, { from: owner })
-            await payroll.mockAddTimestamp(ONE_MONTH)
-          })
-
-          it('reverts', async () => {
-            await assertRevert(payroll.setEmployeeSalary(employeeId, 1000, { from }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
-          })
-        })
-      })
-
-      context('when the given employee does not exist', async () => {
-        const employeeId = 0
-
-        it('reverts', async () => {
-          await assertRevert(payroll.setEmployeeSalary(employeeId, 1000, { from }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
-        })
-      })
-    })
-
-    context('when the sender does not have permissions', () => {
-      const from = anyone
-
-      it('reverts', async () => {
-        await assertRevert(payroll.setEmployeeSalary(0, 1000, { from }), 'APP_AUTH_FAILED')
-      })
-    })
   })
 
   describe('addAccruedValue', () => {
@@ -154,7 +66,7 @@ contract('Payroll, accrued value', (accounts) => {
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 1000, 'John', 'Doe')
+          const receipt = await payroll.addEmployeeNow(employee, 1000, 'John', 'Boss')
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
