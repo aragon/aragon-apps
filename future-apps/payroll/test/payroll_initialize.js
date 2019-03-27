@@ -10,7 +10,7 @@ const getEventArgument = (receipt, event, arg) => getEvent(receipt, event)[arg]
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('Payroll, initialization,', function(accounts) {
-  const [owner, anyone] = accounts
+  const [owner] = accounts
   const { deployErc20TokenAndDeposit, redistributeEth, getDaoFinanceVault } = require('./helpers.js')(owner)
 
   const USD_DECIMALS= 18
@@ -79,51 +79,6 @@ contract('Payroll, initialization,', function(accounts) {
         assert.equal(await payroll.finance(), finance.address, 'finance address should match')
         assert.equal(await payroll.denominationToken(), usdToken.address, 'denomination token does not match')
         assert.equal(await payroll.rateExpiryTime(), RATE_EXPIRATION_TIME, 'rate expiration time does not match')
-      })
-    })
-  })
-
-  describe('addAllowedToken', function () {
-    beforeEach('initialize payroll app and add permissions', async () => {
-      await payroll.initialize(finance.address, usdToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
-
-      const ALLOWED_TOKENS_MANAGER_ROLE = await payrollBase.ALLOWED_TOKENS_MANAGER_ROLE()
-      await acl.createPermission(owner, payroll.address, ALLOWED_TOKENS_MANAGER_ROLE, owner, { from: owner })
-    })
-
-    context('when the sender has permissions', () => {
-      const from = owner
-
-      it('can allow a token', async () => {
-        const receipt = await payroll.addAllowedToken(usdToken.address, { from })
-
-        const event = getEvent(receipt, 'AddAllowedToken')
-        assert.equal(event.token, usdToken.address, 'usd token address should match')
-
-        assert.equal(await payroll.getAllowedTokensArrayLength(), 1, 'allowed tokens length does not match')
-        assert(await payroll.isTokenAllowed(usdToken.address), 'USD token should be allowed')
-      })
-
-      it('can allow multiple tokens', async () => {
-        const erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, 'Token 1', 18)
-        const erc20Token2 = await deployErc20TokenAndDeposit(owner, finance, vault, 'Token 2', 16)
-
-        await payroll.addAllowedToken(usdToken.address, { from })
-        await payroll.addAllowedToken(erc20Token1.address, { from })
-        await payroll.addAllowedToken(erc20Token2.address, { from })
-
-        assert.equal(await payroll.getAllowedTokensArrayLength(), 3, 'allowed tokens length does not match')
-        assert(await payroll.isTokenAllowed(usdToken.address), 'USD token should be allowed')
-        assert(await payroll.isTokenAllowed(erc20Token1.address), 'ERC20 token 1 should be allowed')
-        assert(await payroll.isTokenAllowed(erc20Token2.address), 'ERC20 token 2 should be allowed')
-      })
-    })
-
-    context('when the sender does not have permissions', () => {
-      const from = anyone
-
-      it('reverts', async () => {
-        await assertRevert(payroll.addAllowedToken(usdToken.address, { from }), 'APP_AUTH_FAILED')
       })
     })
   })
