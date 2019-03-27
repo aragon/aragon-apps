@@ -34,8 +34,9 @@ const IdentityProvider = ({
 }
 
 IdentityProvider.propTypes = {
-  onResolve: PropTypes.func.isRequired,
   children: PropTypes.node.isRequired,
+  onResolve: PropTypes.func.isRequired,
+  onShowLocalIdentityModal: PropTypes.func.isRequired,
 }
 
 const IdentityConsumer = IdentityContext.Consumer
