@@ -398,21 +398,28 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function _transferableBalance(address _holder, uint256 _time) internal view returns (uint256) {
-        uint256 vestingsCount = vestingsLengths[_holder];
-        uint256 totalNonTransferable = 0;
+        uint256 transferable = token.balanceOf(_holder);
 
-        for (uint256 i = 0; i < vestingsCount; i++) {
-            TokenVesting storage v = vestings[_holder][i];
-            uint nonTransferable = _calculateNonVestedTokens(
-                v.amount,
-                _time.toUint64(),
-                v.start,
-                v.cliff,
-                v.vesting
-            );
-            totalNonTransferable = totalNonTransferable.add(nonTransferable);
+        // This check is not strictly necessary for the current version of this contract, as
+        // Token Managers now cannot assign vestings to themselves.
+        // However, this was a possibility in the past, so in case there were vestings assigned to
+        // themselves, this will still return the correct value (entire balance, as the Token
+        // Manager does not have a spending limit on its own balance).
+        if (_holder != address(this)) {
+            uint256 vestingsCount = vestingsLengths[_holder];
+            for (uint256 i = 0; i < vestingsCount; i++) {
+                TokenVesting storage v = vestings[_holder][i];
+                uint256 nonTransferable = _calculateNonVestedTokens(
+                    v.amount,
+                    _time.toUint64(),
+                    v.start,
+                    v.cliff,
+                    v.vesting
+                );
+                transferable = transferable.sub(nonTransferable);
+            }
         }
 
-        return token.balanceOf(_holder).sub(totalNonTransferable);
+        return transferable;
     }
 }
