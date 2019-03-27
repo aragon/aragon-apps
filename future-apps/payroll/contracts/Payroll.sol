@@ -234,15 +234,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         authP(SET_EMPLOYEE_SALARY_ROLE, arr(_employeeId, _denominationSalary))
         employeeActive(_employeeId)
     {
-        uint64 timestamp = getTimestamp64();
-
         // Add owed salary to employee's accrued value
-        uint256 owed = _getOwedSalary(_employeeId, timestamp);
+        uint256 owed = _getOwedSalary(_employeeId);
         _addAccruedValue(_employeeId, owed);
 
         // Update employee to track the new salary and payment date
         Employee storage employee = employees[_employeeId];
-        employee.lastPayroll = timestamp;
+        employee.lastPayroll = getTimestamp64();
         employee.denominationTokenSalary = _denominationSalary;
 
         emit SetEmployeeSalary(_employeeId, _denominationSalary);
@@ -353,7 +351,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @dev Withdraw accrued value by employee (the caller). The specified amount capped to the one owed will be transferred.
      *      Initialization check is implicitly provided by `employeeMatches()` as new employees can
      *      only be added via `addEmployee(),` which requires initialization.
-     * @notice Withdraw your own payroll.
+     * @notice Withdraw your own accrued value.
      * @param _amount Amount of accrued value requested. Must be less or equal than total amount so far.
      */
     function partialReimburse(uint256 _amount) external employeeMatches {
@@ -558,22 +556,19 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     function _payday(uint256 _employeeId, uint256 _requestedAmount) internal returns (bool somethingPaid) {
         Employee storage employee = employees[_employeeId];
 
-        // Get the min of current date and termination date
-        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64(): employee.endDate;
-
         // Compute amount to be payed
-        uint256 owedAmount = _getOwedSalary(_employeeId, date);
+        uint256 owedAmount = _getOwedSalary(_employeeId);
         if (owedAmount == 0 || owedAmount < _requestedAmount) {
             return false;
         }
         uint256 payingAmount = _requestedAmount > 0 ? _requestedAmount : owedAmount;
 
         // Execute payment
-        employee.lastPayroll = getTimestamp64();
+        employee.lastPayroll = (payingAmount == owedAmount) ? getTimestamp64() : _getLastPayroll(_employeeId, payingAmount);
         somethingPaid = _transferTokensAmount(_employeeId, payingAmount, "Payroll");
 
         // Try removing employee
-        _tryRemovingEmployee(_employeeId, date);
+        _tryRemovingEmployee(_employeeId);
     }
 
     /**
@@ -595,11 +590,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         employee.accruedValue = employee.accruedValue.sub(payingAmount);
         somethingPaid = _transferTokensAmount(_employeeId, payingAmount, "Reimbursement");
 
-        // Get the min of current date and termination date
-        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64() : employee.endDate;
-
         // Try removing employee
-        _tryRemovingEmployee(_employeeId, date);
+        _tryRemovingEmployee(_employeeId);
     }
 
     function _terminateEmployee(uint256 _employeeId, uint64 _endDate) internal {
@@ -612,25 +604,33 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         emit TerminateEmployee(_employeeId, employee.accountAddress, _endDate);
     }
 
-    function _getOwedSalary(uint256 _employeeId, uint64 _date) internal view returns (uint256) {
+    function _getLastPayroll(uint256 _employeeId, uint256 _payedAmount) internal view returns (uint64) {
         Employee storage employee = employees[_employeeId];
+        uint64 timeDiff = uint64(_payedAmount.div(employee.denominationTokenSalary));
+        uint date = uint(employee.lastPayroll.add(timeDiff));
+        return employee.lastPayroll.add(timeDiff);
+    }
+
+    function _getOwedSalary(uint256 _employeeId) internal view returns (uint256) {
+        Employee storage employee = employees[_employeeId];
+
+        // Get the min of current date and termination date
+        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64(): employee.endDate;
 
         // Make sure we don't revert if we try to get the owed salary for an employee whose start
         // date is in the future (necessary in case we need to change their salary before their start date)
-        if (_date <= employee.lastPayroll) {
+        if (date <= employee.lastPayroll) {
             return 0;
         }
 
-        // Get time that has gone by (seconds)
-        // No need to use safe math as the underflow was covered by the previous check
-        uint64 time = _date - employee.lastPayroll;
+        // Get time diff in seconds, no need to use safe math as the underflow was covered by the previous check
+        uint64 timeDiff = date - employee.lastPayroll;
+        uint256 result = employee.denominationTokenSalary * timeDiff;
 
-        // if the result would overflow, set it to max int
-        uint256 result = employee.denominationTokenSalary * time;
-        if (result / time != employee.denominationTokenSalary) {
+        // Return max int if the result overflows
+        if (result / timeDiff != employee.denominationTokenSalary) {
             return MAX_UINT256;
         }
-
         return result;
     }
 
@@ -686,17 +686,16 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @dev Try removing employee if there are no pending payments and has reached employee's end date.
      * @param _employeeId Employee's identifier
-     * @param _when Date timestamp used to evaluate if the employee can be removed from the payroll.
      */
-    function _tryRemovingEmployee(uint256 _employeeId, uint64 _when) private {
+    function _tryRemovingEmployee(uint256 _employeeId) private {
         Employee storage employee = employees[_employeeId];
 
-        bool hasReachedEndDate = employee.endDate <= _when;
-        bool isOwedSalary = _getOwedSalary(_employeeId, _when) > 0;
-        bool isOwedAccruedValue = employee.accruedValue > 0;
-        bool areNoPendingPayments = !isOwedSalary && !isOwedAccruedValue;
+        bool hasReachedEndDate = employee.endDate <= getTimestamp64();
+        bool noPendingSalary = _getOwedSalary(_employeeId) == 0;
+        bool noPendingAccruedValue = employee.accruedValue == 0;
+        bool noPendingPayments = noPendingSalary && noPendingAccruedValue;
 
-        if (hasReachedEndDate && areNoPendingPayments) {
+        if (hasReachedEndDate && noPendingPayments) {
             delete employeeIds[employee.accountAddress];
             delete employees[_employeeId];
         }
