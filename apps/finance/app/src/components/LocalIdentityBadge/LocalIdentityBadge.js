@@ -11,7 +11,18 @@ function useIdentity(address) {
   )
 
   const handleNameChange = metadata => {
-    setName(metadata.name)
+    if (!metadata) {
+      setName(null)
+    } else {
+      setName(metadata.name)
+    }
+  }
+
+  const handleShowLocalIdentityModal = address => {
+    // Emit an event whenever the modal is closed (when the promise resolves)
+    return showLocalIdentityModal(address)
+      .then(() => updates$.next(address))
+      .catch(e => null)
   }
 
   React.useEffect(() => {
@@ -19,13 +30,14 @@ function useIdentity(address) {
 
     const subscription = updates$.subscribe(updatedAddress => {
       if (updatedAddress.toLowerCase() === address.toLowerCase()) {
+        // Resolve and update state when the identity have been updated
         resolve(address).then(handleNameChange)
       }
     })
     return () => subscription.unsubscribe()
   }, [address])
 
-  return [name, showLocalIdentityModal]
+  return [name, handleShowLocalIdentityModal]
 }
 
 const LocalIdentityBadge = ({ address, ...props }) => {
