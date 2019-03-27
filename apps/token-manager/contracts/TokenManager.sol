@@ -190,7 +190,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
         uint256 nonVested = _calculateNonVestedTokens(
             v.amount,
-            getTimestamp64(),
+            getTimestamp(),
             v.start,
             v.cliff,
             v.vesting
@@ -249,7 +249,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @return False if the controller does not authorize the transfer
     */
     function onTransfer(address _from, address _to, uint256 _amount) public onlyToken returns (bool) {
-        return _isBalanceIncreaseAllowed(_to, _amount) && _transferableBalance(_from, getTimestamp64()) >= _amount;
+        return _isBalanceIncreaseAllowed(_to, _amount) && _transferableBalance(_from, getTimestamp()) >= _amount;
     }
 
     /**
@@ -296,10 +296,10 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function spendableBalanceOf(address _holder) public view isInitialized returns (uint256) {
-        return _transferableBalance(_holder, getTimestamp64());
+        return _transferableBalance(_holder, getTimestamp());
     }
 
-    function transferableBalance(address _holder, uint64 _time) public view isInitialized returns (uint256) {
+    function transferableBalance(address _holder, uint256 _time) public view isInitialized returns (uint256) {
         return _transferableBalance(_holder, _time);
     }
 
@@ -389,7 +389,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         return tokens.sub(vestedTokens);
     }
 
-    function _transferableBalance(address _holder, uint64 _time) internal view returns (uint256) {
+    function _transferableBalance(address _holder, uint256 _time) internal view returns (uint256) {
         uint256 transferable = token.balanceOf(_holder);
 
         // This check is not strictly necessary for the current version of this contract, as

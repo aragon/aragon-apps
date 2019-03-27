@@ -4,8 +4,8 @@ import "../../TokenManager.sol";
 
 
 contract TokenManagerMock is TokenManager {
-    uint64 mockTime = uint64(now);
+    uint256 mockTime;
 
-    function mock_setTimestamp(uint64 i) public { mockTime = i; }
-    function getTimestamp64() internal view returns (uint64) { return mockTime; }
+    function mock_setTimestamp(uint256 i) public { mockTime = i; }
+    function getTimestamp() internal view returns (uint256) { return mockTime; }
 }
