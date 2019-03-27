@@ -13,12 +13,12 @@ contract('Payroll, accrued value', (accounts) => {
   const [owner, employee, anyone] = accounts
   const { deployErc20TokenAndDeposit, redistributeEth, getDaoFinanceVault } = require("./helpers.js")(owner)
 
-  const NOW = Math.floor((new Date()).getTime() / 1000)
+  const NOW = 1553703809 // random fixed timestamp in seconds
   const ONE_MONTH = 60 * 60 * 24 * 31
   const TWO_MONTHS = ONE_MONTH * 2
+  const RATE_EXPIRATION_TIME = TWO_MONTHS
 
   const PCT_ONE = bigExp(1, 18)
-  const RATE_EXPIRATION_TIME = TWO_MONTHS
 
   let dao, acl, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
 
@@ -30,9 +30,8 @@ contract('Payroll, accrued value', (accounts) => {
     acl = ACL.at(await dao.acl())
 
     priceFeed = await PriceFeed.new()
-    priceFeed.mockSetTimestamp(NOW)
-
     payrollBase = await Payroll.new()
+
     denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination token', 18)
     anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', 18)
 
@@ -43,6 +42,10 @@ contract('Payroll, accrued value', (accounts) => {
     const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
     payroll = Payroll.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
     await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+  })
+
+  beforeEach('set timestamps', async () => {
+    await priceFeed.mockSetTimestamp(NOW)
     await payroll.mockSetTimestamp(NOW)
   })
 
@@ -148,9 +151,10 @@ contract('Payroll, accrued value', (accounts) => {
       const from = employee
       let employeeId, salary = 1000
 
-      beforeEach('add employee', async () => {
+      beforeEach('add employee and accumulate some salary', async () => {
         const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Doe')
         employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
+
         await payroll.mockAddTimestamp(ONE_MONTH)
       })
 
@@ -218,9 +222,35 @@ contract('Payroll, accrued value', (accounts) => {
             })
           }
 
+          const itHandlesReimbursementsProperly = () => {
+            context('when exchange rates are not expired', () => {
+              assertTransferredAmounts()
+              assertEmployeeIsNotRemoved()
+            })
+
+            context('when exchange rates are expired', () => {
+              beforeEach('expire exchange rates', async () => {
+                await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+              })
+
+              it('reverts', async () => {
+                await assertRevert(payroll.reimburse({ from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+              })
+            })
+          }
+
           context('when the employee has some pending salary', () => {
-            assertTransferredAmounts()
-            assertEmployeeIsNotRemoved()
+            context('when the employee is not terminated', () => {
+              itHandlesReimbursementsProperly()
+            })
+
+            context('when the employee is terminated', () => {
+              beforeEach('terminate employee', async () => {
+                await payroll.terminateEmployeeNow(employeeId, { from: owner })
+              })
+
+              itHandlesReimbursementsProperly()
+            })
           })
 
           context('when the employee does not have pending salary', () => {
@@ -229,8 +259,7 @@ contract('Payroll, accrued value', (accounts) => {
             })
 
             context('when the employee is not terminated', () => {
-              assertTransferredAmounts()
-              assertEmployeeIsNotRemoved()
+              itHandlesReimbursementsProperly()
             })
 
             context('when the employee is terminated', () => {
@@ -238,12 +267,24 @@ contract('Payroll, accrued value', (accounts) => {
                 await payroll.terminateEmployeeNow(employeeId, { from: owner })
               })
 
-              assertTransferredAmounts()
+              context('when exchange rates are not expired', () => {
+                assertTransferredAmounts()
 
-              it('removes the employee', async () => {
-                await payroll.reimburse({ from })
+                it('removes the employee', async () => {
+                  await payroll.reimburse({ from })
 
-                await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                  await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                })
+              })
+
+              context('when exchange rates are expired', () => {
+                beforeEach('expire exchange rates', async () => {
+                  await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                })
+
+                it('reverts', async () => {
+                  await assertRevert(payroll.reimburse({ from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                })
               })
             })
           })
@@ -292,9 +333,10 @@ contract('Payroll, accrued value', (accounts) => {
       const from = employee
       let employeeId, salary = 1000
 
-      beforeEach('add employee', async () => {
+      beforeEach('add employee and accumulate some salary', async () => {
         const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Doe')
         employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
+
         await payroll.mockAddTimestamp(ONE_MONTH)
       })
 
@@ -370,12 +412,38 @@ contract('Payroll, accrued value', (accounts) => {
             })
           }
 
+          const itHandlesReimbursementsProperly = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
+            context('when exchange rates are not expired', () => {
+              assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
+              assertEmployeeIsNotRemoved(requestedAmount, expectedRequestedAmount)
+            })
+
+            context('when exchange rates are expired', () => {
+              beforeEach('expire exchange rates', async () => {
+                await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+              })
+
+              it('reverts', async () => {
+                await assertRevert(payroll.partialReimburse(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+              })
+            })
+          }
+
           context('when the requested amount is zero', () => {
             const requestedAmount = 0
 
             context('when the employee has some pending salary', () => {
-              assertTransferredAmounts(requestedAmount, accruedValue)
-              assertEmployeeIsNotRemoved(requestedAmount, accruedValue)
+              context('when the employee is not terminated', () => {
+                itHandlesReimbursementsProperly(requestedAmount, accruedValue)
+              })
+
+              context('when the employee is terminated', () => {
+                beforeEach('terminate employee', async () => {
+                  await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                })
+
+                itHandlesReimbursementsProperly(requestedAmount, accruedValue)
+              })
             })
 
             context('when the employee does not have pending salary', () => {
@@ -384,8 +452,7 @@ contract('Payroll, accrued value', (accounts) => {
               })
 
               context('when the employee is not terminated', () => {
-                assertTransferredAmounts(requestedAmount, accruedValue)
-                assertEmployeeIsNotRemoved(requestedAmount, accruedValue)
+                itHandlesReimbursementsProperly(requestedAmount, accruedValue)
               })
 
               context('when the employee is terminated', () => {
@@ -393,12 +460,24 @@ contract('Payroll, accrued value', (accounts) => {
                   await payroll.terminateEmployeeNow(employeeId, { from: owner })
                 })
 
-                assertTransferredAmounts(requestedAmount, accruedValue)
+                context('when exchange rates are not expired', () => {
+                  assertTransferredAmounts(requestedAmount, accruedValue)
 
-                it('removes the employee', async () => {
-                  await payroll.partialReimburse(requestedAmount, { from })
+                  it('removes the employee', async () => {
+                    await payroll.partialReimburse(requestedAmount, { from })
 
-                  await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                    await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                  })
+                })
+
+                context('when exchange rates are expired', () => {
+                  beforeEach('expire exchange rates', async () => {
+                    await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                  })
+
+                  it('reverts', async () => {
+                    await assertRevert(payroll.partialReimburse(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                  })
                 })
               })
             })
@@ -408,8 +487,17 @@ contract('Payroll, accrued value', (accounts) => {
             const requestedAmount = accruedValue - 1
 
             context('when the employee has some pending salary', () => {
-              assertTransferredAmounts(requestedAmount)
-              assertEmployeeIsNotRemoved(requestedAmount)
+              context('when the employee is not terminated', () => {
+                itHandlesReimbursementsProperly(requestedAmount)
+              })
+
+              context('when the employee is terminated', () => {
+                beforeEach('terminate employee', async () => {
+                  await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                })
+
+                itHandlesReimbursementsProperly(requestedAmount)
+              })
             })
 
             context('when the employee does not have pending salary', () => {
@@ -418,8 +506,7 @@ contract('Payroll, accrued value', (accounts) => {
               })
 
               context('when the employee is not terminated', () => {
-                assertTransferredAmounts(requestedAmount)
-                assertEmployeeIsNotRemoved(requestedAmount)
+                itHandlesReimbursementsProperly(requestedAmount)
               })
 
               context('when the employee is terminated', () => {
@@ -427,8 +514,7 @@ contract('Payroll, accrued value', (accounts) => {
                   await payroll.terminateEmployeeNow(employeeId, { from: owner })
                 })
 
-                assertTransferredAmounts(requestedAmount)
-                assertEmployeeIsNotRemoved(requestedAmount)
+                itHandlesReimbursementsProperly(requestedAmount)
               })
             })
           })
@@ -437,8 +523,17 @@ contract('Payroll, accrued value', (accounts) => {
             const requestedAmount = accruedValue
 
             context('when the employee has some pending salary', () => {
-              assertTransferredAmounts(requestedAmount)
-              assertEmployeeIsNotRemoved(requestedAmount)
+              context('when the employee is not terminated', () => {
+                itHandlesReimbursementsProperly(requestedAmount)
+              })
+
+              context('when the employee is terminated', () => {
+                beforeEach('terminate employee', async () => {
+                  await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                })
+
+                itHandlesReimbursementsProperly(requestedAmount)
+              })
             })
 
             context('when the employee does not have pending salary', () => {
@@ -447,8 +542,7 @@ contract('Payroll, accrued value', (accounts) => {
               })
 
               context('when the employee is not terminated', () => {
-                assertTransferredAmounts(requestedAmount)
-                assertEmployeeIsNotRemoved(requestedAmount)
+                itHandlesReimbursementsProperly(requestedAmount)
               })
 
               context('when the employee is terminated', () => {
@@ -456,12 +550,24 @@ contract('Payroll, accrued value', (accounts) => {
                   await payroll.terminateEmployeeNow(employeeId, { from: owner })
                 })
 
-                assertTransferredAmounts(requestedAmount)
+                context('when exchange rates are not expired', () => {
+                  assertTransferredAmounts(requestedAmount)
 
-                it('removes the employee', async () => {
-                  await payroll.partialReimburse(requestedAmount, { from })
+                  it('removes the employee', async () => {
+                    await payroll.partialReimburse(requestedAmount, { from })
 
-                  await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                    await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                  })
+                })
+
+                context('when exchange rates are expired', () => {
+                  beforeEach('expire exchange rates', async () => {
+                    await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                  })
+
+                  it('reverts', async () => {
+                    await assertRevert(payroll.partialReimburse(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                  })
                 })
               })
             })
