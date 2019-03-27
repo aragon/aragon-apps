@@ -28,11 +28,9 @@ contract('Payroll, allowed tokens,', function(accounts) {
     acl = ACL.at(await dao.acl())
 
     priceFeed = await PriceFeed.new()
-    priceFeed.mockSetTimestamp(NOW)
-
     payrollBase = await Payroll.new()
-    usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'USD', USD_DECIMALS)
 
+    usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'USD', USD_DECIMALS)
     await redistributeEth(accounts, finance)
   })
 
@@ -40,7 +38,11 @@ contract('Payroll, allowed tokens,', function(accounts) {
     const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
     payroll = Payroll.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
     await payroll.initialize(finance.address, usdToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+  })
+
+  beforeEach('set timestamps', async () => {
     await payroll.mockSetTimestamp(NOW)
+    await priceFeed.mockSetTimestamp(NOW)
   })
 
   beforeEach('grant permissions', async () => {
@@ -54,7 +56,7 @@ contract('Payroll, allowed tokens,', function(accounts) {
   })
 
   describe('determineAllocation', () => {
-    const tokenAddresses = [], allocations = [10, 20, 70]
+    const tokenAddresses = []
 
     before('deploy some tokens', async () => {
       const token1 = await deployErc20TokenAndDeposit(owner, finance, vault, 'Token 1', 14)
@@ -80,20 +82,82 @@ contract('Payroll, allowed tokens,', function(accounts) {
         context('when the amount of tokens and allocations match', () => {
           context('when the given list is not empty', () => {
             context('when all the given tokens are allowed', () => {
-              it('persists requested allocation', async () => {
-                const receipt = await payroll.determineAllocation(tokenAddresses, allocations, { from })
+              context('when the allocations add up to 100', () => {
 
-                const events = getEvents(receipt, 'DetermineAllocation')
-                assert.equal(events.length, 1, 'number of emitted DetermineAllocation events does not match')
-                assert.equal(events[0].args.employee, employee, 'employee address should match')
-                assert.equal(events[0].args.employeeId.toString(), employeeId, 'employee id should match')
+                const itDeterminesAllocationsProperly = allocations => {
+                  context('when there was no previous allocation', () => {
+                    it('persists requested allocation', async () => {
+                      const receipt = await payroll.determineAllocation(tokenAddresses, allocations, { from })
 
-                for (const tokenAddress of tokenAddresses) {
-                  const expectedAllocation = allocations[tokenAddresses.indexOf(tokenAddress)]
-                  assert.equal(await payroll.getAllocation(employeeId, tokenAddress), expectedAllocation, 'token allocation does not match')
+                      const events = getEvents(receipt, 'DetermineAllocation')
+                      assert.equal(events.length, 1, 'number of emitted DetermineAllocation events does not match')
+                      assert.equal(events[0].args.employee, employee, 'employee address should match')
+                      assert.equal(events[0].args.employeeId.toString(), employeeId, 'employee id should match')
+
+                      for (const tokenAddress of tokenAddresses) {
+                        const expectedAllocation = allocations[tokenAddresses.indexOf(tokenAddress)]
+                        assert.equal(await payroll.getAllocation(employeeId, tokenAddress), expectedAllocation, 'token allocation does not match')
+                      }
+
+                      assert.equal(await payroll.getAllocation(employeeId, anyone), 0, 'token allocation should be zero')
+                    })
+                  })
+
+                  context('when there was a previous allocation', () => {
+                    let token
+
+                    beforeEach('submit previous allocation', async () => {
+                      token = await deployErc20TokenAndDeposit(owner, finance, vault, 'Previous Token', 18)
+                      await payroll.addAllowedToken(token.address, { from: owner })
+
+                      await payroll.determineAllocation([token.address], [100], { from })
+                      assert.equal(await payroll.getAllocation(employeeId, token.address), 100)
+
+                      for (const tokenAddress of tokenAddresses) {
+                        assert.equal(await payroll.getAllocation(employeeId, tokenAddress), 0, 'token allocation does not match')
+                      }
+                    })
+
+                    it('replaces previous allocation for the requested one', async () => {
+                      await payroll.determineAllocation(tokenAddresses, allocations, { from })
+
+                      for (const tokenAddress of tokenAddresses) {
+                        const expectedAllocation = allocations[tokenAddresses.indexOf(tokenAddress)]
+                        assert.equal(await payroll.getAllocation(employeeId, tokenAddress), expectedAllocation, 'token allocation does not match')
+                      }
+
+                      assert.equal(await payroll.getAllocation(employeeId, token.address), 0)
+                    })
+                  })
                 }
 
-                assert.equal(await payroll.getAllocation(employeeId, anyone), 0, 'token allocation should be zero')
+                context('when the allocation list does not include zero values', () => {
+                  const allocations = [10, 20, 70]
+
+                  itDeterminesAllocationsProperly(allocations)
+                })
+
+                context('when the allocation list includes zero values', () => {
+                  const allocations = [90, 10, 0]
+
+                  itDeterminesAllocationsProperly(allocations)
+                })
+              })
+
+              context('when the allocations add up less than 100', () => {
+                const allocations = [10, 20, 69]
+
+                it('reverts', async () => {
+                  await assertRevert(payroll.determineAllocation(tokenAddresses, allocations, { from }), 'PAYROLL_DISTRIBUTION_NO_COMPLETE')
+                })
+              })
+
+              context('when the allocations add up more than 100', () => {
+                const allocations = [10, 20, 71]
+
+                it('reverts', async () => {
+                  await assertRevert(payroll.determineAllocation(tokenAddresses, allocations, { from }), 'PAYROLL_DISTRIBUTION_NO_COMPLETE')
+                })
               })
             })
 
@@ -124,6 +188,7 @@ contract('Payroll, allowed tokens,', function(accounts) {
 
         context('when the amount of tokens and allocations do not match', () => {
           it('reverts', async () => {
+            const allocations = [100]
             const addresses = [...tokenAddresses, anyone]
 
             await assertRevert(payroll.determineAllocation(addresses, allocations, { from }), 'PAYROLL_TOKEN_ALLOCATION_MISMATCH')
@@ -149,7 +214,7 @@ contract('Payroll, allowed tokens,', function(accounts) {
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(payroll.determineAllocation(tokenAddresses, allocations, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+        await assertRevert(payroll.determineAllocation(tokenAddresses, [100, 0, 0], { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
       })
     })
   })
