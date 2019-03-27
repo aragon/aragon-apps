@@ -11,11 +11,7 @@ function useIdentity(address) {
   )
 
   const handleNameChange = metadata => {
-    if (!metadata) {
-      setName(null)
-    } else {
-      setName(metadata.name)
-    }
+    setName(metadata ? metadata.name : null)
   }
 
   const handleShowLocalIdentityModal = address => {
