@@ -2,45 +2,40 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Badge, IdentityBadge, font } from '@aragon/ui'
-import { LocalIdentityModalContext } from '../LocalIdentityModal/LocalIdentityModalManager'
 import { IdentityContext } from '../IdentityManager/IdentityManager'
 
-const LocalIdentityBadge = ({ address, ...props }) => {
-  const { resolve } = React.useContext(IdentityContext)
-  const { showLocalIdentityModal, updates$ } = React.useContext(
-    LocalIdentityModalContext
+function useIdentity(address) {
+  const [name, setName] = React.useState(null)
+  const { resolve, updates$, showLocalIdentityModal } = React.useContext(
+    IdentityContext
   )
-  const [label, setLabel] = React.useState()
-  const handleResolve = async () => {
-    try {
-      const { name = null } = await resolve(address)
-      setLabel(name)
-    } catch (e) {
-      // address does not ressolve to identity
-    }
+
+  const handleNameChange = metadata => {
+    setName(metadata.name)
   }
-  const handleClick = () => {
-    showLocalIdentityModal(address)
-      .then(handleResolve)
-      .catch(e => {
-        /* user cancelled modify intent */
-      })
-  }
+
   React.useEffect(() => {
-    handleResolve()
+    resolve(address).then(handleNameChange)
+
     const subscription = updates$.subscribe(updatedAddress => {
       if (updatedAddress.toLowerCase() === address.toLowerCase()) {
-        handleResolve()
+        resolve(address).then(handleNameChange)
       }
     })
     return () => subscription.unsubscribe()
   }, [address])
 
+  return [name, showLocalIdentityModal]
+}
+
+const LocalIdentityBadge = ({ address, ...props }) => {
+  const [label, showLocalIdentityModal] = useIdentity(address)
+  const handleClick = () => showLocalIdentityModal(address)
   return (
     <IdentityBadge
       {...props}
       customLabel={label || ''}
-      address={address}
+      entity={address}
       popoverAction={{
         label: `${label ? 'Edit' : 'Add'} custom label`,
         onClick: handleClick,
