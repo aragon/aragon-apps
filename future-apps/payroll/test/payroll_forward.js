@@ -1,90 +1,98 @@
-const Payroll = artifacts.require("PayrollMock");
-const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow');
-const { encodeCallScript } = require('@aragon/test-helpers/evmScript');
-const ExecutionTarget = artifacts.require('ExecutionTarget');
-const DAOFactory = artifacts.require('@aragon/os/contracts/factory/DAOFactory');
-const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory/EVMScriptRegistryFactory');
-const ACL = artifacts.require('@aragon/os/contracts/acl/ACL');
-const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel');
+const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 
-const getContract = name => artifacts.require(name)
-const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
+const ACL = artifacts.require('ACL')
+const Payroll = artifacts.require('PayrollMock')
+const PriceFeed = artifacts.require('PriceFeedMock')
+const ExecutionTarget = artifacts.require('ExecutionTarget')
 
-const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff';
+const getEvent = (receipt, event) => receipt.logs.find(l => l.event === event).args
+const getEventArgument = (receipt, event, arg) => getEvent(receipt, event)[arg]
 
 contract('PayrollForward', function(accounts) {
-  const [owner, employee1, employee2] = accounts
-  const {
-      deployErc20TokenAndDeposit,
-      addAllowedTokens,
-      getTimePassed,
-      redistributeEth,
-      getDaoFinanceVault,
-      initializePayroll
-  } = require('./helpers.js')(owner)
+  const [owner, employee, anyone] = accounts
+  const { deployErc20TokenAndDeposit, redistributeEth, getDaoFinanceVault } = require('./helpers.js')(owner)
 
-  const SECONDS_IN_A_YEAR = 31557600; // 365.25 days
   const USD_DECIMALS= 18
-  const rateExpiryTime = 1000
+  const RATE_EXPIRATION_TIME = 1000
 
-  let dao
-  let payroll
-  let payrollBase
-  let finance
-  let vault
-  let priceFeed
-  let usdToken
-  let erc20Token1
-  const erc20Token1Decimals = 18
+  let dao, acl, payroll, payrollBase, finance, vault, priceFeed, usdToken
 
-  let unused_account = accounts[7];
+  before('setup base apps and tokens', async () => {
+    const daoFinanceVault = await getDaoFinanceVault()
+    dao = daoFinanceVault.dao
+    finance = daoFinanceVault.finance
+    vault = daoFinanceVault.vault
+    acl = ACL.at(await dao.acl())
 
-  before(async () => {
-    payrollBase = await getContract('PayrollMock').new()
+    priceFeed = await PriceFeed.new()
+    payrollBase = await Payroll.new()
+    usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'USD', USD_DECIMALS)
 
-    const daoAndFinance = await getDaoFinanceVault()
-
-    dao = daoAndFinance.dao
-    finance = daoAndFinance.finance
-    vault = daoAndFinance.vault
-
-    usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", USD_DECIMALS)
-    priceFeed = await getContract('PriceFeedMock').new()
-
-    // Deploy ERC 20 Tokens
-    erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 1", erc20Token1Decimals)
-
-    // make sure owner and Payroll have enough funds
     await redistributeEth(accounts, finance)
-  });
+  })
+  
+  beforeEach('initialize payroll instance and add employee', async () => {
+    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
+    payroll = Payroll.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+    await payroll.initialize(finance.address, usdToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+  })
+  
+  beforeEach('add employee', async () => {
+    const ADD_EMPLOYEE_ROLE = await payrollBase.ADD_EMPLOYEE_ROLE()
+    await acl.createPermission(owner, payroll.address, ADD_EMPLOYEE_ROLE, owner, { from: owner })
+    await payroll.addEmployeeNow(employee, 100000, 'John', 'Doe', { from: owner })
+  })
 
-  beforeEach(async () => {
-    payroll = await initializePayroll(dao, payrollBase, finance, usdToken, priceFeed, rateExpiryTime)
+  it('is a forwarder', async () => {
+    assert(await payroll.isForwarder(), 'should be a forwarder')
+  })
 
-    // adds allowed tokens
-    await addAllowedTokens(payroll, [usdToken, erc20Token1])
+  describe('canForward', () => {
+    context('when the sender is an employee', () => {
+      const sender = employee
 
-    // add employee
-    const receipt = await payroll.addEmployeeNow(employee1, 100000, 'Kakaroto', 'Saiyajin')
-    employeeId1 = getEvent(receipt, 'AddEmployee', 'employeeId')
-  });
+      it('returns true', async () =>  {
+        assert(await payroll.canForward(sender, '0x'), 'sender should be able to forward')
+      })
+    })
 
-  it("checks that it's forwarder", async () => {
-    let result = await payroll.isForwarder.call();
-    assert.equal(result.toString(), "true", "It's not forwarder");
-  });
+    context('when the sender is an employee', () => {
+      const sender = anyone
 
-  it('forwards actions to employee', async () => {
-    const executionTarget = await ExecutionTarget.new();
-    const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() };
-    const script = encodeCallScript([action]);
+      it('returns false', async () =>  {
+        assert.isFalse(await payroll.canForward(sender, '0x'), 'sender should not be able to forward')
+      })
+    })
+  })
 
-    await payroll.forward(script, { from: employee1 });
-    assert.equal((await executionTarget.counter()).toString(), 1, 'should have received execution call');
+  describe('forward', () => {
+    let executionTarget, script
 
-    // can not forward call
-    return assertRevert(async () => {
-      await payroll.forward(script, { from: unused_account });
-    });
-  });
-});
+    beforeEach('build script', async () => {
+      executionTarget = await ExecutionTarget.new()
+      const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+      script = encodeCallScript([action])
+    })
+
+    context('when the sender is an employee', () => {
+      const from = employee
+
+      it('executes the given script', async () =>  {
+        await payroll.forward(script, { from })
+
+        assert.equal(await executionTarget.counter(), 1, 'should have received execution calls')
+      })
+    })
+
+    context('when the sender is an employee', () => {
+      const from = anyone
+
+      it('reverts', async () =>  {
+        await assertRevert(payroll.forward(script, { from }), 'PAYROLL_NO_FORWARD')
+
+        assert.equal(await executionTarget.counter(), 0, 'should not have received execution calls')
+      })
+    })
+  })
+})
