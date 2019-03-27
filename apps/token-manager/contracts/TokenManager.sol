@@ -247,7 +247,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @param _amount The amount of the transfer
     * @return False if the controller does not authorize the transfer
     */
-    function onTransfer(address _from, address _to, uint _amount) public onlyToken returns (bool) {
+    function onTransfer(address _from, address _to, uint256 _amount) public onlyToken returns (bool) {
         if (_isBalanceIncreaseAllowed(_to, _amount)) {
             // Always allow transfers from the Token Manager itself
             return (_from == address(this) || _spendableBalanceOf(_from) >= _amount);
@@ -328,7 +328,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
     }
 
-    function _isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
+    function _isBalanceIncreaseAllowed(address _receiver, uint256 _inc) internal view returns (bool) {
         // Max balance doesn't apply to the token manager itself
         if (_receiver == address(this)) {
             return true;
