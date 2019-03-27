@@ -1,118 +1,168 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const getBalance = require('@aragon/test-helpers/balance')(web3)
-const getTransaction = require('@aragon/test-helpers/transaction')(web3)
 
-const getContract = name => artifacts.require(name)
-const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
+const ACL = artifacts.require('ACL')
+const Payroll = artifacts.require('PayrollMock')
+const PriceFeed = artifacts.require('PriceFeedMock')
+
+const getEvent = (receipt, event) => getEvents(receipt, event)[0].args
+const getEvents = (receipt, event) => receipt.logs.filter(l => l.event === event)
+const getEventArgument = (receipt, event, arg) => getEvent(receipt, event)[arg]
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('Payroll, price feed,', function(accounts) {
+  const [owner, employee, anyone] = accounts
+  const { deployErc20TokenAndDeposit, redistributeEth, getDaoFinanceVault } = require("./helpers.js")(owner)
+
+  const NOW = Math.floor((new Date()).getTime() / 1000)
+  const ONE_MONTH = 60 * 60 * 24
   const USD_DECIMALS = 18
-  const USD_PRECISION = 10 ** USD_DECIMALS
-  const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
-  const ONE = 1e18
-  const ETH = "0x0"
-  const rateExpiryTime = 1000
+  const RATE_EXPIRATION_TIME = 1000
 
-  const [owner, employee] = accounts
-  const unused_account = accounts[7]
-  const {
-    deployErc20TokenAndDeposit,
-    addAllowedTokens,
-    getTimePassed,
-    redistributeEth,
-    getDaoFinanceVault,
-    initializePayroll
-  } = require("./helpers.js")(owner)
+  let dao, acl, payroll, payrollBase, finance, vault, priceFeed, usdToken
 
-  let salary = (new web3.BigNumber(10000)).times(USD_PRECISION).dividedToIntegerBy(SECONDS_IN_A_YEAR)
+  before('setup base apps and tokens', async () => {
+    const daoFinanceVault = await getDaoFinanceVault()
+    dao = daoFinanceVault.dao
+    finance = daoFinanceVault.finance
+    vault = daoFinanceVault.vault
+    acl = ACL.at(await dao.acl())
 
-  let usdToken
-  let erc20Token1
-  let erc20Token1ExchangeRate
-  const erc20Token1Decimals = 20
-  let erc20Token2;
-  const erc20Token2Decimals = 16;
-  let etherExchangeRate
+    priceFeed = await PriceFeed.new()
+    payrollBase = await Payroll.new()
+    usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'USD', USD_DECIMALS)
 
-  let payroll
-  let payrollBase
-  let priceFeed
-  let employeeId
-  let dao
-  let finance
-  let vault
-
-  before(async () => {
-    payrollBase = await getContract("PayrollMock").new()
-
-    const daoAndFinance = await getDaoFinanceVault()
-
-    dao = daoAndFinance.dao
-    finance = daoAndFinance.finance
-    vault = daoAndFinance.vault
-
-    usdToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", USD_DECIMALS)
-    priceFeed = await getContract("PriceFeedMock").new()
-
-    // Deploy ERC 20 Tokens
-    erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 1", erc20Token1Decimals)
-    erc20Token2 = await deployErc20TokenAndDeposit(owner, finance, vault, "Token 2", erc20Token2Decimals);
-
-    // make sure owner and Payroll have enough funds
     await redistributeEth(accounts, finance)
   })
 
-  beforeEach(async () => {
-    payroll = await initializePayroll(
-      dao,
-      payrollBase,
-      finance,
-      usdToken,
-      priceFeed,
-      rateExpiryTime
-    )
+  beforeEach('create payroll instance', async () => {
+    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
+    payroll = Payroll.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+    await payroll.initialize(finance.address, usdToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+  })
 
-    // adds allowed tokens
-    await addAllowedTokens(payroll, [usdToken, erc20Token1])
+  beforeEach('grant permissions', async () => {
+    const ADD_EMPLOYEE_ROLE = await payrollBase.ADD_EMPLOYEE_ROLE()
+    const CHANGE_PRICE_FEED_ROLE = await payrollBase.CHANGE_PRICE_FEED_ROLE()
+    const MODIFY_RATE_EXPIRY_ROLE = await payrollBase.MODIFY_RATE_EXPIRY_ROLE()
+    const ALLOWED_TOKENS_MANAGER_ROLE = await payrollBase.ALLOWED_TOKENS_MANAGER_ROLE()
+
+    await acl.createPermission(owner, payroll.address, ADD_EMPLOYEE_ROLE, owner, { from: owner })
+    await acl.createPermission(owner, payroll.address, CHANGE_PRICE_FEED_ROLE, owner, { from: owner })
+    await acl.createPermission(owner, payroll.address, MODIFY_RATE_EXPIRY_ROLE, owner, { from: owner })
+    await acl.createPermission(owner, payroll.address, ALLOWED_TOKENS_MANAGER_ROLE, owner, { from: owner })
   })
 
   it('fails to pay if rates are obsolete', async () => {
-    // add employee
-    const startDate = parseInt(await payroll.getTimestampPublic.call(), 10) - 2628005 // now minus 1/12 year
-    const receipt = await payroll.addEmployee(employee, salary, "Kakaroto", 'Saiyajin', startDate)
-    const employeeId = getEvent(receipt, 'AddEmployee', 'employeeId')
+    await payroll.mockSetTimestamp(NOW)
+    await priceFeed.mockSetTimestamp(NOW)
 
-    const usdTokenAllocation = 50
-    const erc20Token1Allocation = 20
-    const ethAllocation = 100 - usdTokenAllocation - erc20Token1Allocation
-    // determine allocation
-    await payroll.determineAllocation([ETH, usdToken.address, erc20Token1.address], [ethAllocation, usdTokenAllocation, erc20Token1Allocation], {from: employee})
-    await getTimePassed(payroll, employeeId)
-    // set old date in price feed
-    const oldTime = parseInt(await payroll.getTimestampPublic(), 10) - rateExpiryTime - 1
-    await priceFeed.mockSetTimestamp(oldTime)
-    // call payday
-    return assertRevert(async () => {
-      await payroll.payday({from: employee})
+    const token = await deployErc20TokenAndDeposit(owner, finance, vault, 'Token', 18)
+    await payroll.addAllowedToken(token.address, { from: owner })
+    await payroll.addEmployeeNow(employee, 1000, 'John', 'Boss', { from: owner })
+    await payroll.determineAllocation([token.address], [100], { from: employee })
+
+    await payroll.mockSetTimestamp(NOW + ONE_MONTH)
+    await priceFeed.mockSetTimestamp(NOW - ONE_MONTH)
+    await assertRevert(payroll.payday({ from: employee }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+
+    await priceFeed.mockSetTimestamp(NOW + ONE_MONTH)
+    await payroll.payday({ from: employee })
+  })
+
+  describe('setPriceFeed', () => {
+    let newFeedAddress
+
+    beforeEach('deploy new feed', async () => {
+      newFeedAddress = (await PriceFeed.new()).address
+    })
+
+    context('when the sender has permissions', async () => {
+      const from = owner
+
+      context('when the given address is a contract', async () => {
+        it('updates the feed address', async () => {
+          await payroll.setPriceFeed(newFeedAddress, { from })
+
+          assert.equal(await payroll.feed(), newFeedAddress, 'feed address does not match')
+        })
+
+        it('emits an event', async () => {
+          const receipt = await payroll.setPriceFeed(newFeedAddress, { from })
+
+          const events = getEvents(receipt, 'SetPriceFeed')
+          assert.equal(events.length, 1, 'number of SetPriceFeed emitted events does not match')
+          assert.equal(events[0].args.feed, newFeedAddress, 'feed address does not match')
+        })
+      })
+
+      context('when the given address is not a contract', async () => {
+        it('reverts', async () => {
+          await assertRevert(payroll.setPriceFeed(anyone, { from }), 'PAYROLL_FEED_NOT_CONTRACT')
+        })
+      })
+
+      context('when the given address is the zero address', async () => {
+        it('reverts', async () => {
+          await assertRevert(payroll.setPriceFeed(ZERO_ADDRESS, { from }), 'PAYROLL_FEED_NOT_CONTRACT')
+        })
+      })
+    })
+
+    context('when the sender does not have permissions', async () => {
+      const from = anyone
+
+      it('reverts', async () => {
+        await assertRevert(payroll.setPriceFeed(newFeedAddress, { from }), 'APP_AUTH_FAILED')
+      })
     })
   })
 
-  it('fails to change the price feed time to 0', async () => {
-    return assertRevert(async () => {
-      await payroll.setPriceFeed('0x0')
+  describe('setRateExpiryTime', () => {
+    context('when the sender has permissions', async () => {
+      const from = owner
+
+      context('when the given time is more than a minute', async () => {
+        const expirationTime = 61
+
+        it('updates the expiration time', async () => {
+          await payroll.setRateExpiryTime(expirationTime, { from })
+
+          assert.equal((await payroll.rateExpiryTime()).toString(), expirationTime, 'rate expiration time does not match')
+        })
+
+        it('emits an event', async () => {
+          const receipt = await payroll.setRateExpiryTime(expirationTime, { from })
+
+          const events = getEvents(receipt, 'SetRateExpiryTime')
+          assert.equal(events.length, 1, 'number of SetRateExpiryTime emitted events does not match')
+          assert.equal(events[0].args.time.toString(), expirationTime, 'rate expiration time does not match')
+        })
+      })
+
+      context('when the given expiration time is one minute', async () => {
+        const expirationTime = 60
+
+        it('reverts', async () => {
+          await assertRevert(payroll.setRateExpiryTime(expirationTime, { from }), 'PAYROLL_EXPIRY_TIME_TOO_SHORT')
+        })
+      })
+
+      context('when the given expiration time is less than a minute', async () => {
+        const expirationTime = 40
+
+        it('reverts', async () => {
+          await assertRevert(payroll.setRateExpiryTime(expirationTime, { from }), 'PAYROLL_EXPIRY_TIME_TOO_SHORT')
+        })
+      })
     })
-  })
 
-  it('changes the rate expiry time', async () => {
-    const newTime = rateExpiryTime * 2
-    await payroll.setRateExpiryTime(newTime)
-    assert.equal(await payroll.rateExpiryTime(), newTime)
-  })
+    context('when the sender does not have permissions', async () => {
+      const from = anyone
 
-  it('fails to change the rate expiry time to 0', async () => {
-    const newTime = 0
-    return assertRevert(async () => {
-      await payroll.setRateExpiryTime(newTime)
+      it('reverts', async () => {
+        await assertRevert(payroll.setRateExpiryTime(1000, { from }), 'APP_AUTH_FAILED')
+      })
     })
   })
 })

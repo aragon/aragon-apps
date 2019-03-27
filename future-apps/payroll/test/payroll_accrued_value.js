@@ -4,10 +4,11 @@ const getContract = name => artifacts.require(name)
 const getEvent = (receipt, event, arg) => receipt.logs.find(l => l.event === event).args[arg]
 
 contract('Payroll, accrued value', (accounts) => {
-  const DECIMALS = 18
-  const NOW = new Date().getTime()
+  const NOW = Math.floor((new Date()).getTime() / 1000)
   const ONE_MONTH = 60 * 60 * 24 * 31
   const TWO_MONTHS = ONE_MONTH * 2
+
+  const DECIMALS = 18
   const PCT_ONE = new web3.BigNumber(1e18)
 
   const [owner, employee, anyone] = accounts
