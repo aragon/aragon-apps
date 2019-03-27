@@ -86,7 +86,7 @@ contract("Payroll, modifying employees,", function(accounts) {
     await addAllowedTokens(payroll, [usdToken, erc20Token1])
 
     // add employee
-    const receipt = await payroll.addEmployeeShort(employee1_1, salary1, 'Kakaroto', 'Saiyajin')
+    const receipt = await payroll.addEmployeeNow(employee1_1, salary1, 'Kakaroto', 'Saiyajin')
     employeeId1 = getEvent(receipt, "AddEmployee", "employeeId")
   })
 
@@ -108,7 +108,7 @@ contract("Payroll, modifying employees,", function(accounts) {
 
   it("fails modifying employee account address by Employee, for already existent account", async () => {
     // add another employee
-    await payroll.addEmployeeShort(employee2, salary1, 'Joe', 'Dev')
+    await payroll.addEmployeeNow(employee2, salary1, 'Joe', 'Dev')
     // try to use account from this other employee
     let account_old = employee1_1
     let account_new = employee2

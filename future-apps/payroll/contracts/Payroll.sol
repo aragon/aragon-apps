@@ -188,7 +188,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _name Employee's name
      * @param _role Employee's role
      */
-    function addEmployee(
+    function addEmployeeNow(
         address _accountAddress,
         uint256 _initialDenominationSalary,
         string _name,
