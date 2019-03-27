@@ -6,7 +6,9 @@ import { IdentityContext } from '../IdentityManager/IdentityManager'
 
 function useIdentity(address) {
   const [name, setName] = React.useState(null)
-  const { resolve, updates$, showLocalIdentityModal } = React.useContext(IdentityContext)
+  const { resolve, updates$, showLocalIdentityModal } = React.useContext(
+    IdentityContext
+  )
 
   const handleNameChange = metadata => {
     setName(metadata.name)
