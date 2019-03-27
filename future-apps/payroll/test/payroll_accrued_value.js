@@ -1,111 +1,251 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { bigExp, maxUint256 } = require('./helpers/numbers')(web3)
 
-const getContract = name => artifacts.require(name)
-const getEvent = (receipt, event, arg) => receipt.logs.find(l => l.event === event).args[arg]
+const ACL = artifacts.require('ACL')
+const Payroll = artifacts.require('PayrollMock')
+const PriceFeed = artifacts.require('PriceFeedMock')
+
+const getEvent = (receipt, event) => getEvents(receipt, event)[0].args
+const getEvents = (receipt, event) => receipt.logs.filter(l => l.event === event)
+const getEventArgument = (receipt, event, arg) => getEvent(receipt, event)[arg]
 
 contract('Payroll, accrued value', (accounts) => {
+  const [owner, employee, anyone] = accounts
+  const { deployErc20TokenAndDeposit, redistributeEth, getDaoFinanceVault } = require("./helpers.js")(owner)
+
   const NOW = Math.floor((new Date()).getTime() / 1000)
   const ONE_MONTH = 60 * 60 * 24 * 31
   const TWO_MONTHS = ONE_MONTH * 2
 
-  const DECIMALS = 18
-  const PCT_ONE = new web3.BigNumber(1e18)
+  const PCT_ONE = bigExp(1, 18)
+  const RATE_EXPIRATION_TIME = TWO_MONTHS
 
-  const [owner, employee, anyone] = accounts
-  const {
-    deployErc20TokenAndDeposit,
-    addAllowedTokens,
-    redistributeEth,
-    getDaoFinanceVault,
-    initializePayroll
-  } = require('./helpers.js')(owner)
+  let dao, acl, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
 
-  let payroll, payrollBase, priceFeed, denominationToken, anotherToken, salary, employeeId, dao, finance, vault
-
-  before(async () => {
-    payrollBase = await getContract('PayrollMock').new()
-
+  before('setup base apps and tokens', async () => {
     const daoFinanceVault = await getDaoFinanceVault()
     dao = daoFinanceVault.dao
     finance = daoFinanceVault.finance
     vault = daoFinanceVault.vault
+    acl = ACL.at(await dao.acl())
+
+    priceFeed = await PriceFeed.new()
+    priceFeed.mockSetTimestamp(NOW)
+
+    payrollBase = await Payroll.new()
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination token', 18)
+    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', 18)
 
     await redistributeEth(accounts, finance)
-
-    priceFeed = await getContract('PriceFeedMock').new()
-    await priceFeed.mockSetTimestamp(NOW)
   })
 
-  beforeEach('initialize payroll, tokens and employee', async () => {
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, "USD", DECIMALS)
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, "ERC20", DECIMALS)
-
-    payroll = await initializePayroll(dao, payrollBase, finance, denominationToken, priceFeed, TWO_MONTHS)
+  beforeEach('create payroll instance and initialize', async () => {
+    const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
+    payroll = Payroll.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+    await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
     await payroll.mockSetTimestamp(NOW)
-    await addAllowedTokens(payroll, [denominationToken, anotherToken])
-
-    salary = 1000
-    const receipt = await payroll.addEmployeeNow(employee, salary, 'Kakaroto', 'Saiyajin')
-    employeeId = getEvent(receipt, 'AddEmployee', 'employeeId')
   })
 
-  it('adds accrued value manually', async () => {
-    const accruedValue = 50
-    await payroll.addAccruedValue(employeeId, accruedValue)
-    assert.equal((await payroll.getEmployee(employeeId))[2].toString(), accruedValue, 'Accrued Value should match')
+  beforeEach('grant permissions', async () => {
+    const ADD_EMPLOYEE_ROLE = await payrollBase.ADD_EMPLOYEE_ROLE()
+    const ADD_ACCRUED_VALUE_ROLE = await payrollBase.ADD_ACCRUED_VALUE_ROLE()
+    const TERMINATE_EMPLOYEE_ROLE = await payrollBase.TERMINATE_EMPLOYEE_ROLE()
+    const SET_EMPLOYEE_SALARY_ROLE = await payrollBase.SET_EMPLOYEE_SALARY_ROLE()
+    const ALLOWED_TOKENS_MANAGER_ROLE = await payrollBase.ALLOWED_TOKENS_MANAGER_ROLE()
+
+    await acl.createPermission(owner, payroll.address, ADD_EMPLOYEE_ROLE, owner, { from: owner })
+    await acl.createPermission(owner, payroll.address, ADD_ACCRUED_VALUE_ROLE, owner, { from: owner })
+    await acl.createPermission(owner, payroll.address, TERMINATE_EMPLOYEE_ROLE, owner, { from: owner })
+    await acl.createPermission(owner, payroll.address, SET_EMPLOYEE_SALARY_ROLE, owner, { from: owner })
+    await acl.createPermission(owner, payroll.address, ALLOWED_TOKENS_MANAGER_ROLE, owner, { from: owner })
   })
 
-  it('fails adding an accrued value too large', async () => {
-    const maxAccruedValue = await payroll.getMaxAccruedValue()
-    await payroll.addAccruedValue(employeeId, maxAccruedValue)
+  describe('setEmployeeSalary', () => {
+    context('when the sender has permissions', () => {
+      const from = owner
 
-    await assertRevert(payroll.addAccruedValue(employeeId, 1))
+      context('when the given employee exists', () => {
+        let employeeId
+        const previousSalary = 1000
+
+        beforeEach('add employee', async () => {
+          const receipt = await payroll.addEmployeeNow(employee, previousSalary, 'John', 'Doe')
+          employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
+        })
+
+        context('when the given employee is active', () => {
+
+          const itSetsSalarySuccessfully = newSalary => {
+            it('changes the salary of the employee', async () => {
+              await payroll.setEmployeeSalary(employeeId, newSalary, { from })
+
+              const salary = (await payroll.getEmployee(employeeId))[1]
+              assert.equal(salary.toString(), newSalary, 'accrued value does not match')
+            })
+
+            it('adds previous owed salary to the accrued value', async () => {
+              await payroll.mockAddTimestamp(ONE_MONTH)
+
+              await payroll.setEmployeeSalary(employeeId, newSalary, { from })
+              await payroll.mockAddTimestamp(ONE_MONTH)
+
+              const accruedValue = (await payroll.getEmployee(employeeId))[2]
+              assert.equal(accruedValue.toString(), previousSalary * ONE_MONTH, 'accrued value does not match')
+            })
+
+            it('emits an event', async () => {
+              const receipt = await payroll.setEmployeeSalary(employeeId, newSalary, { from })
+
+              const events = getEvents(receipt, 'SetEmployeeSalary')
+              assert.equal(events.length, 1, 'number of SetEmployeeSalary emitted events does not match')
+              assert.equal(events[0].args.employeeId.toString(), employeeId, 'employee id does not match')
+              assert.equal(events[0].args.denominationSalary.toString(), newSalary, 'salary does not match')
+            })
+          }
+
+          context('when the given value greater than zero', () => {
+            const value = 1000
+
+            itSetsSalarySuccessfully(value)
+          })
+
+          context('when the given value is zero', () => {
+            const value = 0
+
+            itSetsSalarySuccessfully(value)
+          })
+        })
+
+        context('when the given employee is not active', () => {
+          beforeEach('terminate employee', async () => {
+            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.mockAddTimestamp(ONE_MONTH)
+          })
+
+          it('reverts', async () => {
+            await assertRevert(payroll.setEmployeeSalary(employeeId, 1000, { from }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
+          })
+        })
+      })
+
+      context('when the given employee does not exist', async () => {
+        const employeeId = 0
+
+        it('reverts', async () => {
+          await assertRevert(payroll.setEmployeeSalary(employeeId, 1000, { from }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
+        })
+      })
+    })
+
+    context('when the sender does not have permissions', () => {
+      const from = anyone
+
+      it('reverts', async () => {
+        await assertRevert(payroll.setEmployeeSalary(0, 1000, { from }), 'APP_AUTH_FAILED')
+      })
+    })
   })
 
-  it('considers modified salary as accrued value and it can be computed right after the change', async () => {
-    const timeDiff = 864000
-    await payroll.mockAddTimestamp(timeDiff)
+  describe('addAccruedValue', () => {
+    context('when the sender has permissions', () => {
+      const from = owner
 
-    const salary1_1 = salary * 2
-    await payroll.setEmployeeSalary(employeeId, salary1_1)
+      context('when the given employee exists', () => {
+        let employeeId
 
-    await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
-    const initialBalance = await denominationToken.balanceOf(employee)
-    await payroll.reimburse({ from: employee })
+        beforeEach('add employee', async () => {
+          const receipt = await payroll.addEmployeeNow(employee, 1000, 'John', 'Doe')
+          employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
+        })
 
-    const finalBalance = await denominationToken.balanceOf(employee)
-    const payrollOwed = salary * timeDiff
-    assert.equal(finalBalance - initialBalance, payrollOwed, "Payroll payed doesn't match")
+        context('when the given employee is active', () => {
+
+          const itAddsAccruedValueSuccessfully = value => {
+            it('adds requested accrued value', async () => {
+              await payroll.addAccruedValue(employeeId, value, { from })
+
+              const accruedValue = (await payroll.getEmployee(employeeId))[2]
+              assert.equal(accruedValue, value, 'accrued value does not match')
+            })
+
+            it('emits an event', async () => {
+              const receipt = await payroll.addAccruedValue(employeeId, value, { from })
+
+              const events = getEvents(receipt, 'AddEmployeeAccruedValue')
+              assert.equal(events.length, 1, 'number of AddEmployeeAccruedValue emitted events does not match')
+              assert.equal(events[0].args.employeeId.toString(), employeeId, 'employee id does not match')
+              assert.equal(events[0].args.amount.toString(), value, 'accrued value does not match')
+            })
+          }
+
+          context('when the given value greater than zero', () => {
+            const value = 1000
+
+            itAddsAccruedValueSuccessfully(value)
+          })
+
+          context('when the given value is zero', () => {
+            const value = 0
+
+            itAddsAccruedValueSuccessfully(value)
+          })
+
+          context('when the given value way greater than zero', () => {
+            const value = maxUint256()
+
+            it('reverts', async () => {
+              await payroll.addAccruedValue(employeeId, 1, { from })
+
+              await assertRevert(payroll.addAccruedValue(employeeId, value, { from }), 'MATH_ADD_OVERFLOW')
+            })
+          })
+        })
+
+        context('when the given employee is not active', () => {
+          beforeEach('terminate employee', async () => {
+            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.mockAddTimestamp(ONE_MONTH)
+          })
+
+          it('reverts', async () => {
+            await assertRevert(payroll.addAccruedValue(employeeId, 1000, { from }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
+          })
+        })
+      })
+
+      context('when the given employee does not exist', async () => {
+        const employeeId = 0
+
+        it('reverts', async () => {
+          await assertRevert(payroll.addAccruedValue(employeeId, 1000, { from }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
+        })
+      })
+    })
+
+    context('when the sender does not have permissions', () => {
+      const from = anyone
+
+      it('reverts', async () => {
+        await assertRevert(payroll.addAccruedValue(0, 1000, { from }), 'APP_AUTH_FAILED')
+      })
+    })
   })
 
-  it('considers modified salary as accrued value  and it can be computed some time after the change', async () => {
-    const timeDiff = 864000
-    await payroll.mockAddTimestamp(timeDiff)
-
-    const salary1_1 = salary * 2
-    await payroll.setEmployeeSalary(employeeId, salary1_1)
-
-    await payroll.mockAddTimestamp(timeDiff * 2)
-
-    await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
-    const initialBalance = await denominationToken.balanceOf(employee)
-    await payroll.reimburse({ from: employee })
-
-    const finalBalance = await denominationToken.balanceOf(employee)
-    const payrollOwed = salary * timeDiff
-    assert.equal(finalBalance - initialBalance, payrollOwed, "Payroll payed doesn't match")
-  })
-
-  describe('reimburse', function () {
+  describe('reimburse', () => {
     context('when the sender is an employee', () => {
       const from = employee
+      let employeeId, salary = 1000
 
-      beforeEach('mock current timestamp', async () => {
+      beforeEach('add employee', async () => {
+        const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Doe')
+        employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         await payroll.mockAddTimestamp(ONE_MONTH)
       })
 
       context('when the employee has already set some token allocations', () => {
         beforeEach('set tokens allocation', async () => {
+          await payroll.addAllowedToken(anotherToken.address, { from: owner })
+          await payroll.addAllowedToken(denominationToken.address, { from: owner })
           await payroll.determineAllocation([denominationToken.address, anotherToken.address], [80, 20], { from })
         })
 
@@ -235,11 +375,14 @@ contract('Payroll, accrued value', (accounts) => {
     })
   })
 
-  describe('partialReimburse', function () {
+  describe('partialReimburse', () => {
     context('when the sender is an employee', () => {
       const from = employee
+      let employeeId, salary = 1000
 
-      beforeEach('mock current timestamp', async () => {
+      beforeEach('add employee', async () => {
+        const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Doe')
+        employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         await payroll.mockAddTimestamp(ONE_MONTH)
       })
 
@@ -248,6 +391,8 @@ contract('Payroll, accrued value', (accounts) => {
         const anotherTokenAllocation = 20
 
         beforeEach('set tokens allocation', async () => {
+          await payroll.addAllowedToken(anotherToken.address, { from: owner })
+          await payroll.addAllowedToken(denominationToken.address, { from: owner })
           await payroll.determineAllocation([denominationToken.address, anotherToken.address], [denominationTokenAllocation, anotherTokenAllocation], { from })
         })
 
@@ -348,7 +493,7 @@ contract('Payroll, accrued value', (accounts) => {
           })
 
           context('when the requested amount is less than the total accrued value', () => {
-              const requestedAmount = accruedValue - 1
+            const requestedAmount = accruedValue - 1
 
             context('when the employee has some pending salary', () => {
               assertTransferredAmounts(requestedAmount)
