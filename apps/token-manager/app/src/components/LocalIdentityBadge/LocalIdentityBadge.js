@@ -10,10 +10,9 @@ function useIdentity(address) {
     IdentityContext
   )
 
-  const handleNameChange = metadata => {
-    if (!metadata) return
-
-    setName(metadata.name)
+  const handleNameChange = ({ name = null } = {}) => {
+    // Default to null to reset when an identity has been cleared
+    setName(name)
   }
 
   const handleShowLocalIdentityModal = address => {
