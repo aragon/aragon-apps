@@ -13,25 +13,17 @@ const IdentityProvider = ({
   onResolve,
   onShowLocalIdentityModal,
   children,
-}) => {
-  const handleShowLocalIdentityModal = address => {
-    return onShowLocalIdentityModal(address)
-      .then(() => updates$.next(address))
-      .catch(e => null)
-  }
-
-  return (
-    <IdentityContext.Provider
-      value={{
-        resolve: onResolve,
-        showLocalIdentityModal: handleShowLocalIdentityModal,
-        updates$,
-      }}
-    >
-      {children}
-    </IdentityContext.Provider>
-  )
-}
+}) => (
+  <IdentityContext.Provider
+    value={{
+      resolve: onResolve,
+      showLocalIdentityModal: onShowLocalIdentityModal,
+      updates$,
+    }}
+  >
+    {children}
+  </IdentityContext.Provider>
+)
 
 IdentityProvider.propTypes = {
   children: PropTypes.node.isRequired,
