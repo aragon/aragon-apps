@@ -9,6 +9,7 @@ import "@aragon/os/contracts/common/IForwarder.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/lib/math/SafeMath8.sol";
+import "@aragon/os/contracts/common/Uint256Helpers.sol";
 
 import "@aragon/ppf-contracts/contracts/IFeed.sol";
 import "@aragon/apps-finance/contracts/Finance.sol";
@@ -21,6 +22,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     using SafeMath8 for uint8;
     using SafeMath64 for uint64;
     using SafeMath for uint256;
+    using Uint256Helpers for uint256;
 
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
     bytes32 constant public TERMINATE_EMPLOYEE_ROLE = keccak256("TERMINATE_EMPLOYEE_ROLE");
@@ -605,7 +607,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     function _getLastPayroll(uint256 _employeeId, uint256 _payedAmount) internal view returns (uint64) {
         Employee storage employee = employees[_employeeId];
-        uint64 timeDiff = uint64(_payedAmount.div(employee.denominationTokenSalary));
+        uint64 timeDiff = _payedAmount.div(employee.denominationTokenSalary).toUint64();
         return employee.lastPayroll.add(timeDiff);
     }
 
@@ -623,7 +625,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         // Get time diff in seconds, no need to use safe math as the underflow was covered by the previous check
         uint64 timeDiff = date - employee.lastPayroll;
-        uint256 result = employee.denominationTokenSalary * timeDiff;
+        uint256 result = employee.denominationTokenSalary * uint256(timeDiff);
 
         // Return max int if the result overflows
         if (result / timeDiff != employee.denominationTokenSalary) {
