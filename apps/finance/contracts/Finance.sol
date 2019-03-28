@@ -212,6 +212,37 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
+    * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver` for '`_reference`'
+    * @dev Note that this function is protected by the `CREATE_PAYMENTS_ROLE` but uses `MAX_UINT`
+    *      as its interval auth parameter (as a sentinel value for "never repeating").
+    *      While this protects against most cases (you typically want to set a baseline requirement
+    *      for interval time), it does mean users will have to explicitly check for this case when
+    *      granting a permission that includes a upperbound requirement on the interval time.
+    * @param _token Address of token for payment
+    * @param _receiver Address that will receive payment
+    * @param _amount Tokens that are paid every time the payment is due
+    * @param _reference String detailing payment reason
+    */
+    function newImmediatePayment(address _token, address _receiver, uint256 _amount, string _reference)
+        external
+        // Use MAX_UINT256 as the interval parameter, as this payment will never repeat
+        // Payment time parameter is left as the last param as it was added later
+        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, MAX_UINT, uint256(1), getTimestamp()))
+        transitionsPeriod
+    {
+        require(_amount > 0, ERROR_NEW_PAYMENT_AMOUNT_ZERO);
+
+        _makePaymentTransaction(
+            _token,
+            _receiver,
+            _amount,
+            NO_RECURRING_PAYMENT,   // unrelated to any payment id; it isn't created
+            0,   // also unrelated to any payment repeats
+            _reference
+        );
+    }
+
+    /**
     * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver` for `_reference`, executing `_maxRepeats` times at intervals of `@transformTime(_interval)`
     * @dev See `newImmediatePayment()` for limitations on how the interval auth parameter can be used
     * @param _token Address of token for payment
@@ -265,36 +296,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         // recurring payments before having enough vault balance
         _executePayment(paymentId);
     }
-
-    /**
-    * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver` for '`_reference`'
-    * @dev Note that this function is protected by the `CREATE_PAYMENTS_ROLE` but uses `MAX_UINT64`
-    *      as its interval auth parameter. While this protects against most cases (you typically want
-    *      to set a baseline requirement for the interval time), it does mean users can't grant a
-    *      permission that has a upperbound requirement for the interval time.
-    * @param _token Address of token for payment
-    * @param _receiver Address that will receive payment
-    * @param _amount Tokens that are paid every time the payment is due
-    * @param _reference String detailing payment reason
-    */
-   function newImmediatePayment(address _token, address _receiver, uint256 _amount, string _reference)
-        external
-        // Use MAX_UINT256 as the interval parameter, as this payment will never repeat
-        // Payment time parameter is left as the last param as it was added later
-        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, MAX_UINT, uint256(1), getTimestamp()))
-        transitionsPeriod
-   {
-        require(_amount > 0, ERROR_NEW_PAYMENT_AMOUNT_ZERO);
-
-        _makePaymentTransaction(
-            _token,
-            _receiver,
-            _amount,
-            NO_RECURRING_PAYMENT,   // unrelated to any payment id; it isn't created
-            0,   // also unrelated to any payment repeats
-            _reference
-        );
-   }
 
     /**
     * @notice Change period duration to `@transformTime(_periodDuration)`, effective for next accounting period
