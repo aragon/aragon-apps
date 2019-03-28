@@ -93,6 +93,7 @@ contract('Finance App', accounts => {
         // finance
         const receipt2 = await dao.newAppInstance('0x5678', financeBase.address, '0x', false, { from: root })
         const financeApp = Finance.at(receipt2.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+        await financeApp.mock_setTimestamp(START_TIME)
         await financeApp.mock_setMaxPeriodTransitions(MAX_UINT64)
 
         await acl.createPermission(ANY_ENTITY, financeApp.address, CREATE_PAYMENTS_ROLE, root, { from: root })
@@ -130,7 +131,6 @@ contract('Finance App', accounts => {
         await token2.transfer(vault.address, VAULT_INITIAL_TOKEN2_BALANCE)
         await vault.deposit(ETH, VAULT_INITIAL_ETH_BALANCE, { value: VAULT_INITIAL_ETH_BALANCE, from: accounts[0] });
 
-        await finance.mock_setTimestamp(START_TIME)
         await finance.initialize(vault.address, PERIOD_DURATION)
     })
 
@@ -172,9 +172,7 @@ contract('Finance App', accounts => {
 
     it('fails on initializing with less than one day period', async () => {
         const badPeriod = 60 * 60 * 24 - 1
-
         const { financeApp } = await newProxyFinance()
-        await financeApp.mock_setTimestamp(START_TIME)
 
         return assertRevert(() => financeApp.initialize(vault.address, badPeriod))
     })
@@ -889,7 +887,6 @@ contract('Finance App', accounts => {
             const { financeApp, recoveryVault } = await newProxyFinance()
             nonInit = financeApp
             recVault = recoveryVault
-            await nonInit.mock_setTimestamp(START_TIME)
         })
 
         it('fails to create new scheduled payment', async() => {
