@@ -11,7 +11,6 @@ import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/lib/math/SafeMath8.sol";
 
 import "@aragon/ppf-contracts/contracts/IFeed.sol";
-
 import "@aragon/apps-finance/contracts/Finance.sol";
 
 
@@ -32,7 +31,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
 
     uint128 internal constant ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
-    uint256 internal constant MAX_ALLOWED_TOKENS = 20; // for loop in `payday()` uses ~260k gas per available token
+    uint256 internal constant MAX_ALLOWED_TOKENS = 20; // for loop in `payday()` uses ~270k gas per token
     uint256 internal constant MAX_UINT256 = uint256(-1);
     uint64 internal constant MAX_UINT64 = uint64(-1);
 
@@ -607,7 +606,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     function _getLastPayroll(uint256 _employeeId, uint256 _payedAmount) internal view returns (uint64) {
         Employee storage employee = employees[_employeeId];
         uint64 timeDiff = uint64(_payedAmount.div(employee.denominationTokenSalary));
-        uint date = uint(employee.lastPayroll.add(timeDiff));
         return employee.lastPayroll.add(timeDiff);
     }
 
@@ -640,14 +638,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return ONE if _token is denominationToken or 0 if the exchange rate isn't recent enough
      */
     function _getExchangeRate(address _token) internal view returns (uint128) {
-        uint128 xrt;
-        uint64 when;
-
         // Denomination token has always exchange rate of 1
         if (_token == denominationToken) {
             return ONE;
         }
 
+        uint128 xrt;
+        uint64 when;
         (xrt, when) = feed.get(denominationToken, _token);
 
         // Check the price feed is recent enough
@@ -690,15 +687,18 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     function _tryRemovingEmployee(uint256 _employeeId) private {
         Employee storage employee = employees[_employeeId];
 
-        bool hasReachedEndDate = employee.endDate <= getTimestamp64();
-        bool noPendingSalary = _getOwedSalary(_employeeId) == 0;
-        bool noPendingAccruedValue = employee.accruedValue == 0;
-        bool noPendingPayments = noPendingSalary && noPendingAccruedValue;
-
-        if (hasReachedEndDate && noPendingPayments) {
-            delete employeeIds[employee.accountAddress];
-            delete employees[_employeeId];
+        if (employee.endDate > getTimestamp64()) {
+            return;
         }
+        if (_getOwedSalary(_employeeId) > 0) {
+            return;
+        }
+        if (employee.accruedValue > 0) {
+            return;
+        }
+
+        delete employeeIds[employee.accountAddress];
+        delete employees[_employeeId];
     }
 
     function _employeeExists(address _accountAddress) private returns (bool) {
