@@ -43,12 +43,12 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_NEW_PAYMENT_AMOUNT_ZERO = "FINANCE_NEW_PAYMENT_AMOUNT_ZERO";
     string private constant ERROR_RECOVER_AMOUNT_ZERO = "FINANCE_RECOVER_AMOUNT_ZERO";
     string private constant ERROR_DEPOSIT_AMOUNT_ZERO = "FINANCE_DEPOSIT_AMOUNT_ZERO";
+    string private constant ERROR_ETH_VALUE_MISMATCH = "ERROR_ETH_VALUE_MISMATCH";
     string private constant ERROR_BUDGET = "FINANCE_BUDGET";
     string private constant ERROR_EXECUTE_PAYMENT_TIME = "FINANCE_EXECUTE_PAYMENT_TIME";
     string private constant ERROR_RECEIVER_EXECUTE_PAYMENT_TIME = "FINANCE_RCVR_EXEC_PAYMENT_TIME";
     string private constant ERROR_PAYMENT_RECEIVER = "FINANCE_PAYMENT_RECEIVER";
     string private constant ERROR_TOKEN_TRANSFER_FROM_REVERTED = "FINANCE_TKN_TRANSFER_FROM_REVERT";
-    string private constant ERROR_VALUE_MISMATCH = "FINANCE_VALUE_MISMATCH";
     string private constant ERROR_TOKEN_APPROVE_FAILED = "FINANCE_TKN_APPROVE_FAILED";
     string private constant ERROR_RECURRING_PAYMENT_INACTIVE = "FINANCE_RECURRING_PAYMENT_INACTIVE";
     string private constant ERROR_REMAINING_BUDGET = "FINANCE_REMAINING_BUDGET";
@@ -149,6 +149,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
      * @notice Deposit ETH to the Vault, to avoid locking them in this Finance app forever
      */
     function () external payable isInitialized transitionsPeriod {
+        require(msg.value > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
         _deposit(
             ETH,
             msg.value,
@@ -192,6 +193,12 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @param _reference Reason for payment
     */
     function deposit(address _token, uint256 _amount, string _reference) external payable isInitialized transitionsPeriod {
+        require(_amount > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
+        if (_token == ETH) {
+            // Ensure that the ETH sent with the transaction equals the amount in the deposit
+            require(msg.value == _amount, ERROR_ETH_VALUE_MISMATCH);
+        }
+
         _deposit(
             _token,
             _amount,
@@ -205,7 +212,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver``_maxRepeats > 0 ? ', executing ' + _maxRepeats + ' times at intervals of ' + @transformTime(_interval) : ''`, for '`_reference`'
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment
-    * @param _amount Tokens that are payed every time the payment is due
+    * @param _amount Tokens that are paid every time the payment is due
     * @param _initialPaymentTime Timestamp for when the first payment is done
     * @param _interval Number of seconds that need to pass between payment transactions
     * @param _maxRepeats Maximum instances a payment can be executed
@@ -227,7 +234,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     {
         require(_amount > 0, ERROR_NEW_PAYMENT_AMOUNT_ZERO);
 
-        // Avoid saving payment data for 1 time immediate payments
+        // Avoid saving payment data for one-time immediate payments
         if (_initialPaymentTime <= getTimestamp64() && _maxRepeats == 1) {
             _makePaymentTransaction(
                 _token,
@@ -240,8 +247,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             return;
         }
 
-        // Budget must allow at least one instance of this payment each period, or not be set at all
-        require(settings.budgets[_token] >= _amount || !settings.hasBudget[_token], ERROR_BUDGET);
+        // Token budget must not be set at all or allow at least one instance of this payment each period
+        require(!settings.hasBudget[_token] || settings.budgets[_token] >= _amount, ERROR_BUDGET);
 
         paymentId = paymentsNextIndex++;
         emit NewPayment(paymentId, _receiver, _maxRepeats, _reference);
@@ -325,7 +332,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     }
 
     /**
-    * @dev Always allows receiver of a payment to trigger execution
+    * @dev Always allow receiver of a payment to trigger execution
     * @notice Execute pending payment #`_paymentId`
     * @param _paymentId Identifier for payment
     */
@@ -534,7 +541,6 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     // Internal fns
 
     function _deposit(address _token, uint256 _amount, string _reference, address _sender, bool _isExternalDeposit) internal {
-        require(_amount > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
         _recordIncomingTransaction(
             _token,
             _sender,
@@ -542,57 +548,32 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _reference
         );
 
-        // If it is an external deposit, check that the assets are actually transferred
-        // External deposit will be false when the assets were already in the Finance app
-        // and just need to be transferred to the vault
-        if (_isExternalDeposit) {
-            if (_token != ETH) {
-                // Get the tokens to Finance
+        if (_token == ETH) {
+            vault.deposit.value(_amount)(ETH, _amount);
+        } else {
+            // First, transfer the tokens to Finance if necessary
+            // External deposit will be false when the assets were already in the Finance app
+            // and just need to be transferred to the Vault
+            if (_isExternalDeposit) {
+                // This assumes the sender has approved the tokens for Finance
                 require(
                     ERC20(_token).safeTransferFrom(msg.sender, address(this), _amount),
                     ERROR_TOKEN_TRANSFER_FROM_REVERTED
                 );
-            } else {
-                // Ensure that the ETH sent with the transaction equals the amount in the deposit
-                require(msg.value == _amount, ERROR_VALUE_MISMATCH);
             }
-        }
-
-        if (_token == ETH) {
-            vault.deposit.value(_amount)(ETH, _amount);
-        } else {
+            // Approve the tokens for the Vault (it does the actual transferring)
             require(ERC20(_token).safeApprove(vault, _amount), ERROR_TOKEN_APPROVE_FAILED);
-            // finally we can deposit them
+            // Finally, initiate the deposit
             vault.deposit(_token, _amount);
         }
-    }
-
-    function _newPeriod(uint64 _startTime) internal returns (Period storage) {
-        // There should be no way for this to overflow since each period is at least one day
-        uint64 newPeriodId = periodsLength++;
-
-        Period storage period = periods[newPeriodId];
-        period.startTime = _startTime;
-
-        // Be careful here to not overflow; if startTime + periodDuration overflows, we set endTime
-        // to MAX_UINT64 (let's assume that's the end of time for now).
-        uint64 endTime = _startTime + settings.periodDuration - 1;
-        if (endTime < _startTime) { // overflowed
-            endTime = MAX_UINT64;
-        }
-        period.endTime = endTime;
-
-        emit NewPeriod(newPeriodId, period.startTime, period.endTime);
-
-        return period;
     }
 
     function _executePayment(uint256 _paymentId) internal {
         RecurringPayment storage payment = recurringPayments[_paymentId];
         require(!payment.inactive, ERROR_RECURRING_PAYMENT_INACTIVE);
 
-        uint64 payed = 0;
-        while (_nextPaymentTime(_paymentId) <= getTimestamp64() && payed < MAX_RECURRING_PAYMENTS_PER_TX) {
+        uint64 paid = 0;
+        while (_nextPaymentTime(_paymentId) <= getTimestamp64() && paid < MAX_RECURRING_PAYMENTS_PER_TX) {
             if (!_canMakePayment(payment.token, payment.amount)) {
                 emit PaymentFailure(_paymentId);
                 return;
@@ -600,9 +581,10 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
             // The while() predicate prevents these two from ever overflowing
             payment.repeats += 1;
-            payed += 1;
+            paid += 1;
 
-            _makePaymentTransaction(
+            // We've already checked the remaining budget with `_canMakePayment()`
+            _unsafeMakePaymentTransaction(
                 payment.token,
                 payment.receiver,
                 payment.amount,
@@ -624,6 +606,23 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         internal
     {
         require(_getRemainingBudget(_token) >= _amount, ERROR_REMAINING_BUDGET);
+        _unsafeMakePaymentTransaction(_token, _receiver, _amount, _paymentId, _paymentRepeatNumber, _reference);
+    }
+
+    /**
+    * @dev Unsafe version of _makePaymentTransaction that assumes you have already checked the
+    *      remaining budget
+    */
+    function _unsafeMakePaymentTransaction(
+        address _token,
+        address _receiver,
+        uint256 _amount,
+        uint256 _paymentId,
+        uint64 _paymentRepeatNumber,
+        string _reference
+    )
+        internal
+    {
         _recordTransaction(
             false,
             _token,
@@ -635,6 +634,26 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         );
 
         vault.transfer(_token, _receiver, _amount);
+    }
+
+    function _newPeriod(uint64 _startTime) internal returns (Period storage) {
+        // There should be no way for this to overflow since each period is at least one day
+        uint64 newPeriodId = periodsLength++;
+
+        Period storage period = periods[newPeriodId];
+        period.startTime = _startTime;
+
+        // Be careful here to not overflow; if startTime + periodDuration overflows, we set endTime
+        // to MAX_UINT64 (let's assume that's the end of time for now).
+        uint64 endTime = _startTime + settings.periodDuration - 1;
+        if (endTime < _startTime) { // overflowed
+            endTime = MAX_UINT64;
+        }
+        period.endTime = endTime;
+
+        emit NewPeriod(newPeriodId, period.startTime, period.endTime);
+
+        return period;
     }
 
     function _recordIncomingTransaction(
