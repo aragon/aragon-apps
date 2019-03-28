@@ -702,7 +702,7 @@ contract('Finance App', accounts => {
                 assertEvent(receipt, 'NewPayment')
             })
 
-            it('can create a future scheduled payment too large for current funds', async () => {
+            it('can create a future payment too large for current funds', async () => {
                 const vaultBalance = await vault.balance(token1.address)
                 await finance.removeBudget(token1.address) // clear any budget restrictions
 
@@ -761,26 +761,38 @@ contract('Finance App', accounts => {
                 )
             })
 
-            it('fails to create a scheduled payment too high for the current budget', async () => {
+            it('fails to create a payment too high for the current budget', async () => {
                 const budget = 10
                 await finance.setBudget(token1.address, budget)
 
-                return assertRevert(() => {
-                    return finance.newScheduledPayment(token1.address, recipient, budget + 1, time, 1, 2, '')
-                }, errors.FINANCE_BUDGET)
+                await assertRevert(
+                    finance.newScheduledPayment(token1.address, recipient, budget + 1, time, 1, 2, ''),
+                    errors.FINANCE_BUDGET
+                )
             })
 
-            it('fails to execute a scheduled payment without enough funds', async () => {
+            it('fails to execute a payment without enough funds', async () => {
                 const vaultBalance = await vault.balance(token1.address)
                 await finance.removeBudget(token1.address) // clear any budget restrictions
 
                 const receipt = await finance.newScheduledPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
                 const newScheduledPaymentId = getEventData(receipt, 'NewPayment', 'paymentId')
 
-                return assertRevert(async () => {
-                    await finance.executePayment(newScheduledPaymentId, { from: recipient })
-                }, errors.FINANCE_EXECUTE_PAYMENT_NUM)
+                await assertRevert(finance.executePayment(newScheduledPaymentId), errors.FINANCE_EXECUTE_PAYMENT_NUM)
             })
+
+              it('fails to execute a payment by receiver without enough funds', async () => {
+                  const vaultBalance = await vault.balance(token1.address)
+                  await finance.removeBudget(token1.address) // clear any budget restrictions
+
+                  const receipt = await finance.newScheduledPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
+                  const newScheduledPaymentId = getEventData(receipt, 'NewPayment', 'paymentId')
+
+                  await assertRevert(
+                      finance.receiverExecutePayment(newScheduledPaymentId, { from: recipient }),
+                      errors.FINANCE_EXECUTE_PAYMENT_NUM
+                  )
+              })
 
             context('executing scheduled payment', async () => {
                 let paymentId
@@ -790,7 +802,7 @@ contract('Finance App', accounts => {
                     paymentId = getEventData(receipt, 'NewPayment', 'paymentId')
                 })
 
-                it('only executes scheduled payment until max executions', async () => {
+                it('only executes payment until max executions', async () => {
                     await finance.mock_setTimestamp(time + 10)
                     await finance.executePayment(paymentId)
 
@@ -805,57 +817,35 @@ contract('Finance App', accounts => {
                     assert.equal((await token1.balanceOf(recipient)).valueOf(), amount, 'should have received payment')
                 })
 
-
                 it('fails when non-receiver attempts to execute a payment', async () => {
                     await finance.mock_setTimestamp(time + 1)
 
                     await assertRevert(finance.receiverExecutePayment(paymentId), errors.FINANCE_PAYMENT_RECEIVER)
                 })
 
-                it('fails to execute a scheduled payment before next available time', async () => {
+                it('fails when executing before next available time', async () => {
                     await assertRevert(finance.executePayment(paymentId), errors.FINANCE_EXECUTE_PAYMENT_TIME)
                 })
 
-                it('fails to execute a scheduled payment by receiver before next available time', async () => {
+                it('fails when executed by receiver before next available time', async () => {
                     await assertRevert(
                         finance.receiverExecutePayment(paymentId, { from: recipient }),
                         errors.FINANCE_EXECUTE_PAYMENT_TIME
                     )
                 })
 
-                it('fails to execute a scheduled payment without enough funds', async () => {
-                    const vaultBalance = await vault.balance(token1.address)
-                    await finance.removeBudget(token1.address) // clear any budget restrictions
-
-                    const receipt = await finance.newScheduledPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
-                    const newScheduledPaymentId = getEventData(receipt, 'NewPayment', 'paymentId')
-
-                    await assertRevert(finance.executePayment(newScheduledPaymentId), errors.FINANCE_EXECUTE_PAYMENT_NUM)
-                })
-
-                it('fails to execute a scheduled payment by receiver without enough funds', async () => {
-                    const vaultBalance = await vault.balance(token1.address)
-                    await finance.removeBudget(token1.address) // clear any budget restrictions
-
-                    const receipt = await finance.newScheduledPayment(token1.address, recipient, vaultBalance + 1, time, 1, 2, '')
-                    const newScheduledPaymentId = getEventData(receipt, 'NewPayment', 'paymentId')
-
-                    await assertRevert(
-                        finance.receiverExecutePayment(newScheduledPaymentId, { from: recipient }),
-                        errors.FINANCE_EXECUTE_PAYMENT_NUM
-                    )
-                })
-
-                it('fails to execute inactive scheduled payment', async () => {
+                it('fails to execute inactive payment', async () => {
                     await finance.setPaymentStatus(paymentId, false)
                     await finance.mock_setTimestamp(time + 1)
 
                     await assertRevert(finance.executePayment(paymentId), errors.FINANCE_PAYMENT_INACTIVE)
                 })
 
-                it('succeeds payment after setting payment status to active', async () => {
-                    await finance.setPaymentStatus(paymentId, true)
+                it('succeeds payment after re-setting payment status to active', async () => {
+                    await finance.setPaymentStatus(paymentId, false)
                     await finance.mock_setTimestamp(time + 1)
+
+                    await finance.setPaymentStatus(paymentId, true)
 
                     await finance.executePayment(paymentId)
                 })
