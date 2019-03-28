@@ -227,7 +227,7 @@ class VotePanelContent extends React.Component {
             <Label>Created By</Label>
           </h2>
           <Creator>
-            <LocalIdentityBadge address={creator} networkType={network.type} />
+            <LocalIdentityBadge entity={creator} networkType={network.type} />
           </Creator>
         </Part>
         <SidePanelSeparator />
