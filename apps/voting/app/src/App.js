@@ -223,12 +223,12 @@ class App extends React.Component {
         : preparedVotes.find(vote => vote.voteId === currentVoteId)
     const hasCurrentVote = appStateReady && Boolean(currentVote)
     return (
-      <IdentityProvider
-        onResolve={this.handleResolveLocalIdentity}
-        onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
-      >
+      <Main assetsUrl="./aragon-ui">
         <div css="min-width: 320px">
-          <Main assetsUrl="./aragon-ui">
+          <IdentityProvider
+            onResolve={this.handleResolveLocalIdentity}
+            onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
+          >
             <AppLayout
               title="Voting"
               onMenuOpen={this.handleMenuPanelOpen}
@@ -280,9 +280,9 @@ class App extends React.Component {
                 onCreateVote={this.handleCreateVote}
               />
             </SidePanel>
-          </Main>
+          </IdentityProvider>
         </div>
-      </IdentityProvider>
+      </Main>
     )
   }
 }
