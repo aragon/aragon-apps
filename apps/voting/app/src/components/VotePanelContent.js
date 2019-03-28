@@ -344,7 +344,7 @@ const NoTokenCost = () => (
     Performing this action will{' '}
     <span css="font-weight: bold">not transfer out</span> any of your tokens.
     You’ll only have to pay for the{' '}
-    <SafeLink href="https://ethgas.io/" target="_blcank">
+    <SafeLink href="https://ethgas.io/" target="_blank">
       ETH fee
     </SafeLink>{' '}
     when signing the transaction.
