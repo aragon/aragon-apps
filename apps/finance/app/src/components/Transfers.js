@@ -126,9 +126,9 @@ class Transfers extends React.PureComponent {
   }
   getCsvFilename = () => {
     const { selectedDateRange } = this.state
-    const start = format(selectedDateRange.start, 'MMM dd yyyy')
-    const end = format(selectedDateRange.end, 'MMM dd yyyy')
-    return `Finance (${start} to ${end}).csv`
+    const start = format(selectedDateRange.start, 'yyyy-MM-dd')
+    const end = format(selectedDateRange.end, 'yyyy-MM-dd')
+    return `Finance_(${start}_to_${end}).csv`
   }
   showMoreTransfers = () => {
     this.setState(prevState => ({
