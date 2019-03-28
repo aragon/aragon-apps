@@ -250,11 +250,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @return False if the controller does not authorize the transfer
     */
     function onTransfer(address _from, address _to, uint256 _amount) public onlyToken returns (bool) {
-        if (_isBalanceIncreaseAllowed(_to, _amount)) {
-            return _transferableBalance(_from, now) >= _amount;
-        }
-
-        return false;
+        return _isBalanceIncreaseAllowed(_to, _amount) && _transferableBalance(_from, now) >= _amount;
     }
 
     /**
