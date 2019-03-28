@@ -32,14 +32,15 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     string private constant ERROR_CALLER_NOT_TOKEN = "TM_CALLER_NOT_TOKEN";
     string private constant ERROR_NO_VESTING = "TM_NO_VESTING";
     string private constant ERROR_TOKEN_CONTROLLER = "TM_TOKEN_CONTROLLER";
-    string private constant ERROR_MINT_BALANCE_INCREASE_NOT_ALLOWED = "TM_MINT_BAL_INC_NOT_ALLOWED";
-    string private constant ERROR_ASSIGN_BALANCE_INCREASE_NOT_ALLOWED = "TM_ASSIGN_BAL_INC_NOT_ALLOWED";
+    string private constant ERROR_MINT_RECEIVER_IS_TM = "TM_MINT_RECEIVER_IS_TM";
+    string private constant ERROR_VESTING_TO_TM = "TM_VESTING_TO_TM";
     string private constant ERROR_TOO_MANY_VESTINGS = "TM_TOO_MANY_VESTINGS";
     string private constant ERROR_WRONG_CLIFF_DATE = "TM_WRONG_CLIFF_DATE";
     string private constant ERROR_VESTING_NOT_REVOKABLE = "TM_VESTING_NOT_REVOKABLE";
     string private constant ERROR_REVOKE_TRANSFER_FROM_REVERTED = "TM_REVOKE_TRANSFER_FROM_REVERTED";
-    string private constant ERROR_ASSIGN_TRANSFER_FROM_REVERTED = "TM_ASSIGN_TRANSFER_FROM_REVERTED";
     string private constant ERROR_CAN_NOT_FORWARD = "TM_CAN_NOT_FORWARD";
+    string private constant ERROR_BALANCE_INCREASE_NOT_ALLOWED = "TM_BALANCE_INC_NOT_ALLOWED";
+    string private constant ERROR_ASSIGN_TRANSFER_FROM_REVERTED = "TM_ASSIGN_TRANSFER_FROM_REVERTED";
 
     struct TokenVesting {
         uint256 amount;
@@ -99,11 +100,11 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     /**
     * @notice Mint `@tokenAmount(self.token(): address, _amount, false)` tokens for `_receiver`
-    * @param _receiver The address receiving the tokens
+    * @param _receiver The address receiving the tokens, cannot be the Token Manager itself (use `issue()` instead)
     * @param _amount Number of tokens minted
     */
     function mint(address _receiver, uint256 _amount) external authP(MINT_ROLE, arr(_receiver, _amount)) {
-        require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_MINT_BALANCE_INCREASE_NOT_ALLOWED);
+        require(_receiver != address(this), ERROR_MINT_RECEIVER_IS_TM);
         _mint(_receiver, _amount);
     }
 
@@ -136,7 +137,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     /**
     * @notice Assign `@tokenAmount(self.token(): address, _amount, false)` tokens to `_receiver` from the Token Manager's holdings with a `_revokable : 'revokable' : ''` vesting starting at `@formatDate(_start)`, cliff at `@formatDate(_cliff)` (first portion of tokens transferable), and completed vesting at `@formatDate(_vested)` (all tokens transferable)
-    * @param _receiver The address receiving the tokens
+    * @param _receiver The address receiving the tokens, cannot be Token Manager itself
     * @param _amount Number of tokens vested
     * @param _start Date the vesting calculations start
     * @param _cliff Date when the initial portion of tokens are transferable
@@ -155,6 +156,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         authP(ASSIGN_ROLE, arr(_receiver, _amount))
         returns (uint256)
     {
+        require(_receiver != address(this), ERROR_VESTING_TO_TM);
         require(vestingsLengths[_receiver] < MAX_VESTINGS_PER_ADDRESS, ERROR_TOO_MANY_VESTINGS);
         require(_start <= _cliff && _cliff <= _vested, ERROR_WRONG_CLIFF_DATE);
 
@@ -196,6 +198,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         );
 
         // To make vestingIds immutable over time, we just zero out the revoked vesting
+        // Clearing this out also allows the token transfer back to the Token Manager to succeed
         delete vestings[_holder][_vestingId];
 
         // transferFrom always works as controller
@@ -238,24 +241,16 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     // during initialization.
 
     /*
-    * @dev Notifies the controller about a token transfer allowing the controller to decide whether to allow it or react if desired (only callable from the token)
+    * @dev Notifies the controller about a token transfer allowing the controller to decide whether
+    *      to allow it or react if desired (only callable from the token).
     *      Initialization check is implicitly provided by `onlyToken()`.
     * @param _from The origin of the transfer
     * @param _to The destination of the transfer
     * @param _amount The amount of the transfer
     * @return False if the controller does not authorize the transfer
     */
-    function onTransfer(address _from, address _to, uint _amount) public onlyToken returns (bool) {
-        bool includesTokenManager = _from == address(this) || _to == address(this);
-
-        if (!includesTokenManager) {
-            bool toCanReceive = _isBalanceIncreaseAllowed(_to, _amount);
-            if (!toCanReceive || _transferableBalance(_from, now) < _amount) {
-                return false;
-            }
-        }
-
-        return true;
+    function onTransfer(address _from, address _to, uint256 _amount) public onlyToken returns (bool) {
+        return _isBalanceIncreaseAllowed(_to, _amount) && _transferableBalance(_from, now) >= _amount;
     }
 
     /**
@@ -320,16 +315,21 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     // Internal fns
 
     function _assign(address _receiver, uint256 _amount) internal {
-        require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_ASSIGN_BALANCE_INCREASE_NOT_ALLOWED);
+        require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_BALANCE_INCREASE_NOT_ALLOWED);
         // Must use transferFrom() as transfer() does not give the token controller full control
         require(token.transferFrom(address(this), _receiver, _amount), ERROR_ASSIGN_TRANSFER_FROM_REVERTED);
     }
 
     function _mint(address _receiver, uint256 _amount) internal {
+        require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_BALANCE_INCREASE_NOT_ALLOWED);
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
     }
 
-    function _isBalanceIncreaseAllowed(address _receiver, uint _inc) internal view returns (bool) {
+    function _isBalanceIncreaseAllowed(address _receiver, uint256 _inc) internal view returns (bool) {
+        // Max balance doesn't apply to the token manager itself
+        if (_receiver == address(this)) {
+            return true;
+        }
         return token.balanceOf(_receiver).add(_inc) <= maxAccountTokens;
     }
 
@@ -391,21 +391,28 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function _transferableBalance(address _holder, uint256 _time) internal view returns (uint256) {
-        uint256 vestingsCount = vestingsLengths[_holder];
-        uint256 totalNonTransferable = 0;
+        uint256 transferable = token.balanceOf(_holder);
 
-        for (uint256 i = 0; i < vestingsCount; i++) {
-            TokenVesting storage v = vestings[_holder][i];
-            uint nonTransferable = _calculateNonVestedTokens(
-                v.amount,
-                _time.toUint64(),
-                v.start,
-                v.cliff,
-                v.vesting
-            );
-            totalNonTransferable = totalNonTransferable.add(nonTransferable);
+        // This check is not strictly necessary for the current version of this contract, as
+        // Token Managers now cannot assign vestings to themselves.
+        // However, this was a possibility in the past, so in case there were vestings assigned to
+        // themselves, this will still return the correct value (entire balance, as the Token
+        // Manager does not have a spending limit on its own balance).
+        if (_holder != address(this)) {
+            uint256 vestingsCount = vestingsLengths[_holder];
+            for (uint256 i = 0; i < vestingsCount; i++) {
+                TokenVesting storage v = vestings[_holder][i];
+                uint256 nonTransferable = _calculateNonVestedTokens(
+                    v.amount,
+                    _time.toUint64(),
+                    v.start,
+                    v.cliff,
+                    v.vesting
+                );
+                transferable = transferable.sub(nonTransferable);
+            }
         }
 
-        return token.balanceOf(_holder).sub(totalNonTransferable);
+        return transferable;
     }
 }
