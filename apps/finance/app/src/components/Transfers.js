@@ -375,14 +375,19 @@ const FilterLabel = styled.label`
 const FiltersWrap = styled.div`
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
+  justify-content: unset;
   margin-top: 16px;
+
+  ${FilterLabel}:first-child {
+    margin-right: 16px;
+  }
 
   ${breakpoint(
     'medium',
     `
       display: inline-flex;
       align-items: flex-start;
+      justify-content: space-between;
 
       ${FilterLabel}:last-child {
         margin-right: 0;
