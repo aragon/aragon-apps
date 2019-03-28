@@ -103,6 +103,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     * @param _amount Number of tokens minted
     */
     function mint(address _receiver, uint256 _amount) external authP(MINT_ROLE, arr(_receiver, _amount)) {
+        require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_MINT_BALANCE_INCREASE_NOT_ALLOWED);
         _mint(_receiver, _amount);
     }
 
@@ -325,10 +326,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function _mint(address _receiver, uint256 _amount) internal {
-        // Max balance doesn't apply to the token manager itself
-        if (_receiver != address(this)) {
-            require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_MINT_BALANCE_INCREASE_NOT_ALLOWED);
-        }
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
     }
 
