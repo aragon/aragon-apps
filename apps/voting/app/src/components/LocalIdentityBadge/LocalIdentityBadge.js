@@ -51,7 +51,7 @@ const LocalIdentityBadge = ({ address, ...props }) => {
       popoverTitle={
         label ? (
           <Wrap>
-            <Address>{label}</Address>
+            <Label>{label}</Label>
             <StyledBadge>Custom label</StyledBadge>
           </Wrap>
         ) : (
@@ -73,7 +73,7 @@ const Wrap = styled.div`
   padding-right: 24px;
 `
 
-const Address = styled.span`
+const Label = styled.span`
   display: inline-block;
   overflow: hidden;
   text-overflow: ellipsis;
