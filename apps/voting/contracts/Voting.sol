@@ -171,7 +171,6 @@ contract Voting is IForwarder, AragonApp {
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external voteExists(_voteId) {
-        require(_canExecute(_voteId), ERROR_CAN_NOT_EXECUTE);
         _executeVote(_voteId);
     }
 
@@ -307,11 +306,20 @@ contract Voting is IForwarder, AragonApp {
         emit CastVote(_voteId, _voter, _supports, voterStake);
 
         if (_executesIfDecided && _canExecute(_voteId)) {
-            _executeVote(_voteId);
+            // We've already checked if the vote can be executed with `_canExecute()`
+            _unsafeExecuteVote(_voteId);
         }
     }
 
     function _executeVote(uint256 _voteId) internal {
+        require(_canExecute(_voteId), ERROR_CAN_NOT_EXECUTE);
+        _unsafeExecuteVote(_voteId);
+    }
+
+    /**
+    * @dev Unsafe version of _executeVote that assumes you have already checked if the vote can be executed
+    */
+    function _unsafeExecuteVote(uint256 _voteId) internal {
         Vote storage vote_ = votes[_voteId];
 
         vote_.executed = true;
