@@ -505,7 +505,7 @@ contract('Finance App', accounts => {
             assert.equal((await token2.balanceOf(recipient)).valueOf(), 190, 'recipient should have received tokens')
         })
 
-        it('can create recurring payment', async () => {
+        it('can create scheduled payment', async () => {
             const amount = 10
 
             // repeats up to 10 times every 2 seconds
@@ -528,7 +528,7 @@ contract('Finance App', accounts => {
             }))
         })
 
-        it('can create recurring ether payment', async () => {
+        it('can create scheduled ether payment', async () => {
             const amount = 10
 
             // repeats up to 10 times every 2 seconds
@@ -685,15 +685,15 @@ contract('Finance App', accounts => {
             })
         })
 
-        context('recurring payment', async () => {
+        context('scheduled payment', async () => {
             const amount = 10
 
-            it('can create a recurring payment', async () => {
+            it('can create a scheduled payment', async () => {
                 const receipt = await finance.newScheduledPayment(token1.address, recipient, amount, time + 1, 1, 4, '')
                 assertEvent(receipt, 'NewPayment')
             })
 
-            it('can create a future recurring payment too large for current funds', async () => {
+            it('can create a future scheduled payment too large for current funds', async () => {
                 const vaultBalance = await vault.balance(token1.address)
                 await finance.removeBudget(token1.address) // clear any budget restrictions
 
@@ -750,7 +750,7 @@ contract('Finance App', accounts => {
                 })
             })
 
-            it('fails to create a recurring payment too high for the current budget', async () => {
+            it('fails to create a scheduled payment too high for the current budget', async () => {
                 const budget = 10
                 await finance.setBudget(token1.address, budget)
 
@@ -759,7 +759,7 @@ contract('Finance App', accounts => {
                 })
             })
 
-            it('fails to execute a recurring payment without enough funds', async () => {
+            it('fails to execute a scheduled payment without enough funds', async () => {
                 const vaultBalance = await vault.balance(token1.address)
                 await finance.removeBudget(token1.address) // clear any budget restrictions
 
@@ -771,7 +771,7 @@ contract('Finance App', accounts => {
                 })
             })
 
-            context('created recurring payment', async () => {
+            context('created scheduled payment', async () => {
                 let paymentId
 
                 beforeEach(async () => {
@@ -779,7 +779,7 @@ contract('Finance App', accounts => {
                     paymentId = getEventData(receipt, 'NewPayment', 'paymentId')
                 })
 
-                it('only repeats recurring payment until max repeats', async () => {
+                it('only repeats scheduled payment until max repeats', async () => {
                     await finance.mock_setTimestamp(time + 10)
                     await finance.executePayment(paymentId)
 
@@ -803,19 +803,19 @@ contract('Finance App', accounts => {
                     })
                 })
 
-                it('fails to execute a recurring payment before next available time', async () => {
+                it('fails to execute a scheduled payment before next available time', async () => {
                     return assertRevert(async () => {
                         await finance.executePayment(paymentId, { from: recipient })
                     })
                 })
 
-                it('fails to execute a recurring payment by receiver before next available time', async () => {
+                it('fails to execute a scheduled payment by receiver before next available time', async () => {
                     return assertRevert(async () => {
                         await finance.receiverExecutePayment(paymentId, { from: recipient })
                     })
                 })
 
-                it('fails to execute inactive recurring payment', async () => {
+                it('fails to execute inactive scheduled payment', async () => {
                     await finance.setPaymentStatus(paymentId, false)
                     await finance.mock_setTimestamp(time + 1)
 
@@ -833,7 +833,7 @@ contract('Finance App', accounts => {
             })
 
             context('payment failure', async () => {
-                it('tries to execute a new recurring payment if initially possible even without enough funds', async () => {
+                it('tries to execute a new scheduled payment if initially possible even without enough funds', async () => {
                     const vaultBalance = await vault.balance(token1.address)
                     await finance.removeBudget(token1.address) // clear any budget restrictions
 
@@ -892,7 +892,7 @@ contract('Finance App', accounts => {
             await nonInit.mock_setTimestamp(START_TIME)
         })
 
-        it('fails to create new recurring payment', async() => {
+        it('fails to create new scheduled payment', async() => {
             const recipient = accounts[1]
             const amount = 1
             const time = 22
