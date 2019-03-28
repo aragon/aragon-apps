@@ -42,7 +42,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     string private constant ERROR_SET_PERIOD_TOO_SHORT = "FINANCE_SET_PERIOD_TOO_SHORT";
     string private constant ERROR_NEW_PAYMENT_AMOUNT_ZERO = "FINANCE_NEW_PAYMENT_AMOUNT_ZERO";
     string private constant ERROR_NEW_PAYMENT_INTERVAL_ZERO = "FINANCE_NEW_PAYMENT_INTRVL_ZERO";
-    string private constant ERROR_NEW_PAYMENT_REPEATS_ZERO = "FINANCE_NEW_PAYMENT_REPEATS_ZERO";
+    string private constant ERROR_NEW_PAYMENT_EXECUTIONS_ZERO = "FINANCE_NEW_PAYMENT_EXECUTIONS_ZERO";
     string private constant ERROR_NEW_PAYMENT_IMMEDIATE = "FINANCE_NEW_PAYMENT_IMMEDIATE";
     string private constant ERROR_RECOVER_AMOUNT_ZERO = "FINANCE_RECOVER_AMOUNT_ZERO";
     string private constant ERROR_DEPOSIT_AMOUNT_ZERO = "FINANCE_DEPOSIT_AMOUNT_ZERO";
@@ -65,8 +65,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint256 amount;
         uint64 initialPaymentTime;
         uint64 interval;
-        uint64 maxRepeats;
-        uint64 repeats;
+        uint64 maxExecutions;
+        uint64 executions;
     }
 
     // Order optimized for storage
@@ -76,7 +76,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         bool isIncoming;
         uint256 amount;
         uint256 paymentId;
-        uint64 paymentRepeatNumber;
+        uint64 paymentExecutionNumber;
         uint64 date;
         uint64 periodId;
     }
@@ -117,7 +117,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     event NewPeriod(uint64 indexed periodId, uint64 periodStarts, uint64 periodEnds);
     event SetBudget(address indexed token, uint256 amount, bool hasBudget);
-    event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxRepeats, string reference);
+    event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxExecutions, string reference);
     event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity, uint256 amount, string reference);
     event ChangePaymentState(uint256 indexed paymentId, bool active);
     event ChangePeriodDuration(uint64 newDuration);
@@ -237,20 +237,20 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _receiver,
             _amount,
             NO_SCHEDULED_PAYMENT,   // unrelated to any payment id; it isn't created
-            0,   // also unrelated to any payment repeats
+            0,   // also unrelated to any payment executions
             _reference
         );
     }
 
     /**
-    * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver` for `_reference`, executing `_maxRepeats` times at intervals of `@transformTime(_interval)`
+    * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver` for `_reference`, executing `_maxExecutions` times at intervals of `@transformTime(_interval)`
     * @dev See `newImmediatePayment()` for limitations on how the interval auth parameter can be used
     * @param _token Address of token for payment
     * @param _receiver Address that will receive payment
     * @param _amount Tokens that are paid every time the payment is due
     * @param _initialPaymentTime Timestamp for when the first payment is done
     * @param _interval Number of seconds that need to pass between payment transactions
-    * @param _maxRepeats Maximum instances a payment can be executed
+    * @param _maxExecutions Maximum instances a payment can be executed
     * @param _reference String detailing payment reason
     */
     function newScheduledPayment(
@@ -259,29 +259,29 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         uint256 _amount,
         uint64 _initialPaymentTime,
         uint64 _interval,
-        uint64 _maxRepeats,
+        uint64 _maxExecutions,
         string _reference
     )
         external
         // Payment time parameter is left as the last param as it was added later
-        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, uint256(_interval), uint256(_maxRepeats), uint256(_initialPaymentTime)))
+        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, uint256(_interval), uint256(_maxExecutions), uint256(_initialPaymentTime)))
         transitionsPeriod
         returns (uint256 paymentId)
     {
         require(_amount > 0, ERROR_NEW_PAYMENT_AMOUNT_ZERO);
         require(_interval > 0, ERROR_NEW_PAYMENT_INTERVAL_ZERO);
-        require(_maxRepeats > 0, ERROR_NEW_PAYMENT_REPEATS_ZERO);
+        require(_maxExecutions > 0, ERROR_NEW_PAYMENT_EXECUTIONS_ZERO);
 
         // Token budget must not be set at all or allow at least one instance of this payment each period
         require(!settings.hasBudget[_token] || settings.budgets[_token] >= _amount, ERROR_BUDGET);
 
         // Don't allow creating single payments that are immediately executable, use `newImmediatePayment()` instead
-        if (_maxRepeats == 1) {
+        if (_maxExecutions == 1) {
             require(_initialPaymentTime > getTimestamp64(), ERROR_NEW_PAYMENT_IMMEDIATE);
         }
 
         paymentId = paymentsNextIndex++;
-        emit NewPayment(paymentId, _receiver, _maxRepeats, _reference);
+        emit NewPayment(paymentId, _receiver, _maxExecutions, _reference);
 
         ScheduledPayment storage payment = scheduledPayments[paymentId];
         payment.token = _token;
@@ -289,7 +289,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         payment.amount = _amount;
         payment.initialPaymentTime = _initialPaymentTime;
         payment.interval = _interval;
-        payment.maxRepeats = _maxRepeats;
+        payment.maxExecutions = _maxExecutions;
         payment.createdBy = msg.sender;
 
         // We skip checking how many times the new payment was executed to allow creating new
@@ -443,9 +443,9 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             uint256 amount,
             uint64 initialPaymentTime,
             uint64 interval,
-            uint64 maxRepeats,
+            uint64 maxExecutions,
             bool inactive,
-            uint64 repeats,
+            uint64 executions,
             address createdBy
         )
     {
@@ -456,8 +456,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         amount = payment.amount;
         initialPaymentTime = payment.initialPaymentTime;
         interval = payment.interval;
-        maxRepeats = payment.maxRepeats;
-        repeats = payment.repeats;
+        maxExecutions = payment.maxExecutions;
+        executions = payment.executions;
         inactive = payment.inactive;
         createdBy = payment.createdBy;
     }
@@ -470,7 +470,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             uint64 periodId,
             uint256 amount,
             uint256 paymentId,
-            uint64 paymentRepeatNumber,
+            uint64 paymentExecutionNumber,
             address token,
             address entity,
             bool isIncoming,
@@ -486,7 +486,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         periodId = transaction.periodId;
         amount = transaction.amount;
         paymentId = transaction.paymentId;
-        paymentRepeatNumber = transaction.paymentRepeatNumber;
+        paymentExecutionNumber = transaction.paymentExecutionNumber;
     }
 
     function getPeriod(uint64 _periodId)
@@ -608,7 +608,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             }
 
             // The while() predicate prevents these two from ever overflowing
-            payment.repeats += 1;
+            payment.executions += 1;
             paid += 1;
 
             // We've already checked the remaining budget with `_canMakePayment()`
@@ -617,7 +617,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
                 payment.receiver,
                 payment.amount,
                 _paymentId,
-                payment.repeats,
+                payment.executions,
                 ""
             );
         }
@@ -641,13 +641,13 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         address _receiver,
         uint256 _amount,
         uint256 _paymentId,
-        uint64 _paymentRepeatNumber,
+        uint64 _paymentExecutionNumber,
         string _reference
     )
         internal
     {
         require(_getRemainingBudget(_token) >= _amount, ERROR_REMAINING_BUDGET);
-        _unsafeMakePaymentTransaction(_token, _receiver, _amount, _paymentId, _paymentRepeatNumber, _reference);
+        _unsafeMakePaymentTransaction(_token, _receiver, _amount, _paymentId, _paymentExecutionNumber, _reference);
     }
 
     /**
@@ -659,7 +659,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         address _receiver,
         uint256 _amount,
         uint256 _paymentId,
-        uint64 _paymentRepeatNumber,
+        uint64 _paymentExecutionNumber,
         string _reference
     )
         internal
@@ -670,7 +670,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _receiver,
             _amount,
             _paymentId,
-            _paymentRepeatNumber,
+            _paymentExecutionNumber,
             _reference
         );
 
@@ -711,7 +711,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
             _sender,
             _amount,
             NO_SCHEDULED_PAYMENT, // unrelated to any existing payment
-            0, // and no payment repeats
+            0, // and no payment executions
             _reference
         );
     }
@@ -722,7 +722,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         address _entity,
         uint256 _amount,
         uint256 _paymentId,
-        uint64 _paymentRepeatNumber,
+        uint64 _paymentExecutionNumber,
         string _reference
     )
         internal
@@ -743,7 +743,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         transaction.isIncoming = _incoming;
         transaction.amount = _amount;
         transaction.paymentId = _paymentId;
-        transaction.paymentRepeatNumber = _paymentRepeatNumber;
+        transaction.paymentExecutionNumber = _paymentExecutionNumber;
         transaction.date = getTimestamp64();
         transaction.periodId = periodId;
 
@@ -812,12 +812,12 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     function _nextPaymentTime(uint256 _paymentId) internal view returns (uint64) {
         ScheduledPayment storage payment = scheduledPayments[_paymentId];
 
-        if (payment.repeats >= payment.maxRepeats) {
+        if (payment.executions >= payment.maxExecutions) {
             return MAX_UINT64; // re-executes in some billions of years time... should not need to worry
         }
 
         // Split in multiple lines to circumvent linter warning
-        uint64 increase = payment.repeats.mul(payment.interval);
+        uint64 increase = payment.executions.mul(payment.interval);
         uint64 nextPayment = payment.initialPaymentTime.add(increase);
         return nextPayment;
     }
