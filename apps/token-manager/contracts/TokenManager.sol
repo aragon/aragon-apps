@@ -198,6 +198,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         );
 
         // To make vestingIds immutable over time, we just zero out the revoked vesting
+        // Clearing this out also allows the token transfer back to the Token Manager to succeed
         delete vestings[_holder][_vestingId];
 
         // transferFrom always works as controller
@@ -240,7 +241,8 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     // during initialization.
 
     /*
-    * @dev Notifies the controller about a token transfer allowing the controller to decide whether to allow it or react if desired (only callable from the token)
+    * @dev Notifies the controller about a token transfer allowing the controller to decide whether
+    *      to allow it or react if desired (only callable from the token).
     *      Initialization check is implicitly provided by `onlyToken()`.
     * @param _from The origin of the transfer
     * @param _to The destination of the transfer
