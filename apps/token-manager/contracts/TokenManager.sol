@@ -251,7 +251,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     */
     function onTransfer(address _from, address _to, uint256 _amount) public onlyToken returns (bool) {
         if (_isBalanceIncreaseAllowed(_to, _amount)) {
-            return _spendableBalanceOf(_from) >= _amount;
+            return _transferableBalance(_from, now) >= _amount;
         }
 
         return false;
@@ -301,7 +301,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     }
 
     function spendableBalanceOf(address _holder) public view isInitialized returns (uint256) {
-        return _spendableBalanceOf(_holder);
+        return _transferableBalance(_holder, now);
     }
 
     function transferableBalance(address _holder, uint256 _time) public view isInitialized returns (uint256) {
@@ -392,10 +392,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
         // tokens - vestedTokens
         return tokens.sub(vestedTokens);
-    }
-
-    function _spendableBalanceOf(address _holder) internal view returns (uint256) {
-        return _transferableBalance(_holder, now);
     }
 
     function _transferableBalance(address _holder, uint256 _time) internal view returns (uint256) {
