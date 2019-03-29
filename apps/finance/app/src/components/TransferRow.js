@@ -65,7 +65,6 @@ class TransferRow extends React.PureComponent {
                   <LocalIdentityBadge
                     networkType={network.type}
                     entity={entity}
-                    address={entity}
                   />
                 </div>
               </div>
