@@ -57,7 +57,7 @@ class TransferRow extends React.PureComponent {
 
     if (smallViewMode) {
       return (
-        <StyledTableRow>
+        <TableRow>
           <StyledTableCell>
             <Grid>
               <div css="overflow: hidden">
@@ -78,7 +78,7 @@ class TransferRow extends React.PureComponent {
               </Amount>
             </Grid>
           </StyledTableCell>
-        </StyledTableRow>
+        </TableRow>
       )
     }
 
@@ -129,15 +129,11 @@ class TransferRow extends React.PureComponent {
   }
 }
 
-const StyledTableRow = styled(TableRow)`
-  td:first-child {
-    max-width: 0;
-    width: 100%;
-    overflow: hidden;
-  }
-`
-
 const StyledTableCell = styled(TableCell)`
+  max-width: 0;
+  width: 100%;
+  overflow: hidden;
+
   &&& {
     border-left-width: 0;
     border-right-width: 0;
