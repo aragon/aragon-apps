@@ -118,12 +118,12 @@ class App extends React.Component {
     const { newTransferOpened } = this.state
 
     return (
-      <IdentityProvider
-        onResolve={this.handleResolveLocalIdentity}
-        onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
-      >
+      <Main assetsUrl="./aragon-ui">
         <div css="min-width: 320px">
-          <Main assetsUrl="./aragon-ui">
+          <IdentityProvider
+            onResolve={this.handleResolveLocalIdentity}
+            onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
+          >
             <AppLayout
               title="Finance"
               onMenuOpen={this.handleMenuPanelOpen}
@@ -171,9 +171,9 @@ class App extends React.Component {
                 userAccount={userAccount}
               />
             </SidePanel>
-          </Main>
+          </IdentityProvider>
         </div>
-      </IdentityProvider>
+      </Main>
     )
   }
 }
