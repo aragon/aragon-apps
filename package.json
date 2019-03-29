@@ -22,7 +22,7 @@
   "scripts": {
     "install": "node scripts/install",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/os",
-    "bootstrap:ci": "npm run bootstrap",
+    "bootstrap:ci": "npm run bootstrap -- --no-ci",
     "clean": "git clean -fdxi apps future-apps shared",
     "test": "npm run test:all",
     "test:all": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream test",
