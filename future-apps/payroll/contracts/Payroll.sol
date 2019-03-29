@@ -77,14 +77,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     address[] internal allowedTokensArray;
 
     event AddAllowedToken(address token);
-    event AddEmployee(
-        uint256 indexed employeeId,
-        address indexed accountAddress,
-        uint256 initialDenominationSalary,
-        string name,
-        string role,
-        uint64 startDate
-    );
     event SetEmployeeSalary(uint256 indexed employeeId, uint256 denominationSalary);
     event AddEmployeeAccruedValue(uint256 indexed employeeId, uint256 amount);
     event TerminateEmployee(uint256 indexed employeeId, address indexed accountAddress, uint64 endDate);
@@ -93,6 +85,14 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     event SendPayment(address indexed employee, address indexed token, uint256 amount, string reference);
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
+    event AddEmployee(
+        uint256 indexed employeeId,
+        address indexed accountAddress,
+        uint256 initialDenominationSalary,
+        string name,
+        string role,
+        uint64 startDate
+    );
 
     // Check employee exists by address
     modifier employeeAddressExists(address _accountAddress) {
@@ -125,15 +125,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _priceFeed Address of the price feed.
      * @param _rateExpiryTime Exchange rate expiry time in seconds.
      */
-    function initialize(
-        Finance _finance,
-        address _denominationToken,
-        IFeed _priceFeed,
-        uint64 _rateExpiryTime
-    )
-        external
-        onlyInit
-    {
+    function initialize(Finance _finance, address _denominationToken, IFeed _priceFeed, uint64 _rateExpiryTime) external onlyInit {
         require(isContract(_finance), ERROR_FINANCE_NOT_CONTRACT);
 
         initialized();
@@ -159,10 +151,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @dev Sets the exchange rate expiry time in seconds. Exchange rates older than it won't be accepted for payments.
      * @param _time The expiration time in seconds for exchange rates.
      */
-    function setRateExpiryTime(uint64 _time)
-        external
-        authP(MODIFY_RATE_EXPIRY_ROLE, arr(uint256(_time), uint256(rateExpiryTime)))
-    {
+    function setRateExpiryTime(uint64 _time) external authP(MODIFY_RATE_EXPIRY_ROLE, arr(uint256(_time), uint256(rateExpiryTime))) {
         _setRateExpiryTime(_time);
     }
 
@@ -187,12 +176,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _name Employee's name.
      * @param _role Employee's role.
      */
-    function addEmployeeNow(
-        address _accountAddress,
-        uint256 _initialDenominationSalary,
-        string _name,
-        string _role
-    )
+    function addEmployeeNow(address _accountAddress, uint256 _initialDenominationSalary, string _name, string _role)
         external
         authP(ADD_EMPLOYEE_ROLE, arr(_accountAddress, _initialDenominationSalary, getTimestamp64()))
     {
@@ -207,13 +191,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _role Employee's role.
      * @param _startDate Employee's starting timestamp in seconds (it actually sets their initial lastPayroll value).
      */
-    function addEmployee(
-        address _accountAddress,
-        uint256 _initialDenominationSalary,
-        string _name,
-        string _role,
-        uint64 _startDate
-    )
+    function addEmployee(address _accountAddress, uint256 _initialDenominationSalary, string _name, string _role, uint64 _startDate)
         external
         authP(ADD_EMPLOYEE_ROLE, arr(_accountAddress, _initialDenominationSalary, _startDate))
     {
@@ -225,10 +203,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _employeeId Employee's identifier.
      * @param _denominationSalary Employee's new salary, per second in denomination token.
      */
-    function setEmployeeSalary(
-        uint256 _employeeId,
-        uint256 _denominationSalary
-    )
+    function setEmployeeSalary(uint256 _employeeId, uint256 _denominationSalary)
         external
         authP(SET_EMPLOYEE_SALARY_ROLE, arr(_employeeId, _denominationSalary))
         employeeActive(_employeeId)
@@ -249,9 +224,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @notice Terminates employee #`_employeeId`.
      * @param _employeeId Employee's identifier.
      */
-    function terminateEmployeeNow(
-        uint256 _employeeId
-    )
+    function terminateEmployeeNow(uint256 _employeeId)
         external
         authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
         employeeActive(_employeeId)
@@ -264,10 +237,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _employeeId Employee's identifier.
      * @param _endDate Termination timestamp in seconds.
      */
-    function terminateEmployee(
-        uint256 _employeeId,
-        uint64 _endDate
-    )
+    function terminateEmployee(uint256 _employeeId, uint64 _endDate)
         external
         authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
         employeeActive(_employeeId)
@@ -280,10 +250,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _employeeId Employee's identifier.
      * @param _amount Amount be added to the employee's accrued value.
      */
-    function addAccruedValue(
-        uint256 _employeeId,
-        uint256 _amount
-    )
+    function addAccruedValue(uint256 _employeeId, uint256 _amount)
         external
         authP(ADD_ACCRUED_VALUE_ROLE, arr(_employeeId, _amount))
         employeeActive(_employeeId)
@@ -517,15 +484,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _role Employee's role.
      * @param _startDate Employee's starting timestamp in seconds.
      */
-    function _addEmployee(
-        address _accountAddress,
-        uint256 _initialDenominationSalary,
-        string _name,
-        string _role,
-        uint64 _startDate
-    )
-        internal
-    {
+    function _addEmployee(address _accountAddress, uint256 _initialDenominationSalary, string _name, string _role, uint64 _startDate) internal {
         // Check address isn't already being used
         require(!_employeeExists(_accountAddress), ERROR_EMPLOYEE_ALREADY_EXIST);
 

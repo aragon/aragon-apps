@@ -23,7 +23,7 @@ module.exports = {
     const error = await assertThrows(blockOrPromise, 'revert')
     if (expectedReason) {
       const foundReason = error.message.replace(THROW_ERROR_PREFIX, '').trim()
-      assert.equal(expectedReason, foundReason, `Expected revert reason "${expectedReason}" but failed with "${foundReason || 'no reason'}" instead.`)
+      assert.equal(foundReason, expectedReason, `Expected revert reason "${expectedReason}" but failed with "${foundReason || 'no reason'}" instead.`)
     }
   },
 }

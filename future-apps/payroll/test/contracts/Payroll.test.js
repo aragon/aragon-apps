@@ -1,7 +1,7 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
-const { bn, bigExp, maxUint64, maxUint256 } = require('../helpers/numbers')(web3)
 const { getEvent, getEvents, getEventArgument } = require('../helpers/events')
+const { bn, bigExp, maxUint64, maxUint256, annualSalary } = require('../helpers/numbers')(web3)
 const { deployErc20TokenAndDeposit, redistributeEth, getDaoFinanceVault } = require('../helpers/setup.js')(artifacts, web3)
 
 const ACL = artifacts.require('ACL')
@@ -18,7 +18,6 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
   const NOW = 1553703809 // random fixed timestamp in seconds
   const ONE_MONTH = 60 * 60 * 24 * 31
   const TWO_MONTHS = ONE_MONTH * 2
-  const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
   const RATE_EXPIRATION_TIME = TWO_MONTHS
 
   const PCT_ONE = bigExp(1, 18)
@@ -141,14 +140,29 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
       })
 
       context('when the sender is an employee', () => {
+        let employeeId
         const sender = employee
 
         beforeEach('add employee', async () => {
-          await payroll.addEmployeeNow(employee, 100000, 'John', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, 100000, 'John Doe', 'Boss', { from: owner })
+          employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
-        it('returns true', async () =>  {
-          assert(await payroll.canForward(sender, '0x'), 'sender should be able to forward')
+        context('when the employee was not terminated', () => {
+          it('returns true', async () =>  {
+            assert(await payroll.canForward(sender, '0x'), 'sender should be able to forward')
+          })
+        })
+
+        context('when the employee was already terminated', () => {
+          beforeEach('terminate employee', async () => {
+            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.mockAddTimestamp(ONE_MONTH + 1)
+          })
+
+          it('returns true', async () => {
+            assert(await payroll.canForward(sender, '0x'), 'sender should be able to forward')
+          })
         })
       })
 
@@ -183,16 +197,33 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
       })
 
       context('when the sender is an employee', () => {
+        let employeeId
         const from = employee
 
         beforeEach('add employee', async () => {
-          await payroll.addEmployeeNow(employee, 100000, 'John', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, 100000, 'John Doe', 'Boss', { from: owner })
+          employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
-        it('executes the given script', async () =>  {
-          await payroll.forward(script, { from })
+        context('when the employee was not terminated', () => {
+          it('executes the given script', async () =>  {
+            await payroll.forward(script, { from })
 
-          assert.equal(await executionTarget.counter(), 1, 'should have received execution calls')
+            assert.equal(await executionTarget.counter(), 1, 'should have received execution calls')
+          })
+        })
+
+        context('when the employee was already terminated', () => {
+          beforeEach('terminate employee', async () => {
+            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.mockAddTimestamp(ONE_MONTH + 1)
+          })
+
+          it('executes the given script', async () =>  {
+            await payroll.forward(script, { from })
+
+            assert.equal(await executionTarget.counter(), 1, 'should have received execution calls')
+          })
         })
       })
 
@@ -337,7 +368,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
   describe('addEmployeeNow', () => {
     const employeeName = 'John Doe'
     const employeeRole = 'Boss'
-    const salary = bigExp(100000, DENOMINATION_TOKEN_DECIMALS).dividedToIntegerBy(SECONDS_IN_A_YEAR)
+    const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
 
     context('when it has already been initialized', function () {
       beforeEach('initialize payroll app', async () => {
@@ -354,6 +385,10 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
           beforeEach('add employee', async () => {
             receipt = await payroll.addEmployeeNow(employee, salary, employeeName, employeeRole, { from })
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
+          })
+
+          it('starts with ID 1', async () => {
+            assert.equal(employeeId, 1, 'first employee ID should be 1')
           })
 
           it('adds a new employee and emits an event', async () => {
@@ -375,7 +410,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
           it('can add another employee', async () => {
             const anotherEmployeeName = 'Joe'
             const anotherEmployeeRole = 'Boss'
-            const anotherSalary = bigExp(120000, DENOMINATION_TOKEN_DECIMALS).dividedToIntegerBy(SECONDS_IN_A_YEAR)
+            const anotherSalary = annualSalary(120000, DENOMINATION_TOKEN_DECIMALS)
 
             const receipt = await payroll.addEmployeeNow(anotherEmployee, anotherSalary, anotherEmployeeName, anotherEmployeeRole)
             const anotherEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
@@ -427,8 +462,127 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
     })
   })
 
-  xdescribe('addEmployee', () => {
-    // TODO: implement
+  describe('addEmployee', () => {
+    const employeeName = 'John Doe'
+    const employeeRole = 'Boss'
+    const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
+
+    context('when it has already been initialized', function () {
+      beforeEach('initialize payroll app', async () => {
+        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      })
+
+      context('when the sender has permissions to add employees', () => {
+        const from = owner
+        let receipt, employeeId
+
+        context('when the employee has not been added yet', () => {
+          let receipt, employeeId
+
+          const itHandlesAddingNewEmployeesProperly = startDate => {
+            beforeEach('add employee', async () => {
+              receipt = await payroll.addEmployee(employee, salary, employeeName, employeeRole, startDate, { from })
+              employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
+            })
+
+            it('starts with ID 1', async () => {
+              assert.equal(employeeId, 1, 'first employee ID should be 1')
+            })
+
+            it('adds a new employee and emits an event', async () => {
+              const [address] = await payroll.getEmployee(employeeId)
+              assert.equal(address, employee, 'employee address does not match')
+
+              const events = getEvents(receipt, 'AddEmployee');
+              assert.equal(events.length, 1, 'number of AddEmployee events does not match')
+
+              const event = events[0].args
+              assert.equal(event.employeeId, employeeId, 'employee id does not match')
+              assert.equal(event.name, employeeName, 'employee name does not match')
+              assert.equal(event.role, employeeRole, 'employee role does not match')
+              assert.equal(event.accountAddress, employee, 'employee address does not match')
+              assert.equal(event.startDate.toString(), startDate, 'employee start date does not match')
+              assert.equal(event.initialDenominationSalary.toString(), salary.toString(), 'employee salary does not match')
+            })
+
+            it('can add another employee', async () => {
+              const anotherEmployeeName = 'Joe'
+              const anotherEmployeeRole = 'Boss'
+              const anotherSalary = annualSalary(120000, DENOMINATION_TOKEN_DECIMALS)
+
+              const receipt = await payroll.addEmployee(anotherEmployee, anotherSalary, anotherEmployeeName, anotherEmployeeRole, startDate)
+              const anotherEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
+
+              const events = getEvents(receipt, 'AddEmployee');
+              assert.equal(events.length, 1, 'number of AddEmployee events does not match')
+
+              const event = events[0].args
+              assert.equal(event.employeeId, anotherEmployeeId, 'employee id does not match')
+              assert.equal(event.name, anotherEmployeeName, 'employee name does not match')
+              assert.equal(event.role, anotherEmployeeRole, 'employee role does not match')
+              assert.equal(event.accountAddress, anotherEmployee, 'employee address does not match')
+              assert.equal(event.startDate.toString(), startDate, 'employee start date does not match')
+              assert.equal(event.initialDenominationSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
+
+              const [address, employeeSalary, accruedValue, lastPayroll, endDate] = await payroll.getEmployee(anotherEmployeeId)
+              assert.equal(address, anotherEmployee, 'Employee account does not match')
+              assert.equal(accruedValue, 0, 'Employee accrued value does not match')
+              assert.equal(employeeSalary.toString(), anotherSalary.toString(), 'Employee salary does not match')
+              assert.equal(lastPayroll.toString(), startDate.toString(), 'last payroll should match')
+              assert.equal(endDate.toString(), maxUint64(), 'last payroll should match')
+            })
+          }
+
+          context('when the given end date is in the past ', () => {
+            const startDate = NOW - TWO_MONTHS
+
+            itHandlesAddingNewEmployeesProperly(startDate)
+          })
+
+          context('when the given end date is in the future', () => {
+            const startDate = NOW + TWO_MONTHS
+
+            itHandlesAddingNewEmployeesProperly(startDate)
+          })
+        })
+
+        context('when the employee has already been added', () => {
+          beforeEach('add employee', async () => {
+            await payroll.addEmployee(employee, salary, employeeName, employeeRole, NOW, { from })
+          })
+
+          context('when the given end date is in the past ', () => {
+            const startDate = NOW - TWO_MONTHS
+
+            it('reverts', async () => {
+              await assertRevert(payroll.addEmployee(employee, salary, employeeName, employeeRole, startDate, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
+            })
+          })
+
+          context('when the given end date is in the future', () => {
+            const startDate = NOW + TWO_MONTHS
+
+            it('reverts', async () => {
+              await assertRevert(payroll.addEmployee(employee, salary, employeeName, employeeRole, startDate, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
+            })
+          })
+        })
+      })
+
+      context('when the sender does not have permissions to add employees', () => {
+        const from = anyone
+
+        it('reverts', async () => {
+          await assertRevert(payroll.addEmployee(employee, salary, employeeName, employeeRole, NOW, { from }), 'APP_AUTH_FAILED')
+        })
+      })
+    })
+
+    context('when it has not been initialized yet', function () {
+      it('reverts', async () => {
+        await assertRevert(payroll.addEmployee(employee, salary, employeeName, employeeRole, NOW, { from: owner }), 'APP_AUTH_FAILED')
+      })
+    })
   })
 
   describe('getEmployee', () => {
@@ -441,7 +595,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 1000, 'John', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, 1000, 'John Doe', 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -485,7 +639,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
         const address = employee
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 1000, 'John', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, 1000, 'John Doe', 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
@@ -524,10 +678,10 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
 
       context('when the given employee id exists', () => {
         let employeeId
-        const salary = bigExp(100000, DENOMINATION_TOKEN_DECIMALS).dividedToIntegerBy(SECONDS_IN_A_YEAR)
+        const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -595,7 +749,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
               await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
               // Add employee back
-              const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Boss')
+              const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
               const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
               const [address, employeeSalary, accruedValue, lastPayroll, endDate] = await payroll.getEmployee(newEmployeeId)
@@ -654,10 +808,10 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
 
       context('when the given employee id exists', () => {
         let employeeId
-        const salary = bigExp(100000, DENOMINATION_TOKEN_DECIMALS).dividedToIntegerBy(SECONDS_IN_A_YEAR)
+        const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -732,7 +886,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
                 // Add employee back
-                const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Boss')
+                const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
                 const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
                 const [address, employeeSalary, accruedValue, lastPayroll, date] = await payroll.getEmployee(newEmployeeId)
@@ -822,10 +976,10 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
 
         context('when the given employee exists', () => {
           let employeeId
-          const previousSalary = 1000
+          const previousSalary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, previousSalary, 'John', 'Boss')
+            const receipt = await payroll.addEmployeeNow(employee, previousSalary, 'John Doe', 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -860,15 +1014,15 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
             }
 
             context('when the given value greater than zero', () => {
-              const value = 1000
+              const newSalary = 1000
 
-              itSetsSalarySuccessfully(value)
+              itSetsSalarySuccessfully(newSalary)
             })
 
             context('when the given value is zero', () => {
-              const value = 0
+              const newSalary = 0
 
-              itSetsSalarySuccessfully(value)
+              itSetsSalarySuccessfully(newSalary)
             })
           })
 
@@ -923,7 +1077,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 1000, 'John', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, 1000, 'John Doe', 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
@@ -959,7 +1113,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
 
           context('when the given address belongs to another employee', () => {
             beforeEach('add another employee', async () => {
-              await payroll.addEmployeeNow(anotherEmployee, 1000, 'John', 'Boss', { from: owner })
+              await payroll.addEmployeeNow(anotherEmployee, 1000, 'John Doe', 'Boss', { from: owner })
             })
 
             it('reverts', async () => {
@@ -1020,10 +1174,20 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
             const receipt = await payroll.addAllowedToken(denominationToken.address, { from })
 
             const event = getEvent(receipt, 'AddAllowedToken')
-            assert.equal(event.token, denominationToken.address, 'usd token address should match')
+            assert.equal(event.token, denominationToken.address, 'denomination token address should match')
 
             assert.equal(await payroll.getAllowedTokensArrayLength(), 1, 'allowed tokens length does not match')
-            assert(await payroll.isTokenAllowed(denominationToken.address), 'USD token should be allowed')
+            assert(await payroll.isTokenAllowed(denominationToken.address), 'denomination token should be allowed')
+          })
+
+          it('can allow a the zero address', async () => {
+            const receipt = await payroll.addAllowedToken(ZERO_ADDRESS, { from })
+
+            const event = getEvent(receipt, 'AddAllowedToken')
+            assert.equal(event.token, ZERO_ADDRESS, 'denomination token address should match')
+
+            assert.equal(await payroll.getAllowedTokensArrayLength(), 1, 'allowed tokens length does not match')
+            assert(await payroll.isTokenAllowed(ZERO_ADDRESS), 'zero address token should be allowed')
           })
 
           it('can allow multiple tokens', async () => {
@@ -1035,7 +1199,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
             await payroll.addAllowedToken(erc20Token2.address, { from })
 
             assert.equal(await payroll.getAllowedTokensArrayLength(), 3, 'allowed tokens length does not match')
-            assert(await payroll.isTokenAllowed(denominationToken.address), 'USD token should be allowed')
+            assert(await payroll.isTokenAllowed(denominationToken.address), 'denomination token should be allowed')
             assert(await payroll.isTokenAllowed(erc20Token1.address), 'ERC20 token 1 should be allowed')
             assert(await payroll.isTokenAllowed(erc20Token2.address), 'ERC20 token 2 should be allowed')
           })
@@ -1056,7 +1220,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
             await Promise.all(tokenAddresses.map(address => payroll.addAllowedToken(address, { from: owner })))
             assert.equal(await payroll.getAllowedTokensArrayLength(), MAX_ALLOWED_TOKENS, 'amount of allowed tokens does not match')
 
-            await payroll.addEmployee(employee, 100000, 'John', 'Boss', NOW - ONE_MONTH, { from: owner })
+            await payroll.addEmployee(employee, 100000, 'John Doe', 'Boss', NOW - ONE_MONTH, { from: owner })
           })
 
           it('can not add one more token', async () => {
@@ -1093,6 +1257,44 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
     })
   })
 
+  describe('isTokenAllowed', () => {
+    context('when it has already been initialized', function () {
+      beforeEach('initialize payroll app', async () => {
+        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      })
+
+      context('when the given token is not the zero address', () => {
+        context('when the requested token was allowed', () => {
+          beforeEach('allow denomination token', async () => {
+            await payroll.addAllowedToken(denominationToken.address, { from: owner })
+          })
+
+          it('returns true', async () => {
+            assert(await payroll.isTokenAllowed(denominationToken.address), 'token should be allowed')
+          })
+        })
+
+        context('when the requested token was not allowed yet', () => {
+          it('returns false', async () => {
+            assert.isFalse(await payroll.isTokenAllowed(denominationToken.address), 'token should not be allowed')
+          })
+        })
+      })
+
+      context('when the given token is the zero address', () => {
+        it('returns false', async () => {
+          assert.isFalse(await payroll.isTokenAllowed(ZERO_ADDRESS), 'token should not be allowed')
+        })
+      })
+    })
+
+    context('when it has not been initialized yet', function () {
+      it('returns false', async () => {
+        assert.isFalse(await payroll.isTokenAllowed(denominationToken.address), 'token should not be allowed')
+      })
+    })
+  })
+
   describe('determineAllocation', () => {
     const tokenAddresses = []
 
@@ -1117,7 +1319,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 100000, 'John', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, 100000, 'John Doe', 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
@@ -1269,181 +1471,241 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
     })
   })
 
-  xdescribe('isTokenAllowed', () => {
-    // TODO: implement
-  })
+  describe('getAllocation', () => {
+    context('when it has already been initialized', function () {
+      beforeEach('initialize payroll app', async () => {
+        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      })
 
-  xdescribe('getAllocation', () => {
-    // TODO: implement
+      context('when the employee exists', () => {
+        let employeeId
+
+        beforeEach('add employee', async () => {
+          const receipt = await payroll.addEmployeeNow(employee, 100000, 'John Doe', 'Boss', { from: owner })
+          employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
+        })
+
+        const itShouldAnswerAllocationsProperly = () => {
+          context('when the given token is not the zero address', () => {
+            context('when the given token was allowed', () => {
+              beforeEach('allow denomination token', async () => {
+                await payroll.addAllowedToken(denominationToken.address, { from: owner })
+              })
+
+              context('when the given token was picked by the employee', () => {
+                beforeEach('determine allocation', async () => {
+                  await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
+                })
+
+                it('tells its corresponding allocation', async () => {
+                  const allocation = await payroll.getAllocation(employeeId, denominationToken.address)
+                  assert.equal(allocation.toString(), 100, 'token allocation does not match')
+                })
+              })
+
+              context('when the given token was not picked by the employee', () => {
+                it('returns 0', async () => {
+                  const allocation = await payroll.getAllocation(employeeId, denominationToken.address)
+                  assert.equal(allocation.toString(), 0, 'token allocation should be zero')
+                })
+              })
+            })
+
+            context('when the given token was not allowed', () => {
+              it('returns 0', async () => {
+                const allocation = await payroll.getAllocation(employeeId, denominationToken.address)
+                assert.equal(allocation.toString(), 0, 'token allocation should be zero')
+              })
+            })
+          })
+
+          context('when the given token is the zero address', () => {
+            const token = ZERO_ADDRESS
+
+            context('when the given token was allowed', () => {
+              beforeEach('allow denomination token', async () => {
+                await payroll.addAllowedToken(token, { from: owner })
+              })
+
+              context('when the given token was picked by the employee', () => {
+                beforeEach('determine allocation', async () => {
+                  await payroll.determineAllocation([token], [100], { from: employee })
+                })
+
+                it('tells its corresponding allocation', async () => {
+                  const allocation = await payroll.getAllocation(employeeId, token)
+                  assert.equal(allocation.toString(), 100, 'token allocation does not match')
+                })
+              })
+
+              context('when the given token was not picked by the employee', () => {
+                it('returns 0', async () => {
+                  const allocation = await payroll.getAllocation(employeeId, token)
+                  assert.equal(allocation.toString(), 0, 'token allocation should be zero')
+                })
+              })
+            })
+
+            context('when the given token was not allowed', () => {
+              it('returns 0', async () => {
+                const allocation = await payroll.getAllocation(employeeId, token)
+                assert.equal(allocation.toString(), 0, 'token allocation should be zero')
+              })
+            })
+          })
+        }
+
+        context('when the employee is active', () => {
+          itShouldAnswerAllocationsProperly()
+        })
+
+        context('when the employee is not active', () => {
+          beforeEach('terminate employee', async () => {
+            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.mockAddTimestamp(ONE_MONTH)
+          })
+
+          itShouldAnswerAllocationsProperly()
+        })
+      })
+
+      context('when the employee does not exist', () => {
+        const employeeId = 0
+
+        it('reverts', async () => {
+          await assertRevert(payroll.getAllocation(employeeId, denominationToken.address), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+        })
+      })
+    })
+
+    context('when it has not been initialized yet', function () {
+      const employeeId = 0
+
+      it('reverts', async () => {
+        await assertRevert(payroll.getAllocation(employeeId, denominationToken.address), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+      })
+    })
   })
 
   describe('payday', () => {
-    // TODO: add tests to ensure huge owed amounts can be paid
-
     context('when it has already been initialized', function () {
       beforeEach('initialize payroll app', async () => {
         await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the sender is an employee', () => {
+        let employeeId
         const from = employee
-        let employeeId, salary = 1000
 
-        beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Doe')
-          employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
-        })
+        context('when the employee has a reasonable salary', () => {
+          const salary = 10000
 
-        context('when the employee has already set some token allocations', () => {
-          const denominationTokenAllocation = 80
-          const anotherTokenAllocation = 20
-
-          beforeEach('set tokens allocation', async () => {
-            await payroll.addAllowedToken(anotherToken.address, { from: owner })
-            await payroll.addAllowedToken(denominationToken.address, { from: owner })
-            await payroll.determineAllocation([denominationToken.address, anotherToken.address], [denominationTokenAllocation, anotherTokenAllocation], { from })
+          beforeEach('add employee', async () => {
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
-          context('when the employee has some pending salary', () => {
-            beforeEach('accumulate some pending salary', async () => {
-              await payroll.mockAddTimestamp(ONE_MONTH)
+          context('when the employee has already set some token allocations', () => {
+            const denominationTokenAllocation = 80
+            const anotherTokenAllocation = 20
+
+            beforeEach('set tokens allocation', async () => {
+              await payroll.addAllowedToken(anotherToken.address, { from: owner })
+              await payroll.addAllowedToken(denominationToken.address, { from: owner })
+              await payroll.determineAllocation([denominationToken.address, anotherToken.address], [denominationTokenAllocation, anotherTokenAllocation], { from })
             })
 
-            const assertTransferredAmounts = () => {
-              const expectedOwedAmount = ONE_MONTH * salary
-              const expectedDenominationTokenAmount = Math.round(expectedOwedAmount * denominationTokenAllocation / 100)
-              const expectedAnotherTokenAmount = Math.round(expectedOwedAmount * anotherTokenAllocation / 100)
-
-              it('transfers the owed salary', async () => {
-                const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
-
-                await payroll.payday({ from })
-
-                const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                assert.equal(currentDenominationTokenBalance.toString(), previousDenominationTokenBalance.plus(expectedDenominationTokenAmount).toString(), 'current USD token balance does not match')
-
-                const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                const expectedAnotherTokenBalance = anotherTokenRate.mul(expectedAnotherTokenAmount).plus(previousAnotherTokenBalance)
-                assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
-              })
-
-              it('emits one event per allocated token', async () => {
-                const receipt = await payroll.payday({ from })
-
-                const events = receipt.logs.filter(l => l.event === 'SendPayment')
-                assert.equal(events.length, 2, 'should have emitted two events')
-
-                const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
-                assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
-                assert.equal(denominationTokenEvent.token, denominationToken.address, 'usd token address does not match')
-                assert.equal(denominationTokenEvent.amount.toString(), expectedDenominationTokenAmount, 'payment amount does not match')
-                assert.equal(denominationTokenEvent.reference, 'Payroll', 'payment reference does not match')
-
-                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
-                assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
-                assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
-                assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).toString(), expectedAnotherTokenAmount, 'payment amount does not match')
-                assert.equal(anotherTokenEvent.reference, 'Payroll', 'payment reference does not match')
-              })
-
-              it('can be called multiple times between periods of time', async () => {
-                // terminate employee in the future to ensure we can request payroll multiple times
-                await payroll.terminateEmployee(employeeId, NOW + TWO_MONTHS + TWO_MONTHS, { from: owner })
-
-                const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
-
-                await payroll.payday({ from })
-
+            context('when the employee has some pending salary', () => {
+              beforeEach('accumulate some pending salary', async () => {
                 await payroll.mockAddTimestamp(ONE_MONTH)
-                await priceFeed.mockAddTimestamp(ONE_MONTH)
-                await payroll.payday({ from })
-
-                const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(expectedDenominationTokenAmount * 2)
-                assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current USD token balance does not match')
-
-                const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                const expectedAnotherTokenBalance = anotherTokenRate.mul(expectedAnotherTokenAmount * 2).plus(previousAnotherTokenBalance)
-                assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
-              })
-            }
-
-            const assertEmployeeIsUpdated = () => {
-              it('updates the last payroll date', async () => {
-                await payroll.payday({ from })
-
-                const lastPayrollDate = (await payroll.getEmployee(employeeId))[3]
-                assert.equal(lastPayrollDate.toString(), (await currentTimestamp()).toString(), 'last payroll date does not match')
               })
 
-              it('does not remove the employee', async () => {
-                await payroll.payday({ from })
+              const assertTransferredAmounts = () => {
+                const expectedOwedAmount = salary * ONE_MONTH
+                const expectedDenominationTokenAmount = Math.round(expectedOwedAmount * denominationTokenAllocation / 100)
+                const expectedAnotherTokenAmount = Math.round(expectedOwedAmount * anotherTokenAllocation / 100)
 
-                const [address, employeeSalary] = await payroll.getEmployee(employeeId)
+                it('transfers the owed salary', async () => {
+                  const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                  const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
 
-                assert.equal(address, employee, 'employee address does not match')
-                assert.equal(employeeSalary, salary, 'employee salary does not match')
-              })
-            }
+                  await payroll.payday({ from })
 
-            const itHandlesPaydayProperly = () => {
-              context('when exchange rates are not expired', () => {
-                assertTransferredAmounts()
-                assertEmployeeIsUpdated()
-              })
+                  const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                  assert.equal(currentDenominationTokenBalance.toString(), previousDenominationTokenBalance.plus(expectedDenominationTokenAmount).toString(), 'current denomination token balance does not match')
 
-              context('when exchange rates are expired', () => {
-                beforeEach('expire exchange rates', async () => {
-                  await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                  const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                  const expectedAnotherTokenBalance = anotherTokenRate.mul(expectedAnotherTokenAmount).plus(previousAnotherTokenBalance)
+                  assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
                 })
 
-                it('reverts', async () => {
-                  await assertRevert(payroll.payday({ from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
-                })
-              })
-            }
+                it('emits one event per allocated token', async () => {
+                  const receipt = await payroll.payday({ from })
 
-            context('when the employee has some pending reimbursements', () => {
-              beforeEach('add accrued value', async () => {
-                await payroll.addAccruedValue(employeeId, 1000, { from: owner })
-              })
+                  const events = receipt.logs.filter(l => l.event === 'SendPayment')
+                  assert.equal(events.length, 2, 'should have emitted two events')
 
-              context('when the employee is not terminated', () => {
-                itHandlesPaydayProperly()
-              })
+                  const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
+                  assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
+                  assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
+                  assert.equal(denominationTokenEvent.amount.toString(), expectedDenominationTokenAmount, 'payment amount does not match')
+                  assert.equal(denominationTokenEvent.reference, 'Payroll', 'payment reference does not match')
 
-              context('when the employee is terminated', () => {
-                beforeEach('terminate employee', async () => {
-                  await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                })
-
-                itHandlesPaydayProperly()
-              })
-            })
-
-            context('when the employee does not have pending reimbursements', () => {
-              context('when the employee is not terminated', () => {
-                itHandlesPaydayProperly()
-              })
-
-              context('when the employee is terminated', () => {
-                beforeEach('terminate employee', async () => {
-                  await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                  const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
+                  assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
+                  assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
+                  assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).toString(), expectedAnotherTokenAmount, 'payment amount does not match')
+                  assert.equal(anotherTokenEvent.reference, 'Payroll', 'payment reference does not match')
                 })
 
+                it('can be called multiple times between periods of time', async () => {
+                  // terminate employee in the future to ensure we can request payroll multiple times
+                  await payroll.terminateEmployee(employeeId, NOW + TWO_MONTHS + TWO_MONTHS, { from: owner })
+
+                  const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                  const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
+
+                  await payroll.payday({ from })
+
+                  await payroll.mockAddTimestamp(ONE_MONTH)
+                  await priceFeed.mockAddTimestamp(ONE_MONTH)
+                  await payroll.payday({ from })
+
+                  const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                  const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(expectedDenominationTokenAmount * 2)
+                  assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
+
+                  const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                  const expectedAnotherTokenBalance = anotherTokenRate.mul(expectedAnotherTokenAmount * 2).plus(previousAnotherTokenBalance)
+                  assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
+                })
+              }
+
+              const assertEmployeeIsUpdated = () => {
+                it('updates the last payroll date', async () => {
+                  await payroll.payday({ from })
+
+                  const lastPayrollDate = (await payroll.getEmployee(employeeId))[3]
+                  assert.equal(lastPayrollDate.toString(), (await currentTimestamp()).toString(), 'last payroll date does not match')
+                })
+
+                it('does not remove the employee', async () => {
+                  await payroll.payday({ from })
+
+                  const [address, employeeSalary] = await payroll.getEmployee(employeeId)
+
+                  assert.equal(address, employee, 'employee address does not match')
+                  assert.equal(employeeSalary, salary, 'employee salary does not match')
+                })
+              }
+
+              const itHandlesPaydayProperly = () => {
                 context('when exchange rates are not expired', () => {
                   assertTransferredAmounts()
-
-                  it('removes the employee', async () => {
-                    await payroll.payday({ from })
-
-                    await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
-                  })
+                  assertEmployeeIsUpdated()
                 })
 
                 context('when exchange rates are expired', () => {
@@ -1455,33 +1717,198 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
                     await assertRevert(payroll.payday({ from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
                   })
                 })
+              }
+
+              context('when the employee has some pending reimbursements', () => {
+                beforeEach('add accrued value', async () => {
+                  await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                })
+
+                context('when the employee is not terminated', () => {
+                  itHandlesPaydayProperly()
+                })
+
+                context('when the employee is terminated', () => {
+                  beforeEach('terminate employee', async () => {
+                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                  })
+
+                  itHandlesPaydayProperly()
+                })
+              })
+
+              context('when the employee does not have pending reimbursements', () => {
+                context('when the employee is not terminated', () => {
+                  itHandlesPaydayProperly()
+                })
+
+                context('when the employee is terminated', () => {
+                  beforeEach('terminate employee', async () => {
+                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                  })
+
+                  context('when exchange rates are not expired', () => {
+                    assertTransferredAmounts()
+
+                    it('removes the employee', async () => {
+                      await payroll.payday({ from })
+
+                      await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                    })
+                  })
+
+                  context('when exchange rates are expired', () => {
+                    beforeEach('expire exchange rates', async () => {
+                      await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                    })
+
+                    it('reverts', async () => {
+                      await assertRevert(payroll.payday({ from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                    })
+                  })
+                })
+              })
+            })
+
+            context('when the employee does not have pending salary', () => {
+              it('reverts', async () => {
+                await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
               })
             })
           })
 
-          context('when the employee does not have pending salary', () => {
-            it('reverts', async () => {
-              await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+          context('when the employee did not set any token allocations yet', () => {
+            context('when the employee has some pending salary', () => {
+              beforeEach('accumulate some pending salary', async () => {
+                await payroll.mockAddTimestamp(ONE_MONTH)
+              })
+
+              it('reverts', async () => {
+                await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+              })
+            })
+
+            context('when the employee does not have pending salary', () => {
+              it('reverts', async () => {
+                await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+              })
             })
           })
         })
 
-        context('when the employee did not set any token allocations yet', () => {
-          context('when the employee has some pending salary', () => {
-            beforeEach('accumulate some pending salary', async () => {
-              await payroll.mockAddTimestamp(ONE_MONTH)
+        const itReverts = reason => {
+          it('reverts', async () => {
+            await assertRevert(payroll.payday({ from }), reason)
+          })
+        }
+
+        const itRevertsHandlingExpiredRates = (nonExpiredRatesReason, expiredRatesReason) => {
+          context('when exchange rates are not expired', () => {
+            itReverts(nonExpiredRatesReason)
+          })
+
+          context('when exchange rates are expired', () => {
+            beforeEach('expire exchange rates', async () => {
+              await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
             })
 
-            it('reverts', async () => {
-              await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+            itReverts(expiredRatesReason)
+          })
+        }
+
+        const itRevertsToWithdrawPayroll = (nonExpiredRatesReason, expiredRatesReason) => {
+          context('when the employee has some pending reimbursements', () => {
+            beforeEach('add accrued value', async () => {
+              await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+            })
+
+            context('when the employee is not terminated', () => {
+              itRevertsHandlingExpiredRates(nonExpiredRatesReason, expiredRatesReason)
+            })
+
+            context('when the employee is terminated', () => {
+              beforeEach('terminate employee', async () => {
+                await payroll.terminateEmployeeNow(employeeId, { from: owner })
+              })
+
+              itRevertsHandlingExpiredRates(nonExpiredRatesReason, expiredRatesReason)
             })
           })
 
-          context('when the employee does not have pending salary', () => {
-            it('reverts', async () => {
-              await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+          context('when the employee does not have pending reimbursements', () => {
+            context('when the employee is not terminated', () => {
+              itRevertsHandlingExpiredRates(nonExpiredRatesReason, expiredRatesReason)
+            })
+
+            context('when the employee is terminated', () => {
+              beforeEach('terminate employee', async () => {
+                await payroll.terminateEmployeeNow(employeeId, { from: owner })
+              })
+
+              itRevertsHandlingExpiredRates(nonExpiredRatesReason, expiredRatesReason)
             })
           })
+        }
+
+        const itRevertsAnyAttemptToWithdrawPayroll = (nonExpiredRatesReason, expiredRatesReason) => {
+          context('when the employee has already set some token allocations', () => {
+            const denominationTokenAllocation = 80
+            const anotherTokenAllocation = 20
+
+            beforeEach('set tokens allocation', async () => {
+              await payroll.addAllowedToken(anotherToken.address, { from: owner })
+              await payroll.addAllowedToken(denominationToken.address, { from: owner })
+              await payroll.determineAllocation([denominationToken.address, anotherToken.address], [denominationTokenAllocation, anotherTokenAllocation], { from })
+            })
+
+            context('when the employee has some pending salary', () => {
+              beforeEach('accumulate some pending salary', async () => {
+                await payroll.mockAddTimestamp(ONE_MONTH)
+              })
+
+              itRevertsToWithdrawPayroll(nonExpiredRatesReason, expiredRatesReason)
+            })
+
+            context('when the employee does not have pending salary', () => {
+              itRevertsToWithdrawPayroll('PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+            })
+          })
+
+          context('when the employee did not set any token allocations yet', () => {
+            context('when the employee has some pending salary', () => {
+              beforeEach('accumulate some pending salary', async () => {
+                await payroll.mockAddTimestamp(ONE_MONTH)
+              })
+
+              itRevertsToWithdrawPayroll('PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+            })
+
+            context('when the employee does not have pending salary', () => {
+              itRevertsToWithdrawPayroll('PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+            })
+          })
+        }
+
+        context('when the employee has a zero salary', () => {
+          const salary = 0
+
+          beforeEach('add employee', async () => {
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
+          })
+
+          itRevertsAnyAttemptToWithdrawPayroll('PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+        })
+
+        context('when the employee has a huge salary', () => {
+          const salary = maxUint256()
+
+          beforeEach('add employee', async () => {
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
+          })
+
+          itRevertsAnyAttemptToWithdrawPayroll('MATH_MUL_OVERFLOW', 'PAYROLL_EXCHANGE_RATE_ZERO')
         })
       })
 
@@ -1508,344 +1935,696 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
       })
 
       context('when the sender is an employee', () => {
+        let employeeId
         const from = employee
-        let employeeId, salary = 1000
 
-        beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Boss')
-          employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
-        })
+        context('when the employee has a reasonable salary', () => {
+          const salary = 100000
 
-        context('when the employee has already set some token allocations', () => {
-          const denominationTokenAllocation = 80
-          const anotherTokenAllocation = 20
-
-          beforeEach('set tokens allocation', async () => {
-            await payroll.addAllowedToken(anotherToken.address, { from: owner })
-            await payroll.addAllowedToken(denominationToken.address, { from: owner })
-            await payroll.determineAllocation([denominationToken.address, anotherToken.address], [denominationTokenAllocation, anotherTokenAllocation], { from })
+          beforeEach('add employee', async () => {
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
-          context('when the employee has some pending salary', () => {
-            const owedSalary = ONE_MONTH * salary
+          context('when the employee has already set some token allocations', () => {
+            const denominationTokenAllocation = 80
+            const anotherTokenAllocation = 20
 
-            beforeEach('accumulate some pending salary', async () => {
-              await payroll.mockAddTimestamp(ONE_MONTH)
+            beforeEach('set tokens allocation', async () => {
+              await payroll.addAllowedToken(anotherToken.address, { from: owner })
+              await payroll.addAllowedToken(denominationToken.address, { from: owner })
+              await payroll.determineAllocation([denominationToken.address, anotherToken.address], [denominationTokenAllocation, anotherTokenAllocation], { from })
             })
 
-            const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
-              const requestedDenominationTokenAmount = Math.round(expectedRequestedAmount * denominationTokenAllocation / 100)
-              const requestedAnotherTokenAmount = Math.round(expectedRequestedAmount * anotherTokenAllocation / 100)
+            context('when the employee has some pending salary', () => {
+              const owedSalary = salary * ONE_MONTH
 
-              it('transfers the requested salary amount', async () => {
-                const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
-
-                await payroll.partialPayday(requestedAmount, { from })
-
-                const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount);
-                assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current USD token balance does not match')
-
-                const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount).plus(previousAnotherTokenBalance).trunc()
-                assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
-              })
-
-              it('emits one event per allocated token', async () => {
-                const receipt = await payroll.partialPayday(requestedAmount, { from })
-
-                const events = receipt.logs.filter(l => l.event === 'SendPayment')
-                assert.equal(events.length, 2, 'should have emitted two events')
-
-                const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
-                assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
-                assert.equal(denominationTokenEvent.token, denominationToken.address, 'usd token address does not match')
-                assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
-                assert.equal(denominationTokenEvent.reference, 'Payroll', 'payment reference does not match')
-
-                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
-                assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
-                assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
-                assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), Math.round(requestedAnotherTokenAmount), 'payment amount does not match')
-                assert.equal(anotherTokenEvent.reference, 'Payroll', 'payment reference does not match')
-              })
-
-              it('can be called multiple times between periods of time', async () => {
-                // terminate employee in the future to ensure we can request payroll multiple times
-                await payroll.terminateEmployee(employeeId, NOW + TWO_MONTHS + TWO_MONTHS, { from: owner })
-
-                const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
-
-                await payroll.partialPayday(requestedAmount, { from })
-
+              beforeEach('accumulate some pending salary', async () => {
                 await payroll.mockAddTimestamp(ONE_MONTH)
-                await priceFeed.mockAddTimestamp(ONE_MONTH)
-                await payroll.partialPayday(requestedAmount, { from })
-
-                const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount * 2)
-                assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current USD token balance does not match')
-
-                const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount * 2).plus(previousAnotherTokenBalance)
-                assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
-              })
-            }
-
-            const assertEmployeeIsUpdated = (requestedAmount, expectedRequestedAmount) => {
-              it('updates the last payroll date', async () => {
-                const previousPayrollDate = (await payroll.getEmployee(employeeId))[3]
-                const expectedLastPayrollDate = previousPayrollDate.plus(Math.floor(expectedRequestedAmount / salary))
-
-                await payroll.partialPayday(requestedAmount, { from })
-
-                const lastPayrollDate = (await payroll.getEmployee(employeeId))[3]
-                assert.equal(lastPayrollDate.toString(), expectedLastPayrollDate.toString(), 'last payroll date does not match')
               })
 
-              it('does not remove the employee', async () => {
-                await payroll.partialPayday(requestedAmount, { from })
+              const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
+                const requestedDenominationTokenAmount = Math.round(expectedRequestedAmount * denominationTokenAllocation / 100)
+                const requestedAnotherTokenAmount = Math.round(expectedRequestedAmount * anotherTokenAllocation / 100)
 
-                const [address, employeeSalary] = await payroll.getEmployee(employeeId)
+                it('transfers the requested salary amount', async () => {
+                  const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                  const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
 
-                assert.equal(address, employee, 'employee address does not match')
-                assert.equal(employeeSalary, salary, 'employee salary does not match')
-              })
-            }
+                  await payroll.partialPayday(requestedAmount, { from })
 
-            const itHandlesPayrollProperly = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
-              context('when exchange rates are not expired', () => {
-                assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
-                assertEmployeeIsUpdated(requestedAmount, expectedRequestedAmount)
-              })
+                  const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                  const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount);
+                  assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
 
-              context('when exchange rates are expired', () => {
-                beforeEach('expire exchange rates', async () => {
-                  await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                  const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                  const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount).plus(previousAnotherTokenBalance).trunc()
+                  assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
                 })
+
+                it('emits one event per allocated token', async () => {
+                  const receipt = await payroll.partialPayday(requestedAmount, { from })
+
+                  const events = receipt.logs.filter(l => l.event === 'SendPayment')
+                  assert.equal(events.length, 2, 'should have emitted two events')
+
+                  const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
+                  assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
+                  assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
+                  assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
+                  assert.equal(denominationTokenEvent.reference, 'Payroll', 'payment reference does not match')
+
+                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                  const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
+                  assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
+                  assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
+                  assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), Math.round(requestedAnotherTokenAmount), 'payment amount does not match')
+                  assert.equal(anotherTokenEvent.reference, 'Payroll', 'payment reference does not match')
+                })
+
+                it('can be called multiple times between periods of time', async () => {
+                  // terminate employee in the future to ensure we can request payroll multiple times
+                  await payroll.terminateEmployee(employeeId, NOW + TWO_MONTHS + TWO_MONTHS, { from: owner })
+
+                  const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                  const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
+
+                  await payroll.partialPayday(requestedAmount, { from })
+
+                  await payroll.mockAddTimestamp(ONE_MONTH)
+                  await priceFeed.mockAddTimestamp(ONE_MONTH)
+                  await payroll.partialPayday(requestedAmount, { from })
+
+                  const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                  const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount * 2)
+                  assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
+
+                  const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                  const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount * 2).plus(previousAnotherTokenBalance)
+                  assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
+                })
+              }
+
+              const assertEmployeeIsUpdated = (requestedAmount, expectedRequestedAmount) => {
+                it('updates the last payroll date', async () => {
+                  const previousPayrollDate = (await payroll.getEmployee(employeeId))[3]
+                  const expectedLastPayrollDate = previousPayrollDate.plus(Math.floor(expectedRequestedAmount / salary))
+
+                  await payroll.partialPayday(requestedAmount, { from })
+
+                  const lastPayrollDate = (await payroll.getEmployee(employeeId))[3]
+                  assert.equal(lastPayrollDate.toString(), expectedLastPayrollDate.toString(), 'last payroll date does not match')
+                })
+
+                it('does not remove the employee', async () => {
+                  await payroll.partialPayday(requestedAmount, { from })
+
+                  const [address, employeeSalary] = await payroll.getEmployee(employeeId)
+
+                  assert.equal(address, employee, 'employee address does not match')
+                  assert.equal(employeeSalary, salary, 'employee salary does not match')
+                })
+              }
+
+              const itHandlesPayrollProperly = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
+                context('when exchange rates are not expired', () => {
+                  assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
+                  assertEmployeeIsUpdated(requestedAmount, expectedRequestedAmount)
+                })
+
+                context('when exchange rates are expired', () => {
+                  beforeEach('expire exchange rates', async () => {
+                    await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                  })
+
+                  it('reverts', async () => {
+                    await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                  })
+                })
+              }
+
+              context('when the requested amount is zero', () => {
+                const requestedAmount = 0
+
+                context('when the employee has some pending reimbursements', () => {
+                  beforeEach('add accrued value', async () => {
+                    await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                  })
+
+                  context('when the employee is not terminated', () => {
+                    itHandlesPayrollProperly(requestedAmount, owedSalary)
+                  })
+
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    })
+
+                    itHandlesPayrollProperly(requestedAmount, owedSalary)
+                  })
+                })
+
+                context('when the employee does not have pending reimbursements', () => {
+                  context('when the employee is not terminated', () => {
+                    itHandlesPayrollProperly(requestedAmount, owedSalary)
+                  })
+
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    })
+
+                    context('when exchange rates are not expired', () => {
+                      assertTransferredAmounts(requestedAmount, owedSalary)
+
+                      it('removes the employee', async () => {
+                        await payroll.partialPayday(requestedAmount, { from })
+
+                        await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                      })
+                    })
+
+                    context('when exchange rates are expired', () => {
+                      beforeEach('expire exchange rates', async () => {
+                        await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                      })
+
+                      it('reverts', async () => {
+                        await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      })
+                    })
+                  })
+                })
+              })
+
+              context('when the requested amount is less than the total owed salary', () => {
+                const requestedAmount = owedSalary - 10
+
+                context('when the employee has some pending reimbursements', () => {
+                  beforeEach('add accrued value', async () => {
+                    await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                  })
+
+                  context('when the employee is not terminated', () => {
+                    itHandlesPayrollProperly(requestedAmount)
+                  })
+
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    })
+
+                    itHandlesPayrollProperly(requestedAmount)
+                  })
+                })
+
+                context('when the employee does not have pending reimbursements', () => {
+                  context('when the employee is not terminated', () => {
+                    itHandlesPayrollProperly(requestedAmount)
+                  })
+
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    })
+
+                    itHandlesPayrollProperly(requestedAmount)
+                  })
+                })
+              })
+
+              context('when the requested amount is equal to the total owed salary', () => {
+                const requestedAmount = owedSalary
+
+                context('when the employee has some pending reimbursements', () => {
+                  beforeEach('add accrued value', async () => {
+                    await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                  })
+
+                  context('when the employee is not terminated', () => {
+                    itHandlesPayrollProperly(requestedAmount)
+                  })
+
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    })
+
+                    itHandlesPayrollProperly(requestedAmount)
+                  })
+                })
+
+                context('when the employee does not have pending reimbursements', () => {
+                  context('when the employee is not terminated', () => {
+                    itHandlesPayrollProperly(requestedAmount)
+                  })
+
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    })
+
+                    context('when exchange rates are not expired', () => {
+                      assertTransferredAmounts(requestedAmount)
+
+                      it('removes the employee', async () => {
+                        await payroll.partialPayday(requestedAmount, { from })
+
+                        await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                      })
+                    })
+
+                    context('when exchange rates are expired', () => {
+                      beforeEach('expire exchange rates', async () => {
+                        await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                      })
+
+                      it('reverts', async () => {
+                        await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      })
+                    })
+                  })
+                })
+              })
+
+              context('when the requested amount is greater than the total owed salary', () => {
+                const requestedAmount = owedSalary + 1
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
-                })
-              })
-            }
-
-            context('when the requested amount is zero', () => {
-              const requestedAmount = 0
-
-              context('when the employee has some pending reimbursements', () => {
-                beforeEach('add accrued value', async () => {
-                  await payroll.addAccruedValue(employeeId, 1000, { from: owner })
-                })
-
-                context('when the employee is not terminated', () => {
-                  itHandlesPayrollProperly(requestedAmount, owedSalary)
-                })
-
-                context('when the employee is terminated', () => {
-                  beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                  })
-
-                  itHandlesPayrollProperly(requestedAmount, owedSalary)
-                })
-              })
-
-              context('when the employee does not have pending reimbursements', () => {
-                context('when the employee is not terminated', () => {
-                  itHandlesPayrollProperly(requestedAmount, owedSalary)
-                })
-
-                context('when the employee is terminated', () => {
-                  beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                  })
-
-                  context('when exchange rates are not expired', () => {
-                    assertTransferredAmounts(requestedAmount, owedSalary)
-
-                    it('removes the employee', async () => {
-                      await payroll.partialPayday(requestedAmount, { from })
-
-                      await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
-                    })
-                  })
-
-                  context('when exchange rates are expired', () => {
-                    beforeEach('expire exchange rates', async () => {
-                      await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
-                    })
-
-                    it('reverts', async () => {
-                      await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
-                    })
-                  })
+                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
                 })
               })
             })
 
-            context('when the requested amount is less than the total owed salary', () => {
-              const requestedAmount = owedSalary - 10
+            context('when the employee does not have pending salary', () => {
+              context('when the requested amount is greater than zero', () => {
+                const requestedAmount = 100
 
-              context('when the employee has some pending reimbursements', () => {
-                beforeEach('add accrued value', async () => {
-                  await payroll.addAccruedValue(employeeId, 1000, { from: owner })
-                })
-
-                context('when the employee is not terminated', () => {
-                  itHandlesPayrollProperly(requestedAmount)
-                })
-
-                context('when the employee is terminated', () => {
-                  beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                  })
-
-                  itHandlesPayrollProperly(requestedAmount)
+                it('reverts', async () => {
+                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
                 })
               })
 
-              context('when the employee does not have pending reimbursements', () => {
-                context('when the employee is not terminated', () => {
-                  itHandlesPayrollProperly(requestedAmount)
+              context('when the requested amount is zero', () => {
+                const requestedAmount = 0
+
+                it('reverts', async () => {
+                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
                 })
-
-                context('when the employee is terminated', () => {
-                  beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                  })
-
-                  itHandlesPayrollProperly(requestedAmount)
-                })
-              })
-            })
-
-            context('when the requested amount is equal to the total owed salary', () => {
-              const requestedAmount = owedSalary
-
-              context('when the employee has some pending reimbursements', () => {
-                beforeEach('add accrued value', async () => {
-                  await payroll.addAccruedValue(employeeId, 1000, { from: owner })
-                })
-
-                context('when the employee is not terminated', () => {
-                  itHandlesPayrollProperly(requestedAmount)
-                })
-
-                context('when the employee is terminated', () => {
-                  beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                  })
-
-                  itHandlesPayrollProperly(requestedAmount)
-                })
-              })
-
-              context('when the employee does not have pending reimbursements', () => {
-                context('when the employee is not terminated', () => {
-                  itHandlesPayrollProperly(requestedAmount)
-                })
-
-                context('when the employee is terminated', () => {
-                  beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                  })
-
-                  context('when exchange rates are not expired', () => {
-                    assertTransferredAmounts(requestedAmount)
-
-                    it('removes the employee', async () => {
-                      await payroll.partialPayday(requestedAmount, { from })
-
-                      await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
-                    })
-                  })
-
-                  context('when exchange rates are expired', () => {
-                    beforeEach('expire exchange rates', async () => {
-                      await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
-                    })
-
-                    it('reverts', async () => {
-                      await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
-                    })
-                  })
-                })
-              })
-            })
-
-            context('when the requested amount is greater than the total owed salary', () => {
-              const requestedAmount = owedSalary + 1
-
-              it('reverts', async () => {
-                await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
           })
 
-          context('when the employee does not have pending salary', () => {
-            context('when the requested amount is greater than zero', () => {
-              const requestedAmount = 100
+          context('when the employee did not set any token allocations yet', () => {
+            context('when the employee has some pending salary', () => {
+              const owedSalary = salary * ONE_MONTH
 
-              it('reverts', async () => {
-                await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+              beforeEach('accumulate some pending salary', async () => {
+                await payroll.mockAddTimestamp(ONE_MONTH)
+              })
+
+              context('when the requested amount is less than the total owed salary', () => {
+                const requestedAmount = owedSalary - 10
+
+                it('reverts', async () => {
+                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                })
+              })
+
+              context('when the requested amount is equal to the total owed salary', () => {
+                const requestedAmount = owedSalary
+
+                it('reverts', async () => {
+                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                })
               })
             })
 
-            context('when the requested amount is zero', () => {
-              const requestedAmount = 0
+            context('when the employee does not have pending salary', () => {
+              context('when the requested amount is greater than zero', () => {
+                const requestedAmount = 100
 
-              it('reverts', async () => {
-                await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                it('reverts', async () => {
+                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                })
+              })
+
+              context('when the requested amount is zero', () => {
+                const requestedAmount = 0
+
+                it('reverts', async () => {
+                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                })
               })
             })
           })
         })
 
-        context('when the employee did not set any token allocations yet', () => {
-          context('when the employee has some pending salary', () => {
-            const owedSalary = ONE_MONTH * salary
+        const itReverts = (requestedAmount, reason) => {
+          it('reverts', async () => {
+            await assertRevert(payroll.partialPayday(requestedAmount, {from}), reason)
+          })
+        }
 
-            beforeEach('accumulate some pending salary', async () => {
-              await payroll.mockAddTimestamp(ONE_MONTH)
+        const itRevertsHandlingExpiredRates = (requestedAmount, nonExpiredRatesReason, expiredRatesReason) => {
+          context('when exchange rates are not expired', () => {
+            itReverts(requestedAmount, nonExpiredRatesReason)
+          })
+
+          context('when exchange rates are expired', () => {
+            beforeEach('expire exchange rates', async () => {
+              await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
             })
 
-            context('when the requested amount is less than the total owed salary', () => {
-              const requestedAmount = owedSalary - 10
+            itReverts(requestedAmount, expiredRatesReason)
+          })
+        }
 
-              it('reverts', async () => {
-                await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+        const itRevertsToWithdrawPartialPayroll = (requestedAmount, nonExpiredRatesReason, expiredRatesReason) => {
+          context('when the employee has some pending reimbursements', () => {
+            beforeEach('add accrued value', async () => {
+              await payroll.addAccruedValue(employeeId, 1000, {from: owner})
+            })
+
+            context('when the employee is not terminated', () => {
+              itRevertsHandlingExpiredRates(requestedAmount, nonExpiredRatesReason, expiredRatesReason)
+            })
+
+            context('when the employee is terminated', () => {
+              beforeEach('terminate employee', async () => {
+                await payroll.terminateEmployeeNow(employeeId, {from: owner})
+              })
+
+              itRevertsHandlingExpiredRates(requestedAmount, nonExpiredRatesReason, expiredRatesReason)
+            })
+          })
+
+          context('when the employee does not have pending reimbursements', () => {
+            context('when the employee is not terminated', () => {
+              itRevertsHandlingExpiredRates(requestedAmount, nonExpiredRatesReason, expiredRatesReason)
+            })
+
+            context('when the employee is terminated', () => {
+              beforeEach('terminate employee', async () => {
+                await payroll.terminateEmployeeNow(employeeId, {from: owner})
+              })
+
+              itRevertsHandlingExpiredRates(requestedAmount, nonExpiredRatesReason, expiredRatesReason)
+            })
+          })
+        }
+
+        context('when the employee has a zero salary', () => {
+          const salary = 0
+
+          beforeEach('add employee', async () => {
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
+          })
+
+          const itRevertsAnyAttemptToWithdrawPartialPayroll = () => {
+            context('when the employee has some pending salary', () => {
+              beforeEach('accumulate some pending salary', async () => {
+                await payroll.mockAddTimestamp(ONE_MONTH)
+              })
+
+              context('when the requested amount is greater than zero', () => {
+                const requestedAmount = 10000
+
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+              })
+
+              context('when the requested amount is zero', () => {
+                const requestedAmount = 0
+
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
               })
             })
 
-            context('when the requested amount is equal to the total owed salary', () => {
-              const requestedAmount = owedSalary
+            context('when the employee does not have pending salary', () => {
+              context('when the requested amount is greater than zero', () => {
+                const requestedAmount = 1000
 
-              it('reverts', async () => {
-                await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+              })
+
+              context('when the requested amount is zero', () => {
+                const requestedAmount = 0
+
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+              })
+            })
+          }
+
+          context('when the employee has already set some token allocations', () => {
+            const denominationTokenAllocation = 80
+            const anotherTokenAllocation = 20
+
+            beforeEach('set tokens allocation', async () => {
+              await payroll.addAllowedToken(anotherToken.address, {from: owner})
+              await payroll.addAllowedToken(denominationToken.address, {from: owner})
+              await payroll.determineAllocation([denominationToken.address, anotherToken.address], [denominationTokenAllocation, anotherTokenAllocation], {from})
+            })
+
+            itRevertsAnyAttemptToWithdrawPartialPayroll()
+          })
+
+          context('when the employee did not set any token allocations yet', () => {
+            itRevertsAnyAttemptToWithdrawPartialPayroll()
+          })
+        })
+
+        context('when the employee has a huge salary', () => {
+          const salary = maxUint256()
+
+          beforeEach('add employee', async () => {
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
+          })
+
+          context('when the employee has already set some token allocations', () => {
+            const denominationTokenAllocation = 80
+            const anotherTokenAllocation = 20
+
+            beforeEach('set tokens allocation', async () => {
+              await payroll.addAllowedToken(anotherToken.address, {from: owner})
+              await payroll.addAllowedToken(denominationToken.address, {from: owner})
+              await payroll.determineAllocation([denominationToken.address, anotherToken.address], [denominationTokenAllocation, anotherTokenAllocation], {from})
+            })
+
+            context('when the employee has some pending salary', () => {
+              const owedSalary = maxUint256()
+
+              beforeEach('accumulate some pending salary', async () => {
+                await payroll.mockAddTimestamp(ONE_MONTH)
+              })
+
+              context('when the requested amount is zero', () => {
+                const requestedAmount = 0
+
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'MATH_MUL_OVERFLOW', 'PAYROLL_EXCHANGE_RATE_ZERO')
+              })
+
+              context('when the requested amount is less than the total owed salary', () => {
+                const requestedAmount = 10000
+
+                const assertTransferredAmounts = requestedAmount => {
+                  const requestedDenominationTokenAmount = Math.round(requestedAmount * denominationTokenAllocation / 100)
+                  const requestedAnotherTokenAmount = Math.round(requestedAmount * anotherTokenAllocation / 100)
+
+                  it('transfers the requested salary amount', async () => {
+                    const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                    const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
+
+                    await payroll.partialPayday(requestedAmount, { from })
+
+                    const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                    const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount);
+                    assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
+
+                    const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                    const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                    const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount).plus(previousAnotherTokenBalance).trunc()
+                    assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
+                  })
+
+                  it('emits one event per allocated token', async () => {
+                    const receipt = await payroll.partialPayday(requestedAmount, { from })
+
+                    const events = receipt.logs.filter(l => l.event === 'SendPayment')
+                    assert.equal(events.length, 2, 'should have emitted two events')
+
+                    const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
+                    assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
+                    assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
+                    assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
+                    assert.equal(denominationTokenEvent.reference, 'Payroll', 'payment reference does not match')
+
+                    const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                    const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
+                    assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
+                    assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
+                    assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), Math.round(requestedAnotherTokenAmount), 'payment amount does not match')
+                    assert.equal(anotherTokenEvent.reference, 'Payroll', 'payment reference does not match')
+                  })
+
+                  it('can be called multiple times between periods of time', async () => {
+                    // terminate employee in the future to ensure we can request payroll multiple times
+                    await payroll.terminateEmployee(employeeId, NOW + TWO_MONTHS + TWO_MONTHS, { from: owner })
+
+                    const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                    const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
+
+                    await payroll.partialPayday(requestedAmount, { from })
+
+                    await payroll.mockAddTimestamp(ONE_MONTH)
+                    await priceFeed.mockAddTimestamp(ONE_MONTH)
+                    await payroll.partialPayday(requestedAmount, { from })
+
+                    const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                    const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount * 2)
+                    assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
+
+                    const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                    const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                    const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount * 2).plus(previousAnotherTokenBalance)
+                    assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
+                  })
+                }
+
+                const assertEmployeeIsUpdated = requestedAmount => {
+                  it('updates the last payroll date', async () => {
+                    const previousPayrollDate = (await payroll.getEmployee(employeeId))[3]
+                    const expectedLastPayrollDate = previousPayrollDate.plus(Math.floor(bn(requestedAmount).div(salary)))
+
+                    await payroll.partialPayday(requestedAmount, { from })
+
+                    const lastPayrollDate = (await payroll.getEmployee(employeeId))[3]
+                    assert.equal(lastPayrollDate.toString(), expectedLastPayrollDate.toString(), 'last payroll date does not match')
+                  })
+
+                  it('does not remove the employee', async () => {
+                    await payroll.partialPayday(requestedAmount, { from })
+
+                    const [address, employeeSalary] = await payroll.getEmployee(employeeId)
+
+                    assert.equal(address, employee, 'employee address does not match')
+                    assert.equal(employeeSalary.toString(), salary.toString())
+                  })
+                }
+
+                const itHandlesPayrollProperly = requestedAmount => {
+                  context('when exchange rates are not expired', () => {
+                    assertTransferredAmounts(requestedAmount)
+                    assertEmployeeIsUpdated(requestedAmount)
+                  })
+
+                  context('when exchange rates are expired', () => {
+                    beforeEach('expire exchange rates', async () => {
+                      await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                    })
+
+                    it('reverts', async () => {
+                      await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                    })
+                  })
+                }
+
+                context('when the employee has some pending reimbursements', () => {
+                  beforeEach('add accrued value', async () => {
+                    await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                  })
+
+                  context('when the employee is not terminated', () => {
+                    itHandlesPayrollProperly(requestedAmount)
+                  })
+
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    })
+
+                    itHandlesPayrollProperly(requestedAmount)
+                  })
+                })
+
+                context('when the employee does not have pending reimbursements', () => {
+                  context('when the employee is not terminated', () => {
+                    itHandlesPayrollProperly(requestedAmount)
+                  })
+
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    })
+
+                    itHandlesPayrollProperly(requestedAmount)
+                  })
+                })
+              })
+
+              context('when the requested amount is equal to the total owed salary', () => {
+                const requestedAmount = owedSalary
+
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'MATH_MUL_OVERFLOW', 'PAYROLL_EXCHANGE_RATE_ZERO')
+              })
+            })
+
+            context('when the employee does not have pending salary', () => {
+              context('when the requested amount is greater than zero', () => {
+                const requestedAmount = 100
+
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+              })
+
+              context('when the requested amount is zero', () => {
+                const requestedAmount = 0
+
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
               })
             })
           })
 
-          context('when the employee does not have pending salary', () => {
-            context('when the requested amount is greater than zero', () => {
-              const requestedAmount = 100
+          context('when the employee did not set any token allocations yet', () => {
+            context('when the employee has some pending salary', () => {
+              const owedSalary = maxUint256()
 
-              it('reverts', async () => {
-                await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+              beforeEach('accumulate some pending salary', async () => {
+                await payroll.mockAddTimestamp(ONE_MONTH)
+              })
+
+              context('when the requested amount is zero', () => {
+                const requestedAmount = 0
+
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+              })
+
+              context('when the requested amount is less than the total owed salary', () => {
+                const requestedAmount = 10000
+
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+              })
+
+              context('when the requested amount is equal to the total owed salary', () => {
+                const requestedAmount = owedSalary
+
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
               })
             })
 
-            context('when the requested amount is zero', () => {
-              const requestedAmount = 0
+            context('when the employee does not have pending salary', () => {
+              context('when the requested amount is greater than zero', () => {
+                const requestedAmount = 100
 
-              it('reverts', async () => {
-                await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+              })
+
+              context('when the requested amount is zero', () => {
+                const requestedAmount = 0
+
+                itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
               })
             })
           })
@@ -1895,7 +2674,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
           let employeeId
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, 1000, 'John', 'Boss')
+            const receipt = await payroll.addEmployeeNow(employee, 1000, 'John Doe', 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -1995,7 +2774,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
         let employeeId, salary = 1000
 
         beforeEach('add employee and accumulate some salary', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Doe')
+          const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
           await payroll.mockAddTimestamp(ONE_MONTH)
@@ -2024,7 +2803,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
                 await payroll.reimburse({ from })
 
                 const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                assert.equal(currentDenominationTokenBalance.toString(), previousDenominationTokenBalance.plus(80).toString(), 'current USD token balance does not match')
+                assert.equal(currentDenominationTokenBalance.toString(), previousDenominationTokenBalance.plus(80).toString(), 'current denomination token balance does not match')
 
                 const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
                 const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
@@ -2040,7 +2819,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
 
                 const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
                 assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
-                assert.equal(denominationTokenEvent.token, denominationToken.address, 'usd token address does not match')
+                assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
                 assert.equal(denominationTokenEvent.amount.toString(), 80, 'payment amount does not match')
                 assert.equal(denominationTokenEvent.reference, 'Reimbursement', 'payment reference does not match')
 
@@ -2189,7 +2968,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
         let employeeId, salary = 1000
 
         beforeEach('add employee and accumulate some salary', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'John', 'Doe')
+          const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
           await payroll.mockAddTimestamp(ONE_MONTH)
@@ -2225,7 +3004,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
 
                 const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
                 const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount);
-                assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current USD token balance does not match')
+                assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
 
                 const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
                 const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
@@ -2241,7 +3020,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
 
                 const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
                 assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
-                assert.equal(denominationTokenEvent.token, denominationToken.address, 'usd token address does not match')
+                assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
                 assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
                 assert.equal(denominationTokenEvent.reference, 'Reimbursement', 'payment reference does not match')
 
@@ -2545,7 +3324,7 @@ contract('Payroll, initialization,', ([owner, employee, anotherEmployee, anyone]
       await payroll.mockSetTimestamp(NOW)
 
       const startDate = NOW - ONE_MONTH
-      const salary = bigExp(100000, DENOMINATION_TOKEN_DECIMALS).dividedToIntegerBy(SECONDS_IN_A_YEAR)
+      const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
       await payroll.addEmployee(employee, salary, 'John Doe', 'Boss', startDate)
       await payroll.addEmployee(anotherEmployee, salary, 'John Doe Jr.', 'Manager', startDate)
     })
