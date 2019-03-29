@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import {
   Button,
-  IdentityBadge,
   Info,
   SafeLink,
   SidePanelSplit,
@@ -13,6 +12,7 @@ import {
   blockExplorerUrl,
   theme,
 } from '@aragon/ui'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge.js'
 import provideNetwork from '../utils/provideNetwork'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { round } from '../math-utils'
@@ -227,7 +227,7 @@ class VotePanelContent extends React.Component {
             <Label>Created By</Label>
           </h2>
           <Creator>
-            <IdentityBadge entity={creator} networkType={network.type} />
+            <LocalIdentityBadge entity={creator} networkType={network.type} />
           </Creator>
         </Part>
         <SidePanelSeparator />
