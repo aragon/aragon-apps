@@ -35,8 +35,8 @@ function useIdentity(address) {
 }
 
 const LocalIdentityBadge = ({ entity, ...props }) => {
-  const [label, showLocalIdentityModal] = useIdentity(address)
-  const handleClick = () => showLocalIdentityModal(address)
+  const [label, showLocalIdentityModal] = useIdentity(entity)
+  const handleClick = () => showLocalIdentityModal(entity)
   return (
     <IdentityBadge
       {...props}
