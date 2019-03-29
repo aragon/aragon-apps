@@ -11,6 +11,7 @@ import AppLayout from './components/AppLayout'
 import NewTransferIcon from './components/NewTransferIcon'
 import { networkContextType } from './lib/provideNetwork'
 import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
+import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
 import addFundsIcon from './components/assets/add-funds-icon.svg'
 
@@ -96,6 +97,14 @@ class App extends React.Component {
   handleMenuPanelOpen = () => {
     this.props.sendMessageToWrapper('menuPanel', true)
   }
+  handleResolveLocalIdentity = address => {
+    return this.props.app.resolveAddressIdentity(address).toPromise()
+  }
+  handleShowLocalIdentityModal = address => {
+    return this.props.app
+      .requestAddressIdentityModification(address)
+      .toPromise()
+  }
 
   render() {
     const {
@@ -109,57 +118,62 @@ class App extends React.Component {
     const { newTransferOpened } = this.state
 
     return (
-      <div css="min-width: 320px">
-        <Main assetsUrl="./aragon-ui">
-          <AppLayout
-            title="Finance"
-            onMenuOpen={this.handleMenuPanelOpen}
-            mainButton={{
-              label: 'New transfer',
-              icon: <NewTransferIcon />,
-              onClick: this.handleNewTransferOpen,
-            }}
-            smallViewPadding={0}
+      <Main assetsUrl="./aragon-ui">
+        <div css="min-width: 320px">
+          <IdentityProvider
+            onResolve={this.handleResolveLocalIdentity}
+            onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
           >
-            {balances.length > 0 && (
-              <SpacedBlock>
-                <Balances balances={balances} />
-              </SpacedBlock>
-            )}
-            {transactions.length > 0 && (
-              <SpacedBlock>
-                <Transfers transactions={transactions} tokens={tokens} />
-              </SpacedBlock>
-            )}
-            {balances.length === 0 && transactions.length === 0 && (
-              <EmptyScreen>
-                <EmptyStateCard
-                  icon={<img src={addFundsIcon} alt="" />}
-                  title="There are no funds yet"
-                  text="Create a new transfer to get started."
-                  actionText="New Transfer"
-                  onActivate={this.handleNewTransferOpen}
-                />
-              </EmptyScreen>
-            )}
-          </AppLayout>
-          <SidePanel
-            opened={newTransferOpened}
-            onClose={this.handleNewTransferClose}
-            title="New Transfer"
-          >
-            <NewTransferPanelContent
-              app={app}
+            <AppLayout
+              title="Finance"
+              onMenuOpen={this.handleMenuPanelOpen}
+              mainButton={{
+                label: 'New transfer',
+                icon: <NewTransferIcon />,
+                onClick: this.handleNewTransferOpen,
+              }}
+              smallViewPadding={0}
+            >
+              {balances.length > 0 && (
+                <SpacedBlock>
+                  <Balances balances={balances} />
+                </SpacedBlock>
+              )}
+              {transactions.length > 0 && (
+                <SpacedBlock>
+                  <Transfers transactions={transactions} tokens={tokens} />
+                </SpacedBlock>
+              )}
+              {balances.length === 0 && transactions.length === 0 && (
+                <EmptyScreen>
+                  <EmptyStateCard
+                    icon={<img src={addFundsIcon} alt="" />}
+                    title="There are no funds yet"
+                    text="Create a new transfer to get started."
+                    actionText="New Transfer"
+                    onActivate={this.handleNewTransferOpen}
+                  />
+                </EmptyScreen>
+              )}
+            </AppLayout>
+            <SidePanel
               opened={newTransferOpened}
-              tokens={tokens}
-              onWithdraw={this.handleWithdraw}
-              onDeposit={this.handleDeposit}
-              proxyAddress={proxyAddress}
-              userAccount={userAccount}
-            />
-          </SidePanel>
-        </Main>
-      </div>
+              onClose={this.handleNewTransferClose}
+              title="New Transfer"
+            >
+              <NewTransferPanelContent
+                app={app}
+                opened={newTransferOpened}
+                tokens={tokens}
+                onWithdraw={this.handleWithdraw}
+                onDeposit={this.handleDeposit}
+                proxyAddress={proxyAddress}
+                userAccount={userAccount}
+              />
+            </SidePanel>
+          </IdentityProvider>
+        </div>
+      </Main>
     )
   }
 }
