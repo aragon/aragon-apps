@@ -19,10 +19,8 @@ import "@aragon/apps-finance/contracts/Finance.sol";
  * @title Payroll in multiple currencies
  */
 contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
-    using SafeMath8 for uint8;
-    using SafeMath64 for uint64;
     using SafeMath for uint256;
-    using Uint256Helpers for uint256;
+    using SafeMath64 for uint64;
 
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
     bytes32 constant public TERMINATE_EMPLOYEE_ROLE = keccak256("TERMINATE_EMPLOYEE_ROLE");
@@ -55,6 +53,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     string private constant ERROR_EXPIRY_TIME_TOO_SHORT = "PAYROLL_EXPIRY_TIME_TOO_SHORT";
     string private constant ERROR_EXCHANGE_RATE_ZERO = "PAYROLL_EXCHANGE_RATE_ZERO";
     string private constant ERROR_PAST_TERMINATION_DATE = "PAYROLL_PAST_TERMINATION_DATE";
+    string private constant ERROR_LAST_PAYROLL_DATE_TOO_BIG = "PAYROLL_LAST_DATE_TOO_BIG";
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
@@ -130,7 +129,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         initialized();
 
-        // Reserve the first employee index as an unused index to check null address mappings
+        // Employees start at index 1, to allow us to use employees[0] to check for non-existent address
         nextEmployee = 1;
         finance = _finance;
         denominationToken = _denominationToken;
@@ -488,9 +487,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // Check address isn't already being used
         require(!_employeeExists(_accountAddress), ERROR_EMPLOYEE_ALREADY_EXIST);
 
-        // Employees start at index 1, to allow us to use employees[0] to check for non-existent address
         uint256 employeeId = nextEmployee++;
-
         Employee storage employee = employees[employeeId];
         employee.accountAddress = _accountAddress;
         employee.denominationTokenSalary = _initialDenominationSalary;
@@ -606,8 +603,18 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function _getLastPayroll(uint256 _employeeId, uint256 _payedAmount) internal view returns (uint64) {
         Employee storage employee = employees[_employeeId];
-        uint64 timeDiff = _payedAmount.div(employee.denominationTokenSalary).toUint64();
-        return employee.lastPayroll.add(timeDiff);
+
+        uint256 timeDiff = _payedAmount.div(employee.denominationTokenSalary);
+
+        // This function is only called from _payday, where we make sure that _payedAmount is lower or equal to the
+        // total owed amount, that is obtained from _getOwedSalary, which does exactly the opposite calculation:
+        // multiplying the employee's salary by an uint64 number of seconds. Therefore, timeDiff will always fit in 64.
+        // Nevertheless, we are performing a sanity check at the end to ensure the computed last payroll timestamp
+        // is not greater than the current timestamp.
+
+        uint256 lastPayrollDate = employee.lastPayroll.add(timeDiff);
+        require(lastPayrollDate <= uint256(getTimestamp64()), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
+        return uint64(lastPayrollDate);
     }
 
     /**
