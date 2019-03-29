@@ -11,6 +11,7 @@ import AppLayout from './components/AppLayout'
 import { networkContextType } from './provide-network'
 import { hasLoadedTokenSettings } from './token-settings'
 import { addressesEqual } from './web3-utils'
+import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
 const initialAssignTokensConfig = {
   mode: null,
@@ -90,6 +91,14 @@ class App extends React.Component {
       this.setState({ assignTokensConfig: initialAssignTokensConfig })
     }
   }
+  handleResolveLocalIdentity = address => {
+    return this.props.app.resolveAddressIdentity(address).toPromise()
+  }
+  handleShowLocalIdentityModal = address => {
+    return this.props.app
+      .requestAddressIdentityModification(address)
+      .toPromise()
+  }
   render() {
     const {
       appStateReady,
@@ -108,62 +117,69 @@ class App extends React.Component {
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
-      <div css="min-width: 320px">
-        <Main assetsUrl="./aragon-ui">
-          <AppLayout
-            title="Token Manager"
-            afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
-            onMenuOpen={this.handleMenuPanelOpen}
-            mainButton={{
-              label: 'Assign tokens',
-              icon: <AssignTokensIcon />,
-              onClick: this.handleLaunchAssignTokensNoHolder,
-            }}
-            smallViewPadding={0}
+      <Main assetsUrl="./aragon-ui">
+        <div css="min-width: 320px">
+          <IdentityProvider
+            onResolve={this.handleResolveLocalIdentity}
+            onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
           >
-            {appStateReady && holders.length > 0 ? (
-              <Holders
-                holders={holders}
-                groupMode={groupMode}
-                maxAccountTokens={maxAccountTokens}
-                tokenAddress={tokenAddress}
-                tokenDecimalsBase={tokenDecimalsBase}
-                tokenName={tokenName}
-                tokenSupply={tokenSupply}
-                tokenSymbol={tokenSymbol}
-                tokenTransfersEnabled={tokenTransfersEnabled}
-                userAccount={userAccount}
-                onAssignTokens={this.handleLaunchAssignTokens}
-                onRemoveTokens={this.handleLaunchRemoveTokens}
-              />
-            ) : (
-              <EmptyState onActivate={this.handleLaunchAssignTokensNoHolder} />
-            )}
-          </AppLayout>
-          <SidePanel
-            title={
-              assignTokensConfig.mode === 'assign'
-                ? 'Assign tokens'
-                : 'Remove tokens'
-            }
-            opened={sidepanelOpened}
-            onClose={this.handleSidepanelClose}
-            onTransitionEnd={this.handleSidepanelTransitionEnd}
-          >
-            {appStateReady && (
-              <AssignVotePanelContent
-                opened={sidepanelOpened}
-                tokenDecimals={numData.tokenDecimals}
-                tokenDecimalsBase={tokenDecimalsBase}
-                onUpdateTokens={this.handleUpdateTokens}
-                getHolderBalance={this.getHolderBalance}
-                maxAccountTokens={maxAccountTokens}
-                {...assignTokensConfig}
-              />
-            )}
-          </SidePanel>
-        </Main>
-      </div>
+            <AppLayout
+              title="Token Manager"
+              afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
+              onMenuOpen={this.handleMenuPanelOpen}
+              mainButton={{
+                label: 'Assign tokens',
+                icon: <AssignTokensIcon />,
+                onClick: this.handleLaunchAssignTokensNoHolder,
+              }}
+              smallViewPadding={0}
+            >
+              {appStateReady && holders.length > 0 ? (
+                <Holders
+                  holders={holders}
+                  groupMode={groupMode}
+                  maxAccountTokens={maxAccountTokens}
+                  tokenAddress={tokenAddress}
+                  tokenDecimalsBase={tokenDecimalsBase}
+                  tokenName={tokenName}
+                  tokenSupply={tokenSupply}
+                  tokenSymbol={tokenSymbol}
+                  tokenTransfersEnabled={tokenTransfersEnabled}
+                  userAccount={userAccount}
+                  onAssignTokens={this.handleLaunchAssignTokens}
+                  onRemoveTokens={this.handleLaunchRemoveTokens}
+                />
+              ) : (
+                <EmptyState
+                  onActivate={this.handleLaunchAssignTokensNoHolder}
+                />
+              )}
+            </AppLayout>
+            <SidePanel
+              title={
+                assignTokensConfig.mode === 'assign'
+                  ? 'Assign tokens'
+                  : 'Remove tokens'
+              }
+              opened={sidepanelOpened}
+              onClose={this.handleSidepanelClose}
+              onTransitionEnd={this.handleSidepanelTransitionEnd}
+            >
+              {appStateReady && (
+                <AssignVotePanelContent
+                  opened={sidepanelOpened}
+                  tokenDecimals={numData.tokenDecimals}
+                  tokenDecimalsBase={tokenDecimalsBase}
+                  onUpdateTokens={this.handleUpdateTokens}
+                  getHolderBalance={this.getHolderBalance}
+                  maxAccountTokens={maxAccountTokens}
+                  {...assignTokensConfig}
+                />
+              )}
+            </SidePanel>
+          </IdentityProvider>
+        </div>
+      </Main>
     )
   }
 }

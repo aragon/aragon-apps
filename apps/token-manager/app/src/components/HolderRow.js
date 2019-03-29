@@ -5,11 +5,11 @@ import {
   ContextMenuItem,
   IconAdd,
   IconRemove,
-  IdentityBadge,
   TableCell,
   TableRow,
   theme,
 } from '@aragon/ui'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import provideNetwork from '../provide-network'
 import { formatBalance } from '../utils'
 import You from './You'
@@ -47,16 +47,16 @@ class HolderRow extends React.Component {
 
     return (
       <TableRow>
-        <TableCell css="padding-right: 0">
+        <FirstTableCell css="padding-right: 0">
           <Owner>
-            <IdentityBadge
+            <LocalIdentityBadge
               entity={address}
               networkType={network.type}
               connectedAccount={isCurrentUser}
             />
             {isCurrentUser && <You />}
           </Owner>
-        </TableCell>
+        </FirstTableCell>
         {!groupMode && (
           <TableCell align={compact ? 'left' : 'right'}>
             {formatBalance(balance, tokenDecimalsBase)}
@@ -88,6 +88,12 @@ class HolderRow extends React.Component {
   }
 }
 
+const FirstTableCell = styled(TableCell)`
+  max-width: 0;
+  width: 100%;
+  overflow: hidden;
+`
+
 const ActionLabel = styled.span`
   margin-left: 15px;
 `
@@ -95,6 +101,7 @@ const ActionLabel = styled.span`
 const Owner = styled.div`
   display: flex;
   align-items: center;
+  overflow: hidden;
   & > span:first-child {
     margin-right: 10px;
   }
