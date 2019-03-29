@@ -117,12 +117,12 @@ class App extends React.Component {
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
-      <IdentityProvider
-        onResolve={this.handleResolveLocalIdentity}
-        onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
-      >
+      <Main assetsUrl="./aragon-ui">
         <div css="min-width: 320px">
-          <Main assetsUrl="./aragon-ui">
+          <IdentityProvider
+            onResolve={this.handleResolveLocalIdentity}
+            onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
+          >
             <AppLayout
               title="Token Manager"
               afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
@@ -177,9 +177,9 @@ class App extends React.Component {
                 />
               )}
             </SidePanel>
-          </Main>
+          </IdentityProvider>
         </div>
-      </IdentityProvider>
+      </Main>
     )
   }
 }
