@@ -111,7 +111,6 @@ class SideBar extends React.Component {
                 <span>
                   <StakesListBullet style={{ background: color }} />
                   <LocalIdentityBadge
-                    address={name}
                     entity={name}
                     networkType={network.type}
                     connectedAccount={name === userAccount}

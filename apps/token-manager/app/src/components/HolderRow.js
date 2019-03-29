@@ -50,7 +50,6 @@ class HolderRow extends React.Component {
         <FirstTableCell css="padding-right: 0">
           <Owner>
             <LocalIdentityBadge
-              address={address}
               entity={address}
               networkType={network.type}
               connectedAccount={isCurrentUser}
