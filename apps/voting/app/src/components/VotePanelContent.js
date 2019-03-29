@@ -272,8 +272,9 @@ class VotePanelContent extends React.Component {
                       {userBalance === null
                         ? '…'
                         : pluralize(userBalance, '$ token', '$ tokens')}
-                      , since it was your balance at the beginning of the vote
-                      created on {formatDate(vote.data.startDate)}.
+                      , since it was your balance when the vote was created (
+                      {formatDate(vote.data.startDate)}
+                      ).
                     </p>
                   </Info.Action>
                 </div>
@@ -311,8 +312,9 @@ class VotePanelContent extends React.Component {
                             {userBalance === null
                               ? '… tokens'
                               : pluralize(userBalance, '$ token', '$ tokens')}
-                            , since it was your balance at the beginning of the
-                            vote created on {formatDate(vote.data.startDate)}.
+                            , since it was your balance when the vote was
+                            created ({formatDate(vote.data.startDate)}
+                            ).
                           </p>
                           <NoTokenCost />
                         </div>
