@@ -46,8 +46,8 @@ class HolderRow extends React.Component {
     const canAssign = balance.lt(maxAccountTokens)
 
     return (
-      <StyledTableRow>
-        <TableCell css="padding-right: 0">
+      <TableRow>
+        <FirstTableCell css="padding-right: 0">
           <Owner>
             <LocalIdentityBadge
               address={address}
@@ -57,7 +57,7 @@ class HolderRow extends React.Component {
             />
             {isCurrentUser && <You />}
           </Owner>
-        </TableCell>
+        </FirstTableCell>
         {!groupMode && (
           <TableCell align={compact ? 'left' : 'right'}>
             {formatBalance(balance, tokenDecimalsBase)}
@@ -84,17 +84,15 @@ class HolderRow extends React.Component {
             </ContextMenuItem>
           </ContextMenu>
         </TableCell>
-      </StyledTableRow>
+      </TableRow>
     )
   }
 }
 
-const StyledTableRow = styled(TableRow)`
-  td:first-child {
-    max-width: 0;
-    width: 100%;
-    overflow: hidden;
-  }
+const FirstTableCell = styled(TableCell)`
+  max-width: 0;
+  width: 100%;
+  overflow: hidden;
 `
 
 const ActionLabel = styled.span`
