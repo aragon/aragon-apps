@@ -13,6 +13,7 @@ import {
   theme,
 } from '@aragon/ui'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge.js'
+import { format } from 'date-fns'
 import provideNetwork from '../utils/provideNetwork'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { round } from '../math-utils'
@@ -22,6 +23,9 @@ import VoteSummary from './VoteSummary'
 import VoteStatus from './VoteStatus'
 import VoteSuccess from './VoteSuccess'
 import SummaryBar from './SummaryBar'
+
+const formatDate = date =>
+  `${format(date, 'dd/MM/yy')} at ${format(date, 'HH:mm')} UTC`
 
 class VotePanelContent extends React.Component {
   static propTypes = {
@@ -121,20 +125,6 @@ class VotePanelContent extends React.Component {
           this.setState({ canExecute, loadingCanExecute: false })
         })
     }
-  }
-  renderBlockLink = snapshotBlock => {
-    const {
-      network: { type },
-    } = this.props
-    const text = `(block ${snapshotBlock})`
-    const url = blockExplorerUrl('block', snapshotBlock, { networkType: type })
-    return url ? (
-      <SafeLink href={url} target="_blank">
-        {text}
-      </SafeLink>
-    ) : (
-      text
-    )
   }
   render() {
     const {
@@ -282,8 +272,9 @@ class VotePanelContent extends React.Component {
                       {userBalance === null
                         ? '…'
                         : pluralize(userBalance, '$ token', '$ tokens')}
-                      , since it was your balance at the beginning of the vote{' '}
-                      {this.renderBlockLink(snapshotBlock)}.
+                      , since it was your balance when the vote was created (
+                      {formatDate(vote.data.startDate)}
+                      ).
                     </p>
                   </Info.Action>
                 </div>
@@ -313,23 +304,27 @@ class VotePanelContent extends React.Component {
                     </VotingButton>
                   </ButtonsContainer>
                   {
-                    <Info.Action>
+                    <StyledInfo>
                       {user ? (
-                        <p>
-                          You will cast your vote with{' '}
-                          {userBalance === null
-                            ? '… tokens'
-                            : pluralize(userBalance, '$ token', '$ tokens')}
-                          , since it was your balance at the beginning of the
-                          vote {this.renderBlockLink(snapshotBlock)}.
-                        </p>
+                        <div>
+                          <p>
+                            You will cast your vote with{' '}
+                            {userBalance === null
+                              ? '… tokens'
+                              : pluralize(userBalance, '$ token', '$ tokens')}
+                            , since it was your balance when the vote was
+                            created ({formatDate(vote.data.startDate)}
+                            ).
+                          </p>
+                          <NoTokenCost />
+                        </div>
                       ) : (
                         <p>
                           You will need to connect your account in the next
                           screen.
                         </p>
                       )}
-                    </Info.Action>
+                    </StyledInfo>
                   }
                 </div>
               )
@@ -339,6 +334,24 @@ class VotePanelContent extends React.Component {
     )
   }
 }
+
+const StyledInfo = styled(Info.Action)`
+  div:first-child {
+    align-items: flex-start;
+  }
+`
+
+const NoTokenCost = () => (
+  <p css="margin-top: 10px">
+    Performing this action will{' '}
+    <span css="font-weight: bold">not transfer out</span> any of your tokens.
+    You’ll only have to pay for the{' '}
+    <SafeLink href="https://ethgas.io/" target="_blank">
+      ETH fee
+    </SafeLink>{' '}
+    when signing the transaction.
+  </p>
+)
 
 const Label = styled(Text).attrs({
   smallcaps: true,
