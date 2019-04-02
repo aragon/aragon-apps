@@ -43,6 +43,7 @@ matrix:
   allow_failures:
     - env: TASK=coverage:agent
     - env: TASK=coverage:finance
+    - env: TASK=coverage:payroll
 install:
   - travis_wait 60 npm install
 before_script:
