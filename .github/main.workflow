@@ -1,4 +1,4 @@
-workflow "Lint, test, and build" {
+workflow "test" {
   on = "push"
   resolves = [
     "install",
@@ -7,19 +7,12 @@ workflow "Lint, test, and build" {
     "test:shared",
     "test:voting",
     "test:finance",
-    "test:survey"
+    "test:survey",
+    "test:token-manager",
+    "test:vault",
+    "coverage:voting"
   ]
 }
-
-  # "test:agent",
-  # "test:token-manager",
-  # "test:vault",
-  # "coverage:agent",
-  # "coverage:finance",
-  # "coverage:survey",
-  # "coverage:token-manager",
-  # "coverage:vault",
-  # "coverage:voting"
 
 action "install" {
   uses = "actions/npm@master"
@@ -30,6 +23,9 @@ action "bootstrap" {
   needs = "install"
   uses = "actions/npm@master"
   args = "run bootstrap:ci"
+  env = {
+    INSTALL_FRONTEND = "true"
+  }
 }
 
 action "lint" {
@@ -68,14 +64,11 @@ action "test:token-manager" {
   args = "run test:token-manager"
 }
 
-# action "test:token-manager:app" {
-#   needs = "bootstrap"
-#   uses = "actions/npm@master"
-#   env = {
-#     INSTALL_FRONTEND = "true"
-#   }
-#   args = "run test:token-manager:app"
-# }
+action "test:token-manager:app" {
+  needs = "bootstrap"
+  uses = "actions/npm@master"
+  args = "run test:token-manager:app"
+}
 
 action "test:vault" {
   needs = "bootstrap"
@@ -90,37 +83,37 @@ action "test:voting" {
 }
 
 action "coverage:agent" {
-  needs = "bootstrap"
+  needs = "test:agent"
   uses = "actions/npm@master"
   args = "run coverage:agent"
 }
 
 action "coverage:finance" {
-  needs = "bootstrap"
+  needs = "test:finance"
   uses = "actions/npm@master"
   args = "run coverage:finance"
 }
 
 action "coverage:survey" {
-  needs = "bootstrap"
+  needs = "test:survey"
   uses = "actions/npm@master"
   args = "run coverage:survey"
 }
 
 action "coverage:token-manager" {
-  needs = "bootstrap"
+  needs = "test:token-manager"
   uses = "actions/npm@master"
   args = "run coverage:token-manager"
 }
 
 action "coverage:vault" {
-  needs = "bootstrap"
+  needs = "test:vault"
   uses = "actions/npm@master"
   args = "run coverage:vault"
 }
 
 action "coverage:voting" {
-  needs = "bootstrap"
+  needs = "test:voting"
   uses = "actions/npm@master"
   args = "run coverage:voting"
 }
