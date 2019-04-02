@@ -7,9 +7,15 @@ workflow "test" {
     "test:shared",
     "test:voting",
     "test:finance",
-    "test:survey",
     "test:token-manager",
     "test:vault",
+    "test:survey",
+    "test:agent",
+    "coverage:agent",
+    "coverage:finance",
+    "coverage:survey",
+    "coverage:token-manager",
+    "coverage:vault",
     "coverage:voting"
   ]
 }
@@ -41,7 +47,7 @@ action "test:shared" {
 }
 
 action "test:agent" {
-  needs = "bootstrap"
+  needs = "test:finance"
   uses = "actions/npm@master"
   args = "run test:agent"
 }
@@ -53,7 +59,7 @@ action "test:finance" {
 }
 
 action "test:survey" {
-  needs = "bootstrap"
+  needs = "test:finance"
   uses = "actions/npm@master"
   args = "run test:survey"
 }
@@ -71,7 +77,7 @@ action "test:token-manager:app" {
 }
 
 action "test:vault" {
-  needs = "bootstrap"
+  needs = "test:finance"
   uses = "actions/npm@master"
   args = "run test:vault"
 }
