@@ -95,7 +95,7 @@ action "coverage:agent" {
 }
 
 action "coverage:finance" {
-  needs = "test:finance"
+  needs = "test:survey"
   uses = "actions/npm@master"
   args = "run coverage:finance"
 }
@@ -107,19 +107,19 @@ action "coverage:survey" {
 }
 
 action "coverage:token-manager" {
-  needs = "test:token-manager"
+  needs = "test:survey"
   uses = "actions/npm@master"
   args = "run coverage:token-manager"
 }
 
 action "coverage:vault" {
-  needs = "test:vault"
+  needs = "test:survey"
   uses = "actions/npm@master"
   args = "run coverage:vault"
 }
 
 action "coverage:voting" {
-  needs = "test:voting"
+  needs = "test:survey"
   uses = "actions/npm@master"
   args = "run coverage:voting"
 }
