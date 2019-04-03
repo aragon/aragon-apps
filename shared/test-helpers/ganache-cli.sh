@@ -32,7 +32,7 @@ if testrpc_running; then
 fi
 
 start_testrpc
-sleep 5
+# sleep 5
 
 # Exit error mode so the testrpc instance always gets killed
 set +e
