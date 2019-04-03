@@ -9,6 +9,6 @@ export function useNow(updateEvery = 1000) {
     return () => {
       clearInterval(timer)
     }
-  }, [])
+  }, [updateEvery])
   return now
 }
