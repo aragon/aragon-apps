@@ -156,8 +156,8 @@ contract('Payroll allowed tokens,', ([owner, employee, anotherEmployee, anyone])
     })
 
     context('when it has not been initialized yet', function () {
-      it('returns false', async () => {
-        assert.isFalse(await payroll.isTokenAllowed(denominationToken.address), 'token should not be allowed')
+      it('reverts', async () => {
+        await assertRevert(payroll.isTokenAllowed(denominationToken.address), 'INIT_NOT_INITIALIZED')
       })
     })
   })

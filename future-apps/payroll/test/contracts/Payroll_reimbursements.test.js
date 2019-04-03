@@ -576,7 +576,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
               const requestedAmount = accruedValue + 1
 
               it('reverts', async () => {
-                await assertRevert(payroll.partialReimburse(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.partialReimburse(requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
               })
             })
           })
@@ -609,6 +609,14 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
               await payroll.addAccruedValue(employeeId, accruedValue / 2, { from: owner })
             })
 
+            context('when the requested amount is zero', () => {
+              const requestedAmount = 0
+
+              it('reverts', async () => {
+                await assertRevert(payroll.partialReimburse(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+              })
+            })
+
             context('when the requested amount is less than the total accrued value', () => {
               const requestedAmount = accruedValue - 1
 
@@ -622,6 +630,14 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
 
               it('reverts', async () => {
                 await assertRevert(payroll.partialReimburse(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+              })
+            })
+
+            context('when the requested amount is greater than the total accrued value', () => {
+              const requestedAmount = accruedValue + 1
+
+              it('reverts', async () => {
+                await assertRevert(payroll.partialReimburse(requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
               })
             })
           })

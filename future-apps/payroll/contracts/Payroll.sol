@@ -54,6 +54,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     string private constant ERROR_EXCHANGE_RATE_ZERO = "PAYROLL_EXCHANGE_RATE_ZERO";
     string private constant ERROR_PAST_TERMINATION_DATE = "PAYROLL_PAST_TERMINATION_DATE";
     string private constant ERROR_LAST_PAYROLL_DATE_TOO_BIG = "PAYROLL_LAST_DATE_TOO_BIG";
+    string private constant ERROR_INVALID_REQUESTED_AMOUNT = "PAYROLL_INVALID_REQUESTED_AMT";
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
@@ -64,15 +65,16 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint64 endDate;
     }
 
-    IFeed public feed;
     Finance public finance;
+    IFeed public feed;
     address public denominationToken;
     uint64 public rateExpiryTime;
 
+    // Employees start at index 1, to allow us to use employees[0] to check for non-existent address
     uint256 public nextEmployee;
-    mapping(uint256 => Employee) private employees;     // employee ID -> employee
-    mapping(address => uint256) private employeeIds;    // employee address -> employee ID
-    mapping(address => bool) private allowedTokens;
+    mapping(address => uint256) internal employeeIds;    // employee address -> employee ID
+    mapping(uint256 => Employee) internal employees;     // employee ID -> employee
+    mapping(address => bool) internal allowedTokens;
     address[] internal allowedTokensArray;
 
     event AddAllowedToken(address token);
@@ -225,7 +227,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
         employeeActive(_employeeId)
     {
-        _terminateEmployee(_employeeId, getTimestamp64());
+        _terminateEmployeeAt(_employeeId, getTimestamp64());
     }
 
     /**
@@ -238,7 +240,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
         employeeActive(_employeeId)
     {
-        _terminateEmployee(_employeeId, _endDate);
+        _terminateEmployeeAt(_employeeId, _endDate);
     }
 
     /**
@@ -294,8 +296,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _amount Amount of owed salary requested. Must be less or equal than total owed so far
      */
     function partialPayday(uint256 _amount) external employeeMatches {
-        bool somethingPaid = _payday(employeeIds[msg.sender], _amount);
-        require(somethingPaid, ERROR_NOTHING_PAID);
+        _payday(employeeIds[msg.sender], _amount);
     }
 
     /**
@@ -305,8 +306,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      *      only be added via `addEmployee(),` which requires initialization
      */
     function payday() external employeeMatches {
-        bool somethingPaid = _payday(employeeIds[msg.sender], 0);
-        require(somethingPaid, ERROR_NOTHING_PAID);
+        _payday(employeeIds[msg.sender], 0);
     }
 
     /**
@@ -317,8 +317,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _amount Amount of accrued value requested. Must be less or equal than total amount so far
      */
     function partialReimburse(uint256 _amount) external employeeMatches {
-        bool somethingPaid = _reimburse(employeeIds[msg.sender], _amount);
-        require(somethingPaid, ERROR_NOTHING_PAID);
+        _reimburse(employeeIds[msg.sender], _amount);
     }
 
     /**
@@ -328,8 +327,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      *      only be added via `addEmployee(),` which requires initialization
      */
     function reimburse() external employeeMatches {
-        bool somethingPaid = _reimburse(employeeIds[msg.sender], 0);
-        require(somethingPaid, ERROR_NOTHING_PAID);
+        _reimburse(employeeIds[msg.sender], 0);
     }
 
     /**
@@ -466,7 +464,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _token Address of the token to be checked
      * @return True if the given token is allowed, false otherwise
      */
-    function isTokenAllowed(address _token) public view returns (bool) {
+    function isTokenAllowed(address _token) public view isInitialized returns (bool) {
         return allowedTokens[_token];
     }
 
@@ -480,6 +478,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _startDate Employee's starting timestamp in seconds
      */
     function _addEmployee(address _accountAddress, uint256 _initialDenominationSalary, string _role, uint64 _startDate) internal {
+        // Check address is non-null
+        require(_accountAddress != address(0), ERROR_EMPLOYEE_NULL_ADDRESS);
         // Check address isn't already being used
         require(!_employeeExists(_accountAddress), ERROR_EMPLOYEE_ALREADY_EXIST);
 
@@ -540,17 +540,16 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         // Compute amount to be payed
         uint256 owedAmount = _getOwedSalary(_employeeId);
-        if (owedAmount == 0 || owedAmount < _requestedAmount) {
-            return false;
-        }
+        require(owedAmount > 0, ERROR_NOTHING_PAID);
+        require(owedAmount >= _requestedAmount, ERROR_INVALID_REQUESTED_AMOUNT);
         uint256 payingAmount = _requestedAmount > 0 ? _requestedAmount : owedAmount;
 
         // Execute payment
         employee.lastPayroll = (payingAmount == owedAmount) ? getTimestamp64() : _getLastPayroll(_employeeId, payingAmount);
-        somethingPaid = _transferTokensAmount(_employeeId, payingAmount, "Payroll");
+        require(_transferTokensAmount(_employeeId, payingAmount, "Payroll"), ERROR_NOTHING_PAID);
 
         // Try removing employee
-        _tryRemovingEmployee(_employeeId);
+        _removeEmployeeIfTerminatedAndPaidOut(_employeeId);
     }
 
     /**
@@ -563,17 +562,16 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         Employee storage employee = employees[_employeeId];
 
         // Compute amount to be payed
-        if (employee.accruedValue == 0 || employee.accruedValue < _requestedAmount) {
-            return false;
-        }
+        require(employee.accruedValue > 0, ERROR_NOTHING_PAID);
+        require(employee.accruedValue >= _requestedAmount, ERROR_INVALID_REQUESTED_AMOUNT);
         uint256 payingAmount = _requestedAmount > 0 ? _requestedAmount : employee.accruedValue;
 
         // Execute payment
         employee.accruedValue = employee.accruedValue.sub(payingAmount);
-        somethingPaid = _transferTokensAmount(_employeeId, payingAmount, "Reimbursement");
+        require(_transferTokensAmount(_employeeId, payingAmount, "Reimbursement"), ERROR_NOTHING_PAID);
 
         // Try removing employee
-        _tryRemovingEmployee(_employeeId);
+        _removeEmployeeIfTerminatedAndPaidOut(_employeeId);
     }
 
     /**
@@ -581,7 +579,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _employeeId Employee's identifier to set the end date of
      * @param _endDate Date timestamp in seconds to be set as the end date of the employee
      */
-    function _terminateEmployee(uint256 _employeeId, uint64 _endDate) internal {
+    function _terminateEmployeeAt(uint256 _employeeId, uint64 _endDate) internal {
         // Prevent past termination dates
         require(_endDate >= getTimestamp64(), ERROR_PAST_TERMINATION_DATE);
 
@@ -622,7 +620,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         Employee storage employee = employees[_employeeId];
 
         // Get the min of current date and termination date
-        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64(): employee.endDate;
+        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64() : employee.endDate;
 
         // Make sure we don't revert if we try to get the owed salary for an employee whose start
         // date is in the future (necessary in case we need to change their salary before their start date)
@@ -632,10 +630,11 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         // Get time diff in seconds, no need to use safe math as the underflow was covered by the previous check
         uint64 timeDiff = date - employee.lastPayroll;
-        uint256 result = employee.denominationTokenSalary * uint256(timeDiff);
+        uint256 salary = employee.denominationTokenSalary;
+        uint256 result = salary * uint256(timeDiff);
 
         // Return max int if the result overflows
-        if (result / timeDiff != employee.denominationTokenSalary) {
+        if (result / timeDiff != salary) {
             return MAX_UINT256;
         }
         return result;
@@ -671,7 +670,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _reference String detailing payment reason
      * @return True if there was at least one token transfer
      */
-    function _transferTokensAmount(uint256 _employeeId, uint256 _totalAmount, string _reference) private returns (bool somethingPaid) {
+    function _transferTokensAmount(uint256 _employeeId, uint256 _totalAmount, string _reference) internal returns (bool somethingPaid) {
         Employee storage employee = employees[_employeeId];
         for (uint256 i = 0; i < allowedTokensArray.length; i++) {
             address token = allowedTokensArray[i];
@@ -682,8 +681,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
                 uint256 tokenAmount = _totalAmount.mul(exchangeRate).mul(employee.allocation[token]);
                 // Divide by 100 for the allocation and by ONE for the exchange rate
                 tokenAmount = tokenAmount / (100 * ONE);
-                finance.newPayment(token, employee.accountAddress, tokenAmount, 0, 0, 1, _reference);
-                emit SendPayment(employee.accountAddress, token, tokenAmount, _reference);
+                address employeeAddress = employee.accountAddress;
+                finance.newPayment(token, employeeAddress, tokenAmount, 0, 0, 1, _reference);
+                emit SendPayment(employeeAddress, token, tokenAmount, _reference);
                 somethingPaid = true;
             }
         }
@@ -693,7 +693,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @dev Try removing employee if there are no pending payments and has reached employee's end date
      * @param _employeeId Employee's identifier
      */
-    function _tryRemovingEmployee(uint256 _employeeId) private {
+    function _removeEmployeeIfTerminatedAndPaidOut(uint256 _employeeId) internal {
         Employee storage employee = employees[_employeeId];
 
         if (employee.endDate > getTimestamp64()) {
@@ -715,7 +715,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _accountAddress Address of the employee to query the existence of
      * @return True if the given address belongs to a registered employee, false otherwise
      */
-    function _employeeExists(address _accountAddress) private returns (bool) {
+    function _employeeExists(address _accountAddress) internal returns (bool) {
         return employeeIds[_accountAddress] != uint256(0);
     }
 
@@ -724,9 +724,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _employeeId Employee's identifier
      * @return True if the employee is registered in this Payroll, false otherwise
      */
-    function _employeeExists(uint256 _employeeId) private returns (bool) {
+    function _employeeExists(uint256 _employeeId) internal returns (bool) {
         Employee storage employee = employees[_employeeId];
-        return _employeeExists(employee.accountAddress);
+        return employee.accountAddress != address(0);
     }
 
     /**
@@ -734,7 +734,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _employeeId Employee's identifier
      * @return True if the employee's end date has not been reached yet, false otherwise
      */
-    function _isEmployeeActive(uint256 _employeeId) private returns (bool) {
+    function _isEmployeeActive(uint256 _employeeId) internal returns (bool) {
         Employee storage employee = employees[_employeeId];
         return employee.endDate >= getTimestamp64();
     }
