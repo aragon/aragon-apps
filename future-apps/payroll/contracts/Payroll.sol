@@ -612,8 +612,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // Nevertheless, we are performing a sanity check at the end to ensure the computed last payroll timestamp
         // is not greater than the current timestamp.
 
-        uint256 lastPayrollDate = employee.lastPayroll.add(timeDiff);
-        require(lastPayrollDate <= uint256(getTimestamp64()), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
+        uint256 lastPayrollDate = uint256(employee.lastPayroll).add(timeDiff);
+        require(lastPayrollDate <= getTimestamp(), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
         return uint64(lastPayrollDate);
     }
 
