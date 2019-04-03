@@ -39,7 +39,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
           let employeeId
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, 1000, 'John Doe', 'Boss')
+            const receipt = await payroll.addEmployeeNow(employee, 1000, 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -139,7 +139,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
         let employeeId, salary = 1000
 
         beforeEach('add employee and accumulate some salary', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+          const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
           await payroll.mockAddTimestamp(ONE_MONTH)
@@ -333,7 +333,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
         let employeeId, salary = 1000
 
         beforeEach('add employee and accumulate some salary', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+          const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
           await payroll.mockAddTimestamp(ONE_MONTH)

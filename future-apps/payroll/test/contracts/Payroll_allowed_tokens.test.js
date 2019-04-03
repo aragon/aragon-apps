@@ -87,7 +87,7 @@ contract('Payroll allowed tokens,', ([owner, employee, anotherEmployee, anyone])
             await Promise.all(tokenAddresses.map(address => payroll.addAllowedToken(address, { from: owner })))
             assert.equal(await payroll.getAllowedTokensArrayLength(), MAX_ALLOWED_TOKENS, 'amount of allowed tokens does not match')
 
-            await payroll.addEmployee(employee, 100000, 'John Doe', 'Boss', NOW - ONE_MONTH, { from: owner })
+            await payroll.addEmployee(employee, 100000, 'Boss', NOW - ONE_MONTH, { from: owner })
           })
 
           it('can not add one more token', async () => {

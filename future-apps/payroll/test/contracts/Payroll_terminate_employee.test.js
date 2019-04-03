@@ -38,7 +38,7 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
         const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -106,7 +106,7 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
               await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
               // Add employee back
-              const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+              const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
               const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
               const [address, employeeSalary, accruedValue, lastPayroll, endDate] = await payroll.getEmployee(newEmployeeId)
@@ -168,7 +168,7 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
         const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -243,7 +243,7 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
                 // Add employee back
-                const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+                const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
                 const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
                 const [address, employeeSalary, accruedValue, lastPayroll, date] = await payroll.getEmployee(newEmployeeId)

@@ -41,7 +41,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
           const previousSalary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, previousSalary, 'John Doe', 'Boss')
+            const receipt = await payroll.addEmployeeNow(employee, previousSalary, 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -139,7 +139,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 1000, 'John Doe', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, 1000, 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
@@ -175,7 +175,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
           context('when the given address belongs to another employee', () => {
             beforeEach('add another employee', async () => {
-              await payroll.addEmployeeNow(anotherEmployee, 1000, 'John Doe', 'Boss', { from: owner })
+              await payroll.addEmployeeNow(anotherEmployee, 1000, 'Boss', { from: owner })
             })
 
             it('reverts', async () => {

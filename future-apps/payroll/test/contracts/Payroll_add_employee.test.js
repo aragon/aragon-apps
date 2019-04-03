@@ -28,8 +28,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
   })
 
   describe('addEmployeeNow', () => {
-    const employeeName = 'John Doe'
-    const employeeRole = 'Boss'
+    const role = 'Boss'
     const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
 
     context('when it has already been initialized', function () {
@@ -45,7 +44,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
           let receipt, employeeId
 
           beforeEach('add employee', async () => {
-            receipt = await payroll.addEmployeeNow(employee, salary, employeeName, employeeRole, { from })
+            receipt = await payroll.addEmployeeNow(employee, salary, role, { from })
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
           })
 
@@ -62,19 +61,17 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
             const event = events[0].args
             assert.equal(event.employeeId, employeeId, 'employee id does not match')
-            assert.equal(event.name, employeeName, 'employee name does not match')
-            assert.equal(event.role, employeeRole, 'employee role does not match')
+            assert.equal(event.role, role, 'employee role does not match')
             assert.equal(event.accountAddress, employee, 'employee address does not match')
             assert.equal(event.startDate.toString(), (await currentTimestamp()).toString(), 'employee start date does not match')
             assert.equal(event.initialDenominationSalary.toString(), salary.toString(), 'employee salary does not match')
           })
 
           it('can add another employee', async () => {
-            const anotherEmployeeName = 'Joe'
-            const anotherEmployeeRole = 'Boss'
+            const anotherRole = 'Manager'
             const anotherSalary = annualSalary(120000, DENOMINATION_TOKEN_DECIMALS)
 
-            const receipt = await payroll.addEmployeeNow(anotherEmployee, anotherSalary, anotherEmployeeName, anotherEmployeeRole)
+            const receipt = await payroll.addEmployeeNow(anotherEmployee, anotherSalary, anotherRole)
             const anotherEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
             const events = getEvents(receipt, 'AddEmployee');
@@ -82,8 +79,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
             const event = events[0].args
             assert.equal(event.employeeId, anotherEmployeeId, 'employee id does not match')
-            assert.equal(event.name, anotherEmployeeName, 'employee name does not match')
-            assert.equal(event.role, anotherEmployeeRole, 'employee role does not match')
+            assert.equal(event.role, anotherRole, 'employee role does not match')
             assert.equal(event.accountAddress, anotherEmployee, 'employee address does not match')
             assert.equal(event.startDate.toString(), (await currentTimestamp()).toString(), 'employee start date does not match')
             assert.equal(event.initialDenominationSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
@@ -99,11 +95,11 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
         context('when the employee has already been added', () => {
           beforeEach('add employee', async () => {
-            await payroll.addEmployeeNow(employee, salary, employeeName, employeeRole, { from })
+            await payroll.addEmployeeNow(employee, salary, role, { from })
           })
 
           it('reverts', async () => {
-            await assertRevert(payroll.addEmployeeNow(employee, salary, employeeName, employeeRole, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
+            await assertRevert(payroll.addEmployeeNow(employee, salary, role, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
           })
         })
       })
@@ -112,21 +108,20 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
         const from = anyone
 
         it('reverts', async () => {
-          await assertRevert(payroll.addEmployeeNow(employee, salary, employeeName, employeeRole, { from }), 'APP_AUTH_FAILED')
+          await assertRevert(payroll.addEmployeeNow(employee, salary, role, { from }), 'APP_AUTH_FAILED')
         })
       })
     })
 
     context('when it has not been initialized yet', function () {
       it('reverts', async () => {
-        await assertRevert(payroll.addEmployeeNow(employee, salary, employeeName, employeeRole, { from: owner }), 'APP_AUTH_FAILED')
+        await assertRevert(payroll.addEmployeeNow(employee, salary, role, { from: owner }), 'APP_AUTH_FAILED')
       })
     })
   })
 
   describe('addEmployee', () => {
-    const employeeName = 'John Doe'
-    const employeeRole = 'Boss'
+    const role = 'Boss'
     const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
 
     context('when it has already been initialized', function () {
@@ -143,7 +138,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
           const itHandlesAddingNewEmployeesProperly = startDate => {
             beforeEach('add employee', async () => {
-              receipt = await payroll.addEmployee(employee, salary, employeeName, employeeRole, startDate, { from })
+              receipt = await payroll.addEmployee(employee, salary, role, startDate, { from })
               employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
             })
 
@@ -160,19 +155,17 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
               const event = events[0].args
               assert.equal(event.employeeId, employeeId, 'employee id does not match')
-              assert.equal(event.name, employeeName, 'employee name does not match')
-              assert.equal(event.role, employeeRole, 'employee role does not match')
+              assert.equal(event.role, role, 'employee role does not match')
               assert.equal(event.accountAddress, employee, 'employee address does not match')
               assert.equal(event.startDate.toString(), startDate, 'employee start date does not match')
               assert.equal(event.initialDenominationSalary.toString(), salary.toString(), 'employee salary does not match')
             })
 
             it('can add another employee', async () => {
-              const anotherEmployeeName = 'Joe'
-              const anotherEmployeeRole = 'Boss'
+              const anotherRole = 'Manager'
               const anotherSalary = annualSalary(120000, DENOMINATION_TOKEN_DECIMALS)
 
-              const receipt = await payroll.addEmployee(anotherEmployee, anotherSalary, anotherEmployeeName, anotherEmployeeRole, startDate)
+              const receipt = await payroll.addEmployee(anotherEmployee, anotherSalary, anotherRole, startDate)
               const anotherEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
               const events = getEvents(receipt, 'AddEmployee');
@@ -180,8 +173,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
               const event = events[0].args
               assert.equal(event.employeeId, anotherEmployeeId, 'employee id does not match')
-              assert.equal(event.name, anotherEmployeeName, 'employee name does not match')
-              assert.equal(event.role, anotherEmployeeRole, 'employee role does not match')
+              assert.equal(event.role, anotherRole, 'employee role does not match')
               assert.equal(event.accountAddress, anotherEmployee, 'employee address does not match')
               assert.equal(event.startDate.toString(), startDate, 'employee start date does not match')
               assert.equal(event.initialDenominationSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
@@ -210,14 +202,14 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
         context('when the employee has already been added', () => {
           beforeEach('add employee', async () => {
-            await payroll.addEmployee(employee, salary, employeeName, employeeRole, NOW, { from })
+            await payroll.addEmployee(employee, salary, role, NOW, { from })
           })
 
           context('when the given end date is in the past ', () => {
             const startDate = NOW - TWO_MONTHS
 
             it('reverts', async () => {
-              await assertRevert(payroll.addEmployee(employee, salary, employeeName, employeeRole, startDate, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
+              await assertRevert(payroll.addEmployee(employee, salary, role, startDate, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
             })
           })
 
@@ -225,7 +217,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
             const startDate = NOW + TWO_MONTHS
 
             it('reverts', async () => {
-              await assertRevert(payroll.addEmployee(employee, salary, employeeName, employeeRole, startDate, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
+              await assertRevert(payroll.addEmployee(employee, salary, role, startDate, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
             })
           })
         })
@@ -235,14 +227,14 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
         const from = anyone
 
         it('reverts', async () => {
-          await assertRevert(payroll.addEmployee(employee, salary, employeeName, employeeRole, NOW, { from }), 'APP_AUTH_FAILED')
+          await assertRevert(payroll.addEmployee(employee, salary, role, NOW, { from }), 'APP_AUTH_FAILED')
         })
       })
     })
 
     context('when it has not been initialized yet', function () {
       it('reverts', async () => {
-        await assertRevert(payroll.addEmployee(employee, salary, employeeName, employeeRole, NOW, { from: owner }), 'APP_AUTH_FAILED')
+        await assertRevert(payroll.addEmployee(employee, salary, role, NOW, { from: owner }), 'APP_AUTH_FAILED')
       })
     })
   })

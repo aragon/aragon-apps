@@ -37,8 +37,8 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
 
       const startDate = NOW - ONE_MONTH
       const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
-      await payroll.addEmployee(employee, salary, 'John Doe', 'Boss', startDate)
-      await payroll.addEmployee(anotherEmployee, salary, 'John Doe Jr.', 'Manager', startDate)
+      await payroll.addEmployee(employee, salary, 'Boss', startDate)
+      await payroll.addEmployee(anotherEmployee, salary, 'Manager', startDate)
     })
 
     context('when there are not allowed tokens yet', function () {

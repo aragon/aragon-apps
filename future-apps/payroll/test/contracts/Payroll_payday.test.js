@@ -42,7 +42,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
           const salary = 10000
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -334,7 +334,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
           const salary = 0
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -345,7 +345,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
           const salary = maxUint256()
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -383,7 +383,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
           const salary = 100000
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -781,7 +781,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
           const salary = 0
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -841,7 +841,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
           const salary = maxUint256()
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, salary, 'John Doe', 'Boss')
+            const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 

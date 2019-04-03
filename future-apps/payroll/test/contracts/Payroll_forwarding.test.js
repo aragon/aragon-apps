@@ -56,7 +56,7 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
         const sender = employee
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 100000, 'John Doe', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, 100000, 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -113,7 +113,7 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
         const from = employee
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 100000, 'John Doe', 'Boss', { from: owner })
+          const receipt = await payroll.addEmployeeNow(employee, 100000, 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
