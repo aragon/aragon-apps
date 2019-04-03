@@ -101,14 +101,14 @@ class VotePanelContent extends React.PureComponent {
 
     // If the account is not present, we assume it is not connected.
     if (!user) {
-      this.setState({ loadingCanVote: false, userCanVote: vote.data.open })
+      this.setState({ userCanVote: vote.data.open, loadingCanVote: false })
       return
     }
 
     // Check if the current user can vote
     this.setState({ loadingCanVote: true })
     const userCanVote = await api.call('canVote', vote.voteId, user).toPromise()
-    this.setState({ loadingCanVote: false, userCanVote })
+    this.setState({ userCanVote, loadingCanVote: false })
   }
   loadCanExecute = async vote => {
     const { api } = this.props
@@ -118,7 +118,7 @@ class VotePanelContent extends React.PureComponent {
 
     this.setState({ loadingCanExecute: true })
     const canExecute = await api.call('canExecute', vote.voteId).toPromise()
-    this.setState({ loadingCanExecute: false, canExecute })
+    this.setState({ canExecute, loadingCanExecute: false })
   }
   render() {
     const {
