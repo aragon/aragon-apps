@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import styled from 'styled-components'
 import { theme, IconTime, IconCross, IconCheck } from '@aragon/ui'
 import { useSettings } from '../app-hooks'

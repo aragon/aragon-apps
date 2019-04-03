@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { ConnectAragonApi, useAragonApi } from '@aragon/api-react'
-import PropTypes from 'prop-types'
-import { Main, SidePanel, observe } from '@aragon/ui'
+import { AragonApi, useAragonApi } from '@aragon/api-react'
+import { Main, SidePanel } from '@aragon/ui'
 
 import { VOTE_YEA } from './vote-types'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
@@ -16,6 +15,7 @@ import AppLayout from './components/AppLayout'
 import NewVoteIcon from './components/NewVoteIcon'
 
 import { NetworkContext, SettingsContext } from './app-contexts'
+import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 import { isVoteOpen, voteTypeFromContractEnum } from './vote-utils'
 import { shortenAddress, transformAddresses } from './web3-utils'
 import { useCurrentVoteData } from './vote-hooks'
@@ -67,7 +67,6 @@ function App() {
   const {
     appStateReady,
     pctBase,
-    tokenAddress,
     tokenDecimals,
     tokenSymbol,
     userAccount,
@@ -101,13 +100,13 @@ function App() {
       ? null
       : votes.find(vote => vote.voteId === currentVoteId)
 
-  const { canUserVote, canExecute, userBalance } = useCurrentVoteData(
-    currentVote,
-    userAccount,
-    api,
-    tokenContract,
-    tokenDecimals
-  )
+  // const { canUserVote, canExecute, userBalance } = useCurrentVoteData(
+  //   currentVote,
+  //   userAccount,
+  //   api,
+  //   tokenContract,
+  //   tokenDecimals
+  // )
 
   // update token contract
   useEffect(() => {
@@ -202,70 +201,86 @@ function App() {
     [api]
   )
 
+  // Local identity
+  const resolveLocalIdentity = useCallback(
+    address => api.resolveAddressIdentity(address).toPromise(),
+    [api]
+  )
+  const showLocalIdentityModal = useCallback(
+    address => api.requestAddressIdentityModification(address).toPromise(),
+    [api]
+  )
+
   const hasCurrentVote = appStateReady && Boolean(currentVote)
 
   return (
-    <NetworkContext.Provider value={network}>
-      <SettingsContext.Provider value={{ pctBase, voteTime }}>
-        <div css="min-width: 320px">
-          <Main assetsUrl="./aragon-ui">
-            <AppLayout
-              title="Voting"
-              onMenuOpen={requestMenu}
-              mainButton={{
-                label: 'New vote',
-                icon: <NewVoteIcon />,
-                onClick: handleCreateVoteOpen,
-              }}
-            >
-              {appStateReady && votes.length > 0 ? (
-                <Votes votes={votes} onSelectVote={handleVoteOpen} />
-              ) : (
-                <EmptyState onActivate={handleCreateVoteOpen} />
-              )}
-            </AppLayout>
-            <SidePanel
-              title={`Vote #${currentVoteId} (${
-                currentVote && currentVote.data.open ? 'Open' : 'Closed'
-              })`}
-              opened={hasCurrentVote && !createVoteVisible && voteVisible}
-              onClose={handleVoteClose}
-              onTransitionEnd={handleVoteTransitionEnd}
-            >
-              {hasCurrentVote && (
-                <VotePanelContent
-                  api={api}
-                  vote={currentVote}
-                  user={userAccount}
-                  ready={voteSidebarOpened}
-                  tokenContract={tokenContract}
-                  tokenDecimals={tokenDecimals}
-                  tokenSymbol={tokenSymbol}
-                  onVote={handleVote}
-                  onExecute={handleExecute}
-                />
-              )}
-            </SidePanel>
+    <div css="min-width: 320px">
+      <Main assetsUrl="./aragon-ui">
+        <IdentityProvider
+          onResolve={resolveLocalIdentity}
+          onShowLocalIdentityModal={showLocalIdentityModal}
+        >
+          <NetworkContext.Provider value={network}>
+            <SettingsContext.Provider value={{ pctBase, voteTime }}>
+              <AppLayout
+                title="Voting"
+                onMenuOpen={requestMenu}
+                mainButton={{
+                  label: 'New vote',
+                  icon: <NewVoteIcon />,
+                  onClick: handleCreateVoteOpen,
+                }}
+              >
+                {appStateReady && votes.length > 0 ? (
+                  <Votes votes={votes} onSelectVote={handleVoteOpen} />
+                ) : (
+                  <EmptyState onActivate={handleCreateVoteOpen} />
+                )}
+              </AppLayout>
 
-            <SidePanel
-              title="New Vote"
-              opened={createVoteVisible}
-              onClose={handleCreateVoteClose}
-            >
-              <NewVotePanelContent
+              <SidePanel
+                title={`Vote #${currentVoteId} (${
+                  currentVote && currentVote.data.open ? 'Open' : 'Closed'
+                })`}
+                opened={hasCurrentVote && !createVoteVisible && voteVisible}
+                onClose={handleVoteClose}
+                onTransitionEnd={handleVoteTransitionEnd}
+              >
+                {hasCurrentVote && (
+                  <VotePanelContent
+                    api={api}
+                    vote={currentVote}
+                    user={userAccount}
+                    ready={voteSidebarOpened}
+                    tokenContract={tokenContract}
+                    tokenDecimals={tokenDecimals}
+                    tokenSymbol={tokenSymbol}
+                    onVote={handleVote}
+                    onExecute={handleExecute}
+                  />
+                )}
+              </SidePanel>
+
+              <SidePanel
+                title="New Vote"
                 opened={createVoteVisible}
-                onCreateVote={handleCreateVote}
-              />
-            </SidePanel>
-          </Main>
-        </div>
-      </SettingsContext.Provider>
-    </NetworkContext.Provider>
+                onClose={handleCreateVoteClose}
+              >
+                <NewVotePanelContent
+                  opened={createVoteVisible}
+                  onCreateVote={handleCreateVote}
+                />
+              </SidePanel>
+            </SettingsContext.Provider>
+          </NetworkContext.Provider>
+        </IdentityProvider>
+      </Main>
+    </div>
   )
 }
 
 export default () => (
-  <ConnectAragonApi reducer={appStateReducer}>
+  <AragonApi reducer={appStateReducer}>
     <App />
-  </ConnectAragonApi>
+  </AragonApi>
 )

@@ -4,16 +4,16 @@ import styled from 'styled-components'
 import {
   Button,
   Countdown,
-  IdentityBadge,
   Info,
   SafeLink,
   SidePanelSeparator,
   SidePanelSplit,
   Text,
-  blockExplorerUrl,
   theme,
 } from '@aragon/ui'
 import { NetworkContext } from '../app-contexts'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge.js'
+import { format } from 'date-fns'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { round } from '../math-utils'
 import { pluralize } from '../utils'
@@ -22,6 +22,9 @@ import VoteSummary from './VoteSummary'
 import VoteStatus from './VoteStatus'
 import VoteSuccess from './VoteSuccess'
 import SummaryBar from './SummaryBar'
+
+const formatDate = date =>
+  `${format(date, 'dd/MM/yy')} at ${format(date, 'HH:mm')} UTC`
 
 class VotePanelContent extends React.PureComponent {
   static propTypes = {
@@ -117,20 +120,6 @@ class VotePanelContent extends React.PureComponent {
     const canExecute = await api.call('canExecute', vote.voteId).toPromise()
     this.setState({ loadingCanExecute: false, canExecute })
   }
-  renderBlockLink = snapshotBlock => {
-    const {
-      network: { type },
-    } = this.props
-    const text = `(block ${snapshotBlock})`
-    const url = blockExplorerUrl('block', snapshotBlock, { networkType: type })
-    return url ? (
-      <SafeLink href={url} target="_blank">
-        {text}
-      </SafeLink>
-    ) : (
-      text
-    )
-  }
   render() {
     const {
       vote,
@@ -163,7 +152,6 @@ class VotePanelContent extends React.PureComponent {
       metadataNode,
       descriptionNode,
       open,
-      snapshotBlock,
     } = vote.data
     const { minAcceptQuorum } = vote.numData
     const quorumProgress = getQuorumProgress(vote)
@@ -222,7 +210,7 @@ class VotePanelContent extends React.PureComponent {
             <Label>Created By</Label>
           </h2>
           <Creator>
-            <IdentityBadge entity={creator} networkType={network.type} />
+            <LocalIdentityBadge entity={creator} networkType={network.type} />
           </Creator>
         </Part>
         <SidePanelSeparator />
@@ -277,8 +265,9 @@ class VotePanelContent extends React.PureComponent {
                       {userBalance === null
                         ? '…'
                         : pluralize(userBalance, '$ token', '$ tokens')}
-                      , since it was your balance at the beginning of the vote{' '}
-                      {this.renderBlockLink(snapshotBlock)}.
+                      , since it was your balance when the vote was created (
+                      {formatDate(vote.data.startDate)}
+                      ).
                     </p>
                   </Info.Action>
                 </div>
@@ -308,23 +297,27 @@ class VotePanelContent extends React.PureComponent {
                     </VotingButton>
                   </ButtonsContainer>
                   {
-                    <Info.Action>
+                    <StyledInfo>
                       {user ? (
-                        <p>
-                          You will cast your vote with{' '}
-                          {userBalance === null
-                            ? '… tokens'
-                            : pluralize(userBalance, '$ token', '$ tokens')}
-                          , since it was your balance at the beginning of the
-                          vote {this.renderBlockLink(snapshotBlock)}.
-                        </p>
+                        <div>
+                          <p>
+                            You will cast your vote with{' '}
+                            {userBalance === null
+                              ? '… tokens'
+                              : pluralize(userBalance, '$ token', '$ tokens')}
+                            , since it was your balance when the vote was
+                            created ({formatDate(vote.data.startDate)}
+                            ).
+                          </p>
+                          <NoTokenCost />
+                        </div>
                       ) : (
                         <p>
                           You will need to connect your account in the next
                           screen.
                         </p>
                       )}
-                    </Info.Action>
+                    </StyledInfo>
                   }
                 </div>
               )
@@ -334,6 +327,24 @@ class VotePanelContent extends React.PureComponent {
     )
   }
 }
+
+const StyledInfo = styled(Info.Action)`
+  div:first-child {
+    align-items: flex-start;
+  }
+`
+
+const NoTokenCost = () => (
+  <p css="margin-top: 10px">
+    Performing this action will{' '}
+    <span css="font-weight: bold">not transfer out</span> any of your tokens.
+    You’ll only have to pay for the{' '}
+    <SafeLink href="https://ethgas.io/" target="_blank">
+      ETH fee
+    </SafeLink>{' '}
+    when signing the transaction.
+  </p>
+)
 
 const Label = styled(Text).attrs({
   smallcaps: true,
