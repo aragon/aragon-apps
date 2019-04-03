@@ -18,7 +18,6 @@ import { NetworkContext, SettingsContext } from './app-contexts'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 import { isVoteOpen, voteTypeFromContractEnum } from './vote-utils'
 import { shortenAddress, transformAddresses } from './web3-utils'
-import { useCurrentVoteData } from './vote-hooks'
 import { useNow } from './utils-hooks'
 import appStateReducer from './app-state-reducer'
 
@@ -34,7 +33,7 @@ function shortenAddresses(label) {
   )
 }
 
-function VoteText({ description }) {
+function voteTextNode(description) {
   return description ? (
     <AutoLink>
       {description.split('\n').map((line, i) => (
@@ -47,6 +46,15 @@ function VoteText({ description }) {
   ) : null
 }
 
+// Generate a cache ID from a list of votes, based on their voteId.
+const cacheIdFromVotes = votes =>
+  votes
+    ? votes
+        .map(vote => vote.voteId)
+        .sort()
+        .join()
+    : ''
+
 function App() {
   const {
     api,
@@ -54,6 +62,7 @@ function App() {
     appState,
     requestMenu,
     displayMenuButton,
+    connectedAccount,
   } = useAragonApi()
 
   const [createVoteVisible, setCreateVoteVisible] = useState(false)
@@ -69,7 +78,6 @@ function App() {
     pctBase,
     tokenDecimals,
     tokenSymbol,
-    userAccount,
     voteTime,
   } = appState
 
@@ -84,29 +92,21 @@ function App() {
               open: isVoteOpen(vote, now),
 
               // Render text fields
-              descriptionNode: <VoteText description={vote.data.description} />,
-              metadataNode: <VoteText description={vote.data.metadata} />,
+              descriptionNode: voteTextNode(vote.data.description),
+              metadataNode: voteTextNode(vote.data.metadata),
             },
             userAccountVote: voteTypeFromContractEnum(
               userAccountVotes.get(vote.voteId)
             ),
           }))
         : appState.votes,
-    [appStateReady, appState.votes, userAccountVotes]
+    [appStateReady, cacheIdFromVotes(appState.votes), userAccountVotes]
   )
 
   const currentVote =
     currentVoteId === -1
       ? null
       : votes.find(vote => vote.voteId === currentVoteId)
-
-  // const { canUserVote, canExecute, userBalance } = useCurrentVoteData(
-  //   currentVote,
-  //   userAccount,
-  //   api,
-  //   tokenContract,
-  //   tokenDecimals
-  // )
 
   // update token contract
   useEffect(() => {
@@ -119,7 +119,7 @@ function App() {
 
   // update user account votes
   useEffect(() => {
-    if (!userAccount) {
+    if (!connectedAccount || !votes) {
       setUserAccountVotes(new Map())
       return
     }
@@ -128,7 +128,7 @@ function App() {
     Promise.all(
       votes.map(vote =>
         api
-          .call('getVoterState', vote.voteId, userAccount)
+          .call('getVoterState', vote.voteId, connectedAccount)
           .toPromise()
           .then(result => [vote.voteId, result])
       )
@@ -141,7 +141,7 @@ function App() {
     return () => {
       cancelled = true
     }
-  }, [api, votes && votes.map(vote => vote.voteId).join(), userAccount])
+  }, [api, cacheIdFromVotes(votes), connectedAccount])
 
   // create vote panel
   const handleCreateVoteOpen = useCallback(() => {
@@ -248,9 +248,7 @@ function App() {
               >
                 {hasCurrentVote && (
                   <VotePanelContent
-                    api={api}
                     vote={currentVote}
-                    user={userAccount}
                     ready={voteSidebarOpened}
                     tokenContract={tokenContract}
                     tokenDecimals={tokenDecimals}

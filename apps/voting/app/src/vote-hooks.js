@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useAragonApi } from '@aragon/api-react'
 
 // when `params` are updated, call `fn` and pass the result
 function usePromiseResult(fn, params, memoParams, defaultValue) {
@@ -52,10 +53,10 @@ async function getCanExecute(vote, api) {
 export const useCurrentVoteData = (
   vote,
   userAccount,
-  api,
   tokenContract,
   tokenDecimals
 ) => {
+  const { api } = useAragonApi()
   return {
     canUserVote: usePromiseResult(
       getCanVote,
