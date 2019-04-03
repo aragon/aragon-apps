@@ -16,12 +16,14 @@ testrpc_running() {
 start_testrpc() {
   echo "Starting our own testrpc instance at port $testrpc_port"
   if [ "$SOLIDITY_COVERAGE" = true ]; then
-    npx testrpc-sc -i 16 --gasLimit 0xfffffffffff --port "$testrpc_port"  > /dev/null &
+    npx testrpc-sc -i 16 --keepAliveTimeout 15000 --gasLimit 0xfffffffffff --port "$testrpc_port"  > /dev/null &
   else
-    npx ganache-cli -i 15 --gasLimit 50000000 --port "$testrpc_port" > /dev/null &
+    npx ganache-cli -i 15 --keepAliveTimeout 15000 --gasLimit 50000000 --port "$testrpc_port" > /dev/null &
+    # npx ganache-cli -i 15 --gasLimit 50000000 --port "$testrpc_port" &
   fi
 
   testrpc_pid=$!
+  echo "Running testrpc instance at port $testrpc_port"
 }
 
 if testrpc_running; then
