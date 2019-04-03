@@ -1,4 +1,4 @@
-workflow "test" {
+workflow "Test Apps" {
   on = "push"
   resolves = [
     "install",
@@ -47,7 +47,7 @@ action "test:shared" {
 }
 
 action "test:agent" {
-  needs = "test:finance"
+  needs = "bootstrap"
   uses = "actions/npm@master"
   args = "run test:agent"
 }
@@ -59,7 +59,7 @@ action "test:finance" {
 }
 
 action "test:survey" {
-  needs = "test:finance"
+  needs = "bootstrap"
   uses = "actions/npm@master"
   args = "run test:survey"
 }
@@ -77,7 +77,7 @@ action "test:token-manager:app" {
 }
 
 action "test:vault" {
-  needs = "test:finance"
+  needs = "bootstrap"
   uses = "actions/npm@master"
   args = "run test:vault"
 }
@@ -95,7 +95,7 @@ action "coverage:agent" {
 }
 
 action "coverage:finance" {
-  needs = "test:survey"
+  needs = "test:finance"
   uses = "actions/npm@master"
   args = "run coverage:finance"
 }
@@ -107,19 +107,19 @@ action "coverage:survey" {
 }
 
 action "coverage:token-manager" {
-  needs = "test:survey"
+  needs = "test:token-manager"
   uses = "actions/npm@master"
   args = "run coverage:token-manager"
 }
 
 action "coverage:vault" {
-  needs = "test:survey"
+  needs = "test:vault"
   uses = "actions/npm@master"
   args = "run coverage:vault"
 }
 
 action "coverage:voting" {
-  needs = "test:survey"
+  needs = "test:voting"
   uses = "actions/npm@master"
   args = "run coverage:voting"
 }
