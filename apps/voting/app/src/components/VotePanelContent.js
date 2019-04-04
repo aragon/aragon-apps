@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import {
@@ -28,42 +28,41 @@ import SummaryBar from './SummaryBar'
 const formatDate = date =>
   `${format(date, 'dd/MM/yy')} at ${format(date, 'HH:mm')} UTC`
 
-class VotePanelContent extends React.PureComponent {
-  static propTypes = {
-    api: PropTypes.object.isRequired,
-    canUserVote: PropTypes.bool.isRequired,
-    canExecute: PropTypes.bool.isRequired,
-    userBalance: PropTypes.number,
-  }
-  state = {
-    changeVote: false,
-  }
-  handleChangeVoteClick = () => {
-    this.setState({ changeVote: true })
-  }
-  handleNoClick = () => {
-    this.props.onVote(this.props.vote.voteId, VOTE_NAY)
-  }
-  handleYesClick = () => {
-    this.props.onVote(this.props.vote.voteId, VOTE_YEA)
-  }
-  handleExecuteClick = () => {
-    this.props.onExecute(this.props.vote.voteId)
-  }
-  render() {
-    const {
-      canExecute,
-      canUserVote,
-      network,
-      ready,
-      tokenDecimals,
-      tokenSymbol,
-      connectedAccount,
-      userBalance,
-      vote,
-    } = this.props
+const VotePanelContent = React.memo(
+  ({
+    onVote,
+    onExecute,
+    ready,
+    tokenDecimals,
+    tokenSymbol,
+    tokenContract,
+    vote,
+  }) => {
+    const { connectedAccount } = useAragonApi()
 
-    const { changeVote } = this.state
+    const network = useContext(NetworkContext)
+
+    const { canUserVote, canExecute, userBalance } = useCurrentVoteData(
+      vote,
+      connectedAccount,
+      tokenContract,
+      tokenDecimals
+    )
+
+    const [changeVote, setChangeVote] = useState(false)
+
+    const handleChangeVoteClick = useCallback(() => {
+      setChangeVote(true)
+    }, [])
+    const handleNoClick = useCallback(() => {
+      onVote(vote.voteId, VOTE_NAY)
+    }, [])
+    const handleYesClick = useCallback(() => {
+      onVote(vote.voteId, VOTE_YEA)
+    }, [])
+    const handleExecuteClick = useCallback(() => {
+      onExecute(vote.voteId)
+    }, [])
 
     const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.userAccountVote)
 
@@ -169,7 +168,7 @@ class VotePanelContent extends React.PureComponent {
               <div>
                 <SidePanelSeparator />
                 <ButtonsContainer>
-                  <Button mode="strong" wide onClick={this.handleExecuteClick}>
+                  <Button mode="strong" wide onClick={handleExecuteClick}>
                     Execute vote
                   </Button>
                 </ButtonsContainer>
@@ -185,11 +184,7 @@ class VotePanelContent extends React.PureComponent {
               <div>
                 <SidePanelSeparator />
                 <ButtonsContainer>
-                  <Button
-                    mode="strong"
-                    wide
-                    onClick={this.handleChangeVoteClick}
-                  >
+                  <Button mode="strong" wide onClick={handleChangeVoteClick}>
                     Change my vote
                   </Button>
                 </ButtonsContainer>
@@ -218,7 +213,7 @@ class VotePanelContent extends React.PureComponent {
                     mode="strong"
                     emphasis="positive"
                     wide
-                    onClick={this.handleYesClick}
+                    onClick={handleYesClick}
                   >
                     Yes
                   </VotingButton>
@@ -226,34 +221,37 @@ class VotePanelContent extends React.PureComponent {
                     mode="strong"
                     emphasis="negative"
                     wide
-                    onClick={this.handleNoClick}
+                    onClick={handleNoClick}
                   >
                     No
                   </VotingButton>
                 </ButtonsContainer>
-                {
-                  <StyledInfo>
-                    {connectedAccount ? (
-                      <div>
-                        <p>
-                          You will cast your vote with{' '}
-                          {userBalance === null
-                            ? '… tokens'
-                            : pluralize(userBalance, '$ token', '$ tokens')}
-                          , since it was your balance when the vote was created
-                          ({formatDate(vote.data.startDate)}
-                          ).
-                        </p>
-                        <NoTokenCost />
-                      </div>
-                    ) : (
+                <Info.Action
+                  css={`
+                    & > div {
+                      align-items: flex-start;
+                    }
+                  `}
+                >
+                  {connectedAccount ? (
+                    <div>
                       <p>
-                        You will need to connect your account in the next
-                        screen.
+                        You will cast your vote with{' '}
+                        {userBalance === null
+                          ? '… tokens'
+                          : pluralize(userBalance, '$ token', '$ tokens')}
+                        , since it was your balance when the vote was created (
+                        {formatDate(vote.data.startDate)}
+                        ).
                       </p>
-                    )}
-                  </StyledInfo>
-                }
+                      <NoTokenCost />
+                    </div>
+                  ) : (
+                    <p>
+                      You will need to connect your account in the next screen.
+                    </p>
+                  )}
+                </Info.Action>
               </div>
             )
           }
@@ -261,13 +259,7 @@ class VotePanelContent extends React.PureComponent {
       </React.Fragment>
     )
   }
-}
-
-const StyledInfo = styled(Info.Action)`
-  div:first-child {
-    align-items: flex-start;
-  }
-`
+)
 
 const NoTokenCost = () => (
   <p css="margin-top: 10px">
@@ -311,24 +303,4 @@ const VotingButton = styled(Button)`
   }
 `
 
-export default props => {
-  const { api, connectedAccount } = useAragonApi()
-  const network = useContext(NetworkContext)
-  const { canUserVote, canExecute, userBalance } = useCurrentVoteData(
-    props.vote,
-    connectedAccount,
-    props.tokenContract,
-    props.tokenDecimals
-  )
-  return (
-    <VotePanelContent
-      network={network}
-      api={api}
-      canUserVote={canUserVote}
-      canExecute={canExecute}
-      userBalance={userBalance}
-      connectedAccount={connectedAccount}
-      {...props}
-    />
-  )
-}
+export default VotePanelContent
