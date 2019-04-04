@@ -28,6 +28,9 @@ import SummaryBar from './SummaryBar'
 const formatDate = date =>
   `${format(date, 'dd/MM/yy')} at ${format(date, 'HH:mm')} UTC`
 
+// styled-component `css` transform doesn’t play well with attached components.
+const Action = Info.Action
+
 const VotePanelContent = React.memo(
   ({
     onVote,
@@ -172,9 +175,7 @@ const VotePanelContent = React.memo(
                     Execute vote
                   </Button>
                 </ButtonsContainer>
-                <Info.Action>
-                  Executing this vote is required to enact it.
-                </Info.Action>
+                <Action>Executing this vote is required to enact it.</Action>
               </div>
             )
           }
@@ -188,7 +189,7 @@ const VotePanelContent = React.memo(
                     Change my vote
                   </Button>
                 </ButtonsContainer>
-                <Info.Action>
+                <Action>
                   <p>
                     You voted {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'}{' '}
                     with{' '}
@@ -199,7 +200,7 @@ const VotePanelContent = React.memo(
                     {formatDate(vote.data.startDate)}
                     ).
                   </p>
-                </Info.Action>
+                </Action>
               </div>
             )
           }
@@ -226,7 +227,7 @@ const VotePanelContent = React.memo(
                     No
                   </VotingButton>
                 </ButtonsContainer>
-                <Info.Action
+                <Action
                   css={`
                     & > div {
                       align-items: flex-start;
@@ -251,7 +252,7 @@ const VotePanelContent = React.memo(
                       You will need to connect your account in the next screen.
                     </p>
                   )}
-                </Info.Action>
+                </Action>
               </div>
             )
           }
