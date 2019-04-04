@@ -56,14 +56,7 @@ const cacheIdFromVotes = votes =>
     : ''
 
 function App() {
-  const {
-    api,
-    network,
-    appState,
-    requestMenu,
-    displayMenuButton,
-    connectedAccount,
-  } = useAragonApi()
+  const { api, network, appState, connectedAccount } = useAragonApi()
 
   const [createVoteVisible, setCreateVoteVisible] = useState(false)
   const [currentVoteId, setCurrentVoteId] = useState(-1)
@@ -224,7 +217,6 @@ function App() {
             <SettingsContext.Provider value={{ pctBase, voteTime }}>
               <AppLayout
                 title="Voting"
-                onMenuOpen={requestMenu}
                 mainButton={{
                   label: 'New vote',
                   icon: <NewVoteIcon />,
