@@ -1,7 +1,7 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
-const { maxUint64, annualSalary } = require('../helpers/numbers')(web3)
-const { deployErc20TokenAndDeposit, redistributeEth, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { maxUint64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
+const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -13,15 +13,14 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
   const TWO_MONTHS = ONE_MONTH * 2
   const RATE_EXPIRATION_TIME = TWO_MONTHS
 
-  const DENOMINATION_TOKEN_DECIMALS = 18
+  const TOKEN_DECIMALS = 18
 
   const currentTimestamp = async () => payroll.getTimestampPublic()
 
   before('setup base apps and tokens', async () => {
     ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', 18)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', DENOMINATION_TOKEN_DECIMALS)
-    await redistributeEth(finance)
+    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
   })
 
   beforeEach('setup payroll instance', async () => {
@@ -31,7 +30,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
   describe('addEmployeeNow', () => {
     const role = 'Boss'
-    const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
+    const salary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
 
     context('when it has already been initialized', function () {
       beforeEach('initialize payroll app', async () => {
@@ -74,7 +73,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
             it('can add another employee', async () => {
               const anotherRole = 'Manager'
-              const anotherSalary = annualSalary(120000, DENOMINATION_TOKEN_DECIMALS)
+              const anotherSalary = annualSalaryPerSecond(120000, TOKEN_DECIMALS)
 
               const receipt = await payroll.addEmployeeNow(anotherEmployee, anotherSalary, anotherRole)
               const anotherEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
@@ -136,7 +135,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
   describe('addEmployee', () => {
     const role = 'Boss'
-    const salary = annualSalary(100000, DENOMINATION_TOKEN_DECIMALS)
+    const salary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
 
     context('when it has already been initialized', function () {
       beforeEach('initialize payroll app', async () => {
@@ -180,7 +179,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
               it('can add another employee', async () => {
                 const anotherRole = 'Manager'
-                const anotherSalary = annualSalary(120000, DENOMINATION_TOKEN_DECIMALS)
+                const anotherSalary = annualSalaryPerSecond(120000, TOKEN_DECIMALS)
 
                 const receipt = await payroll.addEmployee(anotherEmployee, anotherSalary, anotherRole, startDate)
                 const anotherEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')

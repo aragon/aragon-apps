@@ -1,7 +1,7 @@
 const { maxUint64 } = require('../helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEventArgument } = require('../helpers/events')
-const { deployErc20TokenAndDeposit, redistributeEth, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
 
 contract('Payroll employee getters', ([owner, employee]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
@@ -11,15 +11,14 @@ contract('Payroll employee getters', ([owner, employee]) => {
   const TWO_MONTHS = ONE_MONTH * 2
   const RATE_EXPIRATION_TIME = TWO_MONTHS
 
-  const DENOMINATION_TOKEN_DECIMALS = 18
+  const TOKEN_DECIMALS = 18
 
   const currentTimestamp = async () => payroll.getTimestampPublic()
 
   before('setup base apps and tokens', async () => {
     ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', 18)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', DENOMINATION_TOKEN_DECIMALS)
-    await redistributeEth(finance)
+    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
   })
 
   beforeEach('setup payroll instance', async () => {

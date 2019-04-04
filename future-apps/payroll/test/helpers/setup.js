@@ -21,20 +21,6 @@ module.exports = (artifacts, web3) => {
     return token
   }
 
-  async function redistributeEth(finance) {
-    const split = 4
-    const amount = 10
-    const accounts = web3.eth.accounts
-
-    // transfer ETH to owner
-    for (let i = 1; i < split; i++)
-      await web3.eth.sendTransaction({ from: accounts[i], to: accounts[0], value: web3.toWei(amount, 'ether') })
-
-    // transfer ETH to payroll contract
-    for (let i = split; i < 10; i++)
-      await finance.sendTransaction({ from: accounts[i], value: web3.toWei(amount, 'ether') })
-  }
-
   async function deployContracts(owner) {
     const kernelBase = await Kernel.new(true) // petrify immediately
     const aclBase = await ACL.new()
@@ -114,7 +100,6 @@ module.exports = (artifacts, web3) => {
 
   return {
     deployContracts,
-    redistributeEth,
     deployErc20TokenAndDeposit,
     createPayrollInstance,
     mockTimestamps
