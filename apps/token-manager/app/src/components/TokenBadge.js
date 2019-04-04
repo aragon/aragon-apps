@@ -1,32 +1,30 @@
 import React from 'react'
 import styled from 'styled-components'
 import { SafeLink, blockExplorerUrl } from '@aragon/ui'
-import provideNetwork from '../provide-network'
+import { useNetwork } from '@aragon/api-react'
 
 import { ETHER_TOKEN_VERIFIED_ADDRESSES } from '../verified-tokens'
 
-class TokenBadge extends React.PureComponent {
-  render() {
-    const { address, name, symbol, network } = this.props
-    const verified = ETHER_TOKEN_VERIFIED_ADDRESSES.has(address.toLowerCase())
-    return (
-      <Main
-        title={`${name} (${address})`}
-        href={blockExplorerUrl('token', address, { networkType: network.type })}
-      >
-        <Label>
-          {verified && (
-            <Icon src={`https://chasing-coins.com/coin/logo/${symbol}`} />
-          )}
-          <NameWrapper>
-            <Name>{name}</Name>
-            {name !== symbol && <Symbol>({symbol})</Symbol>}
-          </NameWrapper>
-        </Label>
-      </Main>
-    )
-  }
-}
+const TokenBadge = React.memo(({ address, name, symbol }) => {
+  const network = useNetwork()
+  const verified = ETHER_TOKEN_VERIFIED_ADDRESSES.has(address.toLowerCase())
+  return (
+    <Main
+      title={`${name} (${address})`}
+      href={blockExplorerUrl('token', address, { networkType: network.type })}
+    >
+      <Label>
+        {verified && (
+          <Icon src={`https://chasing-coins.com/coin/logo/${symbol}`} />
+        )}
+        <NameWrapper>
+          <Name>{name}</Name>
+          {name !== symbol && <Symbol>({symbol})</Symbol>}
+        </NameWrapper>
+      </Label>
+    </Main>
+  )
+})
 
 const Main = styled(SafeLink).attrs({ target: '_blank' })`
   overflow: hidden;
@@ -71,4 +69,4 @@ const Symbol = styled.span`
   margin-left: 5px;
 `
 
-export default provideNetwork(TokenBadge)
+export default TokenBadge
