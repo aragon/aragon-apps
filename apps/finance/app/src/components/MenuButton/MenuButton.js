@@ -11,6 +11,7 @@ export default props => (
       padding: 0 10px 0 20px;
       margin-right: 8px;
     `}
+    label="Open menu"
   >
     <IconMenu />
   </ButtonIcon>
