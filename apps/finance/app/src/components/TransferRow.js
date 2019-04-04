@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { format } from 'date-fns'
+import { useNetwork } from '@aragon/api-react'
 import {
   TableRow,
   TableCell,
@@ -9,7 +10,6 @@ import {
   blockExplorerUrl,
   theme,
 } from '@aragon/ui'
-import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
 import IconTokens from './icons/IconTokens'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
@@ -172,4 +172,7 @@ const TextOverflow = styled.div`
   text-overflow: ellipsis;
 `
 
-export default provideNetwork(TransferRow)
+export default props => {
+  const network = useNetwork()
+  return <TransferRow network={network} {...props} />
+}
