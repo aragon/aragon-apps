@@ -1,9 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import BN from 'bn.js'
-import { map } from 'rxjs/operators'
-import { EmptyStateCard, Main, SidePanel, observe } from '@aragon/ui'
+import { EmptyStateCard, Main, SidePanel } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
@@ -18,6 +16,7 @@ import addFundsIcon from './components/assets/add-funds-icon.svg'
 class App extends React.Component {
   static propTypes = {
     api: PropTypes.object,
+    appState: PropTypes.object,
   }
   static defaultProps = {
     balances: [],
@@ -89,7 +88,7 @@ class App extends React.Component {
   }
 
   render() {
-    const { api, appState } = this.props
+    const { appState } = this.props
     const { newTransferOpened } = this.state
     const { balances, transactions, tokens, proxyAddress } = appState
 
