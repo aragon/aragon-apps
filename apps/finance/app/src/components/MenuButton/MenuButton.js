@@ -1,6 +1,5 @@
 import React from 'react'
-import { ButtonIcon } from '@aragon/ui'
-import IconMenu from './IconMenu'
+import { ButtonIcon, IconMenu } from '@aragon/ui'
 
 export default props => (
   <ButtonIcon
