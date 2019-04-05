@@ -4,13 +4,13 @@ import { ButtonIcon } from '@aragon/ui'
 const Download = props => (
   <ButtonIcon
     {...props}
-    label="Menu"
     css={`
       width: auto;
       height: 100%;
       padding: 0 8px;
       margin: 0 8px;
     `}
+    label="Download"
   >
     <IconDownload />
   </ButtonIcon>
