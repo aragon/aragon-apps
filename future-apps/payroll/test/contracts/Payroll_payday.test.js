@@ -90,14 +90,14 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                   assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
                   assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
                   assert.equal(denominationTokenEvent.amount.toString(), expectedDenominationTokenAmount, 'payment amount does not match')
-                  assert.equal(denominationTokenEvent.reference, 'Payroll', 'payment reference does not match')
+                  assert.equal(denominationTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
 
                   const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                   const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
                   assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
                   assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
                   assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).toString(), expectedAnotherTokenAmount, 'payment amount does not match')
-                  assert.equal(anotherTokenEvent.reference, 'Payroll', 'payment reference does not match')
+                  assert.equal(anotherTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
                 })
 
                 it('can be called multiple times between periods of time', async () => {
@@ -433,14 +433,14 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                   assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
                   assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
                   assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
-                  assert.equal(denominationTokenEvent.reference, 'Payroll', 'payment reference does not match')
+                  assert.equal(denominationTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
 
                   const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                   const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
                   assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
                   assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
                   assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), Math.round(requestedAnotherTokenAmount), 'payment amount does not match')
-                  assert.equal(anotherTokenEvent.reference, 'Payroll', 'payment reference does not match')
+                  assert.equal(anotherTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
                 })
 
                 it('can be called multiple times between periods of time', async () => {
@@ -900,14 +900,14 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                     assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
                     assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
                     assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
-                    assert.equal(denominationTokenEvent.reference, 'Payroll', 'payment reference does not match')
+                    assert.equal(denominationTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
 
                     const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                     const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
                     assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
                     assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
                     assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), Math.round(requestedAnotherTokenAmount), 'payment amount does not match')
-                    assert.equal(anotherTokenEvent.reference, 'Payroll', 'payment reference does not match')
+                    assert.equal(anotherTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
                   })
 
                   it('can be called multiple times between periods of time', async () => {

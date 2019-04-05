@@ -83,7 +83,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     event TerminateEmployee(uint256 indexed employeeId, address indexed accountAddress, uint64 endDate);
     event ChangeAddressByEmployee(uint256 indexed employeeId, address indexed oldAddress, address indexed newAddress);
     event DetermineAllocation(uint256 indexed employeeId, address indexed employee);
-    event SendPayment(address indexed employee, address indexed token, uint256 amount, string reference);
+    event SendPayment(address indexed employee, address indexed token, uint256 amount, string paymentReference);
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
     event AddEmployee(
@@ -667,10 +667,10 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @dev Loop over tokens to send requested amount to the employee
      * @param _employeeId Employee's identifier
      * @param _totalAmount Total amount to be transferred to the employee distributed in accordance to the employee's token allocation
-     * @param _reference String detailing payment reason
+     * @param _paymentReference String detailing payment reason
      * @return True if there was at least one token transfer
      */
-    function _transferTokensAmount(uint256 _employeeId, uint256 _totalAmount, string _reference) internal returns (bool somethingPaid) {
+    function _transferTokensAmount(uint256 _employeeId, uint256 _totalAmount, string _paymentReference) internal returns (bool somethingPaid) {
         Employee storage employee = employees[_employeeId];
         for (uint256 i = 0; i < allowedTokensArray.length; i++) {
             address token = allowedTokensArray[i];
@@ -682,8 +682,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
                 // Divide by 100 for the allocation and by ONE for the exchange rate
                 tokenAmount = tokenAmount / (100 * ONE);
                 address employeeAddress = employee.accountAddress;
-                finance.newPayment(token, employeeAddress, tokenAmount, 0, 0, 1, _reference);
-                emit SendPayment(employeeAddress, token, tokenAmount, _reference);
+                finance.newPayment(token, employeeAddress, tokenAmount, 0, 0, 1, _paymentReference);
+                emit SendPayment(employeeAddress, token, tokenAmount, _paymentReference);
                 somethingPaid = true;
             }
         }
