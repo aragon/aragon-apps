@@ -533,9 +533,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @dev Send the requested amount of salary to the employee
      * @param _employeeId Employee's identifier
      * @param _requestedAmount Amount of owed salary requested (must be less than or equal to total owed salary). Using `0` will request all available salary
-     * @return True if something has been paid
      */
-    function _payday(uint256 _employeeId, uint256 _requestedAmount) internal returns (bool somethingPaid) {
+    function _payday(uint256 _employeeId, uint256 _requestedAmount) internal {
         Employee storage employee = employees[_employeeId];
 
         // Compute amount to be payed
@@ -556,9 +555,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @dev Send the requested amount of accrued value to the employee
      * @param _employeeId Employee's identifier
      * @param _requestedAmount Amount of accrued value requested (must be less than or equal to the total accrued amount). Using `0` will request all accrued value
-     * @return True if something has been paid
      */
-    function _reimburse(uint256 _employeeId, uint256 _requestedAmount) internal returns (bool somethingPaid) {
+    function _reimburse(uint256 _employeeId, uint256 _requestedAmount) internal {
         Employee storage employee = employees[_employeeId];
 
         // Compute amount to be payed
