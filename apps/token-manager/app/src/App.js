@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import { Badge, Main, SidePanel, observe } from '@aragon/ui'
+import { Badge, Main, SidePanel } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
@@ -83,7 +83,6 @@ class App extends React.PureComponent {
   render() {
     const {
       appStateReady,
-      contentPadding,
       groupMode,
       holders,
       maxAccountTokens,

@@ -1,5 +1,4 @@
 import BN from 'bn.js'
-import { map } from 'rxjs/operators'
 import { hasLoadedTokenSettings } from './token-settings'
 
 // Convert tokenSupply and holders balances to BNs,
