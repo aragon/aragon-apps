@@ -69,7 +69,7 @@ class HolderRow extends React.Component {
                 <IconWrapper>
                   <IconAdd />
                 </IconWrapper>
-                <ActionLabel>Assign Tokens</ActionLabel>
+                <ActionLabel>Add Tokens</ActionLabel>
               </ContextMenuItem>
             )}
             <ContextMenuItem onClick={this.handleRemoveTokens}>
