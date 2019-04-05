@@ -32,13 +32,7 @@ class PanelContent extends React.Component {
 
   render() {
     const { screenIndex } = this.state
-    const {
-      opened,
-      tokens,
-      onWithdraw,
-      onDeposit,
-      proxyAddress,
-    } = this.props
+    const { opened, tokens, onWithdraw, onDeposit, proxyAddress } = this.props
     return (
       <div>
         <TabBarWrapper>
