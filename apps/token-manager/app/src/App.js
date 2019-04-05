@@ -1,15 +1,13 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import { map } from 'rxjs/operators'
-import { Badge, Main, SidePanel, observe } from '@aragon/ui'
+import { Badge, Main, SidePanel } from '@aragon/ui'
+import { useAragonApi } from '@aragon/api-react'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import AssignTokensIcon from './components/AssignTokensIcon'
 import AppLayout from './components/AppLayout'
-import { networkContextType } from './provide-network'
-import { hasLoadedTokenSettings } from './token-settings'
 import { addressesEqual } from './web3-utils'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
@@ -18,33 +16,19 @@ const initialAssignTokensConfig = {
   holderAddress: '',
 }
 
-class App extends React.Component {
+class App extends React.PureComponent {
   static propTypes = {
-    app: PropTypes.object.isRequired,
-    sendMessageToWrapper: PropTypes.func.isRequired,
+    api: PropTypes.object,
   }
   static defaultProps = {
     appStateReady: false,
     holders: [],
-    network: {},
-    userAccount: '',
+    connectedAccount: '',
     groupMode: false,
   }
   state = {
     assignTokensConfig: initialAssignTokensConfig,
     sidepanelOpened: false,
-  }
-  static childContextTypes = {
-    network: networkContextType,
-  }
-  getChildContext() {
-    const { network } = this.props
-
-    return {
-      network: {
-        type: network.type,
-      },
-    }
   }
   getHolderBalance = address => {
     const { holders } = this.props
@@ -54,13 +38,13 @@ class App extends React.Component {
     return holder ? holder.balance : new BN('0')
   }
   handleUpdateTokens = ({ amount, holder, mode }) => {
-    const { app } = this.props
+    const { api } = this.props
 
     if (mode === 'assign') {
-      app.mint(holder, amount)
+      api.mint(holder, amount)
     }
     if (mode === 'remove') {
-      app.burn(holder, amount)
+      api.burn(holder, amount)
     }
 
     this.handleSidepanelClose()
@@ -80,9 +64,6 @@ class App extends React.Component {
       sidepanelOpened: true,
     })
   }
-  handleMenuPanelOpen = () => {
-    this.props.sendMessageToWrapper('menuPanel', true)
-  }
   handleSidepanelClose = () => {
     this.setState({ sidepanelOpened: false })
   }
@@ -92,17 +73,16 @@ class App extends React.Component {
     }
   }
   handleResolveLocalIdentity = address => {
-    return this.props.app.resolveAddressIdentity(address).toPromise()
+    return this.props.api.resolveAddressIdentity(address).toPromise()
   }
   handleShowLocalIdentityModal = address => {
-    return this.props.app
+    return this.props.api
       .requestAddressIdentityModification(address)
       .toPromise()
   }
   render() {
     const {
       appStateReady,
-      contentPadding,
       groupMode,
       holders,
       maxAccountTokens,
@@ -113,7 +93,8 @@ class App extends React.Component {
       tokenSupply,
       tokenSymbol,
       tokenTransfersEnabled,
-      userAccount,
+      connectedAccount,
+      requestMenu,
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
@@ -126,7 +107,7 @@ class App extends React.Component {
             <AppLayout
               title="Token Manager"
               afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
-              onMenuOpen={this.handleMenuPanelOpen}
+              onMenuOpen={requestMenu}
               mainButton={{
                 label: 'Assign tokens',
                 icon: <AssignTokensIcon />,
@@ -145,7 +126,7 @@ class App extends React.Component {
                   tokenSupply={tokenSupply}
                   tokenSymbol={tokenSymbol}
                   tokenTransfersEnabled={tokenTransfersEnabled}
-                  userAccount={userAccount}
+                  userAccount={connectedAccount}
                   onAssignTokens={this.handleLaunchAssignTokens}
                   onRemoveTokens={this.handleLaunchRemoveTokens}
                 />
@@ -184,51 +165,14 @@ class App extends React.Component {
   }
 }
 
-export default observe(
-  // Convert tokenSupply and holders balances to BNs,
-  // and calculate tokenDecimalsBase.
-  observable =>
-    observable.pipe(
-      map(state => {
-        const appStateReady = hasLoadedTokenSettings(state)
-        if (!appStateReady) {
-          return {
-            ...state,
-            appStateReady,
-          }
-        }
-
-        const {
-          holders,
-          maxAccountTokens,
-          tokenDecimals,
-          tokenSupply,
-          tokenTransfersEnabled,
-        } = state
-
-        const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
-
-        return {
-          ...state,
-          appStateReady,
-          tokenDecimalsBase,
-          // Note that numbers in `numData` are not safe for accurate computations
-          // (but are useful for making divisions easier)
-          numData: {
-            tokenDecimals: parseInt(tokenDecimals, 10),
-            tokenSupply: parseInt(tokenSupply, 10),
-          },
-          holders: holders
-            ? holders
-                .map(holder => ({ ...holder, balance: new BN(holder.balance) }))
-                .sort((a, b) => b.balance.cmp(a.balance))
-            : [],
-          tokenDecimals: new BN(tokenDecimals),
-          tokenSupply: new BN(tokenSupply),
-          maxAccountTokens: new BN(maxAccountTokens),
-          groupMode: tokenTransfersEnabled && maxAccountTokens === '1',
-        }
-      })
-    ),
-  {}
-)(App)
+export default () => {
+  const { api, appState, connectedAccount, requestMenu } = useAragonApi()
+  return (
+    <App
+      api={api}
+      connectedAccount={connectedAccount}
+      requestMenu={requestMenu}
+      {...appState}
+    />
+  )
+}
