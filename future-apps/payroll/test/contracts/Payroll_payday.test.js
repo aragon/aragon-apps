@@ -55,164 +55,238 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
               await payroll.determineAllocation([denominationToken.address, anotherToken.address], [denominationTokenAllocation, anotherTokenAllocation], { from })
             })
 
-            context('when the employee has some pending salary', () => {
-              beforeEach('accumulate some pending salary', async () => {
+            const assertTransferredAmounts = expectedOwedAmount => {
+              const expectedDenominationTokenAmount = Math.round(expectedOwedAmount * denominationTokenAllocation / 100)
+              const expectedAnotherTokenAmount = Math.round(expectedOwedAmount * anotherTokenAllocation / 100)
+
+              it('transfers the owed salary', async () => {
+                const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
+
+                await payroll.payday({ from })
+
+                const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                assert.equal(currentDenominationTokenBalance.toString(), previousDenominationTokenBalance.plus(expectedDenominationTokenAmount).toString(), 'current denomination token balance does not match')
+
+                const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                const expectedAnotherTokenBalance = anotherTokenRate.mul(expectedAnotherTokenAmount).plus(previousAnotherTokenBalance)
+                assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
+              })
+
+              it('emits one event per allocated token', async () => {
+                const receipt = await payroll.payday({ from })
+
+                const events = receipt.logs.filter(l => l.event === 'SendPayment')
+                assert.equal(events.length, 2, 'should have emitted two events')
+
+                const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
+                assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
+                assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
+                assert.equal(denominationTokenEvent.amount.toString(), expectedDenominationTokenAmount, 'payment amount does not match')
+                assert.equal(denominationTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
+
+                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
+                assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
+                assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
+                assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).toString(), expectedAnotherTokenAmount, 'payment amount does not match')
+                assert.equal(anotherTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
+              })
+
+              it('can be called multiple times between periods of time', async () => {
+                // terminate employee in the future to ensure we can request payroll multiple times
+                await payroll.terminateEmployee(employeeId, NOW + TWO_MONTHS + TWO_MONTHS, { from: owner })
+
+                const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
+
+                await payroll.payday({ from })
+
                 await payroll.mockAddTimestamp(ONE_MONTH)
+                await priceFeed.mockAddTimestamp(ONE_MONTH)
+                await payroll.payday({ from })
+
+                const newOwedAmount = salary * ONE_MONTH
+                const newDenominationTokenOwedAmount = Math.round(newOwedAmount * denominationTokenAllocation / 100)
+                const newAnotherTokenOwedAmount = Math.round(newOwedAmount * anotherTokenAllocation / 100)
+
+                const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(expectedDenominationTokenAmount + newDenominationTokenOwedAmount)
+                assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
+
+                const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                const expectedAnotherTokenBalance = anotherTokenRate.mul(expectedAnotherTokenAmount + newAnotherTokenOwedAmount).plus(previousAnotherTokenBalance)
+                assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
+              })
+            }
+
+            const assertEmployeeIsUpdatedCorrectly = () => {
+              it('updates accrued salary and last payroll date correctly', async () => {
+                await payroll.payday({from})
+
+                const [accruedSalary, lastPayrollDate] = (await payroll.getEmployee(employeeId)).slice(3, 5)
+                assert.equal(accruedSalary.toString(), 0, 'accrued salary should be zero')
+                assert.equal(lastPayrollDate.toString(), (await currentTimestamp()).toString(), 'last payroll date does not match')
+              })
+            }
+
+            const itHandlesPaydayProperly = expectedOwedAmount => {
+              context('when exchange rates are not expired', () => {
+                assertTransferredAmounts(expectedOwedAmount)
+                assertEmployeeIsUpdatedCorrectly()
               })
 
-              const assertTransferredAmounts = () => {
-                const expectedOwedAmount = salary * ONE_MONTH
-                const expectedDenominationTokenAmount = Math.round(expectedOwedAmount * denominationTokenAllocation / 100)
-                const expectedAnotherTokenAmount = Math.round(expectedOwedAmount * anotherTokenAllocation / 100)
-
-                it('transfers the owed salary', async () => {
-                  const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                  const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
-
-                  await payroll.payday({ from })
-
-                  const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                  assert.equal(currentDenominationTokenBalance.toString(), previousDenominationTokenBalance.plus(expectedDenominationTokenAmount).toString(), 'current denomination token balance does not match')
-
-                  const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                  const expectedAnotherTokenBalance = anotherTokenRate.mul(expectedAnotherTokenAmount).plus(previousAnotherTokenBalance)
-                  assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
+              context('when exchange rates are expired', () => {
+                beforeEach('expire exchange rates', async () => {
+                  await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
                 })
 
-                it('emits one event per allocated token', async () => {
-                  const receipt = await payroll.payday({ from })
-
-                  const events = receipt.logs.filter(l => l.event === 'SendPayment')
-                  assert.equal(events.length, 2, 'should have emitted two events')
-
-                  const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
-                  assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
-                  assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
-                  assert.equal(denominationTokenEvent.amount.toString(), expectedDenominationTokenAmount, 'payment amount does not match')
-                  assert.equal(denominationTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
-
-                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                  const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
-                  assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
-                  assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
-                  assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).toString(), expectedAnotherTokenAmount, 'payment amount does not match')
-                  assert.equal(anotherTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
+                it('reverts', async () => {
+                  await assertRevert(payroll.payday({ from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
                 })
+              })
+            }
 
-                it('can be called multiple times between periods of time', async () => {
-                  // terminate employee in the future to ensure we can request payroll multiple times
-                  await payroll.terminateEmployee(employeeId, NOW + TWO_MONTHS + TWO_MONTHS, { from: owner })
+            context('when the employee has some accrued salary', () => {
+              const previousSalary = 10
+              const previousOwedSalary = ONE_MONTH * previousSalary
 
-                  const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                  const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
+              beforeEach('accrue some salary', async () => {
+                await payroll.setEmployeeSalary(employeeId, previousSalary, {from: owner})
+                await payroll.mockAddTimestamp(ONE_MONTH)
+                await priceFeed.mockAddTimestamp(ONE_MONTH)
+                await payroll.setEmployeeSalary(employeeId, salary, {from: owner})
+              })
 
-                  await payroll.payday({ from })
+              context('when the employee has some pending current salary', () => {
+                const currentOwedSalary = ONE_MONTH * salary
+                const totalOwedSalary = previousOwedSalary + currentOwedSalary
 
+                beforeEach('accumulate some pending salary', async () => {
                   await payroll.mockAddTimestamp(ONE_MONTH)
-                  await priceFeed.mockAddTimestamp(ONE_MONTH)
-                  await payroll.payday({ from })
-
-                  const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                  const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(expectedDenominationTokenAmount * 2)
-                  assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
-
-                  const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                  const expectedAnotherTokenBalance = anotherTokenRate.mul(expectedAnotherTokenAmount * 2).plus(previousAnotherTokenBalance)
-                  assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
-                })
-              }
-
-              const assertEmployeeIsUpdated = () => {
-                it('updates the last payroll date', async () => {
-                  await payroll.payday({ from })
-
-                  const lastPayrollDate = (await payroll.getEmployee(employeeId))[3]
-                  assert.equal(lastPayrollDate.toString(), (await currentTimestamp()).toString(), 'last payroll date does not match')
                 })
 
-                it('does not remove the employee', async () => {
-                  await payroll.payday({ from })
-
-                  const [address, employeeSalary] = await payroll.getEmployee(employeeId)
-
-                  assert.equal(address, employee, 'employee address does not match')
-                  assert.equal(employeeSalary, salary, 'employee salary does not match')
-                })
-              }
-
-              const itHandlesPaydayProperly = () => {
-                context('when exchange rates are not expired', () => {
-                  assertTransferredAmounts()
-                  assertEmployeeIsUpdated()
-                })
-
-                context('when exchange rates are expired', () => {
-                  beforeEach('expire exchange rates', async () => {
-                    await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                context('when the employee has some pending reimbursements', () => {
+                  beforeEach('add accrued value', async () => {
+                    await payroll.addAccruedValue(employeeId, 1000, {from: owner})
                   })
 
-                  it('reverts', async () => {
-                    await assertRevert(payroll.payday({ from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
-                  })
-                })
-              }
-
-              context('when the employee has some pending reimbursements', () => {
-                beforeEach('add accrued value', async () => {
-                  await payroll.addAccruedValue(employeeId, 1000, { from: owner })
-                })
-
-                context('when the employee is not terminated', () => {
-                  itHandlesPaydayProperly()
-                })
-
-                context('when the employee is terminated', () => {
-                  beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                  context('when the employee is not terminated', () => {
+                    itHandlesPaydayProperly(totalOwedSalary)
                   })
 
-                  itHandlesPaydayProperly()
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, {from: owner})
+                    })
+
+                    itHandlesPaydayProperly(totalOwedSalary)
+                  })
+                })
+
+                context('when the employee does not have pending reimbursements', () => {
+                  context('when the employee is not terminated', () => {
+                    itHandlesPaydayProperly(totalOwedSalary)
+                  })
+
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, {from: owner})
+                    })
+
+                    context('when exchange rates are not expired', () => {
+                      assertTransferredAmounts(totalOwedSalary)
+
+                      it('removes the employee', async () => {
+                        await payroll.payday({from})
+
+                        await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                      })
+                    })
+
+                    context('when exchange rates are expired', () => {
+                      beforeEach('expire exchange rates', async () => {
+                        await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                      })
+
+                      it('reverts', async () => {
+                        await assertRevert(payroll.payday({from}), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      })
+                    })
+                  })
                 })
               })
 
-              context('when the employee does not have pending reimbursements', () => {
-                context('when the employee is not terminated', () => {
-                  itHandlesPaydayProperly()
-                })
-
-                context('when the employee is terminated', () => {
-                  beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                  })
-
-                  context('when exchange rates are not expired', () => {
-                    assertTransferredAmounts()
-
-                    it('removes the employee', async () => {
-                      await payroll.payday({ from })
-
-                      await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
-                    })
-                  })
-
-                  context('when exchange rates are expired', () => {
-                    beforeEach('expire exchange rates', async () => {
-                      await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
-                    })
-
-                    it('reverts', async () => {
-                      await assertRevert(payroll.payday({ from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
-                    })
-                  })
-                })
+              context('when the employee does not have pending salary', () => {
+                itHandlesPaydayProperly(previousOwedSalary)
               })
             })
 
-            context('when the employee does not have pending salary', () => {
-              it('reverts', async () => {
-                await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+            context('when the employee does not have accrued salary', () => {
+              context('when the employee has some pending current salary', () => {
+                const currentOwedSalary = ONE_MONTH * salary
+
+                beforeEach('accumulate some pending salary', async () => {
+                  await payroll.mockAddTimestamp(ONE_MONTH)
+                })
+
+                context('when the employee has some pending reimbursements', () => {
+                  beforeEach('add accrued value', async () => {
+                    await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                  })
+
+                  context('when the employee is not terminated', () => {
+                    itHandlesPaydayProperly(currentOwedSalary)
+                  })
+
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    })
+
+                    itHandlesPaydayProperly(currentOwedSalary)
+                  })
+                })
+
+                context('when the employee does not have pending reimbursements', () => {
+                  context('when the employee is not terminated', () => {
+                    itHandlesPaydayProperly(currentOwedSalary)
+                  })
+
+                  context('when the employee is terminated', () => {
+                    beforeEach('terminate employee', async () => {
+                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    })
+
+                    context('when exchange rates are not expired', () => {
+                      assertTransferredAmounts(currentOwedSalary)
+
+                      it('removes the employee', async () => {
+                        await payroll.payday({ from })
+
+                        await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                      })
+                    })
+
+                    context('when exchange rates are expired', () => {
+                      beforeEach('expire exchange rates', async () => {
+                        await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                      })
+
+                      it('reverts', async () => {
+                        await assertRevert(payroll.payday({ from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      })
+                    })
+                  })
+                })
+              })
+
+              context('when the employee does not have pending salary', () => {
+                it('reverts', async () => {
+                  await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+                })
               })
             })
           })
@@ -223,14 +297,46 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                 await payroll.mockAddTimestamp(ONE_MONTH)
               })
 
-              it('reverts', async () => {
-                await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+              context('when the employee has some accrued salary', () => {
+                beforeEach('accrue some salary', async () => {
+                  const previousSalary = 10
+                  await payroll.setEmployeeSalary(employeeId, previousSalary, { from: owner })
+                  await payroll.mockAddTimestamp(ONE_MONTH)
+                  await priceFeed.mockAddTimestamp(ONE_MONTH)
+                  await payroll.setEmployeeSalary(employeeId, salary, { from: owner })
+                })
+
+                it('reverts', async () => {
+                  await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+                })
+              })
+
+              context('when the employee does not have accrued salary', () => {
+                it('reverts', async () => {
+                  await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+                })
               })
             })
 
             context('when the employee does not have pending salary', () => {
-              it('reverts', async () => {
-                await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+              context('when the employee has some accrued salary', () => {
+                beforeEach('accrue some salary', async () => {
+                  const previousSalary = 10
+                  await payroll.setEmployeeSalary(employeeId, previousSalary, { from: owner })
+                  await payroll.mockAddTimestamp(ONE_MONTH)
+                  await priceFeed.mockAddTimestamp(ONE_MONTH)
+                  await payroll.setEmployeeSalary(employeeId, salary, { from: owner })
+                })
+
+                it('reverts', async () => {
+                  await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+                })
+              })
+
+              context('when the employee does not have accrued salary', () => {
+                it('reverts', async () => {
+                  await assertRevert(payroll.payday({ from }), 'PAYROLL_NOTHING_PAID')
+                })
               })
             })
           })
@@ -396,282 +502,661 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
               await payroll.determineAllocation([denominationToken.address, anotherToken.address], [denominationTokenAllocation, anotherTokenAllocation], { from })
             })
 
-            context('when the employee has some pending salary', () => {
-              const owedSalary = salary * ONE_MONTH
+            const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
+              const requestedDenominationTokenAmount = Math.round(expectedRequestedAmount * denominationTokenAllocation / 100)
+              const requestedAnotherTokenAmount = Math.round(expectedRequestedAmount * anotherTokenAllocation / 100)
 
-              beforeEach('accumulate some pending salary', async () => {
+              it('transfers the requested salary amount', async () => {
+                const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
+
+                await payroll.partialPayday(requestedAmount, { from })
+
+                const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount);
+                assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
+
+                const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount).plus(previousAnotherTokenBalance).trunc()
+                assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
+              })
+
+              it('emits one event per allocated token', async () => {
+                const receipt = await payroll.partialPayday(requestedAmount, { from })
+
+                const events = receipt.logs.filter(l => l.event === 'SendPayment')
+                assert.equal(events.length, 2, 'should have emitted two events')
+
+                const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
+                assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
+                assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
+                assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
+                assert.equal(denominationTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
+
+                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
+                assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
+                assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
+                assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), Math.round(requestedAnotherTokenAmount), 'payment amount does not match')
+                assert.equal(anotherTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
+              })
+
+              it('can be called multiple times between periods of time', async () => {
+                // terminate employee in the future to ensure we can request payroll multiple times
+                await payroll.terminateEmployee(employeeId, NOW + TWO_MONTHS + TWO_MONTHS, { from: owner })
+
+                const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
+
+                await payroll.partialPayday(requestedAmount, { from })
+
+                const newOwedAmount = salary * ONE_MONTH
+                const newDenominationTokenOwedAmount = Math.round(newOwedAmount * denominationTokenAllocation / 100)
+                const newAnotherTokenOwedAmount = Math.round(newOwedAmount * anotherTokenAllocation / 100)
+
                 await payroll.mockAddTimestamp(ONE_MONTH)
+                await priceFeed.mockAddTimestamp(ONE_MONTH)
+                await payroll.partialPayday(newOwedAmount, { from })
+
+                const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
+                const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount + newDenominationTokenOwedAmount)
+                assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
+
+                const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
+                const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount + newAnotherTokenOwedAmount).plus(previousAnotherTokenBalance)
+                assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
+              })
+            }
+
+            const assertEmployeeIsUpdatedCorrectly = (requestedAmount, expectedRequestedAmount) => {
+              it('updates the accrued salary and the last payroll date', async () => {
+                let expectedLastPayrollDate, expectedAccruedSalary
+                const [previousAccruedSalary, previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(3, 5)
+
+                if (expectedRequestedAmount >= previousAccruedSalary) {
+                  expectedAccruedSalary = 0
+                  const remainder = expectedRequestedAmount - previousAccruedSalary
+                  expectedLastPayrollDate = previousPayrollDate.plus(Math.floor(remainder / salary))
+                } else {
+                  expectedAccruedSalary = previousAccruedSalary.minus(expectedRequestedAmount).toString()
+                  expectedLastPayrollDate = previousPayrollDate
+                }
+
+                await payroll.partialPayday(requestedAmount, { from })
+
+                const [accruedSalary, lastPayrollDate] = (await payroll.getEmployee(employeeId)).slice(3, 5)
+                assert.equal(accruedSalary.toString(), expectedAccruedSalary, 'accrued salary does not match')
+                assert.equal(lastPayrollDate.toString(), expectedLastPayrollDate.toString(), 'last payroll date does not match')
               })
 
-              const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
-                const requestedDenominationTokenAmount = Math.round(expectedRequestedAmount * denominationTokenAllocation / 100)
-                const requestedAnotherTokenAmount = Math.round(expectedRequestedAmount * anotherTokenAllocation / 100)
+              it('does not remove the employee', async () => {
+                await payroll.partialPayday(requestedAmount, { from })
 
-                it('transfers the requested salary amount', async () => {
-                  const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                  const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                const [address, employeeSalary] = await payroll.getEmployee(employeeId)
 
-                  await payroll.partialPayday(requestedAmount, { from })
+                assert.equal(address, employee, 'employee address does not match')
+                assert.equal(employeeSalary, salary, 'employee salary does not match')
+              })
+            }
 
-                  const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                  const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount);
-                  assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
-
-                  const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                  const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount).plus(previousAnotherTokenBalance).trunc()
-                  assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
-                })
-
-                it('emits one event per allocated token', async () => {
-                  const receipt = await payroll.partialPayday(requestedAmount, { from })
-
-                  const events = receipt.logs.filter(l => l.event === 'SendPayment')
-                  assert.equal(events.length, 2, 'should have emitted two events')
-
-                  const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
-                  assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
-                  assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
-                  assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
-                  assert.equal(denominationTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
-
-                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                  const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
-                  assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
-                  assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
-                  assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), Math.round(requestedAnotherTokenAmount), 'payment amount does not match')
-                  assert.equal(anotherTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
-                })
-
-                it('can be called multiple times between periods of time', async () => {
-                  // terminate employee in the future to ensure we can request payroll multiple times
-                  await payroll.terminateEmployee(employeeId, NOW + TWO_MONTHS + TWO_MONTHS, { from: owner })
-
-                  const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                  const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
-
-                  await payroll.partialPayday(requestedAmount, { from })
-
-                  await payroll.mockAddTimestamp(ONE_MONTH)
-                  await priceFeed.mockAddTimestamp(ONE_MONTH)
-                  await payroll.partialPayday(requestedAmount, { from })
-
-                  const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                  const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount * 2)
-                  assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
-
-                  const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                  const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
-                  const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount * 2).plus(previousAnotherTokenBalance)
-                  assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
-                })
-              }
-
-              const assertEmployeeIsUpdated = (requestedAmount, expectedRequestedAmount) => {
-                it('updates the last payroll date', async () => {
-                  const previousPayrollDate = (await payroll.getEmployee(employeeId))[3]
-                  const expectedLastPayrollDate = previousPayrollDate.plus(Math.floor(expectedRequestedAmount / salary))
-
-                  await payroll.partialPayday(requestedAmount, { from })
-
-                  const lastPayrollDate = (await payroll.getEmployee(employeeId))[3]
-                  assert.equal(lastPayrollDate.toString(), expectedLastPayrollDate.toString(), 'last payroll date does not match')
-                })
-
-                it('does not remove the employee', async () => {
-                  await payroll.partialPayday(requestedAmount, { from })
-
-                  const [address, employeeSalary] = await payroll.getEmployee(employeeId)
-
-                  assert.equal(address, employee, 'employee address does not match')
-                  assert.equal(employeeSalary, salary, 'employee salary does not match')
-                })
-              }
-
-              const itHandlesPayrollProperly = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
-                context('when exchange rates are not expired', () => {
-                  assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
-                  assertEmployeeIsUpdated(requestedAmount, expectedRequestedAmount)
-                })
-
-                context('when exchange rates are expired', () => {
-                  beforeEach('expire exchange rates', async () => {
-                    await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
-                  })
-
-                  it('reverts', async () => {
-                    await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
-                  })
-                })
-              }
-
-              context('when the requested amount is zero', () => {
-                const requestedAmount = 0
-
-                context('when the employee has some pending reimbursements', () => {
-                  beforeEach('add accrued value', async () => {
-                    await payroll.addAccruedValue(employeeId, 1000, { from: owner })
-                  })
-
-                  context('when the employee is not terminated', () => {
-                    itHandlesPayrollProperly(requestedAmount, owedSalary)
-                  })
-
-                  context('when the employee is terminated', () => {
-                    beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                    })
-
-                    itHandlesPayrollProperly(requestedAmount, owedSalary)
-                  })
-                })
-
-                context('when the employee does not have pending reimbursements', () => {
-                  context('when the employee is not terminated', () => {
-                    itHandlesPayrollProperly(requestedAmount, owedSalary)
-                  })
-
-                  context('when the employee is terminated', () => {
-                    beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                    })
-
-                    context('when exchange rates are not expired', () => {
-                      assertTransferredAmounts(requestedAmount, owedSalary)
-
-                      it('removes the employee', async () => {
-                        await payroll.partialPayday(requestedAmount, { from })
-
-                        await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
-                      })
-                    })
-
-                    context('when exchange rates are expired', () => {
-                      beforeEach('expire exchange rates', async () => {
-                        await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
-                      })
-
-                      it('reverts', async () => {
-                        await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
-                      })
-                    })
-                  })
-                })
+            const itHandlesPayrollProperly = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
+              context('when exchange rates are not expired', () => {
+                assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
+                assertEmployeeIsUpdatedCorrectly(requestedAmount, expectedRequestedAmount)
               })
 
-              context('when the requested amount is less than the total owed salary', () => {
-                const requestedAmount = owedSalary - 10
-
-                context('when the employee has some pending reimbursements', () => {
-                  beforeEach('add accrued value', async () => {
-                    await payroll.addAccruedValue(employeeId, 1000, { from: owner })
-                  })
-
-                  context('when the employee is not terminated', () => {
-                    itHandlesPayrollProperly(requestedAmount)
-                  })
-
-                  context('when the employee is terminated', () => {
-                    beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                    })
-
-                    itHandlesPayrollProperly(requestedAmount)
-                  })
+              context('when exchange rates are expired', () => {
+                beforeEach('expire exchange rates', async () => {
+                  await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
                 })
-
-                context('when the employee does not have pending reimbursements', () => {
-                  context('when the employee is not terminated', () => {
-                    itHandlesPayrollProperly(requestedAmount)
-                  })
-
-                  context('when the employee is terminated', () => {
-                    beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                    })
-
-                    itHandlesPayrollProperly(requestedAmount)
-                  })
-                })
-              })
-
-              context('when the requested amount is equal to the total owed salary', () => {
-                const requestedAmount = owedSalary
-
-                context('when the employee has some pending reimbursements', () => {
-                  beforeEach('add accrued value', async () => {
-                    await payroll.addAccruedValue(employeeId, 1000, { from: owner })
-                  })
-
-                  context('when the employee is not terminated', () => {
-                    itHandlesPayrollProperly(requestedAmount)
-                  })
-
-                  context('when the employee is terminated', () => {
-                    beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                    })
-
-                    itHandlesPayrollProperly(requestedAmount)
-                  })
-                })
-
-                context('when the employee does not have pending reimbursements', () => {
-                  context('when the employee is not terminated', () => {
-                    itHandlesPayrollProperly(requestedAmount)
-                  })
-
-                  context('when the employee is terminated', () => {
-                    beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
-                    })
-
-                    context('when exchange rates are not expired', () => {
-                      assertTransferredAmounts(requestedAmount)
-
-                      it('removes the employee', async () => {
-                        await payroll.partialPayday(requestedAmount, { from })
-
-                        await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
-                      })
-                    })
-
-                    context('when exchange rates are expired', () => {
-                      beforeEach('expire exchange rates', async () => {
-                        await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
-                      })
-
-                      it('reverts', async () => {
-                        await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
-                      })
-                    })
-                  })
-                })
-              })
-
-              context('when the requested amount is greater than the total owed salary', () => {
-                const requestedAmount = owedSalary + 1
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                })
+              })
+            }
+
+            context('when the employee does not have accrued salary', () => {
+              context('when the employee has some pending salary', () => {
+                const currentOwedSalary = salary * ONE_MONTH
+
+                beforeEach('accumulate some pending salary', async () => {
+                  await payroll.mockAddTimestamp(ONE_MONTH)
+                })
+
+                context('when the requested amount is zero', () => {
+                  const requestedAmount = 0
+
+                  context('when the employee has some pending reimbursements', () => {
+                    beforeEach('add accrued value', async () => {
+                      await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                    })
+
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount, currentOwedSalary)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount, currentOwedSalary)
+                    })
+                  })
+
+                  context('when the employee does not have pending reimbursements', () => {
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount, currentOwedSalary)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      context('when exchange rates are not expired', () => {
+                        assertTransferredAmounts(requestedAmount, currentOwedSalary)
+
+                        it('removes the employee', async () => {
+                          await payroll.partialPayday(requestedAmount, { from })
+
+                          await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                        })
+                      })
+
+                      context('when exchange rates are expired', () => {
+                        beforeEach('expire exchange rates', async () => {
+                          await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                        })
+
+                        it('reverts', async () => {
+                          await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                        })
+                      })
+                    })
+                  })
+                })
+
+                context('when the requested amount is lower than the total owed salary', () => {
+                  const requestedAmount = currentOwedSalary - 10
+
+                  context('when the employee has some pending reimbursements', () => {
+                    beforeEach('add accrued value', async () => {
+                      await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                    })
+
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+                  })
+
+                  context('when the employee does not have pending reimbursements', () => {
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+                  })
+                })
+
+                context('when the requested amount is equal to the total owed salary', () => {
+                  const requestedAmount = currentOwedSalary
+
+                  context('when the employee has some pending reimbursements', () => {
+                    beforeEach('add accrued value', async () => {
+                      await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                    })
+
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+                  })
+
+                  context('when the employee does not have pending reimbursements', () => {
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      context('when exchange rates are not expired', () => {
+                        assertTransferredAmounts(requestedAmount)
+
+                        it('removes the employee', async () => {
+                          await payroll.partialPayday(requestedAmount, { from })
+
+                          await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                        })
+                      })
+
+                      context('when exchange rates are expired', () => {
+                        beforeEach('expire exchange rates', async () => {
+                          await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                        })
+
+                        it('reverts', async () => {
+                          await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                        })
+                      })
+                    })
+                  })
+                })
+
+                context('when the requested amount is greater than the total owed salary', () => {
+                  const requestedAmount = currentOwedSalary + 1
+
+                  it('reverts', async () => {
+                    await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                  })
+                })
+              })
+
+              context('when the employee does not have pending salary', () => {
+                context('when the requested amount is greater than zero', () => {
+                  const requestedAmount = 100
+
+                  it('reverts', async () => {
+                    await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                  })
+                })
+
+                context('when the requested amount is zero', () => {
+                  const requestedAmount = 0
+
+                  it('reverts', async () => {
+                    await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                  })
                 })
               })
             })
 
-            context('when the employee does not have pending salary', () => {
-              context('when the requested amount is greater than zero', () => {
-                const requestedAmount = 100
+            context('when the employee has some accrued salary', () => {
+              const previousSalary = 10
+              const previousOwedSalary = ONE_MONTH * previousSalary
 
-                it('reverts', async () => {
-                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+              beforeEach('accrue some salary', async () => {
+                await payroll.setEmployeeSalary(employeeId, previousSalary, { from: owner })
+                await payroll.mockAddTimestamp(ONE_MONTH)
+                await priceFeed.mockAddTimestamp(ONE_MONTH)
+                await payroll.setEmployeeSalary(employeeId, salary, { from: owner })
+              })
+
+              context('when the employee has some pending salary', () => {
+                const currentOwedSalary = salary * ONE_MONTH
+                const totalOwedSalary = previousOwedSalary + currentOwedSalary
+
+                beforeEach('accumulate some pending salary', async () => {
+                  await payroll.mockAddTimestamp(ONE_MONTH)
+                })
+
+                context('when the requested amount is zero', () => {
+                  const requestedAmount = 0
+
+                  context('when the employee has some pending reimbursements', () => {
+                    beforeEach('add accrued value', async () => {
+                      await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                    })
+
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount, totalOwedSalary)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount, totalOwedSalary)
+                    })
+                  })
+
+                  context('when the employee does not have pending reimbursements', () => {
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount, totalOwedSalary)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      context('when exchange rates are not expired', () => {
+                        assertTransferredAmounts(requestedAmount, totalOwedSalary)
+
+                        it('removes the employee', async () => {
+                          await payroll.partialPayday(requestedAmount, { from })
+
+                          await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                        })
+                      })
+
+                      context('when exchange rates are expired', () => {
+                        beforeEach('expire exchange rates', async () => {
+                          await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                        })
+
+                        it('reverts', async () => {
+                          await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                        })
+                      })
+                    })
+                  })
+                })
+
+                context('when the requested amount is lower than the previous owed salary', () => {
+                  const requestedAmount = previousOwedSalary - 10
+
+                  context('when the employee has some pending reimbursements', () => {
+                    beforeEach('add accrued value', async () => {
+                      await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                    })
+
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+                  })
+
+                  context('when the employee does not have pending reimbursements', () => {
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+                  })
+                })
+                
+                context('when the requested amount is greater than the previous owed salary but lower than the total owed', () => {
+                  const requestedAmount = totalOwedSalary - 10
+
+                  context('when the employee has some pending reimbursements', () => {
+                    beforeEach('add accrued value', async () => {
+                      await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                    })
+
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+                  })
+
+                  context('when the employee does not have pending reimbursements', () => {
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+                  })
+                })
+
+                context('when the requested amount is equal to the total owed salary', () => {
+                  const requestedAmount = totalOwedSalary
+
+                  context('when the employee has some pending reimbursements', () => {
+                    beforeEach('add accrued value', async () => {
+                      await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                    })
+
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+                  })
+
+                  context('when the employee does not have pending reimbursements', () => {
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      context('when exchange rates are not expired', () => {
+                        assertTransferredAmounts(requestedAmount)
+
+                        it('removes the employee', async () => {
+                          await payroll.partialPayday(requestedAmount, { from })
+
+                          await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                        })
+                      })
+
+                      context('when exchange rates are expired', () => {
+                        beforeEach('expire exchange rates', async () => {
+                          await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                        })
+
+                        it('reverts', async () => {
+                          await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                        })
+                      })
+                    })
+                  })
+                })
+
+                context('when the requested amount is greater than the total owed salary', () => {
+                  const requestedAmount = totalOwedSalary + 1
+
+                  it('reverts', async () => {
+                    await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                  })
                 })
               })
 
-              context('when the requested amount is zero', () => {
-                const requestedAmount = 0
+              context('when the employee does not have pending salary', () => {
+                context('when the requested amount is zero', () => {
+                  const requestedAmount = 0
 
-                it('reverts', async () => {
-                  await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                  context('when the employee has some pending reimbursements', () => {
+                    beforeEach('add accrued value', async () => {
+                      await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                    })
+
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount, previousOwedSalary)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount, previousOwedSalary)
+                    })
+                  })
+
+                  context('when the employee does not have pending reimbursements', () => {
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount, previousOwedSalary)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      context('when exchange rates are not expired', () => {
+                        assertTransferredAmounts(requestedAmount, previousOwedSalary)
+
+                        it('removes the employee', async () => {
+                          await payroll.partialPayday(requestedAmount, { from })
+
+                          await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                        })
+                      })
+
+                      context('when exchange rates are expired', () => {
+                        beforeEach('expire exchange rates', async () => {
+                          await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                        })
+
+                        it('reverts', async () => {
+                          await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                        })
+                      })
+                    })
+                  })
+                })
+
+                context('when the requested amount is lower than the previous owed salary', () => {
+                  const requestedAmount = previousOwedSalary - 10
+
+                  context('when the employee has some pending reimbursements', () => {
+                    beforeEach('add accrued value', async () => {
+                      await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                    })
+
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+                  })
+
+                  context('when the employee does not have pending reimbursements', () => {
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+                  })
+                })
+
+                context('when the requested amount is equal to the previous owed salary', () => {
+                  const requestedAmount = previousOwedSalary
+
+                  context('when the employee has some pending reimbursements', () => {
+                    beforeEach('add accrued value', async () => {
+                      await payroll.addAccruedValue(employeeId, 1000, { from: owner })
+                    })
+
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+                  })
+
+                  context('when the employee does not have pending reimbursements', () => {
+                    context('when the employee is not terminated', () => {
+                      itHandlesPayrollProperly(requestedAmount)
+                    })
+
+                    context('when the employee is terminated', () => {
+                      beforeEach('terminate employee', async () => {
+                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      })
+
+                      context('when exchange rates are not expired', () => {
+                        assertTransferredAmounts(requestedAmount)
+
+                        it('removes the employee', async () => {
+                          await payroll.partialPayday(requestedAmount, { from })
+
+                          await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+                        })
+                      })
+
+                      context('when exchange rates are expired', () => {
+                        beforeEach('expire exchange rates', async () => {
+                          await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                        })
+
+                        it('reverts', async () => {
+                          await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                        })
+                      })
+                    })
+                  })
+                })
+
+                context('when the requested amount is greater than the previous owed salary', () => {
+                  const requestedAmount = previousOwedSalary + 1
+
+                  it('reverts', async () => {
+                    await assertRevert(payroll.partialPayday(requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                  })
                 })
               })
             })
@@ -685,7 +1170,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                 await payroll.mockAddTimestamp(ONE_MONTH)
               })
 
-              context('when the requested amount is less than the total owed salary', () => {
+              context('when the requested amount is lower than the total owed salary', () => {
                 const requestedAmount = owedSalary - 10
 
                 it('reverts', async () => {
@@ -867,7 +1352,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                 itRevertsToWithdrawPartialPayroll(requestedAmount, 'MATH_MUL_OVERFLOW', 'PAYROLL_EXCHANGE_RATE_ZERO')
               })
 
-              context('when the requested amount is less than the total owed salary', () => {
+              context('when the requested amount is lower than the total owed salary', () => {
                 const requestedAmount = 10000
 
                 const assertTransferredAmounts = requestedAmount => {
@@ -936,12 +1421,12 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
 
                 const assertEmployeeIsUpdated = requestedAmount => {
                   it('updates the last payroll date', async () => {
-                    const previousPayrollDate = (await payroll.getEmployee(employeeId))[3]
+                    const previousPayrollDate = (await payroll.getEmployee(employeeId))[4]
                     const expectedLastPayrollDate = previousPayrollDate.plus(Math.floor(bn(requestedAmount).div(salary)))
 
                     await payroll.partialPayday(requestedAmount, { from })
 
-                    const lastPayrollDate = (await payroll.getEmployee(employeeId))[3]
+                    const lastPayrollDate = (await payroll.getEmployee(employeeId))[4]
                     assert.equal(lastPayrollDate.toString(), expectedLastPayrollDate.toString(), 'last payroll date does not match')
                   })
 
@@ -1041,7 +1526,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                 itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
               })
 
-              context('when the requested amount is less than the total owed salary', () => {
+              context('when the requested amount is lower than the total owed salary', () => {
                 const requestedAmount = 10000
 
                 itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')

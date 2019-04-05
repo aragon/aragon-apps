@@ -204,7 +204,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
 
                 assert.equal(address, employee, 'employee address does not match')
                 assert.equal(employeeSalary, salary, 'employee salary does not match')
-                assert.equal(accruedValue, 0, 'accrued value should be zero')
+                assert.equal(accruedValue, 0, 'employee accrued value should be zero')
               })
             }
 
@@ -406,7 +406,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
 
                 assert.equal(address, employee, 'employee address does not match')
                 assert.equal(employeeSalary, salary, 'employee salary does not match')
-                assert.equal(currentAccruedValue.minus(expectedRequestedAmount).toString(), accruedValue.toString(), 'accrued value does not match')
+                assert.equal(currentAccruedValue.minus(expectedRequestedAmount).toString(), accruedValue.toString(), 'employee accrued value does not match')
               })
             }
 
