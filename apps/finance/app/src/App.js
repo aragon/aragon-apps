@@ -16,6 +16,7 @@ import addFundsIcon from './components/assets/add-funds-icon.svg'
 class App extends React.Component {
   static propTypes = {
     api: PropTypes.object,
+    appState: PropTypes.object,
   }
   static defaultProps = {
     balances: [],
