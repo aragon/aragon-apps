@@ -1,6 +1,5 @@
 import BN from 'bn.js'
 import { hasLoadedVoteSettings } from './vote-settings'
-import { isVoteOpen } from './vote-utils'
 
 function appStateReducer(state) {
   const appStateReady = hasLoadedVoteSettings(state)
