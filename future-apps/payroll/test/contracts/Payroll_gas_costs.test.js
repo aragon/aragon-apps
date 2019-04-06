@@ -10,6 +10,7 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
   const RATE_EXPIRATION_TIME = TWO_MONTHS
 
   const TOKEN_DECIMALS = 18
+  const PAYROLL_PAYMENT_TYPE = 0
 
   before('setup base apps and tokens', async () => {
     ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
@@ -45,7 +46,7 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
         await payroll.addAllowedToken(denominationToken.address)
         await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
 
-        const { receipt: { cumulativeGasUsed } } = await payroll.payday({ from: employee })
+        const { receipt: { cumulativeGasUsed } } = await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: employee })
 
         assert.isBelow(cumulativeGasUsed, 317000, 'payout gas cost for a single allowed token should be ~314k')
       })
@@ -60,10 +61,10 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
 
       it('expends ~270k gas per allowed token', async () => {
         await payroll.determineAllocation([denominationToken.address, erc20Token1.address], [60, 40], { from: employee })
-        const { receipt: { cumulativeGasUsed: employeePayoutGasUsed } } = await payroll.payday({ from: employee })
+        const { receipt: { cumulativeGasUsed: employeePayoutGasUsed } } = await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: employee })
 
         await payroll.determineAllocation([denominationToken.address, erc20Token1.address, erc20Token2.address], [65, 25, 10], { from: anotherEmployee })
-        const { receipt: { cumulativeGasUsed: anotherEmployeePayoutGasUsed } } = await payroll.payday({ from: anotherEmployee })
+        const { receipt: { cumulativeGasUsed: anotherEmployeePayoutGasUsed } } = await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: anotherEmployee })
 
         const gasPerAllowedToken = anotherEmployeePayoutGasUsed - employeePayoutGasUsed
         assert.isBelow(gasPerAllowedToken, 280000, 'payout gas cost increment per allowed token should be ~270k')

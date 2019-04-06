@@ -12,6 +12,8 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
   const RATE_EXPIRATION_TIME = TWO_MONTHS
 
   const TOKEN_DECIMALS = 18
+  const PAYROLL_PAYMENT_TYPE = 0
+  const REIMBURSEMENTS_PAYMENT_TYPE = 1
 
   const currentTimestamp = async () => payroll.getTimestampPublic()
 
@@ -52,7 +54,7 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
             it('sets the end date of the employee', async () => {
               await payroll.terminateEmployeeNow(employeeId, { from })
 
-              const endDate = (await payroll.getEmployee(employeeId))[5]
+              const endDate = (await payroll.getEmployee(employeeId))[6]
               assert.equal(endDate.toString(), (await currentTimestamp()).toString(), 'employee end date does not match')
             })
 
@@ -83,8 +85,8 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
               await payroll.mockAddTimestamp(ONE_MONTH)
 
               // Request owed money
-              await payroll.payday({ from: employee })
-              await payroll.reimburse({ from: employee })
+              await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: employee })
+              await payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, 0, { from: employee })
               await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
               const currentBalance = await denominationToken.balanceOf(employee)
@@ -101,17 +103,18 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
               await payroll.mockAddTimestamp(ONE_MONTH)
 
               // Request owed money
-              await payroll.payday({ from: employee })
+              await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: employee })
               await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
               // Add employee back
               const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
               const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
-              const [address, employeeSalary, accruedValue, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(newEmployeeId)
+              const [address, employeeSalary, bonus, accruedValue, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(newEmployeeId)
               assert.equal(address, employee, 'employee address does not match')
               assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
               assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll date does not match')
+              assert.equal(bonus.toString(), 0, 'employee bonus does not match')
               assert.equal(accruedValue.toString(), 0, 'employee accrued value does not match')
               assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
               assert.equal(endDate.toString(), maxUint64(), 'employee end date does not match')
@@ -190,7 +193,7 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
               it('sets the end date of the employee', async () => {
                 await payroll.terminateEmployee(employeeId, endDate, { from })
 
-                const date = (await payroll.getEmployee(employeeId))[5]
+                const date = (await payroll.getEmployee(employeeId))[6]
                 assert.equal(date.toString(), endDate.toString(), 'employee end date does not match')
               })
 
@@ -221,8 +224,8 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
                 await payroll.mockAddTimestamp(ONE_MONTH)
 
                 // Request owed money
-                await payroll.payday({ from: employee })
-                await payroll.reimburse({ from: employee })
+                await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: employee })
+                await payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, 0, { from: employee })
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
                 const currentBalance = await denominationToken.balanceOf(employee)
@@ -239,17 +242,18 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
                 await payroll.mockAddTimestamp(ONE_MONTH)
 
                 // Request owed money
-                await payroll.payday({ from: employee })
+                await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: employee })
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
                 // Add employee back
                 const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
                 const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
-                const [address, employeeSalary, accruedValue, accruedSalary, lastPayroll, date] = await payroll.getEmployee(newEmployeeId)
+                const [address, employeeSalary, bonus, accruedValue, accruedSalary, lastPayroll, date] = await payroll.getEmployee(newEmployeeId)
                 assert.equal(address, employee, 'employee account does not match')
                 assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
                 assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll date does not match')
+                assert.equal(bonus.toString(), 0, 'employee bonus does not match')
                 assert.equal(accruedValue.toString(), 0, 'employee accrued value does not match')
                 assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
                 assert.equal(date.toString(), maxUint64(), 'employee end date does not match')
@@ -278,7 +282,7 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
                 const newEndDate = bn(await currentTimestamp()).plus(ONE_MONTH * 2)
                 await payroll.terminateEmployee(employeeId, newEndDate, { from })
 
-                const endDate = (await payroll.getEmployee(employeeId))[5]
+                const endDate = (await payroll.getEmployee(employeeId))[6]
                 assert.equal(endDate.toString(), newEndDate.toString(), 'employee end date does not match')
               })
             })
