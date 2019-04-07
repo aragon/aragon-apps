@@ -90,7 +90,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                 const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
                 assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
                 assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
-                assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), Math.round(requestedAnotherTokenAmount), 'payment amount does not match')
+                assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), requestedAnotherTokenAmount, 'payment amount does not match')
                 assert.equal(anotherTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
               })
 
@@ -130,7 +130,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                 if (expectedRequestedAmount >= previousAccruedSalary) {
                   expectedAccruedSalary = 0
                   const remainder = expectedRequestedAmount - previousAccruedSalary
-                  expectedLastPayrollDate = previousPayrollDate.plus(Math.floor(remainder / salary))
+                  expectedLastPayrollDate = previousPayrollDate.plus(Math.ceil(remainder / salary))
                 } else {
                   expectedAccruedSalary = previousAccruedSalary.minus(expectedRequestedAmount).toString()
                   expectedLastPayrollDate = previousPayrollDate
@@ -282,9 +282,24 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                 })
 
                 context('when the requested amount is lower than the total owed salary', () => {
-                  const requestedAmount = currentOwedSalary - 10
+                  context('when the requested amount is represents less than a second of the earnings', () => {
+                    const requestedAmount = salary / 2
 
-                  itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, currentOwedSalary)
+                    it('updates the last payroll date by one second', async () => {
+                      const previousLastPayrollDate = (await payroll.getEmployee(employeeId))[5]
+
+                      await payroll.payday(PAYROLL_PAYMENT_TYPE, requestedAmount, { from })
+
+                      const currentLastPayrollDate = (await payroll.getEmployee(employeeId))[5]
+                      assert.equal(currentLastPayrollDate.toString(), previousLastPayrollDate.plus(1).toString(), 'last payroll date does not match')
+                    })
+                  })
+
+                  context('when the requested amount is represents more than a second of the earnings', () => {
+                    const requestedAmount = currentOwedSalary / 2
+
+                    itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, currentOwedSalary)
+                  })
                 })
 
                 context('when the requested amount is equal to the total owed salary', () => {
@@ -353,7 +368,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                 })
                 
                 context('when the requested amount is greater than the previous owed salary but lower than the total owed', () => {
-                  const requestedAmount = totalOwedSalary - 10
+                  const requestedAmount = totalOwedSalary / 2
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
                 })
@@ -633,7 +648,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
                       const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
                       assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
                       assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
-                      assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), Math.round(requestedAnotherTokenAmount), 'payment amount does not match')
+                      assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), requestedAnotherTokenAmount, 'payment amount does not match')
                       assert.equal(anotherTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
                     })
 
@@ -663,8 +678,9 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
 
                   const assertEmployeeIsUpdated = requestedAmount => {
                     it('updates the last payroll date', async () => {
+                      const timeDiff = 1 // should be bn(requestedAmount).div(salary).ceil() but BN cannot represent such a small number, hardcoding it to 1
                       const previousPayrollDate = (await payroll.getEmployee(employeeId))[5]
-                      const expectedLastPayrollDate = previousPayrollDate.plus(Math.floor(bn(requestedAmount).div(salary)))
+                      const expectedLastPayrollDate = previousPayrollDate.plus(timeDiff)
 
                       await payroll.payday(PAYROLL_PAYMENT_TYPE, requestedAmount, { from })
 
