@@ -57,7 +57,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
 
             context('when the employee has some pending salary', () => {
               beforeEach('accumulate some pending salary', async () => {
-                await payroll.mockAddTimestamp(ONE_MONTH)
+                await payroll.mockIncreaseTime(ONE_MONTH)
               })
 
               const assertTransferredAmounts = () => {
@@ -109,8 +109,8 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
 
                   await payroll.payday({ from })
 
-                  await payroll.mockAddTimestamp(ONE_MONTH)
-                  await priceFeed.mockAddTimestamp(ONE_MONTH)
+                  await payroll.mockIncreaseTime(ONE_MONTH)
+                  await priceFeed.mockIncreaseTime(ONE_MONTH)
                   await payroll.payday({ from })
 
                   const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
@@ -220,7 +220,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
           context('when the employee did not set any token allocations yet', () => {
             context('when the employee has some pending salary', () => {
               beforeEach('accumulate some pending salary', async () => {
-                await payroll.mockAddTimestamp(ONE_MONTH)
+                await payroll.mockIncreaseTime(ONE_MONTH)
               })
 
               it('reverts', async () => {
@@ -303,7 +303,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
 
             context('when the employee has some pending salary', () => {
               beforeEach('accumulate some pending salary', async () => {
-                await payroll.mockAddTimestamp(ONE_MONTH)
+                await payroll.mockIncreaseTime(ONE_MONTH)
               })
 
               itRevertsToWithdrawPayroll(nonExpiredRatesReason, expiredRatesReason)
@@ -317,7 +317,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
           context('when the employee did not set any token allocations yet', () => {
             context('when the employee has some pending salary', () => {
               beforeEach('accumulate some pending salary', async () => {
-                await payroll.mockAddTimestamp(ONE_MONTH)
+                await payroll.mockIncreaseTime(ONE_MONTH)
               })
 
               itRevertsToWithdrawPayroll('PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
@@ -400,7 +400,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
               const owedSalary = salary * ONE_MONTH
 
               beforeEach('accumulate some pending salary', async () => {
-                await payroll.mockAddTimestamp(ONE_MONTH)
+                await payroll.mockIncreaseTime(ONE_MONTH)
               })
 
               const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
@@ -452,8 +452,8 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
 
                   await payroll.partialPayday(requestedAmount, { from })
 
-                  await payroll.mockAddTimestamp(ONE_MONTH)
-                  await priceFeed.mockAddTimestamp(ONE_MONTH)
+                  await payroll.mockIncreaseTime(ONE_MONTH)
+                  await priceFeed.mockIncreaseTime(ONE_MONTH)
                   await payroll.partialPayday(requestedAmount, { from })
 
                   const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
@@ -682,7 +682,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
               const owedSalary = salary * ONE_MONTH
 
               beforeEach('accumulate some pending salary', async () => {
-                await payroll.mockAddTimestamp(ONE_MONTH)
+                await payroll.mockIncreaseTime(ONE_MONTH)
               })
 
               context('when the requested amount is less than the total owed salary', () => {
@@ -787,7 +787,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
           const itRevertsAnyAttemptToWithdrawPartialPayroll = () => {
             context('when the employee has some pending salary', () => {
               beforeEach('accumulate some pending salary', async () => {
-                await payroll.mockAddTimestamp(ONE_MONTH)
+                await payroll.mockIncreaseTime(ONE_MONTH)
               })
 
               context('when the requested amount is greater than zero', () => {
@@ -858,7 +858,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
               const owedSalary = maxUint256()
 
               beforeEach('accumulate some pending salary', async () => {
-                await payroll.mockAddTimestamp(ONE_MONTH)
+                await payroll.mockIncreaseTime(ONE_MONTH)
               })
 
               context('when the requested amount is zero', () => {
@@ -919,8 +919,8 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
 
                     await payroll.partialPayday(requestedAmount, { from })
 
-                    await payroll.mockAddTimestamp(ONE_MONTH)
-                    await priceFeed.mockAddTimestamp(ONE_MONTH)
+                    await payroll.mockIncreaseTime(ONE_MONTH)
+                    await priceFeed.mockIncreaseTime(ONE_MONTH)
                     await payroll.partialPayday(requestedAmount, { from })
 
                     const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
@@ -1032,7 +1032,7 @@ contract('Payroll payday', ([owner, employee, anotherEmployee, anyone]) => {
               const owedSalary = maxUint256()
 
               beforeEach('accumulate some pending salary', async () => {
-                await payroll.mockAddTimestamp(ONE_MONTH)
+                await payroll.mockIncreaseTime(ONE_MONTH)
               })
 
               context('when the requested amount is zero', () => {

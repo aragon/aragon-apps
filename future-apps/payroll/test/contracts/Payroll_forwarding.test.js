@@ -68,7 +68,7 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
         context('when the employee was already terminated', () => {
           beforeEach('terminate employee', async () => {
             await payroll.terminateEmployeeNow(employeeId, { from: owner })
-            await payroll.mockAddTimestamp(ONE_MONTH + 1)
+            await payroll.mockIncreaseTime(ONE_MONTH + 1)
           })
 
           it('returns true', async () => {
@@ -127,7 +127,7 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
         context('when the employee was already terminated', () => {
           beforeEach('terminate employee', async () => {
             await payroll.terminateEmployeeNow(employeeId, { from: owner })
-            await payroll.mockAddTimestamp(ONE_MONTH + 1)
+            await payroll.mockIncreaseTime(ONE_MONTH + 1)
           })
 
           it('executes the given script', async () =>  {
