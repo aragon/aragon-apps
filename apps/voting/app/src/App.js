@@ -1,10 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { AragonApi, useAragonApi } from '@aragon/api-react'
+import React from 'react'
 import { Main, SidePanel } from '@aragon/ui'
-
-import { VOTE_YEA } from './vote-types'
-import { EMPTY_CALLSCRIPT } from './evmscript-utils'
-import tokenAbi from './abi/token-balanceOfAt.json'
 
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
@@ -14,15 +9,14 @@ import AutoLink from './components/AutoLink'
 import AppLayout from './components/AppLayout'
 import NewVoteIcon from './components/NewVoteIcon'
 
-import { NetworkContext, SettingsContext } from './app-contexts'
+import { SettingsProvider } from './vote-settings-manager'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
-import { isVoteOpen, voteTypeFromContractEnum } from './vote-utils'
 import { shortenAddress, transformAddresses } from './web3-utils'
-import { useNow } from './utils-hooks'
-import appStateReducer from './app-state-reducer'
+import { VotingAppProvider, useVotingApp } from './voting-app'
 
-function shortenAddresses(label) {
-  return transformAddresses(label, (part, isAddress, index) =>
+// Shortens every address detected in `content`.
+function shortenAddresses(content) {
+  return transformAddresses(content, (part, isAddress, index) =>
     isAddress ? (
       <span title={part} key={index}>
         {shortenAddress(part)}
@@ -33,7 +27,8 @@ function shortenAddresses(label) {
   )
 }
 
-function voteTextNode(description) {
+// Renders the text (metadata and description) of every vote.
+function renderVoteText(description) {
   return description ? (
     <AutoLink>
       {description.split('\n').map((line, i) => (
@@ -46,231 +41,78 @@ function voteTextNode(description) {
   ) : null
 }
 
-// Generate a cache ID from a list of votes, based on their voteId.
-const cacheIdFromVotes = votes =>
-  votes
-    ? votes
-        .map(vote => vote.voteId)
-        .sort()
-        .join()
-    : ''
-
 function App() {
-  const { api, network, appState, connectedAccount } = useAragonApi()
-
-  const [createVoteVisible, setCreateVoteVisible] = useState(false)
-  const [currentVoteId, setCurrentVoteId] = useState(-1)
-  const [tokenContract, setTokenContract] = useState(null)
-  const [voteVisible, setVoteVisible] = useState(false)
-  const [voteSidebarOpened, setVoteSidebarOpened] = useState(false)
-  const [userAccountVotes, setUserAccountVotes] = useState(new Map())
-  const now = useNow()
-
   const {
-    appStateReady,
-    pctBase,
-    tokenDecimals,
-    tokenSymbol,
-    voteTime,
-  } = appState
-
-  // Add some useful data to render the votes
-  const votes = useMemo(
-    () =>
-      appStateReady
-        ? appState.votes.map(vote => ({
-            ...vote,
-            data: {
-              ...vote.data,
-              open: isVoteOpen(vote, now),
-
-              // Render text fields
-              descriptionNode: voteTextNode(vote.data.description),
-              metadataNode: voteTextNode(vote.data.metadata),
-            },
-            userAccountVote: voteTypeFromContractEnum(
-              userAccountVotes.get(vote.voteId)
-            ),
-          }))
-        : appState.votes,
-    [appStateReady, cacheIdFromVotes(appState.votes), userAccountVotes]
-  )
-
-  const currentVote =
-    currentVoteId === -1
-      ? null
-      : votes.find(vote => vote.voteId === currentVoteId)
-
-  // update token contract
-  useEffect(() => {
-    setTokenContract(
-      api && appState.tokenAddress
-        ? api.external(appState.tokenAddress, tokenAbi)
-        : null
-    )
-  }, [api, appState.tokenAddress])
-
-  // update user account votes
-  useEffect(() => {
-    if (!connectedAccount || !votes) {
-      setUserAccountVotes(new Map())
-      return
-    }
-
-    let cancelled = false
-    Promise.all(
-      votes.map(vote =>
-        api
-          .call('getVoterState', vote.voteId, connectedAccount)
-          .toPromise()
-          .then(result => [vote.voteId, result])
-      )
-    ).then(voteStates => {
-      if (!cancelled) {
-        setUserAccountVotes(new Map(voteStates))
-      }
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [api, cacheIdFromVotes(votes), connectedAccount])
-
-  // create vote panel
-  const handleCreateVoteOpen = useCallback(() => {
-    setCreateVoteVisible(true)
-  }, [])
-  const handleCreateVoteClose = useCallback(() => {
-    setCreateVoteVisible(false)
-  }, [])
-  const handleCreateVote = useCallback(
-    question => {
-      api.newVote(EMPTY_CALLSCRIPT, question)
-      handleCreateVoteClose()
-    },
-    [api]
-  )
-
-  // single vote panel
-  const handleVoteOpen = useCallback(
-    voteId => {
-      const exists = votes.some(vote => voteId === vote.voteId)
-      if (exists) {
-        setCurrentVoteId(voteId)
-        setVoteVisible(true)
-        setVoteSidebarOpened(false)
-      }
-    },
-    [votes]
-  )
-
-  const handleVoteClose = useCallback(() => {
-    setVoteVisible(false)
-  }, [])
-
-  const handleVoteTransitionEnd = useCallback(opened => {
-    if (opened) {
-      setVoteSidebarOpened(true)
-    } else {
-      setCurrentVoteId(-1)
-    }
-  }, [])
-
-  // vote (action)
-  const handleVote = useCallback(
-    (voteId, voteType, executesIfDecided = true) => {
-      api.vote(voteId, voteType === VOTE_YEA, executesIfDecided)
-      handleVoteClose()
-    },
-    [api]
-  )
-
-  // execute (action)
-  const handleExecute = useCallback(
-    voteId => {
-      api.executeVote(voteId)
-      handleVoteClose()
-    },
-    [api]
-  )
-
-  // Local identity
-  const resolveLocalIdentity = useCallback(
-    address => api.resolveAddressIdentity(address).toPromise(),
-    [api]
-  )
-  const showLocalIdentityModal = useCallback(
-    address => api.requestAddressIdentityModification(address).toPromise(),
-    [api]
-  )
-
-  const hasCurrentVote = appStateReady && Boolean(currentVote)
+    votes,
+    selectedVote,
+    actions,
+    selectVote,
+    newVotePanel,
+    selectedVotePanel,
+  } = useVotingApp({ renderVoteText })
 
   return (
     <div css="min-width: 320px">
       <Main assetsUrl="./aragon-ui">
-        <IdentityProvider
-          onResolve={resolveLocalIdentity}
-          onShowLocalIdentityModal={showLocalIdentityModal}
+        <AppLayout
+          title="Voting"
+          mainButton={{
+            label: 'New vote',
+            icon: <NewVoteIcon />,
+            onClick: newVotePanel.open,
+          }}
         >
-          <NetworkContext.Provider value={network}>
-            <SettingsContext.Provider value={{ pctBase, voteTime }}>
-              <AppLayout
-                title="Voting"
-                mainButton={{
-                  label: 'New vote',
-                  icon: <NewVoteIcon />,
-                  onClick: handleCreateVoteOpen,
-                }}
-              >
-                {appStateReady && votes.length > 0 ? (
-                  <Votes votes={votes} onSelectVote={handleVoteOpen} />
-                ) : (
-                  <EmptyState onActivate={handleCreateVoteOpen} />
-                )}
-              </AppLayout>
+          {votes.length > 0 ? (
+            <Votes votes={votes} onSelectVote={selectVote} />
+          ) : (
+            <EmptyState onActivate={newVotePanel.open} />
+          )}
+        </AppLayout>
 
-              <SidePanel
-                title={`Vote #${currentVoteId} (${
-                  currentVote && currentVote.data.open ? 'Open' : 'Closed'
-                })`}
-                opened={hasCurrentVote && !createVoteVisible && voteVisible}
-                onClose={handleVoteClose}
-                onTransitionEnd={handleVoteTransitionEnd}
-              >
-                {hasCurrentVote && (
-                  <VotePanelContent
-                    vote={currentVote}
-                    ready={voteSidebarOpened}
-                    tokenContract={tokenContract}
-                    tokenDecimals={tokenDecimals}
-                    tokenSymbol={tokenSymbol}
-                    onVote={handleVote}
-                    onExecute={handleExecute}
-                  />
-                )}
-              </SidePanel>
+        <SidePanel
+          title={
+            selectedVote
+              ? `Vote #${selectedVote.voteId} (${
+                  selectedVote.data.open ? 'Open' : 'Closed'
+                })`
+              : ''
+          }
+          opened={selectedVotePanel.visible}
+          onClose={selectedVotePanel.close}
+          onTransitionEnd={selectedVotePanel.onTransitionEnd}
+        >
+          {selectedVote && (
+            <VotePanelContent
+              vote={selectedVote}
+              onVote={actions.vote}
+              onExecute={actions.execute}
+              panelOpened={selectedVotePanel.didOpen}
+            />
+          )}
+        </SidePanel>
 
-              <SidePanel
-                title="New Vote"
-                opened={createVoteVisible}
-                onClose={handleCreateVoteClose}
-              >
-                <NewVotePanelContent
-                  opened={createVoteVisible}
-                  onCreateVote={handleCreateVote}
-                />
-              </SidePanel>
-            </SettingsContext.Provider>
-          </NetworkContext.Provider>
-        </IdentityProvider>
+        <SidePanel
+          title="New Vote"
+          opened={newVotePanel.visible}
+          onClose={newVotePanel.close}
+          onTransitionEnd={newVotePanel.onTransitionEnd}
+        >
+          <NewVotePanelContent
+            onCreateVote={actions.createVote}
+            panelOpened={newVotePanel.didOpen}
+          />
+        </SidePanel>
       </Main>
     </div>
   )
 }
 
 export default () => (
-  <AragonApi reducer={appStateReducer}>
-    <App />
-  </AragonApi>
+  <VotingAppProvider>
+    <IdentityProvider>
+      <SettingsProvider>
+        <App />
+      </SettingsProvider>
+    </IdentityProvider>
+  </VotingAppProvider>
 )

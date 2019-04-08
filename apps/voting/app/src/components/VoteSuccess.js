@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { theme, IconCross, IconCheck } from '@aragon/ui'
 import { getVoteSuccess } from '../vote-utils'
-import { useSettings } from '../app-hooks'
+import { useSettings } from '../vote-settings-manager'
 
 const VoteSuccess = ({ vote, ...props }) => {
   const settings = useSettings()

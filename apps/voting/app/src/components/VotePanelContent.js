@@ -1,4 +1,4 @@
-import React, { useContext, useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import {
   Button,
@@ -11,14 +11,13 @@ import {
   theme,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
-import { useCurrentVoteData } from '../vote-hooks'
-import { NetworkContext } from '../app-contexts'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge.js'
 import { format } from 'date-fns'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { round } from '../math-utils'
 import { pluralize } from '../utils'
 import { getQuorumProgress } from '../vote-utils'
+import { useExtendedVoteData } from '../voting-app'
 import VoteSummary from './VoteSummary'
 import VoteStatus from './VoteStatus'
 import VoteSuccess from './VoteSuccess'
@@ -31,25 +30,14 @@ const formatDate = date =>
 const Action = Info.Action
 
 const VotePanelContent = React.memo(
-  ({
-    onVote,
-    onExecute,
-    ready,
-    tokenDecimals,
-    tokenSymbol,
-    tokenContract,
-    vote,
-  }) => {
-    const { connectedAccount } = useAragonApi()
-
-    const network = useContext(NetworkContext)
-
-    const { canUserVote, canExecute, userBalance } = useCurrentVoteData(
-      vote,
+  ({ onVote, onExecute, panelOpened, vote }) => {
+    const {
       connectedAccount,
-      tokenContract,
-      tokenDecimals
-    )
+      network,
+      appState: { tokenDecimals, tokenSymbol },
+    } = useAragonApi()
+
+    const { canUserVote, canExecute, userBalance } = useExtendedVoteData(vote)
 
     const [changeVote, setChangeVote] = useState(false)
 
@@ -109,7 +97,7 @@ const VotePanelContent = React.memo(
               css="margin-top: 10px"
               positiveSize={quorumProgress}
               requiredSize={minAcceptQuorum}
-              show={ready}
+              show={panelOpened}
               compact
             />
           </div>
@@ -161,7 +149,7 @@ const VotePanelContent = React.memo(
           vote={vote}
           tokenSymbol={tokenSymbol}
           tokenDecimals={tokenDecimals}
-          ready={ready}
+          ready={panelOpened}
         />
 
         {(() => {

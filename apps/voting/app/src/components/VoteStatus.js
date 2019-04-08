@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { theme, IconTime, IconCross, IconCheck } from '@aragon/ui'
-import { useSettings } from '../app-hooks'
+import { useSettings } from '../vote-settings-manager'
 import {
   VOTE_STATUS_ONGOING,
   VOTE_STATUS_REJECTED,

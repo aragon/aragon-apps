@@ -2,13 +2,10 @@ import BN from 'bn.js'
 import { hasLoadedVoteSettings } from './vote-settings'
 
 function appStateReducer(state) {
-  const appStateReady = hasLoadedVoteSettings(state)
+  const ready = hasLoadedVoteSettings(state)
 
-  if (!appStateReady) {
-    return {
-      ...state,
-      appStateReady,
-    }
+  if (!ready) {
+    return { ...state, ready }
   }
 
   const { pctBase, tokenDecimals, voteTime, votes } = state
@@ -20,7 +17,7 @@ function appStateReducer(state) {
   return {
     ...state,
 
-    appStateReady,
+    ready,
     pctBase: new BN(pctBase),
     tokenDecimals: new BN(tokenDecimals),
 
