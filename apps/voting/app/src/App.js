@@ -9,8 +9,8 @@ import AutoLink from './components/AutoLink'
 import AppLayout from './components/AppLayout'
 import NewVoteIcon from './components/NewVoteIcon'
 
+import { IdentityProvider } from './identity-manager'
 import { SettingsProvider } from './vote-settings-manager'
-import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 import { shortenAddress, transformAddresses } from './web3-utils'
 import { VotingAppProvider, useVotingApp } from './voting-app'
 

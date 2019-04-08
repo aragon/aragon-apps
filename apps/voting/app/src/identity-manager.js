@@ -29,7 +29,7 @@ function useShowLocalIdentityModal() {
 
 // The main identity hook, exposing `name` and `handleShowLocalIdentityModal`
 // based on the provided address.
-function useIdentity(address) {
+export function useIdentity(address) {
   const [name, setName] = React.useState(null)
   const resolveLocalIdentity = useResolveLocalIdentity()
   const showLocalIdentityModal = useShowLocalIdentityModal()
@@ -60,16 +60,10 @@ function useIdentity(address) {
   return [name, handleShowLocalIdentityModal]
 }
 
-const IdentityProvider = ({ children }) => {
+export const IdentityProvider = ({ children }) => {
   return (
     <IdentityContext.Provider value={{ updates$ }}>
       {children}
     </IdentityContext.Provider>
   )
 }
-
-IdentityProvider.propTypes = {
-  children: PropTypes.node.isRequired,
-}
-
-export { IdentityProvider, useIdentity }

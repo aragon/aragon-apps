@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Badge, IdentityBadge, font } from '@aragon/ui'
-import { useIdentity } from '../IdentityManager/IdentityManager'
+import { useIdentity } from '../../identity-manager'
 
 const LocalIdentityBadge = ({ entity, ...props }) => {
   const [label, showLocalIdentityModal] = useIdentity(entity)
