@@ -439,14 +439,17 @@ contract('Agent app', (accounts) => {
 
       const signatureTests = directSignatureTests.concat(wrappedSignatureTests)
 
-      for (const {
-        name,
-        signFunction,
-        getSigner,
-        signerOrKey,
-        notSignerOrKey,
-        signatureModifier = sig => sig // defaults to identity function (returns input)
-      } of signatureTests) {
+      for (signatureTest of signatureTests) {
+      // Bind the parameterized variables locally
+        const {
+          name,
+          signFunction,
+          getSigner,
+          signerOrKey,
+          notSignerOrKey,
+          signatureModifier = sig => sig // defaults to identity function (returns input)
+        } = signatureTest
+
         const sign = signFunctionGenerator(signFunction, signatureModifier)
 
         context(`> Signature mode: ${name}`, () => {
