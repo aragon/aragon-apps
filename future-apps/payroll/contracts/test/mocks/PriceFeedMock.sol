@@ -1,16 +1,16 @@
 pragma solidity ^0.4.24;
 
 import "@aragon/ppf-contracts/contracts/IFeed.sol";
+import "@aragon/test-helpers/contracts/TimeHelpersMock.sol";
 
 
-contract PriceFeedMock is IFeed {
-    uint private _mockTime = now;
+contract PriceFeedMock is IFeed, TimeHelpersMock {
 
     event PriceFeedLogSetRate(address sender, address token, uint128 value);
 
     function get(address base, address quote) external view returns (uint128 xrt, uint64 when) {
         xrt = toInt(quote);
-        when = uint64(_mockTime);
+        when = getTimestamp64();
 
         emit PriceFeedLogSetRate(msg.sender, quote, xrt);
     }
@@ -24,15 +24,6 @@ contract PriceFeedMock is IFeed {
         else
             j = j * 10**18;
         i = uint128(j);
-    }
-
-    function mockSetTimestamp(uint _time) public {
-        _mockTime = _time;
-    }
-
-    function mockAddTimestamp(uint64 time) public {
-        _mockTime += time;
-        require(_mockTime >= time);
     }
 
 }
