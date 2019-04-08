@@ -2,14 +2,16 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Badge, IdentityBadge, font } from '@aragon/ui'
+import { useNetwork } from '@aragon/api-react'
 import { useIdentity } from '../../identity-manager'
 
 const LocalIdentityBadge = ({ entity, ...props }) => {
+  const network = useNetwork()
   const [label, showLocalIdentityModal] = useIdentity(entity)
   const handleClick = () => showLocalIdentityModal(entity)
   return (
     <IdentityBadge
-      {...props}
+      networkType={network && network.type}
       customLabel={label || ''}
       entity={entity}
       popoverAction={{
@@ -26,6 +28,7 @@ const LocalIdentityBadge = ({ entity, ...props }) => {
           'Address'
         )
       }
+      {...props}
     />
   )
 }

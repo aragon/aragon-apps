@@ -33,7 +33,6 @@ const VotePanelContent = React.memo(
   ({ onVote, onExecute, panelOpened, vote }) => {
     const {
       connectedAccount,
-      network,
       appState: { tokenDecimals, tokenSymbol },
     } = useAragonApi()
 
@@ -140,7 +139,7 @@ const VotePanelContent = React.memo(
               align-items: center;
             `}
           >
-            <LocalIdentityBadge entity={creator} networkType={network.type} />
+            <LocalIdentityBadge entity={creator} />
           </div>
         </Part>
         <SidePanelSeparator />
