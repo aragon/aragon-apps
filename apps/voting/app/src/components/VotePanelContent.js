@@ -43,15 +43,18 @@ const VotePanelContent = React.memo(
     const handleChangeVoteClick = useCallback(() => {
       setChangeVote(true)
     }, [])
+
     const handleNoClick = useCallback(() => {
       onVote(vote.voteId, VOTE_NAY)
-    }, [])
+    }, [onVote, vote.voteId])
+
     const handleYesClick = useCallback(() => {
       onVote(vote.voteId, VOTE_YEA)
-    }, [])
+    }, [onVote, vote.voteId])
+
     const handleExecuteClick = useCallback(() => {
       onExecute(vote.voteId)
-    }, [])
+    }, [onExecute, vote.voteId])
 
     const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.userAccountVote)
 

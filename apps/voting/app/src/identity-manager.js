@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react'
-import PropTypes from 'prop-types'
 import { Subject } from 'rxjs'
 import { useApi } from '@aragon/api-react'
 
@@ -54,8 +53,10 @@ export function useIdentity(address) {
         resolveLocalIdentity(address).then(handleNameChange)
       }
     })
-    return () => subscription.unsubscribe()
-  }, [address])
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [address, handleNameChange, resolveLocalIdentity, updates$])
 
   return [name, handleShowLocalIdentityModal]
 }

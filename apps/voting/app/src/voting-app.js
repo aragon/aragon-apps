@@ -79,7 +79,7 @@ export function useVotes(renderVoteText) {
       },
       userAccountVote: connectedAccountVotes.get(vote.voteId),
     }))
-  }, [votes, connectedAccountVotes, now])
+  }, [votes, connectedAccountVotes, now, renderVoteText])
 }
 
 // Get the extended data related to a vote
@@ -131,14 +131,14 @@ export function useTokenContract() {
 
 // Get the vote currently selected, or null otherwise.
 export function useSelectedVote(votes) {
-  const [selectedVoteId, setSelectedVoteId] = useState()
+  const [selectedVoteId, setSelectedVoteId] = useState('-1')
   const { ready } = useAppState()
 
   // The memoized vote currently selected.
   const selectedVote = useMemo(() => {
     // The `ready` check prevents a vote to be selected
     // until the app state is fully ready.
-    if (!ready || selectedVoteId === -1) {
+    if (!ready || selectedVoteId === '-1') {
       return null
     }
     return votes.find(vote => vote.voteId === selectedVoteId) || null
@@ -164,7 +164,7 @@ export function useCreateVoteAction(onDone) {
         onDone()
       }
     },
-    [api]
+    [api, onDone]
   )
 }
 
@@ -176,7 +176,7 @@ export function useVoteAction(onDone) {
       api.vote(voteId, voteType === VOTE_YEA, executesIfDecided)
       onDone()
     },
-    [api]
+    [api, onDone]
   )
 }
 
@@ -188,7 +188,7 @@ export function useExecuteAction(onDone) {
       api.executeVote(voteId)
       onDone()
     },
-    [api]
+    [api, onDone]
   )
 }
 
@@ -204,36 +204,48 @@ export function usePanelState({ onDidOpen = noop, onDidClose = noop } = {}) {
   const open = useCallback(() => {
     setVisible(true)
     setDidOpen(false)
-  }, [])
+  }, [setVisible, setDidOpen])
 
   const close = useCallback(() => {
     setVisible(false)
-  }, [])
+  }, [setVisible])
 
   // To be passed to the onTransitionEnd prop of SidePanel.
-  const onTransitionEnd = useCallback(opened => {
-    if (opened) {
-      onDidOpen()
-      setDidOpen(true)
-    } else {
-      onDidClose()
-      setDidOpen(false)
-    }
-  }, [])
+  const onTransitionEnd = useCallback(
+    opened => {
+      if (opened) {
+        onDidOpen()
+        setDidOpen(true)
+      } else {
+        onDidClose()
+        setDidOpen(false)
+      }
+    },
+    [onDidClose, onDidOpen, setDidOpen]
+  )
 
   return { open, close, visible, didOpen, onTransitionEnd }
 }
 
 // Handles the state of the selected vote panel.
-export function useSelectedVotePanel(selectedVote, panelOptions) {
-  const selectedVotePanel = usePanelState(panelOptions)
+export function useSelectedVotePanel(selectedVote, selectVote) {
+  const onDidClose = useCallback(() => {
+    selectVote('-1')
+  }, [selectVote])
+
+  const selectedVotePanel = usePanelState({ onDidClose })
+  const selectedVoteId = selectedVote ? selectedVote.voteId : '-1'
+
+  // Help the React Hooks linter
+  const openPanel = selectedVotePanel.open
+  const panelDidOpen = selectedVotePanel.didOpen
 
   // When the selected vote changes, open the selected vote panel.
   useEffect(() => {
-    if (selectedVote) {
-      selectedVotePanel.open()
+    if (selectedVoteId !== '-1' && !panelDidOpen) {
+      openPanel()
     }
-  }, [selectedVote && selectedVote.voteId])
+  }, [selectedVoteId, openPanel, panelDidOpen])
 
   return selectedVotePanel
 }
@@ -243,11 +255,7 @@ export function useVotingApp({ renderVoteText }) {
   const votes = useVotes(renderVoteText)
   const [selectedVote, selectVote] = useSelectedVote(votes)
   const newVotePanel = usePanelState()
-  const selectedVotePanel = useSelectedVotePanel(selectedVote, {
-    onDidClose: () => {
-      selectVote(-1)
-    },
-  })
+  const selectedVotePanel = useSelectedVotePanel(selectedVote, selectVote)
 
   const actions = {
     createVote: useCreateVoteAction(() => {

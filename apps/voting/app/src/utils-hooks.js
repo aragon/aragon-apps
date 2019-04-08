@@ -25,6 +25,8 @@ export function usePromise(fn, memoParams, defaultValue) {
     return () => {
       cancelled = true
     }
-  }, memoParams)
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...memoParams, fn])
   return result
 }
