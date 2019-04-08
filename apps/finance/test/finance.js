@@ -225,7 +225,10 @@ contract('Finance App', accounts => {
         assert.equal(await finance.currentPeriodId(), 1, 'should have transitioned 1 periods')
     })
 
-    for ({ title, tokenContract} of tokenTestGroups) {
+    for (const testGroup of tokenTestGroups) {
+        // Bind the parameterized variables locally
+        const { title, tokenContract } = testGroup
+
         context(`ERC20 (${title}) deposits`, () => {
             const transferAmount = 5
             let tokenInstance
@@ -305,7 +308,10 @@ contract('Finance App', accounts => {
         })
     })
 
-    for ({ title, tokenContract} of tokenTestGroups) {
+    for (const testGroup of tokenTestGroups) {
+        // Bind the parameterized variables locally
+        const { title, tokenContract } = testGroup
+
         context(`locked ERC20 (${title})`, () => {
             const lockedTokenAmount = 5
             let tokenInstance

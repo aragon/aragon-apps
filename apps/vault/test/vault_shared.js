@@ -165,7 +165,10 @@ module.exports = (
         tokenContract: TokenReturnMissingMock,
       },
     ]
-    for ({ title, tokenContract} of tokenTestGroups) {
+    for (const testGroup of tokenTestGroups) {
+      // Bind the parameterized variables locally
+      const { title, tokenContract } = testGroup
+
       context(`> ERC20 (${title})`, () => {
         let token
 

@@ -144,7 +144,10 @@ contract('Voting App', accounts => {
 
     })
 
-    for (const decimals of [0, 2, 18, 26]) {
+    for (const testDecimals of [0, 2, 18, 26]) {
+        // Bind the parameterized variables locally
+        const decimals = testDecimals
+
         context(`normal token supply, ${decimals} decimals`, () => {
             const holder20 = accounts[0]
             const holder29 = accounts[1]

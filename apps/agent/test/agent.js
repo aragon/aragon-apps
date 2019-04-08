@@ -82,7 +82,10 @@ contract('Agent app', (accounts) => {
     const [_, nonExecutor, executor] = accounts
     let executionTarget
 
-    for (const depositAmount of [0, 3]) {
+    for (const testDepositAmount of [0, 3]) {
+      // Bind the parameterized variables locally
+      const depositAmount = testDepositAmount
+
       context(depositAmount ? '> With ETH' : '> Without ETH', () => {
         beforeEach(async () => {
           await acl.createPermission(executor, agent.address, EXECUTE_ROLE, root, { from: root })
