@@ -178,7 +178,7 @@ contract('Payroll token allocations', ([owner, employee, anotherEmployee, anyone
         context('when the employee is not active', () => {
           beforeEach('terminate employee', async () => {
             await payroll.terminateEmployeeNow(employeeId, { from: owner })
-            await payroll.mockAddTimestamp(ONE_MONTH)
+            await payroll.mockIncreaseTime(ONE_MONTH)
           })
 
           itShouldHandleAllocationsProperly()
@@ -292,7 +292,7 @@ contract('Payroll token allocations', ([owner, employee, anotherEmployee, anyone
         context('when the employee is not active', () => {
           beforeEach('terminate employee', async () => {
             await payroll.terminateEmployeeNow(employeeId, { from: owner })
-            await payroll.mockAddTimestamp(ONE_MONTH)
+            await payroll.mockIncreaseTime(ONE_MONTH)
           })
 
           itShouldAnswerAllocationsProperly()

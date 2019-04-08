@@ -55,10 +55,10 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
               })
 
               it('adds previous owed salary to the accrued value', async () => {
-                await payroll.mockAddTimestamp(ONE_MONTH)
+                await payroll.mockIncreaseTime(ONE_MONTH)
 
                 await payroll.setEmployeeSalary(employeeId, newSalary, { from })
-                await payroll.mockAddTimestamp(ONE_MONTH)
+                await payroll.mockIncreaseTime(ONE_MONTH)
 
                 const accruedValue = (await payroll.getEmployee(employeeId))[2]
                 assert.equal(accruedValue.toString(), previousSalary * ONE_MONTH, 'accrued value does not match')
@@ -90,7 +90,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
           context('when the given employee is not active', () => {
             beforeEach('terminate employee', async () => {
               await payroll.terminateEmployeeNow(employeeId, { from: owner })
-              await payroll.mockAddTimestamp(ONE_MONTH)
+              await payroll.mockIncreaseTime(ONE_MONTH)
             })
 
             it('reverts', async () => {
@@ -198,7 +198,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
         context('when the given employee is not active', () => {
           beforeEach('terminate employee', async () => {
             await payroll.terminateEmployeeNow(employeeId, { from: owner })
-            await payroll.mockAddTimestamp(ONE_MONTH)
+            await payroll.mockIncreaseTime(ONE_MONTH)
           })
 
           itHandlesChangingEmployeeAddressSuccessfully()
