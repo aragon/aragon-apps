@@ -229,14 +229,17 @@ export function usePanelState({ onDidOpen = noop, onDidClose = noop } = {}) {
 
 // Handles the state of the selected vote panel.
 export function useSelectedVotePanel(selectedVote, selectVote) {
+  const selectedVoteId = selectedVote ? selectedVote.voteId : '-1'
+
+  // Only deselect the current vote when the panel is fully closed, so that
+  // the panel doesn’t appear empty while being closed.
   const onDidClose = useCallback(() => {
     selectVote('-1')
   }, [selectVote])
 
   const selectedVotePanel = usePanelState({ onDidClose })
-  const selectedVoteId = selectedVote ? selectedVote.voteId : '-1'
 
-  // Help the React Hooks linter
+  // This is to help the React Hooks linter.
   const openPanel = selectedVotePanel.open
   const panelDidOpen = selectedVotePanel.didOpen
 
