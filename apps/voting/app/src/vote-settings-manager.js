@@ -4,7 +4,7 @@ import React, { useContext } from 'react'
 import { useAppState } from '@aragon/api-react'
 import BN from 'bn.js'
 
-export const SettingsContext = React.createContext({
+const SettingsContext = React.createContext({
   pctBase: new BN(-1),
   voteTime: -1,
 })
