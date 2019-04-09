@@ -149,7 +149,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     /**
      * @notice Deposit ETH to the Vault, to avoid locking them in this Finance app forever
-     * @dev Sends ETH to Vault. Sends all the available balance.
+     * @dev Send ETH to Vault. Send all the available balance.
      */
     function () external payable isInitialized transitionsPeriod {
         require(msg.value > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
