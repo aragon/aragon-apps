@@ -8,24 +8,12 @@ import NewVotePanelContent from './components/NewVotePanelContent'
 import AutoLink from './components/AutoLink'
 import AppLayout from './components/AppLayout'
 import NewVoteIcon from './components/NewVoteIcon'
+import LocalIdentityBadge from './components/LocalIdentityBadge/LocalIdentityBadge'
 
 import { IdentityProvider } from './identity-manager'
 import { SettingsProvider } from './vote-settings-manager'
-import { shortenAddress, transformAddresses } from './web3-utils'
+import { transformAddresses } from './web3-utils'
 import { VotingAppProvider, useVotingApp } from './voting-app'
-
-// Shortens every address detected in `content`.
-function shortenAddresses(content) {
-  return transformAddresses(content, (part, isAddress, index) =>
-    isAddress ? (
-      <span title={part} key={index}>
-        {shortenAddress(part)}
-      </span>
-    ) : (
-      <span key={index}>{part}</span>
-    )
-  )
-}
 
 // Renders the text (metadata and description) of every vote.
 function renderVoteText(description) {
@@ -33,7 +21,16 @@ function renderVoteText(description) {
     <AutoLink>
       {description.split('\n').map((line, i) => (
         <React.Fragment key={i}>
-          {shortenAddresses(line)}
+          {transformAddresses(line, (part, isAddress, index) =>
+            // Transform detected addresses into identity badges.
+            isAddress ? (
+              <span title={part} key={index}>
+                <LocalIdentityBadge entity={part} />
+              </span>
+            ) : (
+              <span key={index}>{part}</span>
+            )
+          )}
           <br />
         </React.Fragment>
       ))}
