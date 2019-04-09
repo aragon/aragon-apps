@@ -165,7 +165,7 @@ module.exports = (
         tokenContract: TokenReturnMissingMock,
       },
     ]
-    for ({ title, tokenContract} of tokenTestGroups) {
+    for (const { title, tokenContract} of tokenTestGroups) {
       context(`> ERC20 (${title})`, () => {
         let token
 
