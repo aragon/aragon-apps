@@ -13,12 +13,26 @@ cleanup() {
   fi
 }
 
+setup_coverage_variables() {
+  PORT=${PORT-8555}
+  BALANCE=${BALANCE-100000}
+  GAS_LIMIT=${GAS_LIMIT-0xfffffffffff}
+  NETWORK_ID=${NETWORK_ID-16}
+}
+
+setup_testing_variables() {
+  PORT=${PORT-8545}
+  BALANCE=${BALANCE-100000}
+  GAS_LIMIT=${GAS_LIMIT-8000000}
+  NETWORK_ID=${NETWORK_ID-15}
+}
+
 start_ganache() {
   echo "Starting ganache-cli..."
   npx ganache-cli -i ${NETWORK_ID} -l ${GAS_LIMIT} -e ${BALANCE} -p ${PORT} > /dev/null &
   rpc_pid=$!
   sleep 3
-  echo "Running ganache-cli with pid ${rpc_pid}"
+  echo "Running ganache-cli with pid ${rpc_pid} in port ${PORT}"
 }
 
 start_testrpc() {
@@ -26,7 +40,7 @@ start_testrpc() {
   npx testrpc-sc -i ${NETWORK_ID} -l ${GAS_LIMIT} -e ${BALANCE} -p ${PORT} > /dev/null &
   rpc_pid=$!
   sleep 3
-  echo "Running testrpc-sc with pid ${rpc_pid}"
+  echo "Running testrpc-sc with pid ${rpc_pid} in port ${PORT}"
 }
 
 measure_coverage() {
@@ -40,19 +54,11 @@ run_tests() {
 }
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
-  PORT=8555
-  BALANCE=10000
-  GAS_LIMIT=0xfffffffffff
-  NETWORK_ID=16
-
+  setup_coverage_variables
   start_testrpc
   measure_coverage
 else
-  PORT=8545
-  BALANCE=100000
-  GAS_LIMIT=50000000
-  NETWORK_ID=15
-
+  setup_testing_variables
   start_ganache
   run_tests
 fi
