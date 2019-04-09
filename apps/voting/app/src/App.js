@@ -13,7 +13,7 @@ import LocalIdentityBadge from './components/LocalIdentityBadge/LocalIdentityBad
 import { IdentityProvider } from './identity-manager'
 import { SettingsProvider } from './vote-settings-manager'
 import { transformAddresses } from './web3-utils'
-import { VotingAppProvider, useVotingApp } from './voting-app'
+import { AppLogicProvider, useAppLogic } from './app-logic'
 
 // Renders the text (metadata and description) of every vote.
 function renderVoteText(description) {
@@ -46,7 +46,7 @@ function App() {
     selectVote,
     newVotePanel,
     selectedVotePanel,
-  } = useVotingApp({ renderVoteText })
+  } = useAppLogic({ renderVoteText })
 
   return (
     <div css="min-width: 320px">
@@ -105,11 +105,11 @@ function App() {
 }
 
 export default () => (
-  <VotingAppProvider>
+  <AppLogicProvider>
     <IdentityProvider>
       <SettingsProvider>
         <App />
       </SettingsProvider>
     </IdentityProvider>
-  </VotingAppProvider>
+  </AppLogicProvider>
 )

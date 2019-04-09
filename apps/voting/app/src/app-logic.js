@@ -254,7 +254,7 @@ export function useSelectedVotePanel(selectedVote, selectVote) {
 }
 
 // Handles the main logic of the app.
-export function useVotingApp({ renderVoteText }) {
+export function useAppLogic({ renderVoteText }) {
   const votes = useVotes(renderVoteText)
   const [selectedVote, selectVote] = useSelectedVote(votes)
   const newVotePanel = usePanelState()
@@ -290,6 +290,6 @@ export function useVotingApp({ renderVoteText }) {
   }
 }
 
-export function VotingAppProvider({ children }) {
+export function AppLogicProvider({ children }) {
   return <AragonApi reducer={appStateReducer}>{children}</AragonApi>
 }
