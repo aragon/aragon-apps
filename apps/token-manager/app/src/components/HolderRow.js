@@ -9,8 +9,8 @@ import {
   TableRow,
   theme,
 } from '@aragon/ui'
+import { useNetwork } from '@aragon/api-react'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
-import provideNetwork from '../provide-network'
 import { formatBalance } from '../utils'
 import You from './You'
 
@@ -114,4 +114,7 @@ const IconWrapper = styled.span`
   color: ${theme.textSecondary};
 `
 
-export default provideNetwork(HolderRow)
+export default props => {
+  const network = useNetwork()
+  return <HolderRow network={network} {...props} />
+}
