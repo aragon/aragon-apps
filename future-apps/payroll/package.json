@@ -55,6 +55,8 @@
     "ethereumjs-abi": "^0.6.5",
     "solidity-coverage": "0.5.11",
     "solium": "^1.1.8",
-    "truffle": "4.1.14"
+    "truffle": "4.1.14",
+    "truffle-config": "1.0.6",
+    "truffle-contract": "3.0.6"
   }
 }
