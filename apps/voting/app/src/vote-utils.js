@@ -72,7 +72,7 @@ export async function getUserBalance(
   tokenContract,
   tokenDecimals
 ) {
-  if (!tokenContract || !connectedAccount) {
+  if (!vote || !tokenContract || !connectedAccount) {
     return -1
   }
 
