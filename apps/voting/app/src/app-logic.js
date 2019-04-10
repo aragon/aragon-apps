@@ -22,10 +22,10 @@ import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 
 // Get the voting state of the connected account for every vote.
 export function useConnectedAccountVotes() {
-  const api = useApi()
-  const { votes } = useAppState()
-  const connectedAccount = useConnectedAccount()
+  const { api, appState, connectedAccount } = useAragonApi()
   const [connectedAccountVotes, setConnectedAccountVotes] = useState(new Map())
+
+  const { votes } = appState
 
   useEffect(() => {
     if (!connectedAccount || !votes) {
