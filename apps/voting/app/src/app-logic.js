@@ -103,13 +103,13 @@ export function useAppLogic() {
 
   const actions = {
     createVote: useCreateVoteAction(() => {
-      newVotePanel.close()
+      newVotePanel.requestClose()
     }),
     vote: useVoteAction(() => {
-      selectedVotePanel.close()
+      selectedVotePanel.requestClose()
     }),
     execute: useExecuteAction(() => {
-      selectedVotePanel.close()
+      selectedVotePanel.requestClose()
     }),
   }
 
