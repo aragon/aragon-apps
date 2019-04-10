@@ -201,12 +201,12 @@ export function usePanelState({ onDidOpen = noop, onDidClose = noop } = {}) {
   // transitions in the panel content.
   const [didOpen, setDidOpen] = useState(false)
 
-  const open = useCallback(() => {
+  const requestOpen = useCallback(() => {
     setVisible(true)
     setDidOpen(false)
   }, [setVisible, setDidOpen])
 
-  const close = useCallback(() => {
+  const requestClose = useCallback(() => {
     setVisible(false)
   }, [setVisible])
 
@@ -224,7 +224,7 @@ export function usePanelState({ onDidOpen = noop, onDidClose = noop } = {}) {
     [onDidClose, onDidOpen, setDidOpen]
   )
 
-  return { open, close, visible, didOpen, onTransitionEnd }
+  return { requestOpen, requestClose, visible, didOpen, onTransitionEnd }
 }
 
 // Handles the state of the selected vote panel.
@@ -240,15 +240,14 @@ export function useSelectedVotePanel(selectedVote, selectVote) {
   const selectedVotePanel = usePanelState({ onDidClose })
 
   // This is to help the React Hooks linter.
-  const openPanel = selectedVotePanel.open
-  const panelDidOpen = selectedVotePanel.didOpen
+  const { requestOpen, didOpen } = selectedVotePanel
 
   // When the selected vote changes, open the selected vote panel.
   useEffect(() => {
-    if (selectedVoteId !== '-1' && !panelDidOpen) {
-      openPanel()
+    if (selectedVoteId !== '-1' && !didOpen) {
+      requestOpen()
     }
-  }, [selectedVoteId, openPanel, panelDidOpen])
+  }, [selectedVoteId, requestOpen, didOpen])
 
   return selectedVotePanel
 }

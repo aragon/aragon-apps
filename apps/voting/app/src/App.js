@@ -56,13 +56,13 @@ function App() {
           mainButton={{
             label: 'New vote',
             icon: <NewVoteIcon />,
-            onClick: newVotePanel.open,
+            onClick: newVotePanel.requestOpen,
           }}
         >
           {votes.length > 0 ? (
             <Votes votes={votes} onSelectVote={selectVote} />
           ) : (
-            <EmptyState onActivate={newVotePanel.open} />
+            <EmptyState onActivate={newVotePanel.requestOpen} />
           )}
         </AppLayout>
 
@@ -75,7 +75,7 @@ function App() {
               : ''
           }
           opened={selectedVotePanel.visible}
-          onClose={selectedVotePanel.close}
+          onClose={selectedVotePanel.requestClose}
           onTransitionEnd={selectedVotePanel.onTransitionEnd}
         >
           {selectedVote && (
@@ -91,7 +91,7 @@ function App() {
         <SidePanel
           title="New Vote"
           opened={newVotePanel.visible}
-          onClose={newVotePanel.close}
+          onClose={newVotePanel.requestClose}
           onTransitionEnd={newVotePanel.onTransitionEnd}
         >
           <NewVotePanelContent
