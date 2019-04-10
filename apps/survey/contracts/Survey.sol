@@ -133,6 +133,7 @@ contract Survey is AragonApp {
         require(votingPower > 0, ERROR_NO_VOTING_POWER);
 
         surveyId = surveysLength++;
+
         SurveyStruct storage survey = surveys[surveyId];
         survey.startDate = getTimestamp64();
         survey.snapshotBlock = snapshotBlock; // avoid double voting in this very block
@@ -167,6 +168,7 @@ contract Survey is AragonApp {
         external
         surveyExists(_surveyId)
     {
+        require(_optionIds.length == _stakes.length && _optionIds.length > 0, ERROR_VOTE_WRONG_INPUT);
         require(canVote(_surveyId, msg.sender), ERROR_CAN_NOT_VOTE);
 
         _voteOptions(_surveyId, _optionIds, _stakes);
@@ -181,7 +183,6 @@ contract Survey is AragonApp {
     * @param _optionId Index of supported option
     */
     function voteOption(uint256 _surveyId, uint256 _optionId) external surveyExists(_surveyId) {
-        require(_optionId != ABSTAIN_VOTE, ERROR_VOTE_WHOLE_WRONG_OPTION);
         require(canVote(_surveyId, msg.sender), ERROR_CAN_NOT_VOTE);
 
         SurveyStruct storage survey = surveys[_surveyId];
@@ -300,16 +301,15 @@ contract Survey is AragonApp {
     * @dev Assumes the survey exists and that msg.sender can vote
     */
     function _voteOptions(uint256 _surveyId, uint256[] _optionIds, uint256[] _stakes) internal {
-        require(_optionIds.length == _stakes.length && _optionIds.length > 0, ERROR_VOTE_WRONG_INPUT);
-
         SurveyStruct storage survey = surveys[_surveyId];
+        MultiOptionVote storage senderVotes = survey.votes[msg.sender];
 
         // Revert previous votes, if any
         _resetVote(_surveyId);
 
         uint256 totalVoted = 0;
         // Reserve first index for ABSTAIN_VOTE
-        survey.votes[msg.sender].castedVotes[0] = OptionCast({ optionId: ABSTAIN_VOTE, stake: 0 });
+        senderVotes.castedVotes[0] = OptionCast({ optionId: ABSTAIN_VOTE, stake: 0 });
         for (uint256 optionIndex = 1; optionIndex <= _optionIds.length; optionIndex++) {
             // Voters don't specify that they're abstaining,
             // but we still keep track of this by reserving the first index of a survey's votes.
@@ -322,10 +322,10 @@ contract Survey is AragonApp {
             // Let's avoid repeating an option by making sure that ascending order is preserved in
             // the options array by checking that the current optionId is larger than the last one
             // we added
-            require(survey.votes[msg.sender].castedVotes[optionIndex - 1].optionId < optionId, ERROR_OPTIONS_NOT_ORDERED);
+            require(senderVotes.castedVotes[optionIndex - 1].optionId < optionId, ERROR_OPTIONS_NOT_ORDERED);
 
             // Register voter amount
-            survey.votes[msg.sender].castedVotes[optionIndex] = OptionCast({ optionId: optionId, stake: stake });
+            senderVotes.castedVotes[optionIndex] = OptionCast({ optionId: optionId, stake: stake });
 
             // Add to total option support
             survey.optionPower[optionId] = survey.optionPower[optionId].add(stake);
@@ -340,10 +340,10 @@ contract Survey is AragonApp {
         // Implictly we are doing require(totalVoted <= voterStake) too
         // (as stated before, index 0 is for ABSTAIN_VOTE option)
         uint256 voterStake = token.balanceOfAt(msg.sender, survey.snapshotBlock);
-        survey.votes[msg.sender].castedVotes[0].stake = voterStake.sub(totalVoted);
+        senderVotes.castedVotes[0].stake = voterStake.sub(totalVoted);
 
         // Register number of options voted
-        survey.votes[msg.sender].optionsCastedLength = _optionIds.length;
+        senderVotes.optionsCastedLength = _optionIds.length;
 
         // Add voter tokens to participation
         survey.participation = survey.participation.add(totalVoted);

@@ -160,7 +160,7 @@ contract Voting is IForwarder, AragonApp {
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
     */
     function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external voteExists(_voteId) {
-        require(canVote(_voteId, msg.sender), ERROR_CAN_NOT_VOTE);
+        require(_canVote(_voteId, msg.sender), ERROR_CAN_NOT_VOTE);
         _vote(_voteId, _supports, msg.sender, _executesIfDecided);
     }
 
@@ -171,7 +171,6 @@ contract Voting is IForwarder, AragonApp {
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external voteExists(_voteId) {
-        require(canExecute(_voteId), ERROR_CAN_NOT_EXECUTE);
         _executeVote(_voteId);
     }
 
@@ -202,44 +201,16 @@ contract Voting is IForwarder, AragonApp {
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote(),` which requires initialization
     */
-    function canVote(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (bool) {
-        Vote storage vote_ = votes[_voteId];
-
-        return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
+    function canExecute(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
+        return _canExecute(_voteId);
     }
 
     /**
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote(),` which requires initialization
     */
-    function canExecute(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
-        Vote storage vote_ = votes[_voteId];
-
-        if (vote_.executed) {
-            return false;
-        }
-
-        // Voting is already decided
-        if (_isValuePct(vote_.yea, vote_.votingPower, vote_.supportRequiredPct)) {
-            return true;
-        }
-
-        uint256 totalVotes = vote_.yea.add(vote_.nay);
-
-        // Vote ended?
-        if (_isVoteOpen(vote_)) {
-            return false;
-        }
-        // Has enough support?
-        if (!_isValuePct(vote_.yea, totalVotes, vote_.supportRequiredPct)) {
-            return false;
-        }
-        // Has min quorum?
-        if (!_isValuePct(vote_.yea, vote_.votingPower, vote_.minAcceptQuorumPct)) {
-            return false;
-        }
-
-        return true;
+    function canVote(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (bool) {
+        return _canVote(_voteId, _voter);
     }
 
     function getVote(uint256 _voteId)
@@ -288,6 +259,7 @@ contract Voting is IForwarder, AragonApp {
         require(votingPower > 0, ERROR_NO_VOTING_POWER);
 
         voteId = votesLength++;
+
         Vote storage vote_ = votes[voteId];
         vote_.startDate = getTimestamp64();
         vote_.snapshotBlock = snapshotBlock;
@@ -298,7 +270,7 @@ contract Voting is IForwarder, AragonApp {
 
         emit StartVote(voteId, msg.sender, _metadata);
 
-        if (_castVote && canVote(voteId, msg.sender)) {
+        if (_castVote && _canVote(voteId, msg.sender)) {
             _vote(voteId, true, msg.sender, _executesIfDecided);
         }
     }
@@ -333,12 +305,21 @@ contract Voting is IForwarder, AragonApp {
 
         emit CastVote(_voteId, _voter, _supports, voterStake);
 
-        if (_executesIfDecided && canExecute(_voteId)) {
-            _executeVote(_voteId);
+        if (_executesIfDecided && _canExecute(_voteId)) {
+            // We've already checked if the vote can be executed with `_canExecute()`
+            _unsafeExecuteVote(_voteId);
         }
     }
 
     function _executeVote(uint256 _voteId) internal {
+        require(_canExecute(_voteId), ERROR_CAN_NOT_EXECUTE);
+        _unsafeExecuteVote(_voteId);
+    }
+
+    /**
+    * @dev Unsafe version of _executeVote that assumes you have already checked if the vote can be executed
+    */
+    function _unsafeExecuteVote(uint256 _voteId) internal {
         Vote storage vote_ = votes[_voteId];
 
         vote_.executed = true;
@@ -347,6 +328,41 @@ contract Voting is IForwarder, AragonApp {
         runScript(vote_.executionScript, input, new address[](0));
 
         emit ExecuteVote(_voteId);
+    }
+
+    function _canExecute(uint256 _voteId) internal view returns (bool) {
+        Vote storage vote_ = votes[_voteId];
+
+        if (vote_.executed) {
+            return false;
+        }
+
+        // Voting is already decided
+        if (_isValuePct(vote_.yea, vote_.votingPower, vote_.supportRequiredPct)) {
+            return true;
+        }
+
+        // Vote ended?
+        if (_isVoteOpen(vote_)) {
+            return false;
+        }
+        // Has enough support?
+        uint256 totalVotes = vote_.yea.add(vote_.nay);
+        if (!_isValuePct(vote_.yea, totalVotes, vote_.supportRequiredPct)) {
+            return false;
+        }
+        // Has min quorum?
+        if (!_isValuePct(vote_.yea, vote_.votingPower, vote_.minAcceptQuorumPct)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function _canVote(uint256 _voteId, address _voter) internal view returns (bool) {
+        Vote storage vote_ = votes[_voteId];
+
+        return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
     }
 
     function _isVoteOpen(Vote storage vote_) internal view returns (bool) {

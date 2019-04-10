@@ -34,13 +34,10 @@ class App extends React.Component {
   }
   handleWithdraw = (tokenAddress, recipient, amount, reference) => {
     // Immediate, one-time payment
-    this.props.api.newPayment(
+    this.props.api.newImmediatePayment(
       tokenAddress,
       recipient,
       amount,
-      0, // initial payment time
-      0, // interval
-      1, // max repeats
       reference
     )
     this.handleNewTransferClose()

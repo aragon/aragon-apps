@@ -4,6 +4,11 @@ import "../../Voting.sol";
 
 
 contract VotingMock is Voting {
+    uint64 mockTime;
+
+    function mock_setTimestamp(uint64 i) public { mockTime = i; }
+    function getTimestamp64() internal view returns (uint64) { return mockTime; }
+
     /* Ugly hack to work around this issue:
      * https://github.com/trufflesuite/truffle/issues/569
      * https://github.com/trufflesuite/truffle/issues/737
