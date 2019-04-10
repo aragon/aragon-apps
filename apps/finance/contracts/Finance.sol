@@ -30,7 +30,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     uint256 internal constant NO_SCHEDULED_PAYMENT = 0;
     uint256 internal constant NO_TRANSACTION = 0;
     uint256 internal constant MAX_SCHEDULED_PAYMENTS_PER_TX = 20;
-    uint256 internal constant MAX_UINT = uint256(-1);
+    uint256 internal constant MAX_UINT256 = uint256(-1);
     uint64 internal constant MAX_UINT64 = uint64(-1);
     uint64 internal constant MINIMUM_PERIOD = uint64(1 days);
 
@@ -213,7 +213,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     /**
     * @notice Create a new payment of `@tokenAmount(_token, _amount)` to `_receiver` for '`_reference`'
-    * @dev Note that this function is protected by the `CREATE_PAYMENTS_ROLE` but uses `MAX_UINT`
+    * @dev Note that this function is protected by the `CREATE_PAYMENTS_ROLE` but uses `MAX_UINT256`
     *      as its interval auth parameter (as a sentinel value for "never repeating").
     *      While this protects against most cases (you typically want to set a baseline requirement
     *      for interval time), it does mean users will have to explicitly check for this case when
@@ -227,7 +227,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         external
         // Use MAX_UINT256 as the interval parameter, as this payment will never repeat
         // Payment time parameter is left as the last param as it was added later
-        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, MAX_UINT, uint256(1), getTimestamp()))
+        authP(CREATE_PAYMENTS_ROLE, _arr(_token, _receiver, _amount, MAX_UINT256, uint256(1), getTimestamp()))
         transitionsPeriod
     {
         require(_amount > 0, ERROR_NEW_PAYMENT_AMOUNT_ZERO);
@@ -793,7 +793,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
 
     function _getRemainingBudget(address _token) internal view returns (uint256) {
         if (!settings.hasBudget[_token]) {
-            return MAX_UINT;
+            return MAX_UINT256;
         }
 
         uint256 budget = settings.budgets[_token];
