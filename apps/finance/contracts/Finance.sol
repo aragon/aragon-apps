@@ -32,13 +32,13 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     uint256 internal constant MAX_SCHEDULED_PAYMENTS_PER_TX = 20;
     uint256 internal constant MAX_UINT = uint256(-1);
     uint64 internal constant MAX_UINT64 = uint64(-1);
+    uint64 internal constant MINIMUM_PERIOD = uint64(1 days);
 
     string private constant ERROR_COMPLETE_TRANSITION = "FINANCE_COMPLETE_TRANSITION";
     string private constant ERROR_NO_SCHEDULED_PAYMENT = "FINANCE_NO_SCHEDULED_PAYMENT";
     string private constant ERROR_NO_TRANSACTION = "FINANCE_NO_TRANSACTION";
     string private constant ERROR_NO_PERIOD = "FINANCE_NO_PERIOD";
     string private constant ERROR_VAULT_NOT_CONTRACT = "FINANCE_VAULT_NOT_CONTRACT";
-    string private constant ERROR_INIT_PERIOD_TOO_SHORT = "FINANCE_INIT_PERIOD_TOO_SHORT";
     string private constant ERROR_SET_PERIOD_TOO_SHORT = "FINANCE_SET_PERIOD_TOO_SHORT";
     string private constant ERROR_NEW_PAYMENT_AMOUNT_ZERO = "FINANCE_NEW_PAYMENT_AMOUNT_ZERO";
     string private constant ERROR_NEW_PAYMENT_INTERVAL_ZERO = "FINANCE_NEW_PAYMENT_INTRVL_ZERO";
@@ -173,7 +173,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         require(isContract(_vault), ERROR_VAULT_NOT_CONTRACT);
         vault = _vault;
 
-        require(_periodDuration >= 1 days, ERROR_INIT_PERIOD_TOO_SHORT);
+        require(_periodDuration >= MINIMUM_PERIOD, ERROR_SET_PERIOD_TOO_SHORT);
         settings.periodDuration = _periodDuration;
 
         // Reserve the first scheduled payment index as an unused index for transactions not linked
@@ -306,7 +306,7 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
         authP(CHANGE_PERIOD_ROLE, arr(uint256(_periodDuration), uint256(settings.periodDuration)))
         transitionsPeriod
     {
-        require(_periodDuration >= 1 days, ERROR_SET_PERIOD_TOO_SHORT);
+        require(_periodDuration >= MINIMUM_PERIOD, ERROR_SET_PERIOD_TOO_SHORT);
         settings.periodDuration = _periodDuration;
         emit ChangePeriodDuration(_periodDuration);
     }
