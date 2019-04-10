@@ -182,7 +182,7 @@ const VotePanelContent = React.memo(
                   <p>
                     You voted {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'}{' '}
                     with{' '}
-                    {userBalance === null
+                    {userBalance === -1
                       ? '…'
                       : pluralize(userBalance, '$ token', '$ tokens')}
                     , since it was your balance when the vote was created (
@@ -227,7 +227,7 @@ const VotePanelContent = React.memo(
                     <div>
                       <p>
                         You will cast your vote with{' '}
-                        {userBalance === null
+                        {userBalance === -1
                           ? '… tokens'
                           : pluralize(userBalance, '$ token', '$ tokens')}
                         , since it was your balance when the vote was created (
