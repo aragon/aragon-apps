@@ -2,44 +2,16 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Badge, IdentityBadge, font } from '@aragon/ui'
-import { IdentityContext } from '../IdentityManager/IdentityManager'
-
-function useIdentity(address) {
-  const [name, setName] = React.useState(null)
-  const { resolve, updates$, showLocalIdentityModal } = React.useContext(
-    IdentityContext
-  )
-
-  const handleNameChange = metadata => {
-    setName(metadata ? metadata.name : null)
-  }
-
-  const handleShowLocalIdentityModal = address => {
-    // Emit an event whenever the modal is closed (when the promise resolves)
-    return showLocalIdentityModal(address).then(() => updates$.next(address))
-  }
-
-  React.useEffect(() => {
-    resolve(address).then(handleNameChange)
-
-    const subscription = updates$.subscribe(updatedAddress => {
-      if (updatedAddress.toLowerCase() === address.toLowerCase()) {
-        // Resolve and update state when the identity have been updated
-        resolve(address).then(handleNameChange)
-      }
-    })
-    return () => subscription.unsubscribe()
-  }, [address])
-
-  return [name, handleShowLocalIdentityModal]
-}
+import { useNetwork } from '@aragon/api-react'
+import { useIdentity } from '../../identity-manager'
 
 const LocalIdentityBadge = ({ entity, ...props }) => {
+  const network = useNetwork()
   const [label, showLocalIdentityModal] = useIdentity(entity)
   const handleClick = () => showLocalIdentityModal(entity)
   return (
     <IdentityBadge
-      {...props}
+      networkType={network && network.type}
       customLabel={label || ''}
       entity={entity}
       popoverAction={{
@@ -56,6 +28,7 @@ const LocalIdentityBadge = ({ entity, ...props }) => {
           'Address'
         )
       }
+      {...props}
     />
   )
 }
