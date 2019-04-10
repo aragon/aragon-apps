@@ -49,6 +49,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         bool revokable;
     }
 
+    // Note that we COMPLETELY trust this MiniMeToken to not be malicious for proper operation of this contract
     MiniMeToken public token;
     uint256 public maxAccountTokens;
 
@@ -207,6 +208,42 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
         emit RevokeVesting(_holder, _vestingId, nonVested);
     }
 
+    // ITokenController fns
+    // `onTransfer()`, `onApprove()`, and `proxyPayment()` are callbacks from the MiniMe token
+    // contract and are only meant to be called through the managed MiniMe token that gets assigned
+    // during initialization.
+
+    /*
+    * @dev Notifies the controller about a token transfer allowing the controller to decide whether
+    *      to allow it or react if desired (only callable from the token).
+    *      Initialization check is implicitly provided by `onlyToken()`.
+    * @param _from The origin of the transfer
+    * @param _to The destination of the transfer
+    * @param _amount The amount of the transfer
+    * @return False if the controller does not authorize the transfer
+    */
+    function onTransfer(address _from, address _to, uint256 _amount) external onlyToken returns (bool) {
+        return _isBalanceIncreaseAllowed(_to, _amount) && _transferableBalance(_from, getTimestamp()) >= _amount;
+    }
+
+    /**
+    * @dev Notifies the controller about an approval allowing the controller to react if desired
+    *      Initialization check is implicitly provided by `onlyToken()`.
+    * @return False if the controller does not authorize the approval
+    */
+    function onApprove(address, address, uint) external onlyToken returns (bool) {
+        return true;
+    }
+
+    /**
+    * @dev Called when ether is sent to the MiniMe Token contract
+    *      Initialization check is implicitly provided by `onlyToken()`.
+    * @return True if the ether is accepted, false for it to throw
+    */
+    function proxyPayment(address) external payable onlyToken returns (bool) {
+        return false;
+    }
+
     // Forwarding fns
 
     function isForwarder() external pure returns (bool) {
@@ -232,42 +269,6 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     function canForward(address _sender, bytes) public view returns (bool) {
         return hasInitialized() && token.balanceOf(_sender) > 0;
-    }
-
-    // ITokenController fns
-    // `onTransfer()`, `onApprove()`, and `proxyPayment()` are callbacks from the MiniMe token
-    // contract and are only meant to be called through the managed MiniMe token that gets assigned
-    // during initialization.
-
-    /*
-    * @dev Notifies the controller about a token transfer allowing the controller to decide whether
-    *      to allow it or react if desired (only callable from the token).
-    *      Initialization check is implicitly provided by `onlyToken()`.
-    * @param _from The origin of the transfer
-    * @param _to The destination of the transfer
-    * @param _amount The amount of the transfer
-    * @return False if the controller does not authorize the transfer
-    */
-    function onTransfer(address _from, address _to, uint256 _amount) public onlyToken returns (bool) {
-        return _isBalanceIncreaseAllowed(_to, _amount) && _transferableBalance(_from, getTimestamp()) >= _amount;
-    }
-
-    /**
-    * @dev Notifies the controller about an approval allowing the controller to react if desired
-    *      Initialization check is implicitly provided by `onlyToken()`.
-    * @return False if the controller does not authorize the approval
-    */
-    function onApprove(address, address, uint) public onlyToken returns (bool) {
-        return true;
-    }
-
-    /**
-    * @dev Called when ether is sent to the MiniMe Token contract
-    *      Initialization check is implicitly provided by `onlyToken()`.
-    * @return True if the ether is accepted, false for it to throw
-    */
-    function proxyPayment(address) public payable onlyToken returns (bool) {
-        return false;
     }
 
     // Getter fns
