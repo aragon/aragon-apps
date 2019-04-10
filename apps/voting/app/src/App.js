@@ -5,38 +5,12 @@ import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
 import VotePanelContent from './components/VotePanelContent'
 import NewVotePanelContent from './components/NewVotePanelContent'
-import AutoLink from './components/AutoLink'
 import AppLayout from './components/AppLayout'
 import NewVoteIcon from './components/NewVoteIcon'
-import LocalIdentityBadge from './components/LocalIdentityBadge/LocalIdentityBadge'
 
 import { IdentityProvider } from './identity-manager'
 import { SettingsProvider } from './vote-settings-manager'
-import { transformAddresses } from './web3-utils'
 import { AppLogicProvider, useAppLogic } from './app-logic'
-
-// Renders the text (metadata and description) of every vote.
-function renderVoteText(description) {
-  return description ? (
-    <AutoLink>
-      {description.split('\n').map((line, i) => (
-        <React.Fragment key={i}>
-          {transformAddresses(line, (part, isAddress, index) =>
-            // Transform detected addresses into identity badges.
-            isAddress ? (
-              <span title={part} key={index}>
-                <LocalIdentityBadge entity={part} />
-              </span>
-            ) : (
-              <span key={index}>{part}</span>
-            )
-          )}
-          <br />
-        </React.Fragment>
-      ))}
-    </AutoLink>
-  ) : null
-}
 
 function App() {
   const {
@@ -46,7 +20,7 @@ function App() {
     selectVote,
     newVotePanel,
     selectedVotePanel,
-  } = useAppLogic({ renderVoteText })
+  } = useAppLogic()
 
   return (
     <div css="min-width: 320px">

@@ -13,121 +13,11 @@ import {
   isVoteOpen,
   voteTypeFromContractEnum,
 } from './vote-utils'
-import { noop } from './utils'
 import appStateReducer from './app-state-reducer'
-import { useNow, usePromise } from './utils-hooks'
-import TOKEN_ABI from './abi/token-balanceOfAt.json'
+import { usePanelState } from './utils-hooks'
+import { useVotes } from './vote-hooks'
 import { VOTE_YEA } from './vote-types'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
-
-// Get the voting state of the connected account for every vote.
-export function useConnectedAccountVotes() {
-  const { api, appState, connectedAccount } = useAragonApi()
-  const [connectedAccountVotes, setConnectedAccountVotes] = useState(new Map())
-
-  const { votes } = appState
-
-  useEffect(() => {
-    if (!connectedAccount || !votes) {
-      setConnectedAccountVotes(new Map())
-      return
-    }
-
-    let cancelled = false
-    Promise.all(
-      votes.map(({ voteId }) =>
-        api
-          .call('getVoterState', voteId, connectedAccount)
-          .toPromise()
-          .then(voteTypeFromContractEnum)
-          .then(voteType => [voteId, voteType])
-      )
-    ).then(voteStates => {
-      if (!cancelled) {
-        setConnectedAccountVotes(new Map(voteStates))
-      }
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [api, votes, connectedAccount])
-
-  return connectedAccountVotes
-}
-
-// Get the votes array ready to be used in the app.
-export function useVotes(renderVoteText) {
-  const { votes } = useAppState()
-  const now = useNow()
-  const connectedAccountVotes = useConnectedAccountVotes()
-
-  return useMemo(() => {
-    if (!votes) {
-      return []
-    }
-    return votes.map(vote => ({
-      ...vote,
-      data: {
-        ...vote.data,
-
-        open: isVoteOpen(vote, now),
-
-        // Render text fields
-        descriptionNode: renderVoteText(vote.data.description),
-        metadataNode: renderVoteText(vote.data.metadata),
-      },
-      userAccountVote: connectedAccountVotes.get(vote.voteId),
-    }))
-  }, [votes, connectedAccountVotes, now, renderVoteText])
-}
-
-// Get the extended data related to a vote
-export function useExtendedVoteData(vote) {
-  const {
-    api,
-    connectedAccount,
-    appState: { tokenDecimals },
-  } = useAragonApi()
-
-  const tokenContract = useTokenContract()
-
-  const canExecute = usePromise(
-    () => getCanExecute(vote, api),
-    [vote && vote.voteId, api],
-    false
-  )
-
-  const canUserVote = usePromise(
-    () => getCanVote(vote, connectedAccount, api),
-    [vote && vote.voteId, connectedAccount, api],
-    false
-  )
-
-  const userBalance = usePromise(
-    () => getUserBalance(vote, connectedAccount, tokenContract, tokenDecimals),
-    [vote && vote.voteId, connectedAccount, tokenContract, tokenDecimals],
-    -1
-  )
-
-  return { canExecute, canUserVote, userBalance }
-}
-
-// Load and returns the token contract, or null if not loaded yet.
-export function useTokenContract() {
-  const api = useApi()
-  const { tokenAddress } = useAppState()
-  const [contract, setContract] = useState(null)
-
-  useEffect(() => {
-    // We assume there is never any reason to set the contract back to null.
-    if (api && tokenAddress) {
-      setContract(api.external(tokenAddress, TOKEN_ABI))
-    }
-  }, [api, tokenAddress])
-
-  return contract
-}
 
 // Get the vote currently selected, or null otherwise.
 export function useSelectedVote(votes) {
@@ -192,41 +82,6 @@ export function useExecuteAction(onDone) {
   )
 }
 
-// Handles the state of a panel.
-export function usePanelState({ onDidOpen = noop, onDidClose = noop } = {}) {
-  const [visible, setVisible] = useState(false)
-
-  // `didOpen` is set to `true` when the opening transition of the panel has
-  // ended, `false` otherwise. This is useful to know when to start inner
-  // transitions in the panel content.
-  const [didOpen, setDidOpen] = useState(false)
-
-  const requestOpen = useCallback(() => {
-    setVisible(true)
-    setDidOpen(false)
-  }, [setVisible, setDidOpen])
-
-  const requestClose = useCallback(() => {
-    setVisible(false)
-  }, [setVisible])
-
-  // To be passed to the onTransitionEnd prop of SidePanel.
-  const onTransitionEnd = useCallback(
-    opened => {
-      if (opened) {
-        onDidOpen()
-        setDidOpen(true)
-      } else {
-        onDidClose()
-        setDidOpen(false)
-      }
-    },
-    [onDidClose, onDidOpen, setDidOpen]
-  )
-
-  return { requestOpen, requestClose, visible, didOpen, onTransitionEnd }
-}
-
 // Handles the state of the selected vote panel.
 export function useSelectedVotePanel(selectedVote, selectVote) {
   const selectedVoteId = selectedVote ? selectedVote.voteId : '-1'
@@ -253,8 +108,8 @@ export function useSelectedVotePanel(selectedVote, selectVote) {
 }
 
 // Handles the main logic of the app.
-export function useAppLogic({ renderVoteText }) {
-  const votes = useVotes(renderVoteText)
+export function useAppLogic() {
+  const votes = useVotes()
   const [selectedVote, selectVote] = useSelectedVote(votes)
   const newVotePanel = usePanelState()
   const selectedVotePanel = useSelectedVotePanel(selectedVote, selectVote)

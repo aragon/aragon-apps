@@ -4,6 +4,7 @@ import { Badge, theme } from '@aragon/ui'
 import VotingCard from '../components/VotingCard/VotingCard'
 import VotingCardGroup from '../components/VotingCard/VotingCardGroup'
 import VoteStatus from '../components/VoteStatus'
+import VoteText from '../components/VoteText'
 import { VOTE_YEA, VOTE_NAY } from '../vote-types'
 
 class Votes extends React.PureComponent {
@@ -36,35 +37,34 @@ class Votes extends React.PureComponent {
               count={votes.length}
               key={groupName}
             >
-              {votes.map(vote => (
-                <VotingCard
-                  key={vote.voteId}
-                  id={vote.voteId}
-                  status={
-                    vote.open ? null : <VoteStatus vote={vote} cardStyle />
-                  }
-                  endDate={vote.data.endDate}
-                  open={vote.data.open}
-                  label={
-                    vote.data.metadata
-                      ? vote.data.metadataNode
-                      : vote.data.descriptionNode
-                  }
-                  votingPower={vote.numData.votingPower}
-                  onOpen={onSelectVote}
-                  options={[
-                    {
-                      label: this.optionLabel('Yes', vote, VOTE_YEA),
-                      power: vote.numData.yea,
-                    },
-                    {
-                      label: this.optionLabel('No', vote, VOTE_NAY),
-                      power: vote.numData.nay,
-                      color: theme.negative,
-                    },
-                  ]}
-                />
-              ))}
+              {votes.map(vote => {
+                const { voteId } = vote
+                const { votingPower, yea, nay } = vote.numData
+                const { endDate, open, metadata, description } = vote.data
+                return (
+                  <VotingCard
+                    key={voteId}
+                    id={voteId}
+                    status={open ? null : <VoteStatus vote={vote} cardStyle />}
+                    endDate={endDate}
+                    open={open}
+                    label={<VoteText text={metadata || description} />}
+                    votingPower={votingPower}
+                    onOpen={onSelectVote}
+                    options={[
+                      {
+                        label: this.optionLabel('Yes', vote, VOTE_YEA),
+                        power: yea,
+                      },
+                      {
+                        label: this.optionLabel('No', vote, VOTE_NAY),
+                        power: nay,
+                        color: theme.negative,
+                      },
+                    ]}
+                  />
+                )
+              })}
             </VotingCardGroup>
           ) : null
         )}

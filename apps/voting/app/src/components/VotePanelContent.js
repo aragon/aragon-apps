@@ -17,10 +17,11 @@ import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { round } from '../math-utils'
 import { pluralize } from '../utils'
 import { getQuorumProgress } from '../vote-utils'
-import { useExtendedVoteData } from '../voting-app'
+import { useExtendedVoteData } from '../vote-hooks'
 import VoteSummary from './VoteSummary'
 import VoteStatus from './VoteStatus'
 import VoteSuccess from './VoteSuccess'
+import VoteText from './VoteText'
 import SummaryBar from './SummaryBar'
 
 const formatDate = date =>
@@ -62,14 +63,7 @@ const VotePanelContent = React.memo(
       return null
     }
 
-    const {
-      creator,
-      endDate,
-      metadata,
-      metadataNode,
-      descriptionNode,
-      open,
-    } = vote.data
+    const { creator, endDate, open, metadata, description } = vote.data
     const { minAcceptQuorum } = vote.numData
     const quorumProgress = getQuorumProgress(vote)
 
@@ -118,16 +112,18 @@ const VotePanelContent = React.memo(
                   hyphens: auto;
                 `}
               >
-                {metadataNode}
+                <VoteText text={metadata} />
               </p>
             </React.Fragment>
           )}
-          {descriptionNode && (
+          {description && (
             <React.Fragment>
               <h2>
                 <Label>Description</Label>
               </h2>
-              <p>{descriptionNode}</p>
+              <p>
+                <VoteText text={description} />
+              </p>
             </React.Fragment>
           )}
         </Part>
