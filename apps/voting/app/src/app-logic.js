@@ -1,18 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  AragonApi,
-  useAragonApi,
-  useApi,
-  useAppState,
-  useConnectedAccount,
-} from '@aragon/api-react'
-import {
-  getCanExecute,
-  getCanVote,
-  getUserBalance,
-  isVoteOpen,
-  voteTypeFromContractEnum,
-} from './vote-utils'
+import { AragonApi, useApi, useAppState } from '@aragon/api-react'
 import appStateReducer from './app-state-reducer'
 import { usePanelState } from './utils-hooks'
 import { useVotes } from './vote-hooks'

@@ -82,21 +82,15 @@ const VotingCard = React.memo(
   },
   (prevProps, nextProps) => {
     const prevVote = prevProps.vote
-    const prevVoteData = prevVote.data
-    const prevVoteNumData = prevVote.numData
-
     const nextVote = nextProps.vote
-    const nextVoteData = nextVote.data
-    const nextVoteNumData = nextVote.numData
-
     return (
       prevProps.onVote === nextProps.onVote &&
       prevVote.voteId === nextVote.voteId &&
       prevVote.connectedAccountVote === nextVote.connectedAccountVote &&
-      prevVoteData.endDate === nextVoteData.endDate &&
-      prevVoteData.open === nextVoteData.open &&
-      prevVoteData.metadata === nextVoteData.metadata &&
-      prevVoteData.description === nextVoteData.description &&
+      prevVote.data.endDate === nextVote.data.endDate &&
+      prevVote.data.open === nextVote.data.open &&
+      prevVote.data.metadata === nextVote.data.metadata &&
+      prevVote.data.description === nextVote.data.description &&
       prevVote.numData.votingPower === nextVote.numData.votingPower &&
       prevVote.numData.yea === nextVote.numData.yea &&
       prevVote.numData.nay === nextVote.numData.nay

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAragonApi, useAppState } from '@aragon/api-react'
 import {
   getCanExecute,

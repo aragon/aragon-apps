@@ -1,5 +1,4 @@
 import React from 'react'
-import styled from 'styled-components'
 import VotingCard from '../components/VotingCard/VotingCard'
 import VotingCardGroup from '../components/VotingCard/VotingCardGroup'
 
