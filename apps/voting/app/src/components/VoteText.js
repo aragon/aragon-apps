@@ -7,7 +7,6 @@ import AutoLink from '../components/AutoLink'
 // Usually vote.data.metadata and vote.data.description.
 const VoteText = React.memo(
   ({ text = '' }) => {
-    console.log('TEXT', text)
     // If there is no text, the component doesn’t render anything.
     if (!text.trim()) {
       return null

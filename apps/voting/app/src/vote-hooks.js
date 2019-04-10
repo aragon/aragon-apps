@@ -8,6 +8,7 @@ import {
   voteTypeFromContractEnum,
 } from './vote-utils'
 import { useNow, usePromise } from './utils-hooks'
+import { VOTE_ABSENT } from './vote-types'
 import TOKEN_ABI from './abi/token-balanceOfAt.json'
 
 // Get the votes array ready to be used in the app.
@@ -29,7 +30,8 @@ export function useVotes() {
         description: vote.data.description || '',
         open: isVoteOpen(vote, now),
       },
-      userAccountVote: connectedAccountVotes.get(vote.voteId),
+      connectedAccountVote:
+        connectedAccountVotes.get(vote.voteId) || VOTE_ABSENT,
     }))
   }, [votes, connectedAccountVotes, now])
 }
