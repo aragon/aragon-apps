@@ -1,18 +1,18 @@
 import React from 'react'
 import styled from 'styled-components'
 import { format } from 'date-fns'
+import { useNetwork } from '@aragon/api-react'
 import {
   TableRow,
   TableCell,
   ContextMenu,
   ContextMenuItem,
-  IdentityBadge,
   blockExplorerUrl,
   theme,
 } from '@aragon/ui'
-import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
 import IconTokens from './icons/IconTokens'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
 class TransferRow extends React.PureComponent {
   handleViewTransaction = () => {
@@ -60,9 +60,12 @@ class TransferRow extends React.PureComponent {
         <TableRow>
           <StyledTableCell>
             <Grid>
-              <div>
+              <div css="overflow: hidden">
                 <div css="display: flex">
-                  <IdentityBadge networkType={network.type} entity={entity} />
+                  <LocalIdentityBadge
+                    networkType={network.type}
+                    entity={entity}
+                  />
                 </div>
               </div>
               <time dateTime={formattedDate} title={formattedDate}>
@@ -86,7 +89,11 @@ class TransferRow extends React.PureComponent {
           </time>
         </NoWrapCell>
         <NoWrapCell>
-          <IdentityBadge networkType={network.type} entity={entity} />
+          <LocalIdentityBadge
+            networkType={network.type}
+            entity={entity}
+            address={entity}
+          />
         </NoWrapCell>
         <NoWrapCell title={reference} css="position: relative">
           <TextOverflow
@@ -122,6 +129,10 @@ class TransferRow extends React.PureComponent {
 }
 
 const StyledTableCell = styled(TableCell)`
+  max-width: 0;
+  width: 100%;
+  overflow: hidden;
+
   &&& {
     border-left-width: 0;
     border-right-width: 0;
@@ -140,8 +151,9 @@ const Amount = styled.span`
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 1fr auto;
+  grid-column-gap: 10px;
   width: 100%;
 
   time,
@@ -160,4 +172,7 @@ const TextOverflow = styled.div`
   text-overflow: ellipsis;
 `
 
-export default provideNetwork(TransferRow)
+export default props => {
+  const network = useNetwork()
+  return <TransferRow network={network} {...props} />
+}
