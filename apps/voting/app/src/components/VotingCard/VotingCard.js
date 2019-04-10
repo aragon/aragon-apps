@@ -48,8 +48,6 @@ const VotingCard = React.memo(
       connectedAccountVote,
     ])
 
-    console.log('RENDER', voteId)
-
     return (
       <Main>
         <Header>
@@ -90,14 +88,6 @@ const VotingCard = React.memo(
     const nextVote = nextProps.vote
     const nextVoteData = nextVote.data
     const nextVoteNumData = nextVote.numData
-
-    if (prevVote.connectedAccountVote !== nextVote.connectedAccountVote) {
-      console.log(
-        nextVote.voteId,
-        prevVote.connectedAccountVote,
-        nextVote.connectedAccountVote
-      )
-    }
 
     return (
       prevProps.onVote === nextProps.onVote &&
