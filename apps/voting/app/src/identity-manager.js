@@ -17,8 +17,8 @@ function useResolveLocalIdentity() {
   )
 }
 
-// Request the local identity modal
-function useShowLocalIdentityModal() {
+// Request a modification of the local identity
+function useModifyLocalIdentity() {
   const api = useApi()
   return useCallback(
     address => api.requestAddressIdentityModification(address).toPromise(),
@@ -26,12 +26,12 @@ function useShowLocalIdentityModal() {
   )
 }
 
-// The main identity hook, exposing `name` and `handleShowLocalIdentityModal`
-// based on the provided address.
+// The main identity hook, exposing `name`
+// and `handleModifyLocalIdentity` based on the provided address.
 export function useIdentity(address) {
   const [name, setName] = React.useState(null)
   const resolveLocalIdentity = useResolveLocalIdentity()
-  const showLocalIdentityModal = useShowLocalIdentityModal()
+  const modifyLocalIdentity = useModifyLocalIdentity()
 
   const { updates$ } = React.useContext(IdentityContext)
 
@@ -39,9 +39,10 @@ export function useIdentity(address) {
     setName(metadata ? metadata.name : null)
   }, [])
 
-  const handleShowLocalIdentityModal = address => {
-    // Emit an event whenever the modal is closed (when the promise resolves)
-    return showLocalIdentityModal(address).then(() => updates$.next(address))
+  const handleModifyLocalIdentity = address => {
+    // Emit an event whenever the address
+    // has been modified (when the promise resolves).
+    return modifyLocalIdentity(address).then(() => updates$.next(address))
   }
 
   React.useEffect(() => {
@@ -49,7 +50,7 @@ export function useIdentity(address) {
 
     const subscription = updates$.subscribe(updatedAddress => {
       if (updatedAddress.toLowerCase() === address.toLowerCase()) {
-        // Resolve and update state when the identity have been updated
+        // Resolve and update state when the identity have been updated.
         resolveLocalIdentity(address).then(handleNameChange)
       }
     })
@@ -58,7 +59,7 @@ export function useIdentity(address) {
     }
   }, [address, handleNameChange, resolveLocalIdentity, updates$])
 
-  return [name, handleShowLocalIdentityModal]
+  return [name, handleModifyLocalIdentity]
 }
 
 export const IdentityProvider = ({ children }) => {
