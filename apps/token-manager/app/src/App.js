@@ -109,7 +109,7 @@ class App extends React.PureComponent {
               afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
               onMenuOpen={requestMenu}
               mainButton={{
-                label: 'Assign tokens',
+                label: 'Add tokens',
                 icon: <AssignTokensIcon />,
                 onClick: this.handleLaunchAssignTokensNoHolder,
               }}
@@ -139,7 +139,7 @@ class App extends React.PureComponent {
             <SidePanel
               title={
                 assignTokensConfig.mode === 'assign'
-                  ? 'Assign tokens'
+                  ? 'Add tokens'
                   : 'Remove tokens'
               }
               opened={sidepanelOpened}
