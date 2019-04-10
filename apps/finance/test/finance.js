@@ -55,9 +55,10 @@ contract('Finance App', accounts => {
       FINANCE_BUDGET: 'FINANCE_BUDGET',
       FINANCE_COMPLETE_TRANSITION: 'FINANCE_COMPLETE_TRANSITION',
       FINANCE_DEPOSIT_AMOUNT_ZERO: 'FINANCE_DEPOSIT_AMOUNT_ZERO',
+      FINANCE_ETH_VALUE_MISMATCH: 'FINANCE_ETH_VALUE_MISMATCH',
       FINANCE_EXECUTE_PAYMENT_NUM: 'FINANCE_EXECUTE_PAYMENT_NUM',
       FINANCE_EXECUTE_PAYMENT_TIME: 'FINANCE_EXECUTE_PAYMENT_TIME',
-      FINANCE_INIT_PERIOD_TOO_SHORT: 'FINANCE_INIT_PERIOD_TOO_SHORT',
+      FINANCE_SET_PERIOD_TOO_SHORT: 'FINANCE_SET_PERIOD_TOO_SHORT',
       FINANCE_NEW_PAYMENT_AMOUNT_ZERO: 'FINANCE_NEW_PAYMENT_AMOUNT_ZERO',
       FINANCE_NEW_PAYMENT_EXECS_ZERO: 'FINANCE_NEW_PAYMENT_EXECS_ZERO',
       FINANCE_NEW_PAYMENT_IMMEDIATE: 'FINANCE_NEW_PAYMENT_IMMEDIATE',
@@ -205,7 +206,7 @@ contract('Finance App', accounts => {
         const badPeriod = 60 * 60 * 24 - 1
         const { financeApp } = await newProxyFinance()
 
-        await assertRevert(financeApp.initialize(vault.address, badPeriod), errors.FINANCE_INIT_PERIOD_TOO_SHORT)
+        await assertRevert(financeApp.initialize(vault.address, badPeriod), errors.FINANCE_SET_PERIOD_TOO_SHORT)
     })
 
     it('adds new token to budget', async () => {
@@ -255,6 +256,11 @@ contract('Finance App', accounts => {
         assert.equal(await finance.currentPeriodId(), 1, 'should have transitioned 1 periods')
     })
 
+    it('fails on changing period duration to too short', async () => {
+        const badPeriod = 60 * 60 * 24 - 1
+        await assertRevert(finance.setPeriodDuration(badPeriod), errors.FINANCE_SET_PERIOD_TOO_SHORT)
+    })
+
     for (const { title, tokenContract} of tokenTestGroups) {
         context(`ERC20 (${title}) deposits`, () => {
             const transferAmount = 5
@@ -292,10 +298,10 @@ contract('Finance App', accounts => {
     }
 
     context('ETH deposits', () => {
+        const reference = 'deposit reference'
         const sentWei = 10
 
         it('records deposits using deposit function', async () => {
-            const reference = 'deposit reference'
             const receipt = await finance.deposit(ETH, sentWei, reference, { value: sentWei })
 
             const transactionId = receipt.logs.filter(log => log.event == 'NewTransaction')[0].args.transactionId
@@ -330,6 +336,10 @@ contract('Finance App', accounts => {
             assert.isTrue(incoming, 'tx should be incoming')
             assert.equal(date, 1, 'date should be correct')
             assert.equal(getEventData(receipt, 'NewTransaction', 'reference'), 'Ether transfer to Finance app', 'ref should be correct')
+        })
+
+        it('fails to deposit if amount does not match value', async () => {
+            await assertRevert(finance.deposit(ETH, sentWei - 1, reference, { value: sentWei }), errors.FINANCE_ETH_VALUE_MISMATCH)
         })
     })
 
