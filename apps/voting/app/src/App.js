@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Main, SidePanel, observe } from '@aragon/ui'
 import BN from 'bn.js'
+import { map } from 'rxjs/operators'
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
 import tokenAbi from './abi/token-balanceOfAt.json'
@@ -10,6 +11,7 @@ import NewVotePanelContent from './components/NewVotePanelContent'
 import AutoLink from './components/AutoLink'
 import AppLayout from './components/AppLayout'
 import NewVoteIcon from './components/NewVoteIcon'
+import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 import { networkContextType } from './utils/provideNetwork'
 import { settingsContextType } from './utils/provideSettings'
 import { hasLoadedVoteSettings } from './vote-settings'
@@ -89,13 +91,11 @@ class App extends React.Component {
     this.setState({
       userAccountVotes: new Map(
         await Promise.all(
-          votes.map(
-            vote =>
-              new Promise((resolve, reject) => {
-                app
-                  .call('getVoterState', vote.voteId, userAccount)
-                  .subscribe(result => resolve([vote.voteId, result]), reject)
-              })
+          votes.map(vote =>
+            app
+              .call('getVoterState', vote.voteId, userAccount)
+              .toPromise()
+              .then(result => [vote.voteId, result])
           )
         )
       ),
@@ -141,6 +141,15 @@ class App extends React.Component {
 
   handleMenuPanelOpen = () => {
     this.props.sendMessageToWrapper('menuPanel', true)
+  }
+
+  handleResolveLocalIdentity = address => {
+    return this.props.app.resolveAddressIdentity(address).toPromise()
+  }
+  handleShowLocalIdentityModal = address => {
+    return this.props.app
+      .requestAddressIdentityModification(address)
+      .toPromise()
   }
 
   shortenAddresses(label) {
@@ -213,122 +222,131 @@ class App extends React.Component {
         ? null
         : preparedVotes.find(vote => vote.voteId === currentVoteId)
     const hasCurrentVote = appStateReady && Boolean(currentVote)
-
     return (
-      <div css="min-width: 320px">
-        <Main assetsUrl="./aragon-ui">
-          <AppLayout
-            title="Voting"
-            onMenuOpen={this.handleMenuPanelOpen}
-            mainButton={{
-              label: 'New vote',
-              icon: <NewVoteIcon />,
-              onClick: this.handleCreateVoteOpen,
-            }}
+      <Main assetsUrl="./aragon-ui">
+        <div css="min-width: 320px">
+          <IdentityProvider
+            onResolve={this.handleResolveLocalIdentity}
+            onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
           >
-            {appStateReady && votes.length > 0 ? (
-              <Votes votes={preparedVotes} onSelectVote={this.handleVoteOpen} />
-            ) : (
-              <EmptyState onActivate={this.handleCreateVoteOpen} />
-            )}
-          </AppLayout>
-          <SidePanel
-            title={`Vote #${currentVoteId} (${
-              currentVote && currentVote.data.open ? 'Open' : 'Closed'
-            })`}
-            opened={hasCurrentVote && !createVoteVisible && voteVisible}
-            onClose={this.handleVoteClose}
-            onTransitionEnd={this.handleVoteTransitionEnd}
-          >
-            {hasCurrentVote && (
-              <VotePanelContent
-                app={app}
-                vote={currentVote}
-                user={userAccount}
-                ready={voteSidebarOpened}
-                tokenContract={tokenContract}
-                tokenDecimals={tokenDecimals}
-                tokenSymbol={tokenSymbol}
-                onVote={this.handleVote}
-                onExecute={this.handleExecute}
-              />
-            )}
-          </SidePanel>
+            <AppLayout
+              title="Voting"
+              onMenuOpen={this.handleMenuPanelOpen}
+              mainButton={{
+                label: 'New vote',
+                icon: <NewVoteIcon />,
+                onClick: this.handleCreateVoteOpen,
+              }}
+            >
+              {appStateReady && votes.length > 0 ? (
+                <Votes
+                  votes={preparedVotes}
+                  onSelectVote={this.handleVoteOpen}
+                />
+              ) : (
+                <EmptyState onActivate={this.handleCreateVoteOpen} />
+              )}
+            </AppLayout>
+            <SidePanel
+              title={`Vote #${currentVoteId} (${
+                currentVote && currentVote.data.open ? 'Open' : 'Closed'
+              })`}
+              opened={hasCurrentVote && !createVoteVisible && voteVisible}
+              onClose={this.handleVoteClose}
+              onTransitionEnd={this.handleVoteTransitionEnd}
+            >
+              {hasCurrentVote && (
+                <VotePanelContent
+                  app={app}
+                  vote={currentVote}
+                  user={userAccount}
+                  ready={voteSidebarOpened}
+                  tokenContract={tokenContract}
+                  tokenDecimals={tokenDecimals}
+                  tokenSymbol={tokenSymbol}
+                  onVote={this.handleVote}
+                  onExecute={this.handleExecute}
+                />
+              )}
+            </SidePanel>
 
-          <SidePanel
-            title="New Vote"
-            opened={createVoteVisible}
-            onClose={this.handleCreateVoteClose}
-          >
-            <NewVotePanelContent
+            <SidePanel
+              title="New Vote"
               opened={createVoteVisible}
-              onCreateVote={this.handleCreateVote}
-            />
-          </SidePanel>
-        </Main>
-      </div>
+              onClose={this.handleCreateVoteClose}
+            >
+              <NewVotePanelContent
+                opened={createVoteVisible}
+                onCreateVote={this.handleCreateVote}
+              />
+            </SidePanel>
+          </IdentityProvider>
+        </div>
+      </Main>
     )
   }
 }
 
 export default observe(
   observable =>
-    observable.map(state => {
-      const appStateReady = hasLoadedVoteSettings(state)
-      if (!appStateReady) {
+    observable.pipe(
+      map(state => {
+        const appStateReady = hasLoadedVoteSettings(state)
+        if (!appStateReady) {
+          return {
+            ...state,
+            appStateReady,
+          }
+        }
+
+        const { pctBase, tokenDecimals, voteTime, votes } = state
+
+        const pctBaseNum = parseInt(pctBase, 10)
+        const tokenDecimalsNum = parseInt(tokenDecimals, 10)
+        const tokenDecimalsBaseNum = Math.pow(10, tokenDecimalsNum)
+
         return {
           ...state,
+
           appStateReady,
+          pctBase: new BN(pctBase),
+          tokenDecimals: new BN(tokenDecimals),
+
+          numData: {
+            pctBase: pctBaseNum,
+            tokenDecimals: tokenDecimalsNum,
+          },
+
+          // Transform the vote data for the frontend
+          votes: votes
+            ? votes.map(vote => {
+                const { data } = vote
+                return {
+                  ...vote,
+                  data: {
+                    ...data,
+                    endDate: new Date(data.startDate + voteTime),
+                    minAcceptQuorum: new BN(data.minAcceptQuorum),
+                    nay: new BN(data.nay),
+                    supportRequired: new BN(data.supportRequired),
+                    votingPower: new BN(data.votingPower),
+                    yea: new BN(data.yea),
+                  },
+                  numData: {
+                    minAcceptQuorum:
+                      parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
+                    nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
+                    supportRequired:
+                      parseInt(data.supportRequired, 10) / pctBaseNum,
+                    votingPower:
+                      parseInt(data.votingPower, 10) / tokenDecimalsBaseNum,
+                    yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,
+                  },
+                }
+              })
+            : [],
         }
-      }
-
-      const { pctBase, tokenDecimals, voteTime, votes } = state
-
-      const pctBaseNum = parseInt(pctBase, 10)
-      const tokenDecimalsNum = parseInt(tokenDecimals, 10)
-      const tokenDecimalsBaseNum = Math.pow(10, tokenDecimalsNum)
-
-      return {
-        ...state,
-
-        appStateReady,
-        pctBase: new BN(pctBase),
-        tokenDecimals: new BN(tokenDecimals),
-
-        numData: {
-          pctBase: pctBaseNum,
-          tokenDecimals: tokenDecimalsNum,
-        },
-
-        // Transform the vote data for the frontend
-        votes: votes
-          ? votes.map(vote => {
-              const { data } = vote
-              return {
-                ...vote,
-                data: {
-                  ...data,
-                  endDate: new Date(data.startDate + voteTime),
-                  minAcceptQuorum: new BN(data.minAcceptQuorum),
-                  nay: new BN(data.nay),
-                  supportRequired: new BN(data.supportRequired),
-                  votingPower: new BN(data.votingPower),
-                  yea: new BN(data.yea),
-                },
-                numData: {
-                  minAcceptQuorum:
-                    parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
-                  nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
-                  supportRequired:
-                    parseInt(data.supportRequired, 10) / pctBaseNum,
-                  votingPower:
-                    parseInt(data.votingPower, 10) / tokenDecimalsBaseNum,
-                  yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,
-                },
-              }
-            })
-          : [],
-      }
-    }),
+      })
+    ),
   {}
 )(App)

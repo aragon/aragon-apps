@@ -4,8 +4,6 @@ import { font, springs } from '@aragon/ui'
 import { Transition, animated } from 'react-spring'
 import arrow from './assets/arrow.svg'
 
-const noop = () => {}
-
 class ToggleContent extends React.Component {
   state = { opened: false }
   handleClick = () => {
