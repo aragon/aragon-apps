@@ -99,7 +99,6 @@ const VotingCard = React.memo(
 )
 
 VotingCard.defaultProps = {
-  options: [],
   onOpen: () => {},
 }
 
