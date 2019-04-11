@@ -1,6 +1,6 @@
 {
   "name": "Finance",
-  "description": "Manage organization assets: budget spending and record financial transactions.",
+  "description": "Send and receive money and other financial assets.",
   "icons": [
     { "src": "/meta/icon-80.svg", "sizes": "80x80" },
     { "src": "/meta/icon-22.svg", "sizes": "22x22" }
