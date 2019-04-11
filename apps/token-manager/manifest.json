@@ -1,6 +1,6 @@
 {
   "name": "Token Manager",
-  "description": "Controls an organization token allowing to mint new tokens, assign them and create vestings.",
+  "description": "Manage an organization's token supply and distribution",
   "icons": [
     { "src": "/meta/icon-80.svg", "sizes": "80x80" },
     { "src": "/meta/icon-22.svg", "sizes": "22x22" }
