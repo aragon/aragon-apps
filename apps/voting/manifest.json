@@ -1,6 +1,6 @@
 {
   "name": "Voting",
-  "description": "Create votes that execute actions on behalf of token holders.",
+  "description": "Create and vote on proposals",
   "icons": [
     { "src": "/meta/icon-80.svg", "sizes": "80x80" },
     { "src": "/meta/icon-22.svg", "sizes": "22x22" }
