@@ -43,7 +43,8 @@ class App extends React.Component {
     this.handleNewTransferClose()
   }
   handleDeposit = async (tokenAddress, amount, reference) => {
-    const { api, periodDuration, periods } = this.props
+    const { api, appState } = this.props
+    const { periodDuration, periods } = appState
 
     let intentParams
     if (tokenAddress === ETHER_TOKEN_FAKE_ADDRESS) {
