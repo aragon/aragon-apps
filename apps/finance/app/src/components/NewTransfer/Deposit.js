@@ -63,6 +63,12 @@ class Deposit extends React.Component {
   state = {
     ...initialState,
   }
+  componentWillReceiveProps({ opened }) {
+    if (!opened && this.props.opened) {
+      // Panel closing; reset state
+      this.setState({ ...initialState })
+    }
+  }
   handleAmountUpdate = event => {
     this.validateInputs({
       amount: {
