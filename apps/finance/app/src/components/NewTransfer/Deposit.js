@@ -63,6 +63,12 @@ class Deposit extends React.Component {
   state = {
     ...initialState,
   }
+  componentWillReceiveProps({ opened }) {
+    if (!opened && this.props.opened) {
+      // Panel closing; reset state
+      this.setState({ ...initialState })
+    }
+  }
   handleAmountUpdate = event => {
     this.validateInputs({
       amount: {
@@ -250,10 +256,14 @@ class Deposit extends React.Component {
     const selectedTokenIsAddress = isAddress(selectedToken.value)
     const showTokenBadge = selectedTokenIsAddress && selectedToken.coerced
     const tokenBalanceMessage = selectedToken.data.userBalance
-      ? `You have ${fromDecimals(
-          selectedToken.data.userBalance,
-          selectedToken.data.decimals
-        )} ${selectedToken.data.symbol} available`
+      ? `You have ${
+          selectedToken.data.userBalance === '0'
+            ? 'no'
+            : fromDecimals(
+                selectedToken.data.userBalance,
+                selectedToken.data.decimals
+              )
+        } ${selectedToken.data.symbol} available`
       : ''
 
     const ethSelected =
