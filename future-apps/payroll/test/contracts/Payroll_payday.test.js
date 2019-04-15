@@ -282,7 +282,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 })
 
                 context('when the requested amount is lower than the total owed salary', () => {
-                  context('when the requested amount is represents less than a second of the earnings', () => {
+                  context('when the requested amount represents less than a second of the earnings', () => {
                     const requestedAmount = salary / 2
 
                     it('updates the last payroll date by one second', async () => {
@@ -295,7 +295,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                     })
                   })
 
-                  context('when the requested amount is represents more than a second of the earnings', () => {
+                  context('when the requested amount represents more than a second of the earnings', () => {
                     const requestedAmount = currentOwedSalary / 2
 
                     itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, currentOwedSalary)

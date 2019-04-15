@@ -600,7 +600,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         uint256 timeDiff = _payedAmount.div(employee.denominationTokenSalary);
 
-        // We check if the division was perfect, and if not, taking its ceiling to avoid giving away tiny amounts of salary.
+        // We check if the division was perfect, and if not, take its ceiling to avoid giving away tiny amounts of salary.
         // As an employee, you may lose up to a second's worth of payroll if you use the "request partial amount" feature.
 
         if (timeDiff.mul(employee.denominationTokenSalary) != _payedAmount) {
