@@ -5,7 +5,7 @@ import {
   cleanup,
   // fireEvent,
   render,
-  waitForElement
+  waitForElement,
 } from 'react-testing-library'
 import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
@@ -47,7 +47,7 @@ describe('Request Salary panel', () => {
     const { loadings } = await renderSummary(emptyState)
 
     // ; ASI workarround
-    ;['year','remaining','bill'].forEach(row => {
+    ;['year', 'remaining', 'bill'].forEach(row => {
       expect(loadings[row]).not.toBeNull()
       expect(loadings[row]).toBeVisible()
     })
@@ -59,9 +59,9 @@ describe('Request Salary panel', () => {
     // ; ASI workarround
     ;[
       { name: 'year', amount: '440.72 USD' },
-      { name:'remaining', amount: '399,559.28 USD' },
-      { name:'bill', amount: '400,000 USD' },
-      { name:'reserves', amount: '+6,937.98 USD' }
+      { name: 'remaining', amount: '399,559.28 USD' },
+      { name: 'bill', amount: '400,000 USD' },
+      { name: 'reserves', amount: '+6,937.98 USD' },
     ].forEach(row => {
       expect(amounts[row.name]).not.toBeNull()
       expect(amounts[row.name]).toBeVisible()
@@ -70,14 +70,14 @@ describe('Request Salary panel', () => {
   })
 })
 
-async function renderSummary (emptyState = false) {
+async function renderSummary(emptyState = false) {
   let app = mockApp()
 
   if (emptyState) {
     const emptyState = {
       ...state,
       employees: null,
-      payments: null
+      payments: null,
     }
     app = mockApp(emptyState) // empty state
   }
@@ -98,7 +98,7 @@ async function renderSummary (emptyState = false) {
     year: year.querySelector('span:first-of-type'),
     remaining: remaining.querySelector('span:first-of-type'),
     bill: bill.querySelector('span:first-of-type'),
-    reserves: reserves.querySelector('span:first-of-type')
+    reserves: reserves.querySelector('span:first-of-type'),
   }
 
   let amounts

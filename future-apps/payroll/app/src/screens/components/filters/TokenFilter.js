@@ -5,20 +5,16 @@ import { DropDown } from '@aragon/ui'
 import InlineField from '../../../components/Field/InlineField'
 
 class TokenFilter extends React.Component {
-
   render() {
     const { active, onChange, options } = this.props
 
-    const _options = [
-      { label: 'All', filter: null },
-      ...options
-    ]
+    const _options = [{ label: 'All', filter: null }, ...options]
 
-    const activeIndex = active &&
-    _options.indexOf(_options.find(f => f.label === active.label))
+    const activeIndex =
+      active && _options.indexOf(_options.find(f => f.label === active.label))
 
     return (
-      <InlineField label='Token:'>
+      <InlineField label="Token:">
         <DropDown
           items={_options.map(opt => opt.label)}
           active={activeIndex || 0}
@@ -27,7 +23,7 @@ class TokenFilter extends React.Component {
               onChange(_options[index])
             }
           }}
-          />
+        />
       </InlineField>
     )
   }
@@ -36,10 +32,10 @@ class TokenFilter extends React.Component {
 TokenFilter.propTypes = {
   active: PropTypes.shape({
     label: PropTypes.string.isRequired,
-    filter: PropTypes.func
+    filter: PropTypes.func,
   }),
   onChange: PropTypes.func,
-  options: PropTypes.array.isRequired
+  options: PropTypes.array.isRequired,
 }
 
 export default TokenFilter

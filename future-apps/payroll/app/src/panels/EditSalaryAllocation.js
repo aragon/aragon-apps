@@ -1,7 +1,15 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
 import styled from 'styled-components'
-import { Button, DropDown, Info, SidePanel, Slider, theme, Text } from '@aragon/ui'
+import {
+  Button,
+  DropDown,
+  Info,
+  SidePanel,
+  Slider,
+  theme,
+  Text,
+} from '@aragon/ui'
 
 import { connect } from '../context/AragonContext'
 
@@ -9,7 +17,7 @@ class EditSalaryAllocation extends React.Component {
   changeHandlers = new Map()
   state = {}
 
-  get pristine () {
+  get pristine() {
     if (this.state.addresses == null || this.state.distribution == null) {
       return true
     }
@@ -18,11 +26,13 @@ class EditSalaryAllocation extends React.Component {
       return false
     }
 
-    return this.state.addresses.every((a, i) => this.props.addresses[i] === a) &&
+    return (
+      this.state.addresses.every((a, i) => this.props.addresses[i] === a) &&
       this.state.distribution.every((d, i) => this.props.distribution[i] === d)
+    )
   }
 
-  get isValid () {
+  get isValid() {
     const { addresses, distribution } = this.state
 
     const tokens = new Set(addresses)
@@ -51,7 +61,7 @@ class EditSalaryAllocation extends React.Component {
       this.setState((state, props) => {
         const [addresses, distribution] = [
           state.addresses || props.addresses || [],
-          state.distribution || props.distribution || []
+          state.distribution || props.distribution || [],
         ]
 
         const unusedTokens = Array.from(availableTokens.keys()).filter(
@@ -60,13 +70,13 @@ class EditSalaryAllocation extends React.Component {
 
         return {
           addresses: [...addresses, unusedTokens[0]],
-          distribution: [...distribution, 0]
+          distribution: [...distribution, 0],
         }
       })
     }
   }
 
-  handleDistributionUpdate = (tokenAddress) => {
+  handleDistributionUpdate = tokenAddress => {
     if (!this.changeHandlers.has(tokenAddress)) {
       const handler = value => {
         const tokens = this.state.addresses || this.props.addresses || []
@@ -78,7 +88,10 @@ class EditSalaryAllocation extends React.Component {
           const nextDist = currDist.slice()
           nextDist[index] = parseInt(value * 100)
 
-          const allocation = nextDist.map((left, t) => ({ t, right: 100 - left }))
+          const allocation = nextDist.map((left, t) => ({
+            t,
+            right: 100 - left,
+          }))
           allocation.splice(index, 1)
           allocation.sort((a, b) => b.right - a.right)
 
@@ -86,14 +99,15 @@ class EditSalaryAllocation extends React.Component {
             const total = nextDist.reduce((acc, val) => acc + val, 0)
             const offset = Math.round((100 - total) / (allocation.length - i))
 
-            nextDist[t] = offset > 0
-              ? nextDist[t] + Math.min(offset, right)
-              : Math.max(0, nextDist[t] + offset)
+            nextDist[t] =
+              offset > 0
+                ? nextDist[t] + Math.min(offset, right)
+                : Math.max(0, nextDist[t] + offset)
           }
 
           return {
             addresses: tokens,
-            distribution: nextDist
+            distribution: nextDist,
           }
         })
       }
@@ -104,7 +118,7 @@ class EditSalaryAllocation extends React.Component {
     return this.changeHandlers.get(tokenAddress)
   }
 
-  handleFormSubmit = (event) => {
+  handleFormSubmit = event => {
     event.preventDefault()
 
     const { app } = this.props
@@ -127,40 +141,37 @@ class EditSalaryAllocation extends React.Component {
         }
       }
 
-      app.determineAllocation(
-        tokens,
-        distribution
-      ).subscribe(() => {
+      app.determineAllocation(tokens, distribution).subscribe(() => {
         this.props.onClose()
       })
     }
   }
 
-  handlePanelToggle = (opened) => {
+  handlePanelToggle = opened => {
     if (!opened) {
       this.setState({ addresses: null, distribution: null })
     }
   }
 
-  render () {
+  render() {
     const { availableTokens = [], opened, onClose } = this.props
 
     const [addresses, distribution] = [
       this.state.addresses || this.props.addresses || [],
-      this.state.distribution || this.props.distribution || []
+      this.state.distribution || this.props.distribution || [],
     ]
 
     const panel = (
       <SidePanel
-        title='Edit salary allocation'
+        title="Edit salary allocation"
         opened={opened}
         onClose={onClose}
         onTransitionEnd={this.handlePanelToggle}
       >
         <Form onSubmit={this.handleFormSubmit}>
-          <Info.Action title='Choose which tokens you get paid in'>
-            You can add as many tokens as you like,
-            as long as your DAO has these tokens.
+          <Info.Action title="Choose which tokens you get paid in">
+            You can add as many tokens as you like, as long as your DAO has
+            these tokens.
           </Info.Action>
 
           <TokenList>
@@ -183,7 +194,7 @@ class EditSalaryAllocation extends React.Component {
                     active={activeIndex + 1}
                     items={[
                       '\xa0',
-                      ...options.map(t => availableTokens.get(t))
+                      ...options.map(t => availableTokens.get(t)),
                     ]}
                     onChange={selectedIndex => {
                       const selectedToken = options[selectedIndex - 1] || ''
@@ -191,11 +202,12 @@ class EditSalaryAllocation extends React.Component {
                       this.setState(() => {
                         const tokens = addresses.slice()
                         tokens[index] = selectedToken
-                        const distribution = this.state.distribution || this.props.distribution
+                        const distribution =
+                          this.state.distribution || this.props.distribution
 
                         return {
                           addresses: tokens,
-                          distribution
+                          distribution,
                         }
                       })
                     }}
@@ -207,10 +219,7 @@ class EditSalaryAllocation extends React.Component {
                     onUpdate={this.handleDistributionUpdate(tokenAddress)}
                   />
 
-                  <Percentage>
-                    {`${allocation} %`}
-                  </Percentage>
-
+                  <Percentage>{`${allocation} %`}</Percentage>
                 </TokenAllocation>
               )
             })}
@@ -220,12 +229,11 @@ class EditSalaryAllocation extends React.Component {
                 Add another token
               </AddTokenButton>
             )}
-
           </TokenList>
 
-          <Info.Permissions title='Submission note'>
-            Your split contract will be updated on the blockchain,
-            and you cannot request salary until it's complete
+          <Info.Permissions title="Submission note">
+            Your split contract will be updated on the blockchain, and you
+            cannot request salary until it's complete
           </Info.Permissions>
 
           <SubmitButton disabled={this.pristine || !this.isValid}>
@@ -235,10 +243,7 @@ class EditSalaryAllocation extends React.Component {
       </SidePanel>
     )
 
-    return createPortal(
-      panel,
-      document.getElementById('modal-root')
-    )
+    return createPortal(panel, document.getElementById('modal-root'))
   }
 }
 
@@ -262,7 +267,7 @@ const TokenAllocation = styled.div`
 
 const TokenAllocationLabel = styled(Text).attrs({
   size: 'xsmall',
-  color: theme.textTertiary
+  color: theme.textTertiary,
 })`
   margin-bottom: 1em;
 `
@@ -272,10 +277,10 @@ const TokenSelector = styled(DropDown)``
 const TokenDistribution = styled(Slider)``
 
 const Percentage = styled(Text).attrs({
-  color: theme.textTertiary
+  color: theme.textTertiary,
 })`
   position: relative;
-  border: 1px solid #E6E6E6;
+  border: 1px solid #e6e6e6;
   border-radius: 3px;
   padding: 8px 15px;
   font-size: 15px;
@@ -289,12 +294,12 @@ const AddTokenButton = styled(Button).attrs({ mode: 'secondary' })`
 
 const SubmitButton = styled(Button).attrs({
   type: 'submit',
-  mode: 'strong'
+  mode: 'strong',
 })`
   margin-top: 2em;
 `
 
-function mapStateToProps ({ tokens = [], salaryAllocation = [] }) {
+function mapStateToProps({ tokens = [], salaryAllocation = [] }) {
   // Sort list by allocation from highest to lowest
   salaryAllocation.sort((a, b) => b.allocation - a.allocation)
 
@@ -309,7 +314,7 @@ function mapStateToProps ({ tokens = [], salaryAllocation = [] }) {
   return {
     availableTokens,
     addresses: Array.from(allocation.keys()),
-    distribution: Array.from(allocation.values())
+    distribution: Array.from(allocation.values()),
   }
 }
 

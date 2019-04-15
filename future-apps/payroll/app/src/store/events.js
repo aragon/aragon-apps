@@ -20,18 +20,18 @@ const SET_RATE_EXPIRY_TIME = Symbol('SET_RATE_EXPIRY_TIME')
 const TERMINATE_EMPLOYEE = Symbol('TERMINATE_EMPLOYEE')
 
 export default {
-  'Init': INITIALIZATION_TRIGGER,
+  Init: INITIALIZATION_TRIGGER,
 
-  'AccountChange': ACCOUNT_CHANGED,
+  AccountChange: ACCOUNT_CHANGED,
 
-  'AddAllowedToken': ADD_ALLOWED_TOKEN,
-  'AddEmployee': ADD_EMPLOYEE,
-  'AddEmployeeAccruedValue': ADD_EMPLOYEE_ACCRUED_VALUE,
-  'ChangeAddressByEmployee': CHANGE_EMPLOYEE_ADDRESS,
-  'DetermineAllocation': DETERMINE_ALLOCATION,
-  'SetEmployeeSalary': SET_EMPLOYEE_SALARY,
-  'SendPayroll': SEND_PAYROLL,
-  'SetPriceFeed': SET_PRICE_FEED,
-  'SetRateExpiryTime': SET_RATE_EXPIRY_TIME,
-  'TerminateEmployee': TERMINATE_EMPLOYEE
+  AddAllowedToken: ADD_ALLOWED_TOKEN,
+  AddEmployee: ADD_EMPLOYEE,
+  AddEmployeeAccruedValue: ADD_EMPLOYEE_ACCRUED_VALUE,
+  ChangeAddressByEmployee: CHANGE_EMPLOYEE_ADDRESS,
+  DetermineAllocation: DETERMINE_ALLOCATION,
+  SetEmployeeSalary: SET_EMPLOYEE_SALARY,
+  SendPayroll: SEND_PAYROLL,
+  SetPriceFeed: SET_PRICE_FEED,
+  SetRateExpiryTime: SET_RATE_EXPIRY_TIME,
+  TerminateEmployee: TERMINATE_EMPLOYEE,
 }

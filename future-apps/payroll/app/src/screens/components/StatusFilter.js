@@ -7,15 +7,15 @@ import InlineField from '../../components/Field/InlineField'
 const options = [
   { label: 'All', filter: null },
   { label: 'Active', filter: employee => !employee.terminated },
-  { label: 'Inactive', filter: employee => employee.terminated }
+  { label: 'Inactive', filter: employee => employee.terminated },
 ]
 
 const StatusFilter = ({ active, onChange }) => {
-  const activeIndex = active &&
-    options.indexOf(options.find(f => f.label === active.label))
+  const activeIndex =
+    active && options.indexOf(options.find(f => f.label === active.label))
 
   return (
-    <InlineField label='Status:'>
+    <InlineField label="Status:">
       <DropDown
         items={options.map(opt => opt.label)}
         active={activeIndex || 0}
@@ -32,9 +32,9 @@ const StatusFilter = ({ active, onChange }) => {
 StatusFilter.propTypes = {
   active: PropTypes.shape({
     label: PropTypes.string.isRequired,
-    filter: PropTypes.func
+    filter: PropTypes.func,
   }),
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 }
 
 export default StatusFilter

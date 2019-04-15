@@ -6,7 +6,7 @@ import {
   fireEvent,
   render,
   waitForElement,
-  queryByText
+  queryByText,
 } from 'react-testing-library'
 import 'jest-dom/extend-expect'
 
@@ -16,8 +16,8 @@ import AragonContext from '../../context/AragonContext'
 const dataMock = {
   salaryAllocation: [
     { symbol: 'TK1', allocation: 30 },
-    { symbol: 'TK2', allocation: 70 }
-  ]
+    { symbol: 'TK2', allocation: 70 },
+  ],
 }
 
 afterEach(cleanup)
@@ -48,20 +48,20 @@ describe('Salary allocation side panel', () => {
   })
 })
 
-function renderSalaryAllocation (props) {
+function renderSalaryAllocation(props) {
   const mockApp = {
-    state () {
+    state() {
       return this
     },
 
-    map () {
+    map() {
       return this
     },
 
-    subscribe (cb) {
+    subscribe(cb) {
       cb(dataMock)
       return { unsubscribe: jest.fn() }
-    }
+    },
   }
 
   const salaryAllocation = render(

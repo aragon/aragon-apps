@@ -5,7 +5,7 @@ const InlineField = styled(Field)`
   label {
     display: flex;
     align-items: center;
-    
+
     > :first-child {
       margin-left: 0.5rem;
       margin-right: 0.75rem;

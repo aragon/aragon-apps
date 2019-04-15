@@ -1,7 +1,14 @@
 import React from 'react'
 import styled from 'styled-components'
 import PropTypes from 'prop-types'
-import { Redraw, IconTime, difference, formatHtmlDatetime, unselectable, theme } from '@aragon/ui'
+import {
+  Redraw,
+  IconTime,
+  difference,
+  formatHtmlDatetime,
+  unselectable,
+  theme,
+} from '@aragon/ui'
 
 const FRAME_EVERY = 1000 / 30 // 30 FPS is enough for a ticker
 

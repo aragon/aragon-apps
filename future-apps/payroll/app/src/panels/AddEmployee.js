@@ -19,42 +19,42 @@ class AddEmployee extends React.PureComponent {
   static initialState = {
     address: {
       value: '',
-      error: NO_ERROR
+      error: NO_ERROR,
     },
     name: '',
     role: '',
     salary: '',
-    startDate: startOfDay(new Date())
+    startDate: startOfDay(new Date()),
   }
 
   static validate = validator.compile({
     type: 'object',
     properties: {
       name: {
-        type: 'string'
+        type: 'string',
       },
       role: {
-        type: 'string'
+        type: 'string',
       },
       salary: {
         type: 'number',
-        exclusiveMinimum: 0
+        exclusiveMinimum: 0,
       },
       startDate: {
-        format: 'date'
-      }
+        format: 'date',
+      },
     },
-    required: ['salary', 'startDate', 'name', 'role']
+    required: ['salary', 'startDate', 'name', 'role'],
   })
 
   static validateAddress = validator.compile({
     type: 'object',
     properties: {
       value: {
-        format: 'address'
-      }
+        format: 'address',
+      },
     },
-    required: ['value']
+    required: ['value'],
   })
 
   state = AddEmployee.initialState
@@ -73,34 +73,34 @@ class AddEmployee extends React.PureComponent {
     }
   }
 
-  handleAddressChange = (event) => {
+  handleAddressChange = event => {
     const error = NO_ERROR
     const value = event.target.value
     this.setState({
       address: {
         value,
-        error
-      }
+        error,
+      },
     })
   }
 
-  handleNameChange = (event) => {
+  handleNameChange = event => {
     this.setState({ name: event.target.value })
   }
 
-  handleRoleChange = (event) => {
+  handleRoleChange = event => {
     this.setState({ role: event.target.value })
   }
 
-  handleSalaryChange = (event) => {
+  handleSalaryChange = event => {
     this.setState({ salary: event.target.value })
   }
 
-  handleStartDateChange = (date) => {
+  handleStartDateChange = date => {
     this.setState({ startDate: date })
   }
 
-  handleFormSubmit = (event) => {
+  handleFormSubmit = event => {
     event.preventDefault()
     const { denominationToken, app, isAddressAvailable } = this.props
     const { address, name, salary, role, startDate } = this.state
@@ -112,8 +112,8 @@ class AddEmployee extends React.PureComponent {
       this.setState(({ address }) => ({
         address: {
           ...address,
-          error: ADDRESS_INVALID_FORMAT
-        }
+          error: ADDRESS_INVALID_FORMAT,
+        },
       }))
       return
     }
@@ -122,8 +122,8 @@ class AddEmployee extends React.PureComponent {
       this.setState(({ address }) => ({
         address: {
           ...address,
-          error: ADDRESS_NOT_AVAILABLE_ERROR
-        }
+          error: ADDRESS_NOT_AVAILABLE_ERROR,
+        },
       }))
       return
     }
@@ -133,53 +133,54 @@ class AddEmployee extends React.PureComponent {
     if (app && isValidForm) {
       const initialDenominationSalary = salary / SECONDS_IN_A_YEAR
 
-      const adjustedAmount = toDecimals(initialDenominationSalary.toString(), denominationToken.decimals, {
-        truncate: true
-      })
+      const adjustedAmount = toDecimals(
+        initialDenominationSalary.toString(),
+        denominationToken.decimals,
+        {
+          truncate: true,
+        }
+      )
 
       const _startDate = Math.floor(startDate.getTime() / 1000)
 
-      app.addEmployee(
-        _address,
-        adjustedAmount,
-        name,
-        role,
-        _startDate
-      ).subscribe(employee => {
-        if (employee) {
-          // Reset form data
-          this.setState(AddEmployee.initialState)
+      app
+        .addEmployee(_address, adjustedAmount, name, role, _startDate)
+        .subscribe(employee => {
+          if (employee) {
+            // Reset form data
+            this.setState(AddEmployee.initialState)
 
-          // Close side panel
-          this.props.onClose()
-        }
-      })
+            // Close side panel
+            this.props.onClose()
+          }
+        })
     }
   }
 
-  handlePanelToggle = (opened) => {
-    if (opened) { // When side panel is shown
+  handlePanelToggle = opened => {
+    if (opened) {
+      // When side panel is shown
       this.focusFirstEmptyField()
     }
   }
 
-  setAddressRef = (el) => {
+  setAddressRef = el => {
     this.address = el
   }
 
-  setNameInputRef = (el) => {
+  setNameInputRef = el => {
     this.nameInput = el
   }
 
-  setRoleInputRef = (el) => {
+  setRoleInputRef = el => {
     this.roleInput = el
   }
 
-  setSalaryInputRef = (el) => {
+  setSalaryInputRef = el => {
     this.salaryInput = el
   }
 
-  render () {
+  render() {
     const { opened, onClose } = this.props
     const { address, name, role, salary, startDate } = this.state
 
@@ -192,17 +193,13 @@ class AddEmployee extends React.PureComponent {
 
     const panel = (
       <SidePanel
-        title='Add new employee'
+        title="Add new employee"
         opened={opened}
         onClose={onClose}
         onTransitionEnd={this.handlePanelToggle}
       >
-        <Form
-          onSubmit={this.handleFormSubmit}
-          data-testid='add-employee-form'
-        >
-
-          <Field label='Address'>
+        <Form onSubmit={this.handleFormSubmit}>
+          <Field label="Address">
             <Input.Text
               innerRef={this.setAddressRef}
               value={address.value}
@@ -211,7 +208,7 @@ class AddEmployee extends React.PureComponent {
             />
           </Field>
 
-          <Field label='Name'>
+          <Field label="Name">
             <Input.Text
               innerRef={this.setNameInputRef}
               value={name}
@@ -220,7 +217,7 @@ class AddEmployee extends React.PureComponent {
             />
           </Field>
 
-          <Field label='Role'>
+          <Field label="Role">
             <Input.Text
               innerRef={this.setRoleInputRef}
               value={role}
@@ -229,7 +226,7 @@ class AddEmployee extends React.PureComponent {
             />
           </Field>
 
-          <Field label='Salary'>
+          <Field label="Salary">
             <Input.Currency
               innerRef={this.setSalaryInputRef}
               value={salary}
@@ -239,18 +236,18 @@ class AddEmployee extends React.PureComponent {
             />
           </Field>
 
-          <Field label='Start Date'>
+          <Field label="Start Date">
             <Input.Date
               key={startDate}
               value={startDate}
               onChange={this.handleStartDateChange}
               icon={<IconBlank />}
-              iconposition='right'
+              iconposition="right"
               required
             />
           </Field>
 
-          <Button type='submit' mode='strong'>
+          <Button type="submit" mode="strong">
             Add new employee
           </Button>
           <Messages>
@@ -260,25 +257,20 @@ class AddEmployee extends React.PureComponent {
       </SidePanel>
     )
 
-    return createPortal(
-      panel,
-      document.getElementById('modal-root')
-    )
+    return createPortal(panel, document.getElementById('modal-root'))
   }
 }
 
 AddEmployee.propsType = {
   onClose: PropTypes.func,
-  opened: PropTypes.bool
+  opened: PropTypes.bool,
 }
 
 // TODO: replace IconBlank with IconCross - sgobotta
 const ValidationError = ({ message }) => (
-  <ValidationErrorBlock name='validation-error-block'>
+  <ValidationErrorBlock name="validation-error-block">
     <StyledIconBlank />
-    <StyledText size='small'>
-      {message}
-    </StyledText>
+    <StyledText size="small">{message}</StyledText>
   </ValidationErrorBlock>
 )
 
@@ -305,7 +297,8 @@ const Form = styled.form`
   grid-template-columns: 1fr 1fr;
   column-gap: 20px;
 
-  > :first-child, > :nth-last-child(-n+2) {
+  > :first-child,
+  > :nth-last-child(-n + 2) {
     grid-column: span 2;
   }
 
@@ -314,10 +307,11 @@ const Form = styled.form`
   }
 `
 
-function mapStateToProps ({ denominationToken = {}, employees = [] }) {
+function mapStateToProps({ denominationToken = {}, employees = [] }) {
   return {
     denominationToken,
-    isAddressAvailable: (address) => employees.every(employee => employee.accountAddress !== address)
+    isAddressAvailable: address =>
+      employees.every(employee => employee.accountAddress !== address),
   }
 }
 

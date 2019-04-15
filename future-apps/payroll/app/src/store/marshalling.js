@@ -1,8 +1,8 @@
-export function currency (value) {
+export function currency(value) {
   return parseInt(value || 0)
 }
 
-export function date (epoch) {
+export function date(epoch) {
   const epochInt = parseInt(epoch)
   if (!epoch || !Number.isSafeInteger(epochInt)) {
     return null
@@ -11,7 +11,7 @@ export function date (epoch) {
   return epochInt * 1000
 }
 
-export function employee (data) {
+export function employee(data) {
   const result = {
     id: data.id || data.employeeId,
     accountAddress: data.accountAddress,
@@ -22,22 +22,22 @@ export function employee (data) {
     startDate: date(data.startDate),
     endDate: date(data.endDate),
     terminated: !!data.terminated,
-    role: data.role
+    role: data.role,
   }
 
   return result
 }
 
-export function tokenAllocation (data) {
+export function tokenAllocation(data) {
   return {
     address: data.address,
     symbol: data.symbol,
-    allocation: parseInt(data.allocation) || 0
+    allocation: parseInt(data.allocation) || 0,
   }
 }
 
-export function payment (data) {
-  const exchanged = (data.returnValues.amount / data.returnValues.exchangeRate)
+export function payment(data) {
+  const exchanged = data.returnValues.amount / data.returnValues.exchangeRate
   return {
     accountAddress: data.returnValues.employee,
     amount: {
@@ -47,15 +47,15 @@ export function payment (data) {
       token: {
         address: data.token.address,
         symbol: data.token.symbol,
-        decimals: data.token.decimals
-      }
+        decimals: data.token.decimals,
+      },
     },
     transactionAddress: data.transactionHash,
     date: date(data.returnValues.paymentDate),
     status: 'Complete', // FIXME: Find out how the status is calculated - - sgobotta
     exchangeRate: {
-      amount: data.returnValues.exchangeRate
+      amount: data.returnValues.exchangeRate,
     },
-    exchanged
+    exchanged,
   }
 }

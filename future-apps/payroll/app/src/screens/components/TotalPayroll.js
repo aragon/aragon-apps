@@ -1,38 +1,51 @@
 import React from 'react'
 import styled from 'styled-components'
 import TotalPayrollTable from './TotalPayrollTable'
-import { formatCurrency, SECONDS_IN_A_YEAR } from '~/utils/formatting'
-import { totalPaidThisYear, summation, MONTHS_IN_A_YEAR } from '~/utils/calculations'
 
-import { connect } from '~/context/AragonContext'
-import Section from '~/components/Layout/Section'
+import {
+  totalPaidThisYear,
+  summation,
+  MONTHS_IN_A_YEAR,
+} from '../../utils/calculations'
+import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
+import { connect } from '../../context/AragonContext'
+import Section from '../../components/Layout/Section'
 
 class TotalPayroll extends React.PureComponent {
   static defaultProps = {
     employeesQty: 0,
     averageSalary: 0,
     monthlyBurnRate: 0,
-    totalPaidThisYear: 0
+    totalPaidThisYear: 0,
   }
 
   state = {
     denominationToken: {
       symbol: '',
-      decimals: 0
+      decimals: 0,
     },
-    data: []
+    data: [],
   }
 
-  getTotalPayrollData (state, props) {
-    const { employeesQty, averageSalary, monthlyBurnRate, totalPaidThisYear } =  props
-    const data = [{ employeesQty, averageSalary, monthlyBurnRate, totalPaidThisYear }]
+  getTotalPayrollData(state, props) {
+    const {
+      employeesQty,
+      averageSalary,
+      monthlyBurnRate,
+      totalPaidThisYear,
+    } = props
+    const data = [
+      { employeesQty, averageSalary, monthlyBurnRate, totalPaidThisYear },
+    ]
     return data
   }
 
   componentDidUpdate(prevProps) {
     if (
-      (this.props.accountAddress != prevProps.accountAddress) ||
-      (this.props.employeesQty && prevProps.employeesQty && this.props.employeesQty != prevProps.employeesQty)
+      this.props.accountAddress != prevProps.accountAddress ||
+      (this.props.employeesQty &&
+        prevProps.employeesQty &&
+        this.props.employeesQty != prevProps.employeesQty)
     ) {
       this.setState((state, props) => {
         const { denominationToken } = props
@@ -42,10 +55,18 @@ class TotalPayroll extends React.PureComponent {
     }
   }
 
-  render () {
+  render() {
     const { data, denominationToken } = this.state
-    const formatSalary = (amount) => formatCurrency(amount, denominationToken.symbol, 10, denominationToken.decimals, SECONDS_IN_A_YEAR)
-    const customFormatCurrency = (amount) => formatCurrency(amount, denominationToken.symbol, 10, 0)
+    const formatSalary = amount =>
+      formatCurrency(
+        amount,
+        denominationToken.symbol,
+        10,
+        denominationToken.decimals,
+        SECONDS_IN_A_YEAR
+      )
+    const customFormatCurrency = amount =>
+      formatCurrency(amount, denominationToken.symbol, 10, 0)
     return (
       <Container>
         <Header>
@@ -54,7 +75,8 @@ class TotalPayroll extends React.PureComponent {
         <TotalPayrollTable
           data={data}
           formatSalary={formatSalary}
-          formatCurrency={customFormatCurrency} />
+          formatCurrency={customFormatCurrency}
+        />
       </Container>
     )
   }
@@ -78,33 +100,33 @@ const Title = styled.h1`
   font-weight: 600;
 `
 
-function parseEmployees (payments, employees) {
-  return employees.map((e) => {
+function parseEmployees(payments, employees) {
+  return employees.map(e => {
     const totalPaid = totalPaidThisYear(payments, e.accountAddress)
     return { ...e, totalPaid }
   })
 }
 
-function getAverageSalary (employees) {
+function getAverageSalary(employees) {
   const field = 'salary'
   const sum = summation(employees, field)
-  return (sum / employees.length)
+  return sum / employees.length
 }
 
-function getTotalPaidThisYear (employees) {
+function getTotalPaidThisYear(employees) {
   const field = 'totalPaid'
   return summation(employees, field)
 }
 
-function getMonthlyBurnRate (total) {
+function getMonthlyBurnRate(total) {
   return total / MONTHS_IN_A_YEAR
 }
 
-function mapStateToProps ({
+function mapStateToProps({
   employees = [],
   accountAddress = [],
   denominationToken = [],
-  payments = []
+  payments = [],
 }) {
   employees = parseEmployees(payments, employees)
   const totalPaidThisYear = getTotalPaidThisYear(employees)

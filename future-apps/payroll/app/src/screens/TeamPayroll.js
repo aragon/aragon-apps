@@ -1,12 +1,12 @@
 import React from 'react'
 
+import Section from '../components/Layout/Section'
 import EmployeeList from './components/EmployeeList'
 import KeyStats from './components/KeyStats'
 import TotalPayroll from './components/TotalPayroll'
-import Section from '~/components/Layout/Section'
 
 const TeamPayroll = () => (
-  <Section data-testid='team-payroll-section'>
+  <Section>
     <Section.Left>
       <TotalPayroll />
       <EmployeeList />

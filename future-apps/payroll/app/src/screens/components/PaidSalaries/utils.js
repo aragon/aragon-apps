@@ -7,7 +7,7 @@ const [MONTHLY, QUARTERLY, YEARLY] = CHART_TYPES
 const HISTORY_FORMAT = {
   [MONTHLY]: 'YYYYMM',
   [QUARTERLY]: 'YYYYQ',
-  [YEARLY]: 'YYYY'
+  [YEARLY]: 'YYYY',
 }
 
 const MAX_PROPORTION = 4 / 5
@@ -15,7 +15,7 @@ const MAX_PROPORTION = 4 / 5
 const MONTHS_AGO = 12
 const QUARTERS_AGO = 4
 
-const calculateProportion = (max, value) => value * MAX_PROPORTION / max
+const calculateProportion = (max, value) => (value * MAX_PROPORTION) / max
 
 const getHistoryKey = (date, type) =>
   format(date, HISTORY_FORMAT[type], { awareOfUnicodeTokens: true })
@@ -31,7 +31,7 @@ const getInitialHistory = {
       const monthAgo = subMonths(toDay, ago)
       acc[getHistoryKey(monthAgo, MONTHLY)] = {
         label: format(monthAgo, 'MMM').toUpperCase(),
-        amount: 0
+        amount: 0,
       }
 
       return acc
@@ -49,13 +49,13 @@ const getInitialHistory = {
       const quarter = format(monthAgo, 'Q')
       acc[getHistoryKey(monthAgo, QUARTERLY)] = {
         label: `${year} Q${quarter}`,
-        amount: 0
+        amount: 0,
       }
 
       return acc
     }, {})
   },
-  [YEARLY]: () => ({})
+  [YEARLY]: () => ({}),
 }
 
 const groupPayments = {
@@ -103,7 +103,7 @@ const groupPayments = {
       if (!history[key]) {
         history[key] = {
           label: key,
-          amount: 0
+          amount: 0,
         }
       }
 
@@ -113,19 +113,22 @@ const groupPayments = {
     })
 
     return { max, history }
-  }
+  },
 }
 
 const getLabels = {
-  [MONTHLY]: (sorted, history) => sorted.map((key, i) => (i % 2 ? history[key].label : '')),
-  [QUARTERLY]: (sorted, history) => [''].concat(sorted.map((key, i) => history[key].label).slice(1)),
-  [YEARLY]: (sorted, history) => [''].concat(sorted.map((key, i) => history[key].label))
+  [MONTHLY]: (sorted, history) =>
+    sorted.map((key, i) => (i % 2 ? history[key].label : '')),
+  [QUARTERLY]: (sorted, history) =>
+    [''].concat(sorted.map((key, i) => history[key].label).slice(1)),
+  [YEARLY]: (sorted, history) =>
+    [''].concat(sorted.map((key, i) => history[key].label)),
 }
 
 export const getDurationSlices = {
   [MONTHLY]: _ => 14,
   [QUARTERLY]: _ => 6,
-  [YEARLY]: labels => (labels ? labels.length + 1 : 2)
+  [YEARLY]: labels => (labels ? labels.length + 1 : 2),
 }
 
 export const chartSettings = (type, payments) => {
@@ -141,8 +144,8 @@ export const chartSettings = (type, payments) => {
       color: '#028CD1',
       values: initialValue.concat(
         sorted.map(key => calculateProportion(max, history[key].amount))
-      )
-    }
+      ),
+    },
   ]
 
   const labels = getLabels[type](sorted, history)

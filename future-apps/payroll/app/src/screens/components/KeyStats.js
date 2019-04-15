@@ -1,9 +1,9 @@
 import React from 'react'
 import styled from 'styled-components'
 
-import Section from '/components/Layout/Section'
 import PaidSalaries from './PaidSalaries'
 import YearlySalarySummary from './YearlySalarySummary'
+import Section from '../../components/Layout/Section'
 
 const KeyStats = () => (
   <Container>
@@ -19,4 +19,3 @@ const Container = styled.section`
 `
 
 export default KeyStats
-

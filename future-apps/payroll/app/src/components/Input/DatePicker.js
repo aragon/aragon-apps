@@ -14,7 +14,7 @@ import {
   startOfMonth,
   startOfWeek,
   subMonths,
-  subYears
+  subYears,
 } from 'date-fns'
 
 const mainColor = '#30D9D4'
@@ -28,15 +28,17 @@ const Container = styled.div`
   border: 1px solid ${theme.contentBorder};
   border-radius: 3px;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
-  
-  ${props => props.overlay && css`
-    &&& {
-      position: absolute;
-      right: 0;
-      z-index: 10;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-    }
-  `}
+
+  ${props =>
+    props.overlay &&
+    css`
+      &&& {
+        position: absolute;
+        right: 0;
+        z-index: 10;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      }
+    `}
 `
 
 const Selector = styled.div`
@@ -77,22 +79,28 @@ const DayView = styled.li`
   font-size: 90%;
   user-select: none;
 
-  ${props => props.today && css`
-    border: 1px solid ${theme.disabled};
-  `}
+  ${props =>
+    props.today &&
+    css`
+      border: 1px solid ${theme.disabled};
+    `}
 
-  ${props => props.disabled && css`
-    pointer-events: none;
-    color: ${theme.disabled};
-  `}
+  ${props =>
+    props.disabled &&
+    css`
+      pointer-events: none;
+      color: ${theme.disabled};
+    `}
   
-  ${props => props.selected && css`
-    &&& {
-      background: ${mainColor};
-      border-color: ${mainColor};
-      color: ${theme.negativeText};
-    }
-  `}
+  ${props =>
+    props.selected &&
+    css`
+      &&& {
+        background: ${mainColor};
+        border-color: ${mainColor};
+        color: ${theme.negativeText};
+      }
+    `}
 
   &:after {
     display: block;
@@ -113,10 +121,10 @@ const WeekDay = styled(DayView)`
 
 class DatePicker extends React.PureComponent {
   state = {
-    value: this.props.currentDate || new Date()
+    value: this.props.currentDate || new Date(),
   }
 
-  handleSelection = (date) => (event) => {
+  handleSelection = date => event => {
     event.preventDefault()
 
     if (typeof this.props.onSelect === 'function') {
@@ -124,39 +132,39 @@ class DatePicker extends React.PureComponent {
     }
   }
 
-  nextMonth = (event) => {
+  nextMonth = event => {
     event.stopPropagation()
 
     this.setState({
-      value: addMonths(startOfMonth(this.state.value), 1)
+      value: addMonths(startOfMonth(this.state.value), 1),
     })
   }
 
-  nextYear = (event) => {
+  nextYear = event => {
     event.stopPropagation()
 
     this.setState({
-      value: addYears(startOfMonth(this.state.value), 1)
+      value: addYears(startOfMonth(this.state.value), 1),
     })
   }
 
-  previousMonth = (event) => {
+  previousMonth = event => {
     event.stopPropagation()
 
     this.setState({
-      value: subMonths(startOfMonth(this.state.value), 1)
+      value: subMonths(startOfMonth(this.state.value), 1),
     })
   }
 
-  previousYear = (event) => {
+  previousYear = event => {
     event.stopPropagation()
 
     this.setState({
-      value: subYears(startOfMonth(this.state.value), 1)
+      value: subYears(startOfMonth(this.state.value), 1),
     })
   }
 
-  render () {
+  render() {
     const today = startOfDay(new Date())
     const { value: selected = today } = this.state
 
@@ -164,50 +172,45 @@ class DatePicker extends React.PureComponent {
       <Container overlay={this.props.overlay}>
         {!this.props.hideYearSelector && (
           <Selector>
-            <ArrowButton onClick={this.previousYear}>
-              ◀
-            </ArrowButton>
-            <Text size='normal'>
+            <ArrowButton onClick={this.previousYear}>◀</ArrowButton>
+            <Text size="normal">
               {formatDate(selected, this.props.yearFormat)}
             </Text>
-            <ArrowButton onClick={this.nextYear}>
-              ▶
-            </ArrowButton>
+            <ArrowButton onClick={this.nextYear}>▶</ArrowButton>
           </Selector>
         )}
 
         {!this.props.hideMonthSelector && (
           <Selector>
-            <ArrowButton onClick={this.previousMonth}>
-              ◀
-            </ArrowButton>
-            <Text size='large' weight='bold'>
-              {formatDate(selected, !this.props.hideYearSelector
-                ? this.props.monthFormat
-                : this.props.monthYearFormat
+            <ArrowButton onClick={this.previousMonth}>◀</ArrowButton>
+            <Text size="large" weight="bold">
+              {formatDate(
+                selected,
+                !this.props.hideYearSelector
+                  ? this.props.monthFormat
+                  : this.props.monthYearFormat
               )}
             </Text>
-            <ArrowButton onClick={this.nextMonth}>
-              ▶
-            </ArrowButton>
+            <ArrowButton onClick={this.nextMonth}>▶</ArrowButton>
           </Selector>
         )}
 
         <MonthView>
-          {!this.props.hideWeekDays && eachDayOfInterval({
-            start: startOfWeek(selected),
-            end: endOfWeek(selected)
-          }).map(day => (
-            <WeekDay key={formatDate(day, 'eeeeee')}>
-              <Text size='xsmall'>
-                {formatDate(day, this.props.weekDayFormat)}
-              </Text>
-            </WeekDay>
-          ))}
+          {!this.props.hideWeekDays &&
+            eachDayOfInterval({
+              start: startOfWeek(selected),
+              end: endOfWeek(selected),
+            }).map(day => (
+              <WeekDay key={formatDate(day, 'eeeeee')}>
+                <Text size="xsmall">
+                  {formatDate(day, this.props.weekDayFormat)}
+                </Text>
+              </WeekDay>
+            ))}
 
           {eachDayOfInterval({
             start: startOfWeek(startOfMonth(selected)),
-            end: endOfWeek(endOfMonth(selected))
+            end: endOfWeek(endOfMonth(selected)),
           }).map(day => (
             <DayView
               key={day.getTime()}
@@ -216,9 +219,7 @@ class DatePicker extends React.PureComponent {
               today={isSameDay(day, today)}
               onClick={this.handleSelection(day)}
             >
-              <Text size='small'>
-                {formatDate(day, this.props.dayFormat)}
-              </Text>
+              <Text size="small">{formatDate(day, this.props.dayFormat)}</Text>
             </DayView>
           ))}
         </MonthView>
@@ -244,7 +245,7 @@ DatePicker.propTypes = {
   monthFormat: PropTypes.string,
   monthYearFormat: PropTypes.string,
   weekDayFormat: PropTypes.string,
-  yearFormat: PropTypes.string
+  yearFormat: PropTypes.string,
 }
 
 DatePicker.defaultProps = {
@@ -253,7 +254,7 @@ DatePicker.defaultProps = {
   monthFormat: 'MMMM',
   monthYearFormat: 'MMMM yyyy',
   weekDayFormat: 'eee',
-  yearFormat: 'yyyy'
+  yearFormat: 'yyyy',
 }
 
 export default DatePicker

@@ -3,45 +3,52 @@ import { of } from '../rxjs'
 import app from './app'
 import Event from './events'
 import { getAccountAddress } from './account'
-import { getEmployeeById, getEmployeeByAddress, getSalaryAllocation } from './employees'
+import {
+  getEmployeeById,
+  getEmployeeByAddress,
+  getSalaryAllocation,
+} from './employees'
 import { getDenominationToken, getToken } from './tokens'
 import { date, payment } from './marshalling'
 // import financeEvents from '../abi/finance-events'
 
-export default function configureStore (financeAddress, vaultAddress) {
+export default function configureStore(financeAddress, vaultAddress) {
   // const financeApp = app.external(financeAddress, financeEvents)
 
-  return app.store(async (state, { event, ...data }) => {
-    const eventType = Event[event] || event
-    const eventProcessor = eventMapping[eventType] || (state => state)
+  return app.store(
+    async (state, { event, ...data }) => {
+      const eventType = Event[event] || event
+      const eventProcessor = eventMapping[eventType] || (state => state)
 
-    try {
-      const newState = await eventProcessor({ ...state }, data)
+      try {
+        const newState = await eventProcessor({ ...state }, data)
 
-      return newState
-    } catch (err) {
-      console.error(`Error occurred processing '${event}' event`, err)
-    }
-
-    return state
-  }, [
-    of({ event: Event.Init, vaultAddress }),
-
-    // Handle account change
-    app.accounts().map(([accountAddress]) => {
-      return {
-        event: Event.AccountChange,
-        accountAddress
+        return newState
+      } catch (err) {
+        console.error(`Error occurred processing '${event}' event`, err)
       }
-    })
-    // ,
 
-    // Handle Finance eventes
-    // financeApp.events()
-  ])
+      return state
+    },
+    [
+      of({ event: Event.Init, vaultAddress }),
+
+      // Handle account change
+      app.accounts().map(([accountAddress]) => {
+        return {
+          event: Event.AccountChange,
+          accountAddress,
+        }
+      }),
+      // ,
+
+      // Handle Finance eventes
+      // financeApp.events()
+    ]
+  )
 }
 
-const eventMapping = ({
+const eventMapping = {
   [Event.Init]: onInit,
   [Event.AccountChange]: onChangeAccount,
   [Event.AddAllowedToken]: onAddAllowedToken,
@@ -52,38 +59,42 @@ const eventMapping = ({
   [Event.SendPayroll]: onSendPayroll,
   [Event.SetEmployeeSalary]: onSetEmployeeSalary,
   [Event.AddEmployeeAccruedValue]: onAddEmployeeAccruedValue,
-  [Event.TerminateEmployee]: onTerminateEmployee
-})
+  [Event.TerminateEmployee]: onTerminateEmployee,
+}
 
-async function onInit (state, { vaultAddress }) {
+async function onInit(state, { vaultAddress }) {
   const [accountAddress, denominationToken, network] = await Promise.all([
     getAccountAddress(),
     getDenominationToken(),
-    app.network().take(1).toPromise()
+    app
+      .network()
+      .take(1)
+      .toPromise(),
   ])
 
   return { ...state, vaultAddress, accountAddress, denominationToken, network }
 }
 
-async function onChangeAccount (state, event) {
+async function onChangeAccount(state, event) {
   const { accountAddress } = event
   const { tokens = [], employees = [] } = state
   let salaryAllocation = []
 
-  const employee = employees.find(employee => employee.accountAddress === accountAddress)
+  const employee = employees.find(
+    employee => employee.accountAddress === accountAddress
+  )
 
   if (employee) {
-    salaryAllocation = await getSalaryAllocation(
-      employee.id,
-      tokens
-    )
+    salaryAllocation = await getSalaryAllocation(employee.id, tokens)
   }
 
   return { ...state, accountAddress, salaryAllocation }
 }
 
-async function onAddAllowedToken (state, event) {
-  const { returnValues: { token: tokenAddress } } = event
+async function onAddAllowedToken(state, event) {
+  const {
+    returnValues: { token: tokenAddress },
+  } = event
   const { tokens = [] } = state
 
   if (!tokens.find(t => t.address === tokenAddress)) {
@@ -97,8 +108,10 @@ async function onAddAllowedToken (state, event) {
   return { ...state, tokens }
 }
 
-async function onAddNewEmployee (state, event) {
-  const { returnValues: { employeeId, name, role, startDate } } = event
+async function onAddNewEmployee(state, event) {
+  const {
+    returnValues: { employeeId, name, role, startDate },
+  } = event
   const { employees = [] } = state
 
   if (!employees.find(e => e.id === employeeId)) {
@@ -109,7 +122,7 @@ async function onAddNewEmployee (state, event) {
         ...newEmployee,
         name: name,
         role: role,
-        startDate: date(startDate)
+        startDate: date(startDate),
       })
     }
   }
@@ -117,50 +130,57 @@ async function onAddNewEmployee (state, event) {
   return { ...state, employees }
 }
 
-async function onChangeEmployeeAddress (state, event) {
-  const { returnValues: { newAddress: accountAddress } } = event
+async function onChangeEmployeeAddress(state, event) {
+  const {
+    returnValues: { newAddress: accountAddress },
+  } = event
   const { tokens = [], employees = [] } = state
   let salaryAllocation = []
 
-  const employee = employees.find(employee => employee.accountAddress === accountAddress)
+  const employee = employees.find(
+    employee => employee.accountAddress === accountAddress
+  )
 
   if (employee) {
-    salaryAllocation = await getSalaryAllocation(
-      employee.id,
-      tokens
-    )
+    salaryAllocation = await getSalaryAllocation(employee.id, tokens)
   }
 
   return { ...state, accountAddress, salaryAllocation }
 }
 
-async function onChangeSalaryAllocation (state, event) {
-  const { returnValues: { employee: accountAddress } } = event
+async function onChangeSalaryAllocation(state, event) {
+  const {
+    returnValues: { employee: accountAddress },
+  } = event
   const { tokens = [], employees = [] } = state
   let salaryAllocation = []
 
-  const employee = employees.find(employee => employee.accountAddress === accountAddress)
+  const employee = employees.find(
+    employee => employee.accountAddress === accountAddress
+  )
 
   if (employee) {
-    salaryAllocation = await getSalaryAllocation(
-      employee.id,
-      tokens
-    )
+    salaryAllocation = await getSalaryAllocation(employee.id, tokens)
   }
 
   return { ...state, salaryAllocation }
 }
 
-function onSetPriceFeed (state, event) {
-  const { returnValues: { feed: priceFeedAddress } } = event
+function onSetPriceFeed(state, event) {
+  const {
+    returnValues: { feed: priceFeedAddress },
+  } = event
 
   return { ...state, priceFeedAddress }
 }
 
-async function onSendPayroll (state, event) {
+async function onSendPayroll(state, event) {
   const employees = await updateEmployeeByAddress(state, event)
   const { tokens } = state
-  const { returnValues: { token }, transactionHash } = event
+  const {
+    returnValues: { token },
+    transactionHash,
+  } = event
   const payments = state.payments || []
 
   const paymentExists = payments.some(payment => {
@@ -171,7 +191,7 @@ async function onSendPayroll (state, event) {
   })
 
   if (!paymentExists) {
-    const transactionToken = tokens.find((_token) => _token.address === token)
+    const transactionToken = tokens.find(_token => _token.address === token)
     const currentPayment = payment({ ...event, token: transactionToken })
     payments.push(currentPayment)
   }
@@ -179,38 +199,42 @@ async function onSendPayroll (state, event) {
   return { ...state, employees, payments }
 }
 
-async function onSetEmployeeSalary (state, event) {
+async function onSetEmployeeSalary(state, event) {
   const employees = await updateEmployeeById(state, event)
   return { ...state, employees }
 }
-async function onAddEmployeeAccruedValue (state, event) {
+async function onAddEmployeeAccruedValue(state, event) {
   const employees = await updateEmployeeById(state, event)
   return { ...state, employees }
 }
-async function onTerminateEmployee (state, event) {
+async function onTerminateEmployee(state, event) {
   const employees = await updateEmployeeById(state, event)
   return { ...state, employees }
 }
 
-async function updateEmployeeByAddress (state, event) {
-  const { returnValues: { employee: employeeAddress } } = event
+async function updateEmployeeByAddress(state, event) {
+  const {
+    returnValues: { employee: employeeAddress },
+  } = event
   const { employees: prevEmployees } = state
   const employeeData = await getEmployeeByAddress(employeeAddress)
 
-  const byAddress = (employee) => (employee.accountAddress === employeeAddress)
+  const byAddress = employee => employee.accountAddress === employeeAddress
   return updateEmployeeBy(prevEmployees, employeeData, byAddress)
 }
 
-async function updateEmployeeById (state, event) {
-  const { returnValues: { employeeId } } = event
+async function updateEmployeeById(state, event) {
+  const {
+    returnValues: { employeeId },
+  } = event
   const { employees: prevEmployees } = state
   const employeeData = await getEmployeeById(employeeId)
 
-  const byId = (employee) => (employee.id === employeeId)
+  const byId = employee => employee.id === employeeId
   return updateEmployeeBy(prevEmployees, employeeData, byId)
 }
 
-function updateEmployeeBy (employees, employeeData, by) {
+function updateEmployeeBy(employees, employeeData, by) {
   let nextEmployees = [...employees]
 
   if (!nextEmployees.find(by)) {
@@ -218,7 +242,7 @@ function updateEmployeeBy (employees, employeeData, by) {
   } else {
     nextEmployees = nextEmployees.map(employee => {
       let nextEmployee = {
-        ...employee
+        ...employee,
       }
 
       if (by(employee)) {
@@ -226,7 +250,7 @@ function updateEmployeeBy (employees, employeeData, by) {
           ...employeeData,
           name: employee.name,
           role: employee.role,
-          startDate: employee.startDate
+          startDate: employee.startDate,
         }
       }
       return nextEmployee

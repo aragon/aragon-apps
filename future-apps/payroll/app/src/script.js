@@ -8,16 +8,16 @@ retryEvery(async retry => {
     .first()
     .toPromise()
 
-  const vaultAddress = await app.external(financeAddress, financeAbi)
+  const vaultAddress = await app
+    .external(financeAddress, financeAbi)
     .vault()
     .first()
     .toPromise()
 
-  initialize(financeAddress, vaultAddress)
-    .catch(err => {
-      console.error('Could not start background script execution due:', err)
-      retry()
-    })
+  initialize(financeAddress, vaultAddress).catch(err => {
+    console.error('Could not start background script execution due:', err)
+    retry()
+  })
 })
 
 /*
@@ -36,8 +36,9 @@ retryEvery(async retry => {
  *
  */
 
-function retryEvery (callback, initialRetryTimer = 1000, increaseFactor = 5) {
+function retryEvery(callback, initialRetryTimer = 1000, increaseFactor = 5) {
   const attempt = (retryTimer = initialRetryTimer) => {
+    // eslint-disable-next-line standard/no-callback-literal
     callback(() => {
       console.error(`Retrying in ${retryTimer / 1000}s...`)
 

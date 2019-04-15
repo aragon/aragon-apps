@@ -1,11 +1,7 @@
 /* eslint-env jest */
 
 import React from 'react'
-import {
-  cleanup,
-  fireEvent,
-  render
-} from 'react-testing-library'
+import { cleanup, fireEvent, render } from 'react-testing-library'
 import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
 import { format as formatDate } from 'date-fns'
@@ -126,10 +122,14 @@ describe('Add new employee panel', () => {
 
       fireEvent.click(buttons.submit)
 
-      const errorBlock = modalRoot.querySelector('div[name="validation-error-block"] span')
+      const errorBlock = modalRoot.querySelector(
+        'div[name="validation-error-block"] span'
+      )
 
       // Asserts the error message is shown
-      expect(errorBlock).toHaveTextContent('Address must be a valid ethereum address')
+      expect(errorBlock).toHaveTextContent(
+        'Address must be a valid ethereum address'
+      )
     })
 
     it('address is taken message should be shown on an already used address input', () => {
@@ -158,7 +158,9 @@ describe('Add new employee panel', () => {
       // Submits the form
       fireEvent.click(buttons.submit)
 
-      const errorBlock = modalRoot.querySelector('div[name="validation-error-block"] span')
+      const errorBlock = modalRoot.querySelector(
+        'div[name="validation-error-block"] span'
+      )
 
       // Asserts the error message is shown
       expect(errorBlock).toHaveTextContent('Address is taken')
@@ -166,28 +168,34 @@ describe('Add new employee panel', () => {
   })
 })
 
-function renderAddEmployeePanel (props) {
+function renderAddEmployeePanel(props) {
   const mockApp = {
-    state () {
+    state() {
       return this
     },
 
-    map () {
+    map() {
       return this
     },
 
-    toPromise () {
+    toPromise() {
       return []
     },
 
-    subscribe (cb) {
+    subscribe(cb) {
       return { unsubscribe: jest.fn() }
-    }
+    },
   }
 
   render(
     <AragonContext.Provider value={mockApp}>
-      <AddEmployeePanel opened {...props} isAddressAvailable={(address) => Factory.createInitialAccounts().every(e => e.address !== address)} />
+      <AddEmployeePanel
+        opened
+        {...props}
+        isAddressAvailable={address =>
+          Factory.createInitialAccounts().every(e => e.address !== address)
+        }
+      />
     </AragonContext.Provider>
   )
 
@@ -199,12 +207,12 @@ function renderAddEmployeePanel (props) {
     name: panel.queryByLabelText('Name*'),
     role: panel.queryByLabelText('Role*'),
     salary: panel.queryByLabelText('Salary*'),
-    startDate: panel.queryByLabelText('Start Date*')
+    startDate: panel.queryByLabelText('Start Date*'),
   }
 
   const buttons = {
     close: modalRoot.querySelector('button'),
-    submit: modalRoot.querySelector('button[type="submit"]')
+    submit: modalRoot.querySelector('button[type="submit"]'),
   }
 
   return { form, fields, buttons }

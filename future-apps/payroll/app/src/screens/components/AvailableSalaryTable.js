@@ -9,7 +9,12 @@ import { formatDate } from '../../utils/formatting'
 import { Button, theme } from '@aragon/ui'
 import Timer from '../../components/Timer'
 
-const initializeColumns = (data, formatCurrency, formatSalary, formatTokenAmount) => {
+const initializeColumns = (
+  data,
+  formatCurrency,
+  formatSalary,
+  formatTokenAmount
+) => {
   return [
     {
       name: 'last-payroll',
@@ -18,8 +23,8 @@ const initializeColumns = (data, formatCurrency, formatSalary, formatTokenAmount
       formatter: formatDate,
       render: (formattedDate, date, item) => {
         const startDate = new Date(date)
-        return (<Timer start={startDate} />)
-      }
+        return <Timer start={startDate} />
+      },
     },
     {
       name: 'available-balance',
@@ -27,13 +32,11 @@ const initializeColumns = (data, formatCurrency, formatSalary, formatTokenAmount
       value: data => data.availableBalance,
       formatter: formatTokenAmount,
       render: (formattedAmount, amount, item) => (
-        <Amount positive={true}>
-          {formattedAmount}
-        </Amount>
+        <Amount positive>{formattedAmount}</Amount>
       ),
       cellProps: {
-        style: CellStyle
-      }
+        style: CellStyle,
+      },
     },
     {
       name: 'total-transferred',
@@ -41,8 +44,8 @@ const initializeColumns = (data, formatCurrency, formatSalary, formatTokenAmount
       value: data => data.totalTransferred,
       formatter: formatCurrency,
       cellProps: {
-        style: CellStyle
-      }
+        style: CellStyle,
+      },
     },
     {
       name: 'your-yearly-salary',
@@ -50,26 +53,31 @@ const initializeColumns = (data, formatCurrency, formatSalary, formatTokenAmount
       value: data => data.salary,
       formatter: formatSalary,
       cellProps: {
-        style: CellStyle
-      }
-    }
+        style: CellStyle,
+      },
+    },
   ]
 }
 
 const Amount = styled.span`
   font-weight: 600;
-  color: ${theme.positive}
+  color: ${theme.positive};
 `
 
 const CellStyle = {
-  fontSize: '20px'
+  fontSize: '20px',
 }
 
-const AvailableSalaryTable = (props) => {
-  const columns = initializeColumns(props.data, props.formatCurrency, props.formatSalary, props.formatTokenAmount)
+const AvailableSalaryTable = props => {
+  const columns = initializeColumns(
+    props.data,
+    props.formatCurrency,
+    props.formatSalary,
+    props.formatTokenAmount
+  )
   return (
     <Table
-      noDataMessage='No available salary found'
+      noDataMessage="No available salary found"
       columns={columns}
       sortable={false}
       {...props}
@@ -79,7 +87,7 @@ const AvailableSalaryTable = (props) => {
 
 AvailableSalaryTable.propTypes = {
   ...Table.propTypes,
-  data: PropTypes.arrayOf(salaryType).isRequired
+  data: PropTypes.arrayOf(salaryType).isRequired,
 }
 
 export default AvailableSalaryTable

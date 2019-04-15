@@ -1,7 +1,7 @@
 import app from './app'
 import { employee, tokenAllocation } from './marshalling'
 
-export function getEmployeeById (id) {
+export function getEmployeeById(id) {
   return app
     .call('getEmployee', id)
     .first()
@@ -11,7 +11,7 @@ export function getEmployeeById (id) {
     .toPromise()
 }
 
-export function getEmployeeByAddress (accountAddress) {
+export function getEmployeeByAddress(accountAddress) {
   return app
     .call('getEmployeeByAddress', accountAddress)
     .first()
@@ -21,7 +21,7 @@ export function getEmployeeByAddress (accountAddress) {
     .toPromise()
 }
 
-export async function getSalaryAllocation (employeeId, tokens) {
+export async function getSalaryAllocation(employeeId, tokens) {
   const salaryAllocation = await Promise.all(
     tokens.map(token =>
       app

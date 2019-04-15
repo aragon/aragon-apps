@@ -2,19 +2,17 @@ import React from 'react'
 import styled from 'styled-components'
 import { Spring, config } from 'react-spring'
 import { subYears, isWithinInterval, format } from 'date-fns'
-import { zip } from '/rxjs'
-
 import { theme, Text } from '@aragon/ui'
-
-import { formatCurrency, SECONDS_IN_A_YEAR } from '/utils/formatting'
-import vaultAbi from '/abi/vault-balance'
-import priceFeedAbi from '/abi/price-feed'
-import { toDecimals } from '/utils/math-utils'
-import { connect } from '/context/AragonContext'
+import vaultAbi from '../../abi/vault-balance'
+import priceFeedAbi from '../../abi/price-feed'
+import { connect } from '../../context/AragonContext'
+import { zip } from '../../rxjs'
+import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
+import { toDecimals } from '../../utils/math-utils'
 
 class YearlySalarySummary extends React.Component {
   state = {
-    cashReserves: 0
+    cashReserves: 0,
   }
 
   formatAmount = amount => {
@@ -46,18 +44,18 @@ class YearlySalarySummary extends React.Component {
     return {
       totalYearSalaryBill: this.formatAmount(totalYearSalaryBill),
       totalPaidThisYear: this.formatAmount(totalPaidThisYear),
-      remainingThisYear: this.formatAmount(remainingThisYear)
+      remainingThisYear: this.formatAmount(remainingThisYear),
     }
   }
 
-  async componentDidUpdate (prevProps) {
+  async componentDidUpdate(prevProps) {
     const { vaultAddress: prevVaultAddress } = prevProps
     const {
       app,
       vaultAddress,
       tokens,
       priceFeedAddress,
-      denominationToken
+      denominationToken,
     } = this.props
 
     if (prevVaultAddress !== vaultAddress) {
@@ -75,7 +73,7 @@ class YearlySalarySummary extends React.Component {
               const exchangedAmount = amount / xrt
               return {
                 ...token,
-                exchangedAmount
+                exchangedAmount,
               }
             })
             .toPromise()
@@ -90,7 +88,7 @@ class YearlySalarySummary extends React.Component {
     }
   }
 
-  render () {
+  render() {
     const { employees, payments, denominationToken } = this.props
     const { cashReserves } = this.state
 
@@ -101,59 +99,43 @@ class YearlySalarySummary extends React.Component {
 
     return (
       <Container>
-        <SummaryTitle data-testid='salary-summary-title'>
-          Yearly salary summary
-        </SummaryTitle>
-        <SummaryRow data-testid='salary-paid-year'>
-          <SummaryItem>
-            Salary paid this year
-          </SummaryItem>
+        <SummaryTitle>Yearly salary summary</SummaryTitle>
+        <SummaryRow>
+          <SummaryItem>Salary paid this year</SummaryItem>
           {summary ? (
-            <SummaryAmount>
-              {summary.totalPaidThisYear}
-            </SummaryAmount>
+            <SummaryAmount>{summary.totalPaidThisYear}</SummaryAmount>
           ) : (
-            <Loading data-testid='loading-year'/>
+            <Loading />
           )}
         </SummaryRow>
-        <SummaryRow data-testid='salary-remaining'>
-          <SummaryItem>
-            Remaining salary this year
-          </SummaryItem>
+        <SummaryRow>
+          <SummaryItem>Remaining salary this year</SummaryItem>
           {summary ? (
-            <SummaryAmount>
-              {summary.remainingThisYear}
-            </SummaryAmount>
+            <SummaryAmount>{summary.remainingThisYear}</SummaryAmount>
           ) : (
-            <Loading data-testid='loading-remaining' />
+            <Loading />
           )}
         </SummaryRow>
 
         <Line />
 
-        <SummaryRow data-testid='salary-bill'>
-          <SummaryItem>
-            Total year salary bill
-          </SummaryItem>
+        <SummaryRow>
+          <SummaryItem>Total year salary bill</SummaryItem>
           {summary ? (
-            <SummaryAmount>
-              {summary.totalYearSalaryBill}
-            </SummaryAmount>
+            <SummaryAmount>{summary.totalYearSalaryBill}</SummaryAmount>
           ) : (
-            <Loading data-testid='loading-bill' />
+            <Loading />
           )}
         </SummaryRow>
-        <SummaryRow data-testid='salary-reserves'>
-          <SummaryItem>
-            Cash reserves
-          </SummaryItem>
+        <SummaryRow>
+          <SummaryItem>Cash reserves</SummaryItem>
           {cashReserves ? (
             <AnimatedCashReserves
               cashReserves={cashReserves}
               symbol={denominationToken.symbol}
             />
           ) : (
-            <Loading data-testid='loading-reserves' />
+            <Loading />
           )}
         </SummaryRow>
       </Container>
@@ -179,7 +161,7 @@ const SummaryRow = styled.div`
 
 const SummaryItem = styled(Text).attrs({
   size: 'large',
-  color: theme.textSecondary
+  color: theme.textSecondary,
 })``
 
 const SummaryAmount = styled(Text).attrs({ size: 'normal' })`
@@ -195,7 +177,7 @@ const Line = styled.div`
 
 const Loading = styled(Text).attrs({
   size: 'normal',
-  color: theme.textTertiary
+  color: theme.textTertiary,
 })`
   &::before {
     content: 'Loading ...';
@@ -217,26 +199,18 @@ const AnimatedCashReserves = props => {
       to={{ number: cashReserves }}
       config={config.stiff}
     >
-      {props => (
-        <CashReserves
-          data-testid={
-            cashReserves === props.number ? 'final-reserves' : ''
-          }
-        >
-          {format(props.number)}
-        </CashReserves>
-      )}
+      {props => <CashReserves>{format(props.number)}</CashReserves>}
     </Spring>
   )
 }
 
-function mapStateToProps ({
+function mapStateToProps({
   employees = [],
   payments = [],
   denominationToken = {},
   vaultAddress = '',
   tokens = [],
-  priceFeedAddress = ''
+  priceFeedAddress = '',
 }) {
   return {
     employees,
@@ -245,7 +219,7 @@ function mapStateToProps ({
     vaultAddress,
     tokens,
     priceFeedAddress,
-    denominationToken
+    denominationToken,
   }
 }
 

@@ -1,20 +1,24 @@
 {
   "presets": [
-    "@babel/preset-env",
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "browsers": [
+            "> 1%",
+            "last 3 versions",
+            "ie >= 9",
+            "ios >= 8",
+            "android >= 4.2"
+          ]
+        },
+        "useBuiltIns": false
+      }
+    ],
     "@babel/preset-react"
   ],
   "plugins": [
-    "@babel/plugin-proposal-class-properties",
-    "@babel/plugin-transform-runtime",
-    "babel-plugin-styled-components"
-  ],
-  "env": {
-    "production": {
-      "plugins": [
-        ["babel-plugin-react-remove-properties", {
-          "properties": ["data-testid"],
-        }]
-      ]
-    }
-  }
+    ["styled-components", { "displayName": true }],
+    "@babel/plugin-proposal-class-properties"
+  ]
 }

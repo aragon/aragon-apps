@@ -7,16 +7,16 @@ import DateRangeInput from './DateRangeInput'
 
 // Text
 Input.Text = styled(Input).attrs({
-  type: 'text'
+  type: 'text',
 })``
 
 // Numeric
 Input.Number = styled(Input).attrs({
-  type: 'number'
+  type: 'number',
 })``
 
 Input.Currency = styled(Input.Number).attrs({
-  min: 0
+  min: 0,
 })``
 
 // Date
@@ -26,7 +26,7 @@ Input.DateRange = DateRangeInput
 
 // Static
 Input.Static = styled(Text).attrs({
-  weight: 'bold'
+  weight: 'bold',
 })`
   line-height: 33px;
   white-space: pre;

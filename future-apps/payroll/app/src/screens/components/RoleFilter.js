@@ -7,16 +7,19 @@ import InlineField from '../../components/Field/InlineField'
 const RoleFilter = ({ active, onChange, roles }) => {
   const options = [
     { label: 'All', filter: null },
-    ...Array.from(roles).sort().map(role => (
-      { label: role, filter: employee => employee.role === role })
-    )
+    ...Array.from(roles)
+      .sort()
+      .map(role => ({
+        label: role,
+        filter: employee => employee.role === role,
+      })),
   ]
 
-  const activeIndex = active &&
-    options.indexOf(options.find(f => f.label === active.label))
+  const activeIndex =
+    active && options.indexOf(options.find(f => f.label === active.label))
 
   return (
-    <InlineField label='Role Type:'>
+    <InlineField label="Role Type:">
       <DropDown
         items={options.map(opt => opt.label)}
         active={activeIndex || 0}
@@ -33,10 +36,10 @@ const RoleFilter = ({ active, onChange, roles }) => {
 RoleFilter.propTypes = {
   active: PropTypes.shape({
     label: PropTypes.string.isRequired,
-    filter: PropTypes.func
+    filter: PropTypes.func,
   }),
   onChange: PropTypes.func,
-  roles: PropTypes.instanceOf(Set).isRequired
+  roles: PropTypes.instanceOf(Set).isRequired,
 }
 
 export default RoleFilter

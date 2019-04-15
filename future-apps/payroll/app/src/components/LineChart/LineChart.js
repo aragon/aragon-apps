@@ -8,7 +8,7 @@ class LineChart extends React.Component {
   static propTypes = {
     springConfig: PropTypes.shape({
       tension: PropTypes.number,
-      friction: PropTypes.number
+      friction: PropTypes.number,
     }),
     durationSlices: PropTypes.number,
     width: PropTypes.number,
@@ -22,10 +22,10 @@ class LineChart extends React.Component {
       PropTypes.shape({
         id: PropTypes.number,
         color: PropTypes.string,
-        values: PropTypes.arrayOf(PropTypes.number) // numbers between 0 and 1
+        values: PropTypes.arrayOf(PropTypes.number), // numbers between 0 and 1
       })
     ),
-    labels: PropTypes.array
+    labels: PropTypes.array,
   }
 
   static defaultProps = {
@@ -34,11 +34,11 @@ class LineChart extends React.Component {
     width: 300,
     height: 200,
     captionsHeight: 20,
-    dotRadius: 7/2,
+    dotRadius: 7 / 2,
     animDelay: 500,
     reset: false,
     borderColor: 'rgba(209, 209, 209, 0.5)',
-    settings: []
+    settings: [],
   }
 
   state = {
@@ -83,7 +83,7 @@ class LineChart extends React.Component {
       dotRadius,
       springConfig,
       labels,
-      reset
+      reset,
     } = this.props
 
     // All the settings' values should have same length
@@ -121,10 +121,11 @@ class LineChart extends React.Component {
                   strokeWidth="1"
                 />
                 {settings.map(({ id, color, values }) => {
-                  return valuesLength && (
-                    <g key={`line-plot-${id}`}>
-                      <path
-                        d={`
+                  return (
+                    valuesLength && (
+                      <g key={`line-plot-${id}`}>
+                        <path
+                          d={`
                           M
                           ${this.getX(0)},
                           ${this.getY(values[0], progress)}
@@ -140,14 +141,12 @@ class LineChart extends React.Component {
                             )
                             .join('')}
                         `}
-                        fill="transparent"
-                        stroke={color}
-                        strokeWidth="2"
-                        strokeOpacity="0.7"
-                      />
-                      {values
-                        .slice(1, -1)
-                        .map((val, i) => (
+                          fill="transparent"
+                          stroke={color}
+                          strokeWidth="2"
+                          strokeOpacity="0.7"
+                        />
+                        {values.slice(1, -1).map((val, i) => (
                           <circle
                             key={i}
                             cx={this.getX(i + 1) * progress}
@@ -158,7 +157,8 @@ class LineChart extends React.Component {
                             strokeWidth="1"
                           />
                         ))}
-                    </g>
+                      </g>
+                    )
                   )
                 })}
                 <line
@@ -169,15 +169,20 @@ class LineChart extends React.Component {
                   stroke="#DAEAEF"
                   strokeWidth="3"
                 />
-                { labels &&
+                {labels && (
                   <g transform={`translate(0,${height + 20})`}>
                     {[...new Array(durationSlices - 1)].map((_, i) => (
-                      <LabelText key={i} x={this.getX(i) + (i === 0 ? 2 : 0)} transform={`rotate(45, ${this.getX(i) + (i === 0 ? 2 : 0)},0) translate(-6)`}>
+                      <LabelText
+                        key={i}
+                        x={this.getX(i) + (i === 0 ? 2 : 0)}
+                        transform={`rotate(45, ${this.getX(i) +
+                          (i === 0 ? 2 : 0)},0) translate(-6)`}
+                      >
                         {labels[i]}
                       </LabelText>
                     ))}
                   </g>
-                }
+                )}
               </svg>
             )}
           </Spring>

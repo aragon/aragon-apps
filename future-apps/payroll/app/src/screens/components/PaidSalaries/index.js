@@ -10,7 +10,7 @@ const [MONTHLY, QUARTERLY, YEARLY] = CHART_TYPES
 
 class PaidSalaries extends React.Component {
   state = {
-    activeFilter: 0
+    activeFilter: 0,
   }
 
   render() {

@@ -16,7 +16,6 @@ describe('App', () => {
   const myPayrollTab = tabContainer.getByText('My payroll')
   const teamPayrollTab = tabContainer.getByText('Team payroll')
 
-
   it('renders a header', () => {
     const title = appBar.querySelector('h1')
 

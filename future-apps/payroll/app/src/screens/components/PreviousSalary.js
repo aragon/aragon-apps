@@ -9,52 +9,74 @@ import TokenFilter from './filters/TokenFilter'
 import DateRangeFilter from './filters/DateRangeFilter'
 import { formatCurrency } from '../../utils/formatting'
 
-
 class PreviousSalary extends React.PureComponent {
   static defaultProps = {
     payments: [],
     salaryAllocation: [],
     employees: [],
-    accountAddress: {}
+    accountAddress: {},
   }
 
   state = {
     tokenFilter: null,
-    dateRangeFilter: null
+    dateRangeFilter: null,
   }
 
   handleClearFilters = () => {
     this.setState({
       statusFilter: null,
-      roleFilter: null
+      roleFilter: null,
     })
   }
 
-  handleTokenFilterChange = (tokenFilter) => {
+  handleTokenFilterChange = tokenFilter => {
     this.setState({ tokenFilter })
   }
 
-  handleDateRangeFilterChange = (dateRangeFilter) => {
-    this.setState({ dateRangeFilter})
+  handleDateRangeFilterChange = dateRangeFilter => {
+    this.setState({ dateRangeFilter })
   }
 
-  render () {
-    const { salaryAllocation, employees, accountAddress, payments, denominationToken, network } = this.props
+  render() {
+    const {
+      salaryAllocation,
+      employees,
+      accountAddress,
+      payments,
+      denominationToken,
+      network,
+    } = this.props
     const { tokenFilter, dateRangeFilter } = this.state
-    const filteredPayments = payments.filter(payment => payment.accountAddress === accountAddress)
+    const filteredPayments = payments.filter(
+      payment => payment.accountAddress === accountAddress
+    )
 
-    const customExchangedFormat = (exchanged) => formatCurrency(exchanged, denominationToken.symbol, 10, 0)
-    const customTokenAmountFormat = (amount) => formatCurrency(amount.amount, amount.token.symbol, 10, amount.token.decimals, 1, 2, true, true )
+    const customExchangedFormat = exchanged =>
+      formatCurrency(exchanged, denominationToken.symbol, 10, 0)
+    const customTokenAmountFormat = amount =>
+      formatCurrency(
+        amount.amount,
+        amount.token.symbol,
+        10,
+        amount.token.decimals,
+        1,
+        2,
+        true,
+        true
+      )
 
-    const tokenFilterOptions = salaryAllocation.map((option) => {
+    const tokenFilterOptions = salaryAllocation.map(option => {
       return {
-        label: option.symbol, filter: salary => salary.amount.token.address  === option.address
+        label: option.symbol,
+        filter: salary => salary.amount.token.address === option.address,
       }
     })
 
     const filters = [
       ...(tokenFilter && tokenFilter.filter ? [tokenFilter.filter] : []),
-      ...(dateRangeFilter && dateRangeFilter.filter ? [dateRangeFilter.filter] : [])
+      ...(dateRangeFilter && dateRangeFilter.filter
+        ? [dateRangeFilter.filter]
+        : []),
     ]
 
     return (
@@ -86,7 +108,6 @@ class PreviousSalary extends React.PureComponent {
   }
 }
 
-
 const StyledContainer = styled.section`
   display: flex;
   flex-direction: column;
@@ -104,17 +125,17 @@ const StyledFilters = styled.div`
   justify-content: space-between;
   text-align: right;
   > * {
-    margin-left: 1rem
+    margin-left: 1rem;
   }
 `
 
-function mapStateToProps ({
+function mapStateToProps({
   salaryAllocation = [],
   employees = [],
   accountAddress = {},
   payments = [],
   denominationToken = [],
-  network = {}
+  network = {},
 }) {
   return {
     accountAddress,
@@ -122,7 +143,7 @@ function mapStateToProps ({
     employees,
     payments,
     salaryAllocation,
-    network
+    network,
   }
 }
 

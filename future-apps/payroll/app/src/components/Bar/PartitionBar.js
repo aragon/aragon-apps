@@ -10,7 +10,7 @@ const DEFAULT_COLORS = [
   '#21AAE7',
   '#39CAD0',
   '#ADE9EC',
-  '#80AEDC'
+  '#80AEDC',
 ]
 
 const Bar = styled.div`
@@ -62,9 +62,7 @@ const Legend = styled.ol`
 
 const PartitionBar = ({ data, legend, colors = DEFAULT_COLORS }) => {
   if (Array.isArray(data) && data.length) {
-    const partitions = data.sort(
-      (p1, p2) => p2.allocation - p1.allocation
-    )
+    const partitions = data.sort((p1, p2) => p2.allocation - p1.allocation)
 
     return (
       <React.Fragment>
@@ -83,15 +81,11 @@ const PartitionBar = ({ data, legend, colors = DEFAULT_COLORS }) => {
             {partitions.map(({ symbol, description, allocation }, index) => (
               <Label key={symbol + index}>
                 <Text color={theme.textSecondary}>
-                  <Bullet color={colors[index]}/>
+                  <Bullet color={colors[index]} />
                   {symbol}
                 </Text>
-                <div>
-                  {description}
-                </div>
-                <Text weight='bolder'>
-                  {allocation}%
-                </Text>
+                <div>{description}</div>
+                <Text weight="bolder">{allocation}%</Text>
               </Label>
             ))}
           </Legend>
@@ -108,15 +102,15 @@ PartitionBar.propTypes = {
     PropTypes.shape({
       symbol: PropTypes.string.isRequired,
       allocation: PropTypes.number.isRequired,
-      description: PropTypes.node
+      description: PropTypes.node,
     })
   ).isRequired,
   colors: PropTypes.arrayOf(PropTypes.string),
-  legend: PropTypes.bool
+  legend: PropTypes.bool,
 }
 
 PartitionBar.defaultProps = {
-  legend: true
+  legend: true,
 }
 
 export default PartitionBar

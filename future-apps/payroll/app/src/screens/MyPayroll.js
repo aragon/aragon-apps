@@ -6,7 +6,7 @@ import PreviousSalary from './components/PreviousSalary'
 import AvailableSalary from './components/AvailableSalary'
 
 const MyPayroll = () => (
-  <Section data-testid='my-payroll-section'>
+  <Section data-testid="my-payroll-section">
     <Section.Left>
       <AvailableSalary />
       <PreviousSalary />

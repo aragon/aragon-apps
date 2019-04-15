@@ -9,7 +9,7 @@ import {
   Info,
   theme,
   Text,
-  IconFundraising
+  IconFundraising,
 } from '@aragon/ui'
 import { differenceInSeconds } from 'date-fns'
 
@@ -25,10 +25,10 @@ class RequestSalary extends React.Component {
   state = {
     isEditing: false,
     opened: false,
-    balance: null
+    balance: null,
   }
 
-  async componentDidUpdate (prevProps) {
+  async componentDidUpdate(prevProps) {
     const { opened } = this.props
     let balance
 
@@ -37,7 +37,7 @@ class RequestSalary extends React.Component {
         balance = await this.getBalance()
         this.setState({
           balance,
-          opened
+          opened,
         })
       } catch (err) {
         console.error('Error occurred', err)
@@ -45,7 +45,7 @@ class RequestSalary extends React.Component {
     } else if (!opened && this.state.balance) {
       this.setState({
         balance,
-        opened
+        opened,
       })
     }
   }
@@ -59,7 +59,7 @@ class RequestSalary extends React.Component {
       accruedTime: 0,
       accruedSalary: 0,
       formatedAccruedSalary: '',
-      accruedAllocation: []
+      accruedAllocation: [],
     }
 
     if (employee) {
@@ -85,7 +85,7 @@ class RequestSalary extends React.Component {
         accruedTime,
         accruedSalary,
         formatedAccruedSalary,
-        accruedAllocation
+        accruedAllocation,
       }
     }
 
@@ -106,7 +106,7 @@ class RequestSalary extends React.Component {
     const token = tokens.find(
       token => token.address === tokenAllocation.address
     )
-    const proportion = accruedSalary * tokenAllocation.allocation / 100
+    const proportion = (accruedSalary * tokenAllocation.allocation) / 100
 
     const formatedProportion = formatCurrency(
       proportion,
@@ -130,7 +130,7 @@ class RequestSalary extends React.Component {
       proportion,
       formatedProportion,
       tokenAmount,
-      formatedTokenAmount
+      formatedTokenAmount,
     }
   }
 
@@ -139,7 +139,7 @@ class RequestSalary extends React.Component {
       app,
       priceFeedAddress,
       salaryAllocation,
-      denominationToken
+      denominationToken,
     } = this.props
 
     const priceFeed = app.external(priceFeedAddress, priceFeedAbi)
@@ -152,7 +152,7 @@ class RequestSalary extends React.Component {
           .map(({ xrt }) => {
             return {
               ...tokenAllocation,
-              xrt
+              xrt,
             }
           })
           .toPromise()
@@ -178,50 +178,40 @@ class RequestSalary extends React.Component {
   }
 
   endEditing = () => {
-    this.setState({ isEditing: false })
+    this.setState({ isEditing: alse })
   }
 
-  render () {
+  render() {
     const { onClose } = this.props
     const { balance, isEditing, opened } = this.state
 
     const accruedAllocation = balance
       ? balance.accruedAllocation.map(tokenAllocation => {
-        const description = (
-          <AllocationDescription>
-            <div>
-              <Text
-                weight='bold'
-                data-testid={`token-allocation-${tokenAllocation.symbol}`}
-              >
-                {tokenAllocation.formatedTokenAmount}
-              </Text>
-            </div>
-            <div>
-              <Text
-                color='textSecondary'
-                data-testid={`proportion-allocation-${
-                  tokenAllocation.symbol
-                }`}
-              >
-                <StyledFormattedProportion>
-                  {tokenAllocation.formatedProportion}
-                </StyledFormattedProportion>
-              </Text>
-            </div>
-          </AllocationDescription>
-        )
+          const description = (
+            <AllocationDescription>
+              <div>
+                <Text weight="bold">{tokenAllocation.formatedTokenAmount}</Text>
+              </div>
+              <div>
+                <Text color="textSecondary">
+                  <StyledFormattedProportion>
+                    {tokenAllocation.formatedProportion}
+                  </StyledFormattedProportion>
+                </Text>
+              </div>
+            </AllocationDescription>
+          )
 
-        return {
-          ...tokenAllocation,
-          description
-        }
-      })
+          return {
+            ...tokenAllocation,
+            description,
+          }
+        })
       : []
 
     const panel = (
       <React.Fragment>
-        <SidePanel title='Request salary' opened={opened} onClose={onClose}>
+        <SidePanel title="Request salary" opened={opened} onClose={onClose}>
           <Container>
             <AllocationWrapper>
               <SectionTitle>Salary Allocation</SectionTitle>
@@ -229,22 +219,19 @@ class RequestSalary extends React.Component {
               {accruedAllocation && <PartitionBar data={accruedAllocation} />}
 
               <TotalAllocationWrapper>
-                <Text weight='bolder'>Total salary</Text>
+                <Text weight="bolder">Total salary</Text>
                 <div>
                   <span />
-                  <Text weight='bolder'>
+                  <Text weight="bolder">
                     <StyledFormattedAccruedSalary>
                       {balance && balance.formatedAccruedSalary}
                     </StyledFormattedAccruedSalary>
                   </Text>
                 </div>
-                <Text weight='bolder'>100%</Text>
+                <Text weight="bolder">100%</Text>
               </TotalAllocationWrapper>
 
-              <EditButton
-                onClick={this.startEditing}
-                data-testid='salary-allocation-edit-btn'
-              >
+              <EditButton onClick={this.startEditing}>
                 Edit salary allocation
               </EditButton>
             </AllocationWrapper>
@@ -260,9 +247,7 @@ class RequestSalary extends React.Component {
                 </InfoTotalItem>
                 <InfoTotalItem>
                   {balance && (
-                    <Text size='xxlarge' data-testid='total-salary'>
-                      {balance.formatedAccruedSalary}
-                    </Text>
+                    <Text size="xxlarge">{balance.formatedAccruedSalary}</Text>
                   )}
                 </InfoTotalItem>
               </Info>
@@ -274,10 +259,7 @@ class RequestSalary extends React.Component {
                 takes place
               </Info.Permissions>
 
-              <RequestButton
-                onClick={this.handleRequestClick}
-                data-testid='request-payment-btn'
-              >
+              <RequestButton onClick={this.handleRequestClick}>
                 Request Salary
               </RequestButton>
             </ButtonWrapper>
@@ -293,7 +275,7 @@ class RequestSalary extends React.Component {
 
 RequestSalary.propsType = {
   onClose: PropTypes.func,
-  opened: PropTypes.bool
+  opened: PropTypes.bool,
 }
 
 const Container = styled.section`
@@ -359,13 +341,13 @@ const ButtonWrapper = styled.div``
 const RequestButton = styled(Button).attrs({ mode: 'strong', wide: true })`
   margin-top: 20px;
 `
-function mapStateToProps ({
+function mapStateToProps({
   accountAddress = '',
   denominationToken = {},
   employees = [],
   priceFeedAddress = '',
   salaryAllocation = [],
-  tokens = []
+  tokens = [],
 }) {
   return {
     accountAddress,
@@ -373,7 +355,7 @@ function mapStateToProps ({
     employees,
     priceFeedAddress,
     salaryAllocation,
-    tokens
+    tokens,
   }
 }
 

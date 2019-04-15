@@ -6,7 +6,7 @@ import {
   fireEvent,
   render,
   waitForElement,
-  queryByText
+  queryByText,
 } from 'react-testing-library'
 import 'jest-dom/extend-expect'
 
@@ -14,14 +14,12 @@ import PreviousSalary from './PreviousSalary'
 import AragonContext from '../../context/AragonContext'
 
 const dataMock = {
-  PreviousSalary: [
-  ]
+  PreviousSalary: [],
 }
 
 afterEach(cleanup)
 
 describe('Available Salary', () => {
-
   it('should render title', async () => {
     const { previousSalary } = renderPreviousSalary()
     const title = await previousSalary.container.querySelector('h1')
@@ -29,20 +27,20 @@ describe('Available Salary', () => {
   })
 })
 
-function renderPreviousSalary (props) {
+function renderPreviousSalary(props) {
   const mockApp = {
-    state () {
+    state() {
       return this
     },
 
-    map () {
+    map() {
       return this
     },
 
-    subscribe (cb) {
+    subscribe(cb) {
       cb(dataMock)
       return { unsubscribe: jest.fn() }
-    }
+    },
   }
 
   const previousSalary = render(

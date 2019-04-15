@@ -10,25 +10,25 @@ const initializeColumns = (data, formatSalary, formatCurrency) => {
     {
       name: 'name',
       title: 'Name',
-      value: data => data.name
+      value: data => data.name,
     },
     {
       name: 'start-date',
       title: 'Start Date',
       value: data => data.startDate,
-      formatter: formatDate
+      formatter: formatDate,
     },
     {
       name: 'end-date',
       title: 'End Date',
       value: data => data.endDate,
       formatter: formatDate,
-      defaultValue: 'Active'
+      defaultValue: 'Active',
     },
     {
       name: 'role',
       title: 'Role',
-      value: data => data.role
+      value: data => data.role,
     },
     {
       name: 'salary',
@@ -36,8 +36,8 @@ const initializeColumns = (data, formatSalary, formatCurrency) => {
       value: data => data.salary,
       formatter: formatSalary,
       cellProps: {
-        align: 'right'
-      }
+        align: 'right',
+      },
     },
     {
       name: 'annual-total-payment',
@@ -45,19 +45,23 @@ const initializeColumns = (data, formatSalary, formatCurrency) => {
       value: data => data.totalPaid,
       formatter: formatCurrency,
       cellProps: {
-        align: 'right'
-      }
-    }
+        align: 'right',
+      },
+    },
   ]
 }
 
-const EmployeeTable = (props) => {
-  const columns = initializeColumns(props.data, props.formatSalary, props.formatCurrency)
+const EmployeeTable = props => {
+  const columns = initializeColumns(
+    props.data,
+    props.formatSalary,
+    props.formatCurrency
+  )
   return (
     <Table
       paginated
       rowsPerPage={4}
-      noDataMessage='No employees found'
+      noDataMessage="No employees found"
       columns={columns}
       {...props}
     />
@@ -67,7 +71,7 @@ const EmployeeTable = (props) => {
 EmployeeTable.propTypes = {
   ...Table.propTypes,
   data: PropTypes.arrayOf(employeeType).isRequired,
-  formatCurrency: PropTypes.func
+  formatCurrency: PropTypes.func,
 }
 
 export default EmployeeTable

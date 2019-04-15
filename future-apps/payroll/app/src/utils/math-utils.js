@@ -9,7 +9,7 @@
  * @param {number} [places=2] Number of places to round to
  * @returns {number} Rounded number
  */
-export function round (num, places = 2) {
+export function round(num, places = 2) {
   const rounded = Number(Math.round(num + 'e+' + places) + 'e-' + places)
   return Number.isNaN(rounded) ? Number(num.toFixed(places)) : rounded
 }
@@ -21,11 +21,11 @@ export function round (num, places = 2) {
  * @param {string} num the number
  * @returns {Array<string>} array with the [<whole>, <decimal>] parts of the number
  */
-function splitDecimalNumber (num) {
+function splitDecimalNumber(num) {
   const [whole = '', dec = ''] = num.split('.')
   return [
     whole.replace(/^0*/, ''), // trim leading zeroes
-    dec.replace(/0*$/, '') // trim trailing zeroes
+    dec.replace(/0*$/, ''), // trim trailing zeroes
   ]
 }
 
@@ -38,7 +38,7 @@ function splitDecimalNumber (num) {
  * @param {bool} [options.truncate=true] Should the number be truncated to its decimal base
  * @returns {string} formatted number
  */
-export function toDecimals (num, decimals, { truncate = true } = {}) {
+export function toDecimals(num, decimals, { truncate = true } = {}) {
   const [whole, dec] = splitDecimalNumber(num)
   if (!whole && !dec) {
     return '0'

@@ -2,14 +2,17 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import {
-  isAfter, isBefore, isEqual, isDate,
+  isAfter,
+  isBefore,
+  isEqual,
+  isDate,
   format as formatDate,
-  startOfDay, endOfDay
+  startOfDay,
+  endOfDay,
 } from 'date-fns'
 
 import BaseInput from './BaseInput'
 import DatePicker from './DatePicker'
-
 
 class DateRangeInput extends React.PureComponent {
   state = {
@@ -19,26 +22,26 @@ class DateRangeInput extends React.PureComponent {
     startPicker: null,
     endPicker: null,
     startDateSelected: false,
-    endDateSelected: false
+    endDateSelected: false,
   }
 
-  get formattedStartDate () {
+  get formattedStartDate() {
     const { startDate } = this.state
 
     return isDate(startDate) ? formatDate(startDate, this.props.format) : ''
   }
 
-  get formattedEndDate () {
+  get formattedEndDate() {
     const { endDate } = this.state
 
     return isDate(endDate) ? formatDate(endDate, this.props.format) : ''
   }
 
-  componentWillUnmount () {
+  componentWillUnmount() {
     document.removeEventListener('mousedown', this.handleClickOutside)
   }
 
-  componentDidUpdate (prevProps, prevState) {
+  componentDidUpdate(prevProps, prevState) {
     if (this.state.showPicker !== prevState.showPicker) {
       if (this.state.showPicker) {
         document.addEventListener('mousedown', this.handleClickOutside)
@@ -48,18 +51,18 @@ class DateRangeInput extends React.PureComponent {
     }
   }
 
-  handleClick = (event) => {
+  handleClick = event => {
     event.stopPropagation()
     this.setState({ showPicker: true })
   }
 
-  handleClickOutside = (event) => {
+  handleClickOutside = event => {
     if (this.rootRef && !this.rootRef.contains(event.target)) {
       this.setState({ showPicker: false })
     }
   }
 
-  handleSelectStartDate = (date) => {
+  handleSelectStartDate = date => {
     const { endDate } = this.state
     const isValidDate = isBefore(date, endDate) || isEqual(date, endDate)
     if (typeof this.props.onStartDateChange === 'function' && isValidDate) {
@@ -68,7 +71,7 @@ class DateRangeInput extends React.PureComponent {
     }
   }
 
-  handleSelectEndDate = (date) => {
+  handleSelectEndDate = date => {
     const { startDate } = this.state
     const isValidDate = isAfter(date, startDate) || isEqual(date, startDate)
     if (typeof this.props.onEndDateChange === 'function' && isValidDate) {
@@ -77,17 +80,17 @@ class DateRangeInput extends React.PureComponent {
     }
   }
 
-  render () {
+  render() {
     const { startDate, endDate } = this.state
     const { icon, iconposition } = this.props
     return (
       <StyledContainer
-        innerRef={el => this.rootRef = el}
+        innerRef={el => (this.rootRef = el)}
         onClick={this.handleClick}
       >
         <StyledBaseInput
           value={`${this.formattedStartDate} - ${this.formattedEndDate}`}
-          readOnly={true}
+          readOnly
           icon={icon}
           iconposition={iconposition}
           height={39}
@@ -109,7 +112,7 @@ class DateRangeInput extends React.PureComponent {
                 onSelect={this.handleSelectEndDate}
                 overlay={false}
               />
-          </StyledDatePickersContainer>
+            </StyledDatePickersContainer>
           </React.Fragment>
         )}
       </StyledContainer>
@@ -121,12 +124,12 @@ DateRangeInput.propTypes = {
   endDate: PropTypes.instanceOf(Date),
   format: PropTypes.string,
   onChange: PropTypes.func,
-  startDate: PropTypes.instanceOf(Date)
+  startDate: PropTypes.instanceOf(Date),
 }
 
 DateRangeInput.defaultProps = {
   format: 'LL/dd/yyyy',
-  onChange: () => {}
+  onChange: () => {},
 }
 
 const StyledContainer = styled.div`

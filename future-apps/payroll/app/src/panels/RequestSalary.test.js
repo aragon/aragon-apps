@@ -5,7 +5,7 @@ import {
   cleanup,
   // fireEvent,
   render,
-  waitForElement
+  waitForElement,
 } from 'react-testing-library'
 import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
@@ -66,7 +66,7 @@ describe('Request Salary panel', () => {
   })
 })
 
-async function renderRequestPanel (props) {
+async function renderRequestPanel(props) {
   const app = mockApp()
 
   const requestSalary = render(
@@ -83,7 +83,7 @@ async function renderRequestPanel (props) {
   const buttons = {
     close: modalRoot.querySelector('button'),
     edit: panel.getByTestId('salary-allocation-edit-btn'),
-    request: panel.getByTestId('request-payment-btn')
+    request: panel.getByTestId('request-payment-btn'),
   }
 
   const title = modalRoot.querySelector('h1')

@@ -7,34 +7,39 @@ import { DropDown, Field, IconBlank } from '@aragon/ui'
 import InlineField from '../../../components/Field/InlineField'
 import Input from '../../../components/Input'
 
-
 class DateRangeFilter extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       startDate: props.startDate,
-      endDate: props.endDate
+      endDate: props.endDate,
     }
   }
 
-  handleStartDateChange = (date) => {
+  handleStartDateChange = date => {
     const { onChange } = this.props
     const { startDate, endDate } = this.state
     this.setState({ startDate: date })
-    onChange({ filter: salary => isWithinInterval(salary.date, { start: date, end: endDate }) })
+    onChange({
+      filter: salary =>
+        isWithinInterval(salary.date, { start: date, end: endDate }),
+    })
   }
 
-  handleEndDateChange = (date) => {
+  handleEndDateChange = date => {
     const { onChange } = this.props
     const { startDate, endDate } = this.state
     this.setState({ endDate: date })
-    onChange({ filter: salary => isWithinInterval(salary.date, { start: startDate, end: date }) })
+    onChange({
+      filter: salary =>
+        isWithinInterval(salary.date, { start: startDate, end: date }),
+    })
   }
 
   render() {
     const { startDate, endDate } = this.state
     return (
-      <InlineField label='Date Range:'>
+      <InlineField label="Date Range:">
         <Field style={{ margin: 0 }}>
           <Input.DateRange
             key="date-range-picker"
@@ -43,7 +48,7 @@ class DateRangeFilter extends React.Component {
             onStartDateChange={this.handleStartDateChange}
             onEndDateChange={this.handleEndDateChange}
             icon={<IconBlank />}
-            iconposition='right'
+            iconposition="right"
           />
         </Field>
       </InlineField>
@@ -53,16 +58,16 @@ class DateRangeFilter extends React.Component {
 
 DateRangeFilter.propTypes = {
   active: PropTypes.shape({
-    filter: PropTypes.func
+    filter: PropTypes.func,
   }),
   endDate: PropTypes.instanceOf(Date),
   onChange: PropTypes.func,
-  startDate: PropTypes.instanceOf(Date)
+  startDate: PropTypes.instanceOf(Date),
 }
 
 DateRangeFilter.defaultProps = {
-  startDate: startOfDay((new Date().getTime())),
-  endDate: endOfDay((new Date()).getTime())
+  startDate: startOfDay(new Date().getTime()),
+  endDate: endOfDay(new Date().getTime()),
 }
 
 export default DateRangeFilter

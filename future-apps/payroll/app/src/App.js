@@ -6,10 +6,10 @@ import { MyPayroll, TeamPayroll } from './screens'
 import { AddEmployee, RequestSalary } from './panels'
 
 const appBarTitle = 'Payroll'
-const tabTitles = [ 'My payroll', 'Team payroll' ]
-const tabNames =  [ 'my-payroll', 'team-payroll' ]
+const tabTitles = ['My payroll', 'Team payroll']
+const tabNames = ['my-payroll', 'team-payroll']
 
-const [ MY_PAYROLL, TEAM_PAYROLL ] = tabNames
+const [MY_PAYROLL, TEAM_PAYROLL] = tabNames
 const activeTab = MY_PAYROLL
 const selectedTab = 0
 
@@ -18,10 +18,10 @@ export default class App extends React.Component {
     activeTab,
     selectedTab,
     showAddEmployeePanel: false,
-    showRequestSalaryPanel: false
+    showRequestSalaryPanel: false,
   }
 
-  componentDidMount () {
+  componentDidMount() {
     // If using Parcel, reload instead of using HMR.
     // HMR makes the app disconnect from the wrapper and the state is empty until a reload
     // See: https://github.com/parcel-bundler/parcel/issues/289
@@ -48,18 +48,18 @@ export default class App extends React.Component {
     this.setState({ showRequestSalaryPanel: false })
   }
 
-  renderActionButtons () {
+  renderActionButtons() {
     switch (this.state.activeTab) {
       case MY_PAYROLL:
         return (
-          <Button mode='strong' onClick={this.showRequestSalaryPanel}>
+          <Button mode="strong" onClick={this.showRequestSalaryPanel}>
             Request salary
           </Button>
         )
 
       case TEAM_PAYROLL:
         return (
-          <Button mode='strong' onClick={this.showAddEmployeePanel}>
+          <Button mode="strong" onClick={this.showAddEmployeePanel}>
             Add new employee
           </Button>
         )
@@ -69,44 +69,38 @@ export default class App extends React.Component {
     }
   }
 
-  render () {
+  render() {
     const header = (
       <React.Fragment>
         <AppBar
           title={appBarTitle}
           endContent={this.renderActionButtons()}
-          data-testid='app-bar'
+          data-testid="app-bar"
         />
 
         <TabContainer>
           <TabBar
             items={tabTitles}
             selected={this.state.selectedTab}
-            onSelect={
-              (index) => {
-                const activeTab = tabNames[index]
+            onSelect={index => {
+              const activeTab = tabNames[index]
 
-                this.setState({
-                  activeTab,
-                  selectedTab: index
-                })
-              }
-            }
+              this.setState({
+                activeTab,
+                selectedTab: index,
+              })
+            }}
           />
         </TabContainer>
       </React.Fragment>
     )
 
     return (
-      <AragonApp publicUrl='./aragon-ui/'>
+      <AragonApp publicUrl="./aragon-ui/">
         <AppView appBar={header}>
-          {this.state.activeTab === MY_PAYROLL && (
-            <MyPayroll />
-          )}
+          {this.state.activeTab === MY_PAYROLL && <MyPayroll />}
 
-          {this.state.activeTab === TEAM_PAYROLL && (
-            <TeamPayroll />
-          )}
+          {this.state.activeTab === TEAM_PAYROLL && <TeamPayroll />}
         </AppView>
 
         <AddEmployee
@@ -123,7 +117,7 @@ export default class App extends React.Component {
   }
 }
 
-const TabContainer = styled.div.attrs({'data-testid': 'tab-container'})`
+const TabContainer = styled.div.attrs({ 'data-testid': 'tab-container' })`
   margin: 0;
   list-style-type: none;
   background: ${theme.contentBackground};

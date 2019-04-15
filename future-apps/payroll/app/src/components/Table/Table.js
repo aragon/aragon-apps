@@ -9,40 +9,41 @@ import TableRow from './TableRow'
 import Panel from '../Panel/Panel'
 import { sort, SORT_DIRECTION } from '../../utils/sorting'
 
-
 class Table extends React.Component {
   state = {
     sortColumnIndex: 0,
     sortDirection: SORT_DIRECTION.ASC,
-    currentPage: 1
+    currentPage: 1,
   }
 
-  shouldComponentUpdate (nextProps, nextState) {
-    return (nextProps.data.sortable !== this.props.sortable)
-      || (nextProps.data.length !== this.props.data.length)
-      || (nextProps.filters.length !== this.props.filters.length)
-      || (nextState.sortColumnIndex !== this.state.sortColumnIndex)
-      || (nextState.sortDirection !== this.state.sortDirection)
+  shouldComponentUpdate(nextProps, nextState) {
+    return (
+      nextProps.data.sortable !== this.props.sortable ||
+      nextProps.data.length !== this.props.data.length ||
+      nextProps.filters.length !== this.props.filters.length ||
+      nextState.sortColumnIndex !== this.state.sortColumnIndex ||
+      nextState.sortDirection !== this.state.sortDirection
+    )
   }
 
-  handleHeaderClick = (event) => {
+  handleHeaderClick = event => {
     const columnIndex = parseInt(event.currentTarget.dataset.columnIndex)
 
     this.setState(({ sortColumnIndex, sortDirection }) => {
       if (sortColumnIndex === columnIndex) {
         return {
-          sortDirection: -sortDirection
+          sortDirection: -sortDirection,
         }
       } else {
         return {
           sortColumnIndex: columnIndex,
-          sortDirection: SORT_DIRECTION.ASC
+          sortDirection: SORT_DIRECTION.ASC,
         }
       }
     })
   }
 
-  paginateData = (data) => {
+  paginateData = data => {
     const { rowsPerPage } = this.props
     const { currentPage } = this.state
     const lastDataIndex = currentPage * rowsPerPage
@@ -54,34 +55,36 @@ class Table extends React.Component {
 
     return {
       emptyRows,
-      paginatedData
+      paginatedData,
     }
   }
 
-  handlePageChange = (pageNumber) => () => {
+  handlePageChange = pageNumber => () => {
     this.setState({
-      currentPage: pageNumber
+      currentPage: pageNumber,
     })
   }
 
-  renderEmptyRows (emptyRows) {
+  renderEmptyRows(emptyRows) {
     const { tableRowHeight } = this.props
-    return emptyRows > 0 && (
-      <TableRow style={{ height: `${tableRowHeight * emptyRows}px` }} />
+    return (
+      emptyRows > 0 && (
+        <TableRow style={{ height: `${tableRowHeight * emptyRows}px` }} />
+      )
     )
   }
 
   renderButton(props) {
-    return (
-      <StyledButton {...props}>
-        { props.text }
-      </StyledButton>
-    )
+    return <StyledButton {...props}>{props.text}</StyledButton>
   }
 
-  renderPageButtons (dataLength) {
+  renderPageButtons(dataLength) {
     const { currentPage } = this.state
-    const { navigationNextText, navigationPreviousText, rowsPerPage } = this.props
+    const {
+      navigationNextText,
+      navigationPreviousText,
+      rowsPerPage,
+    } = this.props
 
     const pageNumbers = Array(Math.ceil(dataLength / rowsPerPage))
       .fill()
@@ -91,17 +94,15 @@ class Table extends React.Component {
     const isLastPage = currentPage === pageNumbers.length
     return (
       <React.Fragment>
-        {
-          this.renderButton({
-            disabled: isFirstPage,
-            mode: isFirstPage ? '' : 'strong',
-            name: 'pagination-button-previous',
-            onClick: this.handlePageChange(currentPage - 1),
-            text: navigationPreviousText,
-            type: 'navigation'
-          })
-        }
-        {pageNumbers.map((pageNumber) => {
+        {this.renderButton({
+          disabled: isFirstPage,
+          mode: isFirstPage ? '' : 'strong',
+          name: 'pagination-button-previous',
+          onClick: this.handlePageChange(currentPage - 1),
+          text: navigationPreviousText,
+          type: 'navigation',
+        })}
+        {pageNumbers.map(pageNumber => {
           const isCurrentPageButton = pageNumber === currentPage
           const mode = isCurrentPageButton ? 'strong' : ''
           const name = `pagination-button-${pageNumber}`
@@ -112,26 +113,34 @@ class Table extends React.Component {
             name,
             onClick: this.handlePageChange(pageNumber),
             text: pageNumber,
-            type: 'page'
+            type: 'page',
           })
           return pageButton
         })}
-        {
-          this.renderButton({
-            disabled: isLastPage,
-            mode: isLastPage ? '' : 'strong',
-            name: 'pagination-button-next',
-            onClick: this.handlePageChange(currentPage + 1),
-            text: navigationNextText,
-            type: 'navigation'
-          })
-        }
+        {this.renderButton({
+          disabled: isLastPage,
+          mode: isLastPage ? '' : 'strong',
+          name: 'pagination-button-next',
+          onClick: this.handlePageChange(currentPage + 1),
+          text: navigationNextText,
+          type: 'navigation',
+        })}
       </React.Fragment>
     )
   }
 
-  render () {
-    const { columns, data, filters, onClearFilters, paginated, sortable, noDataMessage, tableRowHeight, rowsPerPage } = this.props
+  render() {
+    const {
+      columns,
+      data,
+      filters,
+      onClearFilters,
+      paginated,
+      sortable,
+      noDataMessage,
+      tableRowHeight,
+      rowsPerPage,
+    } = this.props
 
     const { sortColumnIndex, sortDirection } = this.state
 
@@ -145,7 +154,7 @@ class Table extends React.Component {
           </Text.Paragraph>
 
           {filteredData.length === 0 && filters.length > 0 && (
-            <Button mode='text' size='small' onClick={onClearFilters}>
+            <Button mode="text" size="small" onClick={onClearFilters}>
               Clear filters
             </Button>
           )}
@@ -155,12 +164,15 @@ class Table extends React.Component {
 
     sort(filteredData, columns[sortColumnIndex].value, sortDirection)
 
-    const shouldShowPagination = paginated && Math.ceil(filteredData.length / rowsPerPage) > 1
+    const shouldShowPagination =
+      paginated && Math.ceil(filteredData.length / rowsPerPage) > 1
 
     // Pagination begins after processing the filters
     let _emptyRows = 0
     if (paginated) {
-      const { paginatedData, emptyRows, totalPages } = this.paginateData(filteredData)
+      const { paginatedData, emptyRows, totalPages } = this.paginateData(
+        filteredData
+      )
       filteredData = paginatedData
       _emptyRows = emptyRows
     }
@@ -188,25 +200,31 @@ class Table extends React.Component {
     const body = (
       <React.Fragment>
         {filteredData.map((item, index) => (
-          <TableRow key={`row-${item.id}-${index}`} style={{ height: `${tableRowHeight}px` }}>
+          <TableRow
+            key={`row-${item.id}-${index}`}
+            style={{ height: `${tableRowHeight}px` }}
+          >
             {columns.map(column => {
               const rawValue = column.value(item)
-              const formattedValue = rawValue != null
-              ? (column.formatter
-                ? column.formatter(rawValue)
-                : rawValue.toString()
-              )
-              : column.defaultValue
+              const formattedValue =
+                rawValue != null
+                  ? column.formatter
+                    ? column.formatter(rawValue)
+                    : rawValue.toString()
+                  : column.defaultValue
 
               return (
                 <TableCell
                   key={`row-${item.id}-${column.name}`}
                   {...column.cellProps}
-                  children={column.render
-                    ? column.render(formattedValue, rawValue, item)
-                    : (<Text>{formattedValue}</Text>)
+                  children={
+                    column.render ? (
+                      column.render(formattedValue, rawValue, item)
+                    ) : (
+                      <Text>{formattedValue}</Text>
+                    )
                   }
-                  />
+                />
               )
             })}
           </TableRow>
@@ -217,9 +235,7 @@ class Table extends React.Component {
     )
 
     const footer = (
-      <StyledCard>
-        {this.renderPageButtons(data.length)}
-      </StyledCard>
+      <StyledCard>{this.renderPageButtons(data.length)}</StyledCard>
     )
 
     return (
@@ -231,11 +247,7 @@ class Table extends React.Component {
   }
 }
 
-const TableFooter = (props) => (
-  <div>
-    {props.content}
-  </div>
-)
+const TableFooter = props => <div>{props.content}</div>
 
 Table.propTypes = {
   columns: PropTypes.arrayOf(
@@ -245,19 +257,17 @@ Table.propTypes = {
       defaultValue: PropTypes.any,
       format: PropTypes.func,
       render: PropTypes.func,
-      sortable: PropTypes.bool
+      sortable: PropTypes.bool,
     })
   ),
-  data: PropTypes.arrayOf(
-    PropTypes.shape({ id: PropTypes.any })
-  ),
+  data: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.any })),
   filters: PropTypes.arrayOf(PropTypes.func),
   noDataMessage: PropTypes.string,
   onClearFilters: PropTypes.func,
   paginated: PropTypes.bool,
   rowsPerPage: PropTypes.number,
   sortable: PropTypes.bool,
-  tableRowHeight: PropTypes.number
+  tableRowHeight: PropTypes.number,
 }
 
 Table.defaultProps = {
@@ -282,12 +292,11 @@ const StyledCard = styled(Card)`
 
 const StyledButton = styled(Button)`
   margin: 0 1px;
-  ${({ type, disabled }) => (
+  ${({ type, disabled }) =>
     ({
-      page: () => disabled ? 'color: #FFFFFF' : 'color: #000000',
-      navigation: () => disabled ? 'color: #707070' : 'color: #FFFFFF'
-    })[type]()
-  )}
+      page: () => (disabled ? 'color: #FFFFFF' : 'color: #000000'),
+      navigation: () => (disabled ? 'color: #707070' : 'color: #FFFFFF'),
+    }[type]())}
 `
 
 export default Table

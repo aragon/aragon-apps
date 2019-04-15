@@ -1,11 +1,10 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import Table from '~/components/Table'
-import { employeeType } from '~/types'
-import { formatDate } from '~/utils/formatting'
-
 import { theme } from '@aragon/ui'
+import Table from '../../components/Table'
+import { employeeType } from '../../types'
+import { formatDate } from '../../utils/formatting'
 
 const initializeColumns = (data, formatCurrency, formatSalary) => {
   return [
@@ -14,8 +13,8 @@ const initializeColumns = (data, formatCurrency, formatSalary) => {
       title: 'Employees',
       value: data => data.employeesQty,
       cellProps: {
-        style: CellStyle
-      }
+        style: CellStyle,
+      },
     },
     {
       name: 'averageSalary',
@@ -23,8 +22,8 @@ const initializeColumns = (data, formatCurrency, formatSalary) => {
       value: data => data.averageSalary,
       formatter: formatSalary,
       cellProps: {
-        style: CellStyle
-      }
+        style: CellStyle,
+      },
     },
     {
       name: 'monthly-burn-date',
@@ -32,8 +31,8 @@ const initializeColumns = (data, formatCurrency, formatSalary) => {
       value: data => data.monthlyBurnRate,
       formatter: formatCurrency,
       cellProps: {
-        style: { ...CellStyle, ...Negative }
-      }
+        style: { ...CellStyle, ...Negative },
+      },
     },
     {
       name: 'total-paid-this-year',
@@ -41,26 +40,30 @@ const initializeColumns = (data, formatCurrency, formatSalary) => {
       value: data => data.totalPaidThisYear,
       formatter: formatCurrency,
       cellProps: {
-        style: CellStyle
-      }
-    }
+        style: CellStyle,
+      },
+    },
   ]
 }
 
 const Negative = {
   fontWeight: 600,
-  color: theme.negative
+  color: theme.negative,
 }
 
 const CellStyle = {
-  fontSize: '20px'
+  fontSize: '20px',
 }
 
-const TotalPayrollTable = (props) => {
-  const columns = initializeColumns(props.data, props.formatCurrency, props.formatSalary)
+const TotalPayrollTable = props => {
+  const columns = initializeColumns(
+    props.data,
+    props.formatCurrency,
+    props.formatSalary
+  )
   return (
     <Table
-      noDataMessage='Total payroll not available'
+      noDataMessage="Total payroll not available"
       columns={columns}
       sortable={false}
       {...props}
@@ -70,7 +73,7 @@ const TotalPayrollTable = (props) => {
 
 TotalPayrollTable.propTypes = {
   ...Table.propTypes,
-  data: PropTypes.arrayOf(employeeType).isRequired
+  data: PropTypes.arrayOf(employeeType).isRequired,
 }
 
 export default TotalPayrollTable

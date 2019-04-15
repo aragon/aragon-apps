@@ -18,7 +18,7 @@ const EditButton = styled(Button).attrs({ mode: 'secondary' })`
 
 class SalaryAllocation extends React.PureComponent {
   state = {
-    isEditing: false
+    isEditing: false,
   }
 
   startEditing = () => {
@@ -29,7 +29,7 @@ class SalaryAllocation extends React.PureComponent {
     this.setState({ isEditing: false })
   }
 
-  render () {
+  render() {
     const { salaryAllocation } = this.props
     const { isEditing } = this.state
 
@@ -37,29 +37,21 @@ class SalaryAllocation extends React.PureComponent {
       <Container>
         <Section.Title>Salary allocation</Section.Title>
 
-        {salaryAllocation && (
-          <PartitionBar data={salaryAllocation} />
-        )}
+        {salaryAllocation && <PartitionBar data={salaryAllocation} />}
 
-        <EditButton
-          onClick={this.startEditing}
-          data-testid='salary-allocation-edit-btn'
-        >
+        <EditButton onClick={this.startEditing}>
           Edit salary allocation
         </EditButton>
 
-        <EditSalaryAllocation
-          opened={isEditing}
-          onClose={this.endEditing}
-        />
+        <EditSalaryAllocation opened={isEditing} onClose={this.endEditing} />
       </Container>
     )
   }
 }
 
-function mapStateToProps ({ salaryAllocation }) {
+function mapStateToProps({ salaryAllocation }) {
   return {
-    salaryAllocation
+    salaryAllocation,
   }
 }
 

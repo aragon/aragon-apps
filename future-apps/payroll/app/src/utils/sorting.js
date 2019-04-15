@@ -1,9 +1,9 @@
 export const SORT_DIRECTION = {
   ASC: 1,
-  DESC: -1
+  DESC: -1,
 }
 
-export function sort (items, sortValue, direction) {
+export function sort(items, sortValue, direction) {
   if (!Array.isArray(items) || items.length < 2) {
     return items
   }
@@ -11,7 +11,7 @@ export function sort (items, sortValue, direction) {
   // USe memoization to avoid calculate values more than once
   const values = new WeakMap()
 
-  const getValue = (item) => {
+  const getValue = item => {
     if (!values.has(item)) {
       values.set(item, sortValue(item))
     }

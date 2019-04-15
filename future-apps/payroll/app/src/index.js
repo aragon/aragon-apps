@@ -1,3 +1,5 @@
+import '@babel/polyfill'
+
 import React from 'react'
 import { render } from 'react-dom'
 
@@ -8,5 +10,5 @@ render(
   <AragonProvider>
     <App />
   </AragonProvider>,
-  document.getElementById('app-root')
+  document.getElementById('root')
 )
