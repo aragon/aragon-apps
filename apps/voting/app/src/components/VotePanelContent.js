@@ -1,149 +1,61 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import {
   Button,
+  Countdown,
   Info,
   SafeLink,
-  SidePanelSplit,
   SidePanelSeparator,
-  Countdown,
+  SidePanelSplit,
   Text,
-  blockExplorerUrl,
   theme,
 } from '@aragon/ui'
+import { useAragonApi } from '@aragon/api-react'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge.js'
 import { format } from 'date-fns'
-import provideNetwork from '../utils/provideNetwork'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { round } from '../math-utils'
 import { pluralize } from '../utils'
 import { getQuorumProgress } from '../vote-utils'
+import { useExtendedVoteData } from '../vote-hooks'
 import VoteSummary from './VoteSummary'
 import VoteStatus from './VoteStatus'
 import VoteSuccess from './VoteSuccess'
+import VoteText from './VoteText'
 import SummaryBar from './SummaryBar'
 
 const formatDate = date =>
   `${format(date, 'dd/MM/yy')} at ${format(date, 'HH:mm')} UTC`
 
-class VotePanelContent extends React.Component {
-  static propTypes = {
-    app: PropTypes.object.isRequired,
-  }
-  state = {
-    userCanVote: false,
-    userBalance: null,
-    canExecute: false,
-    changeVote: false,
-    loadingCanExecute: true,
-    loadingCanVote: true,
-  }
-  componentDidMount() {
-    const { user, vote, tokenContract } = this.props
-    this.loadUserBalance(user, vote, tokenContract)
-    this.loadUserCanVote(user, vote)
-    this.loadCanExecute(vote)
-  }
-  componentWillReceiveProps(nextProps) {
-    const { user, vote, tokenContract } = this.props
+// styled-component `css` transform doesn’t play well with attached components.
+const Action = Info.Action
 
-    const userUpdate = nextProps.user !== user
-    const voteUpdate = nextProps.vote.voteId !== vote.voteId
-    const contractUpdate = nextProps.tokenContract !== tokenContract
-
-    if (userUpdate || contractUpdate || voteUpdate) {
-      this.loadUserBalance(
-        nextProps.user,
-        nextProps.vote,
-        nextProps.tokenContract
-      )
-      this.loadUserCanVote(nextProps.user, nextProps.vote)
-    }
-
-    if (contractUpdate || voteUpdate) {
-      this.loadCanExecute(vote)
-    }
-  }
-  handleChangeVoteClick = () => {
-    this.setState({ changeVote: true })
-  }
-  handleNoClick = () => {
-    this.props.onVote(this.props.vote.voteId, VOTE_NAY)
-  }
-  handleYesClick = () => {
-    this.props.onVote(this.props.vote.voteId, VOTE_YEA)
-  }
-  handleExecuteClick = () => {
-    this.props.onExecute(this.props.vote.voteId)
-  }
-  loadUserBalance = (user, vote, tokenContract) => {
-    const { tokenDecimals } = this.props
-    if (tokenContract && user) {
-      tokenContract
-        .balanceOfAt(user, vote.data.snapshotBlock)
-        .toPromise()
-        .then(balance => {
-          const adjustedBalance = Math.floor(
-            parseInt(balance, 10) / Math.pow(10, tokenDecimals)
-          )
-          this.setState({ userBalance: adjustedBalance })
-        })
-    }
-  }
-  loadUserCanVote = (user, vote) => {
-    const { app } = this.props
-    if (!vote) {
-      return
-    }
-
-    if (user) {
-      this.setState({ loadingCanVote: true })
-
-      // Get if user can vote
-      app
-        .call('canVote', vote.voteId, user)
-        .toPromise()
-        .then(canVote => {
-          this.setState({ loadingCanVote: false, userCanVote: canVote })
-        })
-    } else {
-      // Note: if the account is not present, we assume the account is not
-      // connected.
-      this.setState({ loadingCanVote: false, userCanVote: vote.data.open })
-    }
-  }
-  loadCanExecute = vote => {
-    const { app } = this.props
-    if (vote) {
-      this.setState({ loadingCanExecute: true })
-
-      app
-        .call('canExecute', vote.voteId)
-        .toPromise()
-        .then(canExecute => {
-          this.setState({ canExecute, loadingCanExecute: false })
-        })
-    }
-  }
-  render() {
+const VotePanelContent = React.memo(
+  ({ onVote, onExecute, panelOpened, vote }) => {
     const {
-      network,
-      vote,
-      ready,
-      tokenSymbol,
-      tokenDecimals,
-      user,
-    } = this.props
+      connectedAccount,
+      appState: { tokenDecimals, tokenSymbol },
+    } = useAragonApi()
 
-    const {
-      userBalance,
-      userCanVote,
-      changeVote,
-      canExecute,
-      loadingCanExecute,
-      loadingCanVote,
-    } = this.state
+    const { canUserVote, canExecute, userBalance } = useExtendedVoteData(vote)
+
+    const [changeVote, setChangeVote] = useState(false)
+
+    const handleChangeVoteClick = useCallback(() => {
+      setChangeVote(true)
+    }, [])
+
+    const handleNoClick = useCallback(() => {
+      onVote(vote.voteId, VOTE_NAY)
+    }, [onVote, vote.voteId])
+
+    const handleYesClick = useCallback(() => {
+      onVote(vote.voteId, VOTE_YEA)
+    }, [onVote, vote.voteId])
+
+    const handleExecuteClick = useCallback(() => {
+      onExecute(vote.voteId)
+    }, [onExecute, vote.voteId])
 
     const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.userAccountVote)
 
@@ -151,15 +63,7 @@ class VotePanelContent extends React.Component {
       return null
     }
 
-    const {
-      creator,
-      endDate,
-      metadata,
-      metadataNode,
-      descriptionNode,
-      open,
-      snapshotBlock,
-    } = vote.data
+    const { creator, endDate, open, metadata, description } = vote.data
     const { minAcceptQuorum } = vote.numData
     const quorumProgress = getQuorumProgress(vote)
 
@@ -173,7 +77,7 @@ class VotePanelContent extends React.Component {
             <div>
               {open ? <Countdown end={endDate} /> : <VoteStatus vote={vote} />}
             </div>
-            <StyledVoteSuccess vote={vote} />
+            <VoteSuccess vote={vote} css="margin-top: 10px" />
           </div>
           <div>
             <h2>
@@ -185,10 +89,11 @@ class VotePanelContent extends React.Component {
                 ({round(minAcceptQuorum * 100, 2)}% needed)
               </Text>
             </div>
-            <StyledSummaryBar
+            <SummaryBar
+              css="margin-top: 10px"
               positiveSize={quorumProgress}
               requiredSize={minAcceptQuorum}
-              show={ready}
+              show={panelOpened}
               compact
             />
           </div>
@@ -199,15 +104,26 @@ class VotePanelContent extends React.Component {
               <h2>
                 <Label>Question</Label>
               </h2>
-              <Question>{metadataNode}</Question>
+              <p
+                css={`
+                  max-width: 100%;
+                  overflow: hidden;
+                  word-break: break-all;
+                  hyphens: auto;
+                `}
+              >
+                <VoteText text={metadata} />
+              </p>
             </React.Fragment>
           )}
-          {descriptionNode && (
+          {description && (
             <React.Fragment>
               <h2>
                 <Label>Description</Label>
               </h2>
-              <p>{descriptionNode}</p>
+              <p>
+                <VoteText text={description} />
+              </p>
             </React.Fragment>
           )}
         </Part>
@@ -216,9 +132,14 @@ class VotePanelContent extends React.Component {
           <h2>
             <Label>Created By</Label>
           </h2>
-          <Creator>
-            <LocalIdentityBadge entity={creator} networkType={network.type} />
-          </Creator>
+          <div
+            css={`
+              display: flex;
+              align-items: center;
+            `}
+          >
+            <LocalIdentityBadge entity={creator} />
+          </div>
         </Part>
         <SidePanelSeparator />
 
@@ -226,120 +147,105 @@ class VotePanelContent extends React.Component {
           vote={vote}
           tokenSymbol={tokenSymbol}
           tokenDecimals={tokenDecimals}
-          ready={ready}
+          ready={panelOpened}
         />
 
-        {!loadingCanVote &&
-          !loadingCanExecute &&
-          (() => {
-            if (canExecute) {
-              return (
-                <div>
-                  <SidePanelSeparator />
-                  <ButtonsContainer>
-                    <Button
-                      mode="strong"
-                      wide
-                      onClick={this.handleExecuteClick}
-                    >
-                      Execute vote
-                    </Button>
-                  </ButtonsContainer>
-                  <Info.Action>
-                    Executing this vote is required to enact it.
-                  </Info.Action>
-                </div>
-              )
-            }
+        {(() => {
+          if (canExecute) {
+            return (
+              <div>
+                <SidePanelSeparator />
+                <ButtonsContainer>
+                  <Button mode="strong" wide onClick={handleExecuteClick}>
+                    Execute vote
+                  </Button>
+                </ButtonsContainer>
+                <Action>Executing this vote is required to enact it.</Action>
+              </div>
+            )
+          }
 
-            if (userCanVote && hasVoted && !changeVote) {
-              return (
-                <div>
-                  <SidePanelSeparator />
-                  <ButtonsContainer>
-                    <Button
-                      mode="strong"
-                      wide
-                      onClick={this.handleChangeVoteClick}
-                    >
-                      Change my vote
-                    </Button>
-                  </ButtonsContainer>
-                  <Info.Action>
+          if (canUserVote && hasVoted && !changeVote) {
+            return (
+              <div>
+                <SidePanelSeparator />
+                <ButtonsContainer>
+                  <Button mode="strong" wide onClick={handleChangeVoteClick}>
+                    Change my vote
+                  </Button>
+                </ButtonsContainer>
+                <Action>
+                  <p>
+                    You voted {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'}{' '}
+                    with{' '}
+                    {userBalance === -1
+                      ? '…'
+                      : pluralize(userBalance, '$ token', '$ tokens')}
+                    , since it was your balance when the vote was created (
+                    {formatDate(vote.data.startDate)}
+                    ).
+                  </p>
+                </Action>
+              </div>
+            )
+          }
+
+          if (canUserVote) {
+            return (
+              <div>
+                <SidePanelSeparator />
+                <ButtonsContainer>
+                  <VotingButton
+                    mode="strong"
+                    emphasis="positive"
+                    wide
+                    onClick={handleYesClick}
+                  >
+                    Yes
+                  </VotingButton>
+                  <VotingButton
+                    mode="strong"
+                    emphasis="negative"
+                    wide
+                    onClick={handleNoClick}
+                  >
+                    No
+                  </VotingButton>
+                </ButtonsContainer>
+                <Action
+                  css={`
+                    & > div {
+                      align-items: flex-start;
+                    }
+                  `}
+                >
+                  {connectedAccount ? (
+                    <div>
+                      <p>
+                        You will cast your vote with{' '}
+                        {userBalance === -1
+                          ? '… tokens'
+                          : pluralize(userBalance, '$ token', '$ tokens')}
+                        , since it was your balance when the vote was created (
+                        {formatDate(vote.data.startDate)}
+                        ).
+                      </p>
+                      <NoTokenCost />
+                    </div>
+                  ) : (
                     <p>
-                      You voted{' '}
-                      {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'} with{' '}
-                      {userBalance === null
-                        ? '…'
-                        : pluralize(userBalance, '$ token', '$ tokens')}
-                      , since it was your balance when the vote was created (
-                      {formatDate(vote.data.startDate)}
-                      ).
+                      You will need to connect your account in the next screen.
                     </p>
-                  </Info.Action>
-                </div>
-              )
-            }
-
-            if (userCanVote) {
-              return (
-                <div>
-                  <SidePanelSeparator />
-                  <ButtonsContainer>
-                    <VotingButton
-                      mode="strong"
-                      emphasis="positive"
-                      wide
-                      onClick={this.handleYesClick}
-                    >
-                      Yes
-                    </VotingButton>
-                    <VotingButton
-                      mode="strong"
-                      emphasis="negative"
-                      wide
-                      onClick={this.handleNoClick}
-                    >
-                      No
-                    </VotingButton>
-                  </ButtonsContainer>
-                  {
-                    <StyledInfo>
-                      {user ? (
-                        <div>
-                          <p>
-                            You will cast your vote with{' '}
-                            {userBalance === null
-                              ? '… tokens'
-                              : pluralize(userBalance, '$ token', '$ tokens')}
-                            , since it was your balance when the vote was
-                            created ({formatDate(vote.data.startDate)}
-                            ).
-                          </p>
-                          <NoTokenCost />
-                        </div>
-                      ) : (
-                        <p>
-                          You will need to connect your account in the next
-                          screen.
-                        </p>
-                      )}
-                    </StyledInfo>
-                  }
-                </div>
-              )
-            }
-          })()}
+                  )}
+                </Action>
+              </div>
+            )
+          }
+        })()}
       </React.Fragment>
     )
   }
-}
-
-const StyledInfo = styled(Info.Action)`
-  div:first-child {
-    align-items: flex-start;
-  }
-`
+)
 
 const NoTokenCost = () => (
   <p css="margin-top: 10px">
@@ -361,14 +267,6 @@ const Label = styled(Text).attrs({
   margin-bottom: 10px;
 `
 
-const StyledVoteSuccess = styled(VoteSuccess)`
-  margin-top: 10px;
-`
-
-const StyledSummaryBar = styled(SummaryBar)`
-  margin-top: 10px;
-`
-
 const Part = styled.div`
   padding: 20px 0;
   h2 {
@@ -377,18 +275,6 @@ const Part = styled.div`
       margin-top: 0;
     }
   }
-`
-
-const Question = styled.p`
-  max-width: 100%;
-  overflow: hidden;
-  word-break: break-all;
-  hyphens: auto;
-`
-
-const Creator = styled.div`
-  display: flex;
-  align-items: center;
 `
 
 const ButtonsContainer = styled.div`
@@ -403,4 +289,4 @@ const VotingButton = styled(Button)`
   }
 `
 
-export default provideNetwork(VotePanelContent)
+export default VotePanelContent

@@ -1,20 +1,8 @@
 import React from 'react'
-import styled from 'styled-components'
-import { Badge, theme } from '@aragon/ui'
 import VotingCard from '../components/VotingCard/VotingCard'
 import VotingCardGroup from '../components/VotingCard/VotingCardGroup'
-import VoteStatus from '../components/VoteStatus'
-import { VOTE_YEA, VOTE_NAY } from '../vote-types'
 
-class Votes extends React.Component {
-  optionLabel(label, vote, voteType) {
-    return (
-      <span>
-        <span>{label}</span>
-        {vote.userAccountVote === voteType && <You />}
-      </span>
-    )
-  }
+class Votes extends React.PureComponent {
   render() {
     const { votes, onSelectVote } = this.props
     const sortedVotes = votes.sort((a, b) =>
@@ -27,6 +15,7 @@ class Votes extends React.Component {
       ['Open votes', openVotes],
       ['Past votes', closedVotes],
     ]
+
     return (
       <React.Fragment>
         {votingGroups.map(([groupName, votes]) =>
@@ -39,30 +28,8 @@ class Votes extends React.Component {
               {votes.map(vote => (
                 <VotingCard
                   key={vote.voteId}
-                  id={vote.voteId}
-                  status={
-                    vote.open ? null : <VoteStatus vote={vote} cardStyle />
-                  }
-                  endDate={vote.data.endDate}
-                  open={vote.data.open}
-                  label={
-                    vote.data.metadata
-                      ? vote.data.metadataNode
-                      : vote.data.descriptionNode
-                  }
-                  votingPower={vote.numData.votingPower}
+                  vote={vote}
                   onOpen={onSelectVote}
-                  options={[
-                    {
-                      label: this.optionLabel('Yes', vote, VOTE_YEA),
-                      power: vote.numData.yea,
-                    },
-                    {
-                      label: this.optionLabel('No', vote, VOTE_NAY),
-                      power: vote.numData.nay,
-                      color: theme.negative,
-                    },
-                  ]}
                 />
               ))}
             </VotingCardGroup>
@@ -72,11 +39,5 @@ class Votes extends React.Component {
     )
   }
 }
-
-const You = styled(Badge.Identity).attrs({ children: 'Your vote' })`
-  margin-left: 5px;
-  font-size: 9px;
-  text-transform: uppercase;
-`
 
 export default Votes

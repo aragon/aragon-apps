@@ -81,7 +81,9 @@ class Holders extends React.Component {
                         address={address}
                         balance={balance}
                         groupMode={groupMode}
-                        isCurrentUser={userAccount && userAccount === address}
+                        isCurrentUser={Boolean(
+                          userAccount && userAccount === address
+                        )}
                         maxAccountTokens={maxAccountTokens}
                         tokenDecimalsBase={tokenDecimalsBase}
                         onAssignTokens={onAssignTokens}

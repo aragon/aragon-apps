@@ -49,7 +49,8 @@
         "Receiver address",
         "Token amount",
         "Payment interval",
-        "Max repeats"
+        "Max repeats",
+        "Initial payment time"
       ]
     },
     {

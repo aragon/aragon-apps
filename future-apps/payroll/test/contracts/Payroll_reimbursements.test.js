@@ -89,7 +89,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
           context('when the given employee is not active', () => {
             beforeEach('terminate employee', async () => {
               await payroll.terminateEmployeeNow(employeeId, { from: owner })
-              await payroll.mockAddTimestamp(ONE_MONTH)
+              await payroll.mockIncreaseTime(ONE_MONTH)
             })
 
             it('reverts', async () => {
@@ -142,7 +142,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
           const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
-          await payroll.mockAddTimestamp(ONE_MONTH)
+          await payroll.mockIncreaseTime(ONE_MONTH)
         })
 
         context('when the employee has already set some token allocations', () => {
