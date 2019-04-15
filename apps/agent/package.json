@@ -45,6 +45,6 @@
   },
   "dependencies": {
     "@aragon/apps-vault": "4.0.0",
-    "@aragon/os": "4.1.0"
+    "@aragon/os": "4.2.0"
   }
 }

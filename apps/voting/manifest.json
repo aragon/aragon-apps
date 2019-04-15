@@ -2,8 +2,7 @@
   "name": "Voting",
   "description": "Create votes that execute actions on behalf of token holders.",
   "icons": [
-    { "src": "/meta/icon-80.svg", "sizes": "80x80" },
-    { "src": "/meta/icon-22.svg", "sizes": "22x22" }
+    { "src": "/meta/icon.svg", "sizes": "56x56" }
   ],
   "screenshots": [
     { "src": "/meta/screenshot-1.png" },

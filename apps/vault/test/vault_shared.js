@@ -1,4 +1,4 @@
-const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { hash } = require('eth-ens-namehash')
 const getBalanceFn = require('@aragon/test-helpers/balance')
 

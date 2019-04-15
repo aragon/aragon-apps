@@ -2,8 +2,7 @@
   "name": "Survey",
   "description": "Create signaling votes.",
   "icons": [
-    { "src": "/meta/icon-80.svg", "sizes": "80x80" },
-    { "src": "/meta/icon-22.svg", "sizes": "22x22" }
+    { "src": "/meta/icon.svg", "sizes": "56x56" }
   ],
   "script": "/script.js",
   "start_url": "/index.html"
