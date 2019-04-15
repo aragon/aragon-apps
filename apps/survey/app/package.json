@@ -50,6 +50,9 @@
     "build:script": "parcel build src/script.js --out-dir build/"
   },
   "browserslist": [
-    ">2%, last 1 edge versions, not ie > 0, not op_mini all"
+    ">2%",
+    "last 1 edge versions",
+    "not ie > 0",
+    "not op_mini all"
   ]
 }
