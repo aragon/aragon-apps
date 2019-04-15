@@ -2,8 +2,8 @@
   "name": "Payroll",
   "description": "Manage organization employees payroll",
   "icons": [{
-    "src": "images/icon.png",
-    "sizes": "192x192"
+    "src": "/meta/icon.svg",
+    "sizes": "56x56"
   }],
   "script": "/app/dist/script.js",
   "start_url": "/app/dist/index.html"
