@@ -1,9 +1,10 @@
+const PAYMENT_TYPES = require('../helpers/payment_types')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
 const { bn, maxUint64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
 
-contract('Payroll employees termination', ([owner, employee, anotherEmployee, anyone]) => {
+contract('Payroll employees termination', ([owner, employee, anyone]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
 
   const NOW = 1553703809 // random fixed timestamp in seconds
@@ -12,8 +13,6 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
   const RATE_EXPIRATION_TIME = TWO_MONTHS
 
   const TOKEN_DECIMALS = 18
-  const PAYROLL_PAYMENT_TYPE = 0
-  const REIMBURSEMENTS_PAYMENT_TYPE = 1
 
   const currentTimestamp = async () => payroll.getTimestampPublic()
 
@@ -70,27 +69,27 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
               assert.equal(event.endDate.toString(), (await currentTimestamp()).toString(), 'employee end date does not match')
             })
 
-            it('does not reset the owed salary nor the accrued value of the employee', async () => {
+            it('does not reset the owed salary nor the reimbursements of the employee', async () => {
               const previousBalance = await denominationToken.balanceOf(employee)
               await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
 
               // Accrue some salary and extras
               await payroll.mockAddTimestamp(ONE_MONTH)
               const owedSalary = salary.mul(ONE_MONTH)
-              const accruedValue = 1000
-              await payroll.addAccruedValue(employeeId, accruedValue, { from: owner })
+              const reimbursement = 1000
+              await payroll.addReimbursement(employeeId, reimbursement, { from: owner })
 
               // Terminate employee and travel some time in the future
               await payroll.terminateEmployeeNow(employeeId, { from })
               await payroll.mockAddTimestamp(ONE_MONTH)
 
               // Request owed money
-              await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: employee })
-              await payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, 0, { from: employee })
+              await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+              await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, 0, { from: employee })
               await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
               const currentBalance = await denominationToken.balanceOf(employee)
-              const expectedCurrentBalance = previousBalance.plus(owedSalary).plus(accruedValue)
+              const expectedCurrentBalance = previousBalance.plus(owedSalary).plus(reimbursement)
               assert.equal(currentBalance.toString(), expectedCurrentBalance.toString(), 'current balance does not match')
             })
 
@@ -103,19 +102,19 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
               await payroll.mockAddTimestamp(ONE_MONTH)
 
               // Request owed money
-              await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: employee })
+              await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
               await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
               // Add employee back
               const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
               const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
-              const [address, employeeSalary, bonus, accruedValue, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(newEmployeeId)
+              const [address, employeeSalary, bonus, reimbursements, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(newEmployeeId)
               assert.equal(address, employee, 'employee address does not match')
               assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
               assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll date does not match')
               assert.equal(bonus.toString(), 0, 'employee bonus does not match')
-              assert.equal(accruedValue.toString(), 0, 'employee accrued value does not match')
+              assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
               assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
               assert.equal(endDate.toString(), maxUint64(), 'employee end date does not match')
             })
@@ -209,27 +208,27 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
                 assert.equal(event.endDate.toString(), endDate.toString(), 'employee end date does not match')
               })
 
-              it('does not reset the owed salary nor the accrued value of the employee', async () => {
+              it('does not reset the owed salary nor the reimbursements of the employee', async () => {
                 const previousBalance = await denominationToken.balanceOf(employee)
                 await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
 
                 // Accrue some salary and extras
                 await payroll.mockAddTimestamp(ONE_MONTH)
                 const owedSalary = salary.times(ONE_MONTH)
-                const accruedValue = 1000
-                await payroll.addAccruedValue(employeeId, accruedValue, { from: owner })
+                const reimbursement = 1000
+                await payroll.addReimbursement(employeeId, reimbursement, { from: owner })
 
                 // Terminate employee and travel some time in the future
                 await payroll.terminateEmployee(employeeId, endDate, { from })
                 await payroll.mockAddTimestamp(ONE_MONTH)
 
                 // Request owed money
-                await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: employee })
-                await payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, 0, { from: employee })
+                await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+                await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, 0, { from: employee })
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
                 const currentBalance = await denominationToken.balanceOf(employee)
-                const expectedCurrentBalance = previousBalance.plus(owedSalary).plus(accruedValue)
+                const expectedCurrentBalance = previousBalance.plus(owedSalary).plus(reimbursement)
                 assert.equal(currentBalance.toString(), expectedCurrentBalance.toString(), 'current balance does not match')
               })
 
@@ -242,19 +241,19 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
                 await payroll.mockAddTimestamp(ONE_MONTH)
 
                 // Request owed money
-                await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: employee })
+                await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
                 // Add employee back
                 const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
                 const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
-                const [address, employeeSalary, bonus, accruedValue, accruedSalary, lastPayroll, date] = await payroll.getEmployee(newEmployeeId)
+                const [address, employeeSalary, bonus, reimbursements, accruedSalary, lastPayroll, date] = await payroll.getEmployee(newEmployeeId)
                 assert.equal(address, employee, 'employee account does not match')
                 assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
                 assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll date does not match')
                 assert.equal(bonus.toString(), 0, 'employee bonus does not match')
-                assert.equal(accruedValue.toString(), 0, 'employee accrued value does not match')
+                assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
                 assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
                 assert.equal(date.toString(), maxUint64(), 'employee end date does not match')
               })

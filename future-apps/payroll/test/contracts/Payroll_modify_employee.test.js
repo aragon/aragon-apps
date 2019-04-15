@@ -51,7 +51,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
                 await payroll.setEmployeeSalary(employeeId, newSalary, { from })
 
                 const salary = (await payroll.getEmployee(employeeId))[1]
-                assert.equal(salary.toString(), newSalary, 'accrued value does not match')
+                assert.equal(salary.toString(), newSalary, 'accrued salary does not match')
               })
 
               it('adds previous owed salary to the accrued salary', async () => {

@@ -1,9 +1,10 @@
+const PAYMENT_TYPES = require('../helpers/payment_types')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
 const { bigExp, maxUint256 } = require('../helpers/numbers')(web3)
 const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
 
-contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) => {
+contract('Payroll reimbursements', ([owner, employee, anyone]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
 
   const NOW = 1553703809 // random fixed timestamp in seconds
@@ -13,8 +14,6 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
 
   const PCT_ONE = bigExp(1, 18)
   const TOKEN_DECIMALS = 18
-  const PAYROLL_PAYMENT_TYPE = 0
-  const REIMBURSEMENTS_PAYMENT_TYPE = 1
 
   before('setup base apps and tokens', async () => {
     ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
@@ -27,7 +26,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
     await mockTimestamps(payroll, priceFeed, NOW)
   })
 
-  describe('addAccruedValue', () => {
+  describe('addReimbursement', () => {
     context('when it has already been initialized', function () {
       beforeEach('initialize payroll app', async () => {
         await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
@@ -46,43 +45,43 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
 
           context('when the given employee is active', () => {
 
-            const itAddsAccruedValueSuccessfully = value => {
-              it('adds requested accrued value', async () => {
-                await payroll.addAccruedValue(employeeId, value, { from })
+            const itAddsReimbursementsSuccessfully = value => {
+              it('adds requested reimbursement', async () => {
+                await payroll.addReimbursement(employeeId, value, { from })
 
-                const accruedValue = (await payroll.getEmployee(employeeId))[3]
-                assert.equal(accruedValue, value, 'accrued value does not match')
+                const reimbursements = (await payroll.getEmployee(employeeId))[3]
+                assert.equal(reimbursements, value, 'reimbursement does not match')
               })
 
               it('emits an event', async () => {
-                const receipt = await payroll.addAccruedValue(employeeId, value, { from })
+                const receipt = await payroll.addReimbursement(employeeId, value, { from })
 
-                const events = getEvents(receipt, 'AddEmployeeAccruedValue')
-                assert.equal(events.length, 1, 'number of AddEmployeeAccruedValue emitted events does not match')
+                const events = getEvents(receipt, 'AddEmployeeReimbursement')
+                assert.equal(events.length, 1, 'number of AddEmployeeReimbursement emitted events does not match')
                 assert.equal(events[0].args.employeeId.toString(), employeeId, 'employee id does not match')
-                assert.equal(events[0].args.amount.toString(), value, 'accrued value does not match')
+                assert.equal(events[0].args.amount.toString(), value, 'reimbursement does not match')
               })
             }
 
             context('when the given value greater than zero', () => {
               const value = 1000
 
-              itAddsAccruedValueSuccessfully(value)
+              itAddsReimbursementsSuccessfully(value)
             })
 
             context('when the given value is zero', () => {
               const value = 0
 
-              itAddsAccruedValueSuccessfully(value)
+              itAddsReimbursementsSuccessfully(value)
             })
 
             context('when the given value way greater than zero', () => {
               const value = maxUint256()
 
               it('reverts', async () => {
-                await payroll.addAccruedValue(employeeId, 1, { from })
+                await payroll.addReimbursement(employeeId, 1, { from })
 
-                await assertRevert(payroll.addAccruedValue(employeeId, value, { from }), 'MATH_ADD_OVERFLOW')
+                await assertRevert(payroll.addReimbursement(employeeId, value, { from }), 'MATH_ADD_OVERFLOW')
               })
             })
           })
@@ -94,7 +93,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
             })
 
             it('reverts', async () => {
-              await assertRevert(payroll.addAccruedValue(employeeId, 1000, { from }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
+              await assertRevert(payroll.addReimbursement(employeeId, 1000, { from }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
             })
           })
         })
@@ -103,7 +102,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
           const employeeId = 0
 
           it('reverts', async () => {
-            await assertRevert(payroll.addAccruedValue(employeeId, 1000, { from }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
+            await assertRevert(payroll.addReimbursement(employeeId, 1000, { from }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
           })
         })
       })
@@ -114,7 +113,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
         const employeeId = 0
 
         it('reverts', async () => {
-          await assertRevert(payroll.addAccruedValue(employeeId, value, { from }), 'APP_AUTH_FAILED')
+          await assertRevert(payroll.addReimbursement(employeeId, value, { from }), 'APP_AUTH_FAILED')
         })
       })
     })
@@ -124,7 +123,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
       const employeeId = 0
 
       it('reverts', async () => {
-        await assertRevert(payroll.addAccruedValue(employeeId, value, { from: owner }), 'APP_AUTH_FAILED')
+        await assertRevert(payroll.addReimbursement(employeeId, value, { from: owner }), 'APP_AUTH_FAILED')
       })
     })
   })
@@ -157,11 +156,11 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
           })
 
           context('when the employee has some pending reimbursements', () => {
-            const accruedValue = 100
+            const reimbursement = 100
 
-            beforeEach('add accrued value', async () => {
-              await payroll.addAccruedValue(employeeId, accruedValue / 2, { from: owner })
-              await payroll.addAccruedValue(employeeId, accruedValue / 2, { from: owner })
+            beforeEach('add reimbursement', async () => {
+              await payroll.addReimbursement(employeeId, reimbursement / 2, { from: owner })
+              await payroll.addReimbursement(employeeId, reimbursement / 2, { from: owner })
             })
 
             const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
@@ -172,7 +171,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
                 const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
                 const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
 
-                await payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from })
+                await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from })
 
                 const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
                 const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount);
@@ -185,7 +184,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
               })
 
               it('emits one event per allocated token', async () => {
-                const receipt = await payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from })
+                const receipt = await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from })
 
                 const events = receipt.logs.filter(l => l.event === 'SendPayment')
                 assert.equal(events.length, 2, 'should have emitted two events')
@@ -206,15 +205,15 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
             }
 
             const assertEmployeeIsNotRemoved = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
-              it('does not remove the employee and resets the accrued value', async () => {
-                const previousAccruedValue = (await payroll.getEmployee(employeeId))[3]
-                await payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from })
+              it('does not remove the employee and resets the reimbursements', async () => {
+                const previousReimbursements = (await payroll.getEmployee(employeeId))[3]
+                await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from })
 
-                const [address, employeeSalary, _, accruedValue] = await payroll.getEmployee(employeeId)
+                const [address, employeeSalary, _, reimbursements] = await payroll.getEmployee(employeeId)
 
                 assert.equal(address, employee, 'employee address does not match')
                 assert.equal(employeeSalary, salary, 'employee salary does not match')
-                assert.equal(previousAccruedValue.minus(expectedRequestedAmount).toString(), accruedValue.toString(), 'employee accrued value does not match')
+                assert.equal(previousReimbursements.minus(expectedRequestedAmount).toString(), reimbursements.toString(), 'employee reimbursements does not match')
               })
             }
 
@@ -230,7 +229,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                  await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
                 })
               })
             }
@@ -240,7 +239,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
 
               context('when the employee has some pending salary', () => {
                 context('when the employee is not terminated', () => {
-                  itHandlesReimbursementsProperly(requestedAmount, accruedValue)
+                  itHandlesReimbursementsProperly(requestedAmount, reimbursement)
                 })
 
                 context('when the employee is terminated', () => {
@@ -248,17 +247,17 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
                     await payroll.terminateEmployeeNow(employeeId, { from: owner })
                   })
 
-                  itHandlesReimbursementsProperly(requestedAmount, accruedValue)
+                  itHandlesReimbursementsProperly(requestedAmount, reimbursement)
                 })
               })
 
               context('when the employee does not have pending salary', () => {
                 beforeEach('cash out pending salary', async () => {
-                  await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from })
+                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from })
                 })
 
                 context('when the employee is not terminated', () => {
-                  itHandlesReimbursementsProperly(requestedAmount, accruedValue)
+                  itHandlesReimbursementsProperly(requestedAmount, reimbursement)
                 })
 
                 context('when the employee is terminated', () => {
@@ -267,10 +266,10 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
                   })
 
                   context('when exchange rates are not expired', () => {
-                    assertTransferredAmounts(requestedAmount, accruedValue)
+                    assertTransferredAmounts(requestedAmount, reimbursement)
 
                     it('removes the employee', async () => {
-                      await payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from })
+                      await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from })
 
                       await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
                     })
@@ -282,15 +281,15 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
                     })
 
                     it('reverts', async () => {
-                      await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
                     })
                   })
                 })
               })
             })
 
-            context('when the requested amount is less than the total accrued value', () => {
-              const requestedAmount = accruedValue - 1
+            context('when the requested amount is less than the total reimbursements amount', () => {
+              const requestedAmount = reimbursement - 1
 
               context('when the employee has some pending salary', () => {
                 context('when the employee is not terminated', () => {
@@ -308,7 +307,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
 
               context('when the employee does not have pending salary', () => {
                 beforeEach('cash out pending salary', async () => {
-                  await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from })
+                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from })
                 })
 
                 context('when the employee is not terminated', () => {
@@ -325,8 +324,8 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
               })
             })
 
-            context('when the requested amount is equal to the total accrued value', () => {
-              const requestedAmount = accruedValue
+            context('when the requested amount is equal to the total reimbursements amount', () => {
+              const requestedAmount = reimbursement
 
               context('when the employee has some pending salary', () => {
                 context('when the employee is not terminated', () => {
@@ -344,7 +343,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
 
               context('when the employee does not have pending salary', () => {
                 beforeEach('cash out pending salary', async () => {
-                  await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from })
+                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from })
                 })
 
                 context('when the employee is not terminated', () => {
@@ -360,7 +359,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
                     assertTransferredAmounts(requestedAmount)
 
                     it('removes the employee', async () => {
-                      await payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from })
+                      await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from })
 
                       await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
                     })
@@ -372,18 +371,18 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
                     })
 
                     it('reverts', async () => {
-                      await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
                     })
                   })
                 })
               })
             })
 
-            context('when the requested amount is greater than the total accrued value', () => {
-              const requestedAmount = accruedValue + 1
+            context('when the requested amount is greater than the total reimbursements amount', () => {
+              const requestedAmount = reimbursement + 1
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
               })
             })
           })
@@ -393,7 +392,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
               const requestedAmount = 100
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
 
@@ -401,7 +400,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
               const requestedAmount = 0
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
           })
@@ -409,42 +408,42 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
 
         context('when the employee did not set any token allocations yet', () => {
           context('when the employee has some pending reimbursements', () => {
-            const accruedValue = 100
+            const reimbursement = 100
 
-            beforeEach('add accrued value', async () => {
-              await payroll.addAccruedValue(employeeId, accruedValue / 2, { from: owner })
-              await payroll.addAccruedValue(employeeId, accruedValue / 2, { from: owner })
+            beforeEach('add reimbursement', async () => {
+              await payroll.addReimbursement(employeeId, reimbursement / 2, { from: owner })
+              await payroll.addReimbursement(employeeId, reimbursement / 2, { from: owner })
             })
 
             context('when the requested amount is zero', () => {
               const requestedAmount = 0
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
 
-            context('when the requested amount is less than the total accrued value', () => {
-              const requestedAmount = accruedValue - 1
+            context('when the requested amount is less than the total reimbursements amount', () => {
+              const requestedAmount = reimbursement - 1
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
 
-            context('when the requested amount is equal to the total accrued value', () => {
-              const requestedAmount = accruedValue
+            context('when the requested amount is equal to the total reimbursements amount', () => {
+              const requestedAmount = reimbursement
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
 
-            context('when the requested amount is greater than the total accrued value', () => {
-              const requestedAmount = accruedValue + 1
+            context('when the requested amount is greater than the total reimbursements amount', () => {
+              const requestedAmount = reimbursement + 1
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
               })
             })
           })
@@ -454,7 +453,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
               const requestedAmount = 100
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
 
@@ -462,7 +461,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
               const requestedAmount = 0
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
           })
@@ -476,7 +475,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
           const requestedAmount = 100
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
           })
         })
 
@@ -484,7 +483,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
           const requestedAmount = 0
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
           })
         })
       })
@@ -494,7 +493,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
       const requestedAmount = 0
 
       it('reverts', async () => {
-        await assertRevert(payroll.payday(REIMBURSEMENTS_PAYMENT_TYPE, requestedAmount, { from: employee }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+        await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from: employee }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
       })
     })
   })
