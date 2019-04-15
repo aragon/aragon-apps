@@ -699,7 +699,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
                 // Divide by 100 for the allocation and by ONE for the exchange rate
                 tokenAmount = tokenAmount / (100 * ONE);
                 address employeeAddress = employee.accountAddress;
-                finance.newPayment(token, employeeAddress, tokenAmount, 0, 0, 1, _paymentReference);
+                finance.newImmediatePayment(token, employeeAddress, tokenAmount, _paymentReference);
                 emit SendPayment(employeeAddress, token, tokenAmount, _paymentReference);
                 somethingPaid = true;
             }

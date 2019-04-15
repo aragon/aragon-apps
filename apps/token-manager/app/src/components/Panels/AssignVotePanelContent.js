@@ -29,11 +29,13 @@ class AssignVotePanelContent extends React.Component {
   state = {
     ...initialState,
   }
+  _holderInput = React.createRef()
   componentWillReceiveProps({ opened, mode, holderAddress }) {
     if (opened && !this.props.opened) {
       // setTimeout is needed as a small hack to wait until the input is
       // on-screen before we call focus
-      this.holderInput && setTimeout(() => this.holderInput.focus(), 0)
+      this._holderInput.current &&
+        setTimeout(() => this._holderInput.current.focus(), 0)
 
       // Upadte holder address from the props
       this.updateHolderAddress(mode, holderAddress)
@@ -97,27 +99,27 @@ class AssignVotePanelContent extends React.Component {
     const { mode } = this.props
     const holderAddress = this.filteredHolderAddress()
 
-    const holderError =
-      !isAddress(holderAddress) &&
-      `
+    const holderError = !isAddress(holderAddress)
+      ? `
         ${mode === 'assign' ? 'Recipient' : 'Account'}
         must be a valid Ethereum address.
       `
+      : null
 
-    if (isAddress(holderAddress)) {
-      this.props.onUpdateTokens({
-        mode,
-        amount: this.filteredAmount(),
-        holder: holderAddress,
-      })
-    } else {
+    // Error
+    if (holderError) {
       this.setState(({ holderField }) => ({
-        holderField: {
-          ...holderField,
-          error: holderError,
-        },
+        holderField: { ...holderField, error: holderError },
       }))
+      return
     }
+
+    // Update tokens
+    this.props.onUpdateTokens({
+      mode,
+      amount: this.filteredAmount(),
+      holder: holderAddress,
+    })
   }
   render() {
     const { holderField, amountField } = this.state
@@ -134,6 +136,14 @@ class AssignVotePanelContent extends React.Component {
     return (
       <div>
         <form onSubmit={this.handleSubmit}>
+          <InfoMessage
+            title="Token Manager Permissions"
+            text={`This action will ${
+              mode === 'assign'
+                ? 'mint tokens to the recipient below'
+                : 'burn tokens from the account below'
+            }.`}
+          />
           <Field
             label={`
               ${mode === 'assign' ? 'Recipient' : 'Account'}
@@ -141,18 +151,14 @@ class AssignVotePanelContent extends React.Component {
             `}
           >
             <TextInput
-              ref={element => (this.holderInput = element)}
+              ref={this._holderInput}
               value={holderField.value}
               onChange={this.handleHolderChange}
               wide
             />
           </Field>
 
-          <Field
-            label={`
-              Tokens to ${mode === 'assign' ? 'assign' : 'remove'}
-            `}
-          >
+          <Field label="Number of tokens">
             <TextInput.Number
               value={amountField.value}
               onChange={this.handleAmountChange}
@@ -170,31 +176,45 @@ class AssignVotePanelContent extends React.Component {
             disabled={amountField.max === '0'}
             wide
           >
-            {mode === 'assign' ? 'Assign' : 'Remove'} Tokens
+            {mode === 'assign' ? 'Add' : 'Remove'} Tokens
           </Button>
-          <Messages>
+          <div css="margin-top: 15px">
             {errorMessage && <ErrorMessage message={errorMessage} />}
             {warningMessage && <WarningMessage message={warningMessage} />}
-          </Messages>
+          </div>
         </form>
       </div>
     )
   }
 }
 
-const Messages = styled.div`
-  margin-top: 15px;
+const Message = styled.div`
+  & + & {
+    margin-top: 15px;
+  }
 `
 
-const WarningMessage = ({ message }) => <Info.Action>{message}</Info.Action>
+const InfoMessage = ({ title, text }) => (
+  <div css="margin-bottom: 20px">
+    <Info.Action title={title}>{text}</Info.Action>
+  </div>
+)
+
+const WarningMessage = ({ message }) => (
+  <Message>
+    <Info.Action>{message}</Info.Action>
+  </Message>
+)
 
 const ErrorMessage = ({ message }) => (
-  <p>
-    <IconCross />
-    <Text size="small" style={{ marginLeft: '10px' }}>
-      {message}
-    </Text>
-  </p>
+  <Message>
+    <p>
+      <IconCross />
+      <Text size="small" style={{ marginLeft: '10px' }}>
+        {message}
+      </Text>
+    </p>
+  </Message>
 )
 
 export default AssignVotePanelContent

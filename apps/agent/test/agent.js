@@ -1,6 +1,6 @@
 const Agent = artifacts.require('Agent')
 
-const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { hash: namehash } = require('eth-ens-namehash')
 const ethUtil = require('ethereumjs-util')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
