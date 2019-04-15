@@ -117,7 +117,7 @@ class Withdrawal extends React.Component {
     if (recipient.error === RECEIPIENT_NOT_ADDRESS_ERROR) {
       errorMessage = 'Recipient must be a valid Ethereum address'
     } else if (amount.error === BALANCE_NOT_ENOUGH_ERROR) {
-      errorMessage = 'Amount is greater than balance held by vault'
+      errorMessage = 'Amount is greater than balance available'
     } else if (amount.error === DECIMALS_TOO_MANY_ERROR) {
       errorMessage = 'Amount contains too many decimal places'
     }

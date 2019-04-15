@@ -256,7 +256,7 @@ class App extends React.Component {
           </SidePanel>
 
           <SidePanel
-            title="New Vote"
+            title="New vote"
             opened={createVoteVisible}
             onClose={this.handleCreateVoteClose}
           >

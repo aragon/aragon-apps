@@ -19,7 +19,8 @@ const VoteSuccess = ({ settings, vote, ...props }) => (
             <Icon />
           </IconWrapper>
           <StatusLabel>
-            {success ? 'Vote will pass' : 'Vote won’t pass'}
+            Current outcome:
+            {success ? ' Yes' : ' No'}
           </StatusLabel>
         </React.Fragment>
       )

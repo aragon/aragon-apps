@@ -136,7 +136,7 @@ class App extends React.Component {
                   icon={<img src={addFundsIcon} alt="" />}
                   title="There are no funds yet"
                   text="Create a new transfer to get started."
-                  actionText="New Transfer"
+                  actionText="New transfer"
                   onActivate={this.handleNewTransferOpen}
                 />
               </EmptyScreen>
@@ -145,7 +145,7 @@ class App extends React.Component {
           <SidePanel
             opened={newTransferOpened}
             onClose={this.handleNewTransferClose}
-            title="New Transfer"
+            title="New transfer"
           >
             <NewTransferPanelContent
               app={app}
