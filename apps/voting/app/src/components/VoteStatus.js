@@ -18,7 +18,7 @@ const ATTRIBUTES = {
     bold: false,
   },
   [VOTE_STATUS_ACCEPTED]: {
-    label: 'Pending execution',
+    label: 'Pending enactment',
     Icon: null,
     color: theme.textTertiary,
     bold: false,
@@ -30,7 +30,7 @@ const ATTRIBUTES = {
     bold: true,
   },
   [VOTE_STATUS_EXECUTED]: {
-    label: 'Executed',
+    label: 'Enacted',
     Icon: IconCheck,
     color: theme.positive,
     bold: true,
