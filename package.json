@@ -16,12 +16,13 @@
   "devDependencies": {
     "coveralls": "^3.0.1",
     "ganache-cli": "^6.1.0",
-    "lcov-result-merger": "^1.2.0",
-    "lerna": "^2.8.0"
+    "lcov-result-merger": "^3.1.0",
+    "lerna": "^3.11.1"
   },
   "scripts": {
-    "install": "npm run bootstrap",
+    "install": "node scripts/install",
     "bootstrap": "lerna bootstrap --nohoist=@aragon/os",
+    "bootstrap:ci": "npm run bootstrap -- --no-ci",
     "clean": "git clean -fdxi apps future-apps shared",
     "test": "npm run test:all",
     "test:all": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream test",
@@ -32,6 +33,8 @@
     "test:token-manager:app": "npm test --prefix apps/token-manager/app",
     "test:vault": "lerna run --scope=@aragon/apps-vault --stream test",
     "test:voting": "lerna run --scope=@aragon/apps-voting --stream test",
+    "test:agent": "lerna run --scope=@aragon/apps-agent --stream test",
+    "test:payroll": "lerna run --scope=@aragon/future-apps-payroll --stream test",
     "test:future": "lerna run --scope=@aragon/future-apps-* --concurrency=1 --stream test",
     "test:shared": "lerna run --scope=@aragon/apps-shared-* --concurrency=1 --stream test",
     "coverage": "npm run coverage:all",
@@ -41,6 +44,8 @@
     "coverage:token-manager": "lerna run --scope=@aragon/apps-token-manager --concurrency=1 --stream coverage",
     "coverage:vault": "lerna run --scope=@aragon/apps-vault --concurrency=1 --stream coverage",
     "coverage:voting": "lerna run --scope=@aragon/apps-voting --concurrency=1 --stream coverage",
+    "coverage:agent": "lerna run --scope=@aragon/apps-agent --concurrency=1 --stream coverage",
+    "coverage:payroll": "lerna run --scope=@aragon/future-apps-payroll --concurrency=1 --stream coverage",
     "lint": "lerna run --scope=@aragon/apps-* lint",
     "link:os": "lerna exec --scope '@aragon/apps-*' 'npm link @aragon/os'",
     "ganache-cli:test": "shared/test-helpers/ganache-cli.sh",

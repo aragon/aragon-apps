@@ -4,13 +4,16 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@aragon/client": "^1.1.0",
-    "@aragon/ui": "^0.27.0",
+    "@aragon/api": "^1.0.0",
+    "@aragon/api-react": "^1.0.0-beta.2",
+    "@aragon/ui": "^0.33.0",
     "bn.js": "^4.11.6",
-    "prop-types": "^15.6.0",
-    "react": "^16.2.0",
-    "react-dom": "^16.2.0",
-    "styled-components": "3.2.6",
+    "prop-types": "^15.7.2",
+    "react": "^16.8.4",
+    "react-dom": "^16.8.4",
+    "react-spring": "^7.2.10",
+    "rxjs": "^6.2.1",
+    "styled-components": "4.1.3",
     "web3-utils": "^1.0.0-beta.30"
   },
   "devDependencies": {
@@ -40,8 +43,9 @@
   "scripts": {
     "test": "jest",
     "lint": "eslint ./src",
-    "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve index.html -p 3003 --out-dir build/",
-    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url '.'",
+    "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3003 --out-dir build/",
+    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url \".\"",
+    "watch:script": "parcel watch src/script.js --out-dir build/ --no-hmr",
     "build:script": "parcel build src/script.js --out-dir build/",
     "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build"
   },

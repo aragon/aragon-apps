@@ -1,6 +1,6 @@
 import React from 'react'
 import { DropDown, Field, TextInput } from '@aragon/ui'
-import provideNetwork from '../../lib/provideNetwork'
+import { useNetwork } from '@aragon/api-react'
 import { ETHER_TOKEN_VERIFIED_BY_SYMBOL } from '../../lib/verified-tokens'
 import { isAddress } from '../../lib/web3-utils'
 import TokenSelectorInstance from './TokenSelectorInstance'
@@ -98,6 +98,7 @@ class TokenSelector extends React.Component {
             items={items}
             active={activeIndex}
             onChange={this.handleChange}
+            required
             wide
           />
         </Field>
@@ -108,6 +109,7 @@ class TokenSelector extends React.Component {
               placeholder="SYM…"
               value={customToken.value}
               onChange={this.handleCustomTokenChange}
+              required
               wide
             />
           </Field>
@@ -117,4 +119,7 @@ class TokenSelector extends React.Component {
   }
 }
 
-export default provideNetwork(TokenSelector)
+export default props => {
+  const network = useNetwork()
+  return <TokenSelector network={network} {...props} />
+}

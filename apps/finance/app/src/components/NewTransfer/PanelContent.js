@@ -15,49 +15,41 @@ class PanelContent extends React.Component {
     onDeposit: () => {},
     proxyAddress: null,
   }
+
   state = {
     ...initialState,
   }
 
   componentWillReceiveProps({ opened }) {
-    if (!opened && this.props.opened) {
-      // Panel closed: reset the state
+    if (opened && !this.props.opened) {
+      // Reset the state on the panel re-opening, to avoid flickering when it's still closing
       this.setState({ ...initialState })
     }
   }
 
-  handleSelect = screenIndex => {
+  handleChange = screenIndex => {
     this.setState({ screenIndex })
   }
 
   render() {
     const { screenIndex } = this.state
-    const {
-      app,
-      opened,
-      tokens,
-      onWithdraw,
-      onDeposit,
-      proxyAddress,
-      userAccount,
-    } = this.props
+    const { opened, tokens, onWithdraw, onDeposit, proxyAddress } = this.props
     return (
       <div>
         <TabBarWrapper>
           <TabBar
             items={['Deposit', 'Withdrawal']}
             selected={screenIndex}
-            onSelect={this.handleSelect}
+            onChange={this.handleChange}
           />
         </TabBarWrapper>
 
         {screenIndex === 0 && (
           <Deposit
-            app={app}
+            opened={opened}
             tokens={tokens}
             proxyAddress={proxyAddress}
             onDeposit={onDeposit}
-            userAccount={userAccount}
           />
         )}
         {screenIndex === 1 && (

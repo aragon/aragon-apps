@@ -5,7 +5,7 @@
   "author": "Sebastián Galiano <sebastian.galiano@altoros.com>",
   "scripts": {
     "build": "npm run sync-assets && npm run build:app && npm run build:script",
-    "build:app": "parcel build src/index.html --public-url '.' --no-cache",
+    "build:app": "parcel build src/index.html --public-url \".\" --no-cache",
     "build:script": "parcel build src/script.js --no-cache",
     "lint": "standard --parser babel-eslint src/**/*.js",
     "start": "npm run sync-assets && npm run build:script -- --no-minify && parcel serve src/index.html --port 8001 --open",

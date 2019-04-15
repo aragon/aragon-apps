@@ -42,7 +42,7 @@ class SurveyCard extends React.Component {
             </PastDate>
           )}
         </Header>
-        <Card innerRef={this.handleCardRef}>
+        <Card ref={this.handleCardRef}>
           <Content>
             <Question>
               <Text>{question}</Text>

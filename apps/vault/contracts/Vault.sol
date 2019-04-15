@@ -3,10 +3,13 @@ pragma solidity 0.4.24;
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/DepositableStorage.sol";
 import "@aragon/os/contracts/common/EtherTokenConstant.sol";
+import "@aragon/os/contracts/common/SafeERC20.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 
 
 contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
+    using SafeERC20 for ERC20;
+
     bytes32 public constant TRANSFER_ROLE = keccak256("TRANSFER_ROLE");
 
     string private constant ERROR_DATA_NON_ZERO = "VAULT_DATA_NON_ZERO";
@@ -64,7 +67,7 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
         if (_token == ETH) {
             require(_to.send(_value), ERROR_SEND_REVERTED);
         } else {
-            require(ERC20(_token).transfer(_to, _value), ERROR_TOKEN_TRANSFER_REVERTED);
+            require(ERC20(_token).safeTransfer(_to, _value), ERROR_TOKEN_TRANSFER_REVERTED);
         }
 
         emit VaultTransfer(_token, _to, _value);
@@ -74,7 +77,7 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
         if (_token == ETH) {
             return address(this).balance;
         } else {
-            return ERC20(_token).balanceOf(this);
+            return ERC20(_token).staticBalanceOf(address(this));
         }
     }
 
@@ -94,7 +97,10 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
             // Deposit is implicit in this case
             require(msg.value == _value, ERROR_VALUE_MISMATCH);
         } else {
-            require(ERC20(_token).transferFrom(msg.sender, this, _value), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
+            require(
+                ERC20(_token).safeTransferFrom(msg.sender, address(this), _value),
+                ERROR_TOKEN_TRANSFER_FROM_REVERTED
+            );
         }
 
         emit VaultDeposit(_token, msg.sender, _value);

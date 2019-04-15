@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   theme,
+  unselectable,
 } from '@aragon/ui'
 import { toDecimals } from '../../lib/math-utils'
 import { addressPattern, isAddress } from '../../lib/web3-utils'
@@ -39,7 +40,19 @@ class Withdrawal extends React.Component {
   state = {
     ...initialState,
   }
-
+  _recipientInput = React.createRef()
+  componentDidMount() {
+    // setTimeout is needed as a small hack to wait until the input is
+    // on-screen before we call focus
+    this._recipientInput.current &&
+      setTimeout(() => this._recipientInput.current.focus(), 0)
+  }
+  componentWillReceiveProps({ opened }) {
+    if (!opened && this.props.opened) {
+      // Panel closing; reset state
+      this.setState({ ...initialState })
+    }
+  }
   nonZeroTokens() {
     return this.props.tokens.filter(({ amount }) => amount > 0)
   }
@@ -126,7 +139,7 @@ class Withdrawal extends React.Component {
         <h1>{title}</h1>
         <Field label="Recipient (must be a valid Ethereum address)">
           <TextInput
-            innerRef={recipient => (this.recipientInput = recipient)}
+            ref={this._recipientInput}
             onChange={this.handleRecipientUpdate}
             pattern={
               // Allow spaces to be trimmable
@@ -139,9 +152,10 @@ class Withdrawal extends React.Component {
         </Field>
         <AmountField>
           <label>
-            <Text.Block color={theme.textSecondary} smallcaps>
+            <StyledTextBlock>
               Amount
-            </Text.Block>
+              <StyledAsterisk />
+            </StyledTextBlock>
           </label>
           <CombinedInput>
             <TextInput.Number
@@ -200,6 +214,24 @@ const CombinedInput = styled.div`
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
+`
+
+const StyledTextBlock = styled(Text.Block).attrs({
+  color: theme.textSecondary,
+  smallcaps: true,
+})`
+  ${unselectable()};
+  display: flex;
+`
+
+const StyledAsterisk = styled.span.attrs({
+  children: '*',
+  title: 'Required',
+})`
+  color: ${theme.accent};
+  margin-left: auto;
+  padding-top: 3px;
+  font-size: 12px;
 `
 
 const ValidationError = ({ message }) => (

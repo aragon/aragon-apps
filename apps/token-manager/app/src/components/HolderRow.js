@@ -1,16 +1,18 @@
 import React from 'react'
 import styled from 'styled-components'
 import {
-  TableRow,
-  TableCell,
   ContextMenu,
   ContextMenuItem,
   IconAdd,
   IconRemove,
-  Badge,
+  TableCell,
+  TableRow,
   theme,
 } from '@aragon/ui'
+import { useNetwork } from '@aragon/api-react'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import { formatBalance } from '../utils'
+import You from './You'
 
 class HolderRow extends React.Component {
   static defaultProps = {
@@ -35,7 +37,9 @@ class HolderRow extends React.Component {
       groupMode,
       isCurrentUser,
       maxAccountTokens,
+      network,
       tokenDecimalsBase,
+      compact,
     } = this.props
 
     const singleToken = balance.eq(tokenDecimalsBase)
@@ -43,32 +47,29 @@ class HolderRow extends React.Component {
 
     return (
       <TableRow>
-        <TableCell>
+        <FirstTableCell css="padding-right: 0">
           <Owner>
-            <span>{address}</span>
-            {isCurrentUser && (
-              <Badge.Identity
-                style={{ fontVariant: 'small-caps' }}
-                title="This is your Ethereum address"
-              >
-                you
-              </Badge.Identity>
-            )}
+            <LocalIdentityBadge
+              entity={address}
+              networkType={network.type}
+              connectedAccount={isCurrentUser}
+            />
+            {isCurrentUser && <You />}
           </Owner>
-        </TableCell>
+        </FirstTableCell>
         {!groupMode && (
-          <TableCell align="right">
+          <TableCell align={compact ? 'left' : 'right'}>
             {formatBalance(balance, tokenDecimalsBase)}
           </TableCell>
         )}
-        <TableCell align="right">
+        <TableCell align="right" css="padding-left: 0">
           <ContextMenu>
             {canAssign && (
               <ContextMenuItem onClick={this.handleAssignTokens}>
                 <IconWrapper>
                   <IconAdd />
                 </IconWrapper>
-                <ActionLabel>Assign Tokens</ActionLabel>
+                <ActionLabel>Add Tokens</ActionLabel>
               </ContextMenuItem>
             )}
             <ContextMenuItem onClick={this.handleRemoveTokens}>
@@ -87,6 +88,12 @@ class HolderRow extends React.Component {
   }
 }
 
+const FirstTableCell = styled(TableCell)`
+  max-width: 0;
+  width: 100%;
+  overflow: hidden;
+`
+
 const ActionLabel = styled.span`
   margin-left: 15px;
 `
@@ -94,6 +101,7 @@ const ActionLabel = styled.span`
 const Owner = styled.div`
   display: flex;
   align-items: center;
+  overflow: hidden;
   & > span:first-child {
     margin-right: 10px;
   }
@@ -106,4 +114,7 @@ const IconWrapper = styled.span`
   color: ${theme.textSecondary};
 `
 
-export default HolderRow
+export default props => {
+  const network = useNetwork()
+  return <HolderRow network={network} {...props} />
+}

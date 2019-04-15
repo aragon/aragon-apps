@@ -1,8 +1,11 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Text, theme } from '@aragon/ui'
+import { Text, breakpoint, theme } from '@aragon/ui'
+import { useNetwork } from '@aragon/api-react'
 import { formatBalance, stakesPercentages } from '../utils'
 import TokenBadge from './TokenBadge'
+import You from './You'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
 const DISTRIBUTION_ITEMS_MAX = 7
 const DISTRIBUTION_COLORS = [
@@ -40,15 +43,18 @@ class SideBar extends React.Component {
   render() {
     const {
       holders,
+      network,
       tokenAddress,
       tokenDecimalsBase,
       tokenName,
       tokenSupply,
       tokenSymbol,
+      userAccount,
+      ...rest
     } = this.props
     const stakes = displayedStakes(holders, tokenSupply)
     return (
-      <Main>
+      <Main {...rest}>
         <Part>
           <h1>
             <Text color={theme.textSecondary} smallcaps>
@@ -104,9 +110,12 @@ class SideBar extends React.Component {
               <StakesListItem key={name}>
                 <span>
                   <StakesListBullet style={{ background: color }} />
-                  <Text title={name} color={theme.textSecondary}>
-                    {name}
-                  </Text>
+                  <LocalIdentityBadge
+                    entity={name}
+                    networkType={network.type}
+                    connectedAccount={name === userAccount}
+                  />
+                  {name === userAccount && <You />}
                 </span>
                 <strong>{stake}%</strong>
               </StakesListItem>
@@ -121,9 +130,19 @@ class SideBar extends React.Component {
 const Main = styled.aside`
   flex-shrink: 0;
   flex-grow: 0;
-  width: 260px;
-  margin-left: 30px;
   min-height: 100%;
+  margin-top: 55px;
+  padding: 0 20px;
+
+  ${breakpoint(
+    'medium',
+    `
+      width: 260px;
+      margin-left: 30px;
+      margin-top: unset;
+      padding: 0;
+    `
+  )};
 `
 
 const Part = styled.section`
@@ -197,4 +216,7 @@ const StakesListBullet = styled.span`
   }
 `
 
-export default SideBar
+export default props => {
+  const network = useNetwork()
+  return <SideBar network={network} {...props} />
+}

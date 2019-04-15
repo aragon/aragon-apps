@@ -1,52 +1,30 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import BN from 'bn.js'
-import {
-  AppBar,
-  AppView,
-  BaseStyles,
-  Button,
-  EmptyStateCard,
-  PublicUrl,
-  SidePanel,
-  observe,
-} from '@aragon/ui'
+import { EmptyStateCard, Main, SidePanel } from '@aragon/ui'
+import { useAragonApi } from '@aragon/api-react'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
-import { networkContextType } from './lib/provideNetwork'
+import AppLayout from './components/AppLayout'
+import NewTransferIcon from './components/NewTransferIcon'
 import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
-import { makeEtherscanBaseUrl } from './lib/utils'
+import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
 import addFundsIcon from './components/assets/add-funds-icon.svg'
 
 class App extends React.Component {
   static propTypes = {
-    app: PropTypes.object.isRequired,
-    proxyAddress: PropTypes.string,
+    api: PropTypes.object,
+    appState: PropTypes.object,
   }
   static defaultProps = {
     balances: [],
     transactions: [],
     tokens: [],
-    network: {},
-    userAccount: '',
-  }
-  static childContextTypes = {
-    network: networkContextType,
   }
   state = {
     newTransferOpened: false,
-  }
-  getChildContext() {
-    const { network } = this.props
-    return {
-      network: {
-        etherscanBaseUrl: makeEtherscanBaseUrl(network.type),
-        type: network.type,
-      },
-    }
   }
   handleNewTransferOpen = () => {
     this.setState({ newTransferOpened: true })
@@ -56,109 +34,119 @@ class App extends React.Component {
   }
   handleWithdraw = (tokenAddress, recipient, amount, reference) => {
     // Immediate, one-time payment
-    this.props.app.newPayment(
+    this.props.api.newImmediatePayment(
       tokenAddress,
       recipient,
       amount,
-      0, // initial payment time
-      0, // interval
-      1, // max repeats
       reference
     )
     this.handleNewTransferClose()
   }
   handleDeposit = async (tokenAddress, amount, reference) => {
-    const { app } = this.props
+    const { api, appState } = this.props
+    const { periodDuration, periods } = appState
 
-    const intentParams =
-      tokenAddress === ETHER_TOKEN_FAKE_ADDRESS
-        ? { value: amount }
-        : {
-            token: { address: tokenAddress, value: amount },
-            // Generally a bad idea to hardcode gas in intents, but it prevents metamask from doing
-            // the gas estimation and telling the user that their transaction will fail (before approve is mined).
-            // The actual gas cost is around ~180k + 20k per 32 chars of text.
-            // Estimation with some breathing room in case it is being forwarded (unlikely in deposit)
-            gas: 400000 + 20000 * Math.ceil(reference.length / 32),
-          }
+    let intentParams
+    if (tokenAddress === ETHER_TOKEN_FAKE_ADDRESS) {
+      intentParams = { value: amount }
+    } else {
+      // Get the number of period transitions necessary; we floor because we don't need to
+      // transition the current period
+      const lastPeriodStart = periods[periods.length - 1].startTime
+      const periodTransitions = Math.floor(
+        Math.max(Date.now() - lastPeriodStart, 0) / periodDuration
+      )
 
-    app.deposit(tokenAddress, amount, reference, intentParams)
+      intentParams = {
+        token: { address: tokenAddress, value: amount },
+        // While it's generally a bad idea to hardcode gas in intents, in the case of token deposits
+        // it prevents metamask from doing the gas estimation and telling the user that their
+        // transaction will fail (before the approve is mined).
+        // The actual gas cost is around ~180k + 20k per 32 chars of text + 80k per period
+        // transition but we do the estimation with some breathing room in case it is being
+        // forwarded (unlikely in deposit).
+        gas:
+          400000 +
+          20000 * Math.ceil(reference.length / 32) +
+          80000 * periodTransitions,
+      }
+    }
+
+    api.deposit(tokenAddress, amount, reference, intentParams)
     this.handleNewTransferClose()
   }
+
+  handleResolveLocalIdentity = address => {
+    return this.props.api.resolveAddressIdentity(address).toPromise()
+  }
+  handleShowLocalIdentityModal = address => {
+    return this.props.api
+      .requestAddressIdentityModification(address)
+      .toPromise()
+  }
+
   render() {
-    const {
-      app,
-      balances,
-      transactions,
-      tokens,
-      proxyAddress,
-      userAccount,
-    } = this.props
+    const { appState } = this.props
     const { newTransferOpened } = this.state
+    const { balances, transactions, tokens, proxyAddress } = appState
 
     return (
-      <PublicUrl.Provider url="./aragon-ui/">
-        <BaseStyles />
-        <Main>
-          <AppView
-            appBar={
-              <AppBar
-                title="Finance"
-                endContent={
-                  <Button mode="strong" onClick={this.handleNewTransferOpen}>
-                    New Transfer
-                  </Button>
-                }
-              />
-            }
+      <Main assetsUrl="./aragon-ui">
+        <div css="min-width: 320px">
+          <IdentityProvider
+            onResolve={this.handleResolveLocalIdentity}
+            onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
           >
-            {balances.length > 0 && (
-              <SpacedBlock>
-                <Balances balances={balances} />
-              </SpacedBlock>
-            )}
-            {transactions.length > 0 && (
-              <SpacedBlock>
-                <Transfers transactions={transactions} tokens={tokens} />
-              </SpacedBlock>
-            )}
-            {balances.length === 0 &&
-              transactions.length === 0 && (
+            <AppLayout
+              title="Finance"
+              mainButton={{
+                label: 'New transfer',
+                icon: <NewTransferIcon />,
+                onClick: this.handleNewTransferOpen,
+              }}
+              smallViewPadding={0}
+            >
+              {balances.length > 0 && (
+                <SpacedBlock>
+                  <Balances balances={balances} />
+                </SpacedBlock>
+              )}
+              {transactions.length > 0 && (
+                <SpacedBlock>
+                  <Transfers transactions={transactions} tokens={tokens} />
+                </SpacedBlock>
+              )}
+              {balances.length === 0 && transactions.length === 0 && (
                 <EmptyScreen>
                   <EmptyStateCard
                     icon={<img src={addFundsIcon} alt="" />}
-                    title="Add funds to your organization"
-                    text="There are no funds yet - add funds easily"
-                    actionText="Add funds"
+                    title="There are no funds yet"
+                    text="Create a new transfer to get started."
+                    actionText="New Transfer"
                     onActivate={this.handleNewTransferOpen}
                   />
                 </EmptyScreen>
               )}
-          </AppView>
-          <SidePanel
-            opened={newTransferOpened}
-            onClose={this.handleNewTransferClose}
-            title="New Transfer"
-          >
-            <NewTransferPanelContent
-              app={app}
+            </AppLayout>
+            <SidePanel
               opened={newTransferOpened}
-              tokens={tokens}
-              onWithdraw={this.handleWithdraw}
-              onDeposit={this.handleDeposit}
-              proxyAddress={proxyAddress}
-              userAccount={userAccount}
-            />
-          </SidePanel>
-        </Main>
-      </PublicUrl.Provider>
+              onClose={this.handleNewTransferClose}
+              title="New Transfer"
+            >
+              <NewTransferPanelContent
+                opened={newTransferOpened}
+                tokens={tokens}
+                onWithdraw={this.handleWithdraw}
+                onDeposit={this.handleDeposit}
+                proxyAddress={proxyAddress}
+              />
+            </SidePanel>
+          </IdentityProvider>
+        </div>
+      </Main>
     )
   }
 }
-
-const Main = styled.div`
-  height: 100vh;
-`
 
 const EmptyScreen = styled.div`
   display: flex;
@@ -174,81 +162,7 @@ const SpacedBlock = styled.div`
   }
 `
 
-// Use this function to sort by ETH
-const compareTokenAddresses = (addressA, addressB) => {
-  if (addressA === ETHER_TOKEN_FAKE_ADDRESS) {
-    return -1
-  }
-  if (addressB === ETHER_TOKEN_FAKE_ADDRESS) {
-    return 1
-  }
-  return 0
+export default () => {
+  const { api, appState } = useAragonApi()
+  return <App api={api} appState={appState} />
 }
-
-export default observe(
-  observable =>
-    observable.map(state => {
-      const { balances, transactions } = state || {}
-
-      const balancesBn = balances
-        ? balances
-            .map(balance => ({
-              ...balance,
-              amount: new BN(balance.amount),
-              decimals: new BN(balance.decimals),
-              // Note that numbers in `numData` are not safe for accurate
-              // computations (but are useful for making divisions easier).
-              numData: {
-                amount: parseInt(balance.amount, 10),
-                decimals: parseInt(balance.decimals, 10),
-              },
-            }))
-            .sort((balanceA, balanceB) =>
-              compareTokenAddresses(balanceA.address, balanceB.address)
-            )
-        : []
-
-      const transactionsBn = transactions
-        ? transactions.map(transaction => ({
-            ...transaction,
-            amount: new BN(transaction.amount),
-            numData: {
-              amount: parseInt(transaction.amount, 10),
-            },
-          }))
-        : []
-
-      return {
-        ...state,
-
-        tokens: balancesBn
-          .map(
-            ({
-              address,
-              name,
-              symbol,
-              numData: { amount, decimals },
-              verified,
-            }) => ({
-              address,
-              amount,
-              decimals,
-              name,
-              symbol,
-              verified,
-            })
-          )
-          .sort(
-            (tokenA, tokenB) =>
-              compareTokenAddresses(tokenA.address, tokenB.address) ||
-              tokenA.symbol.localeCompare(tokenB.symbol)
-          ),
-
-        // Filter out empty balances
-        balances: balancesBn.filter(balance => !balance.amount.isZero()),
-
-        transactions: transactionsBn,
-      }
-    }),
-  {}
-)(App)
