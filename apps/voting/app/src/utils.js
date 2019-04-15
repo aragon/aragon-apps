@@ -6,3 +6,5 @@ export function pluralize(count, singular, plural, re = PLURALIZE_RE) {
   }
   return plural.replace(re, count)
 }
+
+export function noop() {}

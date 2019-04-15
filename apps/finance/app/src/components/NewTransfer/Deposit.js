@@ -12,12 +12,12 @@ import {
   TextInput,
   theme,
 } from '@aragon/ui'
+import { useAragonApi } from '@aragon/api-react'
 import QRCode from 'qrcode.react'
 import tokenBalanceOfAbi from '../../abi/token-balanceof.json'
 import tokenDecimalsAbi from '../../abi/token-decimals.json'
 import tokenSymbolAbi from '../../abi/token-symbol.json'
 import { fromDecimals, toDecimals } from '../../lib/math-utils'
-import provideNetwork from '../../lib/provideNetwork'
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
   tokenDataFallback,
@@ -62,6 +62,12 @@ class Deposit extends React.Component {
   }
   state = {
     ...initialState,
+  }
+  componentWillReceiveProps({ opened }) {
+    if (!opened && this.props.opened) {
+      // Panel closing; reset state
+      this.setState({ ...initialState })
+    }
   }
   handleAmountUpdate = event => {
     this.validateInputs({
@@ -124,12 +130,12 @@ class Deposit extends React.Component {
     return selectedToken.value && !selectedToken.data.loading
   }
   loadTokenData(address) {
-    const { app, network, userAccount } = this.props
+    const { api, network, connectedAccount } = this.props
 
     // ETH
     if (addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS)) {
       return new Promise((resolve, reject) =>
-        app.web3Eth('getBalance', userAccount).subscribe(
+        api.web3Eth('getBalance', connectedAccount).subscribe(
           ethBalance =>
             resolve({
               decimals: 18,
@@ -143,10 +149,10 @@ class Deposit extends React.Component {
     }
 
     // Tokens
-    const token = app.external(address, tokenAbi)
+    const token = api.external(address, tokenAbi)
 
     return new Promise(async (resolve, reject) => {
-      const userBalance = await token.balanceOf(userAccount).toPromise()
+      const userBalance = await token.balanceOf(connectedAccount).toPromise()
 
       const decimalsFallback =
         tokenDataFallback(address, 'decimals', network.type) || '0'
@@ -161,7 +167,7 @@ class Deposit extends React.Component {
       }
 
       const [tokenSymbol, tokenDecimals] = await Promise.all([
-        getTokenSymbol(app, address),
+        getTokenSymbol(api, address),
         token.decimals().toPromise(),
       ])
 
@@ -250,10 +256,14 @@ class Deposit extends React.Component {
     const selectedTokenIsAddress = isAddress(selectedToken.value)
     const showTokenBadge = selectedTokenIsAddress && selectedToken.coerced
     const tokenBalanceMessage = selectedToken.data.userBalance
-      ? `You have ${fromDecimals(
-          selectedToken.data.userBalance,
-          selectedToken.data.decimals
-        )} ${selectedToken.data.symbol} available`
+      ? `You have ${
+          selectedToken.data.userBalance === '0'
+            ? 'no'
+            : fromDecimals(
+                selectedToken.data.userBalance,
+                selectedToken.data.decimals
+              )
+        } ${selectedToken.data.symbol} available`
       : ''
 
     const ethSelected =
@@ -401,4 +411,14 @@ const ValidationError = ({ message }) => (
   </div>
 )
 
-export default provideNetwork(Deposit)
+export default props => {
+  const { api, connectedAccount, network } = useAragonApi()
+  return network && api ? (
+    <Deposit
+      api={api}
+      connectedAccount={connectedAccount}
+      network={network}
+      {...props}
+    />
+  ) : null
+}

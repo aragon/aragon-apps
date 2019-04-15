@@ -2,7 +2,6 @@ const sha3 = require('solidity-sha3').default
 
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
-const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
 const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
@@ -36,7 +35,9 @@ contract('Voting App', accounts => {
     let APP_MANAGER_ROLE
     let CREATE_VOTES_ROLE, MODIFY_SUPPORT_ROLE, MODIFY_QUORUM_ROLE
 
-    const votingTime = 1000
+    const startTime = 1
+    const votingDuration = 1000
+    const votingEnd = startTime + votingDuration + 1
     const root = accounts[0]
 
     before(async () => {
@@ -62,6 +63,7 @@ contract('Voting App', accounts => {
 
         const receipt = await dao.newAppInstance('0x1234', votingBase.address, '0x', false, { from: root })
         voting = Voting.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+        await voting.mock_setTimestamp(startTime)
 
         await acl.createPermission(ANY_ADDR, voting.address, CREATE_VOTES_ROLE, root, { from: root })
         await acl.createPermission(ANY_ADDR, voting.address, MODIFY_SUPPORT_ROLE, root, { from: root })
@@ -80,14 +82,14 @@ contract('Voting App', accounts => {
         beforeEach(async () => {
             token = await MiniMeToken.new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration)
 
             executionTarget = await ExecutionTarget.new()
         })
 
         it('fails on reinitialization', async () => {
             return assertRevert(async () => {
-                await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+                await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration)
             })
         })
 
@@ -95,7 +97,7 @@ contract('Voting App', accounts => {
             const newVoting = await Voting.new()
             assert.isTrue(await newVoting.isPetrified())
             return assertRevert(async () => {
-                await newVoting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+                await newVoting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration)
             })
         })
 
@@ -159,7 +161,7 @@ contract('Voting App', accounts => {
                 await token.generateTokens(holder29, bigExp(29, decimals))
                 await token.generateTokens(holder51, bigExp(51, decimals))
 
-                await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+                await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration)
 
                 executionTarget = await ExecutionTarget.new()
             })
@@ -250,7 +252,7 @@ contract('Voting App', accounts => {
                     await voting.vote(voteId, true, false, { from: holder51 })
                     await voting.vote(voteId, true, false, { from: holder20 })
                     await voting.vote(voteId, false, false, { from: holder29 })
-                    await timeTravel(votingTime + 1)
+                    await voting.mock_setTimestamp(votingEnd)
 
                     const state = await voting.getVote(voteId)
                     assert.equal(state[4].toString(), neededSupport.toString(), 'required support in vote should stay equal')
@@ -265,7 +267,7 @@ contract('Voting App', accounts => {
                     // it will succeed
 
                     await voting.vote(voteId, true, true, { from: holder29 })
-                    await timeTravel(votingTime + 1)
+                    await voting.mock_setTimestamp(votingEnd)
 
                     const state = await voting.getVote(voteId)
                     assert.equal(state[5].toString(), minimumAcceptanceQuorum.toString(), 'acceptance quorum in vote should stay equal')
@@ -308,7 +310,7 @@ contract('Voting App', accounts => {
                 })
 
                 it('throws when voting after voting closes', async () => {
-                    await timeTravel(votingTime + 1)
+                    await voting.mock_setTimestamp(votingEnd)
                     return assertRevert(async () => {
                         await voting.vote(voteId, true, true, { from: holder29 })
                     })
@@ -317,14 +319,14 @@ contract('Voting App', accounts => {
                 it('can execute if vote is approved with support and quorum', async () => {
                     await voting.vote(voteId, true, true, { from: holder29 })
                     await voting.vote(voteId, false, true, { from: holder20 })
-                    await timeTravel(votingTime + 1)
+                    await voting.mock_setTimestamp(votingEnd)
                     await voting.executeVote(voteId)
                     assert.equal(await executionTarget.counter(), 2, 'should have executed result')
                 })
 
                 it('cannot execute vote if not enough quorum met', async () => {
                     await voting.vote(voteId, true, true, { from: holder20 })
-                    await timeTravel(votingTime + 1)
+                    await voting.mock_setTimestamp(votingEnd)
                     return assertRevert(async () => {
                         await voting.executeVote(voteId)
                     })
@@ -333,7 +335,7 @@ contract('Voting App', accounts => {
                 it('cannot execute vote if not support met', async () => {
                     await voting.vote(voteId, false, true, { from: holder29 })
                     await voting.vote(voteId, false, true, { from: holder20 })
-                    await timeTravel(votingTime + 1)
+                    await voting.mock_setTimestamp(votingEnd)
                     return assertRevert(async () => {
                         await voting.executeVote(voteId)
                     })
@@ -376,17 +378,17 @@ contract('Voting App', accounts => {
             const neededSupport = pct16(20)
             const minimumAcceptanceQuorum = pct16(50)
             return assertRevert(async() => {
-                await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+                await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration)
             })
         })
 
         it('fails if min support is 100% or more', async() => {
             const minimumAcceptanceQuorum = pct16(20)
             await assertRevert(async() => {
-                await voting.initialize(token.address, pct16(101), minimumAcceptanceQuorum, votingTime)
+                await voting.initialize(token.address, pct16(101), minimumAcceptanceQuorum, votingDuration)
             })
             return assertRevert(async() => {
-                await voting.initialize(token.address, pct16(100), minimumAcceptanceQuorum, votingTime)
+                await voting.initialize(token.address, pct16(100), minimumAcceptanceQuorum, votingDuration)
             })
         })
     })
@@ -398,7 +400,7 @@ contract('Voting App', accounts => {
         beforeEach(async() => {
             token = await MiniMeToken.new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration)
         })
 
         it('fails creating a survey if token has no holder', async () => {
@@ -419,7 +421,7 @@ contract('Voting App', accounts => {
 
             await token.generateTokens(holder, 1)
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration)
         })
 
         it('new vote cannot be executed before voting', async () => {
@@ -469,7 +471,7 @@ contract('Voting App', accounts => {
             await token.generateTokens(holder1, 1)
             await token.generateTokens(holder2, 2)
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration)
         })
 
         it('new vote cannot be executed before holder2 voting', async () => {
@@ -508,7 +510,7 @@ contract('Voting App', accounts => {
             await token.generateTokens(holder1, 1)
             await token.generateTokens(holder2, 1)
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingTime)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration)
         })
 
         it('uses the correct snapshot value if tokens are minted afterwards', async () => {

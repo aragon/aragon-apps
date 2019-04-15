@@ -77,7 +77,7 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
         if (_token == ETH) {
             return address(this).balance;
         } else {
-            return ERC20(_token).staticBalanceOf(this);
+            return ERC20(_token).staticBalanceOf(address(this));
         }
     }
 
@@ -97,7 +97,10 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
             // Deposit is implicit in this case
             require(msg.value == _value, ERROR_VALUE_MISMATCH);
         } else {
-            require(ERC20(_token).safeTransferFrom(msg.sender, this, _value), ERROR_TOKEN_TRANSFER_FROM_REVERTED);
+            require(
+                ERC20(_token).safeTransferFrom(msg.sender, address(this), _value),
+                ERROR_TOKEN_TRANSFER_FROM_REVERTED
+            );
         }
 
         emit VaultDeposit(_token, msg.sender, _value);

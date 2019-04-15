@@ -1,6 +1,5 @@
 import React from 'react'
-import { ButtonIcon } from '@aragon/ui'
-import IconMenu from './IconMenu'
+import { ButtonIcon, IconMenu } from '@aragon/ui'
 
 export default props => (
   <ButtonIcon
@@ -11,6 +10,7 @@ export default props => (
       padding: 0 10px 0 20px;
       margin-right: 8px;
     `}
+    label="Open menu"
   >
     <IconMenu />
   </ButtonIcon>

@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Text, breakpoint, theme } from '@aragon/ui'
-import provideNetwork from '../provide-network'
+import { useNetwork } from '@aragon/api-react'
 import { formatBalance, stakesPercentages } from '../utils'
 import TokenBadge from './TokenBadge'
 import You from './You'
@@ -216,4 +216,7 @@ const StakesListBullet = styled.span`
   }
 `
 
-export default provideNetwork(SideBar)
+export default props => {
+  const network = useNetwork()
+  return <SideBar network={network} {...props} />
+}
