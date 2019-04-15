@@ -327,7 +327,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             _updateEmployeeStatusBasedOnPaidPayroll(employeeId, paymentAmount, currentOwedSalary);
         } else if (_type == PaymentType.Reimbursement) {
             uint256 owedReimbursements = employee.reimbursements;
-            paymentAmount = _ensurePaymentAmount(owedReimbursement, _requestedAmount);
+            paymentAmount = _ensurePaymentAmount(owedReimbursements, _requestedAmount);
             employee.reimbursements = owedReimbursements.sub(paymentAmount);
         } else if (_type == PaymentType.Bonus) {
             uint256 owedBonusAmount = employee.bonus;
@@ -799,7 +799,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         revert(ERROR_INVALID_PAYMENT_TYPE);
     }
 
-    function _ensurePaymentAmount(uint256 _owedAmount, uint256 _requestedAmount) private returns (uint256) {
+    function _ensurePaymentAmount(uint256 _owedAmount, uint256 _requestedAmount) private pure returns (uint256) {
         require(_owedAmount > 0, ERROR_NOTHING_PAID);
         require(_owedAmount >= _requestedAmount, ERROR_INVALID_REQUESTED_AMOUNT);
         return _requestedAmount > 0 ? _requestedAmount : _owedAmount;
