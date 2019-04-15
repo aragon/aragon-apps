@@ -50,6 +50,6 @@
     "truffle-hdwallet-provider": "0.0.3"
   },
   "dependencies": {
-    "@aragon/os": "4.1.0"
+    "@aragon/os": "4.2.0"
   }
 }
