@@ -1,12 +1,12 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
 const { maxUint64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
+  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
 
   const NOW = 1553703809 // random fixed timestamp in seconds
   const ONE_MONTH = 60 * 60 * 24 * 31
@@ -17,15 +17,13 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
   const currentTimestamp = async () => payroll.getTimestampPublic()
 
-  before('setup base apps and tokens', async () => {
-    ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
+  before('deploy base apps and tokens', async () => {
+    ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
   })
 
-  beforeEach('setup payroll instance', async () => {
-    payroll = await createPayrollInstance(dao, payrollBase, owner)
-    await mockTimestamps(payroll, priceFeed, NOW)
+  beforeEach('create payroll and price feed instance', async () => {
+    ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
   describe('addEmployeeNow', () => {
@@ -39,7 +37,6 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
       context('when the sender has permissions to add employees', () => {
         const from = owner
-        let receipt, employeeId
 
         context('when the employee has not been added yet', () => {
           let receipt, employeeId
