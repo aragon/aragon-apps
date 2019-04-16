@@ -24,7 +24,6 @@
     "/arapp.json",
     "/build",
     "/contracts",
-    "/scripts",
     "/test"
   ],
   "keywords": [],
