@@ -25,7 +25,6 @@
     "/arapp.json",
     "/build",
     "/contracts",
-    "/scripts",
     "/test"
   ],
   "author": "Aragon Association <legal@aragon.org>",
