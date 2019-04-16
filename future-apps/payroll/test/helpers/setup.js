@@ -74,6 +74,7 @@ module.exports = (artifacts, web3) => {
 
     const acl = ACL.at(await dao.acl())
 
+    const ADD_BONUS_ROLE = await payroll.ADD_BONUS_ROLE()
     const ADD_EMPLOYEE_ROLE = await payroll.ADD_EMPLOYEE_ROLE()
     const ADD_ACCRUED_VALUE_ROLE = await payroll.ADD_ACCRUED_VALUE_ROLE()
     const CHANGE_PRICE_FEED_ROLE = await payroll.CHANGE_PRICE_FEED_ROLE()
@@ -82,6 +83,7 @@ module.exports = (artifacts, web3) => {
     const SET_EMPLOYEE_SALARY_ROLE = await payroll.SET_EMPLOYEE_SALARY_ROLE()
     const ALLOWED_TOKENS_MANAGER_ROLE = await payroll.ALLOWED_TOKENS_MANAGER_ROLE()
 
+    await acl.createPermission(owner, payroll.address, ADD_BONUS_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, ADD_EMPLOYEE_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, ADD_ACCRUED_VALUE_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, CHANGE_PRICE_FEED_ROLE, owner, { from: owner })

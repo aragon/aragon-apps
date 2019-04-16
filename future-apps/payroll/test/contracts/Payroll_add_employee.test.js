@@ -88,8 +88,9 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
               assert.equal(event.startDate.toString(), (await currentTimestamp()).toString(), 'employee start date does not match')
               assert.equal(event.initialDenominationSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
 
-              const [address, employeeSalary, accruedValue, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(anotherEmployeeId)
+              const [address, employeeSalary, bonus, accruedValue, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(anotherEmployeeId)
               assert.equal(address, anotherEmployee, 'employee account does not match')
+              assert.equal(bonus.toString(), 0, 'employee bonus does not match')
               assert.equal(accruedValue, 0, 'employee accrued value does not match')
               assert.equal(accruedSalary, 0, 'employee accrued salary does not match')
               assert.equal(employeeSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
@@ -195,8 +196,9 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
                 assert.equal(event.startDate.toString(), startDate, 'employee start date does not match')
                 assert.equal(event.initialDenominationSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
 
-                const [address, employeeSalary, accruedValue, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(anotherEmployeeId)
+                const [address, employeeSalary, bonus, accruedValue, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(anotherEmployeeId)
                 assert.equal(address, anotherEmployee, 'employee address does not match')
+                assert.equal(bonus.toString(), 0, 'employee bonus does not match')
                 assert.equal(accruedValue, 0, 'employee accrued value does not match')
                 assert.equal(accruedSalary, 0, 'employee accrued salary does not match')
                 assert.equal(employeeSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
