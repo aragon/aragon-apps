@@ -10,4 +10,5 @@ import "@aragon/apps-shared-migrations/contracts/Migrations.sol";
 
 
 contract TestImports {
+    // solium-disable-previous-line no-empty-blocks
 }

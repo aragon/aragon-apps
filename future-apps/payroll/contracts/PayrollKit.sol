@@ -24,6 +24,7 @@ contract PPFMock is IFeed {
   }
 }
 
+
 contract KitBase is APMNamehash, EVMScriptRegistryConstants {
     ENS public ens;
     DAOFactory public fac;
@@ -65,6 +66,7 @@ contract KitBase is APMNamehash, EVMScriptRegistryConstants {
     }
 }
 
+
 contract PayrollKit is KitBase {
     MiniMeTokenFactory tokenFactory;
 
@@ -84,7 +86,6 @@ contract PayrollKit is KitBase {
         returns (Kernel dao, Payroll payroll)
     {
         address root = msg.sender;
-        address employer = msg.sender;
 
         dao = fac.newDAO(this);
         ACL acl = ACL(dao.acl());
@@ -183,7 +184,7 @@ contract PayrollKit is KitBase {
     }
 
     function deployTokens(Kernel dao, Finance finance, ACL acl, address root) internal {
-        MiniMeToken token1 = deployAndDepositToken(dao, finance, acl, root, "Token 1", "TK1");
+        deployAndDepositToken(dao, finance, acl, root, "Token 1", "TK1");
         deployAndDepositToken(dao, finance, acl, root, "Token 2", "TK2");
         deployAndDepositToken(dao, finance, acl, root, "Token 3", "TK3");
     }
@@ -195,7 +196,10 @@ contract PayrollKit is KitBase {
         address root,
         string name,
         string symbol
-    ) internal returns (MiniMeToken) {
+    )
+        internal
+        returns (MiniMeToken)
+    {
         TokenManager tokenManager = newTokenManager(dao, acl, root);
         MiniMeToken token = newToken(name, symbol);
         token.changeController(tokenManager);
@@ -208,9 +212,8 @@ contract PayrollKit is KitBase {
     }
 
     function addAllowedToken(MiniMeToken token) internal {
-
+        // solium-disable-previous-line no-empty-blocks
     }
-
 
     function newToken(string name, string symbol) internal returns (MiniMeToken token) {
         token = tokenFactory.createCloneToken(MiniMeToken(0), 0, name, 18, symbol, true);
@@ -239,10 +242,10 @@ contract PayrollKit is KitBase {
         uint256 salary4 = 2218166146982026; // 70000
         uint256 salary5 = 1901285268841737; // 60000
 
-        payroll.addEmployee(this, salary1, 'Protofire', 'Organization', uint64(now - 172800));
-        payroll.addEmployee(account2, salary2, 'Leonardo Lower', 'Project Manager',  uint64(now- 86400));
-        payroll.addEmployee(account3, salary3, 'Lisandro Corbalan', 'Developer', uint64(now - 172800));
-        payroll.addEmployee(account4, salary4, 'Sebastián Galiano', 'Developer', uint64(now - 172800));
-        payroll.addEmployee(account5, salary5, 'Fernando Greco', 'Developer', uint64(now - 172800));
+        payroll.addEmployee(this, salary1, "Protofire", "Organization", uint64(now - 172800));
+        payroll.addEmployee(account2, salary2, "Leonardo Lower", "Project Manager",  uint64(now - 86400));
+        payroll.addEmployee(account3, salary3, "Lisandro Corbalan", "Developer", uint64(now - 172800));
+        payroll.addEmployee(account4, salary4, "Sebastián Galiano", "Developer", uint64(now - 172800));
+        payroll.addEmployee(account5, salary5, "Fernando Greco", "Developer", uint64(now - 172800));
     }
 }
