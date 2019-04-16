@@ -52,7 +52,7 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
             it('sets the end date of the employee', async () => {
               await payroll.terminateEmployeeNow(employeeId, { from })
 
-              const endDate = (await payroll.getEmployee(employeeId))[4]
+              const endDate = (await payroll.getEmployee(employeeId))[5]
               assert.equal(endDate.toString(), (await currentTimestamp()).toString(), 'employee end date does not match')
             })
 
@@ -108,11 +108,12 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
               const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
               const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
-              const [address, employeeSalary, accruedValue, lastPayroll, endDate] = await payroll.getEmployee(newEmployeeId)
-              assert.equal(address, employee, 'Employee account does not match')
+              const [address, employeeSalary, accruedValue, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(newEmployeeId)
+              assert.equal(address, employee, 'employee address does not match')
               assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
               assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll date does not match')
               assert.equal(accruedValue.toString(), 0, 'employee accrued value does not match')
+              assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
               assert.equal(endDate.toString(), maxUint64(), 'employee end date does not match')
             })
           })
@@ -189,7 +190,7 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
               it('sets the end date of the employee', async () => {
                 await payroll.terminateEmployee(employeeId, endDate, { from })
 
-                const date = (await payroll.getEmployee(employeeId))[4]
+                const date = (await payroll.getEmployee(employeeId))[5]
                 assert.equal(date.toString(), endDate.toString(), 'employee end date does not match')
               })
 
@@ -245,11 +246,12 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
                 const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
                 const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
-                const [address, employeeSalary, accruedValue, lastPayroll, date] = await payroll.getEmployee(newEmployeeId)
-                assert.equal(address, employee, 'Employee account does not match')
+                const [address, employeeSalary, accruedValue, accruedSalary, lastPayroll, date] = await payroll.getEmployee(newEmployeeId)
+                assert.equal(address, employee, 'employee account does not match')
                 assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
                 assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll date does not match')
                 assert.equal(accruedValue.toString(), 0, 'employee accrued value does not match')
+                assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
                 assert.equal(date.toString(), maxUint64(), 'employee end date does not match')
               })
             })
@@ -276,7 +278,7 @@ contract('Payroll employees termination', ([owner, employee, anotherEmployee, an
                 const newEndDate = bn(await currentTimestamp()).plus(ONE_MONTH * 2)
                 await payroll.terminateEmployee(employeeId, newEndDate, { from })
 
-                const endDate = (await payroll.getEmployee(employeeId))[4]
+                const endDate = (await payroll.getEmployee(employeeId))[5]
                 assert.equal(endDate.toString(), newEndDate.toString(), 'employee end date does not match')
               })
             })

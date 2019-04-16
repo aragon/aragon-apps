@@ -185,14 +185,14 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
                 assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
                 assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
                 assert.equal(denominationTokenEvent.amount.toString(), 80, 'payment amount does not match')
-                assert.equal(denominationTokenEvent.reference, 'Reimbursement', 'payment reference does not match')
+                assert.equal(denominationTokenEvent.paymentReference, 'Reimbursement', 'payment reference does not match')
 
                 const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                 const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
                 assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
                 assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
                 assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).toString(), 20, 'payment amount does not match')
-                assert.equal(anotherTokenEvent.reference, 'Reimbursement', 'payment reference does not match')
+                assert.equal(anotherTokenEvent.paymentReference, 'Reimbursement', 'payment reference does not match')
               })
             }
 
@@ -204,7 +204,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
 
                 assert.equal(address, employee, 'employee address does not match')
                 assert.equal(employeeSalary, salary, 'employee salary does not match')
-                assert.equal(accruedValue, 0, 'accrued value should be zero')
+                assert.equal(accruedValue, 0, 'employee accrued value should be zero')
               })
             }
 
@@ -386,14 +386,14 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
                 assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
                 assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
                 assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
-                assert.equal(denominationTokenEvent.reference, 'Reimbursement', 'payment reference does not match')
+                assert.equal(denominationTokenEvent.paymentReference, 'Reimbursement', 'payment reference does not match')
 
                 const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                 const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
                 assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
                 assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
                 assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), parseInt(requestedAnotherTokenAmount), 'payment amount does not match')
-                assert.equal(anotherTokenEvent.reference, 'Reimbursement', 'payment reference does not match')
+                assert.equal(anotherTokenEvent.paymentReference, 'Reimbursement', 'payment reference does not match')
               })
             }
 
@@ -406,7 +406,7 @@ contract('Payroll reimbursements', ([owner, employee, anotherEmployee, anyone]) 
 
                 assert.equal(address, employee, 'employee address does not match')
                 assert.equal(employeeSalary, salary, 'employee salary does not match')
-                assert.equal(currentAccruedValue.minus(expectedRequestedAmount).toString(), accruedValue.toString(), 'accrued value does not match')
+                assert.equal(currentAccruedValue.minus(expectedRequestedAmount).toString(), accruedValue.toString(), 'employee accrued value does not match')
               })
             }
 
