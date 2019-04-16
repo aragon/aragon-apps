@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { AppBar, AppView, Button, ButtonIcon, Viewport, font } from '@aragon/ui'
+import { useAragonApi } from '@aragon/api-react'
 import MenuButton from './MenuButton/MenuButton'
 
 const AppLayout = ({
@@ -10,9 +11,9 @@ const AppLayout = ({
   afterTitle,
   smallViewPadding,
   largeViewPadding,
-  onMenuOpen,
   mainButton,
 }) => {
+  const { requestMenu, displayMenuButton } = useAragonApi()
   return (
     <Viewport>
       {({ below }) => (
@@ -21,18 +22,24 @@ const AppLayout = ({
           appBar={
             <AppBar>
               <AppBarContainer
-                style={{ padding: below('medium') ? '0' : '0 30px' }}
+                style={{ padding: below('medium') ? '0' : '0 30px 0 10px' }}
               >
                 <Title>
-                  {below('medium') && <MenuButton onClick={onMenuOpen} />}
-                  <TitleLabel>{title}</TitleLabel>
+                  {displayMenuButton && <MenuButton onClick={requestMenu} />}
+                  <TitleLabel
+                    css={`
+                      margin-left: ${displayMenuButton ? '0' : '20px'};
+                    `}
+                  >
+                    {title}
+                  </TitleLabel>
                   {afterTitle}
                 </Title>
                 {mainButton &&
                   (below('medium') ? (
                     <ButtonIcon
                       onClick={mainButton.onClick}
-                      title={mainButton.label}
+                      label={mainButton.label}
                       css={`
                         width: auto;
                         height: 100%;
@@ -67,7 +74,6 @@ AppLayout.propTypes = {
   children: PropTypes.node,
   title: PropTypes.node.isRequired,
   afterTitle: PropTypes.node,
-  onMenuOpen: PropTypes.func.isRequired,
   smallViewPadding: PropTypes.number,
   largeViewPadding: PropTypes.number,
   mainButton: PropTypes.shape({

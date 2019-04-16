@@ -1,12 +1,10 @@
-import BigNumber from 'bignumber.js'
-import { scaleBigNumberValuesSet } from './math-utils'
+import BN from 'bn.js'
+import { scaleBNValuesSet } from './math-utils'
 
 const scaleResults = (values, total, precision) =>
-  scaleBigNumberValuesSet(values, new BigNumber(total), precision).map(v =>
-    v.toFixed(0)
-  )
+  scaleBNValuesSet(values, new BN(total), precision).map(v => v.toString())
 
-describe('scaleBigNumberValuesSet()', () => {
+describe('scaleBNValuesSet()', () => {
   const sets = [
     [
       'should add round up the first number first',

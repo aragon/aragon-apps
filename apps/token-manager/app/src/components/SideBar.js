@@ -1,9 +1,11 @@
 import React from 'react'
 import styled from 'styled-components'
-import { IdentityBadge, Text, Viewport, breakpoint, theme } from '@aragon/ui'
-import provideNetwork from '../provide-network'
+import { Text, breakpoint, theme } from '@aragon/ui'
+import { useNetwork } from '@aragon/api-react'
 import { formatBalance, stakesPercentages } from '../utils'
 import TokenBadge from './TokenBadge'
+import You from './You'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
 const DISTRIBUTION_ITEMS_MAX = 7
 const DISTRIBUTION_COLORS = [
@@ -47,6 +49,7 @@ class SideBar extends React.Component {
       tokenName,
       tokenSupply,
       tokenSymbol,
+      userAccount,
       ...rest
     } = this.props
     const stakes = displayedStakes(holders, tokenSupply)
@@ -102,25 +105,22 @@ class SideBar extends React.Component {
               />
             ))}
           </StakesBar>
-          <Viewport>
-            {({ width, above }) => (
-              <ul>
-                {stakes.map(({ name, stake, color }) => (
-                  <StakesListItem key={name}>
-                    <span>
-                      <StakesListBullet style={{ background: color }} />
-                      <IdentityBadge
-                        entity={name}
-                        networkType={network.type}
-                        shorten={above('medium') || width < 520}
-                      />
-                    </span>
-                    <strong>{stake}%</strong>
-                  </StakesListItem>
-                ))}
-              </ul>
-            )}
-          </Viewport>
+          <ul>
+            {stakes.map(({ name, stake, color }) => (
+              <StakesListItem key={name}>
+                <span>
+                  <StakesListBullet style={{ background: color }} />
+                  <LocalIdentityBadge
+                    entity={name}
+                    networkType={network.type}
+                    connectedAccount={name === userAccount}
+                  />
+                  {name === userAccount && <You />}
+                </span>
+                <strong>{stake}%</strong>
+              </StakesListItem>
+            ))}
+          </ul>
         </Part>
       </Main>
     )
@@ -216,4 +216,7 @@ const StakesListBullet = styled.span`
   }
 `
 
-export default provideNetwork(SideBar)
+export default props => {
+  const network = useNetwork()
+  return <SideBar network={network} {...props} />
+}

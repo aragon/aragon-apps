@@ -40,7 +40,19 @@ class Withdrawal extends React.Component {
   state = {
     ...initialState,
   }
-
+  _recipientInput = React.createRef()
+  componentDidMount() {
+    // setTimeout is needed as a small hack to wait until the input is
+    // on-screen before we call focus
+    this._recipientInput.current &&
+      setTimeout(() => this._recipientInput.current.focus(), 0)
+  }
+  componentWillReceiveProps({ opened }) {
+    if (!opened && this.props.opened) {
+      // Panel closing; reset state
+      this.setState({ ...initialState })
+    }
+  }
   nonZeroTokens() {
     return this.props.tokens.filter(({ amount }) => amount > 0)
   }
@@ -127,7 +139,7 @@ class Withdrawal extends React.Component {
         <h1>{title}</h1>
         <Field label="Recipient (must be a valid Ethereum address)">
           <TextInput
-            ref={recipient => (this.recipientInput = recipient)}
+            ref={this._recipientInput}
             onChange={this.handleRecipientUpdate}
             pattern={
               // Allow spaces to be trimmable

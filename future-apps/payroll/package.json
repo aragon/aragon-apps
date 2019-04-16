@@ -40,7 +40,7 @@
   ],
   "dependencies": {
     "@aragon/apps-finance": "2.1.0",
-    "@aragon/os": "4.0.1",
+    "@aragon/os": "4.1.0",
     "@aragon/ppf-contracts": "1.0.2"
   },
   "devDependencies": {
@@ -54,6 +54,7 @@
     "ganache-cli": "^6.0.3",
     "ethereumjs-abi": "^0.6.5",
     "solidity-coverage": "0.5.11",
-    "solium": "^1.1.8"
+    "solium": "^1.1.8",
+    "truffle": "4.1.14"
   }
 }

@@ -38,14 +38,16 @@ class Balances extends React.Component {
     const { balances } = this.props
     const { convertRates } = this.state
     const balanceItems = balances.map(
-      ({ numData: { amount, decimals }, symbol, verified }) => {
+      ({ address, numData: { amount, decimals }, symbol, verified }) => {
         const adjustedAmount = amount / Math.pow(10, decimals)
         const convertedAmount =
           verified && convertRates[symbol]
             ? adjustedAmount / convertRates[symbol]
             : -1
         return {
+          address,
           symbol,
+          verified,
           amount: round(adjustedAmount, 5),
           convertedAmount: round(convertedAmount, 5),
         }
@@ -58,8 +60,8 @@ class Balances extends React.Component {
           <List>
             {balanceItems.length > 0 ? (
               balanceItems.map(
-                ({ amount, convertedAmount, symbol, verified }) => (
-                  <ListItem key={symbol}>
+                ({ address, amount, convertedAmount, symbol, verified }) => (
+                  <ListItem key={address}>
                     <BalanceToken
                       amount={amount}
                       convertedAmount={convertedAmount}

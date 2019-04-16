@@ -1,32 +1,35 @@
 import React from 'react'
 import styled from 'styled-components'
 import { theme, IconCross, IconCheck } from '@aragon/ui'
-import provideSettings from '../utils/provideSettings'
 import { getVoteSuccess } from '../vote-utils'
+import { useSettings } from '../vote-settings-manager'
 
-const VoteSuccess = ({ settings, vote, ...props }) => (
-  <Main {...props}>
-    {(() => {
-      if (!vote.data.open) {
-        return 'Voting has ended'
-      }
+const VoteSuccess = ({ vote, ...props }) => {
+  const settings = useSettings()
+  return (
+    <Main {...props}>
+      {(() => {
+        if (!vote.data.open) {
+          return 'Voting has ended'
+        }
 
-      const success = getVoteSuccess(vote, settings.pctBase)
-      const Icon = success ? IconCheck : IconCross
-      return (
-        <React.Fragment>
-          <IconWrapper>
-            <Icon />
-          </IconWrapper>
-          <StatusLabel>
-            Current outcome:
-            {success ? ' Yes' : ' No'}
-          </StatusLabel>
-        </React.Fragment>
-      )
-    })()}
-  </Main>
-)
+        const success = getVoteSuccess(vote, settings.pctBase)
+        const Icon = success ? IconCheck : IconCross
+        return (
+          <React.Fragment>
+            <IconWrapper>
+              <Icon />
+            </IconWrapper>
+            <StatusLabel>
+              Current outcome:
+              {success ? ' Yes' : ' No'}
+            </StatusLabel>
+          </React.Fragment>
+        )
+      })()}
+    </Main>
+  )
+}
 
 const Main = styled.div`
   display: flex;
@@ -44,4 +47,4 @@ const StatusLabel = styled.span`
   margin-left: 15px;
 `
 
-export default provideSettings(VoteSuccess)
+export default VoteSuccess
