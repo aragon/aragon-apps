@@ -25,7 +25,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
     bytes32 constant public TERMINATE_EMPLOYEE_ROLE = keccak256("TERMINATE_EMPLOYEE_ROLE");
     bytes32 constant public SET_EMPLOYEE_SALARY_ROLE = keccak256("SET_EMPLOYEE_SALARY_ROLE");
-    bytes32 constant public ADD_ACCRUED_VALUE_ROLE = keccak256("ADD_ACCRUED_VALUE_ROLE");
+    bytes32 constant public ADD_REIMBURSEMENT_ROLE = keccak256("ADD_REIMBURSEMENT_ROLE");
     bytes32 constant public ADD_BONUS_ROLE = keccak256("ADD_BONUS_ROLE");
     bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
     bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("CHANGE_PRICE_FEED_ROLE");
@@ -42,7 +42,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     string private constant ERROR_FINANCE_NOT_CONTRACT = "PAYROLL_FINANCE_NOT_CONTRACT";
     string private constant ERROR_TOKEN_ALREADY_ALLOWED = "PAYROLL_TOKEN_ALREADY_ALLOWED";
     string private constant ERROR_MAX_ALLOWED_TOKENS = "PAYROLL_MAX_ALLOWED_TOKENS";
-    string private constant ERROR_ACCRUED_VALUE_TOO_BIG = "PAYROLL_ACCRUED_VALUE_TOO_BIG";
     string private constant ERROR_TOKEN_ALLOCATION_MISMATCH = "PAYROLL_TOKEN_ALLOCATION_MISMATCH";
     string private constant ERROR_NO_ALLOWED_TOKEN = "PAYROLL_NO_ALLOWED_TOKEN";
     string private constant ERROR_DISTRIBUTION_NO_COMPLETE = "PAYROLL_DISTRIBUTION_NO_COMPLETE";
@@ -65,7 +64,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         mapping(address => uint256) allocation;
         uint256 denominationTokenSalary; // per second in denomination Token
         uint256 bonus;
-        uint256 accruedValue;
+        uint256 reimbursements;
         uint256 accruedSalary;
         uint64 lastPayroll;
         uint64 endDate;
@@ -86,7 +85,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     event AddAllowedToken(address token);
     event SetEmployeeSalary(uint256 indexed employeeId, uint256 denominationSalary);
     event AddEmployeeBonus(uint256 indexed employeeId, uint256 amount);
-    event AddEmployeeAccruedValue(uint256 indexed employeeId, uint256 amount);
+    event AddEmployeeReimbursement(uint256 indexed employeeId, uint256 amount);
     event AddEmployeeAccruedSalary(uint256 indexed employeeId, uint256 amount);
     event TerminateEmployee(uint256 indexed employeeId, address indexed accountAddress, uint64 endDate);
     event ChangeAddressByEmployee(uint256 indexed employeeId, address indexed oldAddress, address indexed newAddress);
@@ -252,7 +251,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Add `_amount` to bonus amount for employee #`_employeeId`
+     * @notice Add `_amount` to bonus for employee #`_employeeId`
      * @param _employeeId Employee's identifier
      * @param _amount Amount to be added to the employee's bonus amount
      */
@@ -265,16 +264,16 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Add `_amount` to accrued value for employee #`_employeeId`
+     * @notice Add `_amount` to reimbursements for employee #`_employeeId`
      * @param _employeeId Employee's identifier
-     * @param _amount Amount to be added to the employee's accrued value
+     * @param _amount Amount to be added to the employee's reimbursements
      */
-    function addAccruedValue(uint256 _employeeId, uint256 _amount)
+    function addReimbursement(uint256 _employeeId, uint256 _amount)
         external
-        authP(ADD_ACCRUED_VALUE_ROLE, arr(_employeeId, _amount))
+        authP(ADD_REIMBURSEMENT_ROLE, arr(_employeeId, _amount))
         employeeActive(_employeeId)
     {
-        _addAccruedValue(_employeeId, _amount);
+        _addReimbursement(_employeeId, _amount);
     }
 
     /**
@@ -318,28 +317,27 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _requestedAmount Requested amount of the total owed to the employee for the requested payment type. Must be less or equal than total owed so far, or zero to request all owed amount
      */
     function payday(PaymentType _type, uint256 _requestedAmount) external employeeMatches {
-        uint256 payingAmount;
+        uint256 paymentAmount;
         uint256 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
 
         if (_type == PaymentType.Payroll) {
             (uint256 currentOwedSalary, uint256 totalOwedSalary) = _getOwedSalary(employeeId);
-            payingAmount = _ensurePayingAmount(totalOwedSalary, _requestedAmount);
-            _updateEmployeeStatusBasedOnPaidPayroll(employeeId, payingAmount, currentOwedSalary);
-        }
-        else if (_type == PaymentType.Reimbursement) {
-            uint256 owedAccruedValue = employee.accruedValue;
-            payingAmount = _ensurePayingAmount(owedAccruedValue, _requestedAmount);
-            employee.accruedValue = owedAccruedValue.sub(payingAmount);
-        }
-        else if (_type == PaymentType.Bonus) {
+            paymentAmount = _ensurePaymentAmount(totalOwedSalary, _requestedAmount);
+            _updateEmployeeStatusBasedOnPaidPayroll(employeeId, paymentAmount, currentOwedSalary);
+        } else if (_type == PaymentType.Reimbursement) {
+            uint256 owedReimbursements = employee.reimbursements;
+            paymentAmount = _ensurePaymentAmount(owedReimbursements, _requestedAmount);
+            employee.reimbursements = owedReimbursements.sub(paymentAmount);
+        } else if (_type == PaymentType.Bonus) {
             uint256 owedBonusAmount = employee.bonus;
-            payingAmount = _ensurePayingAmount(owedBonusAmount, _requestedAmount);
-            employee.bonus = owedBonusAmount.sub(payingAmount);
+            paymentAmount = _ensurePaymentAmount(owedBonusAmount, _requestedAmount);
+            employee.bonus = owedBonusAmount.sub(paymentAmount);
+        } else {
+            revert(ERROR_INVALID_PAYMENT_TYPE);
         }
-        else revert(ERROR_INVALID_PAYMENT_TYPE);
 
-        require(_transferTokensAmount(employeeId, _type, payingAmount), ERROR_NOTHING_PAID);
+        require(_transferTokensAmount(employeeId, _type, paymentAmount), ERROR_NOTHING_PAID);
         _removeEmployeeIfTerminatedAndPaidOut(employeeId);
     }
 
@@ -407,7 +405,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return Employee's identifier
      * @return Employee's annual salary, per second in denomination token
      * @return Employee's bonus amount
-     * @return Employee's accrued value
+     * @return Employee's reimbursements amount
      * @return Employee's accrued salary
      * @return Employee's last payment date
      * @return Employee's termination date (max uint64 if none)
@@ -420,7 +418,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             uint256 employeeId,
             uint256 denominationSalary,
             uint256 bonus,
-            uint256 accruedValue,
+            uint256 reimbursements,
             uint256 accruedSalary,
             uint64 lastPayroll,
             uint64 endDate
@@ -432,7 +430,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         denominationSalary = employee.denominationTokenSalary;
         bonus = employee.bonus;
-        accruedValue = employee.accruedValue;
+        reimbursements = employee.reimbursements;
         accruedSalary = employee.accruedSalary;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
@@ -444,7 +442,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return Employee's address to receive payments
      * @return Employee's annual salary, per second in denomination token
      * @return Employee's bonus amount
-     * @return Employee's accrued value
+     * @return Employee's reimbursements amount
      * @return Employee's accrued salary
      * @return Employee's last payment date
      * @return Employee's termination date (max uint64 if none)
@@ -457,7 +455,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             address accountAddress,
             uint256 denominationSalary,
             uint256 bonus,
-            uint256 accruedValue,
+            uint256 reimbursements,
             uint256 accruedSalary,
             uint64 lastPayroll,
             uint64 endDate
@@ -468,7 +466,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         accountAddress = employee.accountAddress;
         denominationSalary = employee.denominationTokenSalary;
         bonus = employee.bonus;
-        accruedValue = employee.accruedValue;
+        reimbursements = employee.reimbursements;
         accruedSalary = employee.accruedSalary;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
@@ -533,14 +531,14 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Add a requested amount to the accrued value for a given employee
+     * @dev Add a requested amount to the reimbursements of a given employee
      * @param _employeeId Employee's identifier
-     * @param _amount Amount be added to the employee's accrued value
+     * @param _amount Amount be added to the employee's reimbursements
      */
-    function _addAccruedValue(uint256 _employeeId, uint256 _amount) internal {
+    function _addReimbursement(uint256 _employeeId, uint256 _amount) internal {
         Employee storage employee = employees[_employeeId];
-        employee.accruedValue = employee.accruedValue.add(_amount);
-        emit AddEmployeeAccruedValue(_employeeId, _amount);
+        employee.reimbursements = employee.reimbursements.add(_amount);
+        emit AddEmployeeReimbursement(_employeeId, _amount);
     }
 
     /**
@@ -602,6 +600,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         uint256 timeDiff = _payedAmount.div(employee.denominationTokenSalary);
 
+        // We check if the division was perfect, and if not, take its ceiling to avoid giving away tiny amounts of salary.
+        // As an employee, you may lose up to a second's worth of payroll if you use the "request partial amount" feature.
+
+        if (timeDiff.mul(employee.denominationTokenSalary) != _payedAmount) {
+            timeDiff = timeDiff.add(1);
+        }
+
         // This function is only called from _payday, where we make sure that _payedAmount is lower than or equal to the
         // total owed amount, that is obtained from _getCurrentOwedSalary, which does exactly the opposite calculation:
         // multiplying the employee's salary by an uint64 number of seconds. Therefore, timeDiff will always fit in 64.
@@ -635,7 +640,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 salary = employee.denominationTokenSalary;
         uint256 result = salary * uint256(timeDiff);
 
-        // Return max int if the result overflows
+        // Return max uint if the result overflows
         return (result / timeDiff != salary) ? MAX_UINT256 : result;
     }
 
@@ -647,7 +652,11 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     function _getOwedSalary(uint256 _employeeId) internal view returns (uint256 currentOwedSalary, uint256 totalOwedSalary) {
         currentOwedSalary = _getCurrentOwedSalary(_employeeId);
         totalOwedSalary = currentOwedSalary + employees[_employeeId].accruedSalary;
-        if (totalOwedSalary < currentOwedSalary) totalOwedSalary = MAX_UINT256; // cap total owed salary to max int if it overflows
+
+        if (totalOwedSalary < currentOwedSalary) {
+            // Return max uint if previous addition overflowed
+            totalOwedSalary = MAX_UINT256;
+        }
     }
 
     /**
@@ -713,7 +722,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         if (_getCurrentOwedSalary(_employeeId) > 0) {
             return;
         }
-        if (employee.accruedValue > 0 || employee.accruedSalary > 0 || employee.bonus > 0) {
+        if (employee.reimbursements > 0 || employee.accruedSalary > 0 || employee.bonus > 0) {
             return;
         }
 
@@ -753,29 +762,28 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @dev Updates the accrued salary and payroll date of a given employee based on a paying amount and their current owed salary
      * @param _employeeId Employee's identifier
-     * @param _payingAmount Amount being payed to the employee
+     * @param _paymentAmount Amount being payed to the employee
      * @param _currentOwedSalary Amount owed to the employee for his current salary
      */
-    function _updateEmployeeStatusBasedOnPaidPayroll(uint256 _employeeId, uint256 _payingAmount, uint256 _currentOwedSalary) private {
+    function _updateEmployeeStatusBasedOnPaidPayroll(uint256 _employeeId, uint256 _paymentAmount, uint256 _currentOwedSalary) private {
         Employee storage employee = employees[_employeeId];
         uint256 accruedSalary = employee.accruedSalary;
 
-        if (_payingAmount <= accruedSalary) {
+        if (_paymentAmount <= accruedSalary) {
             // employee is only cashing out some previous owed salary, then we don't need to update the last payroll date
-            // there's no need to use safemath here since we already know that accruedSalary is >= than _payingAmount
-            employee.accruedSalary = accruedSalary - _payingAmount;
-        }
-        else if (accruedSalary == 0) {
-            // employee is only cashing out some current owed salary, and there is no previous owed salary,
-            // then we only need to update the last payroll date
-            employee.lastPayroll = (_payingAmount == _currentOwedSalary) ? getTimestamp64() : _getLastPayroll(_employeeId, _payingAmount);
-        } else {
+            // there's no need to use SafeMath here since we already know that accruedSalary is >= than _paymentAmount
+            employee.accruedSalary = accruedSalary - _paymentAmount;
+        } else if (accruedSalary > 0) {
             // employee is cashing out a mixed amount between previous and current owed salaries,
             // then we need to set the accrued salary to zero and update the last payroll date
-            // there's no need to use safemath here since we already know that _payingAmount is > accruedSalary
+            // there's no need to use safemath here since we already know that _paymentAmount is > accruedSalary
             employee.accruedSalary = uint256(0);
-            uint256 remainder = _payingAmount - accruedSalary;
+            uint256 remainder = _paymentAmount - accruedSalary;
             employee.lastPayroll = (remainder == _currentOwedSalary) ? getTimestamp64() : _getLastPayroll(_employeeId, remainder);
+        } else {
+            // employee is only cashing out some current owed salary, and there is no previous owed salary,
+            // then we only need to update the last payroll date
+            employee.lastPayroll = (_paymentAmount == _currentOwedSalary) ? getTimestamp64() : _getLastPayroll(_employeeId, _paymentAmount);
         }
     }
 
@@ -791,7 +799,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         revert(ERROR_INVALID_PAYMENT_TYPE);
     }
 
-    function _ensurePayingAmount(uint256 _owedAmount, uint256 _requestedAmount) private returns (uint256) {
+    function _ensurePaymentAmount(uint256 _owedAmount, uint256 _requestedAmount) private pure returns (uint256) {
         require(_owedAmount > 0, ERROR_NOTHING_PAID);
         require(_owedAmount >= _requestedAmount, ERROR_INVALID_REQUESTED_AMOUNT);
         return _requestedAmount > 0 ? _requestedAmount : _owedAmount;

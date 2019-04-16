@@ -52,8 +52,8 @@
       "params": ["Employee Id", "Yearly salary"]
     },
     {
-      "name": "Add accrued value for employee",
-      "id": "ADD_ACCRUED_VALUE_ROLE",
+      "name": "Add reimbursements for employee",
+      "id": "ADD_REIMBURSEMENT_ROLE",
       "params": ["Employee Id", "Amount"]
     },
     {
