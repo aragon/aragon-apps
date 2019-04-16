@@ -24,7 +24,7 @@ const VoteSummary = ({ vote, tokenSymbol, tokenDecimals, ready }) => {
             Votes{' '}
           </Text>
           <Text size="xsmall" color={theme.textSecondary}>
-            ({Math.round(supportRequired * 100)}% needed)
+            ({Math.round(supportRequired * 100)}% support needed for approval)
           </Text>
         </span>
       </Header>
