@@ -25,7 +25,7 @@ contract('Token Manager', accounts => {
     let MINT_ROLE, ISSUE_ROLE, ASSIGN_ROLE, REVOKE_VESTINGS_ROLE, BURN_ROLE
     let ETH
 
-    const NOW_TIME = 1
+    const NOW = 1
 
     const root = accounts[0]
     const holder = accounts[1]
@@ -59,7 +59,7 @@ contract('Token Manager', accounts => {
 
         const receipt = await dao.newAppInstance('0x1234', tokenManagerBase.address, '0x', false, { from: root })
         tokenManager = TokenManager.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
-        tokenManager.mock_setTimestamp(NOW_TIME)
+        tokenManager.mockSetTimestamp(NOW)
 
         await acl.createPermission(ANY_ADDR, tokenManager.address, MINT_ROLE, root, { from: root })
         await acl.createPermission(ANY_ADDR, tokenManager.address, ISSUE_ROLE, root, { from: root })
@@ -348,9 +348,12 @@ contract('Token Manager', accounts => {
         })
 
         context('assigning vested tokens', () => {
-            const startDate = NOW_TIME + 1000
-            const cliffDate = NOW_TIME + 2000
-            const vestingDate = NOW_TIME + 5000
+            const CLIFF_DURATION = 2000
+            const VESTING_DURATION = 5000
+
+            const startDate = NOW + 1000
+            const cliffDate = NOW + CLIFF_DURATION
+            const vestingDate = NOW + VESTING_DURATION
 
             const totalTokens = 40
             const revokable = true
@@ -376,22 +379,23 @@ contract('Token Manager', accounts => {
             })
 
             it('can start transferring on cliff', async () => {
-                await tokenManager.mock_setTimestamp(cliffDate)
+                await tokenManager.mockIncreaseTime(CLIFF_DURATION)
 
                 await token.transfer(holder2, 10, { from: holder })
-                assert.equal(await token.balanceOf(holder2), 10, 'should have received tokens')
-                assert.equal(await tokenManager.spendableBalanceOf(holder), 0, 'should not be able to spend more tokens')
+                assert.equal((await token.balanceOf(holder2)).toString(), 10, 'should have received tokens')
+                assert.equal((await tokenManager.spendableBalanceOf(holder)).toString(), 0, 'should not be able to spend more tokens')
             })
 
             it('can transfer all tokens after vesting', async () => {
-                await tokenManager.mock_setTimestamp(vestingDate)
+                await tokenManager.mockIncreaseTime(VESTING_DURATION)
 
                 await token.transfer(holder2, totalTokens, { from: holder })
                 assert.equal(await token.balanceOf(holder2), totalTokens, 'should have received tokens')
             })
 
             it('can transfer half mid vesting', async () => {
-                await tokenManager.mock_setTimestamp(startDate + (vestingDate - startDate) / 2)
+                await tokenManager.mockSetTimestamp(startDate)
+                await tokenManager.mockIncreaseTime((vestingDate - startDate) / 2)
 
                 await token.transfer(holder2, 20, { from: holder })
 
@@ -413,7 +417,7 @@ contract('Token Manager', accounts => {
             })
 
             it('cannot transfer all tokens right before vesting', async () => {
-                await tokenManager.mock_setTimestamp(vestingDate - 10)
+                await tokenManager.mockIncreaseTime(VESTING_DURATION - 10)
 
                 return assertRevert(async () => {
                     await token.transfer(holder2, totalTokens, { from: holder })
@@ -421,14 +425,14 @@ contract('Token Manager', accounts => {
             })
 
             it('can be revoked and not vested tokens are transfered to token manager', async () => {
-                await tokenManager.mock_setTimestamp(cliffDate)
+                await tokenManager.mockIncreaseTime(CLIFF_DURATION)
                 await tokenManager.revokeVesting(holder, 0)
 
                 await token.transfer(holder2, 5, { from: holder })
 
-                assert.equal(await token.balanceOf(holder), 5, 'should have kept vested tokens')
-                assert.equal(await token.balanceOf(holder2), 5, 'should have kept vested tokens')
-                assert.equal(await token.balanceOf(tokenManager.address), totalTokens - 10, 'should have received unvested')
+                assert.equal((await token.balanceOf(holder)).toString(), 5, 'should have kept vested tokens')
+                assert.equal((await token.balanceOf(holder2)).toString(), 5, 'should have kept vested tokens')
+                assert.equal((await token.balanceOf(tokenManager.address)).toString(), totalTokens - 10, 'should have received unvested')
             })
 
             it('cannot assign a vesting to itself', async () => {
@@ -459,7 +463,7 @@ contract('Token Manager', accounts => {
                 })
 
                 // Can't create a new vesting even after other vestings have finished
-                await tokenManager.mock_setTimestamp(vestingDate)
+                await tokenManager.mockIncreaseTime(VESTING_DURATION)
                 await assertRevert(async () => {
                     await tokenManager.assignVested(holder, 1, startDate, cliffDate, vestingDate, false)
                 })
