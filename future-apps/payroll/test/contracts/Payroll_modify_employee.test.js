@@ -1,6 +1,6 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { getEvents, getEventArgument } = require('../helpers/events')
+const { maxUint256, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -94,7 +94,20 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
             context('when the given value greater than zero', () => {
               const newSalary = 1000
 
-              itSetsSalarySuccessfully(newSalary)
+              context('when the employee is not owed a huge salary amount', () => {
+                itSetsSalarySuccessfully(newSalary)
+              })
+
+              context('when the employee is owed a huge salary amount', () => {
+                beforeEach('accrued a huge salary amount', async () => {
+                  await payroll.setEmployeeSalary(employeeId, maxUint256(), { from })
+                  await payroll.mockIncreaseTime(ONE_MONTH)
+                })
+
+                it('reverts', async () => {
+                  await assertRevert(payroll.setEmployeeSalary(employeeId, newSalary, { from }), 'MATH_MUL_OVERFLOW')
+                })
+              })
             })
 
             context('when the given value is zero', () => {
