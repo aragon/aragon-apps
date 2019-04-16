@@ -99,7 +99,7 @@ async function initialize(tokenAddr) {
 async function createStore(token, tokenSettings) {
   const { decimals: tokenDecimals, symbol: tokenSymbol } = tokenSettings
 
-  // Hot observable which emits a an object with an accoutn string of the current active account
+  // Hot observable which emits an web3.js event-like object with an account string of the current active account.
   const accounts$ = app.accounts().pipe(
     map(accounts => {
       return {
@@ -176,7 +176,7 @@ async function updateConnectedAccount(state, { account }) {
 
 async function castVote(state, { voteId, voter }) {
   const { connectedAccountVotes } = state
-  // get the voter to see if
+  // If the connected account was the one who made the vote, update their voter status
   if (addressesEqual(connectedAccount, voter)) {
     // fetch vote state for the connected account for this voteId
     const { voteType } = await getVoterState({
