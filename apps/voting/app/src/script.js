@@ -3,11 +3,6 @@ import { of } from 'rxjs'
 import { map, publishReplay } from 'rxjs/operators'
 import { addressesEqual } from './web3-utils'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
-import {
-  VOTE_ABSENT,
-  VOTE_YEA,
-  VOTE_NAY
-} from './vote-types'
 import { voteTypeFromContractEnum } from './vote-utils'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -19,6 +14,8 @@ const ACCOUNTS_TRIGGER = Symbol('ACCOUNTS_TRIGGER')
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
 
 const app = new Aragon()
+
+let connectedAccount
 
 /*
  * Calls `callback` exponentially, everytime `retry()` is called.
@@ -166,9 +163,9 @@ async function createStore(token, tokenSettings) {
  ***********************/
 
 async function updateConnectedAccount(state, { account }) {
+  connectedAccount = account
   return {
     ...state,
-    connectedAccount: account,
     // fetch all the votes casted by the connected account
     connectedAccountVotes: await getAccountVotes({
       connectedAccount: account,
@@ -178,7 +175,7 @@ async function updateConnectedAccount(state, { account }) {
 }
 
 async function castVote(state, { voteId, voter }) {
-  const { connectedAccount, connectedAccountVotes } = state
+  const { connectedAccountVotes } = state
   // get the voter to see if
   if (addressesEqual(connectedAccount, voter)) {
     // fetch vote state for the connected account for this voteId
