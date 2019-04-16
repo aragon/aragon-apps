@@ -122,6 +122,7 @@ contract PayrollKit is KitBase {
         MiniMeToken token3 = deployAndDepositToken(dao, finance, acl, root, "Token 3", "TK3");
         payroll.addAllowedToken(token3);
 
+
         address(finance).send(10 ether);
 
         addEmployees(payroll, root);

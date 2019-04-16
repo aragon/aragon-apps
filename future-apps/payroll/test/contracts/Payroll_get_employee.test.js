@@ -41,13 +41,15 @@ contract('Payroll employee getters', ([owner, employee]) => {
         })
 
         it('adds a new employee', async () => {
-          const [address, salary, accruedValue, lastPayroll, endDate] = await payroll.getEmployee(employeeId)
+          const [address, salary, bonus, reimbursements, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(employeeId)
 
           assert.equal(address, employee, 'employee address does not match')
-          assert.equal(accruedValue, 0, 'Employee accrued value does not match')
-          assert.equal(salary.toString(), 1000, 'Employee salary does not match')
-          assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'last payroll should match')
-          assert.equal(endDate.toString(), maxUint64(), 'last payroll should match')
+          assert.equal(bonus.toString(), 0, 'employee bonus does not match')
+          assert.equal(reimbursements, 0, 'employee reimbursements does not match')
+          assert.equal(accruedSalary, 0, 'employee accrued salary does not match')
+          assert.equal(salary.toString(), 1000, 'employee salary does not match')
+          assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
+          assert.equal(endDate.toString(), maxUint64(), 'employee end date does not match')
         })
       })
 
@@ -85,13 +87,15 @@ contract('Payroll employee getters', ([owner, employee]) => {
         })
 
         it('adds a new employee', async () => {
-          const [id, salary, accruedValue, lastPayroll, endDate] = await payroll.getEmployeeByAddress(address)
+          const [id, salary, bonus, reimbursements, accruedSalary, lastPayroll, endDate] = await payroll.getEmployeeByAddress(address)
 
           assert.equal(id.toString(), employeeId.toString(), 'employee id does not match')
           assert.equal(salary.toString(), 1000, 'employee salary does not match')
-          assert.equal(accruedValue.toString(), 0, 'employee accrued value does not match')
-          assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'last payroll should match')
-          assert.equal(endDate.toString(), maxUint64(), 'last payroll should match')
+          assert.equal(bonus.toString(), 0, 'employee bonus does not match')
+          assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
+          assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
+          assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
+          assert.equal(endDate.toString(), maxUint64(), 'employee end date does not match')
         })
       })
 
