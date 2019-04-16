@@ -179,7 +179,7 @@ async function castVote(state, { voteId, voter }) {
   // get the voter to see if
   if (addressesEqual(connectedAccount, voter)) {
     // fetch vote state for the connected account for this voteId
-    const { voteType } = await getAccountSpecificVote({
+    const { voteType } = await getVoterState({
       connectedAccount,
       voteId,
     })
@@ -216,11 +216,15 @@ async function startVote(state, { creator, metadata, voteId }) {
   }))
 }
 
-async function getAccountVotes({ connectedAccount = '', votes = [] }) {
+/***********************
+ *                     *
+ *       Helpers       *
+ *                     *
+ ***********************/
+
+async function getAccountVotes({ connectedAccount, votes }) {
   const connectedAccountVotes = await Promise.all(
-    votes.map(({ voteId }) =>
-      getAccountSpecificVote({ connectedAccount, voteId })
-    )
+    votes.map(({ voteId }) => getVoterState({ connectedAccount, voteId }))
   )
     .then(voteStates =>
       voteStates.reduce((states, { voteId, voteType }) => {
@@ -233,7 +237,7 @@ async function getAccountVotes({ connectedAccount = '', votes = [] }) {
   return connectedAccountVotes
 }
 
-async function getAccountSpecificVote({ connectedAccount = '', voteId = '' }) {
+async function getVoterState({ connectedAccount, voteId }) {
   return app
     .call('getVoterState', voteId, connectedAccount)
     .toPromise()
@@ -241,13 +245,6 @@ async function getAccountSpecificVote({ connectedAccount = '', voteId = '' }) {
     .then(voteType => ({ voteId, voteType }))
     .catch(console.error)
 }
-
-/***********************
- *                     *
- *       Helpers       *
- *                     *
- ***********************/
-
 
 async function loadVoteDescription(vote) {
   if (!vote.script || vote.script === EMPTY_CALLSCRIPT) {
