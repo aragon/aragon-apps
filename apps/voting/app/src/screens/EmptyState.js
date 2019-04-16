@@ -8,7 +8,7 @@ const EmptyState = ({ onActivate }) => (
     <EmptyStateCard
       title="There are no votes yet"
       text="Create a new vote to get started."
-      actionText="New Vote"
+      actionText="New vote"
       icon={<img src={emptyIcon} alt="" />}
       onActivate={onActivate}
     />
