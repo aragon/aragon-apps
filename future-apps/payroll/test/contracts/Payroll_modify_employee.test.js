@@ -54,17 +54,34 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
                 assert.equal(salary.toString(), newSalary, 'accrued value does not match')
               })
 
-              it('adds previous owed salary to the accrued value', async () => {
+              it('adds previous owed salary to the accrued salary', async () => {
                 await payroll.mockIncreaseTime(ONE_MONTH)
 
-                await payroll.setEmployeeSalary(employeeId, newSalary, { from })
+                const receipt = await payroll.setEmployeeSalary(employeeId, newSalary, { from })
                 await payroll.mockIncreaseTime(ONE_MONTH)
 
-                const accruedValue = (await payroll.getEmployee(employeeId))[2]
-                assert.equal(accruedValue.toString(), previousSalary * ONE_MONTH, 'accrued value does not match')
+                const accruedSalary = (await payroll.getEmployee(employeeId))[3]
+                const expectedAccruedSalary = previousSalary * ONE_MONTH
+                assert.equal(accruedSalary.toString(), expectedAccruedSalary, 'accrued salary does not match')
+
+                const events = getEvents(receipt, 'AddEmployeeAccruedSalary')
+                assert.equal(events.length, 1, 'number of AddEmployeeAccruedSalary emitted events does not match')
+                assert.equal(events[0].args.employeeId.toString(), employeeId, 'employee id does not match')
+                assert.equal(events[0].args.amount.toString(), expectedAccruedSalary, 'accrued salary does not match')
               })
 
-              it('emits an event', async () => {
+              it('accrues all previous owed salary as accrued salary', async () => {
+                await payroll.mockIncreaseTime(ONE_MONTH)
+                await payroll.setEmployeeSalary(employeeId, newSalary, { from })
+                await payroll.mockIncreaseTime(ONE_MONTH)
+                await payroll.setEmployeeSalary(employeeId, newSalary * 2, { from })
+
+                const accruedSalary = (await payroll.getEmployee(employeeId))[3]
+                const expectedAccruedSalary = previousSalary * ONE_MONTH + newSalary * ONE_MONTH
+                assert.equal(accruedSalary.toString(), expectedAccruedSalary, 'accrued salary does not match')
+              })
+
+              it('emits a SetEmployeeSalary event', async () => {
                 const receipt = await payroll.setEmployeeSalary(employeeId, newSalary, { from })
 
                 const events = getEvents(receipt, 'SetEmployeeSalary')
