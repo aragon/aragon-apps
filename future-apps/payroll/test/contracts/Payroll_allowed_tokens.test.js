@@ -14,6 +14,7 @@ contract('Payroll allowed tokens,', ([owner, employee, anotherEmployee, anyone])
   const RATE_EXPIRATION_TIME = TWO_MONTHS
 
   const TOKEN_DECIMALS = 18
+  const PAYROLL_PAYMENT_TYPE = 0
 
   before('setup base apps and tokens', async () => {
     ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
@@ -101,7 +102,7 @@ contract('Payroll allowed tokens,', ([owner, employee, anotherEmployee, anyone])
             const allocationTx = await payroll.determineAllocation(tokenAddresses, allocations, { from: employee })
             assert.isBelow(allocationTx.receipt.cumulativeGasUsed, MAX_GAS_USED, 'Too much gas consumed for allocation')
 
-            const paydayTx = await payroll.payday({ from: employee })
+            const paydayTx = await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from: employee })
             assert.isBelow(paydayTx.receipt.cumulativeGasUsed, MAX_GAS_USED, 'Too much gas consumed for payday')
           })
         })

@@ -60,7 +60,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
                 const receipt = await payroll.setEmployeeSalary(employeeId, newSalary, { from })
                 await payroll.mockIncreaseTime(ONE_MONTH)
 
-                const accruedSalary = (await payroll.getEmployee(employeeId))[3]
+                const accruedSalary = (await payroll.getEmployee(employeeId))[4]
                 const expectedAccruedSalary = previousSalary * ONE_MONTH
                 assert.equal(accruedSalary.toString(), expectedAccruedSalary, 'accrued salary does not match')
 
@@ -76,7 +76,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
                 await payroll.mockIncreaseTime(ONE_MONTH)
                 await payroll.setEmployeeSalary(employeeId, newSalary * 2, { from })
 
-                const accruedSalary = (await payroll.getEmployee(employeeId))[3]
+                const accruedSalary = (await payroll.getEmployee(employeeId))[4]
                 const expectedAccruedSalary = previousSalary * ONE_MONTH + newSalary * ONE_MONTH
                 assert.equal(accruedSalary.toString(), expectedAccruedSalary, 'accrued salary does not match')
               })
