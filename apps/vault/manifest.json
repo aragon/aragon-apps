@@ -1,9 +1,12 @@
 {
   "name": "Vault",
-  "description": "Securely owns and manages tokens on behalf of a DAO.",
+  "author": "Aragon Association",
+  "description": "Securely own and manage tokens on behalf of your organization.",
+  "changelog_url": "https://github.com/aragon/aragon-apps/releases",
+  "details_url": "/meta/details.md",
+  "source_url": "https://github.com/aragon/aragon-apps/blob/master/apps/vault",
   "icons": [
-    { "src": "/meta/icon-80.svg", "sizes": "80x80" },
-    { "src": "/meta/icon-22.svg", "sizes": "22x22" }
+    { "src": "/meta/icon.svg", "sizes": "56x56" }
   ],
   "details_url": "/meta/details.md"
 }
