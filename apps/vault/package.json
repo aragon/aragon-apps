@@ -1,6 +1,6 @@
 {
   "name": "@aragon/apps-vault",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "main": "index.js",
   "scripts": {
     "compile": "truffle compile",
