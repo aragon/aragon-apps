@@ -76,7 +76,7 @@ module.exports = (artifacts, web3) => {
 
     const ADD_BONUS_ROLE = await payroll.ADD_BONUS_ROLE()
     const ADD_EMPLOYEE_ROLE = await payroll.ADD_EMPLOYEE_ROLE()
-    const ADD_ACCRUED_VALUE_ROLE = await payroll.ADD_ACCRUED_VALUE_ROLE()
+    const ADD_REIMBURSEMENT_ROLE = await payroll.ADD_REIMBURSEMENT_ROLE()
     const CHANGE_PRICE_FEED_ROLE = await payroll.CHANGE_PRICE_FEED_ROLE()
     const MODIFY_RATE_EXPIRY_ROLE = await payroll.MODIFY_RATE_EXPIRY_ROLE()
     const TERMINATE_EMPLOYEE_ROLE = await payroll.TERMINATE_EMPLOYEE_ROLE()
@@ -85,7 +85,7 @@ module.exports = (artifacts, web3) => {
 
     await acl.createPermission(owner, payroll.address, ADD_BONUS_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, ADD_EMPLOYEE_ROLE, owner, { from: owner })
-    await acl.createPermission(owner, payroll.address, ADD_ACCRUED_VALUE_ROLE, owner, { from: owner })
+    await acl.createPermission(owner, payroll.address, ADD_REIMBURSEMENT_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, CHANGE_PRICE_FEED_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, MODIFY_RATE_EXPIRY_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, TERMINATE_EMPLOYEE_ROLE, owner, { from: owner })

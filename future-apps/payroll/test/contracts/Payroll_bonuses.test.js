@@ -1,9 +1,10 @@
+const PAYMENT_TYPES = require('../helpers/payment_types')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
 const { bigExp, maxUint256 } = require('../helpers/numbers')(web3)
 const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
 
-contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
+contract('Payroll bonuses', ([owner, employee, anyone]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
 
   const NOW = 1553703809 // random fixed timestamp in seconds
@@ -13,8 +14,6 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
 
   const PCT_ONE = bigExp(1, 18)
   const TOKEN_DECIMALS = 18
-  const BONUS_PAYMENT_TYPE = 2
-  const PAYROLL_PAYMENT_TYPE = 0
 
   before('setup base apps and tokens', async () => {
     ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
@@ -183,7 +182,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
                 const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
                 const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
 
-                await payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from })
+                await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
 
                 const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
                 const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount);
@@ -196,7 +195,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
               })
 
               it('emits one event per allocated token', async () => {
-                const receipt = await payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from })
+                const receipt = await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
 
                 const events = receipt.logs.filter(l => l.event === 'SendPayment')
                 assert.equal(events.length, 2, 'should have emitted two events')
@@ -219,7 +218,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
             const assertEmployeeIsNotRemoved = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
               it('does not remove the employee and resets the bonus amount', async () => {
                 const previousBonus = (await payroll.getEmployee(employeeId))[2]
-                await payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from })
+                await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
 
                 const [address, employeeSalary, bonus] = await payroll.getEmployee(employeeId)
 
@@ -241,7 +240,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                  await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
                 })
               })
             }
@@ -265,7 +264,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
 
               context('when the employee does not have pending salary', () => {
                 beforeEach('cash out pending salary', async () => {
-                  await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from })
+                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from })
                 })
 
                 context('when the employee is not terminated', () => {
@@ -281,7 +280,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
                     assertTransferredAmounts(requestedAmount, bonusAmount)
 
                     it('removes the employee', async () => {
-                      await payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from })
+                      await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
 
                       await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
                     })
@@ -293,7 +292,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
                     })
 
                     it('reverts', async () => {
-                      await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
                     })
                   })
                 })
@@ -319,7 +318,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
 
               context('when the employee does not have pending salary', () => {
                 beforeEach('cash out pending salary', async () => {
-                  await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from })
+                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from })
                 })
 
                 context('when the employee is not terminated', () => {
@@ -355,7 +354,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
 
               context('when the employee does not have pending salary', () => {
                 beforeEach('cash out pending salary', async () => {
-                  await payroll.payday(PAYROLL_PAYMENT_TYPE, 0, { from })
+                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from })
                 })
 
                 context('when the employee is not terminated', () => {
@@ -371,7 +370,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
                     assertTransferredAmounts(requestedAmount)
 
                     it('removes the employee', async () => {
-                      await payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from })
+                      await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
 
                       await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
                     })
@@ -383,7 +382,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
                     })
 
                     it('reverts', async () => {
-                      await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
                     })
                   })
                 })
@@ -394,7 +393,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
               const requestedAmount = bonusAmount + 1
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
               })
             })
           })
@@ -404,7 +403,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
               const requestedAmount = 100
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
 
@@ -412,7 +411,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
               const requestedAmount = 0
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
           })
@@ -431,7 +430,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
               const requestedAmount = 0
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
 
@@ -439,7 +438,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
               const requestedAmount = bonusAmount - 1
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
 
@@ -447,7 +446,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
               const requestedAmount = bonusAmount
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
 
@@ -455,7 +454,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
               const requestedAmount = bonusAmount + 1
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
               })
             })
           })
@@ -465,7 +464,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
               const requestedAmount = 100
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
 
@@ -473,7 +472,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
               const requestedAmount = 0
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
           })
@@ -487,7 +486,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
           const requestedAmount = 100
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
           })
         })
 
@@ -495,7 +494,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
           const requestedAmount = 0
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
           })
         })
       })
@@ -505,7 +504,7 @@ contract('Payroll bonuses', ([owner, employee, anotherEmployee, anyone]) => {
       const requestedAmount = 0
 
       it('reverts', async () => {
-        await assertRevert(payroll.payday(BONUS_PAYMENT_TYPE, requestedAmount, { from: employee }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+        await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from: employee }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
       })
     })
   })
