@@ -49,7 +49,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
           const salary = 100000
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
+            const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -196,7 +196,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                   context('when the employee is terminated', () => {
                     beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                     })
 
                     itHandlesPayrollProperly(requestedAmount, expectedRequestedAmount)
@@ -210,7 +210,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                   context('when the employee is terminated', () => {
                     beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                     })
 
                     itHandlesPayrollProperly(requestedAmount, expectedRequestedAmount)
@@ -230,7 +230,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                   context('when the employee is terminated', () => {
                     beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                     })
 
                     itHandlesPayrollProperly(requestedAmount, expectedRequestedAmount)
@@ -244,7 +244,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                   context('when the employee is terminated', () => {
                     beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                     })
 
                     if (requestedAmount === 0 || requestedAmount === totalOwedAmount) {
@@ -505,7 +505,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
               context('when the employee is terminated', () => {
                 beforeEach('terminate employee', async () => {
-                  await payroll.terminateEmployeeNow(employeeId, {from: owner})
+                  await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), {from: owner})
                 })
 
                 itRevertsHandlingExpiredRates(requestedAmount, nonExpiredRatesReason, expiredRatesReason)
@@ -519,7 +519,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
               context('when the employee is terminated', () => {
                 beforeEach('terminate employee', async () => {
-                  await payroll.terminateEmployeeNow(employeeId, {from: owner})
+                  await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), {from: owner})
                 })
 
                 itRevertsHandlingExpiredRates(requestedAmount, nonExpiredRatesReason, expiredRatesReason)
@@ -531,7 +531,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const salary = 0
 
             beforeEach('add employee', async () => {
-              const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
+              const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
               employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
             })
 
@@ -591,7 +591,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const salary = maxUint256()
 
             beforeEach('add employee', async () => {
-              const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
+              const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
               employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
             })
 
@@ -733,7 +733,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                     context('when the employee is terminated', () => {
                       beforeEach('terminate employee', async () => {
-                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                        await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                       })
 
                       itHandlesPayrollProperly(requestedAmount)
@@ -747,7 +747,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                     context('when the employee is terminated', () => {
                       beforeEach('terminate employee', async () => {
-                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                        await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                       })
 
                       itHandlesPayrollProperly(requestedAmount)
