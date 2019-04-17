@@ -12,7 +12,7 @@ module.exports = (artifacts, web3) => {
   const DAOFactory = getContract('DAOFactory')
   const EVMScriptRegistryFactory = getContract('EVMScriptRegistryFactory')
 
-  async function deployErc20TokenAndDeposit(sender, finance, vault, name = 'ERC20Token', decimals = 18) {
+  async function deployErc20TokenAndDeposit(sender, finance, name = 'ERC20Token', decimals = 18) {
     const token = await getContract('MiniMeToken').new('0x0', '0x0', 0, name, decimals, 'E20', true) // dummy parameters for minime
     const amount = bigExp(1e18, decimals)
     await token.generateTokens(sender, amount)
@@ -62,13 +62,12 @@ module.exports = (artifacts, web3) => {
     const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
     await finance.initialize(vault.address, SECONDS_IN_A_YEAR) // more than one day
 
-    const priceFeed = await PriceFeed.new()
     const payrollBase = await Payroll.new()
 
-    return { dao, finance, vault, priceFeed, payrollBase }
+    return { dao, finance, vault, payrollBase }
   }
 
-  async function createPayrollInstance(dao, payrollBase, owner) {
+  async function createPayrollAndPriceFeed(dao, payrollBase, owner, currentTimestamp) {
     const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
     const payroll = Payroll.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
 
@@ -92,18 +91,16 @@ module.exports = (artifacts, web3) => {
     await acl.createPermission(owner, payroll.address, SET_EMPLOYEE_SALARY_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, ALLOWED_TOKENS_MANAGER_ROLE, owner, { from: owner })
 
-    return payroll
-  }
+    const priceFeed = await PriceFeed.new()
+    await priceFeed.mockSetTimestamp(currentTimestamp)
+    await payroll.mockSetTimestamp(currentTimestamp)
 
-  async function mockTimestamps(payroll, priceFeed, now) {
-    await priceFeed.mockSetTimestamp(now)
-    await payroll.mockSetTimestamp(now)
+    return { payroll, priceFeed }
   }
 
   return {
     deployContracts,
     deployErc20TokenAndDeposit,
-    createPayrollInstance,
-    mockTimestamps
+    createPayrollAndPriceFeed
   }
 }
