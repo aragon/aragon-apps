@@ -28,6 +28,14 @@ contract TimeHelpersMock is TimeHelpers {
     }
 
     /**
+    * @dev Decreases the mocked timestamp value, used only for testing purposes
+    */
+    function mockDecreaseTime(uint256 _seconds) public {
+        if (mockedTimestamp != 0) mockedTimestamp = mockedTimestamp.sub(_seconds);
+        else mockedTimestamp = block.timestamp.sub(_seconds);
+    }
+
+    /**
     * @dev Advances the mocked block number value, used only for testing purposes
     */
     function mockAdvanceBlocks(uint256 _number) public {

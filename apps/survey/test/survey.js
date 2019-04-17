@@ -1,6 +1,5 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
-const timeTravel = require('@aragon/test-helpers/timeTravel')(web3)
 
 const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
@@ -29,7 +28,7 @@ contract('Survey app', accounts => {
     const kernelBase = await getContract('Kernel').new(true) // petrify immediately
     const aclBase = await getContract('ACL').new()
     daoFact = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, NULL_ADDRESS)
-    surveyBase = await getContract('Survey').new()
+    surveyBase = await getContract('SurveyMock').new()
 
     // Setup constants
     ANY_ENTITY = await aclBase.ANY_ENTITY()
@@ -47,7 +46,7 @@ contract('Survey app', accounts => {
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
     const receipt = await dao.newAppInstance(SURVEY_APP_ID, surveyBase.address, '0x', false, { from: root })
-    survey = getContract('Survey').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+    survey = getContract('SurveyMock').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
 
     await acl.createPermission(ANY_ENTITY, survey.address, CREATE_SURVEYS_ROLE, root, { from: root })
     await acl.createPermission(ANY_ENTITY, survey.address, MODIFY_PARTICIPATION_ROLE, root, { from: root })
@@ -210,7 +209,7 @@ contract('Survey app', accounts => {
       it('changing min participation doesnt affect survey min participation', async () => {
         await survey.changeMinAcceptParticipationPct(pct16(50))
 
-        await timeTravel(surveyTime + 1)
+        await survey.mockIncreaseTime(surveyTime + 1)
 
         const state = await survey.getSurvey(surveyId)
         assert.deepEqual(state[3], minimumAcceptanceParticipationPct, 'acceptance participation in survey should stay equal')
@@ -233,7 +232,7 @@ contract('Survey app', accounts => {
       })
 
       it('throws when voting after survey closes', async () => {
-        await timeTravel(surveyTime + 1)
+        await survey.mockIncreaseTime(surveyTime + 1)
         await assertRevert(async () => {
           await survey.voteOption(surveyId, 1, { from: holder31 })
         })
