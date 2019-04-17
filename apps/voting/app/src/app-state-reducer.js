@@ -8,7 +8,13 @@ function appStateReducer(state) {
     return { ...state, ready }
   }
 
-  const { pctBase, tokenDecimals, voteTime, votes } = state
+  const {
+    pctBase,
+    tokenDecimals,
+    voteTime,
+    votes,
+    connectedAccountVotes,
+  } = state
 
   const pctBaseNum = parseInt(pctBase, 10)
   const tokenDecimalsNum = parseInt(tokenDecimals, 10)
@@ -25,6 +31,8 @@ function appStateReducer(state) {
       pctBase: pctBaseNum,
       tokenDecimals: tokenDecimalsNum,
     },
+
+    connectedAccountVotes: connectedAccountVotes || {},
 
     // Transform the vote data for the frontend
     votes: votes

@@ -167,10 +167,12 @@ async function updateConnectedAccount(state, { account }) {
   return {
     ...state,
     // fetch all the votes casted by the connected account
-    connectedAccountVotes: await getAccountVotes({
-      connectedAccount: account,
-      votes: state.votes,
-    }),
+    connectedAccountVotes: state.votes
+      ? await getAccountVotes({
+          connectedAccount: account,
+          votes: state.votes,
+        })
+      : {},
   }
 }
 
@@ -222,7 +224,7 @@ async function startVote(state, { creator, metadata, voteId }) {
  *                     *
  ***********************/
 
-async function getAccountVotes({ connectedAccount, votes }) {
+async function getAccountVotes({ connectedAccount, votes = [] }) {
   const connectedAccountVotes = await Promise.all(
     votes.map(({ voteId }) => getVoterState({ connectedAccount, voteId }))
   )
