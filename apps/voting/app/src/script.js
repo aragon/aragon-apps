@@ -1,15 +1,21 @@
 import Aragon from '@aragon/api'
 import { of } from 'rxjs'
+import { map, publishReplay } from 'rxjs/operators'
+import { addressesEqual } from './web3-utils'
 import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
+import { voteTypeFromContractEnum } from './vote-utils'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
 
 const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
+const ACCOUNTS_TRIGGER = Symbol('ACCOUNTS_TRIGGER')
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
 
 const app = new Aragon()
+
+let connectedAccount
 
 /*
  * Calls `callback` exponentially, everytime `retry()` is called.
@@ -92,6 +98,22 @@ async function initialize(tokenAddr) {
 // Hook up the script as an aragon.js store
 async function createStore(token, tokenSettings) {
   const { decimals: tokenDecimals, symbol: tokenSymbol } = tokenSettings
+
+  // Hot observable which emits an web3.js event-like object with an account string of the current active account.
+  const accounts$ = app.accounts().pipe(
+    map(accounts => {
+      return {
+        event: ACCOUNTS_TRIGGER,
+        returnValues: {
+          account: accounts[0],
+        },
+      }
+    }),
+    publishReplay(1)
+  )
+
+  accounts$.connect()
+
   return app.store(
     async (state, { event, returnValues }) => {
       let nextState = {
@@ -108,6 +130,9 @@ async function createStore(token, tokenSettings) {
         }
       } else {
         switch (event) {
+          case ACCOUNTS_TRIGGER:
+            nextState = await updateConnectedAccount(nextState, returnValues)
+            break
           case 'CastVote':
             nextState = await castVote(nextState, returnValues)
             break
@@ -121,12 +146,12 @@ async function createStore(token, tokenSettings) {
             break
         }
       }
-
       return nextState
     },
     [
       // Always initialize the store with our own home-made event
       of({ event: INITIALIZATION_TRIGGER }),
+      accounts$,
     ]
   )
 }
@@ -137,9 +162,30 @@ async function createStore(token, tokenSettings) {
  *                     *
  ***********************/
 
-async function castVote(state, { voteId }) {
-  // Let's just reload the entire vote again,
-  // cause do we really want more than one source of truth with a blockchain?
+async function updateConnectedAccount(state, { account }) {
+  connectedAccount = account
+  return {
+    ...state,
+    // fetch all the votes casted by the connected account
+    connectedAccountVotes: await getAccountVotes({
+      connectedAccount: account,
+      votes: state.votes,
+    }),
+  }
+}
+
+async function castVote(state, { voteId, voter }) {
+  const { connectedAccountVotes } = state
+  // If the connected account was the one who made the vote, update their voter status
+  if (addressesEqual(connectedAccount, voter)) {
+    // fetch vote state for the connected account for this voteId
+    const { voteType } = await getVoterState({
+      connectedAccount,
+      voteId,
+    })
+    connectedAccountVotes[voteId] = voteType
+  }
+
   const transform = async vote => ({
     ...vote,
     data: {
@@ -147,7 +193,8 @@ async function castVote(state, { voteId }) {
       ...(await loadVoteData(voteId)),
     },
   })
-  return updateState(state, voteId, transform)
+
+  return updateState({ ...state, connectedAccountVotes }, voteId, transform)
 }
 
 async function executeVote(state, { voteId }) {
@@ -174,6 +221,30 @@ async function startVote(state, { creator, metadata, voteId }) {
  *       Helpers       *
  *                     *
  ***********************/
+
+async function getAccountVotes({ connectedAccount, votes }) {
+  const connectedAccountVotes = await Promise.all(
+    votes.map(({ voteId }) => getVoterState({ connectedAccount, voteId }))
+  )
+    .then(voteStates =>
+      voteStates.reduce((states, { voteId, voteType }) => {
+        states[voteId] = voteType
+        return states
+      }, {})
+    )
+    .catch(console.error)
+
+  return connectedAccountVotes
+}
+
+async function getVoterState({ connectedAccount, voteId }) {
+  return app
+    .call('getVoterState', voteId, connectedAccount)
+    .toPromise()
+    .then(voteTypeFromContractEnum)
+    .then(voteType => ({ voteId, voteType }))
+    .catch(console.error)
+}
 
 async function loadVoteDescription(vote) {
   if (!vote.script || vote.script === EMPTY_CALLSCRIPT) {
