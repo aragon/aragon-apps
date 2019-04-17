@@ -1,9 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Button, Info, Text, TextInput, Field } from '@aragon/ui'
+import { TabBar, Button, Info, Text, TextInput, Field } from '@aragon/ui'
 
 const initialState = {
   question: '',
+  screenIndex: 0,
 }
 
 class NewVotePanelContent extends React.Component {
@@ -23,6 +24,9 @@ class NewVotePanelContent extends React.Component {
       this.setState({ ...initialState })
     }
   }
+  handleTabChange = screenIndex => {
+    this.setState({ screenIndex })
+  }
   handleQuestionChange = event => {
     this.setState({ question: event.target.value })
   }
@@ -31,30 +35,61 @@ class NewVotePanelContent extends React.Component {
     this.props.onCreateVote(this.state.question.trim())
   }
   render() {
-    const { question } = this.state
+    const { question, screenIndex } = this.state
     return (
       <div>
-        <Info.Action title="Votes are informative">
-          They don’t have any direct repercussion on the organization.
-        </Info.Action>
-        <Form onSubmit={this.handleSubmit}>
-          <Field label="Question">
-            <TextInput
-              ref={question => (this.questionInput = question)}
-              value={question}
-              onChange={this.handleQuestionChange}
-              required
-              wide
-            />
-          </Field>
-          <Button mode="strong" type="submit" wide>
-            Begin vote
-          </Button>
-          <Warning>
-            If you are allowed to directly create this vote, you will
-            automatically vote yes for it.
-          </Warning>
-        </Form>
+        <div css="margin: 0 -30px 30px">
+          <TabBar
+            items={['Question', 'Action']}
+            selected={screenIndex}
+            onChange={this.handleTabChange}
+          />
+        </div>
+        {screenIndex === 0 && (
+          <Form onSubmit={this.handleSubmit}>
+            <Field label="Question">
+              <TextInput
+                ref={question => (this.questionInput = question)}
+                value={question}
+                onChange={this.handleQuestionChange}
+                required
+                wide
+              />
+            </Field>
+            <Button mode="strong" type="submit" wide>
+              Begin question
+            </Button>
+            <div css="margin-top: 20px">
+              <Info.Action title="These votes are informative">
+                <div
+                  css={`
+                    margin-top: 5px;
+                    font-size: 14px;
+                  `}
+                >
+                  Questions are used for signaling and don’t have any direct
+                  repercussions on the organization.
+                </div>
+              </Info.Action>
+            </div>
+          </Form>
+        )}
+        {screenIndex === 1 && (
+          <div>
+            <Info.Action title="These votes are binding">
+              <div
+                css={`
+                  margin-top: 5px;
+                  font-size: 14px;
+                `}
+              >
+                Any actions that require <strong>consensus</strong>, such as
+                withdrawing funds or minting tokens, will automatically create a
+                binding vote.
+              </div>
+            </Info.Action>
+          </div>
+        )}
       </div>
     )
   }
@@ -62,12 +97,6 @@ class NewVotePanelContent extends React.Component {
 
 const Form = styled.form`
   margin-top: 20px;
-`
-
-const Warning = styled(Text.Paragraph).attrs({
-  size: 'xsmall',
-})`
-  margin-top: 10px;
 `
 
 export default NewVotePanelContent

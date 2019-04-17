@@ -8,7 +8,7 @@ import {
   VOTE_STATUS_ACCEPTED,
   VOTE_STATUS_EXECUTED,
 } from '../vote-types'
-import { getVoteStatus } from '../vote-utils'
+import { isVoteAction, getVoteStatus } from '../vote-utils'
 
 const ATTRIBUTES = {
   [VOTE_STATUS_ONGOING]: {
@@ -40,7 +40,14 @@ const ATTRIBUTES = {
 const VoteStatus = ({ cardStyle, vote }) => {
   const settings = useSettings()
   const status = getVoteStatus(vote, settings.pctBase)
-  const { label, Icon, color, bold } = ATTRIBUTES[status]
+  const { Icon, color, bold } = ATTRIBUTES[status]
+
+  const label =
+    !isVoteAction(vote) &&
+    (status === VOTE_STATUS_EXECUTED || status === VOTE_STATUS_ACCEPTED)
+      ? 'Accepted'
+      : ATTRIBUTES[status].label
+
   return (
     <Main
       fontSize={cardStyle ? 13 : 15}
