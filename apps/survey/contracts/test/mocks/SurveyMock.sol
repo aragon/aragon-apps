@@ -1,9 +1,10 @@
 pragma solidity 0.4.24;
 
 import "../../Survey.sol";
+import "@aragon/test-helpers/contracts/TimeHelpersMock.sol";
 
 
-contract SurveyMock is Survey {
+contract SurveyMock is Survey, TimeHelpersMock {
     // Mint a token and create a vote in the same transaction to test snapshot block values are correct
     function newTokenAndSurvey(address _holder, uint256 _tokenAmount, string _metadata, uint256 _options)
         external

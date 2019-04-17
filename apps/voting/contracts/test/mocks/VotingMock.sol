@@ -1,9 +1,10 @@
 pragma solidity 0.4.24;
 
 import "../../Voting.sol";
+import "@aragon/test-helpers/contracts/TimeHelpersMock.sol";
 
 
-contract VotingMock is Voting {
+contract VotingMock is Voting, TimeHelpersMock {
     /* Ugly hack to work around this issue:
      * https://github.com/trufflesuite/truffle/issues/569
      * https://github.com/trufflesuite/truffle/issues/737

@@ -64,3 +64,41 @@ export function voteTypeFromContractEnum(value) {
   }
   return VOTE_ABSENT
 }
+
+// Get the user balance that can be used on a given vote.
+export async function getUserBalance(
+  vote,
+  connectedAccount,
+  tokenContract,
+  tokenDecimals
+) {
+  if (!vote || !tokenContract || !connectedAccount) {
+    return -1
+  }
+
+  const balance = await tokenContract
+    .balanceOfAt(connectedAccount, vote.data.snapshotBlock)
+    .toPromise()
+
+  return Math.floor(parseInt(balance, 10) / Math.pow(10, tokenDecimals))
+}
+
+export async function getCanVote(vote, connectedAccount, api) {
+  if (!vote) {
+    return false
+  }
+
+  // If the account is not present, we assume the account is not connected.
+  if (!connectedAccount) {
+    return vote.data.open
+  }
+
+  return api.call('canVote', vote.voteId, connectedAccount).toPromise()
+}
+
+export async function getCanExecute(vote, api) {
+  if (!vote) {
+    return false
+  }
+  return api.call('canExecute', vote.voteId).toPromise()
+}

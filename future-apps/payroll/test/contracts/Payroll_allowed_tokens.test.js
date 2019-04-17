@@ -1,12 +1,14 @@
+const PAYMENT_TYPES = require('../helpers/payment_types')
+const setTokenRates = require('../helpers/set_token_rates')(web3)
 const { getEvent } = require('../helpers/events')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
 
 const MAX_GAS_USED = 6.5e6
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-contract('Payroll allowed tokens,', ([owner, employee, anotherEmployee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
+contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
+  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
 
   const NOW = 1553703809 // random fixed timestamp in seconds
   const ONE_MONTH = 60 * 60 * 24 * 31
@@ -15,15 +17,13 @@ contract('Payroll allowed tokens,', ([owner, employee, anotherEmployee, anyone])
 
   const TOKEN_DECIMALS = 18
 
-  before('setup base apps and tokens', async () => {
-    ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
+  before('deploy base apps and tokens', async () => {
+    ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
   })
 
-  beforeEach('setup payroll instance', async () => {
-    payroll = await createPayrollInstance(dao, payrollBase, owner)
-    await mockTimestamps(payroll, priceFeed, NOW)
+  beforeEach('create payroll and price feed instance', async () => {
+    ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
   describe('addAllowedToken', () => {
@@ -57,8 +57,8 @@ contract('Payroll allowed tokens,', ([owner, employee, anotherEmployee, anyone])
           })
 
           it('can allow multiple tokens', async () => {
-            const erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, vault, 'Token 1', 18)
-            const erc20Token2 = await deployErc20TokenAndDeposit(owner, finance, vault, 'Token 2', 16)
+            const erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, 'Token 1', 18)
+            const erc20Token2 = await deployErc20TokenAndDeposit(owner, finance, 'Token 2', 16)
 
             await payroll.addAllowedToken(denominationToken.address, { from })
             await payroll.addAllowedToken(erc20Token1.address, { from })
@@ -74,23 +74,26 @@ contract('Payroll allowed tokens,', ([owner, employee, anotherEmployee, anyone])
         context('when it reaches the maximum amount allowed', () => {
           let tokenAddresses = [], MAX_ALLOWED_TOKENS
 
-          before('deploy multiple tokens', async () => {
-            MAX_ALLOWED_TOKENS = (await payroll.getMaxAllowedTokens()).valueOf()
+          before('deploy multiple tokens and set rates', async () => {
+            MAX_ALLOWED_TOKENS = (await payrollBase.getMaxAllowedTokens()).valueOf()
             for (let i = 0; i < MAX_ALLOWED_TOKENS; i++) {
-              const token = await deployErc20TokenAndDeposit(owner, finance, vault, `Token ${i}`, 18);
+              const token = await deployErc20TokenAndDeposit(owner, finance, `Token ${i}`, 18);
               tokenAddresses.push(token.address)
             }
           })
 
-          beforeEach('allow tokens and add employee', async () => {
+          beforeEach('allow tokens, set rates, and add employee', async () => {
             await Promise.all(tokenAddresses.map(address => payroll.addAllowedToken(address, { from: owner })))
             assert.equal(await payroll.getAllowedTokensArrayLength(), MAX_ALLOWED_TOKENS, 'amount of allowed tokens does not match')
+
+            const rates = tokenAddresses.map(() => 5)
+            await setTokenRates(priceFeed, denominationToken, tokenAddresses, rates)
 
             await payroll.addEmployee(employee, 100000, 'Boss', NOW - ONE_MONTH, { from: owner })
           })
 
           it('can not add one more token', async () => {
-            const erc20Token = await deployErc20TokenAndDeposit(owner, finance, vault, 'Extra token', 18)
+            const erc20Token = await deployErc20TokenAndDeposit(owner, finance, 'Extra token', 18)
 
             await assertRevert(payroll.addAllowedToken(erc20Token.address), 'PAYROLL_MAX_ALLOWED_TOKENS')
           })
@@ -99,10 +102,10 @@ contract('Payroll allowed tokens,', ([owner, employee, anotherEmployee, anyone])
             const allocations = tokenAddresses.map(() => 100 / MAX_ALLOWED_TOKENS)
 
             const allocationTx = await payroll.determineAllocation(tokenAddresses, allocations, { from: employee })
-            assert.isBelow(allocationTx.receipt.cumulativeGasUsed, MAX_GAS_USED, 'Too much gas consumed for allocation')
+            assert.isBelow(allocationTx.receipt.cumulativeGasUsed, MAX_GAS_USED, 'too much gas consumed for allocation')
 
-            const paydayTx = await payroll.payday({ from: employee })
-            assert.isBelow(paydayTx.receipt.cumulativeGasUsed, MAX_GAS_USED, 'Too much gas consumed for payday')
+            const paydayTx = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+            assert.isBelow(paydayTx.receipt.cumulativeGasUsed, MAX_GAS_USED, 'too much gas consumed for payday')
           })
         })
       })

@@ -1,12 +1,12 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const { getEventArgument } = require('../helpers/events')
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
-contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
+contract('Payroll forwarding,', ([owner, employee, anyone]) => {
+  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
 
   const NOW = 1553703809 // random fixed timestamp in seconds
   const ONE_MONTH = 60 * 60 * 24 * 31
@@ -15,15 +15,13 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
 
   const TOKEN_DECIMALS = 18
 
-  before('setup base apps and tokens', async () => {
-    ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
+  before('deploy base apps and tokens', async () => {
+    ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
   })
 
-  beforeEach('setup payroll instance', async () => {
-    payroll = await createPayrollInstance(dao, payrollBase, owner)
-    await mockTimestamps(payroll, priceFeed, NOW)
+  beforeEach('create payroll and price feed instance', async () => {
+    ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
   describe('isForwarder', () => {
@@ -68,7 +66,7 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
         context('when the employee was already terminated', () => {
           beforeEach('terminate employee', async () => {
             await payroll.terminateEmployeeNow(employeeId, { from: owner })
-            await payroll.mockAddTimestamp(ONE_MONTH + 1)
+            await payroll.mockIncreaseTime(ONE_MONTH + 1)
           })
 
           it('returns true', async () => {
@@ -127,7 +125,7 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
         context('when the employee was already terminated', () => {
           beforeEach('terminate employee', async () => {
             await payroll.terminateEmployeeNow(employeeId, { from: owner })
-            await payroll.mockAddTimestamp(ONE_MONTH + 1)
+            await payroll.mockIncreaseTime(ONE_MONTH + 1)
           })
 
           it('executes the given script', async () =>  {

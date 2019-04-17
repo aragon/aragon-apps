@@ -13,12 +13,12 @@ class NewVotePanelContent extends React.Component {
   state = {
     ...initialState,
   }
-  componentWillReceiveProps({ opened }) {
-    if (opened && !this.props.opened) {
+  componentWillReceiveProps({ panelOpened }) {
+    if (panelOpened && !this.props.panelOpened) {
       // setTimeout is needed as a small hack to wait until the input's on
       // screen until we call focus
       this.questionInput && setTimeout(() => this.questionInput.focus(), 0)
-    } else if (!opened && this.props.opened) {
+    } else if (!panelOpened && this.props.panelOpened) {
       // Finished closing the panel, so reset its state
       this.setState({ ...initialState })
     }
@@ -48,7 +48,7 @@ class NewVotePanelContent extends React.Component {
             />
           </Field>
           <Button mode="strong" type="submit" wide>
-            Begin Vote
+            Begin vote
           </Button>
           <Warning>
             If you are allowed to directly create this vote, you will

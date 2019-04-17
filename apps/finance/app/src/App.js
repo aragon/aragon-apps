@@ -34,19 +34,17 @@ class App extends React.Component {
   }
   handleWithdraw = (tokenAddress, recipient, amount, reference) => {
     // Immediate, one-time payment
-    this.props.api.newPayment(
+    this.props.api.newImmediatePayment(
       tokenAddress,
       recipient,
       amount,
-      0, // initial payment time
-      0, // interval
-      1, // max repeats
       reference
     )
     this.handleNewTransferClose()
   }
   handleDeposit = async (tokenAddress, amount, reference) => {
-    const { api, periodDuration, periods } = this.props
+    const { api, appState } = this.props
+    const { periodDuration, periods } = appState
 
     let intentParams
     if (tokenAddress === ETHER_TOKEN_FAKE_ADDRESS) {
@@ -124,7 +122,7 @@ class App extends React.Component {
                     icon={<img src={addFundsIcon} alt="" />}
                     title="There are no funds yet"
                     text="Create a new transfer to get started."
-                    actionText="New Transfer"
+                    actionText="New transfer"
                     onActivate={this.handleNewTransferOpen}
                   />
                 </EmptyScreen>
@@ -133,7 +131,7 @@ class App extends React.Component {
             <SidePanel
               opened={newTransferOpened}
               onClose={this.handleNewTransferClose}
-              title="New Transfer"
+              title="New transfer"
             >
               <NewTransferPanelContent
                 opened={newTransferOpened}

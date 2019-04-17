@@ -39,9 +39,9 @@
     "/test"
   ],
   "dependencies": {
-    "@aragon/apps-finance": "2.1.0",
+    "@aragon/apps-finance": "3.0.0",
     "@aragon/os": "4.1.0",
-    "@aragon/ppf-contracts": "1.0.2"
+    "@aragon/ppf-contracts": "1.1.0"
   },
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
