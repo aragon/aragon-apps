@@ -30,138 +30,6 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
     ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
-  describe('terminateEmployeeNow', () => {
-    context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
-      })
-
-      context('when the given employee id exists', () => {
-        let employeeId
-        const salary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
-
-        beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss', { from: owner })
-          employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
-        })
-
-        context('when the sender has permissions to terminate employees', () => {
-          const from = owner
-
-          context('when the employee was not terminated', () => {
-            beforeEach('allow denomination token', async () => {
-              await payroll.addAllowedToken(denominationToken.address, { from: owner })
-            })
-
-            it('sets the end date of the employee', async () => {
-              await payroll.terminateEmployeeNow(employeeId, { from })
-
-              const endDate = (await payroll.getEmployee(employeeId))[6]
-              assert.equal(endDate.toString(), (await currentTimestamp()).toString(), 'employee end date does not match')
-            })
-
-            it('emits an event', async () => {
-              const receipt = await payroll.terminateEmployeeNow(employeeId, { from })
-
-              const events = getEvents(receipt, 'TerminateEmployee')
-              assert.equal(events.length, 1, 'number of TerminateEmployee events does not match')
-
-              const event  = events[0].args
-              assert.equal(event.employeeId.toString(), employeeId, 'employee id does not match')
-              assert.equal(event.accountAddress, employee, 'employee address does not match')
-              assert.equal(event.endDate.toString(), (await currentTimestamp()).toString(), 'employee end date does not match')
-            })
-
-            it('does not reset the owed salary nor the reimbursements of the employee', async () => {
-              const previousBalance = await denominationToken.balanceOf(employee)
-              await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
-
-              // Accrue some salary and extras
-              await increaseTime(ONE_MONTH)
-              const owedSalary = salary.mul(ONE_MONTH)
-              const reimbursement = 1000
-              await payroll.addReimbursement(employeeId, reimbursement, { from: owner })
-
-              // Terminate employee and travel some time in the future
-              await payroll.terminateEmployeeNow(employeeId, { from })
-              await increaseTime(ONE_MONTH)
-
-              // Request owed money
-              await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
-              await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, 0, { from: employee })
-              await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
-
-              const currentBalance = await denominationToken.balanceOf(employee)
-              const expectedCurrentBalance = previousBalance.plus(owedSalary).plus(reimbursement)
-              assert.equal(currentBalance.toString(), expectedCurrentBalance.toString(), 'current balance does not match')
-            })
-
-            it('can re-add a removed employee', async () => {
-              await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
-              await increaseTime(ONE_MONTH)
-
-              // Terminate employee and travel some time in the future
-              await payroll.terminateEmployeeNow(employeeId, { from })
-              await increaseTime(ONE_MONTH)
-
-              // Request owed money
-              await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
-              await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
-
-              // Add employee back
-              const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
-              const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
-
-              const [address, employeeSalary, bonus, reimbursements, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(newEmployeeId)
-              assert.equal(address, employee, 'employee address does not match')
-              assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
-              assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll date does not match')
-              assert.equal(bonus.toString(), 0, 'employee bonus does not match')
-              assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
-              assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
-              assert.equal(endDate.toString(), maxUint64(), 'employee end date does not match')
-            })
-          })
-
-          context('when the employee was already terminated', () => {
-            beforeEach('terminate employee', async () => {
-              await payroll.terminateEmployeeNow(employeeId, { from })
-              await increaseTime(ONE_MONTH + 1)
-            })
-
-            it('reverts', async () => {
-              await assertRevert(payroll.terminateEmployeeNow(employeeId, { from }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
-            })
-          })
-        })
-
-        context('when the sender does not have permissions to terminate employees', () => {
-          const from = anyone
-
-          it('reverts', async () => {
-            await assertRevert(payroll.terminateEmployeeNow(employeeId, { from }), 'APP_AUTH_FAILED')
-          })
-        })
-      })
-
-      context('when the given employee id does not exist', () => {
-        const employeeId = 0
-
-        it('reverts', async () => {
-          await assertRevert(payroll.terminateEmployeeNow(employeeId, { from: owner }), 'PAYROLL_NON_ACTIVE_EMPLOYEE')
-        })
-      })
-    })
-
-    context('when it has not been initialized yet', function () {
-      const employeeId = 0
-
-      it('reverts', async () => {
-        await assertRevert(payroll.terminateEmployeeNow(employeeId, { from: owner }), 'APP_AUTH_FAILED')
-      })
-    })
-  })
-
   describe('terminateEmployee', () => {
     context('when it has already been initialized', function () {
       beforeEach('initialize payroll app', async () => {
@@ -173,7 +41,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
         const salary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss', { from: owner })
+          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -248,7 +116,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
                 // Add employee back
-                const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
+                const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
                 const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
                 const [address, employeeSalary, bonus, reimbursements, accruedSalary, lastPayroll, date] = await payroll.getEmployee(newEmployeeId)
