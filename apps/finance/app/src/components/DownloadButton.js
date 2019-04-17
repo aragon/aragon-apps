@@ -2,7 +2,7 @@ import React from 'react'
 import { ButtonIcon } from '@aragon/ui'
 import IconDownload from './IconDownload'
 
-const Download = ({ url, filename }) => (
+const Download = ({ url, filename, ...props }) => (
   <ButtonIcon
     href={url}
     download={filename}
@@ -12,6 +12,7 @@ const Download = ({ url, filename }) => (
       height: 40px;
       padding-top: 4px;
     `}
+    {...props}
   >
     <IconDownload />
   </ButtonIcon>

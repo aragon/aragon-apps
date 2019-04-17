@@ -87,7 +87,11 @@ const TransfersFilters = ({
             <div>
               <Download compact={compactMode}>
                 <DownloadLabel>Export</DownloadLabel>
-                <DownloadButton filename={downloadFileName} url={downloadUrl} />
+                <DownloadButton
+                  filename={downloadFileName}
+                  url={downloadUrl}
+                  css="margin-right: -5px"
+                />
               </Download>
             </div>
           </div>

@@ -183,6 +183,7 @@ class Transfers extends React.PureComponent {
                 <ToggleFiltersButton
                   title="Toggle Filters"
                   onClick={this.handleToggleFiltersClick}
+                  css="margin-right: -5px"
                 />
               )}
             </span>
@@ -285,7 +286,9 @@ const NoTransfers = styled.div`
   min-height: 200px;
   background: ${theme.contentBackground};
   border: 1px solid ${theme.contentBorder};
-  border-radius: 3px;
+  border-radius: ${p => (p.compactMode ? '0' : '3px')};
+  margin-bottom: ${p => (p.compactMode ? '20px' : '0')};
+  padding: 20px;
   a {
     text-decoration: underline;
     color: ${theme.accent};
