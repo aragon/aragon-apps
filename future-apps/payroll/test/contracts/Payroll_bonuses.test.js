@@ -1,29 +1,33 @@
 const PAYMENT_TYPES = require('../helpers/payment_types')
+const setTokenRates = require('../helpers/set_token_rates')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { bn, maxUint256 } = require('../helpers/numbers')(web3)
 const { getEvents, getEventArgument } = require('../helpers/events')
-const { bigExp, maxUint256 } = require('../helpers/numbers')(web3)
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
 
 contract('Payroll bonuses', ([owner, employee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
+  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken, anotherTokenRate
 
   const NOW = 1553703809 // random fixed timestamp in seconds
   const ONE_MONTH = 60 * 60 * 24 * 31
   const TWO_MONTHS = ONE_MONTH * 2
   const RATE_EXPIRATION_TIME = TWO_MONTHS
 
-  const PCT_ONE = bigExp(1, 18)
   const TOKEN_DECIMALS = 18
 
-  before('setup base apps and tokens', async () => {
-    ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
+  const increaseTime = async seconds => {
+    await payroll.mockIncreaseTime(seconds)
+    await priceFeed.mockIncreaseTime(seconds)
+  }
+
+  before('deploy base apps and tokens', async () => {
+    ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
+    anotherToken = await deployErc20TokenAndDeposit(owner, finance, 'Another token', TOKEN_DECIMALS)
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
   })
 
-  beforeEach('setup payroll instance', async () => {
-    payroll = await createPayrollInstance(dao, payrollBase, owner)
-    await mockTimestamps(payroll, priceFeed, NOW)
+  beforeEach('create payroll and price feed instance', async () => {
+    ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
   describe('addBonus', () => {
@@ -100,7 +104,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
           context('when the given employee is not active', () => {
             beforeEach('terminate employee', async () => {
               await payroll.terminateEmployeeNow(employeeId, { from: owner })
-              await payroll.mockIncreaseTime(ONE_MONTH)
+              await increaseTime(ONE_MONTH)
             })
 
             it('reverts', async () => {
@@ -145,6 +149,11 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
         await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
+      beforeEach('set token rates', async () => {
+        anotherTokenRate = bn(5)
+        await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate])
+      })
+
       context('when the sender is an employee', () => {
         const from = employee
         let employeeId, salary = 1000
@@ -153,7 +162,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
           const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
-          await payroll.mockIncreaseTime(ONE_MONTH)
+          await increaseTime(ONE_MONTH)
         })
 
         context('when the employee has already set some token allocations', () => {
@@ -189,7 +198,6 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                 assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
 
                 const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                 const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount).plus(previousAnotherTokenBalance).trunc()
                 assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
               })
@@ -206,7 +214,6 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                 assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
                 assert.equal(denominationTokenEvent.paymentReference, 'Bonus', 'payment reference does not match')
 
-                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                 const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
                 assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
                 assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
@@ -236,7 +243,8 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
               context('when exchange rates are expired', () => {
                 beforeEach('expire exchange rates', async () => {
-                  await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                  const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
+                  await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate], expiredTimestamp)
                 })
 
                 it('reverts', async () => {
@@ -288,7 +296,8 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
                   context('when exchange rates are expired', () => {
                     beforeEach('expire exchange rates', async () => {
-                      await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                      const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
+                      await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate], expiredTimestamp)
                     })
 
                     it('reverts', async () => {
@@ -378,7 +387,8 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
                   context('when exchange rates are expired', () => {
                     beforeEach('expire exchange rates', async () => {
-                      await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                      const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
+                      await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate], expiredTimestamp)
                     })
 
                     it('reverts', async () => {

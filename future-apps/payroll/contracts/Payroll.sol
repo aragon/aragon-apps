@@ -9,7 +9,6 @@ import "@aragon/os/contracts/common/IForwarder.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/lib/math/SafeMath8.sol";
-import "@aragon/os/contracts/common/Uint256Helpers.sol";
 
 import "@aragon/ppf-contracts/contracts/IFeed.sol";
 import "@aragon/apps-finance/contracts/Finance.sol";
@@ -322,7 +321,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         Employee storage employee = employees[employeeId];
 
         if (_type == PaymentType.Payroll) {
-            (uint256 currentOwedSalary, uint256 totalOwedSalary) = _getOwedSalary(employeeId);
+            (uint256 currentOwedSalary, uint256 totalOwedSalary) = _getOwedSalaries(employeeId);
             paymentAmount = _ensurePaymentAmount(totalOwedSalary, _requestedAmount);
             _updateEmployeeStatusBasedOnPaidPayroll(employeeId, paymentAmount, currentOwedSalary);
         } else if (_type == PaymentType.Reimbursement) {
@@ -608,37 +607,39 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         }
 
         // This function is only called from _payday, where we make sure that _payedAmount is lower than or equal to the
-        // total owed amount, that is obtained from _getCurrentOwedSalary, which does exactly the opposite calculation:
+        // total owed amount, that is obtained from _getCurrentCappedOwedSalary, which does exactly the opposite calculation:
         // multiplying the employee's salary by an uint64 number of seconds. Therefore, timeDiff will always fit in 64.
         // Nevertheless, we are performing a sanity check at the end to ensure the computed last payroll timestamp
         // is not greater than the current timestamp.
 
-        uint256 lastPayrollDate = uint256(employee.lastPayroll).add(timeDiff);
-        require(lastPayrollDate <= getTimestamp(), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
-        return uint64(lastPayrollDate);
+        uint64 lastPayrollDate = employee.lastPayroll.add(uint64(timeDiff));
+        require(lastPayrollDate <= getTimestamp64(), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
+        return lastPayrollDate;
     }
 
     /**
-     * @dev Get amount of owed salary for a given employee since their last payroll
+     * @dev Get amount of owed salary for a given employee since their last payroll. It reverts in case of an overflow.
      * @param _employeeId Employee's identifier
-     * @return Total amount of owed salary for the requested employee since their last payroll
+     * @return Total amount of owed salary for the requested employee since their last payroll. It reverts in case of an overflow.
      */
     function _getCurrentOwedSalary(uint256 _employeeId) internal view returns (uint256) {
+        uint256 timeDiff = _getOwedPayrollPeriod(_employeeId);
+        if (timeDiff == 0) return 0;
+        return employees[_employeeId].denominationTokenSalary.mul(timeDiff);
+    }
+
+    /**
+     * @dev Get amount of owed salary for a given employee since their last payroll capped by max uint
+     * @param _employeeId Employee's identifier
+     * @return Total amount of owed salary for the requested employee since their last payroll capped by max uint
+     */
+    function _getCurrentCappedOwedSalary(uint256 _employeeId) internal view returns (uint256) {
+        uint256 timeDiff = _getOwedPayrollPeriod(_employeeId);
+        if (timeDiff == 0) return 0;
+
         Employee storage employee = employees[_employeeId];
-
-        // Get the min of current date and termination date
-        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64() : employee.endDate;
-
-        // Make sure we don't revert if we try to get the owed salary for an employee whose start
-        // date is in the future (necessary in case we need to change their salary before their start date)
-        if (date <= employee.lastPayroll) {
-            return 0;
-        }
-
-        // Get time diff in seconds, no need to use safe math as the underflow was covered by the previous check
-        uint64 timeDiff = date - employee.lastPayroll;
         uint256 salary = employee.denominationTokenSalary;
-        uint256 result = salary * uint256(timeDiff);
+        uint256 result = salary * timeDiff;
 
         // Return max uint if the result overflows
         return (result / timeDiff != salary) ? MAX_UINT256 : result;
@@ -649,14 +650,33 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _employeeId Employee's identifier
      * @return Total amounts of previous and current owed salaries for the requested employee since their last payroll
      */
-    function _getOwedSalary(uint256 _employeeId) internal view returns (uint256 currentOwedSalary, uint256 totalOwedSalary) {
-        currentOwedSalary = _getCurrentOwedSalary(_employeeId);
+    function _getOwedSalaries(uint256 _employeeId) internal view returns (uint256 currentOwedSalary, uint256 totalOwedSalary) {
+        currentOwedSalary = _getCurrentCappedOwedSalary(_employeeId);
         totalOwedSalary = currentOwedSalary + employees[_employeeId].accruedSalary;
 
         if (totalOwedSalary < currentOwedSalary) {
             // Return max uint if previous addition overflowed
             totalOwedSalary = MAX_UINT256;
         }
+    }
+
+    /**
+     * @dev Get owed payroll period in seconds for a given employee
+     * @param _employeeId Employee's identifier
+     * @return Number of seconds amounts representing the owed payroll period for the requested employee since their last payroll
+     */
+    function _getOwedPayrollPeriod(uint256 _employeeId) internal view returns (uint256) {
+        Employee storage employee = employees[_employeeId];
+
+        // Get the min of current date and termination date
+        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64() : employee.endDate;
+
+        // Make sure we don't revert if we try to get the owed salary for an employee whose start date
+        // is in the future (necessary in case we need to change their salary before their start date)
+        if (date <= employee.lastPayroll) return 0;
+
+        // Get time diff in seconds, no need to use safe math as the underflow was covered by the previous check
+        return uint256(date - employee.lastPayroll);
     }
 
     /**
@@ -670,9 +690,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             return ONE;
         }
 
-        uint128 xrt;
-        uint64 when;
-        (xrt, when) = feed.get(denominationToken, _token);
+        (uint128 xrt, uint64 when) = feed.get(_token, denominationToken);
 
         // Check the price feed is recent enough
         if (getTimestamp64().sub(when) >= rateExpiryTime) {
@@ -690,6 +708,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return True if there was at least one token transfer
      */
     function _transferTokensAmount(uint256 _employeeId, PaymentType _type, uint256 _totalAmount) internal returns (bool somethingPaid) {
+        if (_totalAmount == 0) return false;
         Employee storage employee = employees[_employeeId];
         string memory paymentReference = _paymentReferenceFor(_type);
         for (uint256 i = 0; i < allowedTokensArray.length; i++) {
@@ -719,7 +738,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         if (employee.endDate > getTimestamp64()) {
             return;
         }
-        if (_getCurrentOwedSalary(_employeeId) > 0) {
+        if (_getCurrentCappedOwedSalary(_employeeId) > 0) {
             return;
         }
         if (employee.reimbursements > 0 || employee.accruedSalary > 0 || employee.bonus > 0) {
