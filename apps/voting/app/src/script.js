@@ -223,7 +223,7 @@ async function startVote(state, { creator, metadata, voteId }) {
  *       Helpers       *
  *                     *
  ***********************/
-
+// Default votes to an empty array to prevent errors on initial load
 async function getAccountVotes({ connectedAccount, votes = [] }) {
   const connectedAccountVotes = await Promise.all(
     votes.map(({ voteId }) => getVoterState({ connectedAccount, voteId }))
