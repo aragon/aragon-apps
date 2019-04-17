@@ -2,10 +2,10 @@ const PAYMENT_TYPES = require('../helpers/payment_types')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
 const { bn, maxUint64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
 
 contract('Payroll employees termination', ([owner, employee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
+  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
 
   const NOW = 1553703809 // random fixed timestamp in seconds
   const ONE_MONTH = 60 * 60 * 24 * 31
@@ -16,15 +16,18 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
 
   const currentTimestamp = async () => payroll.getTimestampPublic()
 
-  before('setup base apps and tokens', async () => {
-    ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
+  const increaseTime = async seconds => {
+    await payroll.mockIncreaseTime(seconds)
+    await priceFeed.mockIncreaseTime(seconds)
+  }
+
+  before('deploy base apps and tokens', async () => {
+    ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
   })
 
-  beforeEach('setup payroll instance', async () => {
-    payroll = await createPayrollInstance(dao, payrollBase, owner)
-    await mockTimestamps(payroll, priceFeed, NOW)
+  beforeEach('create payroll and price feed instance', async () => {
+    ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
   describe('terminateEmployeeNow', () => {
@@ -74,14 +77,14 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
               await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
 
               // Accrue some salary and extras
-              await payroll.mockIncreaseTime(ONE_MONTH)
+              await increaseTime(ONE_MONTH)
               const owedSalary = salary.mul(ONE_MONTH)
               const reimbursement = 1000
               await payroll.addReimbursement(employeeId, reimbursement, { from: owner })
 
               // Terminate employee and travel some time in the future
               await payroll.terminateEmployeeNow(employeeId, { from })
-              await payroll.mockIncreaseTime(ONE_MONTH)
+              await increaseTime(ONE_MONTH)
 
               // Request owed money
               await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
@@ -95,11 +98,11 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
 
             it('can re-add a removed employee', async () => {
               await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
-              await payroll.mockIncreaseTime(ONE_MONTH)
+              await increaseTime(ONE_MONTH)
 
               // Terminate employee and travel some time in the future
               await payroll.terminateEmployeeNow(employeeId, { from })
-              await payroll.mockIncreaseTime(ONE_MONTH)
+              await increaseTime(ONE_MONTH)
 
               // Request owed money
               await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
@@ -123,7 +126,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
           context('when the employee was already terminated', () => {
             beforeEach('terminate employee', async () => {
               await payroll.terminateEmployeeNow(employeeId, { from })
-              await payroll.mockIncreaseTime(ONE_MONTH + 1)
+              await increaseTime(ONE_MONTH + 1)
             })
 
             it('reverts', async () => {
@@ -213,14 +216,14 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
                 await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
 
                 // Accrue some salary and extras
-                await payroll.mockIncreaseTime(ONE_MONTH)
+                await increaseTime(ONE_MONTH)
                 const owedSalary = salary.times(ONE_MONTH)
                 const reimbursement = 1000
                 await payroll.addReimbursement(employeeId, reimbursement, { from: owner })
 
                 // Terminate employee and travel some time in the future
                 await payroll.terminateEmployee(employeeId, endDate, { from })
-                await payroll.mockIncreaseTime(ONE_MONTH)
+                await increaseTime(ONE_MONTH)
 
                 // Request owed money
                 await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
@@ -234,11 +237,11 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
 
               it('can re-add a removed employee', async () => {
                 await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
-                await payroll.mockIncreaseTime(ONE_MONTH)
+                await increaseTime(ONE_MONTH)
 
                 // Terminate employee and travel some time in the future
                 await payroll.terminateEmployee(employeeId, endDate, { from })
-                await payroll.mockIncreaseTime(ONE_MONTH)
+                await increaseTime(ONE_MONTH)
 
                 // Request owed money
                 await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
@@ -262,7 +265,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
             context('when the given end date is in the past', () => {
               beforeEach('set future end date', async () => {
                 endDate = await currentTimestamp()
-                await payroll.mockIncreaseTime(ONE_MONTH + 1)
+                await increaseTime(ONE_MONTH + 1)
               })
 
               it('reverts', async () => {
@@ -288,7 +291,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
 
             context('when the previous end date was reached', () => {
               beforeEach('travel in the future', async () => {
-                await payroll.mockIncreaseTime(ONE_MONTH + 1)
+                await increaseTime(ONE_MONTH + 1)
               })
 
               it('reverts', async () => {

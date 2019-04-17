@@ -8,7 +8,7 @@ async function assertThrows(blockOrPromise, expectedErrorCode, expectedReason) {
     return error
   }
   // assert.fail() for some reason does not have its error string printed 🤷
-  assert(0, `Expected "${expectedErrorCode}"${expectedReason ? ` (with reason: "${expectedReason}")` : ''} but it did not fail`)
+  assert(false, `Expected "${expectedErrorCode}"${expectedReason ? ` (with reason: "${expectedReason}")` : ''} but it did not fail`)
 }
 
 module.exports = {
@@ -28,8 +28,8 @@ module.exports = {
 
     if (process.env.SOLIDITY_COVERAGE !== 'true' && expectedReason) {
       assert.equal(
-        expectedReason,
         error.reason,
+        expectedReason,
         `Expected revert reason "${expectedReason}" but failed with "${error.reason || 'no reason'}" instead.`
       )
     }

@@ -690,9 +690,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             return ONE;
         }
 
-        uint128 xrt;
-        uint64 when;
-        (xrt, when) = feed.get(denominationToken, _token);
+        (uint128 xrt, uint64 when) = feed.get(_token, denominationToken);
 
         // Check the price feed is recent enough
         if (getTimestamp64().sub(when) >= rateExpiryTime) {
@@ -710,6 +708,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return True if there was at least one token transfer
      */
     function _transferTokensAmount(uint256 _employeeId, PaymentType _type, uint256 _totalAmount) internal returns (bool somethingPaid) {
+        if (_totalAmount == 0) return false;
         Employee storage employee = employees[_employeeId];
         string memory paymentReference = _paymentReferenceFor(_type);
         for (uint256 i = 0; i < allowedTokensArray.length; i++) {

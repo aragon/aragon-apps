@@ -1,11 +1,11 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-contract('Payroll token allocations', ([owner, employee, anotherEmployee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
+contract('Payroll token allocations', ([owner, employee, anyone]) => {
+  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
 
   const NOW = 1553703809 // random fixed timestamp in seconds
   const ONE_MONTH = 60 * 60 * 24 * 31
@@ -14,24 +14,22 @@ contract('Payroll token allocations', ([owner, employee, anotherEmployee, anyone
 
   const TOKEN_DECIMALS = 18
 
-  before('setup base apps and tokens', async () => {
-    ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
+  before('deploy base apps and tokens', async () => {
+    ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
   })
 
-  beforeEach('setup payroll instance', async () => {
-    payroll = await createPayrollInstance(dao, payrollBase, owner)
-    await mockTimestamps(payroll, priceFeed, NOW)
+  beforeEach('create payroll and price feed instance', async () => {
+    ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
   describe('determineAllocation', () => {
     const tokenAddresses = []
 
     before('deploy some tokens', async () => {
-      const token1 = await deployErc20TokenAndDeposit(owner, finance, vault, 'Token 1', 14)
-      const token2 = await deployErc20TokenAndDeposit(owner, finance, vault, 'Token 2', 14)
-      const token3 = await deployErc20TokenAndDeposit(owner, finance, vault, 'Token 3', 14)
+      const token1 = await deployErc20TokenAndDeposit(owner, finance, 'Token 1', 14)
+      const token2 = await deployErc20TokenAndDeposit(owner, finance, 'Token 2', 14)
+      const token3 = await deployErc20TokenAndDeposit(owner, finance, 'Token 3', 14)
       tokenAddresses.push(token1.address, token2.address, token3.address)
     })
 
@@ -82,7 +80,7 @@ contract('Payroll token allocations', ([owner, employee, anotherEmployee, anyone
                       let token
 
                       beforeEach('submit previous allocation', async () => {
-                        token = await deployErc20TokenAndDeposit(owner, finance, vault, 'Previous Token', 18)
+                        token = await deployErc20TokenAndDeposit(owner, finance, 'Previous Token', 18)
                         await payroll.addAllowedToken(token.address, { from: owner })
 
                         await payroll.determineAllocation([token.address], [100], { from })
@@ -140,7 +138,7 @@ contract('Payroll token allocations', ([owner, employee, anotherEmployee, anyone
                 let notAllowedToken
 
                 beforeEach('deploy new token', async () => {
-                  notAllowedToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Not-allowed token', 14)
+                  notAllowedToken = await deployErc20TokenAndDeposit(owner, finance, 'Not-allowed token', 14)
                 })
 
                 it('reverts', async () => {
