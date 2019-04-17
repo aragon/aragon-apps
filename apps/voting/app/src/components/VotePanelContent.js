@@ -81,7 +81,7 @@ const VotePanelContent = React.memo(
           </div>
           <div>
             <h2>
-              <Label>Total yes votes</Label>
+              <Label>Quorum progress</Label>
             </h2>
             <div>
               {round(quorumProgress * 100, 2)}%{' '}
