@@ -43,7 +43,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
           let employeeId
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, 1000, 'Boss')
+            const receipt = await payroll.addEmployee(employee, 1000, 'Boss', await payroll.getTimestampPublic())
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -103,7 +103,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
           context('when the given employee is not active', () => {
             beforeEach('terminate employee', async () => {
-              await payroll.terminateEmployeeNow(employeeId, { from: owner })
+              await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
               await increaseTime(ONE_MONTH)
             })
 
@@ -159,7 +159,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
         let employeeId, salary = 1000
 
         beforeEach('add employee and accumulate some salary', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
+          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
           await increaseTime(ONE_MONTH)
@@ -263,7 +263,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
                 context('when the employee is terminated', () => {
                   beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                   })
 
                   itHandlesBonusesProperly(requestedAmount, bonusAmount)
@@ -281,7 +281,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
                 context('when the employee is terminated', () => {
                   beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                   })
 
                   context('when exchange rates are not expired', () => {
@@ -318,7 +318,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
                 context('when the employee is terminated', () => {
                   beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                   })
 
                   itHandlesBonusesProperly(requestedAmount)
@@ -336,7 +336,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
                 context('when the employee is terminated', () => {
                   beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                   })
 
                   itHandlesBonusesProperly(requestedAmount)
@@ -354,7 +354,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
                 context('when the employee is terminated', () => {
                   beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                   })
 
                   itHandlesBonusesProperly(requestedAmount)
@@ -372,7 +372,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
                 context('when the employee is terminated', () => {
                   beforeEach('terminate employee', async () => {
-                    await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                    await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                   })
 
                   context('when exchange rates are not expired', () => {

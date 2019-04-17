@@ -47,7 +47,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 100000, 'Boss', { from: owner })
+          const receipt = await payroll.addEmployee(employee, 100000, 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
@@ -175,7 +175,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
 
         context('when the employee is not active', () => {
           beforeEach('terminate employee', async () => {
-            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
             await payroll.mockIncreaseTime(ONE_MONTH)
           })
 
@@ -209,7 +209,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 100000, 'Boss', { from: owner })
+          const receipt = await payroll.addEmployee(employee, 100000, 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
@@ -289,7 +289,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
 
         context('when the employee is not active', () => {
           beforeEach('terminate employee', async () => {
-            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
             await payroll.mockIncreaseTime(ONE_MONTH)
           })
 

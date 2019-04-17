@@ -176,19 +176,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Add employee with address `_accountAddress` to Payroll with a salary of `_initialDenominationSalary` per second
-     * @param _accountAddress Employee's address to receive payroll
-     * @param _initialDenominationSalary Employee's salary, per second in denomination token
-     * @param _role Employee's role
-     */
-    function addEmployeeNow(address _accountAddress, uint256 _initialDenominationSalary, string _role)
-        external
-        authP(ADD_EMPLOYEE_ROLE, arr(_accountAddress, _initialDenominationSalary, getTimestamp()))
-    {
-        _addEmployee(_accountAddress, _initialDenominationSalary, _role, getTimestamp64());
-    }
-
-    /**
      * @notice Add employee with address `_accountAddress` to Payroll with a salary of `_initialDenominationSalary` per second, starting on `@transformTime(_startDate)`
      * @param _accountAddress Employee's address to receive payroll
      * @param _initialDenominationSalary Employee's salary, per second in denomination token
@@ -222,18 +209,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         employee.denominationTokenSalary = _denominationSalary;
 
         emit SetEmployeeSalary(_employeeId, _denominationSalary);
-    }
-
-    /**
-     * @notice Terminate employee #`_employeeId`
-     * @param _employeeId Employee's identifier
-     */
-    function terminateEmployeeNow(uint256 _employeeId)
-        external
-        authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
-        employeeActive(_employeeId)
-    {
-        _terminateEmployeeAt(_employeeId, getTimestamp64());
     }
 
     /**
@@ -277,12 +252,12 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     /**
      * @notice Set token distribution for payments to an employee (the caller)
-     * @dev Initialization check is implicitly provided by `employeeMatches()` as new employees can
+     * @dev Initialization check is implicitly provided by `employeeMatches` as new employees can
      *      only be added via `addEmployee(),` which requires initialization
      * @param _tokens Array with the tokens to receive, they must belong to allowed tokens for employee
      * @param _distribution Array, correlated to tokens, with their corresponding proportions (integers summing to 100)
      */
-    function determineAllocation(address[] _tokens, uint256[] _distribution) external employeeMatches {
+    function determineAllocation(address[] _tokens, uint256[] _distribution) external employeeMatches nonReentrant {
         // Check arrays match
         require(_tokens.length == _distribution.length, ERROR_TOKEN_ALLOCATION_MISMATCH);
 
@@ -311,11 +286,11 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @notice Request employee's payments
      * @dev Withdraw employee's owed payments (the caller).
-     *      Initialization check is implicitly provided by `employeeMatches()` as new employees can only be added via `addEmployee(),` which requires initialization
+     *      Initialization check is implicitly provided by `employeeMatches` as new employees can only be added via `addEmployee(),` which requires initialization
      * @param _type Payment type being requested (Payroll, Reimbursement or Bonus)
      * @param _requestedAmount Requested amount of the total owed to the employee for the requested payment type. Must be less or equal than total owed so far, or zero to request all owed amount
      */
-    function payday(PaymentType _type, uint256 _requestedAmount) external employeeMatches {
+    function payday(PaymentType _type, uint256 _requestedAmount) external employeeMatches nonReentrant {
         uint256 paymentAmount;
         uint256 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
@@ -343,11 +318,11 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @notice Change your employee account address to `_newAddress`
      * @dev Change employee's account address. Must be called by employee from their registered address.
-     *      Initialization check is implicitly provided by `employeeMatches()` as new employees can
+     *      Initialization check is implicitly provided by `employeeMatches` as new employees can
      *      only be added via `addEmployee(),` which requires initialization
      * @param _newAddress New address to receive payments for the requesting employee
      */
-    function changeAddressByEmployee(address _newAddress) external employeeMatches {
+    function changeAddressByEmployee(address _newAddress) external employeeMatches nonReentrant {
         // Check address is non-null
         require(_newAddress != address(0), ERROR_EMPLOYEE_NULL_ADDRESS);
         // Check address isn't already being used
