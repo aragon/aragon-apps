@@ -31,7 +31,7 @@ const TRANSFER_TYPES = [
 const TRANSFERS_PER_PAGE = 10
 const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
 
-const DEFAULT_DAYS_SELECTED = 30
+const DEFAULT_DAYS_SELECTED = 90
 
 const formatDate = date => format(date, 'dd/MM/yy')
 
