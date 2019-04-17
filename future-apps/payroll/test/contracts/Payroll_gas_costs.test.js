@@ -32,7 +32,6 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
 
     beforeEach('initialize payroll app', async () => {
       await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
-      await payroll.mockSetTimestamp(NOW)
 
       const startDate = NOW - ONE_MONTH
       const salary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
