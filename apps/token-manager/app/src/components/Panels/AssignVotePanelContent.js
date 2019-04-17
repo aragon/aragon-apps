@@ -176,7 +176,7 @@ class AssignVotePanelContent extends React.Component {
             disabled={amountField.max === '0'}
             wide
           >
-            {mode === 'assign' ? 'Add' : 'Remove'} Tokens
+            {mode === 'assign' ? 'Add' : 'Remove'} tokens
           </Button>
           <div css="margin-top: 15px">
             {errorMessage && <ErrorMessage message={errorMessage} />}
