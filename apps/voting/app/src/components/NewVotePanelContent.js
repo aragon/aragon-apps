@@ -76,7 +76,6 @@ class NewVotePanelContent extends React.Component {
         )}
         {screenIndex === 1 && (
           <div>
-            <p css="margin: 30px 0 20px">Coming soon!</p>
             <Info.Action title="These votes are binding">
               <div
                 css={`
