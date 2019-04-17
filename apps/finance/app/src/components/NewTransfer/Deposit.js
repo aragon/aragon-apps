@@ -134,18 +134,15 @@ class Deposit extends React.Component {
 
     // ETH
     if (addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS)) {
-      return new Promise((resolve, reject) =>
-        api.web3Eth('getBalance', connectedAccount).subscribe(
-          ethBalance =>
-            resolve({
-              decimals: 18,
-              loading: false,
-              symbol: 'ETH',
-              userBalance: ethBalance,
-            }),
-          reject
-        )
-      )
+      return api
+        .web3Eth('getBalance', connectedAccount)
+        .toPromise()
+        .then(ethBalance => ({
+          decimals: 18,
+          loading: false,
+          symbol: 'ETH',
+          userBalance: ethBalance,
+        }))
     }
 
     // Tokens
@@ -167,7 +164,7 @@ class Deposit extends React.Component {
       }
 
       const [tokenSymbol, tokenDecimals] = await Promise.all([
-        getTokenSymbol(api, address),
+        getTokenSymbol(api, address).catch(() => {}),
         token.decimals().toPromise(),
       ])
 
