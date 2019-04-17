@@ -2,14 +2,11 @@ import React from 'react'
 import styled from 'styled-components'
 import {
   compareDesc,
-  addDays,
-  addMonths,
-  getMonth,
-  getYear,
-  format,
-  startOfDay,
   endOfDay,
+  format,
   isWithinInterval,
+  startOfDay,
+  subDays,
 } from 'date-fns'
 import {
   Button,
@@ -34,6 +31,10 @@ const TRANSFER_TYPES = [
 const TRANSFERS_PER_PAGE = 10
 const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
 
+const DEFAULT_DAYS_SELECTED = 30
+
+const formatDate = date => format(date, 'dd/MM/yy')
+
 const reduceTokenDetails = (details, { address, decimals, symbol }) => {
   details[toChecksumAddress(address)] = {
     decimals,
@@ -42,17 +43,11 @@ const reduceTokenDetails = (details, { address, decimals, symbol }) => {
   return details
 }
 
-const getCurrentMonthRange = () => {
-  const now = Date.now()
-  const month = getMonth(now)
-  const year = getYear(now)
-  const start = new Date(year, month, 1)
-  const end = addDays(addMonths(start, 1), -1)
-  return { start, end }
-}
-
 const initialState = {
-  selectedDateRange: getCurrentMonthRange(),
+  selectedDateRange: {
+    start: subDays(new Date(), DEFAULT_DAYS_SELECTED),
+    end: new Date(),
+  },
   selectedToken: 0,
   selectedTransferType: 0,
   displayedTransfers: TRANSFERS_PER_PAGE,
@@ -109,9 +104,8 @@ class Transfers extends React.PureComponent {
               true,
               { rounding: 5 }
             )
-            return `${format(
-              date,
-              'dd/MM/yy'
+            return `${formatDate(
+              date
             )},${entity},${reference},${`${formattedAmount} ${symbol}`}`
           }
         )
@@ -204,12 +198,14 @@ class Transfers extends React.PureComponent {
           />
         </Header>
         {filteredTransfers.length === 0 ? (
-          <NoTransfers>
-            <p>
-              No transfers found.{' '}
+          <NoTransfers compactMode={compactMode}>
+            <p css="text-align: center">
+              No transfers match your filter and period (
+              {formatDate(selectedDateRange.start)} to{' '}
+              {formatDate(selectedDateRange.end)}) selection.{' '}
               {filtersActive && (
                 <a role="button" onClick={this.handleResetFilters}>
-                  Reset filters
+                  Clear filters
                 </a>
               )}
             </p>
