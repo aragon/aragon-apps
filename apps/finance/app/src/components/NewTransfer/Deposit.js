@@ -39,6 +39,19 @@ const TOKEN_ALLOWANCE_WEBSITE = 'https://tokenallowance.io/'
 
 const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
 
+const renderBalanceForSelectedToken = selectedToken => {
+  const { decimals, loading, symbol, userBalance } = selectedToken.data
+  if (loading || !userBalance) {
+    return ''
+  }
+
+  return userBalance === '-1'
+    ? `Your balance could not be found for ${symbol}`
+    : `You have ${
+        userBalance === '0' ? 'no' : fromDecimals(userBalance, decimals)
+      } ${symbol} available`
+}
+
 const initialState = {
   amount: {
     error: NO_ERROR,
@@ -129,58 +142,61 @@ class Deposit extends React.Component {
     const { selectedToken } = this.state
     return selectedToken.value && !selectedToken.data.loading
   }
-  loadTokenData(address) {
+  async loadTokenData(address) {
     const { api, network, connectedAccount } = this.props
 
     // ETH
     if (addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS)) {
-      return new Promise((resolve, reject) =>
-        api.web3Eth('getBalance', connectedAccount).subscribe(
-          ethBalance =>
-            resolve({
-              decimals: 18,
-              loading: false,
-              symbol: 'ETH',
-              userBalance: ethBalance,
-            }),
-          reject
-        )
-      )
+      const userBalance = await api
+        .web3Eth('getBalance', connectedAccount)
+        .toPromise()
+        .catch(() => '-1')
+
+      return {
+        decimals: 18,
+        loading: false,
+        symbol: 'ETH',
+        userBalance,
+      }
     }
 
     // Tokens
     const token = api.external(address, tokenAbi)
+    const userBalance = await token
+      .balanceOf(connectedAccount)
+      .toPromise()
+      .catch(() => '-1')
 
-    return new Promise(async (resolve, reject) => {
-      const userBalance = await token.balanceOf(connectedAccount).toPromise()
+    const decimalsFallback =
+      tokenDataFallback(address, 'decimals', network.type) || '0'
+    const symbolFallback =
+      tokenDataFallback(address, 'symbol', network.type) || ''
 
-      const decimalsFallback =
-        tokenDataFallback(address, 'decimals', network.type) || '0'
-      const symbolFallback =
-        tokenDataFallback(address, 'symbol', network.type) || ''
+    const tokenData = {
+      userBalance,
+      decimals: parseInt(decimalsFallback, 10),
+      loading: false,
+      symbol: symbolFallback,
+    }
 
-      const tokenData = {
-        userBalance,
-        decimals: parseInt(decimalsFallback, 10),
-        loading: false,
-        symbol: symbolFallback,
-      }
+    const [tokenSymbol, tokenDecimals] = await Promise.all([
+      getTokenSymbol(api, address).catch(() => ''),
+      token
+        .decimals()
+        .toPromise()
+        .then(decimals => parseInt(decimals, 10))
+        .catch(() => ''),
+    ])
 
-      const [tokenSymbol, tokenDecimals] = await Promise.all([
-        getTokenSymbol(api, address),
-        token.decimals().toPromise(),
-      ])
+    // If symbol or decimals are resolved, overwrite the fallbacks
+    if (tokenSymbol) {
+      tokenData.symbol = tokenSymbol
+    }
+    if (tokenDecimals) {
+      tokenData.decimals = tokenDecimals
+    }
 
-      // If symbol or decimals are resolved, overwrite the fallbacks
-      if (tokenSymbol) {
-        tokenData.symbol = tokenSymbol
-      }
-      if (tokenDecimals) {
-        tokenData.decimals = parseInt(tokenDecimals, 10)
-      }
-
-      resolve(tokenData)
-    })
+    return tokenData
   }
   validateInputs({ amount, selectedToken } = {}) {
     amount = amount || this.state.amount
@@ -255,16 +271,7 @@ class Deposit extends React.Component {
 
     const selectedTokenIsAddress = isAddress(selectedToken.value)
     const showTokenBadge = selectedTokenIsAddress && selectedToken.coerced
-    const tokenBalanceMessage = selectedToken.data.userBalance
-      ? `You have ${
-          selectedToken.data.userBalance === '0'
-            ? 'no'
-            : fromDecimals(
-                selectedToken.data.userBalance,
-                selectedToken.data.decimals
-              )
-        } ${selectedToken.data.symbol} available`
-      : ''
+    const tokenBalanceMessage = renderBalanceForSelectedToken(selectedToken)
 
     const ethSelected =
       selectedTokenIsAddress &&
