@@ -149,7 +149,11 @@ class Deposit extends React.Component {
     const token = api.external(address, tokenAbi)
 
     return new Promise(async (resolve, reject) => {
-      const userBalance = await token.balanceOf(connectedAccount).toPromise()
+      const userBalance = await token
+        .balanceOf(connectedAccount)
+        .toPromise()
+        // Assume no balance if the call failed
+        .catch(() => '0')
 
       const decimalsFallback =
         tokenDataFallback(address, 'decimals', network.type) || '0'
@@ -165,7 +169,11 @@ class Deposit extends React.Component {
 
       const [tokenSymbol, tokenDecimals] = await Promise.all([
         getTokenSymbol(api, address).catch(() => {}),
-        token.decimals().toPromise(),
+        token
+          .decimals()
+          .toPromise()
+          .then(decimals => parseInt(decimals, 10))
+          .catch(() => {}),
       ])
 
       // If symbol or decimals are resolved, overwrite the fallbacks
@@ -173,7 +181,7 @@ class Deposit extends React.Component {
         tokenData.symbol = tokenSymbol
       }
       if (tokenDecimals) {
-        tokenData.decimals = parseInt(tokenDecimals, 10)
+        tokenData.decimals = tokenDecimals
       }
 
       resolve(tokenData)
