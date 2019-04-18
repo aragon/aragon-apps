@@ -28,7 +28,7 @@ const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const TEST_TOKEN_ADDRESSES = []
 const tokenContracts = new Map() // Addr -> External contract
 const tokenDecimals = new Map() // External contract -> decimals
-const tokenName = new Map() // External contract -> name
+const tokenNames = new Map() // External contract -> name
 const tokenSymbols = new Map() // External contract -> symbol
 
 const ETH_CONTRACT = Symbol('ETH_CONTRACT')
@@ -89,7 +89,7 @@ async function initialize(vaultAddress, ethAddress) {
   // Set up ETH placeholders
   tokenContracts.set(ethAddress, ETH_CONTRACT)
   tokenDecimals.set(ETH_CONTRACT, '18')
-  tokenName.set(ETH_CONTRACT, 'Ether')
+  tokenNames.set(ETH_CONTRACT, 'Ether')
   tokenSymbols.set(ETH_CONTRACT, 'ETH')
 
   return createStore({
@@ -317,62 +317,62 @@ function loadTokenBalance(tokenAddress, { vault }) {
   return vault.contract.balance(tokenAddress).toPromise()
 }
 
-function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
-  return new Promise((resolve, reject) => {
-    if (tokenDecimals.has(tokenContract)) {
-      resolve(tokenDecimals.get(tokenContract))
-    } else {
-      const fallback =
-        tokenDataFallback(tokenAddress, 'decimals', network.type) || '0'
+async function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
+  if (tokenDecimals.has(tokenContract)) {
+    return tokenDecimals.get(tokenContract)
+  }
 
-      tokenContract.decimals().subscribe(
-        (decimals = fallback) => {
-          tokenDecimals.set(tokenContract, decimals)
-          resolve(decimals)
-        },
-        () => {
-          // Decimals is optional
-          resolve(fallback)
-        }
-      )
-    }
-  })
+  const fallback =
+    tokenDataFallback(tokenAddress, 'decimals', network.type) || '0'
+
+  let decimals
+  try {
+    decimals = (await tokenContract.decimals().toPromise()) || fallback
+    tokenDecimals.set(tokenContract, decimals)
+  } catch (err) {
+    // decimals is optional
+    decimals = fallback
+  }
+  return decimals
 }
 
-function loadTokenName(tokenContract, tokenAddress, { network }) {
-  return new Promise((resolve, reject) => {
-    if (tokenName.has(tokenContract)) {
-      resolve(tokenName.get(tokenContract))
-    } else {
-      const fallback =
-        tokenDataFallback(tokenAddress, 'name', network.type) || ''
-      const name = getTokenName(app, tokenAddress)
-      resolve(name || fallback)
-    }
-  })
+async function loadTokenName(tokenContract, tokenAddress, { network }) {
+  if (tokenNames.has(tokenContract)) {
+    return tokenNames.get(tokenContract)
+  }
+  const fallback = tokenDataFallback(tokenAddress, 'name', network.type) || ''
+
+  let name
+  try {
+    name = (await getTokenName(app, tokenAddress)) || fallback
+    tokenNames.set(tokenContract, name)
+  } catch (err) {
+    // name is optional
+    name = fallback
+  }
+  return name
 }
 
-function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
-  return new Promise((resolve, reject) => {
-    if (tokenSymbols.has(tokenContract)) {
-      resolve(tokenSymbols.get(tokenContract))
-    } else {
-      const fallback =
-        tokenDataFallback(tokenAddress, 'symbol', network.type) || ''
-      const tokenSymbol = getTokenSymbol(app, tokenAddress)
-      resolve(tokenSymbol || fallback)
-    }
-  })
+async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
+  if (tokenSymbols.has(tokenContract)) {
+    return tokenSymbols.get(tokenContract)
+  }
+  const fallback = tokenDataFallback(tokenAddress, 'symbol', network.type) || ''
+
+  let symbol
+  try {
+    symbol = (await getTokenSymbol(app, tokenAddress)) || fallback
+    tokenSymbols.set(tokenContract, symbol)
+  } catch (err) {
+    // symbol is optional
+    symbol = fallback
+  }
+  return symbol
 }
 
-function loadTransactionDetails(id) {
-  return new Promise((resolve, reject) =>
-    app
-      .call('getTransaction', id)
-      .subscribe(
-        transaction => resolve(marshallTransactionDetails(transaction)),
-        reject
-      )
+async function loadTransactionDetails(id) {
+  return marshallTransactionDetails(
+    await app.call('getTransaction', id).toPromise()
   )
 }
 

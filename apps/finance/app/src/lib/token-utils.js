@@ -47,29 +47,31 @@ export const tokenDataFallback = (tokenAddress, fieldName, networkType) => {
 export async function getTokenSymbol(app, address) {
   // Symbol is optional; note that aragon.js doesn't return an error (only an falsey value) when
   // getting this value fails
-  let token = app.external(address, tokenSymbolAbi)
-  let tokenSymbol = await token.symbol().toPromise()
-  if (tokenSymbol) {
-    return tokenSymbol
+  let tokenSymbol
+  try {
+    const token = app.external(address, tokenSymbolAbi)
+    tokenSymbol = await token.symbol().toPromise()
+  } catch (err) {
+    // Some tokens (e.g. DS-Token) use bytes32 as the return type for symbol().
+    const token = app.external(address, tokenSymbolBytesAbi)
+    tokenSymbol = toUtf8(await token.symbol().toPromise())
   }
-  // Some tokens (e.g. DS-Token) use bytes32 as the return type for symbol().
-  token = app.external(address, tokenSymbolBytesAbi)
-  tokenSymbol = await token.symbol().toPromise()
 
-  return tokenSymbol ? toUtf8(tokenSymbol) : null
+  return tokenSymbol || null
 }
 
 export async function getTokenName(app, address) {
   // Name is optional; note that aragon.js doesn't return an error (only an falsey value) when
   // getting this value fails
-  let token = app.external(address, tokenNameAbi)
-  let tokenName = await token.name().toPromise()
-  if (tokenName) {
-    return tokenName
+  let tokenName
+  try {
+    const token = app.external(address, tokenNameAbi)
+    tokenName = await token.name().toPromise()
+  } catch (err) {
+    // Some tokens (e.g. DS-Token) use bytes32 as the return type for name().
+    const token = app.external(address, tokenNameBytesAbi)
+    tokenName = toUtf8(await token.name().toPromise())
   }
-  // Some tokens (e.g. DS-Token) use bytes32 as the return type for name().
-  token = app.external(address, tokenNameBytesAbi)
-  tokenName = await token.name().toPromise()
 
-  return tokenName ? toUtf8(tokenName) : null
+  return tokenName || null
 }
