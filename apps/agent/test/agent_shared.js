@@ -2,7 +2,7 @@ const { hash: namehash } = require('eth-ens-namehash')
 const ethUtil = require('ethereumjs-util')
 const ethABI = new (require('web3-eth-abi').AbiCoder)()
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
+const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const assertEvent = require('@aragon/test-helpers/assertEvent')
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
@@ -15,29 +15,23 @@ module.exports = (
     web3
   }
 ) => {
-  const getBalance = require('@aragon/test-helpers/balance')(web3)
   const web3Call = require('@aragon/test-helpers/call')(web3)
   const web3Sign = require('@aragon/test-helpers/sign')(web3)
+  const getBalance = require('@aragon/test-helpers/balance')(web3)
 
   const ACL = artifacts.require('ACL')
-  const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
-  const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
-  const DAOFactory = artifacts.require('DAOFactory')
   const Kernel = artifacts.require('Kernel')
-  const KernelProxy = artifacts.require('KernelProxy')
-
-  const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
-  const DestinationMock = artifacts.require('DestinationMock')
-  const KernelDepositableMock = artifacts.require('KernelDepositableMock')
+  const DAOFactory = artifacts.require('DAOFactory')
+  const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
   const ExecutionTarget = artifacts.require('ExecutionTarget')
   const DesignatedSigner = artifacts.require('DesignatedSigner')
+  const DestinationMock = artifacts.require('DestinationMock')
+  const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
 
-  const NULL_ADDRESS = '0x00'
   const NO_SIG = '0x'
-
-  const ERC165_SUPPORT_INTERFACE_ID = '0x01ffc9a7'
   const ERC165_SUPPORT_INVALID_ID = '0xffffffff'
+  const ERC165_SUPPORT_INTERFACE_ID = '0x01ffc9a7'
 
   const AgentLike = artifacts.require(agentName)
 
@@ -181,17 +175,13 @@ module.exports = (
           it('fails to execute without permissions', async () => {
             const data = executionTarget.contract.execute.getData()
 
-            await assertRevert(() =>
-              agent.execute(executionTarget.address, depositAmount, data, { from: nonExecutor })
-            )
+            await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: nonExecutor }))
           })
 
           it('fails to execute actions with more ETH than the agent owns', async () => {
             const data = executionTarget.contract.execute.getData()
 
-            await assertRevert(() =>
-              agent.execute(executionTarget.address, depositAmount + 1, data, { from: executor })
-            )
+            await assertRevert(agent.execute(executionTarget.address, depositAmount + 1, data, { from: executor }))
           })
 
           it('execution forwards success return data', async () => {
@@ -211,9 +201,7 @@ module.exports = (
             // ganache currently doesn't support fetching this data
 
             const data = executionTarget.contract.fail.getData()
-            await assertRevert(() =>
-              agent.execute(executionTarget.address, depositAmount, data, { from: executor })
-            )
+            await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: executor }))
           })
 
           context('depending on the sig ACL param', () => {
@@ -258,18 +246,14 @@ module.exports = (
             it('equal: fails to execute if signature doesn\'t match', async () => {
               const data = executionTarget.contract.execute.getData()
 
-              await assertRevert(() =>
-                agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig })
-              )
+              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig }))
             })
 
             it('not equal: fails to execute if the signature matches', async () => {
               const N = 1102
 
               const data = executionTarget.contract.setCounter.getData(N)
-              await assertRevert(() =>
-                agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig })
-              )
+              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig }))
             })
           })
         })
@@ -304,9 +288,7 @@ module.exports = (
         assert.isFalse(await agent.canForward(nonScriptRunner, script))
         assert.equal(await executionTarget.counter(), 0)
 
-        await assertRevert(() =>
-          agent.forward(script, { from: nonScriptRunner })
-        )
+        await assertRevert(agent.forward(script, { from: nonScriptRunner }))
         assert.equal(await executionTarget.counter(), 0)
       })
     })
@@ -365,9 +347,7 @@ module.exports = (
       })
 
       it('fails to presign a hash if not authorized', async () => {
-        await assertRevert(() =>
-          agent.presignHash(HASH, { from: nobody })
-        )
+        await assertRevert(agent.presignHash(HASH, { from: nobody }))
         assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
       })
 
