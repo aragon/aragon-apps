@@ -9,8 +9,15 @@ import {
   VOTE_STATUS_EXECUTED,
 } from './vote-types'
 
-export const getAccountVote = (account, voters) =>
-  voters[account] || VOTE_ABSENT
+const EMPTY_SCRIPT = '0x00000001'
+
+export function isVoteAction(vote) {
+  return vote.data && vote.data.script && vote.data.script !== EMPTY_SCRIPT
+}
+
+export function getAccountVote(account, voters) {
+  return voters[account] || VOTE_ABSENT
+}
 
 export function isVoteOpen(vote, date) {
   const { executed, endDate } = vote.data

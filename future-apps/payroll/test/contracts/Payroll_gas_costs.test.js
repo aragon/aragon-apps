@@ -40,13 +40,13 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
     })
 
     context('when there are not allowed tokens yet', function () {
-      it('expends ~314k gas for a single allowed token', async () => {
+      it('expends ~330k gas for a single allowed token', async () => {
         await payroll.addAllowedToken(denominationToken.address)
         await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
 
         const { receipt: { cumulativeGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
 
-        assert.isBelow(cumulativeGasUsed, 317000, 'payout gas cost for a single allowed token should be ~314k')
+        assert.isBelow(cumulativeGasUsed, 330000, 'payout gas cost for a single allowed token should be ~314k')
       })
     })
 

@@ -43,7 +43,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
           const previousSalary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, previousSalary, 'Boss')
+            const receipt = await payroll.addEmployee(employee, previousSalary, 'Boss', await payroll.getTimestampPublic())
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -122,7 +122,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
           context('when the given employee is not active', () => {
             beforeEach('terminate employee', async () => {
-              await payroll.terminateEmployeeNow(employeeId, { from: owner })
+              await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
               await increaseTime(ONE_MONTH)
             })
 
@@ -171,7 +171,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 1000, 'Boss', { from: owner })
+          const receipt = await payroll.addEmployee(employee, 1000, 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
@@ -207,7 +207,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
           context('when the given address belongs to another employee', () => {
             beforeEach('add another employee', async () => {
-              await payroll.addEmployeeNow(anotherEmployee, 1000, 'Boss', { from: owner })
+              await payroll.addEmployee(anotherEmployee, 1000, 'Boss', await payroll.getTimestampPublic(), { from: owner })
             })
 
             it('reverts', async () => {
@@ -230,7 +230,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
         context('when the given employee is not active', () => {
           beforeEach('terminate employee', async () => {
-            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
             await increaseTime(ONE_MONTH)
           })
 

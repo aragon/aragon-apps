@@ -53,7 +53,7 @@ contract('Payroll forwarding,', ([owner, employee, anyone]) => {
         const sender = employee
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 100000, 'Boss', { from: owner })
+          const receipt = await payroll.addEmployee(employee, 100000, 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -65,7 +65,7 @@ contract('Payroll forwarding,', ([owner, employee, anyone]) => {
 
         context('when the employee was already terminated', () => {
           beforeEach('terminate employee', async () => {
-            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
             await payroll.mockIncreaseTime(ONE_MONTH + 1)
           })
 
@@ -110,7 +110,7 @@ contract('Payroll forwarding,', ([owner, employee, anyone]) => {
         const from = employee
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 100000, 'Boss', { from: owner })
+          const receipt = await payroll.addEmployee(employee, 100000, 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -124,7 +124,7 @@ contract('Payroll forwarding,', ([owner, employee, anyone]) => {
 
         context('when the employee was already terminated', () => {
           beforeEach('terminate employee', async () => {
-            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
             await payroll.mockIncreaseTime(ONE_MONTH + 1)
           })
 

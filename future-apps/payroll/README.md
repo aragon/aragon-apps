@@ -30,7 +30,6 @@ Set the exchange rate for an allowed token against the Payroll denomination toke
 Three options can be used:
 ```
 payroll.addEmployee(address accountAddress, uint256 initialYearlyDenominationSalary, string role, uint256 startDate)
-payroll.addEmployeeNow(address accountAddress, uint256 initialYearlyDenominationSalary, string role)
 ```
 Add employee to the organization. Start date is used as the initial payment day. If it's not provided, the date of the transaction will be used. It needs `ADD_EMPLOYEE_ROLE`.
 
