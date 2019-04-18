@@ -1,12 +1,12 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
 const { maxUint64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
+  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
 
   const NOW = 1553703809 // random fixed timestamp in seconds
   const ONE_MONTH = 60 * 60 * 24 * 31
@@ -15,124 +15,13 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
   const TOKEN_DECIMALS = 18
 
-  const currentTimestamp = async () => payroll.getTimestampPublic()
-
-  before('setup base apps and tokens', async () => {
-    ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
+  before('deploy base apps and tokens', async () => {
+    ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
   })
 
-  beforeEach('setup payroll instance', async () => {
-    payroll = await createPayrollInstance(dao, payrollBase, owner)
-    await mockTimestamps(payroll, priceFeed, NOW)
-  })
-
-  describe('addEmployeeNow', () => {
-    const role = 'Boss'
-    const salary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
-
-    context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
-      })
-
-      context('when the sender has permissions to add employees', () => {
-        const from = owner
-        let receipt, employeeId
-
-        context('when the employee has not been added yet', () => {
-          let receipt, employeeId
-
-          context('when the employee address is not the zero address', () => {
-            const address = employee
-
-            beforeEach('add employee', async () => {
-              receipt = await payroll.addEmployeeNow(address, salary, role, { from })
-              employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
-            })
-
-            it('starts with ID 1', async () => {
-              assert.equal(employeeId, 1, 'first employee ID should be 1')
-            })
-
-            it('adds a new employee and emits an event', async () => {
-              const [address] = await payroll.getEmployee(employeeId)
-              assert.equal(address, employee, 'employee address does not match')
-
-              const events = getEvents(receipt, 'AddEmployee');
-              assert.equal(events.length, 1, 'number of AddEmployee events does not match')
-
-              const event = events[0].args
-              assert.equal(event.employeeId, employeeId, 'employee id does not match')
-              assert.equal(event.role, role, 'employee role does not match')
-              assert.equal(event.accountAddress, employee, 'employee address does not match')
-              assert.equal(event.startDate.toString(), (await currentTimestamp()).toString(), 'employee start date does not match')
-              assert.equal(event.initialDenominationSalary.toString(), salary.toString(), 'employee salary does not match')
-            })
-
-            it('can add another employee', async () => {
-              const anotherRole = 'Manager'
-              const anotherSalary = annualSalaryPerSecond(120000, TOKEN_DECIMALS)
-
-              const receipt = await payroll.addEmployeeNow(anotherEmployee, anotherSalary, anotherRole)
-              const anotherEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
-
-              const events = getEvents(receipt, 'AddEmployee');
-              assert.equal(events.length, 1, 'number of AddEmployee events does not match')
-
-              const event = events[0].args
-              assert.equal(event.employeeId, anotherEmployeeId, 'employee id does not match')
-              assert.equal(event.role, anotherRole, 'employee role does not match')
-              assert.equal(event.accountAddress, anotherEmployee, 'employee address does not match')
-              assert.equal(event.startDate.toString(), (await currentTimestamp()).toString(), 'employee start date does not match')
-              assert.equal(event.initialDenominationSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
-
-              const [address, employeeSalary, bonus, reimbursements, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(anotherEmployeeId)
-              assert.equal(address, anotherEmployee, 'employee account does not match')
-              assert.equal(bonus.toString(), 0, 'employee bonus does not match')
-              assert.equal(reimbursements, 0, 'employee reimbursements does not match')
-              assert.equal(accruedSalary, 0, 'employee accrued salary does not match')
-              assert.equal(employeeSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
-              assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
-              assert.equal(endDate.toString(), maxUint64(), 'employee end date does not match')
-            })
-          })
-
-          context('when the employee address is not the zero address', () => {
-            const address = ZERO_ADDRESS
-
-            it('reverts', async () => {
-              await assertRevert(payroll.addEmployeeNow(address, salary, role, { from }), 'PAYROLL_EMPLOYEE_NULL_ADDRESS')
-            })
-          })
-        })
-
-        context('when the employee has already been added', () => {
-          beforeEach('add employee', async () => {
-            await payroll.addEmployeeNow(employee, salary, role, { from })
-          })
-
-          it('reverts', async () => {
-            await assertRevert(payroll.addEmployeeNow(employee, salary, role, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
-          })
-        })
-      })
-
-      context('when the sender does not have permissions to add employees', () => {
-        const from = anyone
-
-        it('reverts', async () => {
-          await assertRevert(payroll.addEmployeeNow(employee, salary, role, { from }), 'APP_AUTH_FAILED')
-        })
-      })
-    })
-
-    context('when it has not been initialized yet', function () {
-      it('reverts', async () => {
-        await assertRevert(payroll.addEmployeeNow(employee, salary, role, { from: owner }), 'APP_AUTH_FAILED')
-      })
-    })
+  beforeEach('create payroll and price feed instance', async () => {
+    ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
   describe('addEmployee', () => {
@@ -146,7 +35,6 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
       context('when the sender has permissions to add employees', () => {
         const from = owner
-        let receipt, employeeId
 
         context('when the employee has not been added yet', () => {
           let receipt, employeeId

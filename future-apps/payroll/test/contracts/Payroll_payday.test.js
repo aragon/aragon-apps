@@ -1,35 +1,44 @@
 const PAYMENT_TYPES = require('../helpers/payment_types')
+const setTokenRates = require('../helpers/set_token_rates')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { bn, maxUint256 } = require('../helpers/numbers')(web3)
 const { getEventArgument } = require('../helpers/events')
-const { bigExp, maxUint256 } = require('../helpers/numbers')(web3)
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
 
 contract('Payroll payday', ([owner, employee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
+  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken, anotherTokenRate
 
   const NOW = 1553703809 // random fixed timestamp in seconds
   const ONE_MONTH = 60 * 60 * 24 * 31
   const TWO_MONTHS = ONE_MONTH * 2
   const RATE_EXPIRATION_TIME = TWO_MONTHS
 
-  const PCT_ONE = bigExp(1, 18)
   const TOKEN_DECIMALS = 18
 
-  before('setup base apps and tokens', async () => {
-    ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
+  const increaseTime = async seconds => {
+    await payroll.mockIncreaseTime(seconds)
+    await priceFeed.mockIncreaseTime(seconds)
+  }
+
+  before('deploy base apps and tokens', async () => {
+    ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
+    anotherToken = await deployErc20TokenAndDeposit(owner, finance, 'Another token', TOKEN_DECIMALS)
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
   })
 
-  beforeEach('setup payroll instance', async () => {
-    payroll = await createPayrollInstance(dao, payrollBase, owner)
-    await mockTimestamps(payroll, priceFeed, NOW)
+  beforeEach('create payroll and price feed instance', async () => {
+    ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
   describe('payroll payday', () => {
     context('when it has already been initialized', function () {
       beforeEach('initialize payroll app', async () => {
         await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      })
+
+      beforeEach('set token rates', async () => {
+        anotherTokenRate = bn(5)
+        await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate])
       })
 
       context('when the sender is an employee', () => {
@@ -40,7 +49,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
           const salary = 100000
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
+            const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -69,7 +78,6 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
 
                 const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                 const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount).plus(previousAnotherTokenBalance).trunc()
                 assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
               })
@@ -86,7 +94,6 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
                 assert.equal(denominationTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
 
-                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                 const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
                 assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
                 assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
@@ -107,8 +114,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 const newDenominationTokenOwedAmount = Math.round(newOwedAmount * denominationTokenAllocation / 100)
                 const newAnotherTokenOwedAmount = Math.round(newOwedAmount * anotherTokenAllocation / 100)
 
-                await payroll.mockIncreaseTime(ONE_MONTH)
-                await priceFeed.mockIncreaseTime(ONE_MONTH)
+                await increaseTime(ONE_MONTH)
+                await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate])
                 await payroll.payday(PAYMENT_TYPES.PAYROLL, newOwedAmount, { from })
 
                 const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
@@ -116,7 +123,6 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
 
                 const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                 const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount + newAnotherTokenOwedAmount).plus(previousAnotherTokenBalance)
                 assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
               })
@@ -161,7 +167,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
               context('when exchange rates are expired', () => {
                 beforeEach('expire exchange rates', async () => {
-                  await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                  const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
+                  await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate], expiredTimestamp)
                 })
 
                 it('reverts', async () => {
@@ -189,7 +196,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                   context('when the employee is terminated', () => {
                     beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                     })
 
                     itHandlesPayrollProperly(requestedAmount, expectedRequestedAmount)
@@ -203,7 +210,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                   context('when the employee is terminated', () => {
                     beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                     })
 
                     itHandlesPayrollProperly(requestedAmount, expectedRequestedAmount)
@@ -223,7 +230,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                   context('when the employee is terminated', () => {
                     beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                     })
 
                     itHandlesPayrollProperly(requestedAmount, expectedRequestedAmount)
@@ -237,7 +244,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                   context('when the employee is terminated', () => {
                     beforeEach('terminate employee', async () => {
-                      await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                      await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                     })
 
                     if (requestedAmount === 0 || requestedAmount === totalOwedAmount) {
@@ -253,7 +260,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                       context('when exchange rates are expired', () => {
                         beforeEach('expire exchange rates', async () => {
-                          await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                          const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
+                          await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate], expiredTimestamp)
                         })
 
                         it('reverts', async () => {
@@ -272,7 +280,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 const currentOwedSalary = salary * ONE_MONTH
 
                 beforeEach('accumulate some pending salary', async () => {
-                  await payroll.mockIncreaseTime(ONE_MONTH)
+                  await increaseTime(ONE_MONTH)
                 })
 
                 context('when the requested amount is zero', () => {
@@ -342,8 +350,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
               beforeEach('accrue some salary', async () => {
                 await payroll.setEmployeeSalary(employeeId, previousSalary, { from: owner })
-                await payroll.mockIncreaseTime(ONE_MONTH)
-                await priceFeed.mockIncreaseTime(ONE_MONTH)
+                await increaseTime(ONE_MONTH)
                 await payroll.setEmployeeSalary(employeeId, salary, { from: owner })
               })
 
@@ -351,8 +358,9 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 const currentOwedSalary = salary * ONE_MONTH
                 const totalOwedSalary = previousOwedSalary + currentOwedSalary
 
-                beforeEach('accumulate some pending salary', async () => {
-                  await payroll.mockIncreaseTime(ONE_MONTH)
+                beforeEach('accumulate some pending salary and renew token rates', async () => {
+                  await increaseTime(ONE_MONTH)
+                  await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate])
                 })
 
                 context('when the requested amount is zero', () => {
@@ -423,7 +431,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
               const owedSalary = salary * ONE_MONTH
 
               beforeEach('accumulate some pending salary', async () => {
-                await payroll.mockIncreaseTime(ONE_MONTH)
+                await increaseTime(ONE_MONTH)
               })
 
               context('when the requested amount is lower than the total owed salary', () => {
@@ -477,7 +485,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
             context('when exchange rates are expired', () => {
               beforeEach('expire exchange rates', async () => {
-                await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
+                await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate], expiredTimestamp)
               })
 
               itReverts(requestedAmount, expiredRatesReason)
@@ -496,7 +505,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
               context('when the employee is terminated', () => {
                 beforeEach('terminate employee', async () => {
-                  await payroll.terminateEmployeeNow(employeeId, {from: owner})
+                  await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), {from: owner})
                 })
 
                 itRevertsHandlingExpiredRates(requestedAmount, nonExpiredRatesReason, expiredRatesReason)
@@ -510,7 +519,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
               context('when the employee is terminated', () => {
                 beforeEach('terminate employee', async () => {
-                  await payroll.terminateEmployeeNow(employeeId, {from: owner})
+                  await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), {from: owner})
                 })
 
                 itRevertsHandlingExpiredRates(requestedAmount, nonExpiredRatesReason, expiredRatesReason)
@@ -522,14 +531,14 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const salary = 0
 
             beforeEach('add employee', async () => {
-              const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
+              const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
               employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
             })
 
             const itRevertsAnyAttemptToWithdrawPartialPayroll = () => {
               context('when the employee has some pending salary', () => {
                 beforeEach('accumulate some pending salary', async () => {
-                  await payroll.mockIncreaseTime(ONE_MONTH)
+                  await increaseTime(ONE_MONTH)
                 })
 
                 context('when the requested amount is greater than zero', () => {
@@ -582,7 +591,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const salary = maxUint256()
 
             beforeEach('add employee', async () => {
-              const receipt = await payroll.addEmployeeNow(employee, salary, 'Boss')
+              const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
               employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
             })
 
@@ -600,7 +609,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 const owedSalary = maxUint256()
 
                 beforeEach('accumulate some pending salary', async () => {
-                  await payroll.mockIncreaseTime(ONE_MONTH)
+                  await increaseTime(ONE_MONTH)
                 })
 
                 context('when the requested amount is zero', () => {
@@ -627,7 +636,6 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                       assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
 
                       const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                      const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                       const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount).plus(previousAnotherTokenBalance).trunc()
                       assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
                     })
@@ -644,7 +652,6 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                       assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
                       assert.equal(denominationTokenEvent.paymentReference, 'Payroll', 'payment reference does not match')
 
-                      const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                       const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
                       assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
                       assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
@@ -661,8 +668,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                       await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from })
 
-                      await payroll.mockIncreaseTime(ONE_MONTH)
-                      await priceFeed.mockIncreaseTime(ONE_MONTH)
+                      await increaseTime(ONE_MONTH)
+                      await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate])
                       await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from })
 
                       const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
@@ -670,7 +677,6 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                       assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
 
                       const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                      const anotherTokenRate = (await priceFeed.get(denominationToken.address, anotherToken.address))[0].div(PCT_ONE)
                       const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount * 2).plus(previousAnotherTokenBalance)
                       assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
                     })
@@ -706,7 +712,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                     context('when exchange rates are expired', () => {
                       beforeEach('expire exchange rates', async () => {
-                        await priceFeed.mockSetTimestamp(NOW - TWO_MONTHS)
+                        const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
+                        await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate], expiredTimestamp)
                       })
 
                       it('reverts', async () => {
@@ -726,7 +733,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                     context('when the employee is terminated', () => {
                       beforeEach('terminate employee', async () => {
-                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                        await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                       })
 
                       itHandlesPayrollProperly(requestedAmount)
@@ -740,7 +747,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                     context('when the employee is terminated', () => {
                       beforeEach('terminate employee', async () => {
-                        await payroll.terminateEmployeeNow(employeeId, { from: owner })
+                        await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                       })
 
                       itHandlesPayrollProperly(requestedAmount)
@@ -775,7 +782,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 const owedSalary = maxUint256()
 
                 beforeEach('accumulate some pending salary', async () => {
-                  await payroll.mockIncreaseTime(ONE_MONTH)
+                  await increaseTime(ONE_MONTH)
                 })
 
                 context('when the requested amount is zero', () => {

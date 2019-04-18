@@ -174,7 +174,6 @@ const StyledDatePickersContainer = styled.div`
       display: flex;
       flex-direction: row;
       align-items: baseline;
-      left: -250px;
     `
   )}
 `

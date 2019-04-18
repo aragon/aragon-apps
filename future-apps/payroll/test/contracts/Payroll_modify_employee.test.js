@@ -1,12 +1,12 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { getEvents, getEventArgument } = require('../helpers/events')
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { maxUint256, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
+const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('Payroll employees modification', ([owner, employee, anotherEmployee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
+  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
 
   const NOW = 1553703809 // random fixed timestamp in seconds
   const ONE_MONTH = 60 * 60 * 24 * 31
@@ -15,15 +15,18 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
   const TOKEN_DECIMALS = 18
 
-  before('setup base apps and tokens', async () => {
-    ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
+  const increaseTime = async seconds => {
+    await payroll.mockIncreaseTime(seconds)
+    await priceFeed.mockIncreaseTime(seconds)
+  }
+
+  before('deploy base apps and tokens', async () => {
+    ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
+    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
   })
 
-  beforeEach('setup payroll instance', async () => {
-    payroll = await createPayrollInstance(dao, payrollBase, owner)
-    await mockTimestamps(payroll, priceFeed, NOW)
+  beforeEach('create payroll and price feed instance', async () => {
+    ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
   describe('setEmployeeSalary', () => {
@@ -40,7 +43,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
           const previousSalary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployeeNow(employee, previousSalary, 'Boss')
+            const receipt = await payroll.addEmployee(employee, previousSalary, 'Boss', await payroll.getTimestampPublic())
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -55,10 +58,10 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
               })
 
               it('adds previous owed salary to the accrued salary', async () => {
-                await payroll.mockIncreaseTime(ONE_MONTH)
+                await increaseTime(ONE_MONTH)
 
                 const receipt = await payroll.setEmployeeSalary(employeeId, newSalary, { from })
-                await payroll.mockIncreaseTime(ONE_MONTH)
+                await increaseTime(ONE_MONTH)
 
                 const accruedSalary = (await payroll.getEmployee(employeeId))[4]
                 const expectedAccruedSalary = previousSalary * ONE_MONTH
@@ -71,9 +74,9 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
               })
 
               it('accrues all previous owed salary as accrued salary', async () => {
-                await payroll.mockIncreaseTime(ONE_MONTH)
+                await increaseTime(ONE_MONTH)
                 await payroll.setEmployeeSalary(employeeId, newSalary, { from })
-                await payroll.mockIncreaseTime(ONE_MONTH)
+                await increaseTime(ONE_MONTH)
                 await payroll.setEmployeeSalary(employeeId, newSalary * 2, { from })
 
                 const accruedSalary = (await payroll.getEmployee(employeeId))[4]
@@ -94,7 +97,20 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
             context('when the given value greater than zero', () => {
               const newSalary = 1000
 
-              itSetsSalarySuccessfully(newSalary)
+              context('when the employee is not owed a huge salary amount', () => {
+                itSetsSalarySuccessfully(newSalary)
+              })
+
+              context('when the employee is owed a huge salary amount', () => {
+                beforeEach('accrued a huge salary amount', async () => {
+                  await payroll.setEmployeeSalary(employeeId, maxUint256(), { from })
+                  await increaseTime(ONE_MONTH)
+                })
+
+                it('reverts', async () => {
+                  await assertRevert(payroll.setEmployeeSalary(employeeId, newSalary, { from }), 'MATH_MUL_OVERFLOW')
+                })
+              })
             })
 
             context('when the given value is zero', () => {
@@ -106,8 +122,8 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
           context('when the given employee is not active', () => {
             beforeEach('terminate employee', async () => {
-              await payroll.terminateEmployeeNow(employeeId, { from: owner })
-              await payroll.mockIncreaseTime(ONE_MONTH)
+              await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
+              await increaseTime(ONE_MONTH)
             })
 
             it('reverts', async () => {
@@ -155,7 +171,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 1000, 'Boss', { from: owner })
+          const receipt = await payroll.addEmployee(employee, 1000, 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
@@ -191,7 +207,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
           context('when the given address belongs to another employee', () => {
             beforeEach('add another employee', async () => {
-              await payroll.addEmployeeNow(anotherEmployee, 1000, 'Boss', { from: owner })
+              await payroll.addEmployee(anotherEmployee, 1000, 'Boss', await payroll.getTimestampPublic(), { from: owner })
             })
 
             it('reverts', async () => {
@@ -214,8 +230,8 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
         context('when the given employee is not active', () => {
           beforeEach('terminate employee', async () => {
-            await payroll.terminateEmployeeNow(employeeId, { from: owner })
-            await payroll.mockIncreaseTime(ONE_MONTH)
+            await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
+            await increaseTime(ONE_MONTH)
           })
 
           itHandlesChangingEmployeeAddressSuccessfully()
