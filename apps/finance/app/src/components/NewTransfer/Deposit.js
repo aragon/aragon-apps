@@ -45,7 +45,7 @@ const renderBalanceForSelectedToken = selectedToken => {
     return ''
   }
 
-  return userBalance === -1
+  return userBalance === '-1'
     ? `Your balance could not be found for ${symbol}`
     : `You have ${
         userBalance === '0' ? 'no' : fromDecimals(userBalance, decimals)
