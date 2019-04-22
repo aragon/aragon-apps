@@ -10,7 +10,7 @@ import {
   startOfDay,
   endOfDay,
 } from 'date-fns'
-import { breakpoint, theme } from '@aragon/ui'
+import { breakpoint, font, theme } from '@aragon/ui'
 import IconCalendar from './Calendar'
 import TextInput from './TextInput'
 import DatePicker from './DatePicker'
@@ -29,13 +29,20 @@ class DateRangeInput extends React.PureComponent {
   get formattedStartDate() {
     const { startDate } = this.state
 
-    return isDate(startDate) ? formatDate(startDate, this.props.format) : ''
+    return isDate(startDate)
+      ? formatDate(startDate, this.props.format)
+      : '--/--/----'
   }
 
   get formattedEndDate() {
-    const { endDate } = this.state
+    const { endDate, startDate } = this.state
+    const { format } = this.props
 
-    return isDate(endDate) ? formatDate(endDate, this.props.format) : ''
+    return isDate(endDate)
+      ? formatDate(endDate, format)
+      : startDate
+      ? '--/--/----'
+      : formatDate(new Date(), format)
   }
 
   componentWillUnmount() {
@@ -59,36 +66,33 @@ class DateRangeInput extends React.PureComponent {
 
   handleClickOutside = event => {
     if (this.rootRef && !this.rootRef.contains(event.target)) {
-      this.setState({ showPicker: false })
+      this.setState({ showPicker: false }, () => {
+        const { startDate, endDate } = this.state
+        if (startDate && endDate) {
+          this.props.onChange({
+            start: startOfDay(startDate),
+            end: endOfDay(endDate),
+          })
+        }
+      })
     }
   }
 
   handleSelectStartDate = date => {
     const { endDate } = this.state
-    const isValidDate = isBefore(date, endDate) || isEqual(date, endDate)
+    const isValidDate =
+      !endDate || isBefore(date, endDate) || isEqual(date, endDate)
     if (isValidDate) {
-      this.setState(
-        { startDateSelected: true, startDate: startOfDay(date) },
-        () => {
-          this.props.onChange({
-            start: startOfDay(date),
-            end: endOfDay(endDate),
-          })
-        }
-      )
+      this.setState({ startDateSelected: true, startDate: startOfDay(date) })
     }
   }
 
   handleSelectEndDate = date => {
     const { startDate } = this.state
-    const isValidDate = isAfter(date, startDate) || isEqual(date, startDate)
+    const isValidDate =
+      !startDate || isAfter(date, startDate) || isEqual(date, startDate)
     if (isValidDate) {
-      this.setState({ endDateSelected: true, endDate: endOfDay(date) }, () => {
-        this.props.onChange({
-          start: startOfDay(startDate),
-          end: endOfDay(date),
-        })
-      })
+      this.setState({ endDateSelected: true, endDate: endOfDay(date) })
     }
   }
 
@@ -153,7 +157,8 @@ const StyledContainer = styled.div`
 `
 
 const StyledTextInput = styled(TextInput)`
-  width: 13rem;
+  width: 28ch;
+  fontfamily: ${font({ monospace: true })};
 `
 
 const StyledDatePickersContainer = styled.div`
