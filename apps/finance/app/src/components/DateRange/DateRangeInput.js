@@ -158,7 +158,7 @@ const StyledContainer = styled.div`
 
 const StyledTextInput = styled(TextInput)`
   width: 28ch;
-  fontfamily: ${font({ monospace: true })};
+  ${font({ monospace: true })};
 `
 
 const StyledDatePickersContainer = styled.div`
