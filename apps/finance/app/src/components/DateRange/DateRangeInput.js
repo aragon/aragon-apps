@@ -31,20 +31,14 @@ class DateRangeInput extends React.PureComponent {
   get formattedStartDate() {
     const { startDate } = this.state
 
-    return isDate(startDate)
-      ? formatDate(startDate, this.props.format)
-      : DATE_PLACEHOLDER
+    return isDate(startDate) ? formatDate(startDate, this.props.format) : ''
   }
 
   get formattedEndDate() {
     const { endDate, startDate } = this.state
     const { format } = this.props
 
-    return isDate(endDate)
-      ? formatDate(endDate, format)
-      : startDate
-      ? DATE_PLACEHOLDER
-      : formatDate(new Date(), format)
+    return isDate(endDate) ? formatDate(endDate, format) : ''
   }
 
   componentWillUnmount() {
@@ -106,6 +100,19 @@ class DateRangeInput extends React.PureComponent {
     ) : (
       <IconCalendar />
     )
+    const value =
+      this.formattedStartDate && this.formattedEndDate
+        ? `${this.formattedStartDate} - ${this.formattedEndDate}`
+        : ''
+    const placeholder = `${
+      this.formattedStartDate ? this.formattedStartDate : DATE_PLACEHOLDER
+    } - ${
+      this.formattedEndDate
+        ? this.formattedEndDate
+        : this.formattedStartDate
+        ? DATE_PLACEHOLDER
+        : formatDate(new Date(), this.props.format)
+    }`
 
     return (
       <StyledContainer
@@ -113,12 +120,12 @@ class DateRangeInput extends React.PureComponent {
         onClick={this.handleClick}
       >
         <StyledTextInput
-          value={`${this.formattedStartDate} - ${this.formattedEndDate}`}
+          value={value}
           readOnly
           adornment={icon}
           adornmentPosition="end"
           height={39}
-          placeholder=""
+          placeholder={placeholder}
         />
         {this.state.showPicker && (
           <StyledDatePickersContainer>
