@@ -15,6 +15,8 @@ import IconCalendar from './Calendar'
 import TextInput from './TextInput'
 import DatePicker from './DatePicker'
 
+const DATE_PLACEHOLDER = '--/--/----'
+
 class DateRangeInput extends React.PureComponent {
   state = {
     showPicker: false,
@@ -31,7 +33,7 @@ class DateRangeInput extends React.PureComponent {
 
     return isDate(startDate)
       ? formatDate(startDate, this.props.format)
-      : '--/--/----'
+      : DATE_PLACEHOLDER
   }
 
   get formattedEndDate() {
@@ -41,7 +43,7 @@ class DateRangeInput extends React.PureComponent {
     return isDate(endDate)
       ? formatDate(endDate, format)
       : startDate
-      ? '--/--/----'
+      ? DATE_PLACEHOLDER
       : formatDate(new Date(), format)
   }
 
@@ -116,6 +118,7 @@ class DateRangeInput extends React.PureComponent {
           adornment={icon}
           adornmentPosition="end"
           height={39}
+          placeholder=""
         />
         {this.state.showPicker && (
           <StyledDatePickersContainer>
