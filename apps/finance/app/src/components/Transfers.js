@@ -206,7 +206,7 @@ class Transfers extends React.PureComponent {
                 )} to ${formatDate(selectedDateRange.end)}) selection. `}
               {filtersActive && (
                 <a role="button" onClick={this.handleResetFilters}>
-                  Clear filters
+                  Clear filters
                 </a>
               )}
             </p>
