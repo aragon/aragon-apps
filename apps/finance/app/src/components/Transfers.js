@@ -6,7 +6,6 @@ import {
   format,
   isWithinInterval,
   startOfDay,
-  subDays,
 } from 'date-fns'
 import {
   Button,
@@ -31,8 +30,6 @@ const TRANSFER_TYPES = [
 const TRANSFERS_PER_PAGE = 10
 const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
 
-const DEFAULT_DAYS_SELECTED = 90
-
 const formatDate = date => format(date, 'dd/MM/yy')
 
 const reduceTokenDetails = (details, { address, decimals, symbol }) => {
@@ -45,8 +42,8 @@ const reduceTokenDetails = (details, { address, decimals, symbol }) => {
 
 const initialState = {
   selectedDateRange: {
-    start: subDays(new Date(), DEFAULT_DAYS_SELECTED),
-    end: new Date(),
+    start: null,
+    end: null,
   },
   selectedToken: 0,
   selectedTransferType: 0,
@@ -75,9 +72,10 @@ class Transfers extends React.PureComponent {
     })
   }
   handleResetFilters = () => {
-    this.setState({
+    this.setState(({ selectedDateRange }) => ({
       ...initialState,
-    })
+      selectedDateRange,
+    }))
   }
   handleDateRangeChange = selectedDateRange => {
     this.setState({ selectedDateRange })
@@ -136,10 +134,11 @@ class Transfers extends React.PureComponent {
     const transferType = TRANSFER_TYPES[selectedTransferType]
     return transactions.filter(
       ({ token, isIncoming, date }) =>
-        isWithinInterval(new Date(date), {
-          start: startOfDay(selectedDateRange.start),
-          end: endOfDay(selectedDateRange.end),
-        }) &&
+        (!selectedDateRange.start || !selectedDateRange.end ||
+          isWithinInterval(new Date(date), {
+            start: startOfDay(selectedDateRange.start),
+            end: endOfDay(selectedDateRange.end),
+          })) &&
         (selectedToken === 0 ||
           addressesEqual(token, tokens[selectedToken - 1].address)) &&
         (transferType === TransferTypes.All ||
@@ -200,9 +199,11 @@ class Transfers extends React.PureComponent {
         {filteredTransfers.length === 0 ? (
           <NoTransfers compactMode={compactMode}>
             <p css="text-align: center">
-              No transfers match your filter and period (
-              {formatDate(selectedDateRange.start)} to{' '}
-              {formatDate(selectedDateRange.end)}) selection.{' '}
+              No transfers match your filter{' '}
+              {selectedDateRange.start &&
+                `and period (${formatDate(
+                  selectedDateRange.start
+                )} to ${formatDate(selectedDateRange.end)}) selection. `}
               {filtersActive && (
                 <a role="button" onClick={this.handleResetFilters}>
                   Clear filters
