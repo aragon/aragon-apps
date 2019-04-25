@@ -46,7 +46,7 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
 
         const { receipt: { cumulativeGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
 
-        assert.isBelow(cumulativeGasUsed, 330000, 'payout gas cost for a single allowed token should be ~314k')
+        assert.isBelow(cumulativeGasUsed, 330000, 'payout gas cost for a single allowed token should be ~330k')
       })
     })
 
@@ -60,7 +60,7 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
         await setTokenRates(priceFeed, denominationToken, [erc20Token1, erc20Token2], [erc20Token1Rate, erc20Token2Rate])
       })
 
-      it('expends ~270k gas per allowed token', async () => {
+      it('expends ~280k gas per allowed token', async () => {
         await payroll.determineAllocation([denominationToken.address, erc20Token1.address], [60, 40], { from: employee })
         const { receipt: { cumulativeGasUsed: employeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
 
@@ -68,7 +68,7 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
         const { receipt: { cumulativeGasUsed: anotherEmployeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: anotherEmployee })
 
         const gasPerAllowedToken = anotherEmployeePayoutGasUsed - employeePayoutGasUsed
-        assert.isBelow(gasPerAllowedToken, 280000, 'payout gas cost increment per allowed token should be ~270k')
+        assert.isBelow(gasPerAllowedToken, 280000, 'payout gas cost increment per allowed token should be ~280k')
       })
     })
   })
