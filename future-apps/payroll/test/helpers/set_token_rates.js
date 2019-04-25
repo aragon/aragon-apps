@@ -11,8 +11,8 @@ module.exports = web3 => {
   return async function setTokenRates(feed, denominationToken, tokens, rates, when = undefined) {
     if (!when) when = await feed.getTimestampPublic()
 
-    const bases = tokens.map(token => typeof(token) === 'object' ? token.address : token)
-    const quotes = tokens.map(() => typeof(denominationToken) === 'object' ? denominationToken.address : denominationToken)
+    const quotes = tokens.map(token => typeof(token) === 'object' ? token.address : token)
+    const bases = tokens.map(() => typeof(denominationToken) === 'object' ? denominationToken.address : denominationToken)
     const xrts = rates.map(rate => formatRate(rate))
     const whens = tokens.map(() => when)
     const sigs = `0x${SIG.repeat(tokens.length)}`

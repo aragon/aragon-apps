@@ -665,7 +665,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             return ONE;
         }
 
-        (uint128 xrt, uint64 when) = feed.get(_token, denominationToken);
+        (uint128 xrt, uint64 when) = feed.get(denominationToken, _token);
 
         // Check the price feed is recent enough
         if (getTimestamp64().sub(when) >= rateExpiryTime) {
