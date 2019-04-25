@@ -692,6 +692,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             address token = allowedTokensArray[i];
             uint256 tokenAllocation = employee.allocation[token];
             if (tokenAllocation != uint256(0)) {
+                uint128 exchangeRate = _getExchangeRate(token);
                 require(exchangeRate > 0, ERROR_EXCHANGE_RATE_ZERO);
                 // Salary converted to token and applied allocation percentage
                 uint256 tokenAmount = _totalAmount.mul(exchangeRate).mul(tokenAllocation);
