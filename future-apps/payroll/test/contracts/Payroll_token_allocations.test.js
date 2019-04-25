@@ -1,22 +1,17 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
+const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { USD, deployDAI, deployTokenAndDeposit } = require('../helpers/tokens.js')(artifacts, web3)
+const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('Payroll token allocations', ([owner, employee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
-
-  const NOW = 1553703809 // random fixed timestamp in seconds
-  const ONE_MONTH = 60 * 60 * 24 * 31
-  const TWO_MONTHS = ONE_MONTH * 2
-  const RATE_EXPIRATION_TIME = TWO_MONTHS
-
-  const TOKEN_DECIMALS = 18
+  let dao, payroll, payrollBase, finance, vault, priceFeed, DAI
 
   before('deploy base apps and tokens', async () => {
     ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
+    DAI = await deployDAI(owner, finance)
   })
 
   beforeEach('create payroll and price feed instance', async () => {
@@ -27,15 +22,15 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
     const tokenAddresses = []
 
     before('deploy some tokens', async () => {
-      const token1 = await deployErc20TokenAndDeposit(owner, finance, 'Token 1', 14)
-      const token2 = await deployErc20TokenAndDeposit(owner, finance, 'Token 2', 14)
-      const token3 = await deployErc20TokenAndDeposit(owner, finance, 'Token 3', 14)
+      const token1 = await deployTokenAndDeposit(owner, finance, 'Token 1', 14)
+      const token2 = await deployTokenAndDeposit(owner, finance, 'Token 2', 14)
+      const token3 = await deployTokenAndDeposit(owner, finance, 'Token 3', 14)
       tokenAddresses.push(token1.address, token2.address, token3.address)
     })
 
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       beforeEach('allow multiple tokens', async () => {
@@ -80,7 +75,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
                       let token
 
                       beforeEach('submit previous allocation', async () => {
-                        token = await deployErc20TokenAndDeposit(owner, finance, 'Previous Token', 18)
+                        token = await deployTokenAndDeposit(owner, finance, 'Previous Token', 18)
                         await payroll.addAllowedToken(token.address, { from: owner })
 
                         await payroll.determineAllocation([token.address], [100], { from })
@@ -138,7 +133,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
                 let notAllowedToken
 
                 beforeEach('deploy new token', async () => {
-                  notAllowedToken = await deployErc20TokenAndDeposit(owner, finance, 'Not-allowed token', 14)
+                  notAllowedToken = await deployTokenAndDeposit(owner, finance, 'Not-allowed token', 14)
                 })
 
                 it('reverts', async () => {
@@ -201,8 +196,8 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
 
   describe('getAllocation', () => {
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the employee exists', () => {
@@ -217,23 +212,23 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
           context('when the given token is not the zero address', () => {
             context('when the given token was allowed', () => {
               beforeEach('allow denomination token', async () => {
-                await payroll.addAllowedToken(denominationToken.address, { from: owner })
+                await payroll.addAllowedToken(DAI.address, { from: owner })
               })
 
               context('when the given token was picked by the employee', () => {
                 beforeEach('determine allocation', async () => {
-                  await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
+                  await payroll.determineAllocation([DAI.address], [100], { from: employee })
                 })
 
                 it('tells its corresponding allocation', async () => {
-                  const allocation = await payroll.getAllocation(employeeId, denominationToken.address)
+                  const allocation = await payroll.getAllocation(employeeId, DAI.address)
                   assert.equal(allocation.toString(), 100, 'token allocation does not match')
                 })
               })
 
               context('when the given token was not picked by the employee', () => {
                 it('returns 0', async () => {
-                  const allocation = await payroll.getAllocation(employeeId, denominationToken.address)
+                  const allocation = await payroll.getAllocation(employeeId, DAI.address)
                   assert.equal(allocation.toString(), 0, 'token allocation should be zero')
                 })
               })
@@ -241,7 +236,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
 
             context('when the given token was not allowed', () => {
               it('returns 0', async () => {
-                const allocation = await payroll.getAllocation(employeeId, denominationToken.address)
+                const allocation = await payroll.getAllocation(employeeId, DAI.address)
                 assert.equal(allocation.toString(), 0, 'token allocation should be zero')
               })
             })
@@ -301,7 +296,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
         const employeeId = 0
 
         it('reverts', async () => {
-          await assertRevert(payroll.getAllocation(employeeId, denominationToken.address), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+          await assertRevert(payroll.getAllocation(employeeId, DAI.address), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
         })
       })
     })
@@ -310,7 +305,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
       const employeeId = 0
 
       it('reverts', async () => {
-        await assertRevert(payroll.getAllocation(employeeId, denominationToken.address), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+        await assertRevert(payroll.getAllocation(employeeId, DAI.address), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
       })
     })
   })

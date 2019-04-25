@@ -1,19 +1,13 @@
 const PAYMENT_TYPES = require('../helpers/payment_types')
-const setTokenRates = require('../helpers/set_token_rates')(web3)
+const { MAX_UINT256 } = require('../helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { bn, maxUint256 } = require('../helpers/numbers')(web3)
 const { getEvents, getEventArgument } = require('../helpers/events')
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
+const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
+const { USD, deployDAI, deployANT, DAI_RATE, ANT_RATE, setTokenRates } = require('../helpers/tokens.js')(artifacts, web3)
 
 contract('Payroll bonuses', ([owner, employee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken, anotherTokenRate
-
-  const NOW = 1553703809 // random fixed timestamp in seconds
-  const ONE_MONTH = 60 * 60 * 24 * 31
-  const TWO_MONTHS = ONE_MONTH * 2
-  const RATE_EXPIRATION_TIME = TWO_MONTHS
-
-  const TOKEN_DECIMALS = 18
+  let dao, payroll, payrollBase, finance, vault, priceFeed, DAI, ANT
 
   const increaseTime = async seconds => {
     await payroll.mockIncreaseTime(seconds)
@@ -22,8 +16,8 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
   before('deploy base apps and tokens', async () => {
     ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
+    ANT = await deployANT(owner, finance)
+    DAI = await deployDAI(owner, finance)
   })
 
   beforeEach('create payroll and price feed instance', async () => {
@@ -32,8 +26,8 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
   describe('addBonus', () => {
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the sender has permissions', () => {
@@ -91,7 +85,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
             })
 
             context('when the given bonus way greater than zero', () => {
-              const amount = maxUint256()
+              const amount = MAX_UINT256
 
               it('reverts', async () => {
                 await payroll.addBonus(employeeId, 1, { from })
@@ -145,13 +139,12 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
   describe('bonus payday', () => {
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       beforeEach('set token rates', async () => {
-        anotherTokenRate = bn(5)
-        await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate])
+        await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE])
       })
 
       context('when the sender is an employee', () => {
@@ -166,13 +159,13 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
         })
 
         context('when the employee has already set some token allocations', () => {
-          const denominationTokenAllocation = 80
-          const anotherTokenAllocation = 20
+          const allocationDAI = 80
+          const allocationANT = 20
 
           beforeEach('set tokens allocation', async () => {
-            await payroll.addAllowedToken(anotherToken.address, { from: owner })
-            await payroll.addAllowedToken(denominationToken.address, { from: owner })
-            await payroll.determineAllocation([denominationToken.address, anotherToken.address], [denominationTokenAllocation, anotherTokenAllocation], { from })
+            await payroll.addAllowedToken(ANT.address, { from: owner })
+            await payroll.addAllowedToken(DAI.address, { from: owner })
+            await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], { from })
           })
 
           context('when the employee has a pending bonus', () => {
@@ -184,22 +177,22 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
             })
 
             const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
-              const requestedDenominationTokenAmount = parseInt(expectedRequestedAmount * denominationTokenAllocation / 100)
-              const requestedAnotherTokenAmount = expectedRequestedAmount * anotherTokenAllocation / 100
+              const requestedDAI = DAI_RATE.mul(expectedRequestedAmount * allocationDAI / 100).trunc()
+              const requestedANT = ANT_RATE.mul(expectedRequestedAmount * allocationANT / 100).trunc()
 
               it('transfers all the pending bonus', async () => {
-                const previousDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                const previousAnotherTokenBalance = await anotherToken.balanceOf(employee)
+                const previousDAI = await DAI.balanceOf(employee)
+                const previousANT = await ANT.balanceOf(employee)
 
                 await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
 
-                const currentDenominationTokenBalance = await denominationToken.balanceOf(employee)
-                const expectedDenominationTokenBalance = previousDenominationTokenBalance.plus(requestedDenominationTokenAmount);
-                assert.equal(currentDenominationTokenBalance.toString(), expectedDenominationTokenBalance.toString(), 'current denomination token balance does not match')
+                const currentDAI = await DAI.balanceOf(employee)
+                const expectedDAI = previousDAI.plus(requestedDAI)
+                assert.equal(currentDAI.toString(), expectedDAI.toString(), 'current DAI balance does not match')
 
-                const currentAnotherTokenBalance = await anotherToken.balanceOf(employee)
-                const expectedAnotherTokenBalance = anotherTokenRate.mul(requestedAnotherTokenAmount).plus(previousAnotherTokenBalance).trunc()
-                assert.equal(currentAnotherTokenBalance.toString(), expectedAnotherTokenBalance.toString(), 'current token balance does not match')
+                const currentANT = await ANT.balanceOf(employee)
+                const expectedANT = previousANT.plus(requestedANT)
+                assert.equal(currentANT.toString(), expectedANT.toString(), 'current ANT balance does not match')
               })
 
               it('emits one event per allocated token', async () => {
@@ -208,17 +201,17 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                 const events = receipt.logs.filter(l => l.event === 'SendPayment')
                 assert.equal(events.length, 2, 'should have emitted two events')
 
-                const denominationTokenEvent = events.find(e => e.args.token === denominationToken.address).args
-                assert.equal(denominationTokenEvent.employee, employee, 'employee address does not match')
-                assert.equal(denominationTokenEvent.token, denominationToken.address, 'denomination token address does not match')
-                assert.equal(denominationTokenEvent.amount.toString(), requestedDenominationTokenAmount, 'payment amount does not match')
-                assert.equal(denominationTokenEvent.paymentReference, 'Bonus', 'payment reference does not match')
+                const eventDAI = events.find(e => e.args.token === DAI.address).args
+                assert.equal(eventDAI.employee, employee, 'employee address does not match')
+                assert.equal(eventDAI.token, DAI.address, 'DAI address does not match')
+                assert.equal(eventDAI.amount.toString(), requestedDAI, 'payment amount does not match')
+                assert.equal(eventDAI.paymentReference, 'Bonus', 'payment reference does not match')
 
-                const anotherTokenEvent = events.find(e => e.args.token === anotherToken.address).args
-                assert.equal(anotherTokenEvent.employee, employee, 'employee address does not match')
-                assert.equal(anotherTokenEvent.token, anotherToken.address, 'token address does not match')
-                assert.equal(anotherTokenEvent.amount.div(anotherTokenRate).trunc().toString(), parseInt(requestedAnotherTokenAmount), 'payment amount does not match')
-                assert.equal(anotherTokenEvent.paymentReference, 'Bonus', 'payment reference does not match')
+                const eventANT = events.find(e => e.args.token === ANT.address).args
+                assert.equal(eventANT.employee, employee, 'employee address does not match')
+                assert.equal(eventANT.token, ANT.address, 'token address does not match')
+                assert.equal(eventANT.amount.toString(), requestedANT, 'payment amount does not match')
+                assert.equal(eventANT.paymentReference, 'Bonus', 'payment reference does not match')
               })
             }
 
@@ -244,7 +237,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               context('when exchange rates are expired', () => {
                 beforeEach('expire exchange rates', async () => {
                   const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
-                  await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate], expiredTimestamp)
+                  await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE], expiredTimestamp)
                 })
 
                 it('reverts', async () => {
@@ -297,7 +290,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                   context('when exchange rates are expired', () => {
                     beforeEach('expire exchange rates', async () => {
                       const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
-                      await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate], expiredTimestamp)
+                      await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE], expiredTimestamp)
                     })
 
                     it('reverts', async () => {
@@ -388,7 +381,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                   context('when exchange rates are expired', () => {
                     beforeEach('expire exchange rates', async () => {
                       const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
-                      await setTokenRates(priceFeed, denominationToken, [anotherToken], [anotherTokenRate], expiredTimestamp)
+                      await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE], expiredTimestamp)
                     })
 
                     it('reverts', async () => {

@@ -1,23 +1,18 @@
-const { maxUint64 } = require('../helpers/numbers')(web3)
+const { MAX_UINT64 } = require('../helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEventArgument } = require('../helpers/events')
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
+const { USD, deployDAI } = require('../helpers/tokens.js')(artifacts, web3)
+const { NOW, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 contract('Payroll employee getters', ([owner, employee]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
-
-  const NOW = 1553703809 // random fixed timestamp in seconds
-  const ONE_MONTH = 60 * 60 * 24 * 31
-  const TWO_MONTHS = ONE_MONTH * 2
-  const RATE_EXPIRATION_TIME = TWO_MONTHS
-
-  const TOKEN_DECIMALS = 18
+  let dao, payroll, payrollBase, finance, vault, priceFeed, DAI
 
   const currentTimestamp = async () => payroll.getTimestampPublic()
 
   before('deploy base apps and tokens', async () => {
     ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
+    DAI = await deployDAI(owner, finance)
   })
 
   beforeEach('create payroll and price feed instance', async () => {
@@ -26,8 +21,8 @@ contract('Payroll employee getters', ([owner, employee]) => {
 
   describe('getEmployee', () => {
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the given id exists', () => {
@@ -47,7 +42,7 @@ contract('Payroll employee getters', ([owner, employee]) => {
           assert.equal(accruedSalary, 0, 'employee accrued salary does not match')
           assert.equal(salary.toString(), 1000, 'employee salary does not match')
           assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
-          assert.equal(endDate.toString(), maxUint64(), 'employee end date does not match')
+          assert.equal(endDate.toString(), MAX_UINT64, 'employee end date does not match')
         })
       })
 
@@ -71,8 +66,8 @@ contract('Payroll employee getters', ([owner, employee]) => {
 
   describe('getEmployeeByAddress', () => {
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the given address exists', () => {
@@ -93,7 +88,7 @@ contract('Payroll employee getters', ([owner, employee]) => {
           assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
           assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
           assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
-          assert.equal(endDate.toString(), maxUint64(), 'employee end date does not match')
+          assert.equal(endDate.toString(), MAX_UINT64, 'employee end date does not match')
         })
       })
 

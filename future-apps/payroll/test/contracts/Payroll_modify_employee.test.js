@@ -1,19 +1,14 @@
+const { USD } = require('../helpers/tokens.js')(artifacts, web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
-const { maxUint256, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
+const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { MAX_UINT256, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
+const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('Payroll employees modification', ([owner, employee, anotherEmployee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
-
-  const NOW = 1553703809 // random fixed timestamp in seconds
-  const ONE_MONTH = 60 * 60 * 24 * 31
-  const TWO_MONTHS = ONE_MONTH * 2
-  const RATE_EXPIRATION_TIME = TWO_MONTHS
-
-  const TOKEN_DECIMALS = 18
+  let dao, payroll, payrollBase, finance, vault, priceFeed
 
   const increaseTime = async seconds => {
     await payroll.mockIncreaseTime(seconds)
@@ -22,7 +17,6 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
   before('deploy base apps and tokens', async () => {
     ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
   })
 
   beforeEach('create payroll and price feed instance', async () => {
@@ -31,8 +25,8 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
   describe('setEmployeeSalary', () => {
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the sender has permissions', () => {
@@ -40,7 +34,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
         context('when the given employee exists', () => {
           let employeeId
-          const previousSalary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
+          const previousSalary = annualSalaryPerSecond(100000)
 
           beforeEach('add employee', async () => {
             const receipt = await payroll.addEmployee(employee, previousSalary, 'Boss', await payroll.getTimestampPublic())
@@ -103,7 +97,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
               context('when the employee is owed a huge salary amount', () => {
                 beforeEach('accrued a huge salary amount', async () => {
-                  await payroll.setEmployeeSalary(employeeId, maxUint256(), { from })
+                  await payroll.setEmployeeSalary(employeeId, MAX_UINT256, { from })
                   await increaseTime(ONE_MONTH)
                 })
 
@@ -162,8 +156,8 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
   describe('changeAddressByEmployee', () => {
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the sender is an employee', () => {

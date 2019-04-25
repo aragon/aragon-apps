@@ -1,22 +1,12 @@
 const PAYMENT_TYPES = require('../helpers/payment_types')
-const { bigExp, bn } = require('../helpers/numbers')(web3)
+const { bn } = require('../helpers/numbers')(web3)
 const { getEventArgument } = require('../helpers/events')
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
+const { NOW, TWO_MINUTES, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
+const { USD, ETH, ETH_RATE, deployDAI, DAI_RATE, deployANT, ANT_RATE, setTokenRate } = require('../helpers/tokens.js')(artifacts, web3)
 
 contract('Payroll rates handling,', ([owner, employee]) => {
-  let USD, ETH, DAI, ANT
-  let dao, payroll, payrollBase, finance, vault, priceFeed, employeeId
-
-  const NOW = 1553703809 // random fixed timestamp in seconds
-  const TWO_MINUTES = 60 * 2
-  const ONE_MONTH = 60 * 60 * 24 * 31
-  const RATE_EXPIRATION_TIME = ONE_MONTH
-
-  const TOKEN_DECIMALS = 18
-  const ONE = bigExp(1, 18)
-  const SIG = '00'.repeat(65) // sig full of 0s
-
-  const formatRate = (n) => bn(n.toFixed(18)).times(ONE)
+  let dao, payroll, payrollBase, finance, vault, priceFeed, employeeId, DAI, ANT
 
   const increaseTime = async seconds => {
     await payroll.mockIncreaseTime(seconds)
@@ -26,12 +16,9 @@ contract('Payroll rates handling,', ([owner, employee]) => {
   before('deploy contracts and tokens', async () => {
     ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
 
-    USD = '0x0000000000000000000000000000000000000001'
-    ETH = '0x0000000000000000000000000000000000000000'
+    DAI = await deployDAI(owner, finance)
+    ANT = await deployANT(owner, finance)
     await finance.deposit(ETH, bn(50, 18), 'Initial ETH deposit', { from: owner, value: bn(50, 18) })
-
-    DAI = await deployErc20TokenAndDeposit(owner, finance, 'DAI', TOKEN_DECIMALS)
-    ANT = await deployErc20TokenAndDeposit(owner, finance, 'ANT', TOKEN_DECIMALS)
   })
 
   beforeEach('initialize payroll app with USD as denomination token', async () => {
@@ -41,13 +28,9 @@ contract('Payroll rates handling,', ([owner, employee]) => {
 
   describe('rates', () => {
     beforeEach('set rates and allow tokens', async () => {
-      const DAI_rate = bn(1)
-      const ANT_rate = bn(0.5)
-      const ETH_rate = bn(20)
-
-      await priceFeed.update(ETH, USD, formatRate(ETH_rate), NOW, SIG)
-      await priceFeed.update(DAI.address, USD, formatRate(DAI_rate), NOW, SIG)
-      await priceFeed.update(ANT.address, USD, formatRate(ANT_rate), NOW, SIG)
+      await setTokenRate(priceFeed, ETH, USD, ETH_RATE)
+      await setTokenRate(priceFeed, DAI, USD, DAI_RATE)
+      await setTokenRate(priceFeed, ANT, USD, ANT_RATE)
 
       await payroll.addAllowedToken(ETH, { from: owner })
       await payroll.addAllowedToken(DAI.address, { from: owner })
