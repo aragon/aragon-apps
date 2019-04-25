@@ -33,7 +33,7 @@ const tokenTestGroups = [
     },
 ]
 
-contract('Finance App', accounts => {
+contract('Finance App', ([root, owner, recipient]) => {
     let daoFact, financeBase, finance, vaultBase, vault, token1, token2
 
     let ETH, MAX_UINT64, ANY_ENTITY, APP_MANAGER_ROLE
@@ -73,10 +73,6 @@ contract('Finance App', accounts => {
         FINANCE_VAULT_NOT_CONTRACT: 'FINANCE_VAULT_NOT_CONTRACT',
     })
 
-    const root = accounts[0]
-    const recipient = accounts[1]
-
-    const n = '0x00'
     const NOW = 1
     const ONE_DAY = 60 * 60 * 24 // One day in seconds
     const PERIOD_DURATION = ONE_DAY
@@ -162,11 +158,11 @@ contract('Finance App', accounts => {
         await vault.initialize()
 
         // Set up initial balances
-        token1 = await TokenMock.new(accounts[0], 10000 + VAULT_INITIAL_TOKEN1_BALANCE)
-        await token1.transfer(vault.address, VAULT_INITIAL_TOKEN1_BALANCE)
-        token2 = await TokenMock.new(accounts[0], 10000 + VAULT_INITIAL_TOKEN2_BALANCE)
-        await token2.transfer(vault.address, VAULT_INITIAL_TOKEN2_BALANCE)
-        await vault.deposit(ETH, VAULT_INITIAL_ETH_BALANCE, { value: VAULT_INITIAL_ETH_BALANCE, from: accounts[0] });
+        token1 = await TokenMock.new(owner, 10000 + VAULT_INITIAL_TOKEN1_BALANCE)
+        await token1.transfer(vault.address, VAULT_INITIAL_TOKEN1_BALANCE, { from: owner })
+        token2 = await TokenMock.new(owner, 10000 + VAULT_INITIAL_TOKEN2_BALANCE)
+        await token2.transfer(vault.address, VAULT_INITIAL_TOKEN2_BALANCE, { from: owner })
+        await vault.deposit(ETH, VAULT_INITIAL_ETH_BALANCE, { value: VAULT_INITIAL_ETH_BALANCE, from: owner });
 
         await finance.initialize(vault.address, PERIOD_DURATION)
     })
@@ -266,13 +262,13 @@ contract('Finance App', accounts => {
 
             beforeEach(async () => {
                 // Set up a new token similar to token1's distribution
-                tokenInstance = await tokenContract.new(accounts[0], 10000 + VAULT_INITIAL_TOKEN1_BALANCE)
-                await tokenInstance.transfer(vault.address, VAULT_INITIAL_TOKEN1_BALANCE)
+                tokenInstance = await tokenContract.new(owner, 10000 + VAULT_INITIAL_TOKEN1_BALANCE)
+                await tokenInstance.transfer(vault.address, VAULT_INITIAL_TOKEN1_BALANCE, { from: owner })
             })
 
             it('records deposits', async () => {
-                await tokenInstance.approve(finance.address, transferAmount)
-                const receipt = await finance.deposit(tokenInstance.address, transferAmount, 'ref')
+                await tokenInstance.approve(finance.address, transferAmount, { from: owner })
+                const receipt = await finance.deposit(tokenInstance.address, transferAmount, 'ref', { from: owner })
 
                 // vault has 100 tokens initially
                 assert.equal((await tokenInstance.balanceOf(vault.address)).valueOf(), VAULT_INITIAL_TOKEN1_BALANCE + transferAmount, 'deposited tokens must be in vault')
@@ -283,7 +279,7 @@ contract('Finance App', accounts => {
                 assert.equal(paymentId, 0, 'payment id should be 0')
                 assert.equal(paymentExecutionNumber, 0, 'payment execution number should be 0')
                 assert.equal(token, tokenInstance.address, 'token should be correct')
-                assert.equal(entity, accounts[0], 'entity should be correct')
+                assert.equal(entity, owner, 'entity should be correct')
                 assert.isTrue(incoming, 'tx should be incoming')
                 assert.equal(date, 1, 'date should be correct')
                 assert.equal(getEventData(receipt, 'NewTransaction', 'reference'), 'ref', 'ref should be correct')
@@ -300,7 +296,7 @@ contract('Finance App', accounts => {
         const sentWei = 10
 
         it('records deposits using deposit function', async () => {
-            const receipt = await finance.deposit(ETH, sentWei, reference, { value: sentWei })
+            const receipt = await finance.deposit(ETH, sentWei, reference, { from: owner, value: sentWei })
 
             const transactionId = receipt.logs.filter(log => log.event == 'NewTransaction')[0].args.transactionId
 
@@ -312,14 +308,14 @@ contract('Finance App', accounts => {
             assert.equal(paymentId, 0, 'payment id should be 0')
             assert.equal(paymentExecutionNumber, 0, 'payment execution number should be 0')
             assert.equal(token, ETH, 'token should be ETH token')
-            assert.equal(entity, accounts[0], 'entity should be correct')
+            assert.equal(entity, owner, 'entity should be correct')
             assert.isTrue(incoming, 'tx should be incoming')
             assert.equal(date, 1, 'date should be correct')
             assert.equal(getEventData(receipt, 'NewTransaction', 'reference'), reference, 'ref should be correct')
         })
 
         it('records ETH deposits using fallback', async () => {
-            const receipt = await finance.send(sentWei)
+            const receipt = await finance.sendTransaction({ from: owner, value: sentWei })
             const transactionId = receipt.logs.filter(log => log.event == 'NewTransaction')[0].args.transactionId
 
             const [periodId, amount, paymentId, paymentExecutionNumber, token, entity, incoming, date] = await finance.getTransaction(transactionId)
@@ -330,7 +326,7 @@ contract('Finance App', accounts => {
             assert.equal(paymentId, 0, 'payment id should be 0')
             assert.equal(paymentExecutionNumber, 0, 'payment execution number should be 0')
             assert.equal(token, ETH, 'token should be ETH token')
-            assert.equal(entity, accounts[0], 'entity should be correct')
+            assert.equal(entity, owner, 'entity should be correct')
             assert.isTrue(incoming, 'tx should be incoming')
             assert.equal(date, 1, 'date should be correct')
             assert.equal(getEventData(receipt, 'NewTransaction', 'reference'), 'Ether transfer to Finance app', 'ref should be correct')
@@ -348,11 +344,11 @@ contract('Finance App', accounts => {
 
             beforeEach(async () => {
                 // Set up a new token similar to token1's distribution
-                tokenInstance = await tokenContract.new(accounts[0], 10000 + VAULT_INITIAL_TOKEN1_BALANCE + lockedTokenAmount)
-                await tokenInstance.transfer(vault.address, VAULT_INITIAL_TOKEN1_BALANCE)
+                tokenInstance = await tokenContract.new(owner, 10000 + VAULT_INITIAL_TOKEN1_BALANCE + lockedTokenAmount)
+                await tokenInstance.transfer(vault.address, VAULT_INITIAL_TOKEN1_BALANCE, { from: owner })
 
                 // 'lock' tokens
-                await tokenInstance.transfer(finance.address, lockedTokenAmount)
+                await tokenInstance.transfer(finance.address, lockedTokenAmount, { from: owner })
             })
 
             it('allow recoverability is disabled', async () => {
@@ -453,7 +449,7 @@ contract('Finance App', accounts => {
             assert.equal(getEventData(receipt, 'NewPayment', 'reference'), 'ref', 'ref should match')
             assert.isFalse(disabled, 'should be enabled')
             assert.equal(executions, 1, 'should be on first execution')
-            assert.equal(createdBy, accounts[0], 'should have correct creator')
+            assert.equal(createdBy, root, 'should have correct creator')
         })
 
         it('fails trying to get payment out of bounds', async () => {
@@ -570,8 +566,8 @@ contract('Finance App', accounts => {
 
                 await finance.executePayment(1) // first create payment doesn't get an id because it is simple immediate tx
 
-                await token1.approve(finance.address, 5)
-                await finance.deposit(token1.address, 5, '')
+                await token1.approve(finance.address, 5, { from: owner })
+                await finance.deposit(token1.address, 5, '', { from: owner })
             })
 
             it('has correct token statements', async () => {
@@ -946,7 +942,7 @@ contract('Finance App', accounts => {
 
             beforeEach(async () => {
                 // 'lock' tokens
-                await token1.transfer(nonInit.address, lockedTokenAmount)
+                await token1.transfer(nonInit.address, lockedTokenAmount, { from: owner })
             })
 
             it('allow recoverability is enabled', async () => {

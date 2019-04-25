@@ -142,6 +142,7 @@ const ListItem = styled.li`
     `
       display: block;
       padding: 25px;
+      border: 0;
     `
   )};
 `

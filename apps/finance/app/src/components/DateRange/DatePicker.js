@@ -220,7 +220,7 @@ const DayView = styled.li`
   ${props =>
     props.today &&
     css`
-      border: 1px solid ${theme.disabled};
+      border: 1px solid ${mainColor};
     `}
 
   ${props =>

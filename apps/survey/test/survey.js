@@ -6,18 +6,13 @@ const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16
 const surveyEvent = receipt => receipt.logs.filter(x => x.event == 'StartSurvey')[0].args
 const createdSurveyId = receipt => surveyEvent(receipt).surveyId
 
-contract('Survey app', accounts => {
+contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, nonHolder]) => {
   let daoFact, dao, surveyBase, survey
 
   let ABSTAIN_VOTE, ANY_ENTITY
   let APP_MANAGER_ROLE, CREATE_SURVEYS_ROLE, MODIFY_PARTICIPATION_ROLE
 
-  const root = accounts[0]
-  const holder19 = accounts[0]
-  const holder31 = accounts[1]
-  const holder50 = accounts[2]
-  const nonHolder = accounts[4]
-  const NULL_ADDRESS = '0x00'
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
   const SURVEY_APP_ID = '0x1234'
   const SURVEY_MOCK_APP_ID = '0x12341234'
@@ -27,7 +22,7 @@ contract('Survey app', accounts => {
   before(async () => {
     const kernelBase = await getContract('Kernel').new(true) // petrify immediately
     const aclBase = await getContract('ACL').new()
-    daoFact = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, NULL_ADDRESS)
+    daoFact = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, ZERO_ADDRESS)
     surveyBase = await getContract('SurveyMock').new()
 
     // Setup constants
@@ -56,7 +51,7 @@ contract('Survey app', accounts => {
     let token
 
     beforeEach(async () => {
-      token = await getContract('MiniMeToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
+      token = await getContract('MiniMeToken').new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
       await token.generateTokens(holder19, 19)
       await token.generateTokens(holder31, 31)
@@ -66,17 +61,13 @@ contract('Survey app', accounts => {
     })
 
     it('fails on reinitialization', async () => {
-      await assertRevert(async () => {
-        await survey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime)
-      })
+      await assertRevert(survey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime))
     })
 
     it('cannot initialize base app', async () => {
       const newSurvey = await getContract('Survey').new()
       assert.isTrue(await newSurvey.isPetrified())
-      await assertRevert(async () => {
-        await newSurvey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime)
-      })
+      await assertRevert(newSurvey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime))
     })
 
     it('can change minimum acceptance participation', async () => {
@@ -88,23 +79,19 @@ contract('Survey app', accounts => {
     })
 
     it('cannot change minimum acceptance participation to 0', async () => {
-      await assertRevert(async () => {
-        await survey.changeMinAcceptParticipationPct(0)
-      })
+      await assertRevert(survey.changeMinAcceptParticipationPct(0))
     })
 
     it('cannot change minimum acceptance participation to more than 100', async () => {
-      await assertRevert(async () => {
-        await survey.changeMinAcceptParticipationPct(pct16(101))
-      })
+      await assertRevert(survey.changeMinAcceptParticipationPct(pct16(101)))
     })
 
     context('creating survey', () => {
       const optionsCount = 10e9 // lots of options
-      let surveyId
+      let surveyId, creator, metadata
 
       beforeEach(async () => {
-        createdEvent = surveyEvent(await survey.newSurvey('metadata', optionsCount, { from: nonHolder }))
+        const createdEvent = surveyEvent(await survey.newSurvey('metadata', optionsCount, { from: nonHolder }))
         surveyId = createdEvent.surveyId
         creator = createdEvent.creator
         metadata = createdEvent.metadata
@@ -127,21 +114,15 @@ contract('Survey app', accounts => {
       })
 
       it('fails getting a survey out of bounds', async () => {
-        await assertRevert(async () => {
-          await survey.getSurvey(surveyId + 1)
-        })
+        await assertRevert(survey.getSurvey(surveyId + 1))
       })
 
       it('fails getting option power for a survey out of bounds', async () => {
-        await assertRevert(async () => {
-          await survey.getOptionPower(surveyId + 1, 0)
-        })
+        await assertRevert(survey.getOptionPower(surveyId + 1, 0))
       })
 
       it('fails getting option power for an option out of bounds', async () => {
-        await assertRevert(async () => {
-          await survey.getOptionPower(surveyId, optionsCount + 1)
-        })
+        await assertRevert(survey.getOptionPower(surveyId, optionsCount + 1))
       })
 
       it('counts votes properly', async () => {
@@ -178,21 +159,15 @@ contract('Survey app', accounts => {
       it('fails if voting on non-existing option', async () => {
         await survey.voteOption(surveyId, optionsCount, { from: holder31 })
 
-        await assertRevert(async () => {
-          await survey.voteOption(surveyId, optionsCount + 1, { from: holder31 })
-        })
+        await assertRevert(survey.voteOption(surveyId, optionsCount + 1, { from: holder31 }))
       })
 
       it('fails if vote has no options', async () => {
-        await assertRevert(async () => {
-          await survey.voteOptions(surveyId, [], [], { from: holder50 })
-        })
+        await assertRevert(survey.voteOptions(surveyId, [], [], { from: holder50 }))
       })
 
       it('fails if single-option vote is for ABSTAIN_VOTE', async () => {
-        await assertRevert(async () => {
-          await survey.voteOption(surveyId, ABSTAIN_VOTE, { from: holder50 })
-        })
+        await assertRevert(survey.voteOption(surveyId, ABSTAIN_VOTE, { from: holder50 }))
       })
 
       it('allows to remove and re-vote', async () => {
@@ -226,16 +201,12 @@ contract('Survey app', accounts => {
       })
 
       it('throws when non-holder votes', async () => {
-        await assertRevert(async () => {
-          await survey.voteOption(surveyId, 1, { from: nonHolder })
-        })
+        await assertRevert(survey.voteOption(surveyId, 1, { from: nonHolder }))
       })
 
       it('throws when voting after survey closes', async () => {
         await survey.mockIncreaseTime(surveyTime + 1)
-        await assertRevert(async () => {
-          await survey.voteOption(surveyId, 1, { from: holder31 })
-        })
+        await assertRevert(survey.voteOption(surveyId, 1, { from: holder31 }))
       })
 
       it('casts complete multi option vote', async () => {
@@ -262,27 +233,19 @@ contract('Survey app', accounts => {
       })
 
       it('fails if multi option vote has different size arrays', async () => {
-        await assertRevert(async () => {
-          await survey.voteOptions(surveyId, [1,2], [10, 10, 11], { from: holder31 })
-        })
+        await assertRevert(survey.voteOptions(surveyId, [1,2], [10, 10, 11], { from: holder31 }))
       })
 
       it('fails if multi option vote has unordered options', async () => {
-        await assertRevert(async () => {
-          await survey.voteOptions(surveyId, [2,1], [10, 21], { from: holder31 })
-        })
+        await assertRevert(survey.voteOptions(surveyId, [2,1], [10, 21], { from: holder31 }))
       })
 
       it('fails if multi option vote has NO VOTE option', async () => {
-        await assertRevert(async () => {
-          await survey.voteOptions(surveyId, [ABSTAIN_VOTE, 2], [10, 21], { from: holder31 })
-        })
+        await assertRevert(survey.voteOptions(surveyId, [ABSTAIN_VOTE, 2], [10, 21], { from: holder31 }))
       })
 
       it('fails if multi option vote has a zero stake option', async () => {
-        await assertRevert(async () => {
-          await survey.voteOptions(surveyId, [1,2], [10, 0], { from: holder31 })
-        })
+        await assertRevert(survey.voteOptions(surveyId, [1,2], [10, 0], { from: holder31 }))
       })
     })
   })
@@ -291,7 +254,7 @@ contract('Survey app', accounts => {
     let token
 
     beforeEach(async () => {
-      token = await getContract('MiniMeToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
+      token = await getContract('MiniMeToken').new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
       await token.generateTokens(holder19, 19)
       await token.generateTokens(holder31, 31)
@@ -300,43 +263,35 @@ contract('Survey app', accounts => {
 
     it('fails if min acceptance participation is 0', async () => {
       const badMinimumAcceptanceParticipationPct = pct16(0)
-      await assertRevert(async() => {
-        await survey.initialize(token.address, badMinimumAcceptanceParticipationPct, surveyTime)
-      })
+      await assertRevert(survey.initialize(token.address, badMinimumAcceptanceParticipationPct, surveyTime))
     })
 
     it('fails if min participation is greater than 100', async () => {
       const badMinimumAcceptanceParticipationPct = pct16(101)
-      await assertRevert(async () => {
-        await survey.initialize(token.address, badMinimumAcceptanceParticipationPct, surveyTime)
-      })
+      await assertRevert(survey.initialize(token.address, badMinimumAcceptanceParticipationPct, surveyTime))
     })
   })
 
   context('before init', () => {
     it('fails creating a survey before initialization', async () => {
-      await assertRevert(async () => {
-        await survey.newSurvey('metadata', 10)
-      })
+      await assertRevert(survey.newSurvey('metadata', 10))
     })
   })
 
   context('empty token', () => {
     beforeEach(async() => {
-      const badToken = await getContract('MiniMeToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
+      const badToken = await getContract('MiniMeToken').new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
       await survey.initialize(badToken.address, minimumAcceptanceParticipationPct, surveyTime)
     })
 
     it('fails creating a survey if token has no holder', async () => {
-      await assertRevert(async () => {
-        await survey.newSurvey('metadata', 10)
-      })
+      await assertRevert(survey.newSurvey('metadata', 10))
     })
   })
 
   context('wrong supply token', () => {
     beforeEach(async() => {
-      const badToken = await getContract('BadToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
+      const badToken = await getContract('BadToken').new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
       await badToken.generateTokens(holder19, 19)
       await survey.initialize(badToken.address, minimumAcceptanceParticipationPct, surveyTime)
     })
@@ -344,25 +299,19 @@ contract('Survey app', accounts => {
     // this bad token has broken `totalSupplyAt`, returning always 1
     it('fails voting with more than 1 token because of wrong votingPower', async () => {
       const surveyId = createdSurveyId(await survey.newSurvey('metadata', 10))
-      await assertRevert(async () => {
-        await survey.voteOption(surveyId, 10, { from: holder19 })
-      })
+      await assertRevert(survey.voteOption(surveyId, 10, { from: holder19 }))
     })
   })
 
   context('changing token supply', () => {
-    const optionsCount = 10e9 // lots of options
-    const holder1 = accounts[1]
-    const holder2 = accounts[2]
-
-    let surveyMockBase
+    let surveyMockBase, token
 
     before(async () => {
       surveyMockBase = await getContract('SurveyMock').new()
     })
 
     beforeEach(async () => {
-      token = await getContract('MiniMeToken').new(NULL_ADDRESS, NULL_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
+      token = await getContract('MiniMeToken').new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
       await token.generateTokens(holder1, 1)
       await token.generateTokens(holder2, 1)

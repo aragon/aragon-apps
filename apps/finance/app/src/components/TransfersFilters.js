@@ -131,8 +131,6 @@ const Filters = styled.div`
           width: 100%;
           margin: 0;
           justify-content: space-between;
-          margin-left: 0;
-          margin-right: 0;
 
           /* Easier than passing compactMode to every Filter & FilterLabel */
           ${Filter} {
