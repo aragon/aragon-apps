@@ -75,7 +75,7 @@ contract PayrollKit is KitBase {
     uint64 amount = uint64(-1);
     address constant ANY_ENTITY = address(-1);
     address[] allowedTokens;
-    uint8[] distribution;
+    uint256[] distribution;
 
     constructor(ENS ens) KitBase(DAOFactory(0), ens) public {
         tokenFactory = new MiniMeTokenFactory();
@@ -132,8 +132,8 @@ contract PayrollKit is KitBase {
         allowedTokens.push(address(token1));
         allowedTokens.push(address(token2));
 
-        distribution.push(uint8(45));
-        distribution.push(uint8(55));
+        distribution.push(45);
+        distribution.push(55);
 
         payroll.determineAllocation(allowedTokens, distribution);
         payroll.changeAddressByEmployee(root);
@@ -242,10 +242,10 @@ contract PayrollKit is KitBase {
         uint256 salary4 = 2218166146982026; // 70000
         uint256 salary5 = 1901285268841737; // 60000
 
-        payroll.addEmployee(this, salary1, "Protofire", "Organization", uint64(now - 172800));
-        payroll.addEmployee(account2, salary2, "Leonardo Lower", "Project Manager",  uint64(now - 86400));
-        payroll.addEmployee(account3, salary3, "Lisandro Corbalan", "Developer", uint64(now - 172800));
-        payroll.addEmployee(account4, salary4, "Sebastián Galiano", "Developer", uint64(now - 172800));
-        payroll.addEmployee(account5, salary5, "Fernando Greco", "Developer", uint64(now - 172800));
+        payroll.addEmployee(this, salary1, "Organization", uint64(now - 172800));
+        payroll.addEmployee(account2, salary2, "Project Manager",  uint64(now - 86400));
+        payroll.addEmployee(account3, salary3, "Developer", uint64(now - 172800));
+        payroll.addEmployee(account4, salary4, "Developer", uint64(now - 172800));
+        payroll.addEmployee(account5, salary5, "Developer", uint64(now - 172800));
     }
 }
