@@ -7,6 +7,7 @@ module.exports = web3 => {
   const maxUint = (e) => bn(2).pow(bn(e)).sub(bn(1))
   const maxUint64 = () => maxUint(64)
   const maxUint256 = () => maxUint(256)
+  const one = () => bigExp(1, 18)
 
   const annualSalaryPerSecond = (amount, decimals) => bigExp(amount, decimals).dividedToIntegerBy(SECONDS_IN_A_YEAR)
 
@@ -15,6 +16,7 @@ module.exports = web3 => {
     bigExp,
     maxUint64,
     maxUint256,
+    one,
     annualSalaryPerSecond
   }
 }
