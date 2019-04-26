@@ -2,7 +2,7 @@ const PAYMENT_TYPES = require('../helpers/payment_types')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
-const { USD, DAI_RATE, deployDAI, setTokenRate } = require('../helpers/tokens')(artifacts, web3)
+const { USD, DAI_RATE, exchangedAmount, deployDAI, setTokenRate } = require('../helpers/tokens')(artifacts, web3)
 const { ONE, bn, bigExp, MAX_UINT64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
@@ -93,9 +93,8 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
                 await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, 0, { from: employee })
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
-                // Mimic EVM calculation and truncation for expected token amounts
-                const owedSalaryInDai = salary.times(ONE_MONTH).mul(DAI_RATE).mul(100).div(ONE.mul(100)).trunc()
-                const reimbursementInDai = reimbursement.mul(DAI_RATE).mul(100).div(ONE.mul(100)).trunc()
+                const owedSalaryInDai = exchangedAmount(salary.times(ONE_MONTH), DAI_RATE, 100)
+                const reimbursementInDai = exchangedAmount(reimbursement, DAI_RATE, 100)
 
                 const currentDAI = await DAI.balanceOf(employee)
                 const expectedDAI = previousDAI.plus(owedSalaryInDai).plus(reimbursementInDai)

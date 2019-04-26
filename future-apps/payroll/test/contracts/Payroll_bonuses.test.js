@@ -4,7 +4,7 @@ const { getEvents, getEventArgument } = require('../helpers/events')
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { bn, bigExp, annualSalaryPerSecond, ONE, MAX_UINT256 } = require('../helpers/numbers')(web3)
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
-const { USD, deployDAI, deployANT, DAI_RATE, ANT_RATE, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
+const { USD, DAI_RATE, ANT_RATE, exchangedAmount, deployDAI, deployANT, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
 
 contract('Payroll bonuses', ([owner, employee, anyone]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, DAI, ANT
@@ -177,8 +177,8 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
             })
 
             const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
-              const requestedDAI = expectedRequestedAmount.div(DAI_RATE).mul(allocationDAI).mul(ONE.div(100)).trunc()
-              const requestedANT = expectedRequestedAmount.div(ANT_RATE).mul(allocationANT).mul(ONE.div(100)).trunc()
+              const requestedDAI = exchangedAmount(expectedRequestedAmount, DAI_RATE, allocationDAI)
+              const requestedANT = exchangedAmount(expectedRequestedAmount, ANT_RATE, allocationANT)
 
               it('transfers all the pending bonus', async () => {
                 const previousDAI = await DAI.balanceOf(employee)
