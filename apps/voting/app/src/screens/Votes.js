@@ -5,9 +5,11 @@ import VotingCardGroup from '../components/VotingCard/VotingCardGroup'
 class Votes extends React.PureComponent {
   render() {
     const { votes, onSelectVote } = this.props
-    const sortedVotes = votes.sort((a, b) =>
-      a.data.endDate > b.data.endDate ? -1 : 1
-    )
+    const sortedVotes = votes.sort((a, b) => {
+      const dateDiff = b.data.endDate - a.data.endDate
+      // Order by descending voteId if there's no end date difference
+      return dateDiff !== 0 ? dateDiff : b.voteId - a.voteId
+    })
 
     const openVotes = sortedVotes.filter(vote => vote.data.open)
     const closedVotes = sortedVotes.filter(vote => !openVotes.includes(vote))
