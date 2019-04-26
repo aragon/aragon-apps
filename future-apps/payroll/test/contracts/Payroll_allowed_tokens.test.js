@@ -1,9 +1,10 @@
 const PAYMENT_TYPES = require('../helpers/payment_types')
 const { getEvent } = require('../helpers/events')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
-const { USD, deployDAI, deployTokenAndDeposit, setTokenRates } = require('../helpers/tokens.js')(artifacts, web3)
+const { USD, deployDAI, deployTokenAndDeposit, setTokenRates, formatRate } = require('../helpers/tokens')(artifacts, web3)
 
 const MAX_GAS_USED = 6.5e6
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -80,10 +81,10 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
             await Promise.all(tokenAddresses.map(address => payroll.addAllowedToken(address, { from: owner })))
             assert.equal(await payroll.getAllowedTokensArrayLength(), MAX_ALLOWED_TOKENS, 'amount of allowed tokens does not match')
 
-            const rates = tokenAddresses.map(() => 5)
+            const rates = tokenAddresses.map(() => formatRate(5))
             await setTokenRates(priceFeed, USD, tokenAddresses, rates)
 
-            await payroll.addEmployee(employee, 100000, 'Boss', NOW - ONE_MONTH, { from: owner })
+            await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', NOW - ONE_MONTH, { from: owner })
           })
 
           it('can not add one more token', async () => {

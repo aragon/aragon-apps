@@ -2,7 +2,7 @@ const PAYMENT_TYPES = require('../helpers/payment_types')
 const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
-const { USD, deployDAI, deployANT, DAI_RATE, ANT_RATE, setTokenRates } = require('../helpers/tokens.js')(artifacts, web3)
+const { USD, deployDAI, deployANT, DAI_RATE, ANT_RATE, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
 
 contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, DAI, ANT

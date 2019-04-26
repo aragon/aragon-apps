@@ -1,4 +1,4 @@
-const { USD } = require('../helpers/tokens.js')(artifacts, web3)
+const { USD } = require('../helpers/tokens')(artifacts, web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { NOW, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)

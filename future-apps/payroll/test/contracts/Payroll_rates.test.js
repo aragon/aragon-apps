@@ -2,7 +2,7 @@ const PAYMENT_TYPES = require('../helpers/payment_types')
 const { bigExp } = require('../helpers/numbers')(web3)
 const { NOW, TWO_MINUTES, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
-const { USD, ETH, ETH_RATE, deployDAI, DAI_RATE, deployANT, ANT_RATE, setTokenRate } = require('../helpers/tokens.js')(artifacts, web3)
+const { USD, ETH, ETH_RATE, deployDAI, DAI_RATE, deployANT, ANT_RATE, formatRate, setTokenRate } = require('../helpers/tokens')(artifacts, web3)
 
 contract('Payroll rates handling,', ([owner, employee, anyone]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, DAI, ANT
@@ -27,9 +27,9 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
     })
 
     beforeEach('set rates and allow tokens', async () => {
-      await setTokenRate(priceFeed, ETH, USD, ETH_RATE)
-      await setTokenRate(priceFeed, DAI, USD, DAI_RATE)
-      await setTokenRate(priceFeed, ANT, USD, ANT_RATE)
+      await setTokenRate(priceFeed, USD, ETH, ETH_RATE)
+      await setTokenRate(priceFeed, USD, DAI, DAI_RATE)
+      await setTokenRate(priceFeed, USD, ANT, ANT_RATE)
 
       await payroll.addAllowedToken(ETH, { from: owner })
       await payroll.addAllowedToken(DAI.address, { from: owner })
@@ -137,8 +137,11 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
     })
 
     beforeEach('set rates and allow tokens', async () => {
-      await setTokenRate(priceFeed, DAI, ETH, DAI_RATE.div(ETH_RATE)) // 0.050 ETH
-      await setTokenRate(priceFeed, ANT, ETH, ANT_RATE.div(ETH_RATE)) // 0.025 ETH
+      const DAI_TO_ETH_RATE = formatRate(DAI_RATE.div(ETH_RATE)) // 0.050 ETH
+      const ANT_TO_ETH_RATE = formatRate(ANT_RATE.div(ETH_RATE)) // 0.025 ETH
+
+      await setTokenRate(priceFeed, ETH, DAI, DAI_TO_ETH_RATE)
+      await setTokenRate(priceFeed, ETH, ANT, ANT_TO_ETH_RATE)
 
       await payroll.addAllowedToken(ETH, { from: owner })
       await payroll.addAllowedToken(DAI.address, { from: owner })
@@ -246,8 +249,11 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
     })
 
     beforeEach('set rates and allow tokens', async () => {
-      await setTokenRate(priceFeed, ETH, DAI, ETH_RATE.div(DAI_RATE)) //  20 DAI
-      await setTokenRate(priceFeed, ANT, DAI, ANT_RATE.div(DAI_RATE)) // 0.5 DAI
+      const ETH_TO_DAI_RATE = formatRate(ETH_RATE.div(DAI_RATE)) //  20 DAI
+      const ANT_TO_DAI_RATE = formatRate(ANT_RATE.div(DAI_RATE)) // 0.5 DAI
+
+      await setTokenRate(priceFeed, DAI, ETH, ETH_TO_DAI_RATE)
+      await setTokenRate(priceFeed, DAI, ANT, ANT_TO_DAI_RATE)
 
       await payroll.addAllowedToken(ETH, { from: owner })
       await payroll.addAllowedToken(DAI.address, { from: owner })
@@ -355,8 +361,11 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
     })
 
     beforeEach('set rates and allow tokens', async () => {
-      await setTokenRate(priceFeed, ETH, ANT, ETH_RATE.div(ANT_RATE)) // 40 ANT
-      await setTokenRate(priceFeed, DAI, ANT, DAI_RATE.div(ANT_RATE)) //  2 ANT
+      const ETH_TO_ANT_RATE = formatRate(ETH_RATE.div(ANT_RATE)) // 40 ANT
+      const DAI_TO_ANT_RATE = formatRate(DAI_RATE.div(ANT_RATE)) //  2 ANT
+
+      await setTokenRate(priceFeed, ANT, ETH, ETH_TO_ANT_RATE)
+      await setTokenRate(priceFeed, ANT, DAI, DAI_TO_ANT_RATE)
 
       await payroll.addAllowedToken(ETH, { from: owner })
       await payroll.addAllowedToken(DAI.address, { from: owner })

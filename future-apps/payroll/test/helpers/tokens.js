@@ -8,9 +8,9 @@ module.exports = (artifacts, web3) => {
 
   const formatRate = n => bn(n.toFixed(18)).times(ONE)
 
-  const ETH_RATE = bn(20)   // 1 ETH = 20 USD
-  const DAI_RATE = bn(1)    // 1 DAI = 1 USD
-  const ANT_RATE = bn(0.5)  // 1 ANT = 0.5 USD
+  const ETH_RATE = formatRate(20)   // 1 ETH = 20 USD
+  const DAI_RATE = formatRate(1)    // 1 DAI = 1 USD
+  const ANT_RATE = formatRate(0.5)  // 1 ANT = 0.5 USD
 
   const deployANT = async (sender, finance) => deployTokenAndDeposit(sender, finance, 'ANT')
   const deployDAI = async (sender, finance) => deployTokenAndDeposit(sender, finance, 'DAI')
@@ -30,9 +30,8 @@ module.exports = (artifacts, web3) => {
 
     const base = typeof(token) === 'object' ? token.address : token
     const quote = typeof(denominationToken) === 'object' ? denominationToken.address : denominationToken
-    const xrt = formatRate(rate)
 
-    return feed.update(base, quote, xrt, when, SIG)
+    return feed.update(base, quote, rate, when, SIG)
   }
 
   async function setTokenRates(feed, denominationToken, tokens, rates, when = undefined) {
@@ -40,11 +39,10 @@ module.exports = (artifacts, web3) => {
 
     const bases = tokens.map(token => typeof(token) === 'object' ? token.address : token)
     const quotes = tokens.map(() => typeof(denominationToken) === 'object' ? denominationToken.address : denominationToken)
-    const xrts = rates.map(rate => formatRate(rate))
     const whens = tokens.map(() => when)
     const sigs = `0x${SIG.repeat(tokens.length)}`
 
-    return feed.updateMany(bases, quotes, xrts, whens, sigs)
+    return feed.updateMany(bases, quotes, rates, whens, sigs)
   }
 
   return {
@@ -53,10 +51,11 @@ module.exports = (artifacts, web3) => {
     ETH_RATE,
     DAI_RATE,
     ANT_RATE,
+    formatRate,
     deployANT,
     deployDAI,
     deployTokenAndDeposit,
     setTokenRate,
-    setTokenRates
+    setTokenRates,
   }
 }

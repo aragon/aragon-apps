@@ -1,7 +1,8 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { getEvents, getEventArgument } = require('../helpers/events')
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
-const { USD, deployDAI, deployTokenAndDeposit } = require('../helpers/tokens.js')(artifacts, web3)
+const { USD, deployDAI, deployTokenAndDeposit } = require('../helpers/tokens')(artifacts, web3)
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -42,7 +43,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployee(employee, 100000, 'Boss', await payroll.getTimestampPublic(), { from: owner })
+          const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
@@ -204,7 +205,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployee(employee, 100000, 'Boss', await payroll.getTimestampPublic(), { from: owner })
+          const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 

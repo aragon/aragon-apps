@@ -2,8 +2,8 @@ const PAYMENT_TYPES = require('../helpers/payment_types')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
-const { bn, MAX_UINT64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
-const { USD, DAI_RATE, deployDAI, setTokenRate } = require('../helpers/tokens.js')(artifacts, web3)
+const { USD, DAI_RATE, deployDAI, setTokenRate } = require('../helpers/tokens')(artifacts, web3)
+const { ONE, bn, bigExp, MAX_UINT64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 contract('Payroll employees termination', ([owner, employee, anyone]) => {
@@ -81,8 +81,9 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
 
                 // Accrue some salary and extras
                 await increaseTime(ONE_MONTH)
-                const owedSalary = salary.times(ONE_MONTH)
-                const reimbursement = 1000
+                // Mimic EVM truncation when calculating token amount to transfer
+                const owedSalary = salary.times(ONE_MONTH).div(ONE.div(100)).trunc().mul(ONE.div(100))
+                const reimbursement = bigExp(100000, 18)
                 await payroll.addReimbursement(employeeId, reimbursement, { from: owner })
 
                 // Terminate employee and travel some time in the future

@@ -1,5 +1,5 @@
-const { bigExp } = require('../helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { bigExp, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
@@ -39,7 +39,7 @@ contract('Payroll reentrancy guards', ([owner]) => {
 
     beforeEach('add malicious employee, set tokens allocations, and accrue some salary', async () => {
       await employee.setPayroll(payroll.address)
-      await payroll.addEmployee(employee.address, 1, 'Malicious Boss', await payroll.getTimestampPublic(), { from: owner })
+      await payroll.addEmployee(employee.address, annualSalaryPerSecond(100000), 'Malicious Boss', await payroll.getTimestampPublic(), { from: owner })
 
       await employee.determineAllocation([maliciousToken.address], [100])
       await increaseTime(ONE_MONTH)
