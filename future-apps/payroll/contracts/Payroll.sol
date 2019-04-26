@@ -691,20 +691,24 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     function _transferTokensAmount(uint256 _employeeId, PaymentType _type, uint256 _totalAmount) internal returns (bool somethingPaid) {
         if (_totalAmount == 0) return false;
         Employee storage employee = employees[_employeeId];
+        address employeeAddress = employee.accountAddress;
         string memory paymentReference = _paymentReferenceFor(_type);
+
         for (uint256 i = 0; i < allowedTokensArray.length; i++) {
             address token = allowedTokensArray[i];
-            if (employee.allocation[token] != uint256(0)) {
+            uint256 tokenAllocation = employee.allocation[token];
+            if (tokenAllocation != uint256(0)) {
                 // Get the exchange rate for the token in denomination token,
                 // as we do accounting in denomination tokens
                 uint128 exchangeRate = _getExchangeRateInDenominationToken(token);
                 require(exchangeRate > 0, ERROR_EXCHANGE_RATE_ZERO);
 
-                // Salary converted to token and applied allocation percentage
-                uint256 tokenAmount = _totalAmount.mul(exchangeRate).mul(employee.allocation[token]);
-                // Divide by 100 for the allocation and by ONE for the exchange rate
+                // Salary (in denomination tokens) converted to payout token
+                // and applied allocation percentage
+                uint256 tokenAmount = _totalAmount.mul(exchangeRate).mul(tokenAllocation);
+                // Divide by 100 for the allocation and by ONE for the exchange rate precision
                 tokenAmount = tokenAmount / (100 * ONE);
-                address employeeAddress = employee.accountAddress;
+
                 finance.newImmediatePayment(token, employeeAddress, tokenAmount, paymentReference);
                 emit SendPayment(employeeAddress, token, tokenAmount, paymentReference);
                 somethingPaid = true;

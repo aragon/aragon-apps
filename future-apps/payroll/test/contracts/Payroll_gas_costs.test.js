@@ -1,21 +1,16 @@
 const PAYMENT_TYPES = require('../helpers/payment_types')
-const setTokenRates = require('../helpers/set_token_rates')(web3)
 const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
+const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
+const { USD, deployDAI, deployANT, DAI_RATE, ANT_RATE, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
 
 contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
-
-  const NOW = 1553703809 // random fixed timestamp in seconds
-  const ONE_MONTH = 60 * 60 * 24 * 31
-  const TWO_MONTHS = ONE_MONTH * 2
-  const RATE_EXPIRATION_TIME = TWO_MONTHS
-
-  const TOKEN_DECIMALS = 18
+  let dao, payroll, payrollBase, finance, vault, priceFeed, DAI, ANT
 
   before('deploy base apps and tokens', async () => {
     ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
+    DAI = await deployDAI(owner, finance)
+    ANT = await deployANT(owner, finance)
   })
 
   beforeEach('create payroll and price feed instance', async () => {
@@ -23,52 +18,42 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
   })
 
   describe('gas costs', () => {
-    let erc20Token1, erc20Token2
-
-    before('deploy more tokens', async () => {
-      erc20Token1 = await deployErc20TokenAndDeposit(owner, finance, 'Token 1', 16)
-      erc20Token2 = await deployErc20TokenAndDeposit(owner, finance, 'Token 2', 18)
-    })
-
-    beforeEach('initialize payroll app', async () => {
-      await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+    beforeEach('initialize payroll app using USD as denomination token', async () => {
+      await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
 
       const startDate = NOW - ONE_MONTH
-      const salary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
+      const salary = annualSalaryPerSecond(100000)
       await payroll.addEmployee(employee, salary, 'Boss', startDate)
       await payroll.addEmployee(anotherEmployee, salary, 'Manager', startDate)
     })
 
-    context('when there are not allowed tokens yet', function () {
-      it('expends ~330k gas for a single allowed token', async () => {
-        await payroll.addAllowedToken(denominationToken.address)
-        await payroll.determineAllocation([denominationToken.address], [100], { from: employee })
+    beforeEach('allow tokens and set rates', async () => {
+      await payroll.addAllowedToken(DAI.address, { from: owner })
+      await payroll.addAllowedToken(ANT.address, { from: owner })
+
+      await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE])
+    })
+
+    context('when there is only one allowed token', function () {
+      it('expends ~335k gas for a single allowed token', async () => {
+        await payroll.determineAllocation([DAI.address], [100], { from: employee })
 
         const { receipt: { cumulativeGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
 
-        assert.isBelow(cumulativeGasUsed, 330000, 'payout gas cost for a single allowed token should be ~330k')
+        assert.isBelow(cumulativeGasUsed, 335000, 'payout gas cost for a single allowed token should be ~335k')
       })
     })
 
-    context('when there are some allowed tokens', function () {
-      const erc20Token1Rate = 2, erc20Token2Rate = 5
-
-      beforeEach('allow tokens and set rates', async () => {
-        await payroll.addAllowedToken(denominationToken.address, { from: owner })
-        await payroll.addAllowedToken(erc20Token1.address, { from: owner })
-        await payroll.addAllowedToken(erc20Token2.address, { from: owner })
-        await setTokenRates(priceFeed, denominationToken, [erc20Token1, erc20Token2], [erc20Token1Rate, erc20Token2Rate])
-      })
-
-      it('expends ~280k gas per allowed token', async () => {
-        await payroll.determineAllocation([denominationToken.address, erc20Token1.address], [60, 40], { from: employee })
+    context('when there are two allowed token', function () {
+      it('expends ~295k gas per allowed token', async () => {
+        await payroll.determineAllocation([DAI.address], [100], { from: employee })
         const { receipt: { cumulativeGasUsed: employeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
 
-        await payroll.determineAllocation([denominationToken.address, erc20Token1.address, erc20Token2.address], [65, 25, 10], { from: anotherEmployee })
+        await payroll.determineAllocation([DAI.address, ANT.address], [60, 40], { from: anotherEmployee })
         const { receipt: { cumulativeGasUsed: anotherEmployeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: anotherEmployee })
 
         const gasPerAllowedToken = anotherEmployeePayoutGasUsed - employeePayoutGasUsed
-        assert.isBelow(gasPerAllowedToken, 280000, 'payout gas cost increment per allowed token should be ~280k')
+        assert.isBelow(gasPerAllowedToken, 295000, 'payout gas cost increment per allowed token should be ~295k')
       })
     })
   })
