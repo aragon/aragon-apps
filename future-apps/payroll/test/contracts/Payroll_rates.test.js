@@ -137,11 +137,11 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
     })
 
     beforeEach('set rates and allow tokens', async () => {
-      const DAI_TO_ETH_RATE = formatRate(DAI_RATE.div(ETH_RATE)) // 0.050 ETH
-      const ANT_TO_ETH_RATE = formatRate(ANT_RATE.div(ETH_RATE)) // 0.025 ETH
+      const ETH_TO_DAI_RATE = formatRate(ETH_RATE.div(DAI_RATE)) // 20 DAI
+      const ETH_TO_ANT_RATE = formatRate(ETH_RATE.div(ANT_RATE)) // 40 ANT
 
-      await setTokenRate(priceFeed, ETH, DAI, DAI_TO_ETH_RATE)
-      await setTokenRate(priceFeed, ETH, ANT, ANT_TO_ETH_RATE)
+      await setTokenRate(priceFeed, DAI, ETH, ETH_TO_DAI_RATE)
+      await setTokenRate(priceFeed, ANT, ETH, ETH_TO_ANT_RATE)
 
       await payroll.addAllowedToken(ETH, { from: owner })
       await payroll.addAllowedToken(DAI.address, { from: owner })
