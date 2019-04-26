@@ -4,7 +4,7 @@ const { getEventArgument } = require('../helpers/events')
 const { bn, ONE, MAX_UINT256, bigExp } = require('../helpers/numbers')(web3)
 const { NOW, ONE_MONTH, TWO_MONTHS, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
-const { USD, deployDAI, deployANT, DAI_RATE, ANT_RATE, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
+const { USD, DAI_RATE, ANT_RATE, exchangedAmount, deployDAI, deployANT, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
 
 contract('Payroll payday', ([owner, employee, anyone]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, DAI, ANT
@@ -57,8 +57,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             })
 
             const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
-              const requestedDAI = expectedRequestedAmount.div(DAI_RATE).mul(allocationDAI).trunc().mul(ONE.div(100))
-              const requestedANT = expectedRequestedAmount.div(ANT_RATE).mul(allocationANT).trunc().mul(ONE.div(100))
+              const requestedDAI = exchangedAmount(expectedRequestedAmount, DAI_RATE, allocationDAI)
+              const requestedANT = exchangedAmount(expectedRequestedAmount, ANT_RATE, allocationANT)
 
               it('transfers the requested salary amount', async () => {
                 const previousDAI = await DAI.balanceOf(employee)
@@ -104,8 +104,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from })
 
                 const newOwedAmount = salary.mul(ONE_MONTH)
-                const newDAIAmount = newOwedAmount.div(DAI_RATE).mul(allocationDAI).trunc().mul(ONE.div(100))
-                const newANTAmount = newOwedAmount.div(ANT_RATE).mul(allocationANT).trunc().mul(ONE.div(100))
+                const newDAIAmount = exchangedAmount(newOwedAmount, DAI_RATE, allocationDAI)
+                const newANTAmount = exchangedAmount(newOwedAmount, ANT_RATE, allocationANT)
 
                 await increaseTime(ONE_MONTH)
                 await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE])
@@ -615,8 +615,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   const requestedAmount = bigExp(1000, 18)
 
                   const assertTransferredAmounts = requestedAmount => {
-                    const requestedDAI = requestedAmount.div(DAI_RATE).mul(allocationDAI).mul(ONE.div(100)).trunc()
-                    const requestedANT = requestedAmount.div(ANT_RATE).mul(allocationANT).mul(ONE.div(100)).trunc()
+                    const requestedDAI = exchangedAmount(requestedAmount, DAI_RATE, allocationDAI)
+                    const requestedANT = exchangedAmount(requestedAmount, ANT_RATE, allocationANT)
 
                     it('transfers the requested salary amount', async () => {
                       const previousDAI = await DAI.balanceOf(employee)

@@ -655,17 +655,23 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Get token exchange rate for a token based on the denomination token
-     * @param _token Token
+     * @dev Get token exchange rate for a token based on the denomination token.
+     *      If the denomination token was USD and ETH's price was 100USD,
+     *      this would return 0.01 for ETH.
+     * @param _token Token to get price of in denomination tokens
      * @return ONE if _token is denominationToken or 0 if the exchange rate isn't recent enough
      */
-    function _getExchangeRate(address _token) internal view returns (uint128) {
+    function _getExchangeRateInDenominationToken(address _token) internal view returns (uint128) {
         // Denomination token has always exchange rate of 1
         if (_token == denominationToken) {
             return ONE;
         }
 
-        (uint128 xrt, uint64 when) = feed.get(_token, denominationToken);
+        // xrt is the number of `_token` that can be exchanged for one `denominationToken`
+        (uint128 xrt, uint64 when) = feed.get(
+            denominationToken,  // Base (e.g. USD)
+            _token              // Quote (e.g. ETH)
+        );
 
         // Check the price feed is recent enough
         if (getTimestamp64().sub(when) >= rateExpiryTime) {
@@ -692,10 +698,16 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             address token = allowedTokensArray[i];
             uint256 tokenAllocation = employee.allocation[token];
             if (tokenAllocation != uint256(0)) {
-                uint256 exchangeRate = uint256(_getExchangeRate(token));
+                // Get the exchange rate for the token in denomination token,
+                // as we do accounting in denomination tokens
+                uint128 exchangeRate = _getExchangeRateInDenominationToken(token);
                 require(exchangeRate > 0, ERROR_EXCHANGE_RATE_ZERO);
-                uint256 tokenAmount = _totalAmount.mul(tokenAllocation).div(exchangeRate).mul(ONE / 100);
-                // Salary converted to token and applied allocation percentage
+
+                // Salary (in denomination tokens) converted to payout token
+                // and applied allocation percentage
+                uint256 tokenAmount = _totalAmount.mul(exchangeRate).mul(tokenAllocation);
+                // Divide by 100 for the allocation and by ONE for the exchange rate precision
+                tokenAmount = tokenAmount / (100 * ONE);
 
                 finance.newImmediatePayment(token, employeeAddress, tokenAmount, paymentReference);
                 emit SendPayment(employeeAddress, token, tokenAmount, paymentReference);
