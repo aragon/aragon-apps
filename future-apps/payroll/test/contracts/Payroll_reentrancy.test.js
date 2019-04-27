@@ -1,17 +1,13 @@
-const { bigExp } = require('../helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
+const { bigExp, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
+const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 const MaliciousERC20 = artifacts.require('MaliciousERC20')
 const MaliciousEmployee = artifacts.require('MaliciousEmployee')
 
 contract('Payroll reentrancy guards', ([owner]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, maliciousToken, employee
-
-  const NOW = 1553703809 // random fixed timestamp in seconds
-  const ONE_MONTH = 60 * 60 * 24 * 31
-  const TWO_MONTHS = ONE_MONTH * 2
-  const RATE_EXPIRATION_TIME = TWO_MONTHS
 
   const REENTRANCY_ACTIONS = { PAYDAY: 0, CHANGE_ADDRESS: 1, SET_ALLOCATION: 2 }
 
@@ -43,7 +39,7 @@ contract('Payroll reentrancy guards', ([owner]) => {
 
     beforeEach('add malicious employee, set tokens allocations, and accrue some salary', async () => {
       await employee.setPayroll(payroll.address)
-      await payroll.addEmployee(employee.address, 1, 'Malicious Boss', await payroll.getTimestampPublic(), { from: owner })
+      await payroll.addEmployee(employee.address, annualSalaryPerSecond(100000), 'Malicious Boss', await payroll.getTimestampPublic(), { from: owner })
 
       await employee.determineAllocation([maliciousToken.address], [100])
       await increaseTime(ONE_MONTH)
