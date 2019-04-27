@@ -1,23 +1,18 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
-const { maxUint64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
+const { USD, deployDAI } = require('../helpers/tokens')(artifacts, web3)
+const { NOW, TWO_MONTHS, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { MAX_UINT64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
+const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
-
-  const NOW = 1553703809 // random fixed timestamp in seconds
-  const ONE_MONTH = 60 * 60 * 24 * 31
-  const TWO_MONTHS = ONE_MONTH * 2
-  const RATE_EXPIRATION_TIME = TWO_MONTHS
-
-  const TOKEN_DECIMALS = 18
+  let dao, payroll, payrollBase, finance, vault, priceFeed, DAI
 
   before('deploy base apps and tokens', async () => {
     ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
+    DAI = await deployDAI(owner, finance)
   })
 
   beforeEach('create payroll and price feed instance', async () => {
@@ -26,11 +21,11 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
   describe('addEmployee', () => {
     const role = 'Boss'
-    const salary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
+    const salary = annualSalaryPerSecond(100000)
 
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the sender has permissions to add employees', () => {
@@ -69,7 +64,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
               it('can add another employee', async () => {
                 const anotherRole = 'Manager'
-                const anotherSalary = annualSalaryPerSecond(120000, TOKEN_DECIMALS)
+                const anotherSalary = annualSalaryPerSecond(120000)
 
                 const receipt = await payroll.addEmployee(anotherEmployee, anotherSalary, anotherRole, startDate)
                 const anotherEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
@@ -91,7 +86,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
                 assert.equal(accruedSalary, 0, 'employee accrued salary does not match')
                 assert.equal(employeeSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
                 assert.equal(lastPayroll.toString(), startDate.toString(), 'employee last payroll does not match')
-                assert.equal(endDate.toString(), maxUint64(), 'employee end date does not match')
+                assert.equal(endDate.toString(), MAX_UINT64, 'employee end date does not match')
               })
             })
 
