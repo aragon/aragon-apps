@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { noop } from './utils'
 
 export function useNow(updateEvery = 1000) {
@@ -65,5 +65,8 @@ export function usePanelState({ onDidOpen = noop, onDidClose = noop } = {}) {
     [onDidClose, onDidOpen, setDidOpen]
   )
 
-  return { requestOpen, requestClose, visible, didOpen, onTransitionEnd }
+  return useMemo(
+    () => ({ requestOpen, requestClose, visible, didOpen, onTransitionEnd }),
+    [requestOpen, requestClose, visible, didOpen, onTransitionEnd]
+  )
 }

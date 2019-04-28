@@ -1,10 +1,10 @@
 import React from 'react'
-import { Main, SidePanel } from '@aragon/ui'
+import { Main } from '@aragon/ui'
 
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
-import VotePanelContent from './components/VotePanelContent'
-import NewVotePanelContent from './components/NewVotePanelContent'
+import VotePanel from './components/VotePanel'
+import NewVotePanel from './components/NewVotePanel'
 import AppLayout from './components/AppLayout'
 import NewVoteIcon from './components/NewVoteIcon'
 
@@ -40,39 +40,17 @@ function App() {
           )}
         </AppLayout>
 
-        <SidePanel
-          title={
-            selectedVote
-              ? `Vote #${selectedVote.voteId} (${
-                  selectedVote.data.open ? 'Open' : 'Closed'
-                })`
-              : ''
-          }
-          opened={selectedVotePanel.visible}
-          onClose={selectedVotePanel.requestClose}
-          onTransitionEnd={selectedVotePanel.onTransitionEnd}
-        >
-          {selectedVote && (
-            <VotePanelContent
-              vote={selectedVote}
-              onVote={actions.vote}
-              onExecute={actions.execute}
-              panelOpened={selectedVotePanel.didOpen}
-            />
-          )}
-        </SidePanel>
+        <VotePanel
+          vote={selectedVote}
+          onExecute={actions.execute}
+          onVote={actions.vote}
+          panelState={selectedVotePanel}
+        />
 
-        <SidePanel
-          title="New Vote"
-          opened={newVotePanel.visible}
-          onClose={newVotePanel.requestClose}
-          onTransitionEnd={newVotePanel.onTransitionEnd}
-        >
-          <NewVotePanelContent
-            onCreateVote={actions.createVote}
-            panelOpened={newVotePanel.didOpen}
-          />
-        </SidePanel>
+        <NewVotePanel
+          onCreateVote={actions.createVote}
+          panelState={newVotePanel}
+        />
       </Main>
     </div>
   )

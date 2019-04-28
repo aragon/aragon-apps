@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
-import color from 'onecolor'
 import { format } from 'date-fns'
 import { Badge, Countdown, Text, Button, theme } from '@aragon/ui'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
