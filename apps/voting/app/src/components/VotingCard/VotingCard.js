@@ -52,7 +52,13 @@ const VotingCard = React.memo(
     const action = isVoteAction(vote)
 
     return (
-      <Main>
+      <section
+        css={`
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        `}
+      >
         <Header>
           {open ? (
             <Countdown end={endDate} />
@@ -96,7 +102,7 @@ const VotingCard = React.memo(
             </Button>
           </div>
         </Card>
-      </Main>
+      </section>
     )
   },
   (prevProps, nextProps) => {
@@ -139,11 +145,6 @@ const OptionLabel = ({ label, isConnectedAccount }) => (
     {isConnectedAccount && <You />}
   </span>
 )
-
-const Main = styled.section`
-  display: flex;
-  flex-direction: column;
-`
 
 const Header = styled.div`
   display: flex;
