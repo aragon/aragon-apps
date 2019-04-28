@@ -12,12 +12,16 @@ module.exports = (artifacts, web3) => {
   const DAI_RATE = formatRate(1)    // 1 DAI = 1 USD
   const ANT_RATE = formatRate(0.5)  // 1 ANT = 0.5 USD
 
+  function inverseRate(rate) {
+    // Mimic EVM truncation
+    return ONE.pow(2).div(rate).trunc()
+  }
+
   function exchangedAmount(amount, rate, tokenAllocation) {
-    // Mimic PPF inversion truncation, as we set the denomination token always
-    // as the price feed's quote token
-    const inverseRate = ONE.pow(2).div(rate).trunc()
+    // Invert the rate, as we always set the denomination token as the price feed's quote token
+    const inversedRate = inverseRate(rate)
     // Mimic EVM calculation and truncation for token conversion
-    return amount.mul(inverseRate).mul(tokenAllocation).div(ONE.mul(100)).trunc()
+    return amount.mul(inversedRate).mul(tokenAllocation).div(ONE.mul(100)).trunc()
   }
 
   const deployANT = async (sender, finance) => deployTokenAndDeposit(sender, finance, 'ANT')
@@ -60,6 +64,7 @@ module.exports = (artifacts, web3) => {
     DAI_RATE,
     ANT_RATE,
     formatRate,
+    inverseRate,
     exchangedAmount,
     deployANT,
     deployDAI,

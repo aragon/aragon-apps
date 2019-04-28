@@ -89,7 +89,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     event TerminateEmployee(uint256 indexed employeeId, address indexed accountAddress, uint64 endDate);
     event ChangeAddressByEmployee(uint256 indexed employeeId, address indexed oldAddress, address indexed newAddress);
     event DetermineAllocation(uint256 indexed employeeId, address indexed employee);
-    event SendPayment(address indexed employee, address indexed token, uint256 amount, string paymentReference);
+    event SendPayment(address indexed employee, address indexed token, uint256 amount, uint128 exchangeRate, string paymentReference);
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
     event AddEmployee(
@@ -710,7 +710,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
                 tokenAmount = tokenAmount / (100 * ONE);
 
                 finance.newImmediatePayment(token, employeeAddress, tokenAmount, paymentReference);
-                emit SendPayment(employeeAddress, token, tokenAmount, paymentReference);
+                emit SendPayment(employeeAddress, token, tokenAmount, exchangeRate, paymentReference);
                 somethingPaid = true;
             }
         }
