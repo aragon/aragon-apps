@@ -1,7 +1,7 @@
 {
   "name": "Token Manager",
   "author": "Aragon Association",
-  "description": "Manage a token, with the ability to mint new tokens, assign existing tokens, and create vestings.",
+  "description": "Manage an organization's token supply and distribution",
   "changelog_url": "https://github.com/aragon/aragon-apps/releases",
   "details_url": "/meta/details.md",
   "source_url": "https://github.com/aragon/aragon-apps/blob/master/apps/token-manager",
