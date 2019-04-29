@@ -1,3 +1,4 @@
+const { getEvents } = require('../helpers/events')
 const PAYMENT_TYPES = require('../helpers/payment_types')
 const { bigExp, ONE } = require('../helpers/numbers')(web3)
 const { NOW, TWO_MINUTES, RATE_EXPIRATION_TIME } = require('../helpers/time')
@@ -59,7 +60,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 1, 'should have emitted one event')
 
         // expected an income of 6 ETH since we accrued 2 minutes of salary at 1 USD per second, and the ETH rate is 20 USD
@@ -92,7 +93,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 1, 'should have emitted one event')
 
         // no ETH income expected
@@ -125,7 +126,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 3, 'should have emitted three events')
 
         // expected an income of 3 ETH having 50% allocated, since we accrued 2 minutes of salary at 1 USD per second, and the ETH rate is 20 USD
@@ -192,7 +193,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 1, 'should have emitted one event')
 
         // expected an income of 12 ETH since we accrued 2 minutes of salary at 0.1 ETH per second, and the denomination token is ETH
@@ -225,7 +226,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 1, 'should have emitted one event')
 
         // no ETH income expected
@@ -258,7 +259,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 3, 'should have emitted three events')
 
         // expected an income of 6 ETH having 50% allocated, since we accrued 2 minutes of salary at 0.1 ETH per second, and the denomination token is ETH
@@ -323,7 +324,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 1, 'should have emitted three events')
 
         // expected an income of 6 ETH since we accrued 2 minutes of salary at 1 DAI per second, and the ETH rate is 20 DAI
@@ -356,7 +357,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 1, 'should have emitted three events')
 
         // no ETH income expected
@@ -389,7 +390,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 3, 'should have emitted three events')
 
         // expected an income of 3 ETH having 50% allocated, since we accrued 2 minutes of salary at 1 DAI per second, and the ETH rate is 20 DAI
@@ -454,7 +455,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 1, 'should have emitted three events')
 
         // expected an income of 3 ETH since we accrued 2 minutes of salary at 1 ANT per second, and the ETH rate is 40 ANT
@@ -487,7 +488,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 1, 'should have emitted three events')
 
         // no ETH income expected
@@ -520,7 +521,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
-        const events = logs.filter(l => l.event === 'SendPayment')
+        const events = getEvents({ logs }, 'SendPayment')
         assert.equal(events.length, 3, 'should have emitted three events')
 
         // expected an income of 1.5 ETH having 50% allocated, since we accrued 2 minutes of salary at 1 ANT per second, and the ETH rate is 40 ANT

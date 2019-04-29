@@ -198,7 +198,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               it('emits one event per allocated token', async () => {
                 const receipt = await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
 
-                const events = receipt.logs.filter(l => l.event === 'SendPayment')
+                const events = getEvents(receipt, 'SendPayment')
                 assert.equal(events.length, 2, 'should have emitted two events')
 
                 const eventDAI = events.find(e => e.args.token === DAI.address).args
