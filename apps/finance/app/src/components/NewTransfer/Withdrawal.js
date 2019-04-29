@@ -40,7 +40,19 @@ class Withdrawal extends React.Component {
   state = {
     ...initialState,
   }
-
+  _recipientInput = React.createRef()
+  componentDidMount() {
+    // setTimeout is needed as a small hack to wait until the input is
+    // on-screen before we call focus
+    this._recipientInput.current &&
+      setTimeout(() => this._recipientInput.current.focus(), 0)
+  }
+  componentWillReceiveProps({ opened }) {
+    if (!opened && this.props.opened) {
+      // Panel closing; reset state
+      this.setState({ ...initialState })
+    }
+  }
   nonZeroTokens() {
     return this.props.tokens.filter(({ amount }) => amount > 0)
   }
@@ -117,7 +129,7 @@ class Withdrawal extends React.Component {
     if (recipient.error === RECEIPIENT_NOT_ADDRESS_ERROR) {
       errorMessage = 'Recipient must be a valid Ethereum address'
     } else if (amount.error === BALANCE_NOT_ENOUGH_ERROR) {
-      errorMessage = 'Amount is greater than balance held by vault'
+      errorMessage = 'Amount is greater than balance available'
     } else if (amount.error === DECIMALS_TOO_MANY_ERROR) {
       errorMessage = 'Amount contains too many decimal places'
     }
@@ -127,7 +139,7 @@ class Withdrawal extends React.Component {
         <h1>{title}</h1>
         <Field label="Recipient (must be a valid Ethereum address)">
           <TextInput
-            ref={recipient => (this.recipientInput = recipient)}
+            ref={this._recipientInput}
             onChange={this.handleRecipientUpdate}
             pattern={
               // Allow spaces to be trimmable

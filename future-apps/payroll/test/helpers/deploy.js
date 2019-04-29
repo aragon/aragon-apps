@@ -1,6 +1,8 @@
 module.exports = (artifacts, web3) => {
   const { bigExp } = require('./numbers')(web3)
   const { getEventArgument } = require('./events')
+  const { SECONDS_IN_A_YEAR } = require('./time')
+
   const getContract = name => artifacts.require(name)
 
   const ACL = getContract('ACL')
@@ -12,7 +14,7 @@ module.exports = (artifacts, web3) => {
   const DAOFactory = getContract('DAOFactory')
   const EVMScriptRegistryFactory = getContract('EVMScriptRegistryFactory')
 
-  async function deployErc20TokenAndDeposit(sender, finance, vault, name = 'ERC20Token', decimals = 18) {
+  async function deployErc20TokenAndDeposit(sender, finance, name = 'ERC20Token', decimals = 18) {
     const token = await getContract('MiniMeToken').new('0x0', '0x0', 0, name, decimals, 'E20', true) // dummy parameters for minime
     const amount = bigExp(1e18, decimals)
     await token.generateTokens(sender, amount)
@@ -59,49 +61,47 @@ module.exports = (artifacts, web3) => {
     await acl.createPermission(finance.address, vault.address, TRANSFER_ROLE, owner, { from: owner })
     await vault.initialize()
 
-    const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
     await finance.initialize(vault.address, SECONDS_IN_A_YEAR) // more than one day
 
-    const priceFeed = await PriceFeed.new()
     const payrollBase = await Payroll.new()
 
-    return { dao, finance, vault, priceFeed, payrollBase }
+    return { dao, finance, vault, payrollBase }
   }
 
-  async function createPayrollInstance(dao, payrollBase, owner) {
+  async function createPayrollAndPriceFeed(dao, payrollBase, owner, currentTimestamp) {
     const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
     const payroll = Payroll.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
 
     const acl = ACL.at(await dao.acl())
 
+    const ADD_BONUS_ROLE = await payroll.ADD_BONUS_ROLE()
     const ADD_EMPLOYEE_ROLE = await payroll.ADD_EMPLOYEE_ROLE()
-    const ADD_ACCRUED_VALUE_ROLE = await payroll.ADD_ACCRUED_VALUE_ROLE()
+    const ADD_REIMBURSEMENT_ROLE = await payroll.ADD_REIMBURSEMENT_ROLE()
     const CHANGE_PRICE_FEED_ROLE = await payroll.CHANGE_PRICE_FEED_ROLE()
     const MODIFY_RATE_EXPIRY_ROLE = await payroll.MODIFY_RATE_EXPIRY_ROLE()
     const TERMINATE_EMPLOYEE_ROLE = await payroll.TERMINATE_EMPLOYEE_ROLE()
     const SET_EMPLOYEE_SALARY_ROLE = await payroll.SET_EMPLOYEE_SALARY_ROLE()
     const ALLOWED_TOKENS_MANAGER_ROLE = await payroll.ALLOWED_TOKENS_MANAGER_ROLE()
 
+    await acl.createPermission(owner, payroll.address, ADD_BONUS_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, ADD_EMPLOYEE_ROLE, owner, { from: owner })
-    await acl.createPermission(owner, payroll.address, ADD_ACCRUED_VALUE_ROLE, owner, { from: owner })
+    await acl.createPermission(owner, payroll.address, ADD_REIMBURSEMENT_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, CHANGE_PRICE_FEED_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, MODIFY_RATE_EXPIRY_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, TERMINATE_EMPLOYEE_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, SET_EMPLOYEE_SALARY_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, ALLOWED_TOKENS_MANAGER_ROLE, owner, { from: owner })
 
-    return payroll
-  }
+    const priceFeed = await PriceFeed.new()
+    await priceFeed.mockSetTimestamp(currentTimestamp)
+    await payroll.mockSetTimestamp(currentTimestamp)
 
-  async function mockTimestamps(payroll, priceFeed, now) {
-    await priceFeed.mockSetTimestamp(now)
-    await payroll.mockSetTimestamp(now)
+    return { payroll, priceFeed }
   }
 
   return {
     deployContracts,
     deployErc20TokenAndDeposit,
-    createPayrollInstance,
-    mockTimestamps
+    createPayrollAndPriceFeed
   }
 }

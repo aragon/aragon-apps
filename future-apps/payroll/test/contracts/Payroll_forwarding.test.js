@@ -1,35 +1,29 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const { getEventArgument } = require('../helpers/events')
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
+const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
+const { USD, deployDAI } = require('../helpers/tokens')(artifacts, web3)
+const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
-contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
+contract('Payroll forwarding,', ([owner, employee, anyone]) => {
+  let dao, payroll, payrollBase, finance, vault, priceFeed, DAI
 
-  const NOW = 1553703809 // random fixed timestamp in seconds
-  const ONE_MONTH = 60 * 60 * 24 * 31
-  const TWO_MONTHS = ONE_MONTH * 2
-  const RATE_EXPIRATION_TIME = TWO_MONTHS
-
-  const TOKEN_DECIMALS = 18
-
-  before('setup base apps and tokens', async () => {
-    ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
+  before('deploy base apps and tokens', async () => {
+    ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
+    DAI = await deployDAI(owner, finance)
   })
 
-  beforeEach('setup payroll instance', async () => {
-    payroll = await createPayrollInstance(dao, payrollBase, owner)
-    await mockTimestamps(payroll, priceFeed, NOW)
+  beforeEach('create payroll and price feed instance', async () => {
+    ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
   describe('isForwarder', () => {
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       it('returns true', async () => {
@@ -46,8 +40,8 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
 
   describe('canForward', () => {
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the sender is an employee', () => {
@@ -55,7 +49,7 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
         const sender = employee
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 100000, 'Boss', { from: owner })
+          const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -67,7 +61,7 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
 
         context('when the employee was already terminated', () => {
           beforeEach('terminate employee', async () => {
-            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
             await payroll.mockIncreaseTime(ONE_MONTH + 1)
           })
 
@@ -103,8 +97,8 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
     })
 
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the sender is an employee', () => {
@@ -112,7 +106,7 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
         const from = employee
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 100000, 'Boss', { from: owner })
+          const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -126,7 +120,7 @@ contract('Payroll forwarding,', ([owner, employee, anotherEmployee, anyone]) => 
 
         context('when the employee was already terminated', () => {
           beforeEach('terminate employee', async () => {
-            await payroll.terminateEmployeeNow(employeeId, { from: owner })
+            await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
             await payroll.mockIncreaseTime(ONE_MONTH + 1)
           })
 

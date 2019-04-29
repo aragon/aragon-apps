@@ -1,20 +1,4 @@
 import React from 'react'
-import { ButtonIcon } from '@aragon/ui'
-
-const Download = props => (
-  <ButtonIcon
-    {...props}
-    css={`
-      width: auto;
-      height: 100%;
-      padding: 0 8px;
-      margin: 0 8px;
-    `}
-    label="Download"
-  >
-    <IconDownload />
-  </ButtonIcon>
-)
 
 const IconDownload = props => (
   <svg
@@ -35,4 +19,4 @@ const IconDownload = props => (
   </svg>
 )
 
-export default Download
+export default IconDownload

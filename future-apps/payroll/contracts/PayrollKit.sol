@@ -99,7 +99,7 @@ contract PayrollKit is KitBase {
         acl.createPermission(employer, payroll, payroll.TERMINATE_EMPLOYEE_ROLE(), root);
         acl.createPermission(employer, payroll, payroll.ALLOWED_TOKENS_MANAGER_ROLE(), root);
         acl.createPermission(employer, payroll, payroll.SET_EMPLOYEE_SALARY_ROLE(), root);
-        acl.createPermission(employer, payroll, payroll.ADD_ACCRUED_VALUE_ROLE(), root);
+        acl.createPermission(employer, payroll, payroll.ADD_REIMBURSEMENT_ROLE(), root);
         acl.createPermission(root, payroll, payroll.CHANGE_PRICE_FEED_ROLE(), root);
         acl.createPermission(root, payroll, payroll.MODIFY_RATE_EXPIRY_ROLE(), root);
 

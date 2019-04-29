@@ -25,23 +25,24 @@
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "truffle:dev": "node_modules/.bin/truffle dev",
+    "truffle:dev": "truffle dev",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
     "prepare": "npx apps-shared-scripts-prepare",
     "install:frontend": "cd app && npm install",
-    "prepublishOnly": "truffle compile --all"
+    "abi:extract": "truffle-extract --output abi/ --keys abi",
+    "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile"
   },
   "files": [
+    "/abi",
     "/arapp.json",
     "/build",
     "/contracts",
-    "/scripts",
     "/test"
   ],
   "dependencies": {
-    "@aragon/apps-finance": "2.1.0",
-    "@aragon/os": "4.1.0",
-    "@aragon/ppf-contracts": "1.0.2"
+    "@aragon/apps-finance": "3.0.0",
+    "@aragon/os": "4.2.0",
+    "@aragon/ppf-contracts": "1.1.0"
   },
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
@@ -49,12 +50,12 @@
     "@aragon/apps-shared-scripts": "^1.0.0",
     "@aragon/apps-vault": "4.0.0",
     "@aragon/cli": "^5.1.0",
-    "@aragon/test-helpers": "^1.0.1",
+    "@aragon/test-helpers": "^1.1.0",
     "eth-gas-reporter": "^0.1.12",
-    "ganache-cli": "^6.0.3",
-    "ethereumjs-abi": "^0.6.5",
-    "solidity-coverage": "0.5.11",
-    "solium": "^1.1.8",
-    "truffle": "4.1.14"
+    "ganache-cli": "^6.4.3",
+    "solidity-coverage": "^0.5.11",
+    "solium": "^1.2.3",
+    "truffle": "4.1.14",
+    "truffle-extract": "^1.2.1"
   }
 }

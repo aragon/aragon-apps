@@ -55,7 +55,7 @@ class Balances extends React.Component {
     )
     return (
       <section>
-        <Title>Token Balances</Title>
+        <Title>Balances</Title>
         <ScrollView>
           <List>
             {balanceItems.length > 0 ? (
@@ -142,6 +142,7 @@ const ListItem = styled.li`
     `
       display: block;
       padding: 25px;
+      border: 0;
     `
   )};
 `

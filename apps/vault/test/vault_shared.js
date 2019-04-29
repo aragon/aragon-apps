@@ -1,4 +1,4 @@
-const { assertRevert, assertInvalidOpcode } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { hash } = require('eth-ens-namehash')
 const getBalanceFn = require('@aragon/test-helpers/balance')
 
@@ -15,7 +15,6 @@ module.exports = (
   const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
   const ACL = artifacts.require('ACL')
-  const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
   const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
   const DAOFactory = artifacts.require('DAOFactory')
   const Kernel = artifacts.require('Kernel')
@@ -34,7 +33,6 @@ module.exports = (
   const VaultLike = artifacts.require(vaultName)
 
   const root = accounts[0]
-  const NULL_ADDRESS = '0x00'
 
   context(`> Shared tests for Vault-like apps`, () => {
     let daoFact, vaultBase, vault, vaultId
@@ -78,9 +76,7 @@ module.exports = (
     it('cannot initialize base app', async () => {
       const newVault = await VaultLike.new()
       assert.isTrue(await newVault.isPetrified())
-      await assertRevert(async () => {
-        await newVault.initialize()
-      })
+      await assertRevert(newVault.initialize())
     })
 
     context('> ETH', () => {
@@ -136,17 +132,13 @@ module.exports = (
         await vault.sendTransaction( { value: transferValue })
 
         // Transfer
-        await assertRevert(async () => {
-          await vault.transfer(ETH, destination.address, transferValue)
-        })
+        await assertRevert(vault.transfer(ETH, destination.address, transferValue))
       })
 
       it('fails if depositing a different amount of ETH than sent', async () => {
         const value = 1
 
-        await assertRevert(async () => {
-          await vault.deposit(ETH, value, { value: value * 2 })
-        })
+        await assertRevert(vault.deposit(ETH, value, { value: value * 2 }))
       })
     })
 
@@ -197,9 +189,7 @@ module.exports = (
           const approvedAmount = 10
           await token.approve(vault.address, approvedAmount)
 
-          await assertRevert(async () => {
-            await vault.deposit(token.address, approvedAmount * 2)
-          })
+          await assertRevert(vault.deposit(token.address, approvedAmount * 2))
           assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
         })
 
@@ -210,9 +200,7 @@ module.exports = (
           await token.setAllowTransfer(false)
 
           // Attempt to deposit
-          await assertRevert(() =>
-            vault.deposit(token.address, 5)
-          )
+          await assertRevert(vault.deposit(token.address, 5))
           assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
         })
 
@@ -224,9 +212,7 @@ module.exports = (
           await token.setAllowTransfer(false)
 
           // Attempt to transfer
-          await assertRevert(() =>
-            vault.transfer(token.address, tokenReceiver, 5)
-          )
+          await assertRevert(vault.transfer(token.address, tokenReceiver, 5))
           assert.equal(await token.balanceOf(tokenReceiver), 0, "receiver should have initial token balance")
           assert.equal(await token.balanceOf(vault.address), 10, "vault should have initial token balance")
         })
@@ -281,13 +267,13 @@ module.exports = (
       it('fails when attempting to recover ETH out of the vault', async () => {
         await vault.sendTransaction({ value: 1, gas: 31000 })
         assert.equal((await getBalance(vault.address)).valueOf(), 1, 'vault should have 1 balance')
-        await assertRevert(() => vault.transferToVault(ETH))
+        await assertRevert(vault.transferToVault(ETH))
       })
 
       it('fails when attempting to recover tokens out of the vault', async () => {
         await token.transfer(vault.address, 10)
         assert.equal((await token.balanceOf(vault.address)), 10, 'vault should have 10 balance')
-        await assertRevert(() => vault.transferToVault(token.address))
+        await assertRevert(vault.transferToVault(token.address))
       })
     })
   })

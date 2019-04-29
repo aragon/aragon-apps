@@ -7,6 +7,7 @@ import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 import VotingOptions from './VotingOptions'
 import VoteText from '../VoteText'
 import VoteStatus from '../VoteStatus'
+import { isVoteAction } from '../../vote-utils.js'
 
 function getOptions(yea, nay, connectedAccountVote) {
   return [
@@ -48,8 +49,16 @@ const VotingCard = React.memo(
       connectedAccountVote,
     ])
 
+    const action = isVoteAction(vote)
+
     return (
-      <Main>
+      <section
+        css={`
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        `}
+      >
         <Header>
           {open ? (
             <Countdown end={endDate} />
@@ -73,11 +82,27 @@ const VotingCard = React.memo(
             </Label>
             <VotingOptions options={options} votingPower={votingPower} />
           </Content>
-          <Footer>
-            <SecondaryButton onClick={handleOpen}>View vote</SecondaryButton>
-          </Footer>
+          <div
+            css={`
+              display: flex;
+              justify-content: space-between;
+              flex-shrink: 0;
+            `}
+          >
+            <div
+              css={`
+                display: flex;
+                align-items: center;
+              `}
+            >
+              {action ? <BadgeAction /> : <BadgeQuestion />}
+            </div>
+            <Button compact mode="outline" onClick={handleOpen}>
+              View vote
+            </Button>
+          </div>
         </Card>
-      </Main>
+      </section>
     )
   },
   (prevProps, nextProps) => {
@@ -102,6 +127,18 @@ VotingCard.defaultProps = {
   onOpen: () => {},
 }
 
+const BadgeQuestion = () => (
+  <Badge background="rgba(37, 49, 77, 0.16)" foreground="rgba(37, 49, 77, 1)">
+   Question
+  </Badge>
+)
+
+const BadgeAction = () => (
+  <Badge background="rgba(245, 166, 35, 0.1)" foreground="rgba(156, 99, 7, 1)">
+    Action
+  </Badge>
+)
+
 const OptionLabel = ({ label, isConnectedAccount }) => (
   <span>
     <span>{label}</span>
@@ -109,25 +146,11 @@ const OptionLabel = ({ label, isConnectedAccount }) => (
   </span>
 )
 
-const Main = styled.section`
-  display: flex;
-  flex-direction: column;
-`
-
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 10px;
   padding-left: 5px;
-`
-
-const SecondaryButton = styled(Button).attrs({
-  mode: 'secondary',
-  compact: true,
-})`
-  background: ${color(theme.secondaryBackground)
-    .alpha(0.8)
-    .cssa()};
 `
 
 const Card = styled.div`
@@ -157,12 +180,6 @@ const Label = styled.h1`
 const PastDate = styled.time`
   font-size: 13px;
   color: #98a0a2;
-`
-
-const Footer = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  flex-shrink: 0;
 `
 
 const You = styled(Badge.Identity).attrs({ children: 'Your vote' })`

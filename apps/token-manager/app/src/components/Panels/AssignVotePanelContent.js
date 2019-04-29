@@ -29,11 +29,13 @@ class AssignVotePanelContent extends React.Component {
   state = {
     ...initialState,
   }
+  _holderInput = React.createRef()
   componentWillReceiveProps({ opened, mode, holderAddress }) {
     if (opened && !this.props.opened) {
       // setTimeout is needed as a small hack to wait until the input is
       // on-screen before we call focus
-      this.holderInput && setTimeout(() => this.holderInput.focus(), 0)
+      this._holderInput.current &&
+        setTimeout(() => this._holderInput.current.focus(), 0)
 
       // Upadte holder address from the props
       this.updateHolderAddress(mode, holderAddress)
@@ -135,7 +137,7 @@ class AssignVotePanelContent extends React.Component {
       <div>
         <form onSubmit={this.handleSubmit}>
           <InfoMessage
-            title="Token Manager Permissions"
+            title="Token Manager action"
             text={`This action will ${
               mode === 'assign'
                 ? 'mint tokens to the recipient below'
@@ -149,7 +151,7 @@ class AssignVotePanelContent extends React.Component {
             `}
           >
             <TextInput
-              ref={element => (this.holderInput = element)}
+              ref={this._holderInput}
               value={holderField.value}
               onChange={this.handleHolderChange}
               wide
@@ -174,7 +176,7 @@ class AssignVotePanelContent extends React.Component {
             disabled={amountField.max === '0'}
             wide
           >
-            {mode === 'assign' ? 'Add' : 'Remove'} Tokens
+            {mode === 'assign' ? 'Add' : 'Remove'} tokens
           </Button>
           <div css="margin-top: 15px">
             {errorMessage && <ErrorMessage message={errorMessage} />}

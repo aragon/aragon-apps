@@ -1,53 +1,50 @@
-const { maxUint64 } = require('../helpers/numbers')(web3)
+const { MAX_UINT64 } = require('../helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEventArgument } = require('../helpers/events')
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollInstance, mockTimestamps } = require('../helpers/setup.js')(artifacts, web3)
+const { NOW, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
+const { USD, deployDAI } = require('../helpers/tokens')(artifacts, web3)
+const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 contract('Payroll employee getters', ([owner, employee]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken, anotherToken
-
-  const NOW = 1553703809 // random fixed timestamp in seconds
-  const ONE_MONTH = 60 * 60 * 24 * 31
-  const TWO_MONTHS = ONE_MONTH * 2
-  const RATE_EXPIRATION_TIME = TWO_MONTHS
-
-  const TOKEN_DECIMALS = 18
+  let dao, payroll, payrollBase, finance, vault, priceFeed, DAI
 
   const currentTimestamp = async () => payroll.getTimestampPublic()
 
-  before('setup base apps and tokens', async () => {
-    ({ dao, finance, vault, priceFeed, payrollBase } = await deployContracts(owner))
-    anotherToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Another token', TOKEN_DECIMALS)
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, vault, 'Denomination Token', TOKEN_DECIMALS)
+  before('deploy base apps and tokens', async () => {
+    ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
+    DAI = await deployDAI(owner, finance)
   })
 
-  beforeEach('setup payroll instance', async () => {
-    payroll = await createPayrollInstance(dao, payrollBase, owner)
-    await mockTimestamps(payroll, priceFeed, NOW)
+  beforeEach('create payroll and price feed instance', async () => {
+    ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
   })
 
   describe('getEmployee', () => {
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the given id exists', () => {
         let employeeId
+        const salary = annualSalaryPerSecond(100000)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 1000, 'Boss', { from: owner })
+          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
         it('adds a new employee', async () => {
-          const [address, salary, accruedValue, lastPayroll, endDate] = await payroll.getEmployee(employeeId)
+          const [address, employeeSalary, bonus, reimbursements, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(employeeId)
 
           assert.equal(address, employee, 'employee address does not match')
-          assert.equal(accruedValue, 0, 'Employee accrued value does not match')
-          assert.equal(salary.toString(), 1000, 'Employee salary does not match')
-          assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'last payroll should match')
-          assert.equal(endDate.toString(), maxUint64(), 'last payroll should match')
+          assert.equal(bonus.toString(), 0, 'employee bonus does not match')
+          assert.equal(reimbursements, 0, 'employee reimbursements does not match')
+          assert.equal(accruedSalary, 0, 'employee accrued salary does not match')
+          assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
+          assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
+          assert.equal(endDate.toString(), MAX_UINT64, 'employee end date does not match')
         })
       })
 
@@ -71,27 +68,30 @@ contract('Payroll employee getters', ([owner, employee]) => {
 
   describe('getEmployeeByAddress', () => {
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the given address exists', () => {
         let employeeId
         const address = employee
+        const salary = annualSalaryPerSecond(100000)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployeeNow(employee, 1000, 'Boss', { from: owner })
+          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic(), { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
         it('adds a new employee', async () => {
-          const [id, salary, accruedValue, lastPayroll, endDate] = await payroll.getEmployeeByAddress(address)
+          const [id, employeeSalary, bonus, reimbursements, accruedSalary, lastPayroll, endDate] = await payroll.getEmployeeByAddress(address)
 
           assert.equal(id.toString(), employeeId.toString(), 'employee id does not match')
-          assert.equal(salary.toString(), 1000, 'employee salary does not match')
-          assert.equal(accruedValue.toString(), 0, 'employee accrued value does not match')
-          assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'last payroll should match')
-          assert.equal(endDate.toString(), maxUint64(), 'last payroll should match')
+          assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
+          assert.equal(bonus.toString(), 0, 'employee bonus does not match')
+          assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
+          assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
+          assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
+          assert.equal(endDate.toString(), MAX_UINT64, 'employee end date does not match')
         })
       })
 
