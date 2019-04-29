@@ -1,7 +1,7 @@
 {
   "name": "Vault",
   "author": "Aragon Association",
-  "description": "Securely own and manage tokens on behalf of your organization.",
+  "description": "Store an organization's financial assets.",
   "changelog_url": "https://github.com/aragon/aragon-apps/releases",
   "details_url": "/meta/details.md",
   "source_url": "https://github.com/aragon/aragon-apps/blob/master/apps/vault",

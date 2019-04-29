@@ -1,12 +1,4 @@
-Vaults own and manage the ERC20 assets the DAO has.
+The Vault app is used to store an organization's financial assets. Other apps, such as the Finance app, can be given permission to access and manage the assets held by the Vault, enabling seamless transactions across apps.
 
-The design rationale for having Vaults:
-
-- Allowing the installation of third party apps that can spend from the same
-  pool of assets as other apps.
-- Being able to revoke spending permissions to apps without having to move
-  assets.
-
-Granting permissions to execute functions on the Vault must be done extremely
-carefully (it can cause irreversible leak of funds) and ideally only other
-trusted smart contracts (e.g. Finance app) should have access to it.
+**WARNING**  
+Users should be cautious about which entities have permission to transfer assets from the Vault. Setting the wrong permission could lead to an irreversible loss of assets. Review the permissions set in the Vault app carefully before depositing a significant amount of valuable assets in the Vault.
