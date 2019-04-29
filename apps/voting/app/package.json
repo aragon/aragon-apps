@@ -21,6 +21,7 @@
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-eslint": "^9.0.0",
+    "babel-jest": "^23.0.1",
     "babel-plugin-styled-components": "^1.5.1",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.1",
@@ -37,11 +38,13 @@
     "eslint-plugin-react": "^7.5.1",
     "eslint-plugin-react-hooks": "^1.6.0",
     "eslint-plugin-standard": "^4.0.0",
+    "jest": "^23.0.1",
     "parcel-bundler": "1.9.7",
     "prettier": "^1.8.2"
   },
   "scripts": {
     "lint": "eslint ./src",
+    "test": "jest",
     "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build",
     "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3001 --out-dir build/",
     "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url \".\"",

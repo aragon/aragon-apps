@@ -89,7 +89,7 @@ const VotingCard = React.memo(
                 align-items: center;
               `}
             >
-              {action ? <BadgeAction /> : <BadgeInformative />}
+              {action ? <BadgeAction /> : <BadgeQuestion />}
             </div>
             <Button compact mode="outline" onClick={handleOpen}>
               View vote
@@ -121,9 +121,9 @@ VotingCard.defaultProps = {
   onOpen: () => {},
 }
 
-const BadgeInformative = () => (
+const BadgeQuestion = () => (
   <Badge background="rgba(37, 49, 77, 0.16)" foreground="rgba(37, 49, 77, 1)">
-    Informative
+   Question
   </Badge>
 )
 
