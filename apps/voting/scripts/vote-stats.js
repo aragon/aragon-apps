@@ -3,6 +3,11 @@ Usage:
 $ APP_ADDRESS=[voting app addr] VOTE_ID=[vote id for analysis] npx truffle exec --network mainnet scripts/vote-stats.js
 
 Will save a file name `vote-[id].csv` the current directory.
+
+Notes:
+
+If nothing appears to happen, you may want to supply a different truffle configuration or network,
+as the default connection to mainnet uses an unauthenticated Infura endpoint (that gets throttled).
 */
 
 const fs = require('fs')
