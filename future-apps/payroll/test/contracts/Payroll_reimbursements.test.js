@@ -4,7 +4,7 @@ const { getEvents, getEventArgument } = require('../helpers/events')
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 const { ONE, bn, bigExp, annualSalaryPerSecond, MAX_UINT256 } = require('../helpers/numbers')(web3)
-const { USD, DAI_RATE, ANT_RATE, exchangedAmount, deployDAI, deployANT, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
+const { USD, DAI_RATE, ANT_RATE, inverseRate, exchangedAmount, deployDAI, deployANT, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
 
 contract('Payroll reimbursements', ([owner, employee, anyone]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, DAI, ANT
@@ -187,19 +187,21 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
               it('emits one event per allocated token', async () => {
                 const receipt = await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from })
 
-                const events = receipt.logs.filter(l => l.event === 'SendPayment')
+                const events = getEvents(receipt, 'SendPayment')
                 assert.equal(events.length, 2, 'should have emitted two events')
 
                 const eventDAI = events.find(e => e.args.token === DAI.address).args
                 assert.equal(eventDAI.employee, employee, 'employee address does not match')
                 assert.equal(eventDAI.token, DAI.address, 'DAI address does not match')
                 assert.equal(eventDAI.amount.toString(), requestedDAI, 'payment amount does not match')
+                assert.equal(eventDAI.exchangeRate.toString(), inverseRate(DAI_RATE).toString(), 'payment exchange rate does not match')
                 assert.equal(eventDAI.paymentReference, 'Reimbursement', 'payment reference does not match')
 
                 const eventANT = events.find(e => e.args.token === ANT.address).args
                 assert.equal(eventANT.employee, employee, 'employee address does not match')
                 assert.equal(eventANT.token, ANT.address, 'token address does not match')
                 assert.equal(eventANT.amount.toString(), requestedANT, 'payment amount does not match')
+                assert.equal(eventANT.exchangeRate.toString(), inverseRate(ANT_RATE).toString(), 'payment exchange rate does not match')
                 assert.equal(eventANT.paymentReference, 'Reimbursement', 'payment reference does not match')
               })
             }
