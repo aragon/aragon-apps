@@ -177,7 +177,7 @@ const VotePanelContentActions = React.memo(
 
     const handleChangeVote = useCallback(() => setChangeVote(true), [])
 
-    const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.userAccountVote)
+    const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.connectedAccountVote)
 
     if (canExecute) {
       return (
@@ -204,7 +204,8 @@ const VotePanelContentActions = React.memo(
           </ButtonsContainer>
           <Action>
             <p>
-              You voted {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'} with{' '}
+              You voted {vote.connectedAccountVote === VOTE_YEA ? 'yes' : 'no'}{' '}
+              with{' '}
               {userBalance === -1
                 ? '…'
                 : pluralize(userBalance, '$ token', '$ tokens')}
