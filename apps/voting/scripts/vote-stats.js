@@ -27,6 +27,17 @@ const getTransaction = hash => (
     })
   })
 )
+const getBlock = block => (
+  new Promise((resolve, reject) => {
+    web3.eth.getBlock(block, (err, tx) => {
+      if (err) {
+        return reject(err)
+      }
+
+      resolve(tx)
+    })
+  })
+)
 
 module.exports = async (cb) => {
   const voting = Voting.at(appAddress)
@@ -60,18 +71,21 @@ module.exports = async (cb) => {
       'Stake',
       'Block number',
       'Transaction hash',
+      'Timestamp',
       'Used Aragon client'
     ]
 
     const proccessedVotes = await Promise.all(votes.map(async ({ transactionHash, args }) => {
       const { voter, supports, stake } = args
       const { blockNumber, input } = await getTransaction(transactionHash)
+      const { timestamp } = await getBlock(blockNumber)
       return [
         voter,
         supports,
         formatNumber(stake, decimals),
         blockNumber,
         transactionHash,
+        new Date(timestamp * 1000).toJSON(), // Solidity time is in seconds
         input.endsWith('1') // Did they use the client to vote?
       ]
     }))
