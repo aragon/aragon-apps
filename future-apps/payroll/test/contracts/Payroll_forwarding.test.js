@@ -136,7 +136,7 @@ contract('Payroll forwarding,', ([owner, employee, anyone]) => {
         const from = anyone
 
         it('reverts', async () =>  {
-          await assertRevert(payroll.forward(script, { from }), 'PAYROLL_NO_FORWARD')
+          await assertRevert(payroll.forward(script, { from }), 'PAYROLL_CAN_NOT_FORWARD')
 
           assert.equal(await executionTarget.counter(), 0, 'should not have received execution calls')
         })
@@ -145,7 +145,7 @@ contract('Payroll forwarding,', ([owner, employee, anyone]) => {
 
     context('when it has not been initialized yet', function () {
       it('reverts', async () => {
-        await assertRevert(payroll.forward(script, { from: employee }), 'PAYROLL_NO_FORWARD')
+        await assertRevert(payroll.forward(script, { from: employee }), 'PAYROLL_CAN_NOT_FORWARD')
       })
     })
   })
