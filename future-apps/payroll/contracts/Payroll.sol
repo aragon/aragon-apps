@@ -224,7 +224,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
         employeeActive(_employeeId)
     {
-        _terminateEmployeeAt(_employeeId, _endDate);
+        _terminateEmployee(_employeeId, _endDate);
     }
 
     /**
@@ -304,7 +304,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         if (_type == PaymentType.Payroll) {
             (uint256 currentOwedSalary, uint256 totalOwedSalary) = _getOwedSalaries(employeeId);
             paymentAmount = _ensurePaymentAmount(totalOwedSalary, _requestedAmount);
-            _updateEmployeeStatusBasedOnPaidPayroll(employeeId, paymentAmount, currentOwedSalary);
+            _updateEmployeeAccountingBasedOnPaidPayroll(employeeId, paymentAmount, currentOwedSalary);
         } else if (_type == PaymentType.Reimbursement) {
             uint256 owedReimbursements = employee.reimbursements;
             paymentAmount = _ensurePaymentAmount(owedReimbursements, _requestedAmount);
@@ -565,7 +565,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _employeeId Employee's identifier
      * @param _endDate End date timestamp in seconds
      */
-    function _terminateEmployeeAt(uint256 _employeeId, uint64 _endDate) internal {
+    function _terminateEmployee(uint256 _employeeId, uint64 _endDate) internal {
         // Prevent past termination dates
         require(_endDate >= getTimestamp64(), ERROR_PAST_TERMINATION_DATE);
 
@@ -789,7 +789,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _paymentAmount Amount being paid to the employee
      * @param _currentOwedSalary Owed salary for the employee since their last payroll date
      */
-    function _updateEmployeeStatusBasedOnPaidPayroll(uint256 _employeeId, uint256 _paymentAmount, uint256 _currentOwedSalary) private {
+    function _updateEmployeeAccountingBasedOnPaidPayroll(uint256 _employeeId, uint256 _paymentAmount, uint256 _currentOwedSalary) private {
         Employee storage employee = employees[_employeeId];
         uint256 accruedSalary = employee.accruedSalary;
 
