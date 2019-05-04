@@ -96,7 +96,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     event AddEmployeeAccruedSalary(uint256 indexed employeeId, uint256 amount);
     event ChangeAddressByEmployee(uint256 indexed employeeId, address indexed newAccountAddress, address indexed oldAccountAddress);
     event DetermineAllocation(uint256 indexed employeeId);
-    event SendPayment(uint256 indexed employeeId, address indexed employeeAccountAddress, address indexed token, uint256 amount, uint128 exchangeRate, string paymentReference);
+    event SendPayment(uint256 indexed employeeId, address indexed employeeAccountAddress, address indexed token, uint256 amount, uint256 exchangeRate, string paymentReference);
     event AddAllowedToken(address indexed token);
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
@@ -679,7 +679,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return Exchange rate (multiplied by ONE for precision).
                Exactly ONE if _token is denominationToken or 0 if the exchange rate isn't recent enough.
      */
-    function _getExchangeRateInDenominationToken(address _token) internal view returns (uint128) {
+    function _getExchangeRateInDenominationToken(address _token) internal view returns (uint256) {
         // Denomination token has always exchange rate of 1
         if (_token == denominationToken) {
             return ONE;
@@ -696,7 +696,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             return 0;
         }
 
-        return xrt;
+        return uint256(xrt);
     }
 
     /**
@@ -708,6 +708,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function _transferTokensAmount(uint256 _employeeId, PaymentType _type, uint256 _totalAmount) internal returns (bool somethingPaid) {
         if (_totalAmount == 0) return false;
+
         Employee storage employee = employees[_employeeId];
         address employeeAddress = employee.accountAddress;
         string memory paymentReference = _paymentReferenceFor(_type);
@@ -718,7 +719,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             if (tokenAllocation != uint256(0)) {
                 // Get the exchange rate for the token in denomination token,
                 // as we do accounting in denomination tokens
-                uint128 exchangeRate = _getExchangeRateInDenominationToken(token);
+                uint256 exchangeRate = _getExchangeRateInDenominationToken(token);
                 require(exchangeRate > 0, ERROR_EXCHANGE_RATE_ZERO);
 
                 // Convert amount (in denomination tokens) to payout token and apply allocation
