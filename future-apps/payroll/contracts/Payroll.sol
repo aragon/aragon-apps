@@ -213,8 +213,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         authP(SET_EMPLOYEE_SALARY_ROLE, arr(_employeeId, _denominationSalary, employees[_employeeId].denominationTokenSalary))
         employeeActive(_employeeId)
     {
-        // Accrue employee's owed salary
-        uint256 owed = _getCurrentOwedSalary(_employeeId);
+        // Accrue employee's owed salary; don't cap and revert on overflow
+        uint256 owed = _getOwedSalarySinceLastPayroll(_employeeId, false);
         _addAccruedSalary(_employeeId, owed);
 
         // Update employee to track the new salary and payment date
@@ -610,34 +610,26 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Get owed salary since last payroll for an employee. It reverts in case of an overflow.
+     * @dev Get owed salary since last payroll for an employee.
      * @param _employeeId Employee's identifier
-     * @return Total amount of owed salary for the requested employee since their last payroll. It reverts in case of an overflow.
+     * @param _capped Safely cap the owed salary at max uint
+     * @return Owed salary in denomination tokens since last payroll for the employee.
+     *         If _capped is false, it reverts in case of an overflow.
      */
-    function _getCurrentOwedSalary(uint256 _employeeId) internal view returns (uint256) {
+    function _getOwedSalarySinceLastPayroll(uint256 _employeeId, bool _capped) internal view returns (uint256) {
         uint256 timeDiff = _getOwedPayrollPeriod(_employeeId);
         if (timeDiff == 0) {
             return 0;
         }
-        return employees[_employeeId].denominationTokenSalary.mul(timeDiff);
-    }
-
-    /**
-     * @dev Get amount of owed salary for a given employee since their last payroll, capped by max uint
-     * @param _employeeId Employee's identifier
-     * @return Total amount of owed salary for the requested employee since their last payroll capped by max uint
-     */
-    function _getCurrentCappedOwedSalary(uint256 _employeeId) internal view returns (uint256) {
-        uint256 timeDiff = _getOwedPayrollPeriod(_employeeId);
-        if (timeDiff == 0) {
-            return 0;
-        }
-
         uint256 salary = employees[_employeeId].denominationTokenSalary;
-        uint256 result = salary * timeDiff;
 
-        // Return max uint if the result overflows
-        return (result / timeDiff != salary) ? MAX_UINT256 : result;
+        if (_capped) {
+            // Return max uint if the result overflows
+            uint256 result = salary * timeDiff;
+            return (result / timeDiff != salary) ? MAX_UINT256 : result;
+        } else {
+            return salary.mul(timeDiff);
+        }
     }
 
     /**
@@ -649,9 +641,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      *         denomination tokens
      */
     function _getOwedSalaries(uint256 _employeeId) internal view returns (uint256 currentOwedSalary, uint256 totalOwedSalary) {
-        currentOwedSalary = _getCurrentCappedOwedSalary(_employeeId);
+        currentOwedSalary = _getOwedSalarySinceLastPayroll(_employeeId, true); // cap amount
 
-        // Clamp totalOwedSalary to MAX_UINT256
+        // Also cap totalOwedSalary to max uint
         totalOwedSalary = currentOwedSalary + employees[_employeeId].accruedSalary;
         if (totalOwedSalary < currentOwedSalary) {
             totalOwedSalary = MAX_UINT256;
