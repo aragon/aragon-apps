@@ -82,17 +82,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     mapping(address => bool) internal allowedTokens;
     address[] internal allowedTokensArray;
 
-    event AddAllowedToken(address indexed token);
-    event SetEmployeeSalary(uint256 indexed employeeId, uint256 denominationSalary);
-    event AddEmployeeBonus(uint256 indexed employeeId, uint256 amount);
-    event AddEmployeeReimbursement(uint256 indexed employeeId, uint256 amount);
-    event AddEmployeeAccruedSalary(uint256 indexed employeeId, uint256 amount);
-    event TerminateEmployee(uint256 indexed employeeId, uint64 endDate);
-    event ChangeAddressByEmployee(uint256 indexed employeeId, address indexed newAccountAddress, address indexed oldAccountAddress);
-    event DetermineAllocation(uint256 indexed employeeId);
-    event SendPayment(uint256 indexed employeeId, address indexed employeeAccountAddress, address indexed token, uint256 amount, uint128 exchangeRate, string paymentReference);
-    event SetPriceFeed(address indexed feed);
-    event SetRateExpiryTime(uint64 time);
     event AddEmployee(
         uint256 indexed employeeId,
         address indexed accountAddress,
@@ -100,6 +89,17 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         string role,
         uint64 startDate
     );
+    event TerminateEmployee(uint256 indexed employeeId, uint64 endDate);
+    event SetEmployeeSalary(uint256 indexed employeeId, uint256 denominationSalary);
+    event AddEmployeeBonus(uint256 indexed employeeId, uint256 amount);
+    event AddEmployeeReimbursement(uint256 indexed employeeId, uint256 amount);
+    event AddEmployeeAccruedSalary(uint256 indexed employeeId, uint256 amount);
+    event ChangeAddressByEmployee(uint256 indexed employeeId, address indexed newAccountAddress, address indexed oldAccountAddress);
+    event DetermineAllocation(uint256 indexed employeeId);
+    event SendPayment(uint256 indexed employeeId, address indexed employeeAccountAddress, address indexed token, uint256 amount, uint128 exchangeRate, string paymentReference);
+    event AddAllowedToken(address indexed token);
+    event SetPriceFeed(address indexed feed);
+    event SetRateExpiryTime(uint64 time);
 
     // Check employee exists by address
     modifier employeeAddressExists(address _accountAddress) {
