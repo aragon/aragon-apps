@@ -737,18 +737,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     function _removeEmployeeIfTerminatedAndPaidOut(uint256 _employeeId) internal {
         Employee storage employee = employees[_employeeId];
 
-        if (employee.endDate > getTimestamp64()) {
-            return;
+        if (
+            employee.lastPayroll == employee.endDate &&
+            (employee.reimbursements == 0 && employee.accruedSalary == 0 && employee.bonus == 0)
+        ) {
+            delete employeeIds[employee.accountAddress];
+            delete employees[_employeeId];
         }
-        if (_getCurrentCappedOwedSalary(_employeeId) > 0) {
-            return;
-        }
-        if (employee.reimbursements > 0 || employee.accruedSalary > 0 || employee.bonus > 0) {
-            return;
-        }
-
-        delete employeeIds[employee.accountAddress];
-        delete employees[_employeeId];
     }
 
     /**

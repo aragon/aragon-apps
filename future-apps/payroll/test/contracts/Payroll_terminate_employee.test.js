@@ -87,7 +87,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
                 await payroll.terminateEmployee(employeeId, endDate, { from })
                 await increaseTime(ONE_MONTH - 1) // to avoid expire rates
 
-                // Request owed money
+                // Request owed money and remove terminated employee
                 await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
                 await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, 0, { from: employee })
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
@@ -108,7 +108,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
                 await payroll.terminateEmployee(employeeId, endDate, { from })
                 await increaseTime(ONE_MONTH - 1) // to avoid expire rates
 
-                // Request owed money
+                // Request owed money and remove terminated employee
                 await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
