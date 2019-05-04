@@ -1,6 +1,5 @@
 pragma solidity 0.4.24;
 
-
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/EtherTokenConstant.sol";
 import "@aragon/os/contracts/common/IsContract.sol";
@@ -125,7 +124,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Initialize Payroll app for Finance at `_finance` and price feed at `_priceFeed`, setting denomination token to `_token.symbol(): string` and exchange rate expiry time to `@transformTime(_rateExpiryTime)`
+     * @notice Initialize Payroll app for Finance at `_finance` and price feed at `_priceFeed`, setting denomination token to `_token` and exchange rate expiry time to `@transformTime(_rateExpiryTime)`
+     * @dev Note that we do not require _denominationToken to be a contract, as it may be a "fake"
+     *      address used by the price feed to denominate fiat currencies
      * @param _finance Address of the Finance app this Payroll will rely on (non-changeable)
      * @param _denominationToken Address of the denomination token
      * @param _priceFeed Address of the price feed
@@ -154,7 +155,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     /**
      * @notice Set the exchange rate expiry time to `@transformTime(_time)`
-     * @dev Set the exchange rate expiry time in seconds. Exchange rates older than it won't be accepted for payments
+     * @dev Set the exchange rate expiry time in seconds. Exchange rates older than it won't be accepted for payments.
      * @param _time The expiration time in seconds for exchange rates
      */
     function setRateExpiryTime(uint64 _time) external authP(MODIFY_RATE_EXPIRY_ROLE, arr(uint256(_time), uint256(rateExpiryTime))) {
@@ -162,7 +163,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Add `_allowedToken` to the set of allowed tokens
+     * @notice Add `_allowedToken.symbol(): string` to the set of allowed tokens
      * @param _allowedToken New token address to be allowed for payments
      */
     function addAllowedToken(address _allowedToken) external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
@@ -176,7 +177,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Add employee with address `_accountAddress` to Payroll with a salary of `_initialDenominationSalary` per second, starting on `@transformTime(_startDate)`
+     * @notice Add employee with address `_accountAddress` to payroll with a salary of `_initialDenominationSalary` per second, starting on `@formatDate(_startDate)`
      * @param _accountAddress Employee's address to receive payroll
      * @param _initialDenominationSalary Employee's salary, per second in denomination token
      * @param _role Employee's role
@@ -191,6 +192,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     /**
      * @notice Set employee #`_employeeId`'s annual salary to `_denominationSalary` per second
+     * @dev This reverts if the employee's salary overflows, to avoid losing any accrued salary for
+     *      an employee due to the employer changing their salary.
      * @param _employeeId Employee's identifier
      * @param _denominationSalary Employee's new salary, per second in denomination token
      */
@@ -227,7 +230,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @notice Add `_amount` to bonus for employee #`_employeeId`
      * @param _employeeId Employee's identifier
-     * @param _amount Amount to be added to the employee's bonus amount
+     * @param _amount Amount to be added to the employee's bonuses
      */
     function addBonus(uint256 _employeeId, uint256 _amount)
         external
@@ -251,11 +254,12 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Set token distribution for payments to an employee (the caller)
+     * @notice Set the token distribution for your payments
      * @dev Initialization check is implicitly provided by `employeeMatches` as new employees can
-     *      only be added via `addEmployee(),` which requires initialization
-     * @param _tokens Array with the tokens to receive, they must belong to allowed tokens for employee
-     * @param _distribution Array, correlated to tokens, with their corresponding proportions (integers summing to 100)
+     *      only be added via `addEmployee(),` which requires initialization.
+     *      As the employee is allowed to call this, we enforce non-reentrancy.
+     * @param _tokens Array of token addresses; they must belong to the list of allowed tokens
+     * @param _distribution Array with each token's corresponding proportions (must be integers summing to 100)
      */
     function determineAllocation(address[] _tokens, uint256[] _distribution) external employeeMatches nonReentrant {
         // Check arrays match
@@ -284,11 +288,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Request employee's payments
-     * @dev Withdraw employee's owed payments (the caller).
-     *      Initialization check is implicitly provided by `employeeMatches` as new employees can only be added via `addEmployee(),` which requires initialization
+     * @notice Request your owed payments
+     * @dev Withdraw employee's owed payments (the caller). Must pay at least one token.
+     *      Initialization check is implicitly provided by `employeeMatches` as new employees can
+     *      only be added via `addEmployee(),` which requires initialization.
+     *      As the employee is allowed to call this, we enforce non-reentrancy.
      * @param _type Payment type being requested (Payroll, Reimbursement or Bonus)
-     * @param _requestedAmount Requested amount of the total owed to the employee for the requested payment type. Must be less or equal than total owed so far, or zero to request all owed amount
+     * @param _requestedAmount Requested amount to pay for the payment type. Must be less than or equal to total owed amount for the payment type, or zero to request all.
      */
     function payday(PaymentType _type, uint256 _requestedAmount) external employeeMatches nonReentrant {
         uint256 paymentAmount;
@@ -320,6 +326,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @dev Change employee's account address. Must be called by employee from their registered address.
      *      Initialization check is implicitly provided by `employeeMatches` as new employees can
      *      only be added via `addEmployee(),` which requires initialization
+     *      As the employee is allowed to call this, we enforce non-reentrancy.
      * @param _newAddress New address to receive payments for the requesting employee
      */
     function changeAddressByEmployee(address _newAddress) external employeeMatches nonReentrant {
@@ -342,7 +349,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     // Forwarding fns
 
     /**
-     * @dev IForwarder interface conformance. Tells whether the payroll is a forwarder or not
+     * @dev IForwarder interface conformance. Tells whether the payroll is a forwarder or not.
      * @return Always true
      */
     function isForwarder() external pure returns (bool) {
@@ -350,21 +357,25 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev IForwarder interface conformance. Forwards any employee action
+     * @notice Execute desired action as a an employee
+     * @dev IForwarder interface conformance. Forwards any employee action.
      * @param _evmScript Script being executed
      */
     function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript), ERROR_NO_FORWARD);
         bytes memory input = new bytes(0); // TODO: Consider input for this
+
+        // Add the Finance app to the blacklist to disallow employees from executing actions on this
+        // app's behalf (since it requires permissions on Finance)
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(finance);
         runScript(_evmScript, input, blacklist);
     }
 
     /**
-     * @dev IForwarder interface conformance. Tells whether a given address can forward actions or not
-     * @param _sender Address of the account willing to forward an action
-     * @return True if the given address is an employee, false otherwise
+     * @dev IForwarder interface conformance. Tells whether a given address can forward actions or not.
+     * @param _sender Address of the account intending to forward an action
+     * @return True if the given address is an active employee, false otherwise
      */
     function canForward(address _sender, bytes) public view returns (bool) {
         // Check employee exists (and matches)
@@ -447,7 +458,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Get an employee's payment allocation for a token
+     * @dev Get an employee's payment allocation for a token
      * @param _employeeId Employee's identifier
      * @param _token Token to query the payment allocation for
      * @return Employee's payment allocation for the token being queried
@@ -457,7 +468,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Check if a token is allowed to be used in this app
+     * @dev Check if a token is allowed to be used for payroll
      * @param _token Address of the token to be checked
      * @return True if the given token is allowed, false otherwise
      */
@@ -468,7 +479,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     // Internal fns
 
     /**
-     * @notice Add a new employee to Payroll
+     * @dev Add a new employee to Payroll
      * @param _accountAddress Employee's address to receive payroll
      * @param _initialDenominationSalary Employee's salary, per second in denomination token
      * @param _role Employee's role
@@ -494,9 +505,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Add a requested amount to the bonus amount for a given employee
+     * @dev Add amount to an employee's bonuses
      * @param _employeeId Employee's identifier
-     * @param _amount Amount be added to the employee's bonus amount
+     * @param _amount Amount be added to the employee's bonuses
      */
     function _addBonus(uint256 _employeeId, uint256 _amount) internal {
         Employee storage employee = employees[_employeeId];
@@ -505,7 +516,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Add a requested amount to the reimbursements of a given employee
+     * @dev Add amount to an employee's reimbursements
      * @param _employeeId Employee's identifier
      * @param _amount Amount be added to the employee's reimbursements
      */
@@ -516,7 +527,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Add a requested amount to the accrued salary for a given employee
+     * @dev Add amount to an employee's accrued salary
      * @param _employeeId Employee's identifier
      * @param _amount Amount be added to the employee's accrued salary
      */
@@ -537,7 +548,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Set the exchange rate expiry time in seconds. Exchange rates older than it won't be accepted when making payments
+     * @dev Set the exchange rate expiry time in seconds. Exchange rates older than it won't be accepted when making payments.
      * @param _time The expiration time in seconds for exchange rates
      */
     function _setRateExpiryTime(uint64 _time) internal {
@@ -549,9 +560,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Set the end date of an employee
-     * @param _employeeId Employee's identifier to set the end date of
-     * @param _endDate Date timestamp in seconds to be set as the end date of the employee
+     * @dev Terminate employee on end date
+     * @param _employeeId Employee's identifier
+     * @param _endDate End date timestamp in seconds
      */
     function _terminateEmployeeAt(uint256 _employeeId, uint64 _endDate) internal {
         // Prevent past termination dates
@@ -564,20 +575,19 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Calculate the new last payroll date for an employee based on an requested payment amount
+     * @dev Calculate the new last payroll date for an employee based on the requested payment amount
      * @param _employeeId Employee's identifier
-     * @param _payedAmount Amount payed to the employee
+     * @param _paidAmount Requested amount to be paid to the employee
      * @return The new last payroll timestamp in seconds based on the requested payment amount
      */
-    function _getLastPayroll(uint256 _employeeId, uint256 _payedAmount) internal view returns (uint64) {
+    function _getLastPayroll(uint256 _employeeId, uint256 _paidAmount) internal view returns (uint64) {
         Employee storage employee = employees[_employeeId];
 
-        uint256 timeDiff = _payedAmount.div(employee.denominationTokenSalary);
+        uint256 timeDiff = _paidAmount.div(employee.denominationTokenSalary);
 
         // We check if the division was perfect, and if not, take its ceiling to avoid giving away tiny amounts of salary.
         // As an employee, you may lose up to a second's worth of payroll if you use the "request partial amount" feature.
-
-        if (timeDiff.mul(employee.denominationTokenSalary) != _payedAmount) {
+        if (timeDiff.mul(employee.denominationTokenSalary) != _paidAmount) {
             timeDiff = timeDiff.add(1);
         }
 
@@ -593,7 +603,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Get amount of owed salary for a given employee since their last payroll. It reverts in case of an overflow.
+     * @dev Get owed salary since last payroll for an employee. It reverts in case of an overflow.
      * @param _employeeId Employee's identifier
      * @return Total amount of owed salary for the requested employee since their last payroll. It reverts in case of an overflow.
      */
@@ -604,7 +614,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Get amount of owed salary for a given employee since their last payroll capped by max uint
+     * @dev Get amount of owed salary for a given employee since their last payroll, capped by max uint
      * @param _employeeId Employee's identifier
      * @return Total amount of owed salary for the requested employee since their last payroll capped by max uint
      */
@@ -621,9 +631,12 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Get previous and current amounts of owed salaries for a given employee since their last payroll
+     * @dev Get owed salary since last payroll and total unpaid salary for an employee.
+     *      The salary is capped at max uint to avoid reverting if the employee's accrued salary
+     *      has reached absurd levels.
      * @param _employeeId Employee's identifier
-     * @return Total amounts of previous and current owed salaries for the requested employee since their last payroll
+     * @return Tuple of (currently owed salary since last payroll date, total unpaid salary) in
+     *         denomination tokens
      */
     function _getOwedSalaries(uint256 _employeeId) internal view returns (uint256 currentOwedSalary, uint256 totalOwedSalary) {
         currentOwedSalary = _getCurrentCappedOwedSalary(_employeeId);
@@ -636,9 +649,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Get owed payroll period in seconds for a given employee
+     * @dev Get owed payroll period for an employee
      * @param _employeeId Employee's identifier
-     * @return Number of seconds amounts representing the owed payroll period for the requested employee since their last payroll
+     * @return Time in seconds since the employee's last expected payroll date
      */
     function _getOwedPayrollPeriod(uint256 _employeeId) internal view returns (uint256) {
         Employee storage employee = employees[_employeeId];
@@ -646,20 +659,24 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // Get the min of current date and termination date
         uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64() : employee.endDate;
 
-        // Make sure we don't revert if we try to get the owed salary for an employee whose start date
-        // is in the future (necessary in case we need to change their salary before their start date)
+        // Make sure we don't revert if we try to get the owed salary for an employee whose last
+        // payroll date is now or in the future.
+        // This can happen either by adding new employees with start dates in the future, to allow
+        // us to change their salary before their start date, or by terminating an employee and
+        // paying out their full owed salary
         if (date <= employee.lastPayroll) return 0;
 
-        // Get time diff in seconds, no need to use safe math as the underflow was covered by the previous check
+        // Return time diff in seconds, no need to use SafeMath as the underflow was covered by the previous check
         return uint256(date - employee.lastPayroll);
     }
 
     /**
      * @dev Get token exchange rate for a token based on the denomination token.
-     *      If the denomination token was USD and ETH's price was 100USD,
-     *      this would return 0.01 for ETH.
+     *      As an example, if the denomination token was USD and ETH's price was 100USD,
+     *      this would return 0.01 * ONE for ETH.
      * @param _token Token to get price of in denomination tokens
-     * @return ONE if _token is denominationToken or 0 if the exchange rate isn't recent enough
+     * @return Exchange rate (multiplied by ONE for precision).
+               Exactly ONE if _token is denominationToken or 0 if the exchange rate isn't recent enough.
      */
     function _getExchangeRateInDenominationToken(address _token) internal view returns (uint128) {
         // Denomination token has always exchange rate of 1
@@ -682,10 +699,10 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Loop over tokens to send requested amount to the employee
+     * @dev Loop over allowed tokens to send requested amount to the employee in their desired allocation
      * @param _employeeId Employee's identifier
-     * @param _totalAmount Total amount to be transferred to the employee distributed in accordance to the employee's token allocation
-     * @param _type Payment type to be performed
+     * @param _totalAmount Total amount to be transferred to the employee distributed in accordance to the employee's token allocation.
+     * @param _type Payment type being transferred (Payroll, Reimbursement or Bonus)
      * @return True if there was at least one token transfer
      */
     function _transferTokensAmount(uint256 _employeeId, PaymentType _type, uint256 _totalAmount) internal returns (bool somethingPaid) {
@@ -703,10 +720,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
                 uint128 exchangeRate = _getExchangeRateInDenominationToken(token);
                 require(exchangeRate > 0, ERROR_EXCHANGE_RATE_ZERO);
 
-                // Salary (in denomination tokens) converted to payout token
-                // and applied allocation percentage
+                // Convert amount (in denomination tokens) to payout token and apply allocation
                 uint256 tokenAmount = _totalAmount.mul(exchangeRate).mul(tokenAllocation);
-                // Divide by 100 for the allocation and by ONE for the exchange rate precision
+                // Divide by 100 for the allocation percentage and by ONE for the exchange rate precision
                 tokenAmount = tokenAmount / (100 * ONE);
 
                 finance.newImmediatePayment(token, employeeAddress, tokenAmount, paymentReference);
@@ -717,7 +733,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Try removing employee if there are no pending payments and has reached employee's end date
+     * @dev Remove employee if there are no pending payments and employee's end date has been reached
      * @param _employeeId Employee's identifier
      */
     function _removeEmployeeIfTerminatedAndPaidOut(uint256 _employeeId) internal {
@@ -740,7 +756,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @dev Tell whether an employee is registered in this Payroll or not
      * @param _accountAddress Address of the employee to query the existence of
-     * @return True if the given address belongs to a registered employee, false otherwise
+     * @return True if the given address belongs to an registered employee, false otherwise
      */
     function _employeeExists(address _accountAddress) internal view returns (bool) {
         return employeeIds[_accountAddress] != uint256(0);
@@ -749,7 +765,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @dev Tell whether an employee is registered in this Payroll or not
      * @param _employeeId Employee's identifier
-     * @return True if the employee is registered in this Payroll, false otherwise
+     * @return True if the given employee id belongs to an registered employee, false otherwise
      */
     function _employeeExists(uint256 _employeeId) internal view returns (bool) {
         Employee storage employee = employees[_employeeId];
@@ -759,7 +775,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @dev Tell whether an employee is still active or not
      * @param _employeeId Employee's identifier
-     * @return True if the employee's end date has not been reached yet, false otherwise
+     * @return True if the employee exists and has an end date that has not been reached yet, false otherwise
      */
     function _isEmployeeActive(uint256 _employeeId) internal view returns (bool) {
         Employee storage employee = employees[_employeeId];
@@ -767,18 +783,18 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Updates the accrued salary and payroll date of a given employee based on a paying amount and their current owed salary
+     * @dev Updates the accrued salary and payroll date of an employee based on a payment amount and their currently owed salary
      * @param _employeeId Employee's identifier
-     * @param _paymentAmount Amount being payed to the employee
-     * @param _currentOwedSalary Amount owed to the employee for his current salary
+     * @param _paymentAmount Amount being paid to the employee
+     * @param _currentOwedSalary Owed salary for the employee since their last payroll date
      */
     function _updateEmployeeStatusBasedOnPaidPayroll(uint256 _employeeId, uint256 _paymentAmount, uint256 _currentOwedSalary) private {
         Employee storage employee = employees[_employeeId];
         uint256 accruedSalary = employee.accruedSalary;
 
         if (_paymentAmount <= accruedSalary) {
-            // employee is only cashing out some previous owed salary, then we don't need to update the last payroll date
-            // there's no need to use SafeMath here since we already know that accruedSalary is >= than _paymentAmount
+            // Employee is only cashing out some previous owed salary, so we don't need to update the last payroll date
+            // No need to use SafeMath here since we already know that _paymentAmount <= accruedSalary
             employee.accruedSalary = accruedSalary - _paymentAmount;
         } else if (accruedSalary > 0) {
             // employee is cashing out a mixed amount between previous and current owed salaries,
