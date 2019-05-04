@@ -762,33 +762,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Tell whether an employee is registered in this Payroll or not
-     * @param _accountAddress Address of the employee to query the existence of
-     * @return True if the given address belongs to an registered employee, false otherwise
-     */
-    function _employeeExists(address _accountAddress) internal view returns (bool) {
-        return employeeIds[_accountAddress] != uint256(0);
-    }
-
-    /**
-     * @dev Tell whether an employee is registered in this Payroll or not
-     * @param _employeeId Employee's identifier
-     * @return True if the given employee id belongs to an registered employee, false otherwise
-     */
-    function _employeeExists(uint256 _employeeId) internal view returns (bool) {
-        return employees[_employeeId].accountAddress != address(0);
-    }
-
-    /**
-     * @dev Tell whether an employee is still active or not
-     * @param _employeeId Employee's identifier
-     * @return True if the employee exists and has an end date that has not been reached yet, false otherwise
-     */
-    function _isEmployeeActive(uint256 _employeeId) internal view returns (bool) {
-        return employees[_employeeId].endDate >= getTimestamp64();
-    }
-
-    /**
      * @dev Updates the accrued salary and payroll date of an employee based on a payment amount and their currently owed salary
      * @param _employeeId Employee's identifier
      * @param _paymentAmount Amount being paid to the employee
@@ -817,6 +790,33 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             currentSalaryPaid = _paymentAmount - accruedSalary;
         }
         employee.lastPayroll = _getLastPayrollDate(_employeeId, currentSalaryPaid);
+    }
+
+    /**
+     * @dev Tell whether an employee is registered in this Payroll or not
+     * @param _accountAddress Address of the employee to query the existence of
+     * @return True if the given address belongs to an registered employee, false otherwise
+     */
+    function _employeeExists(address _accountAddress) internal view returns (bool) {
+        return employeeIds[_accountAddress] != uint256(0);
+    }
+
+    /**
+     * @dev Tell whether an employee is registered in this Payroll or not
+     * @param _employeeId Employee's identifier
+     * @return True if the given employee id belongs to an registered employee, false otherwise
+     */
+    function _employeeExists(uint256 _employeeId) internal view returns (bool) {
+        return employees[_employeeId].accountAddress != address(0);
+    }
+
+    /**
+     * @dev Tell whether an employee is still active or not
+     * @param _employeeId Employee's identifier
+     * @return True if the employee exists and has an end date that has not been reached yet, false otherwise
+     */
+    function _isEmployeeActive(uint256 _employeeId) internal view returns (bool) {
+        return employees[_employeeId].endDate >= getTimestamp64();
     }
 
     /**
