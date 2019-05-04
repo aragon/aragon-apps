@@ -30,7 +30,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
 
     uint128 internal constant ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
-    uint256 internal constant MAX_ALLOWED_TOKENS = 20; // for loop in `payday()` uses ~270k gas per token
+    uint256 internal constant MAX_ALLOWED_TOKENS = 20; // prevent OOG issues with `payday()`
+    uint64 internal constant MIN_RATE_EXPIRY = uint64(1 minutes); // 1 min == ~4 block window to mine both a price feed update and a payout
+
     uint256 internal constant MAX_UINT256 = uint256(-1);
     uint64 internal constant MAX_UINT64 = uint64(-1);
 
@@ -557,8 +559,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function _setRateExpiryTime(uint64 _time) internal {
         // Require a sane minimum for the rate expiry time
-        // (1 min == ~4 block window to mine both a pricefeed update and a payout)
-        require(_time > 1 minutes, ERROR_EXPIRY_TIME_TOO_SHORT);
+        require(_time >= MIN_RATE_EXPIRY, ERROR_EXPIRY_TIME_TOO_SHORT);
         rateExpiryTime = _time;
         emit SetRateExpiryTime(rateExpiryTime);
     }
