@@ -582,7 +582,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _paidAmount Requested amount to be paid to the employee
      * @return The new last payroll timestamp in seconds based on the requested payment amount
      */
-    function _getLastPayroll(uint256 _employeeId, uint256 _paidAmount) internal view returns (uint64) {
+    function _getLastPayrollDate(uint256 _employeeId, uint256 _paidAmount) internal view returns (uint64) {
         Employee storage employee = employees[_employeeId];
 
         uint256 timeDiff = _paidAmount.div(employee.denominationTokenSalary);
@@ -593,15 +593,11 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             timeDiff = timeDiff.add(1);
         }
 
-        // This function is only called from _payday, where we make sure that _payedAmount is lower than or equal to the
-        // total owed amount, that is obtained from _getCurrentCappedOwedSalary, which does exactly the opposite calculation:
-        // multiplying the employee's salary by an uint64 number of seconds. Therefore, timeDiff will always fit in 64.
-        // Nevertheless, we are performing a sanity check at the end to ensure the computed last payroll timestamp
-        // is not greater than the current timestamp.
-
         uint64 lastPayrollDate = employee.lastPayroll.add(uint64(timeDiff));
+
+        // Do a few sanity checks at the end to make sure the last payroll timestamp is clamped to our expected values
         require(lastPayrollDate <= getTimestamp64(), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
-        return lastPayrollDate;
+        return lastPayrollDate > employee.endDate ? employee.endDate : lastPayrollDate;
     }
 
     /**
@@ -793,21 +789,24 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 accruedSalary = employee.accruedSalary;
 
         if (_paymentAmount <= accruedSalary) {
-            // Employee is only cashing out some previous owed salary, so we don't need to update the last payroll date
-            // No need to use SafeMath here since we already know that _paymentAmount <= accruedSalary
+            // Employee is only cashing out some previously owed salary so we don't need to update
+            // their last payroll date
+            // No need to use SafeMath as we already know _paymentAmount <= accruedSalary
             employee.accruedSalary = accruedSalary - _paymentAmount;
-        } else if (accruedSalary > 0) {
-            // employee is cashing out a mixed amount between previous and current owed salaries,
-            // then we need to set the accrued salary to zero and update the last payroll date
-            // there's no need to use safemath here since we already know that _paymentAmount is > accruedSalary
-            employee.accruedSalary = uint256(0);
-            uint256 remainder = _paymentAmount - accruedSalary;
-            employee.lastPayroll = (remainder == _currentOwedSalary) ? getTimestamp64() : _getLastPayroll(_employeeId, remainder);
-        } else {
-            // employee is only cashing out some current owed salary, and there is no previous owed salary,
-            // then we only need to update the last payroll date
-            employee.lastPayroll = (_paymentAmount == _currentOwedSalary) ? getTimestamp64() : _getLastPayroll(_employeeId, _paymentAmount);
+            return;
         }
+
+        // Employee is cashing out some of their currently owed salary so their last payroll date
+        // needs to be modified based on the amount of salary paid
+        uint256 currentSalaryPaid = _paymentAmount;
+        if (accruedSalary > 0) {
+            // Employee is cashing out a mixed amount between previous and current owed salaries;
+            // first use up their accrued salary
+            employee.accruedSalary = uint256(0);
+            // No need to use SafeMath here as we already know _paymentAmount > accruedSalary
+            currentSalaryPaid = _paymentAmount - accruedSalary;
+        }
+        employee.lastPayroll = _getLastPayrollDate(_employeeId, currentSalaryPaid);
     }
 
     /**
