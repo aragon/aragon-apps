@@ -186,8 +186,8 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
               const events = getEvents(receipt, 'ChangeAddressByEmployee')
               assert.equal(events.length, 1, 'number of ChangeAddressByEmployee emitted events does not match')
               assert.equal(events[0].args.employeeId.toString(), employeeId, 'employee id does not match')
-              assert.equal(events[0].args.oldAddress, employee, 'previous address does not match')
-              assert.equal(events[0].args.newAddress, newAddress, 'new address does not match')
+              assert.equal(events[0].args.newAccountAddress, newAddress, 'new address does not match')
+              assert.equal(events[0].args.oldAccountAddress, employee, 'previous address does not match')
             })
           })
 

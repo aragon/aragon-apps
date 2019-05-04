@@ -82,15 +82,15 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     mapping(address => bool) internal allowedTokens;
     address[] internal allowedTokensArray;
 
-    event AddAllowedToken(address token);
+    event AddAllowedToken(address indexed token);
     event SetEmployeeSalary(uint256 indexed employeeId, uint256 denominationSalary);
     event AddEmployeeBonus(uint256 indexed employeeId, uint256 amount);
     event AddEmployeeReimbursement(uint256 indexed employeeId, uint256 amount);
     event AddEmployeeAccruedSalary(uint256 indexed employeeId, uint256 amount);
-    event TerminateEmployee(uint256 indexed employeeId, address indexed accountAddress, uint64 endDate);
-    event ChangeAddressByEmployee(uint256 indexed employeeId, address indexed oldAddress, address indexed newAddress);
-    event DetermineAllocation(uint256 indexed employeeId, address indexed employee);
-    event SendPayment(address indexed employee, address indexed token, uint256 amount, uint128 exchangeRate, string paymentReference);
+    event TerminateEmployee(uint256 indexed employeeId, uint64 endDate);
+    event ChangeAddressByEmployee(uint256 indexed employeeId, address indexed newAccountAddress, address indexed oldAccountAddress);
+    event DetermineAllocation(uint256 indexed employeeId);
+    event SendPayment(uint256 indexed employeeId, address indexed employeeAccountAddress, address indexed token, uint256 amount, uint128 exchangeRate, string paymentReference);
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
     event AddEmployee(
@@ -288,7 +288,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         }
         require(sum == 100, ERROR_DISTRIBUTION_NO_COMPLETE);
 
-        emit DetermineAllocation(employeeId, msg.sender);
+        emit DetermineAllocation(employeeId);
     }
 
     /**
@@ -348,7 +348,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         employeeIds[_newAddress] = employeeId;
         employee.accountAddress = _newAddress;
 
-        emit ChangeAddressByEmployee(employeeId, oldAddress, _newAddress);
+        emit ChangeAddressByEmployee(employeeId, _newAddress, oldAddress);
     }
 
     // Forwarding fns
@@ -572,11 +572,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     function _terminateEmployee(uint256 _employeeId, uint64 _endDate) internal {
         // Prevent past termination dates
         require(_endDate >= getTimestamp64(), ERROR_PAST_TERMINATION_DATE);
-
-        Employee storage employee = employees[_employeeId];
-        employee.endDate = _endDate;
-
-        emit TerminateEmployee(_employeeId, employee.accountAddress, _endDate);
+        employees[_employeeId].endDate = _endDate;
+        emit TerminateEmployee(_employeeId, _endDate);
     }
 
     /**
@@ -730,7 +727,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
                 tokenAmount = tokenAmount / (100 * ONE);
 
                 finance.newImmediatePayment(token, employeeAddress, tokenAmount, paymentReference);
-                emit SendPayment(employeeAddress, token, tokenAmount, exchangeRate, paymentReference);
+                emit SendPayment(_employeeId, employeeAddress, token, tokenAmount, exchangeRate, paymentReference);
                 somethingPaid = true;
             }
         }

@@ -60,7 +60,6 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
 
                         const events = getEvents(receipt, 'DetermineAllocation')
                         assert.equal(events.length, 1, 'number of emitted DetermineAllocation events does not match')
-                        assert.equal(events[0].args.employee, employee, 'employee address should match')
                         assert.equal(events[0].args.employeeId.toString(), employeeId, 'employee id should match')
 
                         for (const tokenAddress of tokenAddresses) {

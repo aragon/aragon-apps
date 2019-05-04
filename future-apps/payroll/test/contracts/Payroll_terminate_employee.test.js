@@ -71,7 +71,6 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
 
                 const event  = events[0].args
                 assert.equal(event.employeeId.toString(), employeeId, 'employee id does not match')
-                assert.equal(event.accountAddress, employee, 'employee address does not match')
                 assert.equal(event.endDate.toString(), endDate.toString(), 'employee end date does not match')
               })
 
