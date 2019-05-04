@@ -113,7 +113,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     // Check employee exists and is still active
     modifier employeeActive(uint256 _employeeId) {
-        require(_employeeExists(_employeeId) && _isEmployeeActive(_employeeId), ERROR_NON_ACTIVE_EMPLOYEE);
+        // No need to check for existence as _isEmployeeActive() is false for non-existent employees
+        require(_isEmployeeActive(_employeeId), ERROR_NON_ACTIVE_EMPLOYEE);
         _;
     }
 
