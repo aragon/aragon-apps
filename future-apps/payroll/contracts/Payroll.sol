@@ -69,14 +69,14 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     Finance public finance;
-    IFeed public feed;
     address public denominationToken;
+    IFeed public feed;
     uint64 public rateExpiryTime;
 
     // Employees start at index 1, to allow us to use employees[0] to check for non-existent address
     uint256 public nextEmployee;
-    mapping(address => uint256) internal employeeIds;    // employee address -> employee ID
     mapping(uint256 => Employee) internal employees;     // employee ID -> employee
+    mapping(address => uint256) internal employeeIds;    // employee address -> employee ID
     mapping(address => bool) internal allowedTokens;
     address[] internal allowedTokensArray;
 
@@ -137,12 +137,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         initialized();
 
-        // Employees start at index 1, to allow us to use employees[0] to check for non-existent address
-        nextEmployee = 1;
         finance = _finance;
         denominationToken = _denominationToken;
         _setPriceFeed(_priceFeed);
         _setRateExpiryTime(_rateExpiryTime);
+
+        // Employees start at index 1, to allow us to use employees[0] to check for non-existent address
+        nextEmployee = 1;
     }
 
     /**
@@ -337,11 +338,12 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         uint256 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
-        address oldAddress = employee.accountAddress;
 
-        employee.accountAddress = _newAddress;
+        address oldAddress = employee.accountAddress;
+        delete employeeIds[oldAddress];
+
         employeeIds[_newAddress] = employeeId;
-        delete employeeIds[msg.sender];
+        employee.accountAddress = _newAddress;
 
         emit ChangeAddressByEmployee(employeeId, oldAddress, _newAddress);
     }
@@ -623,8 +625,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 timeDiff = _getOwedPayrollPeriod(_employeeId);
         if (timeDiff == 0) return 0;
 
-        Employee storage employee = employees[_employeeId];
-        uint256 salary = employee.denominationTokenSalary;
+        uint256 salary = employees[_employeeId].denominationTokenSalary;
         uint256 result = salary * timeDiff;
 
         // Return max uint if the result overflows
@@ -641,10 +642,10 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function _getOwedSalaries(uint256 _employeeId) internal view returns (uint256 currentOwedSalary, uint256 totalOwedSalary) {
         currentOwedSalary = _getCurrentCappedOwedSalary(_employeeId);
-        totalOwedSalary = currentOwedSalary + employees[_employeeId].accruedSalary;
 
+        // Clamp totalOwedSalary to MAX_UINT256
+        totalOwedSalary = currentOwedSalary + employees[_employeeId].accruedSalary;
         if (totalOwedSalary < currentOwedSalary) {
-            // Return max uint if previous addition overflowed
             totalOwedSalary = MAX_UINT256;
         }
     }
@@ -769,8 +770,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return True if the given employee id belongs to an registered employee, false otherwise
      */
     function _employeeExists(uint256 _employeeId) internal view returns (bool) {
-        Employee storage employee = employees[_employeeId];
-        return employee.accountAddress != address(0);
+        return employees[_employeeId].accountAddress != address(0);
     }
 
     /**
@@ -779,8 +779,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return True if the employee exists and has an end date that has not been reached yet, false otherwise
      */
     function _isEmployeeActive(uint256 _employeeId) internal view returns (bool) {
-        Employee storage employee = employees[_employeeId];
-        return employee.endDate >= getTimestamp64();
+        return employees[_employeeId].endDate >= getTimestamp64();
     }
 
     /**
