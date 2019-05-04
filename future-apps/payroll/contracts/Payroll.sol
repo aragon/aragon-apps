@@ -96,7 +96,14 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     event AddEmployeeAccruedSalary(uint256 indexed employeeId, uint256 amount);
     event ChangeAddressByEmployee(uint256 indexed employeeId, address indexed newAccountAddress, address indexed oldAccountAddress);
     event DetermineAllocation(uint256 indexed employeeId);
-    event SendPayment(uint256 indexed employeeId, address indexed employeeAccountAddress, address indexed token, uint256 amount, uint256 exchangeRate, string paymentReference);
+    event SendPayment(
+        uint256 indexed employeeId,
+        address indexed employeeAccountAddress,
+        address indexed token,
+        uint256 amount,
+        uint256 exchangeRate,
+        string paymentReference
+    );
     event AddAllowedToken(address indexed token);
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
@@ -607,7 +614,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function _getCurrentOwedSalary(uint256 _employeeId) internal view returns (uint256) {
         uint256 timeDiff = _getOwedPayrollPeriod(_employeeId);
-        if (timeDiff == 0) return 0;
+        if (timeDiff == 0) {
+            return 0;
+        }
         return employees[_employeeId].denominationTokenSalary.mul(timeDiff);
     }
 
@@ -618,7 +627,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function _getCurrentCappedOwedSalary(uint256 _employeeId) internal view returns (uint256) {
         uint256 timeDiff = _getOwedPayrollPeriod(_employeeId);
-        if (timeDiff == 0) return 0;
+        if (timeDiff == 0) {
+            return 0;
+        }
 
         uint256 salary = employees[_employeeId].denominationTokenSalary;
         uint256 result = salary * timeDiff;
@@ -661,7 +672,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // This can happen either by adding new employees with start dates in the future, to allow
         // us to change their salary before their start date, or by terminating an employee and
         // paying out their full owed salary
-        if (date <= employee.lastPayroll) return 0;
+        if (date <= employee.lastPayroll) {
+            return 0;
+        }
 
         // Return time diff in seconds, no need to use SafeMath as the underflow was covered by the previous check
         return uint256(date - employee.lastPayroll);
@@ -703,7 +716,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return True if there was at least one token transfer
      */
     function _transferTokensAmount(uint256 _employeeId, PaymentType _type, uint256 _totalAmount) internal returns (bool somethingPaid) {
-        if (_totalAmount == 0) return false;
+        if (_totalAmount == 0) {
+            return false;
+        }
 
         Employee storage employee = employees[_employeeId];
         address employeeAddress = employee.accountAddress;
@@ -779,7 +794,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _paymentAmount Amount being paid to the employee
      * @param _currentOwedSalary Owed salary for the employee since their last payroll date
      */
-    function _updateEmployeeAccountingBasedOnPaidPayroll(uint256 _employeeId, uint256 _paymentAmount, uint256 _currentOwedSalary) private {
+    function _updateEmployeeAccountingBasedOnPaidPayroll(uint256 _employeeId, uint256 _paymentAmount, uint256 _currentOwedSalary) internal {
         Employee storage employee = employees[_employeeId];
         uint256 accruedSalary = employee.accruedSalary;
 
@@ -810,9 +825,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return Payment reference for the given payment type
      */
     function _paymentReferenceFor(PaymentType _type) internal pure returns (string memory) {
-        if (_type == PaymentType.Payroll) return "Payroll";
-        if (_type == PaymentType.Reimbursement) return "Reimbursement";
-        if (_type == PaymentType.Bonus) return "Bonus";
+        if (_type == PaymentType.Payroll) {
+            return "Payroll";
+        } else if (_type == PaymentType.Reimbursement) {
+            return "Reimbursement";
+        } if (_type == PaymentType.Bonus) {
+            return "Bonus";
+        }
         revert(ERROR_INVALID_PAYMENT_TYPE);
     }
 
