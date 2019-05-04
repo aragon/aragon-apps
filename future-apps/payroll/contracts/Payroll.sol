@@ -384,8 +384,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return True if the given address is an active employee, false otherwise
      */
     function canForward(address _sender, bytes) public view returns (bool) {
-        // Check employee exists (and matches)
-        return (employees[employeeIds[_sender]].accountAddress == _sender);
+        // Check sender is active employee
+        return _isEmployeeActive(employeeIds[_sender]);
     }
 
     // Getter fns

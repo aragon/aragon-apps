@@ -1,14 +1,14 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEventArgument } = require('../helpers/events')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
-const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
+const { annualSalaryPerSecond, bn } = require('../helpers/numbers')(web3)
 const { USD, deployDAI } = require('../helpers/tokens')(artifacts, web3)
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
-contract('Payroll forwarding,', ([owner, employee, anyone]) => {
+contract('Payroll forwarding', ([owner, employee, anyone]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, DAI
 
   before('deploy base apps and tokens', async () => {
@@ -59,14 +59,32 @@ contract('Payroll forwarding,', ([owner, employee, anyone]) => {
           })
         })
 
-        context('when the employee was already terminated', () => {
+        context('when the employee has termination date', () => {
+          const timeUntilTermination = ONE_MONTH + 1
+
           beforeEach('terminate employee', async () => {
-            await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
-            await payroll.mockIncreaseTime(ONE_MONTH + 1)
+            const terminationDate = (await payroll.getTimestampPublic()).plus(bn(timeUntilTermination))
+            await payroll.terminateEmployee(employeeId, terminationDate, { from: owner })
           })
 
-          it('returns true', async () => {
-            assert(await payroll.canForward(sender, '0x'), 'sender should be able to forward')
+          context('when the termination date has not been reached', () => {
+            beforeEach('increase time to before termination date', async () => {
+              await payroll.mockIncreaseTime(timeUntilTermination)
+            })
+
+            it('returns true', async () => {
+              assert(await payroll.canForward(sender, '0x'), 'sender should be able to forward')
+            })
+          })
+
+          context('when the termination date has been reached', () => {
+            beforeEach('increase time to after termination date', async () => {
+              await payroll.mockIncreaseTime(timeUntilTermination + 1)
+            })
+
+            it('returns false', async () => {
+              assert.isFalse(await payroll.canForward(sender, '0x'), 'sender should not be able to forward')
+            })
           })
         })
       })
@@ -118,16 +136,36 @@ contract('Payroll forwarding,', ([owner, employee, anyone]) => {
           })
         })
 
-        context('when the employee was already terminated', () => {
+        context('when the employee has termination date', () => {
+          const timeUntilTermination = ONE_MONTH + 1
+
           beforeEach('terminate employee', async () => {
-            await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
-            await payroll.mockIncreaseTime(ONE_MONTH + 1)
+            const terminationDate = (await payroll.getTimestampPublic()).plus(bn(timeUntilTermination))
+            await payroll.terminateEmployee(employeeId, terminationDate, { from: owner })
           })
 
-          it('executes the given script', async () =>  {
-            await payroll.forward(script, { from })
+          context('when the termination date has not been reached', () => {
+            beforeEach('increase time to before termination date', async () => {
+              await payroll.mockIncreaseTime(timeUntilTermination)
+            })
 
-            assert.equal(await executionTarget.counter(), 1, 'should have received execution calls')
+            it('executes the given script', async () =>  {
+              await payroll.forward(script, { from })
+
+              assert.equal(await executionTarget.counter(), 1, 'should have received execution calls')
+            })
+          })
+
+          context('when the termination date has been reached', () => {
+            beforeEach('increase time to after termination date', async () => {
+              await payroll.mockIncreaseTime(timeUntilTermination + 1)
+            })
+
+            it('reverts', async () =>  {
+              await assertRevert(payroll.forward(script, { from }), 'PAYROLL_CAN_NOT_FORWARD')
+
+              assert.equal(await executionTarget.counter(), 0, 'should not have received execution calls')
+            })
           })
         })
       })
