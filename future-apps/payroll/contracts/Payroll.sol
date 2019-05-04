@@ -23,8 +23,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
     bytes32 constant public TERMINATE_EMPLOYEE_ROLE = keccak256("TERMINATE_EMPLOYEE_ROLE");
     bytes32 constant public SET_EMPLOYEE_SALARY_ROLE = keccak256("SET_EMPLOYEE_SALARY_ROLE");
-    bytes32 constant public ADD_REIMBURSEMENT_ROLE = keccak256("ADD_REIMBURSEMENT_ROLE");
     bytes32 constant public ADD_BONUS_ROLE = keccak256("ADD_BONUS_ROLE");
+    bytes32 constant public ADD_REIMBURSEMENT_ROLE = keccak256("ADD_REIMBURSEMENT_ROLE");
     bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
     bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("CHANGE_PRICE_FEED_ROLE");
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
@@ -189,7 +189,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function addEmployee(address _accountAddress, uint256 _initialDenominationSalary, string _role, uint64 _startDate)
         external
-        authP(ADD_EMPLOYEE_ROLE, arr(_accountAddress, _initialDenominationSalary, _startDate))
+        authP(ADD_EMPLOYEE_ROLE, arr(_accountAddress, _initialDenominationSalary, uint256(_startDate)))
     {
         _addEmployee(_accountAddress, _initialDenominationSalary, _role, _startDate);
     }
@@ -203,7 +203,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function setEmployeeSalary(uint256 _employeeId, uint256 _denominationSalary)
         external
-        authP(SET_EMPLOYEE_SALARY_ROLE, arr(_employeeId, _denominationSalary))
+        authP(SET_EMPLOYEE_SALARY_ROLE, arr(_employeeId, _denominationSalary, employees[_employeeId].denominationTokenSalary))
         employeeActive(_employeeId)
     {
         // Accrue employee's owed salary
@@ -225,7 +225,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function terminateEmployee(uint256 _employeeId, uint64 _endDate)
         external
-        authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId))
+        authP(TERMINATE_EMPLOYEE_ROLE, arr(_employeeId, uint256(_endDate)))
         employeeActive(_employeeId)
     {
         _terminateEmployee(_employeeId, _endDate);
