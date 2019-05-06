@@ -136,15 +136,15 @@ const Transfers = React.memo(({ tokens, transactions }) => {
             true,
             { rounding: 5 }
           )
-          const { name = null } = (await resolveAddress(entity)) || {}
-          return `${formatDate(date)},${
-            name ? `${name} (${entity})` : entity
-          },${reference},${`${formattedAmount} ${symbol}`}`
+          const { name = '' } = (await resolveAddress(entity)) || {}
+          return `${formatDate(
+            date
+          )},${name},${entity},${reference},${`${formattedAmount} ${symbol}`}`
         }
       )
     )
     const csvContent = [
-      'data:text/csv;charset=utf-8,Date,Source/Recipient,Reference,Amount',
+      'data:text/csv;charset=utf-8,Date,Name,Source/Recipient,Reference,Amount',
     ]
       .concat(mappedData)
       .join('\n')
