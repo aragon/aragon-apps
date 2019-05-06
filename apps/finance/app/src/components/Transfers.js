@@ -28,10 +28,10 @@ const TRANSFER_TYPES = [
   TransferTypes.Incoming,
   TransferTypes.Outgoing,
 ]
-const TRANSFERS_PER_PAGE = 10
+const INITIAL_TRANSFERS_PER_PAGE = 10
 const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
 const formatDate = date => format(date, 'dd/MM/yy')
-const reduceTokenDetails = (details, { address, decimals, symbol }) => {
+const getTokenDetails = (details, { address, decimals, symbol }) => {
   details[toChecksumAddress(address)] = {
     decimals,
     symbol,
@@ -69,7 +69,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   const [filtersOpened, setFiltersOpened] = React.useState(!compactMode)
   const [selectedToken, setSelectedToken] = React.useState(0)
   const [displayedTransfers, setDisplayedTransfers] = React.useState(
-    TRANSFERS_PER_PAGE
+    INITIAL_TRANSFERS_PER_PAGE
   )
   const [selectedTransferType, setSelectedTransferType] = React.useState(0)
   const [selectedDateRange, setSelectedDateRange] = React.useState({
@@ -82,14 +82,14 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   })
   const handleTokenChange = React.useCallback(index => {
     setSelectedToken(index)
-    setDisplayedTransfers(TRANSFERS_PER_PAGE)
+    setDisplayedTransfers(INITIAL_TRANSFERS_PER_PAGE)
   })
   const handleTransferTypeChange = React.useCallback(index => {
     setSelectedTransferType(index)
-    setDisplayedTransfers(TRANSFERS_PER_PAGE)
+    setDisplayedTransfers(INITIAL_TRANSFERS_PER_PAGE)
   })
   const handleResetFilters = React.useCallback(() => {
-    setDisplayedTransfers(TRANSFERS_PER_PAGE)
+    setDisplayedTransfers(INITIAL_TRANSFERS_PER_PAGE)
     setSelectedToken(0)
     setSelectedTransferType(0)
   })
@@ -104,7 +104,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     return filename
   })
   const showMoreTransfers = React.useCallback(() => {
-    setDisplayedTransfers(displayedTransfers + TRANSFERS_PER_PAGE)
+    setDisplayedTransfers(displayedTransfers + INITIAL_TRANSFERS_PER_PAGE)
   })
   const filteredTransfers = getFilteredTransfers({
     tokens,
@@ -114,9 +114,9 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     selectedDateRange,
   })
   const symbols = tokens.map(({ symbol }) => symbol)
-  const tokenDetails = tokens.reduce(reduceTokenDetails, {})
+  const tokenDetails = tokens.reduce(getTokenDetails, {})
   const filtersActive = selectedToken !== 0 || selectedTransferType !== 0
-  const { resolve } = React.useContext(IdentityContext)
+  const { resolve: resolveAddress } = React.useContext(IdentityContext)
   const getDownloadData = async () => {
     const mappedData = await Promise.all(
       filteredTransfers.map(
@@ -136,7 +136,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
             true,
             { rounding: 5 }
           )
-          const { name = null } = (await resolve(entity)) || {}
+          const { name = null } = (await resolveAddress(entity)) || {}
           return `${formatDate(date)},${
             name ? `${name} (${entity})` : entity
           },${reference},${`${formattedAmount} ${symbol}`}`
