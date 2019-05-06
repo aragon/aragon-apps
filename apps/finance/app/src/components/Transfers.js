@@ -12,7 +12,7 @@ import {
   Table,
   TableHeader,
   TableRow,
-  Viewport,
+  useViewport,
   theme,
 } from '@aragon/ui'
 import * as TransferTypes from '../transfer-types'
@@ -21,6 +21,7 @@ import { formatTokenAmount } from '../lib/utils'
 import TransferRow from './TransferRow'
 import ToggleFiltersButton from './ToggleFiltersButton'
 import TransfersFilters from './TransfersFilters'
+import { IdentityContext } from './IdentityManager/IdentityManager'
 
 const TRANSFER_TYPES = [
   TransferTypes.All,
@@ -29,9 +30,7 @@ const TRANSFER_TYPES = [
 ]
 const TRANSFERS_PER_PAGE = 10
 const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
-
 const formatDate = date => format(date, 'dd/MM/yy')
-
 const reduceTokenDetails = (details, { address, decimals, symbol }) => {
   details[toChecksumAddress(address)] = {
     decimals,
@@ -39,226 +38,212 @@ const reduceTokenDetails = (details, { address, decimals, symbol }) => {
   }
   return details
 }
-
-const initialState = {
-  selectedDateRange: {
-    start: null,
-    end: null,
-  },
-  selectedToken: 0,
-  selectedTransferType: 0,
-  displayedTransfers: TRANSFERS_PER_PAGE,
+// Filter transfer based on the selected filters
+const getFilteredTransfers = ({
+  tokens,
+  transactions,
+  selectedToken,
+  selectedTransferType,
+  selectedDateRange,
+}) => {
+  const transferType = TRANSFER_TYPES[selectedTransferType]
+  return transactions.filter(
+    ({ token, isIncoming, date }) =>
+      (!selectedDateRange.start ||
+        !selectedDateRange.end ||
+        isWithinInterval(new Date(date), {
+          start: startOfDay(selectedDateRange.start),
+          end: endOfDay(selectedDateRange.end),
+        })) &&
+      (selectedToken === 0 ||
+        addressesEqual(token, tokens[selectedToken - 1].address)) &&
+      (transferType === TransferTypes.All ||
+        (transferType === TransferTypes.Incoming && isIncoming) ||
+        (transferType === TransferTypes.Outgoing && !isIncoming))
+  )
 }
 
-class Transfers extends React.PureComponent {
-  state = {
-    ...initialState,
-    filtersOpened: !this.props.compactMode,
-  }
+const Transfers = React.memo(({ tokens, transactions }) => {
+  const { below } = useViewport()
+  const compactMode = below('medium')
+  const [filtersOpened, setFiltersOpened] = React.useState(!compactMode)
+  const [selectedToken, setSelectedToken] = React.useState(0)
+  const [displayedTransfers, setDisplayedTransfers] = React.useState(
+    TRANSFERS_PER_PAGE
+  )
+  const [selectedTransferType, setSelectedTransferType] = React.useState(0)
+  const [selectedDateRange, setSelectedDateRange] = React.useState({
+    start: null,
+    end: null,
+  })
 
-  handleToggleFiltersClick = () => {
-    this.setState(({ filtersOpened }) => ({ filtersOpened: !filtersOpened }))
-  }
-  handleTokenChange = index => {
-    this.setState({
-      selectedToken: index,
-      displayedTransfers: TRANSFERS_PER_PAGE,
-    })
-  }
-  handleTransferTypeChange = index => {
-    this.setState({
-      selectedTransferType: index,
-      displayedTransfers: TRANSFERS_PER_PAGE,
-    })
-  }
-  handleResetFilters = () => {
-    this.setState(({ selectedDateRange }) => ({
-      ...initialState,
-      selectedDateRange,
-    }))
-  }
-  handleDateRangeChange = selectedDateRange => {
-    this.setState({ selectedDateRange })
-  }
-  encodeDataToCsv = (data, tokenDetails) => {
-    const csvContent = [
-      'data:text/csv;charset=utf-8,Date,Source/Recipient,Reference,Amount',
-    ]
-      .concat(
-        data.map(
-          ({
-            date,
-            numData: { amount },
-            reference,
-            isIncoming,
-            entity,
-            token,
-          }) => {
-            const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
-            const formattedAmount = formatTokenAmount(
-              amount,
-              isIncoming,
-              decimals,
-              true,
-              { rounding: 5 }
-            )
-            return `${formatDate(
-              date
-            )},${entity},${reference},${`${formattedAmount} ${symbol}`}`
-          }
-        )
-      )
-      .join('\n')
-    return window.encodeURI(csvContent)
-  }
-  getCsvFilename = () => {
-    const { selectedDateRange } = this.state
-    const start = format(selectedDateRange.start, 'yyyy-MM-dd')
-    const end = format(selectedDateRange.end, 'yyyy-MM-dd')
-    return `transfers_${start}_to_${end}.csv`
-  }
-  showMoreTransfers = () => {
-    this.setState(prevState => ({
-      displayedTransfers: prevState.displayedTransfers + TRANSFERS_PER_PAGE,
-    }))
-  }
-
-  // Filter transfer based on the selected filters
-  getFilteredTransfers({
+  const handleToggleFiltersClick = React.useCallback(() => {
+    setFiltersOpened(!filtersOpened)
+  })
+  const handleTokenChange = React.useCallback(index => {
+    setSelectedToken(index)
+    setDisplayedTransfers(TRANSFERS_PER_PAGE)
+  })
+  const handleTransferTypeChange = React.useCallback(index => {
+    setSelectedTransferType(index)
+    setDisplayedTransfers(TRANSFERS_PER_PAGE)
+  })
+  const handleResetFilters = React.useCallback(() => {
+    setDisplayedTransfers(TRANSFERS_PER_PAGE)
+    setSelectedToken(0)
+    setSelectedTransferType(0)
+  })
+  const getCsvFilename = React.useCallback(() => {
+    let filename = 'transfers.csv'
+    const { start, end } = selectedDateRange
+    if (start && end) {
+      const formattedStart = format(selectedDateRange.start, 'yyyy-MM-dd')
+      const formattedEnd = format(selectedDateRange.end, 'yyyy-MM-dd')
+      filename = `transfers_${formattedStart}_to_${formattedEnd}.csv`
+    }
+    return filename
+  })
+  const showMoreTransfers = React.useCallback(() => {
+    setDisplayedTransfers(displayedTransfers + TRANSFERS_PER_PAGE)
+  })
+  const filteredTransfers = getFilteredTransfers({
     tokens,
     transactions,
     selectedToken,
     selectedTransferType,
     selectedDateRange,
-  }) {
-    const transferType = TRANSFER_TYPES[selectedTransferType]
-    return transactions.filter(
-      ({ token, isIncoming, date }) =>
-        (!selectedDateRange.start || !selectedDateRange.end ||
-          isWithinInterval(new Date(date), {
-            start: startOfDay(selectedDateRange.start),
-            end: endOfDay(selectedDateRange.end),
-          })) &&
-        (selectedToken === 0 ||
-          addressesEqual(token, tokens[selectedToken - 1].address)) &&
-        (transferType === TransferTypes.All ||
-          (transferType === TransferTypes.Incoming && isIncoming) ||
-          (transferType === TransferTypes.Outgoing && !isIncoming))
+  })
+  const symbols = tokens.map(({ symbol }) => symbol)
+  const tokenDetails = tokens.reduce(reduceTokenDetails, {})
+  const filtersActive = selectedToken !== 0 || selectedTransferType !== 0
+  const { resolve } = React.useContext(IdentityContext)
+  const getDownloadData = async () => {
+    const mappedData = await Promise.all(
+      filteredTransfers.map(
+        async ({
+          date,
+          numData: { amount },
+          reference,
+          isIncoming,
+          entity,
+          token,
+        }) => {
+          const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
+          const formattedAmount = formatTokenAmount(
+            amount,
+            isIncoming,
+            decimals,
+            true,
+            { rounding: 5 }
+          )
+          const { name = null } = (await resolve(entity)) || {}
+          return `${formatDate(date)},${
+            name ? `${name} (${entity})` : entity
+          },${reference},${`${formattedAmount} ${symbol}`}`
+        }
+      )
     )
-  }
-  render() {
-    const {
-      displayedTransfers,
-      filtersOpened,
-      selectedDateRange,
-      selectedToken,
-      selectedTransferType,
-    } = this.state
-    const { compactMode, tokens, transactions } = this.props
-    const filteredTransfers = this.getFilteredTransfers({
-      tokens,
-      transactions,
-      selectedToken,
-      selectedTransferType,
-      selectedDateRange,
-    })
-    const symbols = tokens.map(({ symbol }) => symbol)
-    const tokenDetails = tokens.reduce(reduceTokenDetails, {})
-    const filtersActive = selectedToken !== 0 || selectedTransferType !== 0
+    const csvContent = [
+      'data:text/csv;charset=utf-8,Date,Source/Recipient,Reference,Amount',
+    ]
+      .concat(mappedData)
+      .join('\n')
 
-    return (
-      <section>
-        <Header>
-          <Title compactMode={compactMode}>
-            <span>Transfers </span>
-            <span>
-              {compactMode && (
-                <ToggleFiltersButton
-                  title="Toggle Filters"
-                  onClick={this.handleToggleFiltersClick}
-                  css="margin-right: -5px"
-                />
-              )}
-            </span>
-          </Title>
-          <TransfersFilters
-            dateRangeFilter={selectedDateRange}
-            onDateRangeChange={this.handleDateRangeChange}
-            tokenFilter={selectedToken}
-            onTokenChange={this.handleTokenChange}
-            transferTypeFilter={selectedTransferType}
-            onTransferTypeChange={this.handleTransferTypeChange}
-            compactMode={compactMode}
-            opened={filtersOpened}
-            symbols={symbols}
-            transferTypes={TRANSFER_TYPES_STRING}
-            downloadFileName={this.getCsvFilename()}
-            downloadUrl={this.encodeDataToCsv(filteredTransfers, tokenDetails)}
-          />
-        </Header>
-        {filteredTransfers.length === 0 ? (
-          <NoTransfers compactMode={compactMode}>
-            <p css="text-align: center">
-              No transfers match your filter{' '}
-              {selectedDateRange.start &&
-                `and period (${formatDate(
-                  selectedDateRange.start
-                )} to ${formatDate(selectedDateRange.end)}) selection. `}
-              {filtersActive && (
-                <a role="button" onClick={this.handleResetFilters}>
-                  Clear filters
-                </a>
-              )}
-            </p>
-          </NoTransfers>
-        ) : (
-          <div>
-            <Table
-              compactMode={compactMode}
-              header={
-                !compactMode && (
-                  <TableRow>
-                    <TableHeader title="Date" css="width: 12%" />
-                    <TableHeader title="Source / Recipient" css="width: 40%" />
-                    <TableHeader title="Reference" css="width: 100%" />
-                    <TableHeader title="Amount" align="right" css="width: 0" />
-                    <TableHeader />
-                  </TableRow>
-                )
-              }
-              css={`
-                color: ${theme.textPrimary};
-                margin-bottom: 20px;
-              `}
-            >
-              {filteredTransfers
-                .sort(({ date: dateLeft }, { date: dateRight }) =>
-                  // Sort by date descending
-                  compareDesc(dateLeft, dateRight)
-                )
-                .slice(0, displayedTransfers)
-                .map(transfer => (
-                  <TransferRow
-                    key={transfer.transactionHash}
-                    token={tokenDetails[toChecksumAddress(transfer.token)]}
-                    transaction={transfer}
-                    smallViewMode={compactMode}
-                  />
-                ))}
-            </Table>
-            {displayedTransfers < filteredTransfers.length && (
-              <Footer compactMode={compactMode}>
-                <Button mode="secondary" onClick={this.showMoreTransfers}>
-                  Show Older Transfers
-                </Button>
-              </Footer>
-            )}
-          </div>
-        )}
-      </section>
-    )
+    return window.encodeURI(csvContent)
   }
-}
+
+  return (
+    <section>
+      <Header>
+        <Title compactMode={compactMode}>
+          <span>Transfers </span>
+          <span>
+            {compactMode && (
+              <ToggleFiltersButton
+                title="Toggle Filters"
+                onClick={handleToggleFiltersClick}
+                css="margin-right: -5px"
+              />
+            )}
+          </span>
+        </Title>
+        <TransfersFilters
+          dateRangeFilter={selectedDateRange}
+          onDateRangeChange={setSelectedDateRange}
+          tokenFilter={selectedToken}
+          onTokenChange={handleTokenChange}
+          transferTypeFilter={selectedTransferType}
+          onTransferTypeChange={handleTransferTypeChange}
+          compactMode={compactMode}
+          opened={filtersOpened}
+          symbols={symbols}
+          transferTypes={TRANSFER_TYPES_STRING}
+          downloadFileName={getCsvFilename()}
+          onDownloadData={getDownloadData}
+        />
+      </Header>
+      {filteredTransfers.length === 0 ? (
+        <NoTransfers compactMode={compactMode}>
+          <p css="text-align: center">
+            No transfers match your filter{' '}
+            {selectedDateRange.start &&
+              `and period (${formatDate(
+                selectedDateRange.start
+              )} to ${formatDate(selectedDateRange.end)}) selection. `}
+            {filtersActive && (
+              <a role="button" onClick={handleResetFilters}>
+                Clear filters
+              </a>
+            )}
+          </p>
+        </NoTransfers>
+      ) : (
+        <div>
+          <Table
+            compactMode={compactMode}
+            header={
+              !compactMode && (
+                <TableRow>
+                  <TableHeader title="Date" css="width: 12%" />
+                  <TableHeader title="Source / Recipient" css="width: 40%" />
+                  <TableHeader title="Reference" css="width: 100%" />
+                  <TableHeader title="Amount" align="right" css="width: 0" />
+                  <TableHeader />
+                </TableRow>
+              )
+            }
+            css={`
+              color: ${theme.textPrimary};
+              margin-bottom: 20px;
+            `}
+          >
+            {filteredTransfers
+              .sort(({ date: dateLeft }, { date: dateRight }) =>
+                // Sort by date descending
+                compareDesc(dateLeft, dateRight)
+              )
+              .slice(0, displayedTransfers)
+              .map(transfer => (
+                <TransferRow
+                  key={transfer.transactionHash}
+                  token={tokenDetails[toChecksumAddress(transfer.token)]}
+                  transaction={transfer}
+                  smallViewMode={compactMode}
+                />
+              ))}
+          </Table>
+          {displayedTransfers < filteredTransfers.length && (
+            <Footer compactMode={compactMode}>
+              <Button mode="secondary" onClick={showMoreTransfers}>
+                Show Older Transfers
+              </Button>
+            </Footer>
+          )}
+        </div>
+      )}
+    </section>
+  )
+})
 
 const Header = styled.div`
   display: flex;
@@ -300,8 +285,4 @@ const Footer = styled.div`
   margin-top: 30px;
 `
 
-export default props => (
-  <Viewport>
-    {({ below }) => <Transfers {...props} compactMode={below('medium')} />}
-  </Viewport>
-)
+export default Transfers
