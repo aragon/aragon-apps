@@ -61,6 +61,46 @@ retryEvery(retry => {
 })
 
 async function initialize(tokenAddr) {
+  // Hot observable which emits an web3.js event-like object with an account string of the current active account.
+  const accounts$ = app.accounts().pipe(
+    map(accounts => {
+      return {
+        event: ACCOUNTS_TRIGGER,
+        returnValues: {
+          account: accounts[0],
+        },
+      }
+    }),
+    publishReplay(1)
+  )
+
+  accounts$.connect()
+
+  return app.store(
+    async (state, { event, returnValues }) => {
+      let nextState = {
+        ...state,
+      }
+
+      switch (event) {
+        case ACCOUNTS_TRIGGER:
+          return updateConnectedAccount(nextState, returnValues)
+        case 'CastVote':
+          return castVote(nextState, returnValues)
+        case 'ExecuteVote':
+          return executeVote(nextState, returnValues)
+        case 'StartVote':
+          return startVote(nextState, returnValues)
+        default:
+          return nextState
+      }
+    },
+    [accounts$],
+    initState(tokenAddr)
+  )
+}
+
+const initState = tokenAddr => async () => {
   const token = app.external(tokenAddr, tokenAbi)
 
   let tokenSymbol
@@ -84,76 +124,21 @@ async function initialize(tokenAddr) {
   try {
     tokenDecimals = (await token.decimals().toPromise()) || '0'
   } catch (err) {
-    console.err(
+    console.error(
       `Failed to load token decimals for token at ${tokenAddr} due to:`,
       err
     )
-    console.err('Defaulting to 0...')
+    console.error('Defaulting to 0...')
     tokenDecimals = '0'
   }
 
-  return createStore(token, { decimals: tokenDecimals, symbol: tokenSymbol })
-}
+  const voteSettings = await loadVoteSettings()
 
-// Hook up the script as an aragon.js store
-async function createStore(token, tokenSettings) {
-  const { decimals: tokenDecimals, symbol: tokenSymbol } = tokenSettings
-
-  // Hot observable which emits an web3.js event-like object with an account string of the current active account.
-  const accounts$ = app.accounts().pipe(
-    map(accounts => {
-      return {
-        event: ACCOUNTS_TRIGGER,
-        returnValues: {
-          account: accounts[0],
-        },
-      }
-    }),
-    publishReplay(1)
-  )
-
-  accounts$.connect()
-
-  return app.store(
-    async (state, { event, returnValues }) => {
-      let nextState = {
-        ...state,
-        // Fetch the app's settings, if we haven't already
-        ...(!hasLoadedVoteSettings(state) ? await loadVoteSettings() : {}),
-      }
-
-      if (event === INITIALIZATION_TRIGGER) {
-        nextState = {
-          ...nextState,
-          tokenDecimals,
-          tokenSymbol,
-        }
-      } else {
-        switch (event) {
-          case ACCOUNTS_TRIGGER:
-            nextState = await updateConnectedAccount(nextState, returnValues)
-            break
-          case 'CastVote':
-            nextState = await castVote(nextState, returnValues)
-            break
-          case 'ExecuteVote':
-            nextState = await executeVote(nextState, returnValues)
-            break
-          case 'StartVote':
-            nextState = await startVote(nextState, returnValues)
-            break
-          default:
-            break
-        }
-      }
-      return nextState
-    },
-    [
-      // Always initialize the store with our own home-made event
-      of({ event: INITIALIZATION_TRIGGER }),
-      accounts$,
-    ]
-  )
+  return {
+    tokenDecimals,
+    tokenSymbol,
+    ...voteSettings,
+  }
 }
 
 /***********************
