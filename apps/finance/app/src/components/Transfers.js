@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import {
   compareDesc,
@@ -15,6 +16,7 @@ import {
   useViewport,
   theme,
 } from '@aragon/ui'
+import download from 'downloadjs'
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
@@ -40,7 +42,6 @@ const getTokenDetails = (details, { address, decimals, symbol }) => {
 }
 // Filter transfer based on the selected filters
 const getFilteredTransfers = ({
-  tokens,
   transactions,
   selectedToken,
   selectedTransferType,
@@ -55,15 +56,58 @@ const getFilteredTransfers = ({
           start: startOfDay(selectedDateRange.start),
           end: endOfDay(selectedDateRange.end),
         })) &&
-      (selectedToken === 0 ||
-        addressesEqual(token, tokens[selectedToken - 1].address)) &&
+      (selectedToken === null ||
+        addressesEqual(token, selectedToken.address)) &&
       (transferType === TransferTypes.All ||
         (transferType === TransferTypes.Incoming && isIncoming) ||
         (transferType === TransferTypes.Outgoing && !isIncoming))
   )
 }
+const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
+  const mappedData = await Promise.all(
+    transfers.map(
+      async ({
+        date,
+        numData: { amount },
+        reference,
+        isIncoming,
+        entity,
+        token,
+      }) => {
+        const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
+        const formattedAmount = formatTokenAmount(
+          amount,
+          isIncoming,
+          decimals,
+          true,
+          { rounding: 5 }
+        )
+        const { name = '' } = (await resolveAddress(entity)) || {}
+        return `${formatDate(
+          date
+        )},${name},${entity},${reference},${`${formattedAmount} ${symbol}`}`
+      }
+    )
+  )
+  const csvContent = [
+    'data:text/csv;charset=utf-8,Date,Name,Source/Recipient,Reference,Amount',
+  ]
+    .concat(mappedData)
+    .join('\n')
+  return window.encodeURI(csvContent)
+}
+const getDownloadFilename = (dao, { start, end }) => {
+  const today = format(Date.now(), 'yyyy-MM-dd')
+  let filename = `finance_${dao}_${today}.csv`
+  if (start && end) {
+    const formattedStart = format(selectedDateRange.start, 'yyyy-MM-dd')
+    const formattedEnd = format(selectedDateRange.end, 'yyyy-MM-dd')
+    filename = `finance_${dao}_${formattedStart}_to_${formattedEnd}.csv`
+  }
+  return filename
+}
 
-const Transfers = React.memo(({ tokens, transactions }) => {
+const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const { below } = useViewport()
   const compactMode = below('medium')
   const [filtersOpened, setFiltersOpened] = React.useState(!compactMode)
@@ -76,7 +120,6 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     start: null,
     end: null,
   })
-
   const handleToggleFiltersClick = React.useCallback(() => {
     setFiltersOpened(!filtersOpened)
   })
@@ -93,23 +136,12 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     setSelectedToken(0)
     setSelectedTransferType(0)
   })
-  const getCsvFilename = React.useCallback(() => {
-    let filename = 'transfers.csv'
-    const { start, end } = selectedDateRange
-    if (start && end) {
-      const formattedStart = format(selectedDateRange.start, 'yyyy-MM-dd')
-      const formattedEnd = format(selectedDateRange.end, 'yyyy-MM-dd')
-      filename = `transfers_${formattedStart}_to_${formattedEnd}.csv`
-    }
-    return filename
-  })
   const showMoreTransfers = React.useCallback(() => {
     setDisplayedTransfers(displayedTransfers + INITIAL_TRANSFERS_PER_PAGE)
   })
   const filteredTransfers = getFilteredTransfers({
-    tokens,
     transactions,
-    selectedToken,
+    selectedToken: selectedToken !== 0 ? tokens[selectedToken - 1] : null,
     selectedTransferType,
     selectedDateRange,
   })
@@ -117,40 +149,15 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   const tokenDetails = tokens.reduce(getTokenDetails, {})
   const filtersActive = selectedToken !== 0 || selectedTransferType !== 0
   const { resolve: resolveAddress } = React.useContext(IdentityContext)
-  const getDownloadData = async () => {
-    const mappedData = await Promise.all(
-      filteredTransfers.map(
-        async ({
-          date,
-          numData: { amount },
-          reference,
-          isIncoming,
-          entity,
-          token,
-        }) => {
-          const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
-          const formattedAmount = formatTokenAmount(
-            amount,
-            isIncoming,
-            decimals,
-            true,
-            { rounding: 5 }
-          )
-          const { name = '' } = (await resolveAddress(entity)) || {}
-          return `${formatDate(
-            date
-          )},${name},${entity},${reference},${`${formattedAmount} ${symbol}`}`
-        }
-      )
+  const handleDownload = React.useCallback(async () => {
+    const data = await getDownloadData(
+      filteredTransfers,
+      tokenDetails,
+      resolveAddress
     )
-    const csvContent = [
-      'data:text/csv;charset=utf-8,Date,Name,Source/Recipient,Reference,Amount',
-    ]
-      .concat(mappedData)
-      .join('\n')
-
-    return window.encodeURI(csvContent)
-  }
+    const filename = getDownloadFilename(dao, selectedDateRange)
+    download(data, filename, 'data:text/csv')
+  })
 
   return (
     <section>
@@ -178,8 +185,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
           opened={filtersOpened}
           symbols={symbols}
           transferTypes={TRANSFER_TYPES_STRING}
-          downloadFileName={getCsvFilename()}
-          onDownloadData={getDownloadData}
+          onDownload={handleDownload}
         />
       </Header>
       {filteredTransfers.length === 0 ? (
@@ -244,6 +250,12 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     </section>
   )
 })
+
+Transfers.propTypes = {
+  dao: PropTypes.string.isRequired,
+  tokens: PropTypes.array.isRequired,
+  transactions: PropTypes.array.isRequired,
+}
 
 const Header = styled.div`
   display: flex;

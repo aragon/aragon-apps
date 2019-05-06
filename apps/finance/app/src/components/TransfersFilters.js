@@ -2,7 +2,6 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { DropDown, springs, theme, unselectable } from '@aragon/ui'
 import { Spring, animated } from 'react-spring'
-import download from 'downloadjs'
 import DownloadButton from './DownloadButton'
 import DateRange from './DateRange/DateRangeInput'
 
@@ -17,99 +16,85 @@ const TransfersFilters = ({
   transferTypes,
   transferTypeFilter,
   onTransferTypeChange,
-  downloadFileName,
-  downloadUrl,
-  onDownloadData,
-}) => {
-  const handleDownload = async () => {
-    const data = await onDownloadData()
-    download(data, downloadFileName, 'data:text/csv')
-  }
-
-  return (
-    <Spring
-      native
-      config={springs.smooth}
-      from={{ progress: 0, height: 0 }}
-      to={{
-        progress: Number(opened),
-        height: opened || !compactMode ? 'auto' : 0,
-      }}
-      immediate={!compactMode}
-    >
-      {({ progress, height }) => (
-        <animated.div
-          style={{
-            width: '100%',
-            overflow: progress.interpolate(v => (v === 1 ? 'unset' : 'hidden')),
-            height,
-          }}
-        >
-          <Filters compact={compactMode}>
+  onDownload,
+}) => (
+  <Spring
+    native
+    config={springs.smooth}
+    from={{ progress: 0, height: 0 }}
+    to={{
+      progress: Number(opened),
+      height: opened || !compactMode ? 'auto' : 0,
+    }}
+    immediate={!compactMode}
+  >
+    {({ progress, height }) => (
+      <animated.div
+        style={{
+          width: '100%',
+          overflow: progress.interpolate(v => (v === 1 ? 'unset' : 'hidden')),
+          height,
+        }}
+      >
+        <Filters compact={compactMode}>
+          <div
+            css={`
+              display: flex;
+              width: 100%;
+              justify-content: space-between;
+            `}
+          >
             <div
               css={`
-                display: flex;
                 width: 100%;
-                justify-content: space-between;
+                display: flex;
+                flex-wrap: nowrap;
+                flex-direction: ${compactMode ? 'column' : 'row'};
               `}
             >
-              <div
-                css={`
-                  width: 100%;
-                  display: flex;
-                  flex-wrap: nowrap;
-                  flex-direction: ${compactMode ? 'column' : 'row'};
-                `}
-              >
-                <FiltersGroup compact={compactMode}>
-                  <Filter>
-                    <FilterLabel>Period</FilterLabel>
-                    <WrapDateRange>
-                      <DateRange
-                        startDate={dateRangeFilter.start}
-                        endDate={dateRangeFilter.end}
-                        onChange={onDateRangeChange}
-                      />
-                    </WrapDateRange>
-                  </Filter>
-                </FiltersGroup>
-                <FiltersGroup compact={compactMode}>
-                  <Filter>
-                    <FilterLabel>Token</FilterLabel>
-                    <DropDown
-                      items={['All', ...symbols]}
-                      active={tokenFilter}
-                      onChange={onTokenChange}
+              <FiltersGroup compact={compactMode}>
+                <Filter>
+                  <FilterLabel>Period</FilterLabel>
+                  <WrapDateRange>
+                    <DateRange
+                      startDate={dateRangeFilter.start}
+                      endDate={dateRangeFilter.end}
+                      onChange={onDateRangeChange}
                     />
-                  </Filter>
-                  <Filter>
-                    <FilterLabel>Type</FilterLabel>
-                    <DropDown
-                      items={transferTypes}
-                      active={transferTypeFilter}
-                      onChange={onTransferTypeChange}
-                    />
-                  </Filter>
-                </FiltersGroup>
-              </div>
-              <div>
-                <Download compact={compactMode}>
-                  <DownloadLabel>Export</DownloadLabel>
-                  <DownloadButton
-                    filename={downloadFileName}
-                    _url={downloadUrl}
-                    onClick={handleDownload}
-                    css="margin-right: -5px"
+                  </WrapDateRange>
+                </Filter>
+              </FiltersGroup>
+              <FiltersGroup compact={compactMode}>
+                <Filter>
+                  <FilterLabel>Token</FilterLabel>
+                  <DropDown
+                    items={['All', ...symbols]}
+                    active={tokenFilter}
+                    onChange={onTokenChange}
                   />
-                </Download>
-              </div>
+                </Filter>
+                <Filter>
+                  <FilterLabel>Type</FilterLabel>
+                  <DropDown
+                    items={transferTypes}
+                    active={transferTypeFilter}
+                    onChange={onTransferTypeChange}
+                  />
+                </Filter>
+              </FiltersGroup>
             </div>
-          </Filters>
-        </animated.div>
-      )}
-    </Spring>
-  )
-}
+            <div>
+              <Download compact={compactMode}>
+                <DownloadLabel>Export</DownloadLabel>
+                <DownloadButton onClick={onDownload} css="margin-right: -5px" />
+              </Download>
+            </div>
+          </div>
+        </Filters>
+      </animated.div>
+    )}
+  </Spring>
+)
 
 const WrapDateRange = styled.div`
   display: inline-block;
