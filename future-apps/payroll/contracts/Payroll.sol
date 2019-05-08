@@ -584,125 +584,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Calculate the new last payroll date for an employee based on the requested payment amount
-     * @param _employeeId Employee's identifier
-     * @param _paidAmount Requested amount to be paid to the employee
-     * @return The new last payroll timestamp in seconds based on the requested payment amount
-     */
-    function _getLastPayrollDate(uint256 _employeeId, uint256 _paidAmount) internal view returns (uint64) {
-        Employee storage employee = employees[_employeeId];
-
-        uint256 timeDiff = _paidAmount.div(employee.denominationTokenSalary);
-
-        // We check if the division was perfect, and if not, take its ceiling to avoid giving away tiny amounts of salary.
-        // As an employee, you may lose up to a second's worth of payroll if you use the "request partial amount" feature.
-        if (timeDiff.mul(employee.denominationTokenSalary) != _paidAmount) {
-            timeDiff = timeDiff.add(1);
-        }
-
-        uint256 lastPayrollDate = uint256(employee.lastPayroll).add(timeDiff);
-
-        // Even though this function should never receive a _paidAmount value that would result in
-        // the lastPayrollDate being higher than the current time, let's double check to be safe
-        require(lastPayrollDate <= uint256(getTimestamp64()), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
-        // Already know lastPayrollDate must fit in uint64 from above
-        return uint64(lastPayrollDate);
-    }
-
-    /**
-     * @dev Get owed salary since last payroll for an employee.
-     * @param _employeeId Employee's identifier
-     * @param _capped Safely cap the owed salary at max uint
-     * @return Owed salary in denomination tokens since last payroll for the employee.
-     *         If _capped is false, it reverts in case of an overflow.
-     */
-    function _getOwedSalarySinceLastPayroll(uint256 _employeeId, bool _capped) internal view returns (uint256) {
-        uint256 timeDiff = _getOwedPayrollPeriod(_employeeId);
-        if (timeDiff == 0) {
-            return 0;
-        }
-        uint256 salary = employees[_employeeId].denominationTokenSalary;
-
-        if (_capped) {
-            // Return max uint if the result overflows
-            uint256 result = salary * timeDiff;
-            return (result / timeDiff != salary) ? MAX_UINT256 : result;
-        } else {
-            return salary.mul(timeDiff);
-        }
-    }
-
-    /**
-     * @dev Get owed salary since last payroll and total unpaid salary for an employee.
-     *      The salary is capped at max uint to avoid reverting if the employee's accrued salary
-     *      has reached absurd levels.
-     * @param _employeeId Employee's identifier
-     * @return Tuple of (currently owed salary since last payroll date, total unpaid salary) in
-     *         denomination tokens
-     */
-    function _getOwedSalaries(uint256 _employeeId) internal view returns (uint256 currentOwedSalary, uint256 totalOwedSalary) {
-        currentOwedSalary = _getOwedSalarySinceLastPayroll(_employeeId, true); // cap amount
-
-        // Also cap totalOwedSalary to max uint
-        totalOwedSalary = currentOwedSalary + employees[_employeeId].accruedSalary;
-        if (totalOwedSalary < currentOwedSalary) {
-            totalOwedSalary = MAX_UINT256;
-        }
-    }
-
-    /**
-     * @dev Get owed payroll period for an employee
-     * @param _employeeId Employee's identifier
-     * @return Time in seconds since the employee's last expected payroll date
-     */
-    function _getOwedPayrollPeriod(uint256 _employeeId) internal view returns (uint256) {
-        Employee storage employee = employees[_employeeId];
-
-        // Get the min of current date and termination date
-        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64() : employee.endDate;
-
-        // Make sure we don't revert if we try to get the owed salary for an employee whose last
-        // payroll date is now or in the future.
-        // This can happen either by adding new employees with start dates in the future, to allow
-        // us to change their salary before their start date, or by terminating an employee and
-        // paying out their full owed salary
-        if (date <= employee.lastPayroll) {
-            return 0;
-        }
-
-        // Return time diff in seconds, no need to use SafeMath as the underflow was covered by the previous check
-        return uint256(date - employee.lastPayroll);
-    }
-
-    /**
-     * @dev Get token exchange rate for a token based on the denomination token.
-     *      As an example, if the denomination token was USD and ETH's price was 100USD,
-     *      this would return 0.01 * ONE for ETH.
-     * @param _token Token to get price of in denomination tokens
-     * @return Exchange rate (multiplied by ONE for precision).
-               Exactly ONE if _token is denominationToken or 0 if the exchange rate isn't recent enough.
-     */
-    function _getExchangeRateInDenominationToken(address _token) internal view returns (uint256) {
-        // Denomination token has always exchange rate of 1
-        if (_token == denominationToken) {
-            return ONE;
-        }
-
-        // xrt is the number of `_token` that can be exchanged for one `denominationToken`
-        (uint128 xrt, uint64 when) = feed.get(
-            denominationToken,  // Base (e.g. USD)
-            _token              // Quote (e.g. ETH)
-        );
-
-        // Check the price feed is recent enough
-        if (getTimestamp64().sub(when) >= rateExpiryTime) {
-            return 0;
-        }
-
-        return uint256(xrt);
-    }
-
-    /**
      * @dev Loop over allowed tokens to send requested amount to the employee in their desired allocation
      * @param _employeeId Employee's identifier
      * @param _totalAmount Total amount to be transferred to the employee distributed in accordance to the employee's token allocation.
@@ -811,6 +692,125 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function _isEmployeeActive(uint256 _employeeId) internal view returns (bool) {
         return employees[_employeeId].endDate >= getTimestamp64();
+    }
+
+    /**
+     * @dev Get token exchange rate for a token based on the denomination token.
+     *      As an example, if the denomination token was USD and ETH's price was 100USD,
+     *      this would return 0.01 * ONE for ETH.
+     * @param _token Token to get price of in denomination tokens
+     * @return Exchange rate (multiplied by ONE for precision).
+               Exactly ONE if _token is denominationToken or 0 if the exchange rate isn't recent enough.
+     */
+    function _getExchangeRateInDenominationToken(address _token) internal view returns (uint256) {
+        // Denomination token has always exchange rate of 1
+        if (_token == denominationToken) {
+            return ONE;
+        }
+
+        // xrt is the number of `_token` that can be exchanged for one `denominationToken`
+        (uint128 xrt, uint64 when) = feed.get(
+            denominationToken,  // Base (e.g. USD)
+            _token              // Quote (e.g. ETH)
+        );
+
+        // Check the price feed is recent enough
+        if (getTimestamp64().sub(when) >= rateExpiryTime) {
+            return 0;
+        }
+
+        return uint256(xrt);
+    }
+
+    /**
+     * @dev Calculate the new last payroll date for an employee based on the requested payment amount
+     * @param _employeeId Employee's identifier
+     * @param _paidAmount Requested amount to be paid to the employee
+     * @return The new last payroll timestamp in seconds based on the requested payment amount
+     */
+    function _getLastPayrollDate(uint256 _employeeId, uint256 _paidAmount) internal view returns (uint64) {
+        Employee storage employee = employees[_employeeId];
+
+        uint256 timeDiff = _paidAmount.div(employee.denominationTokenSalary);
+
+        // We check if the division was perfect, and if not, take its ceiling to avoid giving away tiny amounts of salary.
+        // As an employee, you may lose up to a second's worth of payroll if you use the "request partial amount" feature.
+        if (timeDiff.mul(employee.denominationTokenSalary) != _paidAmount) {
+            timeDiff = timeDiff.add(1);
+        }
+
+        uint256 lastPayrollDate = uint256(employee.lastPayroll).add(timeDiff);
+
+        // Even though this function should never receive a _paidAmount value that would result in
+        // the lastPayrollDate being higher than the current time, let's double check to be safe
+        require(lastPayrollDate <= uint256(getTimestamp64()), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
+        // Already know lastPayrollDate must fit in uint64 from above
+        return uint64(lastPayrollDate);
+    }
+
+    /**
+     * @dev Get owed salary since last payroll for an employee.
+     * @param _employeeId Employee's identifier
+     * @param _capped Safely cap the owed salary at max uint
+     * @return Owed salary in denomination tokens since last payroll for the employee.
+     *         If _capped is false, it reverts in case of an overflow.
+     */
+    function _getOwedSalarySinceLastPayroll(uint256 _employeeId, bool _capped) internal view returns (uint256) {
+        uint256 timeDiff = _getOwedPayrollPeriod(_employeeId);
+        if (timeDiff == 0) {
+            return 0;
+        }
+        uint256 salary = employees[_employeeId].denominationTokenSalary;
+
+        if (_capped) {
+            // Return max uint if the result overflows
+            uint256 result = salary * timeDiff;
+            return (result / timeDiff != salary) ? MAX_UINT256 : result;
+        } else {
+            return salary.mul(timeDiff);
+        }
+    }
+
+    /**
+     * @dev Get owed salary since last payroll and total unpaid salary for an employee.
+     *      The salary is capped at max uint to avoid reverting if the employee's accrued salary
+     *      has reached absurd levels.
+     * @param _employeeId Employee's identifier
+     * @return Tuple of (currently owed salary since last payroll date, total unpaid salary) in
+     *         denomination tokens
+     */
+    function _getOwedSalaries(uint256 _employeeId) internal view returns (uint256 currentOwedSalary, uint256 totalOwedSalary) {
+        currentOwedSalary = _getOwedSalarySinceLastPayroll(_employeeId, true); // cap amount
+
+        // Also cap totalOwedSalary to max uint
+        totalOwedSalary = currentOwedSalary + employees[_employeeId].accruedSalary;
+        if (totalOwedSalary < currentOwedSalary) {
+            totalOwedSalary = MAX_UINT256;
+        }
+    }
+
+    /**
+     * @dev Get owed payroll period for an employee
+     * @param _employeeId Employee's identifier
+     * @return Time in seconds since the employee's last expected payroll date
+     */
+    function _getOwedPayrollPeriod(uint256 _employeeId) internal view returns (uint256) {
+        Employee storage employee = employees[_employeeId];
+
+        // Get the min of current date and termination date
+        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64() : employee.endDate;
+
+        // Make sure we don't revert if we try to get the owed salary for an employee whose last
+        // payroll date is now or in the future.
+        // This can happen either by adding new employees with start dates in the future, to allow
+        // us to change their salary before their start date, or by terminating an employee and
+        // paying out their full owed salary
+        if (date <= employee.lastPayroll) {
+            return 0;
+        }
+
+        // Return time diff in seconds, no need to use SafeMath as the underflow was covered by the previous check
+        return uint256(date - employee.lastPayroll);
     }
 
     /**
