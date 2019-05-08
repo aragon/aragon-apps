@@ -134,7 +134,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Initialize Payroll app for Finance at `_finance` and price feed at `_priceFeed`, setting denomination token to `_token` and exchange rate expiry time to `@transformTime(_rateExpiryTime)`
+     * @notice Initialize Payroll app for Finance at `_finance` and PriceFeed at `_priceFeed`, setting denomination token to `_token` and exchange rate expiry time to `@transformTime(_rateExpiryTime)`
      * @dev Note that we do not require _denominationToken to be a contract, as it may be a "fake"
      *      address used by the price feed to denominate fiat currencies
      * @param _finance Address of the Finance app this Payroll will rely on (non-changeable)
