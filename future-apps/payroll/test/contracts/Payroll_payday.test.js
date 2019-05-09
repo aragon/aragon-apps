@@ -128,7 +128,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const assertEmployeeIsUpdatedCorrectly = (requestedAmount, expectedRequestedAmount) => {
               it('updates the accrued salary and the last payroll date', async () => {
                 let expectedLastPayrollDate, expectedAccruedSalary
-                const [previousAccruedSalary, previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(4, 6)
+                const [previousAccruedSalary, , , previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(2, 6)
 
                 if (expectedRequestedAmount >= previousAccruedSalary) {
                   expectedAccruedSalary = bn(0)
@@ -141,7 +141,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                 await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from })
 
-                const [accruedSalary, lastPayrollDate] = (await payroll.getEmployee(employeeId)).slice(4, 6)
+                const [accruedSalary, , , lastPayrollDate] = (await payroll.getEmployee(employeeId)).slice(2, 6)
                 assert.equal(accruedSalary.toString(), expectedAccruedSalary.toString(), 'accrued salary does not match')
                 assert.equal(lastPayrollDate.toString(), expectedLastPayrollDate.toString(), 'last payroll date does not match')
               })

@@ -47,7 +47,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
               it('adds requested reimbursement', async () => {
                 await payroll.addReimbursement(employeeId, reimburse, { from })
 
-                const reimbursements = (await payroll.getEmployee(employeeId))[3]
+                const reimbursements = (await payroll.getEmployee(employeeId))[4]
                 assert.equal(reimbursements.toString(), reimburse.toString(), 'reimbursement does not match')
               })
 
@@ -210,10 +210,10 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
 
             const assertEmployeeIsNotRemoved = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
               it('does not remove the employee and resets the reimbursements', async () => {
-                const previousReimbursements = (await payroll.getEmployee(employeeId))[3]
+                const previousReimbursements = (await payroll.getEmployee(employeeId))[4]
                 await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from })
 
-                const [address, employeeSalary, _, reimbursements] = await payroll.getEmployee(employeeId)
+                const [address, employeeSalary, , , reimbursements] = await payroll.getEmployee(employeeId)
 
                 assert.equal(address, employee, 'employee address does not match')
                 assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')

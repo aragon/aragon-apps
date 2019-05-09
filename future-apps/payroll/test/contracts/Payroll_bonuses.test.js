@@ -45,10 +45,10 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
             const itAddsBonusesSuccessfully = amount => {
               it('adds given bonus amount', async () => {
-                const previousBonus = (await payroll.getEmployee(employeeId))[2]
+                const previousBonus = (await payroll.getEmployee(employeeId))[3]
                 await payroll.addBonus(employeeId, amount, { from })
 
-                const currentBonus = (await payroll.getEmployee(employeeId))[2]
+                const currentBonus = (await payroll.getEmployee(employeeId))[3]
                 assert.equal(previousBonus.plus(amount).toString(), currentBonus.toString(), 'bonus amount does not match')
               })
 
@@ -221,10 +221,10 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
             const assertEmployeeIsNotRemoved = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
               it('does not remove the employee and resets the bonus amount', async () => {
-                const previousBonus = (await payroll.getEmployee(employeeId))[2]
+                const previousBonus = (await payroll.getEmployee(employeeId))[3]
                 await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
 
-                const [address, employeeSalary, bonus] = await payroll.getEmployee(employeeId)
+                const [address, employeeSalary, , bonus] = await payroll.getEmployee(employeeId)
 
                 assert.equal(address, employee, 'employee address does not match')
                 assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')

@@ -63,9 +63,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         address accountAddress; // unique, but can be changed over time
         mapping(address => uint256) allocation;
         uint256 denominationTokenSalary; // salary per second in denomination Token
+        uint256 accruedSalary; // keep track of any leftover accrued salary when changing salaries
         uint256 bonus;
         uint256 reimbursements;
-        uint256 accruedSalary;
         uint64 lastPayroll;
         uint64 endDate;
     }
@@ -92,9 +92,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     );
     event TerminateEmployee(uint256 indexed employeeId, uint64 endDate);
     event SetEmployeeSalary(uint256 indexed employeeId, uint256 denominationSalary);
+    event AddEmployeeAccruedSalary(uint256 indexed employeeId, uint256 amount);
     event AddEmployeeBonus(uint256 indexed employeeId, uint256 amount);
     event AddEmployeeReimbursement(uint256 indexed employeeId, uint256 amount);
-    event AddEmployeeAccruedSalary(uint256 indexed employeeId, uint256 amount);
     event ChangeAddressByEmployee(uint256 indexed employeeId, address indexed newAccountAddress, address indexed oldAccountAddress);
     event DetermineAllocation(uint256 indexed employeeId);
     event SendPayment(
@@ -403,9 +403,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _accountAddress Employee's address to receive payments
      * @return Employee's identifier
      * @return Employee's salary, per second in denomination token
+     * @return Employee's accrued salary
      * @return Employee's bonus amount
      * @return Employee's reimbursements amount
-     * @return Employee's accrued salary
      * @return Employee's last salary payment date
      * @return Employee's termination date (max uint64 if none)
      */
@@ -416,9 +416,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         returns (
             uint256 employeeId,
             uint256 denominationSalary,
+            uint256 accruedSalary,
             uint256 bonus,
             uint256 reimbursements,
-            uint256 accruedSalary,
             uint64 lastPayroll,
             uint64 endDate
         )
@@ -428,9 +428,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         Employee storage employee = employees[employeeId];
 
         denominationSalary = employee.denominationTokenSalary;
+        accruedSalary = employee.accruedSalary;
         bonus = employee.bonus;
         reimbursements = employee.reimbursements;
-        accruedSalary = employee.accruedSalary;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
     }
@@ -440,9 +440,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _employeeId Employee's identifier
      * @return Employee's address to receive payments
      * @return Employee's salary, per second in denomination token
+     * @return Employee's accrued salary
      * @return Employee's bonus amount
      * @return Employee's reimbursements amount
-     * @return Employee's accrued salary
      * @return Employee's last payment date
      * @return Employee's termination date (max uint64 if none)
      */
@@ -453,9 +453,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         returns (
             address accountAddress,
             uint256 denominationSalary,
+            uint256 accruedSalary,
             uint256 bonus,
             uint256 reimbursements,
-            uint256 accruedSalary,
             uint64 lastPayroll,
             uint64 endDate
         )
@@ -464,9 +464,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         accountAddress = employee.accountAddress;
         denominationSalary = employee.denominationTokenSalary;
+        accruedSalary = employee.accruedSalary;
         bonus = employee.bonus;
         reimbursements = employee.reimbursements;
-        accruedSalary = employee.accruedSalary;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
     }
@@ -633,7 +633,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         if (
             employee.lastPayroll == employee.endDate &&
-            (employee.reimbursements == 0 && employee.accruedSalary == 0 && employee.bonus == 0)
+            (employee.accruedSalary == 0 && employee.bonus == 0 && employee.reimbursements == 0)
         ) {
             delete employeeIds[employee.accountAddress];
             delete employees[_employeeId];
