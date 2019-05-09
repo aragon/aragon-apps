@@ -1,4 +1,4 @@
-import Aragon from '@aragon/api'
+import Aragon, { ACCOUNTS_TRIGGER } from '@aragon/api'
 import { of } from 'rxjs'
 import { map, publishReplay } from 'rxjs/operators'
 import { addressesEqual } from './web3-utils'
@@ -7,9 +7,6 @@ import { voteTypeFromContractEnum } from './vote-utils'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
-
-const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
-const ACCOUNTS_TRIGGER = Symbol('ACCOUNTS_TRIGGER')
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
 
@@ -61,21 +58,6 @@ retryEvery(retry => {
 })
 
 async function initialize(tokenAddr) {
-  // Hot observable which emits an web3.js event-like object with an account string of the current active account.
-  const accounts$ = app.accounts().pipe(
-    map(accounts => {
-      return {
-        event: ACCOUNTS_TRIGGER,
-        returnValues: {
-          account: accounts[0],
-        },
-      }
-    }),
-    publishReplay(1)
-  )
-
-  accounts$.connect()
-
   return app.store(
     async (state, { event, returnValues }) => {
       let nextState = {
@@ -95,8 +77,7 @@ async function initialize(tokenAddr) {
           return nextState
       }
     },
-    [accounts$],
-    initState(tokenAddr)
+    { init: initState(tokenAddr) }
   )
 }
 
