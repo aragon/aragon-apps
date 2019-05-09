@@ -144,11 +144,11 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _rateExpiryTime Acceptable expiry time in seconds for the price feed's exchange rates
      */
     function initialize(Finance _finance, address _denominationToken, IFeed _priceFeed, uint64 _rateExpiryTime) external onlyInit {
-        require(isContract(_finance), ERROR_FINANCE_NOT_CONTRACT);
-
         initialized();
 
+        require(isContract(_finance), ERROR_FINANCE_NOT_CONTRACT);
         finance = _finance;
+
         denominationToken = _denominationToken;
         _setPriceFeed(_priceFeed);
         _setRateExpiryTime(_rateExpiryTime);
