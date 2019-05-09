@@ -236,14 +236,14 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
         const from = anyone
 
         it('reverts', async () => {
-          await assertRevert(payroll.changeAddressByEmployee(anotherEmployee, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+          await assertRevert(payroll.changeAddressByEmployee(anotherEmployee, { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
         })
       })
     })
 
     context('when it has not been initialized yet', function () {
       it('reverts', async () => {
-        await assertRevert(payroll.changeAddressByEmployee(anotherEmployee, { from: anyone }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+        await assertRevert(payroll.changeAddressByEmployee(anotherEmployee, { from: anyone }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
       })
     })
   })

@@ -116,7 +116,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
                   const allocations = [10, 20, 69]
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.determineAllocation(tokenAddresses, allocations, { from }), 'PAYROLL_DISTRIBUTION_NO_COMPLETE')
+                    await assertRevert(payroll.determineAllocation(tokenAddresses, allocations, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
                   })
                 })
 
@@ -124,7 +124,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
                   const allocations = [10, 20, 71]
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.determineAllocation(tokenAddresses, allocations, { from }), 'PAYROLL_DISTRIBUTION_NO_COMPLETE')
+                    await assertRevert(payroll.determineAllocation(tokenAddresses, allocations, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
                   })
                 })
               })
@@ -140,7 +140,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
                   const addresses = [...tokenAddresses, notAllowedToken.address]
                   const allocations = [10, 20, 30, 40]
 
-                  await assertRevert(payroll.determineAllocation(addresses, allocations, { from }), 'PAYROLL_NO_ALLOWED_TOKEN')
+                  await assertRevert(payroll.determineAllocation(addresses, allocations, { from }), 'PAYROLL_NOT_ALLOWED_TOKEN')
                 })
               })
             })
@@ -149,7 +149,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
               const addresses = [], allocations = []
 
               it('reverts', async () => {
-                await assertRevert(payroll.determineAllocation(addresses, allocations, { from }), 'PAYROLL_DISTRIBUTION_NO_COMPLETE')
+                await assertRevert(payroll.determineAllocation(addresses, allocations, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
           })
@@ -182,14 +182,14 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
         const from = anyone
 
         it('reverts', async () => {
-          await assertRevert(payroll.determineAllocation(tokenAddresses, [100, 0, 0], { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+          await assertRevert(payroll.determineAllocation(tokenAddresses, [100, 0, 0], { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
         })
       })
     })
 
     context('when it has not been initialized yet', function () {
       it('reverts', async () => {
-        await assertRevert(payroll.determineAllocation(tokenAddresses, [10, 20, 70], { from: employee }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+        await assertRevert(payroll.determineAllocation(tokenAddresses, [10, 20, 70], { from: employee }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
       })
     })
   })

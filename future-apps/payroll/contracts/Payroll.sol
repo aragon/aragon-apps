@@ -38,13 +38,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     string private constant ERROR_EMPLOYEE_DOESNT_EXIST = "PAYROLL_EMPLOYEE_DOESNT_EXIST";
     string private constant ERROR_NON_ACTIVE_EMPLOYEE = "PAYROLL_NON_ACTIVE_EMPLOYEE";
-    string private constant ERROR_EMPLOYEE_DOES_NOT_MATCH = "PAYROLL_EMPLOYEE_DOES_NOT_MATCH";
+    string private constant ERROR_SENDER_DOES_NOT_MATCH = "PAYROLL_SENDER_DOES_NOT_MATCH";
     string private constant ERROR_FINANCE_NOT_CONTRACT = "PAYROLL_FINANCE_NOT_CONTRACT";
     string private constant ERROR_TOKEN_ALREADY_ALLOWED = "PAYROLL_TOKEN_ALREADY_ALLOWED";
     string private constant ERROR_MAX_ALLOWED_TOKENS = "PAYROLL_MAX_ALLOWED_TOKENS";
     string private constant ERROR_TOKEN_ALLOCATION_MISMATCH = "PAYROLL_TOKEN_ALLOCATION_MISMATCH";
-    string private constant ERROR_NO_ALLOWED_TOKEN = "PAYROLL_NO_ALLOWED_TOKEN";
-    string private constant ERROR_DISTRIBUTION_NO_COMPLETE = "PAYROLL_DISTRIBUTION_NO_COMPLETE";
+    string private constant ERROR_NOT_ALLOWED_TOKEN = "PAYROLL_NOT_ALLOWED_TOKEN";
+    string private constant ERROR_DISTRIBUTION_NOT_FULL = "PAYROLL_DISTRIBUTION_NOT_FULL";
     string private constant ERROR_INVALID_PAYMENT_TYPE = "PAYROLL_INVALID_PAYMENT_TYPE";
     string private constant ERROR_NOTHING_PAID = "PAYROLL_NOTHING_PAID";
     string private constant ERROR_EMPLOYEE_ALREADY_EXIST = "PAYROLL_EMPLOYEE_ALREADY_EXIST";
@@ -130,7 +130,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     // Check sender matches an existing employee
     modifier employeeMatches {
-        require(employees[employeeIds[msg.sender]].accountAddress == msg.sender, ERROR_EMPLOYEE_DOES_NOT_MATCH);
+        require(employees[employeeIds[msg.sender]].accountAddress == msg.sender, ERROR_SENDER_DOES_NOT_MATCH);
         _;
     }
 
@@ -289,12 +289,12 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 sum = 0;
         for (uint256 i = 0; i < _distribution.length; i++) {
             // Check token is allowed
-            require(allowedTokens[_tokens[i]], ERROR_NO_ALLOWED_TOKEN);
+            require(allowedTokens[_tokens[i]], ERROR_NOT_ALLOWED_TOKEN);
             // Set distribution
             employee.allocation[_tokens[i]] = _distribution[i];
             sum = sum.add(_distribution[i]);
         }
-        require(sum == 100, ERROR_DISTRIBUTION_NO_COMPLETE);
+        require(sum == 100, ERROR_DISTRIBUTION_NOT_FULL);
 
         emit DetermineAllocation(employeeId);
     }

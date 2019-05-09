@@ -482,7 +482,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
           const requestedAmount = bigExp(100, 18)
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
           })
         })
 
@@ -490,7 +490,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
           const requestedAmount = bn(0)
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
           })
         })
       })
@@ -500,7 +500,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
       const requestedAmount = bn(0)
 
       it('reverts', async () => {
-        await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from: employee }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+        await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from: employee }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
       })
     })
   })
