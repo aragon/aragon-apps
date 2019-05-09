@@ -23,8 +23,8 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
 
       const startDate = NOW - ONE_MONTH
       const salary = annualSalaryPerSecond(100000)
-      await payroll.addEmployee(employee, salary, 'Boss', startDate)
-      await payroll.addEmployee(anotherEmployee, salary, 'Manager', startDate)
+      await payroll.addEmployee(employee, salary, startDate, 'Boss')
+      await payroll.addEmployee(anotherEmployee, salary, startDate, 'Manager')
     })
 
     beforeEach('allow tokens and set rates', async () => {

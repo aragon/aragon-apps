@@ -87,8 +87,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 indexed employeeId,
         address indexed accountAddress,
         uint256 initialDenominationSalary,
-        string role,
-        uint64 startDate
+        uint64 startDate,
+        string role
     );
     event TerminateEmployee(uint256 indexed employeeId, uint64 endDate);
     event SetEmployeeSalary(uint256 indexed employeeId, uint256 denominationSalary);
@@ -192,14 +192,14 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @notice Add employee with address `_accountAddress` to payroll with an salary of `_initialDenominationSalary` per second, starting on `@formatDate(_startDate)`
      * @param _accountAddress Employee's address to receive payroll
      * @param _initialDenominationSalary Employee's salary, per second in denomination token
-     * @param _role Employee's role
      * @param _startDate Employee's starting timestamp in seconds (it actually sets their initial lastPayroll value)
+     * @param _role Employee's role
      */
-    function addEmployee(address _accountAddress, uint256 _initialDenominationSalary, string _role, uint64 _startDate)
+    function addEmployee(address _accountAddress, uint256 _initialDenominationSalary, uint64 _startDate, string _role)
         external
         authP(ADD_EMPLOYEE_ROLE, arr(_accountAddress, _initialDenominationSalary, uint256(_startDate)))
     {
-        _addEmployee(_accountAddress, _initialDenominationSalary, _role, _startDate);
+        _addEmployee(_accountAddress, _initialDenominationSalary, _startDate, _role);
     }
 
     /**
@@ -496,10 +496,10 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @dev Add a new employee to Payroll
      * @param _accountAddress Employee's address to receive payroll
      * @param _initialDenominationSalary Employee's salary, per second in denomination token
-     * @param _role Employee's role
      * @param _startDate Employee's starting timestamp in seconds
+     * @param _role Employee's role
      */
-    function _addEmployee(address _accountAddress, uint256 _initialDenominationSalary, string _role, uint64 _startDate) internal {
+    function _addEmployee(address _accountAddress, uint256 _initialDenominationSalary, uint64 _startDate, string _role) internal {
         // Check address is non-null
         require(_accountAddress != address(0), ERROR_EMPLOYEE_NULL_ADDRESS);
         // Check address isn't already being used
@@ -515,7 +515,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // Create IDs mapping
         employeeIds[_accountAddress] = employeeId;
 
-        emit AddEmployee(employeeId, _accountAddress, _initialDenominationSalary, _role, _startDate);
+        emit AddEmployee(employeeId, _accountAddress, _initialDenominationSalary, _startDate, _role);
     }
 
     /**

@@ -37,7 +37,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
           let employeeId
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', await payroll.getTimestampPublic())
+            const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), await payroll.getTimestampPublic(), 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -152,7 +152,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
         let employeeId, salary = annualSalaryPerSecond(100000)
 
         beforeEach('add employee and accumulate some salary', async () => {
-          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+          const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
           await increaseTime(ONE_MONTH)

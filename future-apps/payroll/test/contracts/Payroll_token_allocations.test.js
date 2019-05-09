@@ -43,7 +43,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', await payroll.getTimestampPublic(), { from: owner })
+          const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), await payroll.getTimestampPublic(), 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
@@ -204,7 +204,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', await payroll.getTimestampPublic(), { from: owner })
+          const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), await payroll.getTimestampPublic(), 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 

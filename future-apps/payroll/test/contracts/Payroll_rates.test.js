@@ -39,7 +39,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     beforeEach('add employee with salary 1 USD per second', async () => {
       const salary = bigExp(1, 18)
-      await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+      await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
     })
 
     beforeEach('accrue two minutes of salary', async () => {
@@ -172,7 +172,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     beforeEach('add employee with salary 0.1 ETH per second', async () => {
       const salary = bigExp(0.1, 18)
-      await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+      await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
     })
 
     beforeEach('accrue two minutes of salary', async () => {
@@ -303,7 +303,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     beforeEach('add employee with salary 1 DAI per second', async () => {
       const salary = bigExp(1, 18)
-      await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+      await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
     })
 
     beforeEach('accrue two minutes of salary', async () => {
@@ -434,7 +434,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     beforeEach('add employee with salary 1 ANT per second', async () => {
       const salary = bigExp(1, 18)
-      await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+      await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
     })
 
     beforeEach('accrue two minutes of salary', async () => {

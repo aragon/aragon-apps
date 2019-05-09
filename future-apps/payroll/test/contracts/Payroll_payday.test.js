@@ -42,7 +42,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
           const salary = bigExp(1, 18) // using 1 USD per second to simplify incomes in tests
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+            const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -528,7 +528,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const salary = bn(0)
 
             beforeEach('add employee', async () => {
-              const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+              const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
               employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
             })
 
@@ -588,7 +588,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const salary = MAX_UINT256
 
             beforeEach('add employee', async () => {
-              const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+              const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
               employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
             })
 

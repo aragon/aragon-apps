@@ -31,7 +31,7 @@ contract('Payroll employee getters', ([owner, employee]) => {
         const salary = annualSalaryPerSecond(100000)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic(), { from: owner })
+          const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -78,7 +78,7 @@ contract('Payroll employee getters', ([owner, employee]) => {
         const salary = annualSalaryPerSecond(100000)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic(), { from: owner })
+          const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 

@@ -37,7 +37,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
           const previousSalary = annualSalaryPerSecond(100000)
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployee(employee, previousSalary, 'Boss', await payroll.getTimestampPublic())
+            const receipt = await payroll.addEmployee(employee, previousSalary, await payroll.getTimestampPublic(), 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -165,7 +165,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
         let employeeId
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', await payroll.getTimestampPublic(), { from: owner })
+          const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), await payroll.getTimestampPublic(), 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
@@ -201,7 +201,7 @@ contract('Payroll employees modification', ([owner, employee, anotherEmployee, a
 
           context('when the given address belongs to another employee', () => {
             beforeEach('add another employee', async () => {
-              await payroll.addEmployee(anotherEmployee, annualSalaryPerSecond(100000), 'Boss', await payroll.getTimestampPublic(), { from: owner })
+              await payroll.addEmployee(anotherEmployee, annualSalaryPerSecond(100000), await payroll.getTimestampPublic(), 'Boss', { from: owner })
             })
 
             it('reverts', async () => {

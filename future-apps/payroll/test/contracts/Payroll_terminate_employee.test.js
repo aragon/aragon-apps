@@ -36,7 +36,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
         const salary = annualSalaryPerSecond(100000)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic(), { from: owner })
+          const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
@@ -113,7 +113,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
                 // Add employee back
-                const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+                const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
                 const newEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
                 const [address, employeeSalary, bonus, reimbursements, accruedSalary, lastPayroll, date] = await payroll.getEmployee(newEmployeeId)
