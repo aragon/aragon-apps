@@ -47,14 +47,14 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     string private constant ERROR_DISTRIBUTION_NOT_FULL = "PAYROLL_DISTRIBUTION_NOT_FULL";
     string private constant ERROR_INVALID_PAYMENT_TYPE = "PAYROLL_INVALID_PAYMENT_TYPE";
     string private constant ERROR_NOTHING_PAID = "PAYROLL_NOTHING_PAID";
-    string private constant ERROR_EMPLOYEE_ALREADY_EXIST = "PAYROLL_EMPLOYEE_ALREADY_EXIST";
-    string private constant ERROR_EMPLOYEE_NULL_ADDRESS = "PAYROLL_EMPLOYEE_NULL_ADDRESS";
     string private constant ERROR_CAN_NOT_FORWARD = "PAYROLL_CAN_NOT_FORWARD";
+    string private constant ERROR_EMPLOYEE_NULL_ADDRESS = "PAYROLL_EMPLOYEE_NULL_ADDRESS";
+    string private constant ERROR_EMPLOYEE_ALREADY_EXIST = "PAYROLL_EMPLOYEE_ALREADY_EXIST";
     string private constant ERROR_FEED_NOT_CONTRACT = "PAYROLL_FEED_NOT_CONTRACT";
     string private constant ERROR_EXPIRY_TIME_TOO_SHORT = "PAYROLL_EXPIRY_TIME_TOO_SHORT";
     string private constant ERROR_PAST_TERMINATION_DATE = "PAYROLL_PAST_TERMINATION_DATE";
-    string private constant ERROR_LAST_PAYROLL_DATE_TOO_BIG = "PAYROLL_LAST_DATE_TOO_BIG";
     string private constant ERROR_EXCHANGE_RATE_ZERO = "PAYROLL_EXCHANGE_RATE_ZERO";
+    string private constant ERROR_LAST_PAYROLL_DATE_TOO_BIG = "PAYROLL_LAST_DATE_TOO_BIG";
     string private constant ERROR_INVALID_REQUESTED_AMOUNT = "PAYROLL_INVALID_REQUESTED_AMT";
 
     enum PaymentType { Payroll, Reimbursement, Bonus }
@@ -158,6 +158,20 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
+     * @notice Add `_allowedToken.symbol(): string` to the set of allowed tokens
+     * @param _allowedToken New token address to be allowed for payments
+     */
+    function addAllowedToken(address _allowedToken) external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
+        require(!allowedTokens[_allowedToken], ERROR_TOKEN_ALREADY_ALLOWED);
+        require(allowedTokensArray.length < MAX_ALLOWED_TOKENS, ERROR_MAX_ALLOWED_TOKENS);
+
+        allowedTokens[_allowedToken] = true;
+        allowedTokensArray.push(_allowedToken);
+
+        emit AddAllowedToken(_allowedToken);
+    }
+
+    /**
      * @notice Set the price feed for exchange rates to `_feed`
      * @param _feed Address of the new price feed instance
      */
@@ -175,20 +189,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Add `_allowedToken.symbol(): string` to the set of allowed tokens
-     * @param _allowedToken New token address to be allowed for payments
-     */
-    function addAllowedToken(address _allowedToken) external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
-        require(!allowedTokens[_allowedToken], ERROR_TOKEN_ALREADY_ALLOWED);
-        require(allowedTokensArray.length < MAX_ALLOWED_TOKENS, ERROR_MAX_ALLOWED_TOKENS);
-
-        allowedTokens[_allowedToken] = true;
-        allowedTokensArray.push(_allowedToken);
-
-        emit AddAllowedToken(_allowedToken);
-    }
-
-    /**
      * @notice Add employee with address `_accountAddress` to payroll with an salary of `_initialDenominationSalary` per second, starting on `@formatDate(_startDate)`
      * @param _accountAddress Employee's address to receive payroll
      * @param _initialDenominationSalary Employee's salary, per second in denomination token
@@ -200,6 +200,32 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         authP(ADD_EMPLOYEE_ROLE, arr(_accountAddress, _initialDenominationSalary, uint256(_startDate)))
     {
         _addEmployee(_accountAddress, _initialDenominationSalary, _startDate, _role);
+    }
+
+    /**
+     * @notice Add `_amount` to bonus for employee #`_employeeId`
+     * @param _employeeId Employee's identifier
+     * @param _amount Amount to be added to the employee's bonuses in denomination token
+     */
+    function addBonus(uint256 _employeeId, uint256 _amount)
+        external
+        authP(ADD_BONUS_ROLE, arr(_employeeId, _amount))
+        employeeActive(_employeeId)
+    {
+        _addBonus(_employeeId, _amount);
+    }
+
+    /**
+     * @notice Add `_amount` to reimbursements for employee #`_employeeId`
+     * @param _employeeId Employee's identifier
+     * @param _amount Amount to be added to the employee's reimbursements in denomination token
+     */
+    function addReimbursement(uint256 _employeeId, uint256 _amount)
+        external
+        authP(ADD_REIMBURSEMENT_ROLE, arr(_employeeId, _amount))
+        employeeActive(_employeeId)
+    {
+        _addReimbursement(_employeeId, _amount);
     }
 
     /**
@@ -240,29 +266,22 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Add `_amount` to bonus for employee #`_employeeId`
-     * @param _employeeId Employee's identifier
-     * @param _amount Amount to be added to the employee's bonuses in denomination token
+     * @notice Change your employee account address to `_newAccountAddress`
+     * @dev Initialization check is implicitly provided by `employeeMatches` as new employees can
+     *      only be added via `addEmployee(),` which requires initialization.
+     *      As the employee is allowed to call this, we enforce non-reentrancy.
+     * @param _newAccountAddress New address to receive payments for the requesting employee
      */
-    function addBonus(uint256 _employeeId, uint256 _amount)
-        external
-        authP(ADD_BONUS_ROLE, arr(_employeeId, _amount))
-        employeeActive(_employeeId)
-    {
-        _addBonus(_employeeId, _amount);
-    }
+    function changeAddressByEmployee(address _newAccountAddress) external employeeMatches nonReentrant {
+        uint256 employeeId = employeeIds[msg.sender];
+        address oldAddress = employees[employeeId].accountAddress;
 
-    /**
-     * @notice Add `_amount` to reimbursements for employee #`_employeeId`
-     * @param _employeeId Employee's identifier
-     * @param _amount Amount to be added to the employee's reimbursements in denomination token
-     */
-    function addReimbursement(uint256 _employeeId, uint256 _amount)
-        external
-        authP(ADD_REIMBURSEMENT_ROLE, arr(_employeeId, _amount))
-        employeeActive(_employeeId)
-    {
-        _addReimbursement(_employeeId, _amount);
+        _setEmployeeAddress(employeeId, _newAccountAddress);
+        // Don't delete the old address until after setting the new address to check that the
+        // employee specified a new address
+        delete employeeIds[oldAddress];
+
+        emit ChangeAddressByEmployee(employeeId, _newAccountAddress, oldAddress);
     }
 
     /**
@@ -341,25 +360,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // Actually transfer the owed funds
         require(_transferTokensAmount(employeeId, _type, paymentAmount), ERROR_NOTHING_PAID);
         _removeEmployeeIfTerminatedAndPaidOut(employeeId);
-    }
-
-    /**
-     * @notice Change your employee account address to `_newAccountAddress`
-     * @dev Initialization check is implicitly provided by `employeeMatches` as new employees can
-     *      only be added via `addEmployee(),` which requires initialization.
-     *      As the employee is allowed to call this, we enforce non-reentrancy.
-     * @param _newAccountAddress New address to receive payments for the requesting employee
-     */
-    function changeAddressByEmployee(address _newAccountAddress) external employeeMatches nonReentrant {
-        uint256 employeeId = employeeIds[msg.sender];
-        address oldAddress = employees[employeeId].accountAddress;
-
-        _setEmployeeAddress(employeeId, _newAccountAddress);
-        // Don't delete the old address until after setting the new address to check that the
-        // employee specified a new address
-        delete employeeIds[oldAddress];
-
-        emit ChangeAddressByEmployee(employeeId, _newAccountAddress, oldAddress);
     }
 
     // Forwarding fns
