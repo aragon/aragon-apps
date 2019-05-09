@@ -83,7 +83,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                 const eventDAI = events.find(e => e.args.token === DAI.address).args
                 assert.equal(eventDAI.employeeId.toString(), employeeId.toString(), 'employee id does not match')
-                assert.equal(eventDAI.employeeAccountAddress, employee, 'employee address does not match')
+                assert.equal(eventDAI.accountAddress, employee, 'employee address does not match')
                 assert.equal(eventDAI.token, DAI.address, 'DAI address does not match')
                 assert.equal(eventDAI.amount.toString(), requestedDAI.toString(), 'payment amount does not match')
                 assert.equal(eventDAI.exchangeRate.toString(), inverseRate(DAI_RATE).toString(), 'payment exchange rate does not match')
@@ -91,7 +91,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                 const eventANT = events.find(e => e.args.token === ANT.address).args
                 assert.equal(eventANT.employeeId.toString(), employeeId.toString(), 'employee id does not match')
-                assert.equal(eventANT.employeeAccountAddress, employee, 'employee address does not match')
+                assert.equal(eventANT.accountAddress, employee, 'employee address does not match')
                 assert.equal(eventANT.token, ANT.address, 'ANT address does not match')
                 assert.equal(eventANT.amount.toString(), requestedANT.toString(), 'payment amount does not match')
                 assert.equal(eventANT.exchangeRate.toString(), inverseRate(ANT_RATE).toString(), 'payment exchange rate does not match')
@@ -645,7 +645,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                       const eventDAI = events.find(e => e.args.token === DAI.address).args
                       assert.equal(eventDAI.employeeId.toString(), employeeId.toString(), 'employee id does not match')
-                      assert.equal(eventDAI.employeeAccountAddress, employee, 'employee address does not match')
+                      assert.equal(eventDAI.accountAddress, employee, 'employee address does not match')
                       assert.equal(eventDAI.token, DAI.address, 'DAI address does not match')
                       assert.equal(eventDAI.amount.toString(), requestedDAI, 'payment amount does not match')
                       assert.equal(eventDAI.exchangeRate.toString(), inverseRate(DAI_RATE).toString(), 'payment exchange rate does not match')
@@ -653,7 +653,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                       const eventANT = events.find(e => e.args.token === ANT.address).args
                       assert.equal(eventANT.employeeId.toString(), employeeId.toString(), 'employee id does not match')
-                      assert.equal(eventANT.employeeAccountAddress, employee, 'employee address does not match')
+                      assert.equal(eventANT.accountAddress, employee, 'employee address does not match')
                       assert.equal(eventANT.token, ANT.address, 'ANT address does not match')
                       assert.equal(eventANT.amount.toString(), requestedANT, 'payment amount does not match')
                       assert.equal(eventANT.exchangeRate.toString(), inverseRate(ANT_RATE).toString(), 'payment exchange rate does not match')

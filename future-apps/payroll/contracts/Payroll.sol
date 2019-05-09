@@ -99,7 +99,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     event DetermineAllocation(uint256 indexed employeeId);
     event SendPayment(
         uint256 indexed employeeId,
-        address indexed employeeAccountAddress,
+        address indexed accountAddress,
         address indexed token,
         uint256 amount,
         uint256 exchangeRate,
