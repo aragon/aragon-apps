@@ -336,28 +336,22 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Change your employee account address to `_newAddress`
+     * @notice Change your employee account address to `_newAccountAddress`
      * @dev Initialization check is implicitly provided by `employeeMatches` as new employees can
      *      only be added via `addEmployee(),` which requires initialization.
      *      As the employee is allowed to call this, we enforce non-reentrancy.
-     * @param _newAddress New address to receive payments for the requesting employee
+     * @param _newAccountAddress New address to receive payments for the requesting employee
      */
-    function changeAddressByEmployee(address _newAddress) external employeeMatches nonReentrant {
-        // Check address is non-null
-        require(_newAddress != address(0), ERROR_EMPLOYEE_NULL_ADDRESS);
-        // Check address isn't already assigned to another employee
-        require(!_employeeExists(_newAddress), ERROR_EMPLOYEE_ALREADY_EXIST);
-
+    function changeAddressByEmployee(address _newAccountAddress) external employeeMatches nonReentrant {
         uint256 employeeId = employeeIds[msg.sender];
-        Employee storage employee = employees[employeeId];
+        address oldAddress = employees[employeeId].accountAddress;
 
-        address oldAddress = employee.accountAddress;
+        _setEmployeeAddress(employeeId, _newAccountAddress);
+        // Don't delete the old address until after setting the new address to check that the
+        // employee specified a new address
         delete employeeIds[oldAddress];
 
-        employeeIds[_newAddress] = employeeId;
-        employee.accountAddress = _newAddress;
-
-        emit ChangeAddressByEmployee(employeeId, _newAddress, oldAddress);
+        emit ChangeAddressByEmployee(employeeId, _newAccountAddress, oldAddress);
     }
 
     // Forwarding fns
@@ -500,20 +494,14 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _role Employee's role
      */
     function _addEmployee(address _accountAddress, uint256 _initialDenominationSalary, uint64 _startDate, string _role) internal {
-        // Check address is non-null
-        require(_accountAddress != address(0), ERROR_EMPLOYEE_NULL_ADDRESS);
-        // Check address isn't already being used
-        require(!_employeeExists(_accountAddress), ERROR_EMPLOYEE_ALREADY_EXIST);
-
         uint256 employeeId = nextEmployee++;
+
+        _setEmployeeAddress(employeeId, _accountAddress);
+
         Employee storage employee = employees[employeeId];
-        employee.accountAddress = _accountAddress;
         employee.denominationTokenSalary = _initialDenominationSalary;
         employee.lastPayroll = _startDate;
         employee.endDate = MAX_UINT64;
-
-        // Create IDs mapping
-        employeeIds[_accountAddress] = employeeId;
 
         emit AddEmployee(employeeId, _accountAddress, _initialDenominationSalary, _startDate, _role);
     }
@@ -549,6 +537,23 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         Employee storage employee = employees[_employeeId];
         employee.accruedSalary = employee.accruedSalary.add(_amount);
         emit AddEmployeeAccruedSalary(_employeeId, _amount);
+    }
+
+    /**
+     * @dev Set an employee's account address
+     * @param _employeeId Employee's identifier
+     * @param _accountAddress Employee's address to receive payroll
+     */
+    function _setEmployeeAddress(uint256 _employeeId, address _accountAddress) internal {
+        // Check address is non-null
+        require(_accountAddress != address(0), ERROR_EMPLOYEE_NULL_ADDRESS);
+        // Check address isn't already being used
+        require(!_employeeExists(_accountAddress), ERROR_EMPLOYEE_ALREADY_EXIST);
+
+        employees[_employeeId].accountAddress = _accountAddress;
+
+        // Create IDs mapping
+        employeeIds[_accountAddress] = _employeeId;
     }
 
     /**
