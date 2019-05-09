@@ -495,6 +495,29 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     // Internal fns
 
     /**
+     * @dev Set the price feed used for exchange rates
+     * @param _feed Address of the new price feed instance
+     */
+    function _setPriceFeed(IFeed _feed) internal {
+        require(isContract(_feed), ERROR_FEED_NOT_CONTRACT);
+        feed = _feed;
+        emit SetPriceFeed(feed);
+    }
+
+    /**
+     * @dev Set the exchange rate expiry time in seconds.
+     *      Exchange rates older than the given value won't be accepted for payments and will cause
+     *      payouts to revert.
+     * @param _time The expiration time in seconds for exchange rates
+     */
+    function _setRateExpiryTime(uint64 _time) internal {
+        // Require a sane minimum for the rate expiry time
+        require(_time >= MIN_RATE_EXPIRY, ERROR_EXPIRY_TIME_TOO_SHORT);
+        rateExpiryTime = _time;
+        emit SetRateExpiryTime(rateExpiryTime);
+    }
+
+    /**
      * @dev Add a new employee to Payroll
      * @param _accountAddress Employee's address to receive payroll
      * @param _initialDenominationSalary Employee's salary, per second in denomination token
@@ -562,29 +585,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         // Create IDs mapping
         employeeIds[_accountAddress] = _employeeId;
-    }
-
-    /**
-     * @dev Set the price feed used for exchange rates
-     * @param _feed Address of the new price feed instance
-     */
-    function _setPriceFeed(IFeed _feed) internal {
-        require(isContract(_feed), ERROR_FEED_NOT_CONTRACT);
-        feed = _feed;
-        emit SetPriceFeed(feed);
-    }
-
-    /**
-     * @dev Set the exchange rate expiry time in seconds.
-     *      Exchange rates older than the given value won't be accepted for payments and will cause
-     *      payouts to revert.
-     * @param _time The expiration time in seconds for exchange rates
-     */
-    function _setRateExpiryTime(uint64 _time) internal {
-        // Require a sane minimum for the rate expiry time
-        require(_time >= MIN_RATE_EXPIRY, ERROR_EXPIRY_TIME_TOO_SHORT);
-        rateExpiryTime = _time;
-        emit SetRateExpiryTime(rateExpiryTime);
     }
 
     /**
