@@ -827,11 +827,11 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      */
     function _paymentReferenceFor(PaymentType _type) internal pure returns (string memory) {
         if (_type == PaymentType.Payroll) {
-            return "Payroll";
+            return "Employee salary";
         } else if (_type == PaymentType.Reimbursement) {
-            return "Reimbursement";
+            return "Employee reimbursement";
         } if (_type == PaymentType.Bonus) {
-            return "Bonus";
+            return "Employee bonus";
         }
         revert(ERROR_INVALID_PAYMENT_TYPE);
     }
