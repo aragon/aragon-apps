@@ -31,18 +31,18 @@ contract('Payroll employee getters', ([owner, employee]) => {
         const salary = annualSalaryPerSecond(100000)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic(), { from: owner })
+          const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
         it('adds a new employee', async () => {
-          const [address, employeeSalary, bonus, reimbursements, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(employeeId)
+          const [address, employeeSalary, accruedSalary, bonus, reimbursements, lastPayroll, endDate] = await payroll.getEmployee(employeeId)
 
           assert.equal(address, employee, 'employee address does not match')
-          assert.equal(bonus.toString(), 0, 'employee bonus does not match')
-          assert.equal(reimbursements, 0, 'employee reimbursements does not match')
-          assert.equal(accruedSalary, 0, 'employee accrued salary does not match')
           assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
+          assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
+          assert.equal(bonus.toString(), 0, 'employee bonus does not match')
+          assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
           assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
           assert.equal(endDate.toString(), MAX_UINT64, 'employee end date does not match')
         })
@@ -78,18 +78,18 @@ contract('Payroll employee getters', ([owner, employee]) => {
         const salary = annualSalaryPerSecond(100000)
 
         beforeEach('add employee', async () => {
-          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic(), { from: owner })
+          const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss', { from: owner })
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
         it('adds a new employee', async () => {
-          const [id, employeeSalary, bonus, reimbursements, accruedSalary, lastPayroll, endDate] = await payroll.getEmployeeByAddress(address)
+          const [id, employeeSalary, accruedSalary, bonus, reimbursements, lastPayroll, endDate] = await payroll.getEmployeeByAddress(address)
 
           assert.equal(id.toString(), employeeId.toString(), 'employee id does not match')
           assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
+          assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
           assert.equal(bonus.toString(), 0, 'employee bonus does not match')
           assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
-          assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
           assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
           assert.equal(endDate.toString(), MAX_UINT64, 'employee end date does not match')
         })

@@ -42,7 +42,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
           const salary = bigExp(1, 18) // using 1 USD per second to simplify incomes in tests
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+            const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -82,18 +82,20 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 assert.equal(events.length, 2, 'should have emitted two events')
 
                 const eventDAI = events.find(e => e.args.token === DAI.address).args
-                assert.equal(eventDAI.employee, employee, 'employee address does not match')
+                assert.equal(eventDAI.employeeId.toString(), employeeId.toString(), 'employee id does not match')
+                assert.equal(eventDAI.accountAddress, employee, 'employee address does not match')
                 assert.equal(eventDAI.token, DAI.address, 'DAI address does not match')
                 assert.equal(eventDAI.amount.toString(), requestedDAI.toString(), 'payment amount does not match')
                 assert.equal(eventDAI.exchangeRate.toString(), inverseRate(DAI_RATE).toString(), 'payment exchange rate does not match')
-                assert.equal(eventDAI.paymentReference, 'Payroll', 'payment reference does not match')
+                assert.equal(eventDAI.paymentReference, 'Employee salary', 'payment reference does not match')
 
                 const eventANT = events.find(e => e.args.token === ANT.address).args
-                assert.equal(eventANT.employee, employee, 'employee address does not match')
+                assert.equal(eventANT.employeeId.toString(), employeeId.toString(), 'employee id does not match')
+                assert.equal(eventANT.accountAddress, employee, 'employee address does not match')
                 assert.equal(eventANT.token, ANT.address, 'ANT address does not match')
                 assert.equal(eventANT.amount.toString(), requestedANT.toString(), 'payment amount does not match')
                 assert.equal(eventANT.exchangeRate.toString(), inverseRate(ANT_RATE).toString(), 'payment exchange rate does not match')
-                assert.equal(eventANT.paymentReference, 'Payroll', 'payment reference does not match')
+                assert.equal(eventANT.paymentReference, 'Employee salary', 'payment reference does not match')
               })
 
               it('can be called multiple times between periods of time', async () => {
@@ -126,7 +128,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const assertEmployeeIsUpdatedCorrectly = (requestedAmount, expectedRequestedAmount) => {
               it('updates the accrued salary and the last payroll date', async () => {
                 let expectedLastPayrollDate, expectedAccruedSalary
-                const [previousAccruedSalary, previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(4, 6)
+                const [previousAccruedSalary, , , previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(2, 6)
 
                 if (expectedRequestedAmount >= previousAccruedSalary) {
                   expectedAccruedSalary = bn(0)
@@ -139,7 +141,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                 await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from })
 
-                const [accruedSalary, lastPayrollDate] = (await payroll.getEmployee(employeeId)).slice(4, 6)
+                const [accruedSalary, , , lastPayrollDate] = (await payroll.getEmployee(employeeId)).slice(2, 6)
                 assert.equal(accruedSalary.toString(), expectedAccruedSalary.toString(), 'accrued salary does not match')
                 assert.equal(lastPayrollDate.toString(), expectedLastPayrollDate.toString(), 'last payroll date does not match')
               })
@@ -526,7 +528,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const salary = bn(0)
 
             beforeEach('add employee', async () => {
-              const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+              const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
               employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
             })
 
@@ -586,7 +588,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const salary = MAX_UINT256
 
             beforeEach('add employee', async () => {
-              const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+              const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
               employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
             })
 
@@ -642,16 +644,20 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                       assert.equal(events.length, 2, 'should have emitted two events')
 
                       const eventDAI = events.find(e => e.args.token === DAI.address).args
-                      assert.equal(eventDAI.employee, employee, 'employee address does not match')
+                      assert.equal(eventDAI.employeeId.toString(), employeeId.toString(), 'employee id does not match')
+                      assert.equal(eventDAI.accountAddress, employee, 'employee address does not match')
                       assert.equal(eventDAI.token, DAI.address, 'DAI address does not match')
                       assert.equal(eventDAI.amount.toString(), requestedDAI, 'payment amount does not match')
-                      assert.equal(eventDAI.paymentReference, 'Payroll', 'payment reference does not match')
+                      assert.equal(eventDAI.exchangeRate.toString(), inverseRate(DAI_RATE).toString(), 'payment exchange rate does not match')
+                      assert.equal(eventDAI.paymentReference, 'Employee salary', 'payment reference does not match')
 
                       const eventANT = events.find(e => e.args.token === ANT.address).args
-                      assert.equal(eventANT.employee, employee, 'employee address does not match')
+                      assert.equal(eventANT.employeeId.toString(), employeeId.toString(), 'employee id does not match')
+                      assert.equal(eventANT.accountAddress, employee, 'employee address does not match')
                       assert.equal(eventANT.token, ANT.address, 'ANT address does not match')
                       assert.equal(eventANT.amount.toString(), requestedANT, 'payment amount does not match')
-                      assert.equal(eventANT.paymentReference, 'Payroll', 'payment reference does not match')
+                      assert.equal(eventANT.exchangeRate.toString(), inverseRate(ANT_RATE).toString(), 'payment exchange rate does not match')
+                      assert.equal(eventANT.paymentReference, 'Employee salary', 'payment reference does not match')
                     })
 
                     it('can be called multiple times between periods of time', async () => {
@@ -824,7 +830,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
           const requestedAmount = bigExp(1000, 18)
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
           })
         })
 
@@ -832,7 +838,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
           const requestedAmount = bn(0)
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
           })
         })
       })
@@ -842,7 +848,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
       const requestedAmount = bn(0)
 
       it('reverts', async () => {
-        await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from: employee }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+        await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from: employee }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
       })
     })
   })

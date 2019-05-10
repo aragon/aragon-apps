@@ -1,6 +1,6 @@
 const { USD } = require('../helpers/tokens')(artifacts, web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { NOW, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { NOW, ONE_MINUTE, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -30,9 +30,9 @@ contract('Payroll initialization', ([owner]) => {
         assert.equal(await payroll.denominationToken(), ZERO_ADDRESS, 'denomination token does not match')
       })
 
-      it('reverts when passing an expiration time lower than or equal to a minute', async () => {
-        const ONE_MINUTE = 60
-        await assertRevert(payroll.initialize(finance.address, USD, priceFeed.address, ONE_MINUTE, { from }), 'PAYROLL_EXPIRY_TIME_TOO_SHORT')
+      it('reverts when passing an expiration time lower than one minute', async () => {
+        const badExpirationTime = ONE_MINUTE - 1
+        await assertRevert(payroll.initialize(finance.address, USD, priceFeed.address, badExpirationTime, { from }), 'PAYROLL_EXPIRY_TIME_TOO_SHORT')
       })
 
       it('reverts when passing an invalid finance instance', async () => {

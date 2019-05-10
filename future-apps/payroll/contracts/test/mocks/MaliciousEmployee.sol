@@ -29,16 +29,17 @@ contract MaliciousEmployee {
     }
 
     function reenter() public {
-        if (counter > 0) return;
+        if (counter > 0) {
+            return;
+        }
+
         counter++;
 
         if (action == Action.Payday) {
             payroll.payday(Payroll.PaymentType.Payroll, 0);
-        }
-        else if (action == Action.ChangeAddress) {
+        } else if (action == Action.ChangeAddress) {
             payroll.changeAddressByEmployee(msg.sender);
-        }
-        else if (action == Action.SetAllocation) {
+        } else if (action == Action.SetAllocation) {
             address[] memory tokens = new address[](1);
             tokens[0] = address(0);
             uint256[] memory allocations = new uint256[](1);
@@ -47,6 +48,7 @@ contract MaliciousEmployee {
         }
     }
 }
+
 
 contract MaliciousERC20 is ERC20 {
     using SafeMath for uint256;
