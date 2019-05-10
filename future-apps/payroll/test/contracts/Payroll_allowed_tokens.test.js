@@ -84,7 +84,7 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
             const rates = tokenAddresses.map(() => formatRate(5))
             await setTokenRates(priceFeed, USD, tokenAddresses, rates)
 
-            await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', NOW - ONE_MONTH, { from: owner })
+            await payroll.addEmployee(employee, annualSalaryPerSecond(100000), NOW - ONE_MONTH, 'Boss', { from: owner })
           })
 
           it('can not add one more token', async () => {

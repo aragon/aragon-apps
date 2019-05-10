@@ -37,7 +37,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
           let employeeId
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', await payroll.getTimestampPublic())
+            const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), await payroll.getTimestampPublic(), 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -47,7 +47,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
               it('adds requested reimbursement', async () => {
                 await payroll.addReimbursement(employeeId, reimburse, { from })
 
-                const reimbursements = (await payroll.getEmployee(employeeId))[3]
+                const reimbursements = (await payroll.getEmployee(employeeId))[4]
                 assert.equal(reimbursements.toString(), reimburse.toString(), 'reimbursement does not match')
               })
 
@@ -141,7 +141,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
         let employeeId, salary = annualSalaryPerSecond(1000)
 
         beforeEach('add employee and accumulate some salary', async () => {
-          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+          const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
           await increaseTime(ONE_MONTH)
@@ -191,27 +191,29 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
                 assert.equal(events.length, 2, 'should have emitted two events')
 
                 const eventDAI = events.find(e => e.args.token === DAI.address).args
-                assert.equal(eventDAI.employee, employee, 'employee address does not match')
+                assert.equal(eventDAI.employeeId.toString(), employeeId.toString(), 'employee id does not match')
+                assert.equal(eventDAI.accountAddress, employee, 'employee address does not match')
                 assert.equal(eventDAI.token, DAI.address, 'DAI address does not match')
                 assert.equal(eventDAI.amount.toString(), requestedDAI, 'payment amount does not match')
                 assert.equal(eventDAI.exchangeRate.toString(), inverseRate(DAI_RATE).toString(), 'payment exchange rate does not match')
-                assert.equal(eventDAI.paymentReference, 'Reimbursement', 'payment reference does not match')
+                assert.equal(eventDAI.paymentReference, 'Employee reimbursement', 'payment reference does not match')
 
                 const eventANT = events.find(e => e.args.token === ANT.address).args
-                assert.equal(eventANT.employee, employee, 'employee address does not match')
+                assert.equal(eventANT.employeeId.toString(), employeeId.toString(), 'employee id does not match')
+                assert.equal(eventANT.accountAddress, employee, 'employee address does not match')
                 assert.equal(eventANT.token, ANT.address, 'token address does not match')
                 assert.equal(eventANT.amount.toString(), requestedANT, 'payment amount does not match')
                 assert.equal(eventANT.exchangeRate.toString(), inverseRate(ANT_RATE).toString(), 'payment exchange rate does not match')
-                assert.equal(eventANT.paymentReference, 'Reimbursement', 'payment reference does not match')
+                assert.equal(eventANT.paymentReference, 'Employee reimbursement', 'payment reference does not match')
               })
             }
 
             const assertEmployeeIsNotRemoved = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
               it('does not remove the employee and resets the reimbursements', async () => {
-                const previousReimbursements = (await payroll.getEmployee(employeeId))[3]
+                const previousReimbursements = (await payroll.getEmployee(employeeId))[4]
                 await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from })
 
-                const [address, employeeSalary, _, reimbursements] = await payroll.getEmployee(employeeId)
+                const [address, employeeSalary, , , reimbursements] = await payroll.getEmployee(employeeId)
 
                 assert.equal(address, employee, 'employee address does not match')
                 assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
@@ -480,7 +482,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
           const requestedAmount = bigExp(100, 18)
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
           })
         })
 
@@ -488,7 +490,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
           const requestedAmount = bn(0)
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
           })
         })
       })
@@ -498,7 +500,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
       const requestedAmount = bn(0)
 
       it('reverts', async () => {
-        await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from: employee }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+        await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from: employee }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
       })
     })
   })

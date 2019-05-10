@@ -39,7 +39,7 @@ contract('Payroll reentrancy guards', ([owner]) => {
 
     beforeEach('add malicious employee, set tokens allocations, and accrue some salary', async () => {
       await employee.setPayroll(payroll.address)
-      await payroll.addEmployee(employee.address, annualSalaryPerSecond(100000), 'Malicious Boss', await payroll.getTimestampPublic(), { from: owner })
+      await payroll.addEmployee(employee.address, annualSalaryPerSecond(100000), await payroll.getTimestampPublic(), 'Malicious Boss', { from: owner })
 
       await employee.determineAllocation([maliciousToken.address], [100])
       await increaseTime(ONE_MONTH)

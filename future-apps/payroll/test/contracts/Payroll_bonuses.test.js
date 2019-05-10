@@ -37,7 +37,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
           let employeeId
 
           beforeEach('add employee', async () => {
-            const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), 'Boss', await payroll.getTimestampPublic())
+            const receipt = await payroll.addEmployee(employee, annualSalaryPerSecond(100000), await payroll.getTimestampPublic(), 'Boss')
             employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
           })
 
@@ -45,10 +45,10 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
             const itAddsBonusesSuccessfully = amount => {
               it('adds given bonus amount', async () => {
-                const previousBonus = (await payroll.getEmployee(employeeId))[2]
+                const previousBonus = (await payroll.getEmployee(employeeId))[3]
                 await payroll.addBonus(employeeId, amount, { from })
 
-                const currentBonus = (await payroll.getEmployee(employeeId))[2]
+                const currentBonus = (await payroll.getEmployee(employeeId))[3]
                 assert.equal(previousBonus.plus(amount).toString(), currentBonus.toString(), 'bonus amount does not match')
               })
 
@@ -152,7 +152,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
         let employeeId, salary = annualSalaryPerSecond(100000)
 
         beforeEach('add employee and accumulate some salary', async () => {
-          const receipt = await payroll.addEmployee(employee, salary, 'Boss', await payroll.getTimestampPublic())
+          const receipt = await payroll.addEmployee(employee, salary, await payroll.getTimestampPublic(), 'Boss')
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
           await increaseTime(ONE_MONTH)
@@ -202,27 +202,29 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                 assert.equal(events.length, 2, 'should have emitted two events')
 
                 const eventDAI = events.find(e => e.args.token === DAI.address).args
-                assert.equal(eventDAI.employee, employee, 'employee address does not match')
+                assert.equal(eventDAI.employeeId.toString(), employeeId.toString(), 'employee id does not match')
+                assert.equal(eventDAI.accountAddress, employee, 'employee address does not match')
                 assert.equal(eventDAI.token, DAI.address, 'DAI address does not match')
                 assert.equal(eventDAI.amount.toString(), requestedDAI, 'payment amount does not match')
                 assert.equal(eventDAI.exchangeRate.toString(), inverseRate(DAI_RATE).toString(), 'payment exchange rate does not match')
-                assert.equal(eventDAI.paymentReference, 'Bonus', 'payment reference does not match')
+                assert.equal(eventDAI.paymentReference, 'Employee bonus', 'payment reference does not match')
 
                 const eventANT = events.find(e => e.args.token === ANT.address).args
-                assert.equal(eventANT.employee, employee, 'employee address does not match')
+                assert.equal(eventANT.employeeId.toString(), employeeId.toString(), 'employee id does not match')
+                assert.equal(eventANT.accountAddress, employee, 'employee address does not match')
                 assert.equal(eventANT.token, ANT.address, 'token address does not match')
                 assert.equal(eventANT.amount.toString(), requestedANT, 'payment amount does not match')
                 assert.equal(eventANT.exchangeRate.toString(), inverseRate(ANT_RATE).toString(), 'payment exchange rate does not match')
-                assert.equal(eventANT.paymentReference, 'Bonus', 'payment reference does not match')
+                assert.equal(eventANT.paymentReference, 'Employee bonus', 'payment reference does not match')
               })
             }
 
             const assertEmployeeIsNotRemoved = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
               it('does not remove the employee and resets the bonus amount', async () => {
-                const previousBonus = (await payroll.getEmployee(employeeId))[2]
+                const previousBonus = (await payroll.getEmployee(employeeId))[3]
                 await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
 
-                const [address, employeeSalary, bonus] = await payroll.getEmployee(employeeId)
+                const [address, employeeSalary, , bonus] = await payroll.getEmployee(employeeId)
 
                 assert.equal(address, employee, 'employee address does not match')
                 assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
@@ -491,7 +493,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
           const requestedAmount = bigExp(100, 18)
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
           })
         })
 
@@ -499,7 +501,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
           const requestedAmount = bn(0)
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
           })
         })
       })
@@ -509,7 +511,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
       const requestedAmount = bn(0)
 
       it('reverts', async () => {
-        await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from: employee }), 'PAYROLL_EMPLOYEE_DOES_NOT_MATCH')
+        await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from: employee }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
       })
     })
   })
