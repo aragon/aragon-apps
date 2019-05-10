@@ -113,7 +113,11 @@ class App extends React.Component {
               )}
               {transactions.length > 0 && (
                 <SpacedBlock>
-                  <Transfers transactions={transactions} tokens={tokens} />
+                  <Transfers
+                    dao={proxyAddress}
+                    transactions={transactions}
+                    tokens={tokens}
+                  />
                 </SpacedBlock>
               )}
               {balances.length === 0 && transactions.length === 0 && (
