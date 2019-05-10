@@ -1,23 +1,18 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('../helpers/events')
-const { maxUint64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
-const { deployErc20TokenAndDeposit, deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy.js')(artifacts, web3)
+const { USD, deployDAI } = require('../helpers/tokens')(artifacts, web3)
+const { NOW, TWO_MONTHS, RATE_EXPIRATION_TIME } = require('../helpers/time')
+const { MAX_UINT64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
+const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyone]) => {
-  let dao, payroll, payrollBase, finance, vault, priceFeed, denominationToken
-
-  const NOW = 1553703809 // random fixed timestamp in seconds
-  const ONE_MONTH = 60 * 60 * 24 * 31
-  const TWO_MONTHS = ONE_MONTH * 2
-  const RATE_EXPIRATION_TIME = TWO_MONTHS
-
-  const TOKEN_DECIMALS = 18
+  let dao, payroll, payrollBase, finance, vault, priceFeed, DAI
 
   before('deploy base apps and tokens', async () => {
     ({ dao, finance, vault, payrollBase } = await deployContracts(owner))
-    denominationToken = await deployErc20TokenAndDeposit(owner, finance, 'Denomination Token', TOKEN_DECIMALS)
+    DAI = await deployDAI(owner, finance)
   })
 
   beforeEach('create payroll and price feed instance', async () => {
@@ -26,11 +21,11 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
   describe('addEmployee', () => {
     const role = 'Boss'
-    const salary = annualSalaryPerSecond(100000, TOKEN_DECIMALS)
+    const salary = annualSalaryPerSecond(100000)
 
     context('when it has already been initialized', function () {
-      beforeEach('initialize payroll app', async () => {
-        await payroll.initialize(finance.address, denominationToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
       })
 
       context('when the sender has permissions to add employees', () => {
@@ -44,7 +39,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
               const address = employee
 
               beforeEach('add employee', async () => {
-                receipt = await payroll.addEmployee(address, salary, role, startDate, { from })
+                receipt = await payroll.addEmployee(address, salary, startDate, role, { from })
                 employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
               })
 
@@ -61,17 +56,17 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
                 const event = events[0].args
                 assert.equal(event.employeeId, employeeId, 'employee id does not match')
-                assert.equal(event.role, role, 'employee role does not match')
                 assert.equal(event.accountAddress, employee, 'employee address does not match')
-                assert.equal(event.startDate.toString(), startDate, 'employee start date does not match')
                 assert.equal(event.initialDenominationSalary.toString(), salary.toString(), 'employee salary does not match')
+                assert.equal(event.startDate.toString(), startDate, 'employee start date does not match')
+                assert.equal(event.role, role, 'employee role does not match')
               })
 
               it('can add another employee', async () => {
                 const anotherRole = 'Manager'
-                const anotherSalary = annualSalaryPerSecond(120000, TOKEN_DECIMALS)
+                const anotherSalary = annualSalaryPerSecond(120000)
 
-                const receipt = await payroll.addEmployee(anotherEmployee, anotherSalary, anotherRole, startDate)
+                const receipt = await payroll.addEmployee(anotherEmployee, anotherSalary, startDate, anotherRole)
                 const anotherEmployeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
 
                 const events = getEvents(receipt, 'AddEmployee');
@@ -79,19 +74,19 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
                 const event = events[0].args
                 assert.equal(event.employeeId, anotherEmployeeId, 'employee id does not match')
-                assert.equal(event.role, anotherRole, 'employee role does not match')
                 assert.equal(event.accountAddress, anotherEmployee, 'employee address does not match')
-                assert.equal(event.startDate.toString(), startDate, 'employee start date does not match')
                 assert.equal(event.initialDenominationSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
+                assert.equal(event.startDate.toString(), startDate, 'employee start date does not match')
+                assert.equal(event.role, anotherRole, 'employee role does not match')
 
-                const [address, employeeSalary, bonus, reimbursements, accruedSalary, lastPayroll, endDate] = await payroll.getEmployee(anotherEmployeeId)
+                const [address, employeeSalary, accruedSalary, bonus, reimbursements, lastPayroll, endDate] = await payroll.getEmployee(anotherEmployeeId)
                 assert.equal(address, anotherEmployee, 'employee address does not match')
-                assert.equal(bonus.toString(), 0, 'employee bonus does not match')
-                assert.equal(reimbursements, 0, 'employee reimbursements does not match')
-                assert.equal(accruedSalary, 0, 'employee accrued salary does not match')
                 assert.equal(employeeSalary.toString(), anotherSalary.toString(), 'employee salary does not match')
+                assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
+                assert.equal(bonus.toString(), 0, 'employee bonus does not match')
+                assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
                 assert.equal(lastPayroll.toString(), startDate.toString(), 'employee last payroll does not match')
-                assert.equal(endDate.toString(), maxUint64(), 'employee end date does not match')
+                assert.equal(endDate.toString(), MAX_UINT64, 'employee end date does not match')
               })
             })
 
@@ -99,7 +94,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
               const address = ZERO_ADDRESS
 
               it('reverts', async () => {
-                await assertRevert(payroll.addEmployee(address, salary, role, startDate, { from }), 'PAYROLL_EMPLOYEE_NULL_ADDRESS')
+                await assertRevert(payroll.addEmployee(address, salary, startDate, role, { from }), 'PAYROLL_EMPLOYEE_NULL_ADDRESS')
               })
             })
           }
@@ -119,14 +114,14 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
 
         context('when the employee has already been added', () => {
           beforeEach('add employee', async () => {
-            await payroll.addEmployee(employee, salary, role, NOW, { from })
+            await payroll.addEmployee(employee, salary, NOW, role, { from })
           })
 
           context('when the given end date is in the past ', () => {
             const startDate = NOW - TWO_MONTHS
 
             it('reverts', async () => {
-              await assertRevert(payroll.addEmployee(employee, salary, role, startDate, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
+              await assertRevert(payroll.addEmployee(employee, salary, startDate, role, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
             })
           })
 
@@ -134,7 +129,7 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
             const startDate = NOW + TWO_MONTHS
 
             it('reverts', async () => {
-              await assertRevert(payroll.addEmployee(employee, salary, role, startDate, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
+              await assertRevert(payroll.addEmployee(employee, salary, startDate, role, { from }), 'PAYROLL_EMPLOYEE_ALREADY_EXIST')
             })
           })
         })
@@ -144,14 +139,14 @@ contract('Payroll employees addition', ([owner, employee, anotherEmployee, anyon
         const from = anyone
 
         it('reverts', async () => {
-          await assertRevert(payroll.addEmployee(employee, salary, role, NOW, { from }), 'APP_AUTH_FAILED')
+          await assertRevert(payroll.addEmployee(employee, salary, NOW, role, { from }), 'APP_AUTH_FAILED')
         })
       })
     })
 
     context('when it has not been initialized yet', function () {
       it('reverts', async () => {
-        await assertRevert(payroll.addEmployee(employee, salary, role, NOW, { from: owner }), 'APP_AUTH_FAILED')
+        await assertRevert(payroll.addEmployee(employee, salary, NOW, role, { from: owner }), 'APP_AUTH_FAILED')
       })
     })
   })

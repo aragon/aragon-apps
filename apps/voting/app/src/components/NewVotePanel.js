@@ -1,13 +1,27 @@
 import React from 'react'
 import styled from 'styled-components'
-import { TabBar, Button, Info, Text, TextInput, Field } from '@aragon/ui'
+import { Button, Field, Info, SidePanel, TabBar, TextInput } from '@aragon/ui'
 
 const initialState = {
   question: '',
   screenIndex: 0,
 }
 
-class NewVotePanelContent extends React.Component {
+const NewVotePanel = React.memo(({ panelState, onCreateVote }) => (
+  <SidePanel
+    title="New Vote"
+    opened={panelState.visible}
+    onClose={panelState.requestClose}
+    onTransitionEnd={panelState.onTransitionEnd}
+  >
+    <NewVotePanelContent
+      onCreateVote={onCreateVote}
+      panelOpened={panelState.didOpen}
+    />
+  </SidePanel>
+))
+
+class NewVotePanelContent extends React.PureComponent {
   static defaultProps = {
     onCreateVote: () => {},
   }
@@ -99,4 +113,4 @@ const Form = styled.form`
   margin-top: 20px;
 `
 
-export default NewVotePanelContent
+export default NewVotePanel

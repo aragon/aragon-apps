@@ -1,6 +1,8 @@
 module.exports = (artifacts, web3) => {
   const { bigExp } = require('./numbers')(web3)
   const { getEventArgument } = require('./events')
+  const { SECONDS_IN_A_YEAR } = require('./time')
+
   const getContract = name => artifacts.require(name)
 
   const ACL = getContract('ACL')
@@ -59,7 +61,6 @@ module.exports = (artifacts, web3) => {
     await acl.createPermission(finance.address, vault.address, TRANSFER_ROLE, owner, { from: owner })
     await vault.initialize()
 
-    const SECONDS_IN_A_YEAR = 31557600 // 365.25 days
     await finance.initialize(vault.address, SECONDS_IN_A_YEAR) // more than one day
 
     const payrollBase = await Payroll.new()

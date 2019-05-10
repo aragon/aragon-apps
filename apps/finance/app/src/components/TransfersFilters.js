@@ -16,8 +16,7 @@ const TransfersFilters = ({
   transferTypes,
   transferTypeFilter,
   onTransferTypeChange,
-  downloadFileName,
-  downloadUrl,
+  onDownload,
 }) => (
   <Spring
     native
@@ -87,11 +86,7 @@ const TransfersFilters = ({
             <div>
               <Download compact={compactMode}>
                 <DownloadLabel>Export</DownloadLabel>
-                <DownloadButton
-                  filename={downloadFileName}
-                  url={downloadUrl}
-                  css="margin-right: -5px"
-                />
+                <DownloadButton onClick={onDownload} css="margin-right: -5px" />
               </Download>
             </div>
           </div>

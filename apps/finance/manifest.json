@@ -1,7 +1,7 @@
 {
   "name": "Finance",
   "author": "Aragon Association",
-  "description": "Manage organization assets, budget expenses, and record financial transactions.",
+  "description": "Manage an organization's financial assets",
   "changelog_url": "https://github.com/aragon/aragon-apps/releases",
   "details_url": "/meta/details.md",
   "source_url": "https://github.com/aragon/aragon-apps/blob/master/apps/finance",

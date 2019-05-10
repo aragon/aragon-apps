@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
-import color from 'onecolor'
 import { format } from 'date-fns'
 import { Badge, Countdown, Text, Button, theme } from '@aragon/ui'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
@@ -52,7 +51,13 @@ const VotingCard = React.memo(
     const action = isVoteAction(vote)
 
     return (
-      <Main>
+      <section
+        css={`
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        `}
+      >
         <Header>
           {open ? (
             <Countdown end={endDate} />
@@ -89,14 +94,14 @@ const VotingCard = React.memo(
                 align-items: center;
               `}
             >
-              {action ? <BadgeAction /> : <BadgeInformative />}
+              {action ? <BadgeAction /> : <BadgeQuestion />}
             </div>
             <Button compact mode="outline" onClick={handleOpen}>
               View vote
             </Button>
           </div>
         </Card>
-      </Main>
+      </section>
     )
   },
   (prevProps, nextProps) => {
@@ -121,9 +126,9 @@ VotingCard.defaultProps = {
   onOpen: () => {},
 }
 
-const BadgeInformative = () => (
+const BadgeQuestion = () => (
   <Badge background="rgba(37, 49, 77, 0.16)" foreground="rgba(37, 49, 77, 1)">
-    Informative
+   Question
   </Badge>
 )
 
@@ -139,11 +144,6 @@ const OptionLabel = ({ label, isConnectedAccount }) => (
     {isConnectedAccount && <You />}
   </span>
 )
-
-const Main = styled.section`
-  display: flex;
-  flex-direction: column;
-`
 
 const Header = styled.div`
   display: flex;

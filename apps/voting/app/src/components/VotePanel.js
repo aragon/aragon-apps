@@ -7,10 +7,11 @@ import {
   SafeLink,
   SidePanelSeparator,
   SidePanelSplit,
+  SidePanel,
   Text,
   theme,
 } from '@aragon/ui'
-import { useAragonApi } from '@aragon/api-react'
+import { useAppState, useConnectedAccount } from '@aragon/api-react'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge.js'
 import { format } from 'date-fns'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
@@ -30,34 +31,41 @@ const formatDate = date =>
 // styled-component `css` transform doesn’t play well with attached components.
 const Action = Info.Action
 
+const VotePanel = React.memo(({ panelState, vote, onExecute, onVote }) => (
+  <SidePanel
+    title={
+      vote ? `Vote #${vote.voteId} (${vote.data.open ? 'Open' : 'Closed'})` : ''
+    }
+    opened={panelState.visible}
+    onClose={panelState.requestClose}
+    onTransitionEnd={panelState.onTransitionEnd}
+  >
+    {vote && (
+      <VotePanelContent
+        vote={vote}
+        onVote={onVote}
+        onExecute={onExecute}
+        panelOpened={panelState.didOpen}
+      />
+    )}
+  </SidePanel>
+))
+
 const VotePanelContent = React.memo(
   ({ onVote, onExecute, panelOpened, vote }) => {
-    const {
-      connectedAccount,
-      appState: { tokenDecimals, tokenSymbol },
-    } = useAragonApi()
+    const { tokenDecimals, tokenSymbol } = useAppState()
 
-    const { canUserVote, canExecute, userBalance } = useExtendedVoteData(vote)
-
-    const [changeVote, setChangeVote] = useState(false)
-
-    const handleChangeVoteClick = useCallback(() => {
-      setChangeVote(true)
-    }, [])
-
-    const handleNoClick = useCallback(() => {
+    const handleVoteNo = useCallback(() => {
       onVote(vote.voteId, VOTE_NAY)
     }, [onVote, vote.voteId])
 
-    const handleYesClick = useCallback(() => {
+    const handleVoteYes = useCallback(() => {
       onVote(vote.voteId, VOTE_YEA)
     }, [onVote, vote.voteId])
 
-    const handleExecuteClick = useCallback(() => {
+    const handleExecute = useCallback(() => {
       onExecute(vote.voteId)
     }, [onExecute, vote.voteId])
-
-    const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.userAccountVote)
 
     if (!vote) {
       return null
@@ -150,100 +158,117 @@ const VotePanelContent = React.memo(
           ready={panelOpened}
         />
 
-        {(() => {
-          if (canExecute) {
-            return (
-              <div>
-                <SidePanelSeparator />
-                <ButtonsContainer>
-                  <Button mode="strong" wide onClick={handleExecuteClick}>
-                    Execute vote
-                  </Button>
-                </ButtonsContainer>
-                <Action>Executing this vote is required to enact it.</Action>
-              </div>
-            )
-          }
-
-          if (canUserVote && hasVoted && !changeVote) {
-            return (
-              <div>
-                <SidePanelSeparator />
-                <ButtonsContainer>
-                  <Button mode="strong" wide onClick={handleChangeVoteClick}>
-                    Change my vote
-                  </Button>
-                </ButtonsContainer>
-                <Action>
-                  <p>
-                    You voted {vote.userAccountVote === VOTE_YEA ? 'yes' : 'no'}{' '}
-                    with{' '}
-                    {userBalance === -1
-                      ? '…'
-                      : pluralize(userBalance, '$ token', '$ tokens')}
-                    , since it was your balance when the vote was created (
-                    {formatDate(vote.data.startDate)}
-                    ).
-                  </p>
-                </Action>
-              </div>
-            )
-          }
-
-          if (canUserVote) {
-            return (
-              <div>
-                <SidePanelSeparator />
-                <ButtonsContainer>
-                  <VotingButton
-                    mode="strong"
-                    emphasis="positive"
-                    wide
-                    onClick={handleYesClick}
-                  >
-                    Yes
-                  </VotingButton>
-                  <VotingButton
-                    mode="strong"
-                    emphasis="negative"
-                    wide
-                    onClick={handleNoClick}
-                  >
-                    No
-                  </VotingButton>
-                </ButtonsContainer>
-                <Action
-                  css={`
-                    & > div {
-                      align-items: flex-start;
-                    }
-                  `}
-                >
-                  {connectedAccount ? (
-                    <div>
-                      <p>
-                        You will cast your vote with{' '}
-                        {userBalance === -1
-                          ? '… tokens'
-                          : pluralize(userBalance, '$ token', '$ tokens')}
-                        , since it was your balance when the vote was created (
-                        {formatDate(vote.data.startDate)}
-                        ).
-                      </p>
-                      <NoTokenCost />
-                    </div>
-                  ) : (
-                    <p>
-                      You will need to connect your account in the next screen.
-                    </p>
-                  )}
-                </Action>
-              </div>
-            )
-          }
-        })()}
+        <VotePanelContentActions
+          onExecute={handleExecute}
+          onVoteNo={handleVoteNo}
+          onVoteYes={handleVoteYes}
+          vote={vote}
+        />
       </React.Fragment>
     )
+  }
+)
+
+const VotePanelContentActions = React.memo(
+  ({ vote, onVoteYes, onVoteNo, onExecute }) => {
+    const connectedAccount = useConnectedAccount()
+    const { canUserVote, canExecute, userBalance } = useExtendedVoteData(vote)
+    const [changeVote, setChangeVote] = useState(false)
+
+    const handleChangeVote = useCallback(() => setChangeVote(true), [])
+
+    const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.connectedAccountVote)
+
+    if (canExecute) {
+      return (
+        <div>
+          <SidePanelSeparator />
+          <ButtonsContainer>
+            <Button mode="strong" wide onClick={onExecute}>
+              Execute vote
+            </Button>
+          </ButtonsContainer>
+          <Action>Executing this vote is required to enact it.</Action>
+        </div>
+      )
+    }
+
+    if (canUserVote && hasVoted && !changeVote) {
+      return (
+        <div>
+          <SidePanelSeparator />
+          <ButtonsContainer>
+            <Button mode="strong" wide onClick={handleChangeVote}>
+              Change my vote
+            </Button>
+          </ButtonsContainer>
+          <Action>
+            <p>
+              You voted {vote.connectedAccountVote === VOTE_YEA ? 'yes' : 'no'}{' '}
+              with{' '}
+              {userBalance === -1
+                ? '…'
+                : pluralize(userBalance, '$ token', '$ tokens')}
+              , since it was your balance when the vote was created (
+              {formatDate(vote.data.startDate)}
+              ).
+            </p>
+          </Action>
+        </div>
+      )
+    }
+
+    if (canUserVote) {
+      return (
+        <div>
+          <SidePanelSeparator />
+          <ButtonsContainer>
+            <VotingButton
+              mode="strong"
+              emphasis="positive"
+              wide
+              onClick={onVoteYes}
+            >
+              Yes
+            </VotingButton>
+            <VotingButton
+              mode="strong"
+              emphasis="negative"
+              wide
+              onClick={onVoteNo}
+            >
+              No
+            </VotingButton>
+          </ButtonsContainer>
+          <Action
+            css={`
+              & > div {
+                align-items: flex-start;
+              }
+            `}
+          >
+            {connectedAccount ? (
+              <div>
+                <p>
+                  You will cast your vote with{' '}
+                  {userBalance === -1
+                    ? '… tokens'
+                    : pluralize(userBalance, '$ token', '$ tokens')}
+                  , since it was your balance when the vote was created (
+                  {formatDate(vote.data.startDate)}
+                  ).
+                </p>
+                <NoTokenCost />
+              </div>
+            ) : (
+              <p>You will need to connect your account in the next screen.</p>
+            )}
+          </Action>
+        </div>
+      )
+    }
+
+    return null
   }
 )
 
@@ -289,4 +314,4 @@ const VotingButton = styled(Button)`
   }
 `
 
-export default VotePanelContent
+export default VotePanel

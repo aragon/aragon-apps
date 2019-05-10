@@ -102,15 +102,9 @@ export function useAppLogic() {
   const selectedVotePanel = useSelectedVotePanel(selectedVote, selectVote)
 
   const actions = {
-    createVote: useCreateVoteAction(() => {
-      newVotePanel.requestClose()
-    }),
-    vote: useVoteAction(() => {
-      selectedVotePanel.requestClose()
-    }),
-    execute: useExecuteAction(() => {
-      selectedVotePanel.requestClose()
-    }),
+    createVote: useCreateVoteAction(newVotePanel.requestClose),
+    vote: useVoteAction(selectedVotePanel.requestClose),
+    execute: useExecuteAction(selectedVotePanel.requestClose),
   }
 
   return {
@@ -118,16 +112,21 @@ export function useAppLogic() {
     selectVote,
     selectedVote,
     actions,
-
-    newVotePanel: {
-      ...newVotePanel,
-      // ensure there is only one panel opened at a time
-      visible: newVotePanel.visible && !selectedVotePanel.visible,
-    },
-    selectedVotePanel: {
-      ...selectedVotePanel,
-      visible: selectedVotePanel.visible && !newVotePanel.visible,
-    },
+    newVotePanel: useMemo(
+      () => ({
+        ...newVotePanel,
+        // ensure there is only one panel opened at a time
+        visible: newVotePanel.visible && !selectedVotePanel.visible,
+      }),
+      [newVotePanel, selectedVotePanel.visible]
+    ),
+    selectedVotePanel: useMemo(
+      () => ({
+        ...selectedVotePanel,
+        visible: selectedVotePanel.visible && !newVotePanel.visible,
+      }),
+      [selectedVotePanel, newVotePanel.visible]
+    ),
   }
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "Voting",
   "author": "Aragon Association",
-  "description": "Create votes that execute actions on behalf of token holders.",
+  "description": "Create and participate in votes",
   "changelog_url": "https://github.com/aragon/aragon-apps/releases",
   "details_url": "/meta/details.md",
   "source_url": "https://github.com/aragon/aragon-apps/blob/master/apps/voting",
