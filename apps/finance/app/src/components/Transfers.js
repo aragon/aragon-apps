@@ -122,23 +122,29 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   })
   const handleToggleFiltersClick = React.useCallback(() => {
     setFiltersOpened(!filtersOpened)
-  })
-  const handleTokenChange = React.useCallback(index => {
-    setSelectedToken(index)
-    setDisplayedTransfers(INITIAL_TRANSFERS_PER_PAGE)
-  })
-  const handleTransferTypeChange = React.useCallback(index => {
-    setSelectedTransferType(index)
-    setDisplayedTransfers(INITIAL_TRANSFERS_PER_PAGE)
-  })
+  }, [filtersOpened])
+  const handleTokenChange = React.useCallback(
+    index => {
+      setSelectedToken(index)
+      setDisplayedTransfers(INITIAL_TRANSFERS_PER_PAGE)
+    },
+    [INITIAL_TRANSFERS_PER_PAGE]
+  )
+  const handleTransferTypeChange = React.useCallback(
+    index => {
+      setSelectedTransferType(index)
+      setDisplayedTransfers(INITIAL_TRANSFERS_PER_PAGE)
+    },
+    [INITIAL_TRANSFERS_PER_PAGE]
+  )
   const handleResetFilters = React.useCallback(() => {
     setDisplayedTransfers(INITIAL_TRANSFERS_PER_PAGE)
     setSelectedToken(0)
     setSelectedTransferType(0)
-  })
+  }, [INITIAL_TRANSFERS_PER_PAGE])
   const showMoreTransfers = React.useCallback(() => {
     setDisplayedTransfers(displayedTransfers + INITIAL_TRANSFERS_PER_PAGE)
-  })
+  }, [displayedTransfers])
   const filteredTransfers = getFilteredTransfers({
     transactions,
     selectedToken: selectedToken !== 0 ? tokens[selectedToken - 1] : null,
