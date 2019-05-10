@@ -22,7 +22,7 @@
     "apm:publish:minor": "aragon apm publish minor --files app/build/",
     "apm:publish:patch": "aragon apm publish patch --files app/build/",
     "lint": "solium --dir ./contracts",
-    "dev": "npm start -- --http localhost:8001 --http-served-from ./app/dist",
+    "dev": "npm start -- --http localhost:8001 --http-served-from ./app/build",
     "dev:reset": "npm run dev -- --reset",
     "start": "aragon run --accounts 9 --environment default --files app/build/ --template PayrollKit --template-init @ARAGON_ENS",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",

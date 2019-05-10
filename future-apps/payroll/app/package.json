@@ -51,8 +51,8 @@
     "build": "npm run sync-assets && npm run build:script & npm run build:app",
     "build:app": "parcel build index.html --out-dir build/ --public-url \".\"",
     "watch:script": "parcel watch src/script.js --out-dir build/ --no-hmr",
-    "build:script": "parcel build src/script.js --no-cache",
-    "start": "npm run sync-assets && npm run watch:script & parcel serve index.html --port 8001 --open",
+    "build:script": "parcel build src/script.js --out-dir build/",
+    "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 8001 --out-dir build/",
     "test": "jest",
     "test:coverage": "jest --coverage"
   },
