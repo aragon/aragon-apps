@@ -12,7 +12,8 @@
             "android >= 4.2"
           ]
         },
-        "useBuiltIns": false
+        "useBuiltIns": 'entry',
+        "core-js": 3
       }
     ],
     "@babel/preset-react"
