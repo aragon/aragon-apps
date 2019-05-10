@@ -17,7 +17,7 @@
     "react-autocomplete": "^1.8.1",
     "react-dom": "^16.8.4",
     "regenerator-runtime": "^0.13.2",
-    "styled-components": "^3.4.10",
+    "styled-components": "^4.2.0",
     "web3-utils": "^1.0.0-beta.36"
   },
   "devDependencies": {

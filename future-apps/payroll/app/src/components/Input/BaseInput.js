@@ -54,18 +54,11 @@ const inputPaddingCss = (position = 'left') => {
 
 class WrapperBaseInput extends React.Component {
   render() {
-    const { icon, iconposition, innerRef, height, ...rest } = this.props
-    const f = x => {
-      this.input = x
-    }
+    const { icon, iconposition, height, ref, ...rest } = this.props
 
     return (
       <Container>
-        <BaseInputStyled
-          {...this.props}
-          innerRef={innerRef || f}
-          height={height}
-        />
+        <BaseInputStyled {...rest} ref={ref} height={height} />
         {icon && (
           <IconStyled
             component={icon}
@@ -88,4 +81,6 @@ WrapperBaseInput.defaultProps = {
   iconposition: 'left',
 }
 
-export default WrapperBaseInput
+export default React.forwardRef((props, ref) => (
+  <WrapperBaseInput ref={ref} {...props} />
+))
