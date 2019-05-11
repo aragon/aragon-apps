@@ -1,21 +1,13 @@
 /* eslint-env jest */
 
 import React from 'react'
-import {
-  cleanup,
-  // fireEvent,
-  render,
-  waitForElement,
-} from 'react-testing-library'
-import { bindElementToQueries } from 'dom-testing-library'
+import { cleanup, render, waitForElement } from 'react-testing-library'
 import 'jest-dom/extend-expect'
 
 import YearlySalarySummary from './YearlySalarySummary'
 import AragonContext from '/context/AragonContext'
 
 import mockApp, { state } from 'mocks'
-
-const bodyUtils = bindElementToQueries(document.body)
 
 afterEach(cleanup)
 

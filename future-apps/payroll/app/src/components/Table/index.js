@@ -1,7 +1,7 @@
-import { default as Table } from './Table'
-import { default as TableCell } from './TableCell'
-import { default as TableHeader } from './TableHeader'
-import { default as TableRow } from './TableRow'
+import Table from './Table'
+import TableCell from './TableCell'
+import TableHeader from './TableHeader'
+import TableRow from './TableRow'
 
 Table.Cell = TableCell
 Table.Header = TableHeader

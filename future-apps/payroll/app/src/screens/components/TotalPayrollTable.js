@@ -1,10 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import styled from 'styled-components'
 import { theme } from '@aragon/ui'
 import Table from '../../components/Table'
 import { employeeType } from '../../types'
-import { formatDate } from '../../utils/formatting'
 
 const initializeColumns = (data, formatCurrency, formatSalary) => {
   return [

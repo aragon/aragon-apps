@@ -1,5 +1,5 @@
 import React from 'react'
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 import { AppBar, AppView, AragonApp, Button, TabBar, theme } from '@aragon/ui'
 
 import { MyPayroll, TeamPayroll } from './screens'

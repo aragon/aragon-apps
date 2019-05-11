@@ -1,14 +1,13 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Spring, config } from 'react-spring'
-import { subYears, isWithinInterval, format } from 'date-fns'
+import { subYears, isWithinInterval } from 'date-fns'
 import { theme, Text } from '@aragon/ui'
 import vaultAbi from '../../abi/vault-balance'
 import priceFeedAbi from '../../abi/price-feed'
 import { connect } from '../../context/AragonContext'
 import { zip } from '../../rxjs'
 import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
-import { toDecimals } from '../../utils/math-utils'
 
 class YearlySalarySummary extends React.Component {
   state = {
@@ -219,7 +218,6 @@ function mapStateToProps({
     vaultAddress,
     tokens,
     priceFeedAddress,
-    denominationToken,
   }
 }
 

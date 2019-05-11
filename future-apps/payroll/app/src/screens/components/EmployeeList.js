@@ -1,6 +1,5 @@
 import React from 'react'
 import styled from 'styled-components'
-import BN from 'bn.js'
 
 import EmployeeTable from './EmployeeTable'
 import RoleFilter from './RoleFilter'

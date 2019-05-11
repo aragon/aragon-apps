@@ -178,7 +178,7 @@ class RequestSalary extends React.Component {
   }
 
   endEditing = () => {
-    this.setState({ isEditing: alse })
+    this.setState({ isEditing: false })
   }
 
   render() {

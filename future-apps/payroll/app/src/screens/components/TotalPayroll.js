@@ -42,10 +42,10 @@ class TotalPayroll extends React.PureComponent {
 
   componentDidUpdate(prevProps) {
     if (
-      this.props.accountAddress != prevProps.accountAddress ||
+      this.props.accountAddress !== prevProps.accountAddress ||
       (this.props.employeesQty &&
         prevProps.employeesQty &&
-        this.props.employeesQty != prevProps.employeesQty)
+        this.props.employeesQty !== prevProps.employeesQty)
     ) {
       this.setState((state, props) => {
         const { denominationToken } = props
@@ -92,12 +92,6 @@ const Container = styled.section`
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
-`
-
-const Title = styled.h1`
-  margin-top: 10px;
-  margin-bottom: 20px;
-  font-weight: 600;
 `
 
 function parseEmployees(payments, employees) {

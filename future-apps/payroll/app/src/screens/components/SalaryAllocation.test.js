@@ -1,13 +1,7 @@
 /* eslint-env jest */
 
 import React from 'react'
-import {
-  cleanup,
-  fireEvent,
-  render,
-  waitForElement,
-  queryByText,
-} from 'react-testing-library'
+import { cleanup, render } from 'react-testing-library'
 import 'jest-dom/extend-expect'
 
 import SalaryAllocation from './SalaryAllocation'
@@ -23,8 +17,6 @@ const dataMock = {
 afterEach(cleanup)
 
 describe('Salary allocation side panel', () => {
-  const { salaryAllocation } = renderSalaryAllocation()
-
   it('should render salary allocation legends', async () => {
     const { salaryAllocation } = renderSalaryAllocation()
     const list = await salaryAllocation.container.querySelectorAll('li')

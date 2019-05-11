@@ -1,7 +1,7 @@
 /* eslint-env jest */
 
 import React from 'react'
-import { fireEvent, render, waitForElement } from 'react-testing-library'
+import { fireEvent, render } from 'react-testing-library'
 import { bindElementToQueries } from 'dom-testing-library'
 import 'jest-dom/extend-expect'
 

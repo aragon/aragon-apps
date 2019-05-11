@@ -15,6 +15,20 @@ import BaseInput from './BaseInput'
 import DatePicker from './DatePicker'
 
 class DateRangeInput extends React.PureComponent {
+  static propTypes = {
+    endDate: PropTypes.instanceOf(Date),
+    format: PropTypes.string,
+    onStartDateChange: PropTypes.func,
+    onEndDateChange: PropTypes.func,
+    startDate: PropTypes.instanceOf(Date),
+  }
+
+  static defaultProps = {
+    format: 'LL/dd/yyyy',
+    onStartDateChange: () => {},
+    onEndDateChange: () => {},
+  }
+
   state = {
     showPicker: false,
     startDate: this.props.startDate,
@@ -118,18 +132,6 @@ class DateRangeInput extends React.PureComponent {
       </StyledContainer>
     )
   }
-}
-
-DateRangeInput.propTypes = {
-  endDate: PropTypes.instanceOf(Date),
-  format: PropTypes.string,
-  onChange: PropTypes.func,
-  startDate: PropTypes.instanceOf(Date),
-}
-
-DateRangeInput.defaultProps = {
-  format: 'LL/dd/yyyy',
-  onChange: () => {},
 }
 
 const StyledContainer = styled.div`

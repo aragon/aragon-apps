@@ -1,5 +1,5 @@
 import React from 'react'
-import { Badge, Button, SafeLink } from '@aragon/ui'
+import { Badge, SafeLink } from '@aragon/ui'
 import styled from 'styled-components'
 
 export const TransactionBadge = ({

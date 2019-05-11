@@ -1,9 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-
 import { isWithinInterval, startOfDay, endOfDay } from 'date-fns'
-
-import { DropDown, Field, IconBlank } from '@aragon/ui'
+import { Field, IconBlank } from '@aragon/ui'
 import InlineField from '../../../components/Field/InlineField'
 import Input from '../../../components/Input'
 
@@ -18,7 +16,7 @@ class DateRangeFilter extends React.Component {
 
   handleStartDateChange = date => {
     const { onChange } = this.props
-    const { startDate, endDate } = this.state
+    const { endDate } = this.state
     this.setState({ startDate: date })
     onChange({
       filter: salary =>
@@ -28,7 +26,7 @@ class DateRangeFilter extends React.Component {
 
   handleEndDateChange = date => {
     const { onChange } = this.props
-    const { startDate, endDate } = this.state
+    const { startDate } = this.state
     this.setState({ endDate: date })
     onChange({
       filter: salary =>

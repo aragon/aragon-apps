@@ -1,6 +1,5 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Button } from '@aragon/ui'
 
 import { connect } from '../../context/AragonContext'
 import Section from '../../components/Layout/Section'
@@ -40,7 +39,6 @@ class PreviousSalary extends React.PureComponent {
   render() {
     const {
       salaryAllocation,
-      employees,
       accountAddress,
       payments,
       denominationToken,

@@ -170,9 +170,7 @@ class Table extends React.Component {
     // Pagination begins after processing the filters
     let _emptyRows = 0
     if (paginated) {
-      const { paginatedData, emptyRows, totalPages } = this.paginateData(
-        filteredData
-      )
+      const { paginatedData, emptyRows } = this.paginateData(filteredData)
       filteredData = paginatedData
       _emptyRows = emptyRows
     }

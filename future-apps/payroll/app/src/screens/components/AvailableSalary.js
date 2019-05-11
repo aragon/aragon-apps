@@ -67,7 +67,7 @@ class AvailableSalary extends React.PureComponent {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.accountAddress != prevProps.accountAddress) {
+    if (this.props.accountAddress !== prevProps.accountAddress) {
       clearInterval(this.interval)
       this.interval = setInterval(() => {
         this.setState((state, props) => {
@@ -78,10 +78,10 @@ class AvailableSalary extends React.PureComponent {
     }
 
     if (
-      this.props.accountAddress != prevProps.accountAddress ||
+      this.props.accountAddress !== prevProps.accountAddress ||
       (this.props.payments &&
         prevProps.payments &&
-        this.props.payments.length != prevProps.payments.length)
+        this.props.payments.length !== prevProps.payments.length)
     ) {
       this.setState((state, props) => {
         const { denominationToken } = props
@@ -144,12 +144,6 @@ const Container = styled.section`
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
-`
-
-const Title = styled.h1`
-  margin-top: 10px;
-  margin-bottom: 20px;
-  font-weight: 600;
 `
 
 function mapStateToProps({

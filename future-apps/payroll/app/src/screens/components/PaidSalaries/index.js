@@ -1,12 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Text, DropDown } from '@aragon/ui'
-
 import SalariesChart from './SalariesChart'
-
 import { CHART_TYPES } from './utils'
-
-const [MONTHLY, QUARTERLY, YEARLY] = CHART_TYPES
 
 class PaidSalaries extends React.Component {
   state = {

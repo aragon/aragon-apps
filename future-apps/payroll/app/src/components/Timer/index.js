@@ -32,10 +32,7 @@ class Timer extends React.Component {
   }
   renderTime = () => {
     const { start, removeDaysAndHours } = this.props
-    const { days, hours, minutes, seconds, totalInSeconds } = difference(
-      new Date(),
-      start
-    )
+    const { days, hours, minutes, seconds } = difference(new Date(), start)
     return (
       <span>
         {!removeDaysAndHours && (
@@ -103,11 +100,6 @@ const Separator = styled.span`
   margin: 0 4px;
   color: ${theme.textTertiary};
   font-weight: 400;
-`
-
-const TimeOut = styled.span`
-  font-weight: 600;
-  color: ${theme.textSecondary};
 `
 
 export default Timer
