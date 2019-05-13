@@ -344,7 +344,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             }
 
             paymentAmount = _ensurePaymentAmount(totalOwedSalary, _requestedAmount);
-            _updateEmployeeAccountingBasedOnPaidSalary(employeeId, paymentAmount, currentOwedSalary);
+            _updateEmployeeAccountingBasedOnPaidSalary(employeeId, paymentAmount);
         } else if (_type == PaymentType.Reimbursement) {
             uint256 owedReimbursements = employee.reimbursements;
             paymentAmount = _ensurePaymentAmount(owedReimbursements, _requestedAmount);
@@ -658,9 +658,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      *      their currently owed salary since last payroll date
      * @param _employeeId Employee's identifier
      * @param _paymentAmount Amount being paid to the employee
-     * @param _currentOwedSalary Owed salary for the employee since their last payroll date
      */
-    function _updateEmployeeAccountingBasedOnPaidSalary(uint256 _employeeId, uint256 _paymentAmount, uint256 _currentOwedSalary) internal {
+    function _updateEmployeeAccountingBasedOnPaidSalary(uint256 _employeeId, uint256 _paymentAmount) internal {
         Employee storage employee = employees[_employeeId];
         uint256 accruedSalary = employee.accruedSalary;
 
