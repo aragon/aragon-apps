@@ -227,11 +227,12 @@ const DayView = styled.li`
     props.disabled &&
     css`
       pointer-events: none;
-      color: ${theme.disabled};
+      color: #fff;
     `}
 
   ${props =>
     props.selected &&
+    !props.disabled &&
     css`
       &&& {
         background: ${mainColor};
