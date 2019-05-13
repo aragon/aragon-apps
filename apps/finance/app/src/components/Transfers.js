@@ -157,7 +157,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
       resolveAddress
     )
     const filename = getDownloadFilename(dao, selectedDateRange)
-    saveAs(new Blob([data.join('\n')]), filename)
+    saveAs(new Blob([data.join('\n')], {type: "text/csv;charset=utf-8"}), filename)
   }, [filteredTransfers, tokenDetails, resolveAddress])
 
   return (
