@@ -100,11 +100,15 @@ class DateRangeInput extends React.PureComponent {
     })
   }
 
-  handleCancel = e => {
+  handleClear = e => {
     e.preventDefault()
     e.stopPropagation()
-    const { startDate, endDate } = this.props
-    this.setState({ showPicker: false, startDate, endDate })
+    this.setState({ showPicker: false, startDate: null, endDate: null }, () =>
+      this.props.onChange({
+        start: null,
+        end: null,
+      })
+    )
   }
 
   render() {
@@ -186,9 +190,9 @@ class DateRangeInput extends React.PureComponent {
               <Button
                 css={'width: 124px;'}
                 mode="secondary"
-                onClick={this.handleCancel}
+                onClick={this.handleClear}
               >
-                Cancel
+                Clear
               </Button>
               <Button
                 css={`
