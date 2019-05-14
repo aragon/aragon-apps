@@ -9,11 +9,13 @@ const TabList = styled.ul`
   list-style-type: none;
   background: ${theme.contentBackground};
 
-  ${({ border = true }) => border && css`
-    border-bottom: 1px solid ${theme.contentBorder};
-    margin-top: -1px; // Overlap AppBar border
-  `}
-  
+  ${({ border = true }) =>
+    border &&
+    css`
+      border-bottom: 1px solid ${theme.contentBorder};
+      margin-top: -1px; // Overlap AppBar border
+    `}
+
   ${TabItem} {
     margin-right: 30px;
   }

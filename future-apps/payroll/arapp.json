@@ -24,7 +24,7 @@
   "dependencies": [
     {
       "appName": "finance.aragonpm.eth",
-      "version": "^1.0.0",
+      "version": "^3.0.0",
       "initParam": "_finance",
       "state": "finance",
       "requiredPermissions": [
@@ -64,7 +64,7 @@
     {
       "name": "Allowed Tokens Manager",
       "id": "ALLOWED_TOKENS_MANAGER_ROLE",
-      "params": ["Token"]
+      "params": ["New token"]
     },
     {
       "name": "Change Price Feed",

@@ -1,20 +1,20 @@
 import React from 'react'
 
-import TwoColumn from '../components/Layout/TwoColumn'
+import Section from '../components/Layout/Section'
+import SalaryAllocation from './components/SalaryAllocation'
+import PreviousSalary from './components/PreviousSalary'
+import AvailableSalary from './components/AvailableSalary'
 
-class MyPayroll extends React.Component {
-  render () {
-    return (
-      <TwoColumn>
-        <TwoColumn.Left>
-          My Payroll
-        </TwoColumn.Left>
-        <TwoColumn.Right>
-          Side content
-        </TwoColumn.Right>
-      </TwoColumn>
-    )
-  }
-}
+const MyPayroll = () => (
+  <Section data-testid="my-payroll-section">
+    <Section.Left>
+      <AvailableSalary />
+      <PreviousSalary />
+    </Section.Left>
+    <Section.Right>
+      <SalaryAllocation />
+    </Section.Right>
+  </Section>
+)
 
 export default MyPayroll
