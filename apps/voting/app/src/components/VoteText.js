@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { shortenAddress, transformAddresses } from '../web3-utils'
+import { transformAddresses } from '../web3-utils'
+import { IdentityBadge } from '@aragon/ui'
 import AutoLink from '../components/AutoLink'
 
 // Render a text associated to a vote.
@@ -19,7 +20,8 @@ const VoteText = React.memo(
             {transformAddresses(line, (part, isAddress, index) =>
               isAddress ? (
                 <span title={part} key={index}>
-                  {shortenAddress(part)}
+                  {' '}
+                  <IdentityBadge entity={part} compact />{' '}
                 </span>
               ) : (
                 <span key={index}>{part}</span>
