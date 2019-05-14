@@ -13,35 +13,30 @@ import {
 import { formatTokenAmount } from '../lib/utils'
 import IconTokens from './icons/IconTokens'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
+import { useIdentity } from './IdentityManager/IdentityManager'
 
-class TransferRow extends React.PureComponent {
-  handleViewTransaction = () => {
+const TransferRow = React.memo(
+  ({ network, transaction, token, smallViewMode }) => {
     const {
-      network,
-      transaction: { transactionHash },
-    } = this.props
-    window.open(
-      blockExplorerUrl('transaction', transactionHash, {
-        networkType: network.type,
-      }),
-      '_blank'
-    )
-  }
+      date,
+      entity,
+      isIncoming,
+      numData: { amount },
+      reference,
+      transactionHash,
+    } = transaction
 
-  render() {
-    const {
-      network,
-      token,
-      smallViewMode,
-      transaction: {
-        date,
-        entity,
-        isIncoming,
-        numData: { amount },
-        reference,
-        transactionHash,
-      },
-    } = this.props
+    const handleViewTransaction = React.useCallback(() => {
+      window.open(
+        blockExplorerUrl('transaction', transactionHash, {
+          networkType: network.type,
+        }),
+        '_blank'
+      )
+    }, [transactionHash, network])
+
+    const [label, showLocalIdentityModal] = useIdentity(entity)
+    const handleEditLabel = () => showLocalIdentityModal(entity)
 
     const txUrl = blockExplorerUrl('transaction', transactionHash, {
       networkType: network.type,
@@ -115,9 +110,15 @@ class TransferRow extends React.PureComponent {
           <div css="position: relative">
             {txUrl && (
               <ContextMenu>
-                <ContextMenuItem onClick={this.handleViewTransaction}>
+                <ContextMenuItem onClick={handleViewTransaction}>
                   <IconTokens />
                   <div css="margin-left: 15px">View Transaction</div>
+                </ContextMenuItem>
+                <ContextMenuItem onClick={handleEditLabel}>
+                  <IconTokens />
+                  <div css="margin-left: 15px">
+                    {label ? 'Edit' : 'Add'} custom label
+                  </div>
                 </ContextMenuItem>
               </ContextMenu>
             )}
@@ -126,7 +127,7 @@ class TransferRow extends React.PureComponent {
       </TableRow>
     )
   }
-}
+)
 
 const StyledTableCell = styled(TableCell)`
   max-width: 0;
