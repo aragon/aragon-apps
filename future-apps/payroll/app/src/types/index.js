@@ -1,3 +1,4 @@
+import BN from 'bn.js'
 import PropTypes from 'prop-types'
 
 export const employeeType = PropTypes.shape({
@@ -17,4 +18,16 @@ export const salaryType = PropTypes.shape({
   exchangeRate: PropTypes.object,
   status: PropTypes.string,
   transactionAddress: PropTypes.string,
+})
+
+export const TokenType = PropTypes.shape({
+  address: PropTypes.string.isRequired,
+  decimals: PropTypes.instanceOf(BN).isRequired,
+  name: PropTypes.string.isRequired,
+  symbol: PropTypes.string.isRequired,
+})
+
+export const SalaryAllocationType = PropTypes.shape({
+  token: TokenType,
+  allocation: PropTypes.instanceOf(BN),
 })

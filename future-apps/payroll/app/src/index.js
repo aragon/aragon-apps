@@ -2,14 +2,14 @@ import 'core-js/stable'
 import 'regenerator-runtime/runtime'
 
 import React from 'react'
-import { render } from 'react-dom'
-
+import ReactDOM from 'react-dom'
+import { AragonApi } from '@aragon/api-react'
+import appStateReducer from './app-state-reducer'
 import App from './App'
-import { AragonProvider } from './context/AragonContext'
 
-render(
-  <AragonProvider>
+ReactDOM.render(
+  <AragonApi reducer={appStateReducer}>
     <App />
-  </AragonProvider>,
+  </AragonApi>,
   document.getElementById('root')
 )

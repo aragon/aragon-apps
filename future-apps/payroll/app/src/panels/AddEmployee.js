@@ -1,296 +1,272 @@
-import React from 'react'
-import { createPortal } from 'react-dom'
+import React, { useCallback } from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { Button, Field, IconBlank, SidePanel, Text } from '@aragon/ui'
+import { useAppState } from '@aragon/api-react'
+import {
+  Button,
+  Field,
+  IconBlank,
+  IconCross,
+  SidePanel,
+  Text,
+  TextInput,
+} from '@aragon/ui'
+import BN from 'bn.js'
 import { startOfDay } from 'date-fns'
 
+import { useAddEmployeeAction } from '../app-logic'
 import Input from '../components/Input'
-import { connect } from '../context/AragonContext'
 import validator from '../data/validation'
-import { toDecimals } from '../utils/math-utils'
-import { SECONDS_IN_A_YEAR } from '../utils/formatting'
+import { TokenType } from '../types'
+import { SECONDS_IN_A_YEAR } from '../utils/time'
+import { addressesEqual } from '../utils/web3'
 
 const NO_ERROR = Symbol('NO_ERROR')
 const ADDRESS_NOT_AVAILABLE_ERROR = Symbol('ADDRESS_NOT_AVAILABLE_ERROR')
 const ADDRESS_INVALID_FORMAT = Symbol('ADDRESS_INVALID_FORMAT')
+const FORM_MISSING_FIELDS = Symbol('FORM_MISSING_FIELDS')
 
-class AddEmployee extends React.PureComponent {
-  static initialState = {
+const AddEmployee = React.memo(({ panelState }) => {
+  const handleAddEmployee = useAddEmployeeAction(panelState.requestClose)
+  const { denominationToken, employees } = useAppState()
+  const isEmployeeAddressAvailable = useCallback(
+    address =>
+      employees.every(
+        employee => !addressesEqual(employee.accountAddress, address)
+      ),
+    [employees]
+  )
+
+  return (
+    <SidePanel
+      title="Add new employee"
+      opened={panelState.visible}
+      onClose={panelState.requestClose}
+      onTransitionEnd={panelState.onTransitionEnd}
+    >
+      <AddEmployeeContent
+        denominationToken={denominationToken}
+        isEmployeeAddressAvailable={isEmployeeAddressAvailable}
+        onAddEmployee={handleAddEmployee}
+        panelOpened={panelState.didOpen}
+      />
+    </SidePanel>
+  )
+})
+
+const validateFormAddress = validator.compile({
+  type: 'object',
+  properties: {
     address: {
-      value: '',
-      error: NO_ERROR,
+      format: 'address',
     },
-    name: '',
-    role: '',
-    salary: '',
-    startDate: startOfDay(new Date()),
+  },
+  required: ['address'],
+})
+const validateForm = validator.compile({
+  type: 'object',
+  properties: {
+    role: {
+      type: 'string',
+    },
+    salary: {
+      type: 'number',
+      exclusiveMinimum: 0,
+    },
+    startDate: {
+      format: 'date',
+    },
+  },
+  required: ['salary', 'startDate', 'role'],
+})
+
+const initialFormState = {
+  error: NO_ERROR,
+  address: '',
+  role: '',
+  salary: '',
+  startDate: startOfDay(new Date()),
+}
+
+class AddEmployeeContent extends React.PureComponent {
+  static propTypes = {
+    denominationToken: TokenType,
+    isEmployeeAddressAvailable: PropTypes.func.isRequired,
+    onAddEmployee: PropTypes.func.isRequired,
+    panelOpened: PropTypes.bool,
   }
+  state = { ...initialFormState }
+  _addressInput = React.createRef()
+  _roleInput = React.createRef()
+  _salaryInput = React.createRef()
 
-  static validate = validator.compile({
-    type: 'object',
-    properties: {
-      name: {
-        type: 'string',
-      },
-      role: {
-        type: 'string',
-      },
-      salary: {
-        type: 'number',
-        exclusiveMinimum: 0,
-      },
-      startDate: {
-        format: 'date',
-      },
-    },
-    required: ['salary', 'startDate', 'name', 'role'],
-  })
-
-  static validateAddress = validator.compile({
-    type: 'object',
-    properties: {
-      value: {
-        format: 'address',
-      },
-    },
-    required: ['value'],
-  })
-
-  state = AddEmployee.initialState
-
-  focusFirstEmptyField = () => {
-    const { address, name, role, salary } = this.state
-
-    if (!address.value) {
-      this.address.input.focus()
-    } else if (!name) {
-      this.nameInput.input.focus()
-    } else if (!role) {
-      this.roleInput.input.focus()
-    } else if (!salary) {
-      this.salaryInput.input.focus()
+  componentWillReceiveProps({ panelOpened }) {
+    if (panelOpened && !this.props.panelOpened) {
+      // setTimeout is needed as a small hack to wait until the inputs are on
+      // screen until we call focus
+      setTimeout(() => this.focusFirstEmptyField(), 0)
+    } else if (!panelOpened && this.props.panelOpened) {
+      // Finished closing the panel, so reset its state
+      this.setState({ ...initialFormState })
     }
   }
 
-  handleAddressChange = event => {
-    const error = NO_ERROR
-    const value = event.target.value
-    this.setState({
-      address: {
-        value,
-        error,
-      },
-    })
+  focusFirstEmptyField = () => {
+    const { address, role, salary } = this.state
+
+    let input
+    if (!address) {
+      input = this._addressInput.current
+    } else if (!role) {
+      input = this._roleInput.current
+    } else if (!salary) {
+      input = this._salaryInput.current
+    }
+
+    // Focus if the input element exists
+    input && input.current && input.current.focus()
   }
 
-  handleNameChange = event => {
-    this.setState({ name: event.target.value })
+  handleAddressChange = event => {
+    this.setState({ address: event.target.value })
+    this.resetError()
   }
 
   handleRoleChange = event => {
     this.setState({ role: event.target.value })
+    this.resetError()
   }
 
   handleSalaryChange = event => {
     this.setState({ salary: event.target.value })
+    this.resetError()
   }
 
   handleStartDateChange = date => {
     this.setState({ startDate: date })
+    this.resetError()
   }
 
   handleFormSubmit = event => {
     event.preventDefault()
-    const { denominationToken, app, isAddressAvailable } = this.props
-    const { address, name, salary, role, startDate } = this.state
-    const _address = address.value
-    const _isValidAddress = AddEmployee.validateAddress(address)
-    const _isAddressAvailable = isAddressAvailable(_address)
+    const {
+      denominationToken,
+      isEmployeeAddressAvailable,
+      onAddEmployee,
+    } = this.props
+    const { address, salary, role, startDate } = this.state
 
-    if (!_isValidAddress) {
-      this.setState(({ address }) => ({
-        address: {
-          ...address,
-          error: ADDRESS_INVALID_FORMAT,
-        },
-      }))
+    // Form validation
+    if (!validateFormAddress(this.state)) {
+      this.setState({
+        error: ADDRESS_INVALID_FORMAT,
+      })
+    }
+    if (!isEmployeeAddressAvailable(address)) {
+      this.setState({
+        error: ADDRESS_NOT_AVAILABLE_ERROR,
+      })
+    }
+    if (!validateForm(this.state)) {
+      this.setState({
+        error: FORM_MISSING_FIELDS,
+      })
       return
     }
 
-    if (!_isAddressAvailable) {
-      this.setState(({ address }) => ({
-        address: {
-          ...address,
-          error: ADDRESS_NOT_AVAILABLE_ERROR,
-        },
-      }))
-      return
-    }
+    // Adjust for denomination token base and use per second version
+    const denominationTokenBase = new BN(10).pow(denominationToken.decimals)
+    const salaryPerSecond = new BN(salary)
+      .mul(denominationTokenBase)
+      .div(SECONDS_IN_A_YEAR)
+      .toString()
+    const startDateInSeconds = Math.floor(startDate.getTime() / 1000)
 
-    const isValidForm = AddEmployee.validate(this.state)
-
-    if (app && isValidForm) {
-      const initialDenominationSalary = salary / SECONDS_IN_A_YEAR
-
-      const adjustedAmount = toDecimals(
-        initialDenominationSalary.toString(),
-        denominationToken.decimals,
-        {
-          truncate: true,
-        }
-      )
-
-      const _startDate = Math.floor(startDate.getTime() / 1000)
-
-      app
-        .addEmployee(_address, adjustedAmount, name, role, _startDate)
-        .subscribe(employee => {
-          if (employee) {
-            // Reset form data
-            this.setState(AddEmployee.initialState)
-
-            // Close side panel
-            this.props.onClose()
-          }
-        })
-    }
+    onAddEmployee(address, salaryPerSecond, startDateInSeconds, role)
   }
 
-  handlePanelToggle = opened => {
-    if (opened) {
-      // When side panel is shown
-      this.focusFirstEmptyField()
-    }
+  resetError() {
+    this.setState({
+      error: NO_ERROR,
+    })
   }
 
-  setAddressRef = el => {
-    this.address = el
-  }
-
-  setNameInputRef = el => {
-    this.nameInput = el
-  }
-
-  setRoleInputRef = el => {
-    this.roleInput = el
-  }
-
-  setSalaryInputRef = el => {
-    this.salaryInput = el
-  }
-
+  // TODO: replace IconBlank with appropriate icons
   render() {
-    const { opened, onClose } = this.props
-    const { address, name, role, salary, startDate } = this.state
+    const { denominationToken } = this.props
+    const { address, error, role, salary, startDate } = this.state
 
     let errorMessage
-    if (address.error === ADDRESS_INVALID_FORMAT) {
+    if (error === ADDRESS_INVALID_FORMAT) {
       errorMessage = 'Address must be a valid ethereum address'
-    } else if (address.error === ADDRESS_NOT_AVAILABLE_ERROR) {
-      errorMessage = 'Address is taken'
+    } else if (error === ADDRESS_NOT_AVAILABLE_ERROR) {
+      errorMessage = 'Address is already in use by another employee'
     }
 
-    const panel = (
-      <SidePanel
-        title="Add new employee"
-        opened={opened}
-        onClose={onClose}
-        onTransitionEnd={this.handlePanelToggle}
-      >
-        <Form onSubmit={this.handleFormSubmit}>
-          <Field label="Address">
-            <Input.Text
-              innerRef={this.setAddressRef}
-              value={address.value}
-              onChange={this.handleAddressChange}
-              required
-            />
-          </Field>
+    return (
+      <Form onSubmit={this.handleFormSubmit}>
+        <Field label="Address">
+          <TextInput
+            ref={this._addressInput}
+            value={address.value}
+            onChange={this.handleAddressChange}
+            required
+            wide
+          />
+        </Field>
 
-          <Field label="Name">
-            <Input.Text
-              innerRef={this.setNameInputRef}
-              value={name}
-              onChange={this.handleNameChange}
-              required
-            />
-          </Field>
+        <Field label="Role">
+          <TextInput
+            ref={this._roleInput}
+            value={role}
+            onChange={this.handleRoleChange}
+            min={0}
+            step={1000}
+            required
+            wide
+          />
+        </Field>
 
-          <Field label="Role">
-            <Input.Text
-              innerRef={this.setRoleInputRef}
-              value={role}
-              onChange={this.handleRoleChange}
-              required
-            />
-          </Field>
+        <Field label="Yearly Salary">
+          <TextInput.Number
+            ref={this._salaryInput}
+            value={salary}
+            onChange={this.handleSalaryChange}
+            adornment={denominationToken.symbol}
+            adornmentPosition="end"
+            required
+          />
+        </Field>
 
-          <Field label="Salary">
-            <Input.Currency
-              innerRef={this.setSalaryInputRef}
-              value={salary}
-              onChange={this.handleSalaryChange}
-              icon={<IconBlank />}
-              required
-            />
-          </Field>
+        <Field label="Start Date">
+          <Input.Date
+            key={startDate}
+            value={startDate}
+            onChange={this.handleStartDateChange}
+            icon={<IconBlank />}
+            iconposition="right"
+            required
+          />
+        </Field>
 
-          <Field label="Start Date">
-            <Input.Date
-              key={startDate}
-              value={startDate}
-              onChange={this.handleStartDateChange}
-              icon={<IconBlank />}
-              iconposition="right"
-              required
-            />
-          </Field>
+        <Button mode="strong" type="submit" wide>
+          Add new employee
+        </Button>
 
-          <Button type="submit" mode="strong">
-            Add new employee
-          </Button>
-          <Messages>
-            {errorMessage && <ValidationError message={errorMessage} />}
-          </Messages>
-        </Form>
-      </SidePanel>
+        {errorMessage && <ValidationError message={errorMessage} />}
+      </Form>
     )
-
-    return createPortal(panel, document.getElementById('modal-root'))
   }
 }
 
-AddEmployee.propsType = {
-  onClose: PropTypes.func,
-  opened: PropTypes.bool,
-}
-
-// TODO: replace IconBlank with IconCross - sgobotta
 const ValidationError = ({ message }) => (
-  <ValidationErrorBlock name="validation-error-block">
-    <StyledIconBlank />
-    <StyledText size="small">{message}</StyledText>
-  </ValidationErrorBlock>
+  <div css="margin-top: 15px">
+    <IconCross />
+    <Text size="small" css="margin-left: 10px">
+      {message}
+    </Text>
+  </div>
 )
-
-const StyledIconBlank = styled(IconBlank)`
-  color: red;
-`
-
-const StyledText = styled(Text)`
-  position: relative;
-  bottom: 6px;
-  margin-left: 10px;
-`
-
-const Messages = styled.div`
-  margin-top: 15px;
-`
-
-const ValidationErrorBlock = styled.div`
-  margin-top: 15px;
-`
 
 const Form = styled.form`
   display: grid;
@@ -307,12 +283,4 @@ const Form = styled.form`
   }
 `
 
-function mapStateToProps({ denominationToken = {}, employees = [] }) {
-  return {
-    denominationToken,
-    isAddressAvailable: address =>
-      employees.every(employee => employee.accountAddress !== address),
-  }
-}
-
-export default connect(mapStateToProps)(AddEmployee)
+export default AddEmployee

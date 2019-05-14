@@ -1,50 +1,31 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-
-import { connect } from '../../../context/AragonContext'
+import { useAppState } from '@aragon/api-react'
 import { LineChart } from '../../../components/LineChart'
-
 import { CHART_TYPES, chartSettings, getDurationSlices } from './utils'
 
-class SalariesChart extends React.Component {
-  state = {
-    settings: [],
-    labels: [],
-  }
+const SalariesChart = React.memo(({ type }) => {
+  const { totalPaymentsOverTime } = useAppState()
 
-  componentDidUpdate(prevProps) {
-    const { type, payments } = this.props
-    const { payments: prevPayments, type: prevType } = prevProps
+  // TODO: TAKE EVERYTHING HERE WITH A GRAIN OF SALT.
+  // IT DOES NOT WORK, BUT IS MEANT TO ILLUSTRATE WHAT THE OLD CODE DID.
+  const periodSalaries = totalPaymentsOverTime[type]
+  const { settings, labels } = chartSettings(type, periodSalaries)
+  const durationSlices = getDurationSlices[type](labels)
 
-    if (
-      (payments &&
-        payments.length &&
-        (!prevPayments || prevPayments.length !== payments.length)) ||
-      prevType !== type
-    ) {
-      this.setState(() => chartSettings(type, payments))
-    }
-  }
-
-  render() {
-    const { type } = this.props
-    const { settings, labels } = this.state
-    const durationSlices = getDurationSlices[type](labels)
-
-    return (
-      <ChartWrapper>
-        <LineChart
-          settings={settings}
-          durationSlices={durationSlices}
-          labels={labels}
-          captionsHeight={50}
-          reset
-        />
-      </ChartWrapper>
-    )
-  }
-}
+  return (
+    <ChartWrapper>
+      <LineChart
+        settings={settings}
+        durationSlices={durationSlices}
+        labels={labels}
+        captionsHeight={50}
+        reset
+      />
+    </ChartWrapper>
+  )
+})
 
 SalariesChart.propTypes = {
   type: PropTypes.oneOf(CHART_TYPES),
@@ -55,10 +36,4 @@ const ChartWrapper = styled.div`
   dispplay: flex:
 `
 
-function mapStateToProps({ payments = [] }) {
-  return {
-    payments,
-  }
-}
-
-export default connect(mapStateToProps)(SalariesChart)
+export default SalariesChart

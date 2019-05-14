@@ -1,145 +1,85 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Spring, config } from 'react-spring'
-import { subYears, isWithinInterval } from 'date-fns'
+import { useAppState } from '@aragon/api-react'
 import { theme, Text } from '@aragon/ui'
-import vaultAbi from '../../abi/vault-balance'
-import priceFeedAbi from '../../abi/price-feed'
-import { connect } from '../../context/AragonContext'
-import { zip } from '../../rxjs'
-import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
+import BN from 'bn.js'
+import { differenceInSeconds, endOfYear } from 'date-fns'
+import { lastItem } from '../../utils'
+import { formatTokenAmount } from '../../utils/formatting'
 
-class YearlySalarySummary extends React.Component {
-  state = {
-    cashReserves: 0,
-  }
+const YearlySalarySummary = React.memo(({ vaultCashReserves }) => {
+  const { denominationToken, employees, totalPaymentsOverTime } = useAppState()
 
-  formatAmount = amount => {
-    const { denominationToken } = this.props
-    return formatCurrency(
-      amount,
-      denominationToken.symbol,
-      10,
-      denominationToken.decimals
-    )
-  }
+  const paidAmountForYear = formatTokenAmount(
+    lastItem(totalPaymentsOverTime.yearly),
+    denominationToken
+  )
 
-  getSummary = () => {
-    const { employees, payments, denominationToken } = this.props
+  const yearEnd = endOfYear(new Date())
+  const rawRemainingSalary = employees
+    .map(({ denominationSalary, endDate, lastPayroll }) => {
+      const end = endDate && endDate < yearEnd ? endDate : yearEnd
+      if (lastPayroll >= end) {
+        return new BN(0)
+      }
 
-    const totalYearSalaryBill =
-      employees.reduce((acc, employee) => acc + employee.salary, 0) *
-      SECONDS_IN_A_YEAR
-    const today = new Date()
-    const yearAgo = subYears(today, 1)
-    const thisYearPayments = payments.filter(payment =>
-      isWithinInterval(new Date(payment.date), { start: yearAgo, end: today })
-    )
-    const totalPaidThisYear =
-      thisYearPayments.reduce((acc, payment) => acc + payment.exchanged, 0) *
-      Math.pow(10, denominationToken.decimals)
-    const remainingThisYear = totalYearSalaryBill - totalPaidThisYear
+      const remainingSeconds = differenceInSeconds(end, lastPayroll)
+      return new BN(remainingSeconds).mul(denominationSalary)
+    })
+    .reduce((sum, salaryLeft) => sum.add(salaryLeft), new BN(0))
+  const remainingSalary = formatTokenAmount(
+    rawRemainingSalary,
+    denominationToken
+  )
 
-    return {
-      totalYearSalaryBill: this.formatAmount(totalYearSalaryBill),
-      totalPaidThisYear: this.formatAmount(totalPaidThisYear),
-      remainingThisYear: this.formatAmount(remainingThisYear),
-    }
-  }
+  const totalByYearEnd = formatTokenAmount(
+    paidAmountForYear.add(remainingSalary),
+    denominationToken
+  )
 
-  async componentDidUpdate(prevProps) {
-    const { vaultAddress: prevVaultAddress } = prevProps
-    const {
-      app,
-      vaultAddress,
-      tokens,
-      priceFeedAddress,
-      denominationToken,
-    } = this.props
+  const cashReserves = vaultCashReserves
+    ? vaultCashReserves
+        .div(new BN(10).pow(denominationToken.decimals))
+        .toNumber()
+    : null
 
-    if (prevVaultAddress !== vaultAddress) {
-      const vault = app.external(vaultAddress, vaultAbi)
-      const priceFeed = app.external(priceFeedAddress, priceFeedAbi)
+  return (
+    <Container>
+      <SummaryTitle>Yearly salary summary</SummaryTitle>
+      <SummaryRow>
+        <SummaryItem>Salary paid this year</SummaryItem>
+        <SummaryAmount>{paidAmountForYear}</SummaryAmount>
+      </SummaryRow>
+      <SummaryRow>
+        <SummaryItem>Remaining salary this year</SummaryItem>
+        <SummaryAmount>{remainingSalary}</SummaryAmount>
+      </SummaryRow>
 
-      const balances = await Promise.all(
-        tokens.map(token => {
-          return zip(
-            vault.balance(token.address).first(),
-            priceFeed.get(denominationToken.address, token.address).first()
-          )
-            .first()
-            .map(([amount, { xrt }]) => {
-              const exchangedAmount = amount / xrt
-              return {
-                ...token,
-                exchangedAmount,
-              }
-            })
-            .toPromise()
-        })
-      )
+      <Line />
 
-      const cashReserves = balances.reduce((acc, balance) => {
-        return acc + balance.exchangedAmount
-      }, 0)
+      <SummaryRow>
+        <SummaryItem>Total year salary bill</SummaryItem>
+        <SummaryAmount>{totalByYearEnd}</SummaryAmount>
+      </SummaryRow>
+      <SummaryRow>
+        <SummaryItem>Cash reserves</SummaryItem>
+        {cashReserves ? (
+          <AnimatedCashReserves
+            cashReserves={cashReserves}
+            symbol={denominationToken.symbol}
+          />
+        ) : (
+          <Loading />
+        )}
+      </SummaryRow>
+    </Container>
+  )
+})
 
-      this.setState({ cashReserves })
-    }
-  }
-
-  render() {
-    const { employees, payments, denominationToken } = this.props
-    const { cashReserves } = this.state
-
-    let summary
-    if (employees && payments) {
-      summary = this.getSummary()
-    }
-
-    return (
-      <Container>
-        <SummaryTitle>Yearly salary summary</SummaryTitle>
-        <SummaryRow>
-          <SummaryItem>Salary paid this year</SummaryItem>
-          {summary ? (
-            <SummaryAmount>{summary.totalPaidThisYear}</SummaryAmount>
-          ) : (
-            <Loading />
-          )}
-        </SummaryRow>
-        <SummaryRow>
-          <SummaryItem>Remaining salary this year</SummaryItem>
-          {summary ? (
-            <SummaryAmount>{summary.remainingThisYear}</SummaryAmount>
-          ) : (
-            <Loading />
-          )}
-        </SummaryRow>
-
-        <Line />
-
-        <SummaryRow>
-          <SummaryItem>Total year salary bill</SummaryItem>
-          {summary ? (
-            <SummaryAmount>{summary.totalYearSalaryBill}</SummaryAmount>
-          ) : (
-            <Loading />
-          )}
-        </SummaryRow>
-        <SummaryRow>
-          <SummaryItem>Cash reserves</SummaryItem>
-          {cashReserves ? (
-            <AnimatedCashReserves
-              cashReserves={cashReserves}
-              symbol={denominationToken.symbol}
-            />
-          ) : (
-            <Loading />
-          )}
-        </SummaryRow>
-      </Container>
-    )
-  }
+YearlySalarySummary.propTypes = {
+  vaultCashReserves: PropTypes.instanceOf(BN),
 }
 
 const Container = styled.section`
@@ -187,38 +127,14 @@ const CashReserves = styled(SummaryAmount)`
   color: ${theme.positive};
 `
 
-const AnimatedCashReserves = props => {
-  const { symbol, cashReserves } = props
-  const format = amount =>
-    formatCurrency(amount, symbol, 10, 0, 1, 2, true, true)
+const AnimatedCashReserves = React.memo(({ cashReserves, symbol }) => (
+  <Spring
+    from={{ number: 0 }}
+    to={{ number: cashReserves }}
+    config={config.stiff}
+  >
+    {({ number }) => <CashReserves>{`+ ${number} ${symbol}`}</CashReserves>}
+  </Spring>
+))
 
-  return (
-    <Spring
-      from={{ number: 0 }}
-      to={{ number: cashReserves }}
-      config={config.stiff}
-    >
-      {props => <CashReserves>{format(props.number)}</CashReserves>}
-    </Spring>
-  )
-}
-
-function mapStateToProps({
-  employees = [],
-  payments = [],
-  denominationToken = {},
-  vaultAddress = '',
-  tokens = [],
-  priceFeedAddress = '',
-}) {
-  return {
-    employees,
-    payments,
-    denominationToken,
-    vaultAddress,
-    tokens,
-    priceFeedAddress,
-  }
-}
-
-export default connect(mapStateToProps)(YearlySalarySummary)
+export default YearlySalarySummary

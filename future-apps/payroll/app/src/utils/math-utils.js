@@ -30,7 +30,7 @@ function splitDecimalNumber(num) {
 }
 
 /**
- * Format the number to be in a given decimal base
+ * Format a decimal-based number back to a normal number
  *
  * @param {string} num the number
  * @param {number} decimals number of decimal places
@@ -38,18 +38,27 @@ function splitDecimalNumber(num) {
  * @param {bool} [options.truncate=true] Should the number be truncated to its decimal base
  * @returns {string} formatted number
  */
-export function toDecimals(num, decimals, { truncate = true } = {}) {
+export function fromDecimals(num, decimals, { truncate = true } = {}) {
   const [whole, dec] = splitDecimalNumber(num)
   if (!whole && !dec) {
     return '0'
   }
 
-  const wholeLengthWithBase = whole.length + decimals
-  const withoutDecimals = (whole + dec).padEnd(wholeLengthWithBase, '0')
-  const wholeWithBase = withoutDecimals.slice(0, wholeLengthWithBase)
+  const paddedWhole = whole.padStart(decimals + 1, '0')
+  const decimalIndex = paddedWhole.length - decimals
+  const wholeWithoutBase = paddedWhole.slice(0, decimalIndex)
+  const decWithoutBase = paddedWhole.slice(decimalIndex)
 
-  if (!truncate && wholeWithBase.length < withoutDecimals.length) {
-    return `${wholeWithBase}.${withoutDecimals.slice(wholeLengthWithBase)}`
+  if (!truncate && dec) {
+    // We need to keep all the zeroes in this case
+    return `${wholeWithoutBase}.${decWithoutBase}${dec}`
   }
-  return wholeWithBase
+
+  // Trim any trailing zeroes from the new decimals
+  const decWithoutBaseTrimmed = decWithoutBase.replace(/0*$/, '')
+  if (decWithoutBaseTrimmed) {
+    return `${wholeWithoutBase}.${decWithoutBaseTrimmed}`
+  }
+
+  return wholeWithoutBase
 }

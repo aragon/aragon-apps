@@ -1,6 +1,6 @@
 import { subQuarters, subMonths, format } from 'date-fns'
 
-export const CHART_TYPES = ['Monthly', 'Quarterly', 'Yearly']
+export const CHART_TYPES = ['monthly', 'quarterly', 'yearly']
 
 const [MONTHLY, QUARTERLY, YEARLY] = CHART_TYPES
 

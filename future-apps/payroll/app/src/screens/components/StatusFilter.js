@@ -6,8 +6,8 @@ import InlineField from '../../components/Field/InlineField'
 
 const options = [
   { label: 'All', filter: null },
-  { label: 'Active', filter: employee => !employee.terminated },
-  { label: 'Inactive', filter: employee => employee.terminated },
+  { label: 'Active', filter: employee => employee.active },
+  { label: 'Inactive', filter: employee => !employee.active },
 ]
 
 const StatusFilter = ({ active, onChange }) => {

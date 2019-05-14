@@ -1,17 +1,13 @@
 import app from './store/app'
 import initialize from './store'
-import financeAbi from './abi/finance-vault'
+import financeVaultAbi from './abi/finance-vault'
 
 retryEvery(async retry => {
-  const financeAddress = await app
-    .call('finance')
-    .first()
-    .toPromise()
+  const financeAddress = await app.call('finance').toPromise()
 
   const vaultAddress = await app
-    .external(financeAddress, financeAbi)
+    .external(financeAddress, financeVaultAbi)
     .vault()
-    .first()
     .toPromise()
 
   initialize(financeAddress, vaultAddress).catch(err => {

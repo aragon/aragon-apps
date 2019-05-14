@@ -4,19 +4,20 @@ import tokenSymbolAbi from '../abi/token-symbol'
 
 const tokenCache = new Map()
 
-export function getDenominationToken() {
-  return app
-    .call('denominationToken')
-    .first()
-    .map(getToken)
-    .toPromise()
+export async function getDenominationToken() {
+  const denominationToken = await app.call('denominationToken').toPromise()
+  return getToken(denominationToken)
 }
 
 export async function getToken(address) {
   if (!tokenCache.has(address)) {
+    const tokenContract = app.external(
+      address,
+      [].concat(tokenDecimalsAbi, tokenSymbolAbi)
+    )
     const [decimals, symbol] = await Promise.all([
-      loadTokenDecimals(address),
-      loadTokenSymbol(address),
+      loadTokenDecimals(tokenContract),
+      loadTokenSymbol(tokenContract),
     ])
 
     tokenCache.set(address, { address, decimals, symbol })
@@ -25,19 +26,11 @@ export async function getToken(address) {
   return tokenCache.get(address)
 }
 
-function loadTokenDecimals(address) {
-  return app
-    .external(address, tokenDecimalsAbi)
-    .decimals()
-    .first()
-    .map(value => parseInt(value))
-    .toPromise()
+async function loadTokenDecimals(tokenContract) {
+  const decimals = tokenContract.decimals().toPromise()
+  return parseInt(decimals, 10)
 }
 
-function loadTokenSymbol(address) {
-  return app
-    .external(address, tokenSymbolAbi)
-    .symbol()
-    .first()
-    .toPromise()
+function loadTokenSymbol(tokenContract) {
+  return tokenContract.symbol().toPromise()
 }

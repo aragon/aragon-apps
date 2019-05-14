@@ -14,7 +14,7 @@ class PaidSalaries extends React.Component {
 
     return (
       <React.Fragment>
-        <FilteWrapper>
+        <FilterWrapper>
           <FilterLabel>Paid Salaries</FilterLabel>
           <DropDown
             items={CHART_TYPES}
@@ -23,7 +23,7 @@ class PaidSalaries extends React.Component {
               this.setState({ activeFilter })
             }}
           />
-        </FilteWrapper>
+        </FilterWrapper>
         <SalariesChart type={CHART_TYPES[activeFilter]} />
       </React.Fragment>
     )
@@ -32,7 +32,7 @@ class PaidSalaries extends React.Component {
 
 export default PaidSalaries
 
-const FilteWrapper = styled.div`
+const FilterWrapper = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;

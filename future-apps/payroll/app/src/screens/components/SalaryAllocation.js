@@ -1,58 +1,32 @@
 import React from 'react'
-import styled from 'styled-components'
+import PropTypes from 'prop-types'
 import { Button } from '@aragon/ui'
-
-import { connect } from '../../context/AragonContext'
-import PartitionBar from '../../components/Bar/PartitionBar'
 import Section from '../../components/Layout/Section'
-import { EditSalaryAllocation } from '../../panels'
+import { SalaryAllocationType } from '../../types'
 
-const Container = styled.section`
-  display: flex;
-  flex-direction: column;
-`
+const SalaryAllocation = React.memo(({ allocations, onEditAllocation }) => {
+  return (
+    <section
+      css={`
+        display: flex;
+        flex-direction: column;
+      `}
+    >
+      <Section.Title>Salary allocation</Section.Title>
+      {/* TODO: add partition bar */}
+      <Button
+        mode="secondary"
+        onClick={onEditAllocation}
+        css="align-self: flex-end"
+      >
+        Edit salary allocation
+      </Button>
+    </section>
+  )
+})
 
-const EditButton = styled(Button).attrs({ mode: 'secondary' })`
-  align-self: flex-end;
-`
-
-class SalaryAllocation extends React.PureComponent {
-  state = {
-    isEditing: false,
-  }
-
-  startEditing = () => {
-    this.setState({ isEditing: true })
-  }
-
-  endEditing = () => {
-    this.setState({ isEditing: false })
-  }
-
-  render() {
-    const { salaryAllocation } = this.props
-    const { isEditing } = this.state
-
-    return (
-      <Container>
-        <Section.Title>Salary allocation</Section.Title>
-
-        {salaryAllocation && <PartitionBar data={salaryAllocation} />}
-
-        <EditButton onClick={this.startEditing}>
-          Edit salary allocation
-        </EditButton>
-
-        <EditSalaryAllocation opened={isEditing} onClose={this.endEditing} />
-      </Container>
-    )
-  }
+SalaryAllocation.PropTypes = {
+  allocations: PropTypes.arrayOf(SalaryAllocationType),
 }
 
-function mapStateToProps({ salaryAllocation }) {
-  return {
-    salaryAllocation,
-  }
-}
-
-export default connect(mapStateToProps)(SalaryAllocation)
+export default SalaryAllocation

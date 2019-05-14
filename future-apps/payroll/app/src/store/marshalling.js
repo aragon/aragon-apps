@@ -1,9 +1,9 @@
 export function currency(value) {
-  return parseInt(value || 0)
+  return parseInt(value || 0, 10)
 }
 
 export function date(epoch) {
-  const epochInt = parseInt(epoch)
+  const epochInt = parseInt(epoch, 10)
   if (!epoch || !Number.isSafeInteger(epochInt)) {
     return null
   }

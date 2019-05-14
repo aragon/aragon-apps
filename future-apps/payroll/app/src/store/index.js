@@ -1,5 +1,5 @@
-import { of } from '../rxjs'
-
+import { first, map } from 'rxjs/operators'
+import { of } from 'rxjs'
 import app from './app'
 import Event from './events'
 import { getAccountAddress } from './account'
@@ -10,11 +10,8 @@ import {
 } from './employees'
 import { getDenominationToken, getToken } from './tokens'
 import { date, payment } from './marshalling'
-// import financeEvents from '../abi/finance-events'
 
-export default function configureStore(financeAddress, vaultAddress) {
-  // const financeApp = app.external(financeAddress, financeEvents)
-
+export default function configureStore(vaultAddress) {
   return app.store(
     async (state, { event, ...data }) => {
       const eventType = Event[event] || event
@@ -34,16 +31,14 @@ export default function configureStore(financeAddress, vaultAddress) {
       of({ event: Event.Init, vaultAddress }),
 
       // Handle account change
-      app.accounts().map(([accountAddress]) => {
-        return {
-          event: Event.AccountChange,
-          accountAddress,
-        }
-      }),
-      // ,
-
-      // Handle Finance eventes
-      // financeApp.events()
+      app.accounts().pipe(
+        map(([accountAddress]) => {
+          return {
+            event: Event.AccountChange,
+            accountAddress,
+          }
+        })
+      ),
     ]
   )
 }
@@ -68,7 +63,7 @@ async function onInit(state, { vaultAddress }) {
     getDenominationToken(),
     app
       .network()
-      .take(1)
+      .pipe(first())
       .toPromise(),
   ])
 

@@ -1,137 +1,47 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { differenceInSeconds } from 'date-fns'
-import AvailableSalaryTable from './AvailableSalaryTable'
-
-import { connect } from '../../context/AragonContext'
+import { useAppState } from '@aragon/api-react'
+import BN from 'bn.js'
 import Section from '../../components/Layout/Section'
-import { formatCurrency, SECONDS_IN_A_YEAR } from '../../utils/formatting'
-import { summation } from '../../utils/calculations'
+import { employeeType } from '../../types'
+import { getYearlySalary } from '../../utils/employee'
+import { formatTokenAmount } from '../../utils/formatting'
 
-const AVAILABLE_BALANCE_TICK = 10000
+const AvailableSalary = React.memo(
+  ({ currentEmployee, currentEmployeeSalary }) => {
+    const { denominationToken } = useAppState()
 
-class AvailableSalary extends React.PureComponent {
-  static defaultProps = {
-    lastPayroll: Date.now(),
-    availableBalance: 0,
-    totalTransferred: 0,
-    salary: 0,
-  }
-
-  state = {
-    denominationToken: {
-      symbol: '',
-      decimals: 0,
-    },
-    data: [],
-  }
-
-  getEmployee(addr) {
-    return (
-      this.props.employees &&
-      this.props.employees.find(employee => employee.accountAddress === addr)
+    const owedSalary = formatTokenAmount(
+      currentEmployeeSalary.owedSalary,
+      denominationToken
     )
-  }
-
-  sumExchanged(payments, accountAddress) {
-    const field = 'exchanged'
-    const filter = e => e.accountAddress === accountAddress
-    const totalTransferred = summation(payments.filter(filter), field)
-    return totalTransferred
-  }
-
-  getAvailableBalance(employee, denominationToken) {
-    const accruedTime = differenceInSeconds(
-      new Date(),
-      new Date(employee.lastPayroll)
+    const totalPayments = formatTokenAmount(
+      currentEmployee.payments.reduce(
+        (sum, { denominationAmount }) => sum.add(denominationAmount),
+        new BN(0)
+      ),
+      denominationToken
     )
-    const accruedSalary = accruedTime * employee.salary + employee.accruedValue
-    return accruedSalary
-  }
-
-  getAvailableSalaryData(state, props, updateAll) {
-    const { payments, accountAddress, denominationToken } = props
-    const employee = this.getEmployee(accountAddress)
-    const availableBalance = this.getAvailableBalance(
-      employee,
+    const formattedYearlySalary = formatTokenAmount(
+      getYearlySalary(currentEmployee),
       denominationToken
     )
 
-    const totalTransferred = updateAll
-      ? this.sumExchanged(payments, accountAddress)
-      : state.data[0].totalTransferred
-
-    const { lastPayroll, salary } = employee
-    const data = [{ lastPayroll, salary, totalTransferred, availableBalance }]
-    return data
-  }
-
-  componentDidUpdate(prevProps) {
-    if (this.props.accountAddress !== prevProps.accountAddress) {
-      clearInterval(this.interval)
-      this.interval = setInterval(() => {
-        this.setState((state, props) => {
-          const data = this.getAvailableSalaryData(state, props, false)
-          return { data }
-        })
-      }, AVAILABLE_BALANCE_TICK)
-    }
-
-    if (
-      this.props.accountAddress !== prevProps.accountAddress ||
-      (this.props.payments &&
-        prevProps.payments &&
-        this.props.payments.length !== prevProps.payments.length)
-    ) {
-      this.setState((state, props) => {
-        const { denominationToken } = props
-        const data = this.getAvailableSalaryData(state, props, true)
-        return { data, denominationToken }
-      })
-    }
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.interval)
-  }
-
-  render() {
-    const { data, denominationToken } = this.state
-    const formatSalary = amount =>
-      formatCurrency(
-        amount,
-        denominationToken.symbol,
-        10,
-        denominationToken.decimals,
-        SECONDS_IN_A_YEAR
-      )
-    const customFormatCurrency = amount =>
-      formatCurrency(amount, denominationToken.symbol, 10, 0)
-    const formatTokenAmount = amount =>
-      formatCurrency(
-        amount,
-        denominationToken.symbol,
-        10,
-        denominationToken.decimals,
-        1,
-        2,
-        true,
-        true
-      )
     return (
       <Container>
         <Header>
           <Section.Title>Available Salary</Section.Title>
+          {/* TODO: render table with timer since lastPayroll, available balance, total transferred, yearly salary */}
         </Header>
-        <AvailableSalaryTable
-          data={data}
-          formatSalary={formatSalary}
-          formatCurrency={customFormatCurrency}
-          formatTokenAmount={formatTokenAmount}
-        />
       </Container>
     )
   }
+)
+
+AvailableSalary.propTypes = {
+  currentEmployee: employeeType,
+  currentEmployeeSalary: PropTypes.object,
 }
 
 const Container = styled.section`
@@ -146,20 +56,4 @@ const Header = styled.div`
   justify-content: space-between;
 `
 
-function mapStateToProps({
-  employees = [],
-  accountAddress = [],
-  denominationToken = [],
-  salaryAllocation = [],
-  payments = [],
-}) {
-  return {
-    employees,
-    accountAddress,
-    denominationToken,
-    salaryAllocation,
-    payments,
-  }
-}
-
-export default connect(mapStateToProps)(AvailableSalary)
+export default AvailableSalary

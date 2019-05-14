@@ -1,268 +1,303 @@
-import React from 'react'
-import { createPortal } from 'react-dom'
+import React, { useCallback, useEffect, useState } from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
+import { useAppState } from '@aragon/api-react'
 import {
   Button,
   DropDown,
+  IconAttention,
   Info,
   SidePanel,
   Slider,
   theme,
   Text,
 } from '@aragon/ui'
+import { useDetermineAllocationAction } from '../app-logic'
+import { TokenType } from '../types'
 
-import { connect } from '../context/AragonContext'
+function transformToTokenAllocations(salaryAllocations) {
+  return Array.isArray(salaryAllocations)
+    ? salaryAllocations.map(({ allocation, symbol, token }) => [
+        token.address,
+        allocation.toNumber(),
+      ])
+    : []
+}
 
-class EditSalaryAllocation extends React.Component {
-  changeHandlers = new Map()
-  state = {}
+const EditSalaryAllocation = React.memo(
+  ({ currentEmployeeSalaryAllocations, panelState }) => {
+    const tokenAllocationsFromProps = transformToTokenAllocations(
+      currentEmployeeSalaryAllocations
+    )
+    const allocationsKey = tokenAllocationsFromProps
+      .map(([address, allocation]) => `${address}:${allocation}`)
+      .join(',')
 
-  get pristine() {
-    if (this.state.addresses == null || this.state.distribution == null) {
-      return true
-    }
+    // TODO: make sure this works correctly; we should allow contract event updates to update these
+    // values
+    const { tokenAllocations, setTokenAllocations } = useState(
+      tokenAllocationsFromProps
+    )
+    const { modified, setModified } = useState(false)
 
-    if (this.props.distribution.length !== this.state.distribution.length) {
-      return false
+    useEffect(() => {
+      setTokenAllocations(
+        transformToTokenAllocations(currentEmployeeSalaryAllocations)
+      )
+      setModified(false)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [allocationsKey])
+
+    const handleDetermineAllocation = useDetermineAllocationAction(
+      panelState.requestClose
+    )
+    const { allowedTokens } = useAppState()
+
+    const handleTokenAllocationChange = tokenAllocations => {
+      setTokenAllocations(tokenAllocations)
+      setModified(true)
     }
 
     return (
-      this.state.addresses.every((a, i) => this.props.addresses[i] === a) &&
-      this.state.distribution.every((d, i) => this.props.distribution[i] === d)
+      <SidePanel
+        title="Edit salary allocation"
+        opened={panelState.visible}
+        onClose={panelState.requestClose}
+        onTransitionEnd={panelState.onTransitionEnd}
+      >
+        <EditSalaryAllocationContent
+          allowedTokens={allowedTokens}
+          modified={modified}
+          onDetermineAllocation={handleDetermineAllocation}
+          onTokenAllocationChange={handleTokenAllocationChange}
+          tokenAllocations={tokenAllocations}
+        />
+      </SidePanel>
     )
   }
+)
 
-  get isValid() {
-    const { addresses, distribution } = this.state
-
-    const tokens = new Set(addresses)
-
-    if (!addresses || tokens.size !== addresses.length) {
-      return false
-    }
-
-    if (!distribution || tokens.size !== distribution.length) {
-      return false
-    }
-
-    if (tokens.has('') && distribution[addresses.indexOf('')] > 0) {
-      return false
-    }
-
-    return distribution.reduce((a, b) => a + b, 0) === 100
+class EditSalaryAllocationContent extends React.Component {
+  static propTypes = {
+    allowedTokens: PropTypes.arrayOf(TokenType).isRequired,
+    modified: PropTypes.bool.isRequired,
+    onDetermineAllocation: PropTypes.func.isRequired,
+    onTokenAllocationChange: PropTypes.func.isRequired,
+    tokenAllocations: PropTypes.array.isRequired,
   }
 
   handleAddAnotherToken = () => {
-    const addresses = this.state.addresses || this.props.addresses
+    const {
+      allowedTokens,
+      tokenAllocations,
+      onTokenAllocationChange,
+    } = this.props
 
-    if (addresses) {
-      const { availableTokens = [] } = this.props
+    // Find first allowed token that is not already allocated
+    const allocatedSet = new Set(
+      ...tokenAllocations.map(([address]) => address)
+    )
+    const newToken = allowedTokens.find(
+      ({ address }) => !allocatedSet.has(address)
+    )
 
-      this.setState((state, props) => {
-        const [addresses, distribution] = [
-          state.addresses || props.addresses || [],
-          state.distribution || props.distribution || [],
-        ]
-
-        const unusedTokens = Array.from(availableTokens.keys()).filter(
-          t => !addresses.includes(t)
-        )
-
-        return {
-          addresses: [...addresses, unusedTokens[0]],
-          distribution: [...distribution, 0],
-        }
-      })
-    }
+    onTokenAllocationChange(tokenAllocations.concat([newToken.address, 0]))
   }
 
-  handleDistributionUpdate = tokenAddress => {
-    if (!this.changeHandlers.has(tokenAddress)) {
-      const handler = value => {
-        const tokens = this.state.addresses || this.props.addresses || []
-        const index = tokens.indexOf(tokenAddress)
+  // TODO: linked sliders' implementation
+  // (make sure values are always 0-100 integers and sum to exactly 100)
+  handleAllocationChange = (tokenAddress, value) => {
+    const { onTokenAllocationChange, tokenAllocations } = this.props
 
-        this.setState((state, props) => {
-          const currDist = state.distribution || props.distribution
+    const newAllocations = Array.from(tokenAllocations)
 
-          const nextDist = currDist.slice()
-          nextDist[index] = parseInt(value * 100)
+    // Replace the old allocation's value
+    const allocationIndex = newAllocations.findIndex(
+      ([address]) => address === tokenAddress
+    )
+    newAllocations[allocationIndex][1] = Math.round(value * 100)
 
-          const allocation = nextDist.map((left, t) => ({
-            t,
-            right: 100 - left,
-          }))
-          allocation.splice(index, 1)
-          allocation.sort((a, b) => b.right - a.right)
+    onTokenAllocationChange(newAllocations)
+  }
 
-          for (const [i, { right, t }] of allocation.entries()) {
-            const total = nextDist.reduce((acc, val) => acc + val, 0)
-            const offset = Math.round((100 - total) / (allocation.length - i))
+  handleAllocationTokenChange = (tokenAddress, newTokenAddress) => {
+    const { onTokenAllocationChange, tokenAllocations } = this.props
 
-            nextDist[t] =
-              offset > 0
-                ? nextDist[t] + Math.min(offset, right)
-                : Math.max(0, nextDist[t] + offset)
-          }
+    const newAllocations = Array.from(tokenAllocations)
 
-          return {
-            addresses: tokens,
-            distribution: nextDist,
-          }
-        })
-      }
+    // Replace the old allocation's address
+    const allocationIndex = newAllocations.findIndex(
+      ([address]) => address === tokenAddress
+    )
+    newAllocations[allocationIndex][0] = newTokenAddress
 
-      this.changeHandlers.set(tokenAddress, handler)
-    }
-
-    return this.changeHandlers.get(tokenAddress)
+    onTokenAllocationChange(newAllocations)
   }
 
   handleFormSubmit = event => {
+    const { onDetermineAllocation, tokenAllocations } = this.props
     event.preventDefault()
 
-    const { app } = this.props
-
-    if (app && this.isValid) {
-      const [tokens, distribution] = [[], []]
-
-      for (const [i, token] of this.state.addresses.entries()) {
-        const value = this.state.distribution[i]
-
-        if (value > 0) {
-          const index = tokens.indexOf(token)
-
-          if (index > -1) {
-            distribution[index] += value
-          } else {
-            tokens.push(token)
-            distribution.push(value)
-          }
-        }
-      }
-
-      app.determineAllocation(tokens, distribution).subscribe(() => {
-        this.props.onClose()
-      })
-    }
+    const [tokens, allocations] = tokenAllocations
+      // Remove empty allocations
+      .filter(([, allocation]) => !!allocation)
+      .reduce(
+        ([tokens, allocations], [token, allocation]) => {
+          tokens.push(token)
+          allocations.push(allocation)
+        },
+        [[], []]
+      )
+    onDetermineAllocation(tokens, allocations)
   }
 
-  handlePanelToggle = opened => {
-    if (!opened) {
-      this.setState({ addresses: null, distribution: null })
-    }
+  getAvailableTokens() {
+    const { allowedTokens, tokenAllocations } = this.props
+
+    // Filter allowed tokens for ones that are not already allocated
+    const allocatedSet = new Set(
+      ...tokenAllocations.map(([address]) => address)
+    )
+    return allowedTokens.filter(({ address }) => !allocatedSet.has(address))
+  }
+
+  getTokenSymbol(tokenAddress) {
+    const { allowedTokens } = this.props
+    const token =
+      allowedTokens.find(({ address }) => address === tokenAddress) || {}
+    return token.symbol
+  }
+
+  isValid() {
+    const { tokenAllocations } = this.props
+    return (
+      tokenAllocations.reduce((sum, [, allocation]) => sum + allocation, 0) ===
+      100
+    )
   }
 
   render() {
-    const { availableTokens = [], opened, onClose } = this.props
+    const { allowedTokens, modified, tokenAllocations } = this.props
+    const availableTokens = this.getAvailableTokens()
+    const valid = this.isValid()
 
-    const [addresses, distribution] = [
-      this.state.addresses || this.props.addresses || [],
-      this.state.distribution || this.props.distribution || [],
-    ]
+    return (
+      <Form onSubmit={this.handleFormSubmit}>
+        <Info.Action title="Choose which tokens you receive salary in">
+          You can select as many tokens as you like, as long as the
+          organization's vault has enough to fulfill your salary request.
+        </Info.Action>
 
-    const panel = (
-      <SidePanel
-        title="Edit salary allocation"
-        opened={opened}
-        onClose={onClose}
-        onTransitionEnd={this.handlePanelToggle}
-      >
-        <Form onSubmit={this.handleFormSubmit}>
-          <Info.Action title="Choose which tokens you get paid in">
-            You can add as many tokens as you like, as long as your DAO has
-            these tokens.
-          </Info.Action>
+        <section
+          css={`
+            flex: 1;
+            margin-bottom: 2em;
+          `}
+        >
+          {tokenAllocations.map(([address, allocation]) => (
+            <TokenAllocation
+              key={address}
+              allocation={allocation}
+              availableTokens={availableTokens}
+              onAllocationChange={this.handleAllocationChange}
+              onAllocationTokenChange={this.handleAllocationTokenChange}
+              selectedToken={{
+                address,
+                symbol: this.getTokenSymbol(address),
+              }}
+            />
+          ))}
 
-          <TokenList>
-            {addresses.map((tokenAddress, index) => {
-              const allocation = distribution[index]
-              const symbol = availableTokens.get(tokenAddress)
+          {tokenAllocations.length < allowedTokens.size && (
+            <Button
+              mode="secondary"
+              onClick={this.handleAddAnotherToken}
+              css={`
+                float: right;
+                margin-top: 2em;
+              `}
+            >
+              Add another token
+            </Button>
+          )}
+        </section>
 
-              const options = Array.from(availableTokens.keys()).filter(
-                t => t === tokenAddress || !addresses.includes(t)
-              )
+        <Info.Permissions icon={<IconAttention />}>
+          {valid
+            ? 'Your new token distribution will only apply to new salary requests'
+            : 'Your selected distributions must sum to 100%'}
+        </Info.Permissions>
 
-              const activeIndex = options.indexOf(tokenAddress) || 0
-
-              return (
-                <TokenAllocation key={`${index}-${tokenAddress}}`}>
-                  <TokenAllocationLabel>TOKEN</TokenAllocationLabel>
-                  <div />
-                  <TokenAllocationLabel>PERCENTAGE</TokenAllocationLabel>
-                  <TokenSelector
-                    active={activeIndex + 1}
-                    items={[
-                      '\xa0',
-                      ...options.map(t => availableTokens.get(t)),
-                    ]}
-                    onChange={selectedIndex => {
-                      const selectedToken = options[selectedIndex - 1] || ''
-
-                      this.setState(() => {
-                        const tokens = addresses.slice()
-                        tokens[index] = selectedToken
-                        const distribution =
-                          this.state.distribution || this.props.distribution
-
-                        return {
-                          addresses: tokens,
-                          distribution,
-                        }
-                      })
-                    }}
-                  />
-
-                  <TokenDistribution
-                    name={symbol}
-                    value={allocation / 100}
-                    onUpdate={this.handleDistributionUpdate(tokenAddress)}
-                  />
-
-                  <Percentage>{`${allocation} %`}</Percentage>
-                </TokenAllocation>
-              )
-            })}
-
-            {addresses.length < availableTokens.size && (
-              <AddTokenButton onClick={this.handleAddAnotherToken}>
-                Add another token
-              </AddTokenButton>
-            )}
-          </TokenList>
-
-          <Info.Permissions title="Submission note">
-            Your split contract will be updated on the blockchain, and you
-            cannot request salary until it's complete
-          </Info.Permissions>
-
-          <SubmitButton disabled={this.pristine || !this.isValid}>
-            Submit split configuration
-          </SubmitButton>
-        </Form>
-      </SidePanel>
+        <Button
+          mode="strong"
+          type="submit"
+          disabled={modified && valid}
+          css={`
+            margin-top: 2em;
+          `}
+        >
+          Submit split configuration
+        </Button>
+      </Form>
     )
-
-    return createPortal(panel, document.getElementById('modal-root'))
   }
 }
+
+const TokenAllocation = React.memo(
+  ({
+    allocation,
+    availableTokens,
+    onAllocationChange,
+    onAllocationTokenChange,
+    selectedToken,
+  }) => {
+    const tokenSymbols = [selectedToken.symbol].concat(
+      availableTokens.map(({ symbol }) => symbol)
+    )
+    const handleAllocationChange = useCallback(
+      value => {
+        onAllocationChange(selectedToken.address, value)
+      },
+      [onAllocationChange, selectedToken.address]
+    )
+    const handleTokenChange = useCallback(
+      index => {
+        onAllocationTokenChange(
+          selectedToken.address,
+          availableTokens[index - 1].address
+        )
+      },
+      [availableTokens, onAllocationTokenChange, selectedToken.address]
+    )
+
+    return (
+      <div
+        css={`
+          display: grid;
+          grid-template-columns: 70px 1fr 70px;
+          align-items: center;
+          margin-top: 1em;
+        `}
+      >
+        <TokenAllocationLabel>TOKEN</TokenAllocationLabel>
+        <div />
+        <TokenAllocationLabel>PERCENTAGE</TokenAllocationLabel>
+        <DropDown
+          active={0}
+          items={tokenSymbols}
+          onChange={handleTokenChange}
+        />
+        <Slider value={allocation / 100} onUpdate={handleAllocationChange} />
+        <Percentage>{`${allocation} %`}</Percentage>
+      </div>
+    )
+  }
+)
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-`
-
-const TokenList = styled.section`
-  flex: 1;
-  margin-bottom: 2em;
-`
-
-const TokenAllocation = styled.div`
-  display: grid;
-  grid-template-columns: 70px 1fr 70px;
-  align-items: center;
-  margin-top: 1em;
 `
 
 const TokenAllocationLabel = styled(Text).attrs({
@@ -271,10 +306,6 @@ const TokenAllocationLabel = styled(Text).attrs({
 })`
   margin-bottom: 1em;
 `
-
-const TokenSelector = styled(DropDown)``
-
-const TokenDistribution = styled(Slider)``
 
 const Percentage = styled(Text).attrs({
   color: theme.textTertiary,
@@ -287,35 +318,4 @@ const Percentage = styled(Text).attrs({
   text-align: right;
 `
 
-const AddTokenButton = styled(Button).attrs({ mode: 'secondary' })`
-  float: right;
-  margin-top: 2em;
-`
-
-const SubmitButton = styled(Button).attrs({
-  type: 'submit',
-  mode: 'strong',
-})`
-  margin-top: 2em;
-`
-
-function mapStateToProps({ tokens = [], salaryAllocation = [] }) {
-  // Sort list by allocation from highest to lowest
-  salaryAllocation.sort((a, b) => b.allocation - a.allocation)
-
-  const allocation = new Map(
-    salaryAllocation.map(({ address, allocation }) => [address, allocation])
-  )
-
-  const availableTokens = new Map(
-    tokens.map(({ address, symbol }) => [address, symbol])
-  )
-
-  return {
-    availableTokens,
-    addresses: Array.from(allocation.keys()),
-    distribution: Array.from(allocation.values()),
-  }
-}
-
-export default connect(mapStateToProps)(EditSalaryAllocation)
+export default EditSalaryAllocation

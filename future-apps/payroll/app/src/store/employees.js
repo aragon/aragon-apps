@@ -1,35 +1,26 @@
 import app from './app'
 import { employee, tokenAllocation } from './marshalling'
 
-export function getEmployeeById(id) {
-  return app
-    .call('getEmployee', id)
-    .first()
-    .map(data => {
-      return employee({ id, ...data, role: 'Employee' })
-    })
-    .toPromise()
+export async function getEmployeeById(id) {
+  const employeeData = await app.call('getEmployee', id).toPromise()
+  return employee({ id, ...employeeData, role: 'Employee' })
 }
 
-export function getEmployeeByAddress(accountAddress) {
-  return app
+export async function getEmployeeByAddress(accountAddress) {
+  const employeeData = await app
     .call('getEmployeeByAddress', accountAddress)
-    .first()
-    .map(data => {
-      return employee({ accountAddress, ...data, role: 'Employee' })
-    })
     .toPromise()
+  return employee({ accountAddress, ...employeeData, role: 'Employee' })
 }
 
 export async function getSalaryAllocation(employeeId, tokens) {
   const salaryAllocation = await Promise.all(
-    tokens.map(token =>
-      app
+    tokens.map(async token => {
+      const allocation = app
         .call('getAllocation', employeeId, token.address)
-        .first()
-        .map(allocation => tokenAllocation({ ...token, allocation }))
         .toPromise()
-    )
+      return tokenAllocation({ ...token, allocation })
+    })
   )
 
   return salaryAllocation.filter(({ allocation }) => allocation)

@@ -1,281 +1,170 @@
 import React from 'react'
-import { createPortal } from 'react-dom'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
+import { useAppState } from '@aragon/api-react'
 import {
   Button,
   SidePanel,
   IconAttention,
-  Info,
-  theme,
-  Text,
   IconFundraising,
+  Info,
+  Text,
+  theme,
 } from '@aragon/ui'
-import { differenceInSeconds } from 'date-fns'
 
-import { connect } from '../context/AragonContext'
-import priceFeedAbi from '../abi/price-feed'
-import { formatCurrency } from '../utils/formatting'
-
+import { usePaydayAction } from '../app-logic'
+import { employeeType, TokenType } from '../types'
+import { formatTokenAmount } from '../utils/formatting'
 import Section from '../components/Layout/Section'
-import PartitionBar from '../components/Bar/PartitionBar'
-import EditSalaryAllocation from './EditSalaryAllocation'
 
-class RequestSalary extends React.Component {
-  state = {
-    isEditing: false,
-    opened: false,
-    balance: null,
-  }
+const RequestSalary = React.memo(
+  ({
+    currentEmployee,
+    currentEmployeeSalary,
+    onEditAllocation,
+    panelState,
+  }) => {
+    const handlePayday = usePaydayAction(panelState.requestClose)
+    const { denominationToken } = useAppState()
 
-  async componentDidUpdate(prevProps) {
-    const { opened } = this.props
-    let balance
-
-    if (opened && !this.state.balance) {
-      try {
-        balance = await this.getBalance()
-        this.setState({
-          balance,
-          opened,
-        })
-      } catch (err) {
-        console.error('Error occurred', err)
-      }
-    } else if (!opened && this.state.balance) {
-      this.setState({
-        balance,
-        opened,
-      })
-    }
-  }
-
-  getBalance = async () => {
-    const { denominationToken } = this.props
-
-    const employee = this.getEmployee()
-
-    let balance = {
-      accruedTime: 0,
-      accruedSalary: 0,
-      formatedAccruedSalary: '',
-      accruedAllocation: [],
-    }
-
-    if (employee) {
-      const salaryAllocationXRT = await this.loadSalaryAllocationXRT()
-
-      const accruedTime = differenceInSeconds(
-        new Date(),
-        new Date(employee.lastPayroll)
-      )
-      const accruedSalary =
-        employee.accruedValue + accruedTime * employee.salary
-      const accruedAllocation = salaryAllocationXRT.map(
-        this.getTokenBalance(accruedSalary)
-      )
-      const formatedAccruedSalary = formatCurrency(
-        accruedSalary,
-        denominationToken.symbol,
-        10,
-        denominationToken.decimals
-      )
-
-      balance = {
-        accruedTime,
-        accruedSalary,
-        formatedAccruedSalary,
-        accruedAllocation,
-      }
-    }
-
-    return balance
-  }
-
-  getEmployee = () => {
-    const { accountAddress, employees } = this.props
-
-    return employees.find(
-      employee => employee.accountAddress === accountAddress
-    )
-  }
-
-  getTokenBalance = accruedSalary => tokenAllocation => {
-    const { denominationToken, tokens } = this.props
-
-    const token = tokens.find(
-      token => token.address === tokenAllocation.address
-    )
-    const proportion = (accruedSalary * tokenAllocation.allocation) / 100
-
-    const formatedProportion = formatCurrency(
-      proportion,
-      denominationToken.symbol,
-      10,
-      denominationToken.decimals
-    )
-
-    const tokenAmount =
-      proportion * (tokenAllocation.xrt / Math.pow(10, token.decimals))
-
-    const formatedTokenAmount = formatCurrency(
-      tokenAmount,
-      token.symbol,
-      10,
-      token.decimals
-    )
-
-    return {
-      ...tokenAllocation,
-      proportion,
-      formatedProportion,
-      tokenAmount,
-      formatedTokenAmount,
-    }
-  }
-
-  loadSalaryAllocationXRT = () => {
-    const {
-      app,
-      priceFeedAddress,
-      salaryAllocation,
-      denominationToken,
-    } = this.props
-
-    const priceFeed = app.external(priceFeedAddress, priceFeedAbi)
-
-    return Promise.all(
-      salaryAllocation.map(tokenAllocation => {
-        return priceFeed
-          .get(denominationToken.address, tokenAllocation.address)
-          .first()
-          .map(({ xrt }) => {
-            return {
-              ...tokenAllocation,
-              xrt,
-            }
-          })
-          .toPromise()
-      })
-    )
-  }
-
-  handleRequestClick = event => {
-    event.preventDefault()
-
-    const { app } = this.props
-
-    if (app) {
-      app.payday().subscribe(() => {
-        this.setState({ balance: null })
-        this.props.onClose()
-      })
-    }
-  }
-
-  startEditing = () => {
-    this.setState({ isEditing: true })
-  }
-
-  endEditing = () => {
-    this.setState({ isEditing: false })
-  }
-
-  render() {
-    const { onClose } = this.props
-    const { balance, isEditing, opened } = this.state
-
-    const accruedAllocation = balance
-      ? balance.accruedAllocation.map(tokenAllocation => {
-          const description = (
-            <AllocationDescription>
-              <div>
-                <Text weight="bold">{tokenAllocation.formatedTokenAmount}</Text>
-              </div>
-              <div>
-                <Text color="textSecondary">
-                  <StyledFormattedProportion>
-                    {tokenAllocation.formatedProportion}
-                  </StyledFormattedProportion>
-                </Text>
-              </div>
-            </AllocationDescription>
-          )
-
-          return {
-            ...tokenAllocation,
-            description,
-          }
-        })
-      : []
-
-    const panel = (
+    return (
       <React.Fragment>
-        <SidePanel title="Request salary" opened={opened} onClose={onClose}>
-          <Container>
-            <AllocationWrapper>
-              <SectionTitle>Salary Allocation</SectionTitle>
-
-              {accruedAllocation && <PartitionBar data={accruedAllocation} />}
-
-              <TotalAllocationWrapper>
-                <Text weight="bolder">Total salary</Text>
-                <div>
-                  <span />
-                  <Text weight="bolder">
-                    <StyledFormattedAccruedSalary>
-                      {balance && balance.formatedAccruedSalary}
-                    </StyledFormattedAccruedSalary>
-                  </Text>
-                </div>
-                <Text weight="bolder">100%</Text>
-              </TotalAllocationWrapper>
-
-              <EditButton onClick={this.startEditing}>
-                Edit salary allocation
-              </EditButton>
-            </AllocationWrapper>
-
-            <SalaryWrapper>
-              <Section.Title>Total Salary</Section.Title>
-              <Info>
-                <InfoTotalItem>
-                  <IconFundraising />
-                  <Text color={theme.textSecondary}>
-                    Total salary to be paid
-                  </Text>
-                </InfoTotalItem>
-                <InfoTotalItem>
-                  {balance && (
-                    <Text size="xxlarge">{balance.formatedAccruedSalary}</Text>
-                  )}
-                </InfoTotalItem>
-              </Info>
-            </SalaryWrapper>
-
-            <ButtonWrapper>
-              <Info.Permissions icon={<IconAttention />}>
-                The actual exchange reate might change once the transaction
-                takes place
-              </Info.Permissions>
-
-              <RequestButton onClick={this.handleRequestClick}>
-                Request Salary
-              </RequestButton>
-            </ButtonWrapper>
-          </Container>
+        <SidePanel
+          title="Request salary"
+          opened={panelState.visible}
+          onClose={panelState.requestClose}
+          onTransitionEnd={panelState.onTransitionEnd}
+        >
+          <RequestSalaryContent
+            currentEmployeeSalary={currentEmployeeSalary}
+            denominationToken={denominationToken}
+            onPayday={handlePayday}
+            onEditAllocation={onEditAllocation}
+          />
         </SidePanel>
-        <EditSalaryAllocation opened={isEditing} onClose={this.endEditing} />
       </React.Fragment>
     )
-
-    return createPortal(panel, document.getElementById('modal-root'))
   }
-}
+)
 
-RequestSalary.propsType = {
-  onClose: PropTypes.func,
-  opened: PropTypes.bool,
+class RequestSalaryContent extends React.PureComponent {
+  static propTypes = {
+    denominationToken: TokenType,
+    currentEmployee: employeeType,
+    currentEmployeeSalary: PropTypes.object.isRequired,
+    onEditAllocation: PropTypes.func.isRequired,
+    onPayday: PropTypes.func.isRequired,
+  }
+  state = {
+    balance: null,
+  }
+  handleRequestClick = event => {
+    event.preventDefault()
+    this.props.onPayday()
+  }
+  render() {
+    const {
+      currentEmployee,
+      currentEmployeeSalary,
+      denominationToken,
+      onEditAllocation,
+    } = this.props
+    const salaryAllocation = currentEmployeeSalary.allocations
+
+    if (!currentEmployee) {
+      return
+    }
+
+    const formattedTotalSalary = formatTokenAmount(
+      currentEmployeeSalary,
+      denominationToken
+    )
+
+    // TODO: fix for new partitionbar API
+    /*
+    const accruedAllocation = Array.isArray(salaryAllocation)
+      ? salaryAllocation.map(
+          ({ allocation, expectedSalaryInTokens, token }) => {
+            const description = (
+              <AllocationDescription>
+                <div>
+                  <Text weight="bold">
+                    {formatTokenAmount(expectedSalaryInTokens, token)}
+                  </Text>
+                </div>
+                <div>
+                  <Text color="#b0b0b0">{allocation.toString()}%</Text>
+                </div>
+              </AllocationDescription>
+            )
+
+            return {
+              ...allocation,
+              description,
+            }
+          }
+        )
+      : null
+      */
+
+    return (
+      <Container>
+        <AllocationWrapper>
+          <SectionTitle>Salary Allocation</SectionTitle>
+
+          {/* TODO: add partition bar */}
+
+          <TotalAllocationWrapper>
+            <Text weight="bolder">Total salary</Text>
+            <div>
+              <span />
+              <Text weight="bolder">
+                <span css="padding-right: 30px">{formattedTotalSalary}</span>
+              </Text>
+            </div>
+            <Text weight="bolder">100%</Text>
+          </TotalAllocationWrapper>
+
+          <Button
+            mode="text"
+            css="align-self: flex-end"
+            onClick={onEditAllocation}
+          >
+            Edit salary allocation
+          </Button>
+        </AllocationWrapper>
+
+        <SalaryWrapper>
+          <Section.Title>Total Salary</Section.Title>
+          <Info>
+            <InfoTotalItem>
+              <IconFundraising />
+              <Text color={theme.textSecondary}>Total salary to be paid</Text>
+            </InfoTotalItem>
+            <InfoTotalItem>
+              <Text size="xxlarge">{formattedTotalSalary}</Text>
+            </InfoTotalItem>
+          </Info>
+        </SalaryWrapper>
+
+        <div>
+          <Info.Permissions icon={<IconAttention />}>
+            The actual transaction time and exchange rate will influence the
+            exact amounts paid to you
+          </Info.Permissions>
+
+          <Button
+            mode="strong"
+            css="margin-top: 20px"
+            onClick={this.handleRequestClick}
+            wide
+          >
+            Request Salary
+          </Button>
+        </div>
+      </Container>
+    )
+  }
 }
 
 const Container = styled.section`
@@ -332,39 +221,4 @@ const InfoTotalItem = styled.div`
   justify-content: center;
 `
 
-const EditButton = styled(Button).attrs({ mode: 'text' })`
-  align-self: flex-end;
-`
-
-const ButtonWrapper = styled.div``
-
-const RequestButton = styled(Button).attrs({ mode: 'strong', wide: true })`
-  margin-top: 20px;
-`
-function mapStateToProps({
-  accountAddress = '',
-  denominationToken = {},
-  employees = [],
-  priceFeedAddress = '',
-  salaryAllocation = [],
-  tokens = [],
-}) {
-  return {
-    accountAddress,
-    denominationToken,
-    employees,
-    priceFeedAddress,
-    salaryAllocation,
-    tokens,
-  }
-}
-
-const StyledFormattedProportion = styled.span`
-  color: #b0b0b0;
-`
-
-const StyledFormattedAccruedSalary = styled.span`
-  padding-right: 30px;
-`
-
-export default connect(mapStateToProps)(RequestSalary)
+export default RequestSalary

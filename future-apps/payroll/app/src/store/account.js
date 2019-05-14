@@ -1,9 +1,10 @@
+import { first } from 'rxjs/operators'
 import app from './app'
 
-export function getAccountAddress() {
-  return app
+export async function getAccountAddress() {
+  const accounts = await app
     .accounts()
-    .first()
-    .map(accounts => (accounts.length ? accounts[0] : null))
+    .pipe(first())
     .toPromise()
+  return accounts[0] || null
 }

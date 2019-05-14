@@ -1,125 +1,121 @@
-import React from 'react'
-import styled from 'styled-components'
-import { AppBar, AppView, AragonApp, Button, TabBar, theme } from '@aragon/ui'
-
+import React, { useState } from 'react'
+import { useAppState } from '@aragon/api-react'
+import { Main, TabBar, Viewport } from '@aragon/ui'
+import BN from 'bn.js'
+import AppLayout from './components/AppLayout'
+import {
+  useAppPanels,
+  useCurrentEmployee,
+  useExchangeRates,
+  useVaultBalancesInDenominationToken,
+} from './app-logic'
+import { useEmployeeSalary } from './employee-hooks'
 import { MyPayroll, TeamPayroll } from './screens'
-import { AddEmployee, RequestSalary } from './panels'
+import {
+  AddEmployee as AddEmployeePanel,
+  RequestSalary as RequestSalaryPanel,
+  EditSalaryAllocation as EditSalaryAllocationPanel,
+} from './panels'
 
-const appBarTitle = 'Payroll'
-const tabTitles = ['My payroll', 'Team payroll']
-const tabNames = ['my-payroll', 'team-payroll']
+const SCREENS = ['My payroll', 'Team payroll']
 
-const [MY_PAYROLL, TEAM_PAYROLL] = tabNames
-const activeTab = MY_PAYROLL
-const selectedTab = 0
+function App() {
+  const [activeTab, setActiveTab] = useState(0)
+  const { allowedTokens } = useAppState()
+  const {
+    addEmployeePanel,
+    editSalaryAllocationPanel,
+    requestSalaryPanel,
+  } = useAppPanels()
+  const {
+    currentEmployee,
+    currentEmployeeSalaryAllocations,
+  } = useCurrentEmployee()
+  const exchangeRates = useExchangeRates(allowedTokens)
+  const currentEmployeeSalary = useEmployeeSalary(
+    currentEmployee,
+    currentEmployeeSalaryAllocations,
+    exchangeRates
+  )
+  const vaultBalancesInDenominationToken = useVaultBalancesInDenominationToken(
+    exchangeRates
+  )
 
-export default class App extends React.Component {
-  state = {
-    activeTab,
-    selectedTab,
-    showAddEmployeePanel: false,
-    showRequestSalaryPanel: false,
-  }
+  const vaultCashReserves = vaultBalancesInDenominationToken
+    ? vaultBalancesInDenominationToken.reduce(
+        (sum, { denominationAmount }) =>
+          denominationAmount ? sum.add(denominationAmount) : sum,
+        new BN(0)
+      )
+    : null
 
-  componentDidMount() {
-    // If using Parcel, reload instead of using HMR.
-    // HMR makes the app disconnect from the wrapper and the state is empty until a reload
-    // See: https://github.com/parcel-bundler/parcel/issues/289
-    if (module.hot) {
-      module.hot.dispose(() => {
-        window.location.reload()
-      })
-    }
-  }
+  // TODO: add icon for responsive view
+  const mainButton =
+    activeTab === 0
+      ? {
+          buttonProps: currentEmployee ? {} : { disabled: true },
+          label: 'Request salary',
+          onClick: requestSalaryPanel.requestOpen,
+        }
+      : {
+          label: 'Add new employee',
+          onClick: addEmployeePanel.requestOpen,
+        }
 
-  showAddEmployeePanel = () => {
-    this.setState({ showAddEmployeePanel: true })
-  }
+  return (
+    <Main assetsUrl="./aragon-ui">
+      <div css="min-width: 320px">
+        <AppLayout
+          title="Payroll"
+          mainButton={mainButton}
+          smallViewPadding={0}
+          tabs={
+            <Viewport>
+              {({ below }) => (
+                <div
+                  css={`
+                    margin-left: ${below('medium') ? '-14px' : '0'};
+                  `}
+                >
+                  <TabBar
+                    items={SCREENS}
+                    selected={activeTab}
+                    onChange={setActiveTab}
+                  />
+                </div>
+              )}
+            </Viewport>
+          }
+        >
+          {activeTab === 0 && (
+            <MyPayroll
+              currentEmployee={currentEmployee}
+              currentEmployeeSalary={currentEmployeeSalary}
+              currentEmployeeSalaryAllocations={
+                currentEmployeeSalaryAllocations
+              }
+              onEditAllocation={editSalaryAllocationPanel.requestOpen}
+            />
+          )}
+          {activeTab === 1 && (
+            <TeamPayroll vaultCashReserves={vaultCashReserves} />
+          )}
+        </AppLayout>
 
-  showRequestSalaryPanel = () => {
-    this.setState({ showRequestSalaryPanel: true })
-  }
-
-  hideAddEmployeePanel = () => {
-    this.setState({ showAddEmployeePanel: false })
-  }
-
-  hideRequestSalaryPanel = () => {
-    this.setState({ showRequestSalaryPanel: false })
-  }
-
-  renderActionButtons() {
-    switch (this.state.activeTab) {
-      case MY_PAYROLL:
-        return (
-          <Button mode="strong" onClick={this.showRequestSalaryPanel}>
-            Request salary
-          </Button>
-        )
-
-      case TEAM_PAYROLL:
-        return (
-          <Button mode="strong" onClick={this.showAddEmployeePanel}>
-            Add new employee
-          </Button>
-        )
-
-      default:
-        return null
-    }
-  }
-
-  render() {
-    const header = (
-      <React.Fragment>
-        <AppBar
-          title={appBarTitle}
-          endContent={this.renderActionButtons()}
-          data-testid="app-bar"
+        <AddEmployeePanel panelState={addEmployeePanel} />
+        <RequestSalaryPanel
+          currentEmployee={currentEmployee}
+          currentEmployeeSalary={currentEmployeeSalary}
+          onEditAllocation={editSalaryAllocationPanel.requestOpen}
+          panelState={requestSalaryPanel}
         />
-
-        <TabContainer>
-          <TabBar
-            items={tabTitles}
-            selected={this.state.selectedTab}
-            onSelect={index => {
-              const activeTab = tabNames[index]
-
-              this.setState({
-                activeTab,
-                selectedTab: index,
-              })
-            }}
-          />
-        </TabContainer>
-      </React.Fragment>
-    )
-
-    return (
-      <AragonApp publicUrl="./aragon-ui/">
-        <AppView appBar={header}>
-          {this.state.activeTab === MY_PAYROLL && <MyPayroll />}
-
-          {this.state.activeTab === TEAM_PAYROLL && <TeamPayroll />}
-        </AppView>
-
-        <AddEmployee
-          opened={this.state.showAddEmployeePanel}
-          onClose={this.hideAddEmployeePanel}
+        <EditSalaryAllocationPanel
+          currentEmployeeSalaryAllocations={currentEmployeeSalaryAllocations}
+          panelState={editSalaryAllocationPanel}
         />
-
-        <RequestSalary
-          opened={this.state.showRequestSalaryPanel}
-          onClose={this.hideRequestSalaryPanel}
-        />
-      </AragonApp>
-    )
-  }
+      </div>
+    </Main>
+  )
 }
 
-const TabContainer = styled.div.attrs({ 'data-testid': 'tab-container' })`
-  margin: 0;
-  list-style-type: none;
-  background: ${theme.contentBackground};
-  margin-top: -1px; // Overlap AppBar border
-`
+export default App
