@@ -16,7 +16,7 @@ import {
   useViewport,
   theme,
 } from '@aragon/ui'
-import download from 'downloadjs'
+import { saveAs } from 'file-saver'
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
@@ -89,19 +89,16 @@ const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
       }
     )
   )
-  const csvContent = [
-    'data:text/csv;charset=utf-8,Date,Name,Source/Recipient,Reference,Amount',
-  ]
+  return ['Date,Name,Source/Recipient,Reference,Amount']
     .concat(mappedData)
     .join('\n')
-  return window.encodeURI(csvContent)
 }
 const getDownloadFilename = (dao, { start, end }) => {
   const today = format(Date.now(), 'yyyy-MM-dd')
   let filename = `finance_${dao}_${today}.csv`
   if (start && end) {
-    const formattedStart = format(selectedDateRange.start, 'yyyy-MM-dd')
-    const formattedEnd = format(selectedDateRange.end, 'yyyy-MM-dd')
+    const formattedStart = format(start, 'yyyy-MM-dd')
+    const formattedEnd = format(end, 'yyyy-MM-dd')
     filename = `finance_${dao}_${formattedStart}_to_${formattedEnd}.csv`
   }
   return filename
@@ -162,7 +159,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
       resolveAddress
     )
     const filename = getDownloadFilename(dao, selectedDateRange)
-    download(data, filename, 'data:text/csv')
+    saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
   }, [filteredTransfers, tokenDetails, resolveAddress])
 
   return (
