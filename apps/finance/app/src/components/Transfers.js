@@ -89,7 +89,9 @@ const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
       }
     )
   )
-  return ['Date,Name,Source/Recipient,Reference,Amount'].concat(mappedData)
+  return ['Date,Name,Source/Recipient,Reference,Amount']
+    .concat(mappedData)
+    .join('\n')
 }
 const getDownloadFilename = (dao, { start, end }) => {
   const today = format(Date.now(), 'yyyy-MM-dd')
@@ -157,7 +159,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
       resolveAddress
     )
     const filename = getDownloadFilename(dao, selectedDateRange)
-    saveAs(new Blob([data.join('\n')], {type: "text/csv;charset=utf-8"}), filename)
+    saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
   }, [filteredTransfers, tokenDetails, resolveAddress])
 
   return (
