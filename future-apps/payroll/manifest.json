@@ -1,10 +1,12 @@
 {
   "name": "Payroll",
-  "description": "Manage organization employees payroll",
-  "icons": [{
-    "src": "/meta/icon.svg",
-    "sizes": "56x56"
-  }],
-  "script": "/app/dist/script.js",
-  "start_url": "/app/dist/index.html"
+  "author": "Aragon Association",
+  "description": "Manage payroll for organization employees",
+  "changelog_url": "https://github.com/aragon/aragon-apps/releases",
+  "source_url": "https://github.com/aragon/aragon-apps/blob/master/future-apps/payroll",
+  "icons": [
+    { "src": "/meta/icon.svg", "sizes": "56x56" }
+  ],
+  "script": "/script.js",
+  "start_url": "/index.html"
 }
