@@ -12,7 +12,7 @@ import {
   theme,
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount } from '@aragon/api-react'
-import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge.js'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import { format } from 'date-fns'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { round } from '../math-utils'

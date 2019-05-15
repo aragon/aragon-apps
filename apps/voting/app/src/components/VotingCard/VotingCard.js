@@ -6,7 +6,7 @@ import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 import VotingOptions from './VotingOptions'
 import VoteText from '../VoteText'
 import VoteStatus from '../VoteStatus'
-import { isVoteAction } from '../../vote-utils.js'
+import { isVoteAction } from '../../vote-utils'
 
 function getOptions(yea, nay, connectedAccountVote) {
   return [
