@@ -1,5 +1,6 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
+const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
@@ -23,6 +24,30 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
     let APP_MANAGER_ROLE
     let MINT_ROLE, ISSUE_ROLE, ASSIGN_ROLE, REVOKE_VESTINGS_ROLE, BURN_ROLE
     let ETH
+
+    // Error strings
+    const errors = makeErrorMappingProxy({
+        // aragonOS errors
+        APP_AUTH_FAILED: 'APP_AUTH_FAILED',
+        INIT_ALREADY_INITIALIZED: 'INIT_ALREADY_INITIALIZED',
+        INIT_NOT_INITIALIZED: 'INIT_NOT_INITIALIZED',
+        RECOVER_DISALLOWED: 'RECOVER_DISALLOWED',
+
+        // Token Manager errors
+        TM_CALLER_NOT_TOKEN = "TM_CALLER_NOT_TOKEN",
+        TM_NO_VESTING = "TM_NO_VESTING",
+        TM_TOKEN_CONTROLLER = "TM_TOKEN_CONTROLLER",
+        TM_MINT_RECEIVER_IS_TM = "TM_MINT_RECEIVER_IS_TM",
+        TM_VESTING_TO_TM = "TM_VESTING_TO_TM",
+        TM_TOO_MANY_VESTINGS = "TM_TOO_MANY_VESTINGS",
+        TM_WRONG_CLIFF_DATE = "TM_WRONG_CLIFF_DATE",
+        TM_VESTING_NOT_REVOKABLE = "TM_VESTING_NOT_REVOKABLE",
+        TM_REVOKE_TRANSFER_FROM_REVERTED = "TM_REVOKE_TRANSFER_FROM_REVERTED",
+        TM_CAN_NOT_FORWARD = "TM_CAN_NOT_FORWARD",
+        TM_BALANCE_INC_NOT_ALLOWED = "TM_BALANCE_INC_NOT_ALLOWED",
+        TM_ASSIGN_TRANSFER_FROM_REVERTED = "TM_ASSIGN_TRANSFER_FROM_REVERTED"
+
+    })
 
     const NOW = 1
 
@@ -88,7 +113,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
     })
 
     it('fails when initializing without setting controller', async () => {
-        await assertRevert(tokenManager.initialize(token.address, true, 0))
+        await assertRevert(tokenManager.initialize(token.address, true, 0), errors.TM_TOKEN_CONTROLLER)
     })
 
     it('fails when sending ether to token', async () => {
@@ -133,7 +158,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
             await tokenManager.forward(script, { from: holder })
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
 
-            await assertRevert(tokenManager.forward(script, { from: anyone }))
+            await assertRevert(tokenManager.forward(script, { from: anyone }), errors.TM_CAN_NOT_FORWARD)
         })
     })
 
@@ -152,7 +177,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         })
 
         it('fails to mint more than limit', async () => {
-            await assertRevert(tokenManager.mint(holder, limit + 1))
+            await assertRevert(tokenManager.mint(holder, limit + 1), errors.TM_BALANCE_INCREASE_NOT_ALLOWED)
         })
 
         it('can issue unlimited tokens to itself', async () => {
@@ -181,7 +206,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         it('cannot assign more than limit', async () => {
             await tokenManager.issue(limit + 2)
 
-            await assertRevert(tokenManager.assign(holder, limit + 1))
+            await assertRevert(tokenManager.assign(holder, limit + 1), errors.TM_BALANCE_INCREASE_NOT_ALLOWED)
         })
 
         it('can transfer tokens to token manager without regard to token limit', async () => {
@@ -209,7 +234,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         })
 
         it('fails on reinitialization', async () => {
-            await assertRevert(tokenManager.initialize(token.address, true, 0))
+            await assertRevert(tokenManager.initialize(token.address, true, 0), errors.INIT_ALREADY_INITIALIZED)
         })
 
         it('cannot initialize base app', async () => {
@@ -246,13 +271,13 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         })
 
         it('cannot mint tokens to itself', async () => {
-            await assertRevert(tokenManager.mint(tokenManager.address, 100))
+            await assertRevert(tokenManager.mint(tokenManager.address, 100), errors.TM_BALANCE_INCREASE_NOT_ALLOWED)
         })
 
         it('cannot assign more tokens than owned', async () => {
             await tokenManager.issue(50)
 
-            await assertRevert(tokenManager.assign(holder, 51))
+            await assertRevert(tokenManager.assign(holder, 51), errors.TM_BALANCE_INCREASE_NOT_ALLOWED)
         })
 
         it('forwards actions only to token holders', async () => {
@@ -265,7 +290,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
             await tokenManager.forward(script, { from: holder })
             assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
 
-            await assertRevert(tokenManager.forward(script, { from: anyone }))
+            await assertRevert(tokenManager.forward(script, { from: anyone }), errors.TM_CAN_NOT_FORWARD)
         })
 
         it("cannot call onTransfer() from outside of the token's context", async () => {
@@ -273,7 +298,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
             await tokenManager.mint(holder, amount)
 
             // Make sure this callback fails when called out-of-context
-            await assertRevert(tokenManager.onTransfer(holder, holder2, 10))
+            await assertRevert(tokenManager.onTransfer(holder, holder2, 10), errors.TM_CALLER_NOT_TOKEN)
 
             // Make sure the same transfer through the token's context doesn't revert
             await token.transfer(holder2, amount, { from: holder })
@@ -284,7 +309,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
             await tokenManager.mint(holder, amount)
 
             // Make sure this callback fails when called out-of-context
-            await assertRevert(tokenManager.onApprove(holder, holder2, 10))
+            await assertRevert(tokenManager.onApprove(holder, holder2, 10), errors.TM_CALLER_NOT_TOKEN)
 
             // Make sure no allowance was registered
             assert.equal(await token.allowance(holder, holder2), 0, 'token approval should be 0')
@@ -295,7 +320,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
             const prevTokenManagerBalance = (await getBalance(tokenManager.address)).toNumber()
 
             // Make sure this callback fails when called out-of-context
-            await assertRevert(tokenManager.proxyPayment(root, { value }))
+            await assertRevert(tokenManager.proxyPayment(root, { value }), errors.TM_CALLER_NOT_TOKEN)
 
             // Make sure no ETH was transferred
             assert.equal((await getBalance(tokenManager.address)).toNumber(), prevTokenManagerBalance, 'token manager ETH balance should be the same')
@@ -304,7 +329,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         it('fails when assigning invalid vesting schedule', async () => {
             const tokens = 10
             // vesting < cliff
-            await assertRevert(tokenManager.assignVested(holder, tokens, 10, 20, 10, true))
+            await assertRevert(tokenManager.assignVested(holder, tokens, 10, 20, 10, true), errors.TM_WRONG_CLIFF_DATE)
         })
 
         it('allows to recover external tokens', async () => {
@@ -333,7 +358,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
             })
 
             it('fails trying to get vesting out of bounds', async () => {
-                await assertRevert(tokenManager.getVesting(holder, 1))
+                await assertRevert(tokenManager.getVesting(holder, 1), errors.TM_NO_VESTING)
             })
 
             it('can get vesting details before being revoked', async () => {
@@ -397,14 +422,14 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
             })
 
             it('cannot assign a vesting to itself', async () => {
-                await assertRevert(tokenManager.assignVested(tokenManager.address, 5, startDate, cliffDate, vestingDate, revokable))
+                await assertRevert(tokenManager.assignVested(tokenManager.address, 5, startDate, cliffDate, vestingDate, revokable), errors.TM_VESTING_TO_TM)
             })
 
             it('cannot revoke non-revokable vestings', async () => {
                 await tokenManager.issue(1)
                 await tokenManager.assignVested(holder, 1, startDate, cliffDate, vestingDate, false)
 
-                await assertRevert(tokenManager.revokeVesting(holder, 1))
+                await assertRevert(tokenManager.revokeVesting(holder, 1), errors.TM_VESTING_NOT_REVOKABLE)
             })
 
             it('cannot have more than 50 vestings', async () => {
@@ -415,11 +440,11 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
                     await tokenManager.assignVested(holder, 1, startDate, cliffDate, vestingDate, false)
                 }
 
-                await assertRevert(tokenManager.assignVested(holder, 1, startDate, cliffDate, vestingDate, false))
+                await assertRevert(tokenManager.assignVested(holder, 1, startDate, cliffDate, vestingDate, false), errors.TM_TOO_MANY_VESTINGS)
 
                 // Can't create a new vesting even after other vestings have finished
                 await tokenManager.mockIncreaseTime(VESTING_DURATION)
-                await assertRevert(tokenManager.assignVested(holder, 1, startDate, cliffDate, vestingDate, false))
+                await assertRevert(tokenManager.assignVested(holder, 1, startDate, cliffDate, vestingDate, false), errors.TM_TOO_MANY_VESTINGS)
 
                 // But can now transfer
                 await token.transfer(holder2, 1, { from: holder })
@@ -429,19 +454,19 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
 
     context('app not initialized', async () => {
         it('fails to mint tokens', async() => {
-            await assertRevert(tokenManager.mint(holder, 1))
+            await assertRevert(tokenManager.mint(holder, 1), errors.INIT_NOT_INITIALIZED)
         })
 
         it('fails to assign tokens', async() => {
-            await assertRevert(tokenManager.assign(holder, 1))
+            await assertRevert(tokenManager.assign(holder, 1), errors.INIT_NOT_INITIALIZED)
         })
 
         it('fails to issue tokens', async() => {
-            await assertRevert(tokenManager.issue(1))
+            await assertRevert(tokenManager.issue(1), errors.INIT_NOT_INITIALIZED)
         })
 
         it('fails to burn tokens', async() => {
-            await assertRevert(tokenManager.burn(holder, 1))
+            await assertRevert(tokenManager.burn(holder, 1), errors.INIT_NOT_INITIALIZED)
         })
     })
 })
