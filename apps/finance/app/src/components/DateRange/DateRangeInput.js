@@ -96,26 +96,24 @@ class DateRangeInput extends React.PureComponent {
   handleApply = e => {
     e.preventDefault()
     e.stopPropagation()
-    this.setState({ showPicker: false }, () => {
-      const { startDate, endDate } = this.state
-      if (startDate && endDate) {
-        this.props.onChange({
-          start: startOfDay(startDate),
-          end: endOfDay(endDate),
-        })
-      }
-    })
+    this.setState({ showPicker: false })
+    const { startDate, endDate } = this.state
+    if (startDate && endDate) {
+      this.props.onChange({
+        start: startOfDay(startDate),
+        end: endOfDay(endDate),
+      })
+    }
   }
 
   handleClear = e => {
     e.preventDefault()
     e.stopPropagation()
-    this.setState({ showPicker: false, startDate: null, endDate: null }, () =>
-      this.props.onChange({
-        start: null,
-        end: null,
-      })
-    )
+    this.setState({ showPicker: false, startDate: null, endDate: null })
+    this.props.onChange({
+      start: null,
+      end: null,
+    })
   }
 
   render() {
