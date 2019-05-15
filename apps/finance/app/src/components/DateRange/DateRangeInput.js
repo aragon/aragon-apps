@@ -116,6 +116,40 @@ class DateRangeInput extends React.PureComponent {
     })
   }
 
+  getValueText = () => {
+    const {
+      compactMode,
+      format,
+      startDate: startDateProps,
+      endDate: endDateProps,
+    } = this.props
+    const { showPicker, startDateSelected, endDateSelected } = this.state
+
+    // closed
+    // shows props, if props null then placeholder
+    if (!showPicker) {
+      return startDateProps && endDateProps
+        ? `${formatDate(startDateProps, format)} | ${formatDate(
+            endDateProps,
+            format
+          )}`
+        : ''
+    }
+
+    // opened
+    //  shows constants, till dates selected
+    if (compactMode) {
+      return `${startDateSelected ? this.formattedStartDate : START_DATE} | ${
+        endDateSelected ? this.formattedEndDate : END_DATE
+      }`
+    }
+
+    //  shows props, changes with selection
+    return `${
+      this.formattedStartDate ? this.formattedStartDate : START_DATE
+    } | ${this.formattedEndDate ? this.formattedEndDate : END_DATE}`
+  }
+
   render() {
     const {
       startDate,
@@ -124,36 +158,13 @@ class DateRangeInput extends React.PureComponent {
       endDateSelected,
       showPicker,
     } = this.state
-    const {
-      compactMode,
-      format,
-      startDate: startDateProps,
-      endDate: endDateProps,
-    } = this.props
+    const { compactMode } = this.props
 
     const icon = this.state.showPicker ? (
       <IconCalendarSelected />
     ) : (
       <IconCalendar />
     )
-    // closed: shows props, if props null then placeholder
-    // opened:
-    //  compact: shows constants, till dates selected
-    //  not compact: shows props, changes with selection
-    const value = !showPicker
-      ? startDateProps && endDateProps
-        ? `${formatDate(startDateProps, format)} | ${formatDate(
-            endDateProps,
-            format
-          )}`
-        : ''
-      : compactMode
-      ? `${startDateSelected ? this.formattedStartDate : START_DATE} | ${
-          endDateSelected ? this.formattedEndDate : END_DATE
-        }`
-      : `${this.formattedStartDate ? this.formattedStartDate : START_DATE} | ${
-          this.formattedEndDate ? this.formattedEndDate : END_DATE
-        }`
 
     return (
       <StyledContainer
@@ -161,7 +172,7 @@ class DateRangeInput extends React.PureComponent {
         onClick={this.handleClick}
       >
         <StyledTextInput
-          value={value}
+          value={this.getValueText()}
           readOnly
           adornment={icon}
           adornmentPosition="end"
