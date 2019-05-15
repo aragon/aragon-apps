@@ -48,7 +48,14 @@ class DateRangeInput extends React.PureComponent {
 
   componentDidUpdate(prevProps, prevState) {
     if (this.state.showPicker !== prevState.showPicker) {
-      this.setState({ startDateSelected: false, endDateSelected: false })
+      const { startDate, endDate, compactMode } = this.props
+      // unsetting selection for compact because it shows one calendar at a time
+      this.setState({
+        startDateSelected: !compactMode && !!startDate,
+        endDateSelected: !compactMode && !!endDate,
+        startDate: !compactMode ? startDate : null,
+        endDate: !compactMode ? endDate : null,
+      })
       if (this.state.showPicker) {
         document.addEventListener('mousedown', this.handleClickOutside)
       } else {
