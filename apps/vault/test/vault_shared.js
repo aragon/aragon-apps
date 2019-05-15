@@ -1,6 +1,7 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { hash } = require('eth-ens-namehash')
 const getBalanceFn = require('@aragon/test-helpers/balance')
+const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 
 // Allow for sharing this test across other vault implementations and subclasses
 module.exports = (
@@ -37,6 +38,25 @@ module.exports = (
   context(`> Shared tests for Vault-like apps`, () => {
     let daoFact, vaultBase, vault, vaultId
     let ETH, ANY_ENTITY, APP_MANAGER_ROLE, TRANSFER_ROLE
+
+    // Error strings
+    const errors = makeErrorMappingProxy({
+      // aragonOS errors
+      APP_AUTH_FAILED: 'APP_AUTH_FAILED',
+      INIT_ALREADY_INITIALIZED: 'INIT_ALREADY_INITIALIZED',
+      INIT_NOT_INITIALIZED: 'INIT_NOT_INITIALIZED',
+      RECOVER_DISALLOWED: 'RECOVER_DISALLOWED',
+
+      // Vault errors
+      VAULT_DATA_NON_ZERO: 'VAULT_DATA_NON_ZERO',
+      VAULT_NOT_DEPOSITABLE: 'VAULT_NOT_DEPOSITABLE',
+      VAULT_DEPOSIT_VALUE_ZERO: 'VAULT_DEPOSIT_VALUE_ZERO',
+      VAULT_TRANSFER_VALUE_ZERO: 'VAULT_TRANSFER_VALUE_ZERO',
+      VAULT_SEND_REVERTED: 'VAULT_SEND_REVERTED',
+      VAULT_VALUE_MISMATCH: 'VAULT_VALUE_MISMATCH',
+      VAULT_TOKEN_TRANSFER_FROM_REVERT: 'VAULT_TOKEN_TRANSFER_FROM_REVERT',
+      VAULT_TOKEN_TRANSFER_REVERTED: 'VAULT_TOKEN_TRANSFER_REVERTED'
+    })
 
     before(async () => {
       const kernelBase = await Kernel.new(true) // petrify immediately
@@ -132,13 +152,13 @@ module.exports = (
         await vault.sendTransaction( { value: transferValue })
 
         // Transfer
-        await assertRevert(vault.transfer(ETH, destination.address, transferValue))
+        await assertRevert(vault.transfer(ETH, destination.address, transferValue), errors.VAULT_SEND_REVERTED)
       })
 
       it('fails if depositing a different amount of ETH than sent', async () => {
         const value = 1
 
-        await assertRevert(vault.deposit(ETH, value, { value: value * 2 }))
+        await assertRevert(vault.deposit(ETH, value, { value: value * 2 }), errors.VAULT_SEND_REVERTED)
       })
     })
 
@@ -189,7 +209,7 @@ module.exports = (
           const approvedAmount = 10
           await token.approve(vault.address, approvedAmount)
 
-          await assertRevert(vault.deposit(token.address, approvedAmount * 2))
+          await assertRevert(vault.deposit(token.address, approvedAmount * 2), errors.VAULT_TOKEN_TRANSFER_FROM_REVERTED)
           assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
         })
 
@@ -200,7 +220,7 @@ module.exports = (
           await token.setAllowTransfer(false)
 
           // Attempt to deposit
-          await assertRevert(vault.deposit(token.address, 5))
+          await assertRevert(vault.deposit(token.address, 5), errors.VAULT_TOKEN_TRANSFER_FROM_REVERTED)
           assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
         })
 
@@ -212,7 +232,7 @@ module.exports = (
           await token.setAllowTransfer(false)
 
           // Attempt to transfer
-          await assertRevert(vault.transfer(token.address, tokenReceiver, 5))
+          await assertRevert(vault.transfer(token.address, tokenReceiver, 5), errors.VAULT_TOKEN_TRANSFER_REVERTED)
           assert.equal(await token.balanceOf(tokenReceiver), 0, "receiver should have initial token balance")
           assert.equal(await token.balanceOf(vault.address), 10, "vault should have initial token balance")
         })
