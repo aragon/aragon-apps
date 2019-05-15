@@ -4,6 +4,7 @@ const ethABI = new (require('web3-eth-abi').AbiCoder)()
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const assertEvent = require('@aragon/test-helpers/assertEvent')
+const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 // Allow for sharing this test across other agent implementations and subclasses
@@ -39,6 +40,21 @@ module.exports = (
     let daoFact, agentBase, dao, acl, agent, agentAppId
 
     let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ERC1271_INTERFACE_ID
+
+    // Error strings
+    const errors = makeErrorMappingProxy({
+      // aragonOS errors
+      APP_AUTH_FAILED: 'APP_AUTH_FAILED',
+      INIT_ALREADY_INITIALIZED: 'INIT_ALREADY_INITIALIZED',
+      INIT_NOT_INITIALIZED: 'INIT_NOT_INITIALIZED',
+      RECOVER_DISALLOWED: 'RECOVER_DISALLOWED',
+
+      // Agent errors
+      AGENT_EXEC_ETH_NO_DATA = "AGENT_EXEC_ETH_NO_DATA",
+      AGENT_EXEC_TARGET_NO_CONTRACT = "AGENT_EXEC_TARGET_NO_CONTRACT",
+      AGENT_DESIGNATED_TO_SELF = "AGENT_DESIGNATED_TO_SELF",
+
+    })
 
     const root = accounts[0]
 
@@ -175,7 +191,7 @@ module.exports = (
           it('fails to execute without permissions', async () => {
             const data = executionTarget.contract.execute.getData()
 
-            await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: nonExecutor }))
+            await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: nonExecutor }), errors.APP_AUTH_FAILED)
           })
 
           it('fails to execute actions with more ETH than the agent owns', async () => {
@@ -288,7 +304,7 @@ module.exports = (
         assert.isFalse(await agent.canForward(nonScriptRunner, script))
         assert.equal(await executionTarget.counter(), 0)
 
-        await assertRevert(agent.forward(script, { from: nonScriptRunner }))
+        await assertRevert(agent.forward(script, { from: nonScriptRunner }), errors.APP_AUTH_FAILED)
         assert.equal(await executionTarget.counter(), 0)
       })
     })
@@ -347,7 +363,7 @@ module.exports = (
       })
 
       it('fails to presign a hash if not authorized', async () => {
-        await assertRevert(agent.presignHash(HASH, { from: nobody }))
+        await assertRevert(agent.presignHash(HASH, { from: nobody }), errors.APP_AUTH_FAILED)
         assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
       })
 
