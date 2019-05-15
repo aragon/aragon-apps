@@ -1,6 +1,4 @@
 import Aragon, { ACCOUNTS_TRIGGER } from '@aragon/api'
-import { of } from 'rxjs'
-import { map } from 'rxjs/operators'
 import { addressesEqual } from './web3-utils'
 import voteSettings from './vote-settings'
 import { voteTypeFromContractEnum } from './vote-utils'
