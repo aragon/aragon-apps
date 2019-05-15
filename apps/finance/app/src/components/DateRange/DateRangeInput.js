@@ -189,7 +189,7 @@ class DateRangeInput extends React.PureComponent {
             <Controls>
               <Button
                 css={'width: 124px;'}
-                mode="secondary"
+                mode="outline"
                 onClick={this.handleClear}
               >
                 Clear
