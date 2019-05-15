@@ -12,6 +12,7 @@ import {
 } from '@aragon/ui'
 import { formatTokenAmount } from '../lib/utils'
 import IconTokens from './icons/IconTokens'
+import IconLabel from './icons/IconLabel'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from './IdentityManager/IdentityManager'
 
@@ -115,7 +116,7 @@ const TransferRow = React.memo(
                   <div css="margin-left: 15px">View Transaction</div>
                 </ContextMenuItem>
                 <ContextMenuItem onClick={handleEditLabel}>
-                  <IconTokens />
+                  <IconLabel />
                   <div css="margin-left: 15px">
                     {label ? 'Edit' : 'Add'} custom label
                   </div>
