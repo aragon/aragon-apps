@@ -1,6 +1,7 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
+const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const Voting = artifacts.require('VotingMock')
@@ -31,6 +32,28 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
     let APP_MANAGER_ROLE
     let CREATE_VOTES_ROLE, MODIFY_SUPPORT_ROLE, MODIFY_QUORUM_ROLE
+
+    // Error strings
+    const errors = makeErrorMappingProxy({
+        // aragonOS errors
+        APP_AUTH_FAILED: 'APP_AUTH_FAILED',
+        INIT_ALREADY_INITIALIZED: 'INIT_ALREADY_INITIALIZED',
+        INIT_NOT_INITIALIZED: 'INIT_NOT_INITIALIZED',
+        RECOVER_DISALLOWED: 'RECOVER_DISALLOWED',
+
+        // Voting errors
+        VOTING_NO_VOTE = "VOTING_NO_VOTE",
+        VOTING_INIT_PCTS = "VOTING_INIT_PCTS",
+        VOTING_CHANGE_SUPPORT_PCTS = "VOTING_CHANGE_SUPPORT_PCTS",
+        VOTING_CHANGE_QUORUM_PCTS = "VOTING_CHANGE_QUORUM_PCTS",
+        VOTING_INIT_SUPPORT_TOO_BIG = "VOTING_INIT_SUPPORT_TOO_BIG",
+        VOTING_CHANGE_SUPP_TOO_BIG = "VOTING_CHANGE_SUPP_TOO_BIG",
+        VOTING_CAN_NOT_VOTE = "VOTING_CAN_NOT_VOTE",
+        VOTING_CAN_NOT_EXECUTE = "VOTING_CAN_NOT_EXECUTE",
+        VOTING_CAN_NOT_FORWARD = "VOTING_CAN_NOT_FORWARD",
+        VOTING_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER"
+
+    })
 
     const NOW = 1
     const votingDuration = 1000
@@ -78,7 +101,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         })
 
         it('fails on reinitialization', async () => {
-            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration))
+            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration), errors.INIT_ALREADY_INITIALIZED)
         })
 
         it('cannot initialize base app', async () => {
@@ -100,12 +123,12 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         })
 
         it('fails changing required support lower than minimum acceptance quorum', async () => {
-            await assertRevert(voting.changeSupportRequiredPct(minimumAcceptanceQuorum.minus(1)))
+            await assertRevert(voting.changeSupportRequiredPct(minimumAcceptanceQuorum.minus(1)), VOTING_CHANGE_SUPPORT_PCTS)
         })
 
         it('fails changing required support to 100% or more', async () => {
-            await assertRevert(voting.changeSupportRequiredPct(pct16(101)))
-            await assertRevert(voting.changeSupportRequiredPct(pct16(100)))
+            await assertRevert(voting.changeSupportRequiredPct(pct16(101)), VOTING_CHANGE_SUPPORT_TOO_BIG)
+            await assertRevert(voting.changeSupportRequiredPct(pct16(100)), VOTING_CHANGE_SUPPORT_TOO_BIG)
         })
 
         it('can change minimum acceptance quorum', async () => {
@@ -117,7 +140,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         })
 
         it('fails changing minimum acceptance quorum to greater than min support', async () => {
-            await assertRevert(voting.changeMinAcceptQuorumPct(neededSupport.plus(1)))
+            await assertRevert(voting.changeMinAcceptQuorumPct(neededSupport.plus(1)), VOTING_CHANGE_QUORUM_PCTS)
         })
 
     })
@@ -208,7 +231,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 })
 
                 it('fails getting a vote out of bounds', async () => {
-                    await assertRevert(voting.getVote(voteId + 1))
+                    await assertRevert(voting.getVote(voteId + 1), VOTING_NO_VOTE)
                 })
 
                 it('changing required support does not affect vote required support', async () => {
@@ -273,12 +296,12 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 })
 
                 it('throws when non-holder votes', async () => {
-                    await assertRevert(voting.vote(voteId, true, true, { from: nonHolder }))
+                    await assertRevert(voting.vote(voteId, true, true, { from: nonHolder }), errors.VOTING_CAN_NOT_VOTE)
                 })
 
                 it('throws when voting after voting closes', async () => {
                     await voting.mockIncreaseTime(votingDuration + 1)
-                    await assertRevert(voting.vote(voteId, true, true, { from: holder29 }))
+                    await assertRevert(voting.vote(voteId, true, true, { from: holder29 }), errors.VOTING_CAN_NOT_VOTE)
                 })
 
                 it('can execute if vote is approved with support and quorum', async () => {
@@ -292,14 +315,14 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 it('cannot execute vote if not enough quorum met', async () => {
                     await voting.vote(voteId, true, true, { from: holder20 })
                     await voting.mockIncreaseTime(votingDuration + 1)
-                    await assertRevert(voting.executeVote(voteId))
+                    await assertRevert(voting.executeVote(voteId), errors.VOTING_CAN_NOT_EXECUTE)
                 })
 
                 it('cannot execute vote if not support met', async () => {
                     await voting.vote(voteId, false, true, { from: holder29 })
                     await voting.vote(voteId, false, true, { from: holder20 })
                     await voting.mockIncreaseTime(votingDuration + 1)
-                    await assertRevert(voting.executeVote(voteId))
+                    await assertRevert(voting.executeVote(voteId), errors.VOTING_CAN_NOT_EXECUTE)
                 })
 
                 it('vote can be executed automatically if decided', async () => {
@@ -315,12 +338,12 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
                 it('cannot re-execute vote', async () => {
                     await voting.vote(voteId, true, true, { from: holder51 }) // causes execution
-                    await assertRevert(voting.executeVote(voteId))
+                    await assertRevert(voting.executeVote(voteId), errors.VOTING_CAN_NOT_EXECUTE)
                 })
 
                 it('cannot vote on executed vote', async () => {
                     await voting.vote(voteId, true, true, { from: holder51 }) // causes execution
-                    await assertRevert(voting.vote(voteId, true, true, { from: holder20 }))
+                    await assertRevert(voting.vote(voteId, true, true, { from: holder20 }), errors.VOTING_CAN_NOT_EXECUTE)
                 })
             })
         })
@@ -334,13 +357,13 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         it('fails if min acceptance quorum is greater than min support', async () => {
             const neededSupport = pct16(20)
             const minimumAcceptanceQuorum = pct16(50)
-            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration))
+            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration), errors.VOTING_INIT_PCTS)
         })
 
         it('fails if min support is 100% or more', async () => {
             const minimumAcceptanceQuorum = pct16(20)
-            await assertRevert(voting.initialize(token.address, pct16(101), minimumAcceptanceQuorum, votingDuration))
-            await assertRevert(voting.initialize(token.address, pct16(100), minimumAcceptanceQuorum, votingDuration))
+            await assertRevert(voting.initialize(token.address, pct16(101), minimumAcceptanceQuorum, votingDuration), errors.VOTING_INIT_SUPPORT_TOO_BIG)
+            await assertRevert(voting.initialize(token.address, pct16(100), minimumAcceptanceQuorum, votingDuration), errors.VOTING_INIT_SUPPORT_TOO_BIG)
         })
     })
 
@@ -355,7 +378,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         })
 
         it('fails creating a survey if token has no holder', async () => {
-            await assertRevert(voting.newVote(EMPTY_SCRIPT, 'metadata'))
+            await assertRevert(voting.newVote(EMPTY_SCRIPT, 'metadata'), errors.VOTING_NO_VOTING_POWER)
         })
     })
 
@@ -483,7 +506,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
     context('before init', () => {
         it('fails creating a vote before initialization', async () => {
-            await assertRevert(voting.newVote(encodeCallScript([]), ''))
+            await assertRevert(voting.newVote(encodeCallScript([]), ''), errors.INIT_NOT_INITIALIZED)
         })
     })
 
