@@ -1,5 +1,6 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
+const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 
 const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
@@ -11,6 +12,28 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
 
   let ABSTAIN_VOTE, ANY_ENTITY
   let APP_MANAGER_ROLE, CREATE_SURVEYS_ROLE, MODIFY_PARTICIPATION_ROLE
+
+  // Error strings
+  const errors = makeErrorMappingProxy({
+    // aragonOS errors
+    APP_AUTH_FAILED: 'APP_AUTH_FAILED',
+    INIT_ALREADY_INITIALIZED: 'INIT_ALREADY_INITIALIZED',
+    INIT_NOT_INITIALIZED: 'INIT_NOT_INITIALIZED',
+    RECOVER_DISALLOWED: 'RECOVER_DISALLOWED',
+
+    // Survey errors
+    SURVEY_MIN_PARTICIPATION = "SURVEY_MIN_PARTICIPATION",
+    SURVEY_NO_SURVEY = "SURVEY_NO_SURVEY",
+    SURVEY_NO_VOTING_POWER = "SURVEY_NO_VOTING_POWER",
+    SURVEY_CAN_NOT_VOTE = "SURVEY_CAN_NOT_VOTE",
+    SURVEY_VOTE_WRONG_INPUT = "SURVEY_VOTE_WRONG_INPUT",
+    SURVEY_VOTE_WRONG_OPTION = "SURVEY_VOTE_WRONG_OPTION",
+    SURVEY_VOTE_WHOLE_WRONG_OPTION = "SURVEY_VOTE_WHOLE_WRONG_OPTION",
+    SURVEY_NO_STAKE = "SURVEY_NO_STAKE",
+    SURVEY_OPTIONS_NOT_ORDERED = "SURVEY_OPTIONS_NOT_ORDERED",
+    SURVEY_NO_OPTION = "SURVEY_NO_OPTION"
+
+  })
 
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -61,7 +84,7 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
     })
 
     it('fails on reinitialization', async () => {
-      await assertRevert(survey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime))
+      await assertRevert(survey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime), errors.INIT_ALREADY_INITIALIZED)
     })
 
     it('cannot initialize base app', async () => {
@@ -79,11 +102,11 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
     })
 
     it('cannot change minimum acceptance participation to 0', async () => {
-      await assertRevert(survey.changeMinAcceptParticipationPct(0))
+      await assertRevert(survey.changeMinAcceptParticipationPct(0), errors.SURVEY_MIN_PARTICIPATION)
     })
 
     it('cannot change minimum acceptance participation to more than 100', async () => {
-      await assertRevert(survey.changeMinAcceptParticipationPct(pct16(101)))
+      await assertRevert(survey.changeMinAcceptParticipationPct(pct16(101)), errors.SURVEY_MIN_PARTICIPATION)
     })
 
     context('creating survey', () => {
@@ -114,15 +137,15 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
       })
 
       it('fails getting a survey out of bounds', async () => {
-        await assertRevert(survey.getSurvey(surveyId + 1))
+        await assertRevert(survey.getSurvey(surveyId + 1), errors.SURVEY_NO_SURVEY)
       })
 
       it('fails getting option power for a survey out of bounds', async () => {
-        await assertRevert(survey.getOptionPower(surveyId + 1, 0))
+        await assertRevert(survey.getOptionPower(surveyId + 1, 0), errors.SURVEY_NO_SURVEY)
       })
 
       it('fails getting option power for an option out of bounds', async () => {
-        await assertRevert(survey.getOptionPower(surveyId, optionsCount + 1))
+        await assertRevert(survey.getOptionPower(surveyId, optionsCount + 1), errors.SURVEY_NO_OPTION)
       })
 
       it('counts votes properly', async () => {
@@ -159,15 +182,15 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
       it('fails if voting on non-existing option', async () => {
         await survey.voteOption(surveyId, optionsCount, { from: holder31 })
 
-        await assertRevert(survey.voteOption(surveyId, optionsCount + 1, { from: holder31 }))
+        await assertRevert(survey.voteOption(surveyId, optionsCount + 1, { from: holder31 }), errors.SURVEY_VOTE_WRONG_INPUT)
       })
 
       it('fails if vote has no options', async () => {
-        await assertRevert(survey.voteOptions(surveyId, [], [], { from: holder50 }))
+        await assertRevert(survey.voteOptions(surveyId, [], [], { from: holder50 }), errors.SURVEY_VOTE_WRONG_OPTION)
       })
 
       it('fails if single-option vote is for ABSTAIN_VOTE', async () => {
-        await assertRevert(survey.voteOption(surveyId, ABSTAIN_VOTE, { from: holder50 }))
+        await assertRevert(survey.voteOption(surveyId, ABSTAIN_VOTE, { from: holder50 }), errors.SURVEY_VOTE_WRONG_OPTION)
       })
 
       it('allows to remove and re-vote', async () => {
@@ -201,12 +224,12 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
       })
 
       it('throws when non-holder votes', async () => {
-        await assertRevert(survey.voteOption(surveyId, 1, { from: nonHolder }))
+        await assertRevert(survey.voteOption(surveyId, 1, { from: nonHolder }), errors.SURVEY_CAN_NOT_VOTE)
       })
 
       it('throws when voting after survey closes', async () => {
         await survey.mockIncreaseTime(surveyTime + 1)
-        await assertRevert(survey.voteOption(surveyId, 1, { from: holder31 }))
+        await assertRevert(survey.voteOption(surveyId, 1, { from: holder31 }), errors.SURVEY_CAN_NOT_VOTE)
       })
 
       it('casts complete multi option vote', async () => {
@@ -233,19 +256,19 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
       })
 
       it('fails if multi option vote has different size arrays', async () => {
-        await assertRevert(survey.voteOptions(surveyId, [1,2], [10, 10, 11], { from: holder31 }))
+        await assertRevert(survey.voteOptions(surveyId, [1,2], [10, 10, 11], { from: holder31 }), errors.SURVEY_VOTE_WRONG_INPUT)
       })
 
       it('fails if multi option vote has unordered options', async () => {
-        await assertRevert(survey.voteOptions(surveyId, [2,1], [10, 21], { from: holder31 }))
+        await assertRevert(survey.voteOptions(surveyId, [2,1], [10, 21], { from: holder31 }), errors.SURVEY_OPTIONS_NOT_ORDERED)
       })
 
       it('fails if multi option vote has NO VOTE option', async () => {
-        await assertRevert(survey.voteOptions(surveyId, [ABSTAIN_VOTE, 2], [10, 21], { from: holder31 }))
+        await assertRevert(survey.voteOptions(surveyId, [ABSTAIN_VOTE, 2], [10, 21], { from: holder31 }), errors.SURVEY_VOTE_WRONG_OPTION)
       })
 
       it('fails if multi option vote has a zero stake option', async () => {
-        await assertRevert(survey.voteOptions(surveyId, [1,2], [10, 0], { from: holder31 }))
+        await assertRevert(survey.voteOptions(surveyId, [1,2], [10, 0], { from: holder31 }), errors.SURVEY_NO_STAKE)
       })
     })
   })
@@ -263,18 +286,18 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
 
     it('fails if min acceptance participation is 0', async () => {
       const badMinimumAcceptanceParticipationPct = pct16(0)
-      await assertRevert(survey.initialize(token.address, badMinimumAcceptanceParticipationPct, surveyTime))
+      await assertRevert(survey.initialize(token.address, badMinimumAcceptanceParticipationPct, surveyTime), errors.SURVEY_MIN_PARTICIPATION)
     })
 
     it('fails if min participation is greater than 100', async () => {
       const badMinimumAcceptanceParticipationPct = pct16(101)
-      await assertRevert(survey.initialize(token.address, badMinimumAcceptanceParticipationPct, surveyTime))
+      await assertRevert(survey.initialize(token.address, badMinimumAcceptanceParticipationPct, surveyTime), errors.SURVEY_MIN_PARTICIPATION)
     })
   })
 
   context('before init', () => {
     it('fails creating a survey before initialization', async () => {
-      await assertRevert(survey.newSurvey('metadata', 10))
+      await assertRevert(survey.newSurvey('metadata', 10), errors.INIT_NOT_INITIALIZED)
     })
   })
 
@@ -285,7 +308,7 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
     })
 
     it('fails creating a survey if token has no holder', async () => {
-      await assertRevert(survey.newSurvey('metadata', 10))
+      await assertRevert(survey.newSurvey('metadata', 10), errors.SURVEY_NO_VOTING_POWER)
     })
   })
 
