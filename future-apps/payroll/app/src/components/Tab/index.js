@@ -5,9 +5,9 @@ import PropTypes from 'prop-types'
 import TabItem from './TabItem'
 import TabList from './TabList'
 
-const Tab = (props) => (
+const Tab = props => (
   <TabItem {...props}>
-    <Text size='large' weight={props.active ? 'bolder' : 'normal'}>
+    <Text size="large" weight={props.active ? 'bolder' : 'normal'}>
       {props.title || `Tab ${props.key}`}
     </Text>
   </TabItem>
@@ -15,7 +15,7 @@ const Tab = (props) => (
 
 Tab.propTypes = {
   active: PropTypes.bool,
-  title: PropTypes.string
+  title: PropTypes.string,
 }
 
 Tab.Container = TabList

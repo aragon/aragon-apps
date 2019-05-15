@@ -10,7 +10,7 @@ const DEFAULT_COLORS = [
   '#21AAE7',
   '#39CAD0',
   '#ADE9EC',
-  '#80AEDC'
+  '#80AEDC',
 ]
 
 const Bar = styled.div`
@@ -37,10 +37,13 @@ const Bullet = styled.span`
 `
 
 const Label = styled.li`
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  
+  display: grid;
+  grid-template-columns: 2fr 6fr 1fr;
+
+  > :last-child {
+    justify-self: end;
+  }
+
   ${Bullet} {
     margin-right: 10px;
   }
@@ -51,53 +54,63 @@ const Legend = styled.ol`
   flex-direction: column;
   list-style-type: none;
   padding: 0;
-  
+
   ${Label} {
     padding-bottom: 8px;
   }
 `
 
-const PartitionBar = ({ partition, legend }) => partition && partition.length && (
-  <React.Fragment>
-    <Bar>
-      {partition.map((data, index) => (
-        <Partition
-          key={index}
-          title={`${data.token}: ${data.distribution}%`}
-          value={data.distribution}
-          color={DEFAULT_COLORS[partition.indexOf(data)]}
-        />
-      ))}
-    </Bar>
-    {legend && (
-      <Legend>
-        {partition.map((data, index) => (
-          <Label key={data.token + index}>
-            <Text color={theme.textSecondary}>
-              <Bullet color={DEFAULT_COLORS[partition.indexOf(data)]}/> {data.token}
-            </Text>
-            <Text weight='bolder'>
-              {data.distribution}%
-            </Text>
-          </Label>
-        ))}
-      </Legend>
-    )}
-  </React.Fragment>
-)
+const PartitionBar = ({ data, legend, colors = DEFAULT_COLORS }) => {
+  if (Array.isArray(data) && data.length) {
+    const partitions = data.sort((p1, p2) => p2.allocation - p1.allocation)
+
+    return (
+      <React.Fragment>
+        <Bar>
+          {partitions.map(({ symbol, allocation }, index) => (
+            <Partition
+              key={index}
+              title={`${symbol}: ${allocation}%`}
+              value={allocation}
+              color={colors[index]}
+            />
+          ))}
+        </Bar>
+        {legend && (
+          <Legend>
+            {partitions.map(({ symbol, description, allocation }, index) => (
+              <Label key={symbol + index}>
+                <Text color={theme.textSecondary}>
+                  <Bullet color={colors[index]} />
+                  {symbol}
+                </Text>
+                <div>{description}</div>
+                <Text weight="bolder">{allocation}%</Text>
+              </Label>
+            ))}
+          </Legend>
+        )}
+      </React.Fragment>
+    )
+  }
+
+  return null
+}
 
 PartitionBar.propTypes = {
-  legend: PropTypes.bool,
-  partition: PropTypes.arrayOf(
+  data: PropTypes.arrayOf(
     PropTypes.shape({
-      token: PropTypes.string.isRequired,
-      distribution: PropTypes.number.isRequired
+      symbol: PropTypes.string.isRequired,
+      allocation: PropTypes.number.isRequired,
+      description: PropTypes.node,
     })
-  ).isRequired
+  ).isRequired,
+  colors: PropTypes.arrayOf(PropTypes.string),
+  legend: PropTypes.bool,
 }
 
 PartitionBar.defaultProps = {
-  legend: true
+  legend: true,
 }
 
 export default PartitionBar
