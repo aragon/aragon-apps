@@ -114,11 +114,15 @@ const TransferRow = React.memo(
             {txUrl && (
               <ContextMenu>
                 <ContextMenuItem onClick={handleViewTransaction}>
-                  <IconTokens />
+                  <IconWrapper>
+                    <IconTokens />
+                  </IconWrapper>
                   <div css="margin-left: 15px">View Transaction</div>
                 </ContextMenuItem>
                 <ContextMenuItem onClick={handleEditLabel}>
-                  <IconLabel />
+                  <IconWrapper>
+                    <IconLabel />
+                  </IconWrapper>
                   <div css="margin-left: 15px">
                     {label ? 'Edit' : 'Add'} custom label
                   </div>
@@ -174,6 +178,15 @@ const TextOverflow = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+`
+
+const IconWrapper = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: ${theme.textSecondary};
 `
 
 export default props => {
