@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import styled from 'styled-components'
 import {
   ContextMenu,
@@ -29,11 +29,11 @@ const HolderRow = React.memo(
     onAssignTokens,
     onRemoveTokens,
   }) => {
-    const handleAssignTokens = React.useCallback(() => {
+    const handleAssignTokens = useCallback(() => {
       onAssignTokens(address)
     }, [address, onAssignTokens])
 
-    const handleRemoveTokens = React.useCallback(() => {
+    const handleRemoveTokens = useCallback(() => {
       onRemoveTokens(address)
     }, [address, onRemoveTokens])
 
