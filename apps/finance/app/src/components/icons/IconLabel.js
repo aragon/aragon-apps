@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react'
 
 const Label = props => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" {...props}>
@@ -9,7 +9,6 @@ const Label = props => (
       strokeWidth="0.1"
     />
   </svg>
-);
+)
 
-export default Label;
-
+export default Label

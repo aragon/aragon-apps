@@ -4,7 +4,6 @@ import styled from 'styled-components'
 import { Badge, IdentityBadge, font } from '@aragon/ui'
 import { useIdentity } from '../IdentityManager/IdentityManager'
 
-
 const LocalIdentityBadge = ({ entity, ...props }) => {
   const [label, showLocalIdentityModal] = useIdentity(entity)
   const handleClick = () => showLocalIdentityModal(entity)
