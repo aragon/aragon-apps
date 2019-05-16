@@ -1,6 +1,5 @@
 import Aragon from '@aragon/api'
 import { first } from 'rxjs/operators'
-import { of } from 'rxjs'
 import { getTestTokenAddresses } from './testnet'
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
@@ -24,7 +23,6 @@ const vaultAbi = [].concat(
   vaultEventAbi
 )
 
-const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const TEST_TOKEN_ADDRESSES = []
 const tokenContracts = new Map() // Addr -> External contract
 const tokenDecimals = new Map() // External contract -> decimals
@@ -92,7 +90,7 @@ async function initialize(vaultAddress, ethAddress) {
   tokenNames.set(ETH_CONTRACT, 'Ether')
   tokenSymbols.set(ETH_CONTRACT, 'ETH')
 
-  return createStore({
+  const settings = {
     network,
     ethToken: {
       address: ethAddress,
@@ -101,11 +99,8 @@ async function initialize(vaultAddress, ethAddress) {
       address: vaultAddress,
       contract: vaultContract,
     },
-  })
-}
+  }
 
-// Hook up the script as an aragon.js store
-async function createStore(settings) {
   let vaultInitializationBlock
 
   try {
@@ -124,9 +119,7 @@ async function createStore(settings) {
         ...state,
       }
 
-      if (eventName === INITIALIZATION_TRIGGER) {
-        nextState = await initializeState(nextState, settings)
-      } else if (addressesEqual(eventAddress, vault.address)) {
+      if (addressesEqual(eventAddress, vault.address)) {
         // Vault event
         nextState = await vaultLoadBalance(nextState, event, settings)
       } else {
@@ -154,12 +147,15 @@ async function createStore(settings) {
 
       return nextState
     },
-    [
-      // Always initialize the store with our own home-made event
-      of({ event: INITIALIZATION_TRIGGER }),
-      // Handle Vault events in case they're not always controlled by this Finance app
-      settings.vault.contract.events(vaultInitializationBlock),
-    ]
+    {
+      init: initializeState(settings),
+      externals: [
+        {
+          contract: settings.vault.contract,
+          initializationBlock: vaultInitializationBlock,
+        },
+      ],
+    }
   )
 }
 
@@ -169,16 +165,15 @@ async function createStore(settings) {
  *                     *
  ***********************/
 
-async function initializeState(state, settings) {
-  const nextState = {
-    ...state,
+const initializeState = settings => async () => {
+  const newState = {
     periodDuration: marshallDate(
       await app.call('getPeriodDuration').toPromise()
     ),
     vaultAddress: settings.vault.address,
   }
 
-  const withTestnetState = await loadTestnetState(nextState, settings)
+  const withTestnetState = await loadTestnetState(newState, settings)
   const withEthBalance = await loadEthBalance(withTestnetState, settings)
   return withEthBalance
 }
