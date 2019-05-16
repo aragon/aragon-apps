@@ -37,11 +37,12 @@ const TransferRow = React.memo(
     }, [transactionHash, network])
 
     const [label, showLocalIdentityModal] = useIdentity(entity)
-    const handleEditLabel = () => showLocalIdentityModal(entity)
+    const handleEditLabel = useCallback(() => showLocalIdentityModal(entity))
 
     const txUrl = blockExplorerUrl('transaction', transactionHash, {
       networkType: network.type,
     })
+
     const formattedAmount = formatTokenAmount(
       amount,
       isIncoming,
@@ -49,6 +50,7 @@ const TransferRow = React.memo(
       true,
       { rounding: 5 }
     )
+
     const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
 
     if (smallViewMode) {

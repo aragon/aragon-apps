@@ -41,7 +41,7 @@ const HolderRow = React.memo(
     const canAssign = balance.lt(maxAccountTokens)
 
     const [label, showLocalIdentityModal] = useIdentity(address)
-    const handleEditLabel = () => showLocalIdentityModal(address)
+    const handleEditLabel = useCallback(() => showLocalIdentityModal(address))
 
     return (
       <TableRow>
