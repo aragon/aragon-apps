@@ -16,23 +16,33 @@ import { formatBalance } from '../utils'
 import You from './You'
 import { useIdentity } from './IdentityManager/IdentityManager'
 
-const HolderRow = React.memo(({ address, balance, groupMode, isCurrentUser, maxAccountTokens, network, tokenDecimalsBase, compact, onAssignTokens, onRemoveTokens }) => {
-    const handleAssignTokens = React.useCallback(() => {  
+const HolderRow = React.memo(
+  ({
+    address,
+    balance,
+    groupMode,
+    isCurrentUser,
+    maxAccountTokens,
+    network,
+    tokenDecimalsBase,
+    compact,
+    onAssignTokens,
+    onRemoveTokens,
+  }) => {
+    const handleAssignTokens = React.useCallback(() => {
       onAssignTokens(address)
     }, [address, onAssignTokens])
-  
+
     const handleRemoveTokens = React.useCallback(() => {
       onRemoveTokens(address)
     }, [address, onRemoveTokens])
-    
-
 
     const singleToken = balance.eq(tokenDecimalsBase)
     const canAssign = balance.lt(maxAccountTokens)
-    
+
     const [label, showLocalIdentityModal] = useIdentity(address)
     const handleEditLabel = () => showLocalIdentityModal(address)
-  
+
     return (
       <TableRow>
         <FirstTableCell css="padding-right: 0">
@@ -73,16 +83,14 @@ const HolderRow = React.memo(({ address, balance, groupMode, isCurrentUser, maxA
               <IconWrapper>
                 <IconLabel />
               </IconWrapper>
-              <ActionLabel>
-                {label ? 'Edit' : 'Add'} custom label
-              </ActionLabel>
+              <ActionLabel>{label ? 'Edit' : 'Add'} custom label</ActionLabel>
             </ContextMenuItem>
           </ContextMenu>
         </TableCell>
       </TableRow>
     )
-  
-})
+  }
+)
 
 HolderRow.defaultProps = {
   address: '',
@@ -90,7 +98,7 @@ HolderRow.defaultProps = {
   groupMode: false,
   onAssignTokens: () => {},
   onRemoveTokens: () => {},
- }
+}
 
 const FirstTableCell = styled(TableCell)`
   max-width: 0;
