@@ -71,7 +71,7 @@ async function initialize(tokenAddress) {
       return nextState
     },
     {
-      externals: [token],
+      externals: [{ contract: token }],
       init: initState({ token, tokenAddress }),
     }
   )
