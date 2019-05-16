@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { Subject } from 'rxjs'
 
@@ -9,22 +9,25 @@ const IdentityContext = React.createContext({
     Promise.reject(Error('Please set resolve using IdentityProvider')),
 })
 
-export function useIdentity(address) {
+function useIdentity(address) {
   const [name, setName] = useState(null)
   const { resolve, updates$, showLocalIdentityModal } = useContext(
     IdentityContext
   )
 
-  const handleNameChange = metadata => {
+  const handleNameChange = useCallback(metadata => {
     setName(metadata ? metadata.name : null)
-  }
+  }, [])
 
-  const handleShowLocalIdentityModal = address => {
-    // Emit an event whenever the modal is closed (when the promise resolves)
-    return showLocalIdentityModal(address)
-      .then(() => updates$.next(address))
-      .catch(e => null)
-  }
+  const handleShowLocalIdentityModal = useCallback(
+    address => {
+      // Emit an event whenever the modal is closed (when the promise resolves)
+      return showLocalIdentityModal(address)
+        .then(() => updates$.next(address))
+        .catch(e => null)
+    },
+    [showLocalIdentityModal, updates$]
+  )
 
   useEffect(() => {
     resolve(address).then(handleNameChange)
@@ -36,7 +39,7 @@ export function useIdentity(address) {
       }
     })
     return () => subscription.unsubscribe()
-  }, [address])
+  }, [address, handleNameChange, updates$])
 
   return [name, handleShowLocalIdentityModal]
 }
@@ -65,4 +68,4 @@ IdentityProvider.propTypes = {
 
 const IdentityConsumer = IdentityContext.Consumer
 
-export { IdentityProvider, IdentityConsumer, IdentityContext }
+export { IdentityConsumer, IdentityContext, IdentityProvider, useIdentity }
