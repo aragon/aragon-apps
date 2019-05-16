@@ -64,14 +64,14 @@ const HolderRow = React.memo(
           <ContextMenu>
             {canAssign && (
               <ContextMenuItem onClick={handleAssignTokens}>
-                <IconWrapper>
+                <IconWrapper css="top: -2px">
                   <IconAdd />
                 </IconWrapper>
                 <ActionLabel>Add tokens</ActionLabel>
               </ContextMenuItem>
             )}
             <ContextMenuItem onClick={handleRemoveTokens}>
-              <IconWrapper>
+              <IconWrapper css="top: -2px">
                 <IconRemove />
               </IconWrapper>
               <ActionLabel>
@@ -80,7 +80,7 @@ const HolderRow = React.memo(
               </ActionLabel>
             </ContextMenuItem>
             <ContextMenuItem onClick={handleEditLabel}>
-              <IconWrapper>
+              <IconWrapper css="left: 1px">
                 <IconLabel />
               </IconWrapper>
               <ActionLabel>{label ? 'Edit' : 'Add'} custom label</ActionLabel>
@@ -120,9 +120,12 @@ const Owner = styled.div`
 `
 
 const IconWrapper = styled.span`
+  position: relative;
   display: flex;
-  align-content: center;
-  margin-top: -3px;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
   color: ${theme.textSecondary};
 `
 
