@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { Subject } from 'rxjs'
 
@@ -10,8 +10,8 @@ const IdentityContext = React.createContext({
 })
 
 export function useIdentity(address) {
-  const [name, setName] = React.useState(null)
-  const { resolve, updates$, showLocalIdentityModal } = React.useContext(
+  const [name, setName] = useState(null)
+  const { resolve, updates$, showLocalIdentityModal } = useContext(
     IdentityContext
   )
 
@@ -26,7 +26,7 @@ export function useIdentity(address) {
       .catch(e => null)
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     resolve(address).then(handleNameChange)
 
     const subscription = updates$.subscribe(updatedAddress => {

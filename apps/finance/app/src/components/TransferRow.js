@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import styled from 'styled-components'
 import { format } from 'date-fns'
 import { useNetwork } from '@aragon/api-react'
@@ -27,7 +27,7 @@ const TransferRow = React.memo(
       transactionHash,
     } = transaction
 
-    const handleViewTransaction = React.useCallback(() => {
+    const handleViewTransaction = useCallback(() => {
       window.open(
         blockExplorerUrl('transaction', transactionHash, {
           networkType: network.type,
