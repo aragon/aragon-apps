@@ -3,6 +3,7 @@ import { useApi, useAppState, useConnectedAccount } from '@aragon/api-react'
 import BN from 'bn.js'
 import VAULT_BALANCE_ABI from './abi/vault-balance'
 import { usePriceFeedContract, usePriceFeedUpdate } from './pricefeed-hooks'
+import { getAllocationUpdateKey } from './utils/employee'
 import {
   useExternalContract,
   useNow,
@@ -105,22 +106,18 @@ export function useCurrentEmployee() {
   const api = useApi()
   const connectedAccount = useConnectedAccount()
   const { allowedTokens, employees } = useAppState()
+
+  // May be undefined if current connected account is not an employee
   const currentEmployee = employees.find(employee =>
     addressesEqual(employee.accountAddress, connectedAccount)
   )
 
-  const {
-    employeeId,
-    removed,
-    data: { lastAllocationUpdate },
-  } = currentEmployee
-  const updateKey = `${employeeId}:${lastAllocationUpdate.getTime()}`
-
   const currentEmployeeSalaryAllocations = usePromise(
     () => async () => {
-      if (removed) {
+      if (!currentEmployee || currentEmployee.removed) {
         return []
       }
+      const { employeeId } = currentEmployee
 
       const possibleAllocations = await Promise.all(
         allowedTokens.map(async token => {
@@ -138,7 +135,7 @@ export function useCurrentEmployee() {
         ({ allocation }) => !allocation.isZero()
       )
     },
-    [updateKey, allowedTokens]
+    [getAllocationUpdateKey(currentEmployee), allowedTokens]
   )
 
   return {
