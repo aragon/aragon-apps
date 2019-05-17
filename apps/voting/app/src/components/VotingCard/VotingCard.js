@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import { format } from 'date-fns'
-import { Badge, Countdown, Text, Button, theme } from '@aragon/ui'
+import { Badge, Timer, Text, Button, theme } from '@aragon/ui'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 import VotingOptions from './VotingOptions'
 import VoteText from '../VoteText'
@@ -60,7 +60,7 @@ const VotingCard = React.memo(
       >
         <Header>
           {open ? (
-            <Countdown end={endDate} />
+            <Timer end={endDate} maxUnits={4} />
           ) : (
             <PastDate
               dateTime={format(endDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")}
@@ -128,7 +128,7 @@ VotingCard.defaultProps = {
 
 const BadgeQuestion = () => (
   <Badge background="rgba(37, 49, 77, 0.16)" foreground="rgba(37, 49, 77, 1)">
-   Question
+    Question
   </Badge>
 )
 
