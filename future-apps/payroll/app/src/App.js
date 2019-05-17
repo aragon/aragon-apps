@@ -53,7 +53,10 @@ function App() {
   const mainButton =
     activeTab === 0
       ? {
-          buttonProps: currentEmployee ? {} : { disabled: true },
+          buttonProps:
+            currentEmployee && !currentEmployee.removed
+              ? {}
+              : { disabled: true },
           label: 'Request salary',
           onClick: requestSalaryPanel.requestOpen,
         }

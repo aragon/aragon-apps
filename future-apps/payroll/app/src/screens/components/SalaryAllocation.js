@@ -14,6 +14,7 @@ const SalaryAllocation = React.memo(({ allocations, onEditAllocation }) => {
     >
       <Section.Title>Salary allocation</Section.Title>
       {/* TODO: add partition bar */}
+      {/* TODO: disable if employee has been removed */}
       <Button
         mode="secondary"
         onClick={onEditAllocation}

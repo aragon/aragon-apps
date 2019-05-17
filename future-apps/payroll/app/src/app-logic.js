@@ -111,15 +111,22 @@ export function useCurrentEmployee() {
 
   const {
     employeeId,
+    removed,
     data: { lastAllocationUpdate },
   } = currentEmployee
   const updateKey = `${employeeId}:${lastAllocationUpdate.getTime()}`
 
   const currentEmployeeSalaryAllocations = usePromise(
     () => async () => {
+      if (removed) {
+        return []
+      }
+
       const possibleAllocations = await Promise.all(
         allowedTokens.map(async token => {
-          const allocation = await api.getAllocation(employeeId, token.address)
+          const allocation = await api
+            .call('getAllocation', employeeId, token.address)
+            .toPromise()
           return {
             token,
             allocation: new BN(allocation),

@@ -54,7 +54,7 @@ function appStateReducer(state) {
       decimals: new BN(denominationToken.decimals),
     },
 
-    employees: employees.map(({ data, payments, ...employee }) => {
+    employees: employees.map(({ data, payments = [], ...employee }) => {
       const {
         accruedSalary,
         bonus,
