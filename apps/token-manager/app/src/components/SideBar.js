@@ -1,9 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Text, breakpoint, theme } from '@aragon/ui'
+import { TokenBadge, Text, breakpoint, theme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { formatBalance, stakesPercentages } from '../utils'
-import TokenBadge from './TokenBadge'
 import You from './You'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
@@ -79,6 +78,7 @@ class SideBar extends React.Component {
                 address={tokenAddress}
                 name={tokenName}
                 symbol={tokenSymbol}
+                networkType={network.type}
               />
             </InfoRow>
           </ul>
