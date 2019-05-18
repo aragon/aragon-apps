@@ -28,7 +28,7 @@ const displayedStakes = (accounts, total) => {
   }))
 }
 
-class SideBar extends React.Component {
+class SideBar extends React.PureComponent {
   static defaultProps = {
     holders: [],
   }
@@ -41,6 +41,7 @@ class SideBar extends React.Component {
   }
   render() {
     const {
+      blankMode,
       holders,
       network,
       tokenAddress,
@@ -60,68 +61,72 @@ class SideBar extends React.Component {
               Token Info
             </Text>
           </h1>
-          <ul>
-            <InfoRow>
-              <span>Total Supply</span>
-              <span>:</span>
-              <strong>{formatBalance(tokenSupply, tokenDecimalsBase)}</strong>
-            </InfoRow>
-            <InfoRow>
-              <span>Transferable</span>
-              <span>:</span>
-              <strong>{this.transferableLabel()}</strong>
-            </InfoRow>
-            <InfoRow>
-              <span>Token</span>
-              <span>:</span>
-              <TokenBadge
-                address={tokenAddress}
-                name={tokenName}
-                symbol={tokenSymbol}
-                networkType={network.type}
-              />
-            </InfoRow>
-          </ul>
+          {!blankMode && (
+            <ul>
+              <InfoRow>
+                <span>Total Supply</span>
+                <span>:</span>
+                <strong>{formatBalance(tokenSupply, tokenDecimalsBase)}</strong>
+              </InfoRow>
+              <InfoRow>
+                <span>Transferable</span>
+                <span>:</span>
+                <strong>{this.transferableLabel()}</strong>
+              </InfoRow>
+              <InfoRow>
+                <span>Token</span>
+                <span>:</span>
+                <TokenBadge
+                  address={tokenAddress}
+                  name={tokenName}
+                  symbol={tokenSymbol}
+                  networkType={network.type}
+                />
+              </InfoRow>
+            </ul>
+          )}
         </Part>
-        <Part>
-          <h1>
-            <Text color={theme.textSecondary} smallcaps>
-              Ownership Distribution
+        {!blankMode && (
+          <Part>
+            <h1>
+              <Text color={theme.textSecondary} smallcaps>
+                Ownership Distribution
+              </Text>
+            </h1>
+            <Text size="large" weight="bold">
+              Token Holder Stakes
             </Text>
-          </h1>
-          <Text size="large" weight="bold">
-            Token Holder Stakes
-          </Text>
-          <StakesBar>
-            {stakes.map(({ name, stake, color }) => (
-              <div
-                key={name}
-                title={`${name}: ${stake}%`}
-                style={{
-                  width: `${stake}%`,
-                  height: '10px',
-                  background: color,
-                }}
-              />
-            ))}
-          </StakesBar>
-          <ul>
-            {stakes.map(({ name, stake, color }) => (
-              <StakesListItem key={name}>
-                <span>
-                  <StakesListBullet style={{ background: color }} />
-                  <LocalIdentityBadge
-                    entity={name}
-                    networkType={network.type}
-                    connectedAccount={name === userAccount}
-                  />
-                  {name === userAccount && <You />}
-                </span>
-                <strong>{stake}%</strong>
-              </StakesListItem>
-            ))}
-          </ul>
-        </Part>
+            <StakesBar>
+              {stakes.map(({ name, stake, color }) => (
+                <div
+                  key={name}
+                  title={`${name}: ${stake}%`}
+                  style={{
+                    width: `${stake}%`,
+                    height: '10px',
+                    background: color,
+                  }}
+                />
+              ))}
+            </StakesBar>
+            <ul>
+              {stakes.map(({ name, stake, color }) => (
+                <StakesListItem key={name}>
+                  <span>
+                    <StakesListBullet style={{ background: color }} />
+                    <LocalIdentityBadge
+                      entity={name}
+                      networkType={network.type}
+                      connectedAccount={name === userAccount}
+                    />
+                    {name === userAccount && <You />}
+                  </span>
+                  <strong>{stake}%</strong>
+                </StakesListItem>
+              ))}
+            </ul>
+          </Part>
+        )}
       </Main>
     )
   }
@@ -131,7 +136,7 @@ const Main = styled.aside`
   flex-shrink: 0;
   flex-grow: 0;
   min-height: 100%;
-  margin-top: 55px;
+  margin-top: 16px;
   padding: 0 20px;
 
   ${breakpoint(
@@ -139,8 +144,9 @@ const Main = styled.aside`
     `
       width: 260px;
       margin-left: 30px;
-      margin-top: unset;
+      margin-top: 0;
       padding: 0;
+      opacity: 1;
     `
   )};
 `
