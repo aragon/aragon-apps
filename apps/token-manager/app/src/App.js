@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import { Badge, Main, SidePanel } from '@aragon/ui'
+import { Badge, Main, SidePanel, SyncIndicator } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
@@ -10,15 +10,29 @@ import AssignTokensIcon from './components/AssignTokensIcon'
 import AppLayout from './components/AppLayout'
 import { addressesEqual } from './web3-utils'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
+import {
+  SYNC_STATUS_INITIALIZING,
+  SYNC_STATUS_READY,
+  SYNC_STATUS_SYNCING,
+  SyncStatusType,
+  useSyncStatus,
+} from './mock-sync-status'
 
 const initialAssignTokensConfig = {
   mode: null,
   holderAddress: '',
 }
 
+const syncLabel = status => {
+  if (status === SYNC_STATUS_INITIALIZING) return 'Initializing…'
+  if (status === SYNC_STATUS_SYNCING) return 'Syncing data…'
+  if (status === SYNC_STATUS_READY) return 'Ready.'
+}
+
 class App extends React.PureComponent {
   static propTypes = {
     api: PropTypes.object,
+    syncStatus: SyncStatusType,
   }
   static defaultProps = {
     appStateReady: false,
@@ -95,6 +109,7 @@ class App extends React.PureComponent {
       tokenTransfersEnabled,
       connectedAccount,
       requestMenu,
+      syncStatus,
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
     return (
@@ -104,6 +119,7 @@ class App extends React.PureComponent {
             onResolve={this.handleResolveLocalIdentity}
             onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
           >
+            <SyncIndicator visible={syncStatus === SYNC_STATUS_SYNCING} />
             <AppLayout
               title="Token Manager"
               afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
@@ -117,6 +133,7 @@ class App extends React.PureComponent {
             >
               {appStateReady && holders.length > 0 ? (
                 <Holders
+                  isLoading={syncStatus === SYNC_STATUS_INITIALIZING}
                   holders={holders}
                   groupMode={groupMode}
                   maxAccountTokens={maxAccountTokens}
@@ -167,11 +184,13 @@ class App extends React.PureComponent {
 
 export default () => {
   const { api, appState, connectedAccount, requestMenu } = useAragonApi()
+  const syncStatus = useSyncStatus()
   return (
     <App
       api={api}
       connectedAccount={connectedAccount}
       requestMenu={requestMenu}
+      syncStatus={syncStatus}
       {...appState}
     />
   )

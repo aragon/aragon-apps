@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import {
   TabBar,
@@ -9,20 +10,25 @@ import {
   breakpoint,
 } from '@aragon/ui'
 import HolderRow from '../components/HolderRow'
+import LoadingRow from '../components/LoadingRow'
 import SideBar from '../components/SideBar'
 
 const TABS = ['Holders', 'Token Info']
 
 class Holders extends React.Component {
-  state = { selectedTab: 0 }
-
+  static propTypes = {
+    holders: PropTypes.array,
+    isLoading: PropTypes.bool,
+  }
   static defaultProps = {
     holders: [],
   }
+  state = { selectedTab: 0 }
   render() {
     const {
       groupMode,
       holders,
+      isLoading,
       maxAccountTokens,
       onAssignTokens,
       onRemoveTokens,
@@ -34,7 +40,8 @@ class Holders extends React.Component {
       tokenTransfersEnabled,
       userAccount,
     } = this.props
-    const { selectedTab } = this.state
+
+    const selectedTab = isLoading ? 0 : this.state.selectedTab
 
     return (
       <Viewport>
@@ -48,13 +55,26 @@ class Holders extends React.Component {
                 {tabbedNavigation && (
                   <TabBarWrapper>
                     <TabBar
-                      items={TABS}
+                      items={TABS.map((tab, i) =>
+                        isLoading && i !== 0 ? (
+                          <span
+                            css={`
+                              color: #b3b3b3;
+                              cursor: default;
+                            `}
+                          >
+                            {tab}
+                          </span>
+                        ) : (
+                          tab
+                        )
+                      )}
                       selected={selectedTab}
                       onSelect={this.handleSelectTab}
                     />
                   </TabBarWrapper>
                 )}
-                <Screen selected={!tabbedNavigation || selectedTab === 0}>
+                {(!tabbedNavigation || selectedTab === 0) && (
                   <ResponsiveTable
                     header={
                       <TableRow>
@@ -75,27 +95,32 @@ class Holders extends React.Component {
                     }
                     noSideBorders={compactTable}
                   >
-                    {holders.map(({ address, balance }) => (
-                      <HolderRow
-                        key={address}
-                        address={address}
-                        balance={balance}
-                        groupMode={groupMode}
-                        isCurrentUser={Boolean(
-                          userAccount && userAccount === address
-                        )}
-                        maxAccountTokens={maxAccountTokens}
-                        tokenDecimalsBase={tokenDecimalsBase}
-                        onAssignTokens={onAssignTokens}
-                        onRemoveTokens={onRemoveTokens}
-                        compact={compactTable}
-                      />
-                    ))}
+                    {isLoading ? (
+                      <LoadingRow groupMode={groupMode} />
+                    ) : (
+                      holders.map(({ address, balance }) => (
+                        <HolderRow
+                          key={address}
+                          address={address}
+                          balance={balance}
+                          groupMode={groupMode}
+                          isCurrentUser={Boolean(
+                            userAccount && userAccount === address
+                          )}
+                          maxAccountTokens={maxAccountTokens}
+                          tokenDecimalsBase={tokenDecimalsBase}
+                          onAssignTokens={onAssignTokens}
+                          onRemoveTokens={onRemoveTokens}
+                          compact={compactTable}
+                        />
+                      ))
+                    )}
                   </ResponsiveTable>
-                </Screen>
+                )}
               </Main>
-              <Screen selected={!tabbedNavigation || selectedTab === 1}>
-                <ResponsiveSideBar
+              {(!tabbedNavigation || selectedTab === 1) && (
+                <SideBar
+                  blankMode={isLoading}
                   holders={holders}
                   tokenAddress={tokenAddress}
                   tokenDecimalsBase={tokenDecimalsBase}
@@ -105,7 +130,7 @@ class Holders extends React.Component {
                   tokenTransfersEnabled={tokenTransfersEnabled}
                   userAccount={userAccount}
                 />
-              </Screen>
+              )}
             </TwoPanels>
           )
         }}
@@ -117,8 +142,6 @@ class Holders extends React.Component {
     this.setState({ selectedTab: index })
   }
 }
-
-const Screen = ({ selected, children }) => selected && children
 
 const TabBarWrapper = styled.div`
   margin-top: 16px;
@@ -142,18 +165,6 @@ const ResponsiveTable = styled(Table)`
   )};
 `
 
-const ResponsiveSideBar = styled(SideBar)`
-  margin-top: 16px;
-
-  ${breakpoint(
-    'medium',
-    `
-      opacity: 1;
-      margin-top: 0;
-    `
-  )};
-`
-
 const Main = styled.div`
   max-width: 100%;
 
@@ -166,7 +177,6 @@ const Main = styled.div`
 `
 const TwoPanels = styled.div`
   width: 100%;
-
   ${breakpoint(
     'medium',
     `
