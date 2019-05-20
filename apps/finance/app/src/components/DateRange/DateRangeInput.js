@@ -185,7 +185,7 @@ class DateRangeInput extends React.PureComponent {
               {(!compactMode || !startDateSelected) && (
                 <DatePicker
                   key={`start-picker-${startDate}`}
-                  name="start-date-picker"
+                  name="Start date"
                   currentDate={startDate}
                   onSelect={this.handleSelectStartDate}
                   overlay={false}
@@ -194,7 +194,7 @@ class DateRangeInput extends React.PureComponent {
               {(!compactMode || startDateSelected) && (
                 <DatePicker
                   key={`end-picker-${endDate}`}
-                  name="end-date-picker"
+                  name="End date"
                   currentDate={endDate}
                   onSelect={this.handleSelectEndDate}
                   overlay={false}
