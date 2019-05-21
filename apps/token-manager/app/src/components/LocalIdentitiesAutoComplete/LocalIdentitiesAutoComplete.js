@@ -93,8 +93,12 @@ const LocalAutoComplete = React.forwardRef(
     const [items, setItems] = useState([])
     const [defaultSelected, setDefaultSelected] = useState(null)
 
-    const handleChange = ({ address = '' } = {}) => {
-      onChange(address)
+    const handleChange = data => {
+      if (data.address) {
+        onChange(data.address)
+        return
+      }
+      onChange(data)
     }
     const handleSearch = value => {
       if (value.length < 3) {
