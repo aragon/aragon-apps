@@ -63,11 +63,25 @@ class DatePicker extends React.PureComponent {
   }
 
   render() {
+    const { name } = this.props
     const today = startOfDay(new Date())
     const { value: selected = today } = this.state
 
     return (
       <Container overlay={this.props.overlay}>
+        {name && (
+          <Text
+            size="normal"
+            weight="bold"
+            css={`
+              text-align: center;
+              margin-bottom: 2px;
+            `}
+          >
+            {name}
+          </Text>
+        )}
+
         {!this.props.hideYearSelector && (
           <Selector>
             <ArrowButton onClick={this.previousYear}>◀</ArrowButton>
@@ -128,6 +142,7 @@ class DatePicker extends React.PureComponent {
 
 DatePicker.propTypes = {
   currentDate: PropTypes.instanceOf(Date),
+  name: PropTypes.string,
 
   // Events
   onSelect: PropTypes.func,
@@ -227,11 +242,12 @@ const DayView = styled.li`
     props.disabled &&
     css`
       pointer-events: none;
-      color: ${theme.disabled};
+      color: #fff;
     `}
 
   ${props =>
     props.selected &&
+    !props.disabled &&
     css`
       &&& {
         background: ${mainColor};
