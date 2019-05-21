@@ -26,7 +26,12 @@ const AutoComplete = React.forwardRef(
 
     const selectedRef = useRef()
     const wrapRef = useRef()
-    const handleClose = () => setOpened(false)
+    const handleClose = () => {
+      setOpened(false)
+      if (!selected) {
+        onChange(searchValue)
+      }
+    }
     const handleSearch = ({ target: { value = '' } }) => {
       if (value === '') {
         setTimeout(() => onChange(), 0)
@@ -51,6 +56,9 @@ const AutoComplete = React.forwardRef(
       setOpened(true)
       setTimeout(() => ref.current && ref.current.focus(), 0)
     }
+    const handleInputFocus = () => {
+      setOpened(true)
+    }
 
     useClickOutside(handleClose, wrapRef)
     const { handleBlur } = useOnBlur(handleClose, wrapRef)
@@ -71,6 +79,7 @@ const AutoComplete = React.forwardRef(
             required={required}
             onChange={handleSearch}
             value={searchValue}
+            onFocus={handleInputFocus}
           />
         )}
         {selected && (
