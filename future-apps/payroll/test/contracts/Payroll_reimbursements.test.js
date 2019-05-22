@@ -1,9 +1,9 @@
 const PAYMENT_TYPES = require('../helpers/payment_types')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { getEvents, getEventArgument } = require('../../../../shared/test-helpers/events')
+const { getEvents, getEventArgument } = require('@aragon/test-helpers/events')
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
-const { ONE, bn, bigExp, annualSalaryPerSecond, MAX_UINT256 } = require('../helpers/numbers')(web3)
+const { bn, bigExp, annualSalaryPerSecond, MAX_UINT256 } = require('../helpers/numbers')(web3)
 const { USD, DAI_RATE, ANT_RATE, inverseRate, exchangedAmount, deployDAI, deployANT, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
 
 contract('Payroll reimbursements', ([owner, employee, anyone]) => {

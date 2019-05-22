@@ -1,6 +1,6 @@
 const PAYMENT_TYPES = require('../helpers/payment_types')
-const { getEventAt } = require('../../../../shared/test-helpers/events')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { assertEvent } = require('@aragon/test-helpers/assertEvent')(web3)
 const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
@@ -33,9 +33,7 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
         context('when it does not reach the maximum amount allowed', () => {
           it('can allow a token', async () => {
             const receipt = await payroll.addAllowedToken(DAI.address, { from })
-
-            const event = getEventAt(receipt, 'AddAllowedToken')
-            assert.equal(event.token, DAI.address, 'denomination token address should match')
+            assertEvent(receipt, 'AddAllowedToken', { token: DAI.address })
 
             assert.equal(await payroll.getAllowedTokensArrayLength(), 1, 'allowed tokens length does not match')
             assert(await payroll.isTokenAllowed(DAI.address), 'denomination token should be allowed')
@@ -43,9 +41,7 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
 
           it('can allow a the zero address', async () => {
             const receipt = await payroll.addAllowedToken(ZERO_ADDRESS, { from })
-
-            const event = getEventAt(receipt, 'AddAllowedToken')
-            assert.equal(event.token, ZERO_ADDRESS, 'denomination token address should match')
+            assertEvent(receipt, 'AddAllowedToken', { token: ZERO_ADDRESS })
 
             assert.equal(await payroll.getAllowedTokensArrayLength(), 1, 'allowed tokens length does not match')
             assert(await payroll.isTokenAllowed(ZERO_ADDRESS), 'zero address token should be allowed')
