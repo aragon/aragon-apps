@@ -13,20 +13,20 @@ const Container = styled.div`
 class DateInput extends React.PureComponent {
   state = {
     showPicker: false,
-    value: this.props.value
+    value: this.props.value,
   }
 
-  get formattedValue () {
+  get formattedValue() {
     const { value } = this.state
 
     return isDate(value) ? formatDate(value, this.props.format) : ''
   }
 
-  componentWillUnmount () {
+  componentWillUnmount() {
     document.removeEventListener('mousedown', this.handleClickOutside)
   }
 
-  componentDidUpdate (prevProps, prevState) {
+  componentDidUpdate(prevProps, prevState) {
     if (this.state.showPicker !== prevState.showPicker) {
       if (this.state.showPicker) {
         document.addEventListener('mousedown', this.handleClickOutside)
@@ -36,18 +36,18 @@ class DateInput extends React.PureComponent {
     }
   }
 
-  handleClick = (event) => {
+  handleClick = event => {
     event.stopPropagation()
     this.setState({ showPicker: true })
   }
 
-  handleClickOutside = (event) => {
+  handleClickOutside = event => {
     if (this.rootRef && !this.rootRef.contains(event.target)) {
       this.setState({ showPicker: false })
     }
   }
 
-  handleSelect = (date) => {
+  handleSelect = date => {
     if (typeof this.props.onChange === 'function') {
       this.props.onChange(date)
     }
@@ -55,21 +55,18 @@ class DateInput extends React.PureComponent {
     this.setState({ showPicker: false })
   }
 
-  render () {
+  render() {
     return (
       <Container
-        innerRef={el => this.rootRef = el}
+        innerRef={el => (this.rootRef = el)}
         onClick={this.handleClick}
       >
-        <BaseInput
-          value={this.formattedValue}
-          readOnly={true}
-        />
+        <BaseInput {...this.props} value={this.formattedValue} readOnly />
         {this.state.showPicker && (
           <DatePicker
             currentDate={this.state.value}
             onSelect={this.handleSelect}
-            overlay={true}
+            overlay
           />
         )}
       </Container>
@@ -80,12 +77,12 @@ class DateInput extends React.PureComponent {
 DateInput.propTypes = {
   format: PropTypes.string,
   onChange: PropTypes.func,
-  value: PropTypes.any
+  value: PropTypes.any,
 }
 
 DateInput.defaultProps = {
   format: 'LL/dd/yyyy',
-  onChange: () => {}
+  onChange: () => {},
 }
 
 export default DateInput

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import styled from 'styled-components'
 import {
   ContextMenu,
@@ -9,41 +9,39 @@ import {
   TableRow,
   theme,
 } from '@aragon/ui'
+import IconLabel from './IconLabel'
+import { useNetwork } from '@aragon/api-react'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
-import provideNetwork from '../provide-network'
 import { formatBalance } from '../utils'
 import You from './You'
+import { useIdentity } from './IdentityManager/IdentityManager'
 
-class HolderRow extends React.Component {
-  static defaultProps = {
-    address: '',
-    balance: 0,
-    groupMode: false,
-    onAssignTokens: () => {},
-    onRemoveTokens: () => {},
-  }
-  handleAssignTokens = () => {
-    const { address, onAssignTokens } = this.props
-    onAssignTokens(address)
-  }
-  handleRemoveTokens = () => {
-    const { address, onRemoveTokens } = this.props
-    onRemoveTokens(address)
-  }
-  render() {
-    const {
-      address,
-      balance,
-      groupMode,
-      isCurrentUser,
-      maxAccountTokens,
-      network,
-      tokenDecimalsBase,
-      compact,
-    } = this.props
+const HolderRow = React.memo(
+  ({
+    address,
+    balance,
+    groupMode,
+    isCurrentUser,
+    maxAccountTokens,
+    network,
+    tokenDecimalsBase,
+    compact,
+    onAssignTokens,
+    onRemoveTokens,
+  }) => {
+    const handleAssignTokens = useCallback(() => {
+      onAssignTokens(address)
+    }, [address, onAssignTokens])
+
+    const handleRemoveTokens = useCallback(() => {
+      onRemoveTokens(address)
+    }, [address, onRemoveTokens])
 
     const singleToken = balance.eq(tokenDecimalsBase)
     const canAssign = balance.lt(maxAccountTokens)
+
+    const [label, showLocalIdentityModal] = useIdentity(address)
+    const handleEditLabel = useCallback(() => showLocalIdentityModal(address))
 
     return (
       <TableRow>
@@ -65,15 +63,15 @@ class HolderRow extends React.Component {
         <TableCell align="right" css="padding-left: 0">
           <ContextMenu>
             {canAssign && (
-              <ContextMenuItem onClick={this.handleAssignTokens}>
-                <IconWrapper>
+              <ContextMenuItem onClick={handleAssignTokens}>
+                <IconWrapper css="top: -2px">
                   <IconAdd />
                 </IconWrapper>
-                <ActionLabel>Assign Tokens</ActionLabel>
+                <ActionLabel>Add tokens</ActionLabel>
               </ContextMenuItem>
             )}
-            <ContextMenuItem onClick={this.handleRemoveTokens}>
-              <IconWrapper>
+            <ContextMenuItem onClick={handleRemoveTokens}>
+              <IconWrapper css="top: -2px">
                 <IconRemove />
               </IconWrapper>
               <ActionLabel>
@@ -81,11 +79,25 @@ class HolderRow extends React.Component {
                 {singleToken ? '' : 's'}
               </ActionLabel>
             </ContextMenuItem>
+            <ContextMenuItem onClick={handleEditLabel}>
+              <IconWrapper css="left: 1px">
+                <IconLabel />
+              </IconWrapper>
+              <ActionLabel>{label ? 'Edit' : 'Add'} custom label</ActionLabel>
+            </ContextMenuItem>
           </ContextMenu>
         </TableCell>
       </TableRow>
     )
   }
+)
+
+HolderRow.defaultProps = {
+  address: '',
+  balance: 0,
+  groupMode: false,
+  onAssignTokens: () => {},
+  onRemoveTokens: () => {},
 }
 
 const FirstTableCell = styled(TableCell)`
@@ -108,10 +120,16 @@ const Owner = styled.div`
 `
 
 const IconWrapper = styled.span`
+  position: relative;
   display: flex;
-  align-content: center;
-  margin-top: -3px;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
   color: ${theme.textSecondary};
 `
 
-export default provideNetwork(HolderRow)
+export default props => {
+  const network = useNetwork()
+  return <HolderRow network={network} {...props} />
+}

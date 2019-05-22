@@ -24,7 +24,7 @@
   "dependencies": [
     {
       "appName": "finance.aragonpm.eth",
-      "version": "^1.0.0",
+      "version": "^3.0.0",
       "initParam": "_finance",
       "state": "finance",
       "requiredPermissions": [
@@ -39,27 +39,32 @@
     {
       "name": "Add employees",
       "id": "ADD_EMPLOYEE_ROLE",
-      "params": ["Account address", "Initial yearly salary", "Start date"]
+      "params": ["Account address", "Initial yearly salary per second", "Start date"]
     },
     {
       "name": "Terminate employees",
       "id": "TERMINATE_EMPLOYEE_ROLE",
-      "params": ["Employee Id"]
+      "params": ["Employee Id", "End date"]
     },
     {
       "name": "Set employee salary",
       "id": "SET_EMPLOYEE_SALARY_ROLE",
-      "params": ["Employee Id", "Yearly salary"]
+      "params": ["Employee Id", "New yearly salary per second", "Old yearly salary per second"]
     },
     {
-      "name": "Add accrued value for employee",
-      "id": "ADD_ACCRUED_VALUE_ROLE",
+      "name": "Add bonuses for employee",
+      "id": "ADD_BONUS_ROLE",
+      "params": ["Employee Id", "Amount"]
+    },
+    {
+      "name": "Add reimbursements for employee",
+      "id": "ADD_REIMBURSEMENT_ROLE",
       "params": ["Employee Id", "Amount"]
     },
     {
       "name": "Allowed Tokens Manager",
       "id": "ALLOWED_TOKENS_MANAGER_ROLE",
-      "params": ["Token"]
+      "params": ["New token"]
     },
     {
       "name": "Change Price Feed",

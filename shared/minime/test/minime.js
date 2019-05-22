@@ -38,9 +38,7 @@ contract('MiniMeToken', accounts => {
             assert.equal(await token.totalSupplyAt(block - 1), 100, 'total supply should be 100 in previous block')
             assert.equal(await token.balanceOf(accounts[1]), 80, 'should have destroyed 20 tokens from orignal amount')
 
-            return assertRevert(async () => {
-                await token.destroyTokens(accounts[2], 100)
-            })
+            await assertRevert(token.destroyTokens(accounts[2], 100))
         })
     })
 
@@ -77,16 +75,12 @@ contract('MiniMeToken', accounts => {
         it('claim tokens', async () => {
             assert.ok(await token.claimTokens(0x0))
             assert.ok(await token.claimTokens(token.address))
-            return assertRevert(async () => {
-                await token.transfer(token.address, 5)
-            })
+            await assertRevert(token.transfer(token.address, 5))
         })
 
         it('disable transfers', async () => {
             await token.enableTransfers(false)
-            return assertRevert(async () => {
-                await token.transfer(accounts[3], 5)
-            })
+            await assertRevert(token.transfer(accounts[3], 5))
         })
 
         it('re-enable transfers', async () => {
@@ -104,9 +98,7 @@ contract('MiniMeToken', accounts => {
 
         it('refuse new allowances if transfer are disabled', async () => {
             await token.enableTransfers(false)
-            return assertRevert(async () => {
-                await token.approve(accounts[2], 10)
-            })
+            await assertRevert(token.approve(accounts[2], 10))
         })
     })
 

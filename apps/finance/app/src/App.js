@@ -1,15 +1,13 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import BN from 'bn.js'
-import { map } from 'rxjs/operators'
-import { EmptyStateCard, Main, SidePanel, observe } from '@aragon/ui'
+import { EmptyStateCard, Main, SidePanel } from '@aragon/ui'
+import { useAragonApi } from '@aragon/api-react'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
 import AppLayout from './components/AppLayout'
 import NewTransferIcon from './components/NewTransferIcon'
-import { networkContextType } from './lib/provideNetwork'
 import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
@@ -17,30 +15,16 @@ import addFundsIcon from './components/assets/add-funds-icon.svg'
 
 class App extends React.Component {
   static propTypes = {
-    app: PropTypes.object.isRequired,
-    sendMessageToWrapper: PropTypes.func.isRequired,
-    proxyAddress: PropTypes.string,
+    api: PropTypes.object,
+    appState: PropTypes.object,
   }
   static defaultProps = {
     balances: [],
     transactions: [],
     tokens: [],
-    network: {},
-    userAccount: '',
-  }
-  static childContextTypes = {
-    network: networkContextType,
   }
   state = {
     newTransferOpened: false,
-  }
-  getChildContext() {
-    const { network } = this.props
-    return {
-      network: {
-        type: network.type,
-      },
-    }
   }
   handleNewTransferOpen = () => {
     this.setState({ newTransferOpened: true })
@@ -50,19 +34,17 @@ class App extends React.Component {
   }
   handleWithdraw = (tokenAddress, recipient, amount, reference) => {
     // Immediate, one-time payment
-    this.props.app.newPayment(
+    this.props.api.newImmediatePayment(
       tokenAddress,
       recipient,
       amount,
-      0, // initial payment time
-      0, // interval
-      1, // max repeats
       reference
     )
     this.handleNewTransferClose()
   }
   handleDeposit = async (tokenAddress, amount, reference) => {
-    const { app, periodDuration, periods } = this.props
+    const { api, appState } = this.props
+    const { periodDuration, periods } = appState
 
     let intentParams
     if (tokenAddress === ETHER_TOKEN_FAKE_ADDRESS) {
@@ -90,32 +72,23 @@ class App extends React.Component {
       }
     }
 
-    app.deposit(tokenAddress, amount, reference, intentParams)
+    api.deposit(tokenAddress, amount, reference, intentParams)
     this.handleNewTransferClose()
   }
 
-  handleMenuPanelOpen = () => {
-    this.props.sendMessageToWrapper('menuPanel', true)
-  }
   handleResolveLocalIdentity = address => {
-    return this.props.app.resolveAddressIdentity(address).toPromise()
+    return this.props.api.resolveAddressIdentity(address).toPromise()
   }
   handleShowLocalIdentityModal = address => {
-    return this.props.app
+    return this.props.api
       .requestAddressIdentityModification(address)
       .toPromise()
   }
 
   render() {
-    const {
-      app,
-      balances,
-      transactions,
-      tokens,
-      proxyAddress,
-      userAccount,
-    } = this.props
+    const { appState } = this.props
     const { newTransferOpened } = this.state
+    const { balances, transactions, tokens, proxyAddress } = appState
 
     return (
       <Main assetsUrl="./aragon-ui">
@@ -126,7 +99,6 @@ class App extends React.Component {
           >
             <AppLayout
               title="Finance"
-              onMenuOpen={this.handleMenuPanelOpen}
               mainButton={{
                 label: 'New transfer',
                 icon: <NewTransferIcon />,
@@ -141,7 +113,11 @@ class App extends React.Component {
               )}
               {transactions.length > 0 && (
                 <SpacedBlock>
-                  <Transfers transactions={transactions} tokens={tokens} />
+                  <Transfers
+                    dao={proxyAddress}
+                    transactions={transactions}
+                    tokens={tokens}
+                  />
                 </SpacedBlock>
               )}
               {balances.length === 0 && transactions.length === 0 && (
@@ -150,7 +126,7 @@ class App extends React.Component {
                     icon={<img src={addFundsIcon} alt="" />}
                     title="There are no funds yet"
                     text="Create a new transfer to get started."
-                    actionText="New Transfer"
+                    actionText="New transfer"
                     onActivate={this.handleNewTransferOpen}
                   />
                 </EmptyScreen>
@@ -159,16 +135,14 @@ class App extends React.Component {
             <SidePanel
               opened={newTransferOpened}
               onClose={this.handleNewTransferClose}
-              title="New Transfer"
+              title="New transfer"
             >
               <NewTransferPanelContent
-                app={app}
                 opened={newTransferOpened}
                 tokens={tokens}
                 onWithdraw={this.handleWithdraw}
                 onDeposit={this.handleDeposit}
                 proxyAddress={proxyAddress}
-                userAccount={userAccount}
               />
             </SidePanel>
           </IdentityProvider>
@@ -192,75 +166,7 @@ const SpacedBlock = styled.div`
   }
 `
 
-// Use this function to sort by ETH and then token symbol
-const compareBalancesByEthAndSymbol = (tokenA, tokenB) => {
-  if (tokenA.address === ETHER_TOKEN_FAKE_ADDRESS) {
-    return -1
-  }
-  if (tokenB.address === ETHER_TOKEN_FAKE_ADDRESS) {
-    return 1
-  }
-  return tokenA.symbol.localeCompare(tokenB.symbol)
+export default () => {
+  const { api, appState } = useAragonApi()
+  return <App api={api} appState={appState} />
 }
-
-export default observe(
-  observable =>
-    observable.pipe(
-      map(state => {
-        const { balances, transactions } = state || {}
-
-        const balancesBn = balances
-          ? balances
-              .map(balance => ({
-                ...balance,
-                amount: new BN(balance.amount),
-                decimals: new BN(balance.decimals),
-                // Note that numbers in `numData` are not safe for accurate
-                // computations (but are useful for making divisions easier).
-                numData: {
-                  amount: parseInt(balance.amount, 10),
-                  decimals: parseInt(balance.decimals, 10),
-                },
-              }))
-              .sort(compareBalancesByEthAndSymbol)
-          : []
-
-        const transactionsBn = transactions
-          ? transactions.map(transaction => ({
-              ...transaction,
-              amount: new BN(transaction.amount),
-              numData: {
-                amount: parseInt(transaction.amount, 10),
-              },
-            }))
-          : []
-
-        return {
-          ...state,
-
-          tokens: balancesBn.map(
-            ({
-              address,
-              name,
-              symbol,
-              numData: { amount, decimals },
-              verified,
-            }) => ({
-              address,
-              amount,
-              decimals,
-              name,
-              symbol,
-              verified,
-            })
-          ),
-
-          // Filter out empty balances
-          balances: balancesBn.filter(balance => !balance.amount.isZero()),
-
-          transactions: transactionsBn,
-        }
-      })
-    ),
-  {}
-)(App)

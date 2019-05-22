@@ -1,36 +1,65 @@
 import React from 'react'
-import { AppBar, AppView, AragonApp, Button } from '@aragon/ui'
-import Tab from './components/Tab'
+import styled from 'styled-components'
+import { AppBar, AppView, AragonApp, Button, TabBar, theme } from '@aragon/ui'
 
 import { MyPayroll, TeamPayroll } from './screens'
-import { AddEmployee } from './panels'
+import { AddEmployee, RequestSalary } from './panels'
+
+const appBarTitle = 'Payroll'
+const tabTitles = ['My payroll', 'Team payroll']
+const tabNames = ['my-payroll', 'team-payroll']
+
+const [MY_PAYROLL, TEAM_PAYROLL] = tabNames
+const activeTab = MY_PAYROLL
+const selectedTab = 0
 
 export default class App extends React.Component {
   state = {
-    activeTab: 'my-payroll',
-    showAddEmployeePanel: false
+    activeTab,
+    selectedTab,
+    showAddEmployeePanel: false,
+    showRequestSalaryPanel: false,
+  }
+
+  componentDidMount() {
+    // If using Parcel, reload instead of using HMR.
+    // HMR makes the app disconnect from the wrapper and the state is empty until a reload
+    // See: https://github.com/parcel-bundler/parcel/issues/289
+    if (module.hot) {
+      module.hot.dispose(() => {
+        window.location.reload()
+      })
+    }
   }
 
   showAddEmployeePanel = () => {
     this.setState({ showAddEmployeePanel: true })
   }
 
-  hidePanels = () => {
+  showRequestSalaryPanel = () => {
+    this.setState({ showRequestSalaryPanel: true })
+  }
+
+  hideAddEmployeePanel = () => {
     this.setState({ showAddEmployeePanel: false })
   }
 
-  renderActionButtons () {
+  hideRequestSalaryPanel = () => {
+    this.setState({ showRequestSalaryPanel: false })
+  }
+
+  renderActionButtons() {
     switch (this.state.activeTab) {
-      case 'my-payroll':
+      case MY_PAYROLL:
         return (
-          <Button mode='strong'>
+          <Button mode="strong" onClick={this.showRequestSalaryPanel}>
             Request salary
           </Button>
         )
 
-      case 'team-payroll':
+      case TEAM_PAYROLL:
         return (
-          <Button mode='strong' onClick={this.showAddEmployeePanel}>
+          <Button mode="strong" onClick={this.showAddEmployeePanel}>
             Add new employee
           </Button>
         )
@@ -40,45 +69,57 @@ export default class App extends React.Component {
     }
   }
 
-  render () {
+  render() {
     const header = (
       <React.Fragment>
-        <AppBar title='Payroll' endContent={this.renderActionButtons()}/>
+        <AppBar
+          title={appBarTitle}
+          endContent={this.renderActionButtons()}
+          data-testid="app-bar"
+        />
 
-        <Tab.Container>
-          <Tab
-            title='My payroll'
-            active={this.state.activeTab === 'my-payroll'}
-            onClick={() => this.setState({ activeTab: 'my-payroll' })}
-          />
+        <TabContainer>
+          <TabBar
+            items={tabTitles}
+            selected={this.state.selectedTab}
+            onSelect={index => {
+              const activeTab = tabNames[index]
 
-          <Tab
-            title='Team payroll'
-            active={this.state.activeTab === 'team-payroll'}
-            onClick={() => this.setState({ activeTab: 'team-payroll' })}
+              this.setState({
+                activeTab,
+                selectedTab: index,
+              })
+            }}
           />
-        </Tab.Container>
+        </TabContainer>
       </React.Fragment>
     )
 
     return (
-      <AragonApp publicUrl='./aragon-ui/'>
+      <AragonApp publicUrl="./aragon-ui/">
         <AppView appBar={header}>
-          {this.state.activeTab === 'my-payroll' && (
-            <MyPayroll {...this.props}/>
-          )}
+          {this.state.activeTab === MY_PAYROLL && <MyPayroll />}
 
-          {this.state.activeTab === 'team-payroll' && (
-            <TeamPayroll {...this.props}/>
-          )}
+          {this.state.activeTab === TEAM_PAYROLL && <TeamPayroll />}
         </AppView>
 
         <AddEmployee
-          {...this.props}
           opened={this.state.showAddEmployeePanel}
-          onClose={this.hidePanels}
+          onClose={this.hideAddEmployeePanel}
+        />
+
+        <RequestSalary
+          opened={this.state.showRequestSalaryPanel}
+          onClose={this.hideRequestSalaryPanel}
         />
       </AragonApp>
     )
   }
 }
+
+const TabContainer = styled.div.attrs({ 'data-testid': 'tab-container' })`
+  margin: 0;
+  list-style-type: none;
+  background: ${theme.contentBackground};
+  margin-top: -1px; // Overlap AppBar border
+`

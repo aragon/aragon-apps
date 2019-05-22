@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import styled from 'styled-components'
 import { format } from 'date-fns'
+import { useNetwork } from '@aragon/api-react'
 import {
   TableRow,
   TableCell,
@@ -9,43 +10,39 @@ import {
   blockExplorerUrl,
   theme,
 } from '@aragon/ui'
-import provideNetwork from '../lib/provideNetwork'
 import { formatTokenAmount } from '../lib/utils'
 import IconTokens from './icons/IconTokens'
+import IconLabel from './icons/IconLabel'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
+import { useIdentity } from './IdentityManager/IdentityManager'
 
-class TransferRow extends React.PureComponent {
-  handleViewTransaction = () => {
+const TransferRow = React.memo(
+  ({ network, transaction, token, smallViewMode }) => {
     const {
-      network,
-      transaction: { transactionHash },
-    } = this.props
-    window.open(
-      blockExplorerUrl('transaction', transactionHash, {
-        networkType: network.type,
-      }),
-      '_blank'
-    )
-  }
+      date,
+      entity,
+      isIncoming,
+      numData: { amount },
+      reference,
+      transactionHash,
+    } = transaction
 
-  render() {
-    const {
-      network,
-      token,
-      smallViewMode,
-      transaction: {
-        date,
-        entity,
-        isIncoming,
-        numData: { amount },
-        reference,
-        transactionHash,
-      },
-    } = this.props
+    const handleViewTransaction = useCallback(() => {
+      window.open(
+        blockExplorerUrl('transaction', transactionHash, {
+          networkType: network.type,
+        }),
+        '_blank'
+      )
+    }, [transactionHash, network])
+
+    const [label, showLocalIdentityModal] = useIdentity(entity)
+    const handleEditLabel = useCallback(() => showLocalIdentityModal(entity))
 
     const txUrl = blockExplorerUrl('transaction', transactionHash, {
       networkType: network.type,
     })
+
     const formattedAmount = formatTokenAmount(
       amount,
       isIncoming,
@@ -53,6 +50,7 @@ class TransferRow extends React.PureComponent {
       true,
       { rounding: 5 }
     )
+
     const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
 
     if (smallViewMode) {
@@ -115,9 +113,19 @@ class TransferRow extends React.PureComponent {
           <div css="position: relative">
             {txUrl && (
               <ContextMenu>
-                <ContextMenuItem onClick={this.handleViewTransaction}>
-                  <IconTokens />
+                <ContextMenuItem onClick={handleViewTransaction}>
+                  <IconWrapper>
+                    <IconTokens />
+                  </IconWrapper>
                   <div css="margin-left: 15px">View Transaction</div>
+                </ContextMenuItem>
+                <ContextMenuItem onClick={handleEditLabel}>
+                  <IconWrapper>
+                    <IconLabel />
+                  </IconWrapper>
+                  <div css="margin-left: 15px">
+                    {label ? 'Edit' : 'Add'} custom label
+                  </div>
                 </ContextMenuItem>
               </ContextMenu>
             )}
@@ -126,7 +134,7 @@ class TransferRow extends React.PureComponent {
       </TableRow>
     )
   }
-}
+)
 
 const StyledTableCell = styled(TableCell)`
   max-width: 0;
@@ -172,4 +180,16 @@ const TextOverflow = styled.div`
   text-overflow: ellipsis;
 `
 
-export default provideNetwork(TransferRow)
+const IconWrapper = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: ${theme.textSecondary};
+`
+
+export default props => {
+  const network = useNetwork()
+  return <TransferRow network={network} {...props} />
+}

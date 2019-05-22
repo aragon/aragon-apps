@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { Subject } from 'rxjs'
 
@@ -8,6 +8,41 @@ const IdentityContext = React.createContext({
   resolve: () =>
     Promise.reject(Error('Please set resolve using IdentityProvider')),
 })
+
+function useIdentity(address) {
+  const [name, setName] = useState(null)
+  const { resolve, updates$, showLocalIdentityModal } = useContext(
+    IdentityContext
+  )
+
+  const handleNameChange = useCallback(metadata => {
+    setName(metadata ? metadata.name : null)
+  }, [])
+
+  const handleShowLocalIdentityModal = useCallback(
+    address => {
+      // Emit an event whenever the modal is closed (when the promise resolves)
+      return showLocalIdentityModal(address)
+        .then(() => updates$.next(address))
+        .catch(e => null)
+    },
+    [showLocalIdentityModal, updates$]
+  )
+
+  useEffect(() => {
+    resolve(address).then(handleNameChange)
+
+    const subscription = updates$.subscribe(updatedAddress => {
+      if (updatedAddress.toLowerCase() === address.toLowerCase()) {
+        // Resolve and update state when the identity have been updated
+        resolve(address).then(handleNameChange)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [address, handleNameChange, updates$])
+
+  return [name, handleShowLocalIdentityModal]
+}
 
 const IdentityProvider = ({
   onResolve,
@@ -33,4 +68,4 @@ IdentityProvider.propTypes = {
 
 const IdentityConsumer = IdentityContext.Consumer
 
-export { IdentityProvider, IdentityConsumer, IdentityContext }
+export { IdentityConsumer, IdentityContext, IdentityProvider, useIdentity }

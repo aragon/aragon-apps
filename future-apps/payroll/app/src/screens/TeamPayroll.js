@@ -1,20 +1,20 @@
 import React from 'react'
 
-import TwoColumn from '../components/Layout/TwoColumn'
+import Section from '../components/Layout/Section'
+import EmployeeList from './components/EmployeeList'
+import KeyStats from './components/KeyStats'
+import TotalPayroll from './components/TotalPayroll'
 
-class TeamPayroll extends React.Component {
-  render () {
-    return (
-      <TwoColumn>
-        <TwoColumn.Left>
-          Team Payroll
-        </TwoColumn.Left>
-        <TwoColumn.Right>
-          Side content
-        </TwoColumn.Right>
-      </TwoColumn>
-    )
-  }
-}
+const TeamPayroll = () => (
+  <Section>
+    <Section.Left>
+      <TotalPayroll />
+      <EmployeeList />
+    </Section.Left>
+    <Section.Right>
+      <KeyStats />
+    </Section.Right>
+  </Section>
+)
 
 export default TeamPayroll

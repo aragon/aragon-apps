@@ -1,34 +1,66 @@
-import React from 'react'
+import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
-import color from 'onecolor'
 import { format } from 'date-fns'
-import { Countdown, Text, Button, theme } from '@aragon/ui'
+import { Badge, Timer, Text, Button, theme } from '@aragon/ui'
+import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 import VotingOptions from './VotingOptions'
+import VoteText from '../VoteText'
+import VoteStatus from '../VoteStatus'
+import { isVoteAction } from '../../vote-utils'
 
-class VotingCard extends React.Component {
-  static defaultProps = {
-    options: [],
-    onOpen: () => {},
-    status: null,
-  }
-  handleOpen = () => {
-    this.props.onOpen(this.props.id)
-  }
-  render() {
-    const {
-      options,
-      endDate,
-      label,
-      open,
-      votingPower,
-      status,
-      id,
-    } = this.props
+function getOptions(yea, nay, connectedAccountVote) {
+  return [
+    {
+      label: (
+        <OptionLabel
+          label="Yes"
+          isConnectedAccount={connectedAccountVote === VOTE_YEA}
+        />
+      ),
+      power: yea,
+    },
+    {
+      label: (
+        <OptionLabel
+          label="No"
+          isConnectedAccount={connectedAccountVote === VOTE_NAY}
+        />
+      ),
+      power: nay,
+      color: theme.negative,
+    },
+  ]
+}
+
+const VotingCard = React.memo(
+  ({ vote, onOpen }) => {
+    const { voteId, connectedAccountVote } = vote
+    const { votingPower, yea, nay } = vote.numData
+    const { endDate, open, metadata, description } = vote.data
+
+    const handleOpen = useCallback(() => {
+      onOpen(voteId)
+    }, [voteId, onOpen])
+
+    const options = useMemo(() => getOptions(yea, nay, connectedAccountVote), [
+      yea,
+      nay,
+      connectedAccountVote,
+    ])
+
+    const action = isVoteAction(vote)
+
     return (
-      <Main>
+      <section
+        css={`
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        `}
+      >
         <Header>
           {open ? (
-            <Countdown end={endDate} />
+            <Timer end={endDate} maxUnits={4} />
           ) : (
             <PastDate
               dateTime={format(endDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")}
@@ -37,46 +69,87 @@ class VotingCard extends React.Component {
             </PastDate>
           )}
 
-          {status}
+          {open ? null : <VoteStatus vote={vote} cardStyle />}
         </Header>
         <Card>
           <Content>
             <Label>
-              <Text color={theme.textTertiary}>#{id} </Text>
-              <span>{label}</span>
+              <Text color={theme.textTertiary}>#{voteId} </Text>
+              <span>
+                <VoteText text={metadata || description} />
+              </span>
             </Label>
             <VotingOptions options={options} votingPower={votingPower} />
           </Content>
-          <Footer>
-            <SecondaryButton onClick={this.handleOpen}>
+          <div
+            css={`
+              display: flex;
+              justify-content: space-between;
+              flex-shrink: 0;
+            `}
+          >
+            <div
+              css={`
+                display: flex;
+                align-items: center;
+              `}
+            >
+              {action ? <BadgeAction /> : <BadgeQuestion />}
+            </div>
+            <Button compact mode="outline" onClick={handleOpen}>
               View vote
-            </SecondaryButton>
-          </Footer>
+            </Button>
+          </div>
         </Card>
-      </Main>
+      </section>
+    )
+  },
+  (prevProps, nextProps) => {
+    const prevVote = prevProps.vote
+    const nextVote = nextProps.vote
+    return (
+      prevProps.onVote === nextProps.onVote &&
+      prevVote.voteId === nextVote.voteId &&
+      prevVote.connectedAccountVote === nextVote.connectedAccountVote &&
+      prevVote.data.endDate === nextVote.data.endDate &&
+      prevVote.data.open === nextVote.data.open &&
+      prevVote.data.metadata === nextVote.data.metadata &&
+      prevVote.data.description === nextVote.data.description &&
+      prevVote.numData.votingPower === nextVote.numData.votingPower &&
+      prevVote.numData.yea === nextVote.numData.yea &&
+      prevVote.numData.nay === nextVote.numData.nay
     )
   }
+)
+
+VotingCard.defaultProps = {
+  onOpen: () => {},
 }
 
-const Main = styled.section`
-  display: flex;
-  flex-direction: column;
-`
+const BadgeQuestion = () => (
+  <Badge background="rgba(37, 49, 77, 0.16)" foreground="rgba(37, 49, 77, 1)">
+    Question
+  </Badge>
+)
+
+const BadgeAction = () => (
+  <Badge background="rgba(245, 166, 35, 0.1)" foreground="rgba(156, 99, 7, 1)">
+    Action
+  </Badge>
+)
+
+const OptionLabel = ({ label, isConnectedAccount }) => (
+  <span>
+    <span>{label}</span>
+    {isConnectedAccount && <You />}
+  </span>
+)
 
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 10px;
   padding-left: 5px;
-`
-
-const SecondaryButton = styled(Button).attrs({
-  mode: 'secondary',
-  compact: true,
-})`
-  background: ${color(theme.secondaryBackground)
-    .alpha(0.8)
-    .cssa()};
 `
 
 const Card = styled.div`
@@ -108,10 +181,10 @@ const PastDate = styled.time`
   color: #98a0a2;
 `
 
-const Footer = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  flex-shrink: 0;
+const You = styled(Badge.Identity).attrs({ children: 'Your vote' })`
+  margin-left: 5px;
+  font-size: 9px;
+  text-transform: uppercase;
 `
 
 export default VotingCard

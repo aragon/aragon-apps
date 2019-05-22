@@ -1,6 +1,7 @@
 sudo: required
 language: node_js
 cache:
+  timeout: 600
   directories:
     - node_modules
     - apps/agent/node_modules
@@ -10,6 +11,7 @@ cache:
     - apps/token-manager/app/node_modules
     - apps/vault/node_modules
     - apps/voting/node_modules
+    - future-apps/payroll/node_modules
     - shared/migrations/node_modules
     - shared/minime/node_modules
     - shared/test-helpers/node_modules
@@ -29,17 +31,20 @@ env:
     - TASK=test:token-manager:app INSTALL_FRONTEND=true
     - TASK=test:vault
     - TASK=test:voting
+    - TASK=test:payroll
     - TASK=coverage:agent
     - TASK=coverage:finance
     - TASK=coverage:survey
     - TASK=coverage:token-manager
     - TASK=coverage:vault
     - TASK=coverage:voting
+    - TASK=coverage:payroll
     - TASK=test:shared
 matrix:
   allow_failures:
     - env: TASK=coverage:agent
     - env: TASK=coverage:finance
+    - env: TASK=coverage:payroll
 install:
   - travis_wait 60 npm install
 before_script:
