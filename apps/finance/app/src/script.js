@@ -121,6 +121,7 @@ async function initialize(vaultAddress, ethAddress) {
 
       if (addressesEqual(eventAddress, vault.address)) {
         // Vault event
+        // TODO: Load balances for known token only once syncing past state has completed
         nextState = await vaultLoadBalance(nextState, event, settings)
       } else {
         // Finance event
