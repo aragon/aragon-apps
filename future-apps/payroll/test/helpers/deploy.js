@@ -1,6 +1,6 @@
 module.exports = (artifacts, web3) => {
   const { bigExp } = require('./numbers')(web3)
-  const { getEventArgument } = require('./events')
+  const { getEventArgument } = require('@aragon/test-helpers/events')
   const { SECONDS_IN_A_YEAR } = require('./time')
 
   const getContract = name => artifacts.require(name)

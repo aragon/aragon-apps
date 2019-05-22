@@ -1,6 +1,6 @@
 const PAYMENT_TYPES = require('../helpers/payment_types')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { getEvents, getEventArgument } = require('../helpers/events')
+const { getEvents, getEventArgument } = require('../../../../shared/test-helpers/events')
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { bn, bigExp, annualSalaryPerSecond, ONE, MAX_UINT256 } = require('../helpers/numbers')(web3)
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
