@@ -19,7 +19,7 @@ setup_testing_variables() {
 
 start_ganache() {
   echo "Starting ganache-cli..."
-  npx ganache-cli -i ${NETWORK_ID} -l ${GAS_LIMIT} -e ${BALANCE} -p ${PORT} > /dev/null &
+  npx ganache-cli -i ${NETWORK_ID} -l ${GAS_LIMIT} -e ${BALANCE} -p ${PORT}
   rpc_pid=$!
   sleep 3
   echo "Running ganache-cli with pid ${rpc_pid} in port ${PORT}"
@@ -27,7 +27,7 @@ start_ganache() {
 
 start_testrpc() {
   echo "Starting testrpc-sc..."
-  npx testrpc-sc -i ${NETWORK_ID} -l ${GAS_LIMIT} -e ${BALANCE} -p ${PORT} > /dev/null &
+  npx testrpc-sc -i ${NETWORK_ID} -l ${GAS_LIMIT} -e ${BALANCE} -p ${PORT}
   rpc_pid=$!
   sleep 3
   echo "Running testrpc-sc with pid ${rpc_pid} in port ${PORT}"
