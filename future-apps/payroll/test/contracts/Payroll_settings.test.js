@@ -1,5 +1,5 @@
 const { USD } = require('../helpers/tokens')(artifacts, web3)
-const { getEvents } = require('../helpers/events')
+const { getEvents } = require('@aragon/test-helpers/events')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { NOW, ONE_MINUTE, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)

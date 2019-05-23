@@ -1,4 +1,5 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 const getBalance = require('@aragon/test-helpers/balance')(web3)
 
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
@@ -47,13 +48,13 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
 
     beforeEach(async () => {
         const r = await daoFact.newDAO(root)
-        const dao = Kernel.at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
+        const dao = Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
         const acl = ACL.at(await dao.acl())
 
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
         const receipt = await dao.newAppInstance('0x1234', tokenManagerBase.address, '0x', false, { from: root })
-        tokenManager = TokenManager.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+        tokenManager = TokenManager.at(getNewProxyAddress(receipt))
         tokenManager.mockSetTimestamp(NOW)
 
         await acl.createPermission(ANY_ADDR, tokenManager.address, MINT_ROLE, root, { from: root })
