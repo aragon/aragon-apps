@@ -1,9 +1,5 @@
 sudo: required
 language: node_js
-branches:
-  only:
-    - master
-    - next
 cache:
   timeout: 600
   directories:
