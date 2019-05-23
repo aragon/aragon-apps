@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Transition, animated } from 'react-spring'
 import { ButtonBase, TextInput, springs, theme, unselectable } from '@aragon/ui'
@@ -6,6 +7,7 @@ import { useClickOutside, useOnBlur } from '../../hooks'
 import IconMagnifyingGlass from './IconMagnifyingGlass'
 
 const { accent, contentBackground, contentBorder, textPrimary } = theme
+const identity = x => x
 
 const AutoComplete = React.memo(
   React.forwardRef(
@@ -68,7 +70,10 @@ const AutoComplete = React.memo(
       const handleFocus = useCallback(() => {
         setSelected(null)
         setOpened(true)
-        setTimeout(() => ref.current && ref.current.focus(), 0)
+        setTimeout(
+          () => ref.current && ref.current.select() && ref.current.focus(),
+          0
+        )
       }, [ref])
       const handleInputFocus = useCallback(() => {
         setOpened(true)
@@ -163,6 +168,25 @@ const AutoComplete = React.memo(
     }
   )
 )
+
+AutoComplete.propTypes = {
+  defaultSelected: PropTypes.object,
+  defaultValue: PropTypes.string,
+  itemButtonStyles: PropTypes.string,
+  items: PropTypes.array.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onSearch: PropTypes.func.isRequired,
+  renderItem: PropTypes.func,
+  renderSelected: PropTypes.func,
+  required: PropTypes.bool,
+  selectedButtonStyles: PropTypes.string,
+  wide: PropTypes.bool,
+}
+
+AutoComplete.defaultProps = {
+  renderItem: identity,
+  renderSelected: identity,
+}
 
 const Selected = styled(ButtonBase)`
   height: 40px;
