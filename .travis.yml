@@ -26,31 +26,34 @@ node_js:
 env:
   global:
     - INSTALL_FRONTEND=false
-  matrix:
-    - TASK=lint
-    - TASK=test:agent
-    - TASK=test:finance
-    - TASK=test:survey
-    - TASK=test:token-manager
-    - TASK=test:token-manager:app INSTALL_FRONTEND=true
-    - TASK=test:vault
-    - TASK=test:voting
-    - TASK=test:payroll
-    - TASK=coverage:agent
-    - TASK=coverage:finance
-    - TASK=coverage:survey
-    - TASK=coverage:token-manager
-    - TASK=coverage:vault
-    - TASK=coverage:voting
-    - TASK=coverage:payroll
-    - TASK=test:shared
-matrix:
-  allow_failures:
-    - env: TASK=coverage:agent
-    - env: TASK=coverage:payroll
 install:
   - travis_wait 60 npm install
-script:
-  - travis_wait 60 npm run $TASK
+jobs:
+  allow_failures:
+    - script: npm run coverage:agent
+    - script: npm run coverage:payroll
+  include:
+    - stage: tests
+      script: npm run lint
+    - script: npm run test:agent
+    - script: npm run test:finance
+    - script: npm run test:payroll
+    - script: npm run test:survey
+    - script: npm run test:token-manager
+    - script: npm run test:token-manager:app
+      env:
+        - INSTALL_FRONTEND=true
+    - script: npm run test:vault
+    - script: npm run test:voting
+    - script: npm run test:shared
+
+    - stage: coverage
+      script: npm run coverage:agent
+    - script: npm run coverage:finance
+    - script: npm run coverage:payroll
+    - script: npm run coverage:survey
+    - script: npm run coverage:token-manager
+    - script: npm run coverage:vault
+    - script: npm run coverage:voting
 after_success:
   - ./node_modules/.bin/lcov-result-merger 'apps/*/coverage/lcov.info' | ./node_modules/.bin/coveralls
