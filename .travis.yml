@@ -31,25 +31,42 @@ jobs:
   include:
     - stage: tests
       script: npm run lint
+      name: "Lint"
     - script: npm run test:agent
+      name: "Agent"
     - script: npm run test:finance
+      name: "Finance"
     - script: npm run test:payroll
+      name: "Payroll"
     - script: npm run test:survey
+      name: "Survey"
     - script: npm run test:token-manager
+      name: "Token Manager"
     - script: npm run test:token-manager:app
+      name: "Token Manager frontend"
       env:
         - INSTALL_FRONTEND=true
     - script: npm run test:vault
+      name: "Vault"
     - script: npm run test:voting
+      name: "Voting"
     - script: npm run test:shared
+      name: "Shared"
 
     - stage: coverage
       script: npm run coverage:agent
+      name: "Agent"
     - script: npm run coverage:finance
+      name: "Finance"
     - script: npm run coverage:payroll
+      name: "Payroll"
     - script: npm run coverage:survey
+      name: "Survey"
     - script: npm run coverage:token-manager
+      name: "Token Manager"
     - script: npm run coverage:vault
+      name: "Vault"
     - script: npm run coverage:voting
+      name: "Voting"
 after_success:
   - ./node_modules/.bin/lcov-result-merger 'apps/*/coverage/lcov.info' | ./node_modules/.bin/coveralls
