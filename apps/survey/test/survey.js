@@ -1,10 +1,11 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
+const { getEventAt, getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 
 const getContract = name => artifacts.require(name)
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
-const surveyEvent = receipt => receipt.logs.filter(x => x.event == 'StartSurvey')[0].args
-const createdSurveyId = receipt => surveyEvent(receipt).surveyId
+const createdSurveyId = receipt => getEventArgument(receipt, 'StartSurvey', 'surveyId')
 
 contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, nonHolder]) => {
   let daoFact, dao, surveyBase, survey
@@ -35,13 +36,13 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
 
   beforeEach(async () => {
     const r = await daoFact.newDAO(root)
-    dao = getContract('Kernel').at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
+    dao = getContract('Kernel').at(getEventArgument(r, 'DeployDAO', 'dao'))
     const acl = getContract('ACL').at(await dao.acl())
 
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
     const receipt = await dao.newAppInstance(SURVEY_APP_ID, surveyBase.address, '0x', false, { from: root })
-    survey = getContract('SurveyMock').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+    survey = getContract('SurveyMock').at(getNewProxyAddress(receipt))
 
     await acl.createPermission(ANY_ENTITY, survey.address, CREATE_SURVEYS_ROLE, root, { from: root })
     await acl.createPermission(ANY_ENTITY, survey.address, MODIFY_PARTICIPATION_ROLE, root, { from: root })
@@ -72,9 +73,8 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
 
     it('can change minimum acceptance participation', async () => {
       const receipt = await survey.changeMinAcceptParticipationPct(1)
-      const events = receipt.logs.filter(x => x.event == 'ChangeMinParticipation')
+      assertAmountOfEvents(receipt, 'ChangeMinParticipation')
 
-      assert.equal(events.length, 1, 'should have emitted ChangeMinParticipation event')
       assert.equal(await survey.minParticipationPct(), 1, 'should have change acceptance participation')
     })
 
@@ -91,10 +91,7 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
       let surveyId, creator, metadata
 
       beforeEach(async () => {
-        const createdEvent = surveyEvent(await survey.newSurvey('metadata', optionsCount, { from: nonHolder }))
-        surveyId = createdEvent.surveyId
-        creator = createdEvent.creator
-        metadata = createdEvent.metadata
+        ({ surveyId, creator, metadata } = getEventAt(await survey.newSurvey('metadata', optionsCount, { from: nonHolder }), 'StartSurvey').args)
       })
 
       it('has correct state', async () => {
@@ -317,7 +314,7 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
       await token.generateTokens(holder2, 1)
 
       const receipt = await dao.newAppInstance(SURVEY_MOCK_APP_ID, surveyMockBase.address, '0x', false, { from: root })
-      survey = getContract('SurveyMock').at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+      survey = getContract('SurveyMock').at(getNewProxyAddress(receipt))
 
       const acl = getContract('ACL').at(await dao.acl())
       await acl.createPermission(ANY_ENTITY, survey.address, CREATE_SURVEYS_ROLE, root, { from: root })

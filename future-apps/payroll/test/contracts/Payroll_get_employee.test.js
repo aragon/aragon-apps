@@ -1,6 +1,6 @@
 const { MAX_UINT64 } = require('../helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { getEventArgument } = require('../helpers/events')
+const { getEventArgument } = require('@aragon/test-helpers/events')
 const { NOW, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { USD, deployDAI } = require('../helpers/tokens')(artifacts, web3)
