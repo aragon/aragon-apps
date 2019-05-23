@@ -1,11 +1,13 @@
+const VOTER_STATE = require('../helpers/state')
+const { bigExp, pct } = require('../helpers/numbers')(web3)
+const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
-const { getEventAt, getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
-const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
-const ExecutionTarget = artifacts.require('ExecutionTarget')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 
 const Voting = artifacts.require('VotingMock')
+const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const ACL = artifacts.require('@aragon/os/contracts/acl/ACL')
 const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel')
@@ -14,18 +16,10 @@ const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory
 const MiniMeToken = artifacts.require('@aragon/apps-shared-minime/contracts/MiniMeToken')
 
 const getContract = name => artifacts.require(name)
-const bigExp = (x, y) => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(y))
-const pct16 = x => bigExp(x, 16)
 const createdVoteId = receipt => getEventArgument(receipt, 'StartVote', 'voteId')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
-const VOTER_STATE = ['ABSENT', 'YEA', 'NAY'].reduce((state, key, index) => {
-    state[key] = index;
-    return state;
-}, {})
-
 
 contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, nonHolder]) => {
     let votingBase, daoFact, voting, token, executionTarget
@@ -67,8 +61,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
     })
 
     context('normal token supply, common tests', () => {
-        const neededSupport = pct16(50)
-        const minimumAcceptanceQuorum = pct16(20)
+        const neededSupport = pct(50)
+        const minimumAcceptanceQuorum = pct(20)
 
         beforeEach(async () => {
             token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
@@ -104,8 +98,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         })
 
         it('fails changing required support to 100% or more', async () => {
-            await assertRevert(voting.changeSupportRequiredPct(pct16(101)))
-            await assertRevert(voting.changeSupportRequiredPct(pct16(100)))
+            await assertRevert(voting.changeSupportRequiredPct(pct(101)))
+            await assertRevert(voting.changeSupportRequiredPct(pct(100)))
         })
 
         it('can change minimum acceptance quorum', async () => {
@@ -123,8 +117,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
     for (const decimals of [0, 2, 18, 26]) {
         context(`normal token supply, ${decimals} decimals`, () => {
-            const neededSupport = pct16(50)
-            const minimumAcceptanceQuorum = pct16(20)
+            const neededSupport = pct(50)
+            const minimumAcceptanceQuorum = pct(20)
 
             beforeEach(async () => {
                 token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', decimals, 'n', true) // empty parameters minime
@@ -212,7 +206,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 })
 
                 it('changing required support does not affect vote required support', async () => {
-                    await voting.changeSupportRequiredPct(pct16(70))
+                    await voting.changeSupportRequiredPct(pct(70))
 
                     // With previous required support at 50%, vote should be approved
                     // with new quorum at 70% it shouldn't have, but since min quorum is snapshotted
@@ -229,7 +223,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 })
 
                 it('changing min quorum doesnt affect vote min quorum', async () => {
-                    await voting.changeMinAcceptQuorumPct(pct16(50))
+                    await voting.changeMinAcceptQuorumPct(pct(50))
 
                     // With previous min acceptance quorum at 20%, vote should be approved
                     // with new quorum at 50% it shouldn't have, but since min quorum is snapshotted
@@ -332,21 +326,21 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         })
 
         it('fails if min acceptance quorum is greater than min support', async () => {
-            const neededSupport = pct16(20)
-            const minimumAcceptanceQuorum = pct16(50)
+            const neededSupport = pct(20)
+            const minimumAcceptanceQuorum = pct(50)
             await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration))
         })
 
         it('fails if min support is 100% or more', async () => {
-            const minimumAcceptanceQuorum = pct16(20)
-            await assertRevert(voting.initialize(token.address, pct16(101), minimumAcceptanceQuorum, votingDuration))
-            await assertRevert(voting.initialize(token.address, pct16(100), minimumAcceptanceQuorum, votingDuration))
+            const minimumAcceptanceQuorum = pct(20)
+            await assertRevert(voting.initialize(token.address, pct(101), minimumAcceptanceQuorum, votingDuration))
+            await assertRevert(voting.initialize(token.address, pct(100), minimumAcceptanceQuorum, votingDuration))
         })
     })
 
     context('empty token', () => {
-        const neededSupport = pct16(50)
-        const minimumAcceptanceQuorum = pct16(20)
+        const neededSupport = pct(50)
+        const minimumAcceptanceQuorum = pct(20)
 
         beforeEach(async() => {
             token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
@@ -360,8 +354,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
     })
 
     context('token supply = 1', () => {
-        const neededSupport = pct16(50)
-        const minimumAcceptanceQuorum = pct16(20)
+        const neededSupport = pct(50)
+        const minimumAcceptanceQuorum = pct(20)
 
         beforeEach(async () => {
             token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
@@ -406,8 +400,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
     })
 
     context('token supply = 3', () => {
-        const neededSupport = pct16(34)
-        const minimumAcceptanceQuorum = pct16(20)
+        const neededSupport = pct(34)
+        const minimumAcceptanceQuorum = pct(20)
 
         beforeEach(async () => {
             token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
@@ -442,8 +436,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
     })
 
     context('changing token supply', () => {
-        const neededSupport = pct16(50)
-        const minimumAcceptanceQuorum = pct16(20)
+        const neededSupport = pct(50)
+        const minimumAcceptanceQuorum = pct(20)
 
         beforeEach(async () => {
             token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
@@ -489,32 +483,32 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
     context('isValuePct unit test', async () => {
         it('tests total = 0', async () => {
-            const result1 = await voting.isValuePct(0, 0, pct16(50))
+            const result1 = await voting.isValuePct(0, 0, pct(50))
             assert.equal(result1, false, "total 0 should always return false")
-            const result2 = await voting.isValuePct(1, 0, pct16(50))
+            const result2 = await voting.isValuePct(1, 0, pct(50))
             assert.equal(result2, false, "total 0 should always return false")
         })
 
         it('tests value = 0', async () => {
-            const result1 = await voting.isValuePct(0, 10, pct16(50))
+            const result1 = await voting.isValuePct(0, 10, pct(50))
             assert.equal(result1, false, "value 0 should false if pct is non-zero")
             const result2 = await voting.isValuePct(0, 10, 0)
             assert.equal(result2, false, "value 0 should return false if pct is zero")
         })
 
         it('tests pct ~= 100', async () => {
-            const result1 = await voting.isValuePct(10, 10, pct16(100).minus(1))
+            const result1 = await voting.isValuePct(10, 10, pct(100).minus(1))
             assert.equal(result1, true, "value 10 over 10 should pass")
         })
 
         it('tests strict inequality', async () => {
-            const result1 = await voting.isValuePct(10, 20, pct16(50))
+            const result1 = await voting.isValuePct(10, 20, pct(50))
             assert.equal(result1, false, "value 10 over 20 should not pass for 50%")
 
-            const result2 = await voting.isValuePct(pct16(50).minus(1), pct16(100), pct16(50))
+            const result2 = await voting.isValuePct(pct(50).minus(1), pct(100), pct(50))
             assert.equal(result2, false, "off-by-one down should not pass")
 
-            const result3 = await voting.isValuePct(pct16(50).plus(1), pct16(100), pct16(50))
+            const result3 = await voting.isValuePct(pct(50).plus(1), pct(100), pct(50))
             assert.equal(result3, true, "off-by-one up should pass")
         })
     })
