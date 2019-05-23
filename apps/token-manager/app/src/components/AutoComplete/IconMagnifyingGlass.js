@@ -1,6 +1,6 @@
 import React from 'react'
 
-const IconMagnifyingGlass = props => {
+const IconMagnifyingGlass = React.memo(props => {
   return (
     <svg width={16} height={16} fill="none" {...props}>
       <path
@@ -9,6 +9,6 @@ const IconMagnifyingGlass = props => {
       />
     </svg>
   )
-}
+})
 
 export default IconMagnifyingGlass
