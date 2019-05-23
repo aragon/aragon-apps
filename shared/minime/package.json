@@ -22,6 +22,7 @@
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/test-helpers": "^1.0.1",
+    "ethereumjs-testrpc-sc": "^6.1.6",
     "ganache-cli": "^6.4.3",
     "solidity-coverage": "^0.5.11",
     "truffle": "4.1.14",
