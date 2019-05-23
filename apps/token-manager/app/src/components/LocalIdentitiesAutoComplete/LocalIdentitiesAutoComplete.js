@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
 import { EthIdenticon, IdentityBadge, theme } from '@aragon/ui'
 import AutoComplete from '../AutoComplete/AutoComplete'
@@ -94,7 +94,7 @@ const LocalAutoComplete = React.forwardRef(
       const items = search(value)
       setItems(items)
     }
-    const renderItem = ({ address, name }, search) => {
+    const renderItem = useCallback(({ address, name }, search) => {
       if (search.indexOf('0x') === 0) {
         return (
           <Option>
@@ -110,16 +110,16 @@ const LocalAutoComplete = React.forwardRef(
           <IdentityBadge compact badgeOnly entity={address} />
         </Option>
       )
-    }
+    })
 
-    const renderSelected = ({ address, name }) => {
+    const renderSelected = useCallback(({ address, name }) => {
       return (
         <Option selected>
           <EthIdenticon address={address} scale={0.6} radius={2} />
           <Name>{name}</Name>
         </Option>
       )
-    }
+    })
 
     useEffect(() => {
       const item = mockItems.find(
