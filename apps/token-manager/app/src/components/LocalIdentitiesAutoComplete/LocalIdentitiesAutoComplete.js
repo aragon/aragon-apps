@@ -74,33 +74,6 @@ const search = value => {
   return items
 }
 
-const Item = ({ address, name }, search) => {
-  if (search.indexOf('0x') === 0) {
-    return (
-      <Option>
-        <IdentityBadge compact badgeOnly entity={address} />
-        <Name>{name}</Name>
-      </Option>
-    )
-  }
-
-  return (
-    <Option>
-      <Name>{name}</Name>
-      <IdentityBadge compact badgeOnly entity={address} />
-    </Option>
-  )
-}
-
-const Selected = ({ address, name }) => {
-  return (
-    <Option selected>
-      <EthIdenticon address={address} scale={0.6} radius={2} />
-      <Name>{name}</Name>
-    </Option>
-  )
-}
-
 const LocalAutoComplete = React.forwardRef(
   ({ onChange, selectAddress, wide, value, required }, ref) => {
     const [items, setItems] = useState([])
@@ -120,6 +93,32 @@ const LocalAutoComplete = React.forwardRef(
       }
       const items = search(value)
       setItems(items)
+    }
+    const renderItem = ({ address, name }, search) => {
+      if (search.indexOf('0x') === 0) {
+        return (
+          <Option>
+            <IdentityBadge compact badgeOnly entity={address} />
+            <Name>{name}</Name>
+          </Option>
+        )
+      }
+
+      return (
+        <Option>
+          <Name>{name}</Name>
+          <IdentityBadge compact badgeOnly entity={address} />
+        </Option>
+      )
+    }
+
+    const renderSelected = ({ address, name }) => {
+      return (
+        <Option selected>
+          <EthIdenticon address={address} scale={0.6} radius={2} />
+          <Name>{name}</Name>
+        </Option>
+      )
     }
 
     useEffect(() => {
@@ -141,7 +140,7 @@ const LocalAutoComplete = React.forwardRef(
         items={items}
         onChange={handleChange}
         onSearch={handleSearch}
-        renderItem={Item}
+        renderItem={renderItem}
         itemButtonStyles={`
           border-left: 3px solid transparent;
           cursor: pointer;
@@ -154,7 +153,7 @@ const LocalAutoComplete = React.forwardRef(
             border-left: 3px solid ${theme.accent}
           }
         `}
-        renderSelected={Selected}
+        renderSelected={renderSelected}
         selectedButtonStyles={`
           &:hover,
           &:focus {
