@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { useAragonApi } from '@aragon/api-react'
-import { EthIdenticon, IdentityBadge } from '@aragon/ui'
+import { EthIdenticon, IdentityBadge, theme } from '@aragon/ui'
 import AutoComplete from '../AutoComplete/AutoComplete'
 
 const mockItems = [
@@ -80,7 +80,7 @@ const Item = ({ address, name }, search) => {
 
 const Selected = ({ address, name }) => {
   return (
-    <Option>
+    <Option selected>
       <EthIdenticon address={address} scale={0.6} radius={2} />
       <Name>{name}</Name>
     </Option>
@@ -139,7 +139,27 @@ const LocalAutoComplete = React.forwardRef(
         onChange={handleChange}
         onSearch={handleSearch}
         renderItem={Item}
+        itemButtonStyles={`
+          border-left: 3px solid transparent;
+          cursor: pointer;
+          border-radius: 0;
+
+          &:hover,
+          &:focus {
+            outline: 2px solid ${theme.accent};
+            background: #f9fafc;
+            border-left: 3px solid ${theme.accent}
+          }
+        `}
         renderSelected={Selected}
+        selectedButtonStyles={`
+          &:hover,
+          &:focus {
+            outline: none;
+            border: 1px solid ${theme.accent};
+            border-radius: 3px;
+          }
+        `}
         wide={wide}
         required={required}
         defaultSelected={defaultSelected}
@@ -163,6 +183,7 @@ const Name = styled.div`
   text-overflow: ellipsis;
   display: inline-block;
   text-align: left;
+  color: #000;
 `
 
 export default LocalAutoComplete
