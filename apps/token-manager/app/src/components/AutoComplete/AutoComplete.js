@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import styled from 'styled-components'
-import { ButtonBase, TextInput, theme, unselectable } from '@aragon/ui'
+import { Transition, animated } from 'react-spring'
+import { ButtonBase, TextInput, springs, theme, unselectable } from '@aragon/ui'
 import { useClickOutside, useOnBlur } from '../../hooks'
 import IconMagnifyingGlass from './IconMagnifyingGlass'
 
@@ -112,23 +113,41 @@ const AutoComplete = React.forwardRef(
         >
           <IconMagnifyingGlass css="color: #a8b3c8" />
         </div>
-        {opened && !!items.length && (
-          <Items role="listbox">
-            {items.map(item => (
-              <Item role="option" key={item.key}>
-                <ButtonBase
-                  onClick={handleChange(item)}
-                  css={`
-                    width: 100%;
-                    ${itemButtonStyles}
-                  `}
-                >
-                  {renderItem(item, searchValue)}
-                </ButtonBase>
-              </Item>
-            ))}
-          </Items>
-        )}
+        <Transition
+          config={springs.swift}
+          items={opened && !!items.length}
+          from={{ scale: 0.98, opacity: 0 }}
+          enter={{ scale: 1, opacity: 1 }}
+          leave={{ scale: 1, opacity: 0 }}
+          native
+        >
+          {show =>
+            show &&
+            (({ scale, opacity }) => (
+              <Items
+                role="listbox"
+                style={{
+                  opacity,
+                  transform: scale.interpolate(t => `scale3d(${t},${t},1)`),
+                }}
+              >
+                {items.map(item => (
+                  <Item role="option" key={item.key}>
+                    <ButtonBase
+                      onClick={handleChange(item)}
+                      css={`
+                        width: 100%;
+                        ${itemButtonStyles}
+                      `}
+                    >
+                      {renderItem(item, searchValue)}
+                    </ButtonBase>
+                  </Item>
+                ))}
+              </Items>
+            ))
+          }
+        </Transition>
       </div>
     )
   }
@@ -154,7 +173,7 @@ const Item = styled.li`
   cursor: pointer;
 `
 
-const Items = styled.ul`
+const Items = styled(animated.ul)`
   position: absolute;
   z-index: 2;
   top: 100%;
