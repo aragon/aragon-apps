@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
-import { useAragonApi } from '@aragon/api-react'
 import { EthIdenticon, IdentityBadge, theme } from '@aragon/ui'
 import AutoComplete from '../AutoComplete/AutoComplete'
 
@@ -60,6 +59,21 @@ const mockItems = [
   },
 ]
 
+const search = value => {
+  const searchAddress = value.substr(0, 2) === '0x'
+  const items = mockItems
+    .filter(
+      ({ address, name }) =>
+        (searchAddress &&
+          value.length > 3 &&
+          address.toLowerCase().indexOf(value.toLowerCase()) === 0) ||
+        name.toLowerCase().indexOf(value.toLowerCase()) > -1
+    )
+    .map(i => ({ ...i, key: i.address }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+  return items
+}
+
 const Item = ({ address, name }, search) => {
   if (search.indexOf('0x') === 0) {
     return (
@@ -89,7 +103,6 @@ const Selected = ({ address, name }) => {
 
 const LocalAutoComplete = React.forwardRef(
   ({ onChange, selectAddress, wide, value, required }, ref) => {
-    const { api } = useAragonApi()
     const [items, setItems] = useState([])
     const [defaultSelected, setDefaultSelected] = useState(null)
 
@@ -105,17 +118,7 @@ const LocalAutoComplete = React.forwardRef(
         setItems([])
         return
       }
-      const searchAddress = value.substr(0, 2) === '0x'
-      const items = mockItems
-        .filter(
-          ({ address, name }) =>
-            (searchAddress &&
-              value.length > 3 &&
-              address.toLowerCase().indexOf(value.toLowerCase()) === 0) ||
-            name.toLowerCase().indexOf(value.toLowerCase()) > -1
-        )
-        .map(i => ({ ...i, key: i.address }))
-        .sort((a, b) => a.name.localeCompare(b.name))
+      const items = search(value)
       setItems(items)
     }
 
