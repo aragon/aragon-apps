@@ -3,20 +3,22 @@ import styled from 'styled-components'
 import { ButtonBase, TextInput, theme, unselectable } from '@aragon/ui'
 import { useClickOutside, useOnBlur } from '../../hooks'
 
-const { contentBackground, contentBorder, textPrimary } = theme
+const { accent, contentBackground, contentBorder, textPrimary } = theme
 
 const AutoComplete = React.forwardRef(
   (
     {
-      defaultValue,
       defaultSelected,
+      defaultValue,
+      itemButtonStyles,
+      items,
       onChange,
       onSearch,
-      items,
       renderItem,
       renderSelected,
-      wide,
       required,
+      selectedButtonStyles,
+      wide,
     },
     ref
   ) => {
@@ -74,6 +76,9 @@ const AutoComplete = React.forwardRef(
       <div css="position: relative" onBlur={handleBlur} ref={wrapRef}>
         {!selected && (
           <TextInput
+            css={`
+              caret-color: ${accent};
+            `}
             ref={ref}
             wide={wide}
             required={required}
@@ -83,7 +88,11 @@ const AutoComplete = React.forwardRef(
           />
         )}
         {selected && (
-          <Selected ref={selectedRef} onClick={handleFocus}>
+          <Selected
+            ref={selectedRef}
+            onClick={handleFocus}
+            css={selectedButtonStyles}
+          >
             {renderSelected(selected)}
           </Selected>
         )}
@@ -91,7 +100,13 @@ const AutoComplete = React.forwardRef(
           <Items role="listbox">
             {items.map(item => (
               <Item role="option" key={item.key}>
-                <ButtonBase onClick={handleChange(item)} css="width: 100%">
+                <ButtonBase
+                  onClick={handleChange(item)}
+                  css={`
+                    width: 100%;
+                    ${itemButtonStyles}
+                  `}
+                >
                   {renderItem(item, searchValue)}
                 </ButtonBase>
               </Item>
@@ -119,6 +134,8 @@ const Selected = styled(ButtonBase)`
 
 const Item = styled.li`
   ${unselectable()};
+  overflow: hidden;
+  cursor: pointer;
 `
 
 const Items = styled.ul`
@@ -135,6 +152,15 @@ const Items = styled.ul`
   padding: 0;
   margin: 0;
   list-style: none;
+
+  & ${Item}:first-child {
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+  }
+  & ${Item}:last-child {
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+  }
 `
 
 export default AutoComplete
