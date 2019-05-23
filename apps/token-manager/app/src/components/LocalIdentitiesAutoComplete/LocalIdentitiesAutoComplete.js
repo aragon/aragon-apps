@@ -94,11 +94,11 @@ const LocalAutoComplete = React.forwardRef(
     const [defaultSelected, setDefaultSelected] = useState(null)
 
     const handleChange = data => {
-      if (data.address) {
+      if (data && data.address) {
         onChange(data.address)
         return
       }
-      onChange(data)
+      onChange(data || '')
     }
     const handleSearch = value => {
       if (value.length < 3) {
