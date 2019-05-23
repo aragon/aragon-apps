@@ -75,7 +75,7 @@ const search = value => {
 }
 
 const LocalAutoComplete = React.forwardRef(
-  ({ onChange, selectAddress, wide, value, required }, ref) => {
+  ({ onChange, wide, value, required }, ref) => {
     const [items, setItems] = useState([])
     const [defaultSelected, setDefaultSelected] = useState(null)
 
