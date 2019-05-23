@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
 import { Transition, animated } from 'react-spring'
 import { ButtonBase, TextInput, springs, theme, unselectable } from '@aragon/ui'
@@ -7,150 +7,161 @@ import IconMagnifyingGlass from './IconMagnifyingGlass'
 
 const { accent, contentBackground, contentBorder, textPrimary } = theme
 
-const AutoComplete = React.forwardRef(
-  (
-    {
-      defaultSelected,
-      defaultValue,
-      itemButtonStyles,
-      items,
-      onChange,
-      onSearch,
-      renderItem,
-      renderSelected,
-      required,
-      selectedButtonStyles,
-      wide,
-    },
-    ref
-  ) => {
-    const [opened, setOpened] = useState(false)
-    const [searchValue, setSearchValue] = useState('')
-    const [selected, setSelected] = useState(null)
+const AutoComplete = React.memo(
+  React.forwardRef(
+    (
+      {
+        defaultSelected,
+        defaultValue,
+        itemButtonStyles,
+        items,
+        onChange,
+        onSearch,
+        renderItem,
+        renderSelected,
+        required,
+        selectedButtonStyles,
+        wide,
+      },
+      ref
+    ) => {
+      const [opened, setOpened] = useState(false)
+      const [searchValue, setSearchValue] = useState('')
+      const [selected, setSelected] = useState(null)
 
-    const selectedRef = useRef()
-    const wrapRef = useRef()
-    const handleClose = () => {
-      setOpened(false)
-      if (!selected) {
-        onChange(searchValue)
-      }
-    }
-    const handleSearch = ({ target: { value = '' } }) => {
-      if (value === '') {
-        setTimeout(() => onChange(), 0)
-      }
-      onSearch(value)
-      setOpened(value.length > 2)
-      setSearchValue(value)
-      setSelected(null)
-    }
-    const handleChange = item => e => {
-      e.preventDefault()
-      const { name } = item
-      onChange(item)
-      onSearch(name)
-      setOpened(false)
-      setSearchValue(name)
-      setSelected(item)
-      setTimeout(() => selectedRef.current && selectedRef.current.focus(), 0)
-    }
-    const handleFocus = () => {
-      setSelected(null)
-      setOpened(true)
-      setTimeout(() => ref.current && ref.current.focus(), 0)
-    }
-    const handleInputFocus = () => {
-      setOpened(true)
-    }
-
-    useClickOutside(handleClose, wrapRef)
-    const { handleBlur } = useOnBlur(handleClose, wrapRef)
-    useEffect(() => {
-      setSearchValue(defaultValue)
-      onSearch(defaultValue)
-    }, [defaultValue])
-    useEffect(() => {
-      setSelected(defaultSelected)
-    }, [defaultSelected])
-
-    return (
-      <div css="position: relative" onBlur={handleBlur} ref={wrapRef}>
-        {!selected && (
-          <TextInput
-            css={`
-              caret-color: ${accent};
-              padding-right: 35px;
-            `}
-            ref={ref}
-            wide={wide}
-            required={required}
-            onChange={handleSearch}
-            value={searchValue}
-            onFocus={handleInputFocus}
-          />
-        )}
-        {selected && (
-          <Selected
-            ref={selectedRef}
-            onClick={handleFocus}
-            css={selectedButtonStyles}
-          >
-            {renderSelected(selected)}
-          </Selected>
-        )}
-        <div
-          css={`
-            position: absolute;
-            top: 0;
-            right: 0;
-            height: 40px;
-            width: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          `}
-        >
-          <IconMagnifyingGlass css="color: #a8b3c8" />
-        </div>
-        <Transition
-          config={springs.swift}
-          items={opened && !!items.length}
-          from={{ scale: 0.98, opacity: 0 }}
-          enter={{ scale: 1, opacity: 1 }}
-          leave={{ scale: 1, opacity: 0 }}
-          native
-        >
-          {show =>
-            show &&
-            (({ scale, opacity }) => (
-              <Items
-                role="listbox"
-                style={{
-                  opacity,
-                  transform: scale.interpolate(t => `scale3d(${t},${t},1)`),
-                }}
-              >
-                {items.map(item => (
-                  <Item role="option" key={item.key}>
-                    <ButtonBase
-                      onClick={handleChange(item)}
-                      css={`
-                        width: 100%;
-                        ${itemButtonStyles}
-                      `}
-                    >
-                      {renderItem(item, searchValue)}
-                    </ButtonBase>
-                  </Item>
-                ))}
-              </Items>
-            ))
+      const selectedRef = useRef()
+      const wrapRef = useRef()
+      const handleClose = useCallback(() => {
+        setOpened(false)
+        if (!selected) {
+          onChange(searchValue)
+        }
+      }, [selected, onChange])
+      const handleSearch = useCallback(
+        ({ target: { value = '' } }) => {
+          if (value === '') {
+            setTimeout(() => onChange(), 0)
           }
-        </Transition>
-      </div>
-    )
-  }
+          onSearch(value)
+          setOpened(value.length > 2)
+          setSearchValue(value)
+          setSelected(null)
+        },
+        [onChange, onSearch]
+      )
+      const handleChange = useCallback(
+        item => e => {
+          e.preventDefault()
+          const { name } = item
+          onChange(item)
+          onSearch(name)
+          setOpened(false)
+          setSearchValue(name)
+          setSelected(item)
+          setTimeout(
+            () => selectedRef.current && selectedRef.current.focus(),
+            0
+          )
+        },
+        [onChange, onSearch, selectedRef]
+      )
+      const handleFocus = useCallback(() => {
+        setSelected(null)
+        setOpened(true)
+        setTimeout(() => ref.current && ref.current.focus(), 0)
+      }, [ref])
+      const handleInputFocus = useCallback(() => {
+        setOpened(true)
+      })
+
+      useClickOutside(handleClose, wrapRef)
+      const { handleBlur } = useOnBlur(handleClose, wrapRef)
+      useEffect(() => {
+        setSearchValue(defaultValue)
+        onSearch(defaultValue)
+      }, [defaultValue])
+      useEffect(() => {
+        setSelected(defaultSelected)
+      }, [defaultSelected])
+
+      return (
+        <div css="position: relative" onBlur={handleBlur} ref={wrapRef}>
+          {!selected && (
+            <TextInput
+              css={`
+                caret-color: ${accent};
+                padding-right: 35px;
+              `}
+              ref={ref}
+              wide={wide}
+              required={required}
+              onChange={handleSearch}
+              value={searchValue}
+              onFocus={handleInputFocus}
+            />
+          )}
+          {selected && (
+            <Selected
+              ref={selectedRef}
+              onClick={handleFocus}
+              css={selectedButtonStyles}
+            >
+              {renderSelected(selected)}
+            </Selected>
+          )}
+          <div
+            css={`
+              position: absolute;
+              top: 0;
+              right: 0;
+              height: 40px;
+              width: 35px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            `}
+          >
+            <IconMagnifyingGlass css="color: #a8b3c8" />
+          </div>
+          <Transition
+            config={springs.swift}
+            items={opened && !!items.length}
+            from={{ scale: 0.98, opacity: 0 }}
+            enter={{ scale: 1, opacity: 1 }}
+            leave={{ scale: 1, opacity: 0 }}
+            native
+          >
+            {show =>
+              show &&
+              (({ scale, opacity }) => (
+                <Items
+                  role="listbox"
+                  style={{
+                    opacity,
+                    transform: scale.interpolate(t => `scale3d(${t},${t},1)`),
+                  }}
+                >
+                  {items.map(item => (
+                    <Item role="option" key={item.key}>
+                      <ButtonBase
+                        onClick={handleChange(item)}
+                        css={`
+                          width: 100%;
+                          ${itemButtonStyles}
+                        `}
+                      >
+                        {renderItem(item, searchValue)}
+                      </ButtonBase>
+                    </Item>
+                  ))}
+                </Items>
+              ))
+            }
+          </Transition>
+        </div>
+      )
+    }
+  )
 )
 
 const Selected = styled(ButtonBase)`
