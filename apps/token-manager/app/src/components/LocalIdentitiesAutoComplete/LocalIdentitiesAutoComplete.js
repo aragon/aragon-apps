@@ -122,17 +122,13 @@ const LocalAutoComplete = React.forwardRef(
     })
 
     useEffect(() => {
-      const item = mockItems.find(
-        ({ address, name }) =>
-          name.toLowerCase() === value.toLowerCase() ||
-          address.toLowerCase() === value.toLowerCase()
-      )
-      if (item) {
-        setDefaultSelected(item)
+      const item = search(value)
+      if (item && item.length === 1) {
+        setDefaultSelected(item[0])
       } else {
         setDefaultSelected(null)
       }
-    }, [value])
+    }, [value, search])
 
     return (
       <AutoComplete
