@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { EthIdenticon, IdentityBadge, theme } from '@aragon/ui'
+import { ButtonBase, EthIdenticon, IdentityBadge, theme } from '@aragon/ui'
 import AutoComplete from '../AutoComplete/AutoComplete'
 
 const mockItems = [
@@ -33,10 +33,6 @@ const mockItems = [
   {
     name: 'Token Manager app',
     address: '0x7aa282a67195b5bca2295cddaedb62516898e7d0',
-  },
-  {
-    name: 'Aragon default 2',
-    address: '0x8401eb5ff34cc943f096a32ef3d5113febe8d4eb',
   },
   {
     name: 'Coinbase @ iPhone',
@@ -75,37 +71,41 @@ const search = value => {
   return items
 }
 
-const LocalAutoComplete = React.memo(
-  React.forwardRef(({ onChange, wide, value, required }, ref) => {
+const LocalAutoComplete = React.forwardRef(
+  ({ onChange, wide, value, required }, ref) => {
     const [items, setItems] = useState([])
-    const [defaultSelected, setDefaultSelected] = useState(null)
+    const [selected, setSelected] = useState(null)
+    const [defaultValue, setDefaultValue] = useState(value)
+    const [selectedValue, setSelectedValue] = useState(null)
+    const [searchTerm, setSearchTerm] = useState('')
+    const selectedRef = useRef()
 
-    const handleChange = useCallback(
-      data => {
-        if (
-          data &&
-          data.address &&
-          data.address.toLowerCase() !== value.toLowerCase()
-        ) {
-          onChange(data.address)
-          return
-        }
-        if (data && data.toLowerCase() !== value.toLowerCase()) {
-          onChange(data)
-          return
-        }
-        onChange('')
-      },
-      [onChange, value]
-    )
-    const handleSearch = useCallback(value => {
-      if (value.length < 3) {
+    const handleSelectedClick = () => {
+      setSelected(null)
+    }
+    const handleSearch = term => {
+      if (term.length < 3) {
         setItems([])
         return
       }
-      const items = search(value)
+      const items = search(term)
       setItems(items)
-    }, [])
+    }
+    const handleChange = value => {
+      setSearchTerm(value)
+      handleSearch(value)
+      onChange(value)
+    }
+    const handleSelect = selected => {
+      const { name, address } = selected
+      setSearchTerm(name)
+      handleSearch(name)
+      setSelected(selected)
+      onChange(address)
+      setTimeout(() => {
+        selectedRef.current.focus()
+      }, 0)
+    }
     const renderItem = useCallback(({ address, name }, search) => {
       if (search.indexOf('0x') === 0) {
         return (
@@ -124,37 +124,47 @@ const LocalAutoComplete = React.memo(
       )
     })
 
-    const renderSelected = useCallback(({ address, name }) => {
-      return (
-        <Option selected>
-          <EthIdenticon address={address} scale={0.6} radius={2} />
-          <Name>{name}</Name>
-        </Option>
-      )
-    })
-
     useEffect(() => {
-      const exists = search(value)
-      if (exists && exists.length === 1) {
-        const item = exists[0]
-        if (
-          item.name.toLowerCase() === value.toLowerCase() ||
-          item.address.toLowerCase() === value.toLowerCase()
-        ) {
-          setDefaultSelected(item)
-        }
-      } else {
-        setDefaultSelected(null)
+      // reset
+      if (value === '') {
+        setSelected(null)
+        setSearchTerm(value)
+        handleSearch(value)
+        return
       }
-    }, [value, search])
+      // value coming from up the tree not from typing
+      if (searchTerm === '') {
+        const exists = search(value)
+        if (exists && exists.length === 1) {
+          const item = exists[0]
+          if (
+            item.name.toLowerCase() === value.toLowerCase() ||
+            item.address.toLowerCase() === value.toLowerCase()
+          ) {
+            setSelected(item)
+            setSearchTerm(item.name)
+            handleSearch(item.name)
+            return
+          }
+        }
+        setSearchTerm(value)
+      }
+    }, [selected, value])
+
+    if (selected) {
+      const { address, name } = selected
+      return (
+        <SelectedWrap onClick={handleSelectedClick} ref={selectedRef}>
+          <Option selected>
+            <EthIdenticon address={address} scale={0.6} radius={2} />
+            <Name>{name}</Name>
+          </Option>
+        </SelectedWrap>
+      )
+    }
 
     return (
       <AutoComplete
-        ref={ref}
-        items={items}
-        onChange={handleChange}
-        onSearch={handleSearch}
-        renderItem={renderItem}
         itemButtonStyles={`
           border-left: 3px solid transparent;
           cursor: pointer;
@@ -167,22 +177,17 @@ const LocalAutoComplete = React.memo(
             border-left: 3px solid ${theme.accent}
           }
         `}
-        renderSelected={renderSelected}
-        selectedButtonStyles={`
-          &:hover,
-          &:focus {
-            outline: none;
-            border: 1px solid ${theme.accent};
-            border-radius: 3px;
-          }
-        `}
-        wide={wide}
+        items={items}
+        onChange={handleChange}
+        onSelect={handleSelect}
+        ref={ref}
+        renderItem={renderItem}
         required={required}
-        defaultSelected={defaultSelected}
-        defaultValue={(defaultSelected && defaultSelected.name) || value || ''}
+        value={searchTerm}
+        wide={wide}
       />
     )
-  })
+  }
 )
 
 LocalAutoComplete.propTypes = {
@@ -191,6 +196,27 @@ LocalAutoComplete.propTypes = {
   value: PropTypes.string,
   wide: PropTypes.bool,
 }
+
+const SelectedWrap = styled(ButtonBase)`
+  height: 40px;
+  width: 100%;
+  background: #fff;
+  display: grid;
+  align-items: center;
+  grid-gap: 8px;
+  grid-template-columns: auto 1fr;
+  padding: 0 8px;
+  cursor: pointer;
+  border: 1px solid ${theme.contentBorder};
+  border-radius: 3px;
+
+  &:hover,
+  &:focus {
+    outline: none;
+    border: 1px solid ${theme.accent};
+    border-radius: 3px;
+  }
+`
 
 const Option = styled.div`
   padding: 8px;
