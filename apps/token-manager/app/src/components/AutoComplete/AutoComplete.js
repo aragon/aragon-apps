@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Transition, animated } from 'react-spring'
@@ -25,7 +25,6 @@ const AutoComplete = React.memo(
       ref
     ) => {
       const [opened, setOpened] = useState(true)
-      const selectedRef = useRef()
       const wrapRef = useRef()
 
       const handleClose = useCallback(() => setOpened(false))
