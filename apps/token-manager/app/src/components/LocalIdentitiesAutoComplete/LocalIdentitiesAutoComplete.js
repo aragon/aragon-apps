@@ -75,8 +75,8 @@ const search = value => {
   return items
 }
 
-const LocalAutoComplete = React.forwardRef(
-  ({ onChange, wide, value, required }, ref) => {
+const LocalAutoComplete = React.memo(
+  React.forwardRef(({ onChange, wide, value, required }, ref) => {
     const [items, setItems] = useState([])
     const [defaultSelected, setDefaultSelected] = useState(null)
 
@@ -171,7 +171,7 @@ const LocalAutoComplete = React.forwardRef(
         defaultValue={(defaultSelected && defaultSelected.name) || value || ''}
       />
     )
-  }
+  })
 )
 
 LocalAutoComplete.propTypes = {
