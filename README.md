@@ -7,7 +7,7 @@ This repository contains the following apps:
 - **[Vault](apps/vault)**: Securely owns and manages tokens on behalf of a DAO.
 - **[Finance](apps/finance)**: Send payments and manage expenses with budgeting.
 - **[Voting](apps/voting)**: Create votes that execute actions on behalf of token holders.
-- **[Token Manager](apps/token-manager)**: Manages organization tokens.
+- **[Tokens](apps/token-manager)**: Manages organization tokens.
 
 You can read more about how the individual apps work in the [Aragon user guide](https://wiki.aragon.org/tutorials/Aragon_User_Guide/#3-aragon-apps).
 
