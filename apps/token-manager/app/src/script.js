@@ -1,5 +1,5 @@
 import Aragon from '@aragon/api'
-import tokenSettings from './token-settings'
+import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
 import { addressesEqual } from './web3-utils'
 import tokenAbi from './abi/minimeToken.json'
 
@@ -77,7 +77,7 @@ async function initialize(tokenAddress) {
   )
 }
 
-const initState = ({ token, tokenAddress }) => async () => {
+const initState = ({ token, tokenAddress }) => async cachedState => {
   try {
     const tokenSymbol = await token.symbol().toPromise()
     app.identify(tokenSymbol)
@@ -87,13 +87,18 @@ const initState = ({ token, tokenAddress }) => async () => {
       err
     )
   }
-  const fetchedTokenSettings = await loadTokenSettings(token)
+
+  const tokenSettings = hasLoadedTokenSettings(cachedState)
+    ? {}
+    : await loadTokenSettings(token)
+
   const maxAccountTokens = await app.call('maxAccountTokens').toPromise()
 
   const inititalState = {
+    ...cachedState,
     tokenAddress,
     maxAccountTokens,
-    ...fetchedTokenSettings,
+    ...tokenSettings,
   }
 
   return inititalState
