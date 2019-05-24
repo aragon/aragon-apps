@@ -71,41 +71,52 @@ const search = value => {
   return items
 }
 
-const LocalAutoComplete = React.forwardRef(
-  ({ onChange, wide, value, required }, ref) => {
+const LocalAutoComplete = React.memo(
+  React.forwardRef(({ onChange, wide, value, required }, ref) => {
     const [items, setItems] = useState([])
     const [selected, setSelected] = useState(null)
-    const [defaultValue, setDefaultValue] = useState(value)
-    const [selectedValue, setSelectedValue] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
     const selectedRef = useRef()
 
-    const handleSelectedClick = () => {
+    const handleSelectedClick = useCallback(() => {
       setSelected(null)
-    }
-    const handleSearch = term => {
-      if (term.length < 3) {
-        setItems([])
-        return
-      }
-      const items = search(term)
-      setItems(items)
-    }
-    const handleChange = value => {
-      setSearchTerm(value)
-      handleSearch(value)
-      onChange(value)
-    }
-    const handleSelect = selected => {
-      const { name, address } = selected
-      setSearchTerm(name)
-      handleSearch(name)
-      setSelected(selected)
-      onChange(address)
       setTimeout(() => {
-        selectedRef.current.focus()
+        ref.current.select()
+        ref.current.focus()
       }, 0)
-    }
+    }, [ref])
+    const handleSearch = useCallback(
+      term => {
+        if (term.length < 3) {
+          setItems([])
+          return
+        }
+        const items = search(term)
+        setItems(items)
+      },
+      [search]
+    )
+    const handleChange = useCallback(
+      value => {
+        setSearchTerm(value)
+        handleSearch(value)
+        onChange(value)
+      },
+      [onChange]
+    )
+    const handleSelect = useCallback(
+      selected => {
+        const { name, address } = selected
+        setSearchTerm(name)
+        handleSearch(name)
+        setSelected(selected)
+        onChange(address)
+        setTimeout(() => {
+          selectedRef.current.focus()
+        }, 0)
+      },
+      [onChange]
+    )
     const renderItem = useCallback(({ address, name }, search) => {
       if (search.indexOf('0x') === 0) {
         return (
@@ -115,7 +126,6 @@ const LocalAutoComplete = React.forwardRef(
           </Option>
         )
       }
-
       return (
         <Option>
           <Name>{name}</Name>
@@ -187,7 +197,7 @@ const LocalAutoComplete = React.forwardRef(
         wide={wide}
       />
     )
-  }
+  })
 )
 
 LocalAutoComplete.propTypes = {
