@@ -122,9 +122,15 @@ const LocalAutoComplete = React.forwardRef(
     })
 
     useEffect(() => {
-      const item = search(value)
-      if (item && item.length === 1) {
-        setDefaultSelected(item[0])
+      const exists = search(value)
+      if (exists && exists.length === 1) {
+        const item = exists[0]
+        if (
+          item.name.toLowerCase() === value.toLowerCase() ||
+          item.address.toLowerCase() === value.toLowerCase()
+        ) {
+          setDefaultSelected(item)
+        }
       } else {
         setDefaultSelected(null)
       }
