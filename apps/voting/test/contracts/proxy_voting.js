@@ -62,7 +62,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
     await token.generateTokens(holder51, bigExp(51, 18), { from: root })
   })
 
-  before('deploy proxy voting', async () => {
+  before('create proxy voting', async () => {
     holder51Proxy = await ProxyVoting.new(holder51, OVERRULE_WINDOW)
     await token.transfer(holder51Proxy.address, bigExp(51, 18), { from: holder51 })
   })
@@ -107,7 +107,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
   }
 
   describe('setFullRepresentative', () => {
-    context('when the sender is the principal', async () => {
+    context('when the sender is the principal', () => {
       const from = holder51
 
       it('is not allowed by default', async () => {
@@ -141,7 +141,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       })
     })
 
-    context('when the sender is not the principal', async () => {
+    context('when the sender is not the principal', () => {
       const from = anyone
 
       it('reverts', async () => {
@@ -151,7 +151,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
   })
 
   describe('setInstanceRepresentative', () => {
-    context('when the sender is the principal', async () => {
+    context('when the sender is the principal', () => {
       const from = holder51
 
       it('is not allowed by default', async () => {
@@ -185,7 +185,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       })
     })
 
-    context('when the sender is not the principal', async () => {
+    context('when the sender is not the principal', () => {
       const from = anyone
 
       it('reverts', async () => {
@@ -197,7 +197,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
   describe('setVoteRepresentative', () => {
     beforeEach('create a vote', createVote)
 
-    context('when the sender is the principal', async () => {
+    context('when the sender is the principal', () => {
       const from = holder51
 
       it('is not allowed by default', async () => {
@@ -231,7 +231,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       })
     })
 
-    context('when the sender is not the principal', async () => {
+    context('when the sender is not the principal', () => {
       const from = anyone
 
       it('reverts', async () => {
@@ -260,8 +260,8 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
         assert.isTrue(open, 'vote should be open')
         assert.isFalse(executed, 'vote should not be executed')
-        assert.equal(yeas.toString(), 0, 'initial yea should be 0')
-        assert.equal(nays.toString(), 0, 'initial nay should be 0')
+        assert.equal(yeas.toString(), 0, 'yeas should be 0')
+        assert.equal(nays.toString(), 0, 'nays should be 0')
         assert.equal(await getVoterState(holder51), VOTER_STATE.ABSENT, 'principal should not have voted yet')
         assert.equal(await getVoterState(holder51Proxy.address), VOTER_STATE.ABSENT, 'principal proxy should not have voted yet')
       })
@@ -333,8 +333,8 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
             it('casts the proxied vote', async () => {
               const { yeas, nays } = await getVoteState()
 
-              assert.equal(yeas.toString(), 0, 'initial yea should be 0')
-              assert.equal(nays.toString(), bigExp(51, 18).toString(), 'initial nay should be 51%')
+              assert.equal(yeas.toString(), 0, 'yeas should be 0')
+              assert.equal(nays.toString(), bigExp(51, 18).toString(), 'nays should be 51%')
               assert.equal(await getVoterState(holder51), VOTER_STATE.ABSENT, 'principal proxy should have voted')
               assert.equal(await getVoterState(holder51Proxy.address), VOTER_STATE.NAY, 'principal proxy should have voted')
             })
@@ -432,8 +432,8 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
           const { yeas, nays } = await getVoteState()
 
-          assert.equal(yeas.toString(), bigExp(51, 18).toString(), 'initial yea should be 51%')
-          assert.equal(nays.toString(), 0, 'initial nay should be 0')
+          assert.equal(yeas.toString(), bigExp(51, 18).toString(), 'yeas should be 51%')
+          assert.equal(nays.toString(), 0, 'nays should be 0')
           assert.equal(await getVoterState(holder51), VOTER_STATE.ABSENT, 'principal proxy should have voted')
           assert.equal(await getVoterState(holder51Proxy.address), VOTER_STATE.YEA, 'principal proxy should have voted')
         })
