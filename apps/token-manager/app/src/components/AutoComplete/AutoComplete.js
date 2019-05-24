@@ -13,107 +13,52 @@ const AutoComplete = React.memo(
   React.forwardRef(
     (
       {
-        defaultSelected,
-        defaultValue,
         itemButtonStyles,
         items,
+        onSelect,
         onChange,
-        onSearch,
         renderItem,
-        renderSelected,
         required,
-        selectedButtonStyles,
+        value,
         wide,
       },
       ref
     ) => {
-      const [opened, setOpened] = useState(false)
-      const [searchValue, setSearchValue] = useState('')
-      const [selected, setSelected] = useState(null)
-
+      const [opened, setOpened] = useState(true)
       const selectedRef = useRef()
       const wrapRef = useRef()
-      const handleClose = useCallback(() => {
-        setOpened(false)
-        if (!selected) {
-          onChange(searchValue)
-        }
-      }, [selected, onChange])
-      const handleSearch = useCallback(
-        ({ target: { value = '' } }) => {
-          if (value === '') {
-            setTimeout(() => onChange(), 0)
-          }
-          onSearch(value)
-          setOpened(value.length > 2)
-          setSearchValue(value)
-          setSelected(null)
-        },
-        [onChange, onSearch]
-      )
-      const handleChange = useCallback(
+
+      const handleClose = useCallback(() => setOpened(false))
+      const handleFocus = useCallback(() => setOpened(true))
+      const handleSelect = useCallback(
         item => e => {
           e.preventDefault()
-          const { name } = item
-          onChange(item)
-          onSearch(name)
-          setOpened(false)
-          setSearchValue(name)
-          setSelected(item)
-          setTimeout(
-            () => selectedRef.current && selectedRef.current.focus(),
-            0
-          )
+          onSelect(item)
         },
-        [onChange, onSearch, selectedRef]
+        [onSelect]
       )
-      const handleFocus = useCallback(() => {
-        setSelected(null)
-        setOpened(true)
-        setTimeout(
-          () => ref.current && ref.current.select() && ref.current.focus(),
-          0
-        )
-      }, [ref])
-      const handleInputFocus = useCallback(() => {
-        setOpened(true)
-      })
+      const handleChange = useCallback(
+        ({ target: { value } }) => onChange(value),
+        [onChange, value]
+      )
 
       useClickOutside(handleClose, wrapRef)
       const { handleBlur } = useOnBlur(handleClose, wrapRef)
-      useEffect(() => {
-        setSearchValue(defaultValue)
-        onSearch(defaultValue)
-      }, [defaultValue])
-      useEffect(() => {
-        setSelected(defaultSelected)
-      }, [defaultSelected])
 
       return (
-        <div css="position: relative" onBlur={handleBlur} ref={wrapRef}>
-          {!selected && (
-            <TextInput
-              css={`
-                caret-color: ${accent};
-                padding-right: 35px;
-              `}
-              ref={ref}
-              wide={wide}
-              required={required}
-              onChange={handleSearch}
-              value={searchValue}
-              onFocus={handleInputFocus}
-            />
-          )}
-          {selected && (
-            <Selected
-              ref={selectedRef}
-              onClick={handleFocus}
-              css={selectedButtonStyles}
-            >
-              {renderSelected(selected)}
-            </Selected>
-          )}
+        <div css="position: relative" ref={wrapRef} onBlur={handleBlur}>
+          <TextInput
+            css={`
+              caret-color: ${accent};
+              padding-right: 35px;
+            `}
+            ref={ref}
+            wide={wide}
+            required={required}
+            onChange={handleChange}
+            onFocus={handleFocus}
+            value={value}
+          />
           <div
             css={`
               position: absolute;
@@ -149,13 +94,13 @@ const AutoComplete = React.memo(
                   {items.map(item => (
                     <Item role="option" key={item.key}>
                       <ButtonBase
-                        onClick={handleChange(item)}
+                        onClick={handleSelect(item)}
                         css={`
                           width: 100%;
                           ${itemButtonStyles}
                         `}
                       >
-                        {renderItem(item, searchValue)}
+                        {renderItem(item, value)}
                       </ButtonBase>
                     </Item>
                   ))}
@@ -170,37 +115,19 @@ const AutoComplete = React.memo(
 )
 
 AutoComplete.propTypes = {
-  defaultSelected: PropTypes.object,
-  defaultValue: PropTypes.string,
   itemButtonStyles: PropTypes.string,
   items: PropTypes.array.isRequired,
+  onSelect: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
-  onSearch: PropTypes.func.isRequired,
   renderItem: PropTypes.func,
-  renderSelected: PropTypes.func,
   required: PropTypes.bool,
-  selectedButtonStyles: PropTypes.string,
+  value: PropTypes.string,
   wide: PropTypes.bool,
 }
 
 AutoComplete.defaultProps = {
   renderItem: identity,
-  renderSelected: identity,
 }
-
-const Selected = styled(ButtonBase)`
-  height: 40px;
-  width: 100%;
-  background: #fff;
-  display: grid;
-  align-items: center;
-  grid-gap: 8px;
-  grid-template-columns: auto 1fr;
-  padding: 0 8px;
-  cursor: pointer;
-  border: 1px solid ${contentBorder};
-  border-radius: 3px;
-`
 
 const Item = styled.li`
   ${unselectable()};
