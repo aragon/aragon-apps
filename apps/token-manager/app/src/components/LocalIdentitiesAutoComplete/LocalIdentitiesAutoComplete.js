@@ -80,11 +80,12 @@ const LocalAutoComplete = React.memo(
 
     const handleSelectedClick = useCallback(() => {
       setSelected(null)
+      onChange(selected.name)
       setTimeout(() => {
         ref.current.select()
         ref.current.focus()
       }, 0)
-    }, [ref])
+    }, [ref, selected, onChange])
     const handleSearch = useCallback(
       term => {
         if (term.length < 3) {
