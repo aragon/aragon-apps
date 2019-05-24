@@ -80,21 +80,32 @@ const LocalAutoComplete = React.memo(
     const [items, setItems] = useState([])
     const [defaultSelected, setDefaultSelected] = useState(null)
 
-    const handleChange = data => {
-      if (data && data.address) {
-        onChange(data.address)
-        return
-      }
-      onChange(data || '')
-    }
-    const handleSearch = value => {
+    const handleChange = useCallback(
+      data => {
+        if (
+          data &&
+          data.address &&
+          data.address.toLowerCase() !== value.toLowerCase()
+        ) {
+          onChange(data.address)
+          return
+        }
+        if (data && data.toLowerCase() !== value.toLowerCase()) {
+          onChange(data)
+          return
+        }
+        onChange('')
+      },
+      [onChange, value]
+    )
+    const handleSearch = useCallback(value => {
       if (value.length < 3) {
         setItems([])
         return
       }
       const items = search(value)
       setItems(items)
-    }
+    }, [])
     const renderItem = useCallback(({ address, name }, search) => {
       if (search.indexOf('0x') === 0) {
         return (
