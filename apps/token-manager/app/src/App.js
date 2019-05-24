@@ -3,6 +3,11 @@ import PropTypes from 'prop-types'
 import BN from 'bn.js'
 import { Badge, Main, SidePanel, SyncIndicator } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
+import {
+  SYNC_STATUS_INITIALIZING,
+  SYNC_STATUS_SYNCING,
+  SYNC_STATUS_SYNCED,
+} from '@aragon/api'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
@@ -10,13 +15,6 @@ import AssignTokensIcon from './components/AssignTokensIcon'
 import AppLayout from './components/AppLayout'
 import { addressesEqual } from './web3-utils'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
-import {
-  SYNC_STATUS_INITIALIZING,
-  SYNC_STATUS_READY,
-  SYNC_STATUS_SYNCING,
-  SyncStatusType,
-  useSyncStatus,
-} from './mock-sync-status'
 
 const initialAssignTokensConfig = {
   mode: null,
@@ -26,16 +24,21 @@ const initialAssignTokensConfig = {
 const syncLabel = status => {
   if (status === SYNC_STATUS_INITIALIZING) return 'Initializing…'
   if (status === SYNC_STATUS_SYNCING) return 'Syncing data…'
-  if (status === SYNC_STATUS_READY) return 'Ready.'
+  if (status === SYNC_STATUS_SYNCED) return 'Ready.'
 }
 
 class App extends React.PureComponent {
   static propTypes = {
     api: PropTypes.object,
-    syncStatus: SyncStatusType,
+    syncStatus: PropTypes.oneOf([
+      SYNC_STATUS_INITIALIZING,
+      SYNC_STATUS_SYNCING,
+      SYNC_STATUS_SYNCED,
+    ]),
   }
   static defaultProps = {
     appStateReady: false,
+    syncStatus: SYNC_STATUS_INITIALIZING,
     holders: [],
     connectedAccount: '',
     groupMode: false,
@@ -184,13 +187,11 @@ class App extends React.PureComponent {
 
 export default () => {
   const { api, appState, connectedAccount, requestMenu } = useAragonApi()
-  const syncStatus = useSyncStatus()
   return (
     <App
       api={api}
       connectedAccount={connectedAccount}
       requestMenu={requestMenu}
-      syncStatus={syncStatus}
       {...appState}
     />
   )

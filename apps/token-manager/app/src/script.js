@@ -1,4 +1,8 @@
-import Aragon from '@aragon/api'
+import Aragon, {
+  SYNC_STATUS_INITIALIZING,
+  SYNC_STATUS_SYNCING,
+  SYNC_STATUS_SYNCED,
+} from '@aragon/api'
 import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
 import { addressesEqual } from './web3-utils'
 import tokenAbi from './abi/minimeToken.json'
@@ -65,8 +69,16 @@ async function initialize(tokenAddress) {
           default:
             return nextState
         }
+      } else {
+        // Finance event
+        switch (event) {
+          case SYNC_STATUS_SYNCING:
+          case SYNC_STATUS_SYNCED:
+            nextState.syncStatus = event
+        }
+
+        // TODO: add handlers for the vesting events from token Manager
       }
-      // TODO: add handlers for the vesting events from token Manager
 
       return nextState
     },
@@ -96,7 +108,7 @@ const initState = ({ token, tokenAddress }) => async cachedState => {
 
   const inititalState = {
     ...cachedState,
-    tokenAddress,
+    syncStatus: SYNC_STATUS_INITIALIZING,
     maxAccountTokens,
     ...tokenSettings,
   }
