@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { EthIdenticon, IdentityBadge, theme } from '@aragon/ui'
 import AutoComplete from '../AutoComplete/AutoComplete'
@@ -172,6 +173,13 @@ const LocalAutoComplete = React.forwardRef(
     )
   }
 )
+
+LocalAutoComplete.propTypes = {
+  onChange: PropTypes.func.isRequired,
+  required: PropTypes.bool,
+  value: PropTypes.string,
+  wide: PropTypes.bool,
+}
 
 const Option = styled.div`
   padding: 8px;
