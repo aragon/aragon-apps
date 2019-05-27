@@ -3,5 +3,6 @@ module.exports = {
     copyPackages: ['@aragon/os'],
     skipFiles: [
         'test',
+        '@aragon/os',
     ]
 }

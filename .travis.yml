@@ -47,8 +47,6 @@ matrix:
     - env: TASK=coverage:payroll
 install:
   - travis_wait 60 npm install
-before_script:
-  - npm prune
 script:
   - travis_wait 60 npm run $TASK
 after_success:
