@@ -37,7 +37,8 @@ export function useCreateVoteAction(onDone) {
   return useCallback(
     question => {
       if (api) {
-        api.newVote(EMPTY_CALLSCRIPT, question)
+        // Don't care about response
+        api.newVote(EMPTY_CALLSCRIPT, question).toPromise()
         onDone()
       }
     },
@@ -50,7 +51,8 @@ export function useVoteAction(onDone) {
   const api = useApi()
   return useCallback(
     (voteId, voteType, executesIfDecided = true) => {
-      api.vote(voteId, voteType === VOTE_YEA, executesIfDecided)
+      // Don't care about response
+      api.vote(voteId, voteType === VOTE_YEA, executesIfDecided).toPromise()
       onDone()
     },
     [api, onDone]
@@ -62,7 +64,8 @@ export function useExecuteAction(onDone) {
   const api = useApi()
   return useCallback(
     voteId => {
-      api.executeVote(voteId)
+      // Don't care about response
+      api.executeVote(voteId).toPromise()
       onDone()
     },
     [api, onDone]
