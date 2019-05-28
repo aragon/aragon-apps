@@ -21,12 +21,6 @@ const initialAssignTokensConfig = {
   holderAddress: '',
 }
 
-const syncLabel = status => {
-  if (status === SYNC_STATUS_INITIALIZING) return 'Initializing…'
-  if (status === SYNC_STATUS_SYNCING) return 'Syncing data…'
-  if (status === SYNC_STATUS_SYNCED) return 'Ready.'
-}
-
 class App extends React.PureComponent {
   static propTypes = {
     api: PropTypes.object,
@@ -115,6 +109,9 @@ class App extends React.PureComponent {
       syncStatus,
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
+    const syncing =
+      syncStatus === SYNC_STATUS_INITIALIZING ||
+      syncStatus === SYNC_STATUS_SYNCING
     return (
       <Main assetsUrl="./aragon-ui">
         <div css="min-width: 320px">
@@ -122,7 +119,7 @@ class App extends React.PureComponent {
             onResolve={this.handleResolveLocalIdentity}
             onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
           >
-            <SyncIndicator visible={syncStatus === SYNC_STATUS_SYNCING} />
+            <SyncIndicator visible={syncing} />
             <AppLayout
               title="Token Manager"
               afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
@@ -136,7 +133,6 @@ class App extends React.PureComponent {
             >
               {appStateReady && holders.length > 0 ? (
                 <Holders
-                  isLoading={syncStatus === SYNC_STATUS_INITIALIZING}
                   holders={holders}
                   groupMode={groupMode}
                   maxAccountTokens={maxAccountTokens}
