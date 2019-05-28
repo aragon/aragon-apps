@@ -57,6 +57,12 @@ async function initialize(tokenAddress) {
         ...state,
       }
 
+      if (event === SYNC_STATUS_SYNCING || event === SYNC_STATUS_SYNCED) {
+        // Handle custom sync events
+        nextState.syncStatus = event
+        return nextState
+      }
+
       if (addressesEqual(address, tokenAddress)) {
         switch (event) {
           case 'ClaimedTokens':
@@ -71,12 +77,6 @@ async function initialize(tokenAddress) {
         }
       } else {
         // Token Manager event
-        switch (event) {
-          case SYNC_STATUS_SYNCING:
-          case SYNC_STATUS_SYNCED:
-            nextState.syncStatus = event
-        }
-
         // TODO: add handlers for the vesting events from token Manager
       }
 
