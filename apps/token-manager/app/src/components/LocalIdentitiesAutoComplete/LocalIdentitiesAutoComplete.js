@@ -33,7 +33,7 @@ const LocalAutoComplete = React.memo(
         const items = await api.searchIdentities(term).toPromise()
         setItems(items)
       },
-      [search]
+      [api]
     )
     const handleChange = useCallback(
       value => {
@@ -103,7 +103,7 @@ const LocalAutoComplete = React.memo(
         }
         effect()
       },
-      [selected, value]
+      [selected, value, api]
     )
 
     if (selected) {
