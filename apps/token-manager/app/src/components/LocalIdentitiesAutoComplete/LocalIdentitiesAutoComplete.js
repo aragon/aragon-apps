@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useAragonApi } from '@aragon/api-react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { ButtonBase, EthIdenticon, IdentityBadge, theme } from '@aragon/ui'
@@ -56,7 +57,7 @@ const mockItems = [
   },
 ]
 
-const search = value => {
+const search = async value => {
   const searchAddress = value.substr(0, 2) === '0x'
   const items = mockItems
     .filter(
@@ -73,6 +74,8 @@ const search = value => {
 
 const LocalAutoComplete = React.memo(
   React.forwardRef(({ onChange, wide, value, required }, ref) => {
+    const { api } = useAragonApi()
+    console.log(api)
     const [items, setItems] = useState([])
     const [selected, setSelected] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
@@ -87,12 +90,12 @@ const LocalAutoComplete = React.memo(
       }, 0)
     }, [ref, selected, onChange])
     const handleSearch = useCallback(
-      term => {
+      async term => {
         if (term.length < 3) {
           setItems([])
           return
         }
-        const items = search(term)
+        const items  = await api.searchIdentities(term).toPromise()
         setItems(items)
       },
       [search]
