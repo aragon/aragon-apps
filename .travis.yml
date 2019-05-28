@@ -22,32 +22,51 @@ node_js:
 env:
   global:
     - INSTALL_FRONTEND=false
-  matrix:
-    - TASK=lint
-    - TASK=test:agent
-    - TASK=test:finance
-    - TASK=test:survey
-    - TASK=test:token-manager
-    - TASK=test:token-manager:app INSTALL_FRONTEND=true
-    - TASK=test:vault
-    - TASK=test:voting
-    - TASK=test:payroll
-    - TASK=coverage:agent
-    - TASK=coverage:finance
-    - TASK=coverage:survey
-    - TASK=coverage:token-manager
-    - TASK=coverage:vault
-    - TASK=coverage:voting
-    - TASK=coverage:payroll
-    - TASK=test:shared
-matrix:
-  allow_failures:
-    - env: TASK=coverage:agent
-    - env: TASK=coverage:finance
-    - env: TASK=coverage:payroll
 install:
   - travis_wait 60 npm install
-script:
-  - travis_wait 60 npm run $TASK
+jobs:
+  allow_failures:
+    - script: npm run coverage:agent
+    - script: npm run coverage:payroll
+  include:
+    - stage: tests
+      script: npm run lint
+      name: "Lint"
+    - script: npm run test:agent
+      name: "Agent"
+    - script: npm run test:finance
+      name: "Finance"
+    - script: npm run test:payroll
+      name: "Payroll"
+    - script: npm run test:survey
+      name: "Survey"
+    - script: npm run test:token-manager
+      name: "Token Manager"
+    - script: npm run test:token-manager:app
+      name: "Token Manager frontend"
+      env:
+        - INSTALL_FRONTEND=true
+    - script: npm run test:vault
+      name: "Vault"
+    - script: npm run test:voting
+      name: "Voting"
+    - script: npm run test:shared
+      name: "Shared"
+
+    - stage: coverage
+      script: npm run coverage:agent
+      name: "Agent"
+    - script: npm run coverage:finance
+      name: "Finance"
+    - script: npm run coverage:payroll
+      name: "Payroll"
+    - script: npm run coverage:survey
+      name: "Survey"
+    - script: npm run coverage:token-manager
+      name: "Token Manager"
+    - script: npm run coverage:vault
+      name: "Vault"
+    - script: npm run coverage:voting
+      name: "Voting"
 after_success:
   - ./node_modules/.bin/lcov-result-merger 'apps/*/coverage/lcov.info' | ./node_modules/.bin/coveralls
