@@ -70,7 +70,7 @@ async function initialize(tokenAddress) {
             return nextState
         }
       } else {
-        // Finance event
+        // Token Manager event
         switch (event) {
           case SYNC_STATUS_SYNCING:
           case SYNC_STATUS_SYNCED:
