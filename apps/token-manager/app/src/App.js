@@ -21,12 +21,6 @@ const initialAssignTokensConfig = {
   holderAddress: '',
 }
 
-const syncLabel = status => {
-  if (status === SYNC_STATUS_INITIALIZING) return 'Initializing…'
-  if (status === SYNC_STATUS_SYNCING) return 'Syncing data…'
-  if (status === SYNC_STATUS_SYNCED) return 'Ready.'
-}
-
 class App extends React.PureComponent {
   static propTypes = {
     api: PropTypes.object,
@@ -115,6 +109,9 @@ class App extends React.PureComponent {
       syncStatus,
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
+    const isInitializing = syncStatus === SYNC_STATUS_INITIALIZING
+    const isSyncing = syncStatus !== SYNC_STATUS_SYNCED
+
     return (
       <Main assetsUrl="./aragon-ui">
         <div css="min-width: 320px">
@@ -122,7 +119,7 @@ class App extends React.PureComponent {
             onResolve={this.handleResolveLocalIdentity}
             onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
           >
-            <SyncIndicator visible={syncStatus === SYNC_STATUS_SYNCING} />
+            <SyncIndicator visible={isSyncing} />
             <AppLayout
               title="Token Manager"
               afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
@@ -136,7 +133,7 @@ class App extends React.PureComponent {
             >
               {appStateReady && holders.length > 0 ? (
                 <Holders
-                  isLoading={syncStatus === SYNC_STATUS_INITIALIZING}
+                  isLoading={isInitializing}
                   holders={holders}
                   groupMode={groupMode}
                   maxAccountTokens={maxAccountTokens}
@@ -151,9 +148,11 @@ class App extends React.PureComponent {
                   onRemoveTokens={this.handleLaunchRemoveTokens}
                 />
               ) : (
-                <EmptyState
-                  onActivate={this.handleLaunchAssignTokensNoHolder}
-                />
+                !isSyncing && (
+                  <EmptyState
+                    onActivate={this.handleLaunchAssignTokensNoHolder}
+                  />
+                )
               )}
             </AppLayout>
             <SidePanel
