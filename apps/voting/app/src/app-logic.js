@@ -96,7 +96,7 @@ export function useSelectedVotePanel(selectedVote, selectVote) {
 
 // Handles the main logic of the app.
 export function useAppLogic() {
-  const { isSyncing } = useAppState()
+  const { isSyncing, ready } = useAppState()
 
   const votes = useVotes()
   const [selectedVote, selectVote] = useSelectedVote(votes)
@@ -110,7 +110,7 @@ export function useAppLogic() {
   }
 
   return {
-    isSyncing,
+    isSyncing: isSyncing || !ready,
     votes,
     selectVote,
     selectedVote,

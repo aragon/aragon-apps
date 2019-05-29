@@ -38,7 +38,7 @@ function App() {
           {votes.length > 0 ? (
             <Votes votes={votes} onSelectVote={selectVote} />
           ) : (
-            <EmptyState onActivate={newVotePanel.requestOpen} />
+            !isSyncing && <EmptyState onActivate={newVotePanel.requestOpen} />
           )}
         </AppLayout>
 
