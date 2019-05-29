@@ -6,68 +6,66 @@ import AutoComplete from './AutoComplete'
 const identity = x => x
 const noop = () => null
 
-function AutoCompleteSelected(
-  {
-    itemButtonStyles,
-    items,
-    onChange,
-    onSelect,
-    onSelectedClick,
-    renderItem,
-    required,
-    renderSelected,
-    selected,
-    selectedButtonStyles,
-    value,
-    wide,
-  },
-  ref
-) {
-  const selectedRef = useRef()
-
-  const handleSelect = useCallback(
-    selected => {
-      onSelect(selected)
-      setTimeout(() => {
-        selectedRef.current.focus()
-      }, 0)
+const AutoCompleteSelected = React.memo(
+  React.forwardRef(function AutoCompleteSelected(
+    {
+      itemButtonStyles,
+      items,
+      onChange,
+      onSelect,
+      onSelectedClick = noop,
+      renderItem,
+      required,
+      renderSelected = identity,
+      selected,
+      selectedButtonStyles = '',
+      value,
+      wide,
     },
-    [onChange]
-  )
-  const handleSelectedClick = useCallback(
-    () => {
+    ref
+  ) {
+    const selectedRef = useRef()
+
+    const handleSelect = useCallback(
+      selected => {
+        onSelect(selected)
+        setTimeout(() => {
+          selectedRef.current.focus()
+        }, 0)
+      },
+      [onChange]
+    )
+    const handleSelectedClick = useCallback(() => {
       onSelectedClick()
       setTimeout(() => {
         ref.current.select()
         ref.current.focus()
       }, 0)
-    },
-    [ref, selected, onChange]
-  )
+    }, [ref, selected, onChange])
 
-  if (selected) {
+    if (selected) {
+      return (
+        <ButtonBase
+          onClick={handleSelectedClick}
+          ref={selectedRef}
+          css={`
+            height: 40px;
+            width: 100%;
+            background: #fff;
+            cursor: pointer;
+            border: 1px solid ${theme.contentBorder};
+            border-radius: 3px;
+            ${selectedButtonStyles};
+          `}
+        >
+          {renderSelected(selected)}
+        </ButtonBase>
+      )
+    }
+
     return (
-      <ButtonBase
-        onClick={handleSelectedClick}
-        ref={selectedRef}
-        css={`
-          height: 40px;
-          width: 100%;
-          background: #fff;
-          cursor: pointer;
-          border: 1px solid ${theme.contentBorder};
-          border-radius: 3px;
-          ${selectedButtonStyles};
-        `}
-      >
-        {renderSelected(selected)}
-      </ButtonBase>
-    )
-  }
-
-  return (
-    <AutoComplete
-      itemButtonStyles={`
+      <AutoComplete
+        itemButtonStyles={`
           border-left: 3px solid transparent;
           cursor: pointer;
           border-radius: 0;
@@ -79,17 +77,18 @@ function AutoCompleteSelected(
             border-left: 3px solid ${theme.accent}
           }
         `}
-      items={items}
-      onChange={onChange}
-      onSelect={handleSelect}
-      ref={ref}
-      renderItem={renderItem}
-      required={required}
-      value={value}
-      wide={wide}
-    />
-  )
-}
+        items={items}
+        onChange={onChange}
+        onSelect={handleSelect}
+        ref={ref}
+        renderItem={renderItem}
+        required={required}
+        value={value}
+        wide={wide}
+      />
+    )
+  })
+)
 
 AutoCompleteSelected.propTypes = {
   itemButtonStyles: PropTypes.string,
@@ -106,10 +105,4 @@ AutoCompleteSelected.propTypes = {
   wide: PropTypes.bool,
 }
 
-AutoCompleteSelected.defaultProps = {
-  onSelectedClick: noop,
-  renderSelected: identity,
-  selectedButtonStyles: '',
-}
-
-export default React.forwardRef(AutoCompleteSelected)
+export default AutoCompleteSelected

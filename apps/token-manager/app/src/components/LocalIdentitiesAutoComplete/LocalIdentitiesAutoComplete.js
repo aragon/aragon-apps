@@ -8,8 +8,11 @@ import AutoCompleteSelected from '../AutoComplete/AutoCompleteSelected'
 const withKey = item => ({ key: item.address, ...item })
 const sortAlphAsc = (a, b) => a.name.localeCompare(b.name)
 
-const LocalAutoComplete = React.memo(
-  React.forwardRef(({ onChange, wide, value, required }, ref) => {
+const LocalIdentitiesAutoComplete = React.memo(
+  React.forwardRef(function LocalIdentitiesAutoComplete(
+    { onChange, wide, value, required },
+    ref
+  ) {
     const { api } = useAragonApi()
     const [items, setItems] = useState([])
     const [selected, setSelected] = useState(null)
@@ -141,7 +144,7 @@ const LocalAutoComplete = React.memo(
   })
 )
 
-LocalAutoComplete.propTypes = {
+LocalIdentitiesAutoComplete.propTypes = {
   onChange: PropTypes.func.isRequired,
   required: PropTypes.bool,
   value: PropTypes.string,
@@ -165,4 +168,4 @@ const Name = styled.div`
   color: #000;
 `
 
-export default LocalAutoComplete
+export default LocalIdentitiesAutoComplete
