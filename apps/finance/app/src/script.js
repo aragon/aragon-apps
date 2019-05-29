@@ -172,10 +172,31 @@ const initializeState = settings => async () => {
     ),
     vaultAddress: settings.vault.address,
   }
-
-  const withTestnetState = await loadTestnetState(newState, settings)
+  const withTokenBalances = await loadTokenBalances(newState, settings)
+  const withTestnetState = await loadTestnetState(withTokenBalances, settings)
   const withEthBalance = await loadEthBalance(withTestnetState, settings)
+
   return withEthBalance
+}
+
+async function loadTokenBalances(state, settings) {
+  let newState = {
+    ...state,
+  }
+  if (!newState.balances) {
+    return newState
+  }
+
+  for (let i = 0; i < newState.balances.length; i++) {
+    const balance = newState.balances[i]
+    const amount = await loadTokenBalance(balance.address, settings)
+    newState.balances[i] = {
+      ...balance,
+      amount,
+    }
+  }
+
+  return newState
 }
 
 async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
