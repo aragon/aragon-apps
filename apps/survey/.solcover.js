@@ -3,6 +3,8 @@ module.exports = {
     copyPackages: ['@aragon/os', '@aragon/apps-shared-minime', '@aragon/test-helpers'],
     skipFiles: [
         'test',
+        '@aragon/os',
+        '@aragon/apps-shared-minime/contracts/MiniMeToken.sol',
         '@aragon/test-helpers/contracts/TimeHelpersMock.sol',
     ]
 }
