@@ -1,7 +1,8 @@
 const PAYMENT_TYPES = require('../helpers/payment_types')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { getEventArgument } = require('../helpers/events')
-const { bn, ONE, MAX_UINT256, bigExp } = require('../helpers/numbers')(web3)
+const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
+const { getEvents, getEventArgument } = require('@aragon/test-helpers/events')
+const { bn, MAX_UINT256, bigExp } = require('../helpers/numbers')(web3)
 const { NOW, ONE_MONTH, TWO_MONTHS, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 const { USD, DAI_RATE, ANT_RATE, inverseRate, exchangedAmount, deployDAI, deployANT, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
@@ -78,8 +79,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
               it('emits one event per allocated token', async () => {
                 const receipt = await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from })
 
-                const events = receipt.logs.filter(l => l.event === 'SendPayment')
-                assert.equal(events.length, 2, 'should have emitted two events')
+                assertAmountOfEvents(receipt, 'SendPayment', 2)
+                const events = getEvents(receipt, 'SendPayment')
 
                 const eventDAI = events.find(e => e.args.token === DAI.address).args
                 assert.equal(eventDAI.employeeId.toString(), employeeId.toString(), 'employee id does not match')
@@ -640,14 +641,14 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                     it('emits one event per allocated token', async () => {
                       const receipt = await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from })
 
-                      const events = receipt.logs.filter(l => l.event === 'SendPayment')
-                      assert.equal(events.length, 2, 'should have emitted two events')
+                      assertAmountOfEvents(receipt, 'SendPayment', 2)
+                      const events = getEvents(receipt, 'SendPayment')
 
                       const eventDAI = events.find(e => e.args.token === DAI.address).args
                       assert.equal(eventDAI.employeeId.toString(), employeeId.toString(), 'employee id does not match')
                       assert.equal(eventDAI.accountAddress, employee, 'employee address does not match')
                       assert.equal(eventDAI.token, DAI.address, 'DAI address does not match')
-                      assert.equal(eventDAI.amount.toString(), requestedDAI, 'payment amount does not match')
+                      assert.equal(eventDAI.amount.toString(), requestedDAI.toString(), 'payment amount does not match')
                       assert.equal(eventDAI.exchangeRate.toString(), inverseRate(DAI_RATE).toString(), 'payment exchange rate does not match')
                       assert.equal(eventDAI.paymentReference, 'Employee salary', 'payment reference does not match')
 
@@ -655,7 +656,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                       assert.equal(eventANT.employeeId.toString(), employeeId.toString(), 'employee id does not match')
                       assert.equal(eventANT.accountAddress, employee, 'employee address does not match')
                       assert.equal(eventANT.token, ANT.address, 'ANT address does not match')
-                      assert.equal(eventANT.amount.toString(), requestedANT, 'payment amount does not match')
+                      assert.equal(eventANT.amount.toString(), requestedANT.toString(), 'payment amount does not match')
                       assert.equal(eventANT.exchangeRate.toString(), inverseRate(ANT_RATE).toString(), 'payment exchange rate does not match')
                       assert.equal(eventANT.paymentReference, 'Employee salary', 'payment reference does not match')
                     })

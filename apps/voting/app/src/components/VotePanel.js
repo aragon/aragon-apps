@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import {
   Button,
-  Countdown,
+  Timer,
   Info,
   SafeLink,
   SidePanelSeparator,
@@ -83,7 +83,11 @@ const VotePanelContent = React.memo(
               <Label>{open ? 'Time Remaining' : 'Status'}</Label>
             </h2>
             <div>
-              {open ? <Countdown end={endDate} /> : <VoteStatus vote={vote} />}
+              {open ? (
+                <Timer end={endDate} maxUnits={3} />
+              ) : (
+                <VoteStatus vote={vote} />
+              )}
             </div>
             <VoteSuccess vote={vote} css="margin-top: 10px" />
           </div>
