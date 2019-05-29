@@ -47,63 +47,64 @@ retryEvery(retry => {
 async function initialize(tokenAddress) {
   const token = app.external(tokenAddress, tokenAbi)
 
-  return app.store(
-    async (state, { address, event, returnValues }) => {
-      let nextState = {
-        ...state,
-      }
-
-      if (addressesEqual(address, tokenAddress)) {
-        switch (event) {
-          case 'ClaimedTokens':
-            if (addressesEqual(returnValues._token, tokenAddress)) {
-              return claimedTokens(token, nextState, returnValues)
-            }
-            return nextState
-          case 'Transfer':
-            return transfer(token, nextState, returnValues)
-          default:
-            return nextState
-        }
-      }
-      // TODO: add handlers for the vesting events from token Manager
-
-      return nextState
-    },
-    {
-      externals: [{ contract: token }],
-      init: initState({ token, tokenAddress }),
+  async function reducer(state, { address, event, returnValues }) {
+    let nextState = {
+      ...state,
     }
-  )
-}
 
-const initState = ({ token, tokenAddress }) => async cachedState => {
-  try {
-    const tokenSymbol = await token.symbol().toPromise()
-    app.identify(tokenSymbol)
-  } catch (err) {
-    console.error(
-      `Failed to load token symbol for token at ${tokenAddress} due to:`,
-      err
-    )
+    if (addressesEqual(address, tokenAddress)) {
+      switch (event) {
+        case 'ClaimedTokens':
+          if (addressesEqual(returnValues._token, tokenAddress)) {
+            return claimedTokens(token, nextState, returnValues)
+          }
+          return nextState
+        case 'Transfer':
+          return transfer(token, nextState, returnValues)
+        default:
+          return nextState
+      }
+    }
+    // TODO: add handlers for the vesting events from token Manager
+    return nextState
   }
 
-  const tokenSettings = hasLoadedTokenSettings(cachedState)
-    ? {}
-    : await loadTokenSettings(token)
-
-  const maxAccountTokens = await app.call('maxAccountTokens').toPromise()
-
-  const inititalState = {
-    ...cachedState,
-    tokenAddress,
-    maxAccountTokens,
-    ...tokenSettings,
+  const storeOptions = {
+    externals: [{ contract: token }],
+    init: initState({ token, tokenAddress }),
   }
 
-  return inititalState
+  return app.store(reducer, storeOptions)
 }
 
+function initState({ token, tokenAddress }) {
+  return async cachedState => {
+    try {
+      const tokenSymbol = await token.symbol().toPromise()
+      app.identify(tokenSymbol)
+    } catch (err) {
+      console.error(
+        `Failed to load token symbol for token at ${tokenAddress} due to:`,
+        err
+      )
+    }
+
+    const tokenSettings = hasLoadedTokenSettings(cachedState)
+      ? {}
+      : await loadTokenSettings(token)
+
+    const maxAccountTokens = await app.call('maxAccountTokens').toPromise()
+
+    const inititalState = {
+      ...cachedState,
+      tokenAddress,
+      maxAccountTokens,
+      ...tokenSettings,
+    }
+
+    return inititalState
+  }
+}
 /***********************
  *                     *
  *   Event Handlers    *
