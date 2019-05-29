@@ -187,15 +187,13 @@ async function loadTokenBalances(state, settings) {
     return newState
   }
 
-  for (let i = 0; i < newState.balances.length; i++) {
-    const balance = newState.balances[i]
-    const amount = await loadTokenBalance(balance.address, settings)
-    newState.balances[i] = {
-      ...balance,
-      amount,
+  const addresses = newState.balances.map(({ address }) => address)
+  for (const address of addresses) {
+    newState = {
+      ...newState,
+      balances: await updateBalances(newState, address, settings),
     }
   }
-
   return newState
 }
 
