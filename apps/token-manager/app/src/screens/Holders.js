@@ -10,7 +10,6 @@ import {
   breakpoint,
 } from '@aragon/ui'
 import HolderRow from '../components/HolderRow'
-import LoadingRow from '../components/LoadingRow'
 import SideBar from '../components/SideBar'
 
 const TABS = ['Holders', 'Token Info']
@@ -18,7 +17,6 @@ const TABS = ['Holders', 'Token Info']
 class Holders extends React.Component {
   static propTypes = {
     holders: PropTypes.array,
-    isLoading: PropTypes.bool,
   }
   static defaultProps = {
     holders: [],
@@ -28,7 +26,6 @@ class Holders extends React.Component {
     const {
       groupMode,
       holders,
-      isLoading,
       maxAccountTokens,
       onAssignTokens,
       onRemoveTokens,
@@ -40,8 +37,7 @@ class Holders extends React.Component {
       tokenTransfersEnabled,
       userAccount,
     } = this.props
-
-    const selectedTab = isLoading ? 0 : this.state.selectedTab
+    const { selectedTab } = this.state
 
     return (
       <Viewport>
@@ -55,20 +51,7 @@ class Holders extends React.Component {
                 {tabbedNavigation && (
                   <TabBarWrapper>
                     <TabBar
-                      items={TABS.map((tab, i) =>
-                        isLoading && i !== 0 ? (
-                          <span
-                            css={`
-                              color: #b3b3b3;
-                              cursor: default;
-                            `}
-                          >
-                            {tab}
-                          </span>
-                        ) : (
-                          tab
-                        )
-                      )}
+                      items={TABS}
                       selected={selectedTab}
                       onSelect={this.handleSelectTab}
                     />
@@ -95,32 +78,27 @@ class Holders extends React.Component {
                     }
                     noSideBorders={compactTable}
                   >
-                    {isLoading ? (
-                      <LoadingRow groupMode={groupMode} />
-                    ) : (
-                      holders.map(({ address, balance }) => (
-                        <HolderRow
-                          key={address}
-                          address={address}
-                          balance={balance}
-                          groupMode={groupMode}
-                          isCurrentUser={Boolean(
-                            userAccount && userAccount === address
-                          )}
-                          maxAccountTokens={maxAccountTokens}
-                          tokenDecimalsBase={tokenDecimalsBase}
-                          onAssignTokens={onAssignTokens}
-                          onRemoveTokens={onRemoveTokens}
-                          compact={compactTable}
-                        />
-                      ))
-                    )}
+                    {holders.map(({ address, balance }) => (
+                      <HolderRow
+                        key={address}
+                        address={address}
+                        balance={balance}
+                        groupMode={groupMode}
+                        isCurrentUser={Boolean(
+                          userAccount && userAccount === address
+                        )}
+                        maxAccountTokens={maxAccountTokens}
+                        tokenDecimalsBase={tokenDecimalsBase}
+                        onAssignTokens={onAssignTokens}
+                        onRemoveTokens={onRemoveTokens}
+                        compact={compactTable}
+                      />
+                    ))}
                   </ResponsiveTable>
                 )}
               </Main>
               {(!tabbedNavigation || selectedTab === 1) && (
                 <SideBar
-                  blankMode={isLoading}
                   holders={holders}
                   tokenAddress={tokenAddress}
                   tokenDecimalsBase={tokenDecimalsBase}

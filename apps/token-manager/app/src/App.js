@@ -133,7 +133,6 @@ class App extends React.PureComponent {
             >
               {appStateReady && holders.length > 0 ? (
                 <Holders
-                  isLoading={isInitializing}
                   holders={holders}
                   groupMode={groupMode}
                   maxAccountTokens={maxAccountTokens}
