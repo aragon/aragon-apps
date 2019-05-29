@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import { Badge, Main, SidePanel } from '@aragon/ui'
+import { Badge, Main, SidePanel, SyncIndicator } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
@@ -19,9 +19,11 @@ const initialAssignTokensConfig = {
 class App extends React.PureComponent {
   static propTypes = {
     api: PropTypes.object,
+    isSyncing: PropTypes.bool,
   }
   static defaultProps = {
     appStateReady: false,
+    isSyncing: true,
     holders: [],
     connectedAccount: '',
     groupMode: false,
@@ -86,6 +88,7 @@ class App extends React.PureComponent {
       appStateReady,
       groupMode,
       holders,
+      isSyncing,
       maxAccountTokens,
       numData,
       tokenAddress,
@@ -98,6 +101,7 @@ class App extends React.PureComponent {
       requestMenu,
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
+
     return (
       <Main assetsUrl="./aragon-ui">
         <div css="min-width: 320px">
@@ -105,6 +109,7 @@ class App extends React.PureComponent {
             onResolve={this.handleResolveLocalIdentity}
             onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
           >
+            <SyncIndicator visible={isSyncing} />
             <AppLayout
               title="Token Manager"
               afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
@@ -132,9 +137,11 @@ class App extends React.PureComponent {
                   onRemoveTokens={this.handleLaunchRemoveTokens}
                 />
               ) : (
-                <EmptyState
-                  onActivate={this.handleLaunchAssignTokensNoHolder}
-                />
+                !isSyncing && (
+                  <EmptyState
+                    onActivate={this.handleLaunchAssignTokensNoHolder}
+                  />
+                )
               )}
             </AppLayout>
             <SidePanel

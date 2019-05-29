@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import {
   TabBar,
@@ -14,11 +15,13 @@ import SideBar from '../components/SideBar'
 const TABS = ['Holders', 'Token Info']
 
 class Holders extends React.Component {
-  state = { selectedTab: 0 }
-
+  static propTypes = {
+    holders: PropTypes.array,
+  }
   static defaultProps = {
     holders: [],
   }
+  state = { selectedTab: 0 }
   render() {
     const {
       groupMode,
@@ -54,7 +57,7 @@ class Holders extends React.Component {
                     />
                   </TabBarWrapper>
                 )}
-                <Screen selected={!tabbedNavigation || selectedTab === 0}>
+                {(!tabbedNavigation || selectedTab === 0) && (
                   <ResponsiveTable
                     header={
                       <TableRow>
@@ -92,10 +95,10 @@ class Holders extends React.Component {
                       />
                     ))}
                   </ResponsiveTable>
-                </Screen>
+                )}
               </Main>
-              <Screen selected={!tabbedNavigation || selectedTab === 1}>
-                <ResponsiveSideBar
+              {(!tabbedNavigation || selectedTab === 1) && (
+                <SideBar
                   holders={holders}
                   tokenAddress={tokenAddress}
                   tokenDecimalsBase={tokenDecimalsBase}
@@ -105,7 +108,7 @@ class Holders extends React.Component {
                   tokenTransfersEnabled={tokenTransfersEnabled}
                   userAccount={userAccount}
                 />
-              </Screen>
+              )}
             </TwoPanels>
           )
         }}
@@ -117,8 +120,6 @@ class Holders extends React.Component {
     this.setState({ selectedTab: index })
   }
 }
-
-const Screen = ({ selected, children }) => selected && children
 
 const TabBarWrapper = styled.div`
   margin-top: 16px;
@@ -142,18 +143,6 @@ const ResponsiveTable = styled(Table)`
   )};
 `
 
-const ResponsiveSideBar = styled(SideBar)`
-  margin-top: 16px;
-
-  ${breakpoint(
-    'medium',
-    `
-      opacity: 1;
-      margin-top: 0;
-    `
-  )};
-`
-
 const Main = styled.div`
   max-width: 100%;
 
@@ -166,7 +155,6 @@ const Main = styled.div`
 `
 const TwoPanels = styled.div`
   width: 100%;
-
   ${breakpoint(
     'medium',
     `
