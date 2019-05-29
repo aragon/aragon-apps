@@ -1,5 +1,5 @@
 import React from 'react'
-import { Main } from '@aragon/ui'
+import { SyncIndicator, Main } from '@aragon/ui'
 
 import EmptyState from './screens/EmptyState'
 import Votes from './screens/Votes'
@@ -14,6 +14,7 @@ import { AppLogicProvider, useAppLogic } from './app-logic'
 
 function App() {
   const {
+    isSyncing,
     votes,
     selectedVote,
     actions,
@@ -25,6 +26,7 @@ function App() {
   return (
     <div css="min-width: 320px">
       <Main assetsUrl="./aragon-ui">
+        <SyncIndicator visible={isSyncing} />
         <AppLayout
           title="Voting"
           mainButton={{
@@ -36,7 +38,7 @@ function App() {
           {votes.length > 0 ? (
             <Votes votes={votes} onSelectVote={selectVote} />
           ) : (
-            <EmptyState onActivate={newVotePanel.requestOpen} />
+            !isSyncing && <EmptyState onActivate={newVotePanel.requestOpen} />
           )}
         </AppLayout>
 
