@@ -1,4 +1,4 @@
-import Aragon from '@aragon/api'
+import Aragon, { events } from '@aragon/api'
 import { first } from 'rxjs/operators'
 import { getTestTokenAddresses } from './testnet'
 import {
@@ -125,6 +125,12 @@ async function initialize(vaultAddress, ethAddress) {
       } else {
         // Finance event
         switch (eventName) {
+          case events.SYNC_STATUS_SYNCING:
+            nextState.isSyncing = true
+            break
+          case events.SYNC_STATUS_SYNCED:
+            nextState.isSyncing = false
+            break
           case 'ChangePeriodDuration':
             nextState.periodDuration = marshallDate(
               event.returnValues.newDuration
@@ -165,8 +171,10 @@ async function initialize(vaultAddress, ethAddress) {
  *                     *
  ***********************/
 
-const initializeState = settings => async () => {
+const initializeState = settings => async cachedState => {
   const newState = {
+    ...cachedState,
+    isSyncing: true,
     periodDuration: marshallDate(
       await app.call('getPeriodDuration').toPromise()
     ),
