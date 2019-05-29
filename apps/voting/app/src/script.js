@@ -57,8 +57,8 @@ retryEvery(retry => {
 
 async function initialize(tokenAddr) {
   return app.store(
-    async (state, { event, returnValues }) => {
-      let nextState = {
+    (state, { event, returnValues }) => {
+      const nextState = {
         ...state,
       }
 

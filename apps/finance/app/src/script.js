@@ -115,43 +115,41 @@ async function initialize(vaultAddress, ethAddress) {
     async (state, event) => {
       const { vault } = settings
       const { address: eventAddress, event: eventName } = event
-      let nextState = {
+      const nextState = {
         ...state,
       }
 
+      if (event === events.SYNC_STATUS_SYNCING) {
+        return { ...nextState, isSyncing: true }
+      } else if (event === events.SYNC_STATUS_SYNCED) {
+        return { ...nextState, isSyncing: false }
+      }
+
+      // Vault event
       if (addressesEqual(eventAddress, vault.address)) {
-        // Vault event
-        nextState = await vaultLoadBalance(nextState, event, settings)
-      } else {
-        // Finance event
-        switch (eventName) {
-          case events.SYNC_STATUS_SYNCING:
-            nextState.isSyncing = true
-            break
-          case events.SYNC_STATUS_SYNCED:
-            nextState.isSyncing = false
-            break
-          case 'ChangePeriodDuration':
-            nextState.periodDuration = marshallDate(
-              event.returnValues.newDuration
-            )
-            break
-          case 'NewPeriod':
+        return vaultLoadBalance(nextState, event, settings)
+      }
+
+      // Finance event
+      switch (eventName) {
+        case 'ChangePeriodDuration':
+          nextState.periodDuration = marshallDate(
+            event.returnValues.newDuration
+          )
+          return nextState
+        case 'NewPeriod':
+          return {
+            ...(await newPeriod(nextState, event, settings)),
             // A new period is always started as part of the Finance app's initialization,
             // so this is just a handy way to get information about the app we're running
             // (e.g. its own address)
-            nextState.proxyAddress = eventAddress
-            nextState = await newPeriod(nextState, event, settings)
-            break
-          case 'NewTransaction':
-            nextState = await newTransaction(nextState, event, settings)
-            break
-          default:
-            break
-        }
+            proxyAddress: eventAddress,
+          }
+        case 'NewTransaction':
+          return newTransaction(nextState, event, settings)
+        default:
+          return nextState
       }
-
-      return nextState
     },
     {
       init: initializeState(settings),

@@ -47,17 +47,18 @@ retryEvery(retry => {
 async function initialize(tokenAddress) {
   const token = app.external(tokenAddress, tokenAbi)
 
-  async function reducer(state, { address, event, returnValues }) {
-    let nextState = {
+  function reducer(state, { address, event, returnValues }) {
+    const nextState = {
       ...state,
     }
 
     if (event === events.SYNC_STATUS_SYNCING) {
-      nextState.isSyncing = true
+      return { ...nextState, isSyncing: true }
     } else if (event === events.SYNC_STATUS_SYNCED) {
-      nextState.isSyncing = false
+      return { ...nextState, isSyncing: false }
     }
 
+    // Token event
     if (addressesEqual(address, tokenAddress)) {
       switch (event) {
         case 'ClaimedTokens':
@@ -70,10 +71,10 @@ async function initialize(tokenAddress) {
         default:
           return nextState
       }
-    } else {
-      // Token Manager event
-      // TODO: add handlers for the vesting events from token Manager
     }
+
+    // Token Manager event
+    // TODO: add handlers for the vesting events from token Manager
 
     return nextState
   }
