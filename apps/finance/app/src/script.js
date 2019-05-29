@@ -119,9 +119,9 @@ async function initialize(vaultAddress, ethAddress) {
         ...state,
       }
 
-      if (event === events.SYNC_STATUS_SYNCING) {
+      if (eventName === events.SYNC_STATUS_SYNCING) {
         return { ...nextState, isSyncing: true }
-      } else if (event === events.SYNC_STATUS_SYNCED) {
+      } else if (eventName === events.SYNC_STATUS_SYNCED) {
         return { ...nextState, isSyncing: false }
       }
 
