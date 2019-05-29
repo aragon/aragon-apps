@@ -96,7 +96,7 @@ const AutoComplete = React.memo(
                         onClick={handleSelect(item)}
                         css={`
                           width: 100%;
-                          ${itemButtonStyles}
+                          ${itemButtonStyles};
                         `}
                       >
                         {renderItem(item, value)}
@@ -125,6 +125,7 @@ AutoComplete.propTypes = {
 }
 
 AutoComplete.defaultProps = {
+  itemButtonStyles: '',
   renderItem: identity,
 }
 
