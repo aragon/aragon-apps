@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { Badge, EmptyStateCard, Main, SidePanel } from '@aragon/ui'
+import { SyncIndicator, EmptyStateCard, Main, SidePanel } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
@@ -98,6 +98,7 @@ class App extends React.Component {
             onResolve={this.handleResolveLocalIdentity}
             onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
           >
+            <SyncIndicator visible={isSyncing} />
             <AppLayout
               title="Finance"
               mainButton={{
@@ -107,7 +108,6 @@ class App extends React.Component {
               }}
               smallViewPadding={0}
             >
-              {isSyncing && <Badge>Syncing...</Badge>}
               {balances.length > 0 && (
                 <SpacedBlock>
                   <Balances balances={balances} />
