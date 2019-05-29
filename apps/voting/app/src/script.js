@@ -1,8 +1,4 @@
-import Aragon, {
-  ACCOUNTS_TRIGGER,
-  SYNC_STATUS_SYNCING,
-  SYNC_STATUS_SYNCED,
-} from '@aragon/api'
+import Aragon, { events } from '@aragon/api'
 import { addressesEqual } from './web3-utils'
 import voteSettings from './vote-settings'
 import { voteTypeFromContractEnum } from './vote-utils'
@@ -67,11 +63,11 @@ async function initialize(tokenAddr) {
       }
 
       switch (event) {
-        case ACCOUNTS_TRIGGER:
+        case events.ACCOUNTS_TRIGGER:
           return updateConnectedAccount(nextState, returnValues)
-        case SYNC_STATUS_SYNCING:
+        case events.SYNC_STATUS_SYNCING:
           return { ...nextState, isSyncing: true }
-        case SYNC_STATUS_SYNCED:
+        case events.SYNC_STATUS_SYNCED:
           return { ...nextState, isSyncing: false }
         case 'CastVote':
           return castVote(nextState, returnValues)
