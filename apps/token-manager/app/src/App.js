@@ -3,11 +3,6 @@ import PropTypes from 'prop-types'
 import BN from 'bn.js'
 import { Badge, Main, SidePanel, SyncIndicator } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
-import {
-  SYNC_STATUS_INITIALIZING,
-  SYNC_STATUS_SYNCING,
-  SYNC_STATUS_SYNCED,
-} from '@aragon/api'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
@@ -24,15 +19,11 @@ const initialAssignTokensConfig = {
 class App extends React.PureComponent {
   static propTypes = {
     api: PropTypes.object,
-    syncStatus: PropTypes.oneOf([
-      SYNC_STATUS_INITIALIZING,
-      SYNC_STATUS_SYNCING,
-      SYNC_STATUS_SYNCED,
-    ]),
+    isSyncing: PropTypes.bool,
   }
   static defaultProps = {
     appStateReady: false,
-    syncStatus: SYNC_STATUS_INITIALIZING,
+    isSyncing: true,
     holders: [],
     connectedAccount: '',
     groupMode: false,
@@ -96,6 +87,7 @@ class App extends React.PureComponent {
       appStateReady,
       groupMode,
       holders,
+      isSyncing,
       maxAccountTokens,
       numData,
       tokenAddress,
@@ -106,10 +98,8 @@ class App extends React.PureComponent {
       tokenTransfersEnabled,
       connectedAccount,
       requestMenu,
-      syncStatus,
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
-    const isSyncing = syncStatus !== SYNC_STATUS_SYNCED
 
     return (
       <Main assetsUrl="./aragon-ui">

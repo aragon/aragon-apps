@@ -1,8 +1,4 @@
-import Aragon, {
-  SYNC_STATUS_INITIALIZING,
-  SYNC_STATUS_SYNCING,
-  SYNC_STATUS_SYNCED,
-} from '@aragon/api'
+import Aragon, { events } from '@aragon/api'
 import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
 import { addressesEqual } from './web3-utils'
 import tokenAbi from './abi/minimeToken.json'
@@ -57,10 +53,10 @@ async function initialize(tokenAddress) {
         ...state,
       }
 
-      if (event === SYNC_STATUS_SYNCING || event === SYNC_STATUS_SYNCED) {
-        // Handle custom sync events
-        nextState.syncStatus = event
-        return nextState
+      if (event === events.SYNC_STATUS_SYNCING) {
+        nextState.isSyncing = true
+      } else if (event === events.SYNC_STATUS_SYNCED) {
+        nextState.isSyncing = false
       }
 
       if (addressesEqual(address, tokenAddress)) {
@@ -108,7 +104,7 @@ const initState = ({ token, tokenAddress }) => async cachedState => {
 
   const inititalState = {
     ...cachedState,
-    syncStatus: SYNC_STATUS_INITIALIZING,
+    isSyncing: true,
     maxAccountTokens,
     ...tokenSettings,
   }
