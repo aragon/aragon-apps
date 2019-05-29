@@ -1,15 +1,10 @@
-import Aragon from '@aragon/api'
-import { of } from 'rxjs'
-import { map, publishReplay } from 'rxjs/operators'
+import Aragon, { events } from '@aragon/api'
 import { addressesEqual } from './web3-utils'
-import voteSettings, { hasLoadedVoteSettings } from './vote-settings'
+import voteSettings from './vote-settings'
 import { voteTypeFromContractEnum } from './vote-utils'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
-
-const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
-const ACCOUNTS_TRIGGER = Symbol('ACCOUNTS_TRIGGER')
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
 
@@ -61,6 +56,34 @@ retryEvery(retry => {
 })
 
 async function initialize(tokenAddr) {
+  return app.store(
+    async (state, { event, returnValues }) => {
+      let nextState = {
+        ...state,
+      }
+
+      switch (event) {
+        case events.ACCOUNTS_TRIGGER:
+          return updateConnectedAccount(nextState, returnValues)
+        case events.SYNC_STATUS_SYNCING:
+          return { ...nextState, isSyncing: true }
+        case events.SYNC_STATUS_SYNCED:
+          return { ...nextState, isSyncing: false }
+        case 'CastVote':
+          return castVote(nextState, returnValues)
+        case 'ExecuteVote':
+          return executeVote(nextState, returnValues)
+        case 'StartVote':
+          return startVote(nextState, returnValues)
+        default:
+          return nextState
+      }
+    },
+    { init: initState(tokenAddr) }
+  )
+}
+
+const initState = tokenAddr => async cachedState => {
   const token = app.external(tokenAddr, tokenAbi)
 
   let tokenSymbol
@@ -84,76 +107,23 @@ async function initialize(tokenAddr) {
   try {
     tokenDecimals = (await token.decimals().toPromise()) || '0'
   } catch (err) {
-    console.err(
+    console.error(
       `Failed to load token decimals for token at ${tokenAddr} due to:`,
       err
     )
-    console.err('Defaulting to 0...')
+    console.error('Defaulting to 0...')
     tokenDecimals = '0'
   }
 
-  return createStore(token, { decimals: tokenDecimals, symbol: tokenSymbol })
-}
+  const voteSettings = await loadVoteSettings()
 
-// Hook up the script as an aragon.js store
-async function createStore(token, tokenSettings) {
-  const { decimals: tokenDecimals, symbol: tokenSymbol } = tokenSettings
-
-  // Hot observable which emits an web3.js event-like object with an account string of the current active account.
-  const accounts$ = app.accounts().pipe(
-    map(accounts => {
-      return {
-        event: ACCOUNTS_TRIGGER,
-        returnValues: {
-          account: accounts[0],
-        },
-      }
-    }),
-    publishReplay(1)
-  )
-
-  accounts$.connect()
-
-  return app.store(
-    async (state, { event, returnValues }) => {
-      let nextState = {
-        ...state,
-        // Fetch the app's settings, if we haven't already
-        ...(!hasLoadedVoteSettings(state) ? await loadVoteSettings() : {}),
-      }
-
-      if (event === INITIALIZATION_TRIGGER) {
-        nextState = {
-          ...nextState,
-          tokenDecimals,
-          tokenSymbol,
-        }
-      } else {
-        switch (event) {
-          case ACCOUNTS_TRIGGER:
-            nextState = await updateConnectedAccount(nextState, returnValues)
-            break
-          case 'CastVote':
-            nextState = await castVote(nextState, returnValues)
-            break
-          case 'ExecuteVote':
-            nextState = await executeVote(nextState, returnValues)
-            break
-          case 'StartVote':
-            nextState = await startVote(nextState, returnValues)
-            break
-          default:
-            break
-        }
-      }
-      return nextState
-    },
-    [
-      // Always initialize the store with our own home-made event
-      of({ event: INITIALIZATION_TRIGGER }),
-      accounts$,
-    ]
-  )
+  return {
+    ...cachedState,
+    isSyncing: true,
+    tokenDecimals,
+    tokenSymbol,
+    ...voteSettings,
+  }
 }
 
 /***********************
