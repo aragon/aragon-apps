@@ -34,12 +34,9 @@ class App extends React.Component {
   }
   handleWithdraw = (tokenAddress, recipient, amount, reference) => {
     // Immediate, one-time payment
-    this.props.api.newImmediatePayment(
-      tokenAddress,
-      recipient,
-      amount,
-      reference
-    )
+    this.props.api
+      .newImmediatePayment(tokenAddress, recipient, amount, reference)
+      .toPromise() // Don't care about response
     this.handleNewTransferClose()
   }
   handleDeposit = async (tokenAddress, amount, reference) => {
@@ -72,7 +69,8 @@ class App extends React.Component {
       }
     }
 
-    api.deposit(tokenAddress, amount, reference, intentParams)
+    // Don't care about response
+    api.deposit(tokenAddress, amount, reference, intentParams).toPromise()
     this.handleNewTransferClose()
   }
 

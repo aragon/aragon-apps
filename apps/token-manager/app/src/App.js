@@ -40,11 +40,12 @@ class App extends React.PureComponent {
   handleUpdateTokens = ({ amount, holder, mode }) => {
     const { api } = this.props
 
+    // Don't care about responses
     if (mode === 'assign') {
-      api.mint(holder, amount)
+      api.mint(holder, amount).toPromise()
     }
     if (mode === 'remove') {
-      api.burn(holder, amount)
+      api.burn(holder, amount).toPromise()
     }
 
     this.handleSidepanelClose()
