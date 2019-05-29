@@ -109,9 +109,9 @@ class App extends React.PureComponent {
       syncStatus,
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
-    const syncing =
-      syncStatus === SYNC_STATUS_INITIALIZING ||
-      syncStatus === SYNC_STATUS_SYNCING
+    const isInitializing = syncStatus === SYNC_STATUS_INITIALIZING
+    const isSyncing = syncStatus !== SYNC_STATUS_SYNCED
+
     return (
       <Main assetsUrl="./aragon-ui">
         <div css="min-width: 320px">
@@ -119,7 +119,7 @@ class App extends React.PureComponent {
             onResolve={this.handleResolveLocalIdentity}
             onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
           >
-            <SyncIndicator visible={syncing} />
+            <SyncIndicator visible={isSyncing} />
             <AppLayout
               title="Token Manager"
               afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
@@ -147,9 +147,11 @@ class App extends React.PureComponent {
                   onRemoveTokens={this.handleLaunchRemoveTokens}
                 />
               ) : (
-                <EmptyState
-                  onActivate={this.handleLaunchAssignTokensNoHolder}
-                />
+                !isSyncing && (
+                  <EmptyState
+                    onActivate={this.handleLaunchAssignTokensNoHolder}
+                  />
+                )
               )}
             </AppLayout>
             <SidePanel
