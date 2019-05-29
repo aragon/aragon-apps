@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { EmptyStateCard, Main, SidePanel } from '@aragon/ui'
+import { SyncIndicator, EmptyStateCard, Main, SidePanel } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
@@ -19,6 +19,7 @@ class App extends React.Component {
     appState: PropTypes.object,
   }
   static defaultProps = {
+    isSyncing: true,
     balances: [],
     transactions: [],
     tokens: [],
@@ -34,12 +35,9 @@ class App extends React.Component {
   }
   handleWithdraw = (tokenAddress, recipient, amount, reference) => {
     // Immediate, one-time payment
-    this.props.api.newImmediatePayment(
-      tokenAddress,
-      recipient,
-      amount,
-      reference
-    )
+    this.props.api
+      .newImmediatePayment(tokenAddress, recipient, amount, reference)
+      .toPromise() // Don't care about response
     this.handleNewTransferClose()
   }
   handleDeposit = async (tokenAddress, amount, reference) => {
@@ -72,7 +70,8 @@ class App extends React.Component {
       }
     }
 
-    api.deposit(tokenAddress, amount, reference, intentParams)
+    // Don't care about response
+    api.deposit(tokenAddress, amount, reference, intentParams).toPromise()
     this.handleNewTransferClose()
   }
 
@@ -86,7 +85,7 @@ class App extends React.Component {
   }
 
   render() {
-    const { appState } = this.props
+    const { appState, isSyncing } = this.props
     const { newTransferOpened } = this.state
     const { balances, transactions, tokens, proxyAddress } = appState
 
@@ -97,6 +96,7 @@ class App extends React.Component {
             onResolve={this.handleResolveLocalIdentity}
             onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
           >
+            <SyncIndicator visible={isSyncing} />
             <AppLayout
               title="Finance"
               mainButton={{
@@ -120,17 +120,19 @@ class App extends React.Component {
                   />
                 </SpacedBlock>
               )}
-              {balances.length === 0 && transactions.length === 0 && (
-                <EmptyScreen>
-                  <EmptyStateCard
-                    icon={<img src={addFundsIcon} alt="" />}
-                    title="There are no funds yet"
-                    text="Create a new transfer to get started."
-                    actionText="New transfer"
-                    onActivate={this.handleNewTransferOpen}
-                  />
-                </EmptyScreen>
-              )}
+              {!isSyncing &&
+                balances.length === 0 &&
+                transactions.length === 0 && (
+                  <EmptyScreen>
+                    <EmptyStateCard
+                      icon={<img src={addFundsIcon} alt="" />}
+                      title="There are no funds yet"
+                      text="Create a new transfer to get started."
+                      actionText="New transfer"
+                      onActivate={this.handleNewTransferOpen}
+                    />
+                  </EmptyScreen>
+                )}
             </AppLayout>
             <SidePanel
               opened={newTransferOpened}
@@ -168,5 +170,5 @@ const SpacedBlock = styled.div`
 
 export default () => {
   const { api, appState } = useAragonApi()
-  return <App api={api} appState={appState} />
+  return <App api={api} appState={appState} isSyncing={appState.isSyncing} />
 }

@@ -3,6 +3,8 @@ module.exports = {
     copyPackages: ['@aragon/os', '@aragon/apps-vault', '@aragon/test-helpers'],
     skipFiles: [
         'test',
+        '@aragon/os',
+        '@aragon/apps-vault/contracts/Vault.sol',
         '@aragon/test-helpers/contracts/TimeHelpersMock.sol',
     ]
 }

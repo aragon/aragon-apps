@@ -1,7 +1,7 @@
 module.exports = (artifacts, web3) => {
   const { bigExp } = require('./numbers')(web3)
-  const { getEventArgument } = require('./events')
   const { SECONDS_IN_A_YEAR } = require('./time')
+  const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 
   const getContract = name => artifacts.require(name)
 
@@ -48,7 +48,7 @@ module.exports = (artifacts, web3) => {
 
     // finance
     const financeReceipt = await dao.newAppInstance('0x5678', financeBase.address, '0x', false, { from: owner })
-    const finance = Finance.at(getEventArgument(financeReceipt, 'NewAppProxy', 'proxy'))
+    const finance = Finance.at(getNewProxyAddress(financeReceipt))
 
     await acl.createPermission(ANY_ENTITY, finance.address, CREATE_PAYMENTS_ROLE, owner, { from: owner })
     await acl.createPermission(ANY_ENTITY, finance.address, CHANGE_PERIOD_ROLE, owner, { from: owner })
@@ -57,7 +57,7 @@ module.exports = (artifacts, web3) => {
     await acl.createPermission(ANY_ENTITY, finance.address, MANAGE_PAYMENTS_ROLE, owner, { from: owner })
 
     const vaultReceipt = await dao.newAppInstance('0x1234', vaultBase.address, '0x', false, { from: owner })
-    const vault = Vault.at(getEventArgument(vaultReceipt, 'NewAppProxy', 'proxy'))
+    const vault = Vault.at(getNewProxyAddress(vaultReceipt))
     await acl.createPermission(finance.address, vault.address, TRANSFER_ROLE, owner, { from: owner })
     await vault.initialize()
 
@@ -70,7 +70,7 @@ module.exports = (artifacts, web3) => {
 
   async function createPayrollAndPriceFeed(dao, payrollBase, owner, currentTimestamp) {
     const receipt = await dao.newAppInstance('0x4321', payrollBase.address, '0x', false, { from: owner })
-    const payroll = Payroll.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+    const payroll = Payroll.at(getNewProxyAddress(receipt))
 
     const acl = ACL.at(await dao.acl())
 

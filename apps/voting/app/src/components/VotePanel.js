@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import {
   Button,
-  Countdown,
+  Timer,
   Info,
   SafeLink,
   SidePanelSeparator,
@@ -12,7 +12,7 @@ import {
   theme,
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount } from '@aragon/api-react'
-import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge.js'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import { format } from 'date-fns'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { round } from '../math-utils'
@@ -83,7 +83,11 @@ const VotePanelContent = React.memo(
               <Label>{open ? 'Time Remaining' : 'Status'}</Label>
             </h2>
             <div>
-              {open ? <Countdown end={endDate} /> : <VoteStatus vote={vote} />}
+              {open ? (
+                <Timer end={endDate} maxUnits={3} />
+              ) : (
+                <VoteStatus vote={vote} />
+              )}
             </div>
             <VoteSuccess vote={vote} css="margin-top: 10px" />
           </div>

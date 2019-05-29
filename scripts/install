@@ -7,5 +7,5 @@ if (inCI) {
   execute('npm run bootstrap:ci', { stdio: 'inherit' })
 } else {
   process.env.INSTALL_FRONTEND = true
-  execute('npm run bootstrap', { stdio: 'inherit' })
+  execute('npm run bootstrap -- --nohoist=@aragon/cli', { stdio: 'inherit' })
 }

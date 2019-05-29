@@ -1,5 +1,6 @@
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { hash } = require('eth-ens-namehash')
+const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 const getBalanceFn = require('@aragon/test-helpers/balance')
 const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 
@@ -13,7 +14,6 @@ module.exports = (
   }
 ) => {
   const getBalance = getBalanceFn(web3)
-  const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
   const ACL = artifacts.require('ACL')
   const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
@@ -76,7 +76,7 @@ module.exports = (
 
     beforeEach(async () => {
       const r = await daoFact.newDAO(root)
-      const dao = Kernel.at(getEvent(r, 'DeployDAO', 'dao'))
+      const dao = Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
       const acl = ACL.at(await dao.acl())
 
       await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
@@ -85,8 +85,7 @@ module.exports = (
       vaultId = hash(`${vaultName.toLowerCase()}.aragonpm.test`)
 
       const vaultReceipt = await dao.newAppInstance(vaultId, vaultBase.address, '0x', false)
-      const vaultProxyAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
-      vault = VaultLike.at(vaultProxyAddress)
+      vault = VaultLike.at(getNewProxyAddress(vaultReceipt))
 
       await acl.createPermission(ANY_ENTITY, vault.address, TRANSFER_ROLE, root, { from: root })
 
@@ -257,8 +256,7 @@ module.exports = (
 
         // Create a new vault and set that vault as the default vault in the kernel
         const defaultVaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '0x', true)
-        const defaultVaultAddress = getEvent(defaultVaultReceipt, 'NewAppProxy', 'proxy')
-        defaultVault = VaultLike.at(defaultVaultAddress)
+        defaultVault = VaultLike.at(getNewProxyAddress(defaultVaultReceipt))
         await defaultVault.initialize()
 
         await kernel.setRecoveryVaultAppId(vaultId)

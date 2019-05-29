@@ -6,6 +6,8 @@ const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const assertEvent = require('@aragon/test-helpers/assertEvent')
 const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
+const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
+const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
 
 // Allow for sharing this test across other agent implementations and subclasses
 module.exports = (
@@ -83,7 +85,7 @@ module.exports = (
 
     beforeEach(async () => {
       const r = await daoFact.newDAO(root)
-      dao = Kernel.at(getEvent(r, 'DeployDAO', 'dao'))
+      dao = Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
       acl = ACL.at(await dao.acl())
 
       await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
@@ -92,8 +94,7 @@ module.exports = (
       agentAppId = namehash(`${agentName}.aragonpm.test`)
 
       const agentReceipt = await dao.newAppInstance(agentAppId, agentBase.address, '0x', false)
-      const agentProxyAddress = getEvent(agentReceipt, 'NewAppProxy', 'proxy')
-      agent = AgentLike.at(agentProxyAddress)
+      agent = AgentLike.at(getNewProxyAddress(agentReceipt))
 
       await agent.initialize()
     })
@@ -123,7 +124,7 @@ module.exports = (
             const data = executionTarget.contract.setCounter.getData(N)
             const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: executor })
 
-            assertEvent(receipt, 'Execute')
+            assertAmountOfEvents(receipt, 'Execute')
             assert.equal(await executionTarget.counter(), N, `expected counter to be ${N}`)
             assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
             assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
@@ -133,7 +134,7 @@ module.exports = (
             const noData = '0x'
             const receipt = await agent.execute(executionTarget.address, depositAmount, noData, { from: executor })
 
-            assertEvent(receipt, 'Execute')
+            assertAmountOfEvents(receipt, 'Execute')
             // Fallback just runs ExecutionTarget.execute()
             assert.equal(await executionTarget.counter(), 1, 'expected counter to be 1')
             assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
@@ -145,7 +146,7 @@ module.exports = (
             const noData = '0x'
             const receipt = await agent.execute(cheapFallbackTarget.address, depositAmount, noData, { from: executor })
 
-            assertEvent(receipt, 'Execute')
+            assertAmountOfEvents(receipt, 'Execute')
             assert.equal((await getBalance(cheapFallbackTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
             assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
           })
@@ -157,7 +158,7 @@ module.exports = (
             const noData = '0x'
             const receipt = await agent.execute(expensiveFallbackTarget.address, depositAmount, noData, { from: executor })
 
-            assertEvent(receipt, 'Execute')
+            assertAmountOfEvents(receipt, 'Execute')
             // Fallback increments counter
             assert.equal(await expensiveFallbackTarget.counter(), 1)
             assert.equal((await getBalance(expensiveFallbackTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
@@ -171,7 +172,7 @@ module.exports = (
 
             const receipt = await agent.execute(nonContract, depositAmount, randomData, { from: executor })
 
-            assertEvent(receipt, 'Execute')
+            assertAmountOfEvents(receipt, 'Execute')
             assert.equal((await getBalance(nonContract)).toString(), nonContractBalance.add(depositAmount).toString(), 'expected ending balance of non-contract to be correct')
             assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
           })
@@ -183,7 +184,7 @@ module.exports = (
 
             const receipt = await agent.execute(nonContract, depositAmount, noData, { from: executor })
 
-            assertEvent(receipt, 'Execute')
+            assertAmountOfEvents(receipt, 'Execute')
             assert.equal((await getBalance(nonContract)).toString(), nonContractBalance.add(depositAmount).toString(), 'expected ending balance of non-contract to be correct')
             assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
           })
@@ -243,7 +244,7 @@ module.exports = (
               const data = executionTarget.contract.setCounter.getData(N)
               const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig })
 
-              assertEvent(receipt, 'Execute')
+              assertAmountOfEvents(receipt, 'Execute')
               assert.equal(await executionTarget.counter(), N, `expected counter to be ${N}`)
               assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
               assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
@@ -253,7 +254,7 @@ module.exports = (
               const data = executionTarget.contract.execute.getData()
               const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig })
 
-              assertEvent(receipt, 'Execute')
+              assertAmountOfEvents(receipt, 'Execute')
               assert.equal(await executionTarget.counter(), 1, `expected counter to be ${1}`)
               assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
               assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
@@ -297,7 +298,7 @@ module.exports = (
 
         // Should execute ExecutionTarget.execute() twice
         assert.equal(await executionTarget.counter(), 2)
-        assertEvent(receipt, 'ScriptResult')
+        assertAmountOfEvents(receipt, 'ScriptResult')
       })
 
       it('fails to run script without permissions', async () => {
@@ -406,8 +407,7 @@ module.exports = (
         const createChildAgentGenerator = (designatedSigner) =>
           async () => {
             const agentReceipt = await dao.newAppInstance(agentAppId, agentBase.address, '0x', false)
-            const agentProxyAddress = getEvent(agentReceipt, 'NewAppProxy', 'proxy')
-            const childAgent = AgentLike.at(agentProxyAddress)
+            const childAgent = AgentLike.at(getNewProxyAddress(agentReceipt))
 
             await childAgent.initialize()
             await acl.createPermission(signerDesignator, childAgent.address, DESIGNATE_SIGNER_ROLE, root, { from: root })

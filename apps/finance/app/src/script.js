@@ -1,6 +1,5 @@
-import Aragon from '@aragon/api'
+import Aragon, { events } from '@aragon/api'
 import { first } from 'rxjs/operators'
-import { of } from 'rxjs'
 import { getTestTokenAddresses } from './testnet'
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
@@ -24,7 +23,6 @@ const vaultAbi = [].concat(
   vaultEventAbi
 )
 
-const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const TEST_TOKEN_ADDRESSES = []
 const tokenContracts = new Map() // Addr -> External contract
 const tokenDecimals = new Map() // External contract -> decimals
@@ -92,7 +90,7 @@ async function initialize(vaultAddress, ethAddress) {
   tokenNames.set(ETH_CONTRACT, 'Ether')
   tokenSymbols.set(ETH_CONTRACT, 'ETH')
 
-  return createStore({
+  const settings = {
     network,
     ethToken: {
       address: ethAddress,
@@ -101,11 +99,8 @@ async function initialize(vaultAddress, ethAddress) {
       address: vaultAddress,
       contract: vaultContract,
     },
-  })
-}
+  }
 
-// Hook up the script as an aragon.js store
-async function createStore(settings) {
   let vaultInitializationBlock
 
   try {
@@ -120,46 +115,51 @@ async function createStore(settings) {
     async (state, event) => {
       const { vault } = settings
       const { address: eventAddress, event: eventName } = event
-      let nextState = {
+      const nextState = {
         ...state,
       }
 
-      if (eventName === INITIALIZATION_TRIGGER) {
-        nextState = await initializeState(nextState, settings)
-      } else if (addressesEqual(eventAddress, vault.address)) {
-        // Vault event
-        nextState = await vaultLoadBalance(nextState, event, settings)
-      } else {
-        // Finance event
-        switch (eventName) {
-          case 'ChangePeriodDuration':
-            nextState.periodDuration = marshallDate(
-              event.returnValues.newDuration
-            )
-            break
-          case 'NewPeriod':
+      if (event === events.SYNC_STATUS_SYNCING) {
+        return { ...nextState, isSyncing: true }
+      } else if (event === events.SYNC_STATUS_SYNCED) {
+        return { ...nextState, isSyncing: false }
+      }
+
+      // Vault event
+      if (addressesEqual(eventAddress, vault.address)) {
+        return vaultLoadBalance(nextState, event, settings)
+      }
+
+      // Finance event
+      switch (eventName) {
+        case 'ChangePeriodDuration':
+          nextState.periodDuration = marshallDate(
+            event.returnValues.newDuration
+          )
+          return nextState
+        case 'NewPeriod':
+          return {
+            ...(await newPeriod(nextState, event, settings)),
             // A new period is always started as part of the Finance app's initialization,
             // so this is just a handy way to get information about the app we're running
             // (e.g. its own address)
-            nextState.proxyAddress = eventAddress
-            nextState = await newPeriod(nextState, event, settings)
-            break
-          case 'NewTransaction':
-            nextState = await newTransaction(nextState, event, settings)
-            break
-          default:
-            break
-        }
+            proxyAddress: eventAddress,
+          }
+        case 'NewTransaction':
+          return newTransaction(nextState, event, settings)
+        default:
+          return nextState
       }
-
-      return nextState
     },
-    [
-      // Always initialize the store with our own home-made event
-      of({ event: INITIALIZATION_TRIGGER }),
-      // Handle Vault events in case they're not always controlled by this Finance app
-      settings.vault.contract.events(vaultInitializationBlock),
-    ]
+    {
+      init: initializeState(settings),
+      externals: [
+        {
+          contract: settings.vault.contract,
+          initializationBlock: vaultInitializationBlock,
+        },
+      ],
+    }
   )
 }
 
@@ -169,18 +169,38 @@ async function createStore(settings) {
  *                     *
  ***********************/
 
-async function initializeState(state, settings) {
-  const nextState = {
-    ...state,
+const initializeState = settings => async cachedState => {
+  const newState = {
+    ...cachedState,
+    isSyncing: true,
     periodDuration: marshallDate(
       await app.call('getPeriodDuration').toPromise()
     ),
     vaultAddress: settings.vault.address,
   }
-
-  const withTestnetState = await loadTestnetState(nextState, settings)
+  const withTokenBalances = await loadTokenBalances(newState, settings)
+  const withTestnetState = await loadTestnetState(withTokenBalances, settings)
   const withEthBalance = await loadEthBalance(withTestnetState, settings)
+
   return withEthBalance
+}
+
+async function loadTokenBalances(state, settings) {
+  let newState = {
+    ...state,
+  }
+  if (!newState.balances) {
+    return newState
+  }
+
+  const addresses = newState.balances.map(({ address }) => address)
+  for (const address of addresses) {
+    newState = {
+      ...newState,
+      balances: await updateBalances(newState, address, settings),
+    }
+  }
+  return newState
 }
 
 async function vaultLoadBalance(state, { returnValues: { token } }, settings) {

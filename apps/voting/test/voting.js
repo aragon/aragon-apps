@@ -1,4 +1,6 @@
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
+const { getEventAt, getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
 const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
@@ -15,8 +17,7 @@ const MiniMeToken = artifacts.require('@aragon/apps-shared-minime/contracts/Mini
 const getContract = name => artifacts.require(name)
 const bigExp = (x, y) => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(y))
 const pct16 = x => bigExp(x, 16)
-const startVoteEvent = receipt => receipt.logs.filter(x => x.event == 'StartVote')[0].args
-const createdVoteId = receipt => startVoteEvent(receipt).voteId
+const createdVoteId = receipt => getEventArgument(receipt, 'StartVote', 'voteId')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -74,13 +75,13 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
     beforeEach(async () => {
         const r = await daoFact.newDAO(root)
-        const dao = Kernel.at(r.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
+        const dao = Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
         const acl = ACL.at(await dao.acl())
 
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
         const receipt = await dao.newAppInstance('0x1234', votingBase.address, '0x', false, { from: root })
-        voting = Voting.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+        voting = Voting.at(getNewProxyAddress(receipt))
         await voting.mockSetTimestamp(NOW)
 
         await acl.createPermission(ANY_ADDR, voting.address, CREATE_VOTES_ROLE, root, { from: root })
@@ -116,9 +117,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
         it('can change required support', async () => {
             const receipt = await voting.changeSupportRequiredPct(neededSupport.add(1))
-            const events = receipt.logs.filter(x => x.event == 'ChangeSupportRequired')
+            assertAmountOfEvents(receipt, 'ChangeSupportRequired')
 
-            assert.equal(events.length, 1, 'should have emitted ChangeSupportRequired event')
             assert.equal((await voting.supportRequiredPct()).toString(), neededSupport.add(1).toString(), 'should have changed required support')
         })
 
@@ -133,9 +133,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
         it('can change minimum acceptance quorum', async () => {
             const receipt = await voting.changeMinAcceptQuorumPct(1)
-            const events = receipt.logs.filter(x => x.event == 'ChangeMinQuorum')
+            assertAmountOfEvents(receipt, 'ChangeMinQuorum')
 
-            assert.equal(events.length, 1, 'should have emitted ChangeMinQuorum event')
             assert.equal(await voting.minAcceptQuorumPct(), 1, 'should have changed acceptance quorum')
         })
 
@@ -207,10 +206,11 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 beforeEach(async () => {
                     const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                     script = encodeCallScript([action, action])
-                    const startVote = startVoteEvent(await voting.newVoteExt(script, 'metadata', false, false, { from: holder51 }))
-                    voteId = startVote.voteId
-                    creator = startVote.creator
-                    metadata = startVote.metadata
+
+                    const receipt = await voting.newVoteExt(script, 'metadata', false, false, { from: holder51 });
+                    voteId = getEventArgument(receipt, 'StartVote', 'voteId')
+                    creator = getEventArgument(receipt, 'StartVote', 'creator')
+                    metadata = getEventArgument(receipt, 'StartVote', 'metadata')
                 })
 
                 it('has correct state', async () => {
