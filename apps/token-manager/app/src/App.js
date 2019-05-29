@@ -109,7 +109,6 @@ class App extends React.PureComponent {
       syncStatus,
     } = this.props
     const { assignTokensConfig, sidepanelOpened } = this.state
-    const isInitializing = syncStatus === SYNC_STATUS_INITIALIZING
     const isSyncing = syncStatus !== SYNC_STATUS_SYNCED
 
     return (
