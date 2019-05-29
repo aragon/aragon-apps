@@ -153,6 +153,7 @@ class AssignVotePanelContent extends React.Component {
               ${mode === 'assign' ? 'Recipient' : 'Account'}
               (must be a valid Ethereum address)
             `}
+            css="height: 62px"
           >
             <LocalIdentitiesAutoComplete
               ref={this._holderInput}
