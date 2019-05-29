@@ -1,4 +1,4 @@
-import Aragon, { SYNC_STATUS_SYNCING, SYNC_STATUS_SYNCED } from '@aragon/api'
+import Aragon, { events } from '@aragon/api'
 import { first } from 'rxjs/operators'
 import { getTestTokenAddresses } from './testnet'
 import {
@@ -126,10 +126,10 @@ async function initialize(vaultAddress, ethAddress) {
       } else {
         // Finance event
         switch (eventName) {
-          case SYNC_STATUS_SYNCING:
+          case events.SYNC_STATUS_SYNCING:
             nextState.isSyncing = true
             break
-          case SYNC_STATUS_SYNCED:
+          case events.SYNC_STATUS_SYNCED:
             nextState.isSyncing = false
             break
           case 'ChangePeriodDuration':
