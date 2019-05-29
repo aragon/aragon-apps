@@ -1,4 +1,4 @@
-import Aragon from '@aragon/api'
+import Aragon, { events } from '@aragon/api'
 import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
 import { addressesEqual } from './web3-utils'
 import tokenAbi from './abi/minimeToken.json'
@@ -52,6 +52,12 @@ async function initialize(tokenAddress) {
       ...state,
     }
 
+    if (event === events.SYNC_STATUS_SYNCING) {
+      nextState.isSyncing = true
+    } else if (event === events.SYNC_STATUS_SYNCED) {
+      nextState.isSyncing = false
+    }
+
     if (addressesEqual(address, tokenAddress)) {
       switch (event) {
         case 'ClaimedTokens':
@@ -64,8 +70,11 @@ async function initialize(tokenAddress) {
         default:
           return nextState
       }
+    } else {
+      // Token Manager event
+      // TODO: add handlers for the vesting events from token Manager
     }
-    // TODO: add handlers for the vesting events from token Manager
+
     return nextState
   }
 
@@ -97,6 +106,7 @@ function initState({ token, tokenAddress }) {
 
     const inititalState = {
       ...cachedState,
+      isSyncing: true,
       tokenAddress,
       maxAccountTokens,
       ...tokenSettings,
