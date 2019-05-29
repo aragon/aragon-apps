@@ -28,7 +28,7 @@ const displayedStakes = (accounts, total) => {
   }))
 }
 
-class SideBar extends React.Component {
+class SideBar extends React.PureComponent {
   static defaultProps = {
     holders: [],
   }
@@ -131,7 +131,7 @@ const Main = styled.aside`
   flex-shrink: 0;
   flex-grow: 0;
   min-height: 100%;
-  margin-top: 55px;
+  margin-top: 16px;
   padding: 0 20px;
 
   ${breakpoint(
@@ -139,8 +139,9 @@ const Main = styled.aside`
     `
       width: 260px;
       margin-left: 30px;
-      margin-top: unset;
+      margin-top: 0;
       padding: 0;
+      opacity: 1;
     `
   )};
 `
