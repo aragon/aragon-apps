@@ -137,7 +137,7 @@ class AssignVotePanelContent extends React.Component {
       <div>
         <form onSubmit={this.handleSubmit}>
           <InfoMessage
-            title="Token Manager action"
+            title="Action"
             text={`This action will ${
               mode === 'assign'
                 ? 'mint tokens to the recipient below'

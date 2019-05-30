@@ -1,4 +1,4 @@
-The Token Manager app is used to manage the supply and distribution of an organization's token. Each Token Manager installation manages only one token. Tokens can be used to give different types of powers or rights to members of an organization, such as the power to vote on proposals or the right to receive a share of the organization's profits.
+The Tokens app is used to manage the supply and distribution of an organization's token. Each installation of the Tokens app manages only one token. Tokens can be used to give different types of powers or rights to members of an organization, such as the power to vote on proposals or the right to receive a share of the organization's profits.
 
 **Features**
 - Issue new tokens and remove existing tokens.

@@ -111,7 +111,7 @@ class App extends React.PureComponent {
           >
             <SyncIndicator visible={isSyncing} />
             <AppLayout
-              title="Token Manager"
+              title="Tokens"
               afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
               onMenuOpen={requestMenu}
               mainButton={{
