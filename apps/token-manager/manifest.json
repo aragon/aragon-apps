@@ -1,5 +1,5 @@
 {
-  "name": "Token Manager",
+  "name": "Tokens",
   "author": "Aragon Association",
   "description": "Manage an organization's token supply and distribution",
   "changelog_url": "https://github.com/aragon/aragon-apps/releases",
