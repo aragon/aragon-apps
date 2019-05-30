@@ -43,21 +43,6 @@ contract ProxyVoting is TimeHelpers {
         overruleWindow = _overruleWindow;
     }
 
-    function setFullRepresentative(address _representative, bool _allowed) external onlyPrincipal {
-        fullRepresentatives[_representative] = _allowed;
-        emit ChangeFullRepresentative(_representative, _allowed);
-    }
-
-    function setInstanceRepresentative(address _representative, address _voting, bool _allowed) external onlyPrincipal {
-        instanceRepresentatives[_voting][_representative] = _allowed;
-        emit ChangeInstanceRepresentative(_representative, _voting, _allowed);
-    }
-
-    function setVoteRepresentative(address _representative, address _voting, uint256 _voteId, bool _allowed) external onlyPrincipal {
-        voteRepresentatives[_voting][_voteId][_representative] = _allowed;
-        emit ChangeVoteRepresentative(_representative, _voting, _voteId, _allowed);
-    }
-
     function withdraw(ERC20 _token, uint256 _amount) external onlyPrincipal {
         emit Withdraw(address(_token), _amount);
         require(_token.transfer(principal, _amount), ERROR_WITHDRAW_FAILED);
@@ -79,6 +64,21 @@ contract ProxyVoting is TimeHelpers {
 
     function vote(Voting _voting, uint256 _voteId, bool _supports, bool _executesIfDecided) external onlyPrincipal {
         _voting.vote(_voteId, _supports, _executesIfDecided);
+    }
+
+    function setFullRepresentative(address _representative, bool _allowed) public onlyPrincipal {
+        fullRepresentatives[_representative] = _allowed;
+        emit ChangeFullRepresentative(_representative, _allowed);
+    }
+
+    function setInstanceRepresentative(address _representative, address _voting, bool _allowed) public onlyPrincipal {
+        instanceRepresentatives[_voting][_representative] = _allowed;
+        emit ChangeInstanceRepresentative(_representative, _voting, _allowed);
+    }
+
+    function setVoteRepresentative(address _representative, address _voting, uint256 _voteId, bool _allowed) public onlyPrincipal {
+        voteRepresentatives[_voting][_voteId][_representative] = _allowed;
+        emit ChangeVoteRepresentative(_representative, _voting, _voteId, _allowed);
     }
 
     function hasNotVoteYet(Voting _voting, uint256 _voteId) public view returns (bool) {
