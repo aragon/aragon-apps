@@ -179,11 +179,11 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
       it('fails if voting on non-existing option', async () => {
         await survey.voteOption(surveyId, optionsCount, { from: holder31 })
 
-        await assertRevert(survey.voteOption(surveyId, optionsCount + 1, { from: holder31 }), errors.SURVEY_VOTE_WRONG_INPUT)
+        await assertRevert(survey.voteOption(surveyId, optionsCount + 1, { from: holder31 }), errors.SURVEY_VOTE_WRONG_OPTION)
       })
 
       it('fails if vote has no options', async () => {
-        await assertRevert(survey.voteOptions(surveyId, [], [], { from: holder50 }), errors.SURVEY_VOTE_WRONG_OPTION)
+        await assertRevert(survey.voteOptions(surveyId, [], [], { from: holder50 }), errors.SURVEY_VOTE_WRONG_INPUT)
       })
 
       it('fails if single-option vote is for ABSTAIN_VOTE', async () => {
@@ -294,7 +294,7 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
 
   context('before init', () => {
     it('fails creating a survey before initialization', async () => {
-      await assertRevert(survey.newSurvey('metadata', 10), errors.INIT_NOT_INITIALIZED)
+      await assertRevert(survey.newSurvey('metadata', 10), errors.APP_AUTH_FAILED)
     })
   })
 
