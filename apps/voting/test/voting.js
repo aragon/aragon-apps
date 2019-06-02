@@ -344,7 +344,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
                 it('cannot vote on executed vote', async () => {
                     await voting.vote(voteId, true, true, { from: holder51 }) // causes execution
-                    await assertRevert(voting.vote(voteId, true, true, { from: holder20 }), errors.VOTING_CAN_NOT_EXECUTE)
+                    await assertRevert(voting.vote(voteId, true, true, { from: holder20 }), errors.VOTING_CAN_NOT_VOTE)
                 })
             })
         })
@@ -507,7 +507,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
     context('before init', () => {
         it('fails creating a vote before initialization', async () => {
-            await assertRevert(voting.newVote(encodeCallScript([]), ''), errors.INIT_NOT_INITIALIZED)
+            await assertRevert(voting.newVote(encodeCallScript([]), ''), errors.APP_AUTH_FAILED)
         })
     })
 
