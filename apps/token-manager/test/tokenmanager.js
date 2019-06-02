@@ -178,7 +178,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         })
 
         it('fails to mint more than limit', async () => {
-            await assertRevert(tokenManager.mint(holder, limit + 1), errors.TM_BALANCE_INCREASE_NOT_ALLOWED)
+            await assertRevert(tokenManager.mint(holder, limit + 1), errors.TM_BALANCE_INC_NOT_ALLOWED)
         })
 
         it('can issue unlimited tokens to itself', async () => {
