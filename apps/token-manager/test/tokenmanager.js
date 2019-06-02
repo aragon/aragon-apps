@@ -272,13 +272,13 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         })
 
         it('cannot mint tokens to itself', async () => {
-            await assertRevert(tokenManager.mint(tokenManager.address, 100), errors.TM_BALANCE_INC_NOT_ALLOWED)
+            await assertRevert(tokenManager.mint(tokenManager.address, 100), errors.TM_MINT_RECEIVER_IS_TM)
         })
 
         it('cannot assign more tokens than owned', async () => {
             await tokenManager.issue(50)
 
-            await assertRevert(tokenManager.assign(holder, 51), errors.TM_BALANCE_INC_NOT_ALLOWED)
+            await assertRevert(tokenManager.assign(holder, 51), errors.TM_ASSIGN_TRANSFER_FROM_REVERTED)
         })
 
         it('forwards actions only to token holders', async () => {
@@ -455,19 +455,19 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
 
     context('app not initialized', async () => {
         it('fails to mint tokens', async() => {
-            await assertRevert(tokenManager.mint(holder, 1), errors.INIT_NOT_INITIALIZED)
+            await assertRevert(tokenManager.mint(holder, 1), errors.APP_AUTH_FAILED)
         })
 
         it('fails to assign tokens', async() => {
-            await assertRevert(tokenManager.assign(holder, 1), errors.INIT_NOT_INITIALIZED)
+            await assertRevert(tokenManager.assign(holder, 1), errors.APP_AUTH_FAILED)
         })
 
         it('fails to issue tokens', async() => {
-            await assertRevert(tokenManager.issue(1), errors.INIT_NOT_INITIALIZED)
+            await assertRevert(tokenManager.issue(1), errors.APP_AUTH_FAILED)
         })
 
         it('fails to burn tokens', async() => {
-            await assertRevert(tokenManager.burn(holder, 1), errors.INIT_NOT_INITIALIZED)
+            await assertRevert(tokenManager.burn(holder, 1), errors.APP_AUTH_FAILED)
         })
     })
 })
