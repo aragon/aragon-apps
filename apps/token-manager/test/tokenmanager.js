@@ -207,7 +207,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         it('cannot assign more than limit', async () => {
             await tokenManager.issue(limit + 2)
 
-            await assertRevert(tokenManager.assign(holder, limit + 1), errors.TM_BALANCE_INCREASE_NOT_ALLOWED)
+            await assertRevert(tokenManager.assign(holder, limit + 1), errors.TM_BALANCE_INC_NOT_ALLOWED)
         })
 
         it('can transfer tokens to token manager without regard to token limit', async () => {
@@ -272,13 +272,13 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         })
 
         it('cannot mint tokens to itself', async () => {
-            await assertRevert(tokenManager.mint(tokenManager.address, 100), errors.TM_BALANCE_INCREASE_NOT_ALLOWED)
+            await assertRevert(tokenManager.mint(tokenManager.address, 100), errors.TM_BALANCE_INC_NOT_ALLOWED)
         })
 
         it('cannot assign more tokens than owned', async () => {
             await tokenManager.issue(50)
 
-            await assertRevert(tokenManager.assign(holder, 51), errors.TM_BALANCE_INCREASE_NOT_ALLOWED)
+            await assertRevert(tokenManager.assign(holder, 51), errors.TM_BALANCE_INC_NOT_ALLOWED)
         })
 
         it('forwards actions only to token holders', async () => {
