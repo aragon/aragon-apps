@@ -157,7 +157,7 @@ module.exports = (
       it('fails if depositing a different amount of ETH than sent', async () => {
         const value = 1
 
-        await assertRevert(vault.deposit(ETH, value, { value: value * 2 }), errors.VAULT_SEND_REVERTED)
+        await assertRevert(vault.deposit(ETH, value, { value: value * 2 }), errors.VAULT_VALUE_MISMATCH)
       })
     })
 
@@ -208,7 +208,7 @@ module.exports = (
           const approvedAmount = 10
           await token.approve(vault.address, approvedAmount)
 
-          await assertRevert(vault.deposit(token.address, approvedAmount * 2), errors.VAULT_TOKEN_TRANSFER_FROM_REVERTED)
+          await assertRevert(vault.deposit(token.address, approvedAmount * 2), errors.VAULT_TOKEN_TRANSFER_FROM_REVERT)
           assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
         })
 
@@ -219,7 +219,7 @@ module.exports = (
           await token.setAllowTransfer(false)
 
           // Attempt to deposit
-          await assertRevert(vault.deposit(token.address, 5), errors.VAULT_TOKEN_TRANSFER_FROM_REVERTED)
+          await assertRevert(vault.deposit(token.address, 5), errors.VAULT_TOKEN_TRANSFER_FROM_REVERT)
           assert.equal(await token.balanceOf(vault.address), 0, "vault should have initial token balance")
         })
 
