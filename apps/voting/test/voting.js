@@ -52,7 +52,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         VOTING_CAN_NOT_VOTE: "VOTING_CAN_NOT_VOTE",
         VOTING_CAN_NOT_EXECUTE: "VOTING_CAN_NOT_EXECUTE",
         VOTING_CAN_NOT_FORWARD: "VOTING_CAN_NOT_FORWARD",
-        VOTING_NO_VOTING_POWER: "VOTING_NO_VOTING_POWER"
+        VOTING_NO_VOTING_POWER: "VOTING_NO_VOTING_POWER",
+        VOTING_CHANGE_SUPP_TOO_BIG: "VOTING_CHANGE_SUPP_TOO_BIG"
 
     })
 
@@ -123,12 +124,12 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         })
 
         it('fails changing required support lower than minimum acceptance quorum', async () => {
-            await assertRevert(voting.changeSupportRequiredPct(minimumAcceptanceQuorum.minus(1)), VOTING_CHANGE_SUPPORT_PCTS)
+            await assertRevert(voting.changeSupportRequiredPct(minimumAcceptanceQuorum.minus(1)), errors.VOTING_CHANGE_SUPPORT_PCTS)
         })
 
         it('fails changing required support to 100% or more', async () => {
-            await assertRevert(voting.changeSupportRequiredPct(pct16(101)), VOTING_CHANGE_SUPPORT_TOO_BIG)
-            await assertRevert(voting.changeSupportRequiredPct(pct16(100)), VOTING_CHANGE_SUPPORT_TOO_BIG)
+            await assertRevert(voting.changeSupportRequiredPct(pct16(101)), errors.VOTING_CHANGE_SUPP_TOO_BIG)
+            await assertRevert(voting.changeSupportRequiredPct(pct16(100)), errors.VOTING_CHANGE_SUPP_TOO_BIG)
         })
 
         it('can change minimum acceptance quorum', async () => {
@@ -139,7 +140,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         })
 
         it('fails changing minimum acceptance quorum to greater than min support', async () => {
-            await assertRevert(voting.changeMinAcceptQuorumPct(neededSupport.plus(1)), VOTING_CHANGE_QUORUM_PCTS)
+            await assertRevert(voting.changeMinAcceptQuorumPct(neededSupport.plus(1)), errors.VOTING_CHANGE_QUORUM_PCTS)
         })
 
     })
@@ -231,7 +232,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 })
 
                 it('fails getting a vote out of bounds', async () => {
-                    await assertRevert(voting.getVote(voteId + 1), VOTING_NO_VOTE)
+                    await assertRevert(voting.getVote(voteId + 1), errors.VOTING_NO_VOTE)
                 })
 
                 it('changing required support does not affect vote required support', async () => {
