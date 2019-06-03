@@ -6,8 +6,9 @@
   "source_url": "https://github.com/aragon/aragon-apps/blob/master/apps/agent",
   "icons": [
     {
-      "src": "images/icon.svg",
-      "sizes": "192x192"
+      "src": "/meta/icon.svg",
+      "sizes": "56x56"
     }
-  ]
+  ],
+  "details_url": "/meta/details.md"
 }
