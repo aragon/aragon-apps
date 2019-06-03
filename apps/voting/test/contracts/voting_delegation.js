@@ -82,15 +82,15 @@ contract('Voting delegation', ([_, root, principal, representative, anotherRepre
     assert.equal(events.length, 1, 'number of StartVote emitted events does not match')
     const startVoteEvent = events[0].args
     voteId = startVoteEvent.voteId
-    return startVoteEvent
+    return voteId
   }
 
-  const getVoteState = async () => {
-    const [open, executed, startDate, snapshotBlock, support, quorum, yeas, nays, votingPower, execScript] = await voting.getVote(voteId)
+  const getVoteState = async (id = voteId) => {
+    const [open, executed, startDate, snapshotBlock, support, quorum, yeas, nays, votingPower, execScript] = await voting.getVote(id)
     return { open, executed, startDate, snapshotBlock, support, quorum, yeas, nays, votingPower, execScript }
   }
 
-  const getVoterState = async (voter) => voting.getVoterState(voteId, voter)
+  const getVoterState = async (voter, id = voteId) => voting.getVoterState(id, voter)
 
   describe('setRepresentative', () => {
     it('is not allowed by default', async () => {
@@ -124,7 +124,7 @@ contract('Voting delegation', ([_, root, principal, representative, anotherRepre
     })
   })
 
-  describe('canVoteOnBehalfOf', async () => {
+  describe('canVoteOnBehalfOf', () => {
 
     context('when the vote exists', () => {
       beforeEach('create a vote', createVote)
@@ -311,11 +311,87 @@ contract('Voting delegation', ([_, root, principal, representative, anotherRepre
     })
   })
 
-  describe('changeOverruleWindow', async () => {
-    context('when the sender is allowed', async () => {
+  describe('voteOnBehalfOfMany', () => {
+
+    context('when the input is valid', () => {
+      beforeEach('add representative', async () => {
+        await voting.setRepresentative(representative, true, { from: principal })
+      })
+
+      it('casts the successful votes', async () => {
+        const voteId = await createVote()
+        const anotherVoteId = await createVote()
+
+        const voteIds = [voteId, anotherVoteId, anotherVoteId]
+        const supports = [false, true, true]
+        const principals = [principal, principal, anyone]
+        const receipt = await voting.voteOnBehalfOfMany(principals, voteIds, supports, { from: representative })
+        console.log(receipt)
+        assertAmountOfEvents(receipt, 'CastVote', 2)
+
+        const { yeas, nays } = await getVoteState(voteId)
+        assert.equal(yeas.toString(), 0, 'yeas should be 0')
+        assert.equal(nays.toString(), bigExp(51, 18).toString(), 'nays should be 51%')
+        assert.equal(await getVoterState(principal, voteId), VOTER_STATE.NAY, 'principal should have voted')
+
+        const { yeas: anotherYeas, nays: anotherNays } = await getVoteState(anotherVoteId)
+        assert.equal(anotherNays.toString(), 0, 'nays should be 0')
+        assert.equal(anotherYeas.toString(), bigExp(51, 18).toString(), 'yeas should be 51%')
+        assert.equal(await getVoterState(principal, anotherVoteId), VOTER_STATE.YEA, 'principal should have voted')
+        assert.equal(await getVoterState(anyone, anotherVoteId), VOTER_STATE.ABSENT, 'invalid principal should not have voted')
+      })
+    })
+
+    context('when the input is not valid', () => {
+      const repeat = (x, y) => [...Array(x).map(() => y)]
+
+      context('when the input length exceeds the max length allowed', () => {
+        it('reverts', async () => {
+          const voteIds = repeat(101, voteId)
+          const supports = repeat(101, true)
+          const principals = repeat(101, principal)
+
+          await assertRevert(voting.voteOnBehalfOfMany(principals, voteIds, supports), 'VOTING_DELEGATES_EXCEEDS_MAX_LEN')
+        })
+      })
+
+      context('when the principals length does not match with the vote ids length', () => {
+        it('reverts', async () => {
+          const voteIds = [1]
+          const supports = [true, true]
+          const principals = [principal, principal]
+
+          await assertRevert(voting.voteOnBehalfOfMany(principals, voteIds, supports), 'VOTING_INVALID_DELEGATES_INPUT_LEN')
+        })
+      })
+
+      context('when the principals length does not match with the supports length', () => {
+        it('reverts', async () => {
+          const voteIds = [1, 2]
+          const supports = [true]
+          const principals = [principal, principal]
+
+          await assertRevert(voting.voteOnBehalfOfMany(principals, voteIds, supports), 'VOTING_INVALID_DELEGATES_INPUT_LEN')
+        })
+      })
+
+      context('when the vote ids length does not match with the supports length', () => {
+        it('reverts', async () => {
+          const voteIds = [1, 2]
+          const supports = [true, true]
+          const principals = [principal]
+
+          await assertRevert(voting.voteOnBehalfOfMany(principals, voteIds, supports), 'VOTING_INVALID_DELEGATES_INPUT_LEN')
+        })
+      })
+    })
+  })
+
+  describe('changeOverruleWindow', () => {
+    context('when the sender is allowed', () => {
       const from = root
 
-      context('when the new window is valid', async () => {
+      context('when the new window is valid', () => {
         const newWindow = ONE_DAY
 
         it('changes the overrule window', async () => {
@@ -332,7 +408,7 @@ contract('Voting delegation', ([_, root, principal, representative, anotherRepre
         })
       })
 
-      context('when the new window is not valid', async () => {
+      context('when the new window is not valid', () => {
         const newWindow = VOTING_DURATION + 1
 
         it('reverts', async () => {
@@ -341,7 +417,7 @@ contract('Voting delegation', ([_, root, principal, representative, anotherRepre
       })
     })
 
-    context('when the sender is not allowed', async () => {
+    context('when the sender is not allowed', () => {
       const from = anyone
       const newWindow = VOTING_DURATION
 
@@ -402,6 +478,43 @@ contract('Voting delegation', ([_, root, principal, representative, anotherRepre
       it('returns false', async () => {
         assert.isFalse(await voting.withinOverruleWindow(voteId))
       })
+    })
+  })
+
+  describe('gas costs', () => {
+    it('adds 65k of gas per casted vote', async () => {
+      const voteId1 = await createVote()
+      const voteId2 = await createVote()
+      const voteId3 = await createVote()
+
+      await voting.setRepresentative(representative, true, { from: principal })
+      const { receipt: { cumulativeGasUsed: oneVoteCumulativeGasUsed } } = await voting.voteOnBehalfOfMany([principal], [voteId1], [true], { from: representative })
+      const { receipt: { cumulativeGasUsed: twoVotesCumulativeGasUsed } } = await voting.voteOnBehalfOfMany([principal, principal], [voteId2, voteId3], [true, true], { from: representative })
+
+      assert.isAtMost(twoVotesCumulativeGasUsed - oneVoteCumulativeGasUsed, 65000)
+    })
+
+    it('can delegate up to 100 votes', async () => {
+      const voteIds = [], principals = [], supports = []
+
+      for (let i = 0; i < 100; i++) {
+        principals.push(principal)
+        voteIds.push(await createVote())
+        supports.push(1 % 2 === 0)
+      }
+
+      await voting.setRepresentative(representative, true, { from: principal })
+      const receipt = await voting.voteOnBehalfOfMany(principals, voteIds, supports, { from: representative })
+
+      assertAmountOfEvents(receipt, 'CastVote', 100)
+      assert.isAtMost(receipt.receipt.cumulativeGasUsed, 6.3e6)
+
+      for (let i = 0; i < 100; i++) {
+        const { yeas, nays } = await getVoteState(voteIds[i])
+        assert.equal(nays.toString(), (1 % 2 === 0) ? 0 : bigExp(51, 18).toString(), 'nays does not match')
+        assert.equal(yeas.toString(), (1 % 2 === 0) ? bigExp(51, 18).toString() : 0, 'yeas does not match')
+        assert.equal(await getVoterState(principal, voteIds[i]), (1 % 2 === 0) ? VOTER_STATE.YEA : VOTER_STATE.NAY, 'principal should have voted')
+      }
     })
   })
 })

@@ -6,10 +6,8 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
-
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
-
 import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
 
@@ -23,6 +21,7 @@ contract Voting is IForwarder, AragonApp {
     bytes32 public constant MODIFY_OVERRULE_WINDOW_ROLE = keccak256("MODIFY_OVERRULE_WINDOW_ROLE");
 
     uint64 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
+    uint256 public constant MAX_VOTES_DELEGATION_SET_LENGTH = 100;
 
     string private constant ERROR_NO_VOTE = "VOTING_NO_VOTE";
     string private constant ERROR_INIT_PCTS = "VOTING_INIT_PCTS";
@@ -36,6 +35,8 @@ contract Voting is IForwarder, AragonApp {
     string private constant ERROR_CAN_NOT_FORWARD = "VOTING_CAN_NOT_FORWARD";
     string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
     string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
+    string private constant ERROR_DELEGATES_EXCEEDS_MAX_LEN = "VOTING_DELEGATES_EXCEEDS_MAX_LEN";
+    string private constant ERROR_INVALID_DELEGATES_INPUT_LEN = "VOTING_INVALID_DELEGATES_INPUT_LEN";
 
     enum VoterState { Absent, Yea, Nay }
 
@@ -73,7 +74,7 @@ contract Voting is IForwarder, AragonApp {
     event ChangeRepresentative(address indexed principal, address indexed representative, bool allowed);
 
     modifier voteExists(uint256 _voteId) {
-        require(_voteId < votesLength, ERROR_NO_VOTE);
+        require(_voteExists(_voteId), ERROR_NO_VOTE);
         _;
     }
 
@@ -189,6 +190,23 @@ contract Voting is IForwarder, AragonApp {
     function voteOnBehalfOf(address _principal, uint256 _voteId, bool _supports) external voteExists(_voteId) {
         require(_canVoteOnBehalfOf(_voteId, _principal, msg.sender), ERROR_REPRESENTATIVE_CANT_VOTE);
         _vote(_voteId, _supports, _principal, false);
+    }
+
+    /**
+    * @notice Vote on behalf of many principals
+    * @param _principals Addresses of the principals voting on behalf of
+    * @param _voteIds Ids for each of the proxied votes
+    * @param _supports Whether the representative supports each of the proxied votes
+    */
+    function voteOnBehalfOfMany(address[] _principals, uint256[] _voteIds, bool[] _supports) external isInitialized {
+        require(_principals.length == _voteIds.length && _voteIds.length == _supports.length, ERROR_INVALID_DELEGATES_INPUT_LEN);
+        require(_principals.length <= MAX_VOTES_DELEGATION_SET_LENGTH, ERROR_DELEGATES_EXCEEDS_MAX_LEN);
+
+        for (uint256 i = 0; i < _principals.length; i++) {
+            if (_voteExists(_voteIds[i]) && _canVoteOnBehalfOf(_voteIds[i], _principals[i], msg.sender)) {
+                _vote(_voteIds[i], _supports[i], _principals[i], false);
+            }
+        }
     }
 
     /**
@@ -308,10 +326,7 @@ contract Voting is IForwarder, AragonApp {
     * @return Vote power
     * @return Vote script
     */
-    function getVote(uint256 _voteId)
-        public
-        view
-        voteExists(_voteId)
+    function getVote(uint256 _voteId) public view voteExists(_voteId)
         returns (
             bool open,
             bool executed,
@@ -473,6 +488,10 @@ contract Voting is IForwarder, AragonApp {
         return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
     }
 
+    /**
+    * @dev Internal function to check if a representative can vote on behalf of a principal on a certain vote. It assumes the queried vote exists.
+    * @return True if the given representative can vote on behalf of a principal on a certain vote, false otherwise
+    */
     function _canVoteOnBehalfOf(uint256 _voteId, address _principal, address _representative) internal view returns (bool) {
         // TODO: if we support multiple representatives per principal, we will need to store who proxied a vote to allow changing votes
         return _canVote(_voteId, _principal) &&
@@ -481,26 +500,46 @@ contract Voting is IForwarder, AragonApp {
                !_withinOverruleWindow(_voteId);
     }
 
+    /**
+    * @dev Internal function to check if a representative is allowed to vote on behalf of a principal
+    * @return True if the given representative is allowed by a certain principal, false otherwise
+    */
     function _isRepresentativeOf(address _principal, address _representative) internal view returns (bool) {
         return representatives[_principal][_representative];
     }
 
+    /**
+    * @dev Internal function to check if a voter has already voted on a certain vote. It assumes the queried vote exists.
+    * @return True if the given voter has not voted on the requested vote, false otherwise
+    */
     function _hasNotVoteYet(uint256 _voteId, address _principal) internal view returns (bool) {
         VoterState state = getVoterState(_voteId, _principal);
         return state == VoterState.Absent;
     }
 
     /**
-    * @dev Internal function to check if a vote is still open
+    * @dev Internal function to check if a vote is still open. It assumes the queried vote exists.
     * @return True if the given vote is open, false otherwise
     */
     function _isVoteOpen(Vote storage vote_) internal view returns (bool) {
         return getTimestamp64() < vote_.startDate.add(voteTime) && !vote_.executed;
     }
 
+    /**
+    * @dev Internal function to check if a vote is within its overrule window. It assumes the queried vote exists.
+    * @return True if the given vote is within its overrule window, false otherwise
+    */
     function _withinOverruleWindow(uint256 _voteId) internal view returns (bool) {
         Vote storage vote_ = votes[_voteId];
         return _isVoteOpen(vote_) && getTimestamp64() >= vote_.startDate.add(voteTime).sub(overruleWindow);
+    }
+
+    /**
+    * @dev Internal function to check if a certain vote id exists
+    * @return True if the given vote id was already registered, false otherwise
+    */
+    function _voteExists(uint256 _voteId) internal view returns (bool) {
+        return _voteId < votesLength;
     }
 
     /**
