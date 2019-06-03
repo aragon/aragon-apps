@@ -20,9 +20,9 @@ const MiniMeToken = artifacts.require('@aragon/apps-shared-minime/contracts/Mini
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, anotherVoting]) => {
+contract('ProxyVoting', ([_, root, principal, representative, anotherRepresentative, anyone, anotherVoting]) => {
   let votingBase, kernelBase, aclBase, daoFactory
-  let dao, acl, voting, token, executionTarget, script, voteId, holder51Proxy
+  let dao, acl, voting, token, executionTarget, script, voteId, principalProxy
   let APP_MANAGER_ROLE, CREATE_VOTES_ROLE, MODIFY_SUPPORT_ROLE, MODIFY_QUORUM_ROLE
 
   const NOW = 1553703809  // random fixed timestamp in seconds
@@ -57,21 +57,19 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
   before('mint tokens', async () => {
     token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 18, 'n', true, { from: root }) // empty parameters minime
-    await token.generateTokens(holder20, bigExp(20, 18), { from: root })
-    await token.generateTokens(holder29, bigExp(29, 18), { from: root })
-    await token.generateTokens(holder51, bigExp(51, 18), { from: root })
+    await token.generateTokens(principal, bigExp(51, 18), { from: root })
   })
 
   before('create proxy voting', async () => {
-    holder51Proxy = await ProxyVoting.new(holder51, OVERRULE_WINDOW)
-    await token.transfer(holder51Proxy.address, bigExp(51, 18), { from: holder51 })
+    principalProxy = await ProxyVoting.new(principal, OVERRULE_WINDOW)
+    await token.transfer(principalProxy.address, bigExp(51, 18), { from: principal })
   })
 
   beforeEach('create voting app', async () => {
     const receipt = await dao.newAppInstance('0x1234', votingBase.address, '0x', false, { from: root })
     voting = Voting.at(getNewProxyAddress(receipt))
 
-    await holder51Proxy.mockSetTimestamp(NOW)
+    await principalProxy.mockSetTimestamp(NOW)
     await voting.mockSetTimestamp(NOW)
     await voting.initialize(token.address, MIN_SUPPORT, MIN_QUORUM, VOTING_DURATION, { from: root })
 
@@ -80,12 +78,12 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
     await acl.createPermission(ANY_ADDR, voting.address, MODIFY_QUORUM_ROLE, root, { from: root })
   })
 
-  const createVote = async (from = holder51) => {
+  const createVote = async (from = principal) => {
     executionTarget = await ExecutionTarget.new()
     const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
     script = encodeCallScript([action])
 
-    const { tx } = await holder51Proxy.newVote(voting.address, script, 'metadata', { from })
+    const { tx } = await principalProxy.newVote(voting.address, script, 'metadata', { from })
     const receipt = await web3.eth.getTransactionReceipt(tx)
     const events = decodeEventsOfType(receipt, Voting.abi, 'StartVote')
     assert.equal(events.length, 1, 'number of StartVote emitted events does not match')
@@ -103,40 +101,40 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
   const increaseTime = async (seconds) => {
     await voting.mockIncreaseTime(seconds)
-    await holder51Proxy.mockIncreaseTime(seconds)
+    await principalProxy.mockIncreaseTime(seconds)
   }
 
   describe('setFullRepresentative', () => {
     context('when the sender is the principal', () => {
-      const from = holder51
+      const from = principal
 
       it('is not allowed by default', async () => {
-        assert.isFalse(await holder51Proxy.isRepresentativeFullyAllowed(holder20))
+        assert.isFalse(await principalProxy.isRepresentativeFullyAllowed(representative))
       })
 
       context('when the representative was not set yet', () => {
         it('sets the given representative', async () => {
-          const receipt = await holder51Proxy.setFullRepresentative(holder20, true, { from })
+          const receipt = await principalProxy.setFullRepresentative(representative, true, { from })
 
           assertAmountOfEvents(receipt, 'ChangeFullRepresentative')
-          assertEvent(receipt, 'ChangeFullRepresentative', { representative: holder20, allowed: true })
+          assertEvent(receipt, 'ChangeFullRepresentative', { representative: representative, allowed: true })
 
-          assert.isTrue(await holder51Proxy.isRepresentativeFullyAllowed(holder20))
+          assert.isTrue(await principalProxy.isRepresentativeFullyAllowed(representative))
         })
       })
 
       context('when the representative was already set', () => {
         beforeEach('add representative', async () => {
-          await holder51Proxy.setFullRepresentative(holder20, true, { from })
+          await principalProxy.setFullRepresentative(representative, true, { from })
         })
 
         it('updates the given representative', async () => {
-          const receipt = await holder51Proxy.setFullRepresentative(holder20, false, { from })
+          const receipt = await principalProxy.setFullRepresentative(representative, false, { from })
 
           assertAmountOfEvents(receipt, 'ChangeFullRepresentative')
-          assertEvent(receipt, 'ChangeFullRepresentative', { representative: holder20, allowed: false })
+          assertEvent(receipt, 'ChangeFullRepresentative', { representative: representative, allowed: false })
 
-          assert.isFalse(await holder51Proxy.isRepresentativeFullyAllowed(holder20))
+          assert.isFalse(await principalProxy.isRepresentativeFullyAllowed(representative))
         })
       })
     })
@@ -145,42 +143,42 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(holder51Proxy.setFullRepresentative(holder20, true, { from }), 'PV_SENDER_NOT_PRINCIPAL')
+        await assertRevert(principalProxy.setFullRepresentative(representative, true, { from }), 'PV_SENDER_NOT_PRINCIPAL')
       })
     })
   })
 
   describe('setInstanceRepresentative', () => {
     context('when the sender is the principal', () => {
-      const from = holder51
+      const from = principal
 
       it('is not allowed by default', async () => {
-        assert.isFalse(await holder51Proxy.isRepresentativeAllowedForInstance(holder20, voting.address))
+        assert.isFalse(await principalProxy.isRepresentativeAllowedForInstance(representative, voting.address))
       })
 
       context('when the representative was not set yet', () => {
         it('sets the given representative', async () => {
-          const receipt = await holder51Proxy.setInstanceRepresentative(holder20, voting.address, true, { from })
+          const receipt = await principalProxy.setInstanceRepresentative(representative, voting.address, true, { from })
 
           assertAmountOfEvents(receipt, 'ChangeInstanceRepresentative')
-          assertEvent(receipt, 'ChangeInstanceRepresentative', { representative: holder20, voting: voting.address, allowed: true })
+          assertEvent(receipt, 'ChangeInstanceRepresentative', { representative: representative, voting: voting.address, allowed: true })
 
-          assert.isTrue(await holder51Proxy.isRepresentativeAllowedForInstance(holder20, voting.address))
+          assert.isTrue(await principalProxy.isRepresentativeAllowedForInstance(representative, voting.address))
         })
       })
 
       context('when the representative was already set', () => {
         beforeEach('add representative', async () => {
-          await holder51Proxy.setInstanceRepresentative(holder20, voting.address, true, { from })
+          await principalProxy.setInstanceRepresentative(representative, voting.address, true, { from })
         })
 
         it('updates the given representative', async () => {
-          const receipt = await holder51Proxy.setInstanceRepresentative(holder20, voting.address, false, { from })
+          const receipt = await principalProxy.setInstanceRepresentative(representative, voting.address, false, { from })
 
           assertAmountOfEvents(receipt, 'ChangeInstanceRepresentative')
-          assertEvent(receipt, 'ChangeInstanceRepresentative', { representative: holder20, voting: voting.address, allowed: false })
+          assertEvent(receipt, 'ChangeInstanceRepresentative', { representative: representative, voting: voting.address, allowed: false })
 
-          assert.isFalse(await holder51Proxy.isRepresentativeAllowedForInstance(holder20, voting.address))
+          assert.isFalse(await principalProxy.isRepresentativeAllowedForInstance(representative, voting.address))
         })
       })
     })
@@ -189,7 +187,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(holder51Proxy.setInstanceRepresentative(holder20, voting.address, true, { from }), 'PV_SENDER_NOT_PRINCIPAL')
+        await assertRevert(principalProxy.setInstanceRepresentative(representative, voting.address, true, { from }), 'PV_SENDER_NOT_PRINCIPAL')
       })
     })
   })
@@ -198,35 +196,35 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
     beforeEach('create a vote', createVote)
 
     context('when the sender is the principal', () => {
-      const from = holder51
+      const from = principal
 
       it('is not allowed by default', async () => {
-        assert.isFalse(await holder51Proxy.isRepresentativeAllowedForVote(holder20, voting.address, voteId))
+        assert.isFalse(await principalProxy.isRepresentativeAllowedForVote(representative, voting.address, voteId))
       })
 
       context('when the representative was not set yet', () => {
         it('sets the given representative', async () => {
-          const receipt = await holder51Proxy.setVoteRepresentative(holder20, voting.address, voteId, true, { from })
+          const receipt = await principalProxy.setVoteRepresentative(representative, voting.address, voteId, true, { from })
 
           assertAmountOfEvents(receipt, 'ChangeVoteRepresentative')
-          assertEvent(receipt, 'ChangeVoteRepresentative', { representative: holder20, voting: voting.address, voteId, allowed: true })
+          assertEvent(receipt, 'ChangeVoteRepresentative', { representative: representative, voting: voting.address, voteId, allowed: true })
 
-          assert.isTrue(await holder51Proxy.isRepresentativeAllowedForVote(holder20, voting.address, voteId))
+          assert.isTrue(await principalProxy.isRepresentativeAllowedForVote(representative, voting.address, voteId))
         })
       })
 
       context('when the representative was already set', () => {
         beforeEach('add representative', async () => {
-          await holder51Proxy.setVoteRepresentative(holder20, voting.address, voteId, true, { from })
+          await principalProxy.setVoteRepresentative(representative, voting.address, voteId, true, { from })
         })
 
         it('updates the given representative', async () => {
-          const receipt = await holder51Proxy.setVoteRepresentative(holder20, voting.address, voteId, false, { from })
+          const receipt = await principalProxy.setVoteRepresentative(representative, voting.address, voteId, false, { from })
 
           assertAmountOfEvents(receipt, 'ChangeVoteRepresentative')
-          assertEvent(receipt, 'ChangeVoteRepresentative', { representative: holder20, voting: voting.address, voteId, allowed: false })
+          assertEvent(receipt, 'ChangeVoteRepresentative', { representative: representative, voting: voting.address, voteId, allowed: false })
 
-          assert.isFalse(await holder51Proxy.isRepresentativeAllowedForVote(holder20, voting.address, voteId))
+          assert.isFalse(await principalProxy.isRepresentativeAllowedForVote(representative, voting.address, voteId))
         })
       })
     })
@@ -235,7 +233,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(holder51Proxy.setVoteRepresentative(holder20, voting.address, voteId, true, { from }), 'PV_SENDER_NOT_PRINCIPAL')
+        await assertRevert(principalProxy.setVoteRepresentative(representative, voting.address, voteId, true, { from }), 'PV_SENDER_NOT_PRINCIPAL')
       })
     })
   })
@@ -243,7 +241,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
   describe('newVote', () => {
     context('when the sender is the principal', () => {
       let startVoteEvent
-      const from = holder51
+      const from = principal
 
       beforeEach('create a vote', async () => {
         startVoteEvent = await createVote(from)
@@ -252,7 +250,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       it('creates a vote', async () => {
         assert.equal(voteId, 0, 'vote id should be correct')
         assert.equal(startVoteEvent.metadata, 'metadata', 'should have returned correct metadata')
-        assert.equal(startVoteEvent.creator, web3.toChecksumAddress(holder51Proxy.address), 'creator should be correct')
+        assert.equal(startVoteEvent.creator, web3.toChecksumAddress(principalProxy.address), 'creator should be correct')
       })
 
       it('does not cast the principal votes and has the correct state', async () => {
@@ -262,8 +260,8 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
         assert.isFalse(executed, 'vote should not be executed')
         assert.equal(yeas.toString(), 0, 'yeas should be 0')
         assert.equal(nays.toString(), 0, 'nays should be 0')
-        assert.equal(await getVoterState(holder51), VOTER_STATE.ABSENT, 'principal should not have voted yet')
-        assert.equal(await getVoterState(holder51Proxy.address), VOTER_STATE.ABSENT, 'principal proxy should not have voted yet')
+        assert.equal(await getVoterState(principal), VOTER_STATE.ABSENT, 'principal should not have voted yet')
+        assert.equal(await getVoterState(principalProxy.address), VOTER_STATE.ABSENT, 'principal proxy should not have voted yet')
       })
 
       it('sets it up correctly', async () => {
@@ -273,7 +271,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
         assert.equal(snapshotBlock.toString(), await getBlockNumber() - 1, 'snapshot block should be correct')
         assert.equal(support.toString(), MIN_SUPPORT.toString(), 'required support should be app required support')
         assert.equal(quorum.toString(), MIN_QUORUM.toString(), 'min quorum should be app min quorum')
-        assert.equal(votingPower.toString(), bigExp(100, 18).toString(), 'voting power should be 100')
+        assert.equal(votingPower.toString(), bigExp(51, 18).toString(), 'voting power should be 51')
         assert.equal(execScript, script, 'script should be correct')
       })
     })
@@ -282,7 +280,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(holder51Proxy.newVote(voting.address, script, 'metadata', { from }), 'PV_SENDER_NOT_PRINCIPAL')
+        await assertRevert(principalProxy.newVote(voting.address, script, 'metadata', { from }), 'PV_SENDER_NOT_PRINCIPAL')
       })
     })
   })
@@ -292,11 +290,11 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       beforeEach('create a vote', createVote)
 
       context('when the representative is not allowed', () => {
-        const from = holder20
+        const from = representative
 
         const itReverts = () => {
           it('reverts', async () => {
-            await assertRevert(holder51Proxy.proxyVote(voting.address, voteId, true, { from }), 'PV_REPRESENTATIVE_NOT_ALLOWED')
+            await assertRevert(principalProxy.proxyVote(voting.address, voteId, true, { from }), 'PV_REPRESENTATIVE_NOT_ALLOWED')
           })
         }
 
@@ -306,7 +304,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
         context('when the representative is allowed for a another vote instance', () => {
           beforeEach('allow representative for another instance', async () => {
-            await holder51Proxy.setInstanceRepresentative(holder20, anotherVoting, true, { from: holder51 })
+            await principalProxy.setInstanceRepresentative(representative, anotherVoting, true, { from: principal })
           })
 
           itReverts()
@@ -314,7 +312,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
         context('when the representative is allowed for a another vote', () => {
           beforeEach('allow representative for another vote', async () => {
-            await holder51Proxy.setVoteRepresentative(holder20, voting.address, voteId + 1, true, { from: holder51 })
+            await principalProxy.setVoteRepresentative(representative, voting.address, voteId + 1, true, { from: principal })
           })
 
           itReverts()
@@ -322,12 +320,12 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       })
 
       context('when the representative is allowed', () => {
-        const from = holder20
+        const from = representative
 
         context('when not within the overrule window', () => {
           const itCastsTheProxiedVote = () => {
             beforeEach('proxy representative\'s vote', async () => {
-              await holder51Proxy.proxyVote(voting.address, voteId, false, { from: holder20 })
+              await principalProxy.proxyVote(voting.address, voteId, false, { from: representative })
             })
 
             it('casts the proxied vote', async () => {
@@ -335,23 +333,23 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
               assert.equal(yeas.toString(), 0, 'yeas should be 0')
               assert.equal(nays.toString(), bigExp(51, 18).toString(), 'nays should be 51%')
-              assert.equal(await getVoterState(holder51), VOTER_STATE.ABSENT, 'principal proxy should have voted')
-              assert.equal(await getVoterState(holder51Proxy.address), VOTER_STATE.NAY, 'principal proxy should have voted')
+              assert.equal(await getVoterState(principal), VOTER_STATE.ABSENT, 'principal proxy should have voted')
+              assert.equal(await getVoterState(principalProxy.address), VOTER_STATE.NAY, 'principal proxy should have voted')
             })
 
             it('cannot be changed by the same representative', async () => {
-              await assertRevert(holder51Proxy.proxyVote(voting.address, voteId, true, { from }), 'PV_VOTE_ALREADY_CASTED')
+              await assertRevert(principalProxy.proxyVote(voting.address, voteId, true, { from }), 'PV_VOTE_ALREADY_CASTED')
             })
 
             it('cannot be overruled by another representative', async () => {
-              await holder51Proxy.setFullRepresentative(holder29, true, { from: holder51 })
-              await assertRevert(holder51Proxy.proxyVote(voting.address, voteId, true, { from: holder29 }), 'PV_VOTE_ALREADY_CASTED')
+              await principalProxy.setFullRepresentative(anotherRepresentative, true, { from: principal })
+              await assertRevert(principalProxy.proxyVote(voting.address, voteId, true, { from: anotherRepresentative }), 'PV_VOTE_ALREADY_CASTED')
             })
           }
 
           context('when the representative is allowed for any vote instance', () => {
             beforeEach('allow representative for any instance', async () => {
-              await holder51Proxy.setFullRepresentative(holder20, true, { from: holder51 })
+              await principalProxy.setFullRepresentative(representative, true, { from: principal })
             })
 
             itCastsTheProxiedVote()
@@ -359,7 +357,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
           context('when the representative is allowed for that particular vote instance', () => {
             beforeEach('allow representative for instance', async () => {
-              await holder51Proxy.setInstanceRepresentative(holder20, voting.address, true, { from: holder51 })
+              await principalProxy.setInstanceRepresentative(representative, voting.address, true, { from: principal })
             })
 
             itCastsTheProxiedVote()
@@ -367,7 +365,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
           context('when the representative is allowed for that particular vote', () => {
             beforeEach('allow representative for vote', async () => {
-              await holder51Proxy.setVoteRepresentative(holder20, voting.address, voteId, true, { from: holder51 })
+              await principalProxy.setVoteRepresentative(representative, voting.address, voteId, true, { from: principal })
             })
 
             itCastsTheProxiedVote()
@@ -381,13 +379,13 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
           const itReverts = () => {
             it('reverts', async () => {
-              await assertRevert(holder51Proxy.proxyVote(voting.address, voteId, true, { from }), 'PV_WITHIN_OVERRULE_WINDOW')
+              await assertRevert(principalProxy.proxyVote(voting.address, voteId, true, { from }), 'PV_WITHIN_OVERRULE_WINDOW')
             })
           }
 
           context('when the representative is allowed for any vote instance', () => {
             beforeEach('allow representative for any instance', async () => {
-              await holder51Proxy.setFullRepresentative(holder20, true, { from: holder51 })
+              await principalProxy.setFullRepresentative(representative, true, { from: principal })
             })
 
             itReverts()
@@ -395,7 +393,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
           context('when the representative is allowed for that particular vote instance', () => {
             beforeEach('allow representative for instance', async () => {
-              await holder51Proxy.setInstanceRepresentative(holder20, voting.address, true, { from: holder51 })
+              await principalProxy.setInstanceRepresentative(representative, voting.address, true, { from: principal })
             })
 
             itReverts()
@@ -403,7 +401,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
           context('when the representative is allowed for that particular vote', () => {
             beforeEach('allow representative for vote', async () => {
-              await holder51Proxy.setVoteRepresentative(holder20, voting.address, voteId, true, { from: holder51 })
+              await principalProxy.setVoteRepresentative(representative, voting.address, voteId, true, { from: principal })
             })
 
             itReverts()
@@ -414,8 +412,8 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
     context('when the vote does not exist', () => {
       it('reverts', async () => {
-        await holder51Proxy.setFullRepresentative(holder20, true, { from: holder51 })
-        await assertRevert(holder51Proxy.proxyVote(voting.address, voteId, true, { from: holder20 }), 'VOTING_NO_VOTE')
+        await principalProxy.setFullRepresentative(representative, true, { from: principal })
+        await assertRevert(principalProxy.proxyVote(voting.address, voteId, true, { from: representative }), 'VOTING_NO_VOTE')
       })
     })
   })
@@ -424,18 +422,18 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
     beforeEach('create a vote', createVote)
 
     context('when the sender is the principal', () => {
-      const from = holder51
+      const from = principal
 
       const itCastsTheProxiedVote = () => {
         it('casts the proxied vote', async () => {
-          await holder51Proxy.vote(voting.address, voteId, true, false, { from })
+          await principalProxy.vote(voting.address, voteId, true, false, { from })
 
           const { yeas, nays } = await getVoteState()
 
           assert.equal(yeas.toString(), bigExp(51, 18).toString(), 'yeas should be 51%')
           assert.equal(nays.toString(), 0, 'nays should be 0')
-          assert.equal(await getVoterState(holder51), VOTER_STATE.ABSENT, 'principal proxy should have voted')
-          assert.equal(await getVoterState(holder51Proxy.address), VOTER_STATE.YEA, 'principal proxy should have voted')
+          assert.equal(await getVoterState(principal), VOTER_STATE.ABSENT, 'principal proxy should have voted')
+          assert.equal(await getVoterState(principalProxy.address), VOTER_STATE.YEA, 'principal proxy should have voted')
         })
       }
 
@@ -445,8 +443,8 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
       context('when a representative already proxied a vote', () => {
         beforeEach('proxy representative\'s vote', async () => {
-          await holder51Proxy.setFullRepresentative(holder20, true, { from: holder51 })
-          await holder51Proxy.proxyVote(voting.address, voteId, false, { from: holder20 })
+          await principalProxy.setFullRepresentative(representative, true, { from: principal })
+          await principalProxy.proxyVote(voting.address, voteId, false, { from: representative })
         })
 
         itCastsTheProxiedVote()
@@ -454,7 +452,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
       context('when the principal already proxied a vote', () => {
         beforeEach('proxy principal\'s vote', async () => {
-          await holder51Proxy.vote(voting.address, voteId, false, false, { from: holder51 })
+          await principalProxy.vote(voting.address, voteId, false, false, { from: principal })
         })
 
         itCastsTheProxiedVote()
@@ -465,7 +463,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(holder51Proxy.vote(voting.address, voteId, true, false, { from }), 'PV_SENDER_NOT_PRINCIPAL')
+        await assertRevert(principalProxy.vote(voting.address, voteId, true, false, { from }), 'PV_SENDER_NOT_PRINCIPAL')
       })
     })
   })
@@ -475,28 +473,28 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
 
     context('when no one has vote yet', () => {
       it('returns true', async () => {
-        assert.isTrue(await holder51Proxy.hasNotVoteYet(voting.address, voteId))
+        assert.isTrue(await principalProxy.hasNotVoteYet(voting.address, voteId))
       })
     })
 
     context('when a representative has proxied a vote', () => {
       beforeEach('proxy representative\'s vote', async () => {
-        await holder51Proxy.setFullRepresentative(holder20, true, { from: holder51 })
-        await holder51Proxy.proxyVote(voting.address, voteId, true, { from: holder20 })
+        await principalProxy.setFullRepresentative(representative, true, { from: principal })
+        await principalProxy.proxyVote(voting.address, voteId, true, { from: representative })
       })
 
       it('returns false', async () => {
-        assert.isFalse(await holder51Proxy.hasNotVoteYet(voting.address, voteId))
+        assert.isFalse(await principalProxy.hasNotVoteYet(voting.address, voteId))
       })
     })
 
     context('when the principal has proxied a vote', () => {
       beforeEach('proxy principal\'s vote', async () => {
-        await holder51Proxy.vote(voting.address, voteId, true, false, { from: holder51 })
+        await principalProxy.vote(voting.address, voteId, true, false, { from: principal })
       })
 
       it('returns false', async () => {
-        assert.isFalse(await holder51Proxy.hasNotVoteYet(voting.address, voteId))
+        assert.isFalse(await principalProxy.hasNotVoteYet(voting.address, voteId))
       })
     })
   })
@@ -510,7 +508,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       })
 
       it('returns false', async () => {
-        assert.isFalse(await holder51Proxy.withinOverruleWindow(voting.address, voteId))
+        assert.isFalse(await principalProxy.withinOverruleWindow(voting.address, voteId))
       })
     })
 
@@ -520,7 +518,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       })
 
       it('returns true', async () => {
-        assert.isTrue(await holder51Proxy.withinOverruleWindow(voting.address, voteId))
+        assert.isTrue(await principalProxy.withinOverruleWindow(voting.address, voteId))
       })
     })
 
@@ -530,7 +528,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       })
 
       it('returns true', async () => {
-        assert.isTrue(await holder51Proxy.withinOverruleWindow(voting.address, voteId))
+        assert.isTrue(await principalProxy.withinOverruleWindow(voting.address, voteId))
       })
     })
 
@@ -540,7 +538,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       })
 
       it('returns false', async () => {
-        assert.isFalse(await holder51Proxy.withinOverruleWindow(voting.address, voteId))
+        assert.isFalse(await principalProxy.withinOverruleWindow(voting.address, voteId))
       })
     })
 
@@ -550,33 +548,33 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       })
 
       it('returns false', async () => {
-        assert.isFalse(await holder51Proxy.withinOverruleWindow(voting.address, voteId))
+        assert.isFalse(await principalProxy.withinOverruleWindow(voting.address, voteId))
       })
     })
   })
 
   describe('withdraw', () => {
     context('when the sender is the principal', () => {
-      const from = holder51
+      const from = principal
 
       context('when the transfer succeeds', () => {
         const amount = bigExp(1, 18)
 
         it('transfers the requested amount of tokens to the principal', async () => {
-          const previousProxyBalance = await token.balanceOf(holder51Proxy.address)
-          const previousPrincipalBalance = await token.balanceOf(holder51)
+          const previousProxyBalance = await token.balanceOf(principalProxy.address)
+          const previousPrincipalBalance = await token.balanceOf(principal)
 
-          await holder51Proxy.withdraw(token.address, amount, { from })
+          await principalProxy.withdraw(token.address, amount, { from })
 
-          const currentProxyBalance = await token.balanceOf(holder51Proxy.address)
+          const currentProxyBalance = await token.balanceOf(principalProxy.address)
           assert.equal(currentProxyBalance.toString(), previousProxyBalance.minus(amount).toString())
 
-          const currentPrincipalBalance = await token.balanceOf(holder51)
+          const currentPrincipalBalance = await token.balanceOf(principal)
           assert.equal(currentPrincipalBalance.toString(), previousPrincipalBalance.plus(amount).toString())
         })
 
         it('emits an event', async () => {
-          const receipt = await holder51Proxy.withdraw(token.address, amount, { from })
+          const receipt = await principalProxy.withdraw(token.address, amount, { from })
 
           assertAmountOfEvents(receipt, 'Withdraw')
           assertEvent(receipt, 'Withdraw', { token: token.address, amount })
@@ -587,7 +585,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
         const amount = bigExp(100, 18)
 
         it('reverts', async () => {
-          await assertRevert(holder51Proxy.withdraw(token.address, amount, { from }), 'PV_WITHDRAW_FAILED')
+          await assertRevert(principalProxy.withdraw(token.address, amount, { from }), 'PV_WITHDRAW_FAILED')
         })
       })
     })
@@ -596,7 +594,7 @@ contract('ProxyVoting', ([_, root, holder20, holder29, holder51, anyone, another
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(holder51Proxy.withdraw(token.address, 1, { from }), 'PV_SENDER_NOT_PRINCIPAL')
+        await assertRevert(principalProxy.withdraw(token.address, 1, { from }), 'PV_SENDER_NOT_PRINCIPAL')
       })
     })
   })

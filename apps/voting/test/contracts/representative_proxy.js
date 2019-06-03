@@ -20,7 +20,7 @@ const MiniMeToken = artifacts.require('@aragon/apps-shared-minime/contracts/Mini
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, representative, anyone]) => {
+contract('RepresentativeProxy', ([_, root, principal, representative, anyone]) => {
   let votingBase, kernelBase, aclBase, daoFactory
   let dao, acl, voting, token, executionTarget, script, voteId, representativeProxy
   let APP_MANAGER_ROLE, CREATE_VOTES_ROLE, MODIFY_SUPPORT_ROLE, MODIFY_QUORUM_ROLE
@@ -57,15 +57,12 @@ contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, represe
 
   beforeEach('mint tokens', async () => {
     token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 18, 'n', true, { from: root }) // empty parameters minime
-    await token.generateTokens(holder20, bigExp(20, 18), { from: root })
-    await token.generateTokens(holder29, bigExp(29, 18), { from: root })
-    await token.generateTokens(holder51, bigExp(51, 18), { from: root })
+    await token.generateTokens(principal, bigExp(51, 18), { from: root })
   })
 
   beforeEach('create representative proxy', async () => {
     representativeProxy = await RepresentativeProxy.new(representative, OVERRULE_WINDOW)
-    await token.approve(representativeProxy.address, bigExp(51, 18), { from: holder51 })
-    await token.approve(representativeProxy.address, bigExp(20, 18), { from: holder20 })
+    await token.approve(representativeProxy.address, bigExp(51, 18), { from: principal })
   })
 
   beforeEach('create voting app', async () => {
@@ -108,10 +105,10 @@ contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, represe
   }
 
   describe('delegate', () => {
-    const from = holder51
+    const from = principal
 
     it('is not allowed by default', async () => {
-      assert.isFalse(await representativeProxy.isAllowedBy(holder51, token.address))
+      assert.isFalse(await representativeProxy.isAllowedBy(principal, token.address))
     })
 
     context('when the token transfer does not fail', () => {
@@ -119,16 +116,16 @@ contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, represe
 
       it('transfers given amount of tokens to the representative proxy', async () => {
         const previousProxyBalance = await token.balanceOf(representativeProxy.address)
-        const previousPrincipalBalance = await token.balanceOf(holder51)
+        const previousPrincipalBalance = await token.balanceOf(principal)
 
         await representativeProxy.delegate(token.address, amount, { from })
 
-        assert.isTrue(await representativeProxy.isAllowedBy(holder51, token.address))
+        assert.isTrue(await representativeProxy.isAllowedBy(principal, token.address))
 
         const currentProxyBalance = await token.balanceOf(representativeProxy.address)
         assert.equal(currentProxyBalance.toString(), previousProxyBalance.plus(amount).toString())
 
-        const currentPrincipalBalance = await token.balanceOf(holder51)
+        const currentPrincipalBalance = await token.balanceOf(principal)
         assert.equal(currentPrincipalBalance.toString(), previousPrincipalBalance.minus(amount).toString())
       })
 
@@ -136,7 +133,7 @@ contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, represe
         const receipt = await representativeProxy.delegate(token.address, amount, { from })
 
         assertAmountOfEvents(receipt, 'Delegate')
-        assertEvent(receipt, 'Delegate', { principal: holder51, token: token.address, amount, totalAmount: amount })
+        assertEvent(receipt, 'Delegate', { principal: principal, token: token.address, amount, totalAmount: amount })
       })
     })
 
@@ -150,7 +147,7 @@ contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, represe
   })
 
   describe('withdraw', () => {
-    const from = holder51
+    const from = principal
 
     context('when the token transfer does not fail', () => {
       const amount = bigExp(2, 18)
@@ -161,16 +158,16 @@ contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, represe
 
       it('withdraw given amount of tokens from the representative proxy', async () => {
         const previousProxyBalance = await token.balanceOf(representativeProxy.address)
-        const previousPrincipalBalance = await token.balanceOf(holder51)
+        const previousPrincipalBalance = await token.balanceOf(principal)
 
         await representativeProxy.withdraw(token.address, amount, { from })
 
-        assert.isFalse(await representativeProxy.isAllowedBy(holder51, token.address))
+        assert.isFalse(await representativeProxy.isAllowedBy(principal, token.address))
 
         const currentProxyBalance = await token.balanceOf(representativeProxy.address)
         assert.equal(currentProxyBalance.toString(), previousProxyBalance.minus(amount).toString())
 
-        const currentPrincipalBalance = await token.balanceOf(holder51)
+        const currentPrincipalBalance = await token.balanceOf(principal)
         assert.equal(currentPrincipalBalance.toString(), previousPrincipalBalance.plus(amount).toString())
       })
 
@@ -178,7 +175,7 @@ contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, represe
         const receipt = await representativeProxy.withdraw(token.address, amount, { from })
 
         assertAmountOfEvents(receipt, 'Withdraw')
-        assertEvent(receipt, 'Withdraw', { principal: holder51, token: token.address, amount, totalAmount: 0 })
+        assertEvent(receipt, 'Withdraw', { principal: principal, token: token.address, amount, totalAmount: 0 })
       })
     })
 
@@ -223,7 +220,7 @@ contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, represe
         assert.equal(snapshotBlock.toString(), await getBlockNumber() - 1, 'snapshot block should be correct')
         assert.equal(support.toString(), MIN_SUPPORT.toString(), 'required support should be app required support')
         assert.equal(quorum.toString(), MIN_QUORUM.toString(), 'min quorum should be app min quorum')
-        assert.equal(votingPower.toString(), bigExp(100, 18).toString(), 'voting power should be 100')
+        assert.equal(votingPower.toString(), bigExp(51, 18).toString(), 'voting power should be 100')
         assert.equal(execScript, script, 'script should be correct')
       })
     })
@@ -245,8 +242,7 @@ contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, represe
 
         context('when the representative is allowed', () => {
           beforeEach('allow representative', async () => {
-            await representativeProxy.delegate(token.address, bigExp(51, 18), { from: holder51 })
-            await representativeProxy.delegate(token.address, bigExp(20, 18), { from: holder20 })
+            await representativeProxy.delegate(token.address, bigExp(51, 18), { from: principal })
           })
 
           beforeEach('create a vote', createVote)
@@ -260,7 +256,7 @@ contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, represe
               const { yeas, nays } = await getVoteState()
 
               assert.equal(yeas.toString(), 0, 'yeas should be 0')
-              assert.equal(nays.toString(), bigExp(71, 18).toString(), 'nays should be 71%')
+              assert.equal(nays.toString(), bigExp(51, 18).toString(), 'nays should be 51%')
               assert.equal(await getVoterState(representativeProxy.address), VOTER_STATE.NAY, 'representative proxy should have voted')
             })
 
@@ -270,7 +266,7 @@ contract('RepresentativeProxy', ([_, root, holder20, holder29, holder51, represe
               const { yeas, nays } = await getVoteState()
 
               assert.equal(nays.toString(), 0, 'nays should be 0')
-              assert.equal(yeas.toString(), bigExp(71, 18).toString(), 'yeas should be 71%')
+              assert.equal(yeas.toString(), bigExp(51, 18).toString(), 'yeas should be 51%')
               assert.equal(await getVoterState(representativeProxy.address), VOTER_STATE.YEA, 'representative proxy should have voted')
             })
           })
