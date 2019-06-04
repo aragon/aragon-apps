@@ -1,6 +1,7 @@
 const VOTER_STATE = require('../helpers/state')
 const { bigExp, pct } = require('../helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { skipCoverage } = require('@aragon/os/test/helpers/coverage')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const { decodeEventsOfType } = require('@aragon/os/test/helpers/decodeEvent')
 const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
@@ -482,7 +483,7 @@ contract('Voting delegation', ([_, root, principal, representative, anotherRepre
   })
 
   describe('gas costs', () => {
-    it('adds 65k of gas per casted vote', async () => {
+    it('adds 65k of gas per casted vote', skipCoverage(async () => {
       const voteId1 = await createVote()
       const voteId2 = await createVote()
       const voteId3 = await createVote()
@@ -492,9 +493,9 @@ contract('Voting delegation', ([_, root, principal, representative, anotherRepre
       const { receipt: { cumulativeGasUsed: twoVotesCumulativeGasUsed } } = await voting.voteOnBehalfOfMany([principal, principal], [voteId2, voteId3], [true, true], { from: representative })
 
       assert.isAtMost(twoVotesCumulativeGasUsed - oneVoteCumulativeGasUsed, 65000)
-    })
+    }))
 
-    it('can delegate up to 100 votes', async () => {
+    it('can delegate up to 100 votes', skipCoverage(async () => {
       const voteIds = [], principals = [], supports = []
 
       for (let i = 0; i < 100; i++) {
@@ -515,6 +516,6 @@ contract('Voting delegation', ([_, root, principal, representative, anotherRepre
         assert.equal(yeas.toString(), (1 % 2 === 0) ? bigExp(51, 18).toString() : 0, 'yeas does not match')
         assert.equal(await getVoterState(principal, voteIds[i]), (1 % 2 === 0) ? VOTER_STATE.YEA : VOTER_STATE.NAY, 'principal should have voted')
       }
-    })
+    }))
   })
 })
