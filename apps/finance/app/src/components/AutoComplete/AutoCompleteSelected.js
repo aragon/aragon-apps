@@ -12,8 +12,8 @@ const AutoCompleteSelected = React.memo(
       itemButtonStyles,
       items,
       onChange,
-      onSelect,
-      onSelectedClick = noop,
+      onSelect, // user clicks on an item in the list and thus, selects it
+      onSelectedClick = noop, // when item is selected and user clicks on it, opens up the input for typing
       renderItem,
       required,
       renderSelected = identity,
