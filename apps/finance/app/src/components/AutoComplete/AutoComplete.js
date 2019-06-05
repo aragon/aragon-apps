@@ -37,7 +37,7 @@ const AutoComplete = React.memo(
     )
     const handleChange = useCallback(
       ({ target: { value } }) => onChange(value),
-      [onChange, value]
+      [onChange]
     )
 
     useClickOutside(handleClose, wrapRef)
