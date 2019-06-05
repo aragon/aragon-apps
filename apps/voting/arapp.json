@@ -47,6 +47,14 @@
         "New quorum",
         "Current quorum"
       ]
+    },
+    {
+      "name": "Modify overrule window",
+      "id": "MODIFY_OVERRULE_WINDOW_ROLE",
+      "params": [
+        "New window",
+        "Current window"
+      ]
     }
   ],
   "path": "contracts/Voting.sol"
