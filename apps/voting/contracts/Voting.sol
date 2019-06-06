@@ -70,12 +70,12 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @notice Initialize Voting app with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, and a voting duration of `@transformTime(_voteTime)`
-     * @param _token MiniMeToken Address that will be used as governance token
-     * @param _supportRequiredPct Percentage of yeas in casted votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
-     * @param _minAcceptQuorumPct Percentage of yeas in total possible votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
-     * @param _voteTime Seconds that a vote will be open for token holders to vote (unless enough yeas or nays have been cast to make an early decision)
-     */
+    * @notice Initialize Voting app with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, and a voting duration of `@transformTime(_voteTime)`
+    * @param _token MiniMeToken Address that will be used as governance token
+    * @param _supportRequiredPct Percentage of yeas in casted votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
+    * @param _minAcceptQuorumPct Percentage of yeas in total possible votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
+    * @param _voteTime Seconds that a vote will be open for token holders to vote (unless enough yeas or nays have been cast to make an early decision)
+    */
     function initialize(MiniMeToken _token, uint64 _supportRequiredPct, uint64 _minAcceptQuorumPct, uint64 _voteTime) external onlyInit {
         initialized();
 
@@ -89,9 +89,9 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @notice Change required support to `@formatPct(_supportRequiredPct)`%
-     * @param _supportRequiredPct New required support
-     */
+    * @notice Change required support to `@formatPct(_supportRequiredPct)`%
+    * @param _supportRequiredPct New required support
+    */
     function changeSupportRequiredPct(uint64 _supportRequiredPct)
         external
         authP(MODIFY_SUPPORT_ROLE, arr(uint256(_supportRequiredPct), uint256(supportRequiredPct)))
@@ -104,9 +104,9 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @notice Change minimum acceptance quorum to `@formatPct(_minAcceptQuorumPct)`%
-     * @param _minAcceptQuorumPct New acceptance quorum
-     */
+    * @notice Change minimum acceptance quorum to `@formatPct(_minAcceptQuorumPct)`%
+    * @param _minAcceptQuorumPct New acceptance quorum
+    */
     function changeMinAcceptQuorumPct(uint64 _minAcceptQuorumPct)
         external
         authP(MODIFY_QUORUM_ROLE, arr(uint256(_minAcceptQuorumPct), uint256(minAcceptQuorumPct)))
@@ -118,23 +118,23 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @notice Create a new vote about "`_metadata`"
-     * @param _executionScript EVM script to be executed on approval
-     * @param _metadata Vote metadata
-     * @return voteId Id for newly created vote
-     */
+    * @notice Create a new vote about "`_metadata`"
+    * @param _executionScript EVM script to be executed on approval
+    * @param _metadata Vote metadata
+    * @return voteId Id for newly created vote
+    */
     function newVote(bytes _executionScript, string _metadata) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
         return _newVote(_executionScript, _metadata, true, true);
     }
 
     /**
-     * @notice Create a new vote about "`_metadata`"
-     * @param _executionScript EVM script to be executed on approval
-     * @param _metadata Vote metadata
-     * @param _castVote Whether to also cast newly created vote
-     * @param _executesIfDecided Whether to also immediately execute newly created vote if decided
-     * @return voteId id for newly created vote
-     */
+    * @notice Create a new vote about "`_metadata`"
+    * @param _executionScript EVM script to be executed on approval
+    * @param _metadata Vote metadata
+    * @param _castVote Whether to also cast newly created vote
+    * @param _executesIfDecided Whether to also immediately execute newly created vote if decided
+    * @return voteId id for newly created vote
+    */
     function newVote(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided)
         external
         auth(CREATE_VOTES_ROLE)
@@ -144,24 +144,24 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @notice Vote `_supports ? 'yes' : 'no'` in vote #`_voteId`
-     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-     *      created via `newVote(),` which requires initialization
-     * @param _voteId Id for vote
-     * @param _supports Whether voter supports the vote
-     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
-     */
+    * @notice Vote `_supports ? 'yes' : 'no'` in vote #`_voteId`
+    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote(),` which requires initialization
+    * @param _voteId Id for vote
+    * @param _supports Whether voter supports the vote
+    * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
+    */
     function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external voteExists(_voteId) {
         require(_canVote(_voteId, msg.sender), ERROR_CAN_NOT_VOTE);
         _vote(_voteId, _supports, msg.sender, _executesIfDecided);
     }
 
     /**
-     * @notice Execute vote #`_voteId`
-     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-     *      created via `newVote(),` which requires initialization
-     * @param _voteId Id for vote
-     */
+    * @notice Execute vote #`_voteId`
+    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote(),` which requires initialization
+    * @param _voteId Id for vote
+    */
     function executeVote(uint256 _voteId) external voteExists(_voteId) {
         _executeVote(_voteId);
     }
@@ -169,30 +169,30 @@ contract Voting is IForwarder, AragonApp {
     // Forwarding fns
 
     /**
-     * @notice Tells whether the Voting app is a forwarder or not
-     * @dev IForwarder interface conformance
-     * @return Always true
-     */
+    * @notice Tells whether the Voting app is a forwarder or not
+    * @dev IForwarder interface conformance
+    * @return Always true
+    */
     function isForwarder() external pure returns (bool) {
         return true;
     }
 
     /**
-     * @notice Creates a vote to execute the desired action, and casts a support vote if possible
-     * @dev IForwarder interface conformance
-     * @param _evmScript Start vote with script
-     */
+    * @notice Creates a vote to execute the desired action, and casts a support vote if possible
+    * @dev IForwarder interface conformance
+    * @param _evmScript Start vote with script
+    */
     function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript), ERROR_CAN_NOT_FORWARD);
         _newVote(_evmScript, "", true, true);
     }
 
     /**
-     * @notice Tells whether `_sender` can forward actions or not
-     * @dev IForwarder interface conformance
-     * @param _sender Address of the account intending to forward an action
-     * @return True if the given address can create votes, false otherwise
-     */
+    * @notice Tells whether `_sender` can forward actions or not
+    * @dev IForwarder interface conformance
+    * @param _sender Address of the account intending to forward an action
+    * @return True if the given address can create votes, false otherwise
+    */
     function canForward(address _sender, bytes) public view returns (bool) {
         // Note that `canPerform()` implicitly does an initialization check itself
         return canPerform(_sender, CREATE_VOTES_ROLE, arr());
@@ -201,39 +201,39 @@ contract Voting is IForwarder, AragonApp {
     // Getter fns
 
     /**
-     * @notice Tells whether a vote #`_voteId` can be executed or not
-     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-     *      created via `newVote(),` which requires initialization
-     * @return True if the given vote can be executed, false otherwise
-     */
+    * @notice Tells whether a vote #`_voteId` can be executed or not
+    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote(),` which requires initialization
+    * @return True if the given vote can be executed, false otherwise
+    */
     function canExecute(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
         return _canExecute(_voteId);
     }
 
     /**
-     * @notice Tells whether `_sender` can participate in the vote #`_voteId` or not
-     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-     *      created via `newVote(),` which requires initialization
-     * @return True if the given voter can participate a certain vote, false otherwise
-     */
+    * @notice Tells whether `_sender` can participate in the vote #`_voteId` or not
+    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote(),` which requires initialization
+    * @return True if the given voter can participate a certain vote, false otherwise
+    */
     function canVote(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (bool) {
         return _canVote(_voteId, _voter);
     }
 
     /**
-     * @dev Return all information for a vote by its ID
-     * @param _voteId Vote identifier
-     * @return Vote open status
-     * @return Vote executed status
-     * @return Vote start date
-     * @return Vote snapshot block
-     * @return Vote support required
-     * @return Vote minimum acceptance quorum
-     * @return Vote yeas amount
-     * @return Vote nays amount
-     * @return Vote power
-     * @return Vote script
-     */
+    * @dev Return all information for a vote by its ID
+    * @param _voteId Vote identifier
+    * @return Vote open status
+    * @return Vote executed status
+    * @return Vote start date
+    * @return Vote snapshot block
+    * @return Vote support required
+    * @return Vote minimum acceptance quorum
+    * @return Vote yeas amount
+    * @return Vote nays amount
+    * @return Vote power
+    * @return Vote script
+    */
     function getVote(uint256 _voteId)
         public
         view
@@ -266,10 +266,10 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @dev Return the state of a voter for a given vote by its ID
-     * @param _voteId Vote identifier
-     * @return VoterState of the requested voter for a certain vote
-     */
+    * @dev Return the state of a voter for a given vote by its ID
+    * @param _voteId Vote identifier
+    * @return VoterState of the requested voter for a certain vote
+    */
     function getVoterState(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (VoterState) {
         return votes[_voteId].voters[_voter];
     }
@@ -277,9 +277,9 @@ contract Voting is IForwarder, AragonApp {
     // Internal fns
 
     /**
-     * @dev Internal function to create a new vote
-     * @return voteId id for newly created vote
-     */
+    * @dev Internal function to create a new vote
+    * @return voteId id for newly created vote
+    */
     function _newVote(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided) internal returns (uint256 voteId) {
         uint64 snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
         uint256 votingPower = token.totalSupplyAt(snapshotBlock);
@@ -303,8 +303,8 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @dev Internal function to cast a vote. It assumes the queried vote exists.
-     */
+    * @dev Internal function to cast a vote. It assumes the queried vote exists.
+    */
     function _vote(uint256 _voteId, bool _supports, address _voter, bool _executesIfDecided) internal {
         Vote storage vote_ = votes[_voteId];
 
@@ -336,16 +336,16 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @dev Internal function to execute a vote. It assumes the queried vote exists.
-     */
+    * @dev Internal function to execute a vote. It assumes the queried vote exists.
+    */
     function _executeVote(uint256 _voteId) internal {
         require(_canExecute(_voteId), ERROR_CAN_NOT_EXECUTE);
         _unsafeExecuteVote(_voteId);
     }
 
     /**
-     * @dev Unsafe version of _executeVote that assumes you have already checked if the vote can be executed and exists
-     */
+    * @dev Unsafe version of _executeVote that assumes you have already checked if the vote can be executed and exists
+    */
     function _unsafeExecuteVote(uint256 _voteId) internal {
         Vote storage vote_ = votes[_voteId];
 
@@ -358,9 +358,9 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @dev Internal function to check if a vote can be executed. It assumes the queried vote exists.
-     * @return True if the given vote can be executed, false otherwise
-     */
+    * @dev Internal function to check if a vote can be executed. It assumes the queried vote exists.
+    * @return True if the given vote can be executed, false otherwise
+    */
     function _canExecute(uint256 _voteId) internal view returns (bool) {
         Vote storage vote_ = votes[_voteId];
 
@@ -391,25 +391,25 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-     * @dev Internal function to check if a voter can participate on a vote. It assumes the queried vote exists.
-     * @return True if the given voter can participate a certain vote, false otherwise
-     */
+    * @dev Internal function to check if a voter can participate on a vote. It assumes the queried vote exists.
+    * @return True if the given voter can participate a certain vote, false otherwise
+    */
     function _canVote(uint256 _voteId, address _voter) internal view returns (bool) {
         Vote storage vote_ = votes[_voteId];
         return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
     }
 
     /**
-     * @dev Internal function to check if a vote is still open
-     * @return True if the given vote is open, false otherwise
-     */
+    * @dev Internal function to check if a vote is still open
+    * @return True if the given vote is open, false otherwise
+    */
     function _isVoteOpen(Vote storage vote_) internal view returns (bool) {
         return getTimestamp64() < vote_.startDate.add(voteTime) && !vote_.executed;
     }
 
     /**
-     * @dev Calculates whether `_value` is more than a percentage `_pct` of `_total`
-     */
+    * @dev Calculates whether `_value` is more than a percentage `_pct` of `_total`
+    */
     function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal pure returns (bool) {
         if (_total == 0) {
             return false;
