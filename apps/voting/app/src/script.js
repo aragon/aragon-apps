@@ -240,7 +240,7 @@ async function loadVoteDescription(vote) {
     console.error('Error describing vote script', error)
     vote.description = 'Invalid script. The result cannot be executed.'
     // Clear metadata so ensure it's rendered with a description rather than question
-    vote.metadata = ''
+    vote.metadata = null
   }
 
   return vote
