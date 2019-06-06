@@ -76,7 +76,7 @@ const VotingCard = React.memo(
             <Label>
               <Text color={theme.textTertiary}>#{voteId} </Text>
               <span>
-                <VoteText text={metadata || description} />
+                <VoteText text={description || metadata} />
               </span>
             </Label>
             <VotingOptions options={options} votingPower={votingPower} />
