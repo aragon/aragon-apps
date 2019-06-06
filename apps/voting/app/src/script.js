@@ -223,17 +223,24 @@ async function loadVoteDescription(vote) {
     return vote
   }
 
-  const path = await app.describeScript(vote.script).toPromise()
-  vote.description = path
-    ? path
-        .map(step => {
-          const identifier = step.identifier ? ` (${step.identifier})` : ''
-          const app = step.name ? `${step.name}${identifier}` : `${step.to}`
+  try {
+    const path = await app.describeScript(vote.script).toPromise()
 
-          return `${app}: ${step.description || 'No description'}`
-        })
-        .join('\n')
-    : ''
+    vote.description = path
+      ? path
+          .map(step => {
+            const identifier = step.identifier ? ` (${step.identifier})` : ''
+            const app = step.name ? `${step.name}${identifier}` : `${step.to}`
+
+            return `${app}: ${step.description || 'No description'}`
+          })
+          .join('\n')
+      : ''
+  } catch (error) {
+    console.log('Error describing vote script', error)
+    vote.description = 'Invalid script. The result cannot be executed.'
+    vote.metadata = ''
+  }
 
   return vote
 }
