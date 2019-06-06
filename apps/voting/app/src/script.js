@@ -237,7 +237,7 @@ async function loadVoteDescription(vote) {
           .join('\n')
       : ''
   } catch (error) {
-    console.log('Error describing vote script', error)
+    console.error('Error describing vote script', error)
     vote.description = 'Invalid script. The result cannot be executed.'
     vote.metadata = ''
   }
