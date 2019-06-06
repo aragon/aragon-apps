@@ -111,6 +111,16 @@ const VotePanelContent = React.memo(
           </div>
         </SidePanelSplit>
         <Part>
+          {description && (
+            <React.Fragment>
+              <h2>
+                <Label>Description</Label>
+              </h2>
+              <p>
+                <VoteText text={description} />
+              </p>
+            </React.Fragment>
+          )}
           {metadata && (
             <React.Fragment>
               <h2>
@@ -125,16 +135,6 @@ const VotePanelContent = React.memo(
                 `}
               >
                 <VoteText text={metadata} />
-              </p>
-            </React.Fragment>
-          )}
-          {description && (
-            <React.Fragment>
-              <h2>
-                <Label>Description</Label>
-              </h2>
-              <p>
-                <VoteText text={description} />
               </p>
             </React.Fragment>
           )}
