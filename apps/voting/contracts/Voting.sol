@@ -51,6 +51,7 @@ contract Voting is IForwarder, AragonApp {
         uint256 votingPower;
         bytes executionScript;
         mapping (address => VoterState) voters;
+        mapping (address => address) issuers;
     }
 
     MiniMeToken public token;
@@ -182,7 +183,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external voteExists(_voteId) {
         require(_canVote(votes[_voteId], msg.sender), ERROR_CAN_NOT_VOTE);
-        _vote(_voteId, _supports, msg.sender, _executesIfDecided);
+        _vote(_voteId, _supports, msg.sender, msg.sender, _executesIfDecided);
     }
 
     /**
@@ -371,10 +372,21 @@ contract Voting is IForwarder, AragonApp {
     /**
     * @dev Return the state of a voter for a given vote by its ID
     * @param _voteId Vote identifier
+    * @param _voter Address of the voter
     * @return VoterState of the requested voter for a certain vote
     */
     function getVoterState(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (VoterState) {
         return _voterState(votes[_voteId], _voter);
+    }
+
+    /**
+    * @dev Return the issuer of a given vote by its ID
+    * @param _voteId Vote identifier
+    * @param _voter Address of the voter
+    * @return Address of the issuer of the voter's vote
+    */
+    function getVoteIssuer(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (address) {
+        return _voteIssuer(votes[_voteId], _voter);
     }
 
     // Internal fns
@@ -401,14 +413,14 @@ contract Voting is IForwarder, AragonApp {
         emit StartVote(voteId, msg.sender, _metadata);
 
         if (_castVote && _canVote(vote_, msg.sender)) {
-            _vote(voteId, true, msg.sender, _executesIfDecided);
+            _vote(voteId, true, msg.sender, msg.sender, _executesIfDecided);
         }
     }
 
     /**
     * @dev Internal function to cast a vote. It assumes the queried vote exists.
     */
-    function _vote(uint256 _voteId, bool _supports, address _voter, bool _executesIfDecided) internal {
+    function _vote(uint256 _voteId, bool _supports, address _voter, address _issuer, bool _executesIfDecided) internal {
         Vote storage vote_ = votes[_voteId];
 
         // This could re-enter, though we can assume the governance token is not malicious
@@ -429,6 +441,7 @@ contract Voting is IForwarder, AragonApp {
         }
 
         vote_.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
+        vote_.issuers[_voter] = _issuer;
 
         emit CastVote(_voteId, _voter, _supports, voterStake);
 
@@ -442,7 +455,7 @@ contract Voting is IForwarder, AragonApp {
     * @dev Internal function to check if a representative can vote on behalf of a principal. It assumes the queried vote exists.
     */
     function _voteOnBehalfOf(uint256 _voteId, bool _supports, address _principal, address _representative) internal {
-        _vote(_voteId, _supports, _principal, false);
+        _vote(_voteId, _supports, _principal, _representative, false);
         emit ProxyVote(_principal, _representative, _voteId, _supports, true);
     }
 
@@ -533,7 +546,7 @@ contract Voting is IForwarder, AragonApp {
     * @return True if the given voter has not voted on the requested vote, false otherwise
     */
     function _hasNotVotedYet(Vote storage vote_, address _principal) internal view returns (bool) {
-        return _voterState(vote_, _principal) == VoterState.Absent;
+        return _voteIssuer(vote_, _principal) != _principal;
     }
 
     /**
@@ -564,6 +577,13 @@ contract Voting is IForwarder, AragonApp {
     */
     function _voterState(Vote storage vote_, address _voter) internal view returns (VoterState) {
         return vote_.voters[_voter];
+    }
+
+    /**
+    * @dev Internal function to get the issuer of a vote. It assumes the queried vote exists.
+    */
+    function _voteIssuer(Vote storage vote_, address _voter) internal view returns (address) {
+        return vote_.issuers[_voter];
     }
 
     /**

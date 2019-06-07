@@ -149,8 +149,20 @@ contract('Voting delegation', ([_, root, principal, anotherPrincipal, representa
                   await voting.voteOnBehalfOf(principal, voteId, true, { from: representative })
                 })
 
-                it('returns false', async () => {
-                  assert.isFalse(await voting.canVoteOnBehalfOf(voteId, principal, representative), 'should not be able to vote')
+                context('when the representative is still allowed', () => {
+                  it('returns true', async () => {
+                    assert.isTrue(await voting.canVoteOnBehalfOf(voteId, principal, representative), 'should be able to vote')
+                  })
+                })
+
+                context('when the representative was disallowed', () => {
+                  beforeEach('change representative', async () => {
+                    await voting.setRepresentative(anotherRepresentative, { from: principal })
+                  })
+
+                  it('returns false', async () => {
+                    assert.isFalse(await voting.canVoteOnBehalfOf(voteId, principal, representative), 'should not be able to vote')
+                  })
                 })
               })
             })
@@ -242,6 +254,10 @@ contract('Voting delegation', ([_, root, principal, anotherPrincipal, representa
                 assert.equal(nays.toString(), bigExp(51, 18).toString(), 'nays should be 51')
                 assert.equal(await getVoterState(principal), VOTER_STATE.NAY, 'principal should have voted')
                 assert.equal(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
+                assert.equal(await voting.getVoteIssuer(voteId, principal), representative, 'vote issuer does not match')
+
+                assertAmountOfEvents(receipt, 'CastVote', 1)
+                assertEvent(receipt, 'CastVote', { voter: principal, voteId, supports: false, stake: bigExp(51, 18) })
               })
 
               it('emits an event', async () => {
@@ -249,13 +265,53 @@ contract('Voting delegation', ([_, root, principal, anotherPrincipal, representa
                 assertEvent(receipt, 'ProxyVote', { principal, representative, succeed: true, voteId, supports: false })
               })
 
-              it('cannot be changed by the same representative', async () => {
-                await assertRevert(voting.voteOnBehalfOf(voting.address, voteId, true, { from }), 'VOTING_REPRESENTATIVE_CANT_VOTE')
+              it('can be changed by the same representative', async () => {
+                const receipt = await voting.voteOnBehalfOf(principal, voteId, true, { from: representative })
+
+                const { yeas, nays } = await getVoteState()
+                assert.equal(nays.toString(), 0, 'nays should be 0')
+                assert.equal(yeas.toString(), bigExp(51, 18).toString(), 'yeas should be 51')
+                assert.equal(await getVoterState(principal), VOTER_STATE.YEA, 'principal should have voted')
+                assert.equal(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
+                assert.equal(await voting.getVoteIssuer(voteId, principal), representative, 'vote issuer does not match')
+
+                assertAmountOfEvents(receipt, 'CastVote', 1)
+                assertEvent(receipt, 'CastVote', { voter: principal, voteId, supports: true, stake: bigExp(51, 18) })
+
+                assertAmountOfEvents(receipt, 'ProxyVote', 1)
+                assertEvent(receipt, 'ProxyVote', { principal, representative, succeed: true, voteId, supports: true })
               })
 
-              it('cannot be overruled by another representative', async () => {
+              it('can be changed by another representative', async () => {
                 await voting.setRepresentative(anotherRepresentative, { from: principal })
-                await assertRevert(voting.voteOnBehalfOf(principal, voteId, true, { from: anotherRepresentative }), 'VOTING_REPRESENTATIVE_CANT_VOTE')
+                const receipt = await voting.voteOnBehalfOf(principal, voteId, true, { from: anotherRepresentative })
+
+                const { yeas, nays } = await getVoteState()
+                assert.equal(nays.toString(), 0, 'nays should be 0')
+                assert.equal(yeas.toString(), bigExp(51, 18).toString(), 'yeas should be 51')
+                assert.equal(await getVoterState(principal), VOTER_STATE.YEA, 'principal should have voted')
+                assert.equal(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
+                assert.equal(await voting.getVoteIssuer(voteId, principal), anotherRepresentative, 'vote issuer does not match')
+
+                assertAmountOfEvents(receipt, 'CastVote', 1)
+                assertEvent(receipt, 'CastVote', { voter: principal, voteId, supports: true, stake: bigExp(51, 18) })
+
+                assertAmountOfEvents(receipt, 'ProxyVote', 1)
+                assertEvent(receipt, 'ProxyVote', { principal, representative: anotherRepresentative, succeed: true, voteId, supports: true })
+              })
+
+              it('can be overrule by the principal', async () => {
+                const receipt = await voting.vote(voteId, true, false, { from: principal })
+
+                const { yeas, nays } = await getVoteState()
+                assert.equal(nays.toString(), 0, 'nays should be 0')
+                assert.equal(yeas.toString(), bigExp(51, 18).toString(), 'yeas should be 51')
+                assert.equal(await getVoterState(principal), VOTER_STATE.YEA, 'principal should have voted')
+                assert.equal(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
+                assert.equal(await voting.getVoteIssuer(voteId, principal), principal, 'vote issuer does not match')
+
+                assertAmountOfEvents(receipt, 'CastVote', 1)
+                assertEvent(receipt, 'CastVote', { voter: principal, voteId, supports: true, stake: bigExp(51, 18) })
               })
             })
 
@@ -347,6 +403,9 @@ contract('Voting delegation', ([_, root, principal, anotherPrincipal, representa
           assert.equal(await getVoterState(principal, voteId), VOTER_STATE.NAY, 'principal should have voted')
           assert.equal(await getVoterState(anotherPrincipal, voteId), VOTER_STATE.NAY, 'another principal should have voted')
           assert.equal(await getVoterState(anyone, voteId), VOTER_STATE.ABSENT, 'invalid principal should not have voted')
+
+          assert.equal(await voting.getVoteIssuer(voteId, principal), representative, 'vote issuer does not match')
+          assert.equal(await voting.getVoteIssuer(voteId, anotherPrincipal), representative, 'vote issuer does not match')
         })
       })
 
@@ -490,7 +549,7 @@ contract('Voting delegation', ([_, root, principal, anotherPrincipal, representa
 
       assertAmountOfEvents(receipt, 'CastVote', 100)
       assertAmountOfEvents(receipt, 'ProxyVote', 100)
-      assert.isAtMost(receipt.receipt.cumulativeGasUsed, 6.3e6)
+      assert.isAtMost(receipt.receipt.cumulativeGasUsed, 6.8e6)
 
       const { yeas, nays } = await getVoteState(voteId)
       assert.equal(nays.toString(), 0, 'nays should be zero')
