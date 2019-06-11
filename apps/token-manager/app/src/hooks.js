@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 
 export function useClickOutside(cb, existingRef) {
   const ref = existingRef || useRef()
@@ -33,4 +33,50 @@ export function useOnBlur(cb, existingRef) {
   )
 
   return { ref, handleBlur }
+}
+
+export function useArrowKeysFocus(query, containerRef = useRef()) {
+  const [index, setIndex] = useState(-1)
+
+  const reset = () => setIndex(-1)
+  const cycleFocus = useCallback(
+    change => {
+      const elements = document.querySelectorAll(query)
+      let next = index + change
+      if (next > elements.length - 1) {
+        next = 0
+      }
+      if (next < 0) {
+        next = elements.length - 1
+      }
+      if (!elements[next]) {
+        next = -1
+      }
+      setIndex(next)
+    },
+    [index]
+  )
+  const handleKeyDown = useCallback(
+    ({ keyCode }) =>
+      keyCode === 38 ? cycleFocus(-1) : keyCode === 40 ? cycleFocus(1) : null,
+    [cycleFocus]
+  )
+
+  const { handleBlur: handleContainerBlur } = useOnBlur(reset, containerRef)
+  useEffect(() => {
+    if (index === -1) {
+      return
+    }
+    const elements = document.querySelectorAll(query)
+    if (!elements[index]) {
+      return
+    }
+    elements[index].focus()
+  }, [index])
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
+
+  return { containerRef, handleContainerBlur }
 }
