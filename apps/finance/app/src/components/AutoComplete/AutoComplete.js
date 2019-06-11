@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Transition, animated } from 'react-spring'
 import { ButtonBase, TextInput, springs, theme, unselectable } from '@aragon/ui'
-import { useClickOutside, useOnBlur } from '../../hooks'
+import { useClickOutside, useOnBlur, useArrowKeysFocus } from '../../hooks'
 import IconMagnifyingGlass from './IconMagnifyingGlass'
 
 const { accent, contentBackground, contentBorder, textPrimary } = theme
@@ -40,8 +40,12 @@ const AutoComplete = React.memo(
       [onChange]
     )
 
-    useClickOutside(handleClose, wrapRef)
+    const {
+      ref: containerRef,
+      handleBlur: handleContainerBlur,
+    } = useArrowKeysFocus('.autocomplete-items')
     const { handleBlur } = useOnBlur(handleClose, wrapRef)
+    useClickOutside(handleClose, wrapRef)
 
     return (
       <div css="position: relative" ref={wrapRef} onBlur={handleBlur}>
@@ -83,6 +87,8 @@ const AutoComplete = React.memo(
             show &&
             (({ scale, opacity }) => (
               <Items
+                ref={containerRef}
+                onBlur={handleContainerBlur}
                 role="listbox"
                 style={{
                   opacity,
@@ -92,6 +98,7 @@ const AutoComplete = React.memo(
                 {items.map(item => (
                   <Item role="option" key={item.key}>
                     <ButtonBase
+                      className="autocomplete-items"
                       onClick={handleSelect(item)}
                       css={`
                         width: 100%;
