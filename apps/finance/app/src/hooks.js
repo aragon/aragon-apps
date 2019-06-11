@@ -38,16 +38,12 @@ export function useOnBlur(cb, existingRef) {
   return { ref, handleBlur }
 }
 
-export function useArrowKeysFocus(query, ref = useRef()) {
+export function useArrowKeysFocus(query, containerRef = useRef()) {
   const [index, setIndex] = useState(-1)
 
   const reset = () => setIndex(-1)
   const cycleFocus = useCallback(
     change => {
-      if (!ref.current) {
-        setIndex(-1)
-        return
-      }
       const elements = document.querySelectorAll(query)
       let next = index + change
       if (next > elements.length - 1) {
@@ -69,7 +65,7 @@ export function useArrowKeysFocus(query, ref = useRef()) {
     [cycleFocus]
   )
 
-  const { handleBlur } = useOnBlur(reset, ref)
+  const { handleBlur: handleContainerBlur } = useOnBlur(reset, containerRef)
   useEffect(
     () => {
       if (index === -1) {
@@ -91,5 +87,5 @@ export function useArrowKeysFocus(query, ref = useRef()) {
     [handleKeyDown]
   )
 
-  return { ref, handleBlur }
+  return { containerRef, handleContainerBlur }
 }
