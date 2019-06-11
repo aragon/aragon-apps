@@ -40,10 +40,9 @@ const AutoComplete = React.memo(
       [onChange]
     )
 
-    const {
-      ref: containerRef,
-      handleBlur: handleContainerBlur,
-    } = useArrowKeysFocus('.autocomplete-items')
+    const { containerRef, handleContainerBlur } = useArrowKeysFocus(
+      '.autocomplete-items'
+    )
     const { handleBlur } = useOnBlur(handleClose, wrapRef)
     useClickOutside(handleClose, wrapRef)
 
