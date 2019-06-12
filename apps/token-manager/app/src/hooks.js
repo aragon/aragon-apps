@@ -1,5 +1,8 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 
+const KEYCODE_UP = 38
+const KEYCODE_DOWN = 40
+
 export function useClickOutside(cb, existingRef) {
   const ref = existingRef || useRef()
   const handleClick = useCallback(
@@ -11,12 +14,15 @@ export function useClickOutside(cb, existingRef) {
     [cb, ref]
   )
 
-  useEffect(() => {
-    document.addEventListener('click', handleClick, true)
-    return () => {
-      document.removeEventListener('click', handleClick, true)
-    }
-  }, [handleClick])
+  useEffect(
+    () => {
+      document.addEventListener('click', handleClick, true)
+      return () => {
+        document.removeEventListener('click', handleClick, true)
+      }
+    },
+    [handleClick]
+  )
 
   return { ref }
 }
@@ -35,14 +41,17 @@ export function useOnBlur(cb, existingRef) {
   return { ref, handleBlur }
 }
 
+/* eslint-disable react-hooks/rules-of-hooks */
 export function useArrowKeysFocus(query, containerRef = useRef()) {
-  const [index, setIndex] = useState(-1)
+  /* eslint-enable react-hooks/rules-of-hooks */
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
 
-  const reset = () => setIndex(-1)
+  const reset = () => setHighlightedIndex(-1)
   const cycleFocus = useCallback(
-    change => {
+    (e, change) => {
+      e.preventDefault()
       const elements = document.querySelectorAll(query)
-      let next = index + change
+      let next = highlightedIndex + change
       if (next > elements.length - 1) {
         next = 0
       }
@@ -52,31 +61,41 @@ export function useArrowKeysFocus(query, containerRef = useRef()) {
       if (!elements[next]) {
         next = -1
       }
-      setIndex(next)
+      setHighlightedIndex(next)
     },
-    [index]
+    [highlightedIndex, query]
   )
   const handleKeyDown = useCallback(
-    ({ keyCode }) =>
-      keyCode === 38 ? cycleFocus(-1) : keyCode === 40 ? cycleFocus(1) : null,
+    e => {
+      const { keyCode } = e
+      if (keyCode === KEYCODE_UP || keyCode === KEYCODE_DOWN) {
+        cycleFocus(e, keyCode === KEYCODE_UP ? -1 : 1)
+      }
+    },
     [cycleFocus]
   )
 
   const { handleBlur: handleContainerBlur } = useOnBlur(reset, containerRef)
-  useEffect(() => {
-    if (index === -1) {
-      return
-    }
-    const elements = document.querySelectorAll(query)
-    if (!elements[index]) {
-      return
-    }
-    elements[index].focus()
-  }, [index])
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
+  useEffect(
+    () => {
+      if (highlightedIndex === -1) {
+        return
+      }
+      const elements = document.querySelectorAll(query)
+      if (!elements[highlightedIndex]) {
+        return
+      }
+      elements[highlightedIndex].focus()
+    },
+    [highlightedIndex, query]
+  )
+  useEffect(
+    () => {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    },
+    [handleKeyDown]
+  )
 
   return { containerRef, handleContainerBlur }
 }
