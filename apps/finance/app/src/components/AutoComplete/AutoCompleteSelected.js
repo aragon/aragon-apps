@@ -6,66 +6,67 @@ import AutoComplete from './AutoComplete'
 const identity = x => x
 const noop = () => null
 
-const AutoCompleteSelected = React.memo(
-  React.forwardRef(function AutoCompleteSelected(
-    {
-      itemButtonStyles,
-      items,
-      onChange,
-      onSelect, // user clicks on an item in the list and thus, selects it
-      onSelectedClick = noop, // when item is selected and user clicks on it, opens up the input for typing
-      renderItem,
-      required,
-      renderSelected = identity,
-      selected,
-      selectedButtonStyles = '',
-      value,
-      wide,
-    },
-    ref
-  ) {
-    const selectedRef = useRef()
+function AutoCompleteSelected({
+  forwardedRef,
+  itemButtonStyles,
+  items,
+  onChange,
+  onSelect, // user clicks on an item in the list and thus, selects it
+  onSelectedClick = noop, // when item is selected and user clicks on it, opens up the input for typing
+  renderItem,
+  required,
+  renderSelected = identity,
+  selected,
+  selectedButtonStyles = '',
+  value,
+  wide,
+}) {
+  const ref = forwardedRef
+  const selectedRef = useRef()
 
-    const handleSelect = useCallback(
-      selected => {
-        onSelect(selected)
-        setTimeout(() => {
-          selectedRef.current.focus()
-        }, 0)
-      },
-      [onChange]
-    )
-    const handleSelectedClick = useCallback(() => {
+  const handleSelect = useCallback(
+    selected => {
+      onSelect(selected)
+      setTimeout(() => {
+        selectedRef.current.focus()
+      }, 0)
+    },
+    [onChange]
+  )
+  const handleSelectedClick = useCallback(
+    () => {
       onSelectedClick()
       setTimeout(() => {
         ref.current.select()
         ref.current.focus()
       }, 0)
-    }, [ref, selected, onChange])
+    },
+    [ref, selected, onChange]
+  )
 
-    if (selected) {
-      return (
-        <ButtonBase
-          onClick={handleSelectedClick}
-          ref={selectedRef}
-          css={`
-            height: 40px;
-            width: 100%;
-            background: #fff;
-            cursor: pointer;
-            border: 1px solid ${theme.contentBorder};
-            border-radius: 3px;
-            ${selectedButtonStyles};
-          `}
-        >
-          {renderSelected(selected)}
-        </ButtonBase>
-      )
-    }
-
+  if (selected) {
     return (
-      <AutoComplete
-        itemButtonStyles={`
+      <ButtonBase
+        onClick={handleSelectedClick}
+        ref={selectedRef}
+        css={`
+          height: 40px;
+          width: 100%;
+          background: #fff;
+          cursor: pointer;
+          border: 1px solid ${theme.contentBorder};
+          border-radius: 3px;
+          ${selectedButtonStyles};
+        `}
+      >
+        {renderSelected(selected)}
+      </ButtonBase>
+    )
+  }
+
+  return (
+    <AutoComplete
+      itemButtonStyles={`
           border-left: 3px solid transparent;
           cursor: pointer;
           border-radius: 0;
@@ -77,20 +78,20 @@ const AutoCompleteSelected = React.memo(
             border-left: 3px solid ${theme.accent}
           }
         `}
-        items={items}
-        onChange={onChange}
-        onSelect={handleSelect}
-        ref={ref}
-        renderItem={renderItem}
-        required={required}
-        value={value}
-        wide={wide}
-      />
-    )
-  })
-)
+      items={items}
+      onChange={onChange}
+      onSelect={handleSelect}
+      ref={ref}
+      renderItem={renderItem}
+      required={required}
+      value={value}
+      wide={wide}
+    />
+  )
+}
 
 AutoCompleteSelected.propTypes = {
+  forwardedRef: PropTypes.object,
   itemButtonStyles: PropTypes.string,
   items: PropTypes.array.isRequired,
   onChange: PropTypes.func.isRequired,
@@ -105,4 +106,8 @@ AutoCompleteSelected.propTypes = {
   wide: PropTypes.bool,
 }
 
-export default AutoCompleteSelected
+const AutoCompleteSelectedMemo = React.memo(AutoCompleteSelected)
+
+export default React.forwardRef((props, ref) => (
+  <AutoCompleteSelectedMemo {...props} forwardedRef={ref} />
+))
