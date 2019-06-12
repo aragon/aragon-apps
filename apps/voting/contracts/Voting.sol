@@ -177,7 +177,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external voteExists(_voteId) {
         require(_canVote(votes[_voteId], msg.sender), ERROR_CAN_NOT_VOTE);
-        _vote(_voteId, _supports, msg.sender, msg.sender, _executesIfDecided);
+        _vote(_voteId, _supports, msg.sender, _executesIfDecided);
     }
 
     /**
@@ -407,37 +407,18 @@ contract Voting is IForwarder, AragonApp {
         emit StartVote(voteId, msg.sender, _metadata);
 
         if (_castVote && _canVote(vote_, msg.sender)) {
-            _vote(voteId, true, msg.sender, msg.sender, _executesIfDecided);
+            _vote(voteId, true, msg.sender, _executesIfDecided);
         }
     }
 
     /**
     * @dev Internal function to cast a vote. It assumes the queried vote exists.
     */
-    function _vote(uint256 _voteId, bool _supports, address _voter, address _issuer, bool _executesIfDecided) internal {
-        Vote storage vote_ = votes[_voteId];
-
+    function _vote(uint256 _voteId, bool _supports, address _voter, bool _executesIfDecided) internal {
         // This could re-enter, though we can assume the governance token is not malicious
-        uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
-        VoterState state = vote_.voters[_voter];
-
-        // If voter had previously voted, decrease count
-        if (state == VoterState.Yea) {
-            vote_.yea = vote_.yea.sub(voterStake);
-        } else if (state == VoterState.Nay) {
-            vote_.nay = vote_.nay.sub(voterStake);
-        }
-
-        if (_supports) {
-            vote_.yea = vote_.yea.add(voterStake);
-        } else {
-            vote_.nay = vote_.nay.add(voterStake);
-        }
-
-        vote_.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
-        vote_.issuers[_voter] = _issuer;
-
-        emit CastVote(_voteId, _voter, _supports, voterStake);
+        Vote storage vote_ = votes[_voteId];
+        _storeVote(vote_, _voteId, _supports, _voter);
+        _overwriteIssuerIfNecessary(vote_, _voter);
 
         if (_executesIfDecided && _canExecute(vote_)) {
             // We've already checked if the vote can be executed with `_canExecute()`
@@ -449,7 +430,10 @@ contract Voting is IForwarder, AragonApp {
     * @dev Internal function to check if a representative can vote on behalf of a voter. It assumes the queried vote exists.
     */
     function _voteOnBehalfOf(uint256 _voteId, bool _supports, address _voter, address _representative) internal {
-        _vote(_voteId, _supports, _voter, _representative, false);
+        Vote storage vote_ = votes[_voteId];
+        _storeVote(vote_, _voteId, _supports, _voter);
+        vote_.issuers[_voter] = _representative;
+
         emit ProxyVote(_voteId, _voter, _representative, _supports, true);
     }
 
@@ -577,7 +561,12 @@ contract Voting is IForwarder, AragonApp {
     * @dev Internal function to get the issuer of a vote. It assumes the queried vote exists.
     */
     function _voteIssuer(Vote storage vote_, address _voter) internal view returns (address) {
-        return vote_.issuers[_voter];
+        if (_voterState(vote_, _voter) == VoterState.Absent) {
+            return address(0);
+        }
+
+        address _issuer = vote_.issuers[_voter];
+        return _issuer == address(0) ? _voter : _issuer;
     }
 
     /**
@@ -598,5 +587,33 @@ contract Voting is IForwarder, AragonApp {
 
         uint256 computedPct = _value.mul(PCT_BASE) / _total;
         return computedPct > _pct;
+    }
+
+    function _storeVote(Vote storage vote_, uint256 _voteId, bool _supports, address _voter) private {
+        uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
+        VoterState state = vote_.voters[_voter];
+
+        // If voter had previously voted, decrease count
+        if (state == VoterState.Yea) {
+            vote_.yea = vote_.yea.sub(voterStake);
+        } else if (state == VoterState.Nay) {
+            vote_.nay = vote_.nay.sub(voterStake);
+        }
+
+        if (_supports) {
+            vote_.yea = vote_.yea.add(voterStake);
+        } else {
+            vote_.nay = vote_.nay.add(voterStake);
+        }
+
+        vote_.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
+        emit CastVote(_voteId, _voter, _supports, voterStake);
+    }
+
+    function _overwriteIssuerIfNecessary(Vote storage vote_, address _voter) private {
+        address _currentIssuer = vote_.issuers[_voter];
+        if (_currentIssuer != address(0) && _currentIssuer != _voter) {
+            vote_.issuers[_voter] = address(0);
+        }
     }
 }
