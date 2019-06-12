@@ -29,7 +29,6 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
     const NOW = 1553703809  // random fixed timestamp in seconds
     const ONE_DAY = 60 * 60 * 24
-    const OVERRULE_WINDOW = ONE_DAY
     const VOTING_DURATION = ONE_DAY * 5
 
     before(async () => {
@@ -69,19 +68,19 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         beforeEach(async () => {
             token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
 
             executionTarget = await ExecutionTarget.new()
         })
 
         it('fails on reinitialization', async () => {
-            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW))
+            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION))
         })
 
         it('cannot initialize base app', async () => {
             const newVoting = await Voting.new()
             assert.isTrue(await newVoting.isPetrified())
-            await assertRevert(newVoting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW))
+            await assertRevert(newVoting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION))
         })
 
         it('checks it is forwarder', async () => {
@@ -129,7 +128,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 await token.generateTokens(holder29, bigExp(29, decimals))
                 await token.generateTokens(holder51, bigExp(51, decimals))
 
-                await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
+                await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
 
                 executionTarget = await ExecutionTarget.new()
             })
@@ -330,13 +329,13 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         it('fails if min acceptance quorum is greater than min support', async () => {
             const neededSupport = pct(20)
             const minimumAcceptanceQuorum = pct(50)
-            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW))
+            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION))
         })
 
         it('fails if min support is 100% or more', async () => {
             const minimumAcceptanceQuorum = pct(20)
-            await assertRevert(voting.initialize(token.address, pct(101), minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW))
-            await assertRevert(voting.initialize(token.address, pct(100), minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW))
+            await assertRevert(voting.initialize(token.address, pct(101), minimumAcceptanceQuorum, VOTING_DURATION))
+            await assertRevert(voting.initialize(token.address, pct(100), minimumAcceptanceQuorum, VOTING_DURATION))
         })
     })
 
@@ -347,7 +346,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         beforeEach(async() => {
             token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
         })
 
         it('fails creating a survey if token has no holder', async () => {
@@ -364,7 +363,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
             await token.generateTokens(holder1, 1)
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
         })
 
         it('new vote cannot be executed before voting', async () => {
@@ -411,7 +410,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             await token.generateTokens(holder1, 1)
             await token.generateTokens(holder2, 2)
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
         })
 
         it('new vote cannot be executed before holder2 voting', async () => {
@@ -447,7 +446,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             await token.generateTokens(holder1, 1)
             await token.generateTokens(holder2, 1)
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
         })
 
         it('uses the correct snapshot value if tokens are minted afterwards', async () => {

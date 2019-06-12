@@ -69,7 +69,8 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, representative, an
     await acl.createPermission(root, voting.address, MODIFY_OVERRULE_WINDOW_ROLE, root, { from: root })
 
     await voting.mockSetTimestamp(NOW)
-    await voting.initialize(token.address, MIN_SUPPORT, MIN_QUORUM, VOTING_DURATION, OVERRULE_WINDOW, { from: root })
+    await voting.initialize(token.address, MIN_SUPPORT, MIN_QUORUM, VOTING_DURATION, { from: root })
+    await voting.changeOverruleWindow(OVERRULE_WINDOW, { from: root })
   })
 
   const createVote = async (from = voter) => {
