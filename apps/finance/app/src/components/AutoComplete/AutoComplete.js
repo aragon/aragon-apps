@@ -9,115 +9,112 @@ import IconMagnifyingGlass from './IconMagnifyingGlass'
 const { accent, contentBackground, contentBorder, textPrimary } = theme
 const identity = x => x
 
-const AutoComplete = React.memo(
-  React.forwardRef(function AutoComplete(
-    {
-      itemButtonStyles = '',
-      items,
-      onSelect,
-      onChange,
-      renderItem = identity,
-      required,
-      value,
-      wide,
+function AutoComplete({
+  forwardedRef,
+  itemButtonStyles = '',
+  items,
+  onSelect,
+  onChange,
+  renderItem = identity,
+  required,
+  value,
+  wide,
+}) {
+  const ref = forwardedRef
+  const [opened, setOpened] = useState(true)
+  const wrapRef = useRef()
+
+  const handleClose = useCallback(() => setOpened(false))
+  const handleFocus = useCallback(() => setOpened(true))
+  const handleSelect = useCallback(
+    item => e => {
+      e.preventDefault()
+      onSelect(item)
     },
-    ref
-  ) {
-    const [opened, setOpened] = useState(true)
-    const wrapRef = useRef()
+    [onSelect]
+  )
+  const handleChange = useCallback(({ target: { value } }) => onChange(value), [
+    onChange,
+  ])
 
-    const handleClose = useCallback(() => setOpened(false))
-    const handleFocus = useCallback(() => setOpened(true))
-    const handleSelect = useCallback(
-      item => e => {
-        e.preventDefault()
-        onSelect(item)
-      },
-      [onSelect]
-    )
-    const handleChange = useCallback(
-      ({ target: { value } }) => onChange(value),
-      [onChange]
-    )
+  const { containerRef, handleContainerBlur } = useArrowKeysFocus(
+    '.autocomplete-items'
+  )
+  const { handleBlur } = useOnBlur(handleClose, wrapRef)
+  useClickOutside(handleClose, wrapRef)
 
-    const { containerRef, handleContainerBlur } = useArrowKeysFocus(
-      '.autocomplete-items'
-    )
-    const { handleBlur } = useOnBlur(handleClose, wrapRef)
-    useClickOutside(handleClose, wrapRef)
-
-    return (
-      <div css="position: relative" ref={wrapRef} onBlur={handleBlur}>
-        <TextInput
-          css={`
-            caret-color: ${accent};
-            padding-right: 35px;
-          `}
-          ref={ref}
-          wide={wide}
-          required={required}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          value={value}
-        />
-        <div
-          css={`
-            position: absolute;
-            top: 0;
-            right: 0;
-            height: 40px;
-            width: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          `}
-        >
-          <IconMagnifyingGlass css="color: #a8b3c8" />
-        </div>
-        <Transition
-          config={springs.swift}
-          items={opened && !!items.length}
-          from={{ scale: 0.98, opacity: 0 }}
-          enter={{ scale: 1, opacity: 1 }}
-          leave={{ scale: 1, opacity: 0 }}
-          native
-        >
-          {show =>
-            show &&
-            (({ scale, opacity }) => (
-              <Items
-                ref={containerRef}
-                onBlur={handleContainerBlur}
-                role="listbox"
-                style={{
-                  opacity,
-                  transform: scale.interpolate(t => `scale3d(${t},${t},1)`),
-                }}
-              >
-                {items.map(item => (
-                  <Item role="option" key={item.key}>
-                    <ButtonBase
-                      className="autocomplete-items"
-                      onClick={handleSelect(item)}
-                      css={`
-                        width: 100%;
-                        ${itemButtonStyles};
-                      `}
-                    >
-                      {renderItem(item, value)}
-                    </ButtonBase>
-                  </Item>
-                ))}
-              </Items>
-            ))
-          }
-        </Transition>
+  return (
+    <div css="position: relative" ref={wrapRef} onBlur={handleBlur}>
+      <TextInput
+        css={`
+          caret-color: ${accent};
+          padding-right: 35px;
+        `}
+        ref={ref}
+        wide={wide}
+        required={required}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        value={value}
+      />
+      <div
+        css={`
+          position: absolute;
+          top: 0;
+          right: 0;
+          height: 40px;
+          width: 35px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `}
+      >
+        <IconMagnifyingGlass css="color: #a8b3c8" />
       </div>
-    )
-  })
-)
+      <Transition
+        config={springs.swift}
+        items={opened && !!items.length}
+        from={{ scale: 0.98, opacity: 0 }}
+        enter={{ scale: 1, opacity: 1 }}
+        leave={{ scale: 1, opacity: 0 }}
+        native
+      >
+        {show =>
+          show &&
+          (({ scale, opacity }) => (
+            <Items
+              ref={containerRef}
+              onBlur={handleContainerBlur}
+              role="listbox"
+              style={{
+                opacity,
+                transform: scale.interpolate(t => `scale3d(${t},${t},1)`),
+              }}
+            >
+              {items.map(item => (
+                <Item role="option" key={item.key}>
+                  <ButtonBase
+                    className="autocomplete-items"
+                    onClick={handleSelect(item)}
+                    css={`
+                      width: 100%;
+                      ${itemButtonStyles};
+                    `}
+                  >
+                    {renderItem(item, value)}
+                  </ButtonBase>
+                </Item>
+              ))}
+            </Items>
+          ))
+        }
+      </Transition>
+    </div>
+  )
+}
 
 AutoComplete.propTypes = {
+  forwardedRef: PropTypes.object,
   itemButtonStyles: PropTypes.string,
   items: PropTypes.array.isRequired,
   onSelect: PropTypes.func.isRequired,
@@ -159,4 +156,8 @@ const Items = styled(animated.ul)`
   }
 `
 
-export default AutoComplete
+const AutoCompleteMemo = React.memo(AutoComplete)
+
+export default React.forwardRef((props, ref) => (
+  <AutoCompleteMemo {...props} forwardedRef={ref} />
+))
