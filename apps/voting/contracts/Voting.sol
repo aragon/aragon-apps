@@ -591,7 +591,7 @@ contract Voting is IForwarder, AragonApp {
 
     function _storeVote(Vote storage vote_, uint256 _voteId, bool _supports, address _voter) private {
         uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
-        VoterState state = vote_.voters[_voter];
+        VoterState state = _voterState(vote_, _voter);
 
         // If voter had previously voted, decrease count
         if (state == VoterState.Yea) {
