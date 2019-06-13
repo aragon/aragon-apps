@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { Button, Field, IconCross, Text, TextInput, Info } from '@aragon/ui'
 import { isAddress } from '../../web3-utils'
 import { fromDecimals, toDecimals, formatBalance } from '../../utils'
+import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
 
 // Any more and the number input field starts to put numbers in scientific notation
 const MAX_INPUT_DECIMAL_BASE = 6
@@ -35,7 +36,10 @@ class AssignVotePanelContent extends React.Component {
       // setTimeout is needed as a small hack to wait until the input is
       // on-screen before we call focus
       this._holderInput.current &&
-        setTimeout(() => this._holderInput.current.focus(), 0)
+        setTimeout(
+          () => this._holderInput.current && this._holderInput.current.focus(),
+          0
+        )
 
       // Upadte holder address from the props
       this.updateHolderAddress(mode, holderAddress)
@@ -91,8 +95,8 @@ class AssignVotePanelContent extends React.Component {
       amountField: { ...amountField, value: event.target.value },
     })
   }
-  handleHolderChange = event => {
-    this.updateHolderAddress(this.props.mode, event.target.value)
+  handleHolderChange = value => {
+    this.updateHolderAddress(this.props.mode, value)
   }
   handleSubmit = event => {
     event.preventDefault()
@@ -149,12 +153,14 @@ class AssignVotePanelContent extends React.Component {
               ${mode === 'assign' ? 'Recipient' : 'Account'}
               (must be a valid Ethereum address)
             `}
+            css="height: 62px"
           >
-            <TextInput
+            <LocalIdentitiesAutoComplete
               ref={this._holderInput}
               value={holderField.value}
               onChange={this.handleHolderChange}
               wide
+              required
             />
           </Field>
 
