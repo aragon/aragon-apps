@@ -4,8 +4,8 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@aragon/api": "^2.0.0-beta.3",
-    "@aragon/api-react": "^2.0.0-beta.1",
+    "@aragon/api": "^2.0.0-beta.4",
+    "@aragon/api-react": "^2.0.0-beta.4",
     "@aragon/templates-tokens": "^1.2.0",
     "@aragon/ui": "^0.40.0",
     "@babel/polyfill": "^7.0.0",
