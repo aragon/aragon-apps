@@ -48,6 +48,14 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
     await acl.createPermission(ANY_ENTITY, survey.address, MODIFY_PARTICIPATION_ROLE, root, { from: root })
   })
 
+  it('it should set permissions', async () => {
+    //kernel = await getContract('Kernel').at(address);
+    ;(await Promise.all([
+      dao.hasPermission(ANY_ENTITY, survey.address, await survey.CREATE_SURVEYS_ROLE(), '0x0'),
+      dao.hasPermission(ANY_ENTITY, survey.address, await survey.MODIFY_PARTICIPATION_ROLE(), '0x0'),
+    ])).should.deep.equal([true, true])
+  });
+
   context('normal token supply', () => {
     let token
 
