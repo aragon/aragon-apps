@@ -11,6 +11,7 @@ import {
   theme,
   unselectable,
 } from '@aragon/ui'
+import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
 import { toDecimals } from '../../lib/math-utils'
 import { addressPattern, isAddress } from '../../lib/web3-utils'
 
@@ -67,11 +68,11 @@ class Withdrawal extends React.Component {
   handleSelectToken = index => {
     this.setState({ selectedToken: index })
   }
-  handleRecipientUpdate = event => {
+  handleRecipientUpdate = value => {
     this.setState({
       recipient: {
         error: NO_ERROR,
-        value: event.target.value,
+        value,
       },
     })
   }
@@ -137,8 +138,11 @@ class Withdrawal extends React.Component {
     return tokens.length ? (
       <form onSubmit={this.handleSubmit}>
         <h1>{title}</h1>
-        <Field label="Recipient (must be a valid Ethereum address)">
-          <TextInput
+        <Field
+          label="Recipient (must be a valid Ethereum address)"
+          css="height: 62px"
+        >
+          <LocalIdentitiesAutoComplete
             ref={this._recipientInput}
             onChange={this.handleRecipientUpdate}
             pattern={
