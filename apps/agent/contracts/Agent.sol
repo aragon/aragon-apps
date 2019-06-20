@@ -33,7 +33,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     event SetDesignatedSigner(address indexed sender, address indexed oldSigner, address indexed newSigner);
 
     /**
-    * @notice Execute '`@radspec(_target, _data)`' on `_target``_ethValue == 0 ? '' : ' (Sending' + @tokenAmount(0x00, _ethValue) + ')'`
+    * @notice Execute '`@radspec(_target, _data)`' on `_target``_ethValue == 0 ? '' : ' (Sending' + @tokenAmount(0x0000000000000000000000000000000000000000, _ethValue) + ')'`
     * @param _target Address where the action is being executed
     * @param _ethValue Amount of ETH from the contract that is sent with the action
     * @param _data Calldata for the action
