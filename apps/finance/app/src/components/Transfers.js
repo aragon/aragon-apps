@@ -85,7 +85,7 @@ const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
         const { name = '' } = (await resolveAddress(entity)) || {}
         return `${formatDate(
           date
-        )},${name},${entity},${reference},${`${formattedAmount} ${symbol}`}`
+        )},${name},${entity},${reference},${`"${formattedAmount} ${symbol}"`}`
       }
     )
   )
