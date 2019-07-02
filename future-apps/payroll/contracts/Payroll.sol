@@ -7,7 +7,6 @@ import "@aragon/os/contracts/common/IForwarder.sol";
 
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
-import "@aragon/os/contracts/lib/math/SafeMath8.sol";
 
 import "@aragon/ppf-contracts/contracts/IFeed.sol";
 import "@aragon/apps-finance/contracts/Finance.sol";
