@@ -2,7 +2,6 @@ module.exports = {
     norpc: true,
     copyPackages: ['@aragon/os', '@aragon/apps-finance', '@aragon/apps-vault', '@aragon/test-helpers'],
     skipFiles: [
-        'PayrollKit.sol',
         'test',
         '@aragon/os',
         '@aragon/apps-vault/contracts/Finance.sol',

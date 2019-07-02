@@ -14,7 +14,7 @@ import "@aragon/os/contracts/lib/ens/PublicResolver.sol";
 import "@aragon/ppf-contracts/contracts/IFeed.sol";
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
 
-import "./Payroll.sol";
+import "../Payroll.sol";
 
 
 contract PPFMock is IFeed {
