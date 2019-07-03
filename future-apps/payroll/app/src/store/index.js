@@ -5,7 +5,7 @@ import Event from './events'
 import { getAccountAddress } from './account'
 import {
   getEmployeeById,
-  getEmployeeByAddress,
+  getEmployeeIdByAddress,
   getSalaryAllocation,
 } from './employees'
 import { getDenominationToken, getToken } from './tokens'
@@ -51,7 +51,7 @@ export default function configureStore(financeAddress, vaultAddress) {
 const eventMapping = {
   [Event.Init]: onInit,
   [Event.AccountChange]: onChangeAccount,
-  [Event.AddAllowedToken]: onAddAllowedToken,
+  [Event.SetAllowedToken]: onSetAllowedToken,
   [Event.AddEmployee]: onAddNewEmployee,
   [Event.ChangeAddressByEmployee]: onChangeEmployeeAddress,
   [Event.DetermineAllocation]: onChangeSalaryAllocation,
@@ -91,13 +91,17 @@ async function onChangeAccount(state, event) {
   return { ...state, accountAddress, salaryAllocation }
 }
 
-async function onAddAllowedToken(state, event) {
+async function onSetAllowedToken(state, event) {
   const {
-    returnValues: { token: tokenAddress },
+    returnValues: { token: tokenAddress, allowed },
   } = event
   const { tokens = [] } = state
 
-  if (!tokens.find(t => t.address === tokenAddress)) {
+  const foundToken = tokens.find(t => t.address === tokenAddress)
+
+  if (foundToken && !allowed) {
+    tokens.splice(tokens.indexOf(foundToken), 1)
+  } else if (!foundToken && allowed) {
     const token = await getToken(tokenAddress)
 
     if (token) {
@@ -217,10 +221,11 @@ async function updateEmployeeByAddress(state, event) {
     returnValues: { employee: employeeAddress },
   } = event
   const { employees: prevEmployees } = state
-  const employeeData = await getEmployeeByAddress(employeeAddress)
+  const { id: employeeId } = await getEmployeeIdByAddress(employeeAddress)
+  const employeeData = await getEmployeeById(employeeId)
 
-  const byAddress = employee => employee.accountAddress === employeeAddress
-  return updateEmployeeBy(prevEmployees, employeeData, byAddress)
+  const byId = employee => employee.id === employeeId
+  return updateEmployeeBy(prevEmployees, employeeData, byId)
 }
 
 async function updateEmployeeById(state, event) {

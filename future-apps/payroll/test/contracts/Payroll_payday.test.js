@@ -52,8 +52,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const allocationANT = 20
 
             beforeEach('set tokens allocation', async () => {
-              await payroll.addAllowedToken(ANT.address, { from: owner })
-              await payroll.addAllowedToken(DAI.address, { from: owner })
+              await payroll.setAllowedToken(ANT.address, true, { from: owner })
+              await payroll.setAllowedToken(DAI.address, true, { from: owner })
               await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], { from })
             })
 
@@ -159,8 +159,20 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
             const itHandlesPayrollProperly = (requestedAmount, expectedRequestedAmount) => {
               context('when exchange rates are not expired', () => {
-                assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
-                assertEmployeeIsUpdatedCorrectly(requestedAmount, expectedRequestedAmount)
+                context('when allocated tokens are still allowed', () => {
+                  assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
+                  assertEmployeeIsUpdatedCorrectly(requestedAmount, expectedRequestedAmount)
+                })
+
+                context('when allocated tokens are not allowed anymore', () => {
+                  beforeEach('remove allowed tokens', async () => {
+                    await payroll.setAllowedToken(DAI.address, false, { from: owner })
+                  })
+
+                  it('reverts', async () => {
+                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
+                  })
+                })
               })
 
               context('when exchange rates are expired', () => {
@@ -436,7 +448,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 const requestedAmount = owedSalary.div(2)
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
                 })
               })
 
@@ -444,7 +456,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 const requestedAmount = owedSalary
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
                 })
               })
             })
@@ -454,7 +466,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 const requestedAmount = bigExp(100, 18)
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
                 })
               })
 
@@ -462,7 +474,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 const requestedAmount = bn(0)
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
                 })
               })
             })
@@ -533,7 +545,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
               employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
             })
 
-            const itRevertsAnyAttemptToWithdrawPartialPayroll = () => {
+            const itRevertsAnyAttemptToWithdrawPartialPayroll = revertReason => {
               context('when the employee has some pending salary', () => {
                 beforeEach('accumulate some pending salary', async () => {
                   await increaseTime(ONE_MONTH)
@@ -542,13 +554,13 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 context('when the requested amount is greater than zero', () => {
                   const requestedAmount = bigExp(10000, 18)
 
-                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+                  itRevertsToWithdrawPartialPayroll(requestedAmount, revertReason, revertReason)
                 })
 
                 context('when the requested amount is zero', () => {
                   const requestedAmount = bn(0)
 
-                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+                  itRevertsToWithdrawPartialPayroll(requestedAmount, revertReason, revertReason)
                 })
               })
 
@@ -556,13 +568,13 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 context('when the requested amount is greater than zero', () => {
                   const requestedAmount = bigExp(1000, 18)
 
-                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+                  itRevertsToWithdrawPartialPayroll(requestedAmount, revertReason, revertReason)
                 })
 
                 context('when the requested amount is zero', () => {
                   const requestedAmount = bn(0)
 
-                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+                  itRevertsToWithdrawPartialPayroll(requestedAmount, revertReason, revertReason)
                 })
               })
             }
@@ -572,16 +584,16 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
               const allocationANT = 20
 
               beforeEach('set tokens allocation', async () => {
-                await payroll.addAllowedToken(ANT.address, { from: owner })
-                await payroll.addAllowedToken(DAI.address, { from: owner })
+                await payroll.setAllowedToken(ANT.address, true, { from: owner })
+                await payroll.setAllowedToken(DAI.address, true, { from: owner })
                 await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], { from })
               })
 
-              itRevertsAnyAttemptToWithdrawPartialPayroll()
+              itRevertsAnyAttemptToWithdrawPartialPayroll('PAYROLL_NOTHING_PAID')
             })
 
             context('when the employee did not set any token allocations yet', () => {
-              itRevertsAnyAttemptToWithdrawPartialPayroll()
+              itRevertsAnyAttemptToWithdrawPartialPayroll('PAYROLL_DISTRIBUTION_NOT_FULL')
             })
           })
 
@@ -598,8 +610,8 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
               const allocationANT = 20
 
               beforeEach('set tokens allocation', async () => {
-                await payroll.addAllowedToken(ANT.address, { from: owner })
-                await payroll.addAllowedToken(DAI.address, { from: owner })
+                await payroll.setAllowedToken(ANT.address, true, { from: owner })
+                await payroll.setAllowedToken(DAI.address, true, { from: owner })
                 await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], { from })
               })
 
@@ -707,19 +719,31 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   }
 
                   const itHandlesPayrollProperly = requestedAmount => {
-                    context('when exchange rates are not expired', () => {
-                      assertTransferredAmounts(requestedAmount)
-                      assertEmployeeIsUpdated(requestedAmount)
+                    context('when allocated tokens are still allowed', () => {
+                      context('when exchange rates are not expired', () => {
+                        assertTransferredAmounts(requestedAmount)
+                        assertEmployeeIsUpdated(requestedAmount)
+                      })
+
+                      context('when exchange rates are expired', () => {
+                        beforeEach('expire exchange rates', async () => {
+                          const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
+                          await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE], expiredTimestamp)
+                        })
+
+                        it('reverts', async () => {
+                          await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, {from}), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                        })
+                      })
                     })
 
-                    context('when exchange rates are expired', () => {
-                      beforeEach('expire exchange rates', async () => {
-                        const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
-                        await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE], expiredTimestamp)
+                    context('when allocated tokens are not allowed anymore', () => {
+                      beforeEach('remove allowed tokens', async () => {
+                        await payroll.setAllowedToken(DAI.address, false, { from: owner })
                       })
 
                       it('reverts', async () => {
-                        await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                        await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
                       })
                     })
                   }
@@ -790,19 +814,19 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 context('when the requested amount is zero', () => {
                   const requestedAmount = bn(0)
 
-                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_DISTRIBUTION_NOT_FULL', 'PAYROLL_DISTRIBUTION_NOT_FULL')
                 })
 
                 context('when the requested amount is lower than the total owed salary', () => {
                   const requestedAmount = bigExp(1000, 18)
 
-                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_DISTRIBUTION_NOT_FULL', 'PAYROLL_DISTRIBUTION_NOT_FULL')
                 })
 
                 context('when the requested amount is equal to the total owed salary', () => {
                   const requestedAmount = owedSalary
 
-                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_DISTRIBUTION_NOT_FULL', 'PAYROLL_DISTRIBUTION_NOT_FULL')
                 })
               })
 
@@ -810,13 +834,13 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 context('when the requested amount is greater than zero', () => {
                   const requestedAmount = bigExp(1000, 18)
 
-                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_DISTRIBUTION_NOT_FULL', 'PAYROLL_DISTRIBUTION_NOT_FULL')
                 })
 
                 context('when the requested amount is zero', () => {
                   const requestedAmount = bn(0)
 
-                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_NOTHING_PAID', 'PAYROLL_NOTHING_PAID')
+                  itRevertsToWithdrawPartialPayroll(requestedAmount, 'PAYROLL_DISTRIBUTION_NOT_FULL', 'PAYROLL_DISTRIBUTION_NOT_FULL')
                 })
               })
             })

@@ -32,7 +32,7 @@ contract('Payroll reentrancy guards', ([owner]) => {
   beforeEach('create payroll and price feed instances', async () => {
     ({ payroll, priceFeed } = await createPayrollAndPriceFeed(dao, payrollBase, owner, NOW))
     await payroll.initialize(finance.address, maliciousToken.address, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
-    await payroll.addAllowedToken(maliciousToken.address, { from: owner })
+    await payroll.setAllowedToken(maliciousToken.address, true, { from: owner })
   })
 
   describe('reentrancy guards', () => {

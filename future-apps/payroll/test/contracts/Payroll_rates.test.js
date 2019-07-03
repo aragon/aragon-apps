@@ -32,9 +32,9 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
       await setTokenRate(priceFeed, USD, DAI, DAI_RATE)
       await setTokenRate(priceFeed, USD, ANT, ANT_RATE)
 
-      await payroll.addAllowedToken(ETH, { from: owner })
-      await payroll.addAllowedToken(DAI.address, { from: owner })
-      await payroll.addAllowedToken(ANT.address, { from: owner })
+      await payroll.setAllowedToken(ETH, true, { from: owner })
+      await payroll.setAllowedToken(DAI.address, true, { from: owner })
+      await payroll.setAllowedToken(ANT.address, true, { from: owner })
     })
 
     beforeEach('add employee with salary 1 USD per second', async () => {
@@ -165,9 +165,9 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
       await setTokenRate(priceFeed, DAI, ETH, ETH_TO_DAI_RATE)
       await setTokenRate(priceFeed, ANT, ETH, ETH_TO_ANT_RATE)
 
-      await payroll.addAllowedToken(ETH, { from: owner })
-      await payroll.addAllowedToken(DAI.address, { from: owner })
-      await payroll.addAllowedToken(ANT.address, { from: owner })
+      await payroll.setAllowedToken(ETH, true, { from: owner })
+      await payroll.setAllowedToken(DAI.address, true, { from: owner })
+      await payroll.setAllowedToken(ANT.address, true, { from: owner })
     })
 
     beforeEach('add employee with salary 0.1 ETH per second', async () => {
@@ -296,9 +296,9 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
       await setTokenRate(priceFeed, DAI, ETH, ETH_TO_DAI_RATE)
       await setTokenRate(priceFeed, DAI, ANT, ANT_TO_DAI_RATE)
 
-      await payroll.addAllowedToken(ETH, { from: owner })
-      await payroll.addAllowedToken(DAI.address, { from: owner })
-      await payroll.addAllowedToken(ANT.address, { from: owner })
+      await payroll.setAllowedToken(ETH, true, { from: owner })
+      await payroll.setAllowedToken(DAI.address, true, { from: owner })
+      await payroll.setAllowedToken(ANT.address, true, { from: owner })
     })
 
     beforeEach('add employee with salary 1 DAI per second', async () => {
@@ -427,9 +427,9 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
       await setTokenRate(priceFeed, ANT, ETH, ETH_TO_ANT_RATE)
       await setTokenRate(priceFeed, ANT, DAI, DAI_TO_ANT_RATE)
 
-      await payroll.addAllowedToken(ETH, { from: owner })
-      await payroll.addAllowedToken(DAI.address, { from: owner })
-      await payroll.addAllowedToken(ANT.address, { from: owner })
+      await payroll.setAllowedToken(ETH, true, { from: owner })
+      await payroll.setAllowedToken(DAI.address, true, { from: owner })
+      await payroll.setAllowedToken(ANT.address, true, { from: owner })
     })
 
     beforeEach('add employee with salary 1 ANT per second', async () => {

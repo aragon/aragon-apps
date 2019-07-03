@@ -35,7 +35,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
       })
 
       beforeEach('allow multiple tokens', async () => {
-        await Promise.all(tokenAddresses.map(address => payroll.addAllowedToken(address, { from: owner })))
+        await Promise.all(tokenAddresses.map(address => payroll.setAllowedToken(address, true, { from: owner })))
       })
 
       context('when the employee exists', () => {
@@ -76,7 +76,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
 
                       beforeEach('submit previous allocation', async () => {
                         token = await deployTokenAndDeposit(owner, finance, 'Previous Token', 18)
-                        await payroll.addAllowedToken(token.address, { from: owner })
+                        await payroll.setAllowedToken(token.address, true, { from: owner })
 
                         await payroll.determineAllocation([token.address], [100], { from })
                         assert.equal(await payroll.getAllocation(employeeId, token.address), 100)
@@ -212,7 +212,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
           context('when the given token is not the zero address', () => {
             context('when the given token was allowed', () => {
               beforeEach('allow denomination token', async () => {
-                await payroll.addAllowedToken(DAI.address, { from: owner })
+                await payroll.setAllowedToken(DAI.address, true, { from: owner })
               })
 
               context('when the given token was picked by the employee', () => {
@@ -247,7 +247,7 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
 
             context('when the given token was allowed', () => {
               beforeEach('allow denomination token', async () => {
-                await payroll.addAllowedToken(token, { from: owner })
+                await payroll.setAllowedToken(token, true, { from: owner })
               })
 
               context('when the given token was picked by the employee', () => {

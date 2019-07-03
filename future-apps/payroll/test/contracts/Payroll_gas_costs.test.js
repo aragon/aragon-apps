@@ -28,8 +28,8 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
     })
 
     beforeEach('allow tokens and set rates', async () => {
-      await payroll.addAllowedToken(DAI.address, { from: owner })
-      await payroll.addAllowedToken(ANT.address, { from: owner })
+      await payroll.setAllowedToken(DAI.address, true, { from: owner })
+      await payroll.setAllowedToken(ANT.address, true, { from: owner })
 
       await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE])
     })
@@ -40,7 +40,7 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
 
         const { receipt: { cumulativeGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
 
-        assert.isBelow(cumulativeGasUsed, 335000, 'payout gas cost for a single allowed token should be ~335k')
+        assert.isAtMost(cumulativeGasUsed, 336000, 'payout gas cost for a single allowed token should be ~336k')
       })
     })
 
@@ -53,7 +53,7 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
         const { receipt: { cumulativeGasUsed: anotherEmployeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: anotherEmployee })
 
         const gasPerAllowedToken = anotherEmployeePayoutGasUsed - employeePayoutGasUsed
-        assert.isBelow(gasPerAllowedToken, 295000, 'payout gas cost increment per allowed token should be ~295k')
+        assert.isAtMost(gasPerAllowedToken, 295000, 'payout gas cost increment per allowed token should be ~295k')
       })
     })
   })

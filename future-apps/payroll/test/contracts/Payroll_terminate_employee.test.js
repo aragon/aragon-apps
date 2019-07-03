@@ -48,7 +48,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
 
             beforeEach('allow DAI and set rate', async () => {
               await setTokenRate(priceFeed, USD, DAI, DAI_RATE)
-              await payroll.addAllowedToken(DAI.address, { from: owner })
+              await payroll.setAllowedToken(DAI.address, true, { from: owner })
             })
 
             context('when the given end date is in the future ', () => {

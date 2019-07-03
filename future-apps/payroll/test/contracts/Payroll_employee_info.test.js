@@ -6,7 +6,7 @@ const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { USD, deployDAI } = require('../helpers/tokens')(artifacts, web3)
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
-contract('Payroll employee getters', ([owner, employee]) => {
+contract('Payroll employee info', ([owner, employee]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, DAI
 
   const currentTimestamp = async () => payroll.getTimestampPublic()
@@ -66,7 +66,7 @@ contract('Payroll employee getters', ([owner, employee]) => {
     })
   })
 
-  describe('getEmployeeByAddress', () => {
+  describe('getEmployeeIdByAddress', () => {
     context('when it has already been initialized', () => {
       beforeEach('initialize payroll app using USD as denomination token', async () => {
         await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
@@ -83,9 +83,11 @@ contract('Payroll employee getters', ([owner, employee]) => {
         })
 
         it('adds a new employee', async () => {
-          const [id, employeeSalary, accruedSalary, bonus, reimbursements, lastPayroll, endDate] = await payroll.getEmployeeByAddress(address)
+          const id = await payroll.getEmployeeIdByAddress(address)
+          const [employeeAddress, employeeSalary, accruedSalary, bonus, reimbursements, lastPayroll, endDate] = await payroll.getEmployee(id)
 
           assert.equal(id.toString(), employeeId.toString(), 'employee id does not match')
+          assert.equal(employeeAddress, address, 'employee address does not match')
           assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
           assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
           assert.equal(bonus.toString(), 0, 'employee bonus does not match')
@@ -98,14 +100,14 @@ contract('Payroll employee getters', ([owner, employee]) => {
       context('when the given id does not exist', () => {
 
         it('reverts', async () => {
-          await assertRevert(payroll.getEmployeeByAddress(employee), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+          await assertRevert(payroll.getEmployeeIdByAddress(employee), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
         })
       })
     })
 
     context('when it has not been initialized yet', () => {
       it('reverts', async () => {
-        await assertRevert(payroll.getEmployeeByAddress(employee), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
+        await assertRevert(payroll.getEmployeeIdByAddress(employee), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
       })
     })
   })
