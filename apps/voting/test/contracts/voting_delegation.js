@@ -169,7 +169,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, representative, an
             })
 
             context('when the voter has already voted', () => {
-              beforeEach('move within overrule window', async () => {
+              beforeEach('voter votes', async () => {
                 await voting.vote(voteId, true, false, { from: voter })
               })
 
@@ -301,7 +301,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, representative, an
                 assertEvent(receipt, 'ProxyVote', { voter, representative: anotherRepresentative, succeed: true, voteId, supports: true })
               })
 
-              it('can be overrule by the voter', async () => {
+              it('can be overruled by the voter', async () => {
                 const receipt = await voting.vote(voteId, true, false, { from: voter })
 
                 const { yeas, nays } = await getVoteState()
@@ -317,7 +317,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, representative, an
             })
 
             context('when the voter has already voted', () => {
-              beforeEach('move within overrule window', async () => {
+              beforeEach('voter votes', async () => {
                 await voting.vote(voteId, true, false, { from: voter })
               })
 
