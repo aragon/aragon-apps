@@ -612,7 +612,7 @@ contract Voting is IForwarder, AragonApp {
 
     function _overwriteIssuerIfNecessary(Vote storage vote_, address _voter) private {
         address _currentIssuer = vote_.issuers[_voter];
-        if (_currentIssuer != address(0) && _currentIssuer != _voter) {
+        if (_currentIssuer != address(0)) {
             vote_.issuers[_voter] = address(0);
         }
     }
