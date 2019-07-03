@@ -337,12 +337,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             // Salary is capped here to avoid reverting at this point if it becomes too big
             // (so employees aren't DDOSed if their salaries get too large)
             // If we do use a capped value, the employee's lastPayroll date will be adjusted accordingly
-            uint256 currentOwedSalary = _getOwedSalarySinceLastPayroll(employeeId, true); // cap amount
-            uint256 totalOwedSalary = currentOwedSalary + employee.accruedSalary;
-            if (totalOwedSalary < currentOwedSalary) {
-                totalOwedSalary = MAX_UINT256;
-            }
-
+            uint256 totalOwedSalary = _getTotalOwedCappedSalary(employeeId);
             paymentAmount = _ensurePaymentAmount(totalOwedSalary, _requestedAmount);
             _updateEmployeeAccountingBasedOnPaidSalary(employeeId, paymentAmount);
         } else if (_type == PaymentType.Reimbursement) {
@@ -471,6 +466,15 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         reimbursements = employee.reimbursements;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
+    }
+
+    /**
+     * @dev Get owed salary since last payroll for an employee. It will take into account the accrued salary as well.
+     *      The result will be capped to max uint256 to avoid having an overflow.
+     * @return Employee's total owed salary: current owed payroll since the last payroll date, plus the accrued salary.
+     */
+    function getTotalOwedSalary(uint256 _employeeId) public view employeeIdExists(_employeeId) returns (uint256) {
+        return _getTotalOwedCappedSalary(_employeeId);
     }
 
     /**
@@ -768,7 +772,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Get owed salary since last payroll for an employee.
+     * @dev Get owed salary since last payroll for an employee
      * @param _employeeId Employee's identifier
      * @param _capped Safely cap the owed salary at max uint
      * @return Owed salary in denomination tokens since last payroll for the employee.
@@ -812,6 +816,23 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         // Return time diff in seconds, no need to use SafeMath as the underflow was covered by the previous check
         return uint256(date - employee.lastPayroll);
+    }
+
+    /**
+     * @dev Get owed salary since last payroll for an employee. It will take into account the accrued salary as well.
+     *      The result will be capped to max uint256 to avoid having an overflow.
+     * @param _employeeId Employee's identifier
+     * @return Employee's total owed salary: current owed payroll since the last payroll date, plus the accrued salary.
+     */
+    function _getTotalOwedCappedSalary(uint256 _employeeId) internal view returns (uint256) {
+        Employee storage employee = employees[_employeeId];
+
+        uint256 currentOwedSalary = _getOwedSalarySinceLastPayroll(_employeeId, true); // cap amount
+        uint256 totalOwedSalary = currentOwedSalary + employee.accruedSalary;
+        if (totalOwedSalary < currentOwedSalary) {
+            totalOwedSalary = MAX_UINT256;
+        }
+        return totalOwedSalary;
     }
 
     /**
