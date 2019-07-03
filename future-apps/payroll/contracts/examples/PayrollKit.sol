@@ -18,7 +18,11 @@ import "../Payroll.sol";
 
 
 contract PPFMock is IFeed {
-  function get(address, address) external view returns (uint128 xrt, uint64 when) {
+    function ratePrecision() external pure returns (uint256) {
+        return 10 ** 18;
+    }
+
+    function get(address, address) external view returns (uint128 xrt, uint64 when) {
       xrt = 7500000000000000; // 1 ETH = ~133USD
       when = uint64(now);
   }

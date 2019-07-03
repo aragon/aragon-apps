@@ -19,17 +19,17 @@ contract PriceFeedMock is PPF, TimeHelpersMock {
 
     // Overwrite function using TimeHelpers and allowing to set past rates
     function update(address base, address quote, uint128 xrt, uint64 when, bytes sig) public {
-        bytes32 pair = super.pairId(base, quote);
+        bytes32 pair = _pairId(base, quote);
 
         // Remove check that ensures a given rate is more recent than the current value
         // require(when > feed[pair].when && when <= getTimestamp());
         require(xrt > 0); // Make sure xrt is not 0, as the math would break (Dividing by 0 sucks big time)
         require(base != quote); // Assumption that currency units are fungible and xrt should always be 1
 
-        bytes32 h = super.setHash(base, quote, xrt, when);
+        bytes32 h = _setHash(base, quote, xrt, when);
         require(h.personalRecover(sig) == operator); // Make sure the update was signed by the operator
 
-        feed[pair] = Price(super.pairXRT(base, quote, xrt), when);
+        feed[pair] = Price(_pairXRT(base, quote, xrt), when);
 
         emit SetRate(base, quote, xrt, when);
     }
