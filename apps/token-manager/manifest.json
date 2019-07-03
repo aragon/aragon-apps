@@ -13,7 +13,6 @@
     { "src": "/meta/screenshot-2.png" },
     { "src": "/meta/screenshot-3.png" }
   ],
-  "details_url": "/meta/details.md",
   "script": "/script.js",
   "start_url": "/index.html"
 }
