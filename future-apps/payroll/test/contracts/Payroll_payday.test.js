@@ -54,7 +54,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             beforeEach('set tokens allocation', async () => {
               await payroll.setAllowedToken(ANT.address, true, { from: owner })
               await payroll.setAllowedToken(DAI.address, true, { from: owner })
-              await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], { from })
+              await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], [DAI_RATE, ANT_RATE], { from })
             })
 
             const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
@@ -182,7 +182,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                 })
               })
             }
@@ -275,7 +275,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                         })
 
                         it('reverts', async () => {
-                          await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                          await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                         })
                       })
                     }
@@ -586,7 +586,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
               beforeEach('set tokens allocation', async () => {
                 await payroll.setAllowedToken(ANT.address, true, { from: owner })
                 await payroll.setAllowedToken(DAI.address, true, { from: owner })
-                await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], { from })
+                await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], [DAI_RATE, ANT_RATE], { from })
               })
 
               itRevertsAnyAttemptToWithdrawPartialPayroll('PAYROLL_NOTHING_PAID')
@@ -612,7 +612,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
               beforeEach('set tokens allocation', async () => {
                 await payroll.setAllowedToken(ANT.address, true, { from: owner })
                 await payroll.setAllowedToken(DAI.address, true, { from: owner })
-                await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], { from })
+                await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], [DAI_RATE, ANT_RATE], { from })
               })
 
               context('when the employee has some pending salary', () => {
@@ -622,7 +622,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   context('when the requested amount is zero', () => {
                     const requestedAmount = bn(0)
 
-                    itRevertsToWithdrawPartialPayroll(requestedAmount, 'MATH_MUL_OVERFLOW', 'PAYROLL_EXCHANGE_RATE_ZERO')
+                    itRevertsToWithdrawPartialPayroll(requestedAmount, 'MATH_MUL_OVERFLOW', 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                   })
 
                   context('when the requested amount is lower than the total owed salary', () => {
@@ -733,7 +733,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                           })
 
                           it('reverts', async () => {
-                            await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, {from}), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                            await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, {from}), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                           })
                         })
                       })
@@ -785,7 +785,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   context('when the requested amount is equal to the total owed salary', () => {
                     const requestedAmount = owedSalary
 
-                    itRevertsToWithdrawPartialPayroll(requestedAmount, 'MATH_MUL_OVERFLOW', 'PAYROLL_EXCHANGE_RATE_ZERO')
+                    itRevertsToWithdrawPartialPayroll(requestedAmount, 'MATH_MUL_OVERFLOW', 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                   })
                 }
 

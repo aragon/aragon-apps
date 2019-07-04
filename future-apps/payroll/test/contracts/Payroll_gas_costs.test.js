@@ -36,7 +36,7 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
 
     context('when there is only one allowed token', function () {
       it('expends ~339k gas for a single allowed token', async () => {
-        await payroll.determineAllocation([DAI.address], [100], { from: employee })
+        await payroll.determineAllocation([DAI.address], [100], [0], { from: employee })
 
         const { receipt: { cumulativeGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
 
@@ -46,10 +46,10 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
 
     context('when there are two allowed token', function () {
       it('expends ~295k gas per allowed token', async () => {
-        await payroll.determineAllocation([DAI.address], [100], { from: employee })
+        await payroll.determineAllocation([DAI.address], [100], [0], { from: employee })
         const { receipt: { cumulativeGasUsed: employeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
 
-        await payroll.determineAllocation([DAI.address, ANT.address], [60, 40], { from: anotherEmployee })
+        await payroll.determineAllocation([DAI.address, ANT.address], [60, 40], [0, 0], { from: anotherEmployee })
         const { receipt: { cumulativeGasUsed: anotherEmployeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: anotherEmployee })
 
         const gasPerAllowedToken = anotherEmployeePayoutGasUsed - employeePayoutGasUsed

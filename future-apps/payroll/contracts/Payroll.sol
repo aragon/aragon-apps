@@ -26,8 +26,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     * bytes32 constant public ADD_BONUS_ROLE = keccak256("ADD_BONUS_ROLE");
     * bytes32 constant public ADD_REIMBURSEMENT_ROLE = keccak256("ADD_REIMBURSEMENT_ROLE");
     * bytes32 constant public MANAGE_ALLOWED_TOKENS_ROLE = keccak256("MANAGE_ALLOWED_TOKENS_ROLE");
-    * bytes32 constant public MODIFY_PRICE_FEED_ROLE = keccak256("MODIFY_PRICE_FEED_ROLE");
-    * bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
+    * bytes32 constant public MODIFY_PRICE_FEED_SETTINGS_ROLE = keccak256("MODIFY_PRICE_FEED_SETTINGS_ROLE");
     */
 
     bytes32 constant public ADD_EMPLOYEE_ROLE = 0x9ecdc3c63716b45d0756eece5fe1614cae1889ec5a1ce62b3127c1f1f1615d6e;
@@ -36,8 +35,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     bytes32 constant public ADD_BONUS_ROLE = 0xceca7e2f5eb749a87aaf68f3f76d6b9251aa2f4600f13f93c5a4adf7a72df4ae;
     bytes32 constant public ADD_REIMBURSEMENT_ROLE = 0x90698b9d54427f1e41636025017309bdb1b55320da960c8845bab0a504b01a16;
     bytes32 constant public MANAGE_ALLOWED_TOKENS_ROLE = 0x0be34987c45700ee3fae8c55e270418ba903337decc6bacb1879504be9331c06;
-    bytes32 constant public MODIFY_PRICE_FEED_ROLE = 0x74350efbcba8b85341c5bbf70cc34e2a585fc1463524773a12fa0a71d4eb9302;
-    bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = 0x79fe989a8899060dfbdabb174ebb96616fa9f1d9dadd739f8d814cbab452404e;
+    bytes32 constant public MODIFY_PRICE_FEED_SETTINGS_ROLE = 0xd5da0a7d4d69a338f4ff576cbdd0b341bc45341d64c650c4f63b3bde43509faf;
 
     uint256 internal constant MAX_ALLOWED_TOKENS = 20; // prevent OOG issues with `payday()`
     uint64 internal constant MIN_RATE_EXPIRY = uint64(1 minutes); // 1 min == ~4 block window to mine both a price feed update and a payout
@@ -63,15 +61,20 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     string private constant ERROR_FEED_NOT_CONTRACT = "PAYROLL_FEED_NOT_CONTRACT";
     string private constant ERROR_EXPIRY_TIME_TOO_SHORT = "PAYROLL_EXPIRY_TIME_TOO_SHORT";
     string private constant ERROR_PAST_TERMINATION_DATE = "PAYROLL_PAST_TERMINATION_DATE";
-    string private constant ERROR_EXCHANGE_RATE_ZERO = "PAYROLL_EXCHANGE_RATE_ZERO";
+    string private constant ERROR_EXCHANGE_RATE_TOO_LOW = "PAYROLL_EXCHANGE_RATE_TOO_LOW";
     string private constant ERROR_LAST_PAYROLL_DATE_TOO_BIG = "PAYROLL_LAST_DATE_TOO_BIG";
     string private constant ERROR_INVALID_REQUESTED_AMOUNT = "PAYROLL_INVALID_REQUESTED_AMT";
 
     enum PaymentType { Payroll, Reimbursement, Bonus }
 
+    struct TokenAllocation {
+        uint256 percentage;
+        uint256 minAcceptableRate;
+    }
+
     struct Employee {
         address accountAddress; // unique, but can be changed over time
-        mapping(address => uint256) allocation;
+        mapping(address => TokenAllocation) allocation;
         uint256 denominationTokenSalary; // salary per second in denomination Token
         uint256 accruedSalary; // keep track of any leftover accrued salary when changing salaries
         uint256 bonus;
@@ -141,13 +144,14 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @notice Initialize Payroll app for Finance at `_finance` and price feed at `_priceFeed`, setting denomination token to `_token` and exchange rate expiry time to `@transformTime(_rateExpiryTime)`
      * @dev Note that we do not require _denominationToken to be a contract, as it may be a "fake"
-     *      address used by the price feed to denominate fiat currencies
+     *      address used by the price feed to denominate fiat currencies.
+     *      Note that the initialization check is already guaranteed by `initialized`.
      * @param _finance Address of the Finance app this Payroll app will rely on for payments (non-changeable)
      * @param _denominationToken Address of the denomination token used for salary accounting
      * @param _priceFeed Address of the price feed
      * @param _rateExpiryTime Acceptable expiry time in seconds for the price feed's exchange rates
      */
-    function initialize(Finance _finance, address _denominationToken, IFeed _priceFeed, uint64 _rateExpiryTime) external onlyInit {
+    function initialize(Finance _finance, address _denominationToken, IFeed _priceFeed, uint64 _rateExpiryTime) external {
         initialized();
 
         require(isContract(_finance), ERROR_FINANCE_NOT_CONTRACT);
@@ -172,19 +176,15 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Set the price feed for exchange rates to `_feed`
+     * @notice Set the price feed for exchange rates to `_feed` and the acceptable rates expiry time to `@transformTime(_time)`
      * @param _feed Address of the new price feed instance
-     */
-    function setPriceFeed(IFeed _feed) external authP(MODIFY_PRICE_FEED_ROLE, arr(_feed, feed)) {
-        _setPriceFeed(_feed);
-    }
-
-    /**
-     * @notice Set the acceptable expiry time for the price feed's exchange rates to `@transformTime(_time)`
-     * @dev Exchange rates older than the given value won't be accepted for payments and will cause payouts to revert
      * @param _time The expiration time in seconds for exchange rates
      */
-    function setRateExpiryTime(uint64 _time) external authP(MODIFY_RATE_EXPIRY_ROLE, arr(uint256(_time), uint256(rateExpiryTime))) {
+    function setPriceFeedSettings(IFeed _feed, uint64 _time)
+        external
+        authP(MODIFY_PRICE_FEED_SETTINGS_ROLE, _arr(_feed, feed, uint256(_time), uint256(rateExpiryTime)))
+    {
+        _setPriceFeed(_feed);
         _setRateExpiryTime(_time);
     }
 
@@ -292,8 +292,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _tokens Array of token addresses; they must belong to the list of allowed tokens
      * @param _distribution Array with each token's corresponding proportions (must be integers summing to 100)
      */
-    function determineAllocation(address[] _tokens, uint256[] _distribution) external employeeMatches nonReentrant {
-        // Check arrays match
+    function determineAllocation(address[] _tokens, uint256[] _distribution, uint256[] _minRates) external employeeMatches nonReentrant {
+        // Check arrays length match
+        require(_tokens.length == _minRates.length, ERROR_TOKEN_ALLOCATION_MISMATCH);
         require(_tokens.length == _distribution.length, ERROR_TOKEN_ALLOCATION_MISMATCH);
 
         uint256 employeeId = employeeIds[msg.sender];
@@ -307,7 +308,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // Set distributions only if given tokens are allowed
         for (uint256 i = 0; i < _distribution.length; i++) {
             require(allowedTokens[_tokens[i]], ERROR_NOT_ALLOWED_TOKEN);
-            employee.allocation[_tokens[i]] = _distribution[i];
+            employee.allocation[_tokens[i]] = TokenAllocation({ percentage: _distribution[i], minAcceptableRate: _minRates[i] });
         }
 
         _ensureEmployeeTokenAllocationsIsValid(employee);
@@ -452,9 +453,14 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _employeeId Employee's identifier
      * @param _token Token to query the payment allocation for
      * @return Employee's payment allocation for the token being queried
+     * @return Employee's min acceptable rate for the token being queried
      */
-    function getAllocation(uint256 _employeeId, address _token) public view employeeIdExists(_employeeId) returns (uint256) {
-        return employees[_employeeId].allocation[_token];
+    function getAllocation(uint256 _employeeId, address _token) public view employeeIdExists(_employeeId)
+        returns (uint256 percentage, uint256 minAcceptableRate)
+    {
+        TokenAllocation storage allocation = employees[_employeeId].allocation[_token];
+        percentage = allocation.percentage;
+        minAcceptableRate = allocation.minAcceptableRate;
     }
 
     /**
@@ -591,15 +597,16 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
         for (uint256 i = 0; i < allowedTokensArray.length; i++) {
             address token = allowedTokensArray[i];
-            uint256 tokenAllocation = employee.allocation[token];
-            if (tokenAllocation != uint256(0)) {
+            TokenAllocation storage tokenAllocation = employee.allocation[token];
+            uint256 percentage = tokenAllocation.percentage;
+            if (percentage != uint256(0)) {
                 // Get the exchange rate for the payout token in denomination token,
                 // as we do accounting in denomination tokens
                 uint256 exchangeRate = _getExchangeRateInDenominationToken(token);
-                require(exchangeRate > 0, ERROR_EXCHANGE_RATE_ZERO);
+                require(exchangeRate >= tokenAllocation.minAcceptableRate, ERROR_EXCHANGE_RATE_TOO_LOW);
 
                 // Convert amount (in denomination tokens) to payout token and apply allocation
-                uint256 tokenAmount = _totalAmount.mul(exchangeRate).mul(tokenAllocation);
+                uint256 tokenAmount = _totalAmount.mul(exchangeRate).mul(percentage);
                 // Divide by 100 for the allocation percentage and by the exchange rate precision
                 tokenAmount = tokenAmount.div(100).div(feed.ratePrecision());
 
@@ -843,7 +850,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     function _ensureEmployeeTokenAllocationsIsValid(Employee storage employee_) internal view {
         uint256 sum = 0;
         for (uint256 i = 0; i < allowedTokensArray.length; i++) {
-            sum = sum.add(employee_.allocation[allowedTokensArray[i]]);
+            sum = sum.add(employee_.allocation[allowedTokensArray[i]].percentage);
         }
         require(sum == 100, ERROR_DISTRIBUTION_NOT_FULL);
     }
@@ -852,5 +859,15 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         require(_owedAmount > 0, ERROR_NOTHING_PAID);
         require(_owedAmount >= _requestedAmount, ERROR_INVALID_REQUESTED_AMOUNT);
         return _requestedAmount > 0 ? _requestedAmount : _owedAmount;
+    }
+
+    // Syntax sugar
+
+    function _arr(address _a, address _b, uint256 _c, uint256 _d) private pure returns (uint256[] r) {
+        r = new uint256[](4);
+        r[0] = uint256(_a);
+        r[1] = uint256(_b);
+        r[2] = _c;
+        r[3] = _d;
     }
 }

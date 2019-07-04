@@ -154,7 +154,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
           beforeEach('set tokens allocation', async () => {
             await payroll.setAllowedToken(ANT.address, true, { from: owner })
             await payroll.setAllowedToken(DAI.address, true, { from: owner })
-            await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], { from })
+            await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], [DAI_RATE, ANT_RATE], { from })
           })
 
           context('when the employee has some pending reimbursements', () => {
@@ -235,7 +235,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
                   })
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                    await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                   })
                 })
               })
@@ -299,7 +299,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
                     })
 
                     it('reverts', async () => {
-                      await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                     })
                   })
                 })
@@ -390,7 +390,7 @@ contract('Payroll reimbursements', ([owner, employee, anyone]) => {
                     })
 
                     it('reverts', async () => {
-                      await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      await assertRevert(payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                     })
                   })
                 })

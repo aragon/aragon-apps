@@ -90,9 +90,10 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
           })
 
           it('does not run out of gas to payout salary', async () => {
-            const allocations = tokenAddresses.map(() => 100 / MAX_ALLOWED_TOKENS)
+            const distribution = tokenAddresses.map(() => 100 / MAX_ALLOWED_TOKENS)
+            const minRates = tokenAddresses.map(() => 0)
 
-            const allocationTx = await payroll.determineAllocation(tokenAddresses, allocations, { from: employee })
+            const allocationTx = await payroll.determineAllocation(tokenAddresses, distribution, minRates, { from: employee })
             assert.isBelow(allocationTx.receipt.cumulativeGasUsed, MAX_GAS_USED, 'too much gas consumed for allocation')
 
             const paydayTx = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })

@@ -67,14 +67,9 @@
       "params": ["Token", "Allowed"]
     },
     {
-      "name": "Modify Price Feed",
-      "id": "MODIFY_PRICE_FEED_ROLE",
-      "params": ["New price feed", "Old price feed"]
-    },
-    {
-      "name": "Modify Rate Expiry Time",
-      "id": "MODIFY_RATE_EXPIRY_ROLE",
-      "params": ["New rate expiry time", "Old rate expiry time"]
+      "name": "Modify Price Feed settings",
+      "id": "MODIFY_PRICE_FEED_SETTINGS_ROLE",
+      "params": ["New price feed", "Old price feed", "New rate expiry time", "Old rate expiry time"]
     }
   ],
   "path": "contracts/Payroll.sol"

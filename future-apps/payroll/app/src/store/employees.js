@@ -23,7 +23,7 @@ export async function getSalaryAllocation(employeeId, tokens) {
       app
         .call('getAllocation', employeeId, token.address)
         .first()
-        .map(allocation => tokenAllocation({ ...token, allocation }))
+        .map(([allocation, minRate]) => tokenAllocation({ ...token, allocation, minRate }))
         .toPromise()
     )
   )

@@ -76,7 +76,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
 
               it('does not reset the owed salary nor the reimbursements of the employee', async () => {
                 const previousDAI = await DAI.balanceOf(employee)
-                await payroll.determineAllocation([DAI.address], [100], { from: employee })
+                await payroll.determineAllocation([DAI.address], [100], [0], { from: employee })
 
                 // Accrue some salary and extras
                 await increaseTime(ONE_MONTH)
@@ -101,7 +101,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
               })
 
               it('can re-add a removed employee', async () => {
-                await payroll.determineAllocation([DAI.address], [100], { from: employee })
+                await payroll.determineAllocation([DAI.address], [100], [0], { from: employee })
                 await increaseTime(ONE_MONTH)
 
                 // Terminate employee and travel some time in the future
