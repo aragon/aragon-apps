@@ -651,42 +651,27 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         if (accruedSalary > 0) {
             // Employee is cashing out a mixed amount between previous and current owed salaries;
             // first use up their accrued salary
-            employee.accruedSalary = uint256(0);
             // No need to use SafeMath here as we already know _paymentAmount > accruedSalary
             currentSalaryPaid = _paymentAmount - accruedSalary;
         }
-        _updateEmployeeLastPayrollDate(_employeeId, currentSalaryPaid);
-    }
+        uint256 salary = employee.denominationTokenSalary;
+        uint256 timeDiff = currentSalaryPaid.div(salary);
 
-    /**
-     * @dev Update the last payroll date for an employee based on the requested payment amount. If the requested amount
-     *      cannot be represented by a multiple of the employee's salary per second, it will be added as accrued salary.
-     * @param _employeeId Employee's identifier
-     * @param _paidAmount Requested amount to be paid to the employee
-     */
-    function _updateEmployeeLastPayrollDate(uint256 _employeeId, uint256 _paidAmount) internal {
-        Employee storage employee = employees[_employeeId];
-
-        uint256 timeDiff = _paidAmount.div(employee.denominationTokenSalary);
-
-        // We check if the division was perfect, and if not, take its ceiling to avoid giving away tiny amounts of
-        // salary and add the remainder to the accrued salary.
-        if (timeDiff.mul(employee.denominationTokenSalary) != _paidAmount) {
-            timeDiff = timeDiff.add(1);
-            // No need to use SafeMath here, we already now that _paidAmount is lower than its ceil
-            uint256 remainder = timeDiff.mul(employee.denominationTokenSalary) - _paidAmount;
-
-            uint256 currentAccruedSalary = employee.accruedSalary;
-            uint256 newAccruedSalary = currentAccruedSalary + remainder;
-            if (newAccruedSalary < currentAccruedSalary) {
-                newAccruedSalary = MAX_UINT256;
-            }
-            employee.accruedSalary = newAccruedSalary;
+        // If they're being paid an amount that doesn't match perfectly with the adjusted time
+        // (up to a seconds' worth of salary), add the second and put the extra remaining salary
+        // into their accrued salary
+        uint256 extraSalary = currentSalaryPaid % salary;
+        if (extraSalary > 0) {
+            timeDiff.add(1);
+            employee.accruedSalary = extraSalary;
+        } else if (accruedSalary > 0) {
+            employee.accruedSalary = 0;
         }
 
         uint256 lastPayrollDate = uint256(employee.lastPayroll).add(timeDiff);
-        // Even though this function should never receive a _paidAmount value that would result in
-        // the lastPayrollDate being higher than the current time, let's double check to be safe
+        // Even though this function should never receive a currentSalaryPaid value that would
+        // result in the lastPayrollDate being higher than the current time,
+        // let's double check to be safe
         require(lastPayrollDate <= uint256(getTimestamp64()), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
         // Already know lastPayrollDate must fit in uint64 from above
         employee.lastPayroll = uint64(lastPayrollDate);
