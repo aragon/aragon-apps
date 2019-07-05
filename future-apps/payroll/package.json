@@ -45,7 +45,7 @@
   "dependencies": {
     "@aragon/apps-finance": "3.0.0",
     "@aragon/os": "4.2.0",
-    "@aragon/ppf-contracts": "1.1.0"
+    "@aragon/ppf-contracts": "1.2.0"
   },
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
