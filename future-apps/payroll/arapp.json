@@ -62,8 +62,8 @@
       "params": ["Employee Id", "Amount"]
     },
     {
-      "name": "Modify allowed tokens",
-      "id": "MODIFY_ALLOWED_TOKENS_ROLE",
+      "name": "Manage allowed tokens",
+      "id": "MANAGE_ALLOWED_TOKENS_ROLE",
       "params": ["Token", "Allowed"]
     },
     {

@@ -114,7 +114,7 @@ contract PayrollKit is KitBase {
 
         // Clean up
         cleanupDAOPermissions(dao, acl, root);
-        cleanupPermission(acl, root, payroll, payroll.MODIFY_ALLOWED_TOKENS_ROLE());
+        cleanupPermission(acl, root, payroll, payroll.MANAGE_ALLOWED_TOKENS_ROLE());
         cleanupPermission(acl, root, payroll, payroll.ADD_EMPLOYEE_ROLE());
 
         emit DeployInstance(dao);
@@ -158,7 +158,7 @@ contract PayrollKit is KitBase {
         acl.createPermission(root, payroll, payroll.TERMINATE_EMPLOYEE_ROLE(), root);
 
         // Allow this contract to add tokens to Payroll for now
-        acl.createPermission(this, payroll, payroll.MODIFY_ALLOWED_TOKENS_ROLE(), this);
+        acl.createPermission(this, payroll, payroll.MANAGE_ALLOWED_TOKENS_ROLE(), this);
 
         // Allow this contract to add employees to Payroll for now
         acl.createPermission(this, payroll, payroll.ADD_EMPLOYEE_ROLE(), this);

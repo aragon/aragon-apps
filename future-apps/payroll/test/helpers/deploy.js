@@ -81,7 +81,7 @@ module.exports = (artifacts, web3) => {
     const MODIFY_RATE_EXPIRY_ROLE = await payroll.MODIFY_RATE_EXPIRY_ROLE()
     const TERMINATE_EMPLOYEE_ROLE = await payroll.TERMINATE_EMPLOYEE_ROLE()
     const SET_EMPLOYEE_SALARY_ROLE = await payroll.SET_EMPLOYEE_SALARY_ROLE()
-    const MODIFY_ALLOWED_TOKENS_ROLE = await payroll.MODIFY_ALLOWED_TOKENS_ROLE()
+    const MANAGE_ALLOWED_TOKENS_ROLE = await payroll.MANAGE_ALLOWED_TOKENS_ROLE()
 
     await acl.createPermission(owner, payroll.address, ADD_BONUS_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, ADD_EMPLOYEE_ROLE, owner, { from: owner })
@@ -90,7 +90,7 @@ module.exports = (artifacts, web3) => {
     await acl.createPermission(owner, payroll.address, MODIFY_RATE_EXPIRY_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, TERMINATE_EMPLOYEE_ROLE, owner, { from: owner })
     await acl.createPermission(owner, payroll.address, SET_EMPLOYEE_SALARY_ROLE, owner, { from: owner })
-    await acl.createPermission(owner, payroll.address, MODIFY_ALLOWED_TOKENS_ROLE, owner, { from: owner })
+    await acl.createPermission(owner, payroll.address, MANAGE_ALLOWED_TOKENS_ROLE, owner, { from: owner })
 
     const priceFeed = await PriceFeed.new()
     await priceFeed.mockSetTimestamp(currentTimestamp)

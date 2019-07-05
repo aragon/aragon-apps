@@ -161,7 +161,7 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
         context('when the given token is not allowed', () => {
           it('reverts', async () => {
             const erc20Token = await deployTokenAndDeposit(owner, finance, 'Some Token', 18)
-            await assertRevert(payroll.setAllowedToken(erc20Token.address, false), 'PAYROLL_MISSING_ALLOWED_TOKEN')
+            await assertRevert(payroll.setAllowedToken(erc20Token.address, false), 'PAYROLL_TOKEN_NOT_ALLOWED')
           })
         })
       })

@@ -25,7 +25,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     * bytes32 constant public SET_EMPLOYEE_SALARY_ROLE = keccak256("SET_EMPLOYEE_SALARY_ROLE");
     * bytes32 constant public ADD_BONUS_ROLE = keccak256("ADD_BONUS_ROLE");
     * bytes32 constant public ADD_REIMBURSEMENT_ROLE = keccak256("ADD_REIMBURSEMENT_ROLE");
-    * bytes32 constant public MODIFY_ALLOWED_TOKENS_ROLE = keccak256("MODIFY_ALLOWED_TOKENS_ROLE");
+    * bytes32 constant public MANAGE_ALLOWED_TOKENS_ROLE = keccak256("MANAGE_ALLOWED_TOKENS_ROLE");
     * bytes32 constant public MODIFY_PRICE_FEED_ROLE = keccak256("MODIFY_PRICE_FEED_ROLE");
     * bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
     */
@@ -35,7 +35,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     bytes32 constant public SET_EMPLOYEE_SALARY_ROLE = 0xea9ac65018da2421cf419ee2152371440c08267a193a33ccc1e39545d197e44d;
     bytes32 constant public ADD_BONUS_ROLE = 0xceca7e2f5eb749a87aaf68f3f76d6b9251aa2f4600f13f93c5a4adf7a72df4ae;
     bytes32 constant public ADD_REIMBURSEMENT_ROLE = 0x90698b9d54427f1e41636025017309bdb1b55320da960c8845bab0a504b01a16;
-    bytes32 constant public MODIFY_ALLOWED_TOKENS_ROLE = 0x26fba4ce9d928e486c1c10b4d0d1565eb2426262acb1790835c4eb593f4ff9dc;
+    bytes32 constant public MANAGE_ALLOWED_TOKENS_ROLE = 0x0be34987c45700ee3fae8c55e270418ba903337decc6bacb1879504be9331c06;
     bytes32 constant public MODIFY_PRICE_FEED_ROLE = 0x74350efbcba8b85341c5bbf70cc34e2a585fc1463524773a12fa0a71d4eb9302;
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = 0x79fe989a8899060dfbdabb174ebb96616fa9f1d9dadd739f8d814cbab452404e;
 
@@ -51,7 +51,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     string private constant ERROR_SENDER_DOES_NOT_MATCH = "PAYROLL_SENDER_DOES_NOT_MATCH";
     string private constant ERROR_FINANCE_NOT_CONTRACT = "PAYROLL_FINANCE_NOT_CONTRACT";
     string private constant ERROR_TOKEN_ALREADY_ALLOWED = "PAYROLL_TOKEN_ALREADY_ALLOWED";
-    string private constant ERROR_MISSING_ALLOWED_TOKEN = "PAYROLL_MISSING_ALLOWED_TOKEN";
+    string private constant ERROR_TOKEN_NOT_ALLOWED = "PAYROLL_TOKEN_NOT_ALLOWED";
     string private constant ERROR_MAX_ALLOWED_TOKENS = "PAYROLL_MAX_ALLOWED_TOKENS";
     string private constant ERROR_TOKEN_ALLOCATION_MISMATCH = "PAYROLL_TOKEN_ALLOCATION_MISMATCH";
     string private constant ERROR_NOT_ALLOWED_TOKEN = "PAYROLL_NOT_ALLOWED_TOKEN";
@@ -116,7 +116,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 exchangeRate,
         string paymentReference
     );
-    event SetAllowedToken(address indexed token, bool indexed allowed);
+    event SetAllowedToken(address indexed token, bool allowed);
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
 
@@ -167,7 +167,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _token Address of the token to be added or removed from the list of allowed tokens for payments
      * @param _allowed Boolean to tell whether the given token should be added or removed from the list
      */
-    function setAllowedToken(address _token, bool _allowed) external authP(MODIFY_ALLOWED_TOKENS_ROLE, arr(_token)) {
+    function setAllowedToken(address _token, bool _allowed) external authP(MANAGE_ALLOWED_TOKENS_ROLE, arr(_token)) {
         _allowed ? _addAllowedToken(_token) : _removeAllowedToken(_token);
         emit SetAllowedToken(_token, _allowed);
     }
@@ -305,13 +305,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             delete employee.allocation[allowedTokensArray[j]];
         }
 
-        // Set distributions checking tokens are allowed
+        // Set distributions only if given tokens are allowed
         for (uint256 i = 0; i < _distribution.length; i++) {
             require(allowedTokens[_tokens[i]], ERROR_NOT_ALLOWED_TOKEN);
             employee.allocation[_tokens[i]] = _distribution[i];
         }
 
-        _ensureEmployeeTokenAllocationsAddsUp(employee);
+        _ensureEmployeeTokenAllocationsIsValid(employee);
         emit DetermineAllocation(employeeId);
     }
 
@@ -328,7 +328,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 paymentAmount;
         uint256 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
-        _ensureEmployeeTokenAllocationsAddsUp(employee);
+        _ensureEmployeeTokenAllocationsIsValid(employee);
 
         // Do internal employee accounting
         if (_type == PaymentType.Payroll) {
@@ -676,7 +676,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _token Token address to be removed from the set of allowed tokens for payments
      */
     function _removeAllowedToken(address _token) internal {
-        require(allowedTokens[_token], ERROR_MISSING_ALLOWED_TOKEN);
+        require(allowedTokens[_token], ERROR_TOKEN_NOT_ALLOWED);
 
         // In order to remove an allowed token, we will swap it with the last allowed token of the list, and then
         // remove the last element. Note that this will hold for 1-element arrays as well.
@@ -853,10 +853,10 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
                 return i;
             }
         }
-        revert(ERROR_MISSING_ALLOWED_TOKEN);
+        revert(ERROR_TOKEN_NOT_ALLOWED);
     }
 
-    function _ensureEmployeeTokenAllocationsAddsUp(Employee storage employee_) internal view {
+    function _ensureEmployeeTokenAllocationsIsValid(Employee storage employee_) internal view {
         uint256 sum = 0;
         for (uint256 i = 0; i < allowedTokensArray.length; i++) {
             sum = sum.add(employee_.allocation[allowedTokensArray[i]]);

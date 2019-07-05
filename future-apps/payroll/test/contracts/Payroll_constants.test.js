@@ -14,7 +14,7 @@ contract('Payroll roles', () => {
       assert.equal(await payroll.SET_EMPLOYEE_SALARY_ROLE(), web3.sha3('SET_EMPLOYEE_SALARY_ROLE'), 'set employee salary does not match')
       assert.equal(await payroll.ADD_BONUS_ROLE(), web3.sha3('ADD_BONUS_ROLE'), 'add bonus role does not match')
       assert.equal(await payroll.ADD_REIMBURSEMENT_ROLE(), web3.sha3('ADD_REIMBURSEMENT_ROLE'), 'add reimbursement role does not match')
-      assert.equal(await payroll.MODIFY_ALLOWED_TOKENS_ROLE(), web3.sha3('MODIFY_ALLOWED_TOKENS_ROLE'), 'modify allowed tokens role does not match')
+      assert.equal(await payroll.MANAGE_ALLOWED_TOKENS_ROLE(), web3.sha3('MANAGE_ALLOWED_TOKENS_ROLE'), 'modify allowed tokens role does not match')
       assert.equal(await payroll.MODIFY_PRICE_FEED_ROLE(), web3.sha3('MODIFY_PRICE_FEED_ROLE'), 'modify price feed does not match')
       assert.equal(await payroll.MODIFY_RATE_EXPIRY_ROLE(), web3.sha3('MODIFY_RATE_EXPIRY_ROLE'), 'modify rate expiry role does not match')
     })
