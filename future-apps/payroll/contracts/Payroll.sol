@@ -39,7 +39,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     bytes32 constant public MODIFY_PRICE_FEED_ROLE = 0x74350efbcba8b85341c5bbf70cc34e2a585fc1463524773a12fa0a71d4eb9302;
     bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = 0x79fe989a8899060dfbdabb174ebb96616fa9f1d9dadd739f8d814cbab452404e;
 
-    uint128 internal constant ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
     uint256 internal constant MAX_ALLOWED_TOKENS = 20; // prevent OOG issues with `payday()`
     uint64 internal constant MIN_RATE_EXPIRY = uint64(1 minutes); // 1 min == ~4 block window to mine both a price feed update and a payout
 
@@ -601,8 +600,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
                 // Convert amount (in denomination tokens) to payout token and apply allocation
                 uint256 tokenAmount = _totalAmount.mul(exchangeRate).mul(tokenAllocation);
-                // Divide by 100 for the allocation percentage and by ONE for the exchange rate precision
-                tokenAmount = tokenAmount / (100 * ONE);
+                // Divide by 100 for the allocation percentage and by the exchange rate precision
+                tokenAmount = tokenAmount.div(100).div(feed.ratePrecision());
 
                 // Finance reverts if the payment wasn't possible
                 finance.newImmediatePayment(token, employeeAddress, tokenAmount, paymentReference);
@@ -708,17 +707,11 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @dev Get exchange rate for a token based on the denomination token.
      *      As an example, if the denomination token was USD and ETH's price was 100USD,
-     *      this would return 0.01 * ONE for ETH.
+     *      this would return 0.01 * precision rate for ETH.
      * @param _token Token to get price of in denomination tokens
-     * @return Exchange rate (multiplied by ONE for precision).
-               Exactly ONE if _token is denominationToken or 0 if the exchange rate isn't recent enough.
+     * @return Exchange rate (multiplied by the PPF rate precision)
      */
     function _getExchangeRateInDenominationToken(address _token) internal view returns (uint256) {
-        // Denomination token has always exchange rate of 1
-        if (_token == denominationToken) {
-            return ONE;
-        }
-
         // xrt is the number of `_token` that can be exchanged for one `denominationToken`
         (uint128 xrt, uint64 when) = feed.get(
             denominationToken,  // Base (e.g. USD)
