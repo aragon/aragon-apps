@@ -32,16 +32,16 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
 
         context('when it does not reach the maximum amount allowed', () => {
           it('can allow a token', async () => {
-            const receipt = await payroll.addAllowedToken(DAI.address, { from })
-            assertEvent(receipt, 'AddAllowedToken', { token: DAI.address })
+            const receipt = await payroll.setAllowedToken(DAI.address, true, { from })
+            assertEvent(receipt, 'SetAllowedToken', { token: DAI.address, allowed: true })
 
             assert.equal(await payroll.getAllowedTokensArrayLength(), 1, 'allowed tokens length does not match')
             assert(await payroll.isTokenAllowed(DAI.address), 'denomination token should be allowed')
           })
 
           it('can allow a the zero address', async () => {
-            const receipt = await payroll.addAllowedToken(ZERO_ADDRESS, { from })
-            assertEvent(receipt, 'AddAllowedToken', { token: ZERO_ADDRESS })
+            const receipt = await payroll.setAllowedToken(ZERO_ADDRESS, true, { from })
+            assertEvent(receipt, 'SetAllowedToken', { token: ZERO_ADDRESS, allowed: true })
 
             assert.equal(await payroll.getAllowedTokensArrayLength(), 1, 'allowed tokens length does not match')
             assert(await payroll.isTokenAllowed(ZERO_ADDRESS), 'zero address token should be allowed')
@@ -51,9 +51,9 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
             const erc20Token1 = await deployTokenAndDeposit(owner, finance, 'Token 1', 18)
             const erc20Token2 = await deployTokenAndDeposit(owner, finance, 'Token 2', 16)
 
-            await payroll.addAllowedToken(DAI.address, { from })
-            await payroll.addAllowedToken(erc20Token1.address, { from })
-            await payroll.addAllowedToken(erc20Token2.address, { from })
+            await payroll.setAllowedToken(DAI.address, true, { from })
+            await payroll.setAllowedToken(erc20Token1.address, true, { from })
+            await payroll.setAllowedToken(erc20Token2.address, true, { from })
 
             assert.equal(await payroll.getAllowedTokensArrayLength(), 3, 'allowed tokens length does not match')
             assert(await payroll.isTokenAllowed(DAI.address), 'denomination token should be allowed')
@@ -74,7 +74,7 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
           })
 
           beforeEach('allow tokens, set rates, and add employee', async () => {
-            await Promise.all(tokenAddresses.map(address => payroll.addAllowedToken(address, { from: owner })))
+            await Promise.all(tokenAddresses.map(address => payroll.setAllowedToken(address, true, { from: owner })))
             assert.equal(await payroll.getAllowedTokensArrayLength(), MAX_ALLOWED_TOKENS, 'amount of allowed tokens does not match')
 
             const rates = tokenAddresses.map(() => formatRate(5))
@@ -86,7 +86,7 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
           it('can not add one more token', async () => {
             const erc20Token = await deployTokenAndDeposit(owner, finance, 'Extra token', 18)
 
-            await assertRevert(payroll.addAllowedToken(erc20Token.address), 'PAYROLL_MAX_ALLOWED_TOKENS')
+            await assertRevert(payroll.setAllowedToken(erc20Token.address, true), 'PAYROLL_MAX_ALLOWED_TOKENS')
           })
 
           it('does not run out of gas to payout salary', async () => {
@@ -105,14 +105,79 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
         const from = anyone
 
         it('reverts', async () => {
-          await assertRevert(payroll.addAllowedToken(DAI.address, { from }), 'APP_AUTH_FAILED')
+          await assertRevert(payroll.setAllowedToken(DAI.address, true, { from }), 'APP_AUTH_FAILED')
         })
       })
     })
 
     context('when it has not been initialized yet', function () {
       it('reverts', async () => {
-        await assertRevert(payroll.addAllowedToken(DAI.address, { from: owner }), 'APP_AUTH_FAILED')
+        await assertRevert(payroll.setAllowedToken(DAI.address, true, { from: owner }), 'APP_AUTH_FAILED')
+      })
+    })
+  })
+
+  describe('removeAllowedToken', () => {
+    context('when it has already been initialized', function () {
+      beforeEach('initialize payroll app using USD as denomination token', async () => {
+        await payroll.initialize(finance.address, USD, priceFeed.address, RATE_EXPIRATION_TIME, { from: owner })
+      })
+
+      context('when the sender has permissions', () => {
+        const from = owner
+
+        context('when the given token is allowed', () => {
+          beforeEach('allow token', async () => {
+            await payroll.setAllowedToken(DAI.address, true, { from })
+          })
+
+          it('can remove an allowed token', async () => {
+            assert.equal(await payroll.getAllowedTokensArrayLength(), 1, 'allowed tokens length does not match')
+
+            const receipt = await payroll.setAllowedToken(DAI.address, false, { from })
+            assertEvent(receipt, 'SetAllowedToken', { token: DAI.address, allowed: false })
+
+            assert.equal(await payroll.getAllowedTokensArrayLength(), 0, 'allowed tokens length does not match')
+            assert.isFalse(await payroll.isTokenAllowed(DAI.address), 'token should not be allowed')
+          })
+
+          it('can remove multiple allowed tokens', async () => {
+            const erc20Token1 = await deployTokenAndDeposit(owner, finance, 'Token 1', 18)
+            await payroll.setAllowedToken(erc20Token1.address, true, { from })
+            const erc20Token2 = await deployTokenAndDeposit(owner, finance, 'Token 2', 16)
+            await payroll.setAllowedToken(erc20Token2.address, true, { from })
+            assert.equal(await payroll.getAllowedTokensArrayLength(), 3, 'allowed tokens length does not match')
+
+            await payroll.setAllowedToken(DAI.address, false, { from })
+            await payroll.setAllowedToken(erc20Token1.address, false, { from })
+
+            assert.equal(await payroll.getAllowedTokensArrayLength(), 1, 'allowed tokens length does not match')
+            assert.isFalse(await payroll.isTokenAllowed(DAI.address), 'token should not be allowed')
+            assert.isFalse(await payroll.isTokenAllowed(erc20Token1.address), 'token should be allowed')
+            assert.isTrue(await payroll.isTokenAllowed(erc20Token2.address), 'token should not be allowed')
+          })
+        })
+
+        context('when the given token is not allowed', () => {
+          it('reverts', async () => {
+            const erc20Token = await deployTokenAndDeposit(owner, finance, 'Some Token', 18)
+            await assertRevert(payroll.setAllowedToken(erc20Token.address, false), 'PAYROLL_TOKEN_NOT_ALLOWED')
+          })
+        })
+      })
+
+      context('when the sender does not have permissions', () => {
+        const from = anyone
+
+        it('reverts', async () => {
+          await assertRevert(payroll.setAllowedToken(DAI.address, false, { from }), 'APP_AUTH_FAILED')
+        })
+      })
+    })
+
+    context('when it has not been initialized yet', function () {
+      it('reverts', async () => {
+        await assertRevert(payroll.setAllowedToken(DAI.address, false, { from: owner }), 'APP_AUTH_FAILED')
       })
     })
   })
@@ -126,7 +191,7 @@ contract('Payroll allowed tokens,', ([owner, employee, anyone]) => {
       context('when the given token is not the zero address', () => {
         context('when the requested token was allowed', () => {
           beforeEach('allow denomination token', async () => {
-            await payroll.addAllowedToken(DAI.address, { from: owner })
+            await payroll.setAllowedToken(DAI.address, true, { from: owner })
           })
 
           it('returns true', async () => {

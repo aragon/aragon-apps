@@ -62,13 +62,13 @@
       "params": ["Employee Id", "Amount"]
     },
     {
-      "name": "Allowed Tokens Manager",
-      "id": "ALLOWED_TOKENS_MANAGER_ROLE",
-      "params": ["New token"]
+      "name": "Manage allowed tokens",
+      "id": "MANAGE_ALLOWED_TOKENS_ROLE",
+      "params": ["Token", "Allowed"]
     },
     {
-      "name": "Change Price Feed",
-      "id": "CHANGE_PRICE_FEED_ROLE",
+      "name": "Modify Price Feed",
+      "id": "MODIFY_PRICE_FEED_ROLE",
       "params": ["New price feed", "Old price feed"]
     },
     {

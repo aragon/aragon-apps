@@ -163,8 +163,8 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
           const allocationANT = 20
 
           beforeEach('set tokens allocation', async () => {
-            await payroll.addAllowedToken(ANT.address, { from: owner })
-            await payroll.addAllowedToken(DAI.address, { from: owner })
+            await payroll.setAllowedToken(ANT.address, true, { from: owner })
+            await payroll.setAllowedToken(DAI.address, true, { from: owner })
             await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], { from })
           })
 
@@ -233,19 +233,31 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
             }
 
             const itHandlesBonusesProperly = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
-              context('when exchange rates are not expired', () => {
-                assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
-                assertEmployeeIsNotRemoved(requestedAmount, expectedRequestedAmount)
+              context('when allocated tokens are still allowed', () => {
+                context('when exchange rates are not expired', () => {
+                  assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
+                  assertEmployeeIsNotRemoved(requestedAmount, expectedRequestedAmount)
+                })
+
+                context('when exchange rates are expired', () => {
+                  beforeEach('expire exchange rates', async () => {
+                    const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
+                    await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE], expiredTimestamp)
+                  })
+
+                  it('reverts', async () => {
+                    await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                  })
+                })
               })
 
-              context('when exchange rates are expired', () => {
-                beforeEach('expire exchange rates', async () => {
-                  const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
-                  await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE], expiredTimestamp)
+              context('when allocated tokens are not allowed anymore', () => {
+                beforeEach('remove allowed tokens', async () => {
+                  await payroll.setAllowedToken(DAI.address, false, { from: owner })
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                  await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
                 })
               })
             }
@@ -437,7 +449,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bn(0)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
 
@@ -445,7 +457,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bonusAmount.minus(1)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
 
@@ -453,7 +465,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bonusAmount
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
 
@@ -461,7 +473,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bonusAmount.plus(1)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
           })
@@ -471,7 +483,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bigExp(100, 18)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
 
@@ -479,7 +491,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bn(0)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
           })

@@ -101,20 +101,20 @@ contract PayrollKit is KitBase {
 
         // Deploy payroll tokens
         MiniMeToken token1 = installManagedToken(dao, acl, root, finance, "Token 1", "TK1");
-        payroll.addAllowedToken(token1);
+        payroll.setAllowedToken(token1, true);
 
         MiniMeToken token2 = installManagedToken(dao, acl, root, finance, "Token 2", "TK2");
-        payroll.addAllowedToken(token2);
+        payroll.setAllowedToken(token2, true);
 
         MiniMeToken token3 = installManagedToken(dao, acl, root, finance, "Token 3", "TK3");
-        payroll.addAllowedToken(token3);
+        payroll.setAllowedToken(token3, true);
 
         // Add employees to payroll
         addEmployees(payroll, root, token1, token2);
 
         // Clean up
         cleanupDAOPermissions(dao, acl, root);
-        cleanupPermission(acl, root, payroll, payroll.ALLOWED_TOKENS_MANAGER_ROLE());
+        cleanupPermission(acl, root, payroll, payroll.MANAGE_ALLOWED_TOKENS_ROLE());
         cleanupPermission(acl, root, payroll, payroll.ADD_EMPLOYEE_ROLE());
 
         emit DeployInstance(dao);
@@ -158,7 +158,7 @@ contract PayrollKit is KitBase {
         acl.createPermission(root, payroll, payroll.TERMINATE_EMPLOYEE_ROLE(), root);
 
         // Allow this contract to add tokens to Payroll for now
-        acl.createPermission(this, payroll, payroll.ALLOWED_TOKENS_MANAGER_ROLE(), this);
+        acl.createPermission(this, payroll, payroll.MANAGE_ALLOWED_TOKENS_ROLE(), this);
 
         // Allow this contract to add employees to Payroll for now
         acl.createPermission(this, payroll, payroll.ADD_EMPLOYEE_ROLE(), this);
