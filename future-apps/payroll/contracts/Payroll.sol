@@ -601,7 +601,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
                 // Convert amount (in denomination tokens) to payout token and apply allocation
                 uint256 tokenAmount = _totalAmount.mul(exchangeRate).mul(tokenAllocation);
                 // Divide by 100 for the allocation percentage and by the exchange rate precision
-                tokenAmount = tokenAmount.div(feed.ratePrecision().mul(100));
+                tokenAmount = tokenAmount.div(100).div(feed.ratePrecision());
 
                 // Finance reverts if the payment wasn't possible
                 finance.newImmediatePayment(token, employeeAddress, tokenAmount, paymentReference);
