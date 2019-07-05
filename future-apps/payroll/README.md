@@ -16,9 +16,9 @@ Initializing a Payroll app requires the following parameters:
 
 #### Add allowed token
 ```
-payroll.addAllowedToken(address _allowedToken)
+payroll.setAllowedToken(address _allowedToken, true)
 ```
-Add token to the list of accepted ones for salary payment. It needs `ALLOWED_TOKEN_MANAGER_ROLE`.
+Add token to the list of accepted ones for salary payment. It needs `MANAGE_ALLOWED_TOKENS_ROLE`.
 
 #### Set exchange rate
 ```
