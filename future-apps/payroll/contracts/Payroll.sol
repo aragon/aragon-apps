@@ -662,8 +662,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // into their accrued salary
         uint256 extraSalary = currentSalaryPaid % salary;
         if (extraSalary > 0) {
-            timeDiff.add(1);
-            employee.accruedSalary = extraSalary;
+            timeDiff = timeDiff.add(1);
+            employee.accruedSalary = salary - currentSalaryPaid;
         } else if (accruedSalary > 0) {
             employee.accruedSalary = 0;
         }
