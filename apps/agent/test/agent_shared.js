@@ -1,6 +1,6 @@
 const { hash: namehash } = require('eth-ens-namehash')
 const ethUtil = require('ethereumjs-util')
-const ethABI = new (require('web3-eth-abi').AbiCoder)()
+const ethABI = require('web3-eth-abi')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const assertEvent = require('@aragon/test-helpers/assertEvent')
