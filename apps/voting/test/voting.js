@@ -507,6 +507,12 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         it('fails creating a vote before initialization', async () => {
             await assertRevert(voting.newVote(encodeCallScript([]), ''), errors.APP_AUTH_FAILED)
         })
+
+        it('fails to forward actions before initialization', async () => {
+            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+            const script = encodeCallScript([action])
+            await assertRevert(voting.forward(script, { from: holder51 }), errors.VOTING_CAN_NOT_FORWARD)
+        })
     })
 
     context('isValuePct unit test', async () => {
