@@ -597,7 +597,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             })
           })
 
-          context.only('when the employee has a huge salary', () => {
+          context('when the employee has a huge salary', () => {
             const salary = MAX_UINT256
 
             beforeEach('add employee', async () => {
