@@ -53,8 +53,6 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         VOTING_CAN_NOT_EXECUTE: "VOTING_CAN_NOT_EXECUTE",
         VOTING_CAN_NOT_FORWARD: "VOTING_CAN_NOT_FORWARD",
         VOTING_NO_VOTING_POWER: "VOTING_NO_VOTING_POWER",
-        VOTING_CHANGE_SUPP_TOO_BIG: "VOTING_CHANGE_SUPP_TOO_BIG"
-
     })
 
     const NOW = 1
@@ -109,7 +107,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         it('cannot initialize base app', async () => {
             const newVoting = await Voting.new()
             assert.isTrue(await newVoting.isPetrified())
-            await assertRevert(newVoting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration))
+            await assertRevert(newVoting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration), errors.INIT_ALREADY_INITIALIZED)
         })
 
         it('checks it is forwarder', async () => {
@@ -378,7 +376,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration)
         })
 
-        it('fails creating a survey if token has no holder', async () => {
+        it('fails creating a vote if token has no holder', async () => {
             await assertRevert(voting.newVote(EMPTY_SCRIPT, 'metadata'), errors.VOTING_NO_VOTING_POWER)
         })
     })
