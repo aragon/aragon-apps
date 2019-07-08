@@ -29,11 +29,9 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
     SURVEY_CAN_NOT_VOTE: "SURVEY_CAN_NOT_VOTE",
     SURVEY_VOTE_WRONG_INPUT: "SURVEY_VOTE_WRONG_INPUT",
     SURVEY_VOTE_WRONG_OPTION: "SURVEY_VOTE_WRONG_OPTION",
-    SURVEY_VOTE_WHOLE_WRONG_OPTION: "SURVEY_VOTE_WHOLE_WRONG_OPTION",
     SURVEY_NO_STAKE: "SURVEY_NO_STAKE",
     SURVEY_OPTIONS_NOT_ORDERED: "SURVEY_OPTIONS_NOT_ORDERED",
     SURVEY_NO_OPTION: "SURVEY_NO_OPTION"
-
   })
 
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -91,7 +89,7 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
     it('cannot initialize base app', async () => {
       const newSurvey = await getContract('Survey').new()
       assert.isTrue(await newSurvey.isPetrified())
-      await assertRevert(newSurvey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime))
+      await assertRevert(newSurvey.initialize(token.address, minimumAcceptanceParticipationPct, surveyTime), errors.INIT_ALREADY_INITIALIZED)
     })
 
     it('can change minimum acceptance participation', async () => {
@@ -145,127 +143,144 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
         await assertRevert(survey.getOptionPower(surveyId, optionsCount + 1), errors.SURVEY_NO_OPTION)
       })
 
-      it('counts votes properly', async () => {
-        await survey.voteOption(surveyId, 10, { from: holder31 })
-        await survey.voteOption(surveyId, 11, { from: holder31 }) // h31 votes for option 11
+      describe('single option vote', () => {
+        it('counts votes properly', async () => {
+          await survey.voteOption(surveyId, 10, { from: holder31 })
+          await survey.voteOption(surveyId, 11, { from: holder31 }) // h31 votes for option 11
 
-        await survey.voteOption(surveyId, 12, { from: holder50 }) // h51 votes for option 12
-        await survey.voteOption(surveyId, 1, { from: holder19 }) // h19 votes for option 1
+          await survey.voteOption(surveyId, 12, { from: holder50 }) // h51 votes for option 12
+          await survey.voteOption(surveyId, 1, { from: holder19 }) // h19 votes for option 1
 
-        assert.equal(await survey.getOptionPower(surveyId, 1), 19)
-        assert.equal(await survey.getOptionPower(surveyId, 10), 0)
-        assert.equal(await survey.getOptionPower(surveyId, 11), 31)
-        assert.equal(await survey.getOptionPower(surveyId, 12), 50)
+          assert.equal(await survey.getOptionPower(surveyId, 1), 19)
+          assert.equal(await survey.getOptionPower(surveyId, 10), 0)
+          assert.equal(await survey.getOptionPower(surveyId, 11), 31)
+          assert.equal(await survey.getOptionPower(surveyId, 12), 50)
 
-        const state = await survey.getSurvey(surveyId)
+          const state = await survey.getSurvey(surveyId)
 
-        assert.equal(state[5], 100, 'participation should be 100')
+          assert.equal(state[5], 100, 'participation should be 100')
+        })
+
+        /* next 2 tests check if isParticipationAchieved works properly
+        * checking whether participation was above minimum set when survey
+        * was created
+        */
+        it('accounts for achieved participation properly', async () => {
+          await survey.voteOption(surveyId, 1, { from: holder31 })
+          assert.isTrue(await survey.isParticipationAchieved(surveyId), 'participation achieved should be true')
+        })
+
+        it('accounts for non-achieved participation properly', async () => {
+          await survey.voteOption(surveyId, 1, { from: holder19 })
+          assert.isFalse(await survey.isParticipationAchieved(surveyId), 'participation achieved should be false')
+        })
+
+        it('fails if voting on non-existing option', async () => {
+          await survey.voteOption(surveyId, optionsCount, { from: holder31 })
+
+          await assertRevert(survey.voteOption(surveyId, optionsCount + 1, { from: holder31 }), errors.SURVEY_VOTE_WRONG_OPTION)
+        })
+
+        it('fails if single-option vote is for ABSTAIN_VOTE', async () => {
+          await assertRevert(survey.voteOption(surveyId, ABSTAIN_VOTE, { from: holder50 }), errors.SURVEY_VOTE_WRONG_OPTION)
+        })
+
+        it('allows to remove and re-vote', async () => {
+          await survey.voteOption(surveyId, 1, { from: holder50 })
+          await survey.resetVote(surveyId, { from: holder50 })
+          assert.equal(await survey.getOptionPower(surveyId, 1), 0)
+          await survey.voteOption(surveyId, 100, { from: holder50 })
+
+          assert.equal(await survey.getOptionPower(surveyId, 1), 0)
+          assert.equal(await survey.getOptionPower(surveyId, 0), 0)
+          assert.equal(await survey.getOptionPower(surveyId, 100), 50)
+        })
+
+        it('changing min participation doesnt affect survey min participation', async () => {
+          await survey.changeMinAcceptParticipationPct(pct16(50))
+
+          await survey.mockIncreaseTime(surveyTime + 1)
+
+          const state = await survey.getSurvey(surveyId)
+          assert.deepEqual(state[3], minimumAcceptanceParticipationPct, 'acceptance participation in survey should stay equal')
+        })
+
+        it('token transfers dont affect voting', async () => {
+          await token.transfer(nonHolder, 31, { from: holder31 })
+
+          await survey.voteOption(surveyId, 1, { from: holder31 })
+          const optionSupport = await survey.getOptionPower(surveyId, 1)
+
+          assert.equal(optionSupport, 31, 'vote should have been counted')
+          assert.equal(await token.balanceOf(holder31), 0, 'balance should be 0 at current block')
+        })
+
+        it('fails when non-holder votes', async () => {
+          await assertRevert(survey.voteOption(surveyId, 1, { from: nonHolder }), errors.SURVEY_CAN_NOT_VOTE)
+        })
+
+        it('fails when voting after survey closes', async () => {
+          await survey.mockIncreaseTime(surveyTime + 1)
+          await assertRevert(survey.voteOption(surveyId, 1, { from: holder31 }), errors.SURVEY_CAN_NOT_VOTE)
+        })
       })
 
-      /* next 2 tests check if isParticipationAchieved works properly
-       * checking whether participation was above minimum set when survey
-       * was created
-       */
-      it('accounts for achieved participation properly', async () => {
-        await survey.voteOption(surveyId, 1, { from: holder31 })
-        assert.isTrue(await survey.isParticipationAchieved(surveyId), 'participation achieved should be true')
-      })
+      describe('multi option votes', () => {
+        it('casts complete multi option vote', async () => {
+          await survey.voteOptions(surveyId, [1,2], [10, 21], { from: holder31 })
+          const voterState = await survey.getVoterState(surveyId, holder31)
+          assert.equal(voterState[0][0].toString(), ABSTAIN_VOTE, "First option should be NO VOTE")
+          assert.equal(voterState[1][0].toString(), 0, "NO VOTE stake doesn't match")
+          assert.equal(voterState[0][1].toString(), 1, "First voted option doesn't match")
+          assert.equal(voterState[1][1].toString(), 10, "First voted stake doesn't match")
+          assert.equal(voterState[0][2].toString(), 2, "Second voted option doesn't match")
+          assert.equal(voterState[1][2].toString(), 21, "Second voted stake doesn't match")
+        })
 
-      it('accounts for non-achieved participation properly', async () => {
-        await survey.voteOption(surveyId, 1, { from: holder19 })
-        assert.isFalse(await survey.isParticipationAchieved(surveyId), 'participation achieved should be false')
-      })
+        it('casts incomplete multi option vote', async () => {
+          // 10 = 20 = 30, 1 vote missing
+          await survey.voteOptions(surveyId, [1,2], [10, 20], { from: holder31 })
+          const voterState = await survey.getVoterState(surveyId, holder31)
+          assert.equal(voterState[0][0].toString(), ABSTAIN_VOTE, "First option should be NO VOTE")
+          assert.equal(voterState[1][0].toString(), 1, "NO VOTE stake doesn't match")
+          assert.equal(voterState[0][1].toString(), 1, "First voted option doesn't match")
+          assert.equal(voterState[1][1].toString(), 10, "First voted stake doesn't match")
+          assert.equal(voterState[0][2].toString(), 2, "Second voted option doesn't match")
+          assert.equal(voterState[1][2].toString(), 20, "Second voted stake doesn't match")
+        })
 
-      it('fails if voting on non-existing option', async () => {
-        await survey.voteOption(surveyId, optionsCount, { from: holder31 })
+        it('fails if multi option vote has different size arrays', async () => {
+          await assertRevert(survey.voteOptions(surveyId, [1,2], [10, 10, 11], { from: holder31 }), errors.SURVEY_VOTE_WRONG_INPUT)
+        })
 
-        await assertRevert(survey.voteOption(surveyId, optionsCount + 1, { from: holder31 }), errors.SURVEY_VOTE_WRONG_OPTION)
-      })
+        it('fails if multi option vote has unordered options', async () => {
+          await assertRevert(survey.voteOptions(surveyId, [2,1], [10, 21], { from: holder31 }), errors.SURVEY_OPTIONS_NOT_ORDERED)
+        })
 
-      it('fails if vote has no options', async () => {
-        await assertRevert(survey.voteOptions(surveyId, [], [], { from: holder50 }), errors.SURVEY_VOTE_WRONG_INPUT)
-      })
+        it('fails if multi option vote has ABSTAIN_VOTE option', async () => {
+          await assertRevert(survey.voteOptions(surveyId, [ABSTAIN_VOTE, 2], [10, 21], { from: holder31 }), errors.SURVEY_VOTE_WRONG_OPTION)
+        })
 
-      it('fails if single-option vote is for ABSTAIN_VOTE', async () => {
-        await assertRevert(survey.voteOption(surveyId, ABSTAIN_VOTE, { from: holder50 }), errors.SURVEY_VOTE_WRONG_OPTION)
-      })
+        it('fails if multi option vote has a zero stake option', async () => {
+          await assertRevert(survey.voteOptions(surveyId, [1,2], [10, 0], { from: holder31 }), errors.SURVEY_NO_STAKE)
+        })
 
-      it('allows to remove and re-vote', async () => {
-        await survey.voteOption(surveyId, 1, { from: holder50 })
-        await survey.resetVote(surveyId, { from: holder50 })
-        assert.equal(await survey.getOptionPower(surveyId, 1), 0)
-        await survey.voteOption(surveyId, 100, { from: holder50 })
+        it('fails if multi option vote includes non-existent option', async () => {
+          await assertRevert(survey.voteOptions(surveyId, [optionsCount + 1], [10], { from: holder31 }), errors.SURVEY_VOTE_WRONG_OPTION)
+        })
 
-        assert.equal(await survey.getOptionPower(surveyId, 1), 0)
-        assert.equal(await survey.getOptionPower(surveyId, 0), 0)
-        assert.equal(await survey.getOptionPower(surveyId, 100), 50)
-      })
+        it('fails if multi option vote does not include any options', async () => {
+          await assertRevert(survey.voteOptions(surveyId, [], [], { from: holder50 }), errors.SURVEY_VOTE_WRONG_INPUT)
+        })
 
-      it('changing min participation doesnt affect survey min participation', async () => {
-        await survey.changeMinAcceptParticipationPct(pct16(50))
+        it('fails when non-holder votes', async () => {
+          await assertRevert(survey.voteOptions(surveyId, [1], [1], { from: nonHolder }), errors.SURVEY_CAN_NOT_VOTE)
+        })
 
-        await survey.mockIncreaseTime(surveyTime + 1)
-
-        const state = await survey.getSurvey(surveyId)
-        assert.deepEqual(state[3], minimumAcceptanceParticipationPct, 'acceptance participation in survey should stay equal')
-      })
-
-      it('token transfers dont affect voting', async () => {
-        await token.transfer(nonHolder, 31, { from: holder31 })
-
-        await survey.voteOption(surveyId, 1, { from: holder31 })
-        const optionSupport = await survey.getOptionPower(surveyId, 1)
-
-        assert.equal(optionSupport, 31, 'vote should have been counted')
-        assert.equal(await token.balanceOf(holder31), 0, 'balance should be 0 at current block')
-      })
-
-      it('throws when non-holder votes', async () => {
-        await assertRevert(survey.voteOption(surveyId, 1, { from: nonHolder }), errors.SURVEY_CAN_NOT_VOTE)
-      })
-
-      it('throws when voting after survey closes', async () => {
-        await survey.mockIncreaseTime(surveyTime + 1)
-        await assertRevert(survey.voteOption(surveyId, 1, { from: holder31 }), errors.SURVEY_CAN_NOT_VOTE)
-      })
-
-      it('casts complete multi option vote', async () => {
-        await survey.voteOptions(surveyId, [1,2], [10, 21], { from: holder31 })
-        const voterState = await survey.getVoterState(surveyId, holder31)
-        assert.equal(voterState[0][0].toString(), ABSTAIN_VOTE, "First option should be NO VOTE")
-        assert.equal(voterState[1][0].toString(), 0, "NO VOTE stake doesn't match")
-        assert.equal(voterState[0][1].toString(), 1, "First voted option doesn't match")
-        assert.equal(voterState[1][1].toString(), 10, "First voted stake doesn't match")
-        assert.equal(voterState[0][2].toString(), 2, "Second voted option doesn't match")
-        assert.equal(voterState[1][2].toString(), 21, "Second voted stake doesn't match")
-      })
-
-      it('casts incomplete multi option vote', async () => {
-        // 10 = 20 = 30, 1 vote missing
-        await survey.voteOptions(surveyId, [1,2], [10, 20], { from: holder31 })
-        const voterState = await survey.getVoterState(surveyId, holder31)
-        assert.equal(voterState[0][0].toString(), ABSTAIN_VOTE, "First option should be NO VOTE")
-        assert.equal(voterState[1][0].toString(), 1, "NO VOTE stake doesn't match")
-        assert.equal(voterState[0][1].toString(), 1, "First voted option doesn't match")
-        assert.equal(voterState[1][1].toString(), 10, "First voted stake doesn't match")
-        assert.equal(voterState[0][2].toString(), 2, "Second voted option doesn't match")
-        assert.equal(voterState[1][2].toString(), 20, "Second voted stake doesn't match")
-      })
-
-      it('fails if multi option vote has different size arrays', async () => {
-        await assertRevert(survey.voteOptions(surveyId, [1,2], [10, 10, 11], { from: holder31 }), errors.SURVEY_VOTE_WRONG_INPUT)
-      })
-
-      it('fails if multi option vote has unordered options', async () => {
-        await assertRevert(survey.voteOptions(surveyId, [2,1], [10, 21], { from: holder31 }), errors.SURVEY_OPTIONS_NOT_ORDERED)
-      })
-
-      it('fails if multi option vote has NO VOTE option', async () => {
-        await assertRevert(survey.voteOptions(surveyId, [ABSTAIN_VOTE, 2], [10, 21], { from: holder31 }), errors.SURVEY_VOTE_WRONG_OPTION)
-      })
-
-      it('fails if multi option vote has a zero stake option', async () => {
-        await assertRevert(survey.voteOptions(surveyId, [1,2], [10, 0], { from: holder31 }), errors.SURVEY_NO_STAKE)
+        it('fails when voting after survey closes', async () => {
+          await survey.mockIncreaseTime(surveyTime + 1)
+          await assertRevert(survey.voteOptions(surveyId, [1], [1], { from: holder31 }), errors.SURVEY_CAN_NOT_VOTE)
+        })
       })
     })
   })
