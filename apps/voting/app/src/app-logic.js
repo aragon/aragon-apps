@@ -1,34 +1,46 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { AragonApi, useApi, useAppState } from '@aragon/api-react'
+import { AragonApi, useApi, useAppState, usePath } from '@aragon/api-react'
 import appStateReducer from './app-state-reducer'
 import { usePanelState } from './utils-hooks'
 import { useVotes } from './vote-hooks'
 import { VOTE_YEA } from './vote-types'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 
+function voteIdFromPath(path) {
+  const matches = path.match(/^\/vote\/([0-9]+)\/?$/)
+  return matches ? matches[1] : '-1'
+}
+
 // Get the vote currently selected, or null otherwise.
 export function useSelectedVote(votes) {
-  const [selectedVoteId, setSelectedVoteId] = useState('-1')
+  const [path, requestPath] = usePath()
+  const [setSelectedVoteId] = useState('-1')
   const { ready } = useAppState()
 
   // The memoized vote currently selected.
   const selectedVote = useMemo(() => {
-    // The `ready` check prevents a vote to be selected
-    // until the app state is fully ready.
-    if (!ready || selectedVoteId === '-1') {
+    const voteId = voteIdFromPath(path)
+
+    // The `ready` check prevents a vote to be
+    // selected until the app state is fully ready.
+    if (!ready || voteId === '-1') {
       return null
     }
-    return votes.find(vote => vote.voteId === selectedVoteId) || null
-  }, [selectedVoteId, votes, ready])
 
-  return [
-    selectedVote,
+    return votes.find(vote => vote.voteId === voteId) || null
+  }, [path, ready, votes])
 
-    // setSelectedVoteId() is exported directly: since `selectedVoteId` is
-    // set in the `selectedVote` dependencies, it means that the useMemo()
-    // will be updated every time `selectedVoteId` changes.
-    setSelectedVoteId,
-  ]
+  const selectVote = useCallback(
+    voteId => {
+      if (!voteId) {
+        return
+      }
+      requestPath(voteId === '-1' ? '/' : `/vote/${voteId}`)
+    },
+    [requestPath]
+  )
+
+  return [selectedVote, selectVote]
 }
 
 // Create a new vote
@@ -76,13 +88,11 @@ export function useExecuteAction(onDone) {
 export function useSelectedVotePanel(selectedVote, selectVote) {
   const selectedVoteId = selectedVote ? selectedVote.voteId : '-1'
 
-  // Only deselect the current vote when the panel is fully closed, so that
-  // the panel doesn’t appear empty while being closed.
-  const onDidClose = useCallback(() => {
+  const onWillClose = useCallback(() => {
     selectVote('-1')
   }, [selectVote])
 
-  const selectedVotePanel = usePanelState({ onDidClose })
+  const selectedVotePanel = usePanelState({ onWillClose })
 
   // This is to help the React Hooks linter.
   const { requestOpen, didOpen } = selectedVotePanel
@@ -100,11 +110,20 @@ export function useSelectedVotePanel(selectedVote, selectVote) {
 // Handles the main logic of the app.
 export function useAppLogic() {
   const { isSyncing, ready } = useAppState()
+  const [path, requestPath] = usePath()
 
   const votes = useVotes()
   const [selectedVote, selectVote] = useSelectedVote(votes)
+
   const newVotePanel = usePanelState()
   const selectedVotePanel = useSelectedVotePanel(selectedVote, selectVote)
+
+  useEffect(() => {
+    console.log('selectedVote?', selectedVote)
+    if (selectedVote === null) {
+      selectedVotePanel.requestClose(true)
+    }
+  }, [selectedVote])
 
   const actions = {
     createVote: useCreateVoteAction(newVotePanel.requestClose),

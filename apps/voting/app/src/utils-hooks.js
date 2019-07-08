@@ -34,7 +34,12 @@ export function usePromise(fn, memoParams, defaultValue) {
 
 // Handles the state of a panel.
 // Pass `onTransitionEnd` to the same SidePanel prop.
-export function usePanelState({ onDidOpen = noop, onDidClose = noop } = {}) {
+export function usePanelState({
+  onDidOpen = noop,
+  onDidClose = noop,
+  onWillOpen = noop,
+  onWillClose = noop,
+} = {}) {
   const [visible, setVisible] = useState(false)
 
   // `didOpen` is set to `true` when the opening transition of the panel has
@@ -45,10 +50,12 @@ export function usePanelState({ onDidOpen = noop, onDidClose = noop } = {}) {
   const requestOpen = useCallback(() => {
     setVisible(true)
     setDidOpen(false)
+    onWillOpen()
   }, [setVisible, setDidOpen])
 
-  const requestClose = useCallback(() => {
+  const requestClose = useCallback((onlyClose) => {
     setVisible(false)
+    if (!onlyClose) onWillClose()
   }, [setVisible])
 
   // To be passed to the onTransitionEnd prop of SidePanel.

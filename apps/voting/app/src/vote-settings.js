@@ -6,7 +6,7 @@ const voteSettings = [
 
 export function hasLoadedVoteSettings(state) {
   state = state || {}
-  return voteSettings.reduce((loaded, [_, key]) => loaded && !!state[key], true)
+  return voteSettings.every(([_, key]) => state[key])
 }
 
 export default voteSettings
