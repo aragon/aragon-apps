@@ -49,7 +49,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     context('when the employee requests only ETH', () => {
       beforeEach('set token allocation', async () => {
-        await payroll.determineAllocation([ETH], [100], [inverseRate(ETH_RATE)], { from: employee })
+        await payroll.determineAllocation([ETH], [100], { from: employee })
       })
 
       it('receives the expected amount of ETH', async () => {
@@ -57,7 +57,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -82,7 +82,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     context('when the employee requests only ANT', () => {
       beforeEach('set token allocation', async () => {
-        await payroll.determineAllocation([ANT.address], [100], [inverseRate(ANT_RATE)], { from: employee })
+        await payroll.determineAllocation([ANT.address], [100], { from: employee })
       })
 
       it('receives the expected amount of ANT', async () => {
@@ -90,7 +90,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ANT_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -115,7 +115,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     context('when the employee requests multiple tokens', () => {
       beforeEach('set token allocations', async () => {
-        await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], [inverseRate(ETH_RATE), inverseRate(DAI_RATE), inverseRate(ANT_RATE)], { from: employee })
+        await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], { from: employee })
       })
 
       it('receives the expected amount of tokens', async () => {
@@ -123,7 +123,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_RATE), inverseRate(DAI_RATE), inverseRate(ANT_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -182,7 +182,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     context('when the employee requests only ETH', () => {
       beforeEach('set token allocation', async () => {
-        await payroll.determineAllocation([ETH], [100], [ONE], { from: employee })
+        await payroll.determineAllocation([ETH], [100], { from: employee })
       })
 
       it('receives the expected amount of ETH', async () => {
@@ -190,7 +190,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [ONE], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -215,7 +215,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     context('when the employee requests only ANT', () => {
       beforeEach('set token allocation', async () => {
-        await payroll.determineAllocation([ANT.address], [100], [ETH_TO_ANT_RATE], { from: employee })
+        await payroll.determineAllocation([ANT.address], [100], { from: employee })
       })
 
       it('receives the expected amount of ANT', async () => {
@@ -223,7 +223,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [ETH_TO_ANT_RATE], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -249,7 +249,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
     context('when the employee requests multiple tokens', () => {
       context('when the exchange rates match the min acceptable ones', () => {
         beforeEach('set token allocations', async () => {
-          await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], [ONE, ETH_TO_DAI_RATE, ETH_TO_ANT_RATE], { from: employee })
+          await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], { from: employee })
         })
 
         it('receives the expected amount of tokens', async () => {
@@ -257,7 +257,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
           const previousDAI = await DAI.balanceOf(employee)
           const previousANT = await ANT.balanceOf(employee)
 
-          const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+          const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [ONE, ETH_TO_DAI_RATE, ETH_TO_ANT_RATE], { from: employee })
           const { gasPrice } = await web3.eth.getTransaction(tx)
           const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -286,11 +286,11 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
       context('when the exchange rates does not match the min acceptable ones', () => {
         beforeEach('set token allocations', async () => {
-          await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], [ONE.mul(2), ETH_TO_DAI_RATE, ETH_TO_ANT_RATE], { from: employee })
+          await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], { from: employee })
         })
 
         it('reverts', async () => {
-          await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
+          await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [ONE.mul(2), ETH_TO_DAI_RATE, ETH_TO_ANT_RATE], { from: employee }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
         })
       })
     })
@@ -325,7 +325,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     context('when the employee requests only ETH', () => {
       beforeEach('set token allocation', async () => {
-        await payroll.determineAllocation([ETH], [100], [inverseRate(ETH_TO_DAI_RATE)], { from: employee })
+        await payroll.determineAllocation([ETH], [100], { from: employee })
       })
 
       it('receives the expected amount of ETH', async () => {
@@ -333,7 +333,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_TO_DAI_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -358,7 +358,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     context('when the employee requests only ANT', () => {
       beforeEach('set token allocation', async () => {
-        await payroll.determineAllocation([ANT.address], [100], [inverseRate(ANT_TO_DAI_RATE)], { from: employee })
+        await payroll.determineAllocation([ANT.address], [100], { from: employee })
       })
 
       it('receives the expected amount of ANT', async () => {
@@ -366,7 +366,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ANT_TO_DAI_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -392,7 +392,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
     context('when the employee requests multiple tokens', () => {
       context('when the exchange rates match the min acceptable ones', () => {
         beforeEach('set token allocations', async () => {
-          await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], [inverseRate(ETH_TO_DAI_RATE), ONE, inverseRate(ANT_TO_DAI_RATE)], { from: employee })
+          await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], { from: employee })
         })
 
         it('receives the expected amount of tokens', async () => {
@@ -400,7 +400,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
           const previousDAI = await DAI.balanceOf(employee)
           const previousANT = await ANT.balanceOf(employee)
 
-          const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+          const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_TO_DAI_RATE), ONE, inverseRate(ANT_TO_DAI_RATE)], { from: employee })
           const { gasPrice } = await web3.eth.getTransaction(tx)
           const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -430,11 +430,11 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     context('when the exchange rates does not match the min acceptable ones', () => {
       beforeEach('set token allocations', async () => {
-        await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], [inverseRate(ETH_TO_DAI_RATE), ONE.mul(2), inverseRate(ANT_TO_DAI_RATE)], { from: employee })
+        await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], { from: employee })
       })
 
       it('reverts', async () => {
-        await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
+        await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_TO_DAI_RATE), ONE.mul(2), inverseRate(ANT_TO_DAI_RATE)], { from: employee }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
       })
     })
   })
@@ -468,7 +468,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     context('when the employee requests only ETH', () => {
       beforeEach('set token allocation', async () => {
-        await payroll.determineAllocation([ETH], [100], [inverseRate(ETH_TO_ANT_RATE)], { from: employee })
+        await payroll.determineAllocation([ETH], [100], { from: employee })
       })
 
       it('receives the expected amount of ETH', async () => {
@@ -476,7 +476,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_TO_ANT_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -501,7 +501,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
     context('when the employee requests only ANT', () => {
       beforeEach('set token allocation', async () => {
-        await payroll.determineAllocation([ANT.address], [100], [ONE], { from: employee })
+        await payroll.determineAllocation([ANT.address], [100], { from: employee })
       })
 
       it('receives the expected amount of ANT', async () => {
@@ -509,7 +509,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [ONE], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -535,7 +535,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
     context('when the employee requests multiple tokens', () => {
       context('when the exchange rates match the min acceptable ones', () => {
         beforeEach('set token allocations', async () => {
-          await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], [inverseRate(ETH_TO_ANT_RATE), inverseRate(DAI_TO_ANT_RATE), ONE], { from: employee })
+          await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], { from: employee })
         })
 
         it('receives the expected amount of tokens', async () => {
@@ -543,7 +543,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
           const previousDAI = await DAI.balanceOf(employee)
           const previousANT = await ANT.balanceOf(employee)
 
-          const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+          const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_TO_ANT_RATE), inverseRate(DAI_TO_ANT_RATE), ONE], { from: employee })
           const { gasPrice } = await web3.eth.getTransaction(tx)
           const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -572,11 +572,11 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
 
       context('when the exchange rates does not match the min acceptable ones', () => {
         beforeEach('set token allocations', async () => {
-          await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], [inverseRate(ETH_TO_ANT_RATE), inverseRate(DAI_TO_ANT_RATE), ONE.mul(2)], { from: employee })
+          await payroll.determineAllocation([ETH, DAI.address, ANT.address], [50, 25, 25], { from: employee })
         })
 
         it('reverts', async () => {
-          await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
+          await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_TO_ANT_RATE), inverseRate(DAI_TO_ANT_RATE), ONE.mul(2)], { from: employee }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
         })
       })
     })

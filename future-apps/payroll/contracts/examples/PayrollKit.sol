@@ -93,7 +93,7 @@ contract PayrollKit is KitBase {
 
         // Payroll prerequisites
         PPFMock priceFeed = new PPFMock();
-        MiniMeToken denominationToken = newToken("USD Dolar", "USD");
+        MiniMeToken denominationToken = newToken("USD Dollar", "USD");
 
         // Allow this contract to install new apps for now
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
@@ -229,11 +229,7 @@ contract PayrollKit is KitBase {
         distribution[0] = 45;
         distribution[1] = 55;
 
-        uint256[] memory minRates = new uint256[](2);
-        minRates[0] = 0;
-        minRates[1] = 0;
-
-        payroll.determineAllocation(allowedTokens, distribution, minRates);
+        payroll.determineAllocation(allowedTokens, distribution);
         payroll.changeAddressByEmployee(root); // Set account to root
 
         // Create more users

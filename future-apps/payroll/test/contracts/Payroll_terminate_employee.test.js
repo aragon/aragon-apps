@@ -2,9 +2,9 @@ const PAYMENT_TYPES = require('../helpers/payment_types')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { getEvents, getEventArgument } = require('@aragon/test-helpers/events')
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
-const { USD, DAI_RATE, exchangedAmount, deployDAI, setTokenRate } = require('../helpers/tokens')(artifacts, web3)
-const { bn, bigExp, MAX_UINT64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
+const { bn, bigExp, MAX_UINT64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
+const { USD, DAI_RATE, exchangedAmount, inverseRate, deployDAI, setTokenRate } = require('../helpers/tokens')(artifacts, web3)
 
 contract('Payroll employees termination', ([owner, employee, anyone]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, DAI
@@ -76,7 +76,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
 
               it('does not reset the owed salary nor the reimbursements of the employee', async () => {
                 const previousDAI = await DAI.balanceOf(employee)
-                await payroll.determineAllocation([DAI.address], [100], [0], { from: employee })
+                await payroll.determineAllocation([DAI.address], [100], { from: employee })
 
                 // Accrue some salary and extras
                 await increaseTime(ONE_MONTH)
@@ -88,8 +88,8 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
                 await increaseTime(ONE_MONTH - 1) // to avoid expire rates
 
                 // Request owed money and remove terminated employee
-                await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
-                await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, 0, { from: employee })
+                await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(DAI_RATE)], { from: employee })
+                await payroll.payday(PAYMENT_TYPES.REIMBURSEMENT, 0, [inverseRate(DAI_RATE)], { from: employee })
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
                 const owedSalaryInDai = exchangedAmount(salary.times(ONE_MONTH), DAI_RATE, 100)
@@ -101,7 +101,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
               })
 
               it('can re-add a removed employee', async () => {
-                await payroll.determineAllocation([DAI.address], [100], [0], { from: employee })
+                await payroll.determineAllocation([DAI.address], [100], { from: employee })
                 await increaseTime(ONE_MONTH)
 
                 // Terminate employee and travel some time in the future
@@ -109,7 +109,7 @@ contract('Payroll employees termination', ([owner, employee, anyone]) => {
                 await increaseTime(ONE_MONTH - 1) // to avoid expire rates
 
                 // Request owed money and remove terminated employee
-                await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+                await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(DAI_RATE)], { from: employee })
                 await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
 
                 // Add employee back

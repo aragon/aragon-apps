@@ -2,7 +2,7 @@ const PAYMENT_TYPES = require('../helpers/payment_types')
 const { annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
-const { USD, deployDAI, deployANT, DAI_RATE, ANT_RATE, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
+const { USD, deployDAI, deployANT, DAI_RATE, ANT_RATE, inverseRate, setTokenRates } = require('../helpers/tokens')(artifacts, web3)
 
 contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, DAI, ANT
@@ -35,25 +35,25 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
     })
 
     context('when there is only one allowed token', function () {
-      it('expends ~339k gas for a single allowed token', async () => {
-        await payroll.determineAllocation([DAI.address], [100], [0], { from: employee })
+      it('expends ~338k gas for a single allowed token', async () => {
+        await payroll.determineAllocation([DAI.address], [100], { from: employee })
 
-        const { receipt: { cumulativeGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { receipt: { cumulativeGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(DAI_RATE)], { from: employee })
 
-        assert.isAtMost(cumulativeGasUsed, 339000, 'payout gas cost for a single allowed token should be ~339k')
+        assert.isAtMost(cumulativeGasUsed, 338000, 'payout gas cost for a single allowed token should be ~338k')
       })
     })
 
     context('when there are two allowed token', function () {
-      it('expends ~295k gas per allowed token', async () => {
-        await payroll.determineAllocation([DAI.address], [100], [0], { from: employee })
-        const { receipt: { cumulativeGasUsed: employeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+      it('expends ~296k gas per allowed token', async () => {
+        await payroll.determineAllocation([DAI.address], [100], { from: employee })
+        const { receipt: { cumulativeGasUsed: employeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(DAI_RATE)], { from: employee })
 
-        await payroll.determineAllocation([DAI.address, ANT.address], [60, 40], [0, 0], { from: anotherEmployee })
-        const { receipt: { cumulativeGasUsed: anotherEmployeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: anotherEmployee })
+        await payroll.determineAllocation([DAI.address, ANT.address], [60, 40], { from: anotherEmployee })
+        const { receipt: { cumulativeGasUsed: anotherEmployeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(DAI_RATE), inverseRate(ANT_RATE)], { from: anotherEmployee })
 
         const gasPerAllowedToken = anotherEmployeePayoutGasUsed - employeePayoutGasUsed
-        assert.isAtMost(gasPerAllowedToken, 295000, 'payout gas cost increment per allowed token should be ~295k')
+        assert.isAtMost(gasPerAllowedToken, 296000, 'payout gas cost increment per allowed token should be ~296k')
       })
     })
   })

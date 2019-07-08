@@ -48,33 +48,26 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
         })
 
         const itShouldHandleAllocationsProperly = () => {
-          context('when the amount of tokens, distribution, and rates match', () => {
+          context('when the amount of tokens and allocations match', () => {
             context('when the given list is not empty', () => {
               context('when all the given tokens are allowed', () => {
-                context('when the distribution adds up to 100', () => {
+                context('when the allocations add up to 100', () => {
 
-                  const itDeterminesAllocationsProperly = (distribution, minRates) => {
+                  const itDeterminesAllocationsProperly = allocations => {
                     context('when there was no previous allocation', () => {
                       it('persists requested allocation', async () => {
-                        const receipt = await payroll.determineAllocation(tokenAddresses, distribution, minRates, { from })
+                        const receipt = await payroll.determineAllocation(tokenAddresses, allocations, { from })
 
                         const events = getEvents(receipt, 'DetermineAllocation')
                         assert.equal(events.length, 1, 'number of emitted DetermineAllocation events does not match')
                         assert.equal(events[0].args.employeeId.toString(), employeeId, 'employee id should match')
 
                         for (const tokenAddress of tokenAddresses) {
-                          const tokenIndex = tokenAddresses.indexOf(tokenAddress)
-                          const expectedAllocation = distribution[tokenIndex]
-                          const expectedMinRate = minRates[tokenIndex]
-
-                          const [percentage, minRate] = await payroll.getAllocation(employeeId, tokenAddress);
-                          assert.equal(percentage, expectedAllocation, 'allocation percentage does not match')
-                          assert.equal(minRate, expectedMinRate, 'allocation min acceptable rate does not match')
+                          const expectedAllocation = allocations[tokenAddresses.indexOf(tokenAddress)]
+                          assert.equal(await payroll.getAllocation(employeeId, tokenAddress), expectedAllocation, 'token allocation does not match')
                         }
 
-                        const [percentage, minRate] = await payroll.getAllocation(employeeId, anyone);
-                        assert.equal(percentage, 0, 'allocation percentage does not match')
-                        assert.equal(minRate, 0, 'allocation min acceptable rate does not match')
+                        assert.equal(await payroll.getAllocation(employeeId, anyone), 0, 'token allocation should be zero')
                       })
                     })
 
@@ -85,65 +78,53 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
                         token = await deployTokenAndDeposit(owner, finance, 'Previous Token', 18)
                         await payroll.setAllowedToken(token.address, true, { from: owner })
 
-                        await payroll.determineAllocation([token.address], [100], [1e18], { from })
-
-                        const [percentage, minRate] = await payroll.getAllocation(employeeId, token.address)
-                        assert.equal(percentage.toString(), 100, 'allocation percentage does not match')
-                        assert.equal(minRate.toString(), 1e18, 'allocation min acceptable rate does not match')
+                        await payroll.determineAllocation([token.address], [100], { from })
+                        assert.equal(await payroll.getAllocation(employeeId, token.address), 100)
 
                         for (const tokenAddress of tokenAddresses) {
-                          const [percentage, minRate] = await payroll.getAllocation(employeeId, tokenAddress)
-                          assert.equal(percentage.toString(), 0, 'allocation percentage does not match')
-                          assert.equal(minRate.toString(), 0, 'allocation min acceptable rate does not match')
+                          assert.equal(await payroll.getAllocation(employeeId, tokenAddress), 0, 'token allocation does not match')
                         }
                       })
 
                       it('replaces previous allocation for the requested one', async () => {
-                        await payroll.determineAllocation(tokenAddresses, distribution, minRates, { from })
+                        await payroll.determineAllocation(tokenAddresses, allocations, { from })
 
                         for (const tokenAddress of tokenAddresses) {
-                          const tokenIndex = tokenAddresses.indexOf(tokenAddress)
-                          const expectedAllocation = distribution[tokenIndex]
-                          const expectedMinRate = minRates[tokenIndex]
-                          const [percentage, minRate] = await payroll.getAllocation(employeeId, tokenAddress)
-
-                          assert.equal(percentage.toString(), expectedAllocation, 'allocation percentage does not match')
-                          assert.equal(minRate.toString(), expectedMinRate, 'allocation min acceptable rate does not match')
+                          const expectedAllocation = allocations[tokenAddresses.indexOf(tokenAddress)]
+                          assert.equal(await payroll.getAllocation(employeeId, tokenAddress), expectedAllocation, 'token allocation does not match')
                         }
 
-                        const [percentage, minRate] = await payroll.getAllocation(employeeId, token.address)
-                        assert.equal(percentage.toString(), 0, 'allocation percentage does not match')
-                        assert.equal(minRate.toString(), 0, 'allocation min acceptable rate does not match')
+                        assert.equal(await payroll.getAllocation(employeeId, token.address), 0)
                       })
                     })
                   }
 
                   context('when the allocation list does not include zero values', () => {
-                    const distribution = [10, 20, 70], minRates = [1e18, 5e18, 10e18]
+                    const allocations = [10, 20, 70]
 
-                    itDeterminesAllocationsProperly(distribution, minRates)
+                    itDeterminesAllocationsProperly(allocations)
                   })
 
                   context('when the allocation list includes zero values', () => {
-                    const distribution = [90, 10, 0], minRates = [1e18, 5e18, 10e18]
+                    const allocations = [90, 10, 0]
 
-                    itDeterminesAllocationsProperly(distribution, minRates)
+                    itDeterminesAllocationsProperly(allocations)
                   })
                 })
 
-                context('when the distribution adds up less than 100', () => {
-                  const distribution = [10, 20, 69], minRates = [1e18, 2e18, 5e18]
+                context('when the allocations add up less than 100', () => {
+                  const allocations = [10, 20, 69]
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.determineAllocation(tokenAddresses, distribution, minRates, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
+                    await assertRevert(payroll.determineAllocation(tokenAddresses, allocations, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
                   })
                 })
 
-                context('when the distribution adds up more than 100', () => {
-                  const distribution = [10, 20, 71], minRates = [1e18, 2e18, 5e18]
+                context('when the allocations add up more than 100', () => {
+                  const allocations = [10, 20, 71]
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.determineAllocation(tokenAddresses, distribution, minRates, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
+                    await assertRevert(payroll.determineAllocation(tokenAddresses, allocations, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
                   })
                 })
               })
@@ -157,39 +138,28 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
 
                 it('reverts', async () => {
                   const addresses = [...tokenAddresses, notAllowedToken.address]
-                  const distribution = [10, 20, 30, 40], minRates = [1e18, 2e18, 5e18, 10e18]
+                  const allocations = [10, 20, 30, 40]
 
-                  await assertRevert(payroll.determineAllocation(addresses, distribution, minRates, { from }), 'PAYROLL_NOT_ALLOWED_TOKEN')
+                  await assertRevert(payroll.determineAllocation(addresses, allocations, { from }), 'PAYROLL_NOT_ALLOWED_TOKEN')
                 })
               })
             })
 
             context('when the given list is empty', () => {
-              const addresses = [], distribution = [], minRates = []
+              const addresses = [], allocations = []
 
               it('reverts', async () => {
-                await assertRevert(payroll.determineAllocation(addresses, distribution, minRates, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
+                await assertRevert(payroll.determineAllocation(addresses, allocations, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
           })
 
-          context('when the amount of tokens and distribution do not match', () => {
+          context('when the amount of tokens and allocations do not match', () => {
             it('reverts', async () => {
-              const distribution = [100]
+              const allocations = [100]
               const addresses = [...tokenAddresses, anyone]
-              const minRates = [1e18]
 
-              await assertRevert(payroll.determineAllocation(addresses, distribution, minRates, { from }), 'PAYROLL_TOKEN_ALLOCATION_MISMATCH')
-            })
-          })
-
-          context('when the amount of tokens and rates do not match', () => {
-            it('reverts', async () => {
-              const distribution = [100]
-              const addresses = [anyone]
-              const minRates = [1e18, 2e18]
-
-              await assertRevert(payroll.determineAllocation(addresses, distribution, minRates, { from }), 'PAYROLL_TOKEN_ALLOCATION_MISMATCH')
+              await assertRevert(payroll.determineAllocation(addresses, allocations, { from }), 'PAYROLL_TOKEN_ALLOCATION_MISMATCH')
             })
           })
         }
@@ -212,14 +182,14 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
         const from = anyone
 
         it('reverts', async () => {
-          await assertRevert(payroll.determineAllocation(tokenAddresses, [100, 0, 0], [0, 0, 0], { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
+          await assertRevert(payroll.determineAllocation(tokenAddresses, [100, 0, 0], { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
         })
       })
     })
 
     context('when it has not been initialized yet', function () {
       it('reverts', async () => {
-        await assertRevert(payroll.determineAllocation(tokenAddresses, [10, 20, 70], [0, 0, 0], { from: employee }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
+        await assertRevert(payroll.determineAllocation(tokenAddresses, [10, 20, 70], { from: employee }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
       })
     })
   })
@@ -247,30 +217,27 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
 
               context('when the given token was picked by the employee', () => {
                 beforeEach('determine allocation', async () => {
-                  await payroll.determineAllocation([DAI.address], [100], [1e18], { from: employee })
+                  await payroll.determineAllocation([DAI.address], [100], { from: employee })
                 })
 
                 it('tells its corresponding allocation', async () => {
-                  const [percentage, minRate] = await payroll.getAllocation(employeeId, DAI.address)
-                  assert.equal(percentage.toString(), 100, 'allocation percentage does not match')
-                  assert.equal(minRate.toString(), 1e18, 'allocation min acceptable rate does not match')
+                  const allocation = await payroll.getAllocation(employeeId, DAI.address)
+                  assert.equal(allocation.toString(), 100, 'token allocation does not match')
                 })
               })
 
               context('when the given token was not picked by the employee', () => {
                 it('returns 0', async () => {
-                  const [percentage, minRate] = await payroll.getAllocation(employeeId, DAI.address)
-                  assert.equal(percentage.toString(), 0, 'allocation percentage does not match')
-                  assert.equal(minRate.toString(), 0, 'allocation min acceptable rate does not match')
+                  const allocation = await payroll.getAllocation(employeeId, DAI.address)
+                  assert.equal(allocation.toString(), 0, 'token allocation should be zero')
                 })
               })
             })
 
             context('when the given token was not allowed', () => {
               it('returns 0', async () => {
-                const [percentage, minRate] = await payroll.getAllocation(employeeId, DAI.address)
-                assert.equal(percentage.toString(), 0, 'allocation percentage does not match')
-                assert.equal(minRate.toString(), 0, 'allocation min acceptable rate does not match')
+                const allocation = await payroll.getAllocation(employeeId, DAI.address)
+                assert.equal(allocation.toString(), 0, 'token allocation should be zero')
               })
             })
           })
@@ -285,30 +252,27 @@ contract('Payroll token allocations', ([owner, employee, anyone]) => {
 
               context('when the given token was picked by the employee', () => {
                 beforeEach('determine allocation', async () => {
-                  await payroll.determineAllocation([token], [100], [0], { from: employee })
+                  await payroll.determineAllocation([token], [100], { from: employee })
                 })
 
                 it('tells its corresponding allocation', async () => {
-                  const [percentage, minRate] = await payroll.getAllocation(employeeId, token)
-                  assert.equal(percentage.toString(), 100, 'allocation percentage does not match')
-                  assert.equal(minRate.toString(), 0, 'allocation min acceptable rate does not match')
+                  const allocation = await payroll.getAllocation(employeeId, token)
+                  assert.equal(allocation.toString(), 100, 'token allocation does not match')
                 })
               })
 
               context('when the given token was not picked by the employee', () => {
                 it('returns 0', async () => {
-                  const [percentage, minRate] = await payroll.getAllocation(employeeId, token)
-                  assert.equal(percentage.toString(), 0, 'allocation percentage does not match')
-                  assert.equal(minRate.toString(), 0, 'allocation min acceptable rate does not match')
+                  const allocation = await payroll.getAllocation(employeeId, token)
+                  assert.equal(allocation.toString(), 0, 'token allocation should be zero')
                 })
               })
             })
 
             context('when the given token was not allowed', () => {
               it('returns 0', async () => {
-                const [percentage, minRate] = await payroll.getAllocation(employeeId, token)
-                assert.equal(percentage.toString(), 0, 'allocation percentage does not match')
-                assert.equal(minRate.toString(), 0, 'allocation min acceptable rate does not match')
+                const allocation = await payroll.getAllocation(employeeId, token)
+                assert.equal(allocation.toString(), 0, 'token allocation should be zero')
               })
             })
           })
