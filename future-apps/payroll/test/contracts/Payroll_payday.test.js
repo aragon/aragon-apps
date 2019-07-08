@@ -299,18 +299,11 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, currentOwedSalary)
                 })
 
-                context('when the requested amount is lower than the total owed salary', () => {
+                context.only('when the requested amount is lower than the total owed salary', () => {
                   context('when the requested amount represents less than a second of the earnings', () => {
                     const requestedAmount = salary.div(2)
 
-                    it('updates the last payroll date by one second', async () => {
-                      const previousLastPayrollDate = (await payroll.getEmployee(employeeId))[5]
-
-                      await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from })
-
-                      const currentLastPayrollDate = (await payroll.getEmployee(employeeId))[5]
-                      assert.equal(currentLastPayrollDate.toString(), previousLastPayrollDate.plus(1).toString(), 'last payroll date does not match')
-                    })
+                    itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, currentOwedSalary)
                   })
 
                   context('when the requested amount represents more than a second of the earnings', () => {
@@ -385,8 +378,14 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
                 })
 
-                context('when the requested amount is greater than the previous owed salary but lower than the total owed', () => {
-                  const requestedAmount = totalOwedSalary.div(2)
+                context.only('when the requested amount is greater than the previous owed salary but greater than one second of additional salary', () => {
+                  const requestedAmount = previousOwedSalary.plus(salary).minus(1)
+
+                  itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
+                })
+
+                context.only('when the requested amount is greater than the previous owed salary but greater than one second of additional salary', () => {
+                  const requestedAmount = previousOwedSalary.plus(salary).plus(1)
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
                 })
@@ -694,7 +693,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                     }
 
                     const assertEmployeeIsUpdated = requestedAmount => {
-                      it('updates the last payroll date', async () => {
+                      it('updates the employee accounting', async () => {
                         const timeDiff = 1 // should be bn(requestedAmount).div(salary).ceil() but BN cannot represent such a small number, hardcoding it to 1
                         const [previousAccruedSalary, , , previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(2, 6)
 
