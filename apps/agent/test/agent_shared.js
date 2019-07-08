@@ -2,12 +2,10 @@ const { hash: namehash } = require('eth-ens-namehash')
 const ethUtil = require('ethereumjs-util')
 const ethABI = require('web3-eth-abi')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
-const assertEvent = require('@aragon/test-helpers/assertEvent')
-const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
-const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
-const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
+const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
+const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
+const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 
 // Allow for sharing this test across other agent implementations and subclasses
 module.exports = (
