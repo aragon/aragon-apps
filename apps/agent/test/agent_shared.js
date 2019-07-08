@@ -573,6 +573,12 @@ module.exports = (
             assertIsValidSignature(true, await agent.isValidSignature(HASH, invalidSignature))
           })
         })
+
+        context('> Signature mode: self', () => {
+          it('cannot set itself as the designated signer', async () => {
+            await assertRevert(agent.setDesignatedSigner(agent.address, { from: signerDesignator }), errors.AGENT_DESIGNATED_TO_SELF)
+          })
+        })
       })
     })
   })
