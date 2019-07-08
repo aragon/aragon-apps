@@ -50,10 +50,7 @@ module.exports = (
       RECOVER_DISALLOWED: 'RECOVER_DISALLOWED',
 
       // Agent errors
-      AGENT_EXEC_ETH_NO_DATA: "AGENT_EXEC_ETH_NO_DATA",
-      AGENT_EXEC_TARGET_NO_CONTRACT: "AGENT_EXEC_TARGET_NO_CONTRACT",
       AGENT_DESIGNATED_TO_SELF: "AGENT_DESIGNATED_TO_SELF",
-
     })
 
     const root = accounts[0]
@@ -236,7 +233,7 @@ module.exports = (
               await acl.grantPermissionP(granteeUnequalToSig, agent.address, EXECUTE_ROLE, [nonEqualParam], { from: root })
             })
 
-            it('equal: can execute if the signature matches', async () => {
+            it('equal param: can execute if the signature matches', async () => {
               const N = 1102
 
               const data = executionTarget.contract.setCounter.getData(N)
@@ -248,7 +245,7 @@ module.exports = (
               assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
             })
 
-            it('not equal: can execute if the signature doesn\'t match', async () => {
+            it('not equal param: can execute if the signature doesn\'t match', async () => {
               const data = executionTarget.contract.execute.getData()
               const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig })
 
@@ -258,17 +255,17 @@ module.exports = (
               assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
             })
 
-            it('equal: fails to execute if signature doesn\'t match', async () => {
+            it('equal param: fails to execute if signature doesn\'t match', async () => {
               const data = executionTarget.contract.execute.getData()
 
-              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig }))
+              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig }), errors.APP_AUTH_FAILED)
             })
 
-            it('not equal: fails to execute if the signature matches', async () => {
+            it('not equal param: fails to execute if the signature matches', async () => {
               const N = 1102
 
               const data = executionTarget.contract.setCounter.getData(N)
-              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig }))
+              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig }), errors.APP_AUTH_FAILED)
             })
           })
         })
