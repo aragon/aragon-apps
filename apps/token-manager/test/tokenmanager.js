@@ -455,5 +455,13 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         it('fails to burn tokens', async() => {
             await assertRevert(tokenManager.burn(holder, 1), errors.APP_AUTH_FAILED)
         })
+
+        it('disallows forwarding actions', async () => {
+            const executionTarget = await ExecutionTarget.new()
+            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+            const script = encodeCallScript([action])
+
+            await assertRevert(tokenManager.forward(script, { from: anyone }), errors.TM_CAN_NOT_FORWARD)
+        })
     })
 })
