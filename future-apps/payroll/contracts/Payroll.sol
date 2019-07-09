@@ -294,7 +294,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _distribution Array with each token's corresponding proportions (must be integers summing to 100)
      */
     function determineAllocation(address[] _tokens, uint256[] _distribution) external employeeMatches nonReentrant {
-        // Check arrays length match
+        // Check array lengthes match
         require(_tokens.length <= MAX_ALLOWED_TOKENS, ERROR_MAX_ALLOWED_TOKENS);
         require(_tokens.length == _distribution.length, ERROR_TOKEN_ALLOCATION_MISMATCH);
 
