@@ -307,7 +307,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, currentOwedSalary)
                 })
 
-                context.only('when the requested amount is lower than the total owed salary', () => {
+                context('when the requested amount is lower than the total owed salary', () => {
                   context('when the requested amount represents less than a second of the earnings', () => {
                     const requestedAmount = salary.div(2).floor()
 
@@ -386,13 +386,13 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
                 })
 
-                context.only('when the requested amount is greater than the previous owed salary but greater than one second of additional salary', () => {
+                context('when the requested amount is greater than the previous owed salary but greater than one second of additional salary', () => {
                   const requestedAmount = previousOwedSalary.plus(salary).minus(1)
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
                 })
 
-                context.only('when the requested amount is greater than the previous owed salary but greater than one second of additional salary', () => {
+                context('when the requested amount is greater than the previous owed salary but greater than one second of additional salary', () => {
                   const requestedAmount = previousOwedSalary.plus(salary).plus(1)
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
