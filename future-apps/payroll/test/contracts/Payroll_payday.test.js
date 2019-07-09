@@ -130,12 +130,20 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const assertEmployeeIsUpdatedCorrectly = (requestedAmount, expectedRequestedAmount) => {
               it('updates the accrued salary and the last payroll date', async () => {
                 let expectedLastPayrollDate, expectedAccruedSalary
-                const [previousAccruedSalary, , , previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(2, 6)
+                const [employeeSalary, previousAccruedSalary, , , previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(1, 6)
 
-                if (expectedRequestedAmount >= previousAccruedSalary) {
-                  expectedAccruedSalary = bn(0)
+                if (expectedRequestedAmount.gte(previousAccruedSalary)) {
                   const remainder = expectedRequestedAmount.minus(previousAccruedSalary)
-                  expectedLastPayrollDate = previousPayrollDate.plus(remainder.div(salary).ceil())
+                  if (remainder.eq(0)) {
+                    expectedAccruedSalary = bn(0)
+                  } else {
+                    // Have remaining salary that needs to be put back into the accrued salary
+                    expectedAccruedSalary =
+                      remainder.lt(employeeSalary)
+                        ? salary.minus(remainder)
+                        : expectedAccruedSalary = remainder.mod(employeeSalary)
+                  }
+                  expectedLastPayrollDate = previousPayrollDate.plus(remainder.div(employeeSalary).ceil())
                 } else {
                   expectedAccruedSalary = previousAccruedSalary.minus(expectedRequestedAmount).toString()
                   expectedLastPayrollDate = previousPayrollDate
@@ -258,7 +266,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                       await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                     })
 
-                    if (requestedAmount.eq(0) || requestedAmount === totalOwedAmount) {
+                    if (requestedAmount.eq(0) || requestedAmount.eq(totalOwedAmount)) {
                       context('when exchange rates are not expired', () => {
                         assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
 
@@ -302,20 +310,13 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                 context('when the requested amount is lower than the total owed salary', () => {
                   context('when the requested amount represents less than a second of the earnings', () => {
-                    const requestedAmount = salary.div(2)
+                    const requestedAmount = salary.div(2).floor()
 
-                    it('updates the last payroll date by one second', async () => {
-                      const previousLastPayrollDate = (await payroll.getEmployee(employeeId))[5]
-
-                      await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from })
-
-                      const currentLastPayrollDate = (await payroll.getEmployee(employeeId))[5]
-                      assert.equal(currentLastPayrollDate.toString(), previousLastPayrollDate.plus(1).toString(), 'last payroll date does not match')
-                    })
+                    itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, currentOwedSalary)
                   })
 
                   context('when the requested amount represents more than a second of the earnings', () => {
-                    const requestedAmount = currentOwedSalary.div(2)
+                    const requestedAmount = currentOwedSalary.div(2).ceil()
 
                     itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, currentOwedSalary)
                   })
@@ -386,8 +387,14 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
                 })
 
-                context('when the requested amount is greater than the previous owed salary but lower than the total owed', () => {
-                  const requestedAmount = totalOwedSalary.div(2)
+                context('when the requested amount is greater than the previous owed salary but less than one second of additional salary', () => {
+                  const requestedAmount = previousOwedSalary.plus(salary).minus(1)
+
+                  itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
+                })
+
+                context('when the requested amount is greater than the previous owed salary but greater than one second of additional salary', () => {
+                  const requestedAmount = previousOwedSalary.plus(salary).plus(1)
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
                 })
@@ -415,7 +422,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 })
 
                 context('when the requested amount is lower than the previous owed salary', () => {
-                  const requestedAmount = previousOwedSalary.div(2)
+                  const requestedAmount = previousOwedSalary.div(2).floor()
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, previousOwedSalary)
                 })
@@ -446,7 +453,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
               })
 
               context('when the requested amount is lower than the total owed salary', () => {
-                const requestedAmount = owedSalary.div(2)
+                const requestedAmount = owedSalary.div(2).floor()
 
                 it('reverts', async () => {
                   await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
@@ -697,7 +704,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                     }
 
                     const assertEmployeeIsUpdated = requestedAmount => {
-                      it('updates the last payroll date', async () => {
+                      it('updates the employee accounting', async () => {
                         const timeDiff = 1 // should be bn(requestedAmount).div(salary).ceil() but BN cannot represent such a small number, hardcoding it to 1
                         const [previousAccruedSalary, , , previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(2, 6)
 
