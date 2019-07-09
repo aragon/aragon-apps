@@ -9,7 +9,7 @@ This repository contains the following apps:
 - **[Voting](apps/voting)**: Create votes that execute actions on behalf of token holders.
 - **[Tokens](apps/token-manager)**: Manages organization tokens.
 
-You can read more about how the individual apps work in the [Aragon user guide](https://wiki.aragon.org/tutorials/Aragon_User_Guide/#3-aragon-apps).
+You can read more about how the individual apps work in the [Aragon user guide](https://help.aragon.org/category/15-aragon-apps).
 
 ## Coming soon apps
 
