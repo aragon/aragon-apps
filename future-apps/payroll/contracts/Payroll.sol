@@ -26,7 +26,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     * bytes32 constant public ADD_BONUS_ROLE = keccak256("ADD_BONUS_ROLE");
     * bytes32 constant public ADD_REIMBURSEMENT_ROLE = keccak256("ADD_REIMBURSEMENT_ROLE");
     * bytes32 constant public MANAGE_ALLOWED_TOKENS_ROLE = keccak256("MANAGE_ALLOWED_TOKENS_ROLE");
-    * bytes32 constant public MODIFY_PRICE_FEED_SETTINGS_ROLE = keccak256("MODIFY_PRICE_FEED_SETTINGS_ROLE");
+    * bytes32 constant public MODIFY_PRICE_FEED_ROLE = keccak256("MODIFY_PRICE_FEED_ROLE");
+    * bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
     */
 
     bytes32 constant public ADD_EMPLOYEE_ROLE = 0x9ecdc3c63716b45d0756eece5fe1614cae1889ec5a1ce62b3127c1f1f1615d6e;
@@ -35,7 +36,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     bytes32 constant public ADD_BONUS_ROLE = 0xceca7e2f5eb749a87aaf68f3f76d6b9251aa2f4600f13f93c5a4adf7a72df4ae;
     bytes32 constant public ADD_REIMBURSEMENT_ROLE = 0x90698b9d54427f1e41636025017309bdb1b55320da960c8845bab0a504b01a16;
     bytes32 constant public MANAGE_ALLOWED_TOKENS_ROLE = 0x0be34987c45700ee3fae8c55e270418ba903337decc6bacb1879504be9331c06;
-    bytes32 constant public MODIFY_PRICE_FEED_SETTINGS_ROLE = 0xd5da0a7d4d69a338f4ff576cbdd0b341bc45341d64c650c4f63b3bde43509faf;
+    bytes32 constant public MODIFY_PRICE_FEED_ROLE = 0x74350efbcba8b85341c5bbf70cc34e2a585fc1463524773a12fa0a71d4eb9302;
+    bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = 0x79fe989a8899060dfbdabb174ebb96616fa9f1d9dadd739f8d814cbab452404e;
 
     uint256 internal constant MAX_ALLOWED_TOKENS = 20; // prevent OOG issues with `payday()`
     uint64 internal constant MIN_RATE_EXPIRY = uint64(1 minutes); // 1 min == ~4 block window to mine both a price feed update and a payout
@@ -139,14 +141,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @notice Initialize Payroll app for Finance at `_finance` and price feed at `_priceFeed`, setting denomination token to `_token` and exchange rate expiry time to `@transformTime(_rateExpiryTime)`
      * @dev Note that we do not require _denominationToken to be a contract, as it may be a "fake"
-     *      address used by the price feed to denominate fiat currencies.
-     *      Note that the initialization check is already guaranteed by `initialized`.
+     *      address used by the price feed to denominate fiat currencies
      * @param _finance Address of the Finance app this Payroll app will rely on for payments (non-changeable)
      * @param _denominationToken Address of the denomination token used for salary accounting
      * @param _priceFeed Address of the price feed
      * @param _rateExpiryTime Acceptable expiry time in seconds for the price feed's exchange rates
      */
-    function initialize(Finance _finance, address _denominationToken, IFeed _priceFeed, uint64 _rateExpiryTime) external {
+    function initialize(Finance _finance, address _denominationToken, IFeed _priceFeed, uint64 _rateExpiryTime) external onlyInit {
         initialized();
 
         require(isContract(_finance), ERROR_FINANCE_NOT_CONTRACT);
@@ -172,15 +173,19 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Set the price feed for exchange rates to `_feed` and the acceptable rates expiry time to `@transformTime(_time)`
+     * @notice Set the price feed for exchange rates to `_feed`
      * @param _feed Address of the new price feed instance
+     */
+    function setPriceFeed(IFeed _feed) external authP(MODIFY_PRICE_FEED_ROLE, arr(_feed, feed)) {
+        _setPriceFeed(_feed);
+    }
+
+    /**
+     * @notice Set the acceptable expiry time for the price feed's exchange rates to `@transformTime(_time)`
+     * @dev Exchange rates older than the given value won't be accepted for payments and will cause payouts to revert
      * @param _time The expiration time in seconds for exchange rates
      */
-    function setPriceFeedSettings(IFeed _feed, uint64 _time)
-        external
-        authP(MODIFY_PRICE_FEED_SETTINGS_ROLE, _arr(_feed, feed, uint256(_time), uint256(rateExpiryTime)))
-    {
-        _setPriceFeed(_feed);
+    function setRateExpiryTime(uint64 _time) external authP(MODIFY_RATE_EXPIRY_ROLE, arr(uint256(_time), uint256(rateExpiryTime))) {
         _setRateExpiryTime(_time);
     }
 
@@ -821,15 +826,5 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         require(_owedAmount > 0, ERROR_NOTHING_PAID);
         require(_owedAmount >= _requestedAmount, ERROR_INVALID_REQUESTED_AMOUNT);
         return _requestedAmount > 0 ? _requestedAmount : _owedAmount;
-    }
-
-    // Syntax sugar
-
-    function _arr(address _a, address _b, uint256 _c, uint256 _d) private pure returns (uint256[] r) {
-        r = new uint256[](4);
-        r[0] = uint256(_a);
-        r[1] = uint256(_b);
-        r[2] = _c;
-        r[3] = _d;
     }
 }
