@@ -386,7 +386,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
                 })
 
-                context('when the requested amount is greater than the previous owed salary but greater than one second of additional salary', () => {
+                context('when the requested amount is greater than the previous owed salary but less than one second of additional salary', () => {
                   const requestedAmount = previousOwedSalary.plus(salary).minus(1)
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
