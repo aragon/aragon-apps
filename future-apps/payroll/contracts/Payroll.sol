@@ -77,8 +77,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 reimbursements;
         uint64 lastPayroll;
         uint64 endDate;
-        address[] allowedTokenAddresses;
-        mapping(address => uint256) tokenAllocations;
+        address[] allocationTokenAddresses;
+        mapping(address => uint256) allocationTokens;
     }
 
     Finance public finance;
@@ -302,16 +302,16 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         Employee storage employee = employees[employeeId];
 
         // Delete previous token allocations
-        address[] previousAllowedTokenAddresses = employee.allowedTokenAddresses;
+        address[] previousAllowedTokenAddresses = employee.allocationTokenAddresses;
         for (uint256 j = 0; j < previousAllowedTokenAddresses.length; j++) {
-            delete employee.tokenAllocations[previousAllowedTokenAddresses[j]];
+            delete employee.allocationTokens[previousAllowedTokenAddresses[j]];
         }
-        delete employee.allowedTokenAddresses;
+        delete employee.allocationTokenAddresses;
 
         // Set distributions only if given tokens are allowed
         for (uint256 i = 0; i < _tokens.length; i++) {
-            employee.allowedTokenAddresses.push(_tokens[i]);
-            employee.tokenAllocations[_tokens[i]] = _distribution[i];
+            employee.allocationTokenAddresses.push(_tokens[i]);
+            employee.allocationTokens[_tokens[i]] = _distribution[i];
         }
 
         _ensureEmployeeTokenAllocationsIsValid(employee);
@@ -333,7 +333,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
         _ensureEmployeeTokenAllocationsIsValid(employee);
-        require(_minRates.length == 0 || _minRates.length == employee.allowedTokenAddresses.length, ERROR_MIN_RATES_MISMATCH);
+        require(_minRates.length == 0 || _minRates.length == employee.allocationTokenAddresses.length, ERROR_MIN_RATES_MISMATCH);
 
         // Do internal employee accounting
         if (_type == PaymentType.Payroll) {
@@ -432,7 +432,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             uint256 reimbursements,
             uint64 lastPayroll,
             uint64 endDate,
-            address[] allowedTokens
+            address[] allocationTokens
         )
     {
         Employee storage employee = employees[_employeeId];
@@ -444,7 +444,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         reimbursements = employee.reimbursements;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
-        allowedTokens = employee.allowedTokenAddresses;
+        allocationTokens = employee.allocationTokenAddresses;
     }
 
     /**
@@ -463,7 +463,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return Employee's payment allocation for the token being queried
      */
     function getAllocation(uint256 _employeeId, address _token) public view employeeIdExists(_employeeId) returns (uint256) {
-        return employees[_employeeId].tokenAllocations[_token];
+        return employees[_employeeId].allocationTokens[_token];
     }
 
     /**
@@ -599,10 +599,10 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         address employeeAddress = employee.accountAddress;
         string memory paymentReference = _paymentReferenceFor(_type);
 
-        address[] storage allowedTokenAddresses = employee.allowedTokenAddresses;
-        for (uint256 i = 0; i < allowedTokenAddresses.length; i++) {
-            address token = allowedTokenAddresses[i];
-            uint256 tokenAllocation = employee.tokenAllocations[token];
+        address[] storage allocationTokenAddresses = employee.allocationTokenAddresses;
+        for (uint256 i = 0; i < allocationTokenAddresses.length; i++) {
+            address token = allocationTokenAddresses[i];
+            uint256 tokenAllocation = employee.allocationTokens[token];
             if (tokenAllocation != uint256(0)) {
                 // Get the exchange rate for the payout token in denomination token,
                 // as we do accounting in denomination tokens
@@ -813,11 +813,11 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     function _ensureEmployeeTokenAllocationsIsValid(Employee storage employee_) internal view {
         uint256 sum = 0;
-        address[] storage allowedTokenAddresses = employee_.allowedTokenAddresses;
-        for (uint256 i = 0; i < allowedTokenAddresses.length; i++) {
-            address token = allowedTokenAddresses[i];
+        address[] storage allocationTokenAddresses = employee_.allocationTokenAddresses;
+        for (uint256 i = 0; i < allocationTokenAddresses.length; i++) {
+            address token = allocationTokenAddresses[i];
             require(allowedTokens[token], ERROR_NOT_ALLOWED_TOKEN);
-            sum = sum.add(employee_.tokenAllocations[token]);
+            sum = sum.add(employee_.allocationTokens[token]);
         }
         require(sum == 100, ERROR_DISTRIBUTION_NOT_FULL);
     }
