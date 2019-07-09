@@ -257,7 +257,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                       await payroll.terminateEmployee(employeeId, await payroll.getTimestampPublic(), { from: owner })
                     })
 
-                    if (requestedAmount.eq(0) || requestedAmount === totalOwedAmount) {
+                    if (requestedAmount.eq(0) || requestedAmount.eq(totalOwedAmount)) {
                       context('when exchange rates are not expired', () => {
                         assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
 
@@ -301,13 +301,13 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
 
                 context.only('when the requested amount is lower than the total owed salary', () => {
                   context('when the requested amount represents less than a second of the earnings', () => {
-                    const requestedAmount = salary.div(2)
+                    const requestedAmount = salary.div(2).floor()
 
                     itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, currentOwedSalary)
                   })
 
                   context('when the requested amount represents more than a second of the earnings', () => {
-                    const requestedAmount = currentOwedSalary.div(2)
+                    const requestedAmount = currentOwedSalary.div(2).ceil()
 
                     itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, currentOwedSalary)
                   })
@@ -413,7 +413,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 })
 
                 context('when the requested amount is lower than the previous owed salary', () => {
-                  const requestedAmount = previousOwedSalary.div(2)
+                  const requestedAmount = previousOwedSalary.div(2).floor()
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, previousOwedSalary)
                 })
@@ -444,7 +444,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
               })
 
               context('when the requested amount is lower than the total owed salary', () => {
-                const requestedAmount = owedSalary.div(2)
+                const requestedAmount = owedSalary.div(2).floor()
 
                 it('reverts', async () => {
                   await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
