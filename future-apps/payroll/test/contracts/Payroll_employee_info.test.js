@@ -35,20 +35,28 @@ contract('Payroll employee info', ([owner, employee]) => {
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId').toString()
         })
 
-        it('adds a new employee', async () => {
-          const [address, employeeSalary, accruedSalary, bonus, reimbursements, lastPayroll, endDate, allocationTokens] = await payroll.getEmployee(employeeId)
+        const itReturnsTheEmployeeInformation = expectedAllocationTokenAddresses => {
+          it('adds a new employee', async () => {
+            const [address, employeeSalary, accruedSalary, bonus, reimbursements, lastPayroll, endDate, allocationTokens] = await payroll.getEmployee(employeeId)
 
-          assert.equal(address, employee, 'employee address does not match')
-          assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
-          assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
-          assert.equal(bonus.toString(), 0, 'employee bonus does not match')
-          assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
-          assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
-          assert.equal(endDate.toString(), MAX_UINT64, 'employee end date does not match')
-          assert.deepEqual(allocationTokens, [], 'employee allocation tokens should be empty')
+            assert.equal(address, employee, 'employee address does not match')
+            assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
+            assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
+            assert.equal(bonus.toString(), 0, 'employee bonus does not match')
+            assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
+            assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
+            assert.equal(endDate.toString(), MAX_UINT64, 'employee end date does not match')
+            assert.deepEqual(allocationTokens, expectedAllocationTokenAddresses, 'employee allocation tokens should be empty')
+          })
+        }
+
+        context('when the employee has not set an allocation yet', () => {
+          const expectedAllocationTokenAddresses = []
+
+          itReturnsTheEmployeeInformation(expectedAllocationTokenAddresses)
         })
 
-        context('when the employee sets a allocation', () => {
+        context('when the employee has already set an allocation', () => {
           const tokens = []
           const tokenAddresses = []
 
@@ -72,11 +80,7 @@ contract('Payroll employee info', ([owner, employee]) => {
             await payroll.determineAllocation(tokenAddresses, allocations, { from: employee })
           })
 
-          it('returns the set allocation tokens', async () => {
-            const [allocationTokens] = (await payroll.getEmployee(employeeId)).slice(-1)
-
-            assert.deepEqual(allocationTokens, tokenAddresses, 'employee allocation tokens should match previous allocation')
-          })
+          itReturnsTheEmployeeInformation(tokenAddresses)
         })
       })
 
@@ -114,50 +118,12 @@ contract('Payroll employee info', ([owner, employee]) => {
           employeeId = getEventArgument(receipt, 'AddEmployee', 'employeeId')
         })
 
-        it('adds a new employee', async () => {
+        it('returns the id of the requested employee', async () => {
           const id = await payroll.getEmployeeIdByAddress(address)
-          const [employeeAddress, employeeSalary, accruedSalary, bonus, reimbursements, lastPayroll, endDate] = await payroll.getEmployee(id)
+          const [employeeAddress] = await payroll.getEmployee(id)
 
           assert.equal(id.toString(), employeeId.toString(), 'employee id does not match')
           assert.equal(employeeAddress, address, 'employee address does not match')
-          assert.equal(employeeSalary.toString(), salary.toString(), 'employee salary does not match')
-          assert.equal(accruedSalary.toString(), 0, 'employee accrued salary does not match')
-          assert.equal(bonus.toString(), 0, 'employee bonus does not match')
-          assert.equal(reimbursements.toString(), 0, 'employee reimbursements does not match')
-          assert.equal(lastPayroll.toString(), (await currentTimestamp()).toString(), 'employee last payroll does not match')
-          assert.equal(endDate.toString(), MAX_UINT64, 'employee end date does not match')
-        })
-
-        context('when the employee sets a allocation', () => {
-          const tokens = []
-          const tokenAddresses = []
-
-          before('deploy tokens', async () => {
-            tokens.push(await deployANT(owner, finance))
-            tokens.push(await deployDAI(owner, finance))
-
-            tokens.forEach(token => tokenAddresses.push(token.address))
-          })
-
-          beforeEach('set allowed tokens', async () => {
-            const from = owner
-
-            await payroll.setAllowedToken(tokens[0].address, true, { from })
-            await payroll.setAllowedToken(tokens[1].address, true, { from })
-          })
-
-          beforeEach('set employee allocation', async () => {
-            const allocations = tokenAddresses.map(() => 100 / tokenAddresses.length)
-
-            await payroll.determineAllocation(tokenAddresses, allocations, { from: employee })
-          })
-
-          it('returns the set allocation tokens', async () => {
-            const id = await payroll.getEmployeeIdByAddress(address)
-            const [allocationTokens] = (await payroll.getEmployee(id)).slice(-1)
-
-            assert.deepEqual(allocationTokens, tokenAddresses, 'employee allocation tokens should match previous allocation')
-          })
         })
       })
 

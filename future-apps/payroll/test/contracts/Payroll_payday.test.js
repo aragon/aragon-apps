@@ -50,7 +50,6 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
           context('when the employee has already set some token allocations', () => {
             const allocationDAI = 80
             const allocationANT = 20
-            const minRates = [inverseRate(DAI_RATE), inverseRate(ANT_RATE)]
 
             beforeEach('set tokens allocation', async () => {
               await payroll.setAllowedToken(ANT.address, true, { from: owner })
@@ -58,7 +57,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
               await payroll.determineAllocation([DAI.address, ANT.address], [allocationDAI, allocationANT], { from })
             })
 
-            const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
+            const assertTransferredAmounts = (requestedAmount, expectedRequestedAmount = requestedAmount, minRates = []) => {
               const requestedDAI = exchangedAmount(expectedRequestedAmount, DAI_RATE, allocationDAI)
               const requestedANT = exchangedAmount(expectedRequestedAmount, ANT_RATE, allocationANT)
 
@@ -127,7 +126,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
               })
             }
 
-            const assertEmployeeIsUpdatedCorrectly = (requestedAmount, expectedRequestedAmount) => {
+            const assertEmployeeIsUpdatedCorrectly = (requestedAmount, expectedRequestedAmount, minRates = []) => {
               it('updates the accrued salary and the last payroll date', async () => {
                 let expectedLastPayrollDate, expectedAccruedSalary
                 const [employeeSalary, previousAccruedSalary, , , previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(1, 6)
@@ -169,8 +168,29 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             const itHandlesPayrollProperly = (requestedAmount, expectedRequestedAmount) => {
               context('when exchange rates are not expired', () => {
                 context('when allocated tokens are still allowed', () => {
-                  assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
-                  assertEmployeeIsUpdatedCorrectly(requestedAmount, expectedRequestedAmount)
+                  context('when the employee does not provide minimum acceptable rates', () => {
+                    const minRates = []
+
+                    assertTransferredAmounts(requestedAmount, expectedRequestedAmount, minRates)
+                    assertEmployeeIsUpdatedCorrectly(requestedAmount, expectedRequestedAmount, minRates)
+                  })
+
+                  context('when the employee provides minimum acceptable rates', () => {
+                    context('when the exchange rates match the min acceptable ones', () => {
+                      const minRates = [inverseRate(DAI_RATE), inverseRate(ANT_RATE)]
+
+                      assertTransferredAmounts(requestedAmount, expectedRequestedAmount, minRates)
+                      assertEmployeeIsUpdatedCorrectly(requestedAmount, expectedRequestedAmount, minRates)
+                    })
+
+                    context('when the exchange rates does not match the min acceptable ones', () => {
+                      const minRates = [inverseRate(DAI_RATE).plus(1), inverseRate(ANT_RATE)]
+
+                      it('reverts', async () => {
+                        await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
+                      })
+                    })
+                  })
                 })
 
                 context('when allocated tokens are not allowed anymore', () => {
@@ -179,7 +199,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   })
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_NOT_ALLOWED_TOKEN')
+                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from }), 'PAYROLL_NOT_ALLOWED_TOKEN')
                   })
                 })
               })
@@ -191,7 +211,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
+                  await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                 })
               })
             }
@@ -271,7 +291,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                         assertTransferredAmounts(requestedAmount, expectedRequestedAmount)
 
                         it('removes the employee', async () => {
-                          await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from })
+                          await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from })
 
                           await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
                         })
@@ -284,7 +304,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                         })
 
                         it('reverts', async () => {
-                          await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
+                          await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                         })
                       })
                     }
@@ -332,7 +352,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   const requestedAmount = currentOwedSalary.plus(1)
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
                   })
                 })
               })
@@ -342,7 +362,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   const requestedAmount = bigExp(100, 18)
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_NOTHING_PAID')
+                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from }), 'PAYROLL_NOTHING_PAID')
                   })
                 })
 
@@ -350,7 +370,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   const requestedAmount = bn(0)
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_NOTHING_PAID')
+                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from }), 'PAYROLL_NOTHING_PAID')
                   })
                 })
               })
@@ -409,7 +429,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   const requestedAmount = totalOwedSalary.plus(1)
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
                   })
                 })
               })
@@ -437,7 +457,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   const requestedAmount = previousOwedSalary.plus(1)
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                    await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
                   })
                 })
               })
@@ -590,7 +610,6 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             context('when the employee has already set some token allocations', () => {
               const allocationDAI = 80
               const allocationANT = 20
-              const minRates = [inverseRate(DAI_RATE), inverseRate(ANT_RATE)]
 
               beforeEach('set tokens allocation', async () => {
                 await payroll.setAllowedToken(ANT.address, true, { from: owner })
@@ -617,7 +636,6 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             context('when the employee has already set some token allocations', () => {
               const allocationDAI = 80
               const allocationANT = 20
-              const minRates = [inverseRate(DAI_RATE), inverseRate(ANT_RATE)]
 
               beforeEach('set tokens allocation', async () => {
                 await payroll.setAllowedToken(ANT.address, true, { from: owner })
@@ -638,7 +656,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   context('when the requested amount is lower than the total owed salary', () => {
                     const requestedAmount = bigExp(1000, 18)
 
-                    const assertTransferredAmounts = requestedAmount => {
+                    const assertTransferredAmounts = (requestedAmount, minRates = []) => {
                       const requestedDAI = exchangedAmount(requestedAmount, DAI_RATE, allocationDAI)
                       const requestedANT = exchangedAmount(requestedAmount, ANT_RATE, allocationANT)
 
@@ -703,7 +721,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                       })
                     }
 
-                    const assertEmployeeIsUpdated = requestedAmount => {
+                    const assertEmployeeIsUpdated = (requestedAmount, minRates = []) => {
                       it('updates the employee accounting', async () => {
                         const timeDiff = 1 // should be bn(requestedAmount).div(salary).ceil() but BN cannot represent such a small number, hardcoding it to 1
                         const [previousAccruedSalary, , , previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(2, 6)
@@ -730,31 +748,52 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                     }
 
                     const itHandlesPayrollProperly = requestedAmount => {
-                      context('when allocated tokens are still allowed', () => {
-                        context('when exchange rates are not expired', () => {
-                          assertTransferredAmounts(requestedAmount)
-                          assertEmployeeIsUpdated(requestedAmount)
+                      context('when exchange rates are not expired', () => {
+                        context('when allocated tokens are still allowed', () => {
+                          context('when the employee does not provide minimum acceptable rates', () => {
+                            const minRates = []
+
+                            assertTransferredAmounts(requestedAmount, minRates)
+                            assertEmployeeIsUpdated(requestedAmount, minRates)
+                          })
+
+                          context('when the employee provides minimum acceptable rates', () => {
+                            context('when the exchange rates match the min acceptable ones', () => {
+                              const minRates = [inverseRate(DAI_RATE), inverseRate(ANT_RATE)]
+
+                              assertTransferredAmounts(requestedAmount, minRates)
+                              assertEmployeeIsUpdated(requestedAmount, minRates)
+                            })
+
+                            context('when the exchange rates does not match the min acceptable ones', () => {
+                              const minRates = [inverseRate(DAI_RATE).plus(1), inverseRate(ANT_RATE)]
+
+                              it('reverts', async () => {
+                                await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
+                              })
+                            })
+                          })
                         })
 
-                        context('when exchange rates are expired', () => {
-                          beforeEach('expire exchange rates', async () => {
-                            const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
-                            await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE], expiredTimestamp)
+                        context('when allocated tokens are not allowed anymore', () => {
+                          beforeEach('remove allowed tokens', async () => {
+                            await payroll.setAllowedToken(DAI.address, false, { from: owner })
                           })
 
                           it('reverts', async () => {
-                            await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
+                            await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from }), 'PAYROLL_NOT_ALLOWED_TOKEN')
                           })
                         })
                       })
 
-                      context('when allocated tokens are not allowed anymore', () => {
-                        beforeEach('remove allowed tokens', async () => {
-                          await payroll.setAllowedToken(DAI.address, false, { from: owner })
+                      context('when exchange rates are expired', () => {
+                        beforeEach('expire exchange rates', async () => {
+                          const expiredTimestamp = (await payroll.getTimestampPublic()).sub(RATE_EXPIRATION_TIME + 1)
+                          await setTokenRates(priceFeed, USD, [DAI, ANT], [DAI_RATE, ANT_RATE], expiredTimestamp)
                         })
 
                         it('reverts', async () => {
-                          await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, minRates, { from }), 'PAYROLL_NOT_ALLOWED_TOKEN')
+                          await assertRevert(payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                         })
                       })
                     }
@@ -907,7 +946,7 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
       })
     })
 
-    context('when it has not been initialized yet', function () {
+    context('when it has not been initialized yet', () => {
       const requestedAmount = bn(0)
 
       it('reverts', async () => {

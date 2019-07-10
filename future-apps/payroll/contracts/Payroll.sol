@@ -302,7 +302,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         Employee storage employee = employees[employeeId];
 
         // Delete previous token allocations
-        address[] previousAllowedTokenAddresses = employee.allocationTokenAddresses;
+        address[] memory previousAllowedTokenAddresses = employee.allocationTokenAddresses;
         for (uint256 j = 0; j < previousAllowedTokenAddresses.length; j++) {
             delete employee.allocationTokens[previousAllowedTokenAddresses[j]];
         }
@@ -813,7 +813,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     function _ensureEmployeeTokenAllocationsIsValid(Employee storage employee_) internal view {
         uint256 sum = 0;
-        address[] storage allocationTokenAddresses = employee_.allocationTokenAddresses;
+        address[] memory allocationTokenAddresses = employee_.allocationTokenAddresses;
         for (uint256 i = 0; i < allocationTokenAddresses.length; i++) {
             address token = allocationTokenAddresses[i];
             require(allowedTokens[token], ERROR_NOT_ALLOWED_TOKEN);
