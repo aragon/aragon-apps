@@ -701,6 +701,23 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
+     * @dev Tell whether an employee has a valid token allocation or not.
+     *      A valid allocation is one that sums to 100 and only includes allowed tokens.
+     * @param _employee Employee struct in storage
+     * @return Reverts if employee's allocation is invalid
+     */
+    function _ensureEmployeeTokenAllocationsIsValid(Employee storage _employee) internal view {
+        uint256 sum = 0;
+        address[] memory allocationTokenAddresses = _employee.allocationTokenAddresses;
+        for (uint256 i = 0; i < allocationTokenAddresses.length; i++) {
+            address token = allocationTokenAddresses[i];
+            require(allowedTokens[token], ERROR_NOT_ALLOWED_TOKEN);
+            sum = sum.add(_employee.allocationTokens[token]);
+        }
+        require(sum == 100, ERROR_DISTRIBUTION_NOT_FULL);
+    }
+
+    /**
      * @dev Tell whether an employee is still active or not
      * @param _employeeId Employee's identifier
      * @return True if the employee exists and has an end date that has not been reached yet, false otherwise
@@ -809,17 +826,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             return "Employee bonus";
         }
         revert(ERROR_INVALID_PAYMENT_TYPE);
-    }
-
-    function _ensureEmployeeTokenAllocationsIsValid(Employee storage employee_) internal view {
-        uint256 sum = 0;
-        address[] memory allocationTokenAddresses = employee_.allocationTokenAddresses;
-        for (uint256 i = 0; i < allocationTokenAddresses.length; i++) {
-            address token = allocationTokenAddresses[i];
-            require(allowedTokens[token], ERROR_NOT_ALLOWED_TOKEN);
-            sum = sum.add(employee_.allocationTokens[token]);
-        }
-        require(sum == 100, ERROR_DISTRIBUTION_NOT_FULL);
     }
 
     function _ensurePaymentAmount(uint256 _owedAmount, uint256 _requestedAmount) private pure returns (uint256) {
