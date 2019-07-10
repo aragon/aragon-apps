@@ -1,7 +1,9 @@
 pragma solidity 0.4.24;
 
+import "@aragon/apps-vault/contracts/Vault.sol";
 import "@aragon/os/contracts/acl/ACL.sol";
 import "@aragon/os/contracts/kernel/Kernel.sol";
+import "@aragon/os/contracts/kernel/KernelConstants.sol";
 import "@aragon/os/contracts/apm/Repo.sol";
 import "@aragon/os/contracts/apm/APMNamehash.sol";
 import "@aragon/os/contracts/factory/DAOFactory.sol";
@@ -53,15 +55,20 @@ contract KitBase is APMNamehash, EVMScriptRegistryConstants {
     }
 }
 
-contract SurveyKit is APMNamehash, KitBase {
+contract SurveyKit is KernelAppIds, KitBase {
     bytes32 constant public SURVEY_APP_ID = apmNamehash("survey"); // survey.aragonpm.eth
 
-    constructor(ENS ens) KitBase(DAOFactory(0), ens) public {}
+    event DeployInstance(address dao, address indexed token);
+
+    constructor(DAOFactory _fac, ENS _ens) KitBase(_fac, _ens) public {
+        // factory must be set up w/o EVMScript support
+        require(address(_fac.regFactory()) == address(0));
+    }
 
     function newInstance(
         MiniMeToken signalingToken,
         address surveyManager,
-        address escapeHatch,
+        address escapeHatchOwner,
         uint64 duration,
         uint64 participation
     )
@@ -74,23 +81,22 @@ contract SurveyKit is APMNamehash, KitBase {
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
         Survey survey = Survey(dao.newAppInstance(SURVEY_APP_ID, latestVersionAppBase(SURVEY_APP_ID)));
-
-        // Set escapeHatch address as the default vault, in case a token rescue is required
-        dao.setApp(dao.APP_BASES_NAMESPACE(), dao.recoveryVaultAppId(), escapeHatch);
-
         survey.initialize(signalingToken, participation, duration);
+
+        // Install a vault to let it be the escape hatch
+        Vault vault = Vault(dao.newAppInstance(KERNEL_DEFAULT_VAULT_APP_ID, latestVersionAppBase(KERNEL_DEFAULT_VAULT_APP_ID)));
+        vault.initialize();
 
         // Set survey manager as the entity that can create votes and change participation
         // surveyManager can then give this permission to other entities
         acl.createPermission(surveyManager, survey, survey.CREATE_SURVEYS_ROLE(), surveyManager);
         acl.createPermission(surveyManager, survey, survey.MODIFY_PARTICIPATION_ROLE(), surveyManager);
-        acl.grantPermission(surveyManager, dao, dao.APP_MANAGER_ROLE());
-        acl.setPermissionManager(surveyManager, dao, dao.APP_MANAGER_ROLE());
+        acl.createPermission(escapeHatchOwner, vault, vault.TRANSFER_ROLE(), escapeHatchOwner);
 
         cleanupDAOPermissions(dao, acl, surveyManager);
 
-        emit DeployInstance(dao);
         emit InstalledApp(survey, SURVEY_APP_ID);
+        emit DeployInstance(dao, signalingToken);
 
         return (dao, survey);
     }

@@ -17,7 +17,15 @@
     "prepare": "npx apps-shared-scripts-prepare",
     "install:frontend": "cd app && npm install",
     "abi:extract": "truffle-extract --output abi/ --keys abi",
-    "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile"
+    "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile",
+    "publish:kit:rpc": "aragon apm publish major $(npm run deploy:kit:rpc | tail -n 1) --environment default",
+    "deploy:kit:rpc": "aragon contracts compile --all && aragon contracts exec --network rpc scripts/ deploy.js",
+    "publish:kit:staging": "aragon apm publish major $(npm run deploy:kit:staging | tail -n 1) --environment staging",
+    "deploy:kit:staging": "aragon contracts compile --all && ENS=0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939 aragon contracts exec --network rinkeby scripts/ deploy.js",
+    "publish:kit:rinkeby": "aragon apm publish major $(npm run deploy:kit:rinkeby | tail -n 1) --environment rinkeby",
+    "deploy:kit:rinkeby": "aragon contracts compile --all && ENS=0x98Df287B6C145399Aaa709692c8D308357bC085D aragon contracts exec --network rinkeby scripts/ deploy.js",
+    "publish:kit:mainnet": "aragon apm publish major $(npm run deploy:kit:mainnet | tail -n 1) --environment mainnet",
+    "deploy:kit:mainnet": "aragon contracts compile --all && ENS=0x314159265dd8dbb310642f98f50c066173c1259b aragon contracts exec --network mainnet scripts/ deploy.js"
   },
   "files": [
     "/abi",
@@ -31,6 +39,7 @@
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "description": "",
   "devDependencies": {
+    "@aragon/apps-vault": "^4.0.0",
     "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/apps-shared-scripts": "^1.0.0",
     "@aragon/cli": "~5.6.0",
