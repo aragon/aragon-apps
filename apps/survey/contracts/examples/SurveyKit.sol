@@ -56,7 +56,8 @@ contract KitBase is APMNamehash, EVMScriptRegistryConstants {
 }
 
 contract SurveyKit is KernelAppIds, KitBase {
-    bytes32 constant public SURVEY_APP_ID = apmNamehash("survey"); // survey.aragonpm.eth
+    // bytes32 constant public SURVEY_APP_ID = apmNamehash("survey");
+    bytes32 constant public SURVEY_APP_ID = 0x030b2ab880b88e228f2da5a3d19a2a31bc10dbf91fb1143776a6de489389471e; // survey.aragonpm.eth
 
     event DeployInstance(address dao, address indexed token);
 
