@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { TokenBadge, Text, breakpoint, theme } from '@aragon/ui'
+import { Box, TokenBadge, Text, breakpoint, theme, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { formatBalance, stakesPercentages } from '../utils'
 import You from './You'
@@ -28,7 +28,7 @@ const displayedStakes = (accounts, total) => {
   }))
 }
 
-class SideBar extends React.PureComponent {
+class InfoBoxes extends React.PureComponent {
   static defaultProps = {
     holders: [],
   }
@@ -49,18 +49,18 @@ class SideBar extends React.PureComponent {
       tokenSupply,
       tokenSymbol,
       userAccount,
+      theme,
       ...rest
     } = this.props
     const stakes = displayedStakes(holders, tokenSupply)
     return (
-      <Main {...rest}>
-        <Part>
-          <h1>
-            <Text color={theme.textSecondary} smallcaps>
-              Token Info
-            </Text>
-          </h1>
-          <ul>
+      <React.Fragment>
+        <Box heading="Token Info">
+          <ul
+            css={`
+              color: ${theme.surfaceContent};
+            `}
+          >
             <InfoRow>
               <span>Total Supply</span>
               <span>:</span>
@@ -82,13 +82,8 @@ class SideBar extends React.PureComponent {
               />
             </InfoRow>
           </ul>
-        </Part>
-        <Part>
-          <h1>
-            <Text color={theme.textSecondary} smallcaps>
-              Ownership Distribution
-            </Text>
-          </h1>
+        </Box>
+        <Box heading="Ownership Distribution">
           <Text size="large" weight="bold">
             Token Holder Stakes
           </Text>
@@ -121,44 +116,11 @@ class SideBar extends React.PureComponent {
               </StakesListItem>
             ))}
           </ul>
-        </Part>
-      </Main>
+        </Box>
+      </React.Fragment>
     )
   }
 }
-
-const Main = styled.aside`
-  flex-shrink: 0;
-  flex-grow: 0;
-  min-height: 100%;
-  margin-top: 16px;
-  padding: 0 20px;
-
-  ${breakpoint(
-    'medium',
-    `
-      width: 260px;
-      margin-left: 30px;
-      margin-top: 0;
-      padding: 0;
-      opacity: 1;
-    `
-  )};
-`
-
-const Part = styled.section`
-  margin-bottom: 55px;
-  h1 {
-    margin-bottom: 15px;
-    color: ${theme.textSecondary};
-    text-transform: lowercase;
-    line-height: 30px;
-    font-variant: small-caps;
-    font-weight: 600;
-    font-size: 16px;
-    border-bottom: 1px solid ${theme.contentBorder};
-  }
-`
 
 const InfoRow = styled.li`
   display: flex;
@@ -168,7 +130,6 @@ const InfoRow = styled.li`
 
   > span:nth-child(1) {
     font-weight: 400;
-    color: ${theme.textSecondary};
   }
   > span:nth-child(2) {
     opacity: 0;
@@ -219,5 +180,6 @@ const StakesListBullet = styled.span`
 
 export default props => {
   const network = useNetwork()
-  return <SideBar network={network} {...props} />
+  const theme = useTheme()
+  return <InfoBoxes theme={theme} network={network} {...props} />
 }

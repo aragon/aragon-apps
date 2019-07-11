@@ -1,7 +1,16 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import { Badge, Main, SidePanel, SyncIndicator } from '@aragon/ui'
+import {
+  Badge,
+  Button,
+  Header,
+  SidePanel,
+  SyncIndicator,
+  useTheme,
+  useThemeMode,
+  GU,
+} from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
@@ -86,100 +95,119 @@ class App extends React.PureComponent {
   render() {
     const {
       appStateReady,
+      connectedAccount,
       groupMode,
       holders,
       isSyncing,
       maxAccountTokens,
       numData,
+      requestMenu,
+      theme,
       tokenAddress,
       tokenDecimalsBase,
       tokenName,
       tokenSupply,
       tokenSymbol,
       tokenTransfersEnabled,
-      connectedAccount,
-      requestMenu,
     } = this.props
+
     const { assignTokensConfig, sidepanelOpened } = this.state
 
     return (
-      <Main assetsUrl="./aragon-ui">
-        <div css="min-width: 320px">
-          <IdentityProvider
-            onResolve={this.handleResolveLocalIdentity}
-            onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
-          >
-            <SyncIndicator visible={isSyncing} />
-            <AppLayout
-              title="Tokens"
-              afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
-              onMenuOpen={requestMenu}
-              mainButton={{
-                label: 'Add tokens',
-                icon: <AssignTokensIcon />,
-                onClick: this.handleLaunchAssignTokensNoHolder,
-              }}
-              smallViewPadding={0}
+      <IdentityProvider
+        onResolve={this.handleResolveLocalIdentity}
+        onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
+      >
+        <SyncIndicator visible={isSyncing} />
+
+        <Header
+          primary={
+            <div
+              css={`
+                display: flex;
+                align-items: center;
+              `}
             >
-              {appStateReady && holders.length > 0 ? (
-                <Holders
-                  holders={holders}
-                  groupMode={groupMode}
-                  maxAccountTokens={maxAccountTokens}
-                  tokenAddress={tokenAddress}
-                  tokenDecimalsBase={tokenDecimalsBase}
-                  tokenName={tokenName}
-                  tokenSupply={tokenSupply}
-                  tokenSymbol={tokenSymbol}
-                  tokenTransfersEnabled={tokenTransfersEnabled}
-                  userAccount={connectedAccount}
-                  onAssignTokens={this.handleLaunchAssignTokens}
-                  onRemoveTokens={this.handleLaunchRemoveTokens}
-                />
-              ) : (
-                !isSyncing && (
-                  <EmptyState
-                    onActivate={this.handleLaunchAssignTokensNoHolder}
-                  />
-                )
-              )}
-            </AppLayout>
-            <SidePanel
-              title={
-                assignTokensConfig.mode === 'assign'
-                  ? 'Add tokens'
-                  : 'Remove tokens'
-              }
+              <h1
+                css={`
+                  font-size: 26px;
+                  color: ${theme.content};
+                  margin-right: ${1 * GU}px;
+                `}
+              >
+                Tokens
+              </h1>
+              {tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
+            </div>
+          }
+          secondary={
+            <Button
+              mode="strong"
+              onClick={this.handleLaunchAssignTokensNoHolder}
+            >
+              Add tokens
+            </Button>
+          }
+        />
+
+        {appStateReady && holders.length > 0 ? (
+          <Holders
+            holders={holders}
+            groupMode={groupMode}
+            maxAccountTokens={maxAccountTokens}
+            tokenAddress={tokenAddress}
+            tokenDecimalsBase={tokenDecimalsBase}
+            tokenName={tokenName}
+            tokenSupply={tokenSupply}
+            tokenSymbol={tokenSymbol}
+            tokenTransfersEnabled={tokenTransfersEnabled}
+            userAccount={connectedAccount}
+            onAssignTokens={this.handleLaunchAssignTokens}
+            onRemoveTokens={this.handleLaunchRemoveTokens}
+          />
+        ) : (
+          !isSyncing && (
+            <EmptyState onActivate={this.handleLaunchAssignTokensNoHolder} />
+          )
+        )}
+
+        <SidePanel
+          title={
+            assignTokensConfig.mode === 'assign'
+              ? 'Add tokens'
+              : 'Remove tokens'
+          }
+          opened={sidepanelOpened}
+          onClose={this.handleSidepanelClose}
+          onTransitionEnd={this.handleSidepanelTransitionEnd}
+        >
+          {appStateReady && (
+            <AssignVotePanelContent
               opened={sidepanelOpened}
-              onClose={this.handleSidepanelClose}
-              onTransitionEnd={this.handleSidepanelTransitionEnd}
-            >
-              {appStateReady && (
-                <AssignVotePanelContent
-                  opened={sidepanelOpened}
-                  tokenDecimals={numData.tokenDecimals}
-                  tokenDecimalsBase={tokenDecimalsBase}
-                  onUpdateTokens={this.handleUpdateTokens}
-                  getHolderBalance={this.getHolderBalance}
-                  maxAccountTokens={maxAccountTokens}
-                  {...assignTokensConfig}
-                />
-              )}
-            </SidePanel>
-          </IdentityProvider>
-        </div>
-      </Main>
+              tokenDecimals={numData.tokenDecimals}
+              tokenDecimalsBase={tokenDecimalsBase}
+              onUpdateTokens={this.handleUpdateTokens}
+              getHolderBalance={this.getHolderBalance}
+              maxAccountTokens={maxAccountTokens}
+              {...assignTokensConfig}
+            />
+          )}
+        </SidePanel>
+      </IdentityProvider>
     )
   }
 }
 
 export default () => {
   const { api, appState, connectedAccount, requestMenu } = useAragonApi()
+  const theme = useTheme()
+
   return (
     <App
       api={api}
       connectedAccount={connectedAccount}
       requestMenu={requestMenu}
+      theme={theme}
       {...appState}
     />
   )

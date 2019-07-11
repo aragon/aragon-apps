@@ -1,10 +1,6 @@
 import React, { useCallback } from 'react'
 import styled from 'styled-components'
 import {
-  ContextMenu,
-  ContextMenuItem,
-  IconAdd,
-  IconRemove,
   TableCell,
   TableRow,
   theme,
@@ -61,31 +57,6 @@ const HolderRow = React.memo(
           </TableCell>
         )}
         <TableCell align="right" css="padding-left: 0">
-          <ContextMenu>
-            {canAssign && (
-              <ContextMenuItem onClick={handleAssignTokens}>
-                <IconWrapper css="top: -2px">
-                  <IconAdd />
-                </IconWrapper>
-                <ActionLabel>Add tokens</ActionLabel>
-              </ContextMenuItem>
-            )}
-            <ContextMenuItem onClick={handleRemoveTokens}>
-              <IconWrapper css="top: -2px">
-                <IconRemove />
-              </IconWrapper>
-              <ActionLabel>
-                Remove Token
-                {singleToken ? '' : 's'}
-              </ActionLabel>
-            </ContextMenuItem>
-            <ContextMenuItem onClick={handleEditLabel}>
-              <IconWrapper css="left: 1px">
-                <IconLabel />
-              </IconWrapper>
-              <ActionLabel>{label ? 'Edit' : 'Add'} custom label</ActionLabel>
-            </ContextMenuItem>
-          </ContextMenu>
         </TableCell>
       </TableRow>
     )
@@ -117,16 +88,6 @@ const Owner = styled.div`
   & > span:first-child {
     margin-right: 10px;
   }
-`
-
-const IconWrapper = styled.span`
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  color: ${theme.textSecondary};
 `
 
 export default props => {
