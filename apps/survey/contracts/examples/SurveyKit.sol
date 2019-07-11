@@ -78,27 +78,26 @@ contract SurveyKit is KernelAppIds, KitBase {
     {
         Kernel dao = fac.newDAO(this);
         ACL acl = ACL(dao.acl());
-
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
+        // Install survey app
         Survey survey = Survey(dao.newAppInstance(SURVEY_APP_ID, latestVersionAppBase(SURVEY_APP_ID)));
         survey.initialize(signalingToken, participation, duration);
+        emit InstalledApp(survey, SURVEY_APP_ID);
 
         // Install a vault to let it be the escape hatch
         Vault vault = Vault(dao.newAppInstance(KERNEL_DEFAULT_VAULT_APP_ID, latestVersionAppBase(KERNEL_DEFAULT_VAULT_APP_ID)));
         vault.initialize();
+        emit InstalledApp(vault, KERNEL_DEFAULT_VAULT_APP_ID);
 
         // Set survey manager as the entity that can create votes and change participation
         // surveyManager can then give this permission to other entities
         acl.createPermission(surveyManager, survey, survey.CREATE_SURVEYS_ROLE(), surveyManager);
         acl.createPermission(surveyManager, survey, survey.MODIFY_PARTICIPATION_ROLE(), surveyManager);
         acl.createPermission(escapeHatchOwner, vault, vault.TRANSFER_ROLE(), escapeHatchOwner);
-
         cleanupDAOPermissions(dao, acl, surveyManager);
 
-        emit InstalledApp(survey, SURVEY_APP_ID);
         emit DeployInstance(dao, signalingToken);
-
         return (dao, survey);
     }
 }
