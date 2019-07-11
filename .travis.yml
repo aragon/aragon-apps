@@ -35,8 +35,10 @@ jobs:
       name: "Agent"
     - script: npm run test:finance
       name: "Finance"
-    - script: npm run test:payroll
-      name: "Payroll"
+    - script: npm run test:payroll:only:payday
+      name: "Payroll payday"
+    - script: npm run test:payroll:except:payday
+      name: "Payroll except payday"
     - script: npm run test:survey
       name: "Survey"
     - script: npm run test:token-manager

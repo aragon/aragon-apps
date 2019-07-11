@@ -21,7 +21,7 @@ contract MaliciousEmployee {
     }
 
     function payday() public {
-        payroll.payday(Payroll.PaymentType.Payroll, 0);
+        payroll.payday(Payroll.PaymentType.Payroll, 0, new uint256[](0));
     }
 
     function determineAllocation(address[] _tokens, uint256[] _distribution) public {
@@ -36,15 +36,17 @@ contract MaliciousEmployee {
         counter++;
 
         if (action == Action.Payday) {
-            payroll.payday(Payroll.PaymentType.Payroll, 0);
+            payroll.payday(Payroll.PaymentType.Payroll, 0, new uint256[](0));
         } else if (action == Action.ChangeAddress) {
             payroll.changeAddressByEmployee(msg.sender);
         } else if (action == Action.SetAllocation) {
             address[] memory tokens = new address[](1);
             tokens[0] = address(0);
-            uint256[] memory allocations = new uint256[](1);
-            allocations[0] = 100;
-            payroll.determineAllocation(tokens, allocations);
+            uint256[] memory distribution = new uint256[](1);
+            distribution[0] = 100;
+            uint256[] memory minRates = new uint256[](1);
+            minRates[0] = 1e18;
+            payroll.determineAllocation(tokens, distribution);
         }
     }
 }

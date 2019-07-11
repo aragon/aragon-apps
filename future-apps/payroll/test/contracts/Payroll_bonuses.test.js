@@ -184,7 +184,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                 const previousDAI = await DAI.balanceOf(employee)
                 const previousANT = await ANT.balanceOf(employee)
 
-                await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
+                await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from })
 
                 const currentDAI = await DAI.balanceOf(employee)
                 const expectedDAI = previousDAI.plus(requestedDAI)
@@ -196,7 +196,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               })
 
               it('emits one event per allocated token', async () => {
-                const receipt = await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
+                const receipt = await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from })
 
                 const events = getEvents(receipt, 'SendPayment')
                 assert.equal(events.length, 2, 'should have emitted two events')
@@ -222,7 +222,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
             const assertEmployeeIsNotRemoved = (requestedAmount, expectedRequestedAmount = requestedAmount) => {
               it('does not remove the employee and resets the bonus amount', async () => {
                 const previousBonus = (await payroll.getEmployee(employeeId))[3]
-                await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
+                await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from })
 
                 const [address, employeeSalary, , bonus] = await payroll.getEmployee(employeeId)
 
@@ -246,7 +246,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                   })
 
                   it('reverts', async () => {
-                    await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                    await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                   })
                 })
               })
@@ -257,7 +257,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
+                  await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_NOT_ALLOWED_TOKEN')
                 })
               })
             }
@@ -281,7 +281,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
               context('when the employee does not have pending salary', () => {
                 beforeEach('cash out pending salary', async () => {
-                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from })
+                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [DAI_RATE, ANT_RATE], { from })
                 })
 
                 context('when the employee is not terminated', () => {
@@ -297,7 +297,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                     assertTransferredAmounts(requestedAmount, bonusAmount)
 
                     it('removes the employee', async () => {
-                      await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
+                      await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from })
 
                       await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
                     })
@@ -310,7 +310,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                     })
 
                     it('reverts', async () => {
-                      await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                     })
                   })
                 })
@@ -336,7 +336,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
               context('when the employee does not have pending salary', () => {
                 beforeEach('cash out pending salary', async () => {
-                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from })
+                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [DAI_RATE, ANT_RATE], { from })
                 })
 
                 context('when the employee is not terminated', () => {
@@ -372,7 +372,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
 
               context('when the employee does not have pending salary', () => {
                 beforeEach('cash out pending salary', async () => {
-                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from })
+                  await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [DAI_RATE, ANT_RATE], { from })
                 })
 
                 context('when the employee is not terminated', () => {
@@ -388,7 +388,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                     assertTransferredAmounts(requestedAmount)
 
                     it('removes the employee', async () => {
-                      await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from })
+                      await payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from })
 
                       await assertRevert(payroll.getEmployee(employeeId), 'PAYROLL_EMPLOYEE_DOESNT_EXIST')
                     })
@@ -401,7 +401,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
                     })
 
                     it('reverts', async () => {
-                      await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_EXCHANGE_RATE_ZERO')
+                      await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_EXCHANGE_RATE_TOO_LOW')
                     })
                   })
                 })
@@ -412,7 +412,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bonusAmount.plus(1)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_INVALID_REQUESTED_AMT')
               })
             })
           })
@@ -422,7 +422,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bigExp(100, 18)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
 
@@ -430,7 +430,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bn(0)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_NOTHING_PAID')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_NOTHING_PAID')
               })
             })
           })
@@ -449,7 +449,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bn(0)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
 
@@ -457,7 +457,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bonusAmount.minus(1)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
 
@@ -465,7 +465,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bonusAmount
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
 
@@ -473,7 +473,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bonusAmount.plus(1)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
           })
@@ -483,7 +483,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bigExp(100, 18)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
 
@@ -491,7 +491,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
               const requestedAmount = bn(0)
 
               it('reverts', async () => {
-                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
+                await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_DISTRIBUTION_NOT_FULL')
               })
             })
           })
@@ -505,7 +505,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
           const requestedAmount = bigExp(100, 18)
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
           })
         })
 
@@ -513,7 +513,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
           const requestedAmount = bn(0)
 
           it('reverts', async () => {
-            await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
+            await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
           })
         })
       })
@@ -523,7 +523,7 @@ contract('Payroll bonuses', ([owner, employee, anyone]) => {
       const requestedAmount = bn(0)
 
       it('reverts', async () => {
-        await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, { from: employee }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
+        await assertRevert(payroll.payday(PAYMENT_TYPES.BONUS, requestedAmount, [DAI_RATE, ANT_RATE], { from: employee }), 'PAYROLL_SENDER_DOES_NOT_MATCH')
       })
     })
   })
