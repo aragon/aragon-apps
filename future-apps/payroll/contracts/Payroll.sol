@@ -127,8 +127,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     // Check employee exists and is still active
     modifier employeeActive(uint256 _employeeId) {
-        // No need to check for existence as _isEmployeeActive() is false for non-existent employees
-        require(_isEmployeeActive(_employeeId), ERROR_NON_ACTIVE_EMPLOYEE);
+        // No need to check for existence as _isEmployeeIdActive() is false for non-existent employees
+        require(_isEmployeeIdActive(_employeeId), ERROR_NON_ACTIVE_EMPLOYEE);
         _;
     }
 
@@ -241,12 +241,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         authP(SET_EMPLOYEE_SALARY_ROLE, arr(_employeeId, _denominationSalary, employees[_employeeId].denominationTokenSalary))
         employeeActive(_employeeId)
     {
+        Employee storage employee = employees[_employeeId];
+
         // Accrue employee's owed salary; don't cap to revert on overflow
-        uint256 owed = _getOwedSalarySinceLastPayroll(_employeeId, false);
+        uint256 owed = _getOwedSalarySinceLastPayroll(employee, false);
         _addAccruedSalary(_employeeId, owed);
 
         // Update employee to track the new salary and payment date
-        Employee storage employee = employees[_employeeId];
         employee.lastPayroll = getTimestamp64();
         employee.denominationTokenSalary = _denominationSalary;
 
@@ -340,9 +341,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             // Salary is capped here to avoid reverting at this point if it becomes too big
             // (so employees aren't DDOSed if their salaries get too large)
             // If we do use a capped value, the employee's lastPayroll date will be adjusted accordingly
-            uint256 totalOwedSalary = _getTotalOwedCappedSalary(employeeId);
+            uint256 totalOwedSalary = _getTotalOwedCappedSalary(employee);
             paymentAmount = _ensurePaymentAmount(totalOwedSalary, _requestedAmount);
-            _updateEmployeeAccountingBasedOnPaidSalary(employeeId, paymentAmount);
+            _updateEmployeeAccountingBasedOnPaidSalary(employee, paymentAmount);
         } else if (_type == PaymentType.Reimbursement) {
             uint256 owedReimbursements = employee.reimbursements;
             paymentAmount = _ensurePaymentAmount(owedReimbursements, _requestedAmount);
@@ -393,7 +394,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return True if the given address is an active employee, false otherwise
      */
     function canForward(address _sender, bytes) public view returns (bool) {
-        return _isEmployeeActive(employeeIds[_sender]);
+        return _isEmployeeIdActive(employeeIds[_sender]);
     }
 
     // Getter fns
@@ -453,7 +454,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return Employee's total owed salary: current owed payroll since the last payroll date, plus the accrued salary.
      */
     function getTotalOwedSalary(uint256 _employeeId) public view employeeIdExists(_employeeId) returns (uint256) {
-        return _getTotalOwedCappedSalary(_employeeId);
+        return _getTotalOwedCappedSalary(employees[_employeeId]);
     }
 
     /**
@@ -641,18 +642,17 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @dev Updates the accrued salary and payroll date of an employee based on a payment amount and
      *      their currently owed salary since last payroll date
-     * @param _employeeId Employee's identifier
+     * @param _employee Employee struct in storage
      * @param _paymentAmount Amount being paid to the employee
      */
-    function _updateEmployeeAccountingBasedOnPaidSalary(uint256 _employeeId, uint256 _paymentAmount) internal {
-        Employee storage employee = employees[_employeeId];
-        uint256 accruedSalary = employee.accruedSalary;
+    function _updateEmployeeAccountingBasedOnPaidSalary(Employee storage _employee, uint256 _paymentAmount) internal {
+        uint256 accruedSalary = _employee.accruedSalary;
 
         if (_paymentAmount <= accruedSalary) {
             // Employee is only cashing out some previously owed salary so we don't need to update
             // their last payroll date
             // No need to use SafeMath as we already know _paymentAmount <= accruedSalary
-            employee.accruedSalary = accruedSalary - _paymentAmount;
+            _employee.accruedSalary = accruedSalary - _paymentAmount;
             return;
         }
 
@@ -665,7 +665,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             // No need to use SafeMath here as we already know _paymentAmount > accruedSalary
             currentSalaryPaid = _paymentAmount - accruedSalary;
         }
-        uint256 salary = employee.denominationTokenSalary;
+        uint256 salary = _employee.denominationTokenSalary;
         uint256 timeDiff = currentSalaryPaid.div(salary);
 
         // If they're being paid an amount that doesn't match perfectly with the adjusted time
@@ -675,20 +675,20 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 extraSalary = currentSalaryPaid < salary ? salary - currentSalaryPaid : currentSalaryPaid % salary;
         if (extraSalary > 0) {
             timeDiff = timeDiff.add(1);
-            employee.accruedSalary = extraSalary;
+            _employee.accruedSalary = extraSalary;
         } else if (accruedSalary > 0) {
             // We finally need to clear their accrued salary, but as an optimization, we only do
             // this if they had a non-zero value before
-            employee.accruedSalary = 0;
+            _employee.accruedSalary = 0;
         }
 
-        uint256 lastPayrollDate = uint256(employee.lastPayroll).add(timeDiff);
+        uint256 lastPayrollDate = uint256(_employee.lastPayroll).add(timeDiff);
         // Even though this function should never receive a currentSalaryPaid value that would
         // result in the lastPayrollDate being higher than the current time,
         // let's double check to be safe
         require(lastPayrollDate <= uint256(getTimestamp64()), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
         // Already know lastPayrollDate must fit in uint64 from above
-        employee.lastPayroll = uint64(lastPayrollDate);
+        _employee.lastPayroll = uint64(lastPayrollDate);
     }
 
     /**
@@ -719,11 +719,20 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     /**
      * @dev Tell whether an employee is still active or not
+     * @param _employee Employee struct in storage
+     * @return True if the employee exists and has an end date that has not been reached yet, false otherwise
+     */
+    function _isEmployeeActive(Employee storage _employee) internal view returns (bool) {
+        return _employee.endDate >= getTimestamp64();
+    }
+
+    /**
+     * @dev Tell whether an employee id is still active or not
      * @param _employeeId Employee's identifier
      * @return True if the employee exists and has an end date that has not been reached yet, false otherwise
      */
-    function _isEmployeeActive(uint256 _employeeId) internal view returns (bool) {
-        return employees[_employeeId].endDate >= getTimestamp64();
+    function _isEmployeeIdActive(uint256 _employeeId) internal view returns (bool) {
+        return _isEmployeeActive(employees[_employeeId]);
     }
 
     /**
@@ -750,17 +759,17 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     /**
      * @dev Get owed salary since last payroll for an employee
-     * @param _employeeId Employee's identifier
+     * @param _employee Employee struct in storage
      * @param _capped Safely cap the owed salary at max uint
      * @return Owed salary in denomination tokens since last payroll for the employee.
      *         If _capped is false, it reverts in case of an overflow.
      */
-    function _getOwedSalarySinceLastPayroll(uint256 _employeeId, bool _capped) internal view returns (uint256) {
-        uint256 timeDiff = _getOwedPayrollPeriod(_employeeId);
+    function _getOwedSalarySinceLastPayroll(Employee storage _employee, bool _capped) internal view returns (uint256) {
+        uint256 timeDiff = _getOwedPayrollPeriod(_employee);
         if (timeDiff == 0) {
             return 0;
         }
-        uint256 salary = employees[_employeeId].denominationTokenSalary;
+        uint256 salary = _employee.denominationTokenSalary;
 
         if (_capped) {
             // Return max uint if the result overflows
@@ -773,39 +782,35 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     /**
      * @dev Get owed payroll period for an employee
-     * @param _employeeId Employee's identifier
+     * @param _employee Employee struct in storage
      * @return Owed time in seconds since the employee's last payroll date
      */
-    function _getOwedPayrollPeriod(uint256 _employeeId) internal view returns (uint256) {
-        Employee storage employee = employees[_employeeId];
-
+    function _getOwedPayrollPeriod(Employee storage _employee) internal view returns (uint256) {
         // Get the min of current date and termination date
-        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64() : employee.endDate;
+        uint64 date = _isEmployeeActive(_employee) ? getTimestamp64() : _employee.endDate;
 
         // Make sure we don't revert if we try to get the owed salary for an employee whose last
         // payroll date is now or in the future
         // This can happen either by adding new employees with start dates in the future, to allow
         // us to change their salary before their start date, or by terminating an employee and
         // paying out their full owed salary
-        if (date <= employee.lastPayroll) {
+        if (date <= _employee.lastPayroll) {
             return 0;
         }
 
         // Return time diff in seconds, no need to use SafeMath as the underflow was covered by the previous check
-        return uint256(date - employee.lastPayroll);
+        return uint256(date - _employee.lastPayroll);
     }
 
     /**
      * @dev Get owed salary since last payroll for an employee. It will take into account the accrued salary as well.
      *      The result will be capped to max uint256 to avoid having an overflow.
-     * @param _employeeId Employee's identifier
+     * @param _employee Employee struct in storage
      * @return Employee's total owed salary: current owed payroll since the last payroll date, plus the accrued salary.
      */
-    function _getTotalOwedCappedSalary(uint256 _employeeId) internal view returns (uint256) {
-        Employee storage employee = employees[_employeeId];
-
-        uint256 currentOwedSalary = _getOwedSalarySinceLastPayroll(_employeeId, true); // cap amount
-        uint256 totalOwedSalary = currentOwedSalary + employee.accruedSalary;
+    function _getTotalOwedCappedSalary(Employee storage _employee) internal view returns (uint256) {
+        uint256 currentOwedSalary = _getOwedSalarySinceLastPayroll(_employee, true); // cap amount
+        uint256 totalOwedSalary = currentOwedSalary + _employee.accruedSalary;
         if (totalOwedSalary < currentOwedSalary) {
             totalOwedSalary = MAX_UINT256;
         }
