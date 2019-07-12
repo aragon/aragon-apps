@@ -19,6 +19,11 @@
       "registry": "0x314159265dd8dbb310642f98f50c066173c1259b",
       "appName": "payroll.aragonpm.eth",
       "network": "mainnet"
+    },
+    "ropsten": {
+      "registry": "0x6afe2cacee211ea9179992f89dc61ff25c61e923",
+      "appName": "payroll.aragonpm.eth",
+      "network": "ropsten"
     }
   },
   "dependencies": [
