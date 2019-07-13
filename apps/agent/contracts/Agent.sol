@@ -21,8 +21,6 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
 
     bytes4 private constant ERC165_INTERFACE_ID = 0x01ffc9a7;
 
-    string private constant ERROR_EXECUTE_ETH_NO_DATA = "AGENT_EXEC_ETH_NO_DATA";
-    string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "AGENT_EXEC_TARGET_NO_CONTRACT";
     string private constant ERROR_DESIGNATED_TO_SELF = "AGENT_DESIGNATED_TO_SELF";
 
     mapping (bytes32 => bool) public isPresigned;
