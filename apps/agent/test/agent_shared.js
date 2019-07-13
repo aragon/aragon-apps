@@ -1,10 +1,11 @@
 const { hash: namehash } = require('eth-ens-namehash')
 const ethUtil = require('ethereumjs-util')
-const ethABI = new (require('web3-eth-abi').AbiCoder)()
+const ethABI = require('web3-eth-abi')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
-const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
+const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
+const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
+const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 
 // Allow for sharing this test across other agent implementations and subclasses
 module.exports = (
@@ -39,6 +40,18 @@ module.exports = (
     let daoFact, agentBase, dao, acl, agent, agentAppId
 
     let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ERC1271_INTERFACE_ID
+
+    // Error strings
+    const errors = makeErrorMappingProxy({
+      // aragonOS errors
+      APP_AUTH_FAILED: 'APP_AUTH_FAILED',
+      INIT_ALREADY_INITIALIZED: 'INIT_ALREADY_INITIALIZED',
+      INIT_NOT_INITIALIZED: 'INIT_NOT_INITIALIZED',
+      RECOVER_DISALLOWED: 'RECOVER_DISALLOWED',
+
+      // Agent errors
+      AGENT_DESIGNATED_TO_SELF: "AGENT_DESIGNATED_TO_SELF",
+    })
 
     const root = accounts[0]
 
@@ -174,7 +187,7 @@ module.exports = (
           it('fails to execute without permissions', async () => {
             const data = executionTarget.contract.execute.getData()
 
-            await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: nonExecutor }))
+            await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: nonExecutor }), errors.APP_AUTH_FAILED)
           })
 
           it('fails to execute actions with more ETH than the agent owns', async () => {
@@ -220,7 +233,7 @@ module.exports = (
               await acl.grantPermissionP(granteeUnequalToSig, agent.address, EXECUTE_ROLE, [nonEqualParam], { from: root })
             })
 
-            it('equal: can execute if the signature matches', async () => {
+            it('equal param: can execute if the signature matches', async () => {
               const N = 1102
 
               const data = executionTarget.contract.setCounter.getData(N)
@@ -232,7 +245,7 @@ module.exports = (
               assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
             })
 
-            it('not equal: can execute if the signature doesn\'t match', async () => {
+            it('not equal param: can execute if the signature doesn\'t match', async () => {
               const data = executionTarget.contract.execute.getData()
               const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig })
 
@@ -242,17 +255,17 @@ module.exports = (
               assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
             })
 
-            it('equal: fails to execute if signature doesn\'t match', async () => {
+            it('equal param: fails to execute if signature doesn\'t match', async () => {
               const data = executionTarget.contract.execute.getData()
 
-              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig }))
+              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig }), errors.APP_AUTH_FAILED)
             })
 
-            it('not equal: fails to execute if the signature matches', async () => {
+            it('not equal param: fails to execute if the signature matches', async () => {
               const N = 1102
 
               const data = executionTarget.contract.setCounter.getData(N)
-              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig }))
+              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig }), errors.APP_AUTH_FAILED)
             })
           })
         })
@@ -287,7 +300,7 @@ module.exports = (
         assert.isFalse(await agent.canForward(nonScriptRunner, script))
         assert.equal(await executionTarget.counter(), 0)
 
-        await assertRevert(agent.forward(script, { from: nonScriptRunner }))
+        await assertRevert(agent.forward(script, { from: nonScriptRunner }), errors.APP_AUTH_FAILED)
         assert.equal(await executionTarget.counter(), 0)
       })
     })
@@ -346,7 +359,7 @@ module.exports = (
       })
 
       it('fails to presign a hash if not authorized', async () => {
-        await assertRevert(agent.presignHash(HASH, { from: nobody }))
+        await assertRevert(agent.presignHash(HASH, { from: nobody }), errors.APP_AUTH_FAILED)
         assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
       })
 
@@ -558,6 +571,12 @@ module.exports = (
             // Now presign it
             await agent.presignHash(HASH, { from: presigner })
             assertIsValidSignature(true, await agent.isValidSignature(HASH, invalidSignature))
+          })
+        })
+
+        context('> Signature mode: self', () => {
+          it('cannot set itself as the designated signer', async () => {
+            await assertRevert(agent.setDesignatedSigner(agent.address, { from: signerDesignator }), errors.AGENT_DESIGNATED_TO_SELF)
           })
         })
       })
