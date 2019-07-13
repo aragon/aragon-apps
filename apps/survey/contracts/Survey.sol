@@ -28,7 +28,6 @@ contract Survey is AragonApp {
     string private constant ERROR_CAN_NOT_VOTE = "SURVEY_CAN_NOT_VOTE";
     string private constant ERROR_VOTE_WRONG_INPUT = "SURVEY_VOTE_WRONG_INPUT";
     string private constant ERROR_VOTE_WRONG_OPTION = "SURVEY_VOTE_WRONG_OPTION";
-    string private constant ERROR_VOTE_WHOLE_WRONG_OPTION = "SURVEY_VOTE_WHOLE_WRONG_OPTION";
     string private constant ERROR_NO_STAKE = "SURVEY_NO_STAKE";
     string private constant ERROR_OPTIONS_NOT_ORDERED = "SURVEY_OPTIONS_NOT_ORDERED";
     string private constant ERROR_NO_OPTION = "SURVEY_NO_OPTION";
