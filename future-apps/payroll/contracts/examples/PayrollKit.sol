@@ -18,7 +18,11 @@ import "../Payroll.sol";
 
 
 contract PPFMock is IFeed {
-  function get(address, address) external view returns (uint128 xrt, uint64 when) {
+    function ratePrecision() external pure returns (uint256) {
+        return 10 ** 18;
+    }
+
+    function get(address, address) external view returns (uint128 xrt, uint64 when) {
       xrt = 7500000000000000; // 1 ETH = ~133USD
       when = uint64(now);
   }
@@ -89,7 +93,7 @@ contract PayrollKit is KitBase {
 
         // Payroll prerequisites
         PPFMock priceFeed = new PPFMock();
-        MiniMeToken denominationToken = newToken("USD Dolar", "USD");
+        MiniMeToken denominationToken = newToken("USD Dollar", "USD");
 
         // Allow this contract to install new apps for now
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
@@ -101,20 +105,20 @@ contract PayrollKit is KitBase {
 
         // Deploy payroll tokens
         MiniMeToken token1 = installManagedToken(dao, acl, root, finance, "Token 1", "TK1");
-        payroll.addAllowedToken(token1);
+        payroll.setAllowedToken(token1, true);
 
         MiniMeToken token2 = installManagedToken(dao, acl, root, finance, "Token 2", "TK2");
-        payroll.addAllowedToken(token2);
+        payroll.setAllowedToken(token2, true);
 
         MiniMeToken token3 = installManagedToken(dao, acl, root, finance, "Token 3", "TK3");
-        payroll.addAllowedToken(token3);
+        payroll.setAllowedToken(token3, true);
 
         // Add employees to payroll
         addEmployees(payroll, root, token1, token2);
 
         // Clean up
         cleanupDAOPermissions(dao, acl, root);
-        cleanupPermission(acl, root, payroll, payroll.ALLOWED_TOKENS_MANAGER_ROLE());
+        cleanupPermission(acl, root, payroll, payroll.MANAGE_ALLOWED_TOKENS_ROLE());
         cleanupPermission(acl, root, payroll, payroll.ADD_EMPLOYEE_ROLE());
 
         emit DeployInstance(dao);
@@ -158,7 +162,7 @@ contract PayrollKit is KitBase {
         acl.createPermission(root, payroll, payroll.TERMINATE_EMPLOYEE_ROLE(), root);
 
         // Allow this contract to add tokens to Payroll for now
-        acl.createPermission(this, payroll, payroll.ALLOWED_TOKENS_MANAGER_ROLE(), this);
+        acl.createPermission(this, payroll, payroll.MANAGE_ALLOWED_TOKENS_ROLE(), this);
 
         // Allow this contract to add employees to Payroll for now
         acl.createPermission(this, payroll, payroll.ADD_EMPLOYEE_ROLE(), this);
@@ -208,13 +212,11 @@ contract PayrollKit is KitBase {
         address account2 = 0x8401Eb5ff34cc943f096A32EF3d5113FEbE8D4Eb;
         address account3 = 0x306469457266CBBe7c0505e8Aad358622235e768;
         address account4 = 0xd873F6DC68e3057e4B7da74c6b304d0eF0B484C7;
-        address account5 = 0xDcC5dD922fb1D0fd0c450a0636a8cE827521f0eD;
 
         uint256 salary1 = 2535047025122316; // 80000
         uint256 salary2 = 2851927903262605; // 90000
         uint256 salary3 = 3168808781402895; // 100000
         uint256 salary4 = 2218166146982026; // 70000
-        uint256 salary5 = 1901285268841737; // 60000
 
         // Set up first user; use this contract as the account so we can set up the initial distribution
         payroll.addEmployee(this, salary1, uint64(now - 86400), "CEO");
@@ -234,6 +236,5 @@ contract PayrollKit is KitBase {
         payroll.addEmployee(account2, salary2, uint64(now - 86400), "Project Manager");
         payroll.addEmployee(account3, salary3, uint64(now - 172800), "Developer");
         payroll.addEmployee(account4, salary4, uint64(now - 172800), "Developer");
-        payroll.addEmployee(account5, salary5, uint64(now - 172800), "Developer");
     }
 }

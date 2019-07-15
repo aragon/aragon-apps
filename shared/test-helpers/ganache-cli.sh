@@ -46,21 +46,21 @@ start_testrpc() {
 }
 
 measure_coverage() {
-  echo "Measuring coverage..."
-  npx solidity-coverage "$@"
+  echo "Measuring coverage $@..."
+  npx solidity-coverage $@
 }
 
 run_tests() {
-  echo "Running tests..."
-  npx truffle test --network rpc "$@"
+  echo "Running tests $@..."
+  npx truffle test --network rpc $@
 }
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
   setup_coverage_variables
   start_testrpc
-  measure_coverage
+  measure_coverage $@
 else
   setup_testing_variables
   start_ganache
-  run_tests
+  run_tests $@
 fi

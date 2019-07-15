@@ -27,6 +27,9 @@
     "start": "aragon run --accounts 9 --environment default --files app/build/ --template PayrollKit --template-init @ARAGON_ENS",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm run test",
+    "test:all": "npm run test:only:payday && npm run test:except:payday",
+    "test:only:payday": "npm run test test/contracts/Payroll_payday.test.js",
+    "test:except:payday": "npm run test $(find test -name '*.test.js' ! -name 'Payroll_payday.test.js')",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "truffle:dev": "truffle dev",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
@@ -45,7 +48,7 @@
   "dependencies": {
     "@aragon/apps-finance": "3.0.0",
     "@aragon/os": "4.2.0",
-    "@aragon/ppf-contracts": "1.1.0"
+    "@aragon/ppf-contracts": "1.2.0"
   },
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",

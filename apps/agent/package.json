@@ -43,7 +43,7 @@
     "solium": "^1.2.3",
     "truffle": "4.1.14",
     "truffle-extract": "^1.2.1",
-    "web3-eth-abi": "^1.0.0-beta.38"
+    "web3-eth-abi": "1.0.0-beta.37"
   },
   "dependencies": {
     "@aragon/apps-vault": "4.1.0",
