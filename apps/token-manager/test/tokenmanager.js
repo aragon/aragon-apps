@@ -8,13 +8,11 @@ const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const TokenManager = artifacts.require('TokenManagerMock')
 const MiniMeToken = artifacts.require('MiniMeToken')
-const ACL = artifacts.require('@aragon/core/contracts/acl/ACL')
-const Kernel = artifacts.require('@aragon/core/contracts/kernel/Kernel')
-const DAOFactory = artifacts.require('@aragon/core/contracts/factory/DAOFactory')
-const EVMScriptRegistryFactory = artifacts.require('@aragon/core/contracts/factory/EVMScriptRegistryFactory')
+const ACL = artifacts.require('ACL')
+const Kernel = artifacts.require('Kernel')
+const DAOFactory = artifacts.require('DAOFactory')
+const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
-
-const getContract = name => artifacts.require(name)
 
 const n = '0x00'
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
@@ -52,8 +50,8 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
     const NOW = 1
 
     before(async () => {
-        const kernelBase = await getContract('Kernel').new(true) // petrify immediately
-        const aclBase = await getContract('ACL').new()
+        const kernelBase = await Kernel.new(true) // petrify immediately
+        const aclBase = await ACL.new()
         const regFact = await EVMScriptRegistryFactory.new()
         daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
         tokenManagerBase = await TokenManager.new()
