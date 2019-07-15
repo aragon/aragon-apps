@@ -5,6 +5,7 @@ const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { skipCoverage } = require('@aragon/os/test/helpers/coverage')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const { decodeEventsOfType } = require('@aragon/os/test/helpers/decodeEvent')
+const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 const { assertEvent, assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
 
@@ -32,6 +33,20 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
 
   const MIN_QUORUM = pct(20)
   const MIN_SUPPORT = pct(70)
+
+  // Error strings
+  const ERRORS = makeErrorMappingProxy({
+    // aragonOS errors
+    APP_AUTH_FAILED: 'APP_AUTH_FAILED',
+
+    // Voting errors
+    VOTING_NO_VOTE: 'VOTING_NO_VOTE',
+    VOTING_CAN_NOT_VOTE: 'VOTING_CAN_NOT_VOTE',
+    VOTING_NOT_REPRESENTATIVE: 'VOTING_NOT_REPRESENTATIVE',
+    VOTING_WITHIN_OVERRULE_WINDOW: 'VOTING_WITHIN_OVERRULE_WINDOW',
+    VOTING_INVALID_OVERRULE_WINDOW: 'VOTING_INVALID_OVERRULE_WINDOW',
+    VOTING_DELEGATES_EXCEEDS_MAX_LEN: 'VOTING_DELEGATES_EXCEEDS_MAX_LEN'
+  })
 
   before('deploy base implementations', async () => {
     kernelBase = await Kernel.new(true) // petrify immediately
@@ -219,7 +234,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
       })
 
       it('reverts', async () => {
-        await assertRevert(voting.canVoteOnBehalfOf(voteId, voter, representative, { from: representative }), 'VOTING_NO_VOTE')
+        await assertRevert(voting.canVoteOnBehalfOf(voteId, voter, representative, { from: representative }), ERRORS.VOTING_NO_VOTE)
       })
     })
   })
@@ -344,7 +359,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
             })
 
             it('reverts', async () => {
-              await assertRevert(voting.voteOnBehalfOf(voter, voteId, true, { from }), 'VOTING_WITHIN_OVERRULE_WINDOW')
+              await assertRevert(voting.voteOnBehalfOf(voter, voteId, true, { from }), ERRORS.VOTING_WITHIN_OVERRULE_WINDOW)
             })
           })
         })
@@ -357,7 +372,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
           })
 
           it('reverts', async () => {
-            await assertRevert(voting.voteOnBehalfOf(invalidVoter, voteId, true, { from }), 'VOTING_CAN_NOT_VOTE')
+            await assertRevert(voting.voteOnBehalfOf(invalidVoter, voteId, true, { from }), ERRORS.VOTING_CAN_NOT_VOTE)
           })
         })
       })
@@ -366,7 +381,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
         const from = voter
 
         it('reverts', async () => {
-          await assertRevert(voting.voteOnBehalfOf(voter, voteId, true, { from }), 'VOTING_NOT_REPRESENTATIVE')
+          await assertRevert(voting.voteOnBehalfOf(voter, voteId, true, { from }), ERRORS.VOTING_NOT_REPRESENTATIVE)
         })
       })
 
@@ -374,7 +389,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
         const from = anyone
 
         it('reverts', async () => {
-          await assertRevert(voting.voteOnBehalfOf(voter, voteId, true, { from }), 'VOTING_NOT_REPRESENTATIVE')
+          await assertRevert(voting.voteOnBehalfOf(voter, voteId, true, { from }), ERRORS.VOTING_NOT_REPRESENTATIVE)
         })
       })
     })
@@ -382,7 +397,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
     context('when the vote does not exist', () => {
       it('reverts', async () => {
         await voting.setRepresentative(representative, { from: voter })
-        await assertRevert(voting.voteOnBehalfOf(voter, voteId, true, { from: representative }), 'VOTING_NO_VOTE')
+        await assertRevert(voting.voteOnBehalfOf(voter, voteId, true, { from: representative }), ERRORS.VOTING_NO_VOTE)
       })
     })
   })
@@ -433,7 +448,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
 
         context('when the input length exceeds the max length allowed', () => {
           it('reverts', async () => {
-            await assertRevert(voting.voteOnBehalfOfMany(voters, voteId, true), 'VOTING_DELEGATES_EXCEEDS_MAX_LEN')
+            await assertRevert(voting.voteOnBehalfOfMany(voters, voteId, true), ERRORS.VOTING_DELEGATES_EXCEEDS_MAX_LEN)
           })
         })
       })
@@ -443,7 +458,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
       const voters = [voter, anotherVoter]
 
       it('reverts', async () => {
-        await assertRevert(voting.voteOnBehalfOfMany(voters, voteId, true, { from: representative }), 'VOTING_NO_VOTE')
+        await assertRevert(voting.voteOnBehalfOfMany(voters, voteId, true, { from: representative }), ERRORS.VOTING_NO_VOTE)
       })
     })
   })
@@ -482,7 +497,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
         const newWindow = VOTING_DURATION + 1
 
         it('reverts', async () => {
-          await assertRevert(voting.changeOverruleWindow(newWindow, { from }), 'VOTING_INVALID_OVERRULE_WINDOW')
+          await assertRevert(voting.changeOverruleWindow(newWindow, { from }), ERRORS.VOTING_INVALID_OVERRULE_WINDOW)
         })
       })
     })
