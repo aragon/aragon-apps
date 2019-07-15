@@ -30,10 +30,11 @@ contract Voting is IForwarder, AragonApp {
     string private constant ERROR_INIT_SUPPORT_TOO_BIG = "VOTING_INIT_SUPPORT_TOO_BIG";
     string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPP_TOO_BIG";
     string private constant ERROR_CAN_NOT_VOTE = "VOTING_CAN_NOT_VOTE";
-    string private constant ERROR_REPRESENTATIVE_CANT_VOTE = "VOTING_REPRESENTATIVE_CANT_VOTE";
+    string private constant ERROR_NOT_REPRESENTATIVE = "VOTING_NOT_REPRESENTATIVE";
     string private constant ERROR_CAN_NOT_EXECUTE = "VOTING_CAN_NOT_EXECUTE";
     string private constant ERROR_CAN_NOT_FORWARD = "VOTING_CAN_NOT_FORWARD";
     string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
+    string private constant ERROR_WITHIN_OVERRULE_WINDOW = "VOTING_WITHIN_OVERRULE_WINDOW";
     string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
     string private constant ERROR_DELEGATES_EXCEEDS_MAX_LEN = "VOTING_DELEGATES_EXCEEDS_MAX_LEN";
     string private constant ERROR_INVALID_DELEGATES_INPUT_LEN = "VOTING_INVALID_DELEGATES_INPUT_LEN";
@@ -51,7 +52,8 @@ contract Voting is IForwarder, AragonApp {
         uint256 votingPower;
         bytes executionScript;
         mapping (address => VoterState) voters;
-        mapping (address => address) issuers;
+        mapping (address => address) casters;
+        uint64 overruleWindow;
     }
 
     MiniMeToken public token;
@@ -68,12 +70,13 @@ contract Voting is IForwarder, AragonApp {
 
     event StartVote(uint256 indexed voteId, address indexed creator, string metadata);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
-    event ProxyVote(uint256 indexed voteId, address indexed voter, address indexed representative, bool supports, bool succeed);
+    event ProxyVoteFailed(uint256 indexed voteId, address indexed voter, address indexed representative);
+    event ProxyVoteSucceed(uint256 indexed voteId, address indexed voter, address indexed representative, bool supports);
     event ExecuteVote(uint256 indexed voteId);
     event ChangeSupportRequired(uint64 supportRequiredPct);
     event ChangeMinQuorum(uint64 minAcceptQuorumPct);
-    event ChangeOverruleWindow(uint64 previousOverruleWindow, uint64 newOverruleWindow);
-    event ChangeRepresentative(address indexed voter, address indexed previousRepresentative, address indexed newRepresentative);
+    event ChangeOverruleWindow(uint64 newOverruleWindow);
+    event ChangeRepresentative(address indexed voter, address indexed newRepresentative);
 
     modifier voteExists(uint256 _voteId) {
         require(_voteExists(_voteId), ERROR_NO_VOTE);
@@ -137,8 +140,8 @@ contract Voting is IForwarder, AragonApp {
         authP(MODIFY_OVERRULE_WINDOW_ROLE, arr(uint256(_newOverruleWindow), uint256(overruleWindow)))
     {
         require(_newOverruleWindow <= voteTime, ERROR_INVALID_OVERRULE_WINDOW);
-        emit ChangeOverruleWindow(overruleWindow, _newOverruleWindow);
         overruleWindow = _newOverruleWindow;
+        emit ChangeOverruleWindow(_newOverruleWindow);
     }
 
     /**
@@ -189,9 +192,9 @@ contract Voting is IForwarder, AragonApp {
     * @param _supports Whether the representative supports the vote
     */
     function voteOnBehalfOf(address _voter, uint256 _voteId, bool _supports) external voteExists(_voteId) {
-        Vote storage vote_ = votes[_voteId];
-        require(_canVoteOnBehalfOf(vote_, _voter, msg.sender), ERROR_REPRESENTATIVE_CANT_VOTE);
-        _voteOnBehalfOf(_voteId, _supports, _voter, msg.sender);
+        address[] memory voters = new address[](1);
+        voters[0] = _voter;
+        _voteOnBehalfOfMany(voters, _voteId, _supports);
     }
 
     /**
@@ -204,16 +207,7 @@ contract Voting is IForwarder, AragonApp {
     */
     function voteOnBehalfOfMany(address[] _voters, uint256 _voteId, bool _supports) external voteExists(_voteId) {
         require(_voters.length <= MAX_VOTES_DELEGATION_SET_LENGTH, ERROR_DELEGATES_EXCEEDS_MAX_LEN);
-
-        Vote storage vote_ = votes[_voteId];
-        for (uint256 i = 0; i < _voters.length; i++) {
-            address voter = _voters[i];
-            if (_canVoteOnBehalfOf(vote_, voter, msg.sender)) {
-                _voteOnBehalfOf(_voteId, _supports, voter, msg.sender);
-            } else {
-                emit ProxyVote(_voteId, voter, msg.sender, _supports, false);
-            }
-        }
+        _voteOnBehalfOfMany(_voters, _voteId, _supports);
     }
 
     /**
@@ -224,15 +218,6 @@ contract Voting is IForwarder, AragonApp {
     */
     function executeVote(uint256 _voteId) external voteExists(_voteId) {
         _executeVote(_voteId);
-    }
-
-    /**
-    * @notice `_allowed ? 'Set' : 'Remove'` `_representative` as the representative
-    * @param _representative Address of the representative to be allowed on behalf of the sender. Use the zero address for none.
-    */
-    function setRepresentative(address _representative) external isInitialized {
-        emit ChangeRepresentative(msg.sender, representatives[msg.sender], _representative);
-        representatives[msg.sender] = _representative;
     }
 
     // Forwarding fns
@@ -267,6 +252,17 @@ contract Voting is IForwarder, AragonApp {
         return canPerform(_sender, CREATE_VOTES_ROLE, arr());
     }
 
+    // Public fns
+
+    /**
+    * @notice `_representative == 0x0 ? 'Set your voting representative to ' + _representative : 'Remove your representative'`
+    * @param _representative Address of the representative to be allowed on behalf of the sender. Use the zero address for none.
+    */
+    function setRepresentative(address _representative) public isInitialized {
+        representatives[msg.sender] = _representative;
+        emit ChangeRepresentative(msg.sender, _representative);
+    }
+
     // Getter fns
 
     /**
@@ -290,17 +286,21 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Tells whether `_representative` can vote on behalf of `_voter` in the vote #`_voteId` or not
+    * @notice Tells whether `_representative` can vote on behalf of `_voter` in vote #`_voteId` or not
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote(),` which requires initialization
     * @return True if the given representative can vote on behalf of the given voter in a certain vote, false otherwise
     */
     function canVoteOnBehalfOf(uint256 _voteId, address _voter, address _representative) public view voteExists(_voteId) returns (bool) {
-        return _canVoteOnBehalfOf(votes[_voteId], _voter, _representative);
+        Vote storage vote_ = votes[_voteId];
+        return _canVote(vote_, _voter) &&
+            _isRepresentativeOf(_voter, _representative) &&
+            _hasNotVotedYet(vote_, _voter) &&
+            !_withinOverruleWindow(vote_);
     }
 
     /**
-    * @notice Tells whether the vote #`_voteId` is within the overrule period for delegated votes or not
+    * @notice Tells whether vote #`_voteId` is within the overrule period for delegated votes or not
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote(),` which requires initialization
     * @return True if the requested vote is within the overrule window for delegated votes, false otherwise
@@ -311,7 +311,7 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @notice Tells whether `_representative` is allowed by `_voter` as representative or not
+    * @notice Tells whether `_representative` is `_voter`'s representative or not
     * @return True if the given representative was allowed by a certain voter, false otherwise
     */
     function isRepresentativeOf(address _voter, address _representative) public view isInitialized returns (bool) {
@@ -327,6 +327,7 @@ contract Voting is IForwarder, AragonApp {
     * @return Vote snapshot block
     * @return Vote support required
     * @return Vote minimum acceptance quorum
+    * @return Vote overrule window period
     * @return Vote yeas amount
     * @return Vote nays amount
     * @return Vote power
@@ -343,6 +344,7 @@ contract Voting is IForwarder, AragonApp {
             uint64 snapshotBlock,
             uint64 supportRequired,
             uint64 minAcceptQuorum,
+            uint64 overruleWindow,
             uint256 yea,
             uint256 nay,
             uint256 votingPower,
@@ -357,6 +359,7 @@ contract Voting is IForwarder, AragonApp {
         snapshotBlock = vote_.snapshotBlock;
         supportRequired = vote_.supportRequiredPct;
         minAcceptQuorum = vote_.minAcceptQuorumPct;
+        overruleWindow = vote_.overruleWindow;
         yea = vote_.yea;
         nay = vote_.nay;
         votingPower = vote_.votingPower;
@@ -374,13 +377,13 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @dev Return the issuer of a given vote by its ID
+    * @dev Return the caster of a given vote by its ID
     * @param _voteId Vote identifier
     * @param _voter Address of the voter
-    * @return Address of the issuer of the voter's vote
+    * @return Address of the caster of the voter's vote
     */
-    function getVoteIssuer(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (address) {
-        return _voteIssuer(votes[_voteId], _voter);
+    function getVoteCaster(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (address) {
+        return _voteCaster(votes[_voteId], _voter);
     }
 
     // Internal fns
@@ -399,6 +402,7 @@ contract Voting is IForwarder, AragonApp {
         Vote storage vote_ = votes[voteId];
         vote_.startDate = getTimestamp64();
         vote_.snapshotBlock = snapshotBlock;
+        vote_.overruleWindow = overruleWindow;
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
         vote_.votingPower = votingPower;
@@ -418,7 +422,7 @@ contract Voting is IForwarder, AragonApp {
         // This could re-enter, though we can assume the governance token is not malicious
         Vote storage vote_ = votes[_voteId];
         _storeVote(vote_, _voteId, _supports, _voter);
-        _overwriteIssuerIfNecessary(vote_, _voter);
+        _overwriteCasterIfNecessary(vote_, _voter);
 
         if (_executesIfDecided && _canExecute(vote_)) {
             // We've already checked if the vote can be executed with `_canExecute()`
@@ -427,14 +431,33 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @dev Internal function to check if a representative can vote on behalf of a voter. It assumes the queried vote exists.
+    * @dev Internal function for a representative to cast a vote on behalf of many voters. It assumes the queried vote exists.
+    */
+    function _voteOnBehalfOfMany(address[] _voters, uint256 _voteId, bool _supports) internal {
+        Vote storage vote_ = votes[_voteId];
+        for (uint256 i = 0; i < _voters.length; i++) {
+            address voter = _voters[i];
+            require(_canVote(vote_, voter), ERROR_CAN_NOT_VOTE);
+            require(!_withinOverruleWindow(vote_), ERROR_WITHIN_OVERRULE_WINDOW);
+            require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
+
+            if (_hasNotVotedYet(vote_, voter)) {
+                _voteOnBehalfOf(_voteId, _supports, voter, msg.sender);
+            } else {
+                emit ProxyVoteFailed(_voteId, voter, msg.sender);
+            }
+        }
+    }
+
+    /**
+    * @dev Internal function for a representative to cast a vote on behalf of a voter. It assumes the queried vote exists.
     */
     function _voteOnBehalfOf(uint256 _voteId, bool _supports, address _voter, address _representative) internal {
         Vote storage vote_ = votes[_voteId];
         _storeVote(vote_, _voteId, _supports, _voter);
-        vote_.issuers[_voter] = _representative;
+        vote_.casters[_voter] = _representative;
 
-        emit ProxyVote(_voteId, _voter, _representative, _supports, true);
+        emit ProxyVoteSucceed(_voteId, _voter, _representative, _supports);
     }
 
     /**
@@ -501,17 +524,6 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @dev Internal function to check if a representative can vote on behalf of a voter on a certain vote. It assumes the queried vote exists.
-    * @return True if the given representative can vote on behalf of a voter on a certain vote, false otherwise
-    */
-    function _canVoteOnBehalfOf(Vote storage vote_, address _voter, address _representative) internal view returns (bool) {
-        return _canVote(vote_, _voter) &&
-               _isRepresentativeOf(_voter, _representative) &&
-               _hasNotVotedYet(vote_, _voter) &&
-               !_withinOverruleWindow(vote_);
-    }
-
-    /**
     * @dev Internal function to check if a representative is allowed to vote on behalf of a voter
     * @return True if the given representative is allowed by a certain voter, false otherwise
     */
@@ -524,7 +536,7 @@ contract Voting is IForwarder, AragonApp {
     * @return True if the given voter has not voted on the requested vote, false otherwise
     */
     function _hasNotVotedYet(Vote storage vote_, address _voter) internal view returns (bool) {
-        return _voteIssuer(vote_, _voter) != _voter;
+        return _voteCaster(vote_, _voter) != _voter;
     }
 
     /**
@@ -540,7 +552,7 @@ contract Voting is IForwarder, AragonApp {
     * @return True if the given vote is within its overrule window, false otherwise
     */
     function _withinOverruleWindow(Vote storage vote_) internal view returns (bool) {
-        return getTimestamp64() >= _voteEndDate(vote_).sub(overruleWindow);
+        return getTimestamp64() >= _voteEndDate(vote_).sub(vote_.overruleWindow);
     }
 
     /**
@@ -558,15 +570,15 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
-    * @dev Internal function to get the issuer of a vote. It assumes the queried vote exists.
+    * @dev Internal function to get the caster of a vote. It assumes the queried vote exists.
     */
-    function _voteIssuer(Vote storage vote_, address _voter) internal view returns (address) {
+    function _voteCaster(Vote storage vote_, address _voter) internal view returns (address) {
         if (_voterState(vote_, _voter) == VoterState.Absent) {
             return address(0);
         }
 
-        address _issuer = vote_.issuers[_voter];
-        return _issuer == address(0) ? _voter : _issuer;
+        address _caster = vote_.casters[_voter];
+        return _caster == address(0) ? _voter : _caster;
     }
 
     /**
@@ -610,10 +622,10 @@ contract Voting is IForwarder, AragonApp {
         emit CastVote(_voteId, _voter, _supports, voterStake);
     }
 
-    function _overwriteIssuerIfNecessary(Vote storage vote_, address _voter) private {
-        address _currentIssuer = vote_.issuers[_voter];
-        if (_currentIssuer != address(0)) {
-            vote_.issuers[_voter] = address(0);
+    function _overwriteCasterIfNecessary(Vote storage vote_, address _voter) private {
+        address _currentCaster = vote_.casters[_voter];
+        if (_currentCaster != address(0)) {
+            vote_.casters[_voter] = address(0);
         }
     }
 }

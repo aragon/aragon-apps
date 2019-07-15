@@ -1,6 +1,7 @@
 const VOTER_STATE = require('../helpers/state')
-const { bigExp, pct } = require('../helpers/numbers')(web3)
 const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
+const { getVoteState } = require('../helpers/voting')
+const { bigExp, pct } = require('../helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
 const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
@@ -186,16 +187,17 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 })
 
                 it('has correct state', async () => {
-                    const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower, execScript] = await voting.getVote(voteId)
+                    const { isOpen, isExecuted, snapshotBlock, support, quorum, overruleWindow, yeas, nays, votingPower, script: execScript } = await getVoteState(voting, voteId)
 
                     assert.isTrue(isOpen, 'vote should be open')
                     assert.isFalse(isExecuted, 'vote should not be executed')
                     assert.equal(creator, holder51, 'creator should be correct')
                     assert.equal(snapshotBlock.toString(), await getBlockNumber() - 1, 'snapshot block should be correct')
-                    assert.equal(supportRequired.toString(), neededSupport.toString(), 'required support should be app required support')
-                    assert.equal(minQuorum.toString(), minimumAcceptanceQuorum.toString(), 'min quorum should be app min quorum')
-                    assert.equal(y, 0, 'initial yea should be 0')
-                    assert.equal(n, 0, 'initial nay should be 0')
+                    assert.equal(support.toString(), neededSupport.toString(), 'required support should be app required support')
+                    assert.equal(quorum.toString(), minimumAcceptanceQuorum.toString(), 'min quorum should be app min quorum')
+                    assert.equal(overruleWindow.toString(), 0, 'default overrule window should be zero')
+                    assert.equal(yeas, 0, 'initial yea should be 0')
+                    assert.equal(nays, 0, 'initial nay should be 0')
                     assert.equal(votingPower.toString(), bigExp(100, decimals).toString(), 'voting power should be 100')
                     assert.equal(execScript, script, 'script should be correct')
                     assert.equal(metadata, 'metadata', 'should have returned correct metadata')
@@ -218,8 +220,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     await voting.vote(voteId, false, false, { from: holder29 })
                     await voting.mockIncreaseTime(VOTING_DURATION + 1)
 
-                    const state = await voting.getVote(voteId)
-                    assert.equal(state[4].toString(), neededSupport.toString(), 'required support in vote should stay equal')
+                    const { support } = await getVoteState(voting, voteId)
+                    assert.equal(support.toString(), neededSupport.toString(), 'required support in vote should stay equal')
                     await voting.executeVote(voteId) // exec doesn't fail
                 })
 
@@ -233,17 +235,17 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     await voting.vote(voteId, true, true, { from: holder29 })
                     await voting.mockIncreaseTime(VOTING_DURATION + 1)
 
-                    const state = await voting.getVote(voteId)
-                    assert.equal(state[5].toString(), minimumAcceptanceQuorum.toString(), 'acceptance quorum in vote should stay equal')
+                    const { quorum } = await getVoteState(voting, voteId)
+                    assert.equal(quorum.toString(), minimumAcceptanceQuorum.toString(), 'acceptance quorum in vote should stay equal')
                     await voting.executeVote(voteId) // exec doesn't fail
                 })
 
                 it('holder can vote', async () => {
                     await voting.vote(voteId, false, true, { from: holder29 })
-                    const state = await voting.getVote(voteId)
+                    const { nays } = await getVoteState(voting, voteId)
                     const voterState = await voting.getVoterState(voteId, holder29)
 
-                    assert.equal(state[7].toString(), bigExp(29, decimals).toString(), 'nay vote should have been counted')
+                    assert.equal(nays.toString(), bigExp(29, decimals).toString(), 'nay vote should have been counted')
                     assert.equal(voterState, VOTER_STATE.NAY, 'holder29 should have nay voter status')
                 })
 
@@ -251,19 +253,19 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     await voting.vote(voteId, true, true, { from: holder29 })
                     await voting.vote(voteId, false, true, { from: holder29 })
                     await voting.vote(voteId, true, true, { from: holder29 })
-                    const state = await voting.getVote(voteId)
+                    const { yeas, nays } = await getVoteState(voting, voteId)
 
-                    assert.equal(state[6].toString(), bigExp(29, decimals).toString(), 'yea vote should have been counted')
-                    assert.equal(state[7], 0, 'nay vote should have been removed')
+                    assert.equal(nays.toString(), 0, 'nay vote should have been removed')
+                    assert.equal(yeas.toString(), bigExp(29, decimals).toString(), 'yea vote should have been counted')
                 })
 
                 it('token transfers dont affect voting', async () => {
                     await token.transfer(nonHolder, bigExp(29, decimals), { from: holder29 })
 
                     await voting.vote(voteId, true, true, { from: holder29 })
-                    const state = await voting.getVote(voteId)
+                    const { yeas } = await getVoteState(voting, voteId)
 
-                    assert.equal(state[6].toString(), bigExp(29, decimals).toString(), 'yea vote should have been counted')
+                    assert.equal(yeas.toString(), bigExp(29, decimals).toString(), 'yea vote should have been counted')
                     assert.equal(await token.balanceOf(holder29), 0, 'balance should be 0 at current block')
                 })
 
@@ -374,7 +376,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
             await voting.vote(voteId, true, true, { from: holder1 })
 
-            const [isOpen, isExecuted] = await voting.getVote(voteId)
+            const { isOpen, isExecuted } = await getVoteState(voting, voteId)
 
             assert.isFalse(isOpen, 'vote should be closed')
             assert.isTrue(isExecuted, 'vote should have been executed')
@@ -384,7 +386,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         context('new vote parameters', () => {
             it('creating vote as holder executes vote (if _canExecute param says so)', async () => {
                 const voteId = createdVoteId(await voting.newVoteExt(EMPTY_SCRIPT, 'metadata', true, true, { from: holder1 }))
-                const [isOpen, isExecuted] = await voting.getVote(voteId)
+                const { isOpen, isExecuted } = await getVoteState(voting, voteId)
 
                 assert.isFalse(isOpen, 'vote should be closed')
                 assert.isTrue(isExecuted, 'vote should have been executed')
@@ -392,7 +394,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
             it("creating vote as holder doesn't execute vote if _canExecute param doesn't says so", async () => {
                 const voteId = createdVoteId(await voting.newVoteExt(EMPTY_SCRIPT, 'metadata', true, false, { from: holder1 }))
-                const [isOpen, isExecuted] = await voting.getVote(voteId)
+                const { isOpen, isExecuted } = await getVoteState(voting, voteId)
 
                 assert.isTrue(isOpen, 'vote should be open')
                 assert.isFalse(isExecuted, 'vote should not have been executed')
@@ -421,7 +423,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             await voting.vote(voteId, true, true, { from: holder1 })
             await voting.vote(voteId, true, true, { from: holder2 })
 
-            const [isOpen, isExecuted] = await voting.getVote(voteId)
+            const { isOpen, isExecuted } = await getVoteState(voting, voteId)
 
             assert.isFalse(isOpen, 'vote should be closed')
             assert.isTrue(isExecuted, 'vote should have been executed')
@@ -429,7 +431,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
         it('creating vote as holder2 executes vote', async () => {
             const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata', { from: holder2 }))
-            const [isOpen, isExecuted] = await voting.getVote(voteId)
+            const { isOpen, isExecuted } = await getVoteState(voting, voteId)
 
             assert.isFalse(isOpen, 'vote should be closed')
             assert.isTrue(isExecuted, 'vote should have been executed')
@@ -454,7 +456,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata'))
             await token.generateTokens(holder2, 1)
 
-            const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower, execScript] = await voting.getVote(voteId)
+            const { snapshotBlock, votingPower } = await getVoteState(voting, voteId)
 
             // Generating tokens advanced the block by one
             assert.equal(snapshotBlock.toString(), await getBlockNumber() - 2, 'snapshot block should be correct')
@@ -468,7 +470,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             await token.changeController(voting.address)
             const voteId = createdVoteId(await voting.newTokenAndVote(holder2, 1, 'metadata'))
 
-            const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower, execScript] = await voting.getVote(voteId)
+            const { snapshotBlock, votingPower } = await getVoteState(voting, voteId)
 
             assert.equal(snapshotBlock.toString(), await getBlockNumber() - 1, 'snapshot block should be correct')
             assert.equal(votingPower.toString(), (await token.totalSupplyAt(snapshotBlock)).toString(), 'voting power should match snapshot supply')
