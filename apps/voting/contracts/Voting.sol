@@ -344,7 +344,7 @@ contract Voting is IForwarder, AragonApp {
             uint64 snapshotBlock,
             uint64 supportRequired,
             uint64 minAcceptQuorum,
-            uint64 overruleWindow,
+            uint64 voteOverruleWindow,
             uint256 yea,
             uint256 nay,
             uint256 votingPower,
@@ -359,7 +359,7 @@ contract Voting is IForwarder, AragonApp {
         snapshotBlock = vote_.snapshotBlock;
         supportRequired = vote_.supportRequiredPct;
         minAcceptQuorum = vote_.minAcceptQuorumPct;
-        overruleWindow = vote_.overruleWindow;
+        voteOverruleWindow = vote_.overruleWindow;
         yea = vote_.yea;
         nay = vote_.nay;
         votingPower = vote_.votingPower;

@@ -139,7 +139,6 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
   })
 
   describe('canVoteOnBehalfOf', () => {
-
     context('when the vote exists', () => {
       beforeEach('create a vote', createVote)
 
@@ -240,7 +239,6 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
   })
 
   describe('voteOnBehalfOf', () => {
-
     context('when the vote exists', () => {
       beforeEach('create a vote', createVote)
 

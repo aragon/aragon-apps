@@ -137,6 +137,9 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             await assertRevert(voting.changeMinAcceptQuorumPct(neededSupport.plus(1)), ERRORS.VOTING_CHANGE_QUORUM_PCTS)
         })
 
+        it('does not have an overrule window by default', async () => {
+            assert.equal((await voting.overruleWindow()).toString(), 0)
+        })
     })
 
     for (const decimals of [0, 2, 18, 26]) {
