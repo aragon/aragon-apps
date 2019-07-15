@@ -34,6 +34,7 @@
     "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/cli": "~5.6.0",
     "@aragon/test-helpers": "^2.0.0",
+    "eth-ens-namehash": "^2.0.8",
     "eth-gas-reporter": "^0.2.0",
     "ethereumjs-testrpc-sc": "^6.1.6",
     "ethereumjs-util": "^6.1.0",
