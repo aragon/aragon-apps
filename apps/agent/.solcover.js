@@ -4,6 +4,6 @@ module.exports = {
     skipFiles: [
         'test',
         '@aragon/os',
-        '@aragon/apps-vault/contracts/Vault.sol',
+        '@aragon/apps-vault',
     ]
 }

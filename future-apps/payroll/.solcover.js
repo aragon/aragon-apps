@@ -8,13 +8,13 @@ module.exports = {
         '@aragon/test-helpers'
     ],
     skipFiles: [
-        'examples',
         'test',
+        'examples',
         '@aragon/os',
-        '@aragon/apps-vault/contracts/Finance.sol',
-        '@aragon/apps-vault/contracts/Vault.sol',
+        '@aragon/apps-vault',
+        '@aragon/apps-finance',
         '@aragon/ppf-contracts',
-        '@aragon/test-helpers/contracts/TimeHelpersMock.sol',
+        '@aragon/test-helpers',
     ],
     // Turn on deep skip to avoid preprocessing (e.g. removing view/pure modifiers) for skipped files
     deepSkip: true
