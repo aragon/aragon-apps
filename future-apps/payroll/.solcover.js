@@ -2,12 +2,12 @@ module.exports = {
     norpc: true,
     copyPackages: ['@aragon/os', '@aragon/apps-finance', '@aragon/apps-vault', '@aragon/test-helpers'],
     skipFiles: [
+	'test',
         'examples',
-        'test',
         '@aragon/os',
-        '@aragon/apps-vault/contracts/Finance.sol',
-        '@aragon/apps-vault/contracts/Vault.sol',
+        '@aragon/apps-vault',
+        '@aragon/apps-finance',
         '@aragon/ppf-contracts',
-        '@aragon/test-helpers/contracts/TimeHelpersMock.sol',
+        '@aragon/test-helpers',
     ]
 }

@@ -4,7 +4,7 @@ module.exports = {
     skipFiles: [
         'test',
         '@aragon/os',
-        '@aragon/apps-vault/contracts/Vault.sol',
-        '@aragon/test-helpers/contracts/TimeHelpersMock.sol',
+        '@aragon/apps-vault',
+        '@aragon/test-helpers',
     ]
 }
