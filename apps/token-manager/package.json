@@ -5,9 +5,10 @@
   "scripts": {
     "compile": "truffle compile",
     "build": "cd app && npm run build",
-    "apm:publish:major": "aragon apm publish major --files app/build/",
-    "apm:publish:minor": "aragon apm publish minor --files app/build/",
-    "apm:publish:patch": "aragon apm publish patch --files app/build/",
+    "apm:prepublish": "npm run compile",
+    "apm:publish:major": "aragon apm publish major --files app/build/ --prepublish-script apm:prepublish",
+    "apm:publish:minor": "aragon apm publish minor --files app/build/ --prepublish-script apm:prepublish/",
+    "apm:publish:patch": "aragon apm publish patch --files app/build/ --prepublish-script apm:prepublish/",
     "lint": "solium --dir ./contracts",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
@@ -39,7 +40,7 @@
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/apps-shared-scripts": "^1.0.0",
-    "@aragon/cli": "~5.6.0",
+    "@aragon/cli": "^6.0.0",
     "@aragon/test-helpers": "^2.0.0",
     "eth-gas-reporter": "^0.2.0",
     "ethereumjs-testrpc-sc": "^6.1.6",
