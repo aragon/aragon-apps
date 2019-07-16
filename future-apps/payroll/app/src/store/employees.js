@@ -5,19 +5,15 @@ export function getEmployeeById(id) {
   return app
     .call('getEmployee', id)
     .first()
-    .map(data => {
-      return employee({ id, ...data, role: 'Employee' })
-    })
+    .map(data => employee({ id, ...data, role: 'Employee' }))
     .toPromise()
 }
 
-export function getEmployeeByAddress(accountAddress) {
+export function getEmployeeIdByAddress(accountAddress) {
   return app
-    .call('getEmployeeByAddress', accountAddress)
+    .call('getEmployeeIdByAddress', accountAddress)
     .first()
-    .map(data => {
-      return employee({ accountAddress, ...data, role: 'Employee' })
-    })
+    .map(data => employee({ accountAddress, ...data, role: 'Employee' }))
     .toPromise()
 }
 
