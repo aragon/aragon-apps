@@ -25,7 +25,6 @@ install:
   - travis_wait 60 npm install
 jobs:
   allow_failures:
-    - script: npm run coverage:agent
     - script: npm run coverage:payroll
   include:
     - stage: tests
