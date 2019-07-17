@@ -379,6 +379,15 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                 await payroll.setEmployeeSalary(employeeId, salary, { from: owner })
               })
 
+              const itHandlesRemainingAccruedSalaryCorrectly = (requestedAmount, expectedAccruedSalary) => {
+                it('handles remaining accrued salary correctly', async () => {
+                  await payroll.payday(PAYMENT_TYPES.PAYROLL, requestedAmount, [], { from })
+
+                  const [accruedSalary] = (await payroll.getEmployee(employeeId)).slice(2)
+                  assert.equal(accruedSalary.toString(), expectedAccruedSalary.toString(), 'accrued salary does not match')
+                })
+              }
+
               context('when the employee has some pending salary', () => {
                 const currentOwedSalary = salary.mul(ONE_MONTH)
                 const totalOwedSalary = previousOwedSalary.plus(currentOwedSalary)
@@ -392,24 +401,38 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
                   const requestedAmount = bn(0)
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
+                  itHandlesRemainingAccruedSalaryCorrectly(requestedAmount, bn(0))
                 })
 
                 context('when the requested amount is lower than the previous owed salary', () => {
-                  const requestedAmount = previousOwedSalary.minus(10)
+                  const remainingAmount = bn(10)
+                  const requestedAmount = previousOwedSalary.minus(remainingAmount)
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
+                  itHandlesRemainingAccruedSalaryCorrectly(requestedAmount, remainingAmount)
                 })
 
                 context('when the requested amount is greater than the previous owed salary but less than one second of additional salary', () => {
-                  const requestedAmount = previousOwedSalary.plus(salary).minus(1)
+                  const remainingAmount = bn(1)
+                  const requestedAmount = previousOwedSalary.plus(salary).minus(remainingAmount)
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
+
+                  // We're requesting all of the accrued salary and just under one second of salary,
+                  // so we should get the remaining bit left over
+                  itHandlesRemainingAccruedSalaryCorrectly(requestedAmount, remainingAmount)
                 })
 
                 context('when the requested amount is greater than the previous owed salary but greater than one second of additional salary', () => {
-                  const requestedAmount = previousOwedSalary.plus(salary).plus(1)
+                  const extraAmount = bn(1)
+                  const requestedAmount = previousOwedSalary.plus(salary).plus(extraAmount)
 
                   itHandlesPayrollProperlyNeverthelessExtrasOwedAmounts(requestedAmount, totalOwedSalary)
+
+                  // We move the salary up a second, so we should get one full second of salary
+                  // minus the extra amount left over
+                  const remainingAmount = salary.minus(extraAmount)
+                  itHandlesRemainingAccruedSalaryCorrectly(requestedAmount, remainingAmount)
                 })
 
                 context('when the requested amount is equal to the total owed salary', () => {
