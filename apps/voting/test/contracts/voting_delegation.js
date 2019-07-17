@@ -272,8 +272,8 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
               })
 
               it('emits an event', async () => {
-                assertAmountOfEvents(receipt, 'ProxyVoteSucceed', 1)
-                assertEvent(receipt, 'ProxyVoteSucceed', { voter, representative, voteId, supports: false })
+                assertAmountOfEvents(receipt, 'ProxyVoteSuccess', 1)
+                assertEvent(receipt, 'ProxyVoteSuccess', { voter, representative, voteId, supports: false })
               })
 
               it('can be changed by the same representative', async () => {
@@ -289,8 +289,8 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
                 assertAmountOfEvents(receipt, 'CastVote', 1)
                 assertEvent(receipt, 'CastVote', { voter, voteId, supports: true, stake: bigExp(51, 18) })
 
-                assertAmountOfEvents(receipt, 'ProxyVoteSucceed', 1)
-                assertEvent(receipt, 'ProxyVoteSucceed', { voter, representative, voteId, supports: true })
+                assertAmountOfEvents(receipt, 'ProxyVoteSuccess', 1)
+                assertEvent(receipt, 'ProxyVoteSuccess', { voter, representative, voteId, supports: true })
               })
 
               it('can be changed by another representative', async () => {
@@ -307,8 +307,8 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
                 assertAmountOfEvents(receipt, 'CastVote', 1)
                 assertEvent(receipt, 'CastVote', { voter, voteId, supports: true, stake: bigExp(51, 18) })
 
-                assertAmountOfEvents(receipt, 'ProxyVoteSucceed', 1)
-                assertEvent(receipt, 'ProxyVoteSucceed', { voter, representative: anotherRepresentative, voteId, supports: true })
+                assertAmountOfEvents(receipt, 'ProxyVoteSuccess', 1)
+                assertEvent(receipt, 'ProxyVoteSuccess', { voter, representative: anotherRepresentative, voteId, supports: true })
               })
 
               it('can be overruled by the voter', async () => {
@@ -345,8 +345,8 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
               it('emits a proxy failed event', async () => {
                 const receipt = await voting.voteOnBehalfOf(voter, voteId, true, { from })
 
-                assertAmountOfEvents(receipt, 'ProxyVoteFailed')
-                assertEvent(receipt, 'ProxyVoteFailed', { voter, representative, voteId })
+                assertAmountOfEvents(receipt, 'ProxyVoteFailure')
+                assertEvent(receipt, 'ProxyVoteFailure', { voter, representative, voteId })
               })
             })
           })
@@ -420,11 +420,11 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
           const receipt = await voting.voteOnBehalfOfMany(voters, voteId, false, { from: representative })
 
           assertAmountOfEvents(receipt, 'CastVote', 2)
-          assertAmountOfEvents(receipt, 'ProxyVoteFailed', 1)
-          assertAmountOfEvents(receipt, 'ProxyVoteSucceed', 2)
-          assertEvent(receipt, 'ProxyVoteFailed', { voter: previousVoter, representative, voteId })
-          assertEvent(receipt, 'ProxyVoteSucceed', { voter, representative, voteId, supports: false }, 0)
-          assertEvent(receipt, 'ProxyVoteSucceed', { voter: anotherVoter, representative, voteId, supports: false }, 1)
+          assertAmountOfEvents(receipt, 'ProxyVoteFailure', 1)
+          assertAmountOfEvents(receipt, 'ProxyVoteSuccess', 2)
+          assertEvent(receipt, 'ProxyVoteFailure', { voter: previousVoter, representative, voteId })
+          assertEvent(receipt, 'ProxyVoteSuccess', { voter, representative, voteId, supports: false }, 0)
+          assertEvent(receipt, 'ProxyVoteSuccess', { voter: anotherVoter, representative, voteId, supports: false }, 1)
 
           const { yeas, nays } = await getVoteState(voting, voteId)
           assert.equal(yeas.toString(), bigExp(1, 18).toString(), 'yeas should be 1')
@@ -588,7 +588,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
       const receipt = await voting.voteOnBehalfOfMany(voters, voteId, true, { from: representative })
 
       assertAmountOfEvents(receipt, 'CastVote', 100)
-      assertAmountOfEvents(receipt, 'ProxyVoteSucceed', 100)
+      assertAmountOfEvents(receipt, 'ProxyVoteSuccess', 100)
       assert.isAtMost(receipt.receipt.cumulativeGasUsed, 6.8e6)
 
       const { yeas, nays } = await getVoteState(voting, voteId)
