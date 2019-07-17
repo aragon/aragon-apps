@@ -43,9 +43,9 @@
     "@aragon/cli": "^6.0.0",
     "@aragon/test-helpers": "^2.0.0",
     "eth-gas-reporter": "^0.2.0",
-    "ethereumjs-testrpc-sc": "^6.1.6",
+    "ethereumjs-testrpc-sc": "^6.4.5-sc.3",
     "ganache-cli": "^6.4.3",
-    "solidity-coverage": "^0.5.11",
+    "solidity-coverage": "^0.6.2",
     "solium": "^1.2.3",
     "truffle": "4.1.14",
     "truffle-extract": "^1.2.1"

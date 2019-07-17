@@ -10,7 +10,7 @@
   ],
   "peerDependencies": {
     "ganache-cli": "^6.0.0",
-    "solidity-coverage": "^0.5.11"
+    "solidity-coverage": "^0.6.2"
   },
   "devDependencies": {
     "ethereumjs-abi": "^0.6.4"
