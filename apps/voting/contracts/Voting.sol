@@ -145,6 +145,15 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
+    * @notice `_representative == 0x0 ? 'Set your voting representative to ' + _representative : 'Remove your representative'`
+    * @param _representative Address of the representative to be allowed on behalf of the sender. Use the zero address for none.
+    */
+    function setRepresentative(address _representative) external isInitialized {
+        representatives[msg.sender] = _representative;
+        emit ChangeRepresentative(msg.sender, _representative);
+    }
+
+    /**
     * @notice Create a new vote about "`_metadata`"
     * @param _executionScript EVM script to be executed on approval
     * @param _metadata Vote metadata
@@ -250,17 +259,6 @@ contract Voting is IForwarder, AragonApp {
     function canForward(address _sender, bytes) public view returns (bool) {
         // Note that `canPerform()` implicitly does an initialization check itself
         return canPerform(_sender, CREATE_VOTES_ROLE, arr());
-    }
-
-    // Public fns
-
-    /**
-    * @notice `_representative == 0x0 ? 'Set your voting representative to ' + _representative : 'Remove your representative'`
-    * @param _representative Address of the representative to be allowed on behalf of the sender. Use the zero address for none.
-    */
-    function setRepresentative(address _representative) public isInitialized {
-        representatives[msg.sender] = _representative;
-        emit ChangeRepresentative(msg.sender, _representative);
     }
 
     // Getter fns
