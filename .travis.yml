@@ -35,8 +35,6 @@ jobs:
     - script: npm run test:finance
       name: "Finance"
     - script: npm run test:payroll:only:payday
-      name: "Payroll payday"
-    - script: npm run test:payroll:except:payday
       name: "Payroll except payday"
     - script: npm run test:survey
       name: "Survey"
@@ -68,5 +66,9 @@ jobs:
       name: "Vault"
     - script: npm run coverage:voting
       name: "Voting"
+
+    - stage: integration
+      script: npm run test:payroll:except:payday
+      name: "Payroll payday"
 after_success:
   - ./node_modules/.bin/lcov-result-merger 'apps/*/coverage/lcov.info' | ./node_modules/.bin/coveralls
