@@ -127,22 +127,15 @@ contract('Payroll payday', ([owner, employee, anyone]) => {
             }
 
             const assertEmployeeIsUpdatedCorrectly = (requestedAmount, expectedRequestedAmount, minRates = []) => {
-              it('updates the accrued salary and the last payroll date', async () => {
+              it('updates the employee accounting', async () => {
                 let expectedLastPayrollDate, expectedAccruedSalary
-                const [employeeSalary, previousAccruedSalary, , , previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(1, 6)
+                const [, previousAccruedSalary, , , previousPayrollDate] = (await payroll.getEmployee(employeeId)).slice(1, 6)
 
                 if (expectedRequestedAmount.gte(previousAccruedSalary)) {
-                  const remainder = expectedRequestedAmount.minus(previousAccruedSalary)
-                  if (remainder.eq(0)) {
-                    expectedAccruedSalary = bn(0)
-                  } else {
-                    // Have remaining salary that needs to be put back into the accrued salary
-                    expectedAccruedSalary =
-                      remainder.lt(employeeSalary)
-                        ? salary.minus(remainder)
-                        : expectedAccruedSalary = remainder.mod(employeeSalary)
-                  }
-                  expectedLastPayrollDate = previousPayrollDate.plus(remainder.div(employeeSalary).ceil())
+                  const currentSalaryPaid = expectedRequestedAmount.minus(previousAccruedSalary)
+                  const extraSalary = currentSalaryPaid.mod(salary)
+                  expectedAccruedSalary = extraSalary.gt(0) ? salary.minus(extraSalary) : 0
+                  expectedLastPayrollDate = previousPayrollDate.plus(currentSalaryPaid.div(salary).ceil())
                 } else {
                   expectedAccruedSalary = previousAccruedSalary.minus(expectedRequestedAmount).toString()
                   expectedLastPayrollDate = previousPayrollDate
