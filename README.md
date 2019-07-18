@@ -10,9 +10,9 @@ This repository contains the following apps:
 - **[Vault](apps/vault)**: Securely owns and manages tokens on behalf of a DAO.
 - **[Voting](apps/voting)**: Create votes that execute actions on behalf of token holders.
 
-Each of these apps come with a frontend that is compatible with the [Aragon client](http://github.com/aragon/aragon).
+Each of the individual apps come with a frontend that is intended to be installed and used through the [Aragon client](http://github.com/aragon/aragon).
 
-You can read more about how the individual apps work in the [Aragon user guide](https://help.aragon.org/category/15-aragon-apps).
+You can read more about how each of the individual apps work in the [Aragon user guide](https://help.aragon.org/category/15-aragon-apps).
 
 ## Coming soon apps
 
@@ -29,8 +29,10 @@ npm install
 This installs global package dependencies and also bootstraps the entire monorepo through [`lerna`](https://github.com/lerna/lerna).
 
 > **Note**: the monorepo is set up in such a way that you **must** install it through a `lerna bootstrap` (done automatically after an `npm install`).
+>
 > If you're only interested in the contract dependencies, and not the frontends, you can use `INSTALL_FRONTEND=false npm install` instead.
-> If you're only interested in bootstrapping one package, you can use `npx lerna bootstrap --scope @aragon/<package> --inclede-filtered-dependencies`
+>
+> If you're only interested in bootstrapping one package, you can use `npx lerna bootstrap --scope @aragon/<package> --include-filtered-dependencies`
 
 Running tests on all apps can be done by running `npm run test` at the root directory (note that running all of the tests can take a significant amount of time!).
 
@@ -38,15 +40,17 @@ Running tests of an individual app can be done by running `npm run test` inside
 
 By default, tests are run in a in-memory instance of testrpc.
 
-### Frontends
+### App frontends
 
-Developing the frontends locally can be a bit tricky.
+Developing the frontends locally can be a bit tricky, due to the frontends' reliance on a properly configured Aragon client.
 
-For now, you can follow [@bpierre's gist](https://gist.github.com/bpierre/22572415b90577aa17e5953fa68980eb#developing-the-apps) on starting an app's local frontend server and connecting it to a locally running Aragon client.
+For now, you can follow [@bpierre's gist](https://gist.github.com/bpierre/22572415b90577aa17e5953fa68980eb#developing-the-apps) to start an app's local frontend server and connect it to a locally running Aragon client.
 
 In the future, we will improve this flow to make it much easier to get started.
 
 ## Contributing
+
+For some introductory information on what an Aragon app is, and how to build one, please read through the [architecture introduction](https://hack.aragon.org/docs/stack) and [Your first Aragon app](https://hack.aragon.org/docs/tutorial). The [aragonAPI documentation](https://hack.aragon.org/docs/api-intro) is also available as a reference.
 
 #### 👋 Get started contributing with a [good first issue](https://github.com/aragon/aragon-apps/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 

@@ -59,6 +59,7 @@ You can also edit a page directly through your browser by clicking the "EDIT" li
 ## Styleguide and development processes
 
 For the frontends, we use [prettier](https://prettier.io/) and [eslint](https://eslint.org/) to automatically lint and format the project.
+
 For the contracts, we use [eth-lint](https://github.com/duaraghav8/Ethlint) to automatically lint the project.
 
 We generally avoid adding external dependencies if they can be ported over easily, due to numerous NPM-related security issues in the past (e.g. [`event-stream`](https://blog.npmjs.org/post/180565383195/details-about-the-event-stream-incident)).
