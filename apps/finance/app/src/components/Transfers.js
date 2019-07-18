@@ -154,7 +154,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
       return
     }
     const data = await getDownloadData(
-      transactions.filter((_, index) => selectedIndexes.includes(index)),
+      filteredTransfers.filter((_, index) => selectedIndexes.includes(index)),
       tokenDetails,
       resolveAddress
     )
