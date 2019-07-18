@@ -8,7 +8,7 @@ const symbolMapping = {
   Outgoing,
 }
 const stringMapping = {
-  [All]: 'All',
+  [All]: 'Type',
   [Incoming]: 'Incoming',
   [Outgoing]: 'Outgoing',
 }
