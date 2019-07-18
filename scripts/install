@@ -6,6 +6,7 @@ const inCI = 'TRAVIS' in process.env && 'CI' in process.env
 if (inCI) {
   execute('npm run bootstrap:ci', { stdio: 'inherit' })
 } else {
-  process.env.INSTALL_FRONTEND = true
+  process.env.INSTALL_FRONTEND =
+    process.env.INSTALL_FRONTEND === undefined ? true : process.env.INSTALL_FRONTEND
   execute('npm run bootstrap -- --nohoist=@aragon/cli', { stdio: 'inherit' })
 }
