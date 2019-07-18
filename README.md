@@ -38,7 +38,7 @@ Running tests on all apps can be done by running `npm run test` at the root dire
 
 Running tests of an individual app can be done by running `npm run test` inside an individual app's directory, or through the selective `npm run test:<app>` scripts.
 
-By default, tests are run in a in-memory instance of testrpc.
+By default, tests are run on an in-memory instance of testrpc.
 
 ## Contributing
 
