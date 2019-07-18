@@ -20,7 +20,7 @@ The following apps are still under development, and not ready for production dep
 
 - **[Payroll](future-apps/payroll)**: Manages employees' payrolls.
 
-## Developing
+## Quick start
 
 ```
 npm install
@@ -40,14 +40,6 @@ Running tests of an individual app can be done by running `npm run test` inside
 
 By default, tests are run in a in-memory instance of testrpc.
 
-### App frontends
-
-Developing the frontends locally can be a bit tricky, due to the frontends' reliance on a properly configured Aragon client.
-
-For now, you can follow [@bpierre's gist](https://gist.github.com/bpierre/22572415b90577aa17e5953fa68980eb#developing-the-apps) to start an app's local frontend server and connect it to a locally running Aragon client.
-
-In the future, we will improve this flow to make it much easier to get started.
-
 ## Contributing
 
 For some introductory information on what an Aragon app is, and how to build one, please read through the [architecture introduction](https://hack.aragon.org/docs/stack) and [Your first Aragon app](https://hack.aragon.org/docs/tutorial). The [aragonAPI documentation](https://hack.aragon.org/docs/api-intro) is also available as a reference.
@@ -60,7 +52,7 @@ For more details about contributing to Aragon, please check the [contributing gu
 
 #### Issues
 
-If you come across an issue with Aragon, do a search in the [Issues](https://github.com/aragon/aragon/issues?utf8=%E2%9C%93&q=is%3Aissue) tab of this repo and the [Aragon Apps Issues](https://github.com/aragon/aragon-apps/issues?utf8=%E2%9C%93&q=is%3Aissue) to make sure it hasn't been reported before. Follow these steps to help us prevent duplicate issues and unnecessary notifications going to the many people watching this repo:
+If you come across an issue with Aragon, do a search in the [Issues](https://github.com/aragon/aragon-apps/issues?utf8=%E2%9C%93&q=is%3Aissue) tab of this repo and the [Aragon client's issues](https://github.com/aragon/aragon/issues?utf8=%E2%9C%93&q=is%3Aissue) to make sure it hasn't been reported before. Follow these steps to help us prevent duplicate issues and unnecessary notifications going to the many people watching this repo:
 
 - If the issue you found has been reported and is still open, and the details match your issue, give a "thumbs up" to the relevant posts in the issue thread to signal that you have the same issue. No further action is required on your part.
 - If the issue you found has been reported and is still open, but the issue is missing some details, you can add a comment to the issue thread describing the additional details.

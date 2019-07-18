@@ -56,11 +56,25 @@ The reviewer will be able to help you fix any problems and improve it!
 
 You can also edit a page directly through your browser by clicking the "EDIT" link in the top-right corner of any page and then clicking the pencil icon in the github copy of the page.
 
-## Styleguide and development processes
+### Tips and Tricks
+
+Windows users may need to install the [windows-build-tools](https://www.npmjs.com/package/windows-build-tools) before installing this project's dependencies.
+
+#### App frontends
+
+Developing the frontends locally can be a bit tricky, due to the frontends' reliance on a properly configured Aragon client.
+
+For now, you can follow [`@bpierre's` gist](https://gist.github.com/bpierre/22572415b90577aa17e5953fa68980eb#developing-the-apps) to start an app's local frontend server and connect it to a locally running Aragon client.
+
+In the future, we will improve this flow to make it much easier to get started.
+
+### Styleguide and development processes
 
 For the frontends, we use [prettier](https://prettier.io/) and [eslint](https://eslint.org/) to automatically lint and format the project.
 
 For the contracts, we use [eth-lint](https://github.com/duaraghav8/Ethlint) to automatically lint the project.
+
+Handy npm scripts (usually `npm run lint`) are provided at all levels to help automate these checks.
 
 We generally avoid adding external dependencies if they can be ported over easily, due to numerous NPM-related security issues in the past (e.g. [`event-stream`](https://blog.npmjs.org/post/180565383195/details-about-the-event-stream-incident)).
 
