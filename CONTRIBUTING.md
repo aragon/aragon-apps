@@ -71,8 +71,8 @@ The main problem is that smart contracts should be heavily scrutinized before a 
 
 Thus, we use the following convention:
 
-- Any change that can be release immediately, base on `master`
-- Any change that should be staged for longer review (e.g. contract functionality changes pending security review), base on `next`
+- Any change that can be release immediately, base on [`master`](https://github.com/aragon/aragon-apps/tree/master)
+- Any change that should be staged for longer review (e.g. contract functionality changes pending security review), base on [`next`](https://github.com/aragon/aragon-apps/tree/next)
 
 As `next` becomes ready, merge `next` onto `master` with a rebase.
 
