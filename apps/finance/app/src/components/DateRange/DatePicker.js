@@ -203,6 +203,8 @@ const Selector = styled.div`
 const ArrowButton = styled(Button.Anchor)`
   font-size: 60%;
   color: ${theme.contentBorder};
+  border: none;
+  box-shadow: none;
 
   &:hover {
     border: none;
