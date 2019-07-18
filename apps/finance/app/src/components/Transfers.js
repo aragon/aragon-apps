@@ -1,6 +1,5 @@
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
-import styled from 'styled-components'
 import {
   compareDesc,
   endOfDay,
@@ -9,28 +8,34 @@ import {
   startOfDay,
 } from 'date-fns'
 import {
-  Button,
-  Table,
-  TableHeader,
-  TableRow,
   useViewport,
   theme,
+  Button,
+  ContextMenu,
+  ContextMenuItem,
+  DataView,
+  GU,
+  IconLabel,
+  IconExternal,
+  IconToken,
+  blockExplorerUrl,
+  textStyle,
+  useTheme,
 } from '@aragon/ui'
+import { useNetwork } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
-import TransferRow from './TransferRow'
-import ToggleFiltersButton from './ToggleFiltersButton'
 import TransfersFilters from './TransfersFilters'
-import { IdentityContext } from './IdentityManager/IdentityManager'
+import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
 const TRANSFER_TYPES = [
   TransferTypes.All,
   TransferTypes.Incoming,
   TransferTypes.Outgoing,
 ]
-const INITIAL_TRANSFERS_PER_PAGE = 10
 const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
 const formatDate = date => format(date, 'dd/MM/yy')
 const getTokenDetails = (details, { address, decimals, symbol }) => {
@@ -105,43 +110,36 @@ const getDownloadFilename = (dao, { start, end }) => {
 }
 
 const Transfers = React.memo(({ dao, tokens, transactions }) => {
-  const { below } = useViewport()
+  const { below, above } = useViewport()
   const compactMode = below('medium')
-  const [filtersOpened, setFiltersOpened] = React.useState(!compactMode)
-  const [selectedToken, setSelectedToken] = React.useState(0)
-  const [displayedTransfers, setDisplayedTransfers] = React.useState(
-    INITIAL_TRANSFERS_PER_PAGE
-  )
-  const [selectedTransferType, setSelectedTransferType] = React.useState(0)
-  const [selectedDateRange, setSelectedDateRange] = React.useState({
+  const network = useNetwork()
+  const newTheme = useTheme()
+  const [page, setPage] = useState(0)
+  const [selectedIndexes, setSelectedIndexes] = useState([])
+  const [selectedToken, setSelectedToken] = useState(0)
+  const [selectedTransferType, setSelectedTransferType] = useState(0)
+  const [selectedDateRange, setSelectedDateRange] = useState({
     start: null,
     end: null,
   })
-  const handleToggleFiltersClick = React.useCallback(() => {
-    setFiltersOpened(!filtersOpened)
-  }, [filtersOpened])
+  const handleSelectedDateRangeChange = range => {
+    setPage(0)
+    setSelectedDateRange(range)
+  }
   const handleTokenChange = React.useCallback(
     index => {
+      setPage(0)
       setSelectedToken(index)
-      setDisplayedTransfers(INITIAL_TRANSFERS_PER_PAGE)
     },
-    [INITIAL_TRANSFERS_PER_PAGE]
+    [setPage, setSelectedToken]
   )
   const handleTransferTypeChange = React.useCallback(
     index => {
+      setPage(0)
       setSelectedTransferType(index)
-      setDisplayedTransfers(INITIAL_TRANSFERS_PER_PAGE)
     },
-    [INITIAL_TRANSFERS_PER_PAGE]
+    [setPage, setSelectedTransferType]
   )
-  const handleResetFilters = React.useCallback(() => {
-    setDisplayedTransfers(INITIAL_TRANSFERS_PER_PAGE)
-    setSelectedToken(0)
-    setSelectedTransferType(0)
-  }, [INITIAL_TRANSFERS_PER_PAGE])
-  const showMoreTransfers = React.useCallback(() => {
-    setDisplayedTransfers(displayedTransfers + INITIAL_TRANSFERS_PER_PAGE)
-  }, [displayedTransfers])
   const filteredTransfers = getFilteredTransfers({
     transactions,
     selectedToken: selectedToken !== 0 ? tokens[selectedToken - 1] : null,
@@ -150,11 +148,13 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   })
   const symbols = tokens.map(({ symbol }) => symbol)
   const tokenDetails = tokens.reduce(getTokenDetails, {})
-  const filtersActive = selectedToken !== 0 || selectedTransferType !== 0
   const { resolve: resolveAddress } = React.useContext(IdentityContext)
   const handleDownload = React.useCallback(async () => {
+    if (!selectedIndexes.length) {
+      return
+    }
     const data = await getDownloadData(
-      filteredTransfers,
+      transactions.filter((_, index) => selectedIndexes.includes(index)),
       tokenDetails,
       resolveAddress
     )
@@ -163,94 +163,131 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   }, [filteredTransfers, tokenDetails, resolveAddress])
 
   return (
-    <section>
-      <Header>
-        <Title compactMode={compactMode}>
-          <span>Transfers </span>
-          <span>
-            {compactMode && (
-              <ToggleFiltersButton
-                title="Toggle Filters"
-                onClick={handleToggleFiltersClick}
-                css="margin-right: -5px"
-              />
-            )}
-          </span>
-        </Title>
-        <TransfersFilters
-          dateRangeFilter={selectedDateRange}
-          onDateRangeChange={setSelectedDateRange}
-          tokenFilter={selectedToken}
-          onTokenChange={handleTokenChange}
-          transferTypeFilter={selectedTransferType}
-          onTransferTypeChange={handleTransferTypeChange}
-          compactMode={compactMode}
-          opened={filtersOpened}
-          symbols={symbols}
-          transferTypes={TRANSFER_TYPES_STRING}
-          onDownload={handleDownload}
-        />
-      </Header>
-      {filteredTransfers.length === 0 ? (
-        <NoTransfers compactMode={compactMode}>
-          <p css="text-align: center">
-            No transfers match your filter{' '}
-            {selectedDateRange.start &&
-              `and period (${formatDate(
-                selectedDateRange.start
-              )} to ${formatDate(selectedDateRange.end)}) selection. `}
-            {filtersActive && (
-              <a role="button" onClick={handleResetFilters}>
-                Clear filters
-              </a>
-            )}
-          </p>
-        </NoTransfers>
-      ) : (
-        <div>
-          <Table
-            compactMode={compactMode}
-            header={
-              !compactMode && (
-                <TableRow>
-                  <TableHeader title="Date" css="width: 12%" />
-                  <TableHeader title="Source / Recipient" css="width: 40%" />
-                  <TableHeader title="Reference" css="width: 100%" />
-                  <TableHeader title="Amount" align="right" css="width: 0" />
-                  <TableHeader />
-                </TableRow>
-              )
-            }
+    <DataView
+      currentPage={page}
+      onPageChange={setPage}
+      heading={
+        <React.Fragment>
+          <div
             css={`
-              color: ${theme.textPrimary};
-              margin-bottom: 20px;
+              padding: ${2 * GU}px 0;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
             `}
           >
-            {filteredTransfers
-              .sort(({ date: dateLeft }, { date: dateRight }) =>
-                // Sort by date descending
-                compareDesc(dateLeft, dateRight)
-              )
-              .slice(0, displayedTransfers)
-              .map(transfer => (
-                <TransferRow
-                  key={transfer.transactionHash}
-                  token={tokenDetails[toChecksumAddress(transfer.token)]}
-                  transaction={transfer}
-                  smallViewMode={compactMode}
-                />
-              ))}
-          </Table>
-          {displayedTransfers < filteredTransfers.length && (
-            <Footer compactMode={compactMode}>
-              <Button mode="secondary" onClick={showMoreTransfers}>
-                Show Older Transfers
+            <div
+              css={`
+                color: ${theme.content};
+                ${textStyle('body1')}
+              `}
+            >
+              Transfers
+            </div>
+            <div css="text-align: right;">
+              <Button
+                onClick={handleDownload}
+                disabled={!!selectedIndexes.length}
+              >
+                <IconExternal /> Export
               </Button>
-            </Footer>
-          )}
-        </div>
+            </div>
+          </div>
+          <TransfersFilters
+            dateRangeFilter={selectedDateRange}
+            onDateRangeChange={handleSelectedDateRangeChange}
+            tokenFilter={selectedToken}
+            onTokenChange={handleTokenChange}
+            transferTypeFilter={selectedTransferType}
+            onTransferTypeChange={handleTransferTypeChange}
+            compactMode={compactMode}
+            symbols={symbols}
+            transferTypes={TRANSFER_TYPES_STRING}
+          />
+        </React.Fragment>
+      }
+      fields={[
+        { label: 'Date', priority: 2 },
+        { label: 'Source/recipient', priority: 3 },
+        { label: 'Reference', priority: 1 },
+        { label: 'Amount', priority: 2 },
+      ]}
+      entries={filteredTransfers.sort(
+        ({ date: dateLeft }, { date: dateRight }) =>
+          // Sort by date descending
+          compareDesc(dateLeft, dateRight)
       )}
-    </section>
+      renderEntry={({
+        date,
+        entity,
+        reference,
+        isIncoming,
+        numData: { amount },
+        token,
+      }) => {
+        const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
+        const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
+        const formattedAmount = formatTokenAmount(
+          amount,
+          isIncoming,
+          decimals,
+          true,
+          { rounding: 5 }
+        )
+
+        return [
+          <time dateTime={formattedDate} title={formattedDate}>
+            {format(date, 'dd/MM/yy')}
+          </time>,
+          <div
+            css={`
+              padding: 0 ${0.5 * GU}px;
+              ${above('medium') &&
+                `
+                  display: inline-flex;
+                  max-width: ${above('large') ? 'unset' : '150px'};
+                `}
+            `}
+          >
+            <LocalIdentityBadge
+              networkType={network.type}
+              entity={entity}
+              address={entity}
+            />
+          </div>,
+          <div
+            css={`
+              padding: 0 ${0.5 * GU}px;
+            `}
+          >
+            {reference}
+          </div>,
+          <span
+            css={`
+              font-weight: 600;
+              color: ${isIncoming ? newTheme.positive : newTheme.negative};
+            `}
+          >
+            {formattedAmount} {symbol}
+          </span>,
+        ]
+      }}
+      renderSelectionCount={count =>
+        `${count} transfer${count !== 1 ? 's' : ''} selected`
+      }
+      onSelectEntries={(_, indexes) => {
+        setSelectedIndexes(indexes)
+      }}
+      renderEntryActions={({ entity, transactionHash }) => (
+        <ContextMenu>
+          <ContextMenuViewTransaction
+            transactionHash={transactionHash}
+            network={network}
+          />
+          <ContextMenuItemCustomLabel entity={entity} />
+        </ContextMenu>
+      )}
+    />
   )
 })
 
@@ -260,44 +297,33 @@ Transfers.propTypes = {
   transactions: PropTypes.array.isRequired,
 }
 
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-`
+const ContextMenuItemCustomLabel = ({ entity }) => {
+  const [label, showLocalIdentityModal] = useIdentity(entity)
+  const handleEditLabel = useCallback(() => showLocalIdentityModal(entity))
 
-const Title = styled.h1`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  font-weight: 600;
-  margin: ${p => (p.compactMode ? '20px 20px 10px 20px' : '30px 30px 20px 0')};
-`
-const NoTransfers = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 200px;
-  background: ${theme.contentBackground};
-  border: 1px solid ${theme.contentBorder};
-  border-radius: ${p => (p.compactMode ? '0' : '3px')};
-  margin-bottom: ${p => (p.compactMode ? '20px' : '0')};
-  padding: 20px;
-  a {
-    text-decoration: underline;
-    color: ${theme.accent};
-    cursor: pointer;
-  }
-`
+  return (
+    <ContextMenuItem onClick={handleEditLabel}>
+      <IconLabel />
+      {label ? 'Edit' : 'Add'} custom label
+    </ContextMenuItem>
+  )
+}
 
-const Footer = styled.div`
-  margin-bottom: ${p => (p.compactMode ? '30px' : '0')};
-  display: flex;
-  justify-content: center;
-  margin-top: 30px;
-`
+const ContextMenuViewTransaction = ({ transactionHash, network }) => {
+  const handleViewTransaction = useCallback(() => {
+    window.open(
+      blockExplorerUrl('transaction', transactionHash, {
+        networkType: network.type,
+      }),
+      '_blank'
+    )
+  }, [transactionHash, network])
+
+  return (
+    <ContextMenuItem onClick={handleViewTransaction}>
+      <IconToken /> View transaction
+    </ContextMenuItem>
+  )
+}
 
 export default Transfers
