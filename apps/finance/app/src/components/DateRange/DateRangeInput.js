@@ -36,7 +36,7 @@ class DateRangeInput extends React.PureComponent {
   }
 
   get formattedEndDate() {
-    const { endDate, startDate } = this.state
+    const { endDate } = this.state
     const { format } = this.props
 
     return isDate(endDate) ? formatDate(endDate, format) : ''
@@ -160,11 +160,7 @@ class DateRangeInput extends React.PureComponent {
     } = this.state
     const { compactMode } = this.props
 
-    const icon = this.state.showPicker ? (
-      <IconCalendarSelected />
-    ) : (
-      <IconCalendar />
-    )
+    const icon = showPicker ? <IconCalendarSelected /> : <IconCalendar />
 
     return (
       <StyledContainer
