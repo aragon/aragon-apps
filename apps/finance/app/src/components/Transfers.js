@@ -187,7 +187,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
             <div css="text-align: right;">
               <Button
                 onClick={handleDownload}
-                disabled={!!selectedIndexes.length}
+                disabled={!selectedIndexes.length}
               >
                 <IconExternal /> Export
               </Button>
