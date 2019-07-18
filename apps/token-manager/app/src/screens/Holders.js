@@ -39,66 +39,61 @@ function Holders({
 }) {
   const network = useNetwork()
   return (
-    <Viewport>
-      {({ below }) => {
-        return (
-          <Split
-            primary={
-              <DataView
-                fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
-                entries={holders.map(({ address, balance }) =>
-                  groupMode ? [address] : [address, balance]
-                )}
-                renderEntry={([address, balance]) => {
-                  const isCurrentUser = Boolean(
-                    userAccount && userAccount === address
-                  )
+    <Split
+      primary={
+        <DataView
+          mode="table"
+          fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
+          entries={holders.map(({ address, balance }) =>
+            groupMode ? [address] : [address, balance]
+          )}
+          renderEntry={([address, balance]) => {
+            const isCurrentUser = Boolean(
+              userAccount && userAccount === address
+            )
 
-                  const values = [
-                    <React.Fragment>
-                      <LocalIdentityBadge
-                        entity={address}
-                        networkType={network.type}
-                        connectedAccount={isCurrentUser}
-                      />
-                      {isCurrentUser && <You />}
-                    </React.Fragment>,
-                  ]
+            const values = [
+              <React.Fragment>
+                <LocalIdentityBadge
+                  entity={address}
+                  networkType={network.type}
+                  connectedAccount={isCurrentUser}
+                />
+                {isCurrentUser && <You />}
+              </React.Fragment>,
+            ]
 
-                  if (balance) {
-                    values.push(formatBalance(balance, tokenDecimalsBase))
-                  }
-
-                  return values
-                }}
-                renderEntryActions={([address, balance]) => (
-                  <EntryActions
-                    address={address}
-                    balance={balance}
-                    onAssignTokens={onAssignTokens}
-                    onRemoveTokens={onRemoveTokens}
-                    singleToken={balance.eq(tokenDecimalsBase)}
-                    canAssign={balance.lt(maxAccountTokens)}
-                  />
-                )}
-              />
+            if (balance) {
+              values.push(formatBalance(balance, tokenDecimalsBase))
             }
-            secondary={
-              <InfoBoxes
-                holders={holders}
-                tokenAddress={tokenAddress}
-                tokenDecimalsBase={tokenDecimalsBase}
-                tokenName={tokenName}
-                tokenSupply={tokenSupply}
-                tokenSymbol={tokenSymbol}
-                tokenTransfersEnabled={tokenTransfersEnabled}
-                userAccount={userAccount}
-              />
-            }
-          />
-        )
-      }}
-    </Viewport>
+
+            return values
+          }}
+          renderEntryActions={([address, balance]) => (
+            <EntryActions
+              address={address}
+              balance={balance}
+              onAssignTokens={onAssignTokens}
+              onRemoveTokens={onRemoveTokens}
+              singleToken={balance.eq(tokenDecimalsBase)}
+              canAssign={balance.lt(maxAccountTokens)}
+            />
+          )}
+        />
+      }
+      secondary={
+        <InfoBoxes
+          holders={holders}
+          tokenAddress={tokenAddress}
+          tokenDecimalsBase={tokenDecimalsBase}
+          tokenName={tokenName}
+          tokenSupply={tokenSupply}
+          tokenSymbol={tokenSymbol}
+          tokenTransfersEnabled={tokenTransfersEnabled}
+          userAccount={userAccount}
+        />
+      }
+    />
   )
 }
 

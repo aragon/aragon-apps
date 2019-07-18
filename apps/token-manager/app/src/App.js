@@ -4,12 +4,15 @@ import BN from 'bn.js'
 import {
   Badge,
   Button,
+  GU,
   Header,
+  IconPlus,
   SidePanel,
   SyncIndicator,
+  textStyle,
+  useLayout,
   useTheme,
   useThemeMode,
-  GU,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import EmptyState from './screens/EmptyState'
@@ -99,6 +102,7 @@ class App extends React.PureComponent {
       groupMode,
       holders,
       isSyncing,
+      layoutName,
       maxAccountTokens,
       numData,
       requestMenu,
@@ -130,7 +134,7 @@ class App extends React.PureComponent {
             >
               <h1
                 css={`
-                  font-size: 26px;
+                  ${textStyle(layoutName === 'small' ? 'title3' : 'title2')};
                   color: ${theme.content};
                   margin-right: ${1 * GU}px;
                 `}
@@ -144,8 +148,18 @@ class App extends React.PureComponent {
             <Button
               mode="strong"
               onClick={this.handleLaunchAssignTokensNoHolder}
+              css={`
+                ${layoutName === 'small'
+                  ? `
+                    width: ${5 * GU}px;
+                    height: ${5 * GU}px;
+                    min-width: 0;
+                    padding: 0;
+                  `
+                  : ''}
+              `}
             >
-              Add tokens
+              {layoutName === 'small' ? <IconPlus /> : 'Add tokens'}
             </Button>
           }
         />
@@ -201,11 +215,32 @@ class App extends React.PureComponent {
 export default () => {
   const { api, appState, connectedAccount, requestMenu } = useAragonApi()
   const theme = useTheme()
+  const themeMode = useThemeMode()
+  const { layoutName } = useLayout()
+
+  useEffect(() => {
+    const fn = ({ data }) => {
+      if (
+        data &&
+        data.from === 'wrapper' &&
+        data.name === 'themeMode' &&
+        data.value
+      ) {
+        themeMode.set(data.value)
+      }
+    }
+
+    window.addEventListener('message', fn)
+    return () => {
+      window.removeEventListener('message', fn)
+    }
+  }, [])
 
   return (
     <App
       api={api}
       connectedAccount={connectedAccount}
+      layoutName={layoutName}
       requestMenu={requestMenu}
       theme={theme}
       {...appState}
