@@ -664,22 +664,20 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             // first use up their accrued salary
             // No need to use SafeMath here as we already know _paymentAmount > accruedSalary
             currentSalaryPaid = _paymentAmount - accruedSalary;
+            // We finally need to clear their accrued salary
+            _employee.accruedSalary = 0;
         }
+
         uint256 salary = _employee.denominationTokenSalary;
         uint256 timeDiff = currentSalaryPaid.div(salary);
 
         // If they're being paid an amount that doesn't match perfectly with the adjusted time
         // (up to a seconds' worth of salary), add the second and put the extra remaining salary
         // into their accrued salary
-        // The extra check is to handle the case where someone requested less than one second of their salary
-        uint256 extraSalary = currentSalaryPaid < salary ? salary - currentSalaryPaid : currentSalaryPaid % salary;
+        uint256 extraSalary = currentSalaryPaid % salary;
         if (extraSalary > 0) {
             timeDiff = timeDiff.add(1);
-            _employee.accruedSalary = extraSalary;
-        } else if (accruedSalary > 0) {
-            // We finally need to clear their accrued salary, but as an optimization, we only do
-            // this if they had a non-zero value before
-            _employee.accruedSalary = 0;
+            _employee.accruedSalary = salary - extraSalary;
         }
 
         uint256 lastPayrollDate = uint256(_employee.lastPayroll).add(timeDiff);

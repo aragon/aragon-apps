@@ -9,15 +9,14 @@ const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScri
 const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 
 const Voting = artifacts.require('VotingMock')
+
+const ACL = artifacts.require('ACL')
+const Kernel = artifacts.require('Kernel')
+const DAOFactory = artifacts.require('DAOFactory')
+const MiniMeToken = artifacts.require('MiniMeToken')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
+const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
-const ACL = artifacts.require('@aragon/os/contracts/acl/ACL')
-const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel')
-const DAOFactory = artifacts.require('@aragon/os/contracts/factory/DAOFactory')
-const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory/EVMScriptRegistryFactory')
-const MiniMeToken = artifacts.require('@aragon/apps-shared-minime/contracts/MiniMeToken')
-
-const getContract = name => artifacts.require(name)
 const createdVoteId = receipt => getEventArgument(receipt, 'StartVote', 'voteId')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
@@ -55,8 +54,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
     })
 
     before(async () => {
-        const kernelBase = await getContract('Kernel').new(true) // petrify immediately
-        const aclBase = await getContract('ACL').new()
+        const kernelBase = await Kernel.new(true) // petrify immediately
+        const aclBase = await ACL.new()
         const regFact = await EVMScriptRegistryFactory.new()
         daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
         votingBase = await Voting.new()
