@@ -1,7 +1,6 @@
 import React from 'react'
-import styled from 'styled-components'
 import throttle from 'lodash.throttle'
-import { theme, breakpoint } from '@aragon/ui'
+import { Box, GU } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
 import { round } from '../lib/math-utils'
 
@@ -34,8 +33,9 @@ class Balances extends React.Component {
     const convertRates = await res.json()
     this.setState({ convertRates })
   }, CONVERT_THROTTLE_TIME)
+
   render() {
-    const { balances } = this.props
+    const { compactMode, balances } = this.props
     const { convertRates } = this.state
     const balanceItems = balances.map(
       ({ address, numData: { amount, decimals }, symbol, verified }) => {
@@ -53,98 +53,55 @@ class Balances extends React.Component {
         }
       }
     )
+
     return (
-      <section>
-        <Title>Balances</Title>
-        <ScrollView>
-          <List>
-            {balanceItems.length > 0 ? (
-              balanceItems.map(
-                ({ address, amount, convertedAmount, symbol, verified }) => (
-                  <ListItem key={address}>
+      <Box heading="Token Balances">
+        <div
+          css={`
+            /*
+            * translate3d() fixes an issue on recent Firefox versions where the
+            * scrollbar would briefly appear on top of everything (including the
+            * sidepanel overlay).
+            */
+            transform: translate3d(0, 0, 0);
+            overflow-x: auto;
+          `}
+        >
+          <ul
+            css={`
+              min-height: 132px;
+              list-style: none;
+              padding: 0;
+              margin: 0;
+              display: flex;
+              ${compactMode && `flex-direction: column;`}
+            `}
+          >
+            {balanceItems.map(
+              ({ address, amount, convertedAmount, symbol, verified }) => (
+                <li
+                  css={`
+                    display: block;
+                    padding: ${3 * GU}px;
+                  `}
+                  key={address}
+                >
+                  <div css="display:inline-block;">
                     <BalanceToken
                       amount={amount}
                       convertedAmount={convertedAmount}
                       symbol={symbol}
                       verified={verified}
                     />
-                  </ListItem>
-                )
+                  </div>
+                </li>
               )
-            ) : (
-              <EmptyListItem />
             )}
-          </List>
-        </ScrollView>
-      </section>
+          </ul>
+        </div>
+      </Box>
     )
   }
 }
-
-const EmptyListItem = () => (
-  <ListItem style={{ opacity: '0' }}>
-    <BalanceToken amount={0} convertedAmount={0} />
-  </ListItem>
-)
-
-const ScrollView = styled.div`
-  /*
-   * translate3d() fixes an issue on recent Firefox versions where the
-   * scrollbar would briefly appear on top of everything (including the
-   * sidepanel overlay).
-   */
-  transform: translate3d(0, 0, 0);
-  overflow-x: auto;
-  background: ${theme.contentBackground};
-  border-top: 1px solid ${theme.contentBorder};
-
-  ${breakpoint(
-    'medium',
-    `
-      border: 1px solid ${theme.contentBorder};
-      border-radius: 3px;
-    `
-  )};
-`
-
-const Title = styled.h1`
-  margin: 20px 0 20px 20px;
-  font-weight: 600;
-
-  ${breakpoint(
-    'medium',
-    `
-      margin: 10px 30px 20px 0;
-    `
-  )};
-`
-
-const List = styled.ul`
-  list-style: none;
-
-  ${breakpoint(
-    'medium',
-    `
-      display: flex;
-      padding: 0 10px;
-    `
-  )};
-`
-
-const ListItem = styled.li`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  padding: 8px 20px;
-  border-bottom: 1px solid ${theme.contentBorder};
-
-  ${breakpoint(
-    'medium',
-    `
-      display: block;
-      padding: 25px;
-      border: 0;
-    `
-  )};
-`
 
 export default Balances
