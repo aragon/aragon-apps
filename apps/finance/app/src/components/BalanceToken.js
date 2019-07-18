@@ -1,6 +1,5 @@
 import React from 'react'
-import styled from 'styled-components'
-import { theme, breakpoint } from '@aragon/ui'
+import { textStyle, useTheme } from '@aragon/ui'
 import { formatTokenAmount } from '../lib/utils'
 
 const splitAmount = amount => {
@@ -13,68 +12,58 @@ const splitAmount = amount => {
   )
 }
 
-const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => (
-  <React.Fragment>
-    <Token title={symbol || 'Unknown symbol'}>
-      {verified && symbol && (
-        <img
-          alt=""
-          width="16"
-          height="16"
-          src={`https://chasing-coins.com/coin/logo/${symbol}`}
-        />
-      )}
-      {symbol || '?'}
-    </Token>
-    <Wrap>
-      <Amount>{splitAmount(amount.toFixed(3))}</Amount>
-      <ConvertedAmount>
-        {convertedAmount >= 0
-          ? `$${formatTokenAmount(convertedAmount.toFixed(2))}`
-          : '−'}
-      </ConvertedAmount>
-    </Wrap>
-  </React.Fragment>
-)
+const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => {
+  const theme = useTheme()
 
-const Wrap = styled.div`
-  text-align: right;
-
-  ${breakpoint(
-    'medium',
-    `
-      text-align: left;
-    `
-  )};
-`
-
-const Token = styled.div`
-  display: flex;
-  align-items: center;
-  text-transform: uppercase;
-  font-size: 28px;
-  color: ${theme.textSecondary};
-  img {
-    margin-right: 10px;
-  }
-
-  ${breakpoint(
-    'medium',
-    `
-      font-size: 14px;
-    `
-  )}
-`
-
-const Amount = styled.div`
-  font-size: 26px;
-  .fractional {
-    font-size: 14px;
-  }
-`
-
-const ConvertedAmount = styled.div`
-  color: ${theme.textTertiary};
-`
+  return (
+    <React.Fragment>
+      <div
+        title={symbol || 'Unknown symbol'}
+        css={`
+          display: flex;
+          align-items: center;
+          text-transform: uppercase;
+          img {
+            margin-right: 10px;
+          }
+          color: ${theme.surfaceContentSecondary};
+          ${textStyle('body2')}
+        `}
+      >
+        {verified && symbol && (
+          <img
+            alt=""
+            width="20"
+            height="20"
+            src={`https://chasing-coins.com/coin/logo/${symbol}`}
+          />
+        )}
+        {symbol || '?'}
+      </div>
+      <div>
+        <div
+          css={`
+            .fractional {
+              font-size: 14px;
+            }
+            ${textStyle('title2')}
+          `}
+        >
+          {splitAmount(amount.toFixed(3))}
+        </div>
+        <div
+          css={`
+            color: ${theme.surfaceContentSecondary};
+            ${textStyle('body2')}
+          `}
+        >
+          {convertedAmount >= 0
+            ? `$${formatTokenAmount(convertedAmount.toFixed(2))}`
+            : '−'}
+        </div>
+      </div>
+    </React.Fragment>
+  )
+}
 
 export default BalanceToken
