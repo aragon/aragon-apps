@@ -18,6 +18,7 @@ contract Voting is IForwarder, AragonApp {
     bytes32 public constant CREATE_VOTES_ROLE = keccak256("CREATE_VOTES_ROLE");
     bytes32 public constant MODIFY_SUPPORT_ROLE = keccak256("MODIFY_SUPPORT_ROLE");
     bytes32 public constant MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
+    bytes32 public constant MODIFY_EARLY_EXECUTION_ROLE = keccak256("MODIFY_EARLY_EXECUTION_ROLE");
     bytes32 public constant MODIFY_OVERRULE_WINDOW_ROLE = keccak256("MODIFY_OVERRULE_WINDOW_ROLE");
 
     uint64 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
@@ -34,6 +35,7 @@ contract Voting is IForwarder, AragonApp {
     string private constant ERROR_CAN_NOT_EXECUTE = "VOTING_CAN_NOT_EXECUTE";
     string private constant ERROR_CAN_NOT_FORWARD = "VOTING_CAN_NOT_FORWARD";
     string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
+    string private constant ERROR_SAME_EARLY_EXECUTION = "VOTING_SAME_EARLY_EXECUTION";
     string private constant ERROR_WITHIN_OVERRULE_WINDOW = "VOTING_WITHIN_OVERRULE_WINDOW";
     string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
     string private constant ERROR_DELEGATES_EXCEEDS_MAX_LEN = "VOTING_DELEGATES_EXCEEDS_MAX_LEN";
@@ -56,6 +58,7 @@ contract Voting is IForwarder, AragonApp {
         mapping (address => VoterState) voters;
         mapping (address => address) casters;
         uint64 overruleWindow;
+        bool earlyExecutionDisallowed;
     }
 
     MiniMeToken public token;
@@ -67,6 +70,7 @@ contract Voting is IForwarder, AragonApp {
     mapping (uint256 => Vote) internal votes;
     uint256 public votesLength;
 
+    bool private earlyExecutionDisallowed;
     uint64 public overruleWindow;
     mapping (address => address) internal representatives;
 
@@ -77,6 +81,7 @@ contract Voting is IForwarder, AragonApp {
     event ExecuteVote(uint256 indexed voteId);
     event ChangeSupportRequired(uint64 supportRequiredPct);
     event ChangeMinQuorum(uint64 minAcceptQuorumPct);
+    event ChangeEarlyExecution(bool allowed);
     event ChangeOverruleWindow(uint64 newOverruleWindow);
     event ChangeRepresentative(address indexed voter, address indexed newRepresentative);
 
@@ -134,6 +139,20 @@ contract Voting is IForwarder, AragonApp {
     }
 
     /**
+    * @notice `_earlyExecutionAllowed ? 'Allow' : 'Disallow'` early execution of votes
+    * @param _earlyExecutionAllowed Early execution setting for new votes
+    */
+    function changeEarlyExecution(bool _earlyExecutionAllowed)
+        external
+        authP(MODIFY_EARLY_EXECUTION_ROLE, arr(uint256(_earlyExecutionAllowed ? 1 : 0), uint256(earlyExecutionDisallowed ? 0 : 1)))
+    {
+        bool earlyExecutionDisallowed_ = !_earlyExecutionAllowed;
+        require(earlyExecutionDisallowed != earlyExecutionDisallowed_, ERROR_SAME_EARLY_EXECUTION);
+        earlyExecutionDisallowed = earlyExecutionDisallowed_;
+        emit ChangeEarlyExecution(_earlyExecutionAllowed);
+    }
+
+    /**
     * @notice Change overrule window to a duration of `@transformTime(_newOverruleWindow)`
     * @param _newOverruleWindow New overrule window in seconds
     */
@@ -184,7 +203,7 @@ contract Voting is IForwarder, AragonApp {
     /**
     * @notice Vote `_supports ? 'yes' : 'no'` in vote #`_voteId`
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-    *      created via `newVote(),` which requires initialization
+    *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
     * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
@@ -197,7 +216,7 @@ contract Voting is IForwarder, AragonApp {
     /**
     * @notice Vote `_supports ? 'yes' : 'no'` in vote #`_voteId` on behalf of `_voter`
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-    *      created via `newVote(),` which requires initialization
+    *      created via `newVote()`, which requires initialization
     * @param _voter Address of the voter voting on behalf of
     * @param _voteId Id for vote
     * @param _supports Whether the representative supports the vote
@@ -211,7 +230,7 @@ contract Voting is IForwarder, AragonApp {
     /**
     * @notice Vote `_supports ? 'yes' : 'no'` in vote #`_voteId` on behalf of many voters
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-    *      created via `newVote(),` which requires initialization
+    *      created via `newVote()`, which requires initialization
     * @param _voters Addresses of the voters voting on behalf of
     * @param _voteId Id for vote
     * @param _supports Whether the representative supports the vote
@@ -224,7 +243,7 @@ contract Voting is IForwarder, AragonApp {
     /**
     * @notice Execute vote #`_voteId`
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-    *      created via `newVote(),` which requires initialization
+    *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external voteExists(_voteId) {
@@ -268,7 +287,7 @@ contract Voting is IForwarder, AragonApp {
     /**
     * @notice Tells whether a vote #`_voteId` can be executed or not
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-    *      created via `newVote(),` which requires initialization
+    *      created via `newVote()`, which requires initialization
     * @return True if the given vote can be executed, false otherwise
     */
     function canExecute(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
@@ -278,7 +297,7 @@ contract Voting is IForwarder, AragonApp {
     /**
     * @notice Tells whether `_sender` can participate in the vote #`_voteId` or not
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-    *      created via `newVote(),` which requires initialization
+    *      created via `newVote()`, which requires initialization
     * @return True if the given voter can participate a certain vote, false otherwise
     */
     function canVote(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (bool) {
@@ -288,7 +307,7 @@ contract Voting is IForwarder, AragonApp {
     /**
     * @notice Tells whether `_representative` can vote on behalf of `_voter` in vote #`_voteId` or not
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-    *      created via `newVote(),` which requires initialization
+    *      created via `newVote()`, which requires initialization
     * @return True if the given representative can vote on behalf of the given voter in a certain vote, false otherwise
     */
     function canVoteOnBehalfOf(uint256 _voteId, address _voter, address _representative) public view voteExists(_voteId) returns (bool) {
@@ -302,13 +321,13 @@ contract Voting is IForwarder, AragonApp {
     /**
     * @dev Return all information for a vote by its ID
     * @param _voteId Vote identifier
-    * @return Vote open status
     * @return Vote executed status
     * @return Vote start date
     * @return Vote snapshot block
     * @return Vote support required
     * @return Vote minimum acceptance quorum
     * @return Vote overrule window period
+    * @return Vote early execution setting
     * @return Vote yeas amount
     * @return Vote nays amount
     * @return Vote power
@@ -319,13 +338,13 @@ contract Voting is IForwarder, AragonApp {
         view
         voteExists(_voteId)
         returns (
-            bool open,
             bool executed,
             uint64 startDate,
             uint64 snapshotBlock,
             uint64 supportRequired,
             uint64 minAcceptQuorum,
             uint64 voteOverruleWindow,
+            bool earlyExecution,
             uint256 yea,
             uint256 nay,
             uint256 votingPower,
@@ -334,17 +353,28 @@ contract Voting is IForwarder, AragonApp {
     {
         Vote storage vote_ = votes[_voteId];
 
-        open = _isVoteOpen(vote_);
         executed = vote_.executed;
         startDate = vote_.startDate;
         snapshotBlock = vote_.snapshotBlock;
         supportRequired = vote_.supportRequiredPct;
         minAcceptQuorum = vote_.minAcceptQuorumPct;
         voteOverruleWindow = vote_.overruleWindow;
+        earlyExecution = _isEarlyExecutionAllowed(vote_);
         yea = vote_.yea;
         nay = vote_.nay;
         votingPower = vote_.votingPower;
         script = vote_.executionScript;
+    }
+
+    /**
+    * @notice Tells whether a vote #`_voteId` is open or not
+    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote()`, which requires initialization
+    * @param _voteId Id for vote
+    * @return True if the vote is still open, false otherwise
+    */
+    function isVoteOpen(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
+        return _isVoteOpen(votes[_voteId]);
     }
 
     /**
@@ -365,6 +395,14 @@ contract Voting is IForwarder, AragonApp {
     */
     function getVoteCaster(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (address) {
         return _voteCaster(votes[_voteId], _voter);
+    }
+
+    /**
+    * @notice Tells whether the voting app allows early execution or not
+    * @return True if the voting app allows early execution, false otherwise
+    */
+    function isEarlyExecutionAllowed() public view isInitialized returns (bool) {
+        return !earlyExecutionDisallowed;
     }
 
     /**
@@ -403,6 +441,7 @@ contract Voting is IForwarder, AragonApp {
         vote_.startDate = getTimestamp64();
         vote_.snapshotBlock = snapshotBlock;
         vote_.overruleWindow = overruleWindow;
+        vote_.earlyExecutionDisallowed = earlyExecutionDisallowed;
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
         vote_.votingPower = votingPower;
@@ -487,31 +526,33 @@ contract Voting is IForwarder, AragonApp {
     * @return True if the given vote can be executed, false otherwise
     */
     function _canExecute(Vote storage vote_) internal view returns (bool) {
+        // If vote is already executed, it cannot be executed again
         if (vote_.executed) {
             return false;
         }
 
-        // Voting is already decided
-        if (_isValuePct(vote_.yea, vote_.votingPower, vote_.supportRequiredPct)) {
+        // If the vote is already decided and early execution is allowed, it can be executed
+        if (_isEarlyExecutionAllowed(vote_) && _isValuePct(vote_.yea, vote_.votingPower, vote_.supportRequiredPct)) {
             return true;
         }
 
-        // Vote ended?
+        // If the vote is still open, it cannot be executed
         if (_isVoteOpen(vote_)) {
             return false;
         }
 
-        // Has enough support?
+        // If the vote does not have enough support, it cannot be executed
         uint256 totalVotes = vote_.yea.add(vote_.nay);
         if (!_isValuePct(vote_.yea, totalVotes, vote_.supportRequiredPct)) {
             return false;
         }
 
-        // Has min quorum?
+        // If the vote has not reached min quorum, it cannot be executed
         if (!_isValuePct(vote_.yea, vote_.votingPower, vote_.minAcceptQuorumPct)) {
             return false;
         }
 
+        // If non of the above conditions are met, it can be executed
         return true;
     }
 
@@ -545,6 +586,14 @@ contract Voting is IForwarder, AragonApp {
     */
     function _isVoteOpen(Vote storage vote_) internal view returns (bool) {
         return getTimestamp64() < _voteEndDate(vote_) && !vote_.executed;
+    }
+
+    /**
+    * @dev Internal function to check if a vote allows early execution. It assumes the queried vote exists.
+    * @return True if the given vote allows early execution, false otherwise
+    */
+    function _isEarlyExecutionAllowed(Vote storage vote_) internal view returns (bool) {
+        return !vote_.earlyExecutionDisallowed;
     }
 
     /**

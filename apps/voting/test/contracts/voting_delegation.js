@@ -24,7 +24,7 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, representative, anotherRepresentative, anyone]) => {
   let votingBase, kernelBase, aclBase, daoFactory
   let dao, acl, token, executionTarget, script, voteId, voting
-  let APP_MANAGER_ROLE, CREATE_VOTES_ROLE, MODIFY_SUPPORT_ROLE, MODIFY_QUORUM_ROLE, MODIFY_OVERRULE_WINDOW_ROLE
+  let APP_MANAGER_ROLE, CREATE_VOTES_ROLE, MODIFY_OVERRULE_WINDOW_ROLE
 
   const NOW = 1553703809  // random fixed timestamp in seconds
   const ONE_DAY = 60 * 60 * 24
@@ -59,8 +59,6 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
   before('load roles', async () => {
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     CREATE_VOTES_ROLE = await votingBase.CREATE_VOTES_ROLE()
-    MODIFY_SUPPORT_ROLE = await votingBase.MODIFY_SUPPORT_ROLE()
-    MODIFY_QUORUM_ROLE = await votingBase.MODIFY_QUORUM_ROLE()
     MODIFY_OVERRULE_WINDOW_ROLE = await votingBase.MODIFY_OVERRULE_WINDOW_ROLE()
   })
 
@@ -505,7 +503,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
       const newWindow = VOTING_DURATION
 
       it('reverts', async () => {
-        await assertRevert(voting.changeOverruleWindow(newWindow, { from }), 'APP_AUTH_FAILED')
+        await assertRevert(voting.changeOverruleWindow(newWindow, { from }), ERRORS.APP_AUTH_FAILED)
       })
     })
   })
