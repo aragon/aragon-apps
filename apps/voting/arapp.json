@@ -54,6 +54,14 @@
       ]
     },
     {
+      "name": "Modify early execution setting",
+      "id": "MODIFY_EARLY_EXECUTION_ROLE",
+      "params": [
+        "New early execution setting",
+        "Current early execution setting"
+      ]
+    },
+    {
       "name": "Modify overrule window",
       "id": "MODIFY_OVERRULE_WINDOW_ROLE",
       "params": [
