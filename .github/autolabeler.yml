@@ -1,0 +1,14 @@
+'app: agent': ['/apps/agent']
+'app: finance': ['/apps/finance']
+'app: survey': ['/apps/survey']
+'app: token manager': ['/apps/token-manager']
+'app: vault': ['/apps/vault']
+'app: voting': ['/apps/voting']
+'component: contract': ['*.sol']
+'component: frontend': [
+  '/apps/agent/app',
+  '/apps/survey/app',
+  '/apps/token-manager/app',
+  '/apps/vault/app',
+  '/apps/voting/app'
+]

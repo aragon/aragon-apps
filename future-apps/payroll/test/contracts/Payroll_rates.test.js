@@ -1,11 +1,11 @@
-const { getEvents } = require('@aragon/test-helpers/events')
 const PAYMENT_TYPES = require('../helpers/payment_types')
+const { getEvents } = require('@aragon/test-helpers/events')
 const { bigExp, ONE } = require('../helpers/numbers')(web3)
 const { NOW, TWO_MINUTES, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 const { USD, ETH, ETH_RATE, deployDAI, DAI_RATE, deployANT, ANT_RATE, formatRate, inverseRate, setTokenRate } = require('../helpers/tokens')(artifacts, web3)
 
-contract('Payroll rates handling,', ([owner, employee, anyone]) => {
+contract('Payroll rates handling', ([owner, employee, anyone]) => {
   let dao, payroll, payrollBase, finance, vault, priceFeed, DAI, ANT
 
   const increaseTime = async seconds => {
@@ -56,7 +56,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -89,7 +89,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ANT_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -122,7 +122,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_RATE), inverseRate(DAI_RATE), inverseRate(ANT_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -189,7 +189,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [ONE], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -222,7 +222,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [ETH_TO_ANT_RATE], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -255,7 +255,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [ONE, ETH_TO_DAI_RATE, ETH_TO_ANT_RATE], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -320,7 +320,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_TO_DAI_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -353,7 +353,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ANT_TO_DAI_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -386,7 +386,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_TO_DAI_RATE), ONE, inverseRate(ANT_TO_DAI_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -451,7 +451,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_TO_ANT_RATE)], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -484,7 +484,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [ONE], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
@@ -517,7 +517,7 @@ contract('Payroll rates handling,', ([owner, employee, anyone]) => {
         const previousDAI = await DAI.balanceOf(employee)
         const previousANT = await ANT.balanceOf(employee)
 
-        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, { from: employee })
+        const { tx, receipt, logs } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [inverseRate(ETH_TO_ANT_RATE), inverseRate(DAI_TO_ANT_RATE), ONE], { from: employee })
         const { gasPrice } = await web3.eth.getTransaction(tx)
         const txCost = gasPrice.mul(receipt.gasUsed)
 
