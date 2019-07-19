@@ -3,9 +3,9 @@ const getBlockNumber = require('@aragon/test-helpers/blockNumber')(web3)
 const { getVoteState } = require('../helpers/voting')
 const { bigExp, pct } = require('../helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
 const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/test-helpers/evmScript')
+const { assertEvent, assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
 const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 
 const Voting = artifacts.require('VotingMock')
@@ -26,7 +26,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
     let votingBase, daoFact, voting, token, executionTarget
 
     let APP_MANAGER_ROLE
-    let CREATE_VOTES_ROLE, MODIFY_SUPPORT_ROLE, MODIFY_QUORUM_ROLE
+    let CREATE_VOTES_ROLE, MODIFY_SUPPORT_ROLE, MODIFY_QUORUM_ROLE, MODIFY_EARLY_EXECUTION_ROLE
 
     const NOW = 1553703809  // random fixed timestamp in seconds
     const ONE_DAY = 60 * 60 * 24
@@ -51,6 +51,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         VOTING_CAN_NOT_EXECUTE: 'VOTING_CAN_NOT_EXECUTE',
         VOTING_CAN_NOT_FORWARD: 'VOTING_CAN_NOT_FORWARD',
         VOTING_NO_VOTING_POWER: 'VOTING_NO_VOTING_POWER',
+        VOTING_SAME_EARLY_EXECUTION: 'VOTING_SAME_EARLY_EXECUTION',
     })
 
     before(async () => {
@@ -65,6 +66,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         CREATE_VOTES_ROLE = await votingBase.CREATE_VOTES_ROLE()
         MODIFY_SUPPORT_ROLE = await votingBase.MODIFY_SUPPORT_ROLE()
         MODIFY_QUORUM_ROLE = await votingBase.MODIFY_QUORUM_ROLE()
+        MODIFY_EARLY_EXECUTION_ROLE = await votingBase.MODIFY_EARLY_EXECUTION_ROLE()
     })
 
     beforeEach(async () => {
@@ -81,6 +83,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         await acl.createPermission(ANY_ADDR, voting.address, CREATE_VOTES_ROLE, root, { from: root })
         await acl.createPermission(ANY_ADDR, voting.address, MODIFY_SUPPORT_ROLE, root, { from: root })
         await acl.createPermission(ANY_ADDR, voting.address, MODIFY_QUORUM_ROLE, root, { from: root })
+        await acl.createPermission(ANY_ADDR, voting.address, MODIFY_EARLY_EXECUTION_ROLE, root, { from: root })
     })
 
     context('normal token supply, common tests', () => {
@@ -138,6 +141,22 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
         it('does not have an overrule window by default', async () => {
             assert.equal((await voting.overruleWindow()).toString(), 0)
+        })
+
+        it('allows early execution by default', async () => {
+            assert.isTrue(await voting.isEarlyExecutionAllowed(), 'early execution should be allowed by default')
+        })
+
+        it('can change the early execution setting', async () => {
+            const receipt = await voting.changeEarlyExecution(false)
+            assertAmountOfEvents(receipt, 'ChangeEarlyExecution')
+            assertEvent(receipt, 'ChangeEarlyExecution', { allowed: false })
+
+            assert.isFalse(await voting.isEarlyExecutionAllowed(), 'early execution should be disallowed')
+        })
+
+        it('fails trying to set the same early execution setting', async () => {
+            await assertRevert(voting.changeEarlyExecution(true), ERRORS.VOTING_SAME_EARLY_EXECUTION)
         })
     })
 
@@ -211,7 +230,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 })
 
                 it('has correct state', async () => {
-                    const { isOpen, isExecuted, snapshotBlock, support, quorum, overruleWindow, yeas, nays, votingPower, script: execScript } = await getVoteState(voting, voteId)
+                    const { isOpen, isExecuted, snapshotBlock, support, quorum, overruleWindow, earlyExecution, yeas, nays, votingPower, script: execScript } = await getVoteState(voting, voteId)
 
                     assert.isTrue(isOpen, 'vote should be open')
                     assert.isFalse(isExecuted, 'vote should not be executed')
@@ -220,6 +239,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     assert.equal(support.toString(), neededSupport.toString(), 'required support should be app required support')
                     assert.equal(quorum.toString(), minimumAcceptanceQuorum.toString(), 'min quorum should be app min quorum')
                     assert.equal(overruleWindow.toString(), 0, 'default overrule window should be zero')
+                    assert.equal(earlyExecution, true, 'early execution should be allowed')
                     assert.equal(yeas, 0, 'initial yea should be 0')
                     assert.equal(nays, 0, 'initial nay should be 0')
                     assert.equal(votingPower.toString(), bigExp(100, decimals).toString(), 'voting power should be 100')
@@ -262,6 +282,19 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     const { quorum } = await getVoteState(voting, voteId)
                     assert.equal(quorum.toString(), minimumAcceptanceQuorum.toString(), 'acceptance quorum in vote should stay equal')
                     await voting.executeVote(voteId) // exec doesn't fail
+                })
+
+                it('changing early execution setting does not affect vote early execution', async () => {
+                    await voting.changeEarlyExecution(false)
+
+                    const { earlyExecution } = await getVoteState(voting, voteId)
+                    assert.isTrue(earlyExecution, 'vote early execution should still be allowed')
+
+                    await voting.vote(voteId, true, false, { from: holder51 })
+                    assert.isTrue(await voting.canExecute(voteId), 'vote can be executed')
+
+                    await voting.executeVote(voteId)
+                    assert.equal(await executionTarget.counter(), 2, 'should have executed result')
                 })
 
                 it('holder can vote', async () => {
@@ -325,6 +358,24 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
                 it('vote can be executed automatically if decided', async () => {
                     await voting.vote(voteId, true, true, { from: holder51 }) // causes execution
+                    assert.equal(await executionTarget.counter(), 2, 'should have executed result')
+                })
+
+                it('cannot early execute vote when early execution is disallow even when decided', async () => {
+                    await voting.changeEarlyExecution(false)
+
+                    const receipt = await voting.newVoteExt(script, 'metadata', true, false, { from: holder51 })
+                    voteId = getEventArgument(receipt, 'StartVote', 'voteId')
+
+                    const { isOpen, isExecuted } = await getVoteState(voting, voteId)
+                    assert.isTrue(isOpen, 'vote should still be open')
+                    assert.isFalse(isExecuted, 'vote should have not been executed')
+                    assert.isFalse(await voting.canExecute(voteId), 'vote cannot be executed')
+
+                    await voting.mockIncreaseTime(VOTING_DURATION + 1)
+                    assert.isTrue(await voting.canExecute(voteId), 'vote can be executed')
+
+                    await voting.executeVote(voteId)
                     assert.equal(await executionTarget.counter(), 2, 'should have executed result')
                 })
 
@@ -408,20 +459,44 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         })
 
         context('new vote parameters', () => {
-            it('creating vote as holder executes vote (if _canExecute param says so)', async () => {
-                const voteId = createdVoteId(await voting.newVoteExt(EMPTY_SCRIPT, 'metadata', true, true, { from: holder1 }))
-                const { isOpen, isExecuted } = await getVoteState(voting, voteId)
+            context('when early execution is allowed', () => {
+                it('creates and executes a vote if voter allows execution', async () => {
+                    const voteId = createdVoteId(await voting.newVoteExt(EMPTY_SCRIPT, 'metadata', true, true, { from: holder1 }))
+                    const { isOpen, isExecuted } = await getVoteState(voting, voteId)
 
-                assert.isFalse(isOpen, 'vote should be closed')
-                assert.isTrue(isExecuted, 'vote should have been executed')
+                    assert.isFalse(isOpen, 'vote should be closed')
+                    assert.isTrue(isExecuted, 'vote should have been executed')
+                })
+
+                it('creates a vote without executing it if voter does not allow execution', async () => {
+                    const voteId = createdVoteId(await voting.newVoteExt(EMPTY_SCRIPT, 'metadata', true, false, { from: holder1 }))
+                    const { isOpen, isExecuted } = await getVoteState(voting, voteId)
+
+                    assert.isTrue(isOpen, 'vote should be open')
+                    assert.isFalse(isExecuted, 'vote should not have been executed')
+                })
             })
 
-            it("creating vote as holder doesn't execute vote if _canExecute param doesn't says so", async () => {
-                const voteId = createdVoteId(await voting.newVoteExt(EMPTY_SCRIPT, 'metadata', true, false, { from: holder1 }))
-                const { isOpen, isExecuted } = await getVoteState(voting, voteId)
+            context('when early execution is not allowed', () => {
+                beforeEach('disallow early execution', async () => {
+                    await voting.changeEarlyExecution(false)
+                })
 
-                assert.isTrue(isOpen, 'vote should be open')
-                assert.isFalse(isExecuted, 'vote should not have been executed')
+                it('creates a vote without executing it even if voter allows execution', async () => {
+                    const voteId = createdVoteId(await voting.newVoteExt(EMPTY_SCRIPT, 'metadata', true, true, { from: holder1 }))
+                    const { isOpen, isExecuted } = await getVoteState(voting, voteId)
+
+                    assert.isTrue(isOpen, 'vote should be open')
+                    assert.isFalse(isExecuted, 'vote should not have been executed')
+                })
+
+                it('creates a vote without executing it if voter does not allow execution', async () => {
+                    const voteId = createdVoteId(await voting.newVoteExt(EMPTY_SCRIPT, 'metadata', true, false, { from: holder1 }))
+                    const { isOpen, isExecuted } = await getVoteState(voting, voteId)
+
+                    assert.isTrue(isOpen, 'vote should be open')
+                    assert.isFalse(isExecuted, 'vote should not have been executed')
+                })
             })
         })
     })
@@ -439,26 +514,56 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
         })
 
-        it('new vote cannot be executed before holder2 voting', async () => {
-            const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata'))
+        context('when early execution is allowed', () => {
+            it('new vote cannot be executed before holder2 voting', async () => {
+                const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata'))
 
-            assert.isFalse(await voting.canExecute(voteId), 'vote cannot be executed')
+                assert.isFalse(await voting.canExecute(voteId), 'vote cannot be executed')
 
-            await voting.vote(voteId, true, true, { from: holder1 })
-            await voting.vote(voteId, true, true, { from: holder2 })
+                await voting.vote(voteId, true, true, { from: holder1 })
+                await voting.vote(voteId, true, true, { from: holder2 })
 
-            const { isOpen, isExecuted } = await getVoteState(voting, voteId)
+                const { isOpen, isExecuted } = await getVoteState(voting, voteId)
 
-            assert.isFalse(isOpen, 'vote should be closed')
-            assert.isTrue(isExecuted, 'vote should have been executed')
+                assert.isFalse(isOpen, 'vote should be closed')
+                assert.isTrue(isExecuted, 'vote should have been executed')
+            })
+
+            it('creating vote as holder2 executes vote', async () => {
+                const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata', { from: holder2 }))
+                const { isOpen, isExecuted } = await getVoteState(voting, voteId)
+
+                assert.isFalse(isOpen, 'vote should be closed')
+                assert.isTrue(isExecuted, 'vote should have been executed')
+            })
         })
 
-        it('creating vote as holder2 executes vote', async () => {
-            const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata', { from: holder2 }))
-            const { isOpen, isExecuted } = await getVoteState(voting, voteId)
+        context('when early execution is not allowed', () => {
+            beforeEach('disallow early execution', async () => {
+                await voting.changeEarlyExecution(false)
+            })
 
-            assert.isFalse(isOpen, 'vote should be closed')
-            assert.isTrue(isExecuted, 'vote should have been executed')
+            it('new vote cannot be executed even after holder2 voting', async () => {
+                const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata'))
+
+                await voting.vote(voteId, true, true, { from: holder1 })
+                await voting.vote(voteId, true, true, { from: holder2 })
+
+                const { isOpen, isExecuted } = await getVoteState(voting, voteId)
+
+                assert.isTrue(isOpen, 'vote should still be open')
+                assert.isFalse(isExecuted, 'vote should have not been executed')
+                assert.isFalse(await voting.canExecute(voteId), 'vote cannot be executed')
+            })
+
+            it('creating vote as holder2 does not execute vote', async () => {
+                const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata', { from: holder2 }))
+                const { isOpen, isExecuted } = await getVoteState(voting, voteId)
+
+                assert.isTrue(isOpen, 'vote should still be open')
+                assert.isFalse(isExecuted, 'vote should have not been executed')
+                assert.isFalse(await voting.canExecute(voteId), 'vote cannot be executed')
+            })
         })
     })
 
