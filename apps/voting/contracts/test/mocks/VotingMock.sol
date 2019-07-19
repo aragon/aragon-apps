@@ -9,12 +9,8 @@ contract VotingMock is Voting, TimeHelpersMock {
      * https://github.com/trufflesuite/truffle/issues/569
      * https://github.com/trufflesuite/truffle/issues/737
      */
-    function newVoteExt(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided)
-        external
-        returns (uint256 voteId)
-    {
-        voteId = _newVote(_executionScript, _metadata, _castVote, _executesIfDecided);
-        emit StartVote(voteId, msg.sender, _metadata);
+    function newVoteExt(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided) external returns (uint256) {
+        return _newVote(_executionScript, _metadata, _castVote, _executesIfDecided);
     }
 
     // _isValuePct public wrapper
@@ -23,14 +19,10 @@ contract VotingMock is Voting, TimeHelpersMock {
     }
 
     // Mint a token and create a vote in the same transaction to test snapshot block values are correct
-    function newTokenAndVote(address _holder, uint256 _tokenAmount, string _metadata)
-        external
-        returns (uint256 voteId)
-    {
+    function newTokenAndVote(address _holder, uint256 _tokenAmount, string _metadata) external returns (uint256) {
         token.generateTokens(_holder, _tokenAmount);
 
         bytes memory noScript = new bytes(0);
-        voteId = _newVote(noScript, _metadata, false, false);
-        emit StartVote(voteId, msg.sender, _metadata);
+        return _newVote(noScript, _metadata, false, false);
     }
 }
