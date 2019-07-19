@@ -54,6 +54,7 @@ module.exports = async (cb) => {
     snapshotBlock,
     supportRequired,
     minQuorum,
+    overruleWindow,
     y,
     n,
     votingPower,
