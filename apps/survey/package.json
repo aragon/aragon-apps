@@ -18,7 +18,7 @@
     "prepare": "npx apps-shared-scripts-prepare",
     "install:frontend": "cd app && npm install",
     "abi:extract": "truffle-extract --output abi/ --keys abi",
-    "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile",
+    "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile"
   },
   "files": [
     "/abi",
