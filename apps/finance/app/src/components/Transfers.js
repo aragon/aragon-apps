@@ -29,6 +29,7 @@ import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
+import EmptyFilteredTransfers from './EmptyFilteredTransfers'
 import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
@@ -109,6 +110,7 @@ const getDownloadFilename = (dao, { start, end }) => {
   }
   return filename
 }
+const INITIAL_DATE_RANGE = { start: null, end: null }
 
 const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const { below, above } = useViewport()
@@ -119,10 +121,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const [page, setPage] = useState(0)
   const [selectedToken, setSelectedToken] = useState(0)
   const [selectedTransferType, setSelectedTransferType] = useState(0)
-  const [selectedDateRange, setSelectedDateRange] = useState({
-    start: null,
-    end: null,
-  })
+  const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
   const handleSelectedDateRangeChange = range => {
     setPage(0)
     setSelectedDateRange(range)
@@ -159,6 +158,18 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
     const filename = getDownloadFilename(dao, selectedDateRange)
     saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
   }, [filteredTransfers, tokenDetails, resolveAddress])
+  const handleClearFilters = useCallback(() => {
+    setPage(0)
+    setSelectedTransferType(0)
+    setSelectedToken(0)
+    setSelectedDateRange(INITIAL_DATE_RANGE)
+  }, [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange])
+  const emptyResultsViaFilters =
+    !filteredTransfers.length &&
+    (selectedToken !== 0 ||
+      selectedTransferType !== 0 ||
+      selectedDateRange.start ||
+      selectedDateRange.end)
 
   return (
     <DataView
@@ -201,14 +212,21 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
               transferTypes={TRANSFER_TYPES_STRING}
             />
           )}
+          {emptyResultsViaFilters && (
+            <EmptyFilteredTransfers onClear={handleClearFilters} />
+          )}
         </React.Fragment>
       }
-      fields={[
-        { label: 'Date', priority: 2 },
-        { label: 'Source/recipient', priority: 3 },
-        { label: 'Reference', priority: 1 },
-        { label: 'Amount', priority: 2 },
-      ]}
+      fields={
+        emptyResultsViaFilters
+          ? []
+          : [
+              { label: 'Date', priority: 2 },
+              { label: 'Source/recipient', priority: 3 },
+              { label: 'Reference', priority: 1 },
+              { label: 'Amount', priority: 2 },
+            ]
+      }
       entries={filteredTransfers.sort(
         ({ date: dateLeft }, { date: dateRight }) =>
           // Sort by date descending
