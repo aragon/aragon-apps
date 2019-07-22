@@ -292,7 +292,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
 })
 
 Transfers.propTypes = {
-  dao: PropTypes.string.isRequired,
+  dao: PropTypes.string,
   tokens: PropTypes.array.isRequired,
   transactions: PropTypes.array.isRequired,
 }
