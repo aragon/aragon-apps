@@ -20,6 +20,7 @@ import {
   IconToken,
   blockExplorerUrl,
   textStyle,
+  useLayout,
   useTheme,
 } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
@@ -111,6 +112,7 @@ const getDownloadFilename = (dao, { start, end }) => {
 
 const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const { below, above } = useViewport()
+  const { layoutName } = useLayout()
   const compactMode = below('medium')
   const network = useNetwork()
   const newTheme = useTheme()
@@ -186,17 +188,19 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
               </Button>
             </div>
           </div>
-          <TransfersFilters
-            dateRangeFilter={selectedDateRange}
-            onDateRangeChange={handleSelectedDateRangeChange}
-            tokenFilter={selectedToken}
-            onTokenChange={handleTokenChange}
-            transferTypeFilter={selectedTransferType}
-            onTransferTypeChange={handleTransferTypeChange}
-            compactMode={compactMode}
-            symbols={symbols}
-            transferTypes={TRANSFER_TYPES_STRING}
-          />
+          {layoutName !== 'small' && (
+            <TransfersFilters
+              dateRangeFilter={selectedDateRange}
+              onDateRangeChange={handleSelectedDateRangeChange}
+              tokenFilter={selectedToken}
+              onTokenChange={handleTokenChange}
+              transferTypeFilter={selectedTransferType}
+              onTransferTypeChange={handleTransferTypeChange}
+              compactMode={compactMode}
+              symbols={symbols}
+              transferTypes={TRANSFER_TYPES_STRING}
+            />
+          )}
         </React.Fragment>
       }
       fields={[
