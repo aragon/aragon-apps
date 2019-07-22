@@ -115,7 +115,6 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const network = useNetwork()
   const newTheme = useTheme()
   const [page, setPage] = useState(0)
-  const [selectedIndexes, setSelectedIndexes] = useState([])
   const [selectedToken, setSelectedToken] = useState(0)
   const [selectedTransferType, setSelectedTransferType] = useState(0)
   const [selectedDateRange, setSelectedDateRange] = useState({
@@ -150,11 +149,8 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const tokenDetails = tokens.reduce(getTokenDetails, {})
   const { resolve: resolveAddress } = React.useContext(IdentityContext)
   const handleDownload = React.useCallback(async () => {
-    if (!selectedIndexes.length) {
-      return
-    }
     const data = await getDownloadData(
-      filteredTransfers.filter((_, index) => selectedIndexes.includes(index)),
+      filteredTransfers,
       tokenDetails,
       resolveAddress
     )
@@ -185,10 +181,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
               Transfers
             </div>
             <div css="text-align: right;">
-              <Button
-                onClick={handleDownload}
-                disabled={!selectedIndexes.length}
-              >
+              <Button onClick={handleDownload}>
                 <IconExternal /> Export
               </Button>
             </div>
@@ -275,9 +268,6 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
       renderSelectionCount={count =>
         `${count} transfer${count !== 1 ? 's' : ''} selected`
       }
-      onSelectEntries={(_, indexes) => {
-        setSelectedIndexes(indexes)
-      }}
       renderEntryActions={({ entity, transactionHash }) => (
         <ContextMenu>
           <ContextMenuViewTransaction
