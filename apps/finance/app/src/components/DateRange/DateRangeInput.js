@@ -18,6 +18,30 @@ import DatePicker from './DatePicker'
 const START_DATE = 'Start date'
 const END_DATE = 'End date'
 
+const Labels = ({ text }) => {
+  const [start, end] = text.split('|')
+  return (
+    <div
+      css={`
+        display: grid;
+        grid-template-columns: 50% 2px 50%;
+        align-items: center;
+        height: 38px;
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        z-index: 2;
+        width: calc(100% - 28px);
+        background: #fff;
+      `}
+    >
+      <div css="text-align: center;">{start}</div>
+      <div>|</div>
+      <div css="text-align: center;">{end}</div>
+    </div>
+  )
+}
+
 class DateRangeInput extends React.PureComponent {
   state = {
     showPicker: false,
@@ -133,7 +157,7 @@ class DateRangeInput extends React.PureComponent {
             endDateProps,
             format
           )}`
-        : ''
+        : `${START_DATE} | ${END_DATE}`
     }
 
     // opened
@@ -167,6 +191,7 @@ class DateRangeInput extends React.PureComponent {
         ref={el => (this.rootRef = el)}
         onClick={this.handleClick}
       >
+        <Labels text={this.getValueText()} />
         <StyledTextInput
           value={this.getValueText()}
           readOnly
@@ -265,7 +290,6 @@ const StyledContainer = styled.div`
 
 const StyledTextInput = styled(TextInput)`
   width: 28ch;
-  ${font({ monospace: true })};
 `
 
 const Wrap = styled.div`
