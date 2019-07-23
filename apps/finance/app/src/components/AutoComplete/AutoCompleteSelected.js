@@ -1,6 +1,6 @@
 import React, { useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
-import { ButtonBase, theme } from '@aragon/ui'
+import { ButtonBase, RADIUS, theme } from '@aragon/ui'
 import AutoComplete from './AutoComplete'
 
 const identity = x => x
@@ -33,16 +33,13 @@ function AutoCompleteSelected({
     },
     [onChange]
   )
-  const handleSelectedClick = useCallback(
-    () => {
-      onSelectedClick()
-      setTimeout(() => {
-        ref.current.select()
-        ref.current.focus()
-      }, 0)
-    },
-    [ref, selected, onChange]
-  )
+  const handleSelectedClick = useCallback(() => {
+    onSelectedClick()
+    setTimeout(() => {
+      ref.current.select()
+      ref.current.focus()
+    }, 0)
+  }, [ref, selected, onChange])
 
   if (selected) {
     return (
@@ -55,7 +52,7 @@ function AutoCompleteSelected({
           background: #fff;
           cursor: pointer;
           border: 1px solid ${theme.contentBorder};
-          border-radius: 3px;
+          border-radius: ${RADIUS}px;
           ${selectedButtonStyles};
         `}
       >
@@ -66,18 +63,7 @@ function AutoCompleteSelected({
 
   return (
     <AutoComplete
-      itemButtonStyles={`
-          border-left: 3px solid transparent;
-          cursor: pointer;
-          border-radius: 0;
-
-          &:hover,
-          &:focus {
-            outline: 2px solid ${theme.accent};
-            background: #f9fafc;
-            border-left: 3px solid ${theme.accent}
-          }
-        `}
+      itemButtonStyles={itemButtonStyles}
       items={items}
       onChange={onChange}
       onSelect={handleSelect}
