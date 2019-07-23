@@ -2,7 +2,14 @@ import React, { useState, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Transition, animated } from 'react-spring'
-import { ButtonBase, TextInput, springs, theme, unselectable } from '@aragon/ui'
+import {
+  ButtonBase,
+  RADIUS,
+  TextInput,
+  springs,
+  theme,
+  unselectable,
+} from '@aragon/ui'
 import { useClickOutside, useOnBlur, useArrowKeysFocus } from '../../hooks'
 import IconMagnifyingGlass from './IconMagnifyingGlass'
 
@@ -141,18 +148,18 @@ const Items = styled(animated.ul)`
   background: ${contentBackground};
   border: 1px solid ${contentBorder};
   box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.06);
-  border-radius: 3px;
+  border-radius: ${RADIUS}px;
   padding: 0;
   margin: 0;
   list-style: none;
 
   & ${Item}:first-child {
-    border-top-left-radius: 3px;
-    border-top-right-radius: 3px;
+    border-top-left-radius: ${RADIUS}px;
+    border-top-right-radius: ${RADIUS}px;
   }
   & ${Item}:last-child {
-    border-bottom-left-radius: 3px;
-    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: ${RADIUS}px;
+    border-bottom-right-radius: ${RADIUS}px;
   }
 `
 
