@@ -1,5 +1,5 @@
 import React from 'react'
-import { DropDown, GU } from '@aragon/ui'
+import { _DropDown as DropDown, GU } from '@aragon/ui'
 import DateRange from './DateRange/DateRangeInput'
 
 const TransfersFilters = ({
@@ -23,20 +23,22 @@ const TransfersFilters = ({
         grid-template-columns: auto auto auto;
       `}
     >
-      <label>
         <DropDown
+          label="Type"
+          header="Type"
           items={transferTypes}
-          active={transferTypeFilter}
+          activeIndex={transferTypeFilter}
           onChange={onTransferTypeChange}
+          width="128px"
         />
-      </label>
-      <label>
         <DropDown
-          items={['Token', ...symbols]}
-          active={tokenFilter}
+          label="Token Type"
+          header="Token Type"
+          items={['All tokens', ...symbols]}
+          activeIndex={tokenFilter}
           onChange={onTokenChange}
+          width="128px"
         />
-      </label>
       <label
         css={`
           display: inline-block;
