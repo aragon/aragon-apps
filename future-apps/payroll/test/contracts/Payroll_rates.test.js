@@ -1,6 +1,6 @@
 const PAYMENT_TYPES = require('../helpers/payment_types')
 const { getEvents } = require('@aragon/test-helpers/events')
-const { bigExp, ONE } = require('../helpers/numbers')(web3)
+const { bigExp, ONE } = require('@aragon/test-helpers/numbers')(web3)
 const { NOW, TWO_MINUTES, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 const { USD, ETH, ETH_RATE, deployDAI, DAI_RATE, deployANT, ANT_RATE, formatRate, inverseRate, setTokenRate } = require('../helpers/tokens')(artifacts, web3)

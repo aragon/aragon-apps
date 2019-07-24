@@ -1,5 +1,6 @@
+const { bigExp } = require('@aragon/test-helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { bigExp, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
+const { annualSalaryPerSecond } = require('../helpers/salary')(web3)
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
