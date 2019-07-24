@@ -10,7 +10,14 @@ import {
   startOfDay,
   endOfDay,
 } from 'date-fns'
-import { Button, breakpoint, font, theme, useViewport } from '@aragon/ui'
+import {
+  Button,
+  RADIUS,
+  breakpoint,
+  font,
+  useTheme,
+  useViewport,
+} from '@aragon/ui'
 import IconCalendar from './Calendar'
 import TextInput from './TextInput'
 import DatePicker from './DatePicker'
@@ -33,6 +40,8 @@ const Labels = ({ text }) => {
         z-index: 2;
         width: calc(100% - 28px);
         background: #fff;
+        border-radius: ${RADIUS}px;
+        overflow: hidden;
       `}
     >
       <div css="text-align: center;">{start}</div>
@@ -182,26 +191,53 @@ class DateRangeInput extends React.PureComponent {
       endDateSelected,
       showPicker,
     } = this.state
-    const { compactMode } = this.props
-
-    const icon = showPicker ? <IconCalendarSelected /> : <IconCalendar />
+    const {
+      compactMode,
+      accent,
+      border,
+      startDate: startDateProps,
+      endDate: endDateProps,
+    } = this.props
 
     return (
-      <StyledContainer
+      <div
+        css={`
+          position: relative;
+          border: ${startDateProps && endDateProps
+            ? `1px solid ${accent}`
+            : `1px solid ${border}`};
+          border-radius: ${RADIUS}px;
+        `}
         ref={el => (this.rootRef = el)}
         onClick={this.handleClick}
       >
         <Labels text={this.getValueText()} />
-        <StyledTextInput
+        <TextInput
+          css="width: 28ch;"
           value={this.getValueText()}
           readOnly
-          adornment={icon}
+          adornment={
+            <IconCalendar
+              css={`
+                color: ${showPicker ? accent : 'initial'};
+              `}
+            />
+          }
           adornmentPosition="end"
           height={39}
           placeholder={`${START_DATE} | ${END_DATE}`}
         />
         {this.state.showPicker && (
-          <Container>
+          <div
+            css={`
+              position: absolute;
+              z-index: 10;
+              border: 1px solid ${border};
+              border-radius: 3px;
+              box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+              background: #fff;
+            `}
+          >
             <Wrap>
               {(!compactMode || !startDateSelected) && (
                 <DatePicker
@@ -249,9 +285,9 @@ class DateRangeInput extends React.PureComponent {
                 Apply
               </Button>
             </Controls>
-          </Container>
+          </div>
         )}
-      </StyledContainer>
+      </div>
     )
   }
 }
@@ -284,14 +320,6 @@ const Controls = styled.div`
   )}
 `
 
-const StyledContainer = styled.div`
-  position: relative;
-`
-
-const StyledTextInput = styled(TextInput)`
-  width: 28ch;
-`
-
 const Wrap = styled.div`
   > div {
     border: 0;
@@ -308,20 +336,15 @@ const Wrap = styled.div`
   )}
 `
 
-const Container = styled.div`
-  position: absolute;
-  z-index: 10;
-  border: 1px solid ${theme.contentBorder};
-  border-radius: 3px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-  background: #fff;
-`
-
-const IconCalendarSelected = styled(IconCalendar)`
-  color: ${theme.accent};
-`
-
 export default props => {
   const { below } = useViewport()
-  return <DateRangeInput {...props} compactMode={below('medium')} />
+  const { accent, border } = useTheme()
+  return (
+    <DateRangeInput
+      {...props}
+      compactMode={below('medium')}
+      accent={accent}
+      border={border}
+    />
+  )
 }
