@@ -35,6 +35,7 @@ const app = new Aragon()
 
 /*
  * Calls `callback` exponentially, everytime `retry()` is called.
+ * Returns a promise that resolves with the callback's result if it (eventually) succeeds.
  *
  * Usage:
  *
@@ -48,32 +49,49 @@ const app = new Aragon()
  * }, 1000, 2)
  *
  */
-const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
-  const attempt = (retryTimer = initialRetryTimer) => {
-    // eslint-disable-next-line standard/no-callback-literal
-    callback(() => {
-      console.error(`Retrying in ${retryTimer / 1000}s...`)
+const retryEvery = async (
+  callback,
+  { initialRetryTimer = 1000, increaseFactor = 3, maxRetries = 3 } = {}
+) => {
+  const sleep = time => new Promise(resolve => setTimeout(resolve, time))
+
+  let retryNum = 0
+  const attempt = async (retryTimer = initialRetryTimer) => {
+    try {
+      return await callback()
+    } catch (err) {
+      if (retryNum === maxRetries) {
+        throw err
+      }
+      ++retryNum
 
       // Exponentially backoff attempts
-      setTimeout(() => attempt(retryTimer * increaseFactor), retryTimer)
-    })
+      const nextRetryTime = retryTimer * increaseFactor
+      console.log(
+        `Retrying in ${nextRetryTime}s... (attempt ${retryNum} of ${maxRetries})`
+      )
+      await sleep(nextRetryTime)
+      return attempt(nextRetryTime)
+    }
   }
-  attempt()
+
+  return attempt()
 }
 
-// Get the token address to initialize ourselves
-retryEvery(retry => {
-  app.call('vault').subscribe(
-    vaultAddress => initialize(vaultAddress, ETHER_TOKEN_FAKE_ADDRESS),
-    err => {
+// Get the vault address to initialize ourselves
+retryEvery(() =>
+  app
+    .call('vault')
+    .toPromise()
+    .then(vaultAddress => initialize(vaultAddress, ETHER_TOKEN_FAKE_ADDRESS))
+    .catch(err => {
       console.error(
-        'Could not start background script execution due to the contract not loading the token:',
+        'Could not start background script execution due to the contract not loading the vault:',
         err
       )
-      retry()
-    }
-  )
-})
+      throw err
+    })
+)
 
 async function initialize(vaultAddress, ethAddress) {
   const vaultContract = app.external(vaultAddress, vaultAbi)
@@ -392,7 +410,16 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
 
 async function loadTransactionDetails(id) {
   return marshallTransactionDetails(
-    await app.call('getTransaction', id).toPromise()
+    // Wrap with retry in case the transaction is somehow not present
+    await retryEvery(() =>
+      app
+        .call('getTransaction', id)
+        .toPromise()
+        .catch(err => {
+          console.error(`Error fetching transaction (${id})`, err)
+          throw err
+        })
+    )
   )
 }
 
