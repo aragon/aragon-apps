@@ -27,7 +27,7 @@ const TransfersFilters = ({
           label="Type"
           header="Type"
           items={transferTypes}
-          activeIndex={transferTypeFilter}
+          selected={transferTypeFilter}
           onChange={onTransferTypeChange}
           width="128px"
         />
@@ -35,7 +35,7 @@ const TransfersFilters = ({
           label="Token Type"
           header="Token Type"
           items={['All tokens', ...symbols]}
-          activeIndex={tokenFilter}
+          selected={tokenFilter}
           onChange={onTokenChange}
           width="128px"
         />
