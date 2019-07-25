@@ -14,7 +14,7 @@ let connectedAccount
 
 /*
  * Calls `callback` exponentially, everytime `retry()` is called.
- * Returns a promise that resolves with the callback's result when (eventually) successful.
+ * Returns a promise that resolves with the callback's result if it (eventually) succeeds.
  *
  * Usage:
  *
