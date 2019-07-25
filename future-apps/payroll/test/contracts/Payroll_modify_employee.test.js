@@ -1,8 +1,9 @@
 const { USD } = require('../helpers/tokens')(artifacts, web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { bn, MAX_UINT256 } = require('@aragon/test-helpers/numbers')(web3)
+const { annualSalaryPerSecond } = require('../helpers/salary')(web3)
 const { getEvents, getEventArgument } = require('@aragon/test-helpers/events')
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
-const { bn, MAX_UINT256, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'

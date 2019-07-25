@@ -1,8 +1,9 @@
+const { bn } = require('@aragon/test-helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { USD, deployDAI } = require('../helpers/tokens')(artifacts, web3)
 const { getEventArgument } = require('@aragon/test-helpers/events')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
-const { annualSalaryPerSecond, bn } = require('../helpers/numbers')(web3)
-const { USD, deployDAI } = require('../helpers/tokens')(artifacts, web3)
+const { annualSalaryPerSecond } = require('../helpers/salary')(web3)
 const { NOW, ONE_MONTH, RATE_EXPIRATION_TIME } = require('../helpers/time')
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 

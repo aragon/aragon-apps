@@ -1,5 +1,5 @@
 module.exports = (artifacts, web3) => {
-  const { bigExp } = require('./numbers')(web3)
+  const { bigExp } = require('@aragon/test-helpers/numbers')(web3)
   const { SECONDS_IN_A_YEAR } = require('./time')
   const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 
