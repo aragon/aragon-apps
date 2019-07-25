@@ -4,7 +4,7 @@ const ETH = '0x0000000000000000000000000000000000000000'
 const USD = '0xFFFfFfffffFFFFFFFfffFFFFFffffFfFfFAAaCbB' // USD identifier: https://github.com/aragon/ppf#tickers-and-token-addresses
 
 module.exports = (artifacts, web3) => {
-  const { ONE, bn, bigExp } = require('./numbers')(web3)
+  const { ONE, bn, bigExp } = require('@aragon/test-helpers/numbers')(web3)
 
   const formatRate = n => bn(n.toFixed(18)).times(ONE)
 
