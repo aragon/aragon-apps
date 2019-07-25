@@ -1,5 +1,5 @@
 module.exports = web3 => {
-  const { bigExp } = require('@aragon/test-helpers/numbers')
+  const { bigExp } = require('@aragon/test-helpers/numbers')(web3)
 
   const pct = x => bigExp(x, 16)
 
