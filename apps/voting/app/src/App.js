@@ -1,7 +1,15 @@
 import React from 'react'
-import { SyncIndicator, Main } from '@aragon/ui'
+import {
+  Button,
+  GU,
+  Header,
+  IconPlus,
+  Main,
+  SyncIndicator,
+  useLayout,
+} from '@aragon/ui'
 
-import EmptyState from './screens/EmptyState'
+import NoVotes from './screens/NoVotes'
 import Votes from './screens/Votes'
 import VotePanel from './components/VotePanel'
 import NewVotePanel from './components/NewVotePanel'
@@ -22,38 +30,80 @@ function App() {
     newVotePanel,
     selectedVotePanel,
   } = useAppLogic()
+  const { layoutName } = useLayout()
+  const compactMode = layoutName === 'small'
 
   return (
     <div css="min-width: 320px">
-      <Main assetsUrl="./aragon-ui">
-        <SyncIndicator visible={isSyncing} />
-        <AppLayout
-          title="Voting"
-          mainButton={{
-            label: 'New vote',
-            icon: <NewVoteIcon />,
-            onClick: newVotePanel.requestOpen,
-          }}
+      <SyncIndicator visible={isSyncing} />
+      {!votes.length && (
+        <div
+          css={`
+            height: calc(100vh - ${8 * GU}px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          `}
         >
-          {votes.length > 0 ? (
-            <Votes votes={votes} onSelectVote={selectVote} />
-          ) : (
-            !isSyncing && <EmptyState onActivate={newVotePanel.requestOpen} />
-          )}
-        </AppLayout>
+          <NoVotes onClick={newVotePanel.requestOpen} isSyncing={isSyncing} />
+        </div>
+      )}
+      {!!votes.length && (
+        <React.Fragment>
+          <Header
+            primary="Voting"
+            secondary={
+              <Button
+                mode="strong"
+                onClick={actions.createVote}
+                css={`
+                  ${compactMode &&
+                    `
+                      min-width: 40px;
+                      padding: 0;
+                    `}
+                `}
+              >
+                {compactMode ? <IconPlus /> : 'New transfer'}
+              </Button>
+            }
+          />
+          <Votes
+            votes={votes}
+            selectVote={selectVote}
+            selectedVote={selectedVote}
+          />
+        </React.Fragment>
+      )}
 
-        <VotePanel
-          vote={selectedVote}
-          onExecute={actions.execute}
-          onVote={actions.vote}
-          panelState={selectedVotePanel}
-        />
+      {/*
+      <AppLayout
+        title="Voting"
+        mainButton={{
+          label: 'New vote',
+          icon: <NewVoteIcon />,
+          onClick: newVotePanel.requestOpen,
+        }}
+      >
+        {votes.length > 0 ? (
+          <Votes votes={votes} onSelectVote={selectVote} />
+        ) : (
+          !isSyncing && <EmptyState onActivate={newVotePanel.requestOpen} />
+        )}
+      </AppLayout>
 
-        <NewVotePanel
-          onCreateVote={actions.createVote}
-          panelState={newVotePanel}
-        />
-      </Main>
+      <VotePanel
+        vote={selectedVote}
+        onExecute={actions.execute}
+        onVote={actions.vote}
+        panelState={selectedVotePanel}
+      />
+
+      <NewVotePanel
+        onCreateVote={actions.createVote}
+        panelState={newVotePanel}
+      />
+      */}
     </div>
   )
 }
@@ -62,7 +112,9 @@ export default () => (
   <AppLogicProvider>
     <IdentityProvider>
       <SettingsProvider>
-        <App />
+        <Main assetsUrl="./aragon-ui">
+          <App />
+        </Main>
       </SettingsProvider>
     </IdentityProvider>
   </AppLogicProvider>
