@@ -172,7 +172,7 @@ class Withdrawal extends React.Component {
             />
             <DropDown
               items={symbols}
-              active={selectedToken}
+              selected={selectedToken}
               onChange={this.handleSelectToken}
             />
           </CombinedInput>
