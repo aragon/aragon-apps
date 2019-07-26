@@ -173,7 +173,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
 
   return (
     <DataView
-      currentPage={page}
+      page={page}
       onPageChange={setPage}
       heading={
         <React.Fragment>
