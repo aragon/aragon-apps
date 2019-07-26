@@ -1,15 +1,5 @@
 import React from 'react'
-import styled from 'styled-components'
-import {
-  Box,
-  GU,
-  Text,
-  TokenBadge,
-  breakpoint,
-  textStyle,
-  theme,
-  useTheme,
-} from '@aragon/ui'
+import { Box, GU, TokenBadge, textStyle, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { formatBalance, stakesPercentages } from '../utils'
 import You from './You'
@@ -50,7 +40,6 @@ class InfoBoxes extends React.PureComponent {
       tokenSymbol,
       userAccount,
       theme,
-      ...rest
     } = this.props
 
     const colors = [

@@ -18,8 +18,6 @@ import { useAragonApi } from '@aragon/api-react'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
-import AssignTokensIcon from './components/AssignTokensIcon'
-import AppLayout from './components/AppLayout'
 import { addressesEqual } from './web3-utils'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
@@ -105,7 +103,6 @@ class App extends React.PureComponent {
       layoutName,
       maxAccountTokens,
       numData,
-      requestMenu,
       theme,
       tokenAddress,
       tokenDecimalsBase,
