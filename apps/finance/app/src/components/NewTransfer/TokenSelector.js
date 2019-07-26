@@ -62,19 +62,15 @@ class TokenSelector extends React.Component {
   }
   getAddressFromTokens(index) {
     if (index === 0) {
-      return ''
-    }
-
-    if (index === 1) {
       return this.state.customToken.address
     }
 
     // Adjust for title and custom address
-    const token = this.props.tokens[index - 2]
+    const token = this.props.tokens[index - 1]
     return token.address
   }
   getItems() {
-    return ['Select a token', 'Other…', ...this.getTokenItems()]
+    return ['Other…', ...this.getTokenItems()]
   }
   getTokenItems() {
     return this.props.tokens.map(({ address, name, symbol, verified }) => (
@@ -90,16 +86,18 @@ class TokenSelector extends React.Component {
     const { customToken } = this.state
     const { activeIndex, label, labelCustomToken } = this.props
     const items = this.getItems()
-    const showCustomToken = activeIndex === 1
+    const showCustomToken = activeIndex === 0
     return (
       <React.Fragment>
         <Field label={label}>
           <DropDown
+            label="Select a token"
             items={items}
-            active={activeIndex}
+            selected={activeIndex}
             onChange={this.handleChange}
             required
             wide
+            width="390px"
           />
         </Field>
 
