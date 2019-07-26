@@ -7,7 +7,7 @@
     "@aragon/api": "^2.0.0-beta.4",
     "@aragon/api-react": "^2.0.0-beta.4",
     "@aragon/templates-tokens": "^1.2.0",
-    "@aragon/ui": "^0.40.0",
+    "@aragon/ui": "^1.0.0-alpha.7",
     "@babel/polyfill": "^7.0.0",
     "bn.js": "^4.11.8",
     "core-js": "^2.6.5",
@@ -46,11 +46,12 @@
   },
   "scripts": {
     "lint": "eslint ./src",
-    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build",
     "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3002 --out-dir build/",
     "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url \".\"",
+    "build:script": "parcel build src/script.js --out-dir build/",
     "watch:script": "parcel watch src/script.js --out-dir build/ --no-hmr",
-    "build:script": "parcel build src/script.js --out-dir build/"
+    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build",
+    "now-build": "npm run build"
   },
   "browserslist": [
     ">2%",
