@@ -64,7 +64,7 @@ const initialState = {
       loading: false,
     },
     error: NO_ERROR,
-    index: 0,
+    index: -1,
     value: '',
   },
 }
