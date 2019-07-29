@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { theme, IconTime, IconCross, IconCheck } from '@aragon/ui'
+import { textStyle, useTheme, IconTime, IconCross, IconCheck } from '@aragon/ui'
 import { useSettings } from '../vote-settings-manager'
 import {
   VOTE_STATUS_ONGOING,
@@ -10,58 +10,62 @@ import {
 } from '../vote-types'
 import { isVoteAction, getVoteStatus } from '../vote-utils'
 
+const POSITIVE = Symbol('positive')
+const NEGATIVE = Symbol('negative')
+
 const ATTRIBUTES = {
   [VOTE_STATUS_ONGOING]: {
     label: 'Ongoing',
     Icon: IconTime,
-    color: theme.textTertiary,
+    color: null,
     bold: false,
   },
   [VOTE_STATUS_ACCEPTED]: {
-    label: 'Pending enactment',
-    Icon: null,
-    color: theme.textTertiary,
+    label: 'Passed',
+    Icon: IconCheck,
+    color: POSITIVE,
     bold: false,
   },
   [VOTE_STATUS_REJECTED]: {
     label: 'Rejected',
     Icon: IconCross,
-    color: theme.negative,
+    color: NEGATIVE,
     bold: true,
   },
   [VOTE_STATUS_EXECUTED]: {
     label: 'Enacted',
     Icon: IconCheck,
-    color: theme.positive,
+    color: POSITIVE,
     bold: true,
   },
 }
 
 const VoteStatus = ({ cardStyle, vote }) => {
+  const theme = useTheme()
   const settings = useSettings()
   const status = getVoteStatus(vote, settings.pctBase)
-  const { Icon, color, bold } = ATTRIBUTES[status]
-
-  const label =
-    !isVoteAction(vote) &&
-    (status === VOTE_STATUS_EXECUTED || status === VOTE_STATUS_ACCEPTED)
-      ? 'Accepted'
-      : ATTRIBUTES[status].label
+  const { Icon, color, bold, label } = ATTRIBUTES[status]
 
   return (
     <Main
-      fontSize={cardStyle ? 13 : 15}
-      fontWeight={cardStyle || !bold ? 400 : 600}
-      color={cardStyle ? theme.textTertiary : color}
+      css={`
+        ${textStyle('body2')};
+        color: ${color === POSITIVE
+          ? theme.positive
+          : color === NEGATIVE
+          ? theme.negative
+          : theme.textTertiary};
+      `}
     >
-      {Icon && <Icon />}
+      {Icon && <Icon size="tiny" />}
       <StatusLabel spaced={Boolean(Icon)}>{label}</StatusLabel>
     </Main>
   )
 }
 
 const Main = styled.span`
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
   color: ${({ color }) => color};
   font-size: ${({ fontSize }) => fontSize}px;
   font-weight: ${({ fontWeight }) => fontWeight};
