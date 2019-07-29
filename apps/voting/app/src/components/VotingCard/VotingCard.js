@@ -1,38 +1,108 @@
 import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import { format } from 'date-fns'
-import { Badge, Timer, Text, Button, theme } from '@aragon/ui'
+import {
+  Badge,
+  Button,
+  Card,
+  GU,
+  IconCheck,
+  Text,
+  Timer,
+  textStyle,
+  theme,
+  useTheme,
+} from '@aragon/ui'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 import VotingOptions from './VotingOptions'
 import VoteText from '../VoteText'
 import VoteStatus from '../VoteStatus'
-import { isVoteAction } from '../../vote-utils'
+import { isVoteAction, getVoteStatus } from '../../vote-utils'
+import { useSettings } from '../../vote-settings-manager'
+import { VOTE_STATUS_ACCEPTED, VOTE_STATUS_EXECUTED } from '../../vote-types'
 
-function getOptions(yea, nay, connectedAccountVote) {
+function getOptions(yea, nay) {
   return [
-    {
-      label: (
-        <OptionLabel
-          label="Yes"
-          isConnectedAccount={connectedAccountVote === VOTE_YEA}
-        />
-      ),
-      power: yea,
-    },
-    {
-      label: (
-        <OptionLabel
-          label="No"
-          isConnectedAccount={connectedAccountVote === VOTE_NAY}
-        />
-      ),
-      power: nay,
-      color: theme.negative,
-    },
+    { label: <span>Yes</span>, power: yea },
+    { label: <span>No</span>, power: nay, color: theme.negative },
   ]
 }
 
-const VotingCard = React.memo(
+const VotingCard = ({ vote, onOpen }) => {
+  const { voteId, data, numData, connectedAccountVote } = vote
+  const { votingPower, yea, nay } = numData
+  const { open, metadata, description, endDate } = data
+  const options = useMemo(() => getOptions(yea, nay), [yea, nay])
+  const settings = useSettings()
+  const status = getVoteStatus(vote, settings.pctBase)
+  const executed = isVoteAction(vote) && status === VOTE_STATUS_EXECUTED
+  const youVoted =
+    connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
+  const handleOpen = useCallback(() => {
+    onOpen(voteId)
+  }, [voteId, onOpen])
+  const theme = useTheme()
+
+  return (
+    <Card
+      onClick={handleOpen}
+      css={`
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto auto;
+        grid-gap: 8px;
+        padding: ${3 * GU}px;
+      `}
+    >
+      <div
+        css={`
+          display: flex;
+          justify-content: space-between;
+        `}
+      >
+        <Badge.App>App Badge</Badge.App>
+        {youVoted && (
+          <div
+            css={`
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              background: #eafafd;
+              color: ${theme.info};
+            `}
+          >
+            <IconCheck size="tiny" />
+          </div>
+        )}
+      </div>
+      <div
+        css={`
+          ${textStyle('body1')};
+          /* lines per font size per line height */
+          /* shorter texts align to the top */
+          height: 84px;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 3;
+          overflow: hidden;
+        `}
+      >
+        <VoteText text={description || metadata} />
+      </div>
+      <VotingOptions options={options} votingPower={votingPower} />
+      {open ? (
+        <Timer end={endDate} maxUnits={4} />
+      ) : (
+        <VoteStatus vote={vote} cardStyle />
+      )}
+    </Card>
+  )
+}
+
+const _VotingCard = React.memo(
   ({ vote, onOpen }) => {
     const { voteId, connectedAccountVote } = vote
     const { votingPower, yea, nay } = vote.numData
@@ -51,57 +121,60 @@ const VotingCard = React.memo(
     const action = isVoteAction(vote)
 
     return (
-      <section
-        css={`
-          display: flex;
-          flex-direction: column;
-          min-width: 0;
-        `}
-      >
-        <Header>
-          {open ? (
-            <Timer end={endDate} maxUnits={4} />
-          ) : (
-            <PastDate
-              dateTime={format(endDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")}
-            >
-              {format(endDate, 'EEE MMM dd yyyy HH:mm')}
-            </PastDate>
-          )}
+      (
+        <section
+          css={`
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+          `}
+        >
+          <Header>
+            {open ? (
+              <Timer end={endDate} maxUnits={4} />
+            ) : (
+              <PastDate
+                dateTime={format(endDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")}
+              >
+                {format(endDate, 'EEE MMM dd yyyy HH:mm')}
+              </PastDate>
+            )}
 
-          {open ? null : <VoteStatus vote={vote} cardStyle />}
-        </Header>
-        <Card>
-          <Content>
-            <Label>
-              <Text color={theme.textTertiary}>#{voteId} </Text>
-              <span>
-                <VoteText text={description || metadata} />
-              </span>
-            </Label>
-            <VotingOptions options={options} votingPower={votingPower} />
-          </Content>
-          <div
-            css={`
-              display: flex;
-              justify-content: space-between;
-              flex-shrink: 0;
-            `}
-          >
+            {open ? null : <VoteStatus vote={vote} cardStyle />}
+          </Header>
+          <Card>
+            <Content>
+              <Label>
+                <Text color={theme.textTertiary}>#{voteId} </Text>
+                <span>
+                  <VoteText text={description || metadata} />
+                </span>
+              </Label>
+              <VotingOptions options={options} votingPower={votingPower} />
+            </Content>
             <div
               css={`
                 display: flex;
-                align-items: center;
+                justify-content: space-between;
+                flex-shrink: 0;
               `}
             >
-              {action ? <BadgeAction /> : <BadgeQuestion />}
+              <div
+                css={`
+                  display: flex;
+                  align-items: center;
+                `}
+              >
+                {action ? <BadgeAction /> : <BadgeQuestion />}
+              </div>
+              <Button compact mode="outline" onClick={handleOpen}>
+                View vote
+              </Button>
             </div>
-            <Button compact mode="outline" onClick={handleOpen}>
-              View vote
-            </Button>
-          </div>
-        </Card>
-      </section>
+          </Card>
+        </section>
+      ),
+      votes
     )
   },
   (prevProps, nextProps) => {
@@ -152,7 +225,7 @@ const Header = styled.div`
   padding-left: 5px;
 `
 
-const Card = styled.div`
+const _Card = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
