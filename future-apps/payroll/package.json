@@ -1,6 +1,6 @@
 {
-  "name": "@aragon/future-apps-payroll",
-  "version": "0.0.1",
+  "name": "@aragon/apps-payroll",
+  "version": "1.0.0-rc.1",
   "description": "",
   "keywords": [
     "app",
