@@ -51,9 +51,11 @@ const useFilterVotes = votes => {
           ((open && openFilter === 1) || (!open && openFilter === 2))) &&
         // type
         // status
+        // will remove all items if open filter is "open"
+        // as no open votes have a "status"
         (statusFilter === 0 ||
-          ((statusFilter === 1 && voteSuccess) ||
-            (statusFilter === 2 && !voteSuccess))) &&
+          ((!open && statusFilter === 1 && voteSuccess) ||
+            (!open && statusFilter === 2 && !voteSuccess))) &&
         // date range
         (!(start || end) ||
           isWithinInterval(new Date(startTimestamp), {
@@ -96,7 +98,13 @@ const useVotes = votes => {
   return { openVotes, closedVotes }
 }
 
-const LayoutVotes = ({ votes, selectedVote, selectVote }) => {
+const LayoutVotes = ({
+  votes,
+  selectedVote,
+  selectVote,
+  onVote,
+  onExecute,
+}) => {
   const theme = useTheme()
   const {
     filteredVotes,
@@ -119,7 +127,7 @@ const LayoutVotes = ({ votes, selectedVote, selectVote }) => {
           <Bar>
             <BackButton onClick={handleBackClick} />
           </Bar>
-          <Vote vote={selectedVote} />
+          <Vote vote={selectedVote} onVote={onVote} onExecute={onExecute} />
         </React.Fragment>
       )}
       {!selectedVote && (
