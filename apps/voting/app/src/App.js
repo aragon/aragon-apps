@@ -74,6 +74,8 @@ function App() {
             votes={votes}
             selectVote={selectVote}
             selectedVote={selectedVote}
+            onVote={actions.vote}
+            onExecute={actions.execute}
           />
         </React.Fragment>
       )}
