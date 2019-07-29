@@ -53,19 +53,21 @@ function App() {
           <Header
             primary="Voting"
             secondary={
-              <Button
-                mode="strong"
-                onClick={actions.createVote}
-                css={`
-                  ${compactMode &&
-                    `
+              !selectedVote && (
+                <Button
+                  mode="strong"
+                  onClick={actions.createVote}
+                  css={`
+                    ${compactMode &&
+                      `
                       min-width: 40px;
                       padding: 0;
                     `}
-                `}
-              >
-                {compactMode ? <IconPlus /> : 'New transfer'}
-              </Button>
+                  `}
+                >
+                  {compactMode ? <IconPlus /> : 'New vote'}
+                </Button>
+              )
             }
           />
           <Votes
@@ -75,35 +77,6 @@ function App() {
           />
         </React.Fragment>
       )}
-
-      {/*
-      <AppLayout
-        title="Voting"
-        mainButton={{
-          label: 'New vote',
-          icon: <NewVoteIcon />,
-          onClick: newVotePanel.requestOpen,
-        }}
-      >
-        {votes.length > 0 ? (
-          <Votes votes={votes} onSelectVote={selectVote} />
-        ) : (
-          !isSyncing && <EmptyState onActivate={newVotePanel.requestOpen} />
-        )}
-      </AppLayout>
-
-      <VotePanel
-        vote={selectedVote}
-        onExecute={actions.execute}
-        onVote={actions.vote}
-        panelState={selectedVotePanel}
-      />
-
-      <NewVotePanel
-        onCreateVote={actions.createVote}
-        panelState={newVotePanel}
-      />
-      */}
     </div>
   )
 }
