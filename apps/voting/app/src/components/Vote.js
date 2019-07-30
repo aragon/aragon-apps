@@ -216,6 +216,7 @@ function Vote({ vote, onVote, onExecute }) {
               positiveSize={quorumProgress}
               requiredSize={minAcceptQuorum}
               show
+              onlyYea
             />
           </Box>
           <Box heading="Minimum approval %">
@@ -238,6 +239,7 @@ function Vote({ vote, onVote, onExecute }) {
               negativeSize={votesNayVotersSize}
               requiredSize={supportRequired}
               show
+              onlyYea
             />
           </Box>
         </React.Fragment>
