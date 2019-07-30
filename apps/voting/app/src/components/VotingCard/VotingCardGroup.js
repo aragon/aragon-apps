@@ -4,8 +4,6 @@ import {
   Badge,
   CardLayout,
   GU,
-  Text,
-  breakpoint,
   textStyle,
   unselectable,
   useLayout,
@@ -15,11 +13,20 @@ import {
 const VotingCardGroup = ({ title, count, children }) => {
   const theme = useTheme()
   const { layoutName } = useLayout()
-  const rowHeight = layoutName === 'small' ? 256 : 294
+  const compactMode = layoutName === 'small'
+  const rowHeight = compactMode ? 256 : 294
 
   return (
-    <Main>
-      <Title>
+    <section>
+      <h2
+        css={`
+          display: flex;
+          align-items: center;
+          ${unselectable};
+          margin-bottom: ${3 * GU}px;
+          ${compactMode ? `padding: 0 ${2 * GU}px;` : ''}
+        `}
+      >
         <div
           css={`
             ${textStyle('body3')};
@@ -28,49 +35,22 @@ const VotingCardGroup = ({ title, count, children }) => {
         >
           {title}
         </div>
-        <TitleBadge>
+        <span
+          css={`
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          `}
+        >
           <Badge.Info>{count}</Badge.Info>
-        </TitleBadge>
-      </Title>
+        </span>
+      </h2>
       <CardLayout columnWidthMin={30 * GU} rowHeight={rowHeight}>
         {children}
       </CardLayout>
-    </Main>
+    </section>
   )
 }
-
-const Main = styled.section`
-  & + & {
-    padding-top: 35px;
-  }
-`
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-auto-rows: 270px;
-  grid-gap: 30px;
-
-  ${breakpoint(
-    'medium',
-    `
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-     `
-  )};
-`
-
-const Title = styled.h1`
-  display: flex;
-  align-items: center;
-  margin-bottom: 25px;
-  ${unselectable};
-`
-
-const TitleBadge = styled.span`
-  margin-left: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`
 
 export default VotingCardGroup
