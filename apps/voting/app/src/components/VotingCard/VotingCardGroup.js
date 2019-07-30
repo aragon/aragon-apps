@@ -14,7 +14,7 @@ const VotingCardGroup = ({ title, count, children }) => {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
-  const rowHeight = compactMode ? 256 : 294
+  const rowHeight = compactMode ? null : 294
 
   return (
     <section>
@@ -29,7 +29,7 @@ const VotingCardGroup = ({ title, count, children }) => {
       >
         <div
           css={`
-            ${textStyle('body3')};
+            ${textStyle(compactMode ? 'body2' : 'body3')};
             color: ${theme.content};
           `}
         >
