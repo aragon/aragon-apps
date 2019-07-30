@@ -10,6 +10,7 @@ class SummaryBar extends React.Component {
     negativeSize: 0,
     requiredSize: 0,
     compact: false,
+    onlyYea: false,
   }
   render() {
     const {
@@ -18,6 +19,7 @@ class SummaryBar extends React.Component {
       requiredSize,
       show,
       compact,
+      onlyYea,
       ...props
     } = this.props
     return (
@@ -40,7 +42,7 @@ class SummaryBar extends React.Component {
               />
               <BarPart
                 style={{
-                  backgroundColor: theme.negative,
+                  backgroundColor: onlyYea ? 'transparent' : theme.negative,
                   transform: progress.interpolate(
                     v => `
                       translate3d(${100 * positiveSize * v}%, 0, 0)
