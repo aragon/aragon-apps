@@ -119,7 +119,8 @@ function Vote({ vote, onVote, onExecute }) {
                 Created By
               </div>
               <div>
-                #{voteId} {description && <VoteText text={description} />}
+                <span css="font-weight: bold;">#{voteId}</span>{' '}
+                {description && <VoteText text={description} />}
                 {metadata && <VoteText text={metadata} />}
               </div>
               <div
