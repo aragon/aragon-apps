@@ -14,16 +14,12 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount } from '@aragon/api-react'
-import { format } from 'date-fns'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { useExtendedVoteData } from '../vote-hooks'
 import { useSettings } from '../vote-settings-manager'
 import { VOTE_STATUS_REJECTED } from '../vote-types'
 import { isVoteAction, getVoteStatus } from '../vote-utils'
-import { pluralize, noop } from '../utils'
-
-const formatDate = date =>
-  `${format(date, 'dd/MM/yy')} at ${format(date, 'HH:mm')} UTC`
+import { pluralize, noop, formatDate } from '../utils'
 
 const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   const theme = useTheme()
