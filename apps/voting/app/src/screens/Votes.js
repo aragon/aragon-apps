@@ -131,7 +131,13 @@ const LayoutVotes = ({
         </React.Fragment>
       )}
       {!selectedVote && (
-        <React.Fragment>
+        <div
+          css={`
+            & > div > div {
+              overflow: unset;
+            }
+          `}
+        >
           <Bar>
             <div
               css={`
@@ -193,7 +199,7 @@ const LayoutVotes = ({
             closedVotes={closedVotes}
             onSelectVote={selectVote}
           />
-        </React.Fragment>
+        </div>
       )}
     </React.Fragment>
   )
