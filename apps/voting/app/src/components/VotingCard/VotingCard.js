@@ -70,7 +70,7 @@ const VotingCard = ({ vote, onOpen }) => {
               width: 20px;
               height: 20px;
               border-radius: 50%;
-              background: #eafafd;
+              background: ${theme.infoSurface.alpha(0.08)};
               color: ${theme.info};
             `}
           >
