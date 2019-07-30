@@ -22,6 +22,7 @@ import VoteActions from './VoteActions'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { percentageList, round, safeDiv } from '../math-utils'
+import { formatDate } from '../utils'
 
 function Vote({ vote, onVote, onExecute }) {
   const theme = useTheme()
@@ -164,23 +165,50 @@ function Vote({ vote, onVote, onExecute }) {
         <React.Fragment>
           <Box heading="Status">
             {open ? (
-              <Timer end={endDate} maxUnits={4} />
+              <React.Fragment>
+                <div
+                  css={`
+                    ${textStyle('body2')};
+                    color: ${theme.content};
+                  `}
+                >
+                  Time remaining
+                </div>
+                <Timer end={endDate} maxUnits={4} />
+              </React.Fragment>
             ) : (
               <React.Fragment>
                 <VoteStatus vote={vote} cardStyle />
-                <div>
+                <div
+                  css={`
+                    margin-top: ${2 * GU}px;
+                    display: inline-grid;
+                    grid-template-columns: auto auto;
+                    grid-gap: ${1 * GU}px;
+                    align-items: center;
+                    ${textStyle('body2')};
+                  `}
+                >
                   <IconTime size="small" />
-                  {endDate.toString()}
+                  {formatDate(endDate)}
                 </div>
               </React.Fragment>
             )}
           </Box>
           <Box heading="Relative support %">
-            <div>
+            <div
+              css={`
+                ${textStyle('body2')};
+              `}
+            >
               {round(quorumProgress * 100, 2)}%{' '}
-              <Text size="small" color={theme.textSecondary}>
-                ({round(minAcceptQuorum * 100, 2)}% needed)
-              </Text>
+              <span
+                css={`
+                  color: ${theme.surfaceContentSecondary};
+                `}
+              >
+                ({round(minAcceptQuorum * 100, 2)}% Support needed)
+              </span>
             </div>
             <SummaryBar
               css="margin-top: 10px"
@@ -190,15 +218,20 @@ function Vote({ vote, onVote, onExecute }) {
             />
           </Box>
           <Box heading="Minimum approval %">
-            <span>
-              <Text color={theme.textSecondary} smallcaps>
-                Votes{' '}
-              </Text>
-              <Text size="xsmall" color={theme.textSecondary}>
-                ({Math.round(supportRequired * 100)}% support needed for
-                approval)
-              </Text>
-            </span>
+            <div
+              css={`
+                ${textStyle('body2')};
+              `}
+            >
+              {round(votesYeaVotersSize * 100, 2)}%{' '}
+              <span
+                css={`
+                  color: ${theme.surfaceContentSecondary};
+                `}
+              >
+                ({round(supportRequired * 100, 2)}% Support needed)
+              </span>
+            </div>
             <SummaryBar
               positiveSize={votesYeaVotersSize}
               negativeSize={votesNayVotersSize}
