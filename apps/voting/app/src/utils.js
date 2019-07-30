@@ -1,3 +1,5 @@
+import { format } from 'date-fns'
+
 const PLURALIZE_RE = /\$/g
 
 export function pluralize(count, singular, plural, re = PLURALIZE_RE) {
@@ -8,3 +10,7 @@ export function pluralize(count, singular, plural, re = PLURALIZE_RE) {
 }
 
 export function noop() {}
+
+export function formatDate(date) {
+  return `${format(date, 'dd/MM/yy')} at ${format(date, 'HH:mm')} UTC`
+}
