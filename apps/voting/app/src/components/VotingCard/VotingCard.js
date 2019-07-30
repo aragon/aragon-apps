@@ -18,6 +18,7 @@ import VotingOptions from './VotingOptions'
 import VoteText from '../VoteText'
 import VoteStatus from '../VoteStatus'
 import { isVoteAction, getVoteStatus } from '../../vote-utils'
+import { noop } from '../../utils'
 import { useSettings } from '../../vote-settings-manager'
 import { VOTE_STATUS_ACCEPTED, VOTE_STATUS_EXECUTED } from '../../vote-types'
 
@@ -29,6 +30,7 @@ function getOptions(yea, nay) {
 }
 
 const VotingCard = ({ vote, onOpen }) => {
+  const theme = useTheme()
   const { voteId, data, numData, connectedAccountVote } = vote
   const { votingPower, yea, nay } = numData
   const { open, metadata, description, endDate } = data
@@ -41,7 +43,6 @@ const VotingCard = ({ vote, onOpen }) => {
   const handleOpen = useCallback(() => {
     onOpen(voteId)
   }, [voteId, onOpen])
-  const theme = useTheme()
 
   return (
     <Card
@@ -93,110 +94,23 @@ const VotingCard = ({ vote, onOpen }) => {
         <VoteText text={description || metadata} />
       </div>
       <VotingOptions options={options} votingPower={votingPower} />
-      {open ? (
-        <Timer end={endDate} maxUnits={4} />
-      ) : (
-        <VoteStatus vote={vote} cardStyle />
-      )}
+      <div
+        css={`
+          margin-top: ${2 * GU}px;
+        `}
+      >
+        {open ? (
+          <Timer end={endDate} maxUnits={4} />
+        ) : (
+          <VoteStatus vote={vote} cardStyle />
+        )}
+      </div>
     </Card>
   )
 }
 
-const _VotingCard = React.memo(
-  ({ vote, onOpen }) => {
-    const { voteId, connectedAccountVote } = vote
-    const { votingPower, yea, nay } = vote.numData
-    const { endDate, open, metadata, description } = vote.data
-
-    const handleOpen = useCallback(() => {
-      onOpen(voteId)
-    }, [voteId, onOpen])
-
-    const options = useMemo(() => getOptions(yea, nay, connectedAccountVote), [
-      yea,
-      nay,
-      connectedAccountVote,
-    ])
-
-    const action = isVoteAction(vote)
-
-    return (
-      (
-        <section
-          css={`
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-          `}
-        >
-          <Header>
-            {open ? (
-              <Timer end={endDate} maxUnits={4} />
-            ) : (
-              <PastDate
-                dateTime={format(endDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")}
-              >
-                {format(endDate, 'EEE MMM dd yyyy HH:mm')}
-              </PastDate>
-            )}
-
-            {open ? null : <VoteStatus vote={vote} cardStyle />}
-          </Header>
-          <Card>
-            <Content>
-              <Label>
-                <Text color={theme.textTertiary}>#{voteId} </Text>
-                <span>
-                  <VoteText text={description || metadata} />
-                </span>
-              </Label>
-              <VotingOptions options={options} votingPower={votingPower} />
-            </Content>
-            <div
-              css={`
-                display: flex;
-                justify-content: space-between;
-                flex-shrink: 0;
-              `}
-            >
-              <div
-                css={`
-                  display: flex;
-                  align-items: center;
-                `}
-              >
-                {action ? <BadgeAction /> : <BadgeQuestion />}
-              </div>
-              <Button compact mode="outline" onClick={handleOpen}>
-                View vote
-              </Button>
-            </div>
-          </Card>
-        </section>
-      ),
-      votes
-    )
-  },
-  (prevProps, nextProps) => {
-    const prevVote = prevProps.vote
-    const nextVote = nextProps.vote
-    return (
-      prevProps.onVote === nextProps.onVote &&
-      prevVote.voteId === nextVote.voteId &&
-      prevVote.connectedAccountVote === nextVote.connectedAccountVote &&
-      prevVote.data.endDate === nextVote.data.endDate &&
-      prevVote.data.open === nextVote.data.open &&
-      prevVote.data.metadata === nextVote.data.metadata &&
-      prevVote.data.description === nextVote.data.description &&
-      prevVote.numData.votingPower === nextVote.numData.votingPower &&
-      prevVote.numData.yea === nextVote.numData.yea &&
-      prevVote.numData.nay === nextVote.numData.nay
-    )
-  }
-)
-
 VotingCard.defaultProps = {
-  onOpen: () => {},
+  onOpen: noop,
 }
 
 const BadgeQuestion = () => (
