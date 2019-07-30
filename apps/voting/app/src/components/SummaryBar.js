@@ -76,7 +76,6 @@ const Main = styled.div`
   display: flex;
   align-items: center;
   height: ${({ compact }) => (compact ? '30px' : '50px')};
-  margin: ${({ compact }) => (compact ? '0' : '10px 0')};
 `
 
 const CombinedBar = styled.div`
