@@ -3,6 +3,7 @@ import {
   Badge,
   Box,
   GU,
+  IconCheck,
   IconTime,
   Split,
   Text,
@@ -25,13 +26,15 @@ import { percentageList, round, safeDiv } from '../math-utils'
 function Vote({ vote, onVote, onExecute }) {
   const theme = useTheme()
   const { tokenDecimals, tokenSymbol } = useAppState()
-  const { data, numData, voteId } = vote
+  const { data, numData, voteId, connectedAccountVote } = vote
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
   const { creator, endDate, open, metadata, description } = data
   const quorumProgress = getQuorumProgress(vote)
   const totalVotes = yea + nay
   const votesYeaVotersSize = safeDiv(yea, totalVotes)
   const votesNayVotersSize = safeDiv(nay, totalVotes)
+  const youVoted =
+    connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
   const handleVoteNo = useCallback(() => {
     onVote(voteId, VOTE_NAY)
   }, [onVote, voteId])
@@ -55,7 +58,34 @@ function Vote({ vote, onVote, onExecute }) {
     <Split
       primary={
         <Box>
-          <Badge.App>App badge</Badge.App>
+          <div
+            css={`
+              display: flex;
+              justify-content: space-between;
+            `}
+          >
+            <Badge.App>App Badge</Badge.App>
+            {youVoted && (
+              <div
+                css={`
+                  display: inline-grid;
+                  grid-template-columns: auto auto;
+                  grid-gap: ${0.5 * GU}px;
+                  align-items: center;
+                  justify-content: center;
+                  height: 20px;
+                  width: auto;
+                  border-radius: 100px;
+                  padding: 0 ${1 * GU}px;
+                  background: ${theme.infoSurface.alpha(0.08)};
+                  color: ${theme.info};
+                  ${textStyle('label2')};
+                `}
+              >
+                <IconCheck size="tiny" /> Voted
+              </div>
+            )}
+          </div>
           <div
             css={`
               display: grid;
