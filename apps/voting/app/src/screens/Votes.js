@@ -5,8 +5,9 @@ import {
   Bar,
   DropDown,
   GU,
-  useTheme,
   textStyle,
+  useLayout,
+  useTheme,
 } from '@aragon/ui'
 import VotingCard from '../components/VotingCard/VotingCard'
 import VotingCardGroup from '../components/VotingCard/VotingCardGroup'
@@ -106,6 +107,7 @@ const LayoutVotes = ({
   onExecute,
 }) => {
   const theme = useTheme()
+  const { layoutName } = useLayout()
   const {
     filteredVotes,
     voteOpenFilter,
@@ -138,62 +140,64 @@ const LayoutVotes = ({
             }
           `}
         >
-          <Bar>
-            <div
-              css={`
-                height: ${8 * GU}px;
-                display: grid;
-                grid-template-columns: auto auto auto 1fr;
-                grid-gap: ${1 * GU}px;
-                align-items: center;
-                padding-left: ${3 * GU}px;
-              `}
-            >
-              <DropDown
-                selected={voteOpenFilter}
-                onChange={handleVoteOpenFilterChange}
-                items={[
-                  <div>
-                    All
-                    <span
-                      css={`
-                        margin-left: ${1.5 * GU}px;
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: ${theme.info};
-                        ${textStyle('label3')};
-                      `}
-                    >
-                      <Badge.Info>{votes.length}</Badge.Info>
-                    </span>
-                  </div>,
-                  'Open',
-                  'Past',
-                ]}
-                width="128px"
-              />
-              <DropDown
-                label="Type"
-                selected={voteAppFilter}
-                onChange={handleVoteAppFilterChange}
-                items={['All', 'Finance', 'Tokens', 'Voting']}
-                width="128px"
-              />
-              <DropDown
-                label="Status"
-                selected={voteStatusFilter}
-                onChange={handleVoteStatusFilterChange}
-                items={['All', 'Passed', 'Rejected']}
-                width="128px"
-              />
-              <DateRangeInput
-                startDate={voteDateRangeFilter.start}
-                endDate={voteDateRangeFilter.end}
-                onChange={handleVoteDateRangeFilterChange}
-              />
-            </div>
-          </Bar>
+          {layoutName !== 'small' && (
+            <Bar>
+              <div
+                css={`
+                  height: ${8 * GU}px;
+                  display: grid;
+                  grid-template-columns: auto auto auto 1fr;
+                  grid-gap: ${1 * GU}px;
+                  align-items: center;
+                  padding-left: ${3 * GU}px;
+                `}
+              >
+                <DropDown
+                  selected={voteOpenFilter}
+                  onChange={handleVoteOpenFilterChange}
+                  items={[
+                    <div>
+                      All
+                      <span
+                        css={`
+                          margin-left: ${1.5 * GU}px;
+                          display: inline-flex;
+                          align-items: center;
+                          justify-content: center;
+                          color: ${theme.info};
+                          ${textStyle('label3')};
+                        `}
+                      >
+                        <Badge.Info>{votes.length}</Badge.Info>
+                      </span>
+                    </div>,
+                    'Open',
+                    'Past',
+                  ]}
+                  width="128px"
+                />
+                <DropDown
+                  label="Type"
+                  selected={voteAppFilter}
+                  onChange={handleVoteAppFilterChange}
+                  items={['All', 'Finance', 'Tokens', 'Voting']}
+                  width="128px"
+                />
+                <DropDown
+                  label="Status"
+                  selected={voteStatusFilter}
+                  onChange={handleVoteStatusFilterChange}
+                  items={['All', 'Passed', 'Rejected']}
+                  width="128px"
+                />
+                <DateRangeInput
+                  startDate={voteDateRangeFilter.start}
+                  endDate={voteDateRangeFilter.end}
+                  onChange={handleVoteDateRangeFilterChange}
+                />
+              </div>
+            </Bar>
+          )}
           <Votes
             openVotes={openVotes}
             closedVotes={closedVotes}
