@@ -1,20 +1,31 @@
 import React, { useCallback } from 'react'
-import { Badge, Box, IconTime, Text, Timer, Split, useTheme } from '@aragon/ui'
+import {
+  Badge,
+  Box,
+  GU,
+  IconTime,
+  Split,
+  Text,
+  Timer,
+  textStyle,
+  useTheme,
+} from '@aragon/ui'
 import { useAppState } from '@aragon/api-react'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import VoteText from './VoteText'
 import VoteStatus from './VoteStatus'
 import SummaryBar from './SummaryBar'
+import SummaryRows from './SummaryRows'
 import VoteSummary from './VoteSummary'
 import VoteActions from './VoteActions'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
-import { round, safeDiv } from '../math-utils'
+import { percentageList, round, safeDiv } from '../math-utils'
 
 function Vote({ vote, onVote, onExecute }) {
   const theme = useTheme()
   const { tokenDecimals, tokenSymbol } = useAppState()
-  const { data, numData } = vote
+  const { data, numData, voteId } = vote
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
   const { creator, endDate, open, metadata, description } = data
   const quorumProgress = getQuorumProgress(vote)
@@ -22,16 +33,19 @@ function Vote({ vote, onVote, onExecute }) {
   const votesYeaVotersSize = safeDiv(yea, totalVotes)
   const votesNayVotersSize = safeDiv(nay, totalVotes)
   const handleVoteNo = useCallback(() => {
-    onVote(vote.voteId, VOTE_NAY)
-  }, [onVote, vote.voteId])
-
+    onVote(voteId, VOTE_NAY)
+  }, [onVote, voteId])
   const handleVoteYes = useCallback(() => {
-    onVote(vote.voteId, VOTE_YEA)
-  }, [onVote, vote.voteId])
+    onVote(voteId, VOTE_YEA)
+  }, [onVote, voteId])
 
   const handleExecute = useCallback(() => {
-    onExecute(vote.voteId)
-  }, [onExecute, vote.voteId])
+    onExecute(voteId)
+  }, [onExecute, voteId])
+  const [yeaPct, nayPct] = percentageList(
+    [votesYeaVotersSize, votesNayVotersSize],
+    2
+  )
 
   if (!vote) {
     return null
@@ -42,32 +56,69 @@ function Vote({ vote, onVote, onExecute }) {
       primary={
         <Box>
           <Badge.App>App badge</Badge.App>
-          <div>
-            {metadata && <VoteText text={metadata} />}
-            {description && (
-              <React.Fragment>
-                <span>Description</span>
-                <VoteText text={description} />
-              </React.Fragment>
-            )}
-            <div>
-              <span>Created By</span>
+          <div
+            css={`
+              display: grid;
+              grid-template-columns: auto;
+              grid-gap: ${2.5 * GU}px;
+              margin-top: ${2.5 * GU}px;
+            `}
+          >
+            <div
+              css={`
+                display: grid;
+                grid-template-columns: auto auto;
+                grid-template-rows: auto auto;
+                grid-column-gap: ${5 * GU}px;
+                grid-row-gap: ${2 * GU}px;
+              `}
+            >
+              <div
+                css={`
+                  ${textStyle('label2')};
+                `}
+              >
+                Description
+              </div>
+              <div
+                css={`
+                  ${textStyle('label2')};
+                `}
+              >
+                Created By
+              </div>
+              <div>
+                #{voteId} {description && <VoteText text={description} />}
+                {metadata && <VoteText text={metadata} />}
+              </div>
               <div
                 css={`
                   display: flex;
-                  align-items: center;
+                  align-items: flex-start;
                 `}
               >
                 <LocalIdentityBadge entity={creator} />
               </div>
             </div>
             <div>
-              Current votes
-              <VoteSummary
-                vote={vote}
-                tokenSymbol={tokenSymbol}
-                tokenDecimals={tokenDecimals}
-                ready
+              <div
+                css={`
+                  ${textStyle('label2')};
+                  margin-bottom: ${1.5 * GU}px;
+                `}
+              >
+                Current votes
+              </div>
+              <SummaryBar
+                positiveSize={votesYeaVotersSize}
+                negativeSize={votesNayVotersSize}
+                requiredSize={supportRequired}
+                show
+              />
+              <SummaryRows
+                yea={{ pct: yeaPct, amount: yea }}
+                nay={{ pct: nayPct, amount: nay }}
+                symbol={tokenSymbol}
               />
             </div>
             <VoteActions
