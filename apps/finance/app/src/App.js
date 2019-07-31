@@ -1,12 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import {
-  SyncIndicator,
-  SidePanel,
   Button,
-  Layout,
   Header,
   IconPlus,
+  Layout,
+  SidePanel,
+  SyncIndicator,
   useViewport,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
