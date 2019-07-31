@@ -11,10 +11,6 @@ import {
 
 import NoVotes from './screens/NoVotes'
 import Votes from './screens/Votes'
-import VotePanel from './components/VotePanel'
-import NewVotePanel from './components/NewVotePanel'
-import AppLayout from './components/AppLayout'
-import NewVoteIcon from './components/NewVoteIcon'
 
 import { IdentityProvider } from './identity-manager'
 import { SettingsProvider } from './vote-settings-manager'
@@ -28,7 +24,6 @@ function App() {
     actions,
     selectVote,
     newVotePanel,
-    selectedVotePanel,
   } = useAppLogic()
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
