@@ -14,7 +14,7 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount } from '@aragon/api-react'
-import { VOTE_NAY, VOTE_YEA } from '../vote-types'
+import { VOTE_NAY, VOTE_YEA, VOTE_ABSENT } from '../vote-types'
 import { useExtendedVoteData } from '../vote-hooks'
 import { useSettings } from '../vote-settings-manager'
 import { VOTE_STATUS_REJECTED } from '../vote-types'
@@ -26,11 +26,12 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   const connectedAccount = useConnectedAccount()
   const settings = useSettings()
   const { tokenSymbol } = useAppState()
-  const { snapshotBlock, startDate: startTimestamp, open } = vote.data
+  const { connectedAccountVote, data } = vote
+  const { snapshotBlock, startDate: startTimestamp, open } = data
   const { canUserVote, canExecute, userBalance } = useExtendedVoteData(vote)
   const [changeVote, setChangeVote] = useState(false)
   const handleChangeVote = useCallback(() => setChangeVote(true), [])
-  const hasVoted = [VOTE_YEA, VOTE_NAY].includes(vote.connectedAccountVote)
+  const hasVoted = [VOTE_YEA, VOTE_NAY].includes(connectedAccountVote)
   const status = getVoteStatus(vote, settings.pctBase)
 
   if (!open) {
@@ -80,20 +81,24 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
               Vote {status !== VOTE_STATUS_REJECTED ? 'success' : 'rejected'}
             </div>
             <div>
-              You voted{' '}
-              <span
-                css={`
-                  font-weight: bold;
-                  text-transform: uppercase;
-                `}
-              >
-                {vote.connectedAccountVote === VOTE_YEA ? 'yes' : 'no'}
-              </span>{' '}
-              with{' '}
-              <span css="font-weight: bold;">
-                {userBalance === -1 ? '…' : userBalance} {tokenSymbol}
-              </span>
-              .
+              {connectedAccount && connectedAccountVote !== VOTE_ABSENT && (
+                <React.Fragment>
+                  You voted{' '}
+                  <span
+                    css={`
+                      font-weight: bold;
+                      text-transform: uppercase;
+                    `}
+                  >
+                    {connectedAccountVote === VOTE_YEA ? 'yes' : 'no'}
+                  </span>{' '}
+                  with{' '}
+                  <span css="font-weight: bold;">
+                    {userBalance === -1 ? '…' : userBalance} {tokenSymbol}
+                  </span>
+                  .
+                </React.Fragment>
+              )}
             </div>
           </div>
         </div>
