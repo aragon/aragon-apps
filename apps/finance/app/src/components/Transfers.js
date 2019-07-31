@@ -208,7 +208,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
               transferTypeFilter={selectedTransferType}
               onTransferTypeChange={handleTransferTypeChange}
               compactMode={compactMode}
-              symbols={symbols}
+              symbols={['All tokens', ...symbols]}
               transferTypes={TRANSFER_TYPES_STRING}
             />
           )}
