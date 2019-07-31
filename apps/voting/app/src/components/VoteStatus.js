@@ -8,7 +8,7 @@ import {
   VOTE_STATUS_ACCEPTED,
   VOTE_STATUS_EXECUTED,
 } from '../vote-types'
-import { isVoteAction, getVoteStatus } from '../vote-utils'
+import { getVoteStatus } from '../vote-utils'
 
 const POSITIVE = Symbol('positive')
 const NEGATIVE = Symbol('negative')
@@ -18,25 +18,21 @@ const ATTRIBUTES = {
     label: 'Ongoing',
     Icon: IconTime,
     color: null,
-    bold: false,
   },
   [VOTE_STATUS_ACCEPTED]: {
     label: 'Passed',
     Icon: IconCheck,
     color: POSITIVE,
-    bold: false,
   },
   [VOTE_STATUS_REJECTED]: {
     label: 'Rejected',
     Icon: IconCross,
     color: NEGATIVE,
-    bold: true,
   },
   [VOTE_STATUS_EXECUTED]: {
     label: 'Enacted',
     Icon: IconCheck,
     color: POSITIVE,
-    bold: true,
   },
 }
 
@@ -44,7 +40,7 @@ const VoteStatus = ({ cardStyle, vote }) => {
   const theme = useTheme()
   const settings = useSettings()
   const status = getVoteStatus(vote, settings.pctBase)
-  const { Icon, color, bold, label } = ATTRIBUTES[status]
+  const { Icon, color, label } = ATTRIBUTES[status]
 
   return (
     <Main
