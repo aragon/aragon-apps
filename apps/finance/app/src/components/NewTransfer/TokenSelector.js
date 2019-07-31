@@ -65,7 +65,7 @@ class TokenSelector extends React.Component {
       return this.state.customToken.address
     }
 
-    // Adjust for title and custom address
+    // Adjust for custom address
     const token = this.props.tokens[index - 1]
     return token.address
   }
