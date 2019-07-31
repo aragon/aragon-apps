@@ -326,7 +326,8 @@ const ContextMenuViewTransaction = ({ transactionHash, network }) => {
       blockExplorerUrl('transaction', transactionHash, {
         networkType: network.type,
       }),
-      '_blank'
+      '_blank',
+      'noopener'
     )
   }, [transactionHash, network])
 
