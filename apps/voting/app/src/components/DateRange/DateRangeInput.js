@@ -10,14 +10,7 @@ import {
   startOfDay,
   endOfDay,
 } from 'date-fns'
-import {
-  Button,
-  RADIUS,
-  breakpoint,
-  font,
-  useTheme,
-  useViewport,
-} from '@aragon/ui'
+import { Button, RADIUS, breakpoint, useTheme, useViewport } from '@aragon/ui'
 import IconCalendar from './Calendar'
 import TextInput from './TextInput'
 import DatePicker from './DatePicker'
