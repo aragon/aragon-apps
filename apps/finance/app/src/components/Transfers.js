@@ -9,7 +9,6 @@ import {
 } from 'date-fns'
 import {
   useViewport,
-  theme,
   Button,
   ContextMenu,
   ContextMenuItem,
@@ -117,7 +116,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const { layoutName } = useLayout()
   const compactMode = below('medium')
   const network = useNetwork()
-  const newTheme = useTheme()
+  const theme = useTheme()
   const [page, setPage] = useState(0)
   const [selectedToken, setSelectedToken] = useState(0)
   const [selectedTransferType, setSelectedTransferType] = useState(0)
@@ -280,7 +279,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
           <span
             css={`
               font-weight: 600;
-              color: ${isIncoming ? newTheme.positive : newTheme.negative};
+              color: ${isIncoming ? theme.positive : theme.negative};
             `}
           >
             {formattedAmount} {symbol}
