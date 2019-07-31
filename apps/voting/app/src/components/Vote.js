@@ -6,9 +6,9 @@ import {
   IconCheck,
   IconTime,
   Split,
-  Text,
   Timer,
   textStyle,
+  useLayout,
   useTheme,
 } from '@aragon/ui'
 import { useAppState } from '@aragon/api-react'
@@ -17,7 +17,6 @@ import VoteText from './VoteText'
 import VoteStatus from './VoteStatus'
 import SummaryBar from './SummaryBar'
 import SummaryRows from './SummaryRows'
-import VoteSummary from './VoteSummary'
 import VoteActions from './VoteActions'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
@@ -26,7 +25,8 @@ import { formatDate } from '../utils'
 
 function Vote({ vote, onVote, onExecute }) {
   const theme = useTheme()
-  const { tokenDecimals, tokenSymbol } = useAppState()
+  const { layoutName } = useLayout()
+  const { tokenSymbol } = useAppState()
   const { data, numData, voteId, connectedAccountVote } = vote
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
   const { creator, endDate, open, metadata, description } = data
@@ -98,38 +98,44 @@ function Vote({ vote, onVote, onExecute }) {
             <div
               css={`
                 display: grid;
-                grid-template-columns: auto auto;
-                grid-template-rows: auto auto;
-                grid-column-gap: ${5 * GU}px;
-                grid-row-gap: ${2 * GU}px;
+                grid-template-columns: ${layoutName === 'large'
+                  ? 'auto auto'
+                  : 'auto'};
+                grid-gap: ${layoutName === 'large' ? 5 * GU : 2.5 * GU}px;
               `}
             >
-              <div
-                css={`
-                  ${textStyle('label2')};
-                `}
-              >
-                Description
-              </div>
-              <div
-                css={`
-                  ${textStyle('label2')};
-                `}
-              >
-                Created By
+              <div>
+                <div
+                  css={`
+                    ${textStyle('label2')};
+                    margin-bottom: ${2 * GU}px;
+                  `}
+                >
+                  Description
+                </div>
+                <div>
+                  <span css="font-weight: bold;">#{voteId}</span>{' '}
+                  {description && <VoteText text={description} />}
+                  {metadata && <VoteText text={metadata} />}
+                </div>
               </div>
               <div>
-                <span css="font-weight: bold;">#{voteId}</span>{' '}
-                {description && <VoteText text={description} />}
-                {metadata && <VoteText text={metadata} />}
-              </div>
-              <div
-                css={`
-                  display: flex;
-                  align-items: flex-start;
-                `}
-              >
-                <LocalIdentityBadge entity={creator} />
+                <div
+                  css={`
+                    ${textStyle('label2')};
+                    margin-bottom: ${2 * GU}px;
+                  `}
+                >
+                  Created By
+                </div>
+                <div
+                  css={`
+                    display: flex;
+                    align-items: flex-start;
+                  `}
+                >
+                  <LocalIdentityBadge entity={creator} />
+                </div>
               </div>
             </div>
             <div>
