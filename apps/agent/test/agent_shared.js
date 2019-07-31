@@ -29,6 +29,7 @@ module.exports = (
   const DesignatedSigner = artifacts.require('DesignatedSigner')
   const DestinationMock = artifacts.require('DestinationMock')
   const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
+  const TokenMock = artifacts.require('TokenMock')
 
   const NO_SIG = '0x'
   const ERC165_SUPPORT_INVALID_ID = '0xffffffff'
@@ -39,7 +40,7 @@ module.exports = (
   context(`> Shared tests for Agent-like apps`, () => {
     let daoFact, agentBase, dao, acl, agent, agentAppId
 
-    let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ERC1271_INTERFACE_ID
+    let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, SAFE_EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PROTECTED_TOKEN_ROLE, REMOVE_PROTECTED_TOKEN_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ERC1271_INTERFACE_ID
 
     // Error strings
     const errors = makeErrorMappingProxy({
@@ -54,6 +55,8 @@ module.exports = (
     })
 
     const root = accounts[0]
+    const authorized = accounts[1]
+    const unauthorized = accounts[2]
 
     const encodeFunctionCall = (contract, functionName, ...params) =>
       contract[functionName].request(...params).params[0]
@@ -68,8 +71,11 @@ module.exports = (
       // Setup constants
       ANY_ENTITY = await aclBase.ANY_ENTITY()
       APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+      SAFE_EXECUTE_ROLE = await agentBase.SAFE_EXECUTE_ROLE()
       EXECUTE_ROLE = await agentBase.EXECUTE_ROLE()
       RUN_SCRIPT_ROLE = await agentBase.RUN_SCRIPT_ROLE()
+      ADD_PROTECTED_TOKEN_ROLE = await agentBase.ADD_PROTECTED_TOKEN_ROLE()
+      REMOVE_PROTECTED_TOKEN_ROLE = await agentBase.REMOVE_PROTECTED_TOKEN_ROLE()
       ADD_PRESIGNED_HASH_ROLE = await agentBase.ADD_PRESIGNED_HASH_ROLE()
       DESIGNATE_SIGNER_ROLE = await agentBase.DESIGNATE_SIGNER_ROLE()
       ERC1271_INTERFACE_ID = await agentBase.ERC1271_INTERFACE_ID()
@@ -92,6 +98,143 @@ module.exports = (
       agent = AgentLike.at(getNewProxyAddress(agentReceipt))
 
       await agent.initialize()
+    })
+
+    context('> Safe executing actions', () => {
+      const noData = '0x'
+      const amount = 1000
+      let target, token1, token2, token3, token4, token5, token6, token7, token8, token9
+
+      beforeEach(async () => {
+        target = await ExecutionTarget.new()
+        token1 = await TokenMock.new(agent.address, amount)
+        token2 = await TokenMock.new(agent.address, amount)
+        token3 = await TokenMock.new(agent.address, amount)
+        token4 = await TokenMock.new(agent.address, amount)
+        token5 = await TokenMock.new(agent.address, amount)
+        token6 = await TokenMock.new(agent.address, amount)
+        token7 = await TokenMock.new(agent.address, amount)
+        token8 = await TokenMock.new(agent.address, amount)
+        token9 = await TokenMock.new(agent.address, amount)
+
+        await acl.createPermission(authorized, agent.address, ADD_PROTECTED_TOKEN_ROLE, root, { from: root })
+        await acl.createPermission(authorized, agent.address, REMOVE_PROTECTED_TOKEN_ROLE, root, { from: root })
+        await acl.createPermission(authorized, agent.address, SAFE_EXECUTE_ROLE, root, { from: root })
+
+        await agent.addProtectedToken(ETH, { from: authorized })
+        await agent.addProtectedToken(token1.address, { from: authorized })
+        await agent.addProtectedToken(token2.address, { from: authorized })
+        await agent.addProtectedToken(token3.address, { from: authorized })
+        await agent.addProtectedToken(token4.address, { from: authorized })
+        await agent.addProtectedToken(token5.address, { from: authorized })
+        await agent.addProtectedToken(token6.address, { from: authorized })
+        await agent.addProtectedToken(token7.address, { from: authorized })
+        await agent.addProtectedToken(token8.address, { from: authorized })
+        await agent.addProtectedToken(token9.address, { from: authorized })
+
+        assert.equal(await target.counter(), 0)
+        assert.equal(await token1.balanceOf(agent.address), amount)
+        assert.equal(await token2.balanceOf(agent.address), amount)
+      })
+
+      context('> sender has SAFE_EXECUTE_ROLE', () => {
+        context('> and target is not a protected ERC20', () => {
+          it('it can execute actions', async () => {
+            const N = 1102
+            const data = target.contract.setCounter.getData(N)
+            const receipt = await agent.safeExecute(target.address, data, { from: authorized })
+
+            assertAmountOfEvents(receipt, 'SafeExecute')
+            assert.equal(await target.counter(), N)
+          })
+
+          it('it can execute actions without data', async () => {
+            const receipt = await agent.safeExecute(target.address, noData, { from: authorized })
+
+            assertAmountOfEvents(receipt, 'SafeExecute')
+            assert.equal(await target.counter(), 1) // fallback just runs ExecutionTarget.execute()
+          })
+
+          it('it can execute cheap fallback actions', async () => {
+            const cheapFallbackTarget = await DestinationMock.new(false)
+            const receipt = await agent.safeExecute(cheapFallbackTarget.address, noData, { from: authorized })
+
+            assertAmountOfEvents(receipt, 'SafeExecute')
+          })
+
+          it('it can execute expensive fallback actions', async () => {
+            const expensiveFallbackTarget = await DestinationMock.new(true)
+            assert.equal(await expensiveFallbackTarget.counter(), 0)
+            const receipt = await agent.safeExecute(expensiveFallbackTarget.address, noData, { from: authorized })
+
+            assertAmountOfEvents(receipt, 'SafeExecute')
+            assert.equal(await expensiveFallbackTarget.counter(), 1) // fallback increments counter
+          })
+
+          it('it can execute with data when target is not a contract', async () => {
+            const nonContract = accounts[8] // random account
+            const randomData = '0x12345678'
+            const receipt = await agent.safeExecute(nonContract, randomData, { from: authorized })
+
+            assertAmountOfEvents(receipt, 'SafeExecute')
+          })
+
+          it('it can execute without data when target is not a contract', async () => {
+            const nonContract = accounts[8] // random account
+            const receipt = await agent.safeExecute(nonContract, noData, { from: authorized })
+
+            assertAmountOfEvents(receipt, 'SafeExecute')
+          })
+
+          it('it can forward success return data', async () => {
+            const { to, data } = encodeFunctionCall(target, 'execute')
+
+            // We make a call to easily get what data could be gotten inside the EVM
+            // Contract -> agent.safeExecute -> Target.func (would allow Contract to have access to this data)
+            const call = encodeFunctionCall(agent, 'safeExecute', to, data, { from: authorized })
+            const returnData = await web3Call(call)
+
+            // ExecutionTarget.execute() increments the counter by 1
+            assert.equal(ethABI.decodeParameter('uint256', returnData), 1)
+          })
+
+          it('it should revert if executed action reverts', async () => {
+            // TODO: Check revert data was correctly forwarded
+            // ganache currently doesn't support fetching this data
+            const data = target.contract.fail.getData()
+            await assertRevert(() => agent.safeExecute(target.address, data, { from: authorized }))
+          })
+        })
+
+        context('> but target is a protected ERC20', () => {
+          it('it should revert', async () => {
+            const approve = token1.contract.approve.getData(target.address, 10)
+
+            await assertRevert(() => agent.safeExecute(token1.address, approve, { from: authorized }))
+          })
+        })
+
+        context('> and target is not a protected ERC20 but action affects a protected ERC20 balance', () => {
+          it('it should revert', async () => {
+            await agent.removeProtectedToken(token9.address, { from: authorized }) // leave a spot to add a new token
+            const token10 = await TokenMock.new(agent.address, amount)
+            const approve = token10.contract.approve.getData(target.address, 10)
+            await agent.safeExecute(token10.address, approve, { from: authorized }) // target is now allowed to transfer on behalf of agent
+            await agent.addProtectedToken(token10.address, { from: authorized }) // token10 is now protected
+            const data = target.contract.transferTokenFrom.getData(token10.address)
+
+            await assertRevert(() => agent.safeExecute(target.address, data, { from: authorized }))
+          })
+        })
+      })
+
+      context('> sender does not have SAFE_EXECUTE_ROLE', () => {
+        it('it should revert', async () => {
+          const data = target.contract.execute.getData()
+
+          await assertRevert(() => agent.safeExecute(target.address, data, { from: unauthorized }))
+        })
+      })
     })
 
     context('> Executing actions', () => {
@@ -217,7 +360,7 @@ module.exports = (
           })
 
           context('depending on the sig ACL param', () => {
-            const [ granteeEqualToSig, granteeUnequalToSig ] = accounts.slice(6) // random slice from accounts
+            const [granteeEqualToSig, granteeUnequalToSig] = accounts.slice(6) // random slice from accounts
 
             beforeEach(async () => {
               const sig = executionTarget.contract.setCounter.getData(1).slice(2, 10)
@@ -305,16 +448,147 @@ module.exports = (
       })
     })
 
+    context('> Adding protected tokens', () => {
+      beforeEach(async () => {
+        await acl.createPermission(authorized, agent.address, ADD_PROTECTED_TOKEN_ROLE, root, { from: root })
+      })
+
+      context('> sender has ADD_PROTECTED_TOKEN_ROLE', () => {
+        context('> and token is ETH or ERC20', () => {
+          context('> and token is not already protected', () => {
+            context('> and protected tokens cap has not yet been reached', () => {
+              it('it should add protected token', async () => {
+                const token2 = await TokenMock.new(agent.address, 10000)
+                const token3 = await TokenMock.new(agent.address, 10000)
+
+                const receipt1 = await agent.addProtectedToken(ETH, { from: authorized })
+                const receipt2 = await agent.addProtectedToken(token2.address, { from: authorized })
+                const receipt3 = await agent.addProtectedToken(token3.address, { from: authorized })
+
+                assertAmountOfEvents(receipt1, 'AddProtectedToken')
+                assertAmountOfEvents(receipt2, 'AddProtectedToken')
+                assertAmountOfEvents(receipt3, 'AddProtectedToken')
+                assert.equal(await agent.protectedTokens(0), ETH)
+                assert.equal(await agent.protectedTokens(1), token2.address)
+                assert.equal(await agent.protectedTokens(2), token3.address)
+              })
+            })
+
+            context('> but protected tokens cap has been reached', () => {
+              beforeEach(async () => {
+                const token1 = await TokenMock.new(agent.address, 1000)
+                const token2 = await TokenMock.new(agent.address, 1000)
+                const token3 = await TokenMock.new(agent.address, 1000)
+                const token4 = await TokenMock.new(agent.address, 1000)
+                const token5 = await TokenMock.new(agent.address, 1000)
+                const token6 = await TokenMock.new(agent.address, 1000)
+                const token7 = await TokenMock.new(agent.address, 1000)
+                const token8 = await TokenMock.new(agent.address, 1000)
+                const token9 = await TokenMock.new(agent.address, 1000)
+
+                await agent.addProtectedToken(ETH, { from: authorized })
+                await agent.addProtectedToken(token1.address, { from: authorized })
+                await agent.addProtectedToken(token2.address, { from: authorized })
+                await agent.addProtectedToken(token3.address, { from: authorized })
+                await agent.addProtectedToken(token4.address, { from: authorized })
+                await agent.addProtectedToken(token5.address, { from: authorized })
+                await agent.addProtectedToken(token6.address, { from: authorized })
+                await agent.addProtectedToken(token7.address, { from: authorized })
+                await agent.addProtectedToken(token8.address, { from: authorized })
+                await agent.addProtectedToken(token9.address, { from: authorized })
+              })
+
+              it('it should revert', async () => {
+                const token10 = await TokenMock.new(agent.address, 10000)
+
+                await assertRevert(() => agent.addProtectedToken(token10.address, { from: authorized }))
+              })
+            })
+          })
+
+          context('> but token is already protected', () => {
+            it('it should revert', async () => {
+              const token = await TokenMock.new(agent.address, 10000)
+              await agent.addProtectedToken(token.address, { from: authorized })
+
+              await assertRevert(() => agent.addProtectedToken(token.address, { from: authorized }))
+            })
+          })
+        })
+
+        context('> but token is not ETH or ERC20', () => {
+          it('it should revert', async () => {
+            await assertRevert(() => agent.addProtectedToken(root, { from: authorized }))
+          })
+        })
+      })
+
+      context('> sender does not have ADD_PROTECTED_TOKEN_ROLE', () => {
+        it('it should revert', async () => {
+          const token = await TokenMock.new(agent.address, 10000)
+
+          await assertRevert(() => agent.addProtectedToken(token.address, { from: unauthorized }))
+        })
+      })
+    })
+
+    context('> Removing protected tokens', () => {
+      beforeEach(async () => {
+        await acl.createPermission(authorized, agent.address, ADD_PROTECTED_TOKEN_ROLE, root, { from: root })
+        await acl.createPermission(authorized, agent.address, REMOVE_PROTECTED_TOKEN_ROLE, root, { from: root })
+      })
+
+      context('> sender has REMOVE_PROTECTED_TOKEN_ROLE', () => {
+        context('> and token is actually protected', () => {
+          it('it should remove protected token', async () => {
+            const token2 = await TokenMock.new(agent.address, 10000)
+            const token3 = await TokenMock.new(agent.address, 10000)
+
+            await agent.addProtectedToken(ETH, { from: authorized })
+            await agent.addProtectedToken(token2.address, { from: authorized })
+            await agent.addProtectedToken(token3.address, { from: authorized })
+
+            const receipt1 = await agent.removeProtectedToken(token3.address, { from: authorized })
+            const receipt2 = await agent.removeProtectedToken(ETH, { from: authorized })
+
+            assertAmountOfEvents(receipt1, 'RemoveProtectedToken')
+            assertAmountOfEvents(receipt2, 'RemoveProtectedToken')
+            assert.equal(await agent.protectedTokens(0), token2.address)
+            await assertRevert(() => agent.protectedTokens(1)) // this should try to overflow the length of the protectedTokens array and thus revert
+          })
+        })
+
+        context('> but token is not actually protected', () => {
+          it('it should revert', async () => {
+            const token1 = await TokenMock.new(agent.address, 10000)
+            const token2 = await TokenMock.new(agent.address, 10000)
+            await agent.addProtectedToken(token1.address, { from: authorized })
+
+            await assertRevert(() => agent.removeProtectedToken(token2.address, { from: authorized }))
+          })
+        })
+      })
+
+      context('> sender does not have REMOVE_PROTECTED_TOKEN_ROLE', () => {
+        it('it should revert', async () => {
+          const token = await TokenMock.new(agent.address, 10000)
+          await agent.addProtectedToken(token.address, { from: authorized })
+
+          await assertRevert(() => agent.removeProtectedToken(token.address, { from: unauthorized }))
+        })
+      })
+    })
+
     context('> Signing messages', () => {
       const [_, nobody, presigner, signerDesignator] = accounts
       const HASH = web3.sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
 
       const SIGNATURE_MODES = {
         Invalid: '0x00',
-        EIP712:  '0x01',
+        EIP712: '0x01',
         EthSign: '0x02',
         ERC1271: '0x03',
-        NMode:   '0x04',
+        NMode: '0x04',
       }
 
       const ERC1271_RETURN_VALID_SIGNATURE = '0x20c13b0b'
@@ -376,11 +650,11 @@ module.exports = (
         }
 
         const eip712Sign = async (hash, key) => ({
-            mode: ethUtil.toBuffer(SIGNATURE_MODES.EIP712),
-            ...ethUtil.ecsign(
-              Buffer.from(hash.slice(2), 'hex'),
-              Buffer.from(key, 'hex')
-            )
+          mode: ethUtil.toBuffer(SIGNATURE_MODES.EIP712),
+          ...ethUtil.ecsign(
+            Buffer.from(hash.slice(2), 'hex'),
+            Buffer.from(key, 'hex')
+          )
         })
 
         const signFunctionGenerator = (signFunction, signatureModifier) => (
@@ -388,8 +662,8 @@ module.exports = (
             const sig = await signFunction(hash, signerOrKey)
             const v =
               useInvalidV
-              ? ethUtil.toBuffer(2) // force set an invalid v
-              : ethUtil.toBuffer(sig.v - (useLegacySig ? 0 : 27))
+                ? ethUtil.toBuffer(2) // force set an invalid v
+                : ethUtil.toBuffer(sig.v - (useLegacySig ? 0 : 27))
 
             const signature = '0x' + Buffer.concat([sig.mode, sig.r, sig.s, v]).toString('hex')
             return signatureModifier(signature)
