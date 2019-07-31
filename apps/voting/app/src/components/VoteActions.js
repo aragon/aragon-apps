@@ -8,18 +8,20 @@ import {
   Info,
   RADIUS,
   SafeLink,
-  Text,
   textStyle,
-  Timer,
   useTheme,
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount } from '@aragon/api-react'
-import { VOTE_NAY, VOTE_YEA, VOTE_ABSENT } from '../vote-types'
+import {
+  VOTE_NAY,
+  VOTE_YEA,
+  VOTE_ABSENT,
+  VOTE_STATUS_REJECTED,
+} from '../vote-types'
 import { useExtendedVoteData } from '../vote-hooks'
 import { useSettings } from '../vote-settings-manager'
-import { VOTE_STATUS_REJECTED } from '../vote-types'
-import { isVoteAction, getVoteStatus } from '../vote-utils'
-import { pluralize, noop, formatDate } from '../utils'
+import { getVoteStatus } from '../vote-utils'
+import { noop, formatDate } from '../utils'
 
 const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   const theme = useTheme()
