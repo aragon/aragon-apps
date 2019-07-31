@@ -1,26 +1,19 @@
 import React, { useCallback, useMemo } from 'react'
-import styled from 'styled-components'
-import { format } from 'date-fns'
 import {
   Badge,
-  Button,
   Card,
   GU,
   IconCheck,
-  Text,
   Timer,
   textStyle,
   theme,
   useTheme,
 } from '@aragon/ui'
-import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 import VotingOptions from './VotingOptions'
 import VoteText from '../VoteText'
 import VoteStatus from '../VoteStatus'
-import { isVoteAction, getVoteStatus } from '../../vote-utils'
 import { noop } from '../../utils'
-import { useSettings } from '../../vote-settings-manager'
-import { VOTE_STATUS_ACCEPTED, VOTE_STATUS_EXECUTED } from '../../vote-types'
+import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 
 function getOptions(yea, nay) {
   return [
@@ -35,9 +28,6 @@ const VotingCard = ({ vote, onOpen }) => {
   const { votingPower, yea, nay } = numData
   const { open, metadata, description, endDate } = data
   const options = useMemo(() => getOptions(yea, nay), [yea, nay])
-  const settings = useSettings()
-  const status = getVoteStatus(vote, settings.pctBase)
-  const executed = isVoteAction(vote) && status === VOTE_STATUS_EXECUTED
   const youVoted =
     connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
   const handleOpen = useCallback(() => {
@@ -112,66 +102,5 @@ const VotingCard = ({ vote, onOpen }) => {
 VotingCard.defaultProps = {
   onOpen: noop,
 }
-
-const BadgeQuestion = () => (
-  <Badge background="rgba(37, 49, 77, 0.16)" foreground="rgba(37, 49, 77, 1)">
-    Question
-  </Badge>
-)
-
-const BadgeAction = () => (
-  <Badge background="rgba(245, 166, 35, 0.1)" foreground="rgba(156, 99, 7, 1)">
-    Action
-  </Badge>
-)
-
-const OptionLabel = ({ label, isConnectedAccount }) => (
-  <span>
-    <span>{label}</span>
-    {isConnectedAccount && <You />}
-  </span>
-)
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  padding-left: 5px;
-`
-
-const _Card = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 20px 30px;
-  background: #ffffff;
-  border: 1px solid rgba(209, 209, 209, 0.5);
-  border-radius: 3px;
-`
-
-const Content = styled.div`
-  height: 100%;
-`
-
-const Label = styled.h1`
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-height: 25px;
-  height: 50px;
-  margin-bottom: 10px;
-`
-
-const PastDate = styled.time`
-  font-size: 13px;
-  color: #98a0a2;
-`
-
-const You = styled(Badge.Identity).attrs({ children: 'Your vote' })`
-  margin-left: 5px;
-  font-size: 9px;
-  text-transform: uppercase;
-`
 
 export default VotingCard
