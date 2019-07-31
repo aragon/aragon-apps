@@ -4,9 +4,10 @@
   "main": "index.js",
   "scripts": {
     "compile": "truffle compile",
-    "apm:publish:major": "aragon apm publish major",
-    "apm:publish:minor": "aragon apm publish minor",
-    "apm:publish:patch": "aragon apm publish patch",
+    "apm:prepublish": "npm run compile",
+    "apm:publish:major": "aragon apm publish major --files public/ --prepublish-script apm:prepublish",
+    "apm:publish:minor": "aragon apm publish minor --files public/ --prepublish-script apm:prepublish",
+    "apm:publish:patch": "aragon apm publish patch --files public/ --prepublish-script apm:prepublish",
     "lint": "solium --dir ./contracts",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
@@ -32,17 +33,18 @@
   "description": "",
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
-    "@aragon/cli": "~5.6.0",
-    "@aragon/test-helpers": "^1.1.0",
+    "@aragon/cli": "^6.0.0",
+    "@aragon/test-helpers": "^2.0.0",
+    "eth-ens-namehash": "^2.0.8",
     "eth-gas-reporter": "^0.2.0",
-    "ethereumjs-testrpc-sc": "^6.1.6",
+    "ethereumjs-testrpc-sc": "^6.4.5-sc.3",
     "ethereumjs-util": "^6.1.0",
     "ganache-cli": "^6.4.3",
-    "solidity-coverage": "^0.5.11",
+    "solidity-coverage": "^0.6.2",
     "solium": "^1.2.3",
     "truffle": "4.1.14",
     "truffle-extract": "^1.2.1",
-    "web3-eth-abi": "^1.0.0-beta.38"
+    "web3-eth-abi": "1.0.0-beta.37"
   },
   "dependencies": {
     "@aragon/apps-vault": "4.1.0",

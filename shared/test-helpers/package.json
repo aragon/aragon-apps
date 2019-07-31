@@ -1,6 +1,6 @@
 {
   "name": "@aragon/test-helpers",
-  "version": "1.2.2",
+  "version": "2.0.0",
   "author": "Aragon Assocation <legal@aragon.org>",
   "license": "AGPL-3.0-or-later",
   "files": [
@@ -10,7 +10,7 @@
   ],
   "peerDependencies": {
     "ganache-cli": "^6.0.0",
-    "solidity-coverage": "^0.5.11"
+    "solidity-coverage": "^0.6.2"
   },
   "devDependencies": {
     "ethereumjs-abi": "^0.6.4"

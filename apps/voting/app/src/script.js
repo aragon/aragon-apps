@@ -14,6 +14,7 @@ let connectedAccount
 
 /*
  * Calls `callback` exponentially, everytime `retry()` is called.
+ * Returns a promise that resolves with the callback's result if it (eventually) succeeds.
  *
  * Usage:
  *
@@ -27,21 +28,37 @@ let connectedAccount
  * }, 1000, 2)
  *
  */
-const retryEvery = (callback, initialRetryTimer = 1000, increaseFactor = 5) => {
-  const attempt = (retryTimer = initialRetryTimer) => {
-    // eslint-disable-next-line standard/no-callback-literal
-    callback(() => {
-      console.error(`Retrying in ${retryTimer / 1000}s...`)
+const retryEvery = async (
+  callback,
+  { initialRetryTimer = 1000, increaseFactor = 3, maxRetries = 3 } = {}
+) => {
+  const sleep = time => new Promise(resolve => setTimeout(resolve, time))
+
+  let retryNum = 0
+  const attempt = async (retryTimer = initialRetryTimer) => {
+    try {
+      return await callback()
+    } catch (err) {
+      if (retryNum === maxRetries) {
+        throw err
+      }
+      ++retryNum
 
       // Exponentially backoff attempts
-      setTimeout(() => attempt(retryTimer * increaseFactor), retryTimer)
-    })
+      const nextRetryTime = retryTimer * increaseFactor
+      console.log(
+        `Retrying in ${nextRetryTime}s... (attempt ${retryNum} of ${maxRetries})`
+      )
+      await sleep(nextRetryTime)
+      return attempt(nextRetryTime)
+    }
   }
-  attempt()
+
+  return attempt()
 }
 
 // Get the token address to initialize ourselves
-retryEvery(retry => {
+retryEvery(() =>
   app
     .call('token')
     .toPromise()
@@ -51,9 +68,9 @@ retryEvery(retry => {
         'Could not start background script execution due to the contract not loading the token:',
         err
       )
-      retry()
+      throw err
     })
-})
+)
 
 async function initialize(tokenAddr) {
   return app.store(
@@ -210,12 +227,21 @@ async function getAccountVotes({ connectedAccount, votes = [] }) {
 }
 
 async function getVoterState({ connectedAccount, voteId }) {
-  return app
-    .call('getVoterState', voteId, connectedAccount)
-    .toPromise()
-    .then(voteTypeFromContractEnum)
-    .then(voteType => ({ voteId, voteType }))
-    .catch(console.error)
+  // Wrap with retry in case the vote is somehow not present
+  return retryEvery(() =>
+    app
+      .call('getVoterState', voteId, connectedAccount)
+      .toPromise()
+      .then(voteTypeFromContractEnum)
+      .then(voteType => ({ voteId, voteType }))
+      .catch(err => {
+        console.error(
+          `Error fetching voter state (${connectedAccount}, ${voteId})`,
+          err
+        )
+        throw err
+      })
+  )
 }
 
 async function loadVoteDescription(vote) {
@@ -245,10 +271,17 @@ async function loadVoteDescription(vote) {
 }
 
 function loadVoteData(voteId) {
-  return app
-    .call('getVote', voteId)
-    .toPromise()
-    .then(vote => loadVoteDescription(marshallVote(vote)))
+  // Wrap with retry in case the vote is somehow not present
+  return retryEvery(() =>
+    app
+      .call('getVote', voteId)
+      .toPromise()
+      .then(vote => loadVoteDescription(marshallVote(vote)))
+      .catch(err => {
+        console.error(`Error fetching vote (${voteId})`, err)
+        throw err
+      })
+  )
 }
 
 async function updateVotes(votes, voteId, transform) {

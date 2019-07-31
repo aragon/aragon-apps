@@ -21,8 +21,6 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
 
     bytes4 private constant ERC165_INTERFACE_ID = 0x01ffc9a7;
 
-    string private constant ERROR_EXECUTE_ETH_NO_DATA = "AGENT_EXEC_ETH_NO_DATA";
-    string private constant ERROR_EXECUTE_TARGET_NOT_CONTRACT = "AGENT_EXEC_TARGET_NO_CONTRACT";
     string private constant ERROR_DESIGNATED_TO_SELF = "AGENT_DESIGNATED_TO_SELF";
 
     mapping (bytes32 => bool) public isPresigned;
@@ -33,7 +31,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     event SetDesignatedSigner(address indexed sender, address indexed oldSigner, address indexed newSigner);
 
     /**
-    * @notice Execute '`@radspec(_target, _data)`' on `_target``_ethValue == 0 ? '' : ' (Sending' + @tokenAmount(_ethValue, 0x00) + ')'`
+    * @notice Execute '`@radspec(_target, _data)`' on `_target``_ethValue == 0 ? '' : ' (Sending' + @tokenAmount(0x0000000000000000000000000000000000000000, _ethValue) + ')'`
     * @param _target Address where the action is being executed
     * @param _ethValue Amount of ETH from the contract that is sent with the action
     * @param _data Calldata for the action

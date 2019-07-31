@@ -7,7 +7,6 @@ import "@aragon/os/contracts/common/IForwarder.sol";
 
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
-import "@aragon/os/contracts/lib/math/SafeMath8.sol";
 
 import "@aragon/ppf-contracts/contracts/IFeed.sol";
 import "@aragon/apps-finance/contracts/Finance.sol";
@@ -20,16 +19,26 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
-    bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
-    bytes32 constant public TERMINATE_EMPLOYEE_ROLE = keccak256("TERMINATE_EMPLOYEE_ROLE");
-    bytes32 constant public SET_EMPLOYEE_SALARY_ROLE = keccak256("SET_EMPLOYEE_SALARY_ROLE");
-    bytes32 constant public ADD_BONUS_ROLE = keccak256("ADD_BONUS_ROLE");
-    bytes32 constant public ADD_REIMBURSEMENT_ROLE = keccak256("ADD_REIMBURSEMENT_ROLE");
-    bytes32 constant public ALLOWED_TOKENS_MANAGER_ROLE = keccak256("ALLOWED_TOKENS_MANAGER_ROLE");
-    bytes32 constant public CHANGE_PRICE_FEED_ROLE = keccak256("CHANGE_PRICE_FEED_ROLE");
-    bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
+    /* Hardcoded constants to save gas
+    * bytes32 constant public ADD_EMPLOYEE_ROLE = keccak256("ADD_EMPLOYEE_ROLE");
+    * bytes32 constant public TERMINATE_EMPLOYEE_ROLE = keccak256("TERMINATE_EMPLOYEE_ROLE");
+    * bytes32 constant public SET_EMPLOYEE_SALARY_ROLE = keccak256("SET_EMPLOYEE_SALARY_ROLE");
+    * bytes32 constant public ADD_BONUS_ROLE = keccak256("ADD_BONUS_ROLE");
+    * bytes32 constant public ADD_REIMBURSEMENT_ROLE = keccak256("ADD_REIMBURSEMENT_ROLE");
+    * bytes32 constant public MANAGE_ALLOWED_TOKENS_ROLE = keccak256("MANAGE_ALLOWED_TOKENS_ROLE");
+    * bytes32 constant public MODIFY_PRICE_FEED_ROLE = keccak256("MODIFY_PRICE_FEED_ROLE");
+    * bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = keccak256("MODIFY_RATE_EXPIRY_ROLE");
+    */
 
-    uint128 internal constant ONE = 10 ** 18; // 10^18 is considered 1 in the price feed to allow for decimal calculations
+    bytes32 constant public ADD_EMPLOYEE_ROLE = 0x9ecdc3c63716b45d0756eece5fe1614cae1889ec5a1ce62b3127c1f1f1615d6e;
+    bytes32 constant public TERMINATE_EMPLOYEE_ROLE = 0x69c67f914d12b6440e7ddf01961214818d9158fbcb19211e0ff42800fdea9242;
+    bytes32 constant public SET_EMPLOYEE_SALARY_ROLE = 0xea9ac65018da2421cf419ee2152371440c08267a193a33ccc1e39545d197e44d;
+    bytes32 constant public ADD_BONUS_ROLE = 0xceca7e2f5eb749a87aaf68f3f76d6b9251aa2f4600f13f93c5a4adf7a72df4ae;
+    bytes32 constant public ADD_REIMBURSEMENT_ROLE = 0x90698b9d54427f1e41636025017309bdb1b55320da960c8845bab0a504b01a16;
+    bytes32 constant public MANAGE_ALLOWED_TOKENS_ROLE = 0x0be34987c45700ee3fae8c55e270418ba903337decc6bacb1879504be9331c06;
+    bytes32 constant public MODIFY_PRICE_FEED_ROLE = 0x74350efbcba8b85341c5bbf70cc34e2a585fc1463524773a12fa0a71d4eb9302;
+    bytes32 constant public MODIFY_RATE_EXPIRY_ROLE = 0x79fe989a8899060dfbdabb174ebb96616fa9f1d9dadd739f8d814cbab452404e;
+
     uint256 internal constant MAX_ALLOWED_TOKENS = 20; // prevent OOG issues with `payday()`
     uint64 internal constant MIN_RATE_EXPIRY = uint64(1 minutes); // 1 min == ~4 block window to mine both a price feed update and a payout
 
@@ -40,8 +49,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     string private constant ERROR_NON_ACTIVE_EMPLOYEE = "PAYROLL_NON_ACTIVE_EMPLOYEE";
     string private constant ERROR_SENDER_DOES_NOT_MATCH = "PAYROLL_SENDER_DOES_NOT_MATCH";
     string private constant ERROR_FINANCE_NOT_CONTRACT = "PAYROLL_FINANCE_NOT_CONTRACT";
-    string private constant ERROR_TOKEN_ALREADY_ALLOWED = "PAYROLL_TOKEN_ALREADY_ALLOWED";
+    string private constant ERROR_TOKEN_ALREADY_SET = "PAYROLL_TOKEN_ALREADY_SET";
     string private constant ERROR_MAX_ALLOWED_TOKENS = "PAYROLL_MAX_ALLOWED_TOKENS";
+    string private constant ERROR_MIN_RATES_MISMATCH = "PAYROLL_MIN_RATES_MISMATCH";
     string private constant ERROR_TOKEN_ALLOCATION_MISMATCH = "PAYROLL_TOKEN_ALLOCATION_MISMATCH";
     string private constant ERROR_NOT_ALLOWED_TOKEN = "PAYROLL_NOT_ALLOWED_TOKEN";
     string private constant ERROR_DISTRIBUTION_NOT_FULL = "PAYROLL_DISTRIBUTION_NOT_FULL";
@@ -53,7 +63,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     string private constant ERROR_FEED_NOT_CONTRACT = "PAYROLL_FEED_NOT_CONTRACT";
     string private constant ERROR_EXPIRY_TIME_TOO_SHORT = "PAYROLL_EXPIRY_TIME_TOO_SHORT";
     string private constant ERROR_PAST_TERMINATION_DATE = "PAYROLL_PAST_TERMINATION_DATE";
-    string private constant ERROR_EXCHANGE_RATE_ZERO = "PAYROLL_EXCHANGE_RATE_ZERO";
+    string private constant ERROR_EXCHANGE_RATE_TOO_LOW = "PAYROLL_EXCHANGE_RATE_TOO_LOW";
     string private constant ERROR_LAST_PAYROLL_DATE_TOO_BIG = "PAYROLL_LAST_DATE_TOO_BIG";
     string private constant ERROR_INVALID_REQUESTED_AMOUNT = "PAYROLL_INVALID_REQUESTED_AMT";
 
@@ -61,13 +71,14 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     struct Employee {
         address accountAddress; // unique, but can be changed over time
-        mapping(address => uint256) allocation;
         uint256 denominationTokenSalary; // salary per second in denomination Token
         uint256 accruedSalary; // keep track of any leftover accrued salary when changing salaries
         uint256 bonus;
         uint256 reimbursements;
         uint64 lastPayroll;
         uint64 endDate;
+        address[] allocationTokenAddresses;
+        mapping(address => uint256) allocationTokens;
     }
 
     Finance public finance;
@@ -81,7 +92,6 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     mapping(address => uint256) internal employeeIds;    // employee address -> employee ID
 
     mapping(address => bool) internal allowedTokens;
-    address[] internal allowedTokensArray;
 
     event AddEmployee(
         uint256 indexed employeeId,
@@ -105,15 +115,9 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         uint256 exchangeRate,
         string paymentReference
     );
-    event AddAllowedToken(address indexed token);
+    event SetAllowedToken(address indexed token, bool allowed);
     event SetPriceFeed(address indexed feed);
     event SetRateExpiryTime(uint64 time);
-
-    // Check employee exists by address
-    modifier employeeAddressExists(address _accountAddress) {
-        require(_employeeExists(_accountAddress), ERROR_EMPLOYEE_DOESNT_EXIST);
-        _;
-    }
 
     // Check employee exists by ID
     modifier employeeIdExists(uint256 _employeeId) {
@@ -123,8 +127,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     // Check employee exists and is still active
     modifier employeeActive(uint256 _employeeId) {
-        // No need to check for existence as _isEmployeeActive() is false for non-existent employees
-        require(_isEmployeeActive(_employeeId), ERROR_NON_ACTIVE_EMPLOYEE);
+        // No need to check for existence as _isEmployeeIdActive() is false for non-existent employees
+        require(_isEmployeeIdActive(_employeeId), ERROR_NON_ACTIVE_EMPLOYEE);
         _;
     }
 
@@ -158,24 +162,21 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @notice Add `_allowedToken.symbol(): string` to the set of allowed tokens
-     * @param _allowedToken New token address to be allowed for payments
+     * @notice `_allowed ? 'Add' : 'Remove'` `_token.symbol(): string` `_allowed ? 'to' : 'from'` the set of allowed tokens
+     * @param _token Address of the token to be added or removed from the list of allowed tokens for payments
+     * @param _allowed Boolean to tell whether the given token should be added or removed from the list
      */
-    function addAllowedToken(address _allowedToken) external authP(ALLOWED_TOKENS_MANAGER_ROLE, arr(_allowedToken)) {
-        require(!allowedTokens[_allowedToken], ERROR_TOKEN_ALREADY_ALLOWED);
-        require(allowedTokensArray.length < MAX_ALLOWED_TOKENS, ERROR_MAX_ALLOWED_TOKENS);
-
-        allowedTokens[_allowedToken] = true;
-        allowedTokensArray.push(_allowedToken);
-
-        emit AddAllowedToken(_allowedToken);
+    function setAllowedToken(address _token, bool _allowed) external authP(MANAGE_ALLOWED_TOKENS_ROLE, arr(_token)) {
+        require(allowedTokens[_token] != _allowed, ERROR_TOKEN_ALREADY_SET);
+        allowedTokens[_token] = _allowed;
+        emit SetAllowedToken(_token, _allowed);
     }
 
     /**
      * @notice Set the price feed for exchange rates to `_feed`
      * @param _feed Address of the new price feed instance
      */
-    function setPriceFeed(IFeed _feed) external authP(CHANGE_PRICE_FEED_ROLE, arr(_feed, feed)) {
+    function setPriceFeed(IFeed _feed) external authP(MODIFY_PRICE_FEED_ROLE, arr(_feed, feed)) {
         _setPriceFeed(_feed);
     }
 
@@ -240,12 +241,13 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         authP(SET_EMPLOYEE_SALARY_ROLE, arr(_employeeId, _denominationSalary, employees[_employeeId].denominationTokenSalary))
         employeeActive(_employeeId)
     {
+        Employee storage employee = employees[_employeeId];
+
         // Accrue employee's owed salary; don't cap to revert on overflow
-        uint256 owed = _getOwedSalarySinceLastPayroll(_employeeId, false);
+        uint256 owed = _getOwedSalarySinceLastPayroll(employee, false);
         _addAccruedSalary(_employeeId, owed);
 
         // Update employee to track the new salary and payment date
-        Employee storage employee = employees[_employeeId];
         employee.lastPayroll = getTimestamp64();
         employee.denominationTokenSalary = _denominationSalary;
 
@@ -293,28 +295,27 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _distribution Array with each token's corresponding proportions (must be integers summing to 100)
      */
     function determineAllocation(address[] _tokens, uint256[] _distribution) external employeeMatches nonReentrant {
-        // Check arrays match
+        // Check array lengthes match
+        require(_tokens.length <= MAX_ALLOWED_TOKENS, ERROR_MAX_ALLOWED_TOKENS);
         require(_tokens.length == _distribution.length, ERROR_TOKEN_ALLOCATION_MISMATCH);
 
         uint256 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
 
-        // Delete previous allocation
-        for (uint256 j = 0; j < allowedTokensArray.length; j++) {
-            delete employee.allocation[allowedTokensArray[j]];
+        // Delete previous token allocations
+        address[] memory previousAllowedTokenAddresses = employee.allocationTokenAddresses;
+        for (uint256 j = 0; j < previousAllowedTokenAddresses.length; j++) {
+            delete employee.allocationTokens[previousAllowedTokenAddresses[j]];
+        }
+        delete employee.allocationTokenAddresses;
+
+        // Set distributions only if given tokens are allowed
+        for (uint256 i = 0; i < _tokens.length; i++) {
+            employee.allocationTokenAddresses.push(_tokens[i]);
+            employee.allocationTokens[_tokens[i]] = _distribution[i];
         }
 
-        // Check distribution sums to 100
-        uint256 sum = 0;
-        for (uint256 i = 0; i < _distribution.length; i++) {
-            // Check token is allowed
-            require(allowedTokens[_tokens[i]], ERROR_NOT_ALLOWED_TOKEN);
-            // Set distribution
-            employee.allocation[_tokens[i]] = _distribution[i];
-            sum = sum.add(_distribution[i]);
-        }
-        require(sum == 100, ERROR_DISTRIBUTION_NOT_FULL);
-
+        _ensureEmployeeTokenAllocationsIsValid(employee);
         emit DetermineAllocation(employeeId);
     }
 
@@ -326,25 +327,23 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      *      As the employee is allowed to call this, we enforce non-reentrancy.
      * @param _type Payment type being requested (Payroll, Reimbursement or Bonus)
      * @param _requestedAmount Requested amount to pay for the payment type. Must be less than or equal to total owed amount for the payment type, or zero to request all.
+     * @param _minRates Array of employee's minimum acceptable rates for their allowed payment tokens
      */
-    function payday(PaymentType _type, uint256 _requestedAmount) external employeeMatches nonReentrant {
+    function payday(PaymentType _type, uint256 _requestedAmount, uint256[] _minRates) external employeeMatches nonReentrant {
         uint256 paymentAmount;
         uint256 employeeId = employeeIds[msg.sender];
         Employee storage employee = employees[employeeId];
+        _ensureEmployeeTokenAllocationsIsValid(employee);
+        require(_minRates.length == 0 || _minRates.length == employee.allocationTokenAddresses.length, ERROR_MIN_RATES_MISMATCH);
 
         // Do internal employee accounting
         if (_type == PaymentType.Payroll) {
             // Salary is capped here to avoid reverting at this point if it becomes too big
             // (so employees aren't DDOSed if their salaries get too large)
             // If we do use a capped value, the employee's lastPayroll date will be adjusted accordingly
-            uint256 currentOwedSalary = _getOwedSalarySinceLastPayroll(employeeId, true); // cap amount
-            uint256 totalOwedSalary = currentOwedSalary + employee.accruedSalary;
-            if (totalOwedSalary < currentOwedSalary) {
-                totalOwedSalary = MAX_UINT256;
-            }
-
+            uint256 totalOwedSalary = _getTotalOwedCappedSalary(employee);
             paymentAmount = _ensurePaymentAmount(totalOwedSalary, _requestedAmount);
-            _updateEmployeeAccountingBasedOnPaidSalary(employeeId, paymentAmount);
+            _updateEmployeeAccountingBasedOnPaidSalary(employee, paymentAmount);
         } else if (_type == PaymentType.Reimbursement) {
             uint256 owedReimbursements = employee.reimbursements;
             paymentAmount = _ensurePaymentAmount(owedReimbursements, _requestedAmount);
@@ -358,7 +357,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         }
 
         // Actually transfer the owed funds
-        require(_transferTokensAmount(employeeId, _type, paymentAmount), ERROR_NOTHING_PAID);
+        require(_transferTokensAmount(employeeId, _type, paymentAmount, _minRates), ERROR_NOTHING_PAID);
         _removeEmployeeIfTerminatedAndPaidOut(employeeId);
     }
 
@@ -395,46 +394,19 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return True if the given address is an active employee, false otherwise
      */
     function canForward(address _sender, bytes) public view returns (bool) {
-        return _isEmployeeActive(employeeIds[_sender]);
+        return _isEmployeeIdActive(employeeIds[_sender]);
     }
 
     // Getter fns
 
     /**
-     * @dev Return all information for employee by their account address
+     * @dev Return employee's identifier by their account address
      * @param _accountAddress Employee's address to receive payments
      * @return Employee's identifier
-     * @return Employee's salary, per second in denomination token
-     * @return Employee's accrued salary
-     * @return Employee's bonus amount
-     * @return Employee's reimbursements amount
-     * @return Employee's last salary payment date
-     * @return Employee's termination date (max uint64 if none)
      */
-    function getEmployeeByAddress(address _accountAddress)
-        public
-        view
-        employeeAddressExists(_accountAddress)
-        returns (
-            uint256 employeeId,
-            uint256 denominationSalary,
-            uint256 accruedSalary,
-            uint256 bonus,
-            uint256 reimbursements,
-            uint64 lastPayroll,
-            uint64 endDate
-        )
-    {
-        employeeId = employeeIds[_accountAddress];
-
-        Employee storage employee = employees[employeeId];
-
-        denominationSalary = employee.denominationTokenSalary;
-        accruedSalary = employee.accruedSalary;
-        bonus = employee.bonus;
-        reimbursements = employee.reimbursements;
-        lastPayroll = employee.lastPayroll;
-        endDate = employee.endDate;
+    function getEmployeeIdByAddress(address _accountAddress) public view returns (uint256) {
+        require(employeeIds[_accountAddress] != uint256(0), ERROR_EMPLOYEE_DOESNT_EXIST);
+        return employeeIds[_accountAddress];
     }
 
     /**
@@ -447,6 +419,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @return Employee's reimbursements amount
      * @return Employee's last payment date
      * @return Employee's termination date (max uint64 if none)
+     * @return Employee's allowed payment tokens
      */
     function getEmployee(uint256 _employeeId)
         public
@@ -459,7 +432,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
             uint256 bonus,
             uint256 reimbursements,
             uint64 lastPayroll,
-            uint64 endDate
+            uint64 endDate,
+            address[] allocationTokens
         )
     {
         Employee storage employee = employees[_employeeId];
@@ -471,6 +445,16 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         reimbursements = employee.reimbursements;
         lastPayroll = employee.lastPayroll;
         endDate = employee.endDate;
+        allocationTokens = employee.allocationTokenAddresses;
+    }
+
+    /**
+     * @dev Get owed salary since last payroll for an employee. It will take into account the accrued salary as well.
+     *      The result will be capped to max uint256 to avoid having an overflow.
+     * @return Employee's total owed salary: current owed payroll since the last payroll date, plus the accrued salary.
+     */
+    function getTotalOwedSalary(uint256 _employeeId) public view employeeIdExists(_employeeId) returns (uint256) {
+        return _getTotalOwedCappedSalary(employees[_employeeId]);
     }
 
     /**
@@ -479,8 +463,8 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _token Token to query the payment allocation for
      * @return Employee's payment allocation for the token being queried
      */
-    function getAllocation(uint256 _employeeId, address _token) public view employeeIdExists(_employeeId) returns (uint256 allocation) {
-        return employees[_employeeId].allocation[_token];
+    function getAllocation(uint256 _employeeId, address _token) public view employeeIdExists(_employeeId) returns (uint256) {
+        return employees[_employeeId].allocationTokens[_token];
     }
 
     /**
@@ -579,7 +563,7 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         // Check address is non-null
         require(_accountAddress != address(0), ERROR_EMPLOYEE_NULL_ADDRESS);
         // Check address isn't already being used
-        require(!_employeeExists(_accountAddress), ERROR_EMPLOYEE_ALREADY_EXIST);
+        require(employeeIds[_accountAddress] == uint256(0), ERROR_EMPLOYEE_ALREADY_EXIST);
 
         employees[_employeeId].accountAddress = _accountAddress;
 
@@ -604,9 +588,10 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
      * @param _employeeId Employee's identifier
      * @param _totalAmount Total amount to be transferred to the employee distributed in accordance to the employee's token allocation.
      * @param _type Payment type being transferred (Payroll, Reimbursement or Bonus)
+     * @param _minRates Array of employee's minimum acceptable rates for their allowed payment tokens
      * @return True if there was at least one token transfer
      */
-    function _transferTokensAmount(uint256 _employeeId, PaymentType _type, uint256 _totalAmount) internal returns (bool somethingPaid) {
+    function _transferTokensAmount(uint256 _employeeId, PaymentType _type, uint256 _totalAmount, uint256[] _minRates) internal returns (bool somethingPaid) {
         if (_totalAmount == 0) {
             return false;
         }
@@ -615,19 +600,20 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         address employeeAddress = employee.accountAddress;
         string memory paymentReference = _paymentReferenceFor(_type);
 
-        for (uint256 i = 0; i < allowedTokensArray.length; i++) {
-            address token = allowedTokensArray[i];
-            uint256 tokenAllocation = employee.allocation[token];
+        address[] storage allocationTokenAddresses = employee.allocationTokenAddresses;
+        for (uint256 i = 0; i < allocationTokenAddresses.length; i++) {
+            address token = allocationTokenAddresses[i];
+            uint256 tokenAllocation = employee.allocationTokens[token];
             if (tokenAllocation != uint256(0)) {
                 // Get the exchange rate for the payout token in denomination token,
                 // as we do accounting in denomination tokens
                 uint256 exchangeRate = _getExchangeRateInDenominationToken(token);
-                require(exchangeRate > 0, ERROR_EXCHANGE_RATE_ZERO);
+                require(_minRates.length > 0 ? exchangeRate >= _minRates[i] : exchangeRate > 0, ERROR_EXCHANGE_RATE_TOO_LOW);
 
                 // Convert amount (in denomination tokens) to payout token and apply allocation
                 uint256 tokenAmount = _totalAmount.mul(exchangeRate).mul(tokenAllocation);
-                // Divide by 100 for the allocation percentage and by ONE for the exchange rate precision
-                tokenAmount = tokenAmount / (100 * ONE);
+                // Divide by 100 for the allocation percentage and by the exchange rate precision
+                tokenAmount = tokenAmount.div(100).div(feed.ratePrecision());
 
                 // Finance reverts if the payment wasn't possible
                 finance.newImmediatePayment(token, employeeAddress, tokenAmount, paymentReference);
@@ -656,18 +642,17 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     /**
      * @dev Updates the accrued salary and payroll date of an employee based on a payment amount and
      *      their currently owed salary since last payroll date
-     * @param _employeeId Employee's identifier
+     * @param _employee Employee struct in storage
      * @param _paymentAmount Amount being paid to the employee
      */
-    function _updateEmployeeAccountingBasedOnPaidSalary(uint256 _employeeId, uint256 _paymentAmount) internal {
-        Employee storage employee = employees[_employeeId];
-        uint256 accruedSalary = employee.accruedSalary;
+    function _updateEmployeeAccountingBasedOnPaidSalary(Employee storage _employee, uint256 _paymentAmount) internal {
+        uint256 accruedSalary = _employee.accruedSalary;
 
         if (_paymentAmount <= accruedSalary) {
             // Employee is only cashing out some previously owed salary so we don't need to update
             // their last payroll date
             // No need to use SafeMath as we already know _paymentAmount <= accruedSalary
-            employee.accruedSalary = accruedSalary - _paymentAmount;
+            _employee.accruedSalary = accruedSalary - _paymentAmount;
             return;
         }
 
@@ -677,20 +662,31 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
         if (accruedSalary > 0) {
             // Employee is cashing out a mixed amount between previous and current owed salaries;
             // first use up their accrued salary
-            employee.accruedSalary = uint256(0);
             // No need to use SafeMath here as we already know _paymentAmount > accruedSalary
             currentSalaryPaid = _paymentAmount - accruedSalary;
+            // We finally need to clear their accrued salary
+            _employee.accruedSalary = 0;
         }
-        employee.lastPayroll = _getLastPayrollDate(_employeeId, currentSalaryPaid);
-    }
 
-    /**
-     * @dev Tell whether an employee is registered in this Payroll or not
-     * @param _accountAddress Address of the employee to query the existence of
-     * @return True if the given address belongs to an registered employee, false otherwise
-     */
-    function _employeeExists(address _accountAddress) internal view returns (bool) {
-        return employeeIds[_accountAddress] != uint256(0);
+        uint256 salary = _employee.denominationTokenSalary;
+        uint256 timeDiff = currentSalaryPaid.div(salary);
+
+        // If they're being paid an amount that doesn't match perfectly with the adjusted time
+        // (up to a seconds' worth of salary), add the second and put the extra remaining salary
+        // into their accrued salary
+        uint256 extraSalary = currentSalaryPaid % salary;
+        if (extraSalary > 0) {
+            timeDiff = timeDiff.add(1);
+            _employee.accruedSalary = salary - extraSalary;
+        }
+
+        uint256 lastPayrollDate = uint256(_employee.lastPayroll).add(timeDiff);
+        // Even though this function should never receive a currentSalaryPaid value that would
+        // result in the lastPayrollDate being higher than the current time,
+        // let's double check to be safe
+        require(lastPayrollDate <= uint256(getTimestamp64()), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
+        // Already know lastPayrollDate must fit in uint64 from above
+        _employee.lastPayroll = uint64(lastPayrollDate);
     }
 
     /**
@@ -703,28 +699,48 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
+     * @dev Tell whether an employee has a valid token allocation or not.
+     *      A valid allocation is one that sums to 100 and only includes allowed tokens.
+     * @param _employee Employee struct in storage
+     * @return Reverts if employee's allocation is invalid
+     */
+    function _ensureEmployeeTokenAllocationsIsValid(Employee storage _employee) internal view {
+        uint256 sum = 0;
+        address[] memory allocationTokenAddresses = _employee.allocationTokenAddresses;
+        for (uint256 i = 0; i < allocationTokenAddresses.length; i++) {
+            address token = allocationTokenAddresses[i];
+            require(allowedTokens[token], ERROR_NOT_ALLOWED_TOKEN);
+            sum = sum.add(_employee.allocationTokens[token]);
+        }
+        require(sum == 100, ERROR_DISTRIBUTION_NOT_FULL);
+    }
+
+    /**
      * @dev Tell whether an employee is still active or not
+     * @param _employee Employee struct in storage
+     * @return True if the employee exists and has an end date that has not been reached yet, false otherwise
+     */
+    function _isEmployeeActive(Employee storage _employee) internal view returns (bool) {
+        return _employee.endDate >= getTimestamp64();
+    }
+
+    /**
+     * @dev Tell whether an employee id is still active or not
      * @param _employeeId Employee's identifier
      * @return True if the employee exists and has an end date that has not been reached yet, false otherwise
      */
-    function _isEmployeeActive(uint256 _employeeId) internal view returns (bool) {
-        return employees[_employeeId].endDate >= getTimestamp64();
+    function _isEmployeeIdActive(uint256 _employeeId) internal view returns (bool) {
+        return _isEmployeeActive(employees[_employeeId]);
     }
 
     /**
      * @dev Get exchange rate for a token based on the denomination token.
      *      As an example, if the denomination token was USD and ETH's price was 100USD,
-     *      this would return 0.01 * ONE for ETH.
+     *      this would return 0.01 * precision rate for ETH.
      * @param _token Token to get price of in denomination tokens
-     * @return Exchange rate (multiplied by ONE for precision).
-               Exactly ONE if _token is denominationToken or 0 if the exchange rate isn't recent enough.
+     * @return Exchange rate (multiplied by the PPF rate precision)
      */
     function _getExchangeRateInDenominationToken(address _token) internal view returns (uint256) {
-        // Denomination token has always exchange rate of 1
-        if (_token == denominationToken) {
-            return ONE;
-        }
-
         // xrt is the number of `_token` that can be exchanged for one `denominationToken`
         (uint128 xrt, uint64 when) = feed.get(
             denominationToken,  // Base (e.g. USD)
@@ -740,46 +756,18 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
     }
 
     /**
-     * @dev Calculate the new last payroll date for an employee based on the requested payment amount
-     * @param _employeeId Employee's identifier
-     * @param _paidAmount Requested amount to be paid to the employee
-     * @return The new last payroll timestamp in seconds based on the requested payment amount
-     */
-    function _getLastPayrollDate(uint256 _employeeId, uint256 _paidAmount) internal view returns (uint64) {
-        Employee storage employee = employees[_employeeId];
-
-        uint256 timeDiff = _paidAmount.div(employee.denominationTokenSalary);
-
-        // We check if the division was perfect, and if not, take its ceiling to avoid giving away
-        // tiny amounts of salary.
-        // Employees may lose up to a second's worth of payroll if they use the "request partial
-        // amount" feature or reach salary amounts that get capped by uint max.
-        if (timeDiff.mul(employee.denominationTokenSalary) != _paidAmount) {
-            timeDiff = timeDiff.add(1);
-        }
-
-        uint256 lastPayrollDate = uint256(employee.lastPayroll).add(timeDiff);
-
-        // Even though this function should never receive a _paidAmount value that would result in
-        // the lastPayrollDate being higher than the current time, let's double check to be safe
-        require(lastPayrollDate <= uint256(getTimestamp64()), ERROR_LAST_PAYROLL_DATE_TOO_BIG);
-        // Already know lastPayrollDate must fit in uint64 from above
-        return uint64(lastPayrollDate);
-    }
-
-    /**
-     * @dev Get owed salary since last payroll for an employee.
-     * @param _employeeId Employee's identifier
+     * @dev Get owed salary since last payroll for an employee
+     * @param _employee Employee struct in storage
      * @param _capped Safely cap the owed salary at max uint
      * @return Owed salary in denomination tokens since last payroll for the employee.
      *         If _capped is false, it reverts in case of an overflow.
      */
-    function _getOwedSalarySinceLastPayroll(uint256 _employeeId, bool _capped) internal view returns (uint256) {
-        uint256 timeDiff = _getOwedPayrollPeriod(_employeeId);
+    function _getOwedSalarySinceLastPayroll(Employee storage _employee, bool _capped) internal view returns (uint256) {
+        uint256 timeDiff = _getOwedPayrollPeriod(_employee);
         if (timeDiff == 0) {
             return 0;
         }
-        uint256 salary = employees[_employeeId].denominationTokenSalary;
+        uint256 salary = _employee.denominationTokenSalary;
 
         if (_capped) {
             // Return max uint if the result overflows
@@ -792,26 +780,39 @@ contract Payroll is EtherTokenConstant, IForwarder, IsContract, AragonApp {
 
     /**
      * @dev Get owed payroll period for an employee
-     * @param _employeeId Employee's identifier
+     * @param _employee Employee struct in storage
      * @return Owed time in seconds since the employee's last payroll date
      */
-    function _getOwedPayrollPeriod(uint256 _employeeId) internal view returns (uint256) {
-        Employee storage employee = employees[_employeeId];
-
+    function _getOwedPayrollPeriod(Employee storage _employee) internal view returns (uint256) {
         // Get the min of current date and termination date
-        uint64 date = _isEmployeeActive(_employeeId) ? getTimestamp64() : employee.endDate;
+        uint64 date = _isEmployeeActive(_employee) ? getTimestamp64() : _employee.endDate;
 
         // Make sure we don't revert if we try to get the owed salary for an employee whose last
         // payroll date is now or in the future
         // This can happen either by adding new employees with start dates in the future, to allow
         // us to change their salary before their start date, or by terminating an employee and
         // paying out their full owed salary
-        if (date <= employee.lastPayroll) {
+        if (date <= _employee.lastPayroll) {
             return 0;
         }
 
         // Return time diff in seconds, no need to use SafeMath as the underflow was covered by the previous check
-        return uint256(date - employee.lastPayroll);
+        return uint256(date - _employee.lastPayroll);
+    }
+
+    /**
+     * @dev Get owed salary since last payroll for an employee. It will take into account the accrued salary as well.
+     *      The result will be capped to max uint256 to avoid having an overflow.
+     * @param _employee Employee struct in storage
+     * @return Employee's total owed salary: current owed payroll since the last payroll date, plus the accrued salary.
+     */
+    function _getTotalOwedCappedSalary(Employee storage _employee) internal view returns (uint256) {
+        uint256 currentOwedSalary = _getOwedSalarySinceLastPayroll(_employee, true); // cap amount
+        uint256 totalOwedSalary = currentOwedSalary + _employee.accruedSalary;
+        if (totalOwedSalary < currentOwedSalary) {
+            totalOwedSalary = MAX_UINT256;
+        }
+        return totalOwedSalary;
     }
 
     /**
