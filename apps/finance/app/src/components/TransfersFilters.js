@@ -34,7 +34,7 @@ const TransfersFilters = ({
       <DropDown
         label="Token Type"
         header="Token Type"
-        items={['All tokens', ...symbols]}
+        items={symbols}
         selected={tokenFilter}
         onChange={onTokenChange}
         width="128px"
