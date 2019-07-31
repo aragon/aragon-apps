@@ -139,6 +139,12 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
     },
     [setPage, setSelectedTransferType]
   )
+  const handleClearFilters = useCallback(() => {
+    setPage(0)
+    setSelectedTransferType(0)
+    setSelectedToken(0)
+    setSelectedDateRange(INITIAL_DATE_RANGE)
+  }, [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange])
   const filteredTransfers = getFilteredTransfers({
     transactions,
     selectedToken: selectedToken !== 0 ? tokens[selectedToken - 1] : null,
@@ -157,12 +163,6 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
     const filename = getDownloadFilename(dao, selectedDateRange)
     saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
   }, [filteredTransfers, tokenDetails, resolveAddress])
-  const handleClearFilters = useCallback(() => {
-    setPage(0)
-    setSelectedTransferType(0)
-    setSelectedToken(0)
-    setSelectedDateRange(INITIAL_DATE_RANGE)
-  }, [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange])
   const emptyResultsViaFilters =
     !filteredTransfers.length &&
     (selectedToken !== 0 ||
