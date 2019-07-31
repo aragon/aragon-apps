@@ -18,6 +18,7 @@ function EmptyFilteredTransfers({ onClear }) {
       <img
         css={`
           margin: ${4 * GU}px 0;
+          height: 176px;
         `}
         src={noResultsSvg}
         alt="No results"
