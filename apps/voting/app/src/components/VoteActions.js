@@ -7,26 +7,19 @@ import {
   IconCross,
   Info,
   RADIUS,
-  SafeLink,
+  ExternalLink,
   textStyle,
   useTheme,
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount } from '@aragon/api-react'
-import {
-  VOTE_NAY,
-  VOTE_YEA,
-  VOTE_ABSENT,
-  VOTE_STATUS_REJECTED,
-} from '../vote-types'
+import { VOTE_NAY, VOTE_YEA, VOTE_ABSENT } from '../vote-types'
 import { useExtendedVoteData } from '../vote-hooks'
-import { useSettings } from '../vote-settings-manager'
 import { getVoteStatus } from '../vote-utils'
 import { noop, formatDate } from '../utils'
 
 const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   const theme = useTheme()
   const connectedAccount = useConnectedAccount()
-  const settings = useSettings()
   const { tokenSymbol } = useAppState()
   const { connectedAccountVote, data } = vote
   const { snapshotBlock, startDate: startTimestamp, open } = data
@@ -34,7 +27,6 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   const [changeVote, setChangeVote] = useState(false)
   const handleChangeVote = useCallback(() => setChangeVote(true), [])
   const hasVoted = [VOTE_YEA, VOTE_NAY].includes(connectedAccountVote)
-  const status = getVoteStatus(vote, settings.pctBase)
 
   if (!open) {
     return (
@@ -185,9 +177,12 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
         participate in this vote. Make sure your account is holding{' '}
         {tokenSymbol} at the time a vote begins if you want to vote using this
         Voting app.{' '}
-        <SafeLink href="https://wiki.aragon.org/documentation/aragon_network_token/">
+        <ExternalLink
+          target="_blank"
+          href="https://wiki.aragon.org/documentation/aragon_network_token/"
+        >
           Find out how to get tokens
-        </SafeLink>
+        </ExternalLink>
       </Info>
     </div>
   )
