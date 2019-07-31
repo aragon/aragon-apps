@@ -286,9 +286,6 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
           </span>,
         ]
       }}
-      renderSelectionCount={count =>
-        `${count} transfer${count !== 1 ? 's' : ''} selected`
-      }
       renderEntryActions={({ entity, transactionHash }) => (
         <ContextMenu>
           <ContextMenuViewTransaction
