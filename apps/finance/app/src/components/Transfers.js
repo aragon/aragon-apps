@@ -33,6 +33,7 @@ import EmptyFilteredTransfers from './EmptyFilteredTransfers'
 import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
+const INITIAL_DATE_RANGE = { start: null, end: null }
 const TRANSFER_TYPES = [
   TransferTypes.All,
   TransferTypes.Incoming,
@@ -110,7 +111,6 @@ const getDownloadFilename = (dao, { start, end }) => {
   }
   return filename
 }
-const INITIAL_DATE_RANGE = { start: null, end: null }
 
 const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const { below, above } = useViewport()
