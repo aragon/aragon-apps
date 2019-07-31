@@ -2,8 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useAragonApi } from '@aragon/api-react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { EthIdenticon, GU, IdentityBadge, RADIUS, theme } from '@aragon/ui'
-import AutoCompleteSelected from '../AutoComplete/AutoCompleteSelected'
+import {
+  _AutoCompleteSelected as AutoCompleteSelected,
+  EthIdenticon,
+  GU,
+  IdentityBadge,
+  RADIUS,
+  theme,
+} from '@aragon/ui'
 
 const withKey = item => ({ key: item.address, ...item })
 const sortAlphAsc = (a, b) => a.name.localeCompare(b.name)
@@ -128,6 +134,8 @@ const LocalIdentitiesAutoComplete = React.memo(
         required={required}
         selected={selected}
         selectedButtonStyles={`
+          padding: 0;
+
           &:focus,
           &:active {
             outline: none;
