@@ -54,7 +54,7 @@ class TokenSelector extends React.Component {
       () => {
         this.props.onChange({
           value,
-          index: 1,
+          index: 0,
           address: resolvedAddress,
         })
       }
