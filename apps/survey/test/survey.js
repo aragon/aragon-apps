@@ -9,7 +9,7 @@ const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16
 const createdSurveyId = receipt => getEventArgument(receipt, 'StartSurvey', 'surveyId')
 
 contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, nonHolder]) => {
-  let daoFact, dao, surveyBase, survey
+  let daoFact, dao, surveyBase, survey, acl
 
   let ABSTAIN_VOTE, ANY_ENTITY
   let APP_MANAGER_ROLE, CREATE_SURVEYS_ROLE, MODIFY_PARTICIPATION_ROLE
@@ -58,7 +58,7 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
   beforeEach(async () => {
     const r = await daoFact.newDAO(root)
     dao = getContract('Kernel').at(getEventArgument(r, 'DeployDAO', 'dao'))
-    const acl = getContract('ACL').at(await dao.acl())
+    acl = getContract('ACL').at(await dao.acl())
 
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
@@ -70,8 +70,6 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
   })
 
   context('checking permissions', () => {
-    const acl = getContract('ACL').at(await dao.acl())
-
     it('create surveys permission', async () => {
       let createSurveysPermission = await acl.hasPermission(holder1, survey.address, CREATE_SURVEYS_ROLE);
       assert.equal(createSurveysPermission, true);
