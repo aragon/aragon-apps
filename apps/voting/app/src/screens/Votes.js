@@ -24,7 +24,7 @@ const sortVotes = (a, b) => {
 }
 
 const useFilterVotes = votes => {
-  const settings = useSettings()
+  const { pctBase } = useSettings()
   const [filteredVotes, setFilteredVotes] = useState(votes)
   // 0: All, 1: Open, 2: Past
   const [openFilter, setOpenFilter] = useState(0)
@@ -43,7 +43,7 @@ const useFilterVotes = votes => {
       const {
         data: { open, endDate, startDate: startTimestamp },
       } = vote
-      const voteSuccess = getVoteSuccess(vote, settings.pctBase)
+      const voteSuccess = getVoteSuccess(vote, pctBase)
       const { start, end } = dateRangeFilter
 
       return (
@@ -71,12 +71,13 @@ const useFilterVotes = votes => {
     })
     setFilteredVotes(filtered)
   }, [
-    votes,
-    openFilter,
     appFilter,
-    statusFilter,
     dateRangeFilter,
+    openFilter,
+    pctBase,
     setFilteredVotes,
+    statusFilter,
+    votes,
   ])
 
   return {
