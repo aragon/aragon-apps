@@ -51,59 +51,55 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
             </Info>
           </React.Fragment>
         )}
-        <div
-          css={`
-            border-radius: ${RADIUS}px;
-            background: ${theme.background};
-            padding: ${3.5 * GU}px ${10 * GU}px;
-            display: grid;
-            grid-template-columns: auto 1fr;
-            grid-gap: 16px;
-            align-items: center;
-          `}
-        >
-          <div>
-            <div
-              css={`
-                border: 2px solid ${theme.accent};
-                border-radius: 50%;
-                width: 60px;
-                height: 60px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: ${theme.accent};
-              `}
-            >
-              {status !== VOTE_STATUS_REJECTED ? <IconCheck /> : <IconCross />}
-            </div>
-          </div>
-          <div>
-            <div css="font-weight: bold;">
-              Vote {status !== VOTE_STATUS_REJECTED ? 'success' : 'rejected'}
+        {connectedAccountVote !== VOTE_ABSENT && (
+          <div
+            css={`
+              border-radius: ${RADIUS}px;
+              background: ${theme.background};
+              padding: ${3.5 * GU}px ${10 * GU}px;
+              display: grid;
+              grid-template-columns: auto 1fr;
+              grid-gap: 16px;
+              align-items: center;
+            `}
+          >
+            <div>
+              <div
+                css={`
+                  border: 2px solid ${theme.accent};
+                  border-radius: 50%;
+                  width: 60px;
+                  height: 60px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: ${theme.accent};
+                `}
+              >
+                <IconCheck />
+              </div>
             </div>
             <div>
-              {connectedAccount && connectedAccountVote !== VOTE_ABSENT && (
-                <React.Fragment>
-                  You voted{' '}
-                  <span
-                    css={`
-                      font-weight: bold;
-                      text-transform: uppercase;
-                    `}
-                  >
-                    {connectedAccountVote === VOTE_YEA ? 'yes' : 'no'}
-                  </span>{' '}
-                  with{' '}
-                  <span css="font-weight: bold;">
-                    {userBalance === -1 ? '…' : userBalance} {tokenSymbol}
-                  </span>
-                  .
-                </React.Fragment>
-              )}
+              <div css="font-weight: bold;">Vote success</div>
+              <div>
+                You voted{' '}
+                <span
+                  css={`
+                    font-weight: bold;
+                    text-transform: uppercase;
+                  `}
+                >
+                  {connectedAccountVote === VOTE_YEA ? 'yes' : 'no'}
+                </span>{' '}
+                with{' '}
+                <span css="font-weight: bold;">
+                  {userBalance === -1 ? '…' : userBalance} {tokenSymbol}
+                </span>
+                .
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </React.Fragment>
     )
   }
