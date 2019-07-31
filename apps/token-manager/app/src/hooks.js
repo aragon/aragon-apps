@@ -14,15 +14,12 @@ export function useClickOutside(cb, existingRef) {
     [cb, ref]
   )
 
-  useEffect(
-    () => {
-      document.addEventListener('click', handleClick, true)
-      return () => {
-        document.removeEventListener('click', handleClick, true)
-      }
-    },
-    [handleClick]
-  )
+  useEffect(() => {
+    document.addEventListener('click', handleClick, true)
+    return () => {
+      document.removeEventListener('click', handleClick, true)
+    }
+  }, [handleClick])
 
   return { ref }
 }
@@ -76,26 +73,20 @@ export function useArrowKeysFocus(query, containerRef = useRef()) {
   )
 
   const { handleBlur: handleContainerBlur } = useOnBlur(reset, containerRef)
-  useEffect(
-    () => {
-      if (highlightedIndex === -1) {
-        return
-      }
-      const elements = document.querySelectorAll(query)
-      if (!elements[highlightedIndex]) {
-        return
-      }
-      elements[highlightedIndex].focus()
-    },
-    [highlightedIndex, query]
-  )
-  useEffect(
-    () => {
-      document.addEventListener('keydown', handleKeyDown)
-      return () => document.removeEventListener('keydown', handleKeyDown)
-    },
-    [handleKeyDown]
-  )
+  useEffect(() => {
+    if (highlightedIndex === -1) {
+      return
+    }
+    const elements = document.querySelectorAll(query)
+    if (!elements[highlightedIndex]) {
+      return
+    }
+    elements[highlightedIndex].focus()
+  }, [highlightedIndex, query])
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
 
   return { containerRef, handleContainerBlur }
 }

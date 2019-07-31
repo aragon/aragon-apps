@@ -33,16 +33,13 @@ function AutoCompleteSelected({
     },
     [onChange]
   )
-  const handleSelectedClick = useCallback(
-    () => {
-      onSelectedClick()
-      setTimeout(() => {
-        ref.current.select()
-        ref.current.focus()
-      }, 0)
-    },
-    [ref, selected, onChange]
-  )
+  const handleSelectedClick = useCallback(() => {
+    onSelectedClick()
+    setTimeout(() => {
+      ref.current.select()
+      ref.current.focus()
+    }, 0)
+  }, [ref, selected, onChange])
 
   if (selected) {
     return (

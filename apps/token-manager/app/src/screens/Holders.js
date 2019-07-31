@@ -1,7 +1,6 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { useNetwork } from '@aragon/api-react'
-import styled from 'styled-components'
 import {
   ContextMenu,
   ContextMenuItem,
@@ -10,18 +9,13 @@ import {
   IconLabel,
   IconRemove,
   Split,
-  TabBar,
-  Table,
-  TableHeader,
-  TableRow,
-  Viewport,
-  breakpoint,
   useTheme,
 } from '@aragon/ui'
 import { formatBalance } from '../utils'
 import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from '../components/IdentityManager/IdentityManager'
+import You from '../components/You'
 
 function Holders({
   groupMode,
