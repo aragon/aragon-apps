@@ -70,6 +70,8 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
   })
 
   context('checking permissions', () => {
+    const acl = getContract('ACL').at(await dao.acl())
+
     it('create surveys permission', async () => {
       let createSurveysPermission = await acl.hasPermission(holder1, survey.address, CREATE_SURVEYS_ROLE);
       assert.equal(createSurveysPermission, true);
