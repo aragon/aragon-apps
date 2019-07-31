@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import {
   BackButton,
   Badge,
@@ -12,6 +12,7 @@ import {
 import VotingCard from '../components/VotingCard/VotingCard'
 import VotingCardGroup from '../components/VotingCard/VotingCardGroup'
 import Vote from '../components/Vote'
+import EmptyFilteredVotes from '../components/EmptyFilteredVotes'
 import DateRangeInput from '../components/DateRange/DateRangeInput'
 import { getVoteSuccess } from '../vote-utils'
 import { useSettings } from '../vote-settings-manager'
@@ -37,6 +38,13 @@ const useFilterVotes = votes => {
     start: null,
     end: null,
   })
+  //
+  const handleClearFilters = useCallback(() => {
+    setOpenFilter(0)
+    setAppFilter(0)
+    setStatusFilter(0)
+    setDateRangeFilter({ start: null, end: null })
+  }, [setOpenFilter, setAppFilter, setStatusFilter, setDateRangeFilter])
 
   useEffect(() => {
     const filtered = votes.filter(vote => {
@@ -90,6 +98,7 @@ const useFilterVotes = votes => {
     handleVoteStatusFilterChange: setStatusFilter,
     voteDateRangeFilter: dateRangeFilter,
     handleVoteDateRangeFilterChange: setDateRangeFilter,
+    handleClearFilters,
   }
 }
 
@@ -119,6 +128,7 @@ const LayoutVotes = ({
     handleVoteStatusFilterChange,
     voteDateRangeFilter,
     handleVoteDateRangeFilterChange,
+    handleClearFilters,
   } = useFilterVotes(votes)
   const { openVotes, closedVotes } = useVotes(filteredVotes)
   const handleBackClick = () => selectVote(-1)
@@ -199,11 +209,15 @@ const LayoutVotes = ({
               </div>
             </Bar>
           )}
-          <Votes
-            openVotes={openVotes}
-            closedVotes={closedVotes}
-            onSelectVote={selectVote}
-          />
+          {!filteredVotes.length ? (
+            <EmptyFilteredVotes onClear={handleClearFilters} />
+          ) : (
+            <Votes
+              openVotes={openVotes}
+              closedVotes={closedVotes}
+              onSelectVote={selectVote}
+            />
+          )}
         </div>
       )}
     </React.Fragment>
