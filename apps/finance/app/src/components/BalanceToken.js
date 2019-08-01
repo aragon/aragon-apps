@@ -6,8 +6,8 @@ const splitAmount = amount => {
   const [integer, fractional] = formatTokenAmount(amount).split('.')
   return (
     <span>
-      <span className="integer">{integer}</span>
-      {fractional && <span className="fractional">.{fractional}</span>}
+      <span>{integer}</span>
+      {fractional && <span css="font-size: 14px;">.{fractional}</span>}
     </span>
   )
 }
@@ -43,9 +43,6 @@ const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => {
       <div>
         <div
           css={`
-            .fractional {
-              font-size: 14px;
-            }
             ${textStyle('title2')}
           `}
         >
