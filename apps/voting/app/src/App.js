@@ -8,10 +8,9 @@ import {
   SyncIndicator,
   useLayout,
 } from '@aragon/ui'
-
 import NoVotes from './screens/NoVotes'
 import Votes from './screens/Votes'
-
+import NewVotePanel from './components/NewVotePanel'
 import { IdentityProvider } from './identity-manager'
 import { SettingsProvider } from './vote-settings-manager'
 import { AppLogicProvider, useAppLogic } from './app-logic'
@@ -51,7 +50,7 @@ function App() {
               !selectedVote && (
                 <Button
                   mode="strong"
-                  onClick={actions.createVote}
+                  onClick={newVotePanel.requestOpen}
                   css={`
                     ${compactMode &&
                       `
@@ -74,6 +73,10 @@ function App() {
           />
         </React.Fragment>
       )}
+      <NewVotePanel
+        onCreateVote={actions.createVote}
+        panelState={newVotePanel}
+      />
     </div>
   )
 }
