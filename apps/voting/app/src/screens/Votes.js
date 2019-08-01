@@ -9,14 +9,20 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
+import { isWithinInterval, startOfDay, endOfDay } from 'date-fns'
 import VotingCard from '../components/VotingCard/VotingCard'
 import VotingCardGroup from '../components/VotingCard/VotingCardGroup'
 import Vote from '../components/Vote'
 import EmptyFilteredVotes from '../components/EmptyFilteredVotes'
 import DateRangeInput from '../components/DateRange/DateRangeInput'
-import { getVoteSuccess } from '../vote-utils'
+import {
+  VOTE_STATUS_REJECTED,
+  VOTE_STATUS_ACCEPTED,
+  VOTE_STATUS_ONGOING,
+  VOTE_STATUS_EXECUTED,
+} from '../vote-types'
+import { getVoteStatus, isVoteAction } from '../vote-utils'
 import { useSettings } from '../vote-settings-manager'
-import { isWithinInterval, startOfDay, endOfDay } from 'date-fns'
 
 const sortVotes = (a, b) => {
   const dateDiff = b.data.endDate - a.data.endDate
@@ -27,12 +33,14 @@ const sortVotes = (a, b) => {
 const useFilterVotes = votes => {
   const { pctBase } = useSettings()
   const [filteredVotes, setFilteredVotes] = useState(votes)
-  // 0: All, 1: Open, 2: Past
-  const [openFilter, setOpenFilter] = useState(0)
+  // Status - 0: All, 1: Open, 2: Closed
+  const [statusFilter, setStatusFilter] = useState(-1)
+  // Trend - 0: All, 1: Will pass, 2: Won't pass, 3: Tied
+  const [trendFilter, setTrendFilter] = useState(-1)
+  // Outcome - 0: All, 1: Passed, 2: Rejected, 3: Enacted, 4: Pending
+  const [outcomeFilter, setOutcomeFilter] = useState(-1)
   // 0: All, 1: Finance, 2: Tokens, 3: Voting
-  const [appFilter, setAppFilter] = useState(0)
-  // 0: All, 1: Passed, 2: Rejected
-  const [statusFilter, setStatusFilter] = useState(0)
+  const [appFilter, setAppFilter] = useState(-1)
   //
   const [dateRangeFilter, setDateRangeFilter] = useState({
     start: null,
@@ -40,31 +48,56 @@ const useFilterVotes = votes => {
   })
   //
   const handleClearFilters = useCallback(() => {
-    setOpenFilter(0)
-    setAppFilter(0)
-    setStatusFilter(0)
+    setStatusFilter(-1)
+    setTrendFilter(-1)
+    setOutcomeFilter(-1)
+    setAppFilter(-1)
     setDateRangeFilter({ start: null, end: null })
-  }, [setOpenFilter, setAppFilter, setStatusFilter, setDateRangeFilter])
+  }, [
+    setStatusFilter,
+    setTrendFilter,
+    setOutcomeFilter,
+    setAppFilter,
+    setDateRangeFilter,
+  ])
 
   useEffect(() => {
     const filtered = votes.filter(vote => {
       const {
-        data: { open, endDate, startDate: startTimestamp },
+        data: { open, endDate, startDate: startTimestamp, yea, nay, executed },
       } = vote
-      const voteSuccess = getVoteSuccess(vote, pctBase)
+      const voteStatus = getVoteStatus(vote, pctBase)
       const { start, end } = dateRangeFilter
 
       return (
-        // open
-        (openFilter === 0 ||
-          ((open && openFilter === 1) || (!open && openFilter === 2))) &&
-        // type
         // status
-        // will remove all items if open filter is "open"
-        // as no open votes have a "status"
-        (statusFilter === 0 ||
-          ((!open && statusFilter === 1 && voteSuccess) ||
-            (!open && statusFilter === 2 && !voteSuccess))) &&
+        (statusFilter === -1 ||
+          statusFilter === 0 ||
+          ((open && statusFilter === 1) || (!open && statusFilter === 2))) &&
+        // trend
+        (trendFilter === -1 ||
+          trendFilter === 0 ||
+          ((open && (trendFilter === 1 && yea.cmp(nay) === 1)) ||
+            (trendFilter === 2 && yea.cmp(nay) !== 1))) &&
+        // outcome
+        (outcomeFilter === -1 ||
+          outcomeFilter === 0 ||
+          ((!open &&
+            outcomeFilter === 1 &&
+            voteStatus === VOTE_STATUS_ACCEPTED &&
+            ((isVoteAction(vote) && executed) || !isVoteAction(vote))) ||
+            (!open &&
+              outcomeFilter === 2 &&
+              voteStatus === VOTE_STATUS_REJECTED) ||
+            (!open &&
+              outcomeFilter === 3 &&
+              voteStatus === VOTE_STATUS_EXECUTED) ||
+            (!open &&
+              outcomeFilter === 4 &&
+              voteStatus === VOTE_STATUS_ACCEPTED &&
+              isVoteAction(vote) &&
+              !executed))) &&
+        // app
         // date range
         (!(start || end) ||
           isWithinInterval(new Date(startTimestamp), {
@@ -79,23 +112,41 @@ const useFilterVotes = votes => {
     })
     setFilteredVotes(filtered)
   }, [
+    statusFilter,
+    outcomeFilter,
+    trendFilter,
     appFilter,
     dateRangeFilter,
-    openFilter,
     pctBase,
     setFilteredVotes,
-    statusFilter,
     votes,
   ])
 
   return {
     filteredVotes,
-    voteOpenFilter: openFilter,
-    handleVoteOpenFilterChange: setOpenFilter,
-    voteAppFilter: appFilter,
-    handleVoteAppFilterChange: setAppFilter,
     voteStatusFilter: statusFilter,
-    handleVoteStatusFilterChange: setStatusFilter,
+    handleVoteStatusFilterChange: useCallback(
+      index => {
+        setStatusFilter(!index ? -1 : index)
+        setTrendFilter(-1)
+      },
+      [setStatusFilter, setTrendFilter]
+    ),
+    voteOutcomeFilter: outcomeFilter,
+    handleVoteOutcomeFilterChange: useCallback(
+      index => setOutcomeFilter(!index ? -1 : index),
+      [setOutcomeFilter]
+    ),
+    voteTrendFilter: trendFilter,
+    handleVoteTrendFilterChange: useCallback(
+      index => setTrendFilter(!index ? -1 : index),
+      [setTrendFilter]
+    ),
+    voteAppFilter: appFilter,
+    handleVoteAppFilterChange: useCallback(
+      index => setAppFilter(!index ? -1 : index),
+      [setAppFilter]
+    ),
     voteDateRangeFilter: dateRangeFilter,
     handleVoteDateRangeFilterChange: setDateRangeFilter,
     handleClearFilters,
@@ -120,16 +171,18 @@ const LayoutVotes = ({
   const { layoutName } = useLayout()
   const {
     filteredVotes,
-    voteOpenFilter,
-    handleVoteOpenFilterChange,
-    voteAppFilter,
-    handleVoteAppFilterChange,
     voteStatusFilter,
     handleVoteStatusFilterChange,
+    voteOutcomeFilter,
+    handleVoteOutcomeFilterChange,
+    voteTrendFilter,
+    handleVoteTrendFilterChange,
+    voteAppFilter,
+    handleVoteAppFilterChange,
     voteDateRangeFilter,
     handleVoteDateRangeFilterChange,
     handleClearFilters,
-  } = useFilterVotes(votes)
+  } = useFilterVotes(votes, votes.map(({ voteId }) => voteId))
   const { openVotes, closedVotes } = useVotes(filteredVotes)
   const handleBackClick = () => selectVote(-1)
 
@@ -164,8 +217,9 @@ const LayoutVotes = ({
                 `}
               >
                 <DropDown
-                  selected={voteOpenFilter}
-                  onChange={handleVoteOpenFilterChange}
+                  selected={voteStatusFilter}
+                  onChange={handleVoteStatusFilterChange}
+                  label="Status"
                   items={[
                     <div>
                       All
@@ -183,22 +237,33 @@ const LayoutVotes = ({
                       </span>
                     </div>,
                     'Open',
-                    'Past',
+                    'Closed',
                   ]}
                   width="128px"
                 />
+                {voteStatusFilter === 1 && (
+                  <DropDown
+                    label="Trend"
+                    selected={voteTrendFilter}
+                    onChange={handleVoteTrendFilterChange}
+                    items={['All', 'Will pass', 'Won’t pass']}
+                    width="128px"
+                  />
+                )}
+                {voteStatusFilter !== 1 && (
+                  <DropDown
+                    label="Outcome"
+                    selected={voteOutcomeFilter}
+                    onChange={handleVoteOutcomeFilterChange}
+                    items={['All', 'Passed', 'Rejected', 'Enacted', 'Pending']}
+                    width="128px"
+                  />
+                )}
                 <DropDown
-                  label="Type"
+                  label="App type"
                   selected={voteAppFilter}
                   onChange={handleVoteAppFilterChange}
                   items={['All', 'Finance', 'Tokens', 'Voting']}
-                  width="128px"
-                />
-                <DropDown
-                  label="Status"
-                  selected={voteStatusFilter}
-                  onChange={handleVoteStatusFilterChange}
-                  items={['All', 'Passed', 'Rejected']}
                   width="128px"
                 />
                 <DateRangeInput
@@ -225,7 +290,10 @@ const LayoutVotes = ({
 }
 
 const Votes = React.memo(({ openVotes, closedVotes, onSelectVote }) => {
-  const votingGroups = [['Open votes', openVotes], ['Past votes', closedVotes]]
+  const votingGroups = [
+    ['Open votes', openVotes],
+    ['Closed votes', closedVotes],
+  ]
 
   return (
     <React.Fragment>
