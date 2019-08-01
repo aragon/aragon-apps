@@ -28,7 +28,7 @@ const VOTER_STATE = ['ABSENT', 'YEA', 'NAY'].reduce((state, key, index) => {
 
 
 contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, nonHolder]) => {
-    let votingBase, daoFact, voting, token, executionTarget
+    let votingBase, daoFact, voting, token, executionTarget, acl
 
     let APP_MANAGER_ROLE
     let CREATE_VOTES_ROLE, MODIFY_SUPPORT_ROLE, MODIFY_QUORUM_ROLE
@@ -74,7 +74,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
     beforeEach(async () => {
         const r = await daoFact.newDAO(root)
         const dao = Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
-        const acl = ACL.at(await dao.acl())
+        acl = ACL.at(await dao.acl())
 
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
@@ -86,6 +86,23 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         await acl.createPermission(ANY_ADDR, voting.address, MODIFY_SUPPORT_ROLE, root, { from: root })
         await acl.createPermission(ANY_ADDR, voting.address, MODIFY_QUORUM_ROLE, root, { from: root })
     })
+
+    context('checking permissions', () => {
+        it('create votes permission', async () => {
+          let createVotesPermission = await acl.hasPermission(holder1, voting.address, CREATE_VOTES_ROLE);
+          assert.equal(createVotesPermission, true);
+        });  
+    
+        it('modify support permission', async () => {
+          let modifySupportPermission = await acl.hasPermission(holder1, voting.address, MODIFY_SUPPORT_ROLE);
+          assert.equal(modifySupportPermission, true);
+        }); 
+
+        it('modify quorum permission', async () => {
+            let modifyQuorumPermission = await acl.hasPermission(holder1, voting.address, MODIFY_QUORUM_ROLE);
+            assert.equal(modifyQuorumPermission, true);
+        }); 
+    });    
 
     context('normal token supply, common tests', () => {
         const neededSupport = pct16(50)
