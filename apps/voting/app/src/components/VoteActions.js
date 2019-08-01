@@ -14,7 +14,7 @@ import {
 import { useAppState, useConnectedAccount } from '@aragon/api-react'
 import { VOTE_NAY, VOTE_YEA, VOTE_ABSENT } from '../vote-types'
 import { useExtendedVoteData } from '../vote-hooks'
-import { getVoteStatus } from '../vote-utils'
+import { isVoteAction, getVoteStatus } from '../vote-utils'
 import { noop, formatDate } from '../utils'
 
 const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
@@ -22,7 +22,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   const connectedAccount = useConnectedAccount()
   const { tokenSymbol } = useAppState()
   const { connectedAccountVote, data } = vote
-  const { snapshotBlock, startDate: startTimestamp, open } = data
+  const { snapshotBlock, startDate: startTimestamp, open, executed } = data
   const { canUserVote, canExecute, userBalance } = useExtendedVoteData(vote)
   const [changeVote, setChangeVote] = useState(false)
   const handleChangeVote = useCallback(() => setChangeVote(true), [])
@@ -31,7 +31,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   if (!open) {
     return (
       <React.Fragment>
-        {canExecute && (
+        {canExecute && !executed && isVoteAction(vote) && (
           <React.Fragment>
             <Button mode="strong" onClick={onExecute} wide>
               Enact this vote
