@@ -23,6 +23,11 @@ import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { formatDate } from '../utils'
 
+const DEFAULT_DESCRIPTION =
+  'No additional description has been provided for this proposal.'
+const SEPARATOR = "for '"
+const EXECUTING = ' , executing'
+
 function Vote({ vote, onVote, onExecute }) {
   const theme = useTheme()
   const { layoutName } = useLayout()
@@ -30,6 +35,12 @@ function Vote({ vote, onVote, onExecute }) {
   const { data, numData, voteId, connectedAccountVote } = vote
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
   const { creator, endDate, open, metadata, description } = data
+  const text = description || metadata
+  const [rawTitle, extra = DEFAULT_DESCRIPTION] =
+    text.indexOf(SEPARATOR) > -1 ? text.split(SEPARATOR) : [text]
+  const [title] = rawTitle.indexOf(EXECUTING)
+    ? rawTitle.split(EXECUTING)
+    : [title]
   const quorumProgress = getQuorumProgress(vote)
   const totalVotes = yea + nay
   const votesYeaVotersSize = safeDiv(yea, totalVotes)
@@ -107,16 +118,24 @@ function Vote({ vote, onVote, onExecute }) {
               <div>
                 <div
                   css={`
-                    ${textStyle('label2')};
-                    margin-bottom: ${2 * GU}px;
+                    ${textStyle('title2')};
                   `}
                 >
-                  Description
+                  <span css="font-weight: bold;">Vote #{voteId}:</span>{' '}
+                  <VoteText text={title} />
                 </div>
                 <div>
-                  <span css="font-weight: bold;">#{voteId}</span>{' '}
-                  {description && <VoteText text={description} />}
-                  {metadata && <VoteText text={metadata} />}
+                  <div
+                    css={`
+                      ${textStyle('label2')};
+                      margin: ${2 * GU}px 0;
+                    `}
+                  >
+                    Description
+                  </div>
+                  <div>
+                    <VoteText text={extra} />
+                  </div>
                 </div>
               </div>
               <div>
