@@ -108,6 +108,14 @@ function Vote({ vote, onVote, onExecute }) {
           >
             <div
               css={`
+                ${textStyle('title2')};
+              `}
+            >
+              <span css="font-weight: bold;">Vote #{voteId}:</span>{' '}
+              <VoteText text={title} />
+            </div>
+            <div
+              css={`
                 display: grid;
                 grid-template-columns: ${layoutName === 'large'
                   ? 'auto auto'
@@ -118,24 +126,14 @@ function Vote({ vote, onVote, onExecute }) {
               <div>
                 <div
                   css={`
-                    ${textStyle('title2')};
+                    ${textStyle('label2')};
+                    margin-bottom: ${2 * GU}px;
                   `}
                 >
-                  <span css="font-weight: bold;">Vote #{voteId}:</span>{' '}
-                  <VoteText text={title} />
+                  Description
                 </div>
                 <div>
-                  <div
-                    css={`
-                      ${textStyle('label2')};
-                      margin: ${2 * GU}px 0;
-                    `}
-                  >
-                    Description
-                  </div>
-                  <div>
-                    <VoteText text={extra} />
-                  </div>
+                  <VoteText text={extra} />
                 </div>
               </div>
               <div>
