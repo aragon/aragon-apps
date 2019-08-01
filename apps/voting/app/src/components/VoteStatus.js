@@ -9,8 +9,7 @@ import {
   VOTE_STATUS_EXECUTED,
   VOTE_STATUS_PENDING_ENACTMENT,
 } from '../vote-types'
-import { getVoteStatus } from '../vote-utils'
-import { useExtendedVoteData } from '../vote-hooks'
+import { isVoteAction, getVoteStatus } from '../vote-utils'
 
 const POSITIVE = Symbol('positive')
 const NEGATIVE = Symbol('negative')
@@ -47,9 +46,9 @@ const VoteStatus = ({ cardStyle, vote }) => {
   const theme = useTheme()
   const { pctBase } = useSettings()
   const status = getVoteStatus(vote, pctBase)
-  const { canExecute } = useExtendedVoteData(vote)
   const { Icon, color, label } = ATTRIBUTES[
-    canExecute && status === VOTE_STATUS_ACCEPTED && !vote.data.extended
+    status === VOTE_STATUS_ACCEPTED &&
+    (isVoteAction(vote) && !vote.data.executed)
       ? VOTE_STATUS_PENDING_ENACTMENT
       : status
   ]
