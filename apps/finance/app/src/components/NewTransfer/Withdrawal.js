@@ -192,9 +192,9 @@ class Withdrawal extends React.Component {
         {errorMessage && <ValidationError message={errorMessage} />}
       </form>
     ) : (
-      <Info.Permissions title="Action impossible">
+      <Info mode="warning">
         The organization doesn’t have any tokens available to withdraw.
-      </Info.Permissions>
+      </Info>
     )
   }
 }
