@@ -7,13 +7,20 @@ import {
   VOTE_STATUS_REJECTED,
   VOTE_STATUS_ACCEPTED,
   VOTE_STATUS_EXECUTED,
+  VOTE_STATUS_PENDING_ENACTMENT,
 } from '../vote-types'
 import { getVoteStatus } from '../vote-utils'
+import { useExtendedVoteData } from '../vote-hooks'
 
 const POSITIVE = Symbol('positive')
 const NEGATIVE = Symbol('negative')
 
 const ATTRIBUTES = {
+  [VOTE_STATUS_PENDING_ENACTMENT]: {
+    label: 'Pending',
+    Icon: IconCheck,
+    color: POSITIVE,
+  },
   [VOTE_STATUS_ONGOING]: {
     label: 'Ongoing',
     Icon: IconTime,
@@ -38,9 +45,14 @@ const ATTRIBUTES = {
 
 const VoteStatus = ({ cardStyle, vote }) => {
   const theme = useTheme()
-  const settings = useSettings()
-  const status = getVoteStatus(vote, settings.pctBase)
-  const { Icon, color, label } = ATTRIBUTES[status]
+  const { pctBase } = useSettings()
+  const status = getVoteStatus(vote, pctBase)
+  const { canExecute } = useExtendedVoteData(vote)
+  const { Icon, color, label } = ATTRIBUTES[
+    canExecute && status === VOTE_STATUS_ACCEPTED && !vote.data.extended
+      ? VOTE_STATUS_PENDING_ENACTMENT
+      : status
+  ]
 
   return (
     <Main
