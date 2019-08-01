@@ -91,18 +91,18 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         it('create votes permission', async () => {
           let createVotesPermission = await acl.hasPermission(holder1, voting.address, CREATE_VOTES_ROLE);
           assert.equal(createVotesPermission, true);
-        });  
-    
+        });
+
         it('modify support permission', async () => {
           let modifySupportPermission = await acl.hasPermission(holder1, voting.address, MODIFY_SUPPORT_ROLE);
           assert.equal(modifySupportPermission, true);
-        }); 
+        });
 
         it('modify quorum permission', async () => {
             let modifyQuorumPermission = await acl.hasPermission(holder1, voting.address, MODIFY_QUORUM_ROLE);
             assert.equal(modifyQuorumPermission, true);
         }); 
-    });    
+    });
 
     context('normal token supply, common tests', () => {
         const neededSupport = pct16(50)
