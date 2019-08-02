@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { Badge, IdentityBadge, font } from '@aragon/ui'
+import { IdentityBadge, Tag, font } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { useIdentity } from '../../identity-manager'
 
@@ -51,7 +51,7 @@ const Label = styled.span`
   white-space: nowrap;
 `
 
-const StyledBadge = styled(Badge)`
+const StyledBadge = styled(Tag).attrs({ mode: 'app' })`
   margin-left: 16px;
   text-transform: uppercase;
   ${font({ size: 'xxsmall' })};

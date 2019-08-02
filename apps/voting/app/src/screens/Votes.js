@@ -1,10 +1,10 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import {
   BackButton,
-  Badge,
   Bar,
   DropDown,
   GU,
+  Tag,
   textStyle,
   useLayout,
   useTheme,
@@ -228,7 +228,9 @@ const LayoutVotes = React.memo(function LayoutVotes({
                           ${textStyle('label3')};
                         `}
                       >
-                        <Badge.Info>{votes.length}</Badge.Info>
+                        <Tag>
+                          {votes.length > 9999 || true ? '9999+' : votes.length}
+                        </Tag>
                       </span>
                     </div>,
                     'Open',

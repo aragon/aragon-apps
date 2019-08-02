@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo } from 'react'
 import {
-  Badge,
   Card,
   GU,
   IconCheck,
+  Tag,
   Timer,
   textStyle,
   theme,
@@ -51,7 +51,7 @@ const VotingCard = ({ vote, onOpen }) => {
           justify-content: space-between;
         `}
       >
-        <Badge.App>App Badge</Badge.App>
+        <Tag mode="app">App Badge</Tag>
         {youVoted && (
           <div
             css={`

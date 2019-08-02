@@ -1,11 +1,11 @@
 import React, { useCallback } from 'react'
 import {
-  Badge,
   Box,
   GU,
   IconCheck,
   IconTime,
   Split,
+  Tag,
   Timer,
   textStyle,
   useLayout,
@@ -76,7 +76,7 @@ function Vote({ vote, onVote, onExecute }) {
               justify-content: space-between;
             `}
           >
-            <Badge.App>App Badge</Badge.App>
+            <Tag mode="app">App Badge</Tag>
             {youVoted && (
               <div
                 css={`
