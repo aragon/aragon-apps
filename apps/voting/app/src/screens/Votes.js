@@ -155,13 +155,13 @@ const useVotes = votes => {
   return { openVotes, closedVotes }
 }
 
-const LayoutVotes = ({
+const LayoutVotes = React.memo(function LayoutVotes({
   votes,
   selectedVote,
   selectVote,
   onVote,
   onExecute,
-}) => {
+}) {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const {
@@ -282,7 +282,7 @@ const LayoutVotes = ({
       )}
     </React.Fragment>
   )
-}
+})
 
 const Votes = React.memo(({ openVotes, closedVotes, onSelectVote }) => {
   const votingGroups = [
