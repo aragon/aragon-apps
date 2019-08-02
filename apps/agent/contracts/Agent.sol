@@ -156,7 +156,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     function removeProtectedToken(address _token) external auth(REMOVE_PROTECTED_TOKEN_ROLE) {
         require(tokenIsProtected(_token), ERROR_TOKEN_NOT_PROTECTED);
 
-      _removeProtectedToken(_token);
+        _removeProtectedToken(_token);
     }
 
     /**
