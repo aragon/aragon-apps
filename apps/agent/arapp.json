@@ -34,6 +34,21 @@
   },
   "roles": [
     {
+      "name": "Execute safe actions",
+      "id": "SAFE_EXECUTE_ROLE",
+      "params": []
+    },
+    {
+      "name": "Add protected tokens",
+      "id": "ADD_PROTECTED_TOKEN_ROLE",
+      "params": []
+    },
+    {
+      "name": "Remove protected tokens",
+      "id": "REMOVE_PROTECTED_TOKEN_ROLE",
+      "params": []
+    },
+    {
       "name": "Execute actions",
       "id": "EXECUTE_ROLE",
       "params": [
@@ -61,6 +76,15 @@
       "id": "RUN_SCRIPT_ROLE",
       "params": [
         "EVM Script"
+      ]
+    },
+    {
+      "name": "Transfer Agent's tokens",
+      "id": "TRANSFER_ROLE",
+      "params": [
+        "Token address",
+        "Receiver address",
+        "Token amount"
       ]
     }
   ],
