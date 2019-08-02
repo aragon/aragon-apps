@@ -33,7 +33,7 @@ const tokenTestGroups = [
 ]
 
 contract('Finance App', ([root, owner, recipient]) => {
-    let daoFact, financeBase, finance, vaultBase, vault, token1, token2, acl
+    let daoFact, financeBase, finance, vaultBase, vault, token1, token2
 
     let ETH, MAX_UINT64, ANY_ENTITY, APP_MANAGER_ROLE
     let CREATE_PAYMENTS_ROLE, CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, MANAGE_PAYMENTS_ROLE
@@ -152,7 +152,7 @@ contract('Finance App', ([root, owner, recipient]) => {
         // vault
         const receipt1 = await dao.newAppInstance('0x1234', vaultBase.address, '0x', false, { from: root })
         vault = getContract('Vault').at(getNewProxyAddress(receipt1))
-        acl = getContract('ACL').at(await dao.acl())
+        const acl = getContract('ACL').at(await dao.acl())
         await acl.createPermission(finance.address, vault.address, TRANSFER_ROLE, root, { from: root })
         await vault.initialize()
 
@@ -293,27 +293,27 @@ contract('Finance App', ([root, owner, recipient]) => {
 
     context('checking permissions', () => {
         it('create payments permission', async () => {
-          let createPaymentsPermission = await acl.hasPermission(root, financeApp.address, CREATE_PAYMENTS_ROLE);
+          let createPaymentsPermission = await acl.hasPermission(root, finance.address, CREATE_PAYMENTS_ROLE);
           assert.equal(createPaymentsPermission, true);
         });
 
         it('change period permission', async () => {
-          let changePeriodPermission = await acl.hasPermission(root, financeApp.address, CHANGE_PERIOD_ROLE);
+          let changePeriodPermission = await acl.hasPermission(root, finance.address, CHANGE_PERIOD_ROLE);
           assert.equal(changePeriodPermission, true);
         });
 
         it('change budgets permission', async () => {
-            let changeBudgetsPermission = await acl.hasPermission(root, financeApp.address, CHANGE_BUDGETS_ROLE);
+            let changeBudgetsPermission = await acl.hasPermission(root, finance.address, CHANGE_BUDGETS_ROLE);
             assert.equal(changeBudgetsPermission, true);
         });
 
         it('execute payments permission', async () => {
-            let executePaymentsPermission = await acl.hasPermission(root, financeApp.address, EXECUTE_PAYMENTS_ROLE);
+            let executePaymentsPermission = await acl.hasPermission(root, finance.address, EXECUTE_PAYMENTS_ROLE);
             assert.equal(executePaymentsPermission, true);
         });
 
         it('manage payments permission', async () => {
-            let managePaymentsPermission = await acl.hasPermission(root, financeApp.address, MANAGE_PAYMENTS_ROLE);
+            let managePaymentsPermission = await acl.hasPermission(root, finance.address, MANAGE_PAYMENTS_ROLE);
             assert.equal(managePaymentsPermission, true);
         });
 
