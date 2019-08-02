@@ -171,7 +171,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   return (
     <div>
       <Buttons disabled />
-      <Info>
+      <Info mode="warning">
         The current account you are using did not hold any {tokenSymbol} at the
         time this vote began {formatDate(startTimestamp)}, and therefore cannot
         participate in this vote. Make sure your account is holding{' '}
@@ -180,6 +180,9 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
         <ExternalLink
           target="_blank"
           href="https://wiki.aragon.org/documentation/aragon_network_token/"
+          css={`
+            color: ${theme.infoSurfaceContent};
+          `}
         >
           Find out how to get tokens
         </ExternalLink>
