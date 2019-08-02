@@ -42,7 +42,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     string private constant ERROR_TOKEN_NOT_PROTECTED = "AGENT_TOKEN_NOT_PROTECTED";
     string private constant ERROR_TARGET_PROTECTED = "AGENT_TARGET_PROTECTED";
     string private constant ERROR_PROTECTED_TOKENS_MODIFIED = "AGENT_PROTECTED_TOKENS_MODIFIED";
-    string private constant ERROR_BALANCE_NOT_CONSTANT = "AGENT_BALANCE_NOT_CONSTANT";
+    string private constant ERROR_PROTECTED_BALANCE_LOWERED = "AGENT_PROTECTED_BALANCE_LOWERED";
     string private constant ERROR_DESIGNATED_TO_SELF = "AGENT_DESIGNATED_TO_SELF";
 
     mapping (bytes32 => bool) public isPresigned;
@@ -92,7 +92,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
             // and their balances have not been modified and return the call's return data
             for (uint256 j = 0; j < _protectedTokens.length; j++) {
                 require(protectedTokens[j] == _protectedTokens[j], ERROR_PROTECTED_TOKENS_MODIFIED);
-                require(balances[j] == balance(_protectedTokens[j]), ERROR_BALANCE_NOT_CONSTANT);
+                require(balance(protectedTokens[j]) >= balances[j], ERROR_PROTECTED_BALANCE_LOWERED);
             }
 
             emit SafeExecute(msg.sender, _target, _data);
