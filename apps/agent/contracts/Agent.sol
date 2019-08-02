@@ -63,12 +63,13 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     * @return Exits call frame forwarding the return data of the executed call (either error or success data)
     */
     function safeExecute(address _target, bytes _data) external auth(SAFE_EXECUTE_ROLE) {
-        address[] memory _protectedTokens = new address[](protectedTokens.length);
-        uint256[] memory balances = new uint256[](protectedTokens.length);
+        uint256 protectedTokensLength = protectedTokens.length;
+        address[] memory _protectedTokens = new address[](protectedTokensLength);
+        uint256[] memory balances = new uint256[](protectedTokensLength);
         bytes32 size;
         bytes32 ptr;
 
-        for (uint256 i = 0; i < protectedTokens.length; i++) {
+        for (uint256 i = 0; i < protectedTokensLength; i++) {
             address token = protectedTokens[i];
             // we don't care if target is ETH [0x00...0] as it can't be spent anyhow [though you can't invoke anything at 0x00...0]
             require(_target != token || token == ETH, ERROR_TARGET_PROTECTED);
@@ -90,7 +91,8 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         if (result) {
             // if the underlying call has succeeded, we check that the protected tokens
             // and their balances have not been modified and return the call's return data
-            for (uint256 j = 0; j < _protectedTokens.length; j++) {
+            require(protectedTokens.length == protectedTokensLength, ERROR_PROTECTED_TOKENS_MODIFIED);
+            for (uint256 j = 0; j < protectedTokensLength; j++) {
                 require(protectedTokens[j] == _protectedTokens[j], ERROR_PROTECTED_TOKENS_MODIFIED);
                 require(balance(protectedTokens[j]) >= balances[j], ERROR_PROTECTED_BALANCE_LOWERED);
             }
