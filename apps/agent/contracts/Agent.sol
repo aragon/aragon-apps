@@ -37,7 +37,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     bytes4 private constant ERC165_INTERFACE_ID = 0x01ffc9a7;
 
     string private constant ERROR_TOKENS_CAP_REACHED = "AGENT_TOKENS_CAP_REACHED";
-    string private constant ERROR_TOKEN_NOT_ETH_OR_CONTRACT = "AGENT_TOKEN_NOT_ETH_OR_CONTRACT";
+    string private constant ERROR_TOKEN_NOT_ERC20 = "AGENT_TOKEN_NOT_ERC20";
     string private constant ERROR_TOKEN_ALREADY_PROTECTED = "AGENT_TOKEN_ALREADY_PROTECTED";
     string private constant ERROR_TOKEN_NOT_PROTECTED = "AGENT_TOKEN_NOT_PROTECTED";
     string private constant ERROR_TARGET_PROTECTED = "AGENT_TARGET_PROTECTED";
@@ -71,8 +71,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
 
         for (uint256 i = 0; i < protectedTokensLength; i++) {
             address token = protectedTokens[i];
-            // we don't care if target is ETH [0x00...0] as it can't be spent anyhow [though you can't invoke anything at 0x00...0]
-            require(_target != token || token == ETH, ERROR_TARGET_PROTECTED);
+            require(_target != token, ERROR_TARGET_PROTECTED);
             // we copy the protected tokens array to check whether the storage array has been modified during the underlying call
             _protectedTokens[i] = token;
             // we copy the balances to check whether they have been modified during the underlying call
@@ -145,7 +144,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     */
     function addProtectedToken(address _token) external auth(ADD_PROTECTED_TOKEN_ROLE) {
         require(protectedTokens.length < PROTECTED_TOKENS_CAP, ERROR_TOKENS_CAP_REACHED);
-        require(isContract(_token) || _token == ETH, ERROR_TOKEN_NOT_ETH_OR_CONTRACT);
+        require(isContract(_token), ERROR_TOKEN_NOT_ERC20);
         require(!tokenIsProtected(_token), ERROR_TOKEN_ALREADY_PROTECTED);
 
         _addProtectedToken(_token);
