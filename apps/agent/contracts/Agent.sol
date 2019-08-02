@@ -144,7 +144,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     */
     function addProtectedToken(address _token) external auth(ADD_PROTECTED_TOKEN_ROLE) {
         require(protectedTokens.length < PROTECTED_TOKENS_CAP, ERROR_TOKENS_CAP_REACHED);
-        require(isContract(_token), ERROR_TOKEN_NOT_ERC20);
+        require(isERC20(_token), ERROR_TOKEN_NOT_ERC20);
         require(!tokenIsProtected(_token), ERROR_TOKEN_ALREADY_PROTECTED);
 
         _addProtectedToken(_token);
@@ -276,6 +276,10 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         }
 
         return false;
+    }
+
+    function isERC20(address _token) internal view returns (bool) {
+        return isContract(_token);
     }
 
     function protectedTokenIndex(address _token) internal view returns (uint256) {
