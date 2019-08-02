@@ -62,7 +62,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     * @param _data Calldata for the action
     * @return Exits call frame forwarding the return data of the executed call (either error or success data)
     */
-    function safeExecute(address _target, bytes _data) external auth(SAFE_EXECUTE_ROLE) {
+    function safeExecute(address _target, bytes _data) external authP(SAFE_EXECUTE_ROLE, arr(_target, uint256(getSig(_data)))) {
         uint256 protectedTokensLength = protectedTokens.length;
         address[] memory _protectedTokens = new address[](protectedTokensLength);
         uint256[] memory balances = new uint256[](protectedTokensLength);

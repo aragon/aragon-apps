@@ -36,7 +36,10 @@
     {
       "name": "Execute safe actions",
       "id": "SAFE_EXECUTE_ROLE",
-      "params": []
+      "params": [
+        "Target address",
+        "Signature"
+      ]
     },
     {
       "name": "Add protected tokens",
