@@ -57,7 +57,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     event SetDesignatedSigner(address indexed sender, address indexed oldSigner, address indexed newSigner);
 
     /**
-    * @notice Safe execute '`@radspec(_target, _data)`' on `_target`
+    * @notice Execute '`@radspec(_target, _data)`' on `_target` ensuring that protected tokens can't be spent
     * @param _target Address where the action is being executed
     * @param _data Calldata for the action
     * @return Exits call frame forwarding the return data of the executed call (either error or success data)
