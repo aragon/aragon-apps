@@ -201,6 +201,7 @@ class DateRangeInput extends React.PureComponent {
             ? `1px solid ${accent}`
             : `1px solid ${border}`};
           border-radius: ${RADIUS}px;
+          box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px;
         `}
         ref={el => (this.rootRef = el)}
         onClick={this.handleClick}
