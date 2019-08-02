@@ -103,7 +103,7 @@ module.exports = (
     context('> Safe executing actions', () => {
       const noData = '0x'
       const amount = 1000
-      let target, token1, token2, token3, token4, token5, token6, token7, token8, token9
+      let target, token1, token2, token3, token4, token5, token6, token7, token8, token9, token10
 
       beforeEach(async () => {
         target = await ExecutionTarget.new()
@@ -116,12 +116,12 @@ module.exports = (
         token7 = await TokenMock.new(agent.address, amount)
         token8 = await TokenMock.new(agent.address, amount)
         token9 = await TokenMock.new(agent.address, amount)
+        token10 = await TokenMock.new(agent.address, amount)
 
         await acl.createPermission(authorized, agent.address, ADD_PROTECTED_TOKEN_ROLE, root, { from: root })
         await acl.createPermission(authorized, agent.address, REMOVE_PROTECTED_TOKEN_ROLE, root, { from: root })
         await acl.createPermission(authorized, agent.address, SAFE_EXECUTE_ROLE, root, { from: root })
 
-        await agent.addProtectedToken(ETH, { from: authorized })
         await agent.addProtectedToken(token1.address, { from: authorized })
         await agent.addProtectedToken(token2.address, { from: authorized })
         await agent.addProtectedToken(token3.address, { from: authorized })
@@ -131,6 +131,7 @@ module.exports = (
         await agent.addProtectedToken(token7.address, { from: authorized })
         await agent.addProtectedToken(token8.address, { from: authorized })
         await agent.addProtectedToken(token9.address, { from: authorized })
+        await agent.addProtectedToken(token10.address, { from: authorized })
 
         assert.equal(await target.counter(), 0)
         assert.equal(await token1.balanceOf(agent.address), amount)
@@ -454,23 +455,20 @@ module.exports = (
       })
 
       context('> sender has ADD_PROTECTED_TOKEN_ROLE', () => {
-        context('> and token is ETH or ERC20', () => {
+        context('> and token is ERC20', () => {
           context('> and token is not already protected', () => {
             context('> and protected tokens cap has not yet been reached', () => {
               it('it should add protected token', async () => {
+                const token1 = await TokenMock.new(agent.address, 10000)
                 const token2 = await TokenMock.new(agent.address, 10000)
-                const token3 = await TokenMock.new(agent.address, 10000)
 
-                const receipt1 = await agent.addProtectedToken(ETH, { from: authorized })
+                const receipt1 = await agent.addProtectedToken(token1.address, { from: authorized })
                 const receipt2 = await agent.addProtectedToken(token2.address, { from: authorized })
-                const receipt3 = await agent.addProtectedToken(token3.address, { from: authorized })
 
                 assertAmountOfEvents(receipt1, 'AddProtectedToken')
                 assertAmountOfEvents(receipt2, 'AddProtectedToken')
-                assertAmountOfEvents(receipt3, 'AddProtectedToken')
-                assert.equal(await agent.protectedTokens(0), ETH)
+                assert.equal(await agent.protectedTokens(0), token1.address)
                 assert.equal(await agent.protectedTokens(1), token2.address)
-                assert.equal(await agent.protectedTokens(2), token3.address)
               })
             })
 
@@ -485,8 +483,8 @@ module.exports = (
                 const token7 = await TokenMock.new(agent.address, 1000)
                 const token8 = await TokenMock.new(agent.address, 1000)
                 const token9 = await TokenMock.new(agent.address, 1000)
+                const token10 = await TokenMock.new(agent.address, 1000)
 
-                await agent.addProtectedToken(ETH, { from: authorized })
                 await agent.addProtectedToken(token1.address, { from: authorized })
                 await agent.addProtectedToken(token2.address, { from: authorized })
                 await agent.addProtectedToken(token3.address, { from: authorized })
@@ -496,6 +494,7 @@ module.exports = (
                 await agent.addProtectedToken(token7.address, { from: authorized })
                 await agent.addProtectedToken(token8.address, { from: authorized })
                 await agent.addProtectedToken(token9.address, { from: authorized })
+                await agent.addProtectedToken(token10.address, { from: authorized })
               })
 
               it('it should revert', async () => {
@@ -516,7 +515,7 @@ module.exports = (
           })
         })
 
-        context('> but token is not ETH or ERC20', () => {
+        context('> but token is not ERC20', () => {
           it('it should revert', async () => {
             await assertRevert(() => agent.addProtectedToken(root, { from: authorized }))
           })
@@ -541,15 +540,16 @@ module.exports = (
       context('> sender has REMOVE_PROTECTED_TOKEN_ROLE', () => {
         context('> and token is actually protected', () => {
           it('it should remove protected token', async () => {
+            const token1 = await TokenMock.new(agent.address, 10000)
             const token2 = await TokenMock.new(agent.address, 10000)
             const token3 = await TokenMock.new(agent.address, 10000)
 
-            await agent.addProtectedToken(ETH, { from: authorized })
+            await agent.addProtectedToken(token1.address, { from: authorized })
             await agent.addProtectedToken(token2.address, { from: authorized })
             await agent.addProtectedToken(token3.address, { from: authorized })
 
             const receipt1 = await agent.removeProtectedToken(token3.address, { from: authorized })
-            const receipt2 = await agent.removeProtectedToken(ETH, { from: authorized })
+            const receipt2 = await agent.removeProtectedToken(token1.address, { from: authorized })
 
             assertAmountOfEvents(receipt1, 'RemoveProtectedToken')
             assertAmountOfEvents(receipt2, 'RemoveProtectedToken')
