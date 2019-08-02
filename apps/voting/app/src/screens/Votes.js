@@ -229,7 +229,7 @@ const LayoutVotes = React.memo(function LayoutVotes({
                         `}
                       >
                         <Tag>
-                          {votes.length > 9999 || true ? '9999+' : votes.length}
+                          {votes.length > 9999 ? '9999+' : votes.length}
                         </Tag>
                       </span>
                     </div>,
