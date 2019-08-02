@@ -33,7 +33,7 @@ const tokenTestGroups = [
 ]
 
 contract('Finance App', ([root, owner, recipient]) => {
-    let daoFact, financeBase, finance, vaultBase, vault, token1, token2
+    let daoFact, financeBase, finance, vaultBase, vault, token1, token2, acl
 
     let ETH, MAX_UINT64, ANY_ENTITY, APP_MANAGER_ROLE
     let CREATE_PAYMENTS_ROLE, CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, MANAGE_PAYMENTS_ROLE
@@ -152,7 +152,7 @@ contract('Finance App', ([root, owner, recipient]) => {
         // vault
         const receipt1 = await dao.newAppInstance('0x1234', vaultBase.address, '0x', false, { from: root })
         vault = getContract('Vault').at(getNewProxyAddress(receipt1))
-        const acl = getContract('ACL').at(await dao.acl())
+        acl = getContract('ACL').at(await dao.acl())
         await acl.createPermission(finance.address, vault.address, TRANSFER_ROLE, root, { from: root })
         await vault.initialize()
 
