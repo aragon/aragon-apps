@@ -122,13 +122,10 @@ function EntryActions({
   ])
 
   const actions = [
+    ...[canAssign ? [assignTokens, IconAdd, 'Add tokens'] : []],
     [removeTokens, IconRemove, `Remove Token${singleToken ? '' : 's'}`],
     [editLabel, IconLabel, `${label ? 'Edit' : 'Add'} custom label`],
   ]
-
-  if (canAssign) {
-    actions.unshift([assignTokens, IconAdd, 'Add tokens'])
-  }
 
   return (
     <ContextMenu>
