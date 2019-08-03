@@ -12,7 +12,6 @@ import {
   textStyle,
   useLayout,
   useTheme,
-  useThemeMode,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import EmptyState from './screens/EmptyState'
@@ -210,35 +209,15 @@ class App extends React.PureComponent {
 }
 
 export default () => {
-  const { api, appState, connectedAccount, requestMenu } = useAragonApi()
+  const { api, appState, connectedAccount } = useAragonApi()
   const theme = useTheme()
-  const themeMode = useThemeMode()
   const { layoutName } = useLayout()
-
-  useEffect(() => {
-    const fn = ({ data }) => {
-      if (
-        data &&
-        data.from === 'wrapper' &&
-        data.name === 'themeMode' &&
-        data.value
-      ) {
-        themeMode.set(data.value)
-      }
-    }
-
-    window.addEventListener('message', fn)
-    return () => {
-      window.removeEventListener('message', fn)
-    }
-  }, [])
 
   return (
     <App
       api={api}
       connectedAccount={connectedAccount}
       layoutName={layoutName}
-      requestMenu={requestMenu}
       theme={theme}
       {...appState}
     />
