@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react'
 import PropTypes from 'prop-types'
+import BN from 'bn.js'
 import { useNetwork } from '@aragon/api-react'
 import {
   ContextMenu,
@@ -92,8 +93,20 @@ function Holders({
 }
 
 Holders.propTypes = {
+  groupMode: PropTypes.bool,
   holders: PropTypes.array,
+  maxAccountTokens: PropTypes.instanceOf(BN),
+  onAssignTokens: PropTypes.func.isRequired,
+  onRemoveTokens: PropTypes.func.isRequired,
+  tokenAddress: PropTypes.string,
+  tokenDecimalsBase: PropTypes.instanceOf(BN),
+  tokenName: PropTypes.string,
+  tokenSupply: PropTypes.instanceOf(BN),
+  tokenSymbol: PropTypes.string,
+  tokenTransfersEnabled: PropTypes.bool,
+  userAccount: PropTypes.string,
 }
+
 Holders.defaultProps = {
   holders: [],
 }
