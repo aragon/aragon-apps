@@ -19,7 +19,7 @@ function displayedStakes(accounts, total) {
     total,
     maxIncluded: DISTRIBUTION_ITEMS_MAX,
   }).map((stake, index) => ({
-    value: stake.index === -1 ? 'Rest' : accounts[index].address,
+    item: stake.index === -1 ? 'Rest' : accounts[index].address,
     percentage: stake.percentage,
   }))
 }
@@ -110,15 +110,15 @@ function InfoBoxes({
       <Box heading="Ownership Distribution">
         <Distribution
           heading="Token holder stakes"
-          values={stakes}
-          renderLegendItem={({ value }) => (
+          items={stakes}
+          renderLegendItem={({ item: account }) => (
             <div>
               <LocalIdentityBadge
-                entity={value}
+                entity={account}
                 networkType={network.type}
-                connectedAccount={value === userAccount}
+                connectedAccount={account === userAccount}
               />
-              {name === userAccount && <You />}
+              {account === userAccount && <You />}
             </div>
           )}
         />
