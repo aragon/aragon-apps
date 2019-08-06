@@ -292,6 +292,8 @@ contract('Finance App', ([root, owner, recipient]) => {
     }
 
     context('checking permissions', () => {
+        const amount = 10
+
         it('create payments permission', async () => {
           let createPaymentsPermission = await acl.hasPermission(root, finance.address, CREATE_PAYMENTS_ROLE);
           assert.equal(createPaymentsPermission, true);
@@ -332,41 +334,38 @@ contract('Finance App', ([root, owner, recipient]) => {
         it("should revert when changing period from an address that does not have change period permission", async() => {
             const NEW_PERIOD_DURATION = ONE_DAY * 2 // two days
             return assertRevert(async () => {
-                await finance.setPeriodDuration(NEW_PERIOD_DURATION)
+                await finance.setPeriodDuration(NEW_PERIOD_DURATION, {from: owner})
                 'address does not have permission to change period'
             })
-        });  
+        });
 
         it("should revert when changing budget from an address that does not have change budgets permission", async() => {
             return assertRevert(async () => {
-                await finance.setBudget(token1.address, 20, {from: owner})              
+                await finance.setBudget(token1.address, 20, {from: owner})
                 'address does not have permission to change budgets'
             })
-        });  
+        });
 
         it("should revert when executing payment from an address that does not have execute payments permission", async() => {
-            const amount = 10
-
             // executes up to 10 times every 2 seconds
             await finance.newScheduledPayment(ETH, withdrawAddr, amount, NOW, 2, 10, '')
             await finance.mockIncreaseTime(4)
 
             return assertRevert(async () => {
-                await finance.executePayment(1, {from: owner})              
+                await finance.executePayment(1, {from: owner})
                 'address does not have permission to execute payments'
             })
-        });  
+        });
 
         it("should revert when managing payment from an address that does not have manage payments permission", async() => {
-            const amount = 10
             const receipt = await finance.newScheduledPayment(token1.address, recipient, amount, NOW + 1, 1, 4, '')
             const paymentId = getEventArgument(receipt, 'NewPayment', 'paymentId')
-            
+
             return assertRevert(async () => {
-                await finance.setPaymentStatus(paymentId, false, {from: owner})              
+                await finance.setPaymentStatus(paymentId, false, {from: owner})
                 'address does not have permission to manage payments'
             })
-        });  
+        });
     });
 
     context('ETH deposits', () => {
