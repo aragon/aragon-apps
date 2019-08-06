@@ -70,6 +70,13 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
   })
 
   context('checking permissions', () => {
+    before(async() => {
+      acl.revokePermission(ANY_ENTITY, survey.address, CREATE_SURVEYS_ROLE);
+      acl.revokePermission(ANY_ENTITY, survey.address, MODIFY_PARTICIPATION_ROLE);
+      acl.grantPermission(holder1, survey.address, CREATE_SURVEYS_ROLE, {from: root});
+      acl.grantPermission(holder1, survey.address, MODIFY_PARTICIPATION_ROLE, {from: root});
+    })
+
     it('create surveys permission', async () => {
       let createSurveysPermission = await acl.hasPermission(holder1, survey.address, CREATE_SURVEYS_ROLE);
       assert.equal(createSurveysPermission, true);
