@@ -205,6 +205,42 @@ module.exports = (
             const data = target.contract.fail.getData()
             await assertRevert(() => agent.safeExecute(target.address, data, { from: authorized }))
           })
+
+          context('> but action affects a protected ERC20 balance', () => {
+            context('> action decreases protected ERC20 balance', () => {
+              it('it should revert', async () => {
+                await agent.removeProtectedToken(token10.address, { from: authorized }) // leave a spot to add a new token
+                const token11 = await TokenMock.new(agent.address, amount)
+                const approve = token11.contract.approve.getData(target.address, 10)
+                await agent.safeExecute(token11.address, approve, { from: authorized }) // target is now allowed to transfer on behalf of agent
+                await agent.addProtectedToken(token11.address, { from: authorized }) // token11 is now protected
+                const data = target.contract.transferTokenFrom.getData(token11.address)
+
+                await assertRevert(() => agent.safeExecute(target.address, data, { from: authorized }))
+              })
+            })
+
+            context('> action increases protected ERC20 balance', () => {
+              it('it should execute action', async () => {
+                await agent.removeProtectedToken(token10.address, { from: authorized }) // leave a spot to add a new token
+                const token11 = await TokenMock.new(target.address, amount)
+                await agent.addProtectedToken(token11.address, { from: authorized }) // token11 is now protected
+                const data = target.contract.transferTokenTo.getData(token11.address)
+                await agent.safeExecute(target.address, data, { from: authorized })
+
+                assert.equal((await token11.balanceOf(agent.address)).toNumber(), 1)
+              })
+            })
+          })
+
+          context('> but action affects protected tokens list', () => {
+            it('it should revert', async () => {
+              await acl.grantPermission(target.address, agent.address, REMOVE_PROTECTED_TOKEN_ROLE, { from: root }) // grant target permission to remove protected tokens
+              const data = target.contract.removeProtectedToken.getData(token4.address)
+
+              await assertRevert(() => agent.safeExecute(target.address, data, { from: authorized }))
+            })
+          })
         })
 
         context('> but target is a protected ERC20', () => {
@@ -212,19 +248,6 @@ module.exports = (
             const approve = token1.contract.approve.getData(target.address, 10)
 
             await assertRevert(() => agent.safeExecute(token1.address, approve, { from: authorized }))
-          })
-        })
-
-        context('> and target is not a protected ERC20 but action affects a protected ERC20 balance', () => {
-          it('it should revert', async () => {
-            await agent.removeProtectedToken(token9.address, { from: authorized }) // leave a spot to add a new token
-            const token10 = await TokenMock.new(agent.address, amount)
-            const approve = token10.contract.approve.getData(target.address, 10)
-            await agent.safeExecute(token10.address, approve, { from: authorized }) // target is now allowed to transfer on behalf of agent
-            await agent.addProtectedToken(token10.address, { from: authorized }) // token10 is now protected
-            const data = target.contract.transferTokenFrom.getData(token10.address)
-
-            await assertRevert(() => agent.safeExecute(target.address, data, { from: authorized }))
           })
         })
       })
