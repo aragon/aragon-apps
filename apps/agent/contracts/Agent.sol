@@ -64,7 +64,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     */
     function safeExecute(address _target, bytes _data) external authP(SAFE_EXECUTE_ROLE, arr(_target, uint256(getSig(_data)))) {
         uint256 protectedTokensLength = protectedTokens.length;
-        address[] memory _protectedTokens = new address[](protectedTokensLength);
+        address[] memory protectedTokens_ = new address[](protectedTokensLength);
         uint256[] memory balances = new uint256[](protectedTokensLength);
         bytes32 size;
         bytes32 ptr;
@@ -73,7 +73,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
             address token = protectedTokens[i];
             require(_target != token, ERROR_TARGET_PROTECTED);
             // we copy the protected tokens array to check whether the storage array has been modified during the underlying call
-            _protectedTokens[i] = token;
+            protectedTokens_[i] = token;
             // we copy the balances to check whether they have been modified during the underlying call
             balances[i] = balance(token);
         }
@@ -92,7 +92,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
             // and their balances have not been modified and return the call's return data
             require(protectedTokens.length == protectedTokensLength, ERROR_PROTECTED_TOKENS_MODIFIED);
             for (uint256 j = 0; j < protectedTokensLength; j++) {
-                require(protectedTokens[j] == _protectedTokens[j], ERROR_PROTECTED_TOKENS_MODIFIED);
+                require(protectedTokens[j] == protectedTokens_[j], ERROR_PROTECTED_TOKENS_MODIFIED);
                 require(balance(protectedTokens[j]) >= balances[j], ERROR_PROTECTED_BALANCE_LOWERED);
             }
 
