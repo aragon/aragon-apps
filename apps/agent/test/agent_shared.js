@@ -539,8 +539,12 @@ module.exports = (
         })
 
         context('> but token is not ERC20', () => {
-          it('it should revert', async () => {
+          it('it should revert [token is not a contract]', async () => {
             await assertRevert(() => agent.addProtectedToken(root, { from: authorized }))
+          })
+
+          it('it should revert [token is a contract but not an ERC20]', async () => {
+            await assertRevert(() => agent.addProtectedToken(daoFact.address, { from: authorized }))
           })
         })
       })

@@ -279,7 +279,13 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     }
 
     function isERC20(address _token) internal view returns (bool) {
-        return isContract(_token);
+        if (!isContract(_token)) {
+            return false;
+        }
+
+        balance(_token);
+
+        return true;
     }
 
     function protectedTokenIndex(address _token) internal view returns (uint256) {
