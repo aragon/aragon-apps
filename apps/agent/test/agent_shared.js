@@ -52,6 +52,7 @@ module.exports = (
 
       // Agent errors
       AGENT_DESIGNATED_TO_SELF: "AGENT_DESIGNATED_TO_SELF",
+      AGENT_CAN_NOT_FORWARD: "AGENT_CAN_NOT_FORWARD",
     })
 
     const root = accounts[0]
@@ -467,7 +468,7 @@ module.exports = (
         assert.isFalse(await agent.canForward(nonScriptRunner, script))
         assert.equal(await executionTarget.counter(), 0)
 
-        await assertRevert(agent.forward(script, { from: nonScriptRunner }), errors.APP_AUTH_FAILED)
+        await assertRevert(agent.forward(script, { from: nonScriptRunner }), errors.AGENT_CAN_NOT_FORWARD)
         assert.equal(await executionTarget.counter(), 0)
       })
     })

@@ -44,6 +44,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     string private constant ERROR_TOKEN_ALREADY_PROTECTED = "AGENT_TOKEN_ALREADY_PROTECTED";
     string private constant ERROR_TOKEN_NOT_PROTECTED = "AGENT_TOKEN_NOT_PROTECTED";
     string private constant ERROR_DESIGNATED_TO_SELF = "AGENT_DESIGNATED_TO_SELF";
+    string private constant ERROR_CAN_NOT_FORWARD = "AGENT_CAN_NOT_FORWARD";
 
     mapping (bytes32 => bool) public isPresigned;
     address public designatedSigner;
@@ -210,10 +211,9 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     * @dev IForwarder interface conformance. Forwards any token holder action.
     * @param _evmScript Script being executed
     */
-    function forward(bytes _evmScript)
-        public
-        authP(RUN_SCRIPT_ROLE, arr(_getScriptACLParam(_evmScript)))
-    {
+    function forward(bytes _evmScript) public {
+        require(canForward(msg.sender, _evmScript), ERROR_CAN_NOT_FORWARD);
+
         bytes memory input = ""; // no input
         address[] memory blacklist = new address[](0); // no addr blacklist, can interact with anything
         runScript(_evmScript, input, blacklist);
@@ -227,9 +227,8 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     * @return True if the given address can run scripts, false otherwise
     */
     function canForward(address _sender, bytes _evmScript) public view returns (bool) {
-        uint256[] memory params = new uint256[](1);
-        params[0] = _getScriptACLParam(_evmScript);
-        return canPerform(_sender, RUN_SCRIPT_ROLE, params);
+        // Note that `canPerform()` implicitly does an initialization check itself
+        return canPerform(_sender, RUN_SCRIPT_ROLE, arr(_getScriptACLParam(_evmScript)));
     }
 
     // ERC-165 conformance
