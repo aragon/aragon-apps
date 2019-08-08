@@ -65,7 +65,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     */
     function execute(address _target, uint256 _ethValue, bytes _data)
         external // This function MUST always be external as the function performs a low level return, exiting the Agent app execution context
-        authP(EXECUTE_ROLE, arr(_target, _ethValue, uint256(getSig(_data)))) // bytes4 casted as uint256 sets the bytes as the LSBs
+        authP(EXECUTE_ROLE, arr(_target, _ethValue, uint256(_getSig(_data)))) // bytes4 casted as uint256 sets the bytes as the LSBs
     {
         bool result = _target.call.value(_ethValue)(_data);
 
@@ -91,7 +91,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     * @param _data Calldata for the action
     * @return Exits call frame forwarding the return data of the executed call (either error or success data)
     */
-    function safeExecute(address _target, bytes _data) external authP(SAFE_EXECUTE_ROLE, arr(_target, uint256(getSig(_data)))) {
+    function safeExecute(address _target, bytes _data) external authP(SAFE_EXECUTE_ROLE, arr(_target, uint256(_getSig(_data)))) {
         uint256 protectedTokensLength = protectedTokens.length;
         address[] memory protectedTokens_ = new address[](protectedTokensLength);
         uint256[] memory balances = new uint256[](protectedTokensLength);
@@ -144,8 +144,8 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     */
     function addProtectedToken(address _token) external auth(ADD_PROTECTED_TOKEN_ROLE) {
         require(protectedTokens.length < PROTECTED_TOKENS_CAP, ERROR_TOKENS_CAP_REACHED);
-        require(isERC20(_token), ERROR_TOKEN_NOT_ERC20);
-        require(!tokenIsProtected(_token), ERROR_TOKEN_ALREADY_PROTECTED);
+        require(_isERC20(_token), ERROR_TOKEN_NOT_ERC20);
+        require(!_tokenIsProtected(_token), ERROR_TOKEN_ALREADY_PROTECTED);
 
         _addProtectedToken(_token);
     }
@@ -155,7 +155,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     * @param _token Address of the token to be unprotected
     */
     function removeProtectedToken(address _token) external auth(REMOVE_PROTECTED_TOKEN_ROLE) {
-        require(tokenIsProtected(_token), ERROR_TOKEN_NOT_PROTECTED);
+        require(_tokenIsProtected(_token), ERROR_TOKEN_NOT_PROTECTED);
 
         _removeProtectedToken(_token);
     }
@@ -194,14 +194,15 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         emit SetDesignatedSigner(msg.sender, oldDesignatedSigner, _designatedSigner);
     }
 
+    // Forwarding fns
+
+    /**
+    * @notice Tells whether the Agent app is a forwarder or not
+    * @dev IForwarder interface conformance
+    * @return Always true
+    */
     function isForwarder() external pure returns (bool) {
         return true;
-    }
-
-    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return
-            interfaceId == ERC1271_INTERFACE_ID ||
-            interfaceId == ERC165_INTERFACE_ID;
     }
 
     /**
@@ -211,7 +212,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     */
     function forward(bytes _evmScript)
         public
-        authP(RUN_SCRIPT_ROLE, arr(getScriptACLParam(_evmScript)))
+        authP(RUN_SCRIPT_ROLE, arr(_getScriptACLParam(_evmScript)))
     {
         bytes memory input = ""; // no input
         address[] memory blacklist = new address[](0); // no addr blacklist, can interact with anything
@@ -219,10 +220,43 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         // We don't need to emit an event here as EVMScriptRunner will emit ScriptResult if successful
     }
 
-    function isValidSignature(bytes32 hash, bytes signature) public view returns (bytes4) {
+    /**
+    * @notice Tells whether `_sender` can forward actions or not
+    * @dev IForwarder interface conformance
+    * @param _sender Address of the account intending to forward an action
+    * @return True if the given address can run scripts, false otherwise
+    */
+    function canForward(address _sender, bytes _evmScript) public view returns (bool) {
+        uint256[] memory params = new uint256[](1);
+        params[0] = _getScriptACLParam(_evmScript);
+        return canPerform(_sender, RUN_SCRIPT_ROLE, params);
+    }
+
+    // ERC-165 conformance
+
+    /**
+     * @notice Tells whether this contract supports a given ERC-165 interface
+     * @param _interfaceId Interface bytes to check
+     * @return True if this contract supports the interface
+     */
+    function supportsInterface(bytes4 _interfaceId) external pure returns (bool) {
+        return
+            _interfaceId == ERC1271_INTERFACE_ID ||
+            _interfaceId == ERC165_INTERFACE_ID;
+    }
+
+    // ERC-1271 conformance
+
+    /**
+     * @notice Tells whether a signature is seen as valid by this contract through ERC-1271
+     * @param _hash Arbitrary length data signed on the behalf of address (this)
+     * @param _signature Signature byte array associated with _data
+     * @return The ERC-1271 magic value if the signature is valid
+     */
+    function isValidSignature(bytes32 _hash, bytes _signature) public view returns (bytes4) {
         // Short-circuit in case the hash was presigned. Optimization as performing calls
         // and ecrecover is more expensive than an SLOAD.
-        if (isPresigned[hash]) {
+        if (isPresigned[_hash]) {
             return returnIsValidSignatureMagicNumber(true);
         }
 
@@ -230,17 +264,13 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         if (designatedSigner == address(0)) {
             isValid = false;
         } else {
-            isValid = SignatureValidator.isValidSignature(hash, designatedSigner, signature);
+            isValid = SignatureValidator.isValidSignature(_hash, designatedSigner, _signature);
         }
 
         return returnIsValidSignatureMagicNumber(isValid);
     }
 
-    function canForward(address sender, bytes evmScript) public view returns (bool) {
-        uint256[] memory params = new uint256[](1);
-        params[0] = getScriptACLParam(evmScript);
-        return canPerform(sender, RUN_SCRIPT_ROLE, params);
-    }
+    // Internal fns
 
     function _addProtectedToken(address _token) internal {
         protectedTokens.push(_token);
@@ -249,36 +279,14 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     }
 
     function _removeProtectedToken(address _token) internal {
-        protectedTokens[protectedTokenIndex(_token)] = protectedTokens[protectedTokens.length - 1];
+        protectedTokens[_protectedTokenIndex(_token)] = protectedTokens[protectedTokens.length - 1];
         delete protectedTokens[protectedTokens.length - 1];
         protectedTokens.length --;
 
         emit RemoveProtectedToken(_token);
     }
 
-    function getScriptACLParam(bytes evmScript) internal pure returns (uint256) {
-        return uint256(keccak256(abi.encodePacked(evmScript)));
-    }
-
-    function getSig(bytes data) internal pure returns (bytes4 sig) {
-        if (data.length < 4) {
-            return;
-        }
-
-        assembly { sig := mload(add(data, 0x20)) }
-    }
-
-    function tokenIsProtected(address _token) internal view returns (bool) {
-        for (uint256 i = 0; i < protectedTokens.length; i++) {
-            if (protectedTokens[i] == _token) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    function isERC20(address _token) internal view returns (bool) {
+    function _isERC20(address _token) internal view returns (bool) {
         if (!isContract(_token)) {
             return false;
         }
@@ -288,7 +296,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         return true;
     }
 
-    function protectedTokenIndex(address _token) internal view returns (uint256) {
+    function _protectedTokenIndex(address _token) internal view returns (uint256) {
         for (uint i = 0; i < protectedTokens.length; i++) {
             if (protectedTokens[i] == _token) {
               return i;
@@ -296,5 +304,27 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         }
 
         revert(ERROR_TOKEN_NOT_PROTECTED);
+    }
+
+    function _tokenIsProtected(address _token) internal view returns (bool) {
+        for (uint256 i = 0; i < protectedTokens.length; i++) {
+            if (protectedTokens[i] == _token) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function _getScriptACLParam(bytes _evmScript) internal pure returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(_evmScript)));
+    }
+
+    function _getSig(bytes _data) internal pure returns (bytes4 sig) {
+        if (_data.length < 4) {
+            return;
+        }
+
+        assembly { sig := mload(add(_data, 0x20)) }
     }
 }
