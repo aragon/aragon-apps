@@ -29,6 +29,24 @@
   },
   "roles": [
     {
+      "name": "Transfer Agent's tokens",
+      "id": "TRANSFER_ROLE",
+      "params": [
+        "Token address",
+        "Receiver address",
+        "Token amount"
+      ]
+    },
+    {
+      "name": "Execute actions",
+      "id": "EXECUTE_ROLE",
+      "params": [
+        "Target address",
+        "ETH value",
+        "Signature"
+      ]
+    },
+    {
       "name": "Execute safe actions",
       "id": "SAFE_EXECUTE_ROLE",
       "params": [
@@ -47,26 +65,17 @@
       "params": []
     },
     {
-      "name": "Execute actions",
-      "id": "EXECUTE_ROLE",
-      "params": [
-        "Target address",
-        "ETH value",
-        "Signature"
-      ]
-    },
-    {
-      "name": "Designate signer",
-      "id": "DESIGNATE_SIGNER_ROLE",
-      "params": [
-        "Designated signer address"
-      ]
-    },
-    {
-      "name": "Presign hash",
+      "name": "Add presigned hashes",
       "id": "ADD_PRESIGNED_HASH_ROLE",
       "params": [
         "Hash"
+      ]
+    },
+    {
+      "name": "Set designated signer",
+      "id": "DESIGNATE_SIGNER_ROLE",
+      "params": [
+        "Designated signer address"
       ]
     },
     {
@@ -74,15 +83,6 @@
       "id": "RUN_SCRIPT_ROLE",
       "params": [
         "EVM Script"
-      ]
-    },
-    {
-      "name": "Transfer Agent's tokens",
-      "id": "TRANSFER_ROLE",
-      "params": [
-        "Token address",
-        "Receiver address",
-        "Token amount"
       ]
     }
   ],
