@@ -36,13 +36,13 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
 
     bytes4 private constant ERC165_INTERFACE_ID = 0x01ffc9a7;
 
+    string private constant ERROR_TARGET_PROTECTED = "AGENT_TARGET_PROTECTED";
+    string private constant ERROR_PROTECTED_TOKENS_MODIFIED = "AGENT_PROTECTED_TOKENS_MODIFIED";
+    string private constant ERROR_PROTECTED_BALANCE_LOWERED = "AGENT_PROTECTED_BALANCE_LOWERED";
     string private constant ERROR_TOKENS_CAP_REACHED = "AGENT_TOKENS_CAP_REACHED";
     string private constant ERROR_TOKEN_NOT_ERC20 = "AGENT_TOKEN_NOT_ERC20";
     string private constant ERROR_TOKEN_ALREADY_PROTECTED = "AGENT_TOKEN_ALREADY_PROTECTED";
     string private constant ERROR_TOKEN_NOT_PROTECTED = "AGENT_TOKEN_NOT_PROTECTED";
-    string private constant ERROR_TARGET_PROTECTED = "AGENT_TARGET_PROTECTED";
-    string private constant ERROR_PROTECTED_TOKENS_MODIFIED = "AGENT_PROTECTED_TOKENS_MODIFIED";
-    string private constant ERROR_PROTECTED_BALANCE_LOWERED = "AGENT_PROTECTED_BALANCE_LOWERED";
     string private constant ERROR_DESIGNATED_TO_SELF = "AGENT_DESIGNATED_TO_SELF";
 
     mapping (bytes32 => bool) public isPresigned;
