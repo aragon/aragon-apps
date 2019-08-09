@@ -227,7 +227,7 @@ function Vote({ vote, onVote, onExecute }) {
                   color: ${theme.surfaceContentSecondary};
                 `}
               >
-                ({round(minAcceptQuorum * 100, 2)}% Support needed)
+                ({round(minAcceptQuorum * 100, 2)}% support needed)
               </span>
             </div>
             <SummaryBar
@@ -250,7 +250,7 @@ function Vote({ vote, onVote, onExecute }) {
                   color: ${theme.surfaceContentSecondary};
                 `}
               >
-                ({round(supportRequired * 100, 2)}% Support needed)
+                ({round(supportRequired * 100, 2)}% approval needed)
               </span>
             </div>
             <SummaryBar

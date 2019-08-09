@@ -37,7 +37,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
               Enact this vote
             </Button>
             <Info>
-              The voting perdiod is closed and the vote status is passed.{' '}
+              The voting period is closed and the vote has passed.{' '}
               <span css="font-weight: bold;">Anyone</span> can now enact this
               vote to execute its action.
             </Info>
@@ -150,7 +150,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
                 ${textStyle('body1')};
               `}
             >
-              You must enable your account to vote this proposal
+              You must enable your account to vote on this proposal
             </div>
             <div
               css={`
@@ -172,10 +172,10 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
     <div>
       <Buttons disabled />
       <Info mode="warning">
-        The current account you are using did not hold any {tokenSymbol} at the
-        time this vote began {formatDate(startTimestamp)}, and therefore cannot
-        participate in this vote. Make sure your account is holding{' '}
-        {tokenSymbol} at the time a vote begins if you want to vote using this
+        The currently connected account did not hold any {tokenSymbol} at the
+        time this vote began ({formatDate(startTimestamp)}), and therefore
+        cannot participate in this vote. Make sure your accounts are holding{' '}
+        {tokenSymbol} at the time a vote begins if you'd like to vote using this
         Voting app.{' '}
         <ExternalLink
           target="_blank"
@@ -184,7 +184,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
             color: ${theme.infoSurfaceContent};
           `}
         >
-          Find out how to get tokens
+          Find out how to get tokens.
         </ExternalLink>
       </Info>
     </div>
@@ -241,7 +241,8 @@ const TokenReference = ({
     <div>
       Voting with <span css="font-weight: bold;">{userBalance}</span> of your{' '}
       <span css="font-weight: bold;">{tokenSymbol}</span> at block{' '}
-      <span css="font-weight: bold;">{snapshotBlock}</span> due to at{' '}
+      <span css="font-weight: bold;">{snapshotBlock}</span> due to the vote
+      starting at{' '}
       <span css="font-weight: bold;">{formatDate(startTimestamp)}</span>.
     </div>
   </Info>
