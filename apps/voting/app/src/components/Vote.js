@@ -62,10 +62,6 @@ function Vote({ vote, onVote, onExecute }) {
     onExecute(voteId)
   }, [onExecute, voteId])
 
-  if (!vote) {
-    return null
-  }
-
   return (
     <Split
       primary={
