@@ -271,6 +271,12 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         return returnIsValidSignatureMagicNumber(isValid);
     }
 
+    // Getters
+
+    function getProtectedTokensLength() public view isInitialized returns (uint256) {
+        return protectedTokens.length;
+    }
+
     // Internal fns
 
     function _addProtectedToken(address _token) internal {

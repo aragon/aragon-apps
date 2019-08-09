@@ -581,6 +581,8 @@ module.exports = (
 
             assertAmountOfEvents(receipt1, 'RemoveProtectedToken')
             assertAmountOfEvents(receipt2, 'RemoveProtectedToken')
+
+            assert.equal(await agent.getProtectedTokensLength(), 1)
             assert.equal(await agent.protectedTokens(0), token2.address)
             await assertRevert(() => agent.protectedTokens(1)) // this should try to overflow the length of the protectedTokens array and thus revert
           })
@@ -603,6 +605,44 @@ module.exports = (
           await agent.addProtectedToken(token.address, { from: authorized })
 
           await assertRevert(() => agent.removeProtectedToken(token.address, { from: unauthorized }))
+        })
+      })
+    })
+
+    context('> Accessing protected tokens', () => {
+      beforeEach(async () => {
+        await acl.createPermission(authorized, agent.address, ADD_PROTECTED_TOKEN_ROLE, root, { from: root })
+      })
+
+      context('> when there are protected tokens', () => {
+        let token
+
+        beforeEach(async () => {
+          token = await TokenMock.new(agent.address, 10000)
+          await agent.addProtectedToken(token.address, { from: authorized })
+        })
+
+        it('has correct protected tokens length', async () => {
+          assert.equal(await agent.getProtectedTokensLength(), 1)
+        })
+
+        it('can access protected token', async () => {
+          const protectedTokenAddress = await agent.protectedTokens(0)
+          assert.equal(token.address, protectedTokenAddress)
+        })
+
+        it('cannot access non-existent protected tokens', async () => {
+          assertRevert(agent.protectedTokens(1))
+        })
+      })
+
+      context('> when there are no protected tokens', () => {
+        it('has correct protected tokens length', async () => {
+          assert.equal(await agent.getProtectedTokensLength(), 0)
+        })
+
+        it('cannot access non-existent protected tokens', async () => {
+          assertRevert(agent.protectedTokens(0))
         })
       })
     })
