@@ -92,7 +92,10 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     * @param _data Calldata for the action
     * @return Exits call frame forwarding the return data of the executed call (either error or success data)
     */
-    function safeExecute(address _target, bytes _data) external authP(SAFE_EXECUTE_ROLE, arr(_target, uint256(_getSig(_data)))) {
+    function safeExecute(address _target, bytes _data)
+        external // This function MUST always be external as the function performs a low level return, exiting the Agent app execution context
+        authP(SAFE_EXECUTE_ROLE, arr(_target, uint256(_getSig(_data)))) // bytes4 casted as uint256 sets the bytes as the LSBs
+    {
         uint256 protectedTokensLength = protectedTokens.length;
         address[] memory protectedTokens_ = new address[](protectedTokensLength);
         uint256[] memory balances = new uint256[](protectedTokensLength);
@@ -132,7 +135,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
                 return(ptr, size)
             }
         } else {
-            // if the underlying call has failed, we revert and forward [possible] returned error data
+            // if the underlying call has failed, we revert and forward returned error data
             assembly {
                 revert(ptr, size)
             }
@@ -290,6 +293,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
             return false;
         }
 
+        // Throwaway sanity check to make sure the token's `balanceOf()` does not error (for now)
         balance(_token);
 
         return true;
