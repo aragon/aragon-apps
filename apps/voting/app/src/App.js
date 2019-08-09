@@ -83,14 +83,14 @@ function App() {
 
 export default function Voting() {
   return (
-    <AppLogicProvider>
-      <IdentityProvider>
-        <SettingsProvider>
-          <Main assetsUrl="./aragon-ui">
+    <Main assetsUrl="./aragon-ui">
+      <AppLogicProvider>
+        <IdentityProvider>
+          <SettingsProvider>
             <App />
-          </Main>
-        </SettingsProvider>
-      </IdentityProvider>
-    </AppLogicProvider>
+          </SettingsProvider>
+        </IdentityProvider>
+      </AppLogicProvider>
+    </Main>
   )
 }
