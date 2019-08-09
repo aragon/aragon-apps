@@ -155,7 +155,7 @@ const useVotes = votes => {
   return { openVotes, closedVotes }
 }
 
-const LayoutVotes = React.memo(function LayoutVotes({
+const Votes = React.memo(function Votes({
   votes,
   selectedVote,
   selectVote,
@@ -274,7 +274,7 @@ const LayoutVotes = React.memo(function LayoutVotes({
           {!filteredVotes.length ? (
             <EmptyFilteredVotes onClear={handleClearFilters} />
           ) : (
-            <Votes
+            <VotingGroups
               openVotes={openVotes}
               closedVotes={closedVotes}
               onSelectVote={selectVote}
@@ -286,7 +286,7 @@ const LayoutVotes = React.memo(function LayoutVotes({
   )
 })
 
-const Votes = React.memo(({ openVotes, closedVotes, onSelectVote }) => {
+const VotingGroups = React.memo(({ openVotes, closedVotes, onSelectVote }) => {
   const votingGroups = [
     ['Open votes', openVotes],
     ['Closed votes', closedVotes],
@@ -311,4 +311,4 @@ const Votes = React.memo(({ openVotes, closedVotes, onSelectVote }) => {
   )
 })
 
-export default LayoutVotes
+export default Votes
