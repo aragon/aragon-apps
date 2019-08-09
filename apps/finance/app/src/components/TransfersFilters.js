@@ -24,7 +24,7 @@ const TransfersFilters = ({
       `}
     >
       <DropDown
-        label="Type"
+        placeholder="Type"
         header="Type"
         items={transferTypes}
         selected={transferTypeFilter}
@@ -32,7 +32,7 @@ const TransfersFilters = ({
         width="128px"
       />
       <DropDown
-        label="Token Type"
+        placeholder="Token Type"
         header="Token Type"
         items={symbols}
         selected={tokenFilter}
