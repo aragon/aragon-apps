@@ -9,7 +9,7 @@ import {
   theme,
   useTheme,
 } from '@aragon/ui'
-import VotingOptions from './VotingOptions'
+import VoteOptions from './VoteOptions'
 import VoteText from '../VoteText'
 import VoteStatus from '../VoteStatus'
 import { noop } from '../../utils'
@@ -22,7 +22,7 @@ function getOptions(yea, nay) {
   ]
 }
 
-const VotingCard = ({ vote, onOpen }) => {
+const VoteCard = ({ vote, onOpen }) => {
   const theme = useTheme()
   const { voteId, data, numData, connectedAccountVote } = vote
   const { votingPower, yea, nay } = numData
@@ -83,7 +83,7 @@ const VotingCard = ({ vote, onOpen }) => {
       >
         <VoteText text={description || metadata} />
       </div>
-      <VotingOptions options={options} votingPower={votingPower} />
+      <VoteOptions options={options} votingPower={votingPower} />
       <div
         css={`
           margin-top: ${2 * GU}px;
@@ -99,8 +99,8 @@ const VotingCard = ({ vote, onOpen }) => {
   )
 }
 
-VotingCard.defaultProps = {
+VoteCard.defaultProps = {
   onOpen: noop,
 }
 
-export default VotingCard
+export default VoteCard

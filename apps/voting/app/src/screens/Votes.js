@@ -10,8 +10,8 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { isWithinInterval, startOfDay, endOfDay } from 'date-fns'
-import VotingCard from '../components/VotingCard/VotingCard'
-import VotingCardGroup from '../components/VotingCard/VotingCardGroup'
+import VoteCard from '../components/VoteCard/VoteCard'
+import VoteCardGroup from '../components/VoteCard/VoteCardGroup'
 import Vote from '../components/Vote'
 import EmptyFilteredVotes from '../components/EmptyFilteredVotes'
 import DateRangeInput from '../components/DateRange/DateRangeInput'
@@ -274,7 +274,7 @@ const Votes = React.memo(function Votes({
           {!filteredVotes.length ? (
             <EmptyFilteredVotes onClear={handleClearFilters} />
           ) : (
-            <VotingGroups
+            <VoteGroups
               openVotes={openVotes}
               closedVotes={closedVotes}
               onSelectVote={selectVote}
@@ -286,25 +286,18 @@ const Votes = React.memo(function Votes({
   )
 })
 
-const VotingGroups = React.memo(({ openVotes, closedVotes, onSelectVote }) => {
-  const votingGroups = [
-    ['Open votes', openVotes],
-    ['Closed votes', closedVotes],
-  ]
+const VoteGroups = React.memo(({ openVotes, closedVotes, onSelectVote }) => {
+  const voteGroups = [['Open votes', openVotes], ['Closed votes', closedVotes]]
 
   return (
     <React.Fragment>
-      {votingGroups.map(([groupName, votes]) =>
+      {voteGroups.map(([groupName, votes]) =>
         votes.length ? (
-          <VotingCardGroup
-            title={groupName}
-            count={votes.length}
-            key={groupName}
-          >
+          <VoteCardGroup title={groupName} count={votes.length} key={groupName}>
             {votes.map(vote => (
-              <VotingCard key={vote.voteId} vote={vote} onOpen={onSelectVote} />
+              <VoteCard key={vote.voteId} vote={vote} onOpen={onSelectVote} />
             ))}
-          </VotingCardGroup>
+          </VoteCardGroup>
         ) : null
       )}
     </React.Fragment>

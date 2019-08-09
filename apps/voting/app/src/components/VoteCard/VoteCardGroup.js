@@ -9,7 +9,7 @@ import {
   useTheme,
 } from '@aragon/ui'
 
-const VotingCardGroup = ({ title, count, children }) => {
+const VoteCardGroup = ({ title, count, children }) => {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
@@ -52,4 +52,4 @@ const VotingCardGroup = ({ title, count, children }) => {
   )
 }
 
-export default VotingCardGroup
+export default VoteCardGroup

@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { Text, theme } from '@aragon/ui'
 import { animated } from 'react-spring'
 
-class VotingOption extends React.Component {
+class VoteOption extends React.Component {
   static defaultProps = {
     color: theme.positive,
   }
@@ -54,4 +54,4 @@ const Bar = styled(animated.div)`
   transform-origin: 0 0;
 `
 
-export default VotingOption
+export default VoteOption
