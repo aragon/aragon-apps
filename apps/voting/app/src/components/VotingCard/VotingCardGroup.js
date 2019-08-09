@@ -21,9 +21,9 @@ const VotingCardGroup = ({ title, count, children }) => {
         css={`
           display: flex;
           align-items: center;
-          ${unselectable};
           margin-bottom: ${3 * GU}px;
           ${compactMode ? `padding: 0 ${2 * GU}px;` : ''}
+          ${unselectable};
         `}
       >
         <div

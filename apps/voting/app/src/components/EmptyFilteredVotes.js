@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Box, Button, GU, useTheme } from '@aragon/ui'
+import { Box, Button, GU, unselectable, useTheme } from '@aragon/ui'
 import noResultsSvg from './assets/no-results.svg'
 
 function EmptyFilteredVotes({ onClear }) {
@@ -14,6 +14,7 @@ function EmptyFilteredVotes({ onClear }) {
           display: flex;
           flex-direction: column;
           align-items: center;
+          ${unselectable};
         `}
       >
         <img
