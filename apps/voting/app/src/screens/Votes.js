@@ -160,6 +160,7 @@ const Votes = React.memo(function Votes({
   selectVote,
   onVote,
   onExecute,
+  onBack,
 }) {
   const theme = useTheme()
   const { layoutName } = useLayout()
@@ -178,14 +179,13 @@ const Votes = React.memo(function Votes({
     handleClearFilters,
   } = useFilterVotes(votes)
   const { openVotes, closedVotes } = useVotes(filteredVotes)
-  const handleBackClick = () => selectVote(-1)
 
   return (
     <React.Fragment>
       {selectedVote !== null && (
         <React.Fragment>
           <Bar>
-            <BackButton onClick={handleBackClick} />
+            <BackButton onClick={onBack} />
           </Bar>
           <Vote vote={selectedVote} onVote={onVote} onExecute={onExecute} />
         </React.Fragment>
