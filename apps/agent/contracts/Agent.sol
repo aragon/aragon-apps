@@ -145,7 +145,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     * @notice Add `_token.symbol(): string` to the list of protected tokens
     * @param _token Address of the token to be protected
     */
-    function addProtectedToken(address _token) external auth(ADD_PROTECTED_TOKEN_ROLE) {
+    function addProtectedToken(address _token) external authP(ADD_PROTECTED_TOKEN_ROLE, arr(_token)) {
         require(protectedTokens.length < PROTECTED_TOKENS_CAP, ERROR_TOKENS_CAP_REACHED);
         require(_isERC20(_token), ERROR_TOKEN_NOT_ERC20);
         require(!_tokenIsProtected(_token), ERROR_TOKEN_ALREADY_PROTECTED);
@@ -157,7 +157,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     * @notice Remove `_token.symbol(): string` from the list of protected tokens
     * @param _token Address of the token to be unprotected
     */
-    function removeProtectedToken(address _token) external auth(REMOVE_PROTECTED_TOKEN_ROLE) {
+    function removeProtectedToken(address _token) external authP(REMOVE_PROTECTED_TOKEN_ROLE, arr(_token)) {
         require(_tokenIsProtected(_token), ERROR_TOKEN_NOT_PROTECTED);
 
         _removeProtectedToken(_token);

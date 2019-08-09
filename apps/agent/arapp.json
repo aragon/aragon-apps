@@ -57,12 +57,16 @@
     {
       "name": "Add protected tokens",
       "id": "ADD_PROTECTED_TOKEN_ROLE",
-      "params": []
+      "params": [
+        "Token"
+      ]
     },
     {
       "name": "Remove protected tokens",
       "id": "REMOVE_PROTECTED_TOKEN_ROLE",
-      "params": []
+      "params": [
+        "Token"
+      ]
     },
     {
       "name": "Add presigned hashes",
