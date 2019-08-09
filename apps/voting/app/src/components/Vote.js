@@ -102,14 +102,14 @@ function Vote({ vote, onVote, onExecute }) {
               margin-top: ${2.5 * GU}px;
             `}
           >
-            <div
+            <h1
               css={`
                 ${textStyle('title2')};
               `}
             >
               <span css="font-weight: bold;">Vote #{voteId}:</span>{' '}
               <VoteText text={title} />
-            </div>
+            </h1>
             <div
               css={`
                 display: grid;
