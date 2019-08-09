@@ -122,7 +122,7 @@ const useFilterVotes = votes => {
     voteStatusFilter: statusFilter,
     handleVoteStatusFilterChange: useCallback(
       index => {
-        setStatusFilter(!index ? -1 : index)
+        setStatusFilter(index || -1)
         setTrendFilter(-1)
       },
       [setStatusFilter, setTrendFilter]
