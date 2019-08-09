@@ -81,14 +81,16 @@ function App() {
   )
 }
 
-export default () => (
-  <AppLogicProvider>
-    <IdentityProvider>
-      <SettingsProvider>
-        <Main assetsUrl="./aragon-ui">
-          <App />
-        </Main>
-      </SettingsProvider>
-    </IdentityProvider>
-  </AppLogicProvider>
-)
+export default function Voting() {
+  return (
+    <AppLogicProvider>
+      <IdentityProvider>
+        <SettingsProvider>
+          <Main assetsUrl="./aragon-ui">
+            <App />
+          </Main>
+        </SettingsProvider>
+      </IdentityProvider>
+    </AppLogicProvider>
+  )
+}
