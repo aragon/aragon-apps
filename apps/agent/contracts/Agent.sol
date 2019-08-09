@@ -75,14 +75,13 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         }
 
         assembly {
-            let size := returndatasize
             let ptr := mload(0x40)
-            returndatacopy(ptr, 0, size)
+            returndatacopy(ptr, 0, returndatasize)
 
             // revert instead of invalid() bc if the underlying call failed with invalid() it already wasted gas.
             // if the call returned error data, forward it
-            switch result case 0 { revert(ptr, size) }
-            default { return(ptr, size) }
+            switch result case 0 { revert(ptr, returndatasize) }
+            default { return(ptr, returndatasize) }
         }
     }
 
@@ -99,8 +98,6 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
         uint256 protectedTokensLength = protectedTokens.length;
         address[] memory protectedTokens_ = new address[](protectedTokensLength);
         uint256[] memory balances = new uint256[](protectedTokensLength);
-        bytes32 size;
-        bytes32 ptr;
 
         for (uint256 i = 0; i < protectedTokensLength; i++) {
             address token = protectedTokens[i];
@@ -113,11 +110,13 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
 
         bool result = _target.call(_data);
 
+        bytes32 ptr;
+        uint256 size;
         assembly {
             size := returndatasize
             ptr := mload(0x40)
-            mstore(0x40, add(ptr, size))
-            returndatacopy(ptr, 0, size)
+            mstore(0x40, add(ptr, returndatasize))
+            returndatacopy(ptr, 0, returndatasize)
         }
 
         if (result) {
@@ -282,8 +281,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
 
     function _removeProtectedToken(address _token) internal {
         protectedTokens[_protectedTokenIndex(_token)] = protectedTokens[protectedTokens.length - 1];
-        delete protectedTokens[protectedTokens.length - 1];
-        protectedTokens.length --;
+        protectedTokens.length--;
 
         emit RemoveProtectedToken(_token);
     }
