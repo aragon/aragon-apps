@@ -177,7 +177,7 @@ const Votes = React.memo(function Votes({
     voteDateRangeFilter,
     handleVoteDateRangeFilterChange,
     handleClearFilters,
-  } = useFilterVotes(votes, votes.map(({ voteId }) => voteId))
+  } = useFilterVotes(votes)
   const { openVotes, closedVotes } = useVotes(filteredVotes)
   const handleBackClick = () => selectVote(-1)
 
