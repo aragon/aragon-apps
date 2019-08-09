@@ -15,10 +15,6 @@ export function isVoteAction(vote) {
   return vote.data && vote.data.script && vote.data.script !== EMPTY_SCRIPT
 }
 
-export function getAccountVote(account, voters) {
-  return voters[account] || VOTE_ABSENT
-}
-
 export function isVoteOpen(vote, date) {
   const { executed, endDate } = vote.data
   // Open if not executed and date is still before end date
