@@ -92,7 +92,7 @@ const VoteCard = ({ vote, onOpen }) => {
         {open ? (
           <Timer end={endDate} maxUnits={4} />
         ) : (
-          <VoteStatus vote={vote} cardStyle />
+          <VoteStatus vote={vote} />
         )}
       </div>
     </Card>

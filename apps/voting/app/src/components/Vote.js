@@ -202,7 +202,7 @@ function Vote({ vote, onVote, onExecute }) {
               </React.Fragment>
             ) : (
               <React.Fragment>
-                <VoteStatus vote={vote} cardStyle />
+                <VoteStatus vote={vote} />
                 <div
                   css={`
                     margin-top: ${2 * GU}px;

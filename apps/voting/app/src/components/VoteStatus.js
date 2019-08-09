@@ -42,7 +42,7 @@ const ATTRIBUTES = {
   },
 }
 
-const VoteStatus = ({ cardStyle, vote }) => {
+const VoteStatus = ({ vote }) => {
   const theme = useTheme()
   const { pctBase } = useSettings()
   const status = getVoteStatus(vote, pctBase)
