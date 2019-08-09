@@ -66,6 +66,7 @@ const getFilteredTransfers = ({
       (selectedToken === null ||
         addressesEqual(token, selectedToken.address)) &&
       (transferType === TransferTypes.All ||
+        selectedTransferType === -1 ||
         (transferType === TransferTypes.Incoming && isIncoming) ||
         (transferType === TransferTypes.Outgoing && !isIncoming))
   )
@@ -118,8 +119,8 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const network = useNetwork()
   const theme = useTheme()
   const [page, setPage] = useState(0)
-  const [selectedToken, setSelectedToken] = useState(0)
-  const [selectedTransferType, setSelectedTransferType] = useState(0)
+  const [selectedToken, setSelectedToken] = useState(-1)
+  const [selectedTransferType, setSelectedTransferType] = useState(-1)
   const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
   const handleSelectedDateRangeChange = range => {
     setPage(0)
@@ -128,14 +129,14 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const handleTokenChange = React.useCallback(
     index => {
       setPage(0)
-      setSelectedToken(index)
+      setSelectedToken(index === 0 ? -1 : index)
     },
     [setPage, setSelectedToken]
   )
   const handleTransferTypeChange = React.useCallback(
     index => {
       setPage(0)
-      setSelectedTransferType(index)
+      setSelectedTransferType(index === 0 ? -1 : index)
     },
     [setPage, setSelectedTransferType]
   )
@@ -147,7 +148,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   }, [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange])
   const filteredTransfers = getFilteredTransfers({
     transactions,
-    selectedToken: selectedToken !== 0 ? tokens[selectedToken - 1] : null,
+    selectedToken: selectedToken > 0 ? tokens[selectedToken - 1] : null,
     selectedTransferType,
     selectedDateRange,
   })
