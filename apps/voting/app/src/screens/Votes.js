@@ -82,10 +82,9 @@ const useFilterVotes = votes => {
         // outcome
         (outcomeFilter === -1 ||
           outcomeFilter === 0 ||
-          ((!open &&
-            (outcomeFilter === 1 &&
-              (voteStatus === VOTE_STATUS_ACCEPTED ||
-                voteStatus === VOTE_STATUS_EXECUTED))) ||
+          ((outcomeFilter === 1 &&
+            (voteStatus === VOTE_STATUS_ACCEPTED ||
+              voteStatus === VOTE_STATUS_EXECUTED)) ||
             (outcomeFilter === 2 && voteStatus === VOTE_STATUS_REJECTED) ||
             (outcomeFilter === 3 && voteStatus === VOTE_STATUS_EXECUTED) ||
             (outcomeFilter === 4 &&
