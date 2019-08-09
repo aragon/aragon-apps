@@ -99,20 +99,16 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   if (canUserVote && hasVoted && !changeVote) {
     return (
       <div>
-        <div
+        <Button
+          mode="strong"
+          onClick={handleChangeVote}
+          wide
           css={`
             margin-bottom: ${2 * GU}px;
           `}
         >
-          <Button
-            mode="strong"
-            onClick={handleChangeVote}
-            wide
-            css="width: 100%;"
-          >
-            Change my vote
-          </Button>
-        </div>
+          Change my vote
+        </Button>
         <TokenReference
           userBalance={userBalance}
           tokenSymbol={tokenSymbol}
@@ -238,13 +234,11 @@ const TokenReference = ({
   startTimestamp,
 }) => (
   <Info>
-    <div>
-      Voting with <span css="font-weight: bold;">{userBalance}</span> of your{' '}
-      <span css="font-weight: bold;">{tokenSymbol}</span> at block{' '}
-      <span css="font-weight: bold;">{snapshotBlock}</span> due to the vote
-      starting at{' '}
-      <span css="font-weight: bold;">{formatDate(startTimestamp)}</span>.
-    </div>
+    Voting with <span css="font-weight: bold;">{userBalance}</span> of your{' '}
+    <span css="font-weight: bold;">{tokenSymbol}</span> at block{' '}
+    <span css="font-weight: bold;">{snapshotBlock}</span> due to the vote
+    starting at{' '}
+    <span css="font-weight: bold;">{formatDate(startTimestamp)}</span>.
   </Info>
 )
 
