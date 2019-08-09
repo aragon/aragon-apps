@@ -77,8 +77,8 @@ const useFilterVotes = votes => {
         // trend
         (trendFilter === -1 ||
           trendFilter === 0 ||
-          ((open && (trendFilter === 1 && yea.cmp(nay) === 1)) ||
-            (trendFilter === 2 && yea.cmp(nay) !== 1))) &&
+          ((open && (trendFilter === 1 && yea.gt(nay))) ||
+            (trendFilter === 2 && yea.lte(nay)))) &&
         // outcome
         (outcomeFilter === -1 ||
           outcomeFilter === 0 ||
