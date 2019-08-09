@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import {
   Button,
   GU,
@@ -26,6 +26,7 @@ function App() {
   } = useAppLogic()
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
+  const handleBack = useCallback(() => selectVote(-1), [selectVote])
 
   return (
     <div css="min-width: 320px">
@@ -70,6 +71,7 @@ function App() {
             selectedVote={selectedVote}
             onVote={actions.vote}
             onExecute={actions.execute}
+            onBack={handleBack}
           />
         </React.Fragment>
       )}
