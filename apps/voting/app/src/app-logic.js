@@ -88,11 +88,11 @@ export function useAppLogic() {
   }
 
   return {
-    isSyncing: isSyncing || !ready,
-    votes,
+    actions,
     selectVote,
     selectedVote,
-    actions,
+    votes,
+    isSyncing: isSyncing || !ready,
     newVotePanel: useMemo(() => newVotePanel, [newVotePanel]),
   }
 }

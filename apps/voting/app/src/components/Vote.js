@@ -45,6 +45,10 @@ function Vote({ vote, onVote, onExecute }) {
   const totalVotes = yea + nay
   const votesYeaVotersSize = safeDiv(yea, totalVotes)
   const votesNayVotersSize = safeDiv(nay, totalVotes)
+  const [yeaPct, nayPct] = percentageList(
+    [votesYeaVotersSize, votesNayVotersSize],
+    2
+  )
   const youVoted =
     connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
   const handleVoteNo = useCallback(() => {
@@ -57,10 +61,6 @@ function Vote({ vote, onVote, onExecute }) {
   const handleExecute = useCallback(() => {
     onExecute(voteId)
   }, [onExecute, voteId])
-  const [yeaPct, nayPct] = percentageList(
-    [votesYeaVotersSize, votesNayVotersSize],
-    2
-  )
 
   if (!vote) {
     return null

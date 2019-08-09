@@ -17,12 +17,12 @@ import { AppLogicProvider, useAppLogic } from './app-logic'
 
 function App() {
   const {
-    isSyncing,
-    votes,
-    selectedVote,
     actions,
-    selectVote,
+    isSyncing,
     newVotePanel,
+    selectedVote,
+    selectVote,
+    votes,
   } = useAppLogic()
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
