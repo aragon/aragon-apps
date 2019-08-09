@@ -180,106 +180,97 @@ const Votes = React.memo(function Votes({
   } = useFilterVotes(votes)
   const { openVotes, closedVotes } = useVotes(filteredVotes)
 
+  if (selectedVote) {
+    return (
+      <React.Fragment>
+        <Bar>
+          <BackButton onClick={onBack} />
+        </Bar>
+        <Vote vote={selectedVote} onVote={onVote} onExecute={onExecute} />
+      </React.Fragment>
+    )
+  }
+
   return (
     <React.Fragment>
-      {selectedVote !== null && (
-        <React.Fragment>
-          <Bar>
-            <BackButton onClick={onBack} />
-          </Bar>
-          <Vote vote={selectedVote} onVote={onVote} onExecute={onExecute} />
-        </React.Fragment>
-      )}
-      {!selectedVote && (
-        <div
-          css={`
-            & > div > div {
-              overflow: unset;
-            }
-          `}
-        >
-          {layoutName !== 'small' && (
-            <Bar>
-              <div
-                css={`
-                  height: ${8 * GU}px;
-                  display: grid;
-                  grid-template-columns: auto auto auto 1fr;
-                  grid-gap: ${1 * GU}px;
-                  align-items: center;
-                  padding-left: ${3 * GU}px;
-                `}
-              >
-                <DropDown
-                  selected={voteStatusFilter}
-                  onChange={handleVoteStatusFilterChange}
-                  label="Status"
-                  items={[
-                    <div>
-                      All
-                      <span
-                        css={`
-                          margin-left: ${1.5 * GU}px;
-                          display: inline-flex;
-                          align-items: center;
-                          justify-content: center;
-                          color: ${theme.info};
-                          ${textStyle('label3')};
-                        `}
-                      >
-                        <Tag>
-                          {votes.length > 9999 ? '9999+' : votes.length}
-                        </Tag>
-                      </span>
-                    </div>,
-                    'Open',
-                    'Closed',
-                  ]}
-                  width="128px"
-                />
-                {voteStatusFilter === 1 && (
-                  <DropDown
-                    label="Trend"
-                    selected={voteTrendFilter}
-                    onChange={handleVoteTrendFilterChange}
-                    items={['All', 'Will pass', 'Won’t pass']}
-                    width="128px"
-                  />
-                )}
-                {voteStatusFilter !== 1 && (
-                  <DropDown
-                    label="Outcome"
-                    selected={voteOutcomeFilter}
-                    onChange={handleVoteOutcomeFilterChange}
-                    items={['All', 'Passed', 'Rejected', 'Enacted', 'Pending']}
-                    width="128px"
-                  />
-                )}
-                <DropDown
-                  label="App type"
-                  selected={voteAppFilter}
-                  onChange={handleVoteAppFilterChange}
-                  items={['All', 'Finance', 'Tokens', 'Voting']}
-                  width="128px"
-                />
-                <DateRangeInput
-                  startDate={voteDateRangeFilter.start}
-                  endDate={voteDateRangeFilter.end}
-                  onChange={handleVoteDateRangeFilterChange}
-                />
-              </div>
-            </Bar>
-          )}
-          {!filteredVotes.length ? (
-            <EmptyFilteredVotes onClear={handleClearFilters} />
-          ) : (
-            <VoteGroups
-              openVotes={openVotes}
-              closedVotes={closedVotes}
-              onSelectVote={selectVote}
+      {layoutName !== 'small' && (
+        <Bar>
+          <div
+            css={`
+              height: ${8 * GU}px;
+              display: grid;
+              grid-template-columns: auto auto auto 1fr;
+              grid-gap: ${1 * GU}px;
+              align-items: center;
+              padding-left: ${3 * GU}px;
+            `}
+          >
+            <DropDown
+              selected={voteStatusFilter}
+              onChange={handleVoteStatusFilterChange}
+              label="Status"
+              items={[
+                <div>
+                  All
+                  <span
+                    css={`
+                      margin-left: ${1.5 * GU}px;
+                      display: inline-flex;
+                      align-items: center;
+                      justify-content: center;
+                      color: ${theme.info};
+                      ${textStyle('label3')};
+                    `}
+                  >
+                    <Tag>{votes.length > 9999 ? '9999+' : votes.length}</Tag>
+                  </span>
+                </div>,
+                'Open',
+                'Closed',
+              ]}
+              width="128px"
             />
-          )}
-        </div>
+            {voteStatusFilter === 1 && (
+              <DropDown
+                label="Trend"
+                selected={voteTrendFilter}
+                onChange={handleVoteTrendFilterChange}
+                items={['All', 'Will pass', 'Won’t pass']}
+                width="128px"
+              />
+            )}
+            {voteStatusFilter !== 1 && (
+              <DropDown
+                label="Outcome"
+                selected={voteOutcomeFilter}
+                onChange={handleVoteOutcomeFilterChange}
+                items={['All', 'Passed', 'Rejected', 'Enacted', 'Pending']}
+                width="128px"
+              />
+            )}
+            <DropDown
+              label="App type"
+              selected={voteAppFilter}
+              onChange={handleVoteAppFilterChange}
+              items={['All', 'Finance', 'Tokens', 'Voting']}
+              width="128px"
+            />
+            <DateRangeInput
+              startDate={voteDateRangeFilter.start}
+              endDate={voteDateRangeFilter.end}
+              onChange={handleVoteDateRangeFilterChange}
+            />
+          </div>
+        </Bar>
+      )}
+      {!filteredVotes.length ? (
+        <EmptyFilteredVotes onClear={handleClearFilters} />
+      ) : (
+        <VoteGroups
+          openVotes={openVotes}
+          closedVotes={closedVotes}
+          onSelectVote={selectVote}
+        />
       )}
     </React.Fragment>
   )
