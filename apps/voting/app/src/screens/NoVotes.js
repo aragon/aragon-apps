@@ -2,7 +2,7 @@ import React from 'react'
 import { Button, EmptyStateCard, GU, LoadingRing } from '@aragon/ui'
 import noVotesSvg from '../assets/no-votes.svg'
 
-const NoVotes = React.memo(function NoVotes({ onClick, isSyncing }) {
+const NoVotes = React.memo(function NoVotes({ onNewVote, isSyncing }) {
   return (
     <EmptyStateCard
       text={
@@ -24,7 +24,7 @@ const NoVotes = React.memo(function NoVotes({ onClick, isSyncing }) {
         )
       }
       action={
-        <Button wide mode="strong" onClick={onClick}>
+        <Button wide mode="strong" onNewVote={onNewVote}>
           Create a new vote
         </Button>
       }

@@ -39,7 +39,7 @@ function App() {
             justify-content: center;
           `}
         >
-          <NoVotes onClick={newVotePanel.requestOpen} isSyncing={isSyncing} />
+          <NoVotes onNewVote={newVotePanel.requestOpen} isSyncing={isSyncing} />
         </div>
       )}
       {!!votes.length && (
