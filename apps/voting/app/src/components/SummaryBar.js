@@ -5,7 +5,6 @@ import { Spring, animated } from 'react-spring'
 
 class SummaryBar extends React.Component {
   static defaultProps = {
-    show: true,
     positiveSize: 0,
     negativeSize: 0,
     requiredSize: 0,
@@ -17,40 +16,42 @@ class SummaryBar extends React.Component {
       positiveSize,
       negativeSize,
       requiredSize,
-      show,
       compact,
-      onlyYea,
       ...props
     } = this.props
     return (
       <Spring
         from={{ progress: 0 }}
-        to={{ progress: Number(show) }}
+        to={{ progress: 1 }}
         config={springs.lazy}
         native
       >
         {({ progress }) => (
           <Main compact={compact} {...props}>
             <CombinedBar>
-              <BarPart
-                style={{
-                  backgroundColor: theme.positive,
-                  transform: progress.interpolate(
-                    v => `scale3d(${positiveSize * v}, 1, 1)`
-                  ),
-                }}
-              />
-              <BarPart
-                style={{
-                  backgroundColor: onlyYea ? 'transparent' : theme.negative,
-                  transform: progress.interpolate(
-                    v => `
-                      translate3d(${100 * positiveSize * v}%, 0, 0)
-                      scale3d(${negativeSize * v}, 1, 1)
-                    `
-                  ),
-                }}
-              />
+              {positiveSize && (
+                <BarPart
+                  style={{
+                    backgroundColor: theme.positive,
+                    transform: progress.interpolate(
+                      v => `scale3d(${positiveSize * v}, 1, 1)`
+                    ),
+                  }}
+                />
+              )}
+              {negativeSize && (
+                <BarPart
+                  style={{
+                    backgroundColor: theme.negative,
+                    transform: progress.interpolate(
+                      v => `
+                        translate3d(${100 * positiveSize * v}%, 0, 0)
+                        scale3d(${negativeSize * v}, 1, 1)
+                      `
+                    ),
+                  }}
+                />
+              )}
             </CombinedBar>
             <RequiredSeparatorClip>
               <RequiredSeparatorWrapper
