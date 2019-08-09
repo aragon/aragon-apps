@@ -16,6 +16,7 @@ export function useVotes() {
   const now = useNow()
 
   const openedStates = (votes || []).map(v => isVoteOpen(v, now))
+  const openedStatesKey = openedStates.join('')
 
   return useMemo(() => {
     if (!votes) {
@@ -32,7 +33,7 @@ export function useVotes() {
       },
       connectedAccountVote: connectedAccountVotes[vote.voteId] || VOTE_ABSENT,
     }))
-  }, [votes, connectedAccountVotes, openedStates])
+  }, [votes, connectedAccountVotes, openedStatesKey]) // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 // Load and returns the token contract, or null if not loaded yet.
