@@ -29,6 +29,7 @@ module.exports = (
   const DesignatedSigner = artifacts.require('DesignatedSigner')
   const DestinationMock = artifacts.require('DestinationMock')
   const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
+  const TokenInteractionExecutionTarget = artifacts.require('TokenInteractionExecutionTarget')
   const TokenMock = artifacts.require('TokenMock')
 
   const NO_SIG = '0x'
@@ -49,10 +50,18 @@ module.exports = (
       INIT_ALREADY_INITIALIZED: 'INIT_ALREADY_INITIALIZED',
       INIT_NOT_INITIALIZED: 'INIT_NOT_INITIALIZED',
       RECOVER_DISALLOWED: 'RECOVER_DISALLOWED',
+      SAFE_ERC_20_BALANCE_REVERTED: 'SAFE_ERC_20_BALANCE_REVERTED',
 
       // Agent errors
-      AGENT_DESIGNATED_TO_SELF: "AGENT_DESIGNATED_TO_SELF",
-      AGENT_CAN_NOT_FORWARD: "AGENT_CAN_NOT_FORWARD",
+      AGENT_TARGET_PROTECTED: 'AGENT_TARGET_PROTECTED',
+      AGENT_PROTECTED_TOKENS_MODIFIED: 'AGENT_PROTECTED_TOKENS_MODIFIED',
+      AGENT_PROTECTED_BALANCE_LOWERED: 'AGENT_PROTECTED_BALANCE_LOWERED',
+      AGENT_TOKENS_CAP_REACHED: 'AGENT_TOKENS_CAP_REACHED',
+      AGENT_TOKEN_ALREADY_PROTECTED: 'AGENT_TOKEN_ALREADY_PROTECTED',
+      AGENT_TOKEN_NOT_ERC20: 'AGENT_TOKEN_NOT_ERC20',
+      AGENT_TOKEN_NOT_PROTECTED: 'AGENT_TOKEN_NOT_PROTECTED',
+      AGENT_DESIGNATED_TO_SELF: 'AGENT_DESIGNATED_TO_SELF',
+      AGENT_CAN_NOT_FORWARD: 'AGENT_CAN_NOT_FORWARD',
     })
 
     const root = accounts[0]
@@ -282,20 +291,12 @@ module.exports = (
     context('> Safe executing actions', () => {
       const noData = '0x'
       const amount = 1000
-      let target, token1, token2, token3, token4, token5, token6, token7, token8, token9, token10
+      let target, token1, token2
 
       beforeEach(async () => {
         target = await ExecutionTarget.new()
         token1 = await TokenMock.new(agent.address, amount)
         token2 = await TokenMock.new(agent.address, amount)
-        token3 = await TokenMock.new(agent.address, amount)
-        token4 = await TokenMock.new(agent.address, amount)
-        token5 = await TokenMock.new(agent.address, amount)
-        token6 = await TokenMock.new(agent.address, amount)
-        token7 = await TokenMock.new(agent.address, amount)
-        token8 = await TokenMock.new(agent.address, amount)
-        token9 = await TokenMock.new(agent.address, amount)
-        token10 = await TokenMock.new(agent.address, amount)
 
         await acl.createPermission(authorized, agent.address, ADD_PROTECTED_TOKEN_ROLE, root, { from: root })
         await acl.createPermission(authorized, agent.address, REMOVE_PROTECTED_TOKEN_ROLE, root, { from: root })
@@ -303,14 +304,6 @@ module.exports = (
 
         await agent.addProtectedToken(token1.address, { from: authorized })
         await agent.addProtectedToken(token2.address, { from: authorized })
-        await agent.addProtectedToken(token3.address, { from: authorized })
-        await agent.addProtectedToken(token4.address, { from: authorized })
-        await agent.addProtectedToken(token5.address, { from: authorized })
-        await agent.addProtectedToken(token6.address, { from: authorized })
-        await agent.addProtectedToken(token7.address, { from: authorized })
-        await agent.addProtectedToken(token8.address, { from: authorized })
-        await agent.addProtectedToken(token9.address, { from: authorized })
-        await agent.addProtectedToken(token10.address, { from: authorized })
 
         assert.equal(await target.counter(), 0)
         assert.equal(await token1.balanceOf(agent.address), amount)
@@ -382,42 +375,62 @@ module.exports = (
             // TODO: Check revert data was correctly forwarded
             // ganache currently doesn't support fetching this data
             const data = target.contract.fail.getData()
-            await assertRevert(() => agent.safeExecute(target.address, data, { from: authorized }))
+            await assertRevert(agent.safeExecute(target.address, data, { from: authorized }))
           })
 
           context('> but action affects a protected ERC20 balance', () => {
+            let tokenInteractionTarget
+
+            beforeEach(async () => {
+              tokenInteractionTarget = await TokenInteractionExecutionTarget.new()
+            })
+
             context('> action decreases protected ERC20 balance', () => {
               it('it should revert', async () => {
-                await agent.removeProtectedToken(token10.address, { from: authorized }) // leave a spot to add a new token
-                const token11 = await TokenMock.new(agent.address, amount)
-                const approve = token11.contract.approve.getData(target.address, 10)
-                await agent.safeExecute(token11.address, approve, { from: authorized }) // target is now allowed to transfer on behalf of agent
-                await agent.addProtectedToken(token11.address, { from: authorized }) // token11 is now protected
-                const data = target.contract.transferTokenFrom.getData(token11.address)
+                const newToken = await TokenMock.new(agent.address, amount)
+                const initialBalance = (await newToken.balanceOf(agent.address)).toNumber()
 
-                await assertRevert(() => agent.safeExecute(target.address, data, { from: authorized }))
+                const approve = newToken.contract.approve.getData(tokenInteractionTarget.address, 10)
+                await agent.safeExecute(newToken.address, approve, { from: authorized }) // target is now allowed to transfer on behalf of agent
+
+                await agent.addProtectedToken(newToken.address, { from: authorized }) // new token is now protected (must do this after execution)
+                const data = tokenInteractionTarget.contract.transferTokenFrom.getData(newToken.address)
+
+                await assertRevert(agent.safeExecute(tokenInteractionTarget.address, data, { from: authorized }), errors.AGENT_PROTECTED_BALANCE_LOWERED)
+                const newBalance = (await newToken.balanceOf(agent.address)).toNumber()
+
+                assert.equal(initialBalance, newBalance)
               })
             })
 
             context('> action increases protected ERC20 balance', () => {
               it('it should execute action', async () => {
-                await agent.removeProtectedToken(token10.address, { from: authorized }) // leave a spot to add a new token
-                const token11 = await TokenMock.new(target.address, amount)
-                await agent.addProtectedToken(token11.address, { from: authorized }) // token11 is now protected
-                const data = target.contract.transferTokenTo.getData(token11.address)
-                await agent.safeExecute(target.address, data, { from: authorized })
+                const newToken = await TokenMock.new(tokenInteractionTarget.address, amount)
+                const initialBalance = (await newToken.balanceOf(agent.address)).toNumber()
+                await agent.addProtectedToken(newToken.address, { from: authorized }) // newToken is now protected
 
-                assert.equal((await token11.balanceOf(agent.address)).toNumber(), 1)
+                const data = tokenInteractionTarget.contract.transferTokenTo.getData(newToken.address)
+                await agent.safeExecute(tokenInteractionTarget.address, data, { from: authorized })
+                const newBalance = (await newToken.balanceOf(agent.address)).toNumber()
+
+                assert.equal(newBalance, 1)
+                assert.notEqual(initialBalance, newBalance)
               })
             })
           })
 
           context('> but action affects protected tokens list', () => {
-            it('it should revert', async () => {
-              await acl.grantPermission(target.address, agent.address, REMOVE_PROTECTED_TOKEN_ROLE, { from: root }) // grant target permission to remove protected tokens
-              const data = target.contract.removeProtectedToken.getData(token4.address)
+            let tokenInteractionTarget
 
-              await assertRevert(() => agent.safeExecute(target.address, data, { from: authorized }))
+            beforeEach(async () => {
+              tokenInteractionTarget = await TokenInteractionExecutionTarget.new()
+            })
+
+            it('it should revert', async () => {
+              await acl.grantPermission(tokenInteractionTarget.address, agent.address, REMOVE_PROTECTED_TOKEN_ROLE, { from: root }) // grant target permission to remove protected tokens
+              const data = tokenInteractionTarget.contract.removeProtectedToken.getData(token2.address)
+
+              await assertRevert(agent.safeExecute(tokenInteractionTarget.address, data, { from: authorized }), errors.AGENT_PROTECTED_TOKENS_MODIFIED)
             })
           })
         })
@@ -426,7 +439,7 @@ module.exports = (
           it('it should revert', async () => {
             const approve = token1.contract.approve.getData(target.address, 10)
 
-            await assertRevert(() => agent.safeExecute(token1.address, approve, { from: authorized }))
+            await assertRevert(agent.safeExecute(token1.address, approve, { from: authorized }), errors.AGENT_TARGET_PROTECTED)
           })
         })
       })
@@ -435,7 +448,7 @@ module.exports = (
         it('it should revert', async () => {
           const data = target.contract.execute.getData()
 
-          await assertRevert(() => agent.safeExecute(target.address, data, { from: unauthorized }))
+          await assertRevert(agent.safeExecute(target.address, data, { from: unauthorized }), errors.APP_AUTH_FAILED)
         })
       })
     })
@@ -524,7 +537,7 @@ module.exports = (
               it('it should revert', async () => {
                 const token10 = await TokenMock.new(agent.address, 10000)
 
-                await assertRevert(() => agent.addProtectedToken(token10.address, { from: authorized }))
+                await assertRevert(agent.addProtectedToken(token10.address, { from: authorized }), errors.AGENT_TOKENS_CAP_REACHED)
               })
             })
           })
@@ -534,18 +547,19 @@ module.exports = (
               const token = await TokenMock.new(agent.address, 10000)
               await agent.addProtectedToken(token.address, { from: authorized })
 
-              await assertRevert(() => agent.addProtectedToken(token.address, { from: authorized }))
+              await assertRevert(agent.addProtectedToken(token.address, { from: authorized }), errors.AGENT_TOKEN_ALREADY_PROTECTED)
             })
           })
         })
 
         context('> but token is not ERC20', () => {
           it('it should revert [token is not a contract]', async () => {
-            await assertRevert(() => agent.addProtectedToken(root, { from: authorized }))
+            await assertRevert(agent.addProtectedToken(root, { from: authorized }), errors.AGENT_TOKEN_NOT_ERC20)
           })
 
           it('it should revert [token is a contract but not an ERC20]', async () => {
-            await assertRevert(() => agent.addProtectedToken(daoFact.address, { from: authorized }))
+            // The balanceOf check reverts here, so it's a SafeERC20 error
+            await assertRevert(agent.addProtectedToken(daoFact.address, { from: authorized }), errors.SAFE_ERC_20_BALANCE_REVERTED)
           })
         })
       })
@@ -554,7 +568,7 @@ module.exports = (
         it('it should revert', async () => {
           const token = await TokenMock.new(agent.address, 10000)
 
-          await assertRevert(() => agent.addProtectedToken(token.address, { from: unauthorized }))
+          await assertRevert(agent.addProtectedToken(token.address, { from: unauthorized }), errors.APP_AUTH_FAILED)
         })
       })
     })
@@ -588,7 +602,7 @@ module.exports = (
 
             assert.equal(await agent.getProtectedTokensLength(), 1)
             assert.equal(await agent.protectedTokens(0), token2.address)
-            await assertRevert(() => agent.protectedTokens(1)) // this should overflow the length of the protectedTokens array and thus revert
+            await assertRevert(agent.protectedTokens(1)) // this should overflow the length of the protectedTokens array and thus revert
           })
         })
 
@@ -598,7 +612,7 @@ module.exports = (
             const token2 = await TokenMock.new(agent.address, 10000)
             await agent.addProtectedToken(token1.address, { from: authorized })
 
-            await assertRevert(() => agent.removeProtectedToken(token2.address, { from: authorized }))
+            await assertRevert(agent.removeProtectedToken(token2.address, { from: authorized }), errors.AGENT_TOKEN_NOT_PROTECTED)
           })
         })
       })
@@ -608,7 +622,7 @@ module.exports = (
           const token = await TokenMock.new(agent.address, 10000)
           await agent.addProtectedToken(token.address, { from: authorized })
 
-          await assertRevert(() => agent.removeProtectedToken(token.address, { from: unauthorized }))
+          await assertRevert(agent.removeProtectedToken(token.address, { from: unauthorized }), errors.APP_AUTH_FAILED)
         })
       })
     })
