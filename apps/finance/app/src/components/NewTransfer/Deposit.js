@@ -40,19 +40,6 @@ const TOKEN_ALLOWANCE_WEBSITE = 'https://tokenallowance.io/'
 
 const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
 
-const renderBalanceForSelectedToken = selectedToken => {
-  const { decimals, loading, symbol, userBalance } = selectedToken.data
-  if (loading || !userBalance) {
-    return ''
-  }
-
-  return userBalance === '-1'
-    ? `Your balance could not be found for ${symbol}`
-    : `You have ${
-        userBalance === '0' ? 'no' : fromDecimals(userBalance, decimals)
-      } ${symbol} available`
-}
-
 const initialState = {
   amount: {
     error: NO_ERROR,
@@ -282,15 +269,8 @@ class Deposit extends React.Component {
     }
     const disabled = !!errorMessage || !this.canSubmit()
 
-    const selectedTokenIsAddress = isAddress(selectedToken.value)
-    const showTokenBadge =
-      selectedTokenIsAddress &&
-      !selectedToken.data.loading &&
-      selectedToken.coerced
-    const tokenBalanceMessage = renderBalanceForSelectedToken(selectedToken)
-
     const ethSelected =
-      selectedTokenIsAddress &&
+      isAddress(selectedToken.value) &&
       addressesEqual(selectedToken.value, ETHER_TOKEN_FAKE_ADDRESS)
     const tokenSelected = selectedToken.value && !ethSelected
     const isMainnet = network.type === 'main'
@@ -303,17 +283,11 @@ class Deposit extends React.Component {
           onChange={this.handleSelectToken}
           tokens={tokens}
         />
-        {showTokenBadge && (
-          <TokenBadge
-            address={selectedToken.value}
-            symbol={selectedToken.data.symbol}
-            networkType={network.type}
-          />
-        )}
         <div css="margin: 10px 0 20px">
-          <Text size="small" color={theme.surfaceContentSecondary}>
-            {tokenBalanceMessage}
-          </Text>
+          <SelectedTokenBalance
+            network={network}
+            selectedToken={selectedToken}
+          />
         </div>
         <Field label="Amount">
           <TextInput.Number
@@ -419,6 +393,49 @@ class Deposit extends React.Component {
       </form>
     )
   }
+}
+
+const SelectedTokenBalance = ({ network, selectedToken }) => {
+  const theme = useTheme()
+  console.log(theme)
+  const {
+    data: { decimals, loading, symbol, userBalance },
+    value: address,
+  } = selectedToken
+  if (loading || !isAddress(address) || !userBalance) {
+    return ''
+  }
+
+  return (
+    <Text size="small" color={theme.surfaceContentSecondary}>
+      {userBalance === '-1' ? (
+        `Your balance could not be found for ${symbol}`
+      ) : (
+        <div
+          css={`
+            display: flex;
+            align-items: center;
+          `}
+        >
+          You have{' '}
+          {userBalance === '0' ? 'no' : fromDecimals(userBalance, decimals)}{' '}
+          {addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS) ? (
+            'ETH'
+          ) : (
+            <TokenBadge
+              address={address}
+              symbol={symbol}
+              networkType={network.type}
+              css={`
+                margin: 0 ${0.5 * GU}px;
+              `}
+            />
+          )}{' '}
+          available
+        </div>
+      )}
+    </Text>
+  )
 }
 
 const StyledSafeLink = styled(SafeLink)`
