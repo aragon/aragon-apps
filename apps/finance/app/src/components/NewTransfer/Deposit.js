@@ -316,11 +316,15 @@ class Deposit extends React.Component {
             wide
           />
         </Field>
-        <ButtonWrapper>
+        <div
+          css={`
+            padding-top: ${1 * GU}px;
+          `}
+        >
           <Button wide mode="strong" type="submit" disabled={disabled}>
             Submit deposit
           </Button>
-        </ButtonWrapper>
+        </div>
         {errorMessage && <ValidationError message={errorMessage} />}
 
         <VSpace size={4} />
@@ -400,14 +404,6 @@ class Deposit extends React.Component {
     )
   }
 }
-
-const ButtonWrapper = styled.div`
-  padding-top: 10px;
-`
-
-const TokenBalance = styled.div`
-  margin: 10px 0 20px;
-`
 
 const StyledSafeLink = styled(SafeLink)`
   text-decoration-color: ${p => p.theme.accent};
