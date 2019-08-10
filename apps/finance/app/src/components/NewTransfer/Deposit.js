@@ -100,7 +100,15 @@ class Deposit extends React.Component {
     }
 
     if (!tokenIsAddress) {
-      this.validateInputs({ selectedToken })
+      this.validateInputs({
+        selectedToken: {
+          ...selectedToken,
+          data: {
+            loading: false,
+            symbol: value,
+          },
+        },
+      })
       return
     }
 
@@ -200,16 +208,20 @@ class Deposit extends React.Component {
     return tokenData
   }
   validateInputs({ amount, selectedToken } = {}) {
-    amount = amount || this.state.amount
-    selectedToken = selectedToken || this.state.selectedToken
-
-    if (selectedToken.value && !isAddress(selectedToken.value)) {
+    if (
+      selectedToken &&
+      !isAddress(selectedToken.value) &&
+      selectedToken.data.symbol
+    ) {
       this.setState(({ amount }) => ({
         amount: { ...amount },
         selectedToken: { ...selectedToken, error: TOKEN_NOT_FOUND_ERROR },
       }))
       return false
     }
+
+    amount = amount || this.state.amount
+    selectedToken = selectedToken || this.state.selectedToken
 
     if (amount.value && selectedToken.data.decimals) {
       // Adjust but without truncation in case the user entered a value with more
@@ -271,7 +283,10 @@ class Deposit extends React.Component {
     const disabled = errorMessage || !this.canSubmit()
 
     const selectedTokenIsAddress = isAddress(selectedToken.value)
-    const showTokenBadge = selectedTokenIsAddress && selectedToken.coerced
+    const showTokenBadge =
+      selectedTokenIsAddress &&
+      !selectedToken.data.loading &&
+      selectedToken.coerced
     const tokenBalanceMessage = renderBalanceForSelectedToken(selectedToken)
 
     const ethSelected =
