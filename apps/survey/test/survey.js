@@ -70,24 +70,27 @@ contract('Survey app', ([root, holder1, holder2, holder19, holder31, holder50, n
   })
 
   context('checking permissions', () => {
-    before(async() => {
-      const acl = getContract('ACL').at(await dao.acl())
 
-      await acl.revokePermission(ANY_ENTITY, survey.address, CREATE_SURVEYS_ROLE);
-      await acl.revokePermission(ANY_ENTITY, survey.address, MODIFY_PARTICIPATION_ROLE);
-      await acl.grantPermission(holder1, survey.address, CREATE_SURVEYS_ROLE, {from: root});
-      await acl.grantPermission(holder1, survey.address, MODIFY_PARTICIPATION_ROLE, {from: root});
-    })
-
-    it('create surveys permission', async () => {
-      let createSurveysPermission = await acl.hasPermission(holder1, survey.address, CREATE_SURVEYS_ROLE);
-      assert.equal(createSurveysPermission, true);
-    });  
-
-    it('modify participation permission', async () => {
-      let modifyParticipationPermission = await acl.hasPermission(holder1, survey.address, MODIFY_PARTICIPATION_ROLE);
-      assert.equal(modifyParticipationPermission, true);
-    }); 
+    describe('Restrict permissions to specific address', async() => {
+      before(async() => {
+        const acl = getContract('ACL').at(await dao.acl())
+  
+        await acl.revokePermission(ANY_ENTITY, survey.address, CREATE_SURVEYS_ROLE);
+        await acl.revokePermission(ANY_ENTITY, survey.address, MODIFY_PARTICIPATION_ROLE);
+        await acl.grantPermission(holder1, survey.address, CREATE_SURVEYS_ROLE, {from: root});
+        await acl.grantPermission(holder1, survey.address, MODIFY_PARTICIPATION_ROLE, {from: root});
+      })
+  
+      it('create surveys permission', async () => {
+        let createSurveysPermission = await acl.hasPermission(holder1, survey.address, CREATE_SURVEYS_ROLE);
+        assert.equal(createSurveysPermission, true);
+      });  
+  
+      it('modify participation permission', async () => {
+        let modifyParticipationPermission = await acl.hasPermission(holder1, survey.address, MODIFY_PARTICIPATION_ROLE);
+        assert.equal(modifyParticipationPermission, true);
+      }); 
+    });
   });
 
   context('normal token supply', () => {
