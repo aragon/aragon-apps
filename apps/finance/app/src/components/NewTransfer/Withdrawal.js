@@ -8,8 +8,8 @@ import {
   Field,
   Text,
   TextInput,
-  theme,
   unselectable,
+  useTheme,
 } from '@aragon/ui'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
 import { toDecimals } from '../../lib/math-utils'
@@ -120,7 +120,7 @@ class Withdrawal extends React.Component {
   }
 
   render() {
-    const { title } = this.props
+    const { theme, title } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
 
     const tokens = this.nonZeroTokens()
@@ -156,9 +156,9 @@ class Withdrawal extends React.Component {
         </Field>
         <AmountField>
           <label>
-            <StyledTextBlock>
+            <StyledTextBlock theme={theme}>
               Amount
-              <StyledAsterisk />
+              <StyledAsterisk theme={theme} />
             </StyledTextBlock>
           </label>
           <CombinedInput>
@@ -221,9 +221,9 @@ const CombinedInput = styled.div`
 `
 
 const StyledTextBlock = styled(Text.Block).attrs({
-  color: theme.textSecondary,
   smallcaps: true,
 })`
+  color: ${p => p.theme.surfaceContentSecondary};
   ${unselectable()};
   display: flex;
 `
@@ -232,7 +232,7 @@ const StyledAsterisk = styled.span.attrs({
   children: '*',
   title: 'Required',
 })`
-  color: ${theme.accent};
+  color: ${p => p.theme.accent};
   margin-left: auto;
   padding-top: 3px;
   font-size: 12px;
@@ -251,4 +251,7 @@ const ValidationErrorBlock = styled.p`
   margin-top: 15px;
 `
 
-export default Withdrawal
+export default props => {
+  const theme = useTheme()
+  return <Withdrawal theme={theme} {...props} />
+}

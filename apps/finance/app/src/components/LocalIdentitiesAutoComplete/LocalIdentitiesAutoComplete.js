@@ -8,7 +8,7 @@ import {
   GU,
   IdentityBadge,
   RADIUS,
-  theme,
+  useTheme,
 } from '@aragon/ui'
 
 const withKey = item => ({ key: item.address, ...item })
@@ -20,6 +20,7 @@ const LocalIdentitiesAutoComplete = React.memo(
     ref
   ) {
     const { api } = useAragonApi()
+    const theme = useTheme()
     const [items, setItems] = useState([])
     const [selected, setSelected] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')

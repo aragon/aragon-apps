@@ -10,7 +10,7 @@ import {
   SafeLink,
   Text,
   TextInput,
-  theme,
+  useTheme,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import QRCode from 'qrcode.react'
@@ -256,7 +256,7 @@ class Deposit extends React.Component {
   }
 
   render() {
-    const { network, title, tokens, proxyAddress } = this.props
+    const { network, proxyAddress, theme, title, tokens } = this.props
     const { amount, reference, selectedToken } = this.state
 
     let errorMessage
@@ -293,11 +293,11 @@ class Deposit extends React.Component {
             symbol={selectedToken.data.symbol}
           />
         )}
-        <TokenBalance>
-          <Text size="small" color={theme.textSecondary}>
+        <div css="margin: 10px 0 20px">
+          <Text size="small" color={theme.surfaceContentSecondary}>
             {tokenBalanceMessage}
           </Text>
-        </TokenBalance>
+        </div>
         <Field label="Amount">
           <TextInput.Number
             value={amount.value}
@@ -328,7 +328,11 @@ class Deposit extends React.Component {
             <React.Fragment>
               <p>
                 Remember, Mainnet organizations use real (not test) funds.{' '}
-                <StyledSafeLink href={MAINNET_RISKS_BLOG_POST} target="_blank">
+                <StyledSafeLink
+                  href={MAINNET_RISKS_BLOG_POST}
+                  target="_blank"
+                  theme={theme}
+                >
                   Learn more
                 </StyledSafeLink>{' '}
                 about the risks and what's been done to mitigate them here.
@@ -347,7 +351,11 @@ class Deposit extends React.Component {
               <p>
                 Tokens may require a pretransaction to approve the Finance app
                 for your deposit.{' '}
-                <StyledSafeLink href={TOKEN_ALLOWANCE_WEBSITE} target="_blank">
+                <StyledSafeLink
+                  href={TOKEN_ALLOWANCE_WEBSITE}
+                  target="_blank"
+                  theme={theme}
+                >
                   Find out why.
                 </StyledSafeLink>{' '}
               </p>
@@ -398,8 +406,8 @@ const TokenBalance = styled.div`
 `
 
 const StyledSafeLink = styled(SafeLink)`
-  text-decoration-color: ${theme.accent};
-  color: ${theme.accent};
+  text-decoration-color: ${p => p.theme.accent};
+  color: ${p => p.theme.accent};
 `
 
 const VSpace = styled.div`
@@ -420,11 +428,13 @@ const ValidationError = ({ message }) => (
 
 export default props => {
   const { api, connectedAccount, network } = useAragonApi()
+  const theme = useTheme()
   return network && api ? (
     <Deposit
       api={api}
       connectedAccount={connectedAccount}
       network={network}
+      theme={theme}
       {...props}
     />
   ) : null
