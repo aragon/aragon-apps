@@ -91,13 +91,12 @@ class TokenSelector extends React.Component {
       <React.Fragment>
         <Field label={label}>
           <DropDown
-            label="Select a token"
+            placeholder="Select a token"
             items={items}
             selected={activeIndex}
             onChange={this.handleChange}
             required
             wide
-            width="390px"
           />
         </Field>
 
