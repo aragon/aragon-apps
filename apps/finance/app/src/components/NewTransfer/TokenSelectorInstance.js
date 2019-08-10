@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Viewport, GU } from '@aragon/ui'
+import { Tag, Viewport, GU } from '@aragon/ui'
 import { ETHER_TOKEN_FAKE_ADDRESS } from '../../lib/token-utils'
 import { addressesEqual, shortenAddress } from '../../lib/web3-utils'
 
@@ -17,9 +17,9 @@ class TokenSelectorInstance extends React.PureComponent {
         {symbol && <TokenSymbol>{symbol}</TokenSymbol>}
         {name && <TokenName>({name})</TokenName>}
         {!addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS) && (
-          <StyledAddressBadge>
+          <StyledAddressTag title={address}>
             {shortenAddress(address, shorten ? 5 : 10)}
-          </StyledAddressBadge>
+          </StyledAddressTag>
         )}
       </Main>
     )
@@ -50,7 +50,7 @@ const TokenSymbol = styled.span`
   margin-right: ${1 * GU}px;
 `
 
-const StyledAddressBadge = styled(Badge.Identity)`
+const StyledAddressTag = styled(Tag)`
   flex-shrink: 0;
   margin-left: auto;
 `

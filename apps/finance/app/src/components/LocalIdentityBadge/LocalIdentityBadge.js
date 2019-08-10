@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { IdentityBadge, GU } from '@aragon/ui'
+import { IdentityBadge, Tag, GU } from '@aragon/ui'
 import { useIdentity } from '../IdentityManager/IdentityManager'
 
 const LocalIdentityBadge = ({ entity, ...props }) => {
@@ -20,7 +20,13 @@ const LocalIdentityBadge = ({ entity, ...props }) => {
         label ? (
           <Wrap>
             <Label>{label}</Label>
-            <StyledBadge>Custom label</StyledBadge>
+            <Tag
+              css={`
+                margin-left: ${2 * GU}px;
+              `}
+            >
+              Custom label
+            </Tag>
           </Wrap>
         ) : (
           'Address'
@@ -46,12 +52,6 @@ const Label = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-`
-
-const StyledBadge = styled(Badge)`
-  margin-left: 16px;
-  text-transform: uppercase;
-  ${font({ size: 'xxsmall' })};
 `
 
 export default LocalIdentityBadge
