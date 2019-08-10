@@ -280,7 +280,7 @@ class Deposit extends React.Component {
     } else if (amount.error === DECIMALS_TOO_MANY_ERROR) {
       errorMessage = 'Amount contains too many decimal places'
     }
-    const disabled = errorMessage || !this.canSubmit()
+    const disabled = !!errorMessage || !this.canSubmit()
 
     const selectedTokenIsAddress = isAddress(selectedToken.value)
     const showTokenBadge =
