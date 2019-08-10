@@ -8,6 +8,7 @@ import {
   Field,
   Text,
   TextInput,
+  GU,
   unselectable,
   useTheme,
 } from '@aragon/ui'
@@ -238,18 +239,26 @@ const StyledAsterisk = styled.span.attrs({
   font-size: 12px;
 `
 
-const ValidationError = ({ message }) => (
-  <ValidationErrorBlock>
-    <IconCross />
-    <Text size="small" style={{ marginLeft: '10px' }}>
-      {message}
-    </Text>
-  </ValidationErrorBlock>
-)
-
-const ValidationErrorBlock = styled.p`
-  margin-top: 15px;
-`
+const ValidationError = ({ message }) => {
+  const theme = useTheme()
+  return (
+    <div
+      css={`
+        display: flex;
+        align-items: center;
+      `}
+    >
+      <IconCross
+        size="tiny"
+        css={`
+          color: ${theme.negative};
+          margin-right: ${1 * GU}px;
+        `}
+      />
+      <Text size="small">{message}</Text>
+    </div>
+  )
+}
 
 export default props => {
   const theme = useTheme()

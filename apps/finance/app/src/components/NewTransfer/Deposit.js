@@ -418,17 +418,29 @@ const VSpace = styled.div`
   height: ${p => (p.size || 1) * GU}px;
 `
 
-const ValidationError = ({ message }) => (
-  <div>
-    <VSpace size={3} />
-    <p>
-      <IconCross />
-      <Text size="small" style={{ marginLeft: '10px' }}>
-        {message}
-      </Text>
-    </p>
-  </div>
-)
+const ValidationError = ({ message }) => {
+  const theme = useTheme()
+  return (
+    <div>
+      <VSpace size={2} />
+      <div
+        css={`
+          display: flex;
+          align-items: center;
+        `}
+      >
+        <IconCross
+          size="tiny"
+          css={`
+            color: ${theme.negative};
+            margin-right: ${1 * GU}px;
+          `}
+        />
+        <Text size="small">{message}</Text>
+      </div>
+    </div>
+  )
+}
 
 export default props => {
   const { api, connectedAccount, network } = useAragonApi()
