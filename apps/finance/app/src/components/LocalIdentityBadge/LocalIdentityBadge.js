@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { Badge, IdentityBadge, font } from '@aragon/ui'
+import { IdentityBadge, GU } from '@aragon/ui'
 import { useIdentity } from '../IdentityManager/IdentityManager'
 
 const LocalIdentityBadge = ({ entity, ...props }) => {
@@ -38,7 +38,7 @@ const Wrap = styled.div`
   display: grid;
   align-items: center;
   grid-template-columns: auto 1fr;
-  padding-right: 24px;
+  padding-right: ${3 * GU}px;
 `
 
 const Label = styled.span`

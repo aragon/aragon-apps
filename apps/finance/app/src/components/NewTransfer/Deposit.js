@@ -10,6 +10,7 @@ import {
   SafeLink,
   Text,
   TextInput,
+  GU,
   useTheme,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
@@ -322,7 +323,7 @@ class Deposit extends React.Component {
         </ButtonWrapper>
         {errorMessage && <ValidationError message={errorMessage} />}
 
-        <VSpace size={6} />
+        <VSpace size={4} />
         <Info.Action title="Depositing funds to your organization">
           {isMainnet && (
             <React.Fragment>
@@ -337,7 +338,7 @@ class Deposit extends React.Component {
                 </StyledSafeLink>{' '}
                 about the risks and what's been done to mitigate them here.
               </p>
-              <VSpace size={2} />
+              <VSpace size={1} />
             </React.Fragment>
           )}
           <p>
@@ -347,7 +348,7 @@ class Deposit extends React.Component {
           </p>
           {tokenSelected && (
             <React.Fragment>
-              <VSpace size={2} />
+              <VSpace size={1} />
               <p>
                 Tokens may require a pretransaction to approve the Finance app
                 for your deposit.{' '}
@@ -365,14 +366,14 @@ class Deposit extends React.Component {
 
         {proxyAddress && ethSelected && (
           <div>
-            <VSpace size={6} />
+            <VSpace size={4} />
             <ToggleContent label="Show address for direct ETH transfer ">
-              <VSpace size={4} />
+              <VSpace size={2} />
               <QRCode
                 value={proxyAddress}
                 style={{ width: '80px', height: '80px' }}
               />
-              <VSpace size={4} />
+              <VSpace size={2} />
               <IdentityBadge
                 entity={proxyAddress}
                 fontSize="small"
@@ -384,7 +385,10 @@ class Deposit extends React.Component {
                 Use the above address or QR code to transfer ETH directly to
                 your organization’s Finance app. You should specify a gas limit
                 of 350,000 for this transfer.
-                <Text.Paragraph size="xsmall" style={{ marginTop: '10px' }}>
+                <Text.Paragraph
+                  size="xsmall"
+                  style={{ marginTop: `${1 * GU}px` }}
+                >
                   <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
                   (e.g. ERC-20) tokens directly to this address.
                 </Text.Paragraph>
@@ -411,7 +415,7 @@ const StyledSafeLink = styled(SafeLink)`
 `
 
 const VSpace = styled.div`
-  height: ${p => (p.size || 1) * 5}px;
+  height: ${p => (p.size || 1) * GU}px;
 `
 
 const ValidationError = ({ message }) => (

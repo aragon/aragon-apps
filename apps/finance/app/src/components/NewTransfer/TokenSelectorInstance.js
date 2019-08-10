@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Badge, Viewport } from '@aragon/ui'
+import { Viewport, GU } from '@aragon/ui'
 import { ETHER_TOKEN_FAKE_ADDRESS } from '../../lib/token-utils'
 import { addressesEqual, shortenAddress } from '../../lib/web3-utils'
 
@@ -32,22 +32,22 @@ const Main = styled.div`
 `
 
 const Icon = styled.img.attrs({ alt: '', width: '16', height: '16' })`
-  margin-right: 10px;
+  margin-right: ${1 * GU}px;
 `
 
 const IconSpacer = styled.div`
-  width: 26px;
+  width: ${3 * GU}px;
 `
 
 const TokenName = styled.span`
   max-width: 110px;
-  margin-right: 10px;
+  margin-right: ${1 * GU}px;
   overflow: hidden;
   text-overflow: ellipsis;
 `
 
 const TokenSymbol = styled.span`
-  margin-right: 10px;
+  margin-right: ${1 * GU}px;
 `
 
 const StyledAddressBadge = styled(Badge.Identity)`
