@@ -10,14 +10,7 @@ import {
   startOfDay,
   endOfDay,
 } from 'date-fns'
-import {
-  Button,
-  RADIUS,
-  breakpoint,
-  font,
-  useTheme,
-  useViewport,
-} from '@aragon/ui'
+import { Button, RADIUS, breakpoint, useTheme, useViewport } from '@aragon/ui'
 import IconCalendar from './Calendar'
 import TextInput from './TextInput'
 import DatePicker from './DatePicker'
@@ -202,18 +195,23 @@ class DateRangeInput extends React.PureComponent {
     return (
       <div
         css={`
+          width: 250px;
           position: relative;
           border: ${startDateProps && endDateProps
             ? `1px solid ${accent}`
             : `1px solid ${border}`};
           border-radius: ${RADIUS}px;
+          box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px;
         `}
         ref={el => (this.rootRef = el)}
         onClick={this.handleClick}
       >
         <Labels text={this.getValueText()} />
         <TextInput
-          css="width: 28ch;"
+          css={`
+            width: 28ch;
+            opacity: 0;
+          `}
           value={this.getValueText()}
           readOnly
           adornment={
