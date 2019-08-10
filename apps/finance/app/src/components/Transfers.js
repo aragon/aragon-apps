@@ -32,6 +32,8 @@ import EmptyFilteredTransfers from './EmptyFilteredTransfers'
 import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
+const UNSELECTED_TOKEN_FILTER = -1
+const UNSELECTED_TRANSFER_TYPE_FILTER = -1
 const INITIAL_DATE_RANGE = { start: null, end: null }
 const TRANSFER_TYPES = [
   TransferTypes.All,
@@ -66,7 +68,7 @@ const getFilteredTransfers = ({
       (selectedToken === null ||
         addressesEqual(token, selectedToken.address)) &&
       (transferType === TransferTypes.All ||
-        selectedTransferType === -1 ||
+        selectedTransferType === UNSELECTED_TRANSFER_TYPE_FILTER ||
         (transferType === TransferTypes.Incoming && isIncoming) ||
         (transferType === TransferTypes.Outgoing && !isIncoming))
   )
@@ -119,8 +121,10 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const network = useNetwork()
   const theme = useTheme()
   const [page, setPage] = useState(0)
-  const [selectedToken, setSelectedToken] = useState(-1)
-  const [selectedTransferType, setSelectedTransferType] = useState(-1)
+  const [selectedToken, setSelectedToken] = useState(UNSELECTED_TOKEN_FILTER)
+  const [selectedTransferType, setSelectedTransferType] = useState(
+    UNSELECTED_TRANSFER_TYPE_FILTER
+  )
   const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
   const handleSelectedDateRangeChange = range => {
     setPage(0)
@@ -129,21 +133,21 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const handleTokenChange = React.useCallback(
     index => {
       setPage(0)
-      setSelectedToken(index === 0 ? -1 : index)
+      setSelectedToken(index || UNSELECTED_TOKEN_FILTER)
     },
     [setPage, setSelectedToken]
   )
   const handleTransferTypeChange = React.useCallback(
     index => {
       setPage(0)
-      setSelectedTransferType(index === 0 ? -1 : index)
+      setSelectedTransferType(index || UNSELECTED_TOKEN_FILTER)
     },
     [setPage, setSelectedTransferType]
   )
   const handleClearFilters = useCallback(() => {
     setPage(0)
-    setSelectedTransferType(0)
-    setSelectedToken(0)
+    setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
+    setSelectedToken(UNSELECTED_TOKEN_FILTER)
     setSelectedDateRange(INITIAL_DATE_RANGE)
   }, [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange])
   const filteredTransfers = getFilteredTransfers({
