@@ -10,6 +10,7 @@ import {
   SafeLink,
   Text,
   TextInput,
+  TokenBadge,
   GU,
   useTheme,
 } from '@aragon/ui'
@@ -26,7 +27,6 @@ import {
 } from '../../lib/token-utils'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
 import ToggleContent from '../ToggleContent'
-import TokenBadge from './TokenBadge'
 import TokenSelector from './TokenSelector'
 
 const NO_ERROR = Symbol('NO_ERROR')
@@ -292,6 +292,7 @@ class Deposit extends React.Component {
           <TokenBadge
             address={selectedToken.value}
             symbol={selectedToken.data.symbol}
+            networkType={network.type}
           />
         )}
         <div css="margin: 10px 0 20px">
