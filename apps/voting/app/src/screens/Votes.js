@@ -16,12 +16,13 @@ import Vote from '../components/Vote'
 import EmptyFilteredVotes from '../components/EmptyFilteredVotes'
 import DateRangeInput from '../components/DateRange/DateRangeInput'
 import {
+  VOTE_STATUS_ONGOING,
   VOTE_STATUS_REJECTED,
   VOTE_STATUS_ACCEPTED,
-  VOTE_STATUS_ONGOING,
+  VOTE_STATUS_PENDING_ENACTMENT,
   VOTE_STATUS_ENACTED,
 } from '../vote-types'
-import { getVoteStatus, isVoteAction } from '../vote-utils'
+import { getVoteStatus } from '../vote-utils'
 import { useSettings } from '../vote-settings-manager'
 
 const sortVotes = (a, b) => {
@@ -64,7 +65,7 @@ const useFilterVotes = votes => {
   useEffect(() => {
     const filtered = votes.filter(vote => {
       const {
-        data: { open, endDate, startDate: startTimestamp, yea, nay, executed },
+        data: { endDate, startDate: startTimestamp, yea, nay },
       } = vote
       const voteStatus = getVoteStatus(vote, pctBase)
       const { start, end } = dateRangeFilter
@@ -73,7 +74,8 @@ const useFilterVotes = votes => {
         // status
         (statusFilter === -1 ||
           statusFilter === 0 ||
-          ((open && statusFilter === 1) || (!open && statusFilter === 2))) &&
+          ((statusFilter === 1 && voteStatus === VOTE_STATUS_ONGOING) ||
+            (statusFilter === 2 && voteStatus !== VOTE_STATUS_ONGOING))) &&
         // trend
         (trendFilter === -1 ||
           trendFilter === 0 ||
@@ -84,13 +86,12 @@ const useFilterVotes = votes => {
           outcomeFilter === 0 ||
           ((outcomeFilter === 1 &&
             (voteStatus === VOTE_STATUS_ACCEPTED ||
+              voteStatus === VOTE_STATUS_PENDING_ENACTMENT ||
               voteStatus === VOTE_STATUS_ENACTED)) ||
             (outcomeFilter === 2 && voteStatus === VOTE_STATUS_REJECTED) ||
             (outcomeFilter === 3 && voteStatus === VOTE_STATUS_ENACTED) ||
             (outcomeFilter === 4 &&
-              voteStatus === VOTE_STATUS_ACCEPTED &&
-              isVoteAction(vote) &&
-              !executed))) &&
+              voteStatus === VOTE_STATUS_PENDING_ENACTMENT))) &&
         // app
         // date range
         (!(start || end) ||

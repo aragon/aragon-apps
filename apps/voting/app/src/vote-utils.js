@@ -26,15 +26,20 @@ export const getQuorumProgress = ({ numData: { yea, votingPower } }) =>
   yea / votingPower
 
 export function getVoteStatus(vote, pctBase) {
-  if (vote.data.executed) {
-    return VOTE_STATUS_EXECUTED
-  }
   if (vote.data.open) {
     return VOTE_STATUS_ONGOING
   }
-  return getVoteSuccess(vote, pctBase)
-    ? VOTE_STATUS_ACCEPTED
-    : VOTE_STATUS_REJECTED
+  if (!getVoteSuccess(vote, pctBase)) {
+    return VOTE_STATUS_REJECTED
+  }
+
+  // Only if the vote has an action do we consider it possible for enactment
+  const hasAction = isVoteAction(vote)
+  return hasAction
+    ? vote.data.executed
+      ? VOTE_STATUS_ENACTED
+      : VOTE_STATUS_PENDING_ENACTMENT
+    : VOTE_STATUS_ACCEPTED
 }
 
 export function getVoteSuccess(vote, pctBase) {

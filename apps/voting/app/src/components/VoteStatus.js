@@ -16,59 +16,57 @@ import {
   VOTE_STATUS_ENACTED,
   VOTE_STATUS_PENDING_ENACTMENT,
 } from '../vote-types'
-import { isVoteAction, getVoteStatus } from '../vote-utils'
+import { getVoteStatus } from '../vote-utils'
 
-const POSITIVE = Symbol('positive')
-const NEGATIVE = Symbol('negative')
-
-const ATTRIBUTES = {
-  [VOTE_STATUS_PENDING_ENACTMENT]: {
-    label: 'Pending',
-    Icon: IconCheck,
-    color: POSITIVE,
-  },
-  [VOTE_STATUS_ONGOING]: {
-    label: 'Ongoing',
-    Icon: IconTime,
-    color: null,
-  },
-  [VOTE_STATUS_ACCEPTED]: {
-    label: 'Passed',
-    Icon: IconCheck,
-    color: POSITIVE,
-  },
-  [VOTE_STATUS_REJECTED]: {
-    label: 'Rejected',
-    Icon: IconCross,
-    color: NEGATIVE,
-  },
-  [VOTE_STATUS_ENACTED]: {
-    label: 'Enacted',
-    Icon: IconCheck,
-    color: POSITIVE,
-  },
+const getStatusAttributes = (status, theme) => {
+  if (status === VOTE_STATUS_ONGOING) {
+    return {
+      label: 'Ongoing',
+      Icon: IconTime,
+      color: null,
+    }
+  }
+  if (status === VOTE_STATUS_REJECTED) {
+    return {
+      label: 'Rejected',
+      Icon: IconCross,
+      color: theme.negative,
+    }
+  }
+  if (status === VOTE_STATUS_ACCEPTED) {
+    return {
+      label: 'Passed',
+      Icon: IconCheck,
+      color: theme.positive,
+    }
+  }
+  if (status === VOTE_STATUS_PENDING_ENACTMENT) {
+    return {
+      label: 'Pending',
+      Icon: IconCheck,
+      color: theme.positive,
+    }
+  }
+  if (status === VOTE_STATUS_ENACTED) {
+    return {
+      label: 'Enacted',
+      Icon: IconCheck,
+      color: theme.positive,
+    }
+  }
 }
 
 const VoteStatus = ({ vote }) => {
   const theme = useTheme()
   const { pctBase } = useSettings()
   const status = getVoteStatus(vote, pctBase)
-  const { Icon, color, label } = ATTRIBUTES[
-    status === VOTE_STATUS_ACCEPTED &&
-    (isVoteAction(vote) && !vote.data.executed)
-      ? VOTE_STATUS_PENDING_ENACTMENT
-      : status
-  ]
+  const { Icon, color, label } = getStatusAttributes(status, theme)
 
   return (
     <Main
       css={`
         ${textStyle('body2')};
-        color: ${color === POSITIVE
-          ? theme.positive
-          : color === NEGATIVE
-          ? theme.negative
-          : theme.textTertiary};
+        color: ${color || theme.surfaceContentSecondary};
       `}
     >
       {Icon && <Icon size="tiny" />}
