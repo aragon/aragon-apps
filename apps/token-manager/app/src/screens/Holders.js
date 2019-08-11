@@ -38,9 +38,7 @@ function Holders({
         <DataView
           mode="table"
           fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
-          entries={holders.map(({ address, balance }) =>
-            groupMode ? [address] : [address, balance]
-          )}
+          entries={holders.map(({ address, balance }) => [address, balance])}
           renderEntry={([address, balance]) => {
             const isCurrentUser = Boolean(
               userAccount && userAccount === address
@@ -56,7 +54,7 @@ function Holders({
               </React.Fragment>,
             ]
 
-            if (balance) {
+            if (!groupMode) {
               values.push(formatBalance(balance, tokenDecimalsBase))
             }
 
@@ -65,11 +63,10 @@ function Holders({
           renderEntryActions={([address, balance]) => (
             <EntryActions
               address={address}
-              balance={balance}
               onAssignTokens={onAssignTokens}
               onRemoveTokens={onRemoveTokens}
-              singleToken={!balance || balance.eq(tokenDecimalsBase)}
-              canAssign={!!balance && balance.lt(maxAccountTokens)}
+              singleToken={groupMode || balance.eq(tokenDecimalsBase)}
+              canAssign={!groupMode && balance.lt(maxAccountTokens)}
             />
           )}
         />
