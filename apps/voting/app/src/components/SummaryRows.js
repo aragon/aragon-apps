@@ -1,46 +1,68 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU, theme } from '@aragon/ui'
+import { GU, useTheme } from '@aragon/ui'
 import { formatNumber } from '../math-utils'
 
-const SummaryRows = ({ yea, nay, symbol }) => (
-  <div>
-    <Row>
-      <RowStart>
-        <Bullet color={theme.positive} />
-        <YesNo>Yes</YesNo>
-        <div>{yea.pct}%</div>
-      </RowStart>
-      <Amount>
-        {formatNumber(yea.amount, 5)} {symbol}
-      </Amount>
-    </Row>
-    <Row>
-      <RowStart>
-        <Bullet color={theme.negative} />
-        <YesNo>No</YesNo>
-        <div>{nay.pct}%</div>
-      </RowStart>
-      <Amount>
-        {formatNumber(nay.amount, 5)} {symbol}
-      </Amount>
-    </Row>
-  </div>
-)
+function SummaryRows({ yea, nay, symbol }) {
+  const theme = useTheme()
+  return (
+    <div>
+      <SummaryRow
+        color={theme.positive}
+        label="Yes"
+        pct={yea.pct}
+        token={{ amount: yea.amount, symbol }}
+      />
+      <SummaryRow
+        color={theme.negative}
+        label="No"
+        pct={nay.pct}
+        token={{ amount: nay.amount, symbol }}
+      />
+    </div>
+  )
+}
 
-const Row = styled.div`
-  display: flex;
-  width: 100%;
-  margin-bottom: 10px;
-  align-items: center;
-  justify-content: space-between;
-  white-space: nowrap;
-`
-
-const RowStart = styled.div`
-  display: flex;
-  align-items: center;
-`
+function SummaryRow({ color, label, pct, token }) {
+  const theme = useTheme()
+  return (
+    <div
+      css={`
+        display: flex;
+        width: 100%;
+        margin-bottom: ${1 * GU}px;
+        align-items: center;
+        justify-content: space-between;
+        white-space: nowrap;
+      `}
+    >
+      <div
+        css={`
+          display: flex;
+          align-items: center;
+        `}
+      >
+        <Bullet color={color} />
+        <div
+          css={`
+            width: ${4 * GU}px;
+            color: ${theme.textSecondary};
+          `}
+        >
+          {label}
+        </div>
+        <div>{pct}%</div>
+      </div>
+      <div
+        css={`
+          color: ${theme.textTertiary};
+        `}
+      >
+        {formatNumber(token.amount, 5)} {token.symbol}
+      </div>
+    </div>
+  )
+}
 
 const Bullet = styled.div`
   flex-shrink: 0;
@@ -52,13 +74,4 @@ const Bullet = styled.div`
   background: ${({ color }) => color};
 `
 
-const YesNo = styled.div`
-  width: 35px;
-  color: ${theme.textSecondary};
-`
-
-const Amount = styled.div`
-  color: ${theme.textTertiary};
-`
-
-export default SummaryRows
+export default React.memo(SummaryRows)

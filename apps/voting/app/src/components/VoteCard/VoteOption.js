@@ -1,34 +1,44 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Text, GU, theme } from '@aragon/ui'
+import { GU, textStyle, useTheme } from '@aragon/ui'
 import { animated } from 'react-spring'
 
-class VoteOption extends React.Component {
-  static defaultProps = {
-    color: theme.positive,
-  }
-  render() {
-    const { value, label, percentage, color } = this.props
-    return (
-      <Main>
-        <Labels>
-          <Text size="xsmall">{label}</Text>
-          <Text size="xsmall" color="#98A0A2">
-            {percentage}%
-          </Text>
-        </Labels>
-        <BarWrapper>
-          <Bar
-            style={{
-              width: '100%',
-              transform: value.interpolate(v => `scale3d(${v}, 1, 1)`),
-              backgroundColor: color,
-            }}
-          />
-        </BarWrapper>
-      </Main>
-    )
-  }
+function VoteOption({ color, label, percentage, value }) {
+  const theme = useTheme()
+  return (
+    <Main>
+      <Labels>
+        <span
+          css={`
+            ${textStyle('body3')}
+            font-size: 12px;
+          `}
+        >
+          {label}
+        </span>
+        <span
+          css={`
+            ${textStyle('body3')}
+            font-size: 12px;
+          `}
+          color={theme.surfaceContentSecondary}
+        >
+          {percentage}%
+        </span>
+      </Labels>
+      <BarWrapper>
+        <Bar
+          css={`
+            background-color: ${color || theme.positive};
+            width: 100%;
+          `}
+          style={{
+            transform: value.interpolate(v => `scale3d(${v}, 1, 1)`),
+          }}
+        />
+      </BarWrapper>
+    </Main>
+  )
 }
 
 const Main = styled.div`
@@ -54,4 +64,4 @@ const Bar = styled(animated.div)`
   transform-origin: 0 0;
 `
 
-export default VoteOption
+export default React.memo(VoteOption)
