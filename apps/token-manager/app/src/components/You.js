@@ -1,7 +1,7 @@
 import styled from 'styled-components'
-import { Badge, GU } from '@aragon/ui'
+import { Tag, GU } from '@aragon/ui'
 
-const You = styled(Badge.Identity).attrs({
+const You = styled(Tag).attrs({
   title: 'This is your Ethereum address',
   children: 'you',
 })`

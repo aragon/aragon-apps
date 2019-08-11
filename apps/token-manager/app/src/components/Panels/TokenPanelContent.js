@@ -215,13 +215,13 @@ const Message = styled.div`
 
 const InfoMessage = ({ title, text }) => (
   <div css="margin-bottom: 20px">
-    <Info.Action title={title}>{text}</Info.Action>
+    <Info title={title}>{text}</Info>
   </div>
 )
 
 const WarningMessage = ({ message }) => (
   <Message>
-    <Info.Action>{message}</Info.Action>
+    <Info mode="warning">{message}</Info>
   </Message>
 )
 

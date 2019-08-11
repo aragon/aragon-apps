@@ -2,13 +2,13 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
 import {
-  Badge,
   Button,
   GU,
   Header,
   IconPlus,
   SidePanel,
   SyncIndicator,
+  Tag,
   textStyle,
   useLayout,
   useTheme,
@@ -137,7 +137,7 @@ class App extends React.PureComponent {
               >
                 Tokens
               </h1>
-              {tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
+              {tokenSymbol && <Tag>{tokenSymbol}</Tag>}
             </div>
           }
           secondary={
