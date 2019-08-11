@@ -68,8 +68,8 @@ function Holders({
               balance={balance}
               onAssignTokens={onAssignTokens}
               onRemoveTokens={onRemoveTokens}
-              singleToken={balance.eq(tokenDecimalsBase)}
-              canAssign={balance.lt(maxAccountTokens)}
+              singleToken={!balance || balance.eq(tokenDecimalsBase)}
+              canAssign={!!balance && balance.lt(maxAccountTokens)}
             />
           )}
         />
@@ -133,7 +133,7 @@ function EntryActions({
   ])
 
   const actions = [
-    ...[canAssign ? [assignTokens, IconAdd, 'Add tokens'] : []],
+    ...(canAssign ? [[assignTokens, IconAdd, 'Add tokens']] : []),
     [removeTokens, IconRemove, `Remove Token${singleToken ? '' : 's'}`],
     [editLabel, IconLabel, `${label ? 'Edit' : 'Add'} custom label`],
   ]
