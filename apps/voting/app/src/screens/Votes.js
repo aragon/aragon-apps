@@ -19,7 +19,7 @@ import {
   VOTE_STATUS_REJECTED,
   VOTE_STATUS_ACCEPTED,
   VOTE_STATUS_ONGOING,
-  VOTE_STATUS_EXECUTED,
+  VOTE_STATUS_ENACTED,
 } from '../vote-types'
 import { getVoteStatus, isVoteAction } from '../vote-utils'
 import { useSettings } from '../vote-settings-manager'
@@ -84,9 +84,9 @@ const useFilterVotes = votes => {
           outcomeFilter === 0 ||
           ((outcomeFilter === 1 &&
             (voteStatus === VOTE_STATUS_ACCEPTED ||
-              voteStatus === VOTE_STATUS_EXECUTED)) ||
+              voteStatus === VOTE_STATUS_ENACTED)) ||
             (outcomeFilter === 2 && voteStatus === VOTE_STATUS_REJECTED) ||
-            (outcomeFilter === 3 && voteStatus === VOTE_STATUS_EXECUTED) ||
+            (outcomeFilter === 3 && voteStatus === VOTE_STATUS_ENACTED) ||
             (outcomeFilter === 4 &&
               voteStatus === VOTE_STATUS_ACCEPTED &&
               isVoteAction(vote) &&

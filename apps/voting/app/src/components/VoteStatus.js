@@ -13,7 +13,7 @@ import {
   VOTE_STATUS_ONGOING,
   VOTE_STATUS_REJECTED,
   VOTE_STATUS_ACCEPTED,
-  VOTE_STATUS_EXECUTED,
+  VOTE_STATUS_ENACTED,
   VOTE_STATUS_PENDING_ENACTMENT,
 } from '../vote-types'
 import { isVoteAction, getVoteStatus } from '../vote-utils'
@@ -42,7 +42,7 @@ const ATTRIBUTES = {
     Icon: IconCross,
     color: NEGATIVE,
   },
-  [VOTE_STATUS_EXECUTED]: {
+  [VOTE_STATUS_ENACTED]: {
     label: 'Enacted',
     Icon: IconCheck,
     color: POSITIVE,
