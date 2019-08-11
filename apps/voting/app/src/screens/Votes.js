@@ -206,9 +206,9 @@ const Votes = React.memo(function Votes({
             `}
           >
             <DropDown
+              placeholder="Status"
               selected={voteStatusFilter}
               onChange={handleVoteStatusFilterChange}
-              label="Status"
               items={[
                 <div>
                   All
@@ -232,7 +232,7 @@ const Votes = React.memo(function Votes({
             />
             {voteStatusFilter === 1 && (
               <DropDown
-                label="Trend"
+                placeholder="Trend"
                 selected={voteTrendFilter}
                 onChange={handleVoteTrendFilterChange}
                 items={['All', 'Will pass', 'Won’t pass']}
@@ -241,7 +241,7 @@ const Votes = React.memo(function Votes({
             )}
             {voteStatusFilter !== 1 && (
               <DropDown
-                label="Outcome"
+                placeholder="Outcome"
                 selected={voteOutcomeFilter}
                 onChange={handleVoteOutcomeFilterChange}
                 items={['All', 'Passed', 'Rejected', 'Enacted', 'Pending']}
@@ -249,7 +249,7 @@ const Votes = React.memo(function Votes({
               />
             )}
             <DropDown
-              label="App type"
+              placeholder="App type"
               selected={voteAppFilter}
               onChange={handleVoteAppFilterChange}
               items={['All', 'Finance', 'Tokens', 'Voting']}
