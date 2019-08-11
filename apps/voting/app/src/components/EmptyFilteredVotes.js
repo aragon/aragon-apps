@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Box, Button, GU, unselectable, useTheme } from '@aragon/ui'
-import noResultsSvg from './assets/no-results.svg'
+import noResultsSvg from '../assets/no-results.svg'
 
 function EmptyFilteredVotes({ onClear }) {
   const theme = useTheme()
