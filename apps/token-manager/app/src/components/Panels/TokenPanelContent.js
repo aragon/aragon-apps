@@ -90,10 +90,10 @@ class TokenPanelContent extends React.Component {
           (mode === 'assign'
             ? `
               The maximum amount of tokens that can be assigned has already been
-              reached.
+              reached
             `
             : `
-              This account doesn’t have any tokens to remove.
+              This account doesn’t have any tokens to remove
             `),
       },
     }))
@@ -115,7 +115,7 @@ class TokenPanelContent extends React.Component {
     const holderError = !isAddress(holderAddress)
       ? `
         ${mode === 'assign' ? 'Recipient' : 'Account'}
-        must be a valid Ethereum address.
+        must be a valid Ethereum address
       `
       : null
 
