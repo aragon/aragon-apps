@@ -1,6 +1,15 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Button, Field, IconCross, Text, TextInput, Info } from '@aragon/ui'
+import {
+  Button,
+  Field,
+  IconCross,
+  Info,
+  TextInput,
+  GU,
+  textStyle,
+  useTheme,
+} from '@aragon/ui'
 import { isAddress } from '../../web3-utils'
 import { fromDecimals, toDecimals, formatBalance } from '../../utils'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
@@ -196,7 +205,7 @@ class AssignVotePanelContent extends React.Component {
 
 const Message = styled.div`
   & + & {
-    margin-top: 15px;
+    margin-top: ${2 * GU}px;
   }
 `
 
@@ -212,15 +221,31 @@ const WarningMessage = ({ message }) => (
   </Message>
 )
 
-const ErrorMessage = ({ message }) => (
-  <Message>
-    <p>
-      <IconCross />
-      <Text size="small" style={{ marginLeft: '10px' }}>
+const ErrorMessage = ({ message }) => {
+  const theme = useTheme()
+  return (
+    <Message
+      css={`
+        display: flex;
+        align-items: center;
+      `}
+    >
+      <IconCross
+        size="tiny"
+        css={`
+          color: ${theme.negative};
+          margin-right: ${1 * GU}px;
+        `}
+      />
+      <span
+        css={`
+          ${textStyle('body3')}
+        `}
+      >
         {message}
-      </Text>
-    </p>
-  </Message>
-)
+      </span>
+    </Message>
+  )
+}
 
 export default AssignVotePanelContent
