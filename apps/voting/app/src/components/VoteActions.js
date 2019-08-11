@@ -12,20 +12,21 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount } from '@aragon/api-react'
-import { VOTE_NAY, VOTE_YEA, VOTE_ABSENT } from '../vote-types'
+import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { useExtendedVoteData } from '../vote-hooks'
-import { isVoteAction, getVoteStatus } from '../vote-utils'
+import { isVoteAction } from '../vote-utils'
 import { noop, formatDate } from '../utils'
 
 const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   const theme = useTheme()
   const connectedAccount = useConnectedAccount()
   const { tokenSymbol } = useAppState()
-  const { connectedAccountVote, data } = vote
-  const { snapshotBlock, startDate: startTimestamp, open, executed } = data
-  const { canUserVote, canExecute, userBalance } = useExtendedVoteData(vote)
   const [changeVote, setChangeVote] = useState(false)
   const handleChangeVote = useCallback(() => setChangeVote(true), [])
+
+  const { connectedAccountVote, data } = vote
+  const { snapshotBlock, startDate: startTimestamp, open } = data
+  const { canUserVote, canExecute, userBalance } = useExtendedVoteData(vote)
   const hasVoted = [VOTE_YEA, VOTE_NAY].includes(connectedAccountVote)
 
   if (!open) {
@@ -43,7 +44,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
             </Info>
           </React.Fragment>
         )}
-        {connectedAccountVote !== VOTE_ABSENT && (
+        {hasVoted && (
           <div
             css={`
               border-radius: ${RADIUS}px;
