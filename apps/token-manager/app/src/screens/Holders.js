@@ -10,6 +10,7 @@ import {
   IconLabel,
   IconRemove,
   Split,
+  GU,
   useTheme,
 } from '@aragon/ui'
 import { formatBalance } from '../utils'
@@ -157,7 +158,13 @@ function EntryActions({
           >
             <Icon />
           </span>
-          <span css="margin-left: 15px">{label}</span>
+          <span
+            css={`
+              margin-left: ${2 * GU}px;
+            `}
+          >
+            {label}
+          </span>
         </ContextMenuItem>
       ))}
     </ContextMenu>

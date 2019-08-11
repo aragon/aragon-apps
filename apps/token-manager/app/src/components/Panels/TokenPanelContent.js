@@ -193,7 +193,11 @@ class TokenPanelContent extends React.Component {
           >
             {mode === 'assign' ? 'Add' : 'Remove'} tokens
           </Button>
-          <div css="margin-top: 15px">
+          <div
+            css={`
+              margin-top: ${2 * GU}px;
+            `}
+          >
             {errorMessage && <ErrorMessage message={errorMessage} />}
             {warningMessage && <WarningMessage message={warningMessage} />}
           </div>
