@@ -246,6 +246,7 @@ const ValidationError = ({ message }) => {
       css={`
         display: flex;
         align-items: center;
+        margin-top: ${2 * GU}px;
       `}
     >
       <IconCross
