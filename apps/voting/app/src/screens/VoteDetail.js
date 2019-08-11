@@ -1,5 +1,7 @@
 import React, { useCallback } from 'react'
 import {
+  BackButton,
+  Bar,
   Box,
   GU,
   IconCheck,
@@ -26,7 +28,7 @@ import { formatDate } from '../utils'
 const DEFAULT_DESCRIPTION =
   'No additional description has been provided for this proposal.'
 
-function VoteDetail({ vote, onVote, onExecute }) {
+function VoteDetail({ vote, onBack, onVote, onExecute }) {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const { tokenSymbol } = useAppState()
@@ -57,212 +59,217 @@ function VoteDetail({ vote, onVote, onExecute }) {
   }, [onExecute, voteId])
 
   return (
-    <Split
-      primary={
-        <Box>
-          <div
-            css={`
-              display: flex;
-              justify-content: space-between;
-            `}
-          >
-            <AppBadge>App Badge</AppBadge>
-            {youVoted && (
-              <div
-                css={`
-                  display: inline-grid;
-                  grid-template-columns: auto auto;
-                  grid-gap: ${0.5 * GU}px;
-                  align-items: center;
-                  justify-content: center;
-                  height: 20px;
-                  width: auto;
-                  border-radius: 100px;
-                  padding: 0 ${1 * GU}px;
-                  background: ${theme.infoSurface.alpha(0.08)};
-                  color: ${theme.info};
-                  ${textStyle('label2')};
-                `}
-              >
-                <IconCheck size="tiny" /> Voted
-              </div>
-            )}
-          </div>
-          <section
-            css={`
-              display: grid;
-              grid-template-columns: auto;
-              grid-gap: ${2.5 * GU}px;
-              margin-top: ${2.5 * GU}px;
-            `}
-          >
-            <h1
-              css={`
-                ${textStyle('title2')};
-              `}
-            >
-              <span css="font-weight: bold;">Vote #{voteId}</span>
-            </h1>
+    <React.Fragment>
+      <Bar>
+        <BackButton onClick={onBack} />
+      </Bar>
+      <Split
+        primary={
+          <Box>
             <div
               css={`
-                display: grid;
-                grid-template-columns: ${layoutName === 'large'
-                  ? 'auto auto'
-                  : 'auto'};
-                grid-gap: ${layoutName === 'large' ? 5 * GU : 2.5 * GU}px;
+                display: flex;
+                justify-content: space-between;
               `}
             >
-              <div>
-                <h2
-                  css={`
-                    ${textStyle('label2')};
-                    color: ${theme.surfaceContentSecondary};
-                    margin-bottom: ${2 * GU}px;
-                  `}
-                >
-                  Description
-                </h2>
+              <AppBadge>App Badge</AppBadge>
+              {youVoted && (
                 <div
                   css={`
-                    ${textStyle('body2')};
-                  `}
-                >
-                  <VoteText
-                    text={description || metadata || DEFAULT_DESCRIPTION}
-                  />
-                </div>
-              </div>
-              <div>
-                <h2
-                  css={`
-                    ${textStyle('label2')};
-                    color: ${theme.surfaceContentSecondary};
-                    margin-bottom: ${2 * GU}px;
-                  `}
-                >
-                  Created By
-                </h2>
-                <div
-                  css={`
-                    display: flex;
-                    align-items: flex-start;
-                  `}
-                >
-                  <LocalIdentityBadge entity={creator} />
-                </div>
-              </div>
-            </div>
-            <div>
-              <h2
-                css={`
-                  ${textStyle('label2')};
-                  color: ${theme.surfaceContentSecondary};
-                  margin-bottom: ${1.5 * GU}px;
-                `}
-              >
-                Current votes
-              </h2>
-              <SummaryBar
-                positiveSize={votesYeaVotersSize}
-                negativeSize={votesNayVotersSize}
-                requiredSize={supportRequired}
-              />
-              <SummaryRows
-                yea={{ pct: yeaPct, amount: yea }}
-                nay={{ pct: nayPct, amount: nay }}
-                symbol={tokenSymbol}
-              />
-            </div>
-            <VoteActions
-              onExecute={handleExecute}
-              onVoteNo={handleVoteNo}
-              onVoteYes={handleVoteYes}
-              vote={vote}
-            />
-          </section>
-        </Box>
-      }
-      secondary={
-        <React.Fragment>
-          <Box heading="Status">
-            {open ? (
-              <React.Fragment>
-                <div
-                  css={`
-                    ${textStyle('body2')};
-                    color: ${theme.surfaceContentSecondary};
-                    margin-bottom: ${1 * GU}px;
-                  `}
-                >
-                  Time remaining
-                </div>
-                <Timer end={endDate} maxUnits={4} />
-              </React.Fragment>
-            ) : (
-              <React.Fragment>
-                <VoteStatus vote={vote} />
-                <div
-                  css={`
-                    margin-top: ${1 * GU}px;
                     display: inline-grid;
                     grid-template-columns: auto auto;
-                    grid-gap: ${1 * GU}px;
+                    grid-gap: ${0.5 * GU}px;
                     align-items: center;
-                    ${textStyle('body2')};
+                    justify-content: center;
+                    height: 20px;
+                    width: auto;
+                    border-radius: 100px;
+                    padding: 0 ${1 * GU}px;
+                    background: ${theme.infoSurface.alpha(0.08)};
+                    color: ${theme.info};
+                    ${textStyle('label2')};
                   `}
                 >
-                  <IconTime size="small" />
-                  {formatDate(endDate)}
+                  <IconCheck size="tiny" /> Voted
                 </div>
-              </React.Fragment>
-            )}
-          </Box>
-          <Box heading="Relative support %">
-            <div
+              )}
+            </div>
+            <section
               css={`
-                ${textStyle('body2')};
+                display: grid;
+                grid-template-columns: auto;
+                grid-gap: ${2.5 * GU}px;
+                margin-top: ${2.5 * GU}px;
               `}
             >
-              {round(quorumProgress * 100, 2)}%{' '}
-              <span
+              <h1
                 css={`
-                  color: ${theme.surfaceContentSecondary};
+                  ${textStyle('title2')};
                 `}
               >
-                ({round(minAcceptQuorum * 100, 2)}% support needed)
-              </span>
-            </div>
-            <SummaryBar
-              css={`
-                margin-top: ${1 * GU}px;
-              `}
-              positiveSize={quorumProgress}
-              requiredSize={minAcceptQuorum}
-            />
-          </Box>
-          <Box heading="Minimum approval %">
-            <div
-              css={`
-                ${textStyle('body2')};
-              `}
-            >
-              {round(votesYeaVotersSize * 100, 2)}%{' '}
-              <span
+                <span css="font-weight: bold;">Vote #{voteId}</span>
+              </h1>
+              <div
                 css={`
-                  color: ${theme.surfaceContentSecondary};
+                  display: grid;
+                  grid-template-columns: ${layoutName === 'large'
+                    ? 'auto auto'
+                    : 'auto'};
+                  grid-gap: ${layoutName === 'large' ? 5 * GU : 2.5 * GU}px;
                 `}
               >
-                ({round(supportRequired * 100, 2)}% approval needed)
-              </span>
-            </div>
-            <SummaryBar
-              positiveSize={votesYeaVotersSize}
-              requiredSize={supportRequired}
-            />
+                <div>
+                  <h2
+                    css={`
+                      ${textStyle('label2')};
+                      color: ${theme.surfaceContentSecondary};
+                      margin-bottom: ${2 * GU}px;
+                    `}
+                  >
+                    Description
+                  </h2>
+                  <div
+                    css={`
+                      ${textStyle('body2')};
+                    `}
+                  >
+                    <VoteText
+                      text={description || metadata || DEFAULT_DESCRIPTION}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <h2
+                    css={`
+                      ${textStyle('label2')};
+                      color: ${theme.surfaceContentSecondary};
+                      margin-bottom: ${2 * GU}px;
+                    `}
+                  >
+                    Created By
+                  </h2>
+                  <div
+                    css={`
+                      display: flex;
+                      align-items: flex-start;
+                    `}
+                  >
+                    <LocalIdentityBadge entity={creator} />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h2
+                  css={`
+                    ${textStyle('label2')};
+                    color: ${theme.surfaceContentSecondary};
+                    margin-bottom: ${1.5 * GU}px;
+                  `}
+                >
+                  Current votes
+                </h2>
+                <SummaryBar
+                  positiveSize={votesYeaVotersSize}
+                  negativeSize={votesNayVotersSize}
+                  requiredSize={supportRequired}
+                />
+                <SummaryRows
+                  yea={{ pct: yeaPct, amount: yea }}
+                  nay={{ pct: nayPct, amount: nay }}
+                  symbol={tokenSymbol}
+                />
+              </div>
+              <VoteActions
+                onExecute={handleExecute}
+                onVoteNo={handleVoteNo}
+                onVoteYes={handleVoteYes}
+                vote={vote}
+              />
+            </section>
           </Box>
-        </React.Fragment>
-      }
-    />
+        }
+        secondary={
+          <React.Fragment>
+            <Box heading="Status">
+              {open ? (
+                <React.Fragment>
+                  <div
+                    css={`
+                      ${textStyle('body2')};
+                      color: ${theme.surfaceContentSecondary};
+                      margin-bottom: ${1 * GU}px;
+                    `}
+                  >
+                    Time remaining
+                  </div>
+                  <Timer end={endDate} maxUnits={4} />
+                </React.Fragment>
+              ) : (
+                <React.Fragment>
+                  <VoteStatus vote={vote} />
+                  <div
+                    css={`
+                      margin-top: ${1 * GU}px;
+                      display: inline-grid;
+                      grid-template-columns: auto auto;
+                      grid-gap: ${1 * GU}px;
+                      align-items: center;
+                      ${textStyle('body2')};
+                    `}
+                  >
+                    <IconTime size="small" />
+                    {formatDate(endDate)}
+                  </div>
+                </React.Fragment>
+              )}
+            </Box>
+            <Box heading="Relative support %">
+              <div
+                css={`
+                  ${textStyle('body2')};
+                `}
+              >
+                {round(quorumProgress * 100, 2)}%{' '}
+                <span
+                  css={`
+                    color: ${theme.surfaceContentSecondary};
+                  `}
+                >
+                  ({round(minAcceptQuorum * 100, 2)}% support needed)
+                </span>
+              </div>
+              <SummaryBar
+                css={`
+                  margin-top: ${1 * GU}px;
+                `}
+                positiveSize={quorumProgress}
+                requiredSize={minAcceptQuorum}
+              />
+            </Box>
+            <Box heading="Minimum approval %">
+              <div
+                css={`
+                  ${textStyle('body2')};
+                `}
+              >
+                {round(votesYeaVotersSize * 100, 2)}%{' '}
+                <span
+                  css={`
+                    color: ${theme.surfaceContentSecondary};
+                  `}
+                >
+                  ({round(supportRequired * 100, 2)}% approval needed)
+                </span>
+              </div>
+              <SummaryBar
+                positiveSize={votesYeaVotersSize}
+                requiredSize={supportRequired}
+              />
+            </Box>
+          </React.Fragment>
+        }
+      />
+    </React.Fragment>
   )
 }
 
