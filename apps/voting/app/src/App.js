@@ -1,20 +1,20 @@
 import React, { useCallback } from 'react'
 import {
   Button,
-  GU,
   Header,
   IconPlus,
   Main,
   SyncIndicator,
+  GU,
   useLayout,
 } from '@aragon/ui'
+import NewVotePanel from './components/NewVotePanel'
 import NoVotes from './screens/NoVotes'
 import VoteDetail from './screens/VoteDetail'
 import Votes from './screens/Votes'
-import NewVotePanel from './components/NewVotePanel'
+import { AppLogicProvider, useAppLogic } from './app-logic'
 import { IdentityProvider } from './identity-manager'
 import { SettingsProvider } from './vote-settings-manager'
-import { AppLogicProvider, useAppLogic } from './app-logic'
 
 function App() {
   const {

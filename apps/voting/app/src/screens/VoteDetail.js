@@ -13,17 +13,17 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useAppState } from '@aragon/api-react'
-import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import AppBadge from '../components/AppBadge'
-import VoteText from '../components/VoteText'
-import VoteStatus from '../components/VoteStatus'
+import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
 import VoteActions from '../components/VoteActions'
-import { getQuorumProgress } from '../vote-utils'
-import { VOTE_NAY, VOTE_YEA } from '../vote-types'
+import VoteStatus from '../components/VoteStatus'
+import VoteText from '../components/VoteText'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { formatDate } from '../utils'
+import { getQuorumProgress } from '../vote-utils'
+import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 
 const DEFAULT_DESCRIPTION =
   'No additional description has been provided for this proposal.'

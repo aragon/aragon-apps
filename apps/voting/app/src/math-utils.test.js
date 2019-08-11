@@ -42,8 +42,8 @@ describe('scaleBNValuesSet()', () => {
     [
       'should work with values that errored and made us debug this',
       [[0.55, 0], '100'],
-      ['55', '0']
-    ]
+      ['55', '0'],
+    ],
   ]
 
   sets.forEach(([label, params, results]) => {

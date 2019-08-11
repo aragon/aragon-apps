@@ -9,10 +9,11 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { isWithinInterval, startOfDay, endOfDay } from 'date-fns'
+import DateRangeInput from '../components/DateRange/DateRangeInput'
+import EmptyFilteredVotes from '../components/EmptyFilteredVotes'
 import VoteCard from '../components/VoteCard/VoteCard'
 import VoteCardGroup from '../components/VoteCard/VoteCardGroup'
-import EmptyFilteredVotes from '../components/EmptyFilteredVotes'
-import DateRangeInput from '../components/DateRange/DateRangeInput'
+import { useSettings } from '../vote-settings-manager'
 import {
   VOTE_STATUS_ONGOING,
   VOTE_STATUS_REJECTED,
@@ -21,7 +22,6 @@ import {
   VOTE_STATUS_ENACTED,
 } from '../vote-types'
 import { getVoteStatus } from '../vote-utils'
-import { useSettings } from '../vote-settings-manager'
 
 const sortVotes = (a, b) => {
   const dateDiff = b.data.endDate - a.data.endDate

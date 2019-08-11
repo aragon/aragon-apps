@@ -2,20 +2,20 @@ import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import {
   Button,
-  GU,
+  ExternalLink,
   IconCheck,
   IconCross,
   Info,
+  GU,
   RADIUS,
-  ExternalLink,
   textStyle,
   useTheme,
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount } from '@aragon/api-react'
-import { VOTE_NAY, VOTE_YEA } from '../vote-types'
-import { useExtendedVoteData } from '../vote-hooks'
-import { isVoteAction } from '../vote-utils'
 import { noop, formatDate } from '../utils'
+import { useExtendedVoteData } from '../vote-hooks'
+import { VOTE_NAY, VOTE_YEA } from '../vote-types'
+import { isVoteAction } from '../vote-utils'
 
 const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   const theme = useTheme()

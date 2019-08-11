@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo } from 'react'
 import { Card, GU, IconCheck, Timer, textStyle, useTheme } from '@aragon/ui'
-import VoteOptions from './VoteOptions'
 import AppBadge from '../AppBadge'
-import VoteText from '../VoteText'
+import VoteOptions from './VoteOptions'
 import VoteStatus from '../VoteStatus'
+import VoteText from '../VoteText'
 import { noop } from '../../utils'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 
