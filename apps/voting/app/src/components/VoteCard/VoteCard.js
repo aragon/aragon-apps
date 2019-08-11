@@ -72,6 +72,7 @@ const VoteCard = ({ vote, onOpen }) => {
           overflow: hidden;
         `}
       >
+        <span css="font-weight: bold;">#{voteId}:</span>{' '}
         <VoteText text={description || metadata} />
       </div>
       <VoteOptions options={options} votingPower={votingPower} />

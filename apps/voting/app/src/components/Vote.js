@@ -25,22 +25,15 @@ import { formatDate } from '../utils'
 
 const DEFAULT_DESCRIPTION =
   'No additional description has been provided for this proposal.'
-const SEPARATOR = "for '"
-const EXECUTING = ' , executing'
 
 function Vote({ vote, onVote, onExecute }) {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const { tokenSymbol } = useAppState()
+
   const { data, numData, voteId, connectedAccountVote } = vote
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
   const { creator, endDate, open, metadata, description } = data
-  const text = description || metadata
-  const [rawTitle, extra = DEFAULT_DESCRIPTION] =
-    text.indexOf(SEPARATOR) > -1 ? text.split(SEPARATOR) : [text]
-  const [title] = rawTitle.indexOf(EXECUTING)
-    ? rawTitle.split(EXECUTING)
-    : [title]
   const quorumProgress = getQuorumProgress(vote)
   const totalVotes = yea + nay
   const votesYeaVotersSize = safeDiv(yea, totalVotes)
@@ -51,6 +44,7 @@ function Vote({ vote, onVote, onExecute }) {
   )
   const youVoted =
     connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
+
   const handleVoteNo = useCallback(() => {
     onVote(voteId, VOTE_NAY)
   }, [onVote, voteId])
@@ -107,8 +101,7 @@ function Vote({ vote, onVote, onExecute }) {
                 ${textStyle('title2')};
               `}
             >
-              <span css="font-weight: bold;">Vote #{voteId}:</span>{' '}
-              <VoteText text={title} />
+              <span css="font-weight: bold;">Vote #{voteId}</span>
             </h1>
             <div
               css={`
@@ -128,8 +121,14 @@ function Vote({ vote, onVote, onExecute }) {
                 >
                   Description
                 </div>
-                <div>
-                  <VoteText text={extra} />
+                <div
+                  css={`
+                    ${textStyle('body2')};
+                  `}
+                >
+                  <VoteText
+                    text={description || metadata || DEFAULT_DESCRIPTION}
+                  />
                 </div>
               </div>
               <div>
