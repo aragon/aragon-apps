@@ -11,13 +11,13 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useAppState } from '@aragon/api-react'
-import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
-import AppBadge from './AppBadge'
-import VoteText from './VoteText'
-import VoteStatus from './VoteStatus'
-import SummaryBar from './SummaryBar'
-import SummaryRows from './SummaryRows'
-import VoteActions from './VoteActions'
+import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
+import AppBadge from '../components/AppBadge'
+import VoteText from '../components/VoteText'
+import VoteStatus from '../components/VoteStatus'
+import SummaryBar from '../components/SummaryBar'
+import SummaryRows from '../components/SummaryRows'
+import VoteActions from '../components/VoteActions'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { percentageList, round, safeDiv } from '../math-utils'
@@ -26,7 +26,7 @@ import { formatDate } from '../utils'
 const DEFAULT_DESCRIPTION =
   'No additional description has been provided for this proposal.'
 
-function Vote({ vote, onVote, onExecute }) {
+function VoteDetail({ vote, onVote, onExecute }) {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const { tokenSymbol } = useAppState()
@@ -266,4 +266,4 @@ function Vote({ vote, onVote, onExecute }) {
   )
 }
 
-export default Vote
+export default VoteDetail

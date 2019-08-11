@@ -1,6 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import {
-  BackButton,
   Bar,
   DropDown,
   GU,
@@ -12,7 +11,6 @@ import {
 import { isWithinInterval, startOfDay, endOfDay } from 'date-fns'
 import VoteCard from '../components/VoteCard/VoteCard'
 import VoteCardGroup from '../components/VoteCard/VoteCardGroup'
-import Vote from '../components/Vote'
 import EmptyFilteredVotes from '../components/EmptyFilteredVotes'
 import DateRangeInput from '../components/DateRange/DateRangeInput'
 import {
@@ -155,14 +153,7 @@ const useVotes = votes => {
   return { openVotes, closedVotes }
 }
 
-const Votes = React.memo(function Votes({
-  votes,
-  selectedVote,
-  selectVote,
-  onVote,
-  onExecute,
-  onBack,
-}) {
+const Votes = React.memo(function Votes({ votes, selectVote }) {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const {
@@ -180,17 +171,6 @@ const Votes = React.memo(function Votes({
     handleClearFilters,
   } = useFilterVotes(votes)
   const { openVotes, closedVotes } = useVotes(filteredVotes)
-
-  if (selectedVote) {
-    return (
-      <React.Fragment>
-        <Bar>
-          <BackButton onClick={onBack} />
-        </Bar>
-        <Vote vote={selectedVote} onVote={onVote} onExecute={onExecute} />
-      </React.Fragment>
-    )
-  }
 
   return (
     <React.Fragment>

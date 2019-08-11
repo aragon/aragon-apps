@@ -9,6 +9,7 @@ import {
   useLayout,
 } from '@aragon/ui'
 import NoVotes from './screens/NoVotes'
+import VoteDetail from './screens/VoteDetail'
 import Votes from './screens/Votes'
 import NewVotePanel from './components/NewVotePanel'
 import { IdentityProvider } from './identity-manager'
@@ -65,14 +66,16 @@ function App() {
               )
             }
           />
-          <Votes
-            votes={votes}
-            selectVote={selectVote}
-            selectedVote={selectedVote}
-            onVote={actions.vote}
-            onExecute={actions.execute}
-            onBack={handleBack}
-          />
+          {selectedVote ? (
+            <VoteDetail
+              vote={selectedVote}
+              onBack={handleBack}
+              onVote={actions.vote}
+              onExecute={actions.execute}
+            />
+          ) : (
+            <Votes votes={votes} selectVote={selectVote} />
+          )}
         </React.Fragment>
       )}
       <NewVotePanel
