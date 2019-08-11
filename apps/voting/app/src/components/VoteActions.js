@@ -25,7 +25,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   const handleChangeVote = useCallback(() => setChangeVote(true), [])
 
   const { connectedAccountVote, data } = vote
-  const { snapshotBlock, startDate: startTimestamp, open } = data
+  const { snapshotBlock, startDate, open } = data
   const { canUserVote, canExecute, userBalance } = useExtendedVoteData(vote)
   const hasVoted = [VOTE_YEA, VOTE_NAY].includes(connectedAccountVote)
 
@@ -132,7 +132,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
           userBalance={userBalance}
           tokenSymbol={tokenSymbol}
           snapshotBlock={snapshotBlock}
-          startTimestamp={startTimestamp}
+          startDate={startDate}
         />
       </div>
     )
@@ -148,7 +148,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
               userBalance={userBalance}
               tokenSymbol={tokenSymbol}
               snapshotBlock={snapshotBlock}
-              startTimestamp={startTimestamp}
+              startDate={startDate}
             />
           </React.Fragment>
         ) : (
@@ -189,8 +189,8 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
       <Buttons disabled />
       <Info mode="warning">
         The currently connected account did not hold any {tokenSymbol} at the
-        time this vote began ({formatDate(startTimestamp)}), and therefore
-        cannot participate in this vote. Make sure your accounts are holding{' '}
+        time this vote began ({formatDate(startDate)}), and therefore cannot
+        participate in this vote. Make sure your accounts are holding{' '}
         {tokenSymbol} at the time a vote begins if you'd like to vote using this
         Voting app.{' '}
         <ExternalLink
@@ -251,14 +251,13 @@ const TokenReference = ({
   userBalance,
   tokenSymbol,
   snapshotBlock,
-  startTimestamp,
+  startDate,
 }) => (
   <Info>
     Voting with <span css="font-weight: bold;">{userBalance}</span> of your{' '}
     <span css="font-weight: bold;">{tokenSymbol}</span> at block{' '}
     <span css="font-weight: bold;">{snapshotBlock}</span> due to the vote
-    starting at{' '}
-    <span css="font-weight: bold;">{formatDate(startTimestamp)}</span>.
+    starting at <span css="font-weight: bold;">{formatDate(startDate)}</span>.
   </Info>
 )
 

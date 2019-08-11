@@ -63,7 +63,7 @@ const useFilterVotes = votes => {
   useEffect(() => {
     const filtered = votes.filter(vote => {
       const {
-        data: { endDate, startDate: startTimestamp, yea, nay },
+        data: { endDate, startDate, yea, nay },
       } = vote
       const voteStatus = getVoteStatus(vote, pctBase)
       const { start, end } = dateRangeFilter
@@ -93,7 +93,7 @@ const useFilterVotes = votes => {
         // app
         // date range
         (!(start || end) ||
-          isWithinInterval(new Date(startTimestamp), {
+          isWithinInterval(startDate, {
             start: startOfDay(start),
             end: endOfDay(end),
           }) ||
