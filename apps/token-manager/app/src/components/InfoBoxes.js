@@ -1,12 +1,5 @@
 import React, { useMemo } from 'react'
-import {
-  Distribution,
-  Box,
-  GU,
-  TokenBadge,
-  textStyle,
-  useTheme,
-} from '@aragon/ui'
+import { Distribution, Box, GU, TokenBadge, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { formatBalance, stakesPercentages } from '../utils'
 import You from './You'
