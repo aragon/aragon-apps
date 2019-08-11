@@ -5,7 +5,6 @@ import {
   IconCheck,
   IconTime,
   Split,
-  Tag,
   Timer,
   textStyle,
   useLayout,
@@ -13,6 +12,7 @@ import {
 } from '@aragon/ui'
 import { useAppState } from '@aragon/api-react'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
+import AppBadge from './AppBadge'
 import VoteText from './VoteText'
 import VoteStatus from './VoteStatus'
 import SummaryBar from './SummaryBar'
@@ -72,7 +72,7 @@ function Vote({ vote, onVote, onExecute }) {
               justify-content: space-between;
             `}
           >
-            <Tag mode="app">App Badge</Tag>
+            <AppBadge>App Badge</AppBadge>
             {youVoted && (
               <div
                 css={`

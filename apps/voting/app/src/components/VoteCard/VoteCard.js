@@ -1,14 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
-import {
-  Card,
-  GU,
-  IconCheck,
-  Tag,
-  Timer,
-  textStyle,
-  useTheme,
-} from '@aragon/ui'
+import { Card, GU, IconCheck, Timer, textStyle, useTheme } from '@aragon/ui'
 import VoteOptions from './VoteOptions'
+import AppBadge from '../AppBadge'
 import VoteText from '../VoteText'
 import VoteStatus from '../VoteStatus'
 import { noop } from '../../utils'
@@ -49,7 +42,7 @@ const VoteCard = ({ vote, onOpen }) => {
           justify-content: space-between;
         `}
       >
-        <Tag mode="app">App Badge</Tag>
+        <AppBadge>App Badge</AppBadge>
         {youVoted && (
           <div
             css={`
