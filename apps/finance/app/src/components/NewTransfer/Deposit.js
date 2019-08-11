@@ -318,7 +318,7 @@ class Deposit extends React.Component {
         {errorMessage && <ValidationError message={errorMessage} />}
 
         <VSpace size={4} />
-        <Info.Action title="Depositing funds to your organization">
+        <Info title="Depositing funds to your organization">
           {isMainnet && (
             <React.Fragment>
               <p>
@@ -348,7 +348,7 @@ class Deposit extends React.Component {
               </p>
             </React.Fragment>
           )}
-        </Info.Action>
+        </Info>
 
         {proxyAddress && ethSelected && (
           <div>
