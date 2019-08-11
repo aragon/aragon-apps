@@ -268,11 +268,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
                 `}
             `}
           >
-            <LocalIdentityBadge
-              networkType={network.type}
-              entity={entity}
-              address={entity}
-            />
+            <LocalIdentityBadge entity={entity} address={entity} />
           </div>,
           <div
             css={`
