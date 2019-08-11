@@ -88,7 +88,7 @@ function Vote({ vote, onVote, onExecute }) {
               </div>
             )}
           </div>
-          <div
+          <section
             css={`
               display: grid;
               grid-template-columns: auto;
@@ -113,7 +113,7 @@ function Vote({ vote, onVote, onExecute }) {
               `}
             >
               <div>
-                <div
+                <h2
                   css={`
                     ${textStyle('label2')};
                     color: ${theme.surfaceContentSecondary};
@@ -121,7 +121,7 @@ function Vote({ vote, onVote, onExecute }) {
                   `}
                 >
                   Description
-                </div>
+                </h2>
                 <div
                   css={`
                     ${textStyle('body2')};
@@ -133,7 +133,7 @@ function Vote({ vote, onVote, onExecute }) {
                 </div>
               </div>
               <div>
-                <div
+                <h2
                   css={`
                     ${textStyle('label2')};
                     color: ${theme.surfaceContentSecondary};
@@ -141,7 +141,7 @@ function Vote({ vote, onVote, onExecute }) {
                   `}
                 >
                   Created By
-                </div>
+                </h2>
                 <div
                   css={`
                     display: flex;
@@ -153,7 +153,7 @@ function Vote({ vote, onVote, onExecute }) {
               </div>
             </div>
             <div>
-              <div
+              <h2
                 css={`
                   ${textStyle('label2')};
                   color: ${theme.surfaceContentSecondary};
@@ -161,7 +161,7 @@ function Vote({ vote, onVote, onExecute }) {
                 `}
               >
                 Current votes
-              </div>
+              </h2>
               <SummaryBar
                 positiveSize={votesYeaVotersSize}
                 negativeSize={votesNayVotersSize}
@@ -179,7 +179,7 @@ function Vote({ vote, onVote, onExecute }) {
               onVoteYes={handleVoteYes}
               vote={vote}
             />
-          </div>
+          </section>
         </Box>
       }
       secondary={
