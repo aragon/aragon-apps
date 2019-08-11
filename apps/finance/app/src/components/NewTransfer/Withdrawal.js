@@ -221,7 +221,7 @@ const CombinedInput = styled.div`
   }
 `
 
-const StyledTextBlock = (...props) => {
+const StyledTextBlock = props => {
   const theme = useTheme()
   return (
     <div
@@ -237,7 +237,7 @@ const StyledTextBlock = (...props) => {
   )
 }
 
-const StyledAsterisk = (...props) => {
+const StyledAsterisk = props => {
   const theme = useTheme()
   return (
     <span

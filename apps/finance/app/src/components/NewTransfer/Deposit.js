@@ -437,7 +437,7 @@ const SelectedTokenBalance = ({ network, selectedToken }) => {
   )
 }
 
-const StyledSafeLink = (...props) => {
+const StyledSafeLink = props => {
   const theme = useTheme()
   return (
     <SafeLink
