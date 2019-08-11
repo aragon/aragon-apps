@@ -108,7 +108,6 @@ function InfoBoxes({
             <div>
               <LocalIdentityBadge
                 entity={account}
-                networkType={network.type}
                 connectedAccount={account === userAccount}
               />
               {account === userAccount && <You />}

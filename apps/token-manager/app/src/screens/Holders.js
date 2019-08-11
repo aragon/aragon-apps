@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import { useNetwork } from '@aragon/api-react'
 import {
   ContextMenu,
   ContextMenuItem,
@@ -33,7 +32,6 @@ function Holders({
   tokenTransfersEnabled,
   userAccount,
 }) {
-  const network = useNetwork()
   return (
     <Split
       primary={
@@ -52,7 +50,6 @@ function Holders({
               <React.Fragment>
                 <LocalIdentityBadge
                   entity={address}
-                  networkType={network.type}
                   connectedAccount={isCurrentUser}
                 />
                 {isCurrentUser && <You />}
