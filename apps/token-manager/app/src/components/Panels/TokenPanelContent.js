@@ -32,7 +32,7 @@ const initialState = {
   },
 }
 
-class AssignVotePanelContent extends React.Component {
+class TokenPanelContent extends React.Component {
   static defaultProps = {
     onUpdateTokens: () => {},
   }
@@ -248,4 +248,4 @@ const ErrorMessage = ({ message }) => {
   )
 }
 
-export default AssignVotePanelContent
+export default TokenPanelContent

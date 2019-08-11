@@ -14,11 +14,11 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
+import { IdentityProvider } from './components/IdentityManager/IdentityManager'
+import TokenPanelContent from './components/Panels/TokenPanelContent'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
-import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
 import { addressesEqual } from './web3-utils'
-import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
 const initialAssignTokensConfig = {
   mode: null,
@@ -192,7 +192,7 @@ class App extends React.PureComponent {
           onTransitionEnd={this.handleSidepanelTransitionEnd}
         >
           {appStateReady && (
-            <AssignVotePanelContent
+            <TokenPanelContent
               opened={sidepanelOpened}
               tokenDecimals={numData.tokenDecimals}
               tokenDecimalsBase={tokenDecimalsBase}
