@@ -36,7 +36,7 @@ const VoteCardGroup = ({ title, count, children }) => {
         </div>
         <span
           css={`
-            margin-left: 10px;
+            margin-left: ${1 * GU}px;
             display: flex;
             align-items: center;
             justify-content: center;

@@ -51,7 +51,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
               padding: ${3.5 * GU}px ${10 * GU}px;
               display: grid;
               grid-template-columns: auto 1fr;
-              grid-gap: 16px;
+              grid-gap: ${2 * GU}px;
               align-items: center;
             `}
           >
@@ -245,7 +245,7 @@ const TokenReference = ({
 const VotingButton = styled(Button)`
   width: 50%;
   &:first-child {
-    margin-right: 10px;
+    margin-right: ${1 * GU}px;
   }
 `
 

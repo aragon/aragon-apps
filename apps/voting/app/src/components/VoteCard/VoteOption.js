@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Text, theme } from '@aragon/ui'
+import { Text, GU, theme } from '@aragon/ui'
 import { animated } from 'react-spring'
 
 class VoteOption extends React.Component {
@@ -33,14 +33,14 @@ class VoteOption extends React.Component {
 
 const Main = styled.div`
   & + & {
-    margin-top: 10px;
+    margin-top: ${1 * GU}px;
   }
 `
 
 const Labels = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 5px;
+  margin-bottom: ${0.5 * GU}px;
 `
 
 const BarWrapper = styled.div`

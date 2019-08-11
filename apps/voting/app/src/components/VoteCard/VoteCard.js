@@ -41,7 +41,7 @@ const VoteCard = ({ vote, onOpen }) => {
         display: grid;
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr auto auto;
-        grid-gap: 8px;
+        grid-gap: ${1 * GU}px;
         padding: ${3 * GU}px;
       `}
     >

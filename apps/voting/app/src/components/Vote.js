@@ -230,7 +230,9 @@ function Vote({ vote, onVote, onExecute }) {
               </span>
             </div>
             <SummaryBar
-              css="margin-top: 10px"
+              css={`
+                margin-top: ${1 * GU}px;
+              `}
               positiveSize={quorumProgress}
               requiredSize={minAcceptQuorum}
             />

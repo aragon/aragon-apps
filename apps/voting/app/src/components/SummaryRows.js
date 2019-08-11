@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { theme } from '@aragon/ui'
+import { GU, theme } from '@aragon/ui'
 import { formatNumber } from '../math-utils'
 
 const SummaryRows = ({ yea, nay, symbol }) => (
@@ -45,9 +45,9 @@ const RowStart = styled.div`
 const Bullet = styled.div`
   flex-shrink: 0;
   display: block;
-  width: 10px;
-  height: 10px;
-  margin-right: 15px;
+  width: ${1 * GU}px;
+  height: ${1 * GU}px;
+  margin-right: ${2 * GU}px;
   border-radius: 50%;
   background: ${({ color }) => color};
 `

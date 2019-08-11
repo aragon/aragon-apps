@@ -1,6 +1,13 @@
 import React from 'react'
 import styled from 'styled-components'
-import { textStyle, useTheme, IconTime, IconCross, IconCheck } from '@aragon/ui'
+import {
+  IconCheck,
+  IconCross,
+  IconTime,
+  GU,
+  textStyle,
+  useTheme,
+} from '@aragon/ui'
 import { useSettings } from '../vote-settings-manager'
 import {
   VOTE_STATUS_ONGOING,
@@ -73,13 +80,10 @@ const VoteStatus = ({ vote }) => {
 const Main = styled.span`
   display: flex;
   align-items: center;
-  color: ${({ color }) => color};
-  font-size: ${({ fontSize }) => fontSize}px;
-  font-weight: ${({ fontWeight }) => fontWeight};
 `
 
 const StatusLabel = styled.span`
-  margin-left: ${({ spaced }) => (spaced ? '5px' : '0')};
+  margin-left: ${({ spaced }) => (spaced ? `${0.5 * GU}px` : '0')};
 `
 
 export default VoteStatus
