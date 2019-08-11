@@ -24,7 +24,7 @@ const NoVotes = React.memo(function NoVotes({ onNewVote, isSyncing }) {
         )
       }
       action={
-        <Button wide mode="strong" onNewVote={onNewVote}>
+        <Button wide mode="strong" onClick={onNewVote}>
           Create a new vote
         </Button>
       }
