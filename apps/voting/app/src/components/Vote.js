@@ -116,6 +116,7 @@ function Vote({ vote, onVote, onExecute }) {
                 <div
                   css={`
                     ${textStyle('label2')};
+                    color: ${theme.surfaceContentSecondary};
                     margin-bottom: ${2 * GU}px;
                   `}
                 >
@@ -135,6 +136,7 @@ function Vote({ vote, onVote, onExecute }) {
                 <div
                   css={`
                     ${textStyle('label2')};
+                    color: ${theme.surfaceContentSecondary};
                     margin-bottom: ${2 * GU}px;
                   `}
                 >
@@ -154,6 +156,7 @@ function Vote({ vote, onVote, onExecute }) {
               <div
                 css={`
                   ${textStyle('label2')};
+                  color: ${theme.surfaceContentSecondary};
                   margin-bottom: ${1.5 * GU}px;
                 `}
               >
@@ -187,7 +190,8 @@ function Vote({ vote, onVote, onExecute }) {
                 <div
                   css={`
                     ${textStyle('body2')};
-                    color: ${theme.content};
+                    color: ${theme.surfaceContentSecondary};
+                    margin-bottom: ${1 * GU}px;
                   `}
                 >
                   Time remaining
@@ -199,7 +203,7 @@ function Vote({ vote, onVote, onExecute }) {
                 <VoteStatus vote={vote} />
                 <div
                   css={`
-                    margin-top: ${2 * GU}px;
+                    margin-top: ${1 * GU}px;
                     display: inline-grid;
                     grid-template-columns: auto auto;
                     grid-gap: ${1 * GU}px;

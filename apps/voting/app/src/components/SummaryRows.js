@@ -1,12 +1,16 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU, useTheme } from '@aragon/ui'
+import { GU, textStyle, useTheme } from '@aragon/ui'
 import { formatNumber } from '../math-utils'
 
 function SummaryRows({ yea, nay, symbol }) {
   const theme = useTheme()
   return (
-    <div>
+    <div
+      css={`
+        ${textStyle('body2')}
+      `}
+    >
       <SummaryRow
         color={theme.positive}
         label="Yes"
@@ -46,7 +50,7 @@ function SummaryRow({ color, label, pct, token }) {
         <div
           css={`
             width: ${4 * GU}px;
-            color: ${theme.textSecondary};
+            color: ${theme.surfaceContentSecondary};
           `}
         >
           {label}
@@ -55,7 +59,7 @@ function SummaryRow({ color, label, pct, token }) {
       </div>
       <div
         css={`
-          color: ${theme.textTertiary};
+          color: ${theme.surfaceContentSecondary};
         `}
       >
         {formatNumber(token.amount, 5)} {token.symbol}

@@ -10,8 +10,7 @@ function VoteOption({ color, label, percentage, value }) {
       <Labels>
         <span
           css={`
-            ${textStyle('body3')}
-            font-size: 12px;
+            ${textStyle('label2')}
           `}
         >
           {label}
@@ -20,8 +19,8 @@ function VoteOption({ color, label, percentage, value }) {
           css={`
             ${textStyle('body3')}
             font-size: 12px;
+            color: ${theme.surfaceContentSecondary};
           `}
-          color={theme.surfaceContentSecondary}
         >
           {percentage}%
         </span>
