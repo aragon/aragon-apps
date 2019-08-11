@@ -8,10 +8,10 @@ import {
   IdentityBadge,
   Info,
   SafeLink,
-  Text,
   TextInput,
   TokenBadge,
   GU,
+  textStyle,
   useTheme,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
@@ -256,7 +256,7 @@ class Deposit extends React.Component {
   }
 
   render() {
-    const { network, proxyAddress, theme, title, tokens } = this.props
+    const { network, proxyAddress, title, tokens } = this.props
     const { amount, reference, selectedToken } = this.state
 
     let errorMessage
@@ -323,11 +323,7 @@ class Deposit extends React.Component {
             <React.Fragment>
               <p>
                 Remember, Mainnet organizations use real (not test) funds.{' '}
-                <StyledSafeLink
-                  href={MAINNET_RISKS_BLOG_POST}
-                  target="_blank"
-                  theme={theme}
-                >
+                <StyledSafeLink href={MAINNET_RISKS_BLOG_POST} target="_blank">
                   Learn more
                 </StyledSafeLink>{' '}
                 about the risks and what's been done to mitigate them here.
@@ -346,11 +342,7 @@ class Deposit extends React.Component {
               <p>
                 Tokens may require a pretransaction to approve the Finance app
                 for your deposit.{' '}
-                <StyledSafeLink
-                  href={TOKEN_ALLOWANCE_WEBSITE}
-                  target="_blank"
-                  theme={theme}
-                >
+                <StyledSafeLink href={TOKEN_ALLOWANCE_WEBSITE} target="_blank">
                   Find out why.
                 </StyledSafeLink>{' '}
               </p>
@@ -379,13 +371,16 @@ class Deposit extends React.Component {
                 Use the above address or QR code to transfer ETH directly to
                 your organization’s Finance app. You should specify a gas limit
                 of 350,000 for this transfer.
-                <Text.Paragraph
-                  size="xsmall"
-                  style={{ marginTop: `${1 * GU}px` }}
+                <p
+                  css={`
+                    margin-top: ${1 * GU}px;
+                    ${textStyle('body3')}
+                    font-size: 12px;
+                  `}
                 >
                   <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
                   (e.g. ERC-20) tokens directly to this address.
-                </Text.Paragraph>
+                </p>
               </Info>
             </ToggleContent>
           </div>
@@ -397,7 +392,6 @@ class Deposit extends React.Component {
 
 const SelectedTokenBalance = ({ network, selectedToken }) => {
   const theme = useTheme()
-  console.log(theme)
   const {
     data: { decimals, loading, symbol, userBalance },
     value: address,
@@ -407,7 +401,12 @@ const SelectedTokenBalance = ({ network, selectedToken }) => {
   }
 
   return (
-    <Text size="small" color={theme.surfaceContentSecondary}>
+    <span
+      css={`
+        ${textStyle('body3')}
+        color: ${theme.surfaceContentSecondary};
+      `}
+    >
       {userBalance === '-1' ? (
         `Your balance could not be found for ${symbol}`
       ) : (
@@ -434,14 +433,22 @@ const SelectedTokenBalance = ({ network, selectedToken }) => {
           available
         </div>
       )}
-    </Text>
+    </span>
   )
 }
 
-const StyledSafeLink = styled(SafeLink)`
-  text-decoration-color: ${p => p.theme.accent};
-  color: ${p => p.theme.accent};
-`
+const StyledSafeLink = (...props) => {
+  const theme = useTheme()
+  return (
+    <SafeLink
+      css={`
+        text-decoration-color: ${theme.accent};
+        color: ${theme.accent};
+      `}
+      {...props}
+    />
+  )
+}
 
 const VSpace = styled.div`
   height: ${p => (p.size || 1) * GU}px;
@@ -465,7 +472,13 @@ const ValidationError = ({ message }) => {
             margin-right: ${1 * GU}px;
           `}
         />
-        <Text size="small">{message}</Text>
+        <span
+          css={`
+            ${textStyle('body3')}
+          `}
+        >
+          {message}
+        </span>
       </div>
     </div>
   )
@@ -473,13 +486,11 @@ const ValidationError = ({ message }) => {
 
 export default props => {
   const { api, connectedAccount, network } = useAragonApi()
-  const theme = useTheme()
   return network && api ? (
     <Deposit
       api={api}
       connectedAccount={connectedAccount}
       network={network}
-      theme={theme}
       {...props}
     />
   ) : null

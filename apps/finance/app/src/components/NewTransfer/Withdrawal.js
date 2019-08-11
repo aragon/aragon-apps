@@ -6,9 +6,9 @@ import {
   IconCross,
   Info,
   Field,
-  Text,
   TextInput,
   GU,
+  textStyle,
   unselectable,
   useTheme,
 } from '@aragon/ui'
@@ -121,7 +121,7 @@ class Withdrawal extends React.Component {
   }
 
   render() {
-    const { theme, title } = this.props
+    const { title } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
 
     const tokens = this.nonZeroTokens()
@@ -157,9 +157,9 @@ class Withdrawal extends React.Component {
         </Field>
         <AmountField>
           <label>
-            <StyledTextBlock theme={theme}>
+            <StyledTextBlock>
               Amount
-              <StyledAsterisk theme={theme} />
+              <StyledAsterisk />
             </StyledTextBlock>
           </label>
           <CombinedInput>
@@ -221,23 +221,39 @@ const CombinedInput = styled.div`
   }
 `
 
-const StyledTextBlock = styled(Text.Block).attrs({
-  smallcaps: true,
-})`
-  color: ${p => p.theme.surfaceContentSecondary};
-  ${unselectable()};
-  display: flex;
-`
+const StyledTextBlock = (...props) => {
+  const theme = useTheme()
+  return (
+    <div
+      css={`
+        color: ${theme.surfaceContentSecondary};
+        display: flex;
+        text-transform: lowercase;
+        font-variant: small-caps;
+        ${unselectable()};
+      `}
+      {...props}
+    />
+  )
+}
 
-const StyledAsterisk = styled.span.attrs({
-  children: '*',
-  title: 'Required',
-})`
-  color: ${p => p.theme.accent};
-  margin-left: auto;
-  padding-top: 3px;
-  font-size: 12px;
-`
+const StyledAsterisk = (...props) => {
+  const theme = useTheme()
+  return (
+    <span
+      title="Required"
+      css={`
+        color: ${theme.accent};
+        margin-left: auto;
+        padding-top: 3px;
+        font-size: 12px;
+      `}
+      {...props}
+    >
+      *
+    </span>
+  )
+}
 
 const ValidationError = ({ message }) => {
   const theme = useTheme()
@@ -256,12 +272,15 @@ const ValidationError = ({ message }) => {
           margin-right: ${1 * GU}px;
         `}
       />
-      <Text size="small">{message}</Text>
+      <span
+        css={`
+          ${textStyle('body3')}
+        `}
+      >
+        {message}
+      </span>
     </div>
   )
 }
 
-export default props => {
-  const theme = useTheme()
-  return <Withdrawal theme={theme} {...props} />
-}
+export default Withdrawal
