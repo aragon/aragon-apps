@@ -72,19 +72,37 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
               </div>
             </div>
             <div>
-              <div css="font-weight: bold;">Vote success</div>
-              <div>
+              <div
+                css={`
+                  ${textStyle('body1')}
+                  margin-bottom: ${0.5 * GU}px;
+                `}
+              >
+                Vote success
+              </div>
+              <div
+                css={`
+                  ${textStyle('body2')}
+                  color: ${theme.surfaceContentSecondary};
+                `}
+              >
                 You voted{' '}
                 <span
                   css={`
-                    font-weight: bold;
+                    color: ${theme.surfaceContent};
+                    font-weight: 600;
                     text-transform: uppercase;
                   `}
                 >
                   {connectedAccountVote === VOTE_YEA ? 'yes' : 'no'}
                 </span>{' '}
                 with{' '}
-                <span css="font-weight: bold;">
+                <span
+                  css={`
+                    color: ${theme.surfaceContent};
+                    font-weight: 600;
+                  `}
+                >
                   {userBalance === -1 ? '…' : userBalance} {tokenSymbol}
                 </span>
                 .
@@ -151,6 +169,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
             <div
               css={`
                 ${textStyle('body2')};
+                color: ${theme.surfaceContentSecondary};
                 margin-top: ${2 * GU}px;
               `}
             >
