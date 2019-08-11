@@ -2,8 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useAragonApi } from '@aragon/api-react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { EthIdenticon, IdentityBadge, theme } from '@aragon/ui'
-import AutoCompleteSelected from '../AutoComplete/AutoCompleteSelected'
+import {
+  _AutoCompleteSelected as AutoCompleteSelected,
+  EthIdenticon,
+  GU,
+  IdentityBadge,
+  RADIUS,
+  useTheme,
+} from '@aragon/ui'
 
 const withKey = item => ({ key: item.address, ...item })
 const sortAlphAsc = (a, b) => a.name.localeCompare(b.name)
@@ -14,6 +20,7 @@ const LocalIdentitiesAutoComplete = React.memo(
     ref
   ) {
     const { api } = useAragonApi()
+    const theme = useTheme()
     const [items, setItems] = useState([])
     const [selected, setSelected] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
@@ -109,15 +116,13 @@ const LocalIdentitiesAutoComplete = React.memo(
     return (
       <AutoCompleteSelected
         itemButtonStyles={`
-          border-left: 3px solid transparent;
           cursor: pointer;
           border-radius: 0;
-
-          &:hover,
           &:focus {
             outline: 2px solid ${theme.accent};
+          }
+          &:active {
             background: #f9fafc;
-            border-left: 3px solid ${theme.accent}
           }
         `}
         items={items}
@@ -130,11 +135,12 @@ const LocalIdentitiesAutoComplete = React.memo(
         required={required}
         selected={selected}
         selectedButtonStyles={`
-          &:hover,
-          &:focus {
+          padding: 0;
+
+          &:focus,
+          &:active {
             outline: none;
-            border: 1px solid ${theme.accent};
-            border-radius: 3px;
+            border-radius: ${RADIUS}px;
           }
         `}
         value={searchTerm}
@@ -152,10 +158,10 @@ LocalIdentitiesAutoComplete.propTypes = {
 }
 
 const Option = styled.div`
-  padding: 8px;
+  padding: ${1 * GU}px;
   display: grid;
   grid-template-columns: auto minmax(140px, 1fr);
-  grid-gap: 8px;
+  grid-gap: ${1 * GU}px;
   align-items: center;
 `
 
