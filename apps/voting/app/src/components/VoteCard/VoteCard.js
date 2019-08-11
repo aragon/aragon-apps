@@ -6,7 +6,6 @@ import {
   Tag,
   Timer,
   textStyle,
-  theme,
   useTheme,
 } from '@aragon/ui'
 import VoteOptions from './VoteOptions'
@@ -15,19 +14,18 @@ import VoteStatus from '../VoteStatus'
 import { noop } from '../../utils'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 
-function getOptions(yea, nay) {
-  return [
-    { label: <span>Yes</span>, power: yea },
-    { label: <span>No</span>, power: nay, color: theme.negative },
-  ]
-}
-
 const VoteCard = ({ vote, onOpen }) => {
   const theme = useTheme()
   const { voteId, data, numData, connectedAccountVote } = vote
   const { votingPower, yea, nay } = numData
   const { open, metadata, description, endDate } = data
-  const options = useMemo(() => getOptions(yea, nay), [yea, nay])
+  const options = useMemo(
+    () => [
+      { label: <span>Yes</span>, power: yea },
+      { label: <span>No</span>, power: nay, color: theme.negative },
+    ],
+    [yea, nay, theme]
+  )
   const youVoted =
     connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
   const handleOpen = useCallback(() => {
