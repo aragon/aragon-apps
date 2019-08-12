@@ -2,8 +2,8 @@ import React from 'react'
 import {
   Bar,
   DropDown,
+  Count,
   GU,
-  Tag,
   textStyle,
   useLayout,
   useTheme,
@@ -77,7 +77,7 @@ const Votes = React.memo(function Votes({
                       ${textStyle('label3')};
                     `}
                   >
-                    <Tag>{votes.length > 9999 ? '9999+' : votes.length}</Tag>
+                    <Count digits={4} value={votes.length} />
                   </span>
                 </div>,
                 'Open',
