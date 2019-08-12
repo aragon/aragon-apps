@@ -16,6 +16,7 @@ import { AppLogicProvider, useAppLogic } from './app-logic'
 import { IdentityProvider } from './identity-manager'
 import { SettingsProvider } from './vote-settings-manager'
 import useFilterVotes from './useFilterVotes'
+import useScrollTop from './useScrollTop'
 
 const App = React.memo(function App() {
   const {
@@ -43,6 +44,8 @@ const App = React.memo(function App() {
     handleVoteDateRangeFilterChange,
     handleClearFilters,
   } = useFilterVotes(votes)
+
+  useScrollTop(selectedVote)
 
   return (
     <div css="min-width: 320px">
