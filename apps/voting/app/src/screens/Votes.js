@@ -8,7 +8,7 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { isWithinInterval, startOfDay, endOfDay } from 'date-fns'
+import { startOfDay, endOfDay, isAfter, isBefore } from 'date-fns'
 import DateRangeInput from '../components/DateRange/DateRangeInput'
 import EmptyFilteredVotes from '../components/EmptyFilteredVotes'
 import VoteCard from '../components/VoteCard/VoteCard'
@@ -100,15 +100,8 @@ const useFilterVotes = votes => {
               voteStatus === VOTE_STATUS_PENDING_ENACTMENT))) &&
         // app
         // date range
-        (!(start || end) ||
-          isWithinInterval(startDate, {
-            start: startOfDay(start),
-            end: endOfDay(end),
-          }) ||
-          isWithinInterval(endDate, {
-            start: startOfDay(start),
-            end: endOfDay(end),
-          }))
+        ((!start || isAfter(startDate, startOfDay(start))) &&
+          (!end || isBefore(endDate, endOfDay(end))))
       )
     })
     setFilteredVotes(filtered)
