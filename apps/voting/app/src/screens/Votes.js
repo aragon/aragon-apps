@@ -23,6 +23,16 @@ import {
 } from '../vote-types'
 import { getVoteStatus } from '../vote-utils'
 
+const NULL_FILTER_STATE = -1
+const STATUS_FILTER_OPEN = 1
+const STATUS_FILTER_CLOSED = 2
+const TREND_FILTER_WILL_PASS = 1
+const TREND_FILTER_WILL_NOT_PASS = 2
+const OUTCOME_FILTER_PASSED = 1
+const OUTCOME_FILTER_REJECTED = 2
+const OUTCOME_FILTER_ENACTED = 3
+const OUTCOME_FILTER_PENDING = 4
+
 const sortVotes = (a, b) => {
   const dateDiff = b.data.endDate - a.data.endDate
   // Order by descending voteId if there's no end date difference
@@ -32,14 +42,11 @@ const sortVotes = (a, b) => {
 const useFilterVotes = votes => {
   const { pctBase } = useSettings()
   const [filteredVotes, setFilteredVotes] = useState(votes)
-  // Status - 0: All, 1: Open, 2: Closed
-  const [statusFilter, setStatusFilter] = useState(-1)
-  // Trend - 0: All, 1: Will pass, 2: Won't pass, 3: Tied
-  const [trendFilter, setTrendFilter] = useState(-1)
-  // Outcome - 0: All, 1: Passed, 2: Rejected, 3: Enacted, 4: Pending
-  const [outcomeFilter, setOutcomeFilter] = useState(-1)
+  const [statusFilter, setStatusFilter] = useState(NULL_FILTER_STATE)
+  const [trendFilter, setTrendFilter] = useState(NULL_FILTER_STATE)
+  const [outcomeFilter, setOutcomeFilter] = useState(NULL_FILTER_STATE)
   // 0: All, 1: Finance, 2: Tokens, 3: Voting
-  const [appFilter, setAppFilter] = useState(-1)
+  const [appFilter, setAppFilter] = useState(NULL_FILTER_STATE)
   //
   const [dateRangeFilter, setDateRangeFilter] = useState({
     start: null,
@@ -47,10 +54,10 @@ const useFilterVotes = votes => {
   })
   //
   const handleClearFilters = useCallback(() => {
-    setStatusFilter(-1)
-    setTrendFilter(-1)
-    setOutcomeFilter(-1)
-    setAppFilter(-1)
+    setStatusFilter(NULL_FILTER_STATE)
+    setTrendFilter(NULL_FILTER_STATE)
+    setOutcomeFilter(NULL_FILTER_STATE)
+    setAppFilter(NULL_FILTER_STATE)
     setDateRangeFilter({ start: null, end: null })
   }, [
     setStatusFilter,
@@ -70,25 +77,26 @@ const useFilterVotes = votes => {
 
       return (
         // status
-        (statusFilter === -1 ||
-          statusFilter === 0 ||
-          ((statusFilter === 1 && voteStatus === VOTE_STATUS_ONGOING) ||
-            (statusFilter === 2 && voteStatus !== VOTE_STATUS_ONGOING))) &&
+        (statusFilter === NULL_FILTER_STATE ||
+          ((statusFilter === STATUS_FILTER_OPEN &&
+            voteStatus === VOTE_STATUS_ONGOING) ||
+            (statusFilter === STATUS_FILTER_CLOSED &&
+              voteStatus !== VOTE_STATUS_ONGOING))) &&
         // trend
-        (trendFilter === -1 ||
-          trendFilter === 0 ||
-          ((open && (trendFilter === 1 && yea.gt(nay))) ||
-            (trendFilter === 2 && yea.lte(nay)))) &&
+        (trendFilter === NULL_FILTER_STATE ||
+          ((open && (trendFilter === TREND_FILTER_WILL_PASS && yea.gt(nay))) ||
+            (trendFilter === TREND_FILTER_WILL_NOT_PASS && yea.lte(nay)))) &&
         // outcome
-        (outcomeFilter === -1 ||
-          outcomeFilter === 0 ||
-          ((outcomeFilter === 1 &&
+        (outcomeFilter === NULL_FILTER_STATE ||
+          ((outcomeFilter === OUTCOME_FILTER_PASSED &&
             (voteStatus === VOTE_STATUS_ACCEPTED ||
               voteStatus === VOTE_STATUS_PENDING_ENACTMENT ||
               voteStatus === VOTE_STATUS_ENACTED)) ||
-            (outcomeFilter === 2 && voteStatus === VOTE_STATUS_REJECTED) ||
-            (outcomeFilter === 3 && voteStatus === VOTE_STATUS_ENACTED) ||
-            (outcomeFilter === 4 &&
+            (outcomeFilter === OUTCOME_FILTER_REJECTED &&
+              voteStatus === VOTE_STATUS_REJECTED) ||
+            (outcomeFilter === OUTCOME_FILTER_ENACTED &&
+              voteStatus === VOTE_STATUS_ENACTED) ||
+            (outcomeFilter === OUTCOME_FILTER_PENDING &&
               voteStatus === VOTE_STATUS_PENDING_ENACTMENT))) &&
         // app
         // date range
@@ -120,26 +128,25 @@ const useFilterVotes = votes => {
     voteStatusFilter: statusFilter,
     handleVoteStatusFilterChange: useCallback(
       index => {
-        setStatusFilter(index || -1)
-        setTrendFilter(-1)
+        setStatusFilter(index || NULL_FILTER_STATE)
+        setTrendFilter(NULL_FILTER_STATE)
       },
       [setStatusFilter, setTrendFilter]
     ),
     voteOutcomeFilter: outcomeFilter,
     handleVoteOutcomeFilterChange: useCallback(
-      index => setOutcomeFilter(!index ? -1 : index),
+      index => setOutcomeFilter(index || NULL_FILTER_STATE),
       [setOutcomeFilter]
     ),
     voteTrendFilter: trendFilter,
     handleVoteTrendFilterChange: useCallback(
-      index => setTrendFilter(!index ? -1 : index),
+      index => setTrendFilter(index || NULL_FILTER_STATE),
       [setTrendFilter]
     ),
     voteAppFilter: appFilter,
-    handleVoteAppFilterChange: useCallback(
-      index => setAppFilter(!index ? -1 : index),
-      [setAppFilter]
-    ),
+    handleVoteAppFilterChange: useCallback(index => setAppFilter(index), [
+      setAppFilter,
+    ]),
     voteDateRangeFilter: dateRangeFilter,
     handleVoteDateRangeFilterChange: setDateRangeFilter,
     handleClearFilters,
