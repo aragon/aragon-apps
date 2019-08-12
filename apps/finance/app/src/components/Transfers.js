@@ -29,6 +29,7 @@ import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
 import EmptyFilteredTransfers from './EmptyFilteredTransfers'
+import EmptyTransactions from './EmptyTransactions'
 import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
@@ -174,6 +175,10 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
       selectedTransferType !== 0 ||
       selectedDateRange.start ||
       selectedDateRange.end)
+
+  if (!transactions.length) {
+    return <EmptyTransactions />
+  }
 
   return (
     <DataView
