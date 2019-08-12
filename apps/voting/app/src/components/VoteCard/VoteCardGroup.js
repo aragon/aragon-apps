@@ -1,8 +1,8 @@
 import React from 'react'
 import {
   CardLayout,
+  Count,
   GU,
-  Tag,
   textStyle,
   unselectable,
   useLayout,
@@ -42,7 +42,7 @@ const VoteCardGroup = ({ title, count, children }) => {
             justify-content: center;
           `}
         >
-          <Tag>{count}</Tag>
+          <Count digits={4} value={count} />
         </span>
       </h2>
       <CardLayout columnWidthMin={30 * GU} rowHeight={rowHeight}>
