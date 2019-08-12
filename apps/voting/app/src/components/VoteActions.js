@@ -39,8 +39,8 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
             </Button>
             <Info>
               The voting period is closed and the vote has passed.{' '}
-              <span css="font-weight: bold;">Anyone</span> can now enact this
-              vote to execute its action.
+              <strong>Anyone</strong> can now enact this vote to execute its
+              action.
             </Info>
           </React.Fragment>
         )}
@@ -254,10 +254,9 @@ const TokenReference = ({
   startDate,
 }) => (
   <Info>
-    Voting with <span css="font-weight: bold;">{userBalance}</span> of your{' '}
-    <span css="font-weight: bold;">{tokenSymbol}</span> at block{' '}
-    <span css="font-weight: bold;">{snapshotBlock}</span> due to the vote
-    starting at <span css="font-weight: bold;">{formatDate(startDate)}</span>.
+    Voting with <strong>{userBalance}</strong> of your{' '}
+    <strong>{tokenSymbol}</strong> at block <strong>{snapshotBlock}</strong> due
+    to the vote starting at <strong>{formatDate(startDate)}</strong>.
   </Info>
 )
 
