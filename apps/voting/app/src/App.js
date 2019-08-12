@@ -15,8 +15,9 @@ import Votes from './screens/Votes'
 import { AppLogicProvider, useAppLogic } from './app-logic'
 import { IdentityProvider } from './identity-manager'
 import { SettingsProvider } from './vote-settings-manager'
+import useFilterVotes from './useFilterVotes'
 
-function App() {
+const App = React.memo(function App() {
   const {
     actions,
     isSyncing,
@@ -28,6 +29,20 @@ function App() {
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
   const handleBack = useCallback(() => selectVote(-1), [selectVote])
+  const {
+    filteredVotes,
+    voteStatusFilter,
+    handleVoteStatusFilterChange,
+    voteOutcomeFilter,
+    handleVoteOutcomeFilterChange,
+    voteTrendFilter,
+    handleVoteTrendFilterChange,
+    voteAppFilter,
+    handleVoteAppFilterChange,
+    voteDateRangeFilter,
+    handleVoteDateRangeFilterChange,
+    handleClearFilters,
+  } = useFilterVotes(votes)
 
   return (
     <div css="min-width: 320px">
@@ -56,9 +71,9 @@ function App() {
                   css={`
                     ${compactMode &&
                       `
-                      min-width: 40px;
-                      padding: 0;
-                    `}
+                        min-width: 40px;
+                        padding: 0;
+                      `}
                   `}
                 >
                   {compactMode ? <IconPlus /> : 'New vote'}
@@ -68,13 +83,29 @@ function App() {
           />
           {selectedVote ? (
             <VoteDetail
+              selectVote={selectVote}
               vote={selectedVote}
               onBack={handleBack}
               onVote={actions.vote}
               onExecute={actions.execute}
             />
           ) : (
-            <Votes votes={votes} selectVote={selectVote} />
+            <Votes
+              votes={votes}
+              selectVote={selectVote}
+              filteredVotes={filteredVotes}
+              voteStatusFilter={voteStatusFilter}
+              handleVoteStatusFilterChange={handleVoteStatusFilterChange}
+              voteOutcomeFilter={voteOutcomeFilter}
+              handleVoteOutcomeFilterChange={handleVoteOutcomeFilterChange}
+              voteTrendFilter={voteTrendFilter}
+              handleVoteTrendFilterChange={handleVoteTrendFilterChange}
+              voteAppFilter={voteAppFilter}
+              handleVoteAppFilterChange={handleVoteAppFilterChange}
+              voteDateRangeFilter={voteDateRangeFilter}
+              handleVoteDateRangeFilterChange={handleVoteDateRangeFilterChange}
+              handleClearFilters={handleClearFilters}
+            />
           )}
         </React.Fragment>
       )}
@@ -84,7 +115,7 @@ function App() {
       />
     </div>
   )
-}
+})
 
 export default function Voting() {
   return (
