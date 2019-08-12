@@ -1,6 +1,6 @@
 import React from 'react'
 import throttle from 'lodash.throttle'
-import { Box, GU } from '@aragon/ui'
+import { Box, GU, textStyle, useTheme } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
 import { round } from '../lib/math-utils'
 
@@ -35,7 +35,7 @@ class Balances extends React.Component {
   }, CONVERT_THROTTLE_TIME)
 
   render() {
-    const { compactMode, balances } = this.props
+    const { compactMode, balances, theme } = this.props
     const { convertRates } = this.state
     const balanceItems = balances.map(
       ({ address, numData: { amount, decimals }, symbol, verified }) => {
@@ -53,6 +53,23 @@ class Balances extends React.Component {
         }
       }
     )
+
+    if (!balanceItems.length) {
+      return (
+        <Box heading="Token Balances">
+          <div
+            css={`
+              margin: ${5 * GU}px auto;
+              text-align: center;
+              ${textStyle('body1')};
+              color: ${theme.content};
+            `}
+          >
+            No token balances yet.
+          </div>
+        </Box>
+      )
+    }
 
     return (
       <Box heading="Token Balances">
@@ -104,4 +121,7 @@ class Balances extends React.Component {
   }
 }
 
-export default Balances
+export default props => {
+  const theme = useTheme()
+  return <Balances {...props} theme={theme} />
+}
