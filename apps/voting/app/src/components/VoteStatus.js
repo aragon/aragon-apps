@@ -42,14 +42,14 @@ const getStatusAttributes = (status, theme) => {
   }
   if (status === VOTE_STATUS_PENDING_ENACTMENT) {
     return {
-      label: 'Pending',
+      label: 'Passed (pending)',
       Icon: IconCheck,
       color: theme.positive,
     }
   }
   if (status === VOTE_STATUS_ENACTED) {
     return {
-      label: 'Enacted',
+      label: 'Passed (enacted)',
       Icon: IconCheck,
       color: theme.positive,
     }
