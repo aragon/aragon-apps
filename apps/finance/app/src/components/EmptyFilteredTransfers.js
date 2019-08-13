@@ -40,7 +40,7 @@ function EmptyFilteredTransfers({ onClear }) {
           font-size: 16px;
         `}
       >
-        We can’t find any item matching your search query.{' '}
+        We can’t find any item matching your filter selection.{' '}
         <Button
           css={`
             color: ${theme.link};
