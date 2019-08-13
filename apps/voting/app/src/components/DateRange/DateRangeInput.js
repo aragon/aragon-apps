@@ -19,6 +19,7 @@ const START_DATE = 'Start date'
 const END_DATE = 'End date'
 
 const Labels = ({ text }) => {
+  const color = text.indexOf(START_DATE) > -1 ? '#8FA4B5' : 'inherit'
   const [start, end] = text.split('|')
   return (
     <div
@@ -35,6 +36,7 @@ const Labels = ({ text }) => {
         background: #fff;
         border-radius: ${RADIUS}px;
         overflow: hidden;
+        color: ${color};
       `}
     >
       <div css="text-align: center;">{start}</div>
@@ -186,8 +188,7 @@ class DateRangeInput extends React.PureComponent {
     } = this.state
     const {
       compactMode,
-      accent,
-      border,
+      theme,
       startDate: startDateProps,
       endDate: endDateProps,
     } = this.props
@@ -198,10 +199,9 @@ class DateRangeInput extends React.PureComponent {
           width: 250px;
           position: relative;
           border: ${startDateProps && endDateProps
-            ? `1px solid ${accent}`
-            : `1px solid ${border}`};
+            ? `1px solid ${theme.accent}`
+            : `1px solid ${theme.border}`};
           border-radius: ${RADIUS}px;
-          box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px;
         `}
         ref={el => (this.rootRef = el)}
         onClick={this.handleClick}
@@ -217,7 +217,7 @@ class DateRangeInput extends React.PureComponent {
           adornment={
             <IconCalendar
               css={`
-                color: ${showPicker ? accent : 'initial'};
+                color: ${showPicker ? theme.accent : theme.surfaceIcon};
               `}
             />
           }
@@ -230,7 +230,7 @@ class DateRangeInput extends React.PureComponent {
             css={`
               position: absolute;
               z-index: 10;
-              border: 1px solid ${border};
+              border: 1px solid ${theme.border};
               border-radius: 3px;
               box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
               background: #fff;
@@ -336,13 +336,8 @@ const Wrap = styled.div`
 
 export default props => {
   const { below } = useViewport()
-  const { accent, border } = useTheme()
+  const theme = useTheme()
   return (
-    <DateRangeInput
-      {...props}
-      compactMode={below('medium')}
-      accent={accent}
-      border={border}
-    />
+    <DateRangeInput {...props} compactMode={below('medium')} theme={theme} />
   )
 }
