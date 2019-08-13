@@ -28,7 +28,7 @@ const VoteCardGroup = ({ title, count, children }) => {
       >
         <div
           css={`
-            ${textStyle(compactMode ? 'body2' : 'body3')};
+            ${textStyle('body2')};
             color: ${theme.content};
           `}
         >
