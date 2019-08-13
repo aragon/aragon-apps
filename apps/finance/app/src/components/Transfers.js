@@ -188,7 +188,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
         <React.Fragment>
           <div
             css={`
-              padding: ${2 * GU}px 0;
+              padding-bottom: ${2 * GU}px;
               display: flex;
               align-items: center;
               justify-content: space-between;
