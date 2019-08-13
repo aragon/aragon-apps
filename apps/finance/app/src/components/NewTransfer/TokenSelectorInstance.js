@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Tag, Viewport, GU } from '@aragon/ui'
+import LocalIdentityBadge from '../LocalIdentityBadge/LocalIdentityBadge'
 import { ETHER_TOKEN_FAKE_ADDRESS } from '../../lib/token-utils'
 import { addressesEqual, shortenAddress } from '../../lib/web3-utils'
 
@@ -17,9 +18,7 @@ class TokenSelectorInstance extends React.PureComponent {
         {symbol && <TokenSymbol>{symbol}</TokenSymbol>}
         {name && <TokenName>({name})</TokenName>}
         {!addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS) && (
-          <StyledAddressTag title={address}>
-            {shortenAddress(address, shorten ? 5 : 10)}
-          </StyledAddressTag>
+          <LocalIdentityBadge readOnly compact entity={address} />
         )}
       </Main>
     )
