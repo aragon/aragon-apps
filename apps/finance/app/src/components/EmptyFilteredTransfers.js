@@ -58,7 +58,7 @@ function EmptyFilteredTransfers({ onClear }) {
           `}
           onClick={onClear}
         >
-          Clear search
+          Clear filters
         </Button>
       </div>
     </div>
