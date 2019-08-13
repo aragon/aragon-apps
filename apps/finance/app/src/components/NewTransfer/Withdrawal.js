@@ -172,6 +172,9 @@ class Withdrawal extends React.Component {
               wide
             />
             <DropDown
+              css={`
+                margin-left: ${1.5 * GU}px;
+              `}
               items={symbols}
               selected={selectedToken}
               onChange={this.handleSelectToken}
