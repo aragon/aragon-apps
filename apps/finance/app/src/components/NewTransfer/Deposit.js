@@ -318,18 +318,14 @@ class Deposit extends React.Component {
         {errorMessage && <ValidationError message={errorMessage} />}
 
         <VSpace size={4} />
-        <Info title="Depositing funds to your organization">
+        <Info>
           {isMainnet && (
-            <React.Fragment>
-              <p>
-                Remember, Mainnet organizations use real (not test) funds.{' '}
-                <StyledSafeLink href={MAINNET_RISKS_BLOG_POST} target="_blank">
-                  Learn more
-                </StyledSafeLink>{' '}
-                about the risks and what's been done to mitigate them here.
-              </p>
-              <VSpace size={1} />
-            </React.Fragment>
+            <p>
+              Remember, Mainnet organizations use <strong>real tokens</strong>.
+              Configure your deposit above, and sign the transaction with your
+              wallet after clicking “Submit Transfer”. It will then show up in
+              your Finance app once processed.
+            </p>
           )}
           <p>
             Configure your deposit above, and sign the transaction with your
