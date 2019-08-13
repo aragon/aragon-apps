@@ -39,18 +39,11 @@ const TransfersFilters = ({
         onChange={onTokenChange}
         width="128px"
       />
-      <label
-        css={`
-          display: inline-block;
-          box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.03);
-        `}
-      >
-        <DateRange
-          startDate={dateRangeFilter.start}
-          endDate={dateRangeFilter.end}
-          onChange={onDateRangeChange}
-        />
-      </label>
+      <DateRange
+        startDate={dateRangeFilter.start}
+        endDate={dateRangeFilter.end}
+        onChange={onDateRangeChange}
+      />
     </div>
   )
 }

@@ -19,6 +19,7 @@ const START_DATE = 'Start date'
 const END_DATE = 'End date'
 
 const Labels = ({ text }) => {
+  const color = text.indexOf(START_DATE) > -1 ? '#8FA4B5' : 'inherit'
   const [start, end] = text.split('|')
   return (
     <div
@@ -35,6 +36,7 @@ const Labels = ({ text }) => {
         background: #fff;
         border-radius: ${RADIUS}px;
         overflow: hidden;
+        color: ${color};
       `}
     >
       <div css="text-align: center;">{start}</div>
@@ -201,7 +203,6 @@ class DateRangeInput extends React.PureComponent {
             ? `1px solid ${accent}`
             : `1px solid ${border}`};
           border-radius: ${RADIUS}px;
-          box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px;
         `}
         ref={el => (this.rootRef = el)}
         onClick={this.handleClick}
