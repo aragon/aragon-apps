@@ -204,7 +204,13 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
             </div>
             <div css="text-align: right;">
               <Button onClick={handleDownload}>
-                <IconExternal /> Export
+                <IconExternal
+                  css={`
+                    margin-right: ${1.5 + GU}px;
+                    color: ${theme.surfaceIcon};
+                  `}
+                />{' '}
+                Export
               </Button>
             </div>
           </div>
