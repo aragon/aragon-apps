@@ -1,5 +1,14 @@
 import React, { useCallback, useMemo } from 'react'
-import { Card, GU, IconCheck, Timer, textStyle, useTheme } from '@aragon/ui'
+import styled from 'styled-components'
+import {
+  Card,
+  GU,
+  IconCheck,
+  Tag,
+  Timer,
+  textStyle,
+  useTheme,
+} from '@aragon/ui'
 import AppBadge from '../AppBadge'
 import VoteOptions from './VoteOptions'
 import VoteStatus from '../VoteStatus'
@@ -14,10 +23,27 @@ const VoteCard = ({ vote, onOpen }) => {
   const { open, metadata, description, endDate } = data
   const options = useMemo(
     () => [
-      { label: <span>Yes</span>, power: yea },
-      { label: <span>No</span>, power: nay, color: theme.negative },
+      {
+        label: (
+          <WrapVoteOption>
+            <span>Yes</span>
+            {connectedAccountVote === VOTE_YEA && <You />}
+          </WrapVoteOption>
+        ),
+        power: yea,
+      },
+      {
+        label: (
+          <WrapVoteOption>
+            <span>No</span>
+            {connectedAccountVote === VOTE_NAY && <You />}
+          </WrapVoteOption>
+        ),
+        power: nay,
+        color: theme.negative,
+      },
     ],
-    [yea, nay, theme]
+    [yea, nay, theme, connectedAccountVote]
   )
   const youVoted =
     connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
@@ -94,5 +120,23 @@ const VoteCard = ({ vote, onOpen }) => {
 VoteCard.defaultProps = {
   onOpen: noop,
 }
+
+const You = () => (
+  <Tag
+    css={`
+      margin-left: ${0.5 * GU}px;
+    `}
+    size="small"
+  >
+    you
+  </Tag>
+)
+
+const WrapVoteOption = styled.span`
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  ${textStyle('label2')};
+`
 
 export default VoteCard
