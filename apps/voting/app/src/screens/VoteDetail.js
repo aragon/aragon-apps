@@ -163,7 +163,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   css={`
                     ${textStyle('label2')};
                     color: ${theme.surfaceContentSecondary};
-                    margin-bottom: ${1.5 * GU}px;
+                    margin-bottom: ${2 * GU}px;
                   `}
                 >
                   Current votes
