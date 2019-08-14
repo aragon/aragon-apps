@@ -42,7 +42,7 @@ const VoteCardGroup = ({ title, count, children }) => {
             justify-content: center;
           `}
         >
-          <Tag count countDigits={4} label={count} />
+          <Tag count={4} label={count} />
         </span>
       </h2>
       <CardLayout columnWidthMin={30 * GU} rowHeight={rowHeight}>
