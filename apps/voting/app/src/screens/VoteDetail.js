@@ -20,6 +20,7 @@ import SummaryRows from '../components/SummaryRows'
 import VoteActions from '../components/VoteActions'
 import VoteStatus from '../components/VoteStatus'
 import VoteText from '../components/VoteText'
+import VoteCasted from '../components/VoteCasted'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { formatDate } from '../utils'
 import { getQuorumProgress } from '../vote-utils'
@@ -179,6 +180,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   symbol={tokenSymbol}
                   connectedAccountVote={connectedAccountVote}
                 />
+                {youVoted && <VoteCasted vote={vote} />}
               </div>
               <VoteActions
                 onExecute={handleExecute}
