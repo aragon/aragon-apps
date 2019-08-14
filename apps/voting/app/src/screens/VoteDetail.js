@@ -177,6 +177,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   yea={{ pct: yeaPct, amount: yea }}
                   nay={{ pct: nayPct, amount: nay }}
                   symbol={tokenSymbol}
+                  connectedAccountVote={connectedAccountVote}
                 />
               </div>
               <VoteActions
