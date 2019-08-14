@@ -3,10 +3,11 @@ import styled from 'styled-components'
 import {
   Button,
   ExternalLink,
+  GU,
   IconCheck,
+  IconConnect,
   IconCross,
   Info,
-  GU,
   RADIUS,
   textStyle,
   useTheme,
@@ -174,9 +175,19 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
                 margin-top: ${2 * GU}px;
               `}
             >
-              Connect to your Ethereum provider by clicking on the Enable
-              account button on the header. You may be temporarily redirected to
-              a new screen.
+              Connect to your Ethereum provider by clicking on the{' '}
+              <strong
+                css={`
+                  display: inline-flex;
+                  align-items: center;
+                  position: relative;
+                  top: 7px;
+                `}
+              >
+                <IconConnect /> Enable account
+              </strong>{' '}
+              button on the header. You may be temporarily redirected to a new
+              screen.
             </div>
           </div>
         )}
