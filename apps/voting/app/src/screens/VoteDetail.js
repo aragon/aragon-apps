@@ -13,6 +13,7 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useAppState } from '@aragon/api-react'
+import { format } from 'date-fns'
 import AppBadge from '../components/AppBadge'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import SummaryBar from '../components/SummaryBar'
@@ -22,9 +23,10 @@ import VoteStatus from '../components/VoteStatus'
 import VoteText from '../components/VoteText'
 import VoteCasted from '../components/VoteCasted'
 import { percentageList, round, safeDiv } from '../math-utils'
-import { formatDate } from '../utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
+
+const formatDate = date => `${format(date, 'do MMM yy, HH:mm')} UTC`
 
 const DEFAULT_DESCRIPTION =
   'No additional description has been provided for this proposal.'
