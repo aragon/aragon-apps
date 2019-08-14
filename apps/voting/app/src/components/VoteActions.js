@@ -132,20 +132,11 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
     <div>
       <Buttons disabled />
       <Info mode="warning">
-        The currently connected account did not hold any {tokenSymbol} at the
-        time this vote began ({formatDate(startDate)}), and therefore cannot
-        participate in this vote. Make sure your accounts are holding{' '}
-        {tokenSymbol} at the time a vote begins if you'd like to vote using this
-        Voting app.{' '}
-        <Link
-          target="_blank"
-          href="https://wiki.aragon.org/documentation/aragon_network_token/"
-          css={`
-            color: ${theme.infoSurfaceContent};
-          `}
-        >
-          Find out how to get tokens.
-        </Link>
+        The currently connected account did not hold any{' '}
+        <strong>{tokenSymbol}</strong> at the time this vote began (
+        {formatDate(startDate)}), and therefore cannot participate in this vote.
+        Make sure your accounts are holding {tokenSymbol} at the time a vote
+        begins if you'd like to vote using this Voting app.
       </Info>
     </div>
   )
