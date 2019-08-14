@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { startOfDay, endOfDay, isAfter, isBefore } from 'date-fns'
 import { useSettings } from './vote-settings-manager'
 import {
