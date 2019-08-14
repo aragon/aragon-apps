@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import {
   Button,
-  ExternalLink,
+  Link,
   GU,
   IconCheck,
   IconConnect,
@@ -204,7 +204,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
         participate in this vote. Make sure your accounts are holding{' '}
         {tokenSymbol} at the time a vote begins if you'd like to vote using this
         Voting app.{' '}
-        <ExternalLink
+        <Link
           target="_blank"
           href="https://wiki.aragon.org/documentation/aragon_network_token/"
           css={`
@@ -212,7 +212,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
           `}
         >
           Find out how to get tokens.
-        </ExternalLink>
+        </Link>
       </Info>
     </div>
   )
