@@ -113,7 +113,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 css={`
                   display: grid;
                   grid-template-columns: ${layoutName === 'large'
-                    ? 'auto auto'
+                    ? '1fr minmax(300px, auto)'
                     : 'auto'};
                   grid-gap: ${layoutName === 'large' ? 5 * GU : 2.5 * GU}px;
                 `}
