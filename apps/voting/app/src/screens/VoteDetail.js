@@ -91,7 +91,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     ${textStyle('label2')};
                   `}
                 >
-                  <IconCheck size="tiny" /> Voted
+                  <IconCheck size="small" /> Voted
                 </div>
               )}
             </div>
