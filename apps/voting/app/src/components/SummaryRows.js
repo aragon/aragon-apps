@@ -8,7 +8,8 @@ function SummaryRows({ yea, nay, symbol }) {
   return (
     <div
       css={`
-        ${textStyle('body2')}
+        ${textStyle('body2')};
+        display: inline-block;
       `}
     >
       <SummaryRow
@@ -60,6 +61,7 @@ function SummaryRow({ color, label, pct, token }) {
       <div
         css={`
           color: ${theme.surfaceContentSecondary};
+          margin-left: ${2 * GU}px;
         `}
       >
         {formatNumber(token.amount, 5)} {token.symbol}
