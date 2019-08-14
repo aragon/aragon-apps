@@ -16,63 +16,70 @@ function VoteCasted({ vote }) {
         border-radius: ${RADIUS}px;
         background: ${theme.background};
         padding: ${3.5 * GU}px ${10 * GU}px;
-        display: grid;
-        grid-template-columns: auto 1fr;
-        grid-gap: ${2 * GU}px;
-        align-items: center;
+        text-align: center;
       `}
     >
-      <div>
-        <div
-          css={`
-            border: 2px solid ${theme.accent};
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: ${theme.accent};
-          `}
-        >
-          <IconCheck />
+      <div
+        css={`
+          display: inline-grid;
+          grid-template-columns: auto 1fr;
+          grid-gap: ${2 * GU}px;
+          align-items: center;
+          text-align: left;
+        `}
+      >
+        <div>
+          <div
+            css={`
+              border: 2px solid ${theme.accent};
+              border-radius: 50%;
+              width: 60px;
+              height: 60px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: ${theme.accent};
+            `}
+          >
+            <IconCheck />
+          </div>
         </div>
-      </div>
-      <div>
-        <div
-          css={`
+        <div>
+          <div
+            css={`
             ${textStyle('body1')}
             margin-bottom: ${0.5 * GU}px;
           `}
-        >
-          Vote success
-        </div>
-        <div
-          css={`
+          >
+            Your vote was casted successfully
+          </div>
+          <div
+            css={`
             ${textStyle('body2')}
             color: ${theme.surfaceContentSecondary};
           `}
-        >
-          You voted{' '}
-          <span
-            css={`
-              color: ${theme.surfaceContent};
-              font-weight: 600;
-              text-transform: uppercase;
-            `}
           >
-            {connectedAccountVote === VOTE_YEA ? 'yes' : 'no'}
-          </span>{' '}
-          with{' '}
-          <span
-            css={`
-              color: ${theme.surfaceContent};
-              font-weight: 600;
-            `}
-          >
-            {userBalance === -1 ? '…' : userBalance} {tokenSymbol}
-          </span>
-          .
+            You voted{' '}
+            <span
+              css={`
+                color: ${theme.surfaceContent};
+                font-weight: 600;
+                text-transform: uppercase;
+              `}
+            >
+              {connectedAccountVote === VOTE_YEA ? 'yes' : 'no'}
+            </span>{' '}
+            with{' '}
+            <span
+              css={`
+                color: ${theme.surfaceContent};
+                font-weight: 600;
+              `}
+            >
+              {userBalance === -1 ? '…' : userBalance} {tokenSymbol}
+            </span>
+            .
+          </div>
         </div>
       </div>
     </div>
