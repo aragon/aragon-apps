@@ -208,6 +208,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
 })
 
 const Buttons = ({ onClickYes = noop, onClickNo = noop, disabled = false }) => {
+  const theme = useTheme()
   return (
     <ButtonsContainer>
       <VotingButton
@@ -220,6 +221,8 @@ const Buttons = ({ onClickYes = noop, onClickNo = noop, disabled = false }) => {
           size="small"
           css={`
             margin-right: ${1 * GU}px;
+            stroke: ${theme.positiveContent};
+            stroke-width: 0.3px;
           `}
         />
         Yes
@@ -234,6 +237,8 @@ const Buttons = ({ onClickYes = noop, onClickNo = noop, disabled = false }) => {
           size="small"
           css={`
             margin-right: ${1 * GU}px;
+            stroke: ${theme.negativeContent};
+            stroke-width: 0.3px;
           `}
         />
         No
@@ -261,6 +266,7 @@ const TokenReference = ({
 )
 
 const VotingButton = styled(Button)`
+  ${textStyle('body2')};
   width: 50%;
   &:first-child {
     margin-right: ${1 * GU}px;
