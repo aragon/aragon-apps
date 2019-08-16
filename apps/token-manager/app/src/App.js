@@ -120,65 +120,67 @@ class App extends React.PureComponent {
       >
         <SyncIndicator visible={isSyncing} />
 
-        <Header
-          primary={
-            <div
-              css={`
-                display: flex;
-                align-items: center;
-              `}
-            >
-              <h1
-                css={`
-                  ${textStyle(layoutName === 'small' ? 'title3' : 'title2')};
-                  color: ${theme.content};
-                  margin-right: ${1 * GU}px;
-                `}
-              >
-                Tokens
-              </h1>
-              {tokenSymbol && <Tag>{tokenSymbol}</Tag>}
-            </div>
-          }
-          secondary={
-            <Button
-              mode="strong"
-              onClick={this.handleLaunchAssignTokensNoHolder}
-              css={`
-                ${layoutName === 'small'
-                  ? `
-                    width: ${5 * GU}px;
-                    height: ${5 * GU}px;
-                    min-width: 0;
-                    padding: 0;
-                  `
-                  : ''}
-              `}
-            >
-              {layoutName === 'small' ? <IconPlus /> : 'Add tokens'}
-            </Button>
-          }
-        />
-
-        {appStateReady && holders.length > 0 ? (
-          <Holders
-            holders={holders}
-            groupMode={groupMode}
-            maxAccountTokens={maxAccountTokens}
-            tokenAddress={tokenAddress}
-            tokenDecimalsBase={tokenDecimalsBase}
-            tokenName={tokenName}
-            tokenSupply={tokenSupply}
-            tokenSymbol={tokenSymbol}
-            tokenTransfersEnabled={tokenTransfersEnabled}
-            userAccount={connectedAccount}
-            onAssignTokens={this.handleLaunchAssignTokens}
-            onRemoveTokens={this.handleLaunchRemoveTokens}
-          />
-        ) : (
-          !isSyncing && (
-            <EmptyState onActivate={this.handleLaunchAssignTokensNoHolder} />
-          )
+        {!isSyncing && appStateReady && holders.length === 0 && (
+          <EmptyState onAssignHolder={this.handleLaunchAssignTokensNoHolder} />
+        )}
+        {appStateReady && holders.length && (
+          <React.Fragment>
+            <Header
+              primary={
+                <div
+                  css={`
+                    display: flex;
+                    align-items: center;
+                  `}
+                >
+                  <h1
+                    css={`
+                      ${textStyle(
+                        layoutName === 'small' ? 'title3' : 'title2'
+                      )};
+                      color: ${theme.content};
+                      margin-right: ${1 * GU}px;
+                    `}
+                  >
+                    Tokens
+                  </h1>
+                  {tokenSymbol && <Tag>{tokenSymbol}</Tag>}
+                </div>
+              }
+              secondary={
+                <Button
+                  mode="strong"
+                  onClick={this.handleLaunchAssignTokensNoHolder}
+                  css={`
+                    ${layoutName === 'small'
+                      ? `
+                        width: ${5 * GU}px;
+                        height: ${5 * GU}px;
+                        min-width: 0;
+                        padding: 0;
+                      `
+                      : ''}
+                  `}
+                >
+                  {layoutName === 'small' ? <IconPlus /> : 'Add tokens'}
+                </Button>
+              }
+            />
+            <Holders
+              holders={holders}
+              groupMode={groupMode}
+              maxAccountTokens={maxAccountTokens}
+              tokenAddress={tokenAddress}
+              tokenDecimalsBase={tokenDecimalsBase}
+              tokenName={tokenName}
+              tokenSupply={tokenSupply}
+              tokenSymbol={tokenSymbol}
+              tokenTransfersEnabled={tokenTransfersEnabled}
+              userAccount={connectedAccount}
+              onAssignTokens={this.handleLaunchAssignTokens}
+              onRemoveTokens={this.handleLaunchRemoveTokens}
+            />
+          </React.Fragment>
         )}
 
         <SidePanel
