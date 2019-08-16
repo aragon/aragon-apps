@@ -40,14 +40,16 @@ export function useVotes() {
 export function useTokenContract() {
   const { api, appState } = useAragonApi()
   const { tokenAddress } = appState
-  const [contract, setContract] = useState(null)
+  const [contract, setContract] = useState(
+    api && tokenAddress ? api.external(tokenAddress, TOKEN_ABI) : null
+  )
 
   useEffect(() => {
     // We assume there is never any reason to set the contract back to null.
-    if (api && tokenAddress) {
+    if (api && tokenAddress && !contract) {
       setContract(api.external(tokenAddress, TOKEN_ABI))
     }
-  }, [api, tokenAddress])
+  }, [api, tokenAddress, contract])
 
   return contract
 }
