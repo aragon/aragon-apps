@@ -1,6 +1,5 @@
 import React from 'react'
-import { DropDown, GU } from '@aragon/ui'
-import DateRange from './DateRange/DateRangeInput'
+import { DropDown, GU, _DateRange as DateRange } from '@aragon/ui'
 
 const TransfersFilters = ({
   compactMode,
