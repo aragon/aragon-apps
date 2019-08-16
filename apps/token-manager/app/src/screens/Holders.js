@@ -152,7 +152,7 @@ function EntryActions({
               justify-content: center;
               width: 22px;
               height: 22px;
-              color: ${theme.textSecondary};
+              color: ${theme.surfaceContentSecondary};
             `}
           >
             <Icon />
