@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import styled from 'styled-components'
 import {
   Button,
@@ -19,6 +19,7 @@ import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { isVoteAction } from '../vote-utils'
 
 const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
+  const [ready, setReady] = useState(false)
   const theme = useTheme()
   const connectedAccount = useConnectedAccount()
   const { tokenSymbol } = useAppState()
@@ -27,8 +28,32 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
 
   const { connectedAccountVote, data } = vote
   const { snapshotBlock, startDate, open } = data
-  const { canUserVote, canExecute, userBalance } = useExtendedVoteData(vote)
+  const {
+    canUserVote,
+    canExecute,
+    userBalance,
+    canUserVotePromise,
+    userBalancePromise,
+    canExecutePromise,
+  } = useExtendedVoteData(vote)
   const hasVoted = [VOTE_YEA, VOTE_NAY].includes(connectedAccountVote)
+
+  useEffect(() => {
+    const whenReady = async () => {
+      const res = await Promise.all([
+        canUserVotePromise,
+        canExecutePromise,
+        userBalancePromise,
+      ])
+      setReady(true)
+    }
+    setReady(false)
+    whenReady()
+  }, [userBalancePromise, canUserVotePromise, canExecutePromise])
+
+  if (!ready) {
+    return null
+  }
 
   if (!open) {
     return (
