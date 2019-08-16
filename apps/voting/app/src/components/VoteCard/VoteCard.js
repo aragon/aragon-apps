@@ -1,15 +1,8 @@
 import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
-import {
-  Card,
-  GU,
-  IconCheck,
-  Tag,
-  Timer,
-  textStyle,
-  useTheme,
-} from '@aragon/ui'
+import { Card, GU, IconCheck, Timer, textStyle, useTheme } from '@aragon/ui'
 import AppBadge from '../AppBadge'
+import You from '../You'
 import VoteOptions from './VoteOptions'
 import VoteStatus from '../VoteStatus'
 import VoteText from '../VoteText'
@@ -120,17 +113,6 @@ const VoteCard = ({ vote, onOpen }) => {
 VoteCard.defaultProps = {
   onOpen: noop,
 }
-
-const You = () => (
-  <Tag
-    css={`
-      margin-left: ${0.5 * GU}px;
-    `}
-    size="small"
-  >
-    you
-  </Tag>
-)
 
 const WrapVoteOption = styled.span`
   display: flex;
