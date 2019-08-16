@@ -86,7 +86,6 @@ const App = React.memo(function App() {
           />
           {selectedVote ? (
             <VoteDetail
-              selectVote={selectVote}
               vote={selectedVote}
               onBack={handleBack}
               onVote={actions.vote}
