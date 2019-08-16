@@ -77,7 +77,7 @@ const Votes = React.memo(function Votes({
                       ${textStyle('label3')};
                     `}
                   >
-                    <Tag count={4} label={votes.length} />
+                    <Tag limitDigits={4} label={votes.length} />
                   </span>
                 </div>,
                 'Open',
