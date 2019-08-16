@@ -18,7 +18,8 @@ export function usePromise(fn, memoParams, defaultValue) {
   const [result, setResult] = useState(defaultValue)
   useEffect(() => {
     let cancelled = false
-    fn().then(value => {
+    const promise = typeof fn === 'function' ? fn() : fn
+    promise.then(value => {
       if (!cancelled) {
         setResult(value)
       }
