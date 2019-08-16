@@ -135,7 +135,7 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
         The currently connected account did not hold any{' '}
         <strong>{tokenSymbol}</strong> at the time this vote began (
         {formatDate(startDate)}), and therefore cannot participate in this vote.
-        Make sure your accounts are holding {tokenSymbol} at the time a vote
+        Make sure your accounts are holding <strong>{tokenSymbol}</strong> at the time a vote
         begins if you'd like to vote using this Voting app.
       </Info>
     </div>
