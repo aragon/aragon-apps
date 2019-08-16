@@ -18,7 +18,7 @@ class TokenSelectorInstance extends React.PureComponent {
         {symbol && <TokenSymbol>{symbol}</TokenSymbol>}
         {name && <TokenName>({name})</TokenName>}
         {!addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS) && (
-          <LocalIdentityBadge readOnly compact entity={address} />
+          <LocalIdentityBadge badgeOnly compact entity={address} />
         )}
       </Main>
     )
