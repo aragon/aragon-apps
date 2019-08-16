@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU, Tag, textStyle, useTheme } from '@aragon/ui'
+import { GU, textStyle, useTheme } from '@aragon/ui'
+import You from './You'
 import { formatNumber } from '../math-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 
@@ -73,17 +74,6 @@ function SummaryRow({ color, label, pct, token, youVoted }) {
     </div>
   )
 }
-
-const You = () => (
-  <Tag
-    css={`
-      margin-left: ${0.5 * GU}px;
-    `}
-    size="small"
-  >
-    you
-  </Tag>
-)
 
 const Bullet = styled.div`
   flex-shrink: 0;
