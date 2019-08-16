@@ -322,9 +322,6 @@ class Deposit extends React.Component {
           {isMainnet && (
             <p>
               Remember, Mainnet organizations use <strong>real tokens</strong>.
-              Configure your deposit above, and sign the transaction with your
-              wallet after clicking “Submit Transfer”. It will then show up in
-              your Finance app once processed.
             </p>
           )}
           <p>
