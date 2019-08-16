@@ -214,7 +214,11 @@ const Message = styled.div`
 `
 
 const InfoMessage = ({ title, text }) => (
-  <div css="margin-bottom: 20px">
+  <div
+    css={`
+      margin-bottom: ${3 * GU}px;
+    `}
+  >
     <Info title={title}>{text}</Info>
   </div>
 )
