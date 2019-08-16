@@ -7,8 +7,8 @@ import {
   textStyle,
   useLayout,
   useTheme,
+  _DateRange as DateRange,
 } from '@aragon/ui'
-import DateRangeInput from '../components/DateRange/DateRangeInput'
 import EmptyFilteredVotes from '../components/EmptyFilteredVotes'
 import VoteCard from '../components/VoteCard/VoteCard'
 import VoteCardGroup from '../components/VoteCard/VoteCardGroup'
@@ -110,7 +110,7 @@ const Votes = React.memo(function Votes({
               items={['All', 'Finance', 'Tokens', 'Voting']}
               width="128px"
             />
-            <DateRangeInput
+            <DateRange
               startDate={voteDateRangeFilter.start}
               endDate={voteDateRangeFilter.end}
               onChange={handleVoteDateRangeFilterChange}
