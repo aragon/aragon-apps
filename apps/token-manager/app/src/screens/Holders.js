@@ -45,13 +45,18 @@ function Holders({
             )
 
             const values = [
-              <React.Fragment>
+              <div
+                css={`
+                  display: flex;
+                  align-items: center;
+                `}
+              >
                 <LocalIdentityBadge
                   entity={address}
                   connectedAccount={isCurrentUser}
                 />
                 {isCurrentUser && <You />}
-              </React.Fragment>,
+              </div>,
             ]
 
             if (!groupMode) {

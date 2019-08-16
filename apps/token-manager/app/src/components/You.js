@@ -1,12 +1,15 @@
-import styled from 'styled-components'
+import React from 'react'
 import { Tag, GU } from '@aragon/ui'
 
-const You = styled(Tag).attrs({
-  title: 'This is your Ethereum address',
-  children: 'you',
-})`
-  font-variant: small-caps;
-  margin-left: ${1 * GU}px;
-`
+const You = () => (
+  <Tag
+    css={`
+      margin-left: ${0.5 * GU}px;
+    `}
+    size="small"
+  >
+    you
+  </Tag>
+)
 
 export default You
