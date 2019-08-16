@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react'
-import { Distribution, Box, GU, TokenBadge, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
+import { Box, Distribution, GU, TokenBadge, useTheme } from '@aragon/ui'
 import { formatBalance, stakesPercentages } from '../utils'
-import You from './You'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
+import You from './You'
 
 const DISTRIBUTION_ITEMS_MAX = 7
 
