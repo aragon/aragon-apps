@@ -136,7 +136,7 @@ function EntryActions({
 
   const actions = [
     ...(canAssign ? [[assignTokens, IconAdd, 'Add tokens']] : []),
-    [removeTokens, IconRemove, `Remove Token${singleToken ? '' : 's'}`],
+    [removeTokens, IconRemove, `Remove token${singleToken ? '' : 's'}`],
     [editLabel, IconLabel, `${label ? 'Edit' : 'Add'} custom label`],
   ]
 
