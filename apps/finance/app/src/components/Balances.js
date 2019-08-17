@@ -53,23 +53,7 @@ class Balances extends React.Component {
         }
       }
     )
-
-    if (!balanceItems.length) {
-      return (
-        <Box heading="Token Balances">
-          <div
-            css={`
-              margin: ${5 * GU}px auto;
-              text-align: center;
-              ${textStyle('body1')};
-              color: ${theme.content};
-            `}
-          >
-            No token balances yet.
-          </div>
-        </Box>
-      )
-    }
+    const noBalances = balanceItems.length === 0
 
     return (
       <Box heading="Token Balances">
@@ -80,41 +64,57 @@ class Balances extends React.Component {
             * scrollbar would briefly appear on top of everything (including the
             * sidepanel overlay).
             */
+            min-height: 132px;
             transform: translate3d(0, 0, 0);
             overflow-x: auto;
+            ${noBalances
+              ? `
+                display: flex;
+                justify-content: center;
+                align-items: center;
+              `
+              : ''}
           `}
         >
-          <ul
-            css={`
-              min-height: 132px;
-              list-style: none;
-              padding: 0;
-              margin: 0;
-              display: flex;
-              ${compactMode && `flex-direction: column;`}
-            `}
-          >
-            {balanceItems.map(
-              ({ address, amount, convertedAmount, symbol, verified }) => (
-                <li
-                  css={`
-                    display: block;
-                    padding: ${3 * GU}px;
-                  `}
-                  key={address}
-                >
-                  <div css="display:inline-block;">
-                    <BalanceToken
-                      amount={amount}
-                      convertedAmount={convertedAmount}
-                      symbol={symbol}
-                      verified={verified}
-                    />
-                  </div>
-                </li>
-              )
-            )}
-          </ul>
+          {noBalances ? (
+            <div
+              css={`
+                ${textStyle('body1')};
+                color: ${theme.content};
+              `}
+            >
+              No token balances yet.
+            </div>
+          ) : (
+            <ul
+              css={`
+                list-style: none;
+                display: flex;
+                ${compactMode && `flex-direction: column;`}
+              `}
+            >
+              {balanceItems.map(
+                ({ address, amount, convertedAmount, symbol, verified }) => (
+                  <li
+                    css={`
+                      display: block;
+                      padding: ${3 * GU}px;
+                    `}
+                    key={address}
+                  >
+                    <div css="display:inline-block;">
+                      <BalanceToken
+                        amount={amount}
+                        convertedAmount={convertedAmount}
+                        symbol={symbol}
+                        verified={verified}
+                      />
+                    </div>
+                  </li>
+                )
+              )}
+            </ul>
+          )}
         </div>
       </Box>
     )
