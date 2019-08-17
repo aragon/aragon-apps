@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Button, GU, useTheme } from '@aragon/ui'
+import { ButtonText, GU, textStyle, useTheme } from '@aragon/ui'
 import noResultsSvg from './assets/no-results.svg'
 
 function EmptyFilteredTransfers({ onClear }) {
@@ -35,31 +35,16 @@ function EmptyFilteredTransfers({ onClear }) {
         css={`
           max-width: 270px;
           text-align: center;
+          margin-top: ${1 * GU}px;
           margin-bottom: ${4 * GU}px;
           color: ${theme.surfaceContentSecondary};
-          font-size: 16px;
+          ${textStyle('body2')}
         `}
       >
         We can’t find any item matching your filter selection.{' '}
-        <Button
-          css={`
-            color: ${theme.link};
-            border: none;
-            background: none;
-            border-radius: 0;
-            box-shadow: none;
-            padding: 0;
-            min-width: unset;
-
-            &:hover {
-              border: none;
-              box-shadow: none;
-            }
-          `}
-          onClick={onClear}
-        >
+        <ButtonText horizontalPadding="none" onClick={onClear}>
           Clear filters
-        </Button>
+        </ButtonText>
       </div>
     </div>
   )
