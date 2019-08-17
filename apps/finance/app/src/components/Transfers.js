@@ -318,18 +318,30 @@ Transfers.propTypes = {
 }
 
 const ContextMenuItemCustomLabel = ({ entity }) => {
+  const theme = useTheme()
   const [label, showLocalIdentityModal] = useIdentity(entity)
   const handleEditLabel = useCallback(() => showLocalIdentityModal(entity))
 
   return (
     <ContextMenuItem onClick={handleEditLabel}>
-      <IconLabel />
-      {label ? 'Edit' : 'Add'} custom label
+      <IconLabel
+        css={`
+          color: ${theme.surfaceContentSecondary};
+        `}
+      />
+      <span
+        css={`
+          margin-left: ${1 * GU}px;
+        `}
+      >
+        {label ? 'Edit' : 'Add'} custom label
+      </span>
     </ContextMenuItem>
   )
 }
 
 const ContextMenuViewTransaction = ({ transactionHash, network }) => {
+  const theme = useTheme()
   const handleViewTransaction = useCallback(() => {
     window.open(
       blockExplorerUrl('transaction', transactionHash, {
@@ -342,7 +354,18 @@ const ContextMenuViewTransaction = ({ transactionHash, network }) => {
 
   return (
     <ContextMenuItem onClick={handleViewTransaction}>
-      <IconToken /> View transaction
+      <IconToken
+        css={`
+          color: ${theme.surfaceContentSecondary};
+        `}
+      />
+      <span
+        css={`
+          margin-left: ${1 * GU}px;
+        `}
+      >
+        View transaction
+      </span>
     </ContextMenuItem>
   )
 }
