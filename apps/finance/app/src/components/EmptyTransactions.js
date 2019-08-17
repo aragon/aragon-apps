@@ -9,7 +9,7 @@ function EmptyTransactions() {
     <Box>
       <div
         css={`
-          margin: ${20 * GU}px auto;
+          margin: ${15 * GU}px auto;
           display: flex;
           flex-direction: column;
           align-items: center;
