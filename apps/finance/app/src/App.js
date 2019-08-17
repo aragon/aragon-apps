@@ -4,7 +4,6 @@ import {
   Button,
   Header,
   IconPlus,
-  Layout,
   SidePanel,
   SyncIndicator,
   useViewport,
@@ -97,48 +96,44 @@ class App extends React.Component {
         onResolve={this.handleResolveLocalIdentity}
         onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
       >
-        <div css="min-width: 320px">
-          <SyncIndicator visible={isSyncing} />
-          <Layout>
-            <Header
-              primary="Finance"
-              secondary={
-                <Button
-                  mode="strong"
-                  onClick={this.handleNewTransferOpen}
-                  css={`
-                    ${compactMode &&
-                      `
-                        min-width: 40px;
-                        padding: 0;
-                      `}
+        <SyncIndicator visible={isSyncing} />
+        <Header
+          primary="Finance"
+          secondary={
+            <Button
+              mode="strong"
+              onClick={this.handleNewTransferOpen}
+              css={`
+                ${compactMode &&
+                  `
+                    min-width: 40px;
+                    padding: 0;
                   `}
-                >
-                  {compactMode ? <IconPlus /> : 'New transfer'}
-                </Button>
-              }
-            />
-            <Balances balances={balances} compactMode={compactMode} />
-            <Transfers
-              dao={proxyAddress}
-              transactions={transactions}
-              tokens={tokens}
-            />
-          </Layout>
-          <SidePanel
+              `}
+            >
+              {compactMode ? <IconPlus /> : 'New transfer'}
+            </Button>
+          }
+        />
+        <Balances balances={balances} compactMode={compactMode} />
+        <Transfers
+          dao={proxyAddress}
+          transactions={transactions}
+          tokens={tokens}
+        />
+        <SidePanel
+          opened={newTransferOpened}
+          onClose={this.handleNewTransferClose}
+          title="New transfer"
+        >
+          <NewTransferPanelContent
             opened={newTransferOpened}
-            onClose={this.handleNewTransferClose}
-            title="New transfer"
-          >
-            <NewTransferPanelContent
-              opened={newTransferOpened}
-              tokens={tokens}
-              onWithdraw={this.handleWithdraw}
-              onDeposit={this.handleDeposit}
-              proxyAddress={proxyAddress}
-            />
-          </SidePanel>
-        </div>
+            tokens={tokens}
+            onWithdraw={this.handleWithdraw}
+            onDeposit={this.handleDeposit}
+            proxyAddress={proxyAddress}
+          />
+        </SidePanel>
       </IdentityProvider>
     )
   }
