@@ -137,6 +137,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     `}
                   >
                     <VoteText
+                      autolink
                       text={description || metadata || DEFAULT_DESCRIPTION}
                     />
                   </div>
