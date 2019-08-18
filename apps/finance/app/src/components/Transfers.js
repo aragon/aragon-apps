@@ -210,7 +210,7 @@ const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
               <Button onClick={handleDownload}>
                 <IconExternal
                   css={`
-                    margin-right: ${1.5 + GU}px;
+                    margin-right: ${1.5 * GU}px;
                     color: ${theme.surfaceIcon};
                   `}
                 />{' '}
