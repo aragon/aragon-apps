@@ -103,16 +103,10 @@ class App extends React.Component {
             <Button
               mode="strong"
               onClick={this.handleNewTransferOpen}
-              css={`
-                ${compactMode &&
-                  `
-                    min-width: 40px;
-                    padding: 0;
-                  `}
-              `}
-            >
-              {compactMode ? <IconPlus /> : 'New transfer'}
-            </Button>
+              label="New transfer"
+              icon={<IconPlus />}
+              display={compactMode ? 'icon' : 'label'}
+            />
           }
         />
         <Balances balances={balances} compactMode={compactMode} />
