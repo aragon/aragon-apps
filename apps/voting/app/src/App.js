@@ -48,7 +48,7 @@ const App = React.memo(function App() {
   useScrollTop(selectedVote)
 
   return (
-    <div css="min-width: 320px">
+    <React.Fragment>
       <SyncIndicator visible={isSyncing} />
       {!votes.length && (
         <div
@@ -115,7 +115,7 @@ const App = React.memo(function App() {
         onCreateVote={actions.createVote}
         panelState={newVotePanel}
       />
-    </div>
+    </React.Fragment>
   )
 })
 
