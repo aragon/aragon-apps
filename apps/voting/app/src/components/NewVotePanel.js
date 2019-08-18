@@ -1,21 +1,11 @@
 import React from 'react'
-import styled from 'styled-components'
-import {
-  Button,
-  GU,
-  Info,
-  SidePanel,
-  TextInput,
-  textStyle,
-  useTheme,
-} from '@aragon/ui'
+import { Button, GU, Info, Field, SidePanel, TextInput } from '@aragon/ui'
 
 const initialState = {
   question: '',
 }
 
 const NewVotePanel = React.memo(({ panelState, onCreateVote }) => {
-  const theme = useTheme()
   return (
     <SidePanel
       title="New Vote"
@@ -26,7 +16,6 @@ const NewVotePanel = React.memo(({ panelState, onCreateVote }) => {
       <NewVotePanelContent
         onCreateVote={onCreateVote}
         panelOpened={panelState.didOpen}
-        theme={theme}
       />
     </SidePanel>
   )
@@ -57,28 +46,16 @@ class NewVotePanelContent extends React.PureComponent {
     this.props.onCreateVote(this.state.question.trim())
   }
   render() {
-    const { theme } = this.props
     const { question } = this.state
     return (
       <div>
-        <Form onSubmit={this.handleSubmit}>
-          <label>
-            <div
-              css={`
-                margin-bottom: ${1 * GU}px;
-                color: ${theme.surfaceContentSecondary};
-                ${textStyle('label2')};
-              `}
-            >
-              Question{' '}
-              <span
-                css={`
-                  color: ${theme.accent};
-                `}
-              >
-                *
-              </span>
-            </div>
+        <form
+          css={`
+            margin-top: ${3 * GU}px;
+          `}
+          onSubmit={this.handleSubmit}
+        >
+          <Field label="Question">
             <TextInput
               ref={question => (this.questionInput = question)}
               value={question}
@@ -86,10 +63,10 @@ class NewVotePanelContent extends React.PureComponent {
               required
               wide
             />
-          </label>
+          </Field>
           <div
             css={`
-              margin: ${2 * GU}px 0;
+              margin-bottom: ${3 * GU}px;
             `}
           >
             <Info>
@@ -100,14 +77,10 @@ class NewVotePanelContent extends React.PureComponent {
           <Button mode="strong" type="submit" wide>
             Create new vote
           </Button>
-        </Form>
+        </form>
       </div>
     )
   }
 }
-
-const Form = styled.form`
-  margin-top: 20px;
-`
 
 export default NewVotePanel
