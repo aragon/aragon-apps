@@ -7,6 +7,7 @@ import {
   IconCheck,
   IconTime,
   Split,
+  Tag,
   Timer,
   textStyle,
   useLayout,
@@ -77,24 +78,10 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
             >
               <AppBadge>App Badge</AppBadge>
               {youVoted && (
-                <div
-                  css={`
-                    display: inline-grid;
-                    grid-template-columns: auto auto;
-                    grid-gap: ${0.5 * GU}px;
-                    align-items: center;
-                    justify-content: center;
-                    height: 20px;
-                    width: auto;
-                    border-radius: 100px;
-                    padding: 0 ${1 * GU}px;
-                    background: ${theme.infoSurface.alpha(0.08)};
-                    color: ${theme.info};
-                    ${textStyle('label2')};
-                  `}
-                >
-                  <IconCheck size="small" /> Voted
-                </div>
+                <Tag
+                  icon={<IconCheck size="small" css="padding-top: 3px" />}
+                  label="Voted"
+                />
               )}
             </div>
             <section
