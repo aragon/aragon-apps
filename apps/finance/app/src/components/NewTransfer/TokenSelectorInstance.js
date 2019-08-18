@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Viewport, GU } from '@aragon/ui'
+import { GU } from '@aragon/ui'
 import LocalIdentityBadge from '../LocalIdentityBadge/LocalIdentityBadge'
 import { ETHER_TOKEN_FAKE_ADDRESS } from '../../lib/token-utils'
 import { addressesEqual } from '../../lib/web3-utils'
@@ -49,10 +49,4 @@ const TokenSymbol = styled.span`
   margin-right: ${1 * GU}px;
 `
 
-export default props => (
-  <Viewport>
-    {({ below }) => (
-      <TokenSelectorInstance {...props} shorten={below('medium')} />
-    )}
-  </Viewport>
-)
+export default TokenSelectorInstance
