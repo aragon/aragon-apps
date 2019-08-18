@@ -151,19 +151,10 @@ class App extends React.PureComponent {
                 <Button
                   mode="strong"
                   onClick={this.handleLaunchAssignTokensNoHolder}
-                  css={`
-                    ${layoutName === 'small'
-                      ? `
-                        width: ${5 * GU}px;
-                        height: ${5 * GU}px;
-                        min-width: 0;
-                        padding: 0;
-                      `
-                      : ''}
-                  `}
-                >
-                  {layoutName === 'small' ? <IconPlus /> : 'Add tokens'}
-                </Button>
+                  label="Add tokens"
+                  icon={<IconPlus />}
+                  display={layoutName === 'small' ? 'icon' : 'label'}
+                />
               }
             />
             <Holders
