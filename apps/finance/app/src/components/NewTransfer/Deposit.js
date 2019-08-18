@@ -7,7 +7,7 @@ import {
   IconCross,
   IdentityBadge,
   Info,
-  SafeLink,
+  Link,
   TextInput,
   TokenBadge,
   GU,
@@ -323,9 +323,9 @@ class Deposit extends React.Component {
               <p>
                 Tokens may require a pretransaction to approve the Finance app
                 for your deposit.{' '}
-                <StyledSafeLink href={TOKEN_ALLOWANCE_WEBSITE} target="_blank">
+                <Link href={TOKEN_ALLOWANCE_WEBSITE} target="_blank">
                   Find out why.
-                </StyledSafeLink>{' '}
+                </Link>{' '}
               </p>
             </React.Fragment>
           )}
@@ -417,19 +417,6 @@ const SelectedTokenBalance = ({ network, selectedToken }) => {
         </div>
       )}
     </div>
-  )
-}
-
-const StyledSafeLink = props => {
-  const theme = useTheme()
-  return (
-    <SafeLink
-      css={`
-        text-decoration-color: ${theme.accent};
-        color: ${theme.accent};
-      `}
-      {...props}
-    />
   )
 }
 
