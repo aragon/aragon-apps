@@ -117,7 +117,7 @@ class App extends React.Component {
         />
         <Balances balances={balances} compactMode={compactMode} />
         <Transfers
-          dao={proxyAddress}
+          proxyAddress={proxyAddress}
           transactions={transactions}
           tokens={tokens}
         />

@@ -104,18 +104,18 @@ const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
     .concat(mappedData)
     .join('\n')
 }
-const getDownloadFilename = (dao, { start, end }) => {
+const getDownloadFilename = (proxyAddress, { start, end }) => {
   const today = format(Date.now(), 'yyyy-MM-dd')
-  let filename = `finance_${dao}_${today}.csv`
+  let filename = `finance_${proxyAddress}_${today}.csv`
   if (start && end) {
     const formattedStart = format(start, 'yyyy-MM-dd')
     const formattedEnd = format(end, 'yyyy-MM-dd')
-    filename = `finance_${dao}_${formattedStart}_to_${formattedEnd}.csv`
+    filename = `finance_${proxyAddress}_${formattedStart}_to_${formattedEnd}.csv`
   }
   return filename
 }
 
-const Transfers = React.memo(({ dao, tokens, transactions }) => {
+const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
   const { below, above } = useViewport()
   const { layoutName } = useLayout()
   const compactMode = below('medium')
@@ -161,12 +161,16 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const tokenDetails = tokens.reduce(getTokenDetails, {})
   const { resolve: resolveAddress } = React.useContext(IdentityContext)
   const handleDownload = React.useCallback(async () => {
+    if (!proxyAddress) {
+      return
+    }
+
     const data = await getDownloadData(
       filteredTransfers,
       tokenDetails,
       resolveAddress
     )
-    const filename = getDownloadFilename(dao, selectedDateRange)
+    const filename = getDownloadFilename(proxyAddress, selectedDateRange)
     saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
   }, [filteredTransfers, tokenDetails, resolveAddress])
   const emptyResultsViaFilters =
@@ -312,7 +316,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
 })
 
 Transfers.propTypes = {
-  dao: PropTypes.string,
+  proxyAddress: PropTypes.string,
   tokens: PropTypes.array.isRequired,
   transactions: PropTypes.array.isRequired,
 }
