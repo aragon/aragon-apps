@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react'
 import styled from 'styled-components'
 import {
   Button,
-  Link,
   GU,
   IconCheck,
   IconConnect,
@@ -39,16 +38,24 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   const hasVoted = [VOTE_YEA, VOTE_NAY].includes(connectedAccountVote)
 
   useEffect(() => {
+    let cancelled = false
+
     const whenReady = async () => {
-      const res = await Promise.all([
+      await Promise.all([
         canUserVotePromise,
         canExecutePromise,
         userBalancePromise,
       ])
-      setReady(true)
+      if (!cancelled) {
+        setReady(true)
+      }
     }
     setReady(false)
     whenReady()
+
+    return () => {
+      cancelled = true
+    }
   }, [userBalancePromise, canUserVotePromise, canExecutePromise])
 
   if (!ready) {
