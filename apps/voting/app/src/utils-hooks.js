@@ -71,3 +71,9 @@ export function usePanelState({ onDidOpen = noop, onDidClose = noop } = {}) {
     [requestOpen, requestClose, visible, didOpen, onTransitionEnd]
   )
 }
+
+export function useScrollTop(dependency) {
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [dependency])
+}

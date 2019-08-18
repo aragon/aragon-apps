@@ -14,9 +14,9 @@ import VoteDetail from './screens/VoteDetail'
 import Votes from './screens/Votes'
 import { AppLogicProvider, useAppLogic } from './app-logic'
 import { IdentityProvider } from './identity-manager'
-import { SettingsProvider } from './vote-settings-manager'
 import useFilterVotes from './useFilterVotes'
-import useScrollTop from './useScrollTop'
+import { useScrollTop } from './utils-hooks'
+import { SettingsProvider } from './vote-settings-manager'
 
 const App = React.memo(function App() {
   const {
