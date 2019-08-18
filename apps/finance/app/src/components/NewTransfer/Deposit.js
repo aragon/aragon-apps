@@ -305,7 +305,7 @@ class Deposit extends React.Component {
         </Button>
         {errorMessage && <ValidationError message={errorMessage} />}
 
-        <VSpace size={4} />
+        <VSpace size={3} />
         <Info>
           {isMainnet && (
             <p>
@@ -319,8 +319,11 @@ class Deposit extends React.Component {
           </p>
           {tokenSelected && (
             <React.Fragment>
-              <VSpace size={1} />
-              <p>
+              <p
+                css={`
+                  margin-top: ${1 * GU}px;
+                `}
+              >
                 Tokens may require a pretransaction to approve the Finance app
                 for your deposit.{' '}
                 <Link href={TOKEN_ALLOWANCE_WEBSITE} target="_blank">
@@ -333,14 +336,14 @@ class Deposit extends React.Component {
 
         {proxyAddress && ethSelected && (
           <div>
-            <VSpace size={4} />
+            <VSpace size={3} />
             <ToggleContent label="Show address for direct ETH transfer ">
               <VSpace size={2} />
               <QRCode
                 value={proxyAddress}
                 style={{ width: '80px', height: '80px' }}
               />
-              <VSpace size={2} />
+              <VSpace size={1} />
               <IdentityBadge
                 entity={proxyAddress}
                 fontSize="small"
