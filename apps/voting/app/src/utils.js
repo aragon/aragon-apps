@@ -14,6 +14,6 @@ export function noop() {}
 export function formatDate(date) {
   return `${format(date, 'HH:mm')} UTC on ${format(date, 'do')} of ${format(
     date,
-    'MMM, yyyy'
+    'MMM. yyyy'
   )}`
 }
