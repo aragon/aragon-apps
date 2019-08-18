@@ -71,16 +71,10 @@ const App = React.memo(function App() {
                 <Button
                   mode="strong"
                   onClick={newVotePanel.requestOpen}
-                  css={`
-                    ${compactMode &&
-                      `
-                        min-width: 40px;
-                        padding: 0;
-                      `}
-                  `}
-                >
-                  {compactMode ? <IconPlus /> : 'New vote'}
-                </Button>
+                  label="New vote"
+                  icon={<IconPlus />}
+                  display={compactMode ? 'icon' : 'label'}
+                />
               )
             }
           />
