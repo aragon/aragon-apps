@@ -277,8 +277,8 @@ class Deposit extends React.Component {
       <form onSubmit={this.handleSubmit}>
         <h1>{title}</h1>
         <TokenSelector
-          activeIndex={selectedToken.index}
           onChange={this.handleSelectToken}
+          selectedIndex={selectedToken.index}
           tokens={tokens}
         />
         <SelectedTokenBalance network={network} selectedToken={selectedToken} />

@@ -14,11 +14,11 @@ const INITIAL_STATE = {
 
 class TokenSelector extends React.Component {
   static defaultProps = {
-    activeIndex: 0,
     onChange: () => {},
     tokens: [],
     label: 'Token',
     labelCustomToken: 'Token address or symbol',
+    selectedIndex: 0,
   }
   state = {
     ...INITIAL_STATE,
@@ -84,16 +84,16 @@ class TokenSelector extends React.Component {
   }
   render() {
     const { customToken } = this.state
-    const { activeIndex, label, labelCustomToken } = this.props
+    const { label, labelCustomToken, selectedIndex } = this.props
     const items = this.getItems()
-    const showCustomToken = activeIndex === 0
+    const showCustomToken = selectedIndex === 0
     return (
       <React.Fragment>
         <Field label={label}>
           <DropDown
             placeholder="Select a token"
             items={items}
-            selected={activeIndex}
+            selected={selectedIndex}
             onChange={this.handleChange}
             required
             wide
