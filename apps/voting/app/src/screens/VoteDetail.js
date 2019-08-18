@@ -79,7 +79,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
               <AppBadge>App Badge</AppBadge>
               {youVoted && (
                 <Tag
-                  icon={<IconCheck size="small" css="padding-top: 3px" />}
+                  icon={<IconCheck size="small" />}
                   label="Voted"
                 />
               )}
