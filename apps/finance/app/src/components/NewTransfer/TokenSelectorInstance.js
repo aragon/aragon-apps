@@ -1,13 +1,13 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Tag, Viewport, GU } from '@aragon/ui'
+import { Viewport, GU } from '@aragon/ui'
 import LocalIdentityBadge from '../LocalIdentityBadge/LocalIdentityBadge'
 import { ETHER_TOKEN_FAKE_ADDRESS } from '../../lib/token-utils'
-import { addressesEqual, shortenAddress } from '../../lib/web3-utils'
+import { addressesEqual } from '../../lib/web3-utils'
 
 class TokenSelectorInstance extends React.PureComponent {
   render() {
-    const { address, name, shorten, symbol, showIcon = true } = this.props
+    const { address, name, symbol, showIcon = true } = this.props
     return (
       <Main>
         {showIcon ? (
@@ -47,11 +47,6 @@ const TokenName = styled.span`
 
 const TokenSymbol = styled.span`
   margin-right: ${1 * GU}px;
-`
-
-const StyledAddressTag = styled(Tag)`
-  flex-shrink: 0;
-  margin-left: auto;
 `
 
 export default props => (

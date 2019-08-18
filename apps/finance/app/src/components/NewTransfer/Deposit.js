@@ -34,8 +34,6 @@ const BALANCE_NOT_ENOUGH_ERROR = Symbol('BALANCE_NOT_ENOUGH_ERROR')
 const DECIMALS_TOO_MANY_ERROR = Symbol('DECIMALS_TOO_MANY_ERROR')
 const TOKEN_NOT_FOUND_ERROR = Symbol('TOKEN_NOT_FOUND_ERROR')
 
-const MAINNET_RISKS_BLOG_POST =
-  'https://blog.aragon.org/aragon-06-is-live-on-mainnet'
 const TOKEN_ALLOWANCE_WEBSITE = 'https://tokenallowance.io/'
 
 const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
