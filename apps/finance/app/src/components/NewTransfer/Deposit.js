@@ -281,14 +281,10 @@ class Deposit extends React.Component {
           onChange={this.handleSelectToken}
           tokens={tokens}
         />
-        <div css="margin: 10px 0 20px">
-          <SelectedTokenBalance
-            network={network}
-            selectedToken={selectedToken}
-          />
-        </div>
+        <SelectedTokenBalance network={network} selectedToken={selectedToken} />
         <Field label="Amount">
-          <TextInput.Number
+          <TextInput
+            type="number"
             value={amount.value}
             onChange={this.handleAmountUpdate}
             min={0}
@@ -304,15 +300,9 @@ class Deposit extends React.Component {
             wide
           />
         </Field>
-        <div
-          css={`
-            padding-top: ${1 * GU}px;
-          `}
-        >
-          <Button wide mode="strong" type="submit" disabled={disabled}>
-            Submit deposit
-          </Button>
-        </div>
+        <Button wide mode="strong" type="submit" disabled={disabled}>
+          Submit deposit
+        </Button>
         {errorMessage && <ValidationError message={errorMessage} />}
 
         <VSpace size={4} />
@@ -392,10 +382,12 @@ const SelectedTokenBalance = ({ network, selectedToken }) => {
   }
 
   return (
-    <span
+    <div
       css={`
         ${textStyle('body3')}
         color: ${theme.surfaceContentSecondary};
+        /* Adjust for Field's bottom margin */
+        margin: -${2 * GU}px 0 ${3 * GU}px;
       `}
     >
       {userBalance === '-1' ? (
@@ -424,7 +416,7 @@ const SelectedTokenBalance = ({ network, selectedToken }) => {
           available
         </div>
       )}
-    </span>
+    </div>
   )
 }
 

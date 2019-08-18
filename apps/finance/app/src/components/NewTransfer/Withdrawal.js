@@ -9,7 +9,6 @@ import {
   TextInput,
   GU,
   textStyle,
-  unselectable,
   useTheme,
 } from '@aragon/ui'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
@@ -141,7 +140,7 @@ class Withdrawal extends React.Component {
         <h1>{title}</h1>
         <Field
           label="Recipient (must be a valid Ethereum address)"
-          css="height: 62px"
+          css="height: 60px"
         >
           <LocalIdentitiesAutoComplete
             ref={this._recipientInput}
@@ -155,15 +154,10 @@ class Withdrawal extends React.Component {
             wide
           />
         </Field>
-        <AmountField>
-          <label>
-            <StyledTextBlock>
-              Amount
-              <StyledAsterisk />
-            </StyledTextBlock>
-          </label>
+        <Field label="Amount" required>
           <CombinedInput>
-            <TextInput.Number
+            <TextInput
+              type="number"
               value={amount.value}
               onChange={this.handleAmountUpdate}
               min={0}
@@ -180,7 +174,7 @@ class Withdrawal extends React.Component {
               onChange={this.handleSelectToken}
             />
           </CombinedInput>
-        </AmountField>
+        </Field>
         <Field label="Reference">
           <TextInput
             onChange={this.handleReferenceUpdate}
@@ -188,11 +182,9 @@ class Withdrawal extends React.Component {
             wide
           />
         </Field>
-        <ButtonWrapper>
-          <Button mode="strong" type="submit" wide>
-            Submit withdrawal
-          </Button>
-        </ButtonWrapper>
+        <Button mode="strong" type="submit" wide>
+          Submit withdrawal
+        </Button>
         {errorMessage && <ValidationError message={errorMessage} />}
       </form>
     ) : (
@@ -202,14 +194,6 @@ class Withdrawal extends React.Component {
     )
   }
 }
-
-const ButtonWrapper = styled.div`
-  padding-top: 10px;
-`
-
-const AmountField = styled.div`
-  margin-bottom: 20px;
-`
 
 const CombinedInput = styled.div`
   display: flex;
@@ -223,40 +207,6 @@ const CombinedInput = styled.div`
     border-bottom-left-radius: 0;
   }
 `
-
-const StyledTextBlock = props => {
-  const theme = useTheme()
-  return (
-    <div
-      css={`
-        color: ${theme.surfaceContentSecondary};
-        display: flex;
-        text-transform: lowercase;
-        font-variant: small-caps;
-        ${unselectable()};
-      `}
-      {...props}
-    />
-  )
-}
-
-const StyledAsterisk = props => {
-  const theme = useTheme()
-  return (
-    <span
-      title="Required"
-      css={`
-        color: ${theme.accent};
-        margin-left: auto;
-        padding-top: 3px;
-        font-size: 12px;
-      `}
-      {...props}
-    >
-      *
-    </span>
-  )
-}
 
 const ValidationError = ({ message }) => {
   const theme = useTheme()
