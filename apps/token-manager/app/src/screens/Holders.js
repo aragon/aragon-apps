@@ -141,7 +141,7 @@ function EntryActions({
   ]
 
   return (
-    <ContextMenu>
+    <ContextMenu zIndex={1}>
       {actions.map(([onClick, Icon, label], index) => (
         <ContextMenuItem onClick={onClick} key={index}>
           <span
@@ -150,8 +150,6 @@ function EntryActions({
               display: flex;
               align-items: center;
               justify-content: center;
-              width: 22px;
-              height: 22px;
               color: ${theme.surfaceContentSecondary};
             `}
           >
@@ -159,7 +157,7 @@ function EntryActions({
           </span>
           <span
             css={`
-              margin-left: ${2 * GU}px;
+              margin-left: ${1 * GU}px;
             `}
           >
             {label}
