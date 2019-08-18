@@ -169,7 +169,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     margin-bottom: ${2 * GU}px;
                   `}
                 >
-                  Current votes
+                  {open ? 'Current votes' : 'Votes'}
                 </h2>
                 <SummaryBar
                   positiveSize={votesYeaVotersSize}
