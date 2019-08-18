@@ -293,7 +293,7 @@ class Deposit extends React.Component {
             wide
           />
         </Field>
-        <Field label="Reference">
+        <Field label="Reference (optional)">
           <TextInput
             onChange={this.handleReferenceUpdate}
             value={reference}

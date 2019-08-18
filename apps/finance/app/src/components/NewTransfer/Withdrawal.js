@@ -175,7 +175,7 @@ class Withdrawal extends React.Component {
             />
           </CombinedInput>
         </Field>
-        <Field label="Reference">
+        <Field label="Reference (optional)">
           <TextInput
             onChange={this.handleReferenceUpdate}
             value={reference}
