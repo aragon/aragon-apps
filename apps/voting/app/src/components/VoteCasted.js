@@ -23,7 +23,7 @@ function VoteCasted({ vote }) {
         css={`
           display: inline-grid;
           grid-template-columns: auto 1fr;
-          grid-gap: ${2 * GU}px;
+          grid-gap: ${3 * GU}px;
           align-items: center;
           text-align: left;
         `}
@@ -31,10 +31,10 @@ function VoteCasted({ vote }) {
         <div>
           <div
             css={`
-              border: 2px solid ${theme.accent};
+              border: 3px solid ${theme.accent};
               border-radius: 50%;
-              width: 60px;
-              height: 60px;
+              width: 40px;
+              height: 40px;
               display: flex;
               align-items: center;
               justify-content: center;
