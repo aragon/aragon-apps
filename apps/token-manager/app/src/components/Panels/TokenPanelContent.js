@@ -148,7 +148,12 @@ class TokenPanelContent extends React.Component {
 
     return (
       <div>
-        <form onSubmit={this.handleSubmit}>
+        <form
+          css={`
+            margin-top: ${3 * GU}px;
+          `}
+          onSubmit={this.handleSubmit}
+        >
           <InfoMessage
             title="Action"
             text={`This action will ${
