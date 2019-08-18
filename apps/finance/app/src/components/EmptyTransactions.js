@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAragonApi } from '@aragon/api-react'
-import { Box, GU, useTheme } from '@aragon/ui'
+import { Box, LoadingRing, GU, useTheme } from '@aragon/ui'
 import noTransfersSvg from './assets/no-transfers.svg'
 
 function EmptyTransactions() {
@@ -31,7 +31,22 @@ function EmptyTransactions() {
             color: ${theme.content};
           `}
         >
-          {appState.isSyncing ? 'Loading…' : 'No transfers yet!'}
+          {appState.isSyncing ? (
+            <div
+              css={`
+                display: grid;
+                align-items: center;
+                justify-content: center;
+                grid-template-columns: auto auto;
+                grid-gap: ${1 * GU}px;
+              `}
+            >
+              <LoadingRing />
+              <span>Loading…</span>
+            </div>
+          ) : (
+            'No transfers yet!'
+          )}
         </h3>
       </div>
     </Box>
