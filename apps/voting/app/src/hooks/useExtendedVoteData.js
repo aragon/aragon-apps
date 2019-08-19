@@ -15,31 +15,19 @@ export default function useExtendedVoteData(vote) {
   const tokenContract = useTokenContract()
 
   const canExecutePromise = useMemo(() => getCanExecute(vote, api), [api, vote])
-  const canExecute = usePromise(
-    canExecutePromise,
-    [vote && vote.voteId, api],
-    false
-  )
+  const canExecute = usePromise(canExecutePromise, [], false)
 
   const canUserVotePromise = useMemo(
     () => getCanVote(vote, connectedAccount, api),
     [vote, connectedAccount, api]
   )
-  const canUserVote = usePromise(
-    canUserVotePromise,
-    [vote && vote.voteId, connectedAccount, api],
-    false
-  )
+  const canUserVote = usePromise(canUserVotePromise, [], false)
 
   const userBalancePromise = useMemo(
     () => getUserBalance(vote, connectedAccount, tokenContract, tokenDecimals),
     [connectedAccount, tokenContract, tokenDecimals, vote]
   )
-  const userBalance = usePromise(
-    userBalancePromise,
-    [vote && vote.voteId, connectedAccount, tokenContract, tokenDecimals],
-    -1
-  )
+  const userBalance = usePromise(userBalancePromise, [], -1)
 
   return {
     canExecute,
