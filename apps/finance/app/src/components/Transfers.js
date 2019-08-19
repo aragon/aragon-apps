@@ -303,7 +303,7 @@ const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
         ]
       }}
       renderEntryActions={({ entity, transactionHash }) => (
-        <ContextMenu>
+        <ContextMenu zIndex={1}>
           <ContextMenuViewTransaction
             transactionHash={transactionHash}
             network={network}
