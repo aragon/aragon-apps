@@ -1,15 +1,24 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import { Badge, Main, SidePanel, SyncIndicator } from '@aragon/ui'
+import {
+  Button,
+  GU,
+  Header,
+  IconPlus,
+  SidePanel,
+  SyncIndicator,
+  Tag,
+  textStyle,
+  useLayout,
+  useTheme,
+} from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
+import { IdentityProvider } from './components/IdentityManager/IdentityManager'
+import TokenPanelContent from './components/Panels/TokenPanelContent'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
-import AssignVotePanelContent from './components/Panels/AssignVotePanelContent'
-import AssignTokensIcon from './components/AssignTokensIcon'
-import AppLayout from './components/AppLayout'
 import { addressesEqual } from './web3-utils'
-import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
 const initialAssignTokensConfig = {
   mode: null,
@@ -86,100 +95,123 @@ class App extends React.PureComponent {
   render() {
     const {
       appStateReady,
+      connectedAccount,
       groupMode,
       holders,
       isSyncing,
+      layoutName,
       maxAccountTokens,
       numData,
+      theme,
       tokenAddress,
       tokenDecimalsBase,
       tokenName,
       tokenSupply,
       tokenSymbol,
       tokenTransfersEnabled,
-      connectedAccount,
-      requestMenu,
     } = this.props
+
     const { assignTokensConfig, sidepanelOpened } = this.state
 
     return (
-      <Main assetsUrl="./aragon-ui">
-        <div css="min-width: 320px">
-          <IdentityProvider
-            onResolve={this.handleResolveLocalIdentity}
-            onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
-          >
-            <SyncIndicator visible={isSyncing} />
-            <AppLayout
-              title="Tokens"
-              afterTitle={tokenSymbol && <Badge.App>{tokenSymbol}</Badge.App>}
-              onMenuOpen={requestMenu}
-              mainButton={{
-                label: 'Add tokens',
-                icon: <AssignTokensIcon />,
-                onClick: this.handleLaunchAssignTokensNoHolder,
-              }}
-              smallViewPadding={0}
-            >
-              {appStateReady && holders.length > 0 ? (
-                <Holders
-                  holders={holders}
-                  groupMode={groupMode}
-                  maxAccountTokens={maxAccountTokens}
-                  tokenAddress={tokenAddress}
-                  tokenDecimalsBase={tokenDecimalsBase}
-                  tokenName={tokenName}
-                  tokenSupply={tokenSupply}
-                  tokenSymbol={tokenSymbol}
-                  tokenTransfersEnabled={tokenTransfersEnabled}
-                  userAccount={connectedAccount}
-                  onAssignTokens={this.handleLaunchAssignTokens}
-                  onRemoveTokens={this.handleLaunchRemoveTokens}
-                />
-              ) : (
-                !isSyncing && (
-                  <EmptyState
-                    onActivate={this.handleLaunchAssignTokensNoHolder}
-                  />
-                )
-              )}
-            </AppLayout>
-            <SidePanel
-              title={
-                assignTokensConfig.mode === 'assign'
-                  ? 'Add tokens'
-                  : 'Remove tokens'
+      <IdentityProvider
+        onResolve={this.handleResolveLocalIdentity}
+        onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
+      >
+        <SyncIndicator visible={isSyncing} />
+
+        {!isSyncing && appStateReady && holders.length === 0 && (
+          <EmptyState onAssignHolder={this.handleLaunchAssignTokensNoHolder} />
+        )}
+        {appStateReady && holders.length && (
+          <React.Fragment>
+            <Header
+              primary={
+                <div
+                  css={`
+                    display: flex;
+                    align-items: center;
+                  `}
+                >
+                  <h1
+                    css={`
+                      ${textStyle(
+                        layoutName === 'small' ? 'title3' : 'title2'
+                      )};
+                      color: ${theme.content};
+                      margin-right: ${1 * GU}px;
+                    `}
+                  >
+                    Tokens
+                  </h1>
+                  {tokenSymbol && <Tag>{tokenSymbol}</Tag>}
+                </div>
               }
-              opened={sidepanelOpened}
-              onClose={this.handleSidepanelClose}
-              onTransitionEnd={this.handleSidepanelTransitionEnd}
-            >
-              {appStateReady && (
-                <AssignVotePanelContent
-                  opened={sidepanelOpened}
-                  tokenDecimals={numData.tokenDecimals}
-                  tokenDecimalsBase={tokenDecimalsBase}
-                  onUpdateTokens={this.handleUpdateTokens}
-                  getHolderBalance={this.getHolderBalance}
-                  maxAccountTokens={maxAccountTokens}
-                  {...assignTokensConfig}
+              secondary={
+                <Button
+                  mode="strong"
+                  onClick={this.handleLaunchAssignTokensNoHolder}
+                  label="Add tokens"
+                  icon={<IconPlus />}
+                  display={layoutName === 'small' ? 'icon' : 'label'}
                 />
-              )}
-            </SidePanel>
-          </IdentityProvider>
-        </div>
-      </Main>
+              }
+            />
+            <Holders
+              holders={holders}
+              groupMode={groupMode}
+              maxAccountTokens={maxAccountTokens}
+              tokenAddress={tokenAddress}
+              tokenDecimalsBase={tokenDecimalsBase}
+              tokenName={tokenName}
+              tokenSupply={tokenSupply}
+              tokenSymbol={tokenSymbol}
+              tokenTransfersEnabled={tokenTransfersEnabled}
+              userAccount={connectedAccount}
+              onAssignTokens={this.handleLaunchAssignTokens}
+              onRemoveTokens={this.handleLaunchRemoveTokens}
+            />
+          </React.Fragment>
+        )}
+
+        <SidePanel
+          title={
+            assignTokensConfig.mode === 'assign'
+              ? 'Add tokens'
+              : 'Remove tokens'
+          }
+          opened={sidepanelOpened}
+          onClose={this.handleSidepanelClose}
+          onTransitionEnd={this.handleSidepanelTransitionEnd}
+        >
+          {appStateReady && (
+            <TokenPanelContent
+              opened={sidepanelOpened}
+              tokenDecimals={numData.tokenDecimals}
+              tokenDecimalsBase={tokenDecimalsBase}
+              onUpdateTokens={this.handleUpdateTokens}
+              getHolderBalance={this.getHolderBalance}
+              maxAccountTokens={maxAccountTokens}
+              {...assignTokensConfig}
+            />
+          )}
+        </SidePanel>
+      </IdentityProvider>
     )
   }
 }
 
 export default () => {
-  const { api, appState, connectedAccount, requestMenu } = useAragonApi()
+  const { api, appState, connectedAccount } = useAragonApi()
+  const theme = useTheme()
+  const { layoutName } = useLayout()
+
   return (
     <App
       api={api}
       connectedAccount={connectedAccount}
-      requestMenu={requestMenu}
+      layoutName={layoutName}
+      theme={theme}
       {...appState}
     />
   )
