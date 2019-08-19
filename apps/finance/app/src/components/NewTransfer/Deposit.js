@@ -7,10 +7,12 @@ import {
   IconCross,
   IdentityBadge,
   Info,
-  SafeLink,
-  Text,
+  Link,
   TextInput,
-  theme,
+  TokenBadge,
+  GU,
+  textStyle,
+  useTheme,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import QRCode from 'qrcode.react'
@@ -25,7 +27,6 @@ import {
 } from '../../lib/token-utils'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
 import ToggleContent from '../ToggleContent'
-import TokenBadge from './TokenBadge'
 import TokenSelector from './TokenSelector'
 
 const NO_ERROR = Symbol('NO_ERROR')
@@ -33,24 +34,9 @@ const BALANCE_NOT_ENOUGH_ERROR = Symbol('BALANCE_NOT_ENOUGH_ERROR')
 const DECIMALS_TOO_MANY_ERROR = Symbol('DECIMALS_TOO_MANY_ERROR')
 const TOKEN_NOT_FOUND_ERROR = Symbol('TOKEN_NOT_FOUND_ERROR')
 
-const MAINNET_RISKS_BLOG_POST =
-  'https://blog.aragon.org/aragon-06-is-live-on-mainnet'
 const TOKEN_ALLOWANCE_WEBSITE = 'https://tokenallowance.io/'
 
 const tokenAbi = [].concat(tokenBalanceOfAbi, tokenDecimalsAbi, tokenSymbolAbi)
-
-const renderBalanceForSelectedToken = selectedToken => {
-  const { decimals, loading, symbol, userBalance } = selectedToken.data
-  if (loading || !userBalance) {
-    return ''
-  }
-
-  return userBalance === '-1'
-    ? `Your balance could not be found for ${symbol}`
-    : `You have ${
-        userBalance === '0' ? 'no' : fromDecimals(userBalance, decimals)
-      } ${symbol} available`
-}
 
 const initialState = {
   amount: {
@@ -64,7 +50,7 @@ const initialState = {
       loading: false,
     },
     error: NO_ERROR,
-    index: 0,
+    index: -1,
     value: '',
   },
 }
@@ -99,7 +85,15 @@ class Deposit extends React.Component {
     }
 
     if (!tokenIsAddress) {
-      this.validateInputs({ selectedToken })
+      this.validateInputs({
+        selectedToken: {
+          ...selectedToken,
+          data: {
+            loading: false,
+            symbol: value,
+          },
+        },
+      })
       return
     }
 
@@ -199,16 +193,20 @@ class Deposit extends React.Component {
     return tokenData
   }
   validateInputs({ amount, selectedToken } = {}) {
-    amount = amount || this.state.amount
-    selectedToken = selectedToken || this.state.selectedToken
-
-    if (selectedToken.value && !isAddress(selectedToken.value)) {
+    if (
+      selectedToken &&
+      !isAddress(selectedToken.value) &&
+      selectedToken.data.symbol
+    ) {
       this.setState(({ amount }) => ({
         amount: { ...amount },
         selectedToken: { ...selectedToken, error: TOKEN_NOT_FOUND_ERROR },
       }))
       return false
     }
+
+    amount = amount || this.state.amount
+    selectedToken = selectedToken || this.state.selectedToken
 
     if (amount.value && selectedToken.data.decimals) {
       // Adjust but without truncation in case the user entered a value with more
@@ -256,7 +254,7 @@ class Deposit extends React.Component {
   }
 
   render() {
-    const { network, title, tokens, proxyAddress } = this.props
+    const { network, proxyAddress, title, tokens } = this.props
     const { amount, reference, selectedToken } = this.state
 
     let errorMessage
@@ -267,14 +265,10 @@ class Deposit extends React.Component {
     } else if (amount.error === DECIMALS_TOO_MANY_ERROR) {
       errorMessage = 'Amount contains too many decimal places'
     }
-    const disabled = errorMessage || !this.canSubmit()
-
-    const selectedTokenIsAddress = isAddress(selectedToken.value)
-    const showTokenBadge = selectedTokenIsAddress && selectedToken.coerced
-    const tokenBalanceMessage = renderBalanceForSelectedToken(selectedToken)
+    const disabled = !!errorMessage || !this.canSubmit()
 
     const ethSelected =
-      selectedTokenIsAddress &&
+      isAddress(selectedToken.value) &&
       addressesEqual(selectedToken.value, ETHER_TOKEN_FAKE_ADDRESS)
     const tokenSelected = selectedToken.value && !ethSelected
     const isMainnet = network.type === 'main'
@@ -283,23 +277,14 @@ class Deposit extends React.Component {
       <form onSubmit={this.handleSubmit}>
         <h1>{title}</h1>
         <TokenSelector
-          activeIndex={selectedToken.index}
           onChange={this.handleSelectToken}
+          selectedIndex={selectedToken.index}
           tokens={tokens}
         />
-        {showTokenBadge && (
-          <TokenBadge
-            address={selectedToken.value}
-            symbol={selectedToken.data.symbol}
-          />
-        )}
-        <TokenBalance>
-          <Text size="small" color={theme.textSecondary}>
-            {tokenBalanceMessage}
-          </Text>
-        </TokenBalance>
+        <SelectedTokenBalance network={network} selectedToken={selectedToken} />
         <Field label="Amount">
-          <TextInput.Number
+          <TextInput
+            type="number"
             value={amount.value}
             onChange={this.handleAmountUpdate}
             min={0}
@@ -308,33 +293,24 @@ class Deposit extends React.Component {
             wide
           />
         </Field>
-        <Field label="Reference">
+        <Field label="Reference (optional)">
           <TextInput
             onChange={this.handleReferenceUpdate}
             value={reference}
             wide
           />
         </Field>
-        <ButtonWrapper>
-          <Button wide mode="strong" type="submit" disabled={disabled}>
-            Submit deposit
-          </Button>
-        </ButtonWrapper>
+        <Button wide mode="strong" type="submit" disabled={disabled}>
+          Submit deposit
+        </Button>
         {errorMessage && <ValidationError message={errorMessage} />}
 
-        <VSpace size={6} />
-        <Info.Action title="Depositing funds to your organization">
+        <VSpace size={3} />
+        <Info>
           {isMainnet && (
-            <React.Fragment>
-              <p>
-                Remember, Mainnet organizations use real (not test) funds.{' '}
-                <StyledSafeLink href={MAINNET_RISKS_BLOG_POST} target="_blank">
-                  Learn more
-                </StyledSafeLink>{' '}
-                about the risks and what's been done to mitigate them here.
-              </p>
-              <VSpace size={2} />
-            </React.Fragment>
+            <p>
+              Remember, Mainnet organizations use <strong>real tokens</strong>.
+            </p>
           )}
           <p>
             Configure your deposit above, and sign the transaction with your
@@ -343,28 +319,31 @@ class Deposit extends React.Component {
           </p>
           {tokenSelected && (
             <React.Fragment>
-              <VSpace size={2} />
-              <p>
+              <p
+                css={`
+                  margin-top: ${1 * GU}px;
+                `}
+              >
                 Tokens may require a pretransaction to approve the Finance app
                 for your deposit.{' '}
-                <StyledSafeLink href={TOKEN_ALLOWANCE_WEBSITE} target="_blank">
+                <Link href={TOKEN_ALLOWANCE_WEBSITE} target="_blank">
                   Find out why.
-                </StyledSafeLink>{' '}
+                </Link>{' '}
               </p>
             </React.Fragment>
           )}
-        </Info.Action>
+        </Info>
 
         {proxyAddress && ethSelected && (
           <div>
-            <VSpace size={6} />
+            <VSpace size={3} />
             <ToggleContent label="Show address for direct ETH transfer ">
-              <VSpace size={4} />
+              <VSpace size={2} />
               <QRCode
                 value={proxyAddress}
                 style={{ width: '80px', height: '80px' }}
               />
-              <VSpace size={4} />
+              <VSpace size={1} />
               <IdentityBadge
                 entity={proxyAddress}
                 fontSize="small"
@@ -376,10 +355,16 @@ class Deposit extends React.Component {
                 Use the above address or QR code to transfer ETH directly to
                 your organization’s Finance app. You should specify a gas limit
                 of 350,000 for this transfer.
-                <Text.Paragraph size="xsmall" style={{ marginTop: '10px' }}>
+                <p
+                  css={`
+                    margin-top: ${1 * GU}px;
+                    ${textStyle('body3')}
+                    font-size: 12px;
+                  `}
+                >
                   <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
                   (e.g. ERC-20) tokens directly to this address.
-                </Text.Paragraph>
+                </p>
               </Info>
             </ToggleContent>
           </div>
@@ -389,34 +374,88 @@ class Deposit extends React.Component {
   }
 }
 
-const ButtonWrapper = styled.div`
-  padding-top: 10px;
-`
+const SelectedTokenBalance = ({ network, selectedToken }) => {
+  const theme = useTheme()
+  const {
+    data: { decimals, loading, symbol, userBalance },
+    value: address,
+  } = selectedToken
+  if (loading || !isAddress(address) || !userBalance) {
+    return ''
+  }
 
-const TokenBalance = styled.div`
-  margin: 10px 0 20px;
-`
-
-const StyledSafeLink = styled(SafeLink)`
-  text-decoration-color: ${theme.accent};
-  color: ${theme.accent};
-`
+  return (
+    <div
+      css={`
+        ${textStyle('body3')}
+        color: ${theme.surfaceContentSecondary};
+        /* Adjust for Field's bottom margin */
+        margin: -${2 * GU}px 0 ${3 * GU}px;
+      `}
+    >
+      {userBalance === '-1' ? (
+        `Your balance could not be found for ${symbol}`
+      ) : (
+        <div
+          css={`
+            display: flex;
+            align-items: center;
+          `}
+        >
+          You have{' '}
+          {userBalance === '0' ? 'no' : fromDecimals(userBalance, decimals)}{' '}
+          {addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS) ? (
+            'ETH'
+          ) : (
+            <TokenBadge
+              address={address}
+              symbol={symbol}
+              networkType={network.type}
+              css={`
+                margin: 0 ${0.5 * GU}px;
+              `}
+            />
+          )}{' '}
+          available
+        </div>
+      )}
+    </div>
+  )
+}
 
 const VSpace = styled.div`
-  height: ${p => (p.size || 1) * 5}px;
+  height: ${p => (p.size || 1) * GU}px;
 `
 
-const ValidationError = ({ message }) => (
-  <div>
-    <VSpace size={3} />
-    <p>
-      <IconCross />
-      <Text size="small" style={{ marginLeft: '10px' }}>
-        {message}
-      </Text>
-    </p>
-  </div>
-)
+const ValidationError = ({ message }) => {
+  const theme = useTheme()
+  return (
+    <div>
+      <VSpace size={2} />
+      <div
+        css={`
+          display: flex;
+          align-items: center;
+        `}
+      >
+        <IconCross
+          size="tiny"
+          css={`
+            color: ${theme.negative};
+            margin-right: ${1 * GU}px;
+          `}
+        />
+        <span
+          css={`
+            ${textStyle('body3')}
+          `}
+        >
+          {message}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 export default props => {
   const { api, connectedAccount, network } = useAragonApi()

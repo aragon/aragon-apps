@@ -6,10 +6,10 @@ import {
   IconCross,
   Info,
   Field,
-  Text,
   TextInput,
-  theme,
-  unselectable,
+  GU,
+  textStyle,
+  useTheme,
 } from '@aragon/ui'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
 import { toDecimals } from '../../lib/math-utils'
@@ -140,7 +140,7 @@ class Withdrawal extends React.Component {
         <h1>{title}</h1>
         <Field
           label="Recipient (must be a valid Ethereum address)"
-          css="height: 62px"
+          css="height: 60px"
         >
           <LocalIdentitiesAutoComplete
             ref={this._recipientInput}
@@ -154,15 +154,10 @@ class Withdrawal extends React.Component {
             wide
           />
         </Field>
-        <AmountField>
-          <label>
-            <StyledTextBlock>
-              Amount
-              <StyledAsterisk />
-            </StyledTextBlock>
-          </label>
+        <Field label="Amount" required>
           <CombinedInput>
-            <TextInput.Number
+            <TextInput
+              type="number"
               value={amount.value}
               onChange={this.handleAmountUpdate}
               min={0}
@@ -171,41 +166,34 @@ class Withdrawal extends React.Component {
               wide
             />
             <DropDown
+              css={`
+                margin-left: ${1.5 * GU}px;
+              `}
               items={symbols}
-              active={selectedToken}
+              selected={selectedToken}
               onChange={this.handleSelectToken}
             />
           </CombinedInput>
-        </AmountField>
-        <Field label="Reference">
+        </Field>
+        <Field label="Reference (optional)">
           <TextInput
             onChange={this.handleReferenceUpdate}
             value={reference}
             wide
           />
         </Field>
-        <ButtonWrapper>
-          <Button mode="strong" type="submit" wide>
-            Submit withdrawal
-          </Button>
-        </ButtonWrapper>
+        <Button mode="strong" type="submit" wide>
+          Submit withdrawal
+        </Button>
         {errorMessage && <ValidationError message={errorMessage} />}
       </form>
     ) : (
-      <Info.Permissions title="Action impossible">
+      <Info mode="warning">
         The organization doesn’t have any tokens available to withdraw.
-      </Info.Permissions>
+      </Info>
     )
   }
 }
-
-const ButtonWrapper = styled.div`
-  padding-top: 10px;
-`
-
-const AmountField = styled.div`
-  margin-bottom: 20px;
-`
 
 const CombinedInput = styled.div`
   display: flex;
@@ -220,35 +208,32 @@ const CombinedInput = styled.div`
   }
 `
 
-const StyledTextBlock = styled(Text.Block).attrs({
-  color: theme.textSecondary,
-  smallcaps: true,
-})`
-  ${unselectable()};
-  display: flex;
-`
-
-const StyledAsterisk = styled.span.attrs({
-  children: '*',
-  title: 'Required',
-})`
-  color: ${theme.accent};
-  margin-left: auto;
-  padding-top: 3px;
-  font-size: 12px;
-`
-
-const ValidationError = ({ message }) => (
-  <ValidationErrorBlock>
-    <IconCross />
-    <Text size="small" style={{ marginLeft: '10px' }}>
-      {message}
-    </Text>
-  </ValidationErrorBlock>
-)
-
-const ValidationErrorBlock = styled.p`
-  margin-top: 15px;
-`
+const ValidationError = ({ message }) => {
+  const theme = useTheme()
+  return (
+    <div
+      css={`
+        display: flex;
+        align-items: center;
+        margin-top: ${2 * GU}px;
+      `}
+    >
+      <IconCross
+        size="tiny"
+        css={`
+          color: ${theme.negative};
+          margin-right: ${1 * GU}px;
+        `}
+      />
+      <span
+        css={`
+          ${textStyle('body3')}
+        `}
+      >
+        {message}
+      </span>
+    </div>
+  )
+}
 
 export default Withdrawal

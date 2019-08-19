@@ -1,12 +1,13 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Badge, Viewport } from '@aragon/ui'
+import { GU } from '@aragon/ui'
+import LocalIdentityBadge from '../LocalIdentityBadge/LocalIdentityBadge'
 import { ETHER_TOKEN_FAKE_ADDRESS } from '../../lib/token-utils'
-import { addressesEqual, shortenAddress } from '../../lib/web3-utils'
+import { addressesEqual } from '../../lib/web3-utils'
 
 class TokenSelectorInstance extends React.PureComponent {
   render() {
-    const { address, name, shorten, symbol, showIcon = true } = this.props
+    const { address, name, symbol, showIcon = true } = this.props
     return (
       <Main>
         {showIcon ? (
@@ -17,9 +18,7 @@ class TokenSelectorInstance extends React.PureComponent {
         {symbol && <TokenSymbol>{symbol}</TokenSymbol>}
         {name && <TokenName>({name})</TokenName>}
         {!addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS) && (
-          <StyledAddressBadge>
-            {shortenAddress(address, shorten ? 5 : 10)}
-          </StyledAddressBadge>
+          <LocalIdentityBadge badgeOnly compact entity={address} />
         )}
       </Main>
     )
@@ -32,33 +31,22 @@ const Main = styled.div`
 `
 
 const Icon = styled.img.attrs({ alt: '', width: '16', height: '16' })`
-  margin-right: 10px;
+  margin-right: ${1 * GU}px;
 `
 
 const IconSpacer = styled.div`
-  width: 26px;
+  width: ${3 * GU}px;
 `
 
 const TokenName = styled.span`
   max-width: 110px;
-  margin-right: 10px;
+  margin-right: ${1 * GU}px;
   overflow: hidden;
   text-overflow: ellipsis;
 `
 
 const TokenSymbol = styled.span`
-  margin-right: 10px;
+  margin-right: ${1 * GU}px;
 `
 
-const StyledAddressBadge = styled(Badge.Identity)`
-  flex-shrink: 0;
-  margin-left: auto;
-`
-
-export default props => (
-  <Viewport>
-    {({ below }) => (
-      <TokenSelectorInstance {...props} shorten={below('medium')} />
-    )}
-  </Viewport>
-)
+export default TokenSelectorInstance

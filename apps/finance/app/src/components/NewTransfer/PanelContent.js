@@ -1,7 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { TabBar } from '@aragon/ui'
-
+import { SidePanel, Tabs, GU } from '@aragon/ui'
 import Deposit from './Deposit'
 import Withdrawal from './Withdrawal'
 
@@ -36,13 +35,13 @@ class PanelContent extends React.Component {
     const { opened, tokens, onWithdraw, onDeposit, proxyAddress } = this.props
     return (
       <div>
-        <TabBarWrapper>
-          <TabBar
+        <TabsWrapper>
+          <Tabs
             items={['Deposit', 'Withdrawal']}
             selected={screenIndex}
             onChange={this.handleChange}
           />
-        </TabBarWrapper>
+        </TabsWrapper>
 
         {screenIndex === 0 && (
           <Deposit
@@ -60,8 +59,8 @@ class PanelContent extends React.Component {
   }
 }
 
-const TabBarWrapper = styled.div`
-  margin: 0 -30px 30px;
+const TabsWrapper = styled.div`
+  margin: 0 -${SidePanel.HORIZONTAL_PADDING}px ${3 * GU}px;
 `
 
 export default PanelContent

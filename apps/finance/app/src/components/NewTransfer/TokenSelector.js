@@ -14,11 +14,11 @@ const INITIAL_STATE = {
 
 class TokenSelector extends React.Component {
   static defaultProps = {
-    activeIndex: 0,
     onChange: () => {},
     tokens: [],
     label: 'Token',
     labelCustomToken: 'Token address or symbol',
+    selectedIndex: 0,
   }
   state = {
     ...INITIAL_STATE,
@@ -54,7 +54,7 @@ class TokenSelector extends React.Component {
       () => {
         this.props.onChange({
           value,
-          index: 1,
+          index: 0,
           address: resolvedAddress,
         })
       }
@@ -62,19 +62,15 @@ class TokenSelector extends React.Component {
   }
   getAddressFromTokens(index) {
     if (index === 0) {
-      return ''
-    }
-
-    if (index === 1) {
       return this.state.customToken.address
     }
 
-    // Adjust for title and custom address
-    const token = this.props.tokens[index - 2]
+    // Adjust for custom address
+    const token = this.props.tokens[index - 1]
     return token.address
   }
   getItems() {
-    return ['Select a token', 'Other…', ...this.getTokenItems()]
+    return ['Other…', ...this.getTokenItems()]
   }
   getTokenItems() {
     return this.props.tokens.map(({ address, name, symbol, verified }) => (
@@ -88,15 +84,16 @@ class TokenSelector extends React.Component {
   }
   render() {
     const { customToken } = this.state
-    const { activeIndex, label, labelCustomToken } = this.props
+    const { label, labelCustomToken, selectedIndex } = this.props
     const items = this.getItems()
-    const showCustomToken = activeIndex === 1
+    const showCustomToken = selectedIndex === 0
     return (
       <React.Fragment>
         <Field label={label}>
           <DropDown
+            placeholder="Select a token"
             items={items}
-            active={activeIndex}
+            selected={selectedIndex}
             onChange={this.handleChange}
             required
             wide
