@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { startOfDay, endOfDay, isAfter, isBefore } from 'date-fns'
-import { useSettings } from './vote-settings-manager'
+import { useSettings } from '../vote-settings-manager'
 import {
   VOTE_STATUS_ONGOING,
   VOTE_STATUS_REJECTED,
   VOTE_STATUS_ACCEPTED,
   VOTE_STATUS_PENDING_ENACTMENT,
   VOTE_STATUS_ENACTED,
-} from './vote-types'
-import { getVoteStatus } from './vote-utils'
+} from '../vote-types'
+import { getVoteStatus } from '../vote-utils'
 
 const NULL_FILTER_STATE = -1
 const STATUS_FILTER_OPEN = 1

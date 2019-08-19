@@ -2,9 +2,9 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { AragonApi, useApi, useAppState } from '@aragon/api-react'
 import appStateReducer from './app-state-reducer'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
-import { usePanelState } from './utils-hooks'
+import usePanelState from './hooks/usePanelState'
+import useVotes from './hooks/useVotes'
 import { noop } from './utils'
-import { useVotes } from './vote-hooks'
 import { VOTE_YEA } from './vote-types'
 
 // Get the vote currently selected, or null otherwise.

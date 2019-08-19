@@ -9,13 +9,13 @@ import {
   useLayout,
 } from '@aragon/ui'
 import NewVotePanel from './components/NewVotePanel'
+import useFilterVotes from './hooks/useFilterVotes'
+import useScrollTop from './hooks/useScrollTop'
 import NoVotes from './screens/NoVotes'
 import VoteDetail from './screens/VoteDetail'
 import Votes from './screens/Votes'
 import { AppLogicProvider, useAppLogic } from './app-logic'
 import { IdentityProvider } from './identity-manager'
-import useFilterVotes from './useFilterVotes'
-import { useScrollTop } from './utils-hooks'
 import { SettingsProvider } from './vote-settings-manager'
 
 const App = React.memo(function App() {
