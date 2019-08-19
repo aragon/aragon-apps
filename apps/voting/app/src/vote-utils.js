@@ -6,17 +6,14 @@ import {
   VOTE_STATUS_ONGOING,
   VOTE_STATUS_REJECTED,
   VOTE_STATUS_ACCEPTED,
-  VOTE_STATUS_EXECUTED,
+  VOTE_STATUS_PENDING_ENACTMENT,
+  VOTE_STATUS_ENACTED,
 } from './vote-types'
 
 const EMPTY_SCRIPT = '0x00000001'
 
 export function isVoteAction(vote) {
   return vote.data && vote.data.script && vote.data.script !== EMPTY_SCRIPT
-}
-
-export function getAccountVote(account, voters) {
-  return voters[account] || VOTE_ABSENT
 }
 
 export function isVoteOpen(vote, date) {
@@ -29,15 +26,20 @@ export const getQuorumProgress = ({ numData: { yea, votingPower } }) =>
   yea / votingPower
 
 export function getVoteStatus(vote, pctBase) {
-  if (vote.data.executed) {
-    return VOTE_STATUS_EXECUTED
-  }
   if (vote.data.open) {
     return VOTE_STATUS_ONGOING
   }
-  return getVoteSuccess(vote, pctBase)
-    ? VOTE_STATUS_ACCEPTED
-    : VOTE_STATUS_REJECTED
+  if (!getVoteSuccess(vote, pctBase)) {
+    return VOTE_STATUS_REJECTED
+  }
+
+  // Only if the vote has an action do we consider it possible for enactment
+  const hasAction = isVoteAction(vote)
+  return hasAction
+    ? vote.data.executed
+      ? VOTE_STATUS_ENACTED
+      : VOTE_STATUS_PENDING_ENACTMENT
+    : VOTE_STATUS_ACCEPTED
 }
 
 export function getVoteSuccess(vote, pctBase) {

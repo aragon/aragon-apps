@@ -1,12 +1,12 @@
 import React from 'react'
 import { Spring, config as springs } from 'react-spring'
-import VotingOption from './VotingOption'
+import VoteOption from './VoteOption'
 import { percentageList } from '../../math-utils'
 
 const ANIM_DELAY_MIN = 100
 const ANIM_DELAY_MAX = 800
 
-class VotingOptions extends React.Component {
+class VoteOptions extends React.Component {
   static defaultProps = {
     options: [],
 
@@ -45,7 +45,7 @@ class VotingOptions extends React.Component {
             native
           >
             {({ value }) => (
-              <VotingOption
+              <VoteOption
                 value={value}
                 percentage={percentages[i]}
                 {...option}
@@ -58,4 +58,4 @@ class VotingOptions extends React.Component {
   }
 }
 
-export default VotingOptions
+export default VoteOptions

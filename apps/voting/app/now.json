@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "public": true,
+  "scope": "aragon",
+  "name": "voting",
+  "alias": "nightly-voting.aragon.org",
+  "builds": [
+    { "src": "package.json", "use": "@now/static-build", "config": { "distDir": "build" } }
+  ]
+}

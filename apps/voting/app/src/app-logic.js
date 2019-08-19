@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { AragonApi, useApi, useAppState } from '@aragon/api-react'
 import appStateReducer from './app-state-reducer'
-import { usePanelState } from './utils-hooks'
-import { useVotes } from './vote-hooks'
-import { VOTE_YEA } from './vote-types'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
+import usePanelState from './hooks/usePanelState'
+import useVotes from './hooks/useVotes'
+import { noop } from './utils'
+import { VOTE_YEA } from './vote-types'
 
 // Get the vote currently selected, or null otherwise.
 export function useSelectedVote(votes) {
@@ -32,7 +33,7 @@ export function useSelectedVote(votes) {
 }
 
 // Create a new vote
-export function useCreateVoteAction(onDone) {
+export function useCreateVoteAction(onDone = noop) {
   const api = useApi()
   return useCallback(
     question => {
@@ -47,7 +48,7 @@ export function useCreateVoteAction(onDone) {
 }
 
 // Vote (the action) on a vote
-export function useVoteAction(onDone) {
+export function useVoteAction(onDone = noop) {
   const api = useApi()
   return useCallback(
     (voteId, voteType, executesIfDecided = true) => {
@@ -60,7 +61,7 @@ export function useVoteAction(onDone) {
 }
 
 // Execute a vote
-export function useExecuteAction(onDone) {
+export function useExecuteAction(onDone = noop) {
   const api = useApi()
   return useCallback(
     voteId => {
@@ -72,31 +73,6 @@ export function useExecuteAction(onDone) {
   )
 }
 
-// Handles the state of the selected vote panel.
-export function useSelectedVotePanel(selectedVote, selectVote) {
-  const selectedVoteId = selectedVote ? selectedVote.voteId : '-1'
-
-  // Only deselect the current vote when the panel is fully closed, so that
-  // the panel doesn’t appear empty while being closed.
-  const onDidClose = useCallback(() => {
-    selectVote('-1')
-  }, [selectVote])
-
-  const selectedVotePanel = usePanelState({ onDidClose })
-
-  // This is to help the React Hooks linter.
-  const { requestOpen, didOpen } = selectedVotePanel
-
-  // When the selected vote changes, open the selected vote panel.
-  useEffect(() => {
-    if (selectedVoteId !== '-1' && !didOpen) {
-      requestOpen()
-    }
-  }, [selectedVoteId, requestOpen, didOpen])
-
-  return selectedVotePanel
-}
-
 // Handles the main logic of the app.
 export function useAppLogic() {
   const { isSyncing, ready } = useAppState()
@@ -104,35 +80,20 @@ export function useAppLogic() {
   const votes = useVotes()
   const [selectedVote, selectVote] = useSelectedVote(votes)
   const newVotePanel = usePanelState()
-  const selectedVotePanel = useSelectedVotePanel(selectedVote, selectVote)
 
   const actions = {
     createVote: useCreateVoteAction(newVotePanel.requestClose),
-    vote: useVoteAction(selectedVotePanel.requestClose),
-    execute: useExecuteAction(selectedVotePanel.requestClose),
+    vote: useVoteAction(),
+    execute: useExecuteAction(),
   }
 
   return {
-    isSyncing: isSyncing || !ready,
-    votes,
+    actions,
     selectVote,
     selectedVote,
-    actions,
-    newVotePanel: useMemo(
-      () => ({
-        ...newVotePanel,
-        // ensure there is only one panel opened at a time
-        visible: newVotePanel.visible && !selectedVotePanel.visible,
-      }),
-      [newVotePanel, selectedVotePanel.visible]
-    ),
-    selectedVotePanel: useMemo(
-      () => ({
-        ...selectedVotePanel,
-        visible: selectedVotePanel.visible && !newVotePanel.visible,
-      }),
-      [selectedVotePanel, newVotePanel.visible]
-    ),
+    votes,
+    isSyncing: isSyncing || !ready,
+    newVotePanel: useMemo(() => newVotePanel, [newVotePanel]),
   }
 }
 
