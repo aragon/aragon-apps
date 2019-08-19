@@ -1,166 +1,171 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import PropTypes from 'prop-types'
-import styled from 'styled-components'
+import BN from 'bn.js'
 import {
-  TabBar,
-  Table,
-  TableHeader,
-  TableRow,
-  Viewport,
-  breakpoint,
+  ContextMenu,
+  ContextMenuItem,
+  DataView,
+  IconAdd,
+  IconLabel,
+  IconRemove,
+  Split,
+  GU,
+  useTheme,
 } from '@aragon/ui'
-import HolderRow from '../components/HolderRow'
-import SideBar from '../components/SideBar'
+import { formatBalance } from '../utils'
+import InfoBoxes from '../components/InfoBoxes'
+import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
+import { useIdentity } from '../components/IdentityManager/IdentityManager'
+import You from '../components/You'
 
-const TABS = ['Holders', 'Token Info']
+function Holders({
+  groupMode,
+  holders,
+  maxAccountTokens,
+  onAssignTokens,
+  onRemoveTokens,
+  tokenAddress,
+  tokenDecimalsBase,
+  tokenName,
+  tokenSupply,
+  tokenSymbol,
+  tokenTransfersEnabled,
+  userAccount,
+}) {
+  return (
+    <Split
+      primary={
+        <DataView
+          mode="table"
+          fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
+          entries={holders.map(({ address, balance }) => [address, balance])}
+          renderEntry={([address, balance]) => {
+            const isCurrentUser = Boolean(
+              userAccount && userAccount === address
+            )
 
-class Holders extends React.Component {
-  static propTypes = {
-    holders: PropTypes.array,
-  }
-  static defaultProps = {
-    holders: [],
-  }
-  state = { selectedTab: 0 }
-  render() {
-    const {
-      groupMode,
-      holders,
-      maxAccountTokens,
-      onAssignTokens,
-      onRemoveTokens,
-      tokenAddress,
-      tokenDecimalsBase,
-      tokenName,
-      tokenSupply,
-      tokenSymbol,
-      tokenTransfersEnabled,
-      userAccount,
-    } = this.props
-    const { selectedTab } = this.state
-
-    return (
-      <Viewport>
-        {({ below }) => {
-          const tabbedNavigation = below('medium')
-          const compactTable = below('medium')
-
-          return (
-            <TwoPanels>
-              <Main>
-                {tabbedNavigation && (
-                  <TabBarWrapper>
-                    <TabBar
-                      items={TABS}
-                      selected={selectedTab}
-                      onSelect={this.handleSelectTab}
-                    />
-                  </TabBarWrapper>
-                )}
-                {(!tabbedNavigation || selectedTab === 0) && (
-                  <ResponsiveTable
-                    header={
-                      <TableRow>
-                        <TableHeader
-                          title={groupMode ? 'Owner' : 'Holder'}
-                          groupmode={groupMode}
-                          colSpan={groupMode ? '2' : '1'}
-                        />
-                        {!groupMode && (
-                          <TableHeader
-                            title="Balance"
-                            align={compactTable ? 'left' : 'right'}
-                            colSpan={compactTable ? '2' : '1'}
-                          />
-                        )}
-                        {!groupMode && !compactTable && <TableHeader />}
-                      </TableRow>
-                    }
-                    noSideBorders={compactTable}
-                  >
-                    {holders.map(({ address, balance }) => (
-                      <HolderRow
-                        key={address}
-                        address={address}
-                        balance={balance}
-                        groupMode={groupMode}
-                        isCurrentUser={Boolean(
-                          userAccount && userAccount === address
-                        )}
-                        maxAccountTokens={maxAccountTokens}
-                        tokenDecimalsBase={tokenDecimalsBase}
-                        onAssignTokens={onAssignTokens}
-                        onRemoveTokens={onRemoveTokens}
-                        compact={compactTable}
-                      />
-                    ))}
-                  </ResponsiveTable>
-                )}
-              </Main>
-              {(!tabbedNavigation || selectedTab === 1) && (
-                <SideBar
-                  holders={holders}
-                  tokenAddress={tokenAddress}
-                  tokenDecimalsBase={tokenDecimalsBase}
-                  tokenName={tokenName}
-                  tokenSupply={tokenSupply}
-                  tokenSymbol={tokenSymbol}
-                  tokenTransfersEnabled={tokenTransfersEnabled}
-                  userAccount={userAccount}
+            const values = [
+              <div
+                css={`
+                  display: flex;
+                  align-items: center;
+                `}
+              >
+                <LocalIdentityBadge
+                  entity={address}
+                  connectedAccount={isCurrentUser}
                 />
-              )}
-            </TwoPanels>
-          )
-        }}
-      </Viewport>
-    )
-  }
+                {isCurrentUser && <You />}
+              </div>,
+            ]
 
-  handleSelectTab = index => {
-    this.setState({ selectedTab: index })
-  }
+            if (!groupMode) {
+              values.push(formatBalance(balance, tokenDecimalsBase))
+            }
+
+            return values
+          }}
+          renderEntryActions={([address, balance]) => (
+            <EntryActions
+              address={address}
+              onAssignTokens={onAssignTokens}
+              onRemoveTokens={onRemoveTokens}
+              singleToken={groupMode || balance.eq(tokenDecimalsBase)}
+              canAssign={!groupMode && balance.lt(maxAccountTokens)}
+            />
+          )}
+        />
+      }
+      secondary={
+        <InfoBoxes
+          holders={holders}
+          tokenAddress={tokenAddress}
+          tokenDecimalsBase={tokenDecimalsBase}
+          tokenName={tokenName}
+          tokenSupply={tokenSupply}
+          tokenSymbol={tokenSymbol}
+          tokenTransfersEnabled={tokenTransfersEnabled}
+          userAccount={userAccount}
+        />
+      }
+    />
+  )
 }
 
-const TabBarWrapper = styled.div`
-  margin-top: 16px;
-  & ul {
-    border-bottom: none !important;
-  }
-  & li {
-    padding: 0 20px;
-  }
-`
+Holders.propTypes = {
+  groupMode: PropTypes.bool,
+  holders: PropTypes.array,
+  maxAccountTokens: PropTypes.instanceOf(BN),
+  onAssignTokens: PropTypes.func.isRequired,
+  onRemoveTokens: PropTypes.func.isRequired,
+  tokenAddress: PropTypes.string,
+  tokenDecimalsBase: PropTypes.instanceOf(BN),
+  tokenName: PropTypes.string,
+  tokenSupply: PropTypes.instanceOf(BN),
+  tokenSymbol: PropTypes.string,
+  tokenTransfersEnabled: PropTypes.bool,
+  userAccount: PropTypes.string,
+}
 
-const ResponsiveTable = styled(Table)`
-  margin-top: 16px;
+Holders.defaultProps = {
+  holders: [],
+}
 
-  ${breakpoint(
-    'medium',
-    `
-      opacity: 1;
-      margin-top: 0;
-    `
-  )};
-`
+function EntryActions({
+  address,
+  onAssignTokens,
+  onRemoveTokens,
+  singleToken,
+  canAssign,
+}) {
+  const theme = useTheme()
+  const [label, showLocalIdentityModal] = useIdentity(address)
 
-const Main = styled.div`
-  max-width: 100%;
+  const editLabel = useCallback(() => showLocalIdentityModal(address), [
+    address,
+    showLocalIdentityModal,
+  ])
+  const assignTokens = useCallback(() => onAssignTokens(address), [
+    address,
+    onAssignTokens,
+  ])
+  const removeTokens = useCallback(() => onRemoveTokens(address), [
+    address,
+    onRemoveTokens,
+  ])
 
-  ${breakpoint(
-    'medium',
-    `
-      width: 100%;
-    `
-  )};
-`
-const TwoPanels = styled.div`
-  width: 100%;
-  ${breakpoint(
-    'medium',
-    `
-      display: flex;
-    `
-  )};
-`
+  const actions = [
+    ...(canAssign ? [[assignTokens, IconAdd, 'Add tokens']] : []),
+    [removeTokens, IconRemove, `Remove token${singleToken ? '' : 's'}`],
+    [editLabel, IconLabel, `${label ? 'Edit' : 'Add'} custom label`],
+  ]
+
+  return (
+    <ContextMenu zIndex={1}>
+      {actions.map(([onClick, Icon, label], index) => (
+        <ContextMenuItem onClick={onClick} key={index}>
+          <span
+            css={`
+              position: relative;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: ${theme.surfaceContentSecondary};
+            `}
+          >
+            <Icon />
+          </span>
+          <span
+            css={`
+              margin-left: ${1 * GU}px;
+            `}
+          >
+            {label}
+          </span>
+        </ContextMenuItem>
+      ))}
+    </ContextMenu>
+  )
+}
 
 export default Holders

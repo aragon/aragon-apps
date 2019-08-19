@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "public": true,
+  "scope": "aragon",
+  "name": "token-manager",
+  "alias": "nightly-token-manager.aragon.org",
+  "builds": [
+    { "src": "package.json", "use": "@now/static-build", "config": { "distDir": "build" } }
+  ]
+}
