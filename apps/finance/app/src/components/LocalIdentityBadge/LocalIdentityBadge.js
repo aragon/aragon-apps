@@ -1,17 +1,19 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { Badge, IdentityBadge, font } from '@aragon/ui'
+import { useNetwork } from '@aragon/api-react'
+import { IdentityBadge, Tag, GU } from '@aragon/ui'
 import { useIdentity } from '../IdentityManager/IdentityManager'
 
 const LocalIdentityBadge = ({ entity, ...props }) => {
+  const network = useNetwork()
   const [label, showLocalIdentityModal] = useIdentity(entity)
   const handleClick = () => showLocalIdentityModal(entity)
   return (
     <IdentityBadge
-      {...props}
       customLabel={label || ''}
       entity={entity}
+      networkType={network && network.type}
       popoverAction={{
         label: `${label ? 'Edit' : 'Add'} custom label`,
         onClick: handleClick,
@@ -20,12 +22,19 @@ const LocalIdentityBadge = ({ entity, ...props }) => {
         label ? (
           <Wrap>
             <Label>{label}</Label>
-            <StyledBadge>Custom label</StyledBadge>
+            <Tag
+              css={`
+                margin-left: ${2 * GU}px;
+              `}
+            >
+              Custom label
+            </Tag>
           </Wrap>
         ) : (
           'Address'
         )
       }
+      {...props}
     />
   )
 }
@@ -38,7 +47,7 @@ const Wrap = styled.div`
   display: grid;
   align-items: center;
   grid-template-columns: auto 1fr;
-  padding-right: 24px;
+  padding-right: ${3 * GU}px;
 `
 
 const Label = styled.span`
@@ -46,12 +55,6 @@ const Label = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-`
-
-const StyledBadge = styled(Badge)`
-  margin-left: 16px;
-  text-transform: uppercase;
-  ${font({ size: 'xxsmall' })};
 `
 
 export default LocalIdentityBadge
