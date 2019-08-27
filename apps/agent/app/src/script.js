@@ -179,7 +179,7 @@ async function newVaultTransaction(state, event, settings) {
           tokenTransfers: [
             {
               amount,
-              address: token,
+              token,
               from: event.returnData.sender,
               to: null,
             },
@@ -191,7 +191,7 @@ async function newVaultTransaction(state, event, settings) {
           tokenTransfers: [
             {
               amount,
-              address: token,
+              token,
               from: null,
               to: event.returnData.to,
             },
@@ -237,7 +237,7 @@ async function newExecution(state, event, settings) {
       // Filter out token transfers not to the agent
       return fromAgent || toAgent
         ? {
-            address: token,
+            token,
             amount: value,
             from: fromAgent ? null : from,
             to: toAgent ? null : to,
@@ -247,10 +247,10 @@ async function newExecution(state, event, settings) {
     .filter(Boolean)
   if (ethValue && ethValue !== '0') {
     tokenTransfers.push({
-      address: settings.ethToken.address,
       amount: ethValue,
       from: null,
       to: transactionReceipt.to,
+      token: settings.ethToken.address,
     })
   }
 
