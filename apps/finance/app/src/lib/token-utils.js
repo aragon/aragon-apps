@@ -5,6 +5,23 @@ import tokenSymbolBytesAbi from '../abi/token-symbol-bytes.json'
 import tokenNameAbi from '../abi/token-name.json'
 import tokenNameBytesAbi from '../abi/token-name-bytes.json'
 
+const ANT_MAINNET_TOKEN_ADDRESS = '0x960b236A07cf122663c4303350609A66A7B288C0'
+const DAI_MAINNET_TOKEN_ADDRESS = '0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359'
+export const ETHER_TOKEN_FAKE_ADDRESS =
+  '0x0000000000000000000000000000000000000000'
+
+// "Important" tokens the Finance app should prioritize
+const PRESET_TOKENS = new Map([
+  [
+    'main',
+    [
+      ETHER_TOKEN_FAKE_ADDRESS,
+      ANT_MAINNET_TOKEN_ADDRESS,
+      DAI_MAINNET_TOKEN_ADDRESS,
+    ],
+  ],
+])
+
 // Some known tokens don’t strictly follow ERC-20 and it would be difficult to
 // adapt to every situation. The data listed in this map is used as a fallback
 // if either some part of their interface doesn't conform to a standard we
@@ -14,15 +31,12 @@ const KNOWN_TOKENS_FALLBACK = new Map([
     'main',
     new Map([
       [
-        '0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359',
+        DAI_MAINNET_TOKEN_ADDRESS,
         { symbol: 'DAI', name: 'Dai Stablecoin v1.0', decimals: '18' },
       ],
     ]),
   ],
 ])
-
-export const ETHER_TOKEN_FAKE_ADDRESS =
-  '0x0000000000000000000000000000000000000000'
 
 export const isTokenVerified = (tokenAddress, networkType) =>
   // The verified list is without checksums
@@ -74,4 +88,8 @@ export async function getTokenName(app, address) {
   }
 
   return tokenName || null
+}
+
+export function getPresetTokens(networkType) {
+  return PRESET_TOKENS.get(networkType) || [ETHER_TOKEN_FAKE_ADDRESS]
 }
