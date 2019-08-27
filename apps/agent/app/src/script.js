@@ -124,6 +124,9 @@ async function initialize() {
       }
 
       switch (eventName) {
+        // AppProxy events
+        case 'ProxyDeposit':
+          return newProxyDeposit(nextState, event, settings)
         // Vault events
         case 'VaultTransfer':
         case 'VaultDeposit':
@@ -164,6 +167,32 @@ const initializeState = settings => async cachedState => {
   )
 
   return withTestnetState
+}
+
+async function newProxyDeposit(state, event, settings) {
+  const { sender, value } = event.returnData
+  const newBalances = await updateBalances(
+    state.balances,
+    settings.ethToken.address,
+    settings
+  )
+  const newTransactions = await updateTransactions(state.transactions, event, {
+    description: 'Direct deposit',
+    tokenTransfers: [
+      {
+        amount: value,
+        from: sender,
+        to: null,
+        token: settings.ethToken.address,
+      },
+    ],
+  })
+
+  return {
+    ...state,
+    balances: newBalances,
+    transactions: newTransactions,
+  }
 }
 
 async function newVaultTransaction(state, event, settings) {
