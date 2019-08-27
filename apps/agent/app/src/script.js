@@ -466,6 +466,7 @@ async function createTransactionDetails(
     description,
     safe,
     tokenTransfers,
+    transactionHash,
     type,
     id: transactionId,
   }
