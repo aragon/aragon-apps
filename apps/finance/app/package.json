@@ -17,7 +17,6 @@
     "prop-types": "^15.7.2",
     "qrcode.react": "^0.8.0",
     "react": "^16.8.4",
-    "react-display-name": "^0.2.3",
     "react-dom": "^16.8.4",
     "react-spring": "^7.2.8",
     "rxjs": "^6.5.2",
