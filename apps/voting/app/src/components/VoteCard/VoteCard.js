@@ -45,66 +45,69 @@ const VoteCard = ({ vote, onOpen }) => {
   }, [voteId, onOpen])
 
   return (
-    <Card
-      onClick={handleOpen}
-      css={`
-        display: grid;
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr auto auto;
-        grid-gap: ${1 * GU}px;
-        padding: ${3 * GU}px;
-      `}
-    >
+    <Card onClick={handleOpen}>
       <div
         css={`
-          display: flex;
-          justify-content: space-between;
+          display: grid;
+          grid-template-columns: 100%;
+          grid-template-rows: auto 1fr auto auto;
+          grid-gap: ${1 * GU}px;
+          padding: ${3 * GU}px;
+          width: 100%;
+          text-align: left;
         `}
       >
-        <AppBadge>App Badge</AppBadge>
-        {youVoted && (
-          <div
-            css={`
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              width: 20px;
-              height: 20px;
-              border-radius: 50%;
-              background: ${theme.infoSurface.alpha(0.08)};
-              color: ${theme.info};
-            `}
-          >
-            <IconCheck size="tiny" />
-          </div>
-        )}
-      </div>
-      <div
-        css={`
-          ${textStyle('body1')};
-          /* lines per font size per line height */
-          /* shorter texts align to the top */
-          height: 84px;
-          display: -webkit-box;
-          -webkit-box-orient: vertical;
-          -webkit-line-clamp: 3;
-          overflow: hidden;
-        `}
-      >
-        <span css="font-weight: bold;">#{voteId}:</span>{' '}
-        <VoteText text={description || metadata} />
-      </div>
-      <VoteOptions options={options} votingPower={votingPower} />
-      <div
-        css={`
-          margin-top: ${2 * GU}px;
-        `}
-      >
-        {open ? (
-          <Timer end={endDate} maxUnits={4} />
-        ) : (
-          <VoteStatus vote={vote} />
-        )}
+        <div
+          css={`
+            display: flex;
+            justify-content: space-between;
+          `}
+        >
+          <AppBadge>App Badge</AppBadge>
+          {youVoted && (
+            <div
+              css={`
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: ${theme.infoSurface.alpha(0.08)};
+                color: ${theme.info};
+              `}
+            >
+              <IconCheck size="tiny" />
+            </div>
+          )}
+        </div>
+        <div
+          css={`
+            ${textStyle('body1')};
+            /* lines per font size per line height */
+            /* shorter texts align to the top */
+            height: 84px;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+            overflow: hidden;
+          `}
+        >
+          <span css="font-weight: bold;">#{voteId}:</span>{' '}
+          <VoteText text={description || metadata} />
+        </div>
+        <VoteOptions options={options} votingPower={votingPower} />
+        <div
+          css={`
+            margin-top: ${2 * GU}px;
+          `}
+        >
+          {open ? (
+            <Timer end={endDate} maxUnits={4} />
+          ) : (
+            <VoteStatus vote={vote} />
+          )}
+        </div>
       </div>
     </Card>
   )
