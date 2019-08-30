@@ -46,4 +46,3 @@ const SvgFrame = props => (
 )
 
 export default SvgFrame
-
