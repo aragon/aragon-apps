@@ -30,9 +30,9 @@ import { toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
 import EmptyFilteredTransfers from './EmptyFilteredTransfers'
-import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import useFilteredTransfers from './useFilteredTransfers'
+import useDownloadData from './useDownloadData'
 
 const TRANSFER_TYPES_LABELS = {
   'direct transfer': 'Transfer',
@@ -52,46 +52,6 @@ const getTokenDetails = (details, { address, decimals, symbol }) => {
     symbol,
   }
   return details
-}
-const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
-  const mappedData = await Promise.all(
-    transfers.map(
-      async ({
-        date,
-        numData: { amount },
-        reference,
-        entity,
-        token,
-        isIncoming,
-      }) => {
-        const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
-        const formattedAmount = formatTokenAmount(
-          amount,
-          isIncoming,
-          decimals,
-          true,
-          { rounding: 5 }
-        )
-        const { name = '' } = (await resolveAddress(entity)) || {}
-        return `${formatDate(
-          date
-        )},${name},${entity},${reference},${`"${formattedAmount} ${symbol}"`}`
-      }
-    )
-  )
-  return ['Date,Name,Source/Recipient,Reference,Amount']
-    .concat(mappedData)
-    .join('\n')
-}
-const getDownloadFilename = (dao, { start, end }) => {
-  const today = format(Date.now(), 'yyyy-MM-dd')
-  let filename = `finance_${dao}_${today}.csv`
-  if (start && end) {
-    const formattedStart = format(start, 'yyyy-MM-dd')
-    const formattedEnd = format(end, 'yyyy-MM-dd')
-    filename = `finance_${dao}_${formattedStart}_to_${formattedEnd}.csv`
-  }
-  return filename
 }
 
 const Transfers = React.memo(({ dao, tokens, transactions }) => {
@@ -114,19 +74,15 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
     selectedToken,
     selectedTransferType,
   } = useFilteredTransfers({ transactions, tokens })
-
-  const symbols = tokens.map(({ symbol }) => symbol)
   const tokenDetails = tokens.reduce(getTokenDetails, {})
-  const { resolve: resolveAddress } = React.useContext(IdentityContext)
-  const handleDownload = React.useCallback(async () => {
-    const data = await getDownloadData(
-      filteredTransfers,
-      tokenDetails,
-      resolveAddress
-    )
-    const filename = getDownloadFilename(dao, selectedDateRange)
-    saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
-  }, [filteredTransfers, tokenDetails, resolveAddress])
+  const { onDownload } = useDownloadData({
+    filteredTransfers,
+    tokenDetails,
+    tokens,
+    selectedDateRange,
+    dao,
+  })
+  const symbols = tokens.map(({ symbol }) => symbol)
 
   return (
     <DataView
@@ -151,7 +107,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
               Transfers
             </div>
             <div css="text-align: right;">
-              <Button onClick={handleDownload}>
+              <Button onClick={onDownload}>
                 <IconExternal /> Export
               </Button>
             </div>
@@ -342,6 +298,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
       renderEntryActions={({ transactionHash }) => (
         <ContextMenu>
           <ContextMenuViewTransaction
+            theme={theme}
             transactionHash={transactionHash}
             network={network}
           />
@@ -388,7 +345,7 @@ const AgentOrEntity = ({ entity }) => (
   <LocalIdentityBadge entity={entity ? entity : 'Agent'} badgeOnly={!entity} />
 )
 
-const ContextMenuViewTransaction = ({ transactionHash, network }) => {
+const ContextMenuViewTransaction = ({ transactionHash, network, theme }) => {
   const handleViewTransaction = useCallback(() => {
     window.open(
       blockExplorerUrl('transaction', transactionHash, {
@@ -401,7 +358,13 @@ const ContextMenuViewTransaction = ({ transactionHash, network }) => {
 
   return (
     <ContextMenuItem onClick={handleViewTransaction}>
-      <IconToken /> View transaction
+      <IconToken
+        css={`
+          color: ${theme.hint};
+          margin-right: ${1 * GU}px;
+        `}
+      />{' '}
+      View transaction
     </ContextMenuItem>
   )
 }
