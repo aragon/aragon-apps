@@ -665,4 +665,3 @@ const SvgAgentAndFrame = props => (
 )
 
 export default SvgAgentAndFrame
-
