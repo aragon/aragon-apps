@@ -1,13 +1,6 @@
 import React, { useState, useCallback } from 'react'
-import * as TransferTypes from '../transfer-types'
 import { addressesEqual } from '../lib/web3-utils'
-import {
-  compareDesc,
-  endOfDay,
-  format,
-  isWithinInterval,
-  startOfDay,
-} from 'date-fns'
+import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
 
 const INITIAL_DATE_RANGE = { start: null, end: null }
 const INITIAL_TRANSFER_TYPE = -1
