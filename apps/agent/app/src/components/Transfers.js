@@ -16,7 +16,6 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
-import { saveAs } from 'file-saver'
 import * as TransferTypes from '../transfer-types'
 import { toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
