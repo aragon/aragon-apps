@@ -4,7 +4,7 @@ import { toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import { format } from 'date-fns'
 
-const formatDate = date => format(date, 'dd/MM/yy')
+const formatDate = date => format(date, 'MM/dd/yy')
 
 const getDownloadData = async ({
   transfers,

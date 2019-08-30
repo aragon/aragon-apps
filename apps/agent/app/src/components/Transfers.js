@@ -212,7 +212,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
               color: ${theme.surfaceContent};
             `}
           >
-            {format(date, 'mm/dd/yy')}
+            {format(date, 'MM/dd/yy')}
           </time>
         )
         const badgeDiv = onlyOne ? (
