@@ -409,8 +409,8 @@ const InnerEntryColumn = styled.div`
   color: ${({ theme }) => theme.surfaceContentSecondary};
   ${textStyle('label2')};
   display: inline-grid;
-  grid-template-columns: 40px 1fr;
-  grid-gap: ${0.5 * GU}px;
+  grid-template-columns: auto 1fr;
+  grid-gap: ${1 * GU}px;
   align-items: center;
   width: 200px;
 
