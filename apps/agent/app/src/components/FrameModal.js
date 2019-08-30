@@ -4,7 +4,6 @@ import {
   ButtonIcon,
   ExternalLink,
   GU,
-  IconCross,
   Modal,
   textStyle,
   useTheme,
@@ -16,17 +15,6 @@ function FrameModal({ visible, onClose }) {
 
   return (
     <Modal visible={visible} onClose={onClose}>
-      <div css="text-align: right;">
-        <ButtonIcon
-          label="Close"
-          onClick={onClose}
-          css={`
-            color: ${theme.surfaceContent};
-          `}
-        >
-          <IconCross />
-        </ButtonIcon>
-      </div>
       <div
         css={`
           text-align: center;
