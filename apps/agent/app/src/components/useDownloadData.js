@@ -1,8 +1,9 @@
 import { useContext, useState, useEffect, useCallback } from 'react'
+import { format } from 'date-fns'
+import { saveAs } from 'file-saver'
 import { IdentityContext } from './IdentityManager/IdentityManager'
 import { toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
-import { format } from 'date-fns'
 
 const formatDate = date => format(date, 'MM/dd/yy')
 
