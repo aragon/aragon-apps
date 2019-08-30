@@ -8,7 +8,6 @@ import {
   startOfDay,
 } from 'date-fns'
 import {
-  useViewport,
   Button,
   ContextMenu,
   ContextMenuItem,
@@ -116,11 +115,10 @@ const getDownloadFilename = (proxyAddress, { start, end }) => {
 }
 
 const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
-  const { below, above } = useViewport()
-  const { layoutName } = useLayout()
-  const compactMode = below('medium')
   const network = useNetwork()
   const theme = useTheme()
+  const { layoutName } = useLayout()
+
   const [page, setPage] = useState(0)
   const [selectedToken, setSelectedToken] = useState(UNSELECTED_TOKEN_FILTER)
   const [selectedTransferType, setSelectedTransferType] = useState(
@@ -180,6 +178,8 @@ const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
       selectedDateRange.start ||
       selectedDateRange.end)
 
+  const compactMode = layoutName === 'small'
+
   if (!transactions.length) {
     return <EmptyTransactions />
   }
@@ -218,7 +218,7 @@ const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
               </Button>
             </div>
           </div>
-          {layoutName !== 'small' && (
+          {!compactMode && (
             <TransfersFilters
               dateRangeFilter={selectedDateRange}
               onDateRangeChange={handleSelectedDateRangeChange}
@@ -276,11 +276,12 @@ const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
           <div
             css={`
               padding: 0 ${0.5 * GU}px;
-              ${above('medium') &&
-                `
-                  display: inline-flex;
-                  max-width: ${above('large') ? 'unset' : '150px'};
-                `}
+              ${!compactMode
+                ? `
+                    display: inline-flex;
+                    max-width: ${layoutName === 'large' ? 'unset' : '150px'};
+                  `
+                : ''}
             `}
           >
             <LocalIdentityBadge entity={entity} address={entity} />

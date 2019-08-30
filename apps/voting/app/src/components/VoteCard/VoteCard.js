@@ -49,7 +49,7 @@ const VoteCard = ({ vote, onOpen }) => {
       onClick={handleOpen}
       css={`
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: 100%;
         grid-template-rows: auto 1fr auto auto;
         grid-gap: ${1 * GU}px;
         padding: ${3 * GU}px;

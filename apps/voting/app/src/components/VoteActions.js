@@ -188,8 +188,6 @@ const Buttons = ({ onClickYes = noop, onClickNo = noop, disabled = false }) => {
           size="small"
           css={`
             margin-right: ${1 * GU}px;
-            stroke: ${theme.positiveContent};
-            stroke-width: 0.3px;
           `}
         />
         Yes
@@ -204,8 +202,6 @@ const Buttons = ({ onClickYes = noop, onClickNo = noop, disabled = false }) => {
           size="small"
           css={`
             margin-right: ${1 * GU}px;
-            stroke: ${theme.negativeContent};
-            stroke-width: 0.3px;
           `}
         />
         No

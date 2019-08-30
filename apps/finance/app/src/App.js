@@ -6,7 +6,7 @@ import {
   IconPlus,
   SidePanel,
   SyncIndicator,
-  useViewport,
+  useLayout,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import Balances from './components/Balances'
@@ -135,15 +135,14 @@ class App extends React.Component {
 
 export default () => {
   const { api, appState } = useAragonApi()
-  const { below } = useViewport()
-  const compactMode = below('medium')
+  const { layoutName } = useLayout()
 
   return (
     <App
       api={api}
       appState={appState}
       isSyncing={appState.isSyncing}
-      compactMode={compactMode}
+      compactMode={layoutName === 'small'}
     />
   )
 }

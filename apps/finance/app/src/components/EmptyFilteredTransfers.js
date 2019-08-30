@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { ButtonText, GU, textStyle, useTheme } from '@aragon/ui'
+import { Link, GU, textStyle, useTheme } from '@aragon/ui'
 import noResultsSvg from './assets/no-results.svg'
 
 function EmptyFilteredTransfers({ onClear }) {
@@ -42,9 +42,7 @@ function EmptyFilteredTransfers({ onClear }) {
         `}
       >
         We can’t find any item matching your filter selection.{' '}
-        <ButtonText horizontalPadding="none" onClick={onClear}>
-          Clear filters
-        </ButtonText>
+        <Link onClick={onClear}>Clear filters</Link>
       </div>
     </div>
   )
