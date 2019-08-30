@@ -13,35 +13,28 @@ const compareBalancesByEthAndSymbol = (tokenA, tokenB) => {
 }
 
 function appStateReducer(state) {
-  console.log('-----> appStateReducer: ', state)
-  const { balances, transactions } = state || {}
+  const { balances, transactions } = state || { balances: [], transactions: [] }
 
   const balancesBn = balances
-    ? balances
-        .map(balance => ({
-          ...balance,
-          amount: new BN(balance.amount),
-          decimals: new BN(balance.decimals),
+    .map(balance => ({
+      ...balance,
+      amount: new BN(balance.amount),
+      decimals: new BN(balance.decimals),
 
-          // Note that numbers in `numData` are not safe for accurate
-          // computations (but are useful for making divisions easier).
-          numData: {
-            amount: parseInt(balance.amount, 10),
-            decimals: parseInt(balance.decimals, 10),
-          },
-        }))
-        .sort(compareBalancesByEthAndSymbol)
-    : []
+      // Note that numbers in `numData` are not safe for accurate
+      // computations (but are useful for making divisions easier).
+      numData: {
+        amount: parseInt(balance.amount, 10),
+        decimals: parseInt(balance.decimals, 10),
+      },
+    }))
+    .sort(compareBalancesByEthAndSymbol)
 
-  const transactionsBn = transactions
-    ? transactions.map(transaction => ({
-        ...transaction,
-        amount: new BN(transaction.amount),
-        numData: {
-          amount: parseInt(transaction.amount, 10),
-        },
-      }))
-    : []
+  const transactionsBn = transactions.map(transaction => ({
+    ...transaction,
+    onlyOne: transaction.tokenTransfers.length === 1,
+    isIncoming: !!transaction.tokenTransfers[0].from,
+  }))
 
   return {
     ...state,
