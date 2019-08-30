@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAragonApi } from '@aragon/api-react'
 import { Box, LoadingRing, GU, useTheme } from '@aragon/ui'
-import noTransfersSvg from './assets/no-transfers.svg'
+import noTransfersPng from './assets/no-transfers.png'
 
 function EmptyTransactions() {
   const { appState } = useAragonApi()
@@ -22,7 +22,7 @@ function EmptyTransactions() {
             margin: ${4 * GU}px 0;
             height: 176px;
           `}
-          src={noTransfersSvg}
+          src={noTransfersPng}
           alt="No transfers"
         />
         <h3

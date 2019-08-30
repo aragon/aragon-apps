@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Box, Link, GU, unselectable, useTheme } from '@aragon/ui'
-import noResultsSvg from '../assets/no-results.svg'
+import noResultsPng from '../assets/no-results.png'
 
 function EmptyFilteredVotes({ onClear }) {
   const theme = useTheme()
@@ -22,7 +22,7 @@ function EmptyFilteredVotes({ onClear }) {
             margin: ${4 * GU}px 0;
             height: 176px;
           `}
-          src={noResultsSvg}
+          src={noResultsPng}
           alt="No results"
         />
         <h3
