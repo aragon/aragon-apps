@@ -284,7 +284,7 @@ const initializeState = () => async cachedState => {
     },
     {
       id: '0.0.1',
-      date: 1567076212953,
+      date: 1567159876315,
       description: 'Description 2',
       safe: true,
       tokenTransfers: [
