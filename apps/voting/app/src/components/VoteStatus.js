@@ -67,11 +67,6 @@ const VoteStatus = ({ vote }) => {
       css={`
         ${textStyle('body2')};
         color: ${color || theme.surfaceContentSecondary};
-
-        & svg {
-          stroke: ${color || theme.surfaceContentSecondary};
-          stroke-width: 0.3px;
-        }
       `}
     >
       {Icon && <Icon size="small" />}

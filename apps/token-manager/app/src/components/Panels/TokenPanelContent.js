@@ -47,7 +47,7 @@ class TokenPanelContent extends React.Component {
       this._holderInput.current &&
         setTimeout(
           () => this._holderInput.current && this._holderInput.current.focus(),
-          0
+          100 // focusing too soon will cause the SidePanel's opening animation to be skipped
         )
 
       // Upadte holder address from the props

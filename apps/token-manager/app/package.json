@@ -6,7 +6,7 @@
   "dependencies": {
     "@aragon/api": "^2.0.0-beta.4",
     "@aragon/api-react": "^2.0.0-beta.4",
-    "@aragon/ui": "^1.0.0-alpha.15",
+    "@aragon/ui": "^1.0.0-alpha.20",
     "bn.js": "^4.11.6",
     "prop-types": "^15.7.2",
     "react": "^16.8.4",
