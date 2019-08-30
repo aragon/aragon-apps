@@ -1,13 +1,5 @@
 import React from 'react'
-import {
-  Button,
-  ButtonIcon,
-  ExternalLink,
-  GU,
-  Modal,
-  textStyle,
-  useTheme,
-} from '@aragon/ui'
+import { Button, Link, GU, Modal, textStyle, useTheme } from '@aragon/ui'
 import FrameAndAgentSvg from './FrameAndAgentSvg'
 
 function FrameModal({ visible, onClose }) {
@@ -39,13 +31,14 @@ function FrameModal({ visible, onClose }) {
           `}
         >
           <div>To interact with the Agent App you must install Frame</div>
-          <ExternalLink
+          <Link
+            href="https://frame.sh"
             css={`
               color: ${theme.indicatorContent};
             `}
           >
             Learn more about Frame
-          </ExternalLink>
+          </Link>
         </div>
       </div>
       <div
@@ -57,7 +50,9 @@ function FrameModal({ visible, onClose }) {
         `}
       >
         <Button onClick={onClose}>Cancel</Button>
-        <Button mode="strong">Install Frame</Button>
+        <Button mode="strong" href="https://frame.sh">
+          Install Frame
+        </Button>
       </div>
     </Modal>
   )
