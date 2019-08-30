@@ -1,21 +1,13 @@
 import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import PropTypes from 'prop-types'
+import { compareDesc, format } from 'date-fns'
 import {
-  compareDesc,
-  endOfDay,
-  format,
-  isWithinInterval,
-  startOfDay,
-} from 'date-fns'
-import {
-  useViewport,
   Button,
   ContextMenu,
   ContextMenuItem,
   DataView,
   GU,
-  IconLabel,
   IconExternal,
   IconToken,
   blockExplorerUrl,
@@ -55,9 +47,8 @@ const getTokenDetails = (details, { address, decimals, symbol }) => {
 }
 
 const Transfers = React.memo(({ dao, tokens, transactions }) => {
-  const { below, above } = useViewport()
   const { layoutName } = useLayout()
-  const compactMode = below('medium')
+  const compactMode = layoutName === 'small'
   const network = useNetwork()
   const theme = useTheme()
 
@@ -173,10 +164,10 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
                 justify-content: space-between;
               `}
             >
-              <InnerEntryColumn above={above} theme={theme}>
+              <InnerEntryColumn layoutName={layoutName} theme={theme}>
                 From: <AgentOrEntity entity={from} />
               </InnerEntryColumn>
-              <InnerEntryColumn above={above} theme={theme}>
+              <InnerEntryColumn layoutName={layoutName} theme={theme}>
                 To: <AgentOrEntity entity={to} />
               </InnerEntryColumn>
               <div
@@ -218,10 +209,15 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
         const badgeDiv = onlyOne ? (
           <div
             css={`
-              ${above('medium') &&
+              ${layoutName === 'medium' &&
                 `
                   display: inline-flex;
-                  max-width: ${above('large') ? 'unset' : '150px'};
+                  max-width: 150px;
+                `}
+              ${layoutName === 'large' &&
+                `
+                  display: inline-flex;
+                  max-width: 'unset';
                 `}
             `}
           >
@@ -323,15 +319,15 @@ const InnerEntryColumn = styled.div`
   align-items: center;
   width: 200px;
 
-  ${({ above }) =>
-    above('medium')
+  ${({ layoutName }) =>
+    layoutName === 'medium'
       ? `
           max-width: 250px;
           width: 250px;
         `
       : ''}
-  ${({ above }) =>
-    above('large')
+  ${({ layoutName }) =>
+    layoutName === 'large'
       ? `
           /* max possible length of custom label + from length + some spacing */
           min-width: 342px;
