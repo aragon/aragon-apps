@@ -1,6 +1,5 @@
 import React from 'react'
-import { DropDown, GU } from '@aragon/ui'
-import DateRange from './DateRange/DateRangeInput'
+import { _DateRange as DateRange, DropDown, GU } from '@aragon/ui'
 
 const TransfersFilters = ({
   compactMode,
@@ -24,27 +23,20 @@ const TransfersFilters = ({
       `}
     >
       <DropDown
-        label="Type"
+        placeholder="Type"
         header="Type"
         items={transferTypes}
         selected={transferTypeFilter}
         onChange={onTransferTypeChange}
-        width="128px"
       />
       <DropDown
-        label="Token Type"
+        placeholder="Token Type"
         header="Token Type"
         items={symbols}
         selected={tokenFilter}
         onChange={onTokenChange}
-        width="128px"
       />
-      <label
-        css={`
-          display: inline-block;
-          box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.03);
-        `}
-      >
+      <label css="display: inline-block;">
         <DateRange
           startDate={dateRangeFilter.start}
           endDate={dateRangeFilter.end}

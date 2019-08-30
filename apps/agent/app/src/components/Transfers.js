@@ -26,19 +26,19 @@ import {
 import { useNetwork } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
 import * as TransferTypes from '../transfer-types'
-import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
+import { toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
 import EmptyFilteredTransfers from './EmptyFilteredTransfers'
 import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
+import useFilteredTransfers from './useFilteredTransfers'
 
-const TYPES = {
+const TRANSFER_TYPES_LABELS = {
   'direct transfer': 'Transfer',
   'direct deposit': 'Deposit',
   'contract interaction': 'Contract interaction',
 }
-const INITIAL_DATE_RANGE = { start: null, end: null }
 const TRANSFER_TYPES = [
   TransferTypes.All,
   TransferTypes.Incoming,
@@ -52,29 +52,6 @@ const getTokenDetails = (details, { address, decimals, symbol }) => {
     symbol,
   }
   return details
-}
-// Filter transfer based on the selected filters
-const getFilteredTransfers = ({
-  transactions,
-  selectedToken,
-  selectedTransferType,
-  selectedDateRange,
-}) => {
-  const transferType = TRANSFER_TYPES[selectedTransferType]
-  return transactions.filter(
-    ({ token, isIncoming, date }) =>
-      (!selectedDateRange.start ||
-        !selectedDateRange.end ||
-        isWithinInterval(new Date(date), {
-          start: startOfDay(selectedDateRange.start),
-          end: endOfDay(selectedDateRange.end),
-        })) &&
-      (selectedToken === null ||
-        addressesEqual(token, selectedToken.address)) &&
-      (transferType === TransferTypes.All ||
-        (transferType === TransferTypes.Incoming && isIncoming) ||
-        (transferType === TransferTypes.Outgoing && !isIncoming))
-  )
 }
 const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
   const mappedData = await Promise.all(
@@ -123,40 +100,21 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
   const compactMode = below('medium')
   const network = useNetwork()
   const theme = useTheme()
-  const [page, setPage] = useState(0)
-  const [selectedToken, setSelectedToken] = useState(0)
-  const [selectedTransferType, setSelectedTransferType] = useState(0)
-  const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
-  const handleSelectedDateRangeChange = range => {
-    setPage(0)
-    setSelectedDateRange(range)
-  }
-  const handleTokenChange = React.useCallback(
-    index => {
-      setPage(0)
-      setSelectedToken(index)
-    },
-    [setPage, setSelectedToken]
-  )
-  const handleTransferTypeChange = React.useCallback(
-    index => {
-      setPage(0)
-      setSelectedTransferType(index)
-    },
-    [setPage, setSelectedTransferType]
-  )
-  const handleClearFilters = useCallback(() => {
-    setPage(0)
-    setSelectedTransferType(0)
-    setSelectedToken(0)
-    setSelectedDateRange(INITIAL_DATE_RANGE)
-  }, [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange])
-  const filteredTransfers = getFilteredTransfers({
-    transactions,
-    selectedToken: selectedToken !== 0 ? tokens[selectedToken - 1] : null,
-    selectedTransferType,
+
+  const {
+    emptyResultsViaFilters,
+    filteredTransfers,
+    handleClearFilters,
+    handleSelectedDateRangeChange,
+    handleTokenChange,
+    handleTransferTypeChange,
+    page,
+    setPage,
     selectedDateRange,
-  })
+    selectedToken,
+    selectedTransferType,
+  } = useFilteredTransfers({ transactions, tokens })
+
   const symbols = tokens.map(({ symbol }) => symbol)
   const tokenDetails = tokens.reduce(getTokenDetails, {})
   const { resolve: resolveAddress } = React.useContext(IdentityContext)
@@ -169,12 +127,6 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
     const filename = getDownloadFilename(dao, selectedDateRange)
     saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
   }, [filteredTransfers, tokenDetails, resolveAddress])
-  const emptyResultsViaFilters =
-    !filteredTransfers.length &&
-    (selectedToken !== 0 ||
-      selectedTransferType !== 0 ||
-      selectedDateRange.start ||
-      selectedDateRange.end)
 
   return (
     <DataView
@@ -304,7 +256,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
               color: ${theme.surfaceContent};
             `}
           >
-            {format(date, 'MM/DD/YY')}
+            {format(date, 'mm/dd/yy')}
           </time>
         )
         const badgeDiv = onlyOne ? (
@@ -332,7 +284,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
               color: ${theme.surfaceContent};
             `}
           >
-            {TYPES[type]}
+            {TRANSFER_TYPES_LABELS[type]}
           </div>
         )
         const referenceDiv = (
@@ -433,7 +385,7 @@ const InnerEntryColumn = styled.div`
 `
 
 const AgentOrEntity = ({ entity }) => (
-  <LocalIdentityBadge entity={entity ? entity : 'Agent'} badgeOnly={!!entity} />
+  <LocalIdentityBadge entity={entity ? entity : 'Agent'} badgeOnly={!entity} />
 )
 
 const ContextMenuViewTransaction = ({ transactionHash, network }) => {
