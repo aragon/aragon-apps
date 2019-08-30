@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Box, ButtonText, GU, unselectable, useTheme } from '@aragon/ui'
+import { Box, Link, GU, unselectable, useTheme } from '@aragon/ui'
 import noResultsSvg from '../assets/no-results.svg'
 
 function EmptyFilteredVotes({ onClear }) {
@@ -44,9 +44,7 @@ function EmptyFilteredVotes({ onClear }) {
           `}
         >
           We can’t find any item matching your filter selection.{' '}
-          <ButtonText horizontalPadding="none" onClick={onClear}>
-            Clear filters
-          </ButtonText>
+          <Link onClick={onClear}>Clear filters</Link>
         </div>
       </div>
     </Box>

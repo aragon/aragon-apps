@@ -123,7 +123,7 @@ class App extends React.PureComponent {
         {!isSyncing && appStateReady && holders.length === 0 && (
           <EmptyState onAssignHolder={this.handleLaunchAssignTokensNoHolder} />
         )}
-        {appStateReady && holders.length && (
+        {appStateReady && holders.length !== 0 && (
           <React.Fragment>
             <Header
               primary={

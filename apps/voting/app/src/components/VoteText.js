@@ -1,6 +1,5 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Link } from '@aragon/ui'
 import { transformAddresses } from '../web3-utils'
 import AutoLink from '../components/AutoLink'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
@@ -13,10 +12,10 @@ const VoteText = React.memo(
     if (!text.trim()) {
       return null
     }
-    const LinkComponent = autolink ? AutoLink : Link
+    const TextComponent = autolink ? AutoLink : 'span'
 
     return (
-      <LinkComponent>
+      <TextComponent>
         {text.split('\n').map((line, i) => (
           <React.Fragment key={i}>
             {transformAddresses(line, (part, isAddress, index) =>
@@ -32,7 +31,7 @@ const VoteText = React.memo(
             <br />
           </React.Fragment>
         ))}
-      </LinkComponent>
+      </TextComponent>
     )
   },
   (prevProps, nextProps) => prevProps.text === nextProps.text
