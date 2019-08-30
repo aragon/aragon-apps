@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useCallback } from 'react'
 import styled from 'styled-components'
 import PropTypes from 'prop-types'
 import { compareDesc, format } from 'date-fns'
@@ -36,7 +36,6 @@ const TRANSFER_TYPES = [
   TransferTypes.Outgoing,
 ]
 const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
-const formatDate = date => format(date, 'dd/MM/yy')
 const getTokenDetails = (details, { address, decimals, symbol }) => {
   details[toChecksumAddress(address)] = {
     decimals,
@@ -164,10 +163,15 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
               `}
             >
               <InnerEntryColumn layoutName={layoutName} theme={theme}>
-                From: <AgentOrEntity entity={from} />
+                From:{' '}
+                <LocalIdentityBadge
+                  entity={from || 'Agent'}
+                  badgeOnly={!from}
+                />
               </InnerEntryColumn>
               <InnerEntryColumn layoutName={layoutName} theme={theme}>
-                To: <AgentOrEntity entity={to} />
+                To:{' '}
+                <LocalIdentityBadge entity={to || 'Agent'} badgeOnly={!to} />
               </InnerEntryColumn>
               <div
                 css={`
@@ -335,10 +339,6 @@ const InnerEntryColumn = styled.div`
         `
       : ''}
 `
-
-const AgentOrEntity = ({ entity }) => (
-  <LocalIdentityBadge entity={entity ? entity : 'Agent'} badgeOnly={!entity} />
-)
 
 const ContextMenuViewTransaction = ({ transactionHash, network, theme }) => {
   const handleViewTransaction = useCallback(() => {
