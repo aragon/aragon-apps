@@ -42,7 +42,7 @@ class App extends React.Component {
       .toPromise() // Don't care about response
     this.handleNewTransferClose()
   }
-  handleDeposit = async (tokenAddress, amount, reference) => {
+  handleDeposit = (tokenAddress, amount, reference) => {
     const { api, appState } = this.props
     const { periodDuration, periods } = appState
 
@@ -89,7 +89,7 @@ class App extends React.Component {
   render() {
     const { appState, isSyncing, compactMode } = this.props
     const { newTransferOpened } = this.state
-    const { balances, transactions, tokens, proxyAddress } = appState
+    const { balances, transactions, tokens } = appState
 
     return (
       <IdentityProvider
@@ -110,11 +110,7 @@ class App extends React.Component {
           }
         />
         <Balances balances={balances} compactMode={compactMode} />
-        <Transfers
-          proxyAddress={proxyAddress}
-          transactions={transactions}
-          tokens={tokens}
-        />
+        <Transfers transactions={transactions} tokens={tokens} />
         <SidePanel
           opened={newTransferOpened}
           onClose={this.handleNewTransferClose}
@@ -125,7 +121,6 @@ class App extends React.Component {
             tokens={tokens}
             onWithdraw={this.handleWithdraw}
             onDeposit={this.handleDeposit}
-            proxyAddress={proxyAddress}
           />
         </SidePanel>
       </IdentityProvider>
