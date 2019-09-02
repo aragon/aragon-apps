@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useAragonApi } from '@aragon/api-react'
-import { getCanExecute, getCanVote, getUserBalance } from '../vote-utils'
+import { getUserBalanceAt, getUserBalanceNow } from '../token-utils'
+import { getCanExecute, getCanVote } from '../vote-utils'
 import useTokenContract from './useTokenContract'
 import usePromise from './usePromise'
 
@@ -23,17 +24,32 @@ export default function useExtendedVoteData(vote) {
   )
   const canUserVote = usePromise(canUserVotePromise, [], false)
 
-  const userBalancePromise = useMemo(
-    () => getUserBalance(vote, connectedAccount, tokenContract, tokenDecimals),
-    [connectedAccount, tokenContract, tokenDecimals, vote]
-  )
+  const userBalancePromise = useMemo(() => {
+    if (!vote) {
+      return -1
+    }
+    return getUserBalanceAt(
+      connectedAccount,
+      vote.data.snapshotBlock,
+      tokenContract,
+      tokenDecimals
+    )
+  }, [connectedAccount, tokenContract, tokenDecimals, vote])
   const userBalance = usePromise(userBalancePromise, [], -1)
+
+  const userBalanceNowPromise = useMemo(
+    () => getUserBalanceNow(connectedAccount, tokenContract, tokenDecimals),
+    [connectedAccount, tokenContract, tokenDecimals]
+  )
+  const userBalanceNow = usePromise(userBalanceNowPromise, [], -1)
 
   return {
     canExecute,
     canUserVote,
     userBalance,
     userBalancePromise,
+    userBalanceNow,
+    userBalanceNowPromise,
     canUserVotePromise,
     canExecutePromise,
   }
