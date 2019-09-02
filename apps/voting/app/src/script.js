@@ -74,7 +74,7 @@ retryEvery(() =>
 
 async function initialize(tokenAddr) {
   return app.store(
-    (state, { event, returnValues }) => {
+    (state, { blockNumber, event, returnValues, transactionHash }) => {
       const nextState = {
         ...state,
       }
@@ -89,7 +89,10 @@ async function initialize(tokenAddr) {
         case 'CastVote':
           return castVote(nextState, returnValues)
         case 'ExecuteVote':
-          return executeVote(nextState, returnValues)
+          return executeVote(nextState, returnValues, {
+            blockNumber,
+            transactionHash,
+          })
         case 'StartVote':
           return startVote(nextState, returnValues)
         default:
@@ -186,10 +189,19 @@ async function castVote(state, { voteId, voter }) {
   return updateState({ ...state, connectedAccountVotes }, voteId, transform)
 }
 
-async function executeVote(state, { voteId }) {
-  const transform = ({ data, ...vote }) => ({
+async function executeVote(
+  state,
+  { voteId },
+  { blockNumber, transactionHash }
+) {
+  const transform = async ({ data, ...vote }) => ({
     ...vote,
-    data: { ...data, executed: true },
+    data: {
+      ...data,
+      executed: true,
+      executionDate: await loadBlockTimestamp(blockNumber),
+      executionTransaction: transactionHash,
+    },
   })
   return updateState(state, voteId, transform)
 }
@@ -332,6 +344,12 @@ function loadVoteSettings() {
     })
 }
 
+async function loadBlockTimestamp(blockNumber) {
+  const { timestamp } = await app.web3Eth('getBlock', blockNumber).toPromise()
+  // Adjust for solidity time (s => ms)
+  return timestamp * 1000
+}
+
 // Apply transformations to a vote received from web3
 // Note: ignores the 'open' field as we calculate that locally
 function marshallVote({
@@ -355,7 +373,7 @@ function marshallVote({
     yea,
     // Like times, blocks should be safe to represent as real numbers
     snapshotBlock: parseInt(snapshotBlock, 10),
-    startDate: marshallDate(startDate, 10),
+    startDate: marshallDate(startDate),
   }
 }
 
