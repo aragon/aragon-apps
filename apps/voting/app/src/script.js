@@ -168,7 +168,7 @@ async function castVote(state, { voteId, voter }) {
   // If the connected account was the one who made the vote, update their voter status
   if (addressesEqual(connectedAccount, voter)) {
     // fetch vote state for the connected account for this voteId
-    const { voteType } = await getVoterState({
+    const { voteType } = await loadVoterState({
       connectedAccount,
       voteId,
     })
@@ -210,10 +210,38 @@ async function startVote(state, { creator, metadata, voteId }) {
  *       Helpers       *
  *                     *
  ***********************/
+
+async function updateState(state, voteId, transform) {
+  const { votes = [] } = state
+
+  return {
+    ...state,
+    votes: await updateVotes(votes, voteId, transform),
+  }
+}
+
+async function updateVotes(votes, voteId, transform) {
+  const voteIndex = votes.findIndex(vote => vote.voteId === voteId)
+
+  if (voteIndex === -1) {
+    // If we can't find it, load its data, perform the transformation, and concat
+    return votes.concat(
+      await transform({
+        voteId,
+        data: await loadVoteData(voteId),
+      })
+    )
+  } else {
+    const nextVotes = Array.from(votes)
+    nextVotes[voteIndex] = await transform(nextVotes[voteIndex])
+    return nextVotes
+  }
+}
+
 // Default votes to an empty array to prevent errors on initial load
 async function getAccountVotes({ connectedAccount, votes = [] }) {
   const connectedAccountVotes = await Promise.all(
-    votes.map(({ voteId }) => getVoterState({ connectedAccount, voteId }))
+    votes.map(({ voteId }) => loadVoterState({ connectedAccount, voteId }))
   )
     .then(voteStates =>
       voteStates.reduce((states, { voteId, voteType }) => {
@@ -226,7 +254,7 @@ async function getAccountVotes({ connectedAccount, votes = [] }) {
   return connectedAccountVotes
 }
 
-async function getVoterState({ connectedAccount, voteId }) {
+async function loadVoterState({ connectedAccount, voteId }) {
   // Wrap with retry in case the vote is somehow not present
   return retryEvery(() =>
     app
@@ -282,33 +310,6 @@ function loadVoteData(voteId) {
         throw err
       })
   )
-}
-
-async function updateVotes(votes, voteId, transform) {
-  const voteIndex = votes.findIndex(vote => vote.voteId === voteId)
-
-  if (voteIndex === -1) {
-    // If we can't find it, load its data, perform the transformation, and concat
-    return votes.concat(
-      await transform({
-        voteId,
-        data: await loadVoteData(voteId),
-      })
-    )
-  } else {
-    const nextVotes = Array.from(votes)
-    nextVotes[voteIndex] = await transform(nextVotes[voteIndex])
-    return nextVotes
-  }
-}
-
-async function updateState(state, voteId, transform) {
-  const { votes = [] } = state
-
-  return {
-    ...state,
-    votes: await updateVotes(votes, voteId, transform),
-  }
 }
 
 function loadVoteSettings() {
