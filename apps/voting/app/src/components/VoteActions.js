@@ -174,41 +174,28 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
   )
 })
 
-const Buttons = ({ onClickYes = noop, onClickNo = noop, disabled = false }) => {
-  const theme = useTheme()
-  return (
-    <ButtonsContainer>
-      <VotingButton
-        mode="positive"
-        wide
-        disabled={disabled}
-        onClick={onClickYes}
-      >
-        <IconCheck
-          size="small"
-          css={`
-            margin-right: ${1 * GU}px;
-          `}
-        />
-        Yes
-      </VotingButton>
-      <VotingButton
-        mode="negative"
-        wide
-        disabled={disabled}
-        onClick={onClickNo}
-      >
-        <IconCross
-          size="small"
-          css={`
-            margin-right: ${1 * GU}px;
-          `}
-        />
-        No
-      </VotingButton>
-    </ButtonsContainer>
-  )
-}
+const Buttons = ({ onClickYes = noop, onClickNo = noop, disabled = false }) => (
+  <ButtonsContainer>
+    <VotingButton mode="positive" wide disabled={disabled} onClick={onClickYes}>
+      <IconCheck
+        size="small"
+        css={`
+          margin-right: ${1 * GU}px;
+        `}
+      />
+      Yes
+    </VotingButton>
+    <VotingButton mode="negative" wide disabled={disabled} onClick={onClickNo}>
+      <IconCross
+        size="small"
+        css={`
+          margin-right: ${1 * GU}px;
+        `}
+      />
+      No
+    </VotingButton>
+  </ButtonsContainer>
+)
 
 const ButtonsContainer = styled.div`
   display: flex;
