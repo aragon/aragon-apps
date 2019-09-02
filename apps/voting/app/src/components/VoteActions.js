@@ -94,12 +94,10 @@ const VoteActions = React.memo(({ vote, onVoteYes, onVoteNo, onExecute }) => {
         >
           Change my vote
         </Button>
-        <TokenReference
-          userBalance={userBalance}
-          tokenSymbol={tokenSymbol}
-          snapshotBlock={snapshotBlock}
-          startDate={startDate}
-        />
+        <Info>
+          While the voting period is open, you can{' '}
+          <strong>change your vote</strong> as many times as you wish.
+        </Info>
       </div>
     )
   }
