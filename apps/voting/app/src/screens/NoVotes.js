@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button, EmptyStateCard, GU, LoadingRing } from '@aragon/ui'
-import noVotesSvg from '../assets/no-votes.svg'
+import noVotesPng from '../assets/no-votes.png'
 
 const NoVotes = React.memo(function NoVotes({ onNewVote, isSyncing }) {
   return (
@@ -29,7 +29,14 @@ const NoVotes = React.memo(function NoVotes({ onNewVote, isSyncing }) {
         </Button>
       }
       illustration={
-        <img css="margin: auto;" src={noVotesSvg} alt="No vote here" />
+        <img
+          css={`
+            margin: auto;
+            height: 170px;
+          `}
+          src={noVotesPng}
+          alt="No vote here"
+        />
       }
     />
   )
