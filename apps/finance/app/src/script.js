@@ -3,10 +3,11 @@ import { first } from 'rxjs/operators'
 import { getTestTokenAddresses } from './testnet'
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
-  isTokenVerified,
-  tokenDataFallback,
+  getPresetTokens,
   getTokenSymbol,
   getTokenName,
+  isTokenVerified,
+  tokenDataFallback,
 } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -196,39 +197,50 @@ const initializeState = settings => async cachedState => {
     ),
     vaultAddress: settings.vault.address,
   }
-  const withTokenBalances = await loadTokenBalances(newState, settings)
-  const withTestnetState = await loadTestnetState(withTokenBalances, settings)
-  const withEthBalance = await loadEthBalance(withTestnetState, settings)
+  const withTokenBalances = await loadTokenBalances(
+    newState,
+    getPresetTokens(settings.network.type), // always immediately load some tokens
+    settings
+  )
+  const withTestnetState = await loadTestnetTokenBalances(
+    withTokenBalances,
+    settings
+  )
 
-  return withEthBalance
+  return withTestnetState
 }
 
-async function loadTokenBalances(state, settings) {
+async function loadTokenBalances(state, includedTokenAddresses, settings) {
   let newState = {
     ...state,
   }
-  if (!newState.balances) {
+  if (
+    !Array.isArray(newState.balances) &&
+    !Array.isArray(includedTokenAddresses)
+  ) {
     return newState
   }
 
-  const addresses = newState.balances.map(({ address }) => address)
+  let newBalances = newState.balances || []
+  const addresses = new Set(
+    newBalances
+      .map(({ address }) => address)
+      .concat(includedTokenAddresses || [])
+  )
   for (const address of addresses) {
-    newState = {
-      ...newState,
-      balances: await updateBalances(newState, address, settings),
-    }
+    newBalances = await updateBalances(newBalances, address, settings)
   }
-  return newState
+
+  return {
+    ...newState,
+    balances: newBalances,
+  }
 }
 
 async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
   return {
     ...state,
-    balances: await updateBalances(
-      state,
-      token || settings.ethToken.address,
-      settings
-    ),
+    balances: await updateBalances(state.balances, token, settings),
   }
 }
 
@@ -238,7 +250,7 @@ async function newPeriod(
 ) {
   return {
     ...state,
-    periods: await updatePeriods(state, {
+    periods: await updatePeriods(state.periods, {
       id: periodId,
       startTime: marshallDate(periodStarts),
       endTime: marshallDate(periodEnds),
@@ -257,9 +269,12 @@ async function newTransaction(
     transactionHash,
     id: transactionId,
   }
-  const transactions = await updateTransactions(state, transactionDetails)
+  const transactions = await updateTransactions(
+    state.transactions,
+    transactionDetails
+  )
   const balances = await updateBalances(
-    state,
+    state.balances,
     transactionDetails.token,
     settings
   )
@@ -277,48 +292,51 @@ async function newTransaction(
  *                     *
  ***********************/
 
-async function updateBalances({ balances = [] }, tokenAddress, settings) {
+async function updateBalances(balances, tokenAddress, settings) {
+  const newBalances = Array.from(balances || [])
+
   const tokenContract = tokenContracts.has(tokenAddress)
     ? tokenContracts.get(tokenAddress)
     : app.external(tokenAddress, tokenAbi)
   tokenContracts.set(tokenAddress, tokenContract)
 
-  const balancesIndex = balances.findIndex(({ address }) =>
+  const balancesIndex = newBalances.findIndex(({ address }) =>
     addressesEqual(address, tokenAddress)
   )
   if (balancesIndex === -1) {
-    return balances.concat(
+    return newBalances.concat(
       await newBalanceEntry(tokenContract, tokenAddress, settings)
     )
   } else {
-    const newBalances = Array.from(balances)
     newBalances[balancesIndex] = {
-      ...balances[balancesIndex],
+      ...newBalances[balancesIndex],
       amount: await loadTokenBalance(tokenAddress, settings),
     }
     return newBalances
   }
 }
 
-function updatePeriods({ periods = [] }, periodDetails) {
-  const periodsIndex = periods.findIndex(({ id }) => id === periodDetails.id)
+function updatePeriods(periods, periodDetails) {
+  const newPeriods = Array.from(periods || [])
+
+  const periodsIndex = newPeriods.findIndex(({ id }) => id === periodDetails.id)
   if (periodsIndex === -1) {
-    return periods.concat(periodDetails)
+    return newPeriods.concat(periodDetails)
   } else {
-    const newPeriods = Array.from(periods)
     newPeriods[periodsIndex] = periodDetails
     return newPeriods
   }
 }
 
-function updateTransactions({ transactions = [] }, transactionDetails) {
-  const transactionsIndex = transactions.findIndex(
+function updateTransactions(transactions, transactionDetails) {
+  const newTransactions = Array.from(transactions || [])
+
+  const transactionsIndex = newTransactions.findIndex(
     ({ id }) => id === transactionDetails.id
   )
   if (transactionsIndex === -1) {
-    return transactions.concat(transactionDetails)
+    return newTransactions.concat(transactionDetails)
   } else {
-    const newTransactions = Array.from(transactions)
     newTransactions[transactionsIndex] = transactionDetails
     return newTransactions
   }
@@ -341,13 +359,6 @@ async function newBalanceEntry(tokenContract, tokenAddress, settings) {
     verified:
       isTokenVerified(tokenAddress, settings.network.type) ||
       addressesEqual(tokenAddress, settings.ethToken.address),
-  }
-}
-
-async function loadEthBalance(state, settings) {
-  return {
-    ...state,
-    balances: await updateBalances(state, settings.ethToken.address, settings),
   }
 }
 
@@ -455,18 +466,14 @@ function marshallDate(date) {
  *                    *
  **********************/
 
-function loadTestnetState(nextState, settings) {
-  // Reload all the test tokens' balances for this DAO's vault
-  return loadTestnetTokenBalances(nextState, settings)
-}
-
-async function loadTestnetTokenBalances(nextState, settings) {
-  let reducedState = nextState
+async function loadTestnetTokenBalances(state, settings) {
+  let newBalances = state.balances
   for (const tokenAddress of TEST_TOKEN_ADDRESSES) {
-    reducedState = {
-      ...reducedState,
-      balances: await updateBalances(reducedState, tokenAddress, settings),
-    }
+    newBalances = await updateBalances(newBalances, tokenAddress, settings)
   }
-  return reducedState
+
+  return {
+    ...state,
+    balances: newBalances,
+  }
 }
