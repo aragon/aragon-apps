@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useAragonApi } from '@aragon/api-react'
-import TOKEN_ABI from '../abi/token-balanceOfAt.json'
+import tokenBalanceOfAbi from '../abi/token-balanceOf.json'
+import tokenBalanceOfAtAbi from '../abi/token-balanceOfAt.json'
+
+const TOKEN_ABI = [].concat(tokenBalanceOfAbi, tokenBalanceOfAtAbi)
 
 // Load and returns the token contract, or null if not loaded yet.
 export default function useTokenContract() {

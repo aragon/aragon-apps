@@ -1,6 +1,7 @@
 import Aragon, { events } from '@aragon/api'
 import { addressesEqual } from './web3-utils'
 import voteSettings from './vote-settings'
+import { VOTE_ABSENT } from './vote-types'
 import { voteTypeFromContractEnum } from './vote-utils'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -267,6 +268,12 @@ async function getAccountVotes({ connectedAccount, votes = [] }) {
 }
 
 async function loadVoterState({ connectedAccount, voteId }) {
+  if (!connectedAccount) {
+    return {
+      voteId,
+      voteType: VOTE_ABSENT,
+    }
+  }
   // Wrap with retry in case the vote is somehow not present
   return retryEvery(() =>
     app
