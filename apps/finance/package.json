@@ -41,11 +41,11 @@
     "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/apps-shared-scripts": "^1.0.0",
     "@aragon/cli": "^6.0.0",
-    "@aragon/test-helpers": "^2.0.0",
+    "@aragon/test-helpers": "^2.1.0",
     "eth-gas-reporter": "^0.2.0",
     "ethereumjs-testrpc-sc": "^6.5.1-sc.0",
     "ganache-cli": "^6.4.3",
-    "solidity-coverage": "^0.6.2",
+    "solidity-coverage": "0.6.2",
     "solium": "^1.2.3",
     "truffle": "4.1.14",
     "truffle-extract": "^1.2.1"
