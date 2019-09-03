@@ -29,6 +29,7 @@ const useVotes = votes => {
 const Votes = React.memo(function Votes({
   votes,
   selectVote,
+  executionTargets,
   filteredVotes,
   voteStatusFilter,
   handleVoteStatusFilterChange,
@@ -104,10 +105,18 @@ const Votes = React.memo(function Votes({
               />
             )}
             <DropDown
-              placeholder="App type"
+              placeholder="App"
               selected={voteAppFilter}
               onChange={handleVoteAppFilterChange}
-              items={['All', 'Finance', 'Tokens', 'Voting']}
+              items={[
+                'All',
+                'Voting (this)',
+                ...executionTargets.map(
+                  ({ name, identifier }) =>
+                    `${name}${identifier ? ` (${identifier})` : ''}`
+                ),
+                'External',
+              ]}
               width="128px"
             />
             <DateRange

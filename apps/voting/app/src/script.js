@@ -207,7 +207,7 @@ async function executeVote(
   return updateState(state, voteId, transform)
 }
 
-async function startVote(state, { creator, metadata, voteId }) {
+async function startVote(state, { creator, metadata = '', voteId }) {
   return updateState(state, voteId, vote => ({
     ...vote,
     data: {
@@ -292,6 +292,9 @@ async function loadVoterState({ connectedAccount, voteId }) {
 }
 
 async function loadVoteDescription(vote) {
+  vote.description = ''
+  vote.executionTargets = []
+
   if (!vote.script || vote.script === EMPTY_CALLSCRIPT) {
     return vote
   }
@@ -299,6 +302,8 @@ async function loadVoteDescription(vote) {
   try {
     const path = await app.describeScript(vote.script).toPromise()
 
+    // Get unique list of targets
+    vote.executionTargets = [...new Set(path.map(({ to }) => to))]
     vote.description = path
       ? path
           .map(step => {

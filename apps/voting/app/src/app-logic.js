@@ -77,7 +77,7 @@ export function useExecuteAction(onDone = noop) {
 export function useAppLogic() {
   const { isSyncing, ready } = useAppState()
 
-  const votes = useVotes()
+  const [votes, executionTargets] = useVotes()
   const [selectedVote, selectVote] = useSelectedVote(votes)
   const newVotePanel = usePanelState()
 
@@ -89,6 +89,7 @@ export function useAppLogic() {
 
   return {
     actions,
+    executionTargets,
     selectVote,
     selectedVote,
     votes,
