@@ -47,11 +47,11 @@ function useDecoratedVotes() {
 
       let executionTargetData = {}
       if (targetApp) {
-        const { appAddress, name, iconSrc, identifier } = targetApp
+        const { appAddress, name, identifier } = targetApp
         executionTargetData = {
           address: appAddress,
           name,
-          iconSrc,
+          iconSrc: targetApp.icon(24),
           identifier,
         }
       }
