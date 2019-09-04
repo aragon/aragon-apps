@@ -110,7 +110,7 @@ const Votes = React.memo(function Votes({
               onChange={handleVoteAppFilterChange}
               items={[
                 'All',
-                'Voting (this)',
+                <ThisVoting />,
                 ...executionTargets.map(
                   ({ name, identifier }) =>
                     `${name}${identifier ? ` (${identifier})` : ''}`
@@ -139,6 +139,25 @@ const Votes = React.memo(function Votes({
     </React.Fragment>
   )
 })
+
+const ThisVoting = () => (
+  <div
+    css={`
+      display: flex;
+      align-items: center;
+    `}
+  >
+    Voting
+    <Tag
+      size="small"
+      css={`
+        margin-left: ${1 * GU}px;
+      `}
+    >
+      this app
+    </Tag>
+  </div>
+)
 
 const VoteGroups = React.memo(({ openVotes, closedVotes, onSelectVote }) => {
   const voteGroups = [['Open votes', openVotes], ['Closed votes', closedVotes]]
