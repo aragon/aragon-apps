@@ -169,6 +169,9 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   positiveSize={votesYeaVotersSize}
                   negativeSize={votesNayVotersSize}
                   requiredSize={supportRequired}
+                  css={`
+                    margin-bottom: ${2 * GU}px;
+                  `}
                 />
                 <SummaryRows
                   yea={{ pct: yeaPct, amount: yea }}
@@ -208,11 +211,11 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 </span>
               </div>
               <SummaryBar
-                css={`
-                  margin-top: ${1 * GU}px;
-                `}
                 positiveSize={quorumProgress}
                 requiredSize={minAcceptQuorum}
+                css={`
+                  margin-top: ${2 * GU}px;
+                `}
               />
             </Box>
             <Box heading="Minimum approval %">
@@ -233,6 +236,9 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
               <SummaryBar
                 positiveSize={votesYeaVotersSize}
                 requiredSize={supportRequired}
+                css={`
+                  margin-top: ${2 * GU}px;
+                `}
               />
             </Box>
           </React.Fragment>
