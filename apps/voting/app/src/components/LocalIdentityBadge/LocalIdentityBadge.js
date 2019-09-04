@@ -37,6 +37,7 @@ const LocalIdentityBadge = ({ entity, ...props }) => {
           <Wrap>
             <Label>{label}</Label>
             <Tag
+              mode="identifier"
               css={`
                 margin-left: ${2 * GU}px;
               `}
