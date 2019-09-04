@@ -18,7 +18,7 @@ class TokenSelector extends React.Component {
     tokens: [],
     label: 'Token',
     labelCustomToken: 'Token address or symbol',
-    selectedIndex: 0,
+    selectedIndex: -1,
   }
   state = {
     ...INITIAL_STATE,
@@ -91,6 +91,7 @@ class TokenSelector extends React.Component {
       <React.Fragment>
         <Field label={label}>
           <DropDown
+            header="Token"
             placeholder="Select a token"
             items={items}
             selected={selectedIndex}
