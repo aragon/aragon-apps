@@ -47,6 +47,11 @@ const Votes = React.memo(function Votes({
   const { layoutName } = useLayout()
   const { openVotes, closedVotes } = useVotes(filteredVotes)
 
+  const multipleOfTarget = executionTargets.reduce((map, { name }) => {
+    map.set(name, map.has(name))
+    return map
+  }, new Map())
+
   return (
     <React.Fragment>
       {layoutName !== 'small' && (
@@ -110,10 +115,14 @@ const Votes = React.memo(function Votes({
               onChange={handleVoteAppFilterChange}
               items={[
                 'All',
-                <ThisVoting />,
+                <ThisVoting showTag={multipleOfTarget.get('Voting')} />,
                 ...executionTargets.map(
                   ({ name, identifier }) =>
-                    `${name}${identifier ? ` (${identifier})` : ''}`
+                    `${name}${
+                      multipleOfTarget.get(name) && identifier
+                        ? ` (${identifier})`
+                        : ''
+                    }`
                 ),
                 'External',
               ]}
@@ -140,7 +149,7 @@ const Votes = React.memo(function Votes({
   )
 })
 
-const ThisVoting = () => (
+const ThisVoting = ({ showTag }) => (
   <div
     css={`
       display: flex;
@@ -148,14 +157,16 @@ const ThisVoting = () => (
     `}
   >
     Voting
-    <Tag
-      size="small"
-      css={`
-        margin-left: ${1 * GU}px;
-      `}
-    >
-      this app
-    </Tag>
+    {showTag && (
+      <Tag
+        size="small"
+        css={`
+          margin-left: ${1 * GU}px;
+        `}
+      >
+        this app
+      </Tag>
+    )}
   </div>
 )
 
