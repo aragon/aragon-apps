@@ -34,7 +34,6 @@ class App extends React.PureComponent {
     appStateReady: false,
     isSyncing: true,
     holders: [],
-    connectedAccount: '',
     groupMode: false,
   }
   state = {
@@ -95,7 +94,6 @@ class App extends React.PureComponent {
   render() {
     const {
       appStateReady,
-      connectedAccount,
       groupMode,
       holders,
       isSyncing,
@@ -167,7 +165,6 @@ class App extends React.PureComponent {
               tokenSupply={tokenSupply}
               tokenSymbol={tokenSymbol}
               tokenTransfersEnabled={tokenTransfersEnabled}
-              userAccount={connectedAccount}
               onAssignTokens={this.handleLaunchAssignTokens}
               onRemoveTokens={this.handleLaunchRemoveTokens}
             />
@@ -202,17 +199,9 @@ class App extends React.PureComponent {
 }
 
 export default () => {
-  const { api, appState, connectedAccount } = useAragonApi()
+  const { api, appState } = useAragonApi()
   const theme = useTheme()
   const { layoutName } = useLayout()
 
-  return (
-    <App
-      api={api}
-      connectedAccount={connectedAccount}
-      layoutName={layoutName}
-      theme={theme}
-      {...appState}
-    />
-  )
+  return <App api={api} layoutName={layoutName} theme={theme} {...appState} />
 }

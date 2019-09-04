@@ -14,7 +14,7 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { useAppState, useNetwork } from '@aragon/api-react'
+import { useAppState, useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { format } from 'date-fns'
 import AppBadge from '../components/AppBadge'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
@@ -27,6 +27,7 @@ import VoteCasted from '../components/VoteCasted'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
+import { addressesEqual } from '../web3-utils'
 
 const formatDate = date => `${format(date, 'do MMM yy, HH:mm')} UTC`
 
@@ -37,6 +38,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const { tokenSymbol } = useAppState()
+  const connectedAccount = useConnectedAccount()
 
   const { data, numData, voteId, connectedAccountVote } = vote
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
@@ -143,7 +145,13 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                       align-items: flex-start;
                     `}
                   >
-                    <LocalIdentityBadge entity={creator} />
+                    <LocalIdentityBadge
+                      connectedAccount={addressesEqual(
+                        creator,
+                        connectedAccount
+                      )}
+                      entity={creator}
+                    />
                   </div>
                 </div>
               </div>
