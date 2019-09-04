@@ -346,7 +346,9 @@ class Deposit extends React.Component {
               <VSpace size={1} />
               <IdentityBadge
                 entity={proxyAddress}
-                fontSize="small"
+                labelStyle={`
+                  ${textStyle('body3')}
+                `}
                 networkType={network.type}
                 shorten={false}
               />
