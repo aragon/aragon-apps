@@ -74,7 +74,7 @@ class NewVotePanelContent extends React.PureComponent {
               have any direct repercussions on the organization.
             </Info>
           </div>
-          <Button mode="strong" type="submit" wide>
+          <Button disabled={!question} mode="strong" type="submit" wide>
             Create new vote
           </Button>
         </form>

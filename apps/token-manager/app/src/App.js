@@ -142,7 +142,7 @@ class App extends React.PureComponent {
                   >
                     Tokens
                   </h1>
-                  {tokenSymbol && <Tag>{tokenSymbol}</Tag>}
+                  {tokenSymbol && <Tag mode="identifier">{tokenSymbol}</Tag>}
                 </div>
               }
               secondary={

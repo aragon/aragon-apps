@@ -1,15 +1,9 @@
 import React from 'react'
 import styled from 'styled-components'
-import { springs, useTheme } from '@aragon/ui'
+import { RADIUS, springs, useTheme } from '@aragon/ui'
 import { Spring, animated } from 'react-spring'
 
-function SummaryBar({
-  compact,
-  positiveSize,
-  negativeSize,
-  requiredSize,
-  ...props
-}) {
+function SummaryBar({ positiveSize, negativeSize, requiredSize, ...props }) {
   const theme = useTheme()
   return (
     <Spring
@@ -19,7 +13,7 @@ function SummaryBar({
       native
     >
       {({ progress }) => (
-        <Main compact={compact} {...props}>
+        <Main {...props}>
           <CombinedBar>
             {!!positiveSize && (
               <BarPart
@@ -56,7 +50,12 @@ function SummaryBar({
                 ),
               }}
             >
-              <RequiredSeparator />
+              <div
+                css={`
+                  height: 100%;
+                  border-left: 1px dashed ${theme.surfaceContent};
+                `}
+              />
             </RequiredSeparatorWrapper>
           </RequiredSeparatorClip>
         </Main>
@@ -69,14 +68,13 @@ SummaryBar.defaultProps = {
   positiveSize: 0,
   negativeSize: 0,
   requiredSize: 0,
-  compact: false,
 }
 
 const Main = styled.div`
   position: relative;
   display: flex;
   align-items: center;
-  height: ${({ compact }) => (compact ? '30px' : '50px')};
+  height: 25px;
 `
 
 const CombinedBar = props => {
@@ -88,7 +86,7 @@ const CombinedBar = props => {
         overflow: hidden;
         width: 100%;
         height: 6px;
-        border-radius: 2px;
+        border-radius: ${RADIUS}px;
         background: ${theme.surfaceUnder};
       `}
       {...props}
@@ -117,11 +115,6 @@ const RequiredSeparatorClip = styled.div`
 
 const RequiredSeparatorWrapper = styled(animated.div)`
   height: 100%;
-`
-
-const RequiredSeparator = styled.div`
-  height: 100%;
-  border-left: 1px dashed #979797;
 `
 
 export default SummaryBar

@@ -19,7 +19,7 @@ const LocalIdentityBadge = ({ entity, ...props }) => {
           <div
             css={`
               display: flex;
-              align-content: center;
+              align-items: center;
             `}
           >
             <IconLabel

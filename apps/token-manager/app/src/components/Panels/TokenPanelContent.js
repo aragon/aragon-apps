@@ -145,6 +145,14 @@ class TokenPanelContent extends React.Component {
 
     const errorMessage = holderField.error || amountField.error
     const warningMessage = holderField.warning || amountField.warning
+    const accountMaxed = amountField.max === '0'
+    const disabled = Boolean(
+      errorMessage ||
+        accountMaxed ||
+        !holderField.value ||
+        !amountField.value ||
+        amountField.value === '0'
+    )
 
     return (
       <div>
@@ -184,18 +192,13 @@ class TokenPanelContent extends React.Component {
               onChange={this.handleAmountChange}
               min={minTokenStep}
               max={amountField.max}
-              disabled={amountField.max === '0'}
+              disabled={accountMaxed}
               step={minTokenStep}
               required
               wide
             />
           </Field>
-          <Button
-            mode="strong"
-            type="submit"
-            disabled={amountField.max === '0'}
-            wide
-          >
+          <Button mode="strong" type="submit" disabled={disabled} wide>
             {mode === 'assign' ? 'Add' : 'Remove'} tokens
           </Button>
           <div
