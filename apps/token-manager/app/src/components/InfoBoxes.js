@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react'
-import { useNetwork } from '@aragon/api-react'
+import { useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { Box, Distribution, GU, TokenBadge, useTheme } from '@aragon/ui'
 import { formatBalance, stakesPercentages } from '../utils'
+import { addressesEqual } from '../web3-utils'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import You from './You'
 
@@ -31,11 +32,11 @@ function InfoBoxes({
   tokenName,
   tokenSupply,
   tokenSymbol,
-  userAccount,
   tokenTransfersEnabled,
 }) {
-  const network = useNetwork()
   const theme = useTheme()
+  const connectedAccount = useConnectedAccount()
+  const network = useNetwork()
 
   const stakes = useMemo(() => displayedStakes(holders, tokenSupply), [
     holders,
@@ -104,15 +105,18 @@ function InfoBoxes({
         <Distribution
           heading="Token holder stakes"
           items={stakes}
-          renderLegendItem={({ item: account }) => (
-            <div>
-              <LocalIdentityBadge
-                entity={account}
-                connectedAccount={account === userAccount}
-              />
-              {account === userAccount && <You />}
-            </div>
-          )}
+          renderLegendItem={({ item: account }) => {
+            const isCurrentUser = addressesEqual(account, connectedAccount)
+            return (
+              <div>
+                <LocalIdentityBadge
+                  entity={account}
+                  connectedAccount={isCurrentUser}
+                />
+                {isCurrentUser && <You />}
+              </div>
+            )
+          }}
         />
       </Box>
     </React.Fragment>

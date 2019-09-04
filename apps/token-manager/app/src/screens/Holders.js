@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
+import { useConnectedAccount } from '@aragon/api-react'
 import {
   ContextMenu,
   ContextMenuItem,
@@ -13,6 +14,7 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { formatBalance } from '../utils'
+import { addressesEqual } from '../web3-utils'
 import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from '../components/IdentityManager/IdentityManager'
@@ -30,8 +32,8 @@ function Holders({
   tokenSupply,
   tokenSymbol,
   tokenTransfersEnabled,
-  userAccount,
 }) {
+  const connectedAccount = useConnectedAccount()
   return (
     <Split
       primary={
@@ -40,9 +42,7 @@ function Holders({
           fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
           entries={holders.map(({ address, balance }) => [address, balance])}
           renderEntry={([address, balance]) => {
-            const isCurrentUser = Boolean(
-              userAccount && userAccount === address
-            )
+            const isCurrentUser = addressesEqual(address, connectedAccount)
 
             const values = [
               <div
@@ -85,7 +85,6 @@ function Holders({
           tokenSupply={tokenSupply}
           tokenSymbol={tokenSymbol}
           tokenTransfersEnabled={tokenTransfersEnabled}
-          userAccount={userAccount}
         />
       }
     />
@@ -104,7 +103,6 @@ Holders.propTypes = {
   tokenSupply: PropTypes.instanceOf(BN),
   tokenSymbol: PropTypes.string,
   tokenTransfersEnabled: PropTypes.bool,
-  userAccount: PropTypes.string,
 }
 
 Holders.defaultProps = {

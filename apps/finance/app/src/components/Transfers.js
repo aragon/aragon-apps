@@ -21,7 +21,7 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { useNetwork } from '@aragon/api-react'
+import { useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
@@ -115,6 +115,7 @@ const getDownloadFilename = (proxyAddress, { start, end }) => {
 }
 
 const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
+  const connectedAccount = useConnectedAccount()
   const network = useNetwork()
   const theme = useTheme()
   const { layoutName } = useLayout()
@@ -284,7 +285,10 @@ const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
                 : ''}
             `}
           >
-            <LocalIdentityBadge entity={entity} address={entity} />
+            <LocalIdentityBadge
+              connectedAccount={addressesEqual(entity, connectedAccount)}
+              entity={entity}
+            />
           </div>,
           <div
             css={`
