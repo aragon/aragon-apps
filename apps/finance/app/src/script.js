@@ -240,7 +240,11 @@ async function loadTokenBalances(state, includedTokenAddresses, settings) {
 async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
   return {
     ...state,
-    balances: await updateBalances(state.balances, token, settings),
+    balances: await updateBalances(
+      state.balances,
+      token || settings.ethToken.address,
+      settings
+    ),
   }
 }
 
