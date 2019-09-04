@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU, textStyle, useTheme } from '@aragon/ui'
+import { GU, RADIUS, textStyle, useTheme } from '@aragon/ui'
 import { animated } from 'react-spring'
 
 function VoteOption({ color, label, percentage, value }) {
@@ -25,7 +25,13 @@ function VoteOption({ color, label, percentage, value }) {
           {percentage}%
         </span>
       </Labels>
-      <BarWrapper>
+      <div
+        css={`
+          overflow: hidden;
+          background: ${theme.surfaceUnder};
+          border-radius: ${RADIUS}px;
+        `}
+      >
         <Bar
           css={`
             background-color: ${color || theme.positive};
@@ -35,7 +41,7 @@ function VoteOption({ color, label, percentage, value }) {
             transform: value.interpolate(v => `scale3d(${v}, 1, 1)`),
           }}
         />
-      </BarWrapper>
+      </div>
     </Main>
   )
 }
@@ -50,12 +56,6 @@ const Labels = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: ${0.5 * GU}px;
-`
-
-const BarWrapper = styled.div`
-  overflow: hidden;
-  background: #edf3f6;
-  border-radius: 2px;
 `
 
 const Bar = styled(animated.div)`

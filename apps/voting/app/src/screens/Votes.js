@@ -67,6 +67,7 @@ const Votes = React.memo(function Votes({
             `}
           >
             <DropDown
+              header="Status"
               placeholder="Status"
               selected={voteStatusFilter}
               onChange={handleVoteStatusFilterChange}
@@ -93,6 +94,7 @@ const Votes = React.memo(function Votes({
             />
             {voteStatusFilter === 1 && (
               <DropDown
+                header="Trend"
                 placeholder="Trend"
                 selected={voteTrendFilter}
                 onChange={handleVoteTrendFilterChange}
@@ -102,6 +104,7 @@ const Votes = React.memo(function Votes({
             )}
             {voteStatusFilter !== 1 && (
               <DropDown
+                header="Outcome"
                 placeholder="Outcome"
                 selected={voteOutcomeFilter}
                 onChange={handleVoteOutcomeFilterChange}
@@ -110,6 +113,7 @@ const Votes = React.memo(function Votes({
               />
             )}
             <DropDown
+              header="App"
               placeholder="App"
               selected={voteAppFilter}
               onChange={handleVoteAppFilterChange}

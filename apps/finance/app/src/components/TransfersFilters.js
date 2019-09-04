@@ -31,8 +31,8 @@ const TransfersFilters = ({
         width="128px"
       />
       <DropDown
-        placeholder="Token Type"
-        header="Token Type"
+        placeholder="Token"
+        header="Token"
         items={symbols}
         selected={tokenFilter}
         onChange={onTokenChange}

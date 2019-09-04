@@ -20,6 +20,8 @@ const RECEIPIENT_NOT_ADDRESS_ERROR = Symbol('RECEIPIENT_NOT_ADDRESS_ERROR')
 const BALANCE_NOT_ENOUGH_ERROR = Symbol('BALANCE_NOT_ENOUGH_ERROR')
 const DECIMALS_TOO_MANY_ERROR = Symbol('DECIMALS_TOO_MANY_ERROR')
 
+const NULL_SELECTED_TOKEN = -1
+
 const initialState = {
   amount: {
     error: NO_ERROR,
@@ -30,7 +32,7 @@ const initialState = {
     value: '',
   },
   reference: '',
-  selectedToken: 0,
+  selectedToken: NULL_SELECTED_TOKEN,
 }
 
 class Withdrawal extends React.Component {
@@ -135,6 +137,13 @@ class Withdrawal extends React.Component {
       errorMessage = 'Amount contains too many decimal places'
     }
 
+    const disabled = Boolean(
+      errorMessage ||
+        !recipient.value ||
+        !amount.value ||
+        selectedToken === NULL_SELECTED_TOKEN
+    )
+
     return tokens.length ? (
       <form onSubmit={this.handleSubmit}>
         <h1>{title}</h1>
@@ -166,12 +175,14 @@ class Withdrawal extends React.Component {
               wide
             />
             <DropDown
-              css={`
-                margin-left: ${1.5 * GU}px;
-              `}
+              header="Token"
+              placeholder="Token"
               items={symbols}
               selected={selectedToken}
               onChange={this.handleSelectToken}
+              css={`
+                margin-left: ${1.5 * GU}px;
+              `}
             />
           </CombinedInput>
         </Field>
@@ -182,7 +193,7 @@ class Withdrawal extends React.Component {
             wide
           />
         </Field>
-        <Button mode="strong" type="submit" wide>
+        <Button disabled={disabled} mode="strong" type="submit" wide>
           Submit withdrawal
         </Button>
         {errorMessage && <ValidationError message={errorMessage} />}
