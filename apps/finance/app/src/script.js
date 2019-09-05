@@ -157,13 +157,7 @@ async function initialize(vaultAddress, ethAddress) {
           )
           return nextState
         case 'NewPeriod':
-          return {
-            ...(await newPeriod(nextState, event, settings)),
-            // A new period is always started as part of the Finance app's initialization,
-            // so this is just a handy way to get information about the app we're running
-            // (e.g. its own address)
-            proxyAddress: eventAddress,
-          }
+          return newPeriod(nextState, event, settings)
         case 'NewTransaction':
           return newTransaction(nextState, event, settings)
         default:
