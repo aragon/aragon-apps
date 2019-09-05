@@ -1,9 +1,9 @@
 import React from 'react'
-import PropTypes from 'prop-types'
-import styled from 'styled-components'
 import { useNetwork } from '@aragon/api-react'
-import { IconLabel, IdentityBadge, Tag, GU } from '@aragon/ui'
+import { IdentityBadge } from '@aragon/ui'
 import { useIdentity } from '../IdentityManager/IdentityManager'
+import LocalLabelPopoverTitle from './LocalLabelPopoverTitle'
+import LocalLabelPopoverActionLabel from './LocalLabelPopoverActionLabel'
 
 const LocalIdentityBadge = ({ entity, ...props }) => {
   const network = useNetwork()
@@ -15,39 +15,11 @@ const LocalIdentityBadge = ({ entity, ...props }) => {
       entity={entity}
       networkType={network && network.type}
       popoverAction={{
-        label: (
-          <div
-            css={`
-              display: flex;
-              align-items: center;
-            `}
-          >
-            <IconLabel
-              css={`
-                margin-right: ${1 * GU}px;
-              `}
-            />
-            {label ? 'Edit' : 'Add'} custom label
-          </div>
-        ),
+        label: <LocalLabelPopoverActionLabel hasLabel={Boolean(label)} />,
         onClick: handleClick,
       }}
       popoverTitle={
-        label ? (
-          <Wrap>
-            <Label>{label}</Label>
-            <Tag
-              mode="identifier"
-              css={`
-                margin-left: ${2 * GU}px;
-              `}
-            >
-              Custom label
-            </Tag>
-          </Wrap>
-        ) : (
-          'Address'
-        )
+        label ? <LocalLabelPopoverTitle label={label} /> : undefined
       }
       {...props}
     />
@@ -55,20 +27,7 @@ const LocalIdentityBadge = ({ entity, ...props }) => {
 }
 
 LocalIdentityBadge.propTypes = {
-  entity: PropTypes.string.isRequired,
+  ...IdentityBadge.propTypes,
 }
-
-const Wrap = styled.div`
-  display: grid;
-  align-items: center;
-  grid-template-columns: auto 1fr;
-`
-
-const Label = styled.span`
-  display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`
 
 export default LocalIdentityBadge

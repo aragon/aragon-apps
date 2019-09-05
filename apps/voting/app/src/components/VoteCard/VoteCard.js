@@ -1,17 +1,23 @@
 import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import { Card, GU, IconCheck, Timer, textStyle, useTheme } from '@aragon/ui'
-import AppBadge from '../AppBadge'
-import You from '../You'
+import { noop } from '../../utils'
+import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
+import LocalLabelAppBadge from '..//LocalIdentityBadge/LocalLabelAppBadge'
 import VoteOptions from './VoteOptions'
 import VoteStatus from '../VoteStatus'
 import VoteText from '../VoteText'
-import { noop } from '../../utils'
-import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
+import You from '../You'
 
 const VoteCard = ({ vote, onOpen }) => {
   const theme = useTheme()
-  const { voteId, data, numData, connectedAccountVote } = vote
+  const {
+    connectedAccountVote,
+    data,
+    executionTargetData,
+    numData,
+    voteId,
+  } = vote
   const { votingPower, yea, nay } = numData
   const { open, metadata, description, endDate } = data
   const options = useMemo(
@@ -59,9 +65,16 @@ const VoteCard = ({ vote, onOpen }) => {
         css={`
           display: flex;
           justify-content: space-between;
+          margin-bottom: ${1 * GU}px;
         `}
       >
-        <AppBadge>App Badge</AppBadge>
+        <LocalLabelAppBadge
+          badgeOnly
+          appAddress={executionTargetData.address}
+          iconSrc={executionTargetData.iconSrc}
+          identifier={executionTargetData.identifier}
+          label={executionTargetData.name}
+        />
         {youVoted && (
           <div
             css={`
@@ -92,7 +105,7 @@ const VoteCard = ({ vote, onOpen }) => {
         `}
       >
         <span css="font-weight: bold;">#{voteId}:</span>{' '}
-        <VoteText text={description || metadata} />
+        <VoteText disabled text={description || metadata} />
       </div>
       <VoteOptions options={options} votingPower={votingPower} />
       <div
