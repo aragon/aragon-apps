@@ -16,8 +16,8 @@ import {
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { format } from 'date-fns'
-import AppBadge from '../components/AppBadge'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
+import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
 import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
 import VoteActions from '../components/VoteActions'
@@ -40,7 +40,13 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
   const { tokenSymbol } = useAppState()
   const connectedAccount = useConnectedAccount()
 
-  const { data, numData, voteId, connectedAccountVote } = vote
+  const {
+    connectedAccountVote,
+    data,
+    executionTargetData,
+    numData,
+    voteId,
+  } = vote
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
   const { creator, description, metadata, open } = data
   const quorumProgress = getQuorumProgress(vote)
@@ -79,7 +85,12 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 justify-content: space-between;
               `}
             >
-              <AppBadge>App Badge</AppBadge>
+              <LocalLabelAppBadge
+                appAddress={executionTargetData.address}
+                iconSrc={executionTargetData.iconSrc}
+                identifier={executionTargetData.identifier}
+                label={executionTargetData.name}
+              />
               {youVoted && (
                 <Tag icon={<IconCheck size="small" />} label="Voted" />
               )}
@@ -124,7 +135,6 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     `}
                   >
                     <VoteText
-                      autolink
                       text={description || metadata || DEFAULT_DESCRIPTION}
                     />
                   </div>
