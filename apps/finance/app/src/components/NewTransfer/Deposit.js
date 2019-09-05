@@ -459,7 +459,6 @@ const ValidationError = ({ message }) => {
 
 export default props => {
   const { api, currentApp, connectedAccount, network } = useAragonApi()
-  console.log('currentApp', currentApp)
   return network && api ? (
     <Deposit
       api={api}
