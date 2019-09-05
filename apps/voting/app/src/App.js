@@ -21,6 +21,7 @@ import { SettingsProvider } from './vote-settings-manager'
 const App = React.memo(function App() {
   const {
     actions,
+    executionTargets,
     isSyncing,
     newVotePanel,
     selectedVote,
@@ -43,7 +44,7 @@ const App = React.memo(function App() {
     voteDateRangeFilter,
     handleVoteDateRangeFilterChange,
     handleClearFilters,
-  } = useFilterVotes(votes)
+  } = useFilterVotes(votes, executionTargets)
 
   useScrollTop(selectedVote)
 
@@ -89,6 +90,7 @@ const App = React.memo(function App() {
             <Votes
               votes={votes}
               selectVote={selectVote}
+              executionTargets={executionTargets}
               filteredVotes={filteredVotes}
               voteStatusFilter={voteStatusFilter}
               handleVoteStatusFilterChange={handleVoteStatusFilterChange}

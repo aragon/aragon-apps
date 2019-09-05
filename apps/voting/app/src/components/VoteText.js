@@ -7,12 +7,12 @@ import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBa
 // Render a text associated to a vote.
 // Usually vote.data.metadata and vote.data.description.
 const VoteText = React.memo(
-  ({ autolink, text = '' }) => {
+  ({ disabled, text = '' }) => {
     // If there is no text, the component doesn’t render anything.
     if (!text.trim()) {
       return null
     }
-    const TextComponent = autolink ? AutoLink : 'span'
+    const TextComponent = disabled ? 'span' : AutoLink
 
     return (
       <TextComponent>
@@ -22,7 +22,11 @@ const VoteText = React.memo(
               isAddress ? (
                 <span title={part} key={index}>
                   {' '}
-                  <LocalIdentityBadge entity={part} compact />{' '}
+                  <LocalIdentityBadge
+                    badgeOnly={disabled}
+                    compact
+                    entity={part}
+                  />{' '}
                 </span>
               ) : (
                 <span key={index}>{part}</span>
@@ -38,7 +42,7 @@ const VoteText = React.memo(
 )
 
 VoteText.propTypes = {
-  autolink: PropTypes.bool,
+  disabled: PropTypes.bool,
   text: PropTypes.string,
 }
 

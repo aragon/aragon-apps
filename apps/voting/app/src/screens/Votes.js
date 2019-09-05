@@ -29,6 +29,7 @@ const useVotes = votes => {
 const Votes = React.memo(function Votes({
   votes,
   selectVote,
+  executionTargets,
   filteredVotes,
   voteStatusFilter,
   handleVoteStatusFilterChange,
@@ -46,6 +47,11 @@ const Votes = React.memo(function Votes({
   const { layoutName } = useLayout()
   const { openVotes, closedVotes } = useVotes(filteredVotes)
 
+  const multipleOfTarget = executionTargets.reduce((map, { name }) => {
+    map.set(name, map.has(name))
+    return map
+  }, new Map())
+
   return (
     <React.Fragment>
       {layoutName !== 'small' && (
@@ -61,6 +67,7 @@ const Votes = React.memo(function Votes({
             `}
           >
             <DropDown
+              header="Status"
               placeholder="Status"
               selected={voteStatusFilter}
               onChange={handleVoteStatusFilterChange}
@@ -87,6 +94,7 @@ const Votes = React.memo(function Votes({
             />
             {voteStatusFilter === 1 && (
               <DropDown
+                header="Trend"
                 placeholder="Trend"
                 selected={voteTrendFilter}
                 onChange={handleVoteTrendFilterChange}
@@ -96,6 +104,7 @@ const Votes = React.memo(function Votes({
             )}
             {voteStatusFilter !== 1 && (
               <DropDown
+                header="Outcome"
                 placeholder="Outcome"
                 selected={voteOutcomeFilter}
                 onChange={handleVoteOutcomeFilterChange}
@@ -104,10 +113,23 @@ const Votes = React.memo(function Votes({
               />
             )}
             <DropDown
-              placeholder="App type"
+              header="App"
+              placeholder="App"
               selected={voteAppFilter}
               onChange={handleVoteAppFilterChange}
-              items={['All', 'Finance', 'Tokens', 'Voting']}
+              items={[
+                'All',
+                <ThisVoting showTag={multipleOfTarget.get('Voting')} />,
+                ...executionTargets.map(
+                  ({ name, identifier }) =>
+                    `${name}${
+                      multipleOfTarget.get(name) && identifier
+                        ? ` (${identifier})`
+                        : ''
+                    }`
+                ),
+                'External',
+              ]}
               width="128px"
             />
             <DateRange
@@ -130,6 +152,27 @@ const Votes = React.memo(function Votes({
     </React.Fragment>
   )
 })
+
+const ThisVoting = ({ showTag }) => (
+  <div
+    css={`
+      display: flex;
+      align-items: center;
+    `}
+  >
+    Voting
+    {showTag && (
+      <Tag
+        size="small"
+        css={`
+          margin-left: ${1 * GU}px;
+        `}
+      >
+        this app
+      </Tag>
+    )}
+  </div>
+)
 
 const VoteGroups = React.memo(({ openVotes, closedVotes, onSelectVote }) => {
   const voteGroups = [['Open votes', openVotes], ['Closed votes', closedVotes]]

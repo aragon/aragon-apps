@@ -3,7 +3,10 @@ import { noop } from '../utils'
 
 // Handles the state of a panel.
 // Pass `onTransitionEnd` to the same SidePanel prop.
-export default function usePanelState({ onDidOpen = noop, onDidClose = noop } = {}) {
+export default function usePanelState({
+  onDidOpen = noop,
+  onDidClose = noop,
+} = {}) {
   const [visible, setVisible] = useState(false)
 
   // `didOpen` is set to `true` when the opening transition of the panel has

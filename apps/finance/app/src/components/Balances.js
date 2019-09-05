@@ -64,7 +64,7 @@ class Balances extends React.Component {
             * scrollbar would briefly appear on top of everything (including the
             * sidepanel overlay).
             */
-            min-height: 132px;
+            min-height: 112px;
             transform: translate3d(0, 0, 0);
             overflow-x: auto;
             ${noBalances
@@ -90,26 +90,35 @@ class Balances extends React.Component {
               css={`
                 list-style: none;
                 display: flex;
-                ${compactMode && `flex-direction: column;`}
+                ${compactMode
+                  ? `
+                    flex-direction: column;
+                    padding: ${1 * GU}px 0;
+                  `
+                  : ''}
               `}
             >
               {balanceItems.map(
                 ({ address, amount, convertedAmount, symbol, verified }) => (
                   <li
+                    key={address}
                     css={`
                       display: block;
-                      padding: ${3 * GU}px;
+                      min-width: ${20 * GU}px;
+                      ${compactMode ? `margin-bottom: ${3 * GU}px;` : ''}
+                      &:last-of-type {
+                        min-width: unset;
+                        margin-bottom: 0;
+                      }
                     `}
-                    key={address}
                   >
-                    <div css="display:inline-block;">
-                      <BalanceToken
-                        amount={amount}
-                        convertedAmount={convertedAmount}
-                        symbol={symbol}
-                        verified={verified}
-                      />
-                    </div>
+                    <BalanceToken
+                      amount={amount}
+                      compact={compactMode}
+                      convertedAmount={convertedAmount}
+                      symbol={symbol}
+                      verified={verified}
+                    />
                   </li>
                 )
               )}

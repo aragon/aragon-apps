@@ -9,14 +9,15 @@ import {
   Split,
   Tag,
   Timer,
+  TransactionBadge,
   textStyle,
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { useAppState } from '@aragon/api-react'
+import { useAppState, useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { format } from 'date-fns'
-import AppBadge from '../components/AppBadge'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
+import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
 import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
 import VoteActions from '../components/VoteActions'
@@ -26,6 +27,7 @@ import VoteCasted from '../components/VoteCasted'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
+import { addressesEqual } from '../web3-utils'
 
 const formatDate = date => `${format(date, 'do MMM yy, HH:mm')} UTC`
 
@@ -36,10 +38,17 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const { tokenSymbol } = useAppState()
+  const connectedAccount = useConnectedAccount()
 
-  const { data, numData, voteId, connectedAccountVote } = vote
+  const {
+    connectedAccountVote,
+    data,
+    executionTargetData,
+    numData,
+    voteId,
+  } = vote
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
-  const { creator, endDate, open, metadata, description } = data
+  const { creator, description, metadata, open } = data
   const quorumProgress = getQuorumProgress(vote)
   const totalVotes = yea + nay
   const votesYeaVotersSize = safeDiv(yea, totalVotes)
@@ -76,12 +85,14 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 justify-content: space-between;
               `}
             >
-              <AppBadge>App Badge</AppBadge>
+              <LocalLabelAppBadge
+                appAddress={executionTargetData.address}
+                iconSrc={executionTargetData.iconSrc}
+                identifier={executionTargetData.identifier}
+                label={executionTargetData.name}
+              />
               {youVoted && (
-                <Tag
-                  icon={<IconCheck size="small" />}
-                  label="Voted"
-                />
+                <Tag icon={<IconCheck size="small" />} label="Voted" />
               )}
             </div>
             <section
@@ -124,7 +135,6 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     `}
                   >
                     <VoteText
-                      autolink
                       text={description || metadata || DEFAULT_DESCRIPTION}
                     />
                   </div>
@@ -145,7 +155,13 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                       align-items: flex-start;
                     `}
                   >
-                    <LocalIdentityBadge entity={creator} />
+                    <LocalIdentityBadge
+                      connectedAccount={addressesEqual(
+                        creator,
+                        connectedAccount
+                      )}
+                      entity={creator}
+                    />
                   </div>
                 </div>
               </div>
@@ -163,6 +179,9 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   positiveSize={votesYeaVotersSize}
                   negativeSize={votesNayVotersSize}
                   requiredSize={supportRequired}
+                  css={`
+                    margin-bottom: ${2 * GU}px;
+                  `}
                 />
                 <SummaryRows
                   yea={{ pct: yeaPct, amount: yea }}
@@ -184,37 +203,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
         secondary={
           <React.Fragment>
             <Box heading="Status">
-              {open ? (
-                <React.Fragment>
-                  <div
-                    css={`
-                      ${textStyle('body2')};
-                      color: ${theme.surfaceContentSecondary};
-                      margin-bottom: ${1 * GU}px;
-                    `}
-                  >
-                    Time remaining
-                  </div>
-                  <Timer end={endDate} maxUnits={4} />
-                </React.Fragment>
-              ) : (
-                <React.Fragment>
-                  <VoteStatus vote={vote} />
-                  <div
-                    css={`
-                      margin-top: ${1 * GU}px;
-                      display: inline-grid;
-                      grid-template-columns: auto auto;
-                      grid-gap: ${1 * GU}px;
-                      align-items: center;
-                      ${textStyle('body2')};
-                    `}
-                  >
-                    <IconTime size="small" />
-                    {formatDate(endDate)}
-                  </div>
-                </React.Fragment>
-              )}
+              <Status vote={vote} />
             </Box>
             <Box heading="Relative support %">
               <div
@@ -232,11 +221,11 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 </span>
               </div>
               <SummaryBar
-                css={`
-                  margin-top: ${1 * GU}px;
-                `}
                 positiveSize={quorumProgress}
                 requiredSize={minAcceptQuorum}
+                css={`
+                  margin-top: ${2 * GU}px;
+                `}
               />
             </Box>
             <Box heading="Minimum approval %">
@@ -257,11 +246,67 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
               <SummaryBar
                 positiveSize={votesYeaVotersSize}
                 requiredSize={supportRequired}
+                css={`
+                  margin-top: ${2 * GU}px;
+                `}
               />
             </Box>
           </React.Fragment>
         }
       />
+    </React.Fragment>
+  )
+}
+
+function Status({ vote }) {
+  const theme = useTheme()
+  const network = useNetwork()
+  const { endDate, executionDate, executionTransaction, open } = vote.data
+
+  if (open) {
+    return (
+      <React.Fragment>
+        <div
+          css={`
+            ${textStyle('body2')};
+            color: ${theme.surfaceContentSecondary};
+            margin-bottom: ${1 * GU}px;
+          `}
+        >
+          Time remaining
+        </div>
+        <Timer end={endDate} maxUnits={4} />
+      </React.Fragment>
+    )
+  }
+
+  return (
+    <React.Fragment>
+      <VoteStatus vote={vote} />
+      <div
+        css={`
+          margin-top: ${1 * GU}px;
+          display: inline-grid;
+          grid-template-columns: auto auto;
+          grid-gap: ${1 * GU}px;
+          align-items: center;
+          color: ${theme.surfaceContentSecondary};
+          ${textStyle('body2')};
+        `}
+      >
+        <IconTime size="small" /> {formatDate(executionDate || endDate)}
+      </div>
+      {executionTransaction && (
+        <div>
+          <TransactionBadge
+            networkType={network.type}
+            transaction={executionTransaction}
+            css={`
+              margin-top: ${1 * GU}px;
+            `}
+          />
+        </div>
+      )}
     </React.Fragment>
   )
 }

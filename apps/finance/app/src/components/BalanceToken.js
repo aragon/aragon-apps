@@ -1,5 +1,5 @@
 import React from 'react'
-import { textStyle, useTheme } from '@aragon/ui'
+import { GU, textStyle, useTheme } from '@aragon/ui'
 import { formatTokenAmount } from '../lib/utils'
 
 const splitAmount = amount => {
@@ -7,27 +7,32 @@ const splitAmount = amount => {
   return (
     <span>
       <span>{integer}</span>
-      {fractional && <span css="font-size: 14px;">.{fractional}</span>}
+      {fractional && (
+        <span
+          css={`
+            ${textStyle('body3')}
+          `}
+        >
+          .{fractional}
+        </span>
+      )}
     </span>
   )
 }
 
-const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => {
+const BalanceToken = ({ amount, compact, symbol, verified, convertedAmount = -1 }) => {
   const theme = useTheme()
 
   return (
-    <React.Fragment>
+    <div css="display: inline-block">
       <div
         title={symbol || 'Unknown symbol'}
         css={`
           display: flex;
           align-items: center;
-          text-transform: uppercase;
-          img {
-            margin-right: 10px;
-          }
           color: ${theme.surfaceContentSecondary};
           ${textStyle('body2')}
+          text-transform: uppercase;
         `}
       >
         {verified && symbol && (
@@ -36,6 +41,9 @@ const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => {
             width="20"
             height="20"
             src={`https://chasing-coins.com/coin/logo/${symbol}`}
+            css={`
+              margin-right: ${0.75 * GU}px;
+            `}
           />
         )}
         {symbol || '?'}
@@ -44,6 +52,7 @@ const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => {
         <div
           css={`
             ${textStyle('title2')}
+            margin: ${(compact ? 1 : 1.5) * GU}px 0;
           `}
         >
           {splitAmount(amount.toFixed(3))}
@@ -59,7 +68,7 @@ const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => {
             : '−'}
         </div>
       </div>
-    </React.Fragment>
+    </div>
   )
 }
 
