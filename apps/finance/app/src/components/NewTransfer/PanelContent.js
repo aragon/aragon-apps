@@ -12,7 +12,6 @@ class PanelContent extends React.Component {
   static defaultProps = {
     onWithdraw: () => {},
     onDeposit: () => {},
-    proxyAddress: null,
   }
 
   state = {
@@ -32,7 +31,7 @@ class PanelContent extends React.Component {
 
   render() {
     const { screenIndex } = this.state
-    const { opened, tokens, onWithdraw, onDeposit, proxyAddress } = this.props
+    const { opened, tokens, onWithdraw, onDeposit } = this.props
     return (
       <div>
         <TabsWrapper>
@@ -44,12 +43,7 @@ class PanelContent extends React.Component {
         </TabsWrapper>
 
         {screenIndex === 0 && (
-          <Deposit
-            opened={opened}
-            tokens={tokens}
-            proxyAddress={proxyAddress}
-            onDeposit={onDeposit}
-          />
+          <Deposit opened={opened} tokens={tokens} onDeposit={onDeposit} />
         )}
         {screenIndex === 1 && (
           <Withdrawal opened={opened} tokens={tokens} onWithdraw={onWithdraw} />

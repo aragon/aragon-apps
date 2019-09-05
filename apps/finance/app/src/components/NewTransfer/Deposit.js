@@ -254,7 +254,7 @@ class Deposit extends React.Component {
   }
 
   render() {
-    const { network, proxyAddress, title, tokens } = this.props
+    const { appAddress, network, title, tokens } = this.props
     const { amount, reference, selectedToken } = this.state
 
     let errorMessage
@@ -334,18 +334,18 @@ class Deposit extends React.Component {
           )}
         </Info>
 
-        {proxyAddress && ethSelected && (
+        {appAddress && ethSelected && (
           <div>
             <VSpace size={3} />
             <ToggleContent label="Show address for direct ETH transfer ">
               <VSpace size={2} />
               <QRCode
-                value={proxyAddress}
+                value={appAddress}
                 style={{ width: '80px', height: '80px' }}
               />
               <VSpace size={1} />
               <IdentityBadge
-                entity={proxyAddress}
+                entity={appAddress}
                 labelStyle={`
                   ${textStyle('body3')}
                 `}
@@ -460,10 +460,11 @@ const ValidationError = ({ message }) => {
 }
 
 export default props => {
-  const { api, connectedAccount, network } = useAragonApi()
+  const { api, currentApp, connectedAccount, network } = useAragonApi()
   return network && api ? (
     <Deposit
       api={api}
+      appAddress={currentApp && currentApp.appAddress}
       connectedAccount={connectedAccount}
       network={network}
       {...props}

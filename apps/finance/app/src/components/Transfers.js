@@ -21,7 +21,7 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { useConnectedAccount, useNetwork } from '@aragon/api-react'
+import { useConnectedAccount, useCurrentApp, useNetwork } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
@@ -103,19 +103,20 @@ const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
     .concat(mappedData)
     .join('\n')
 }
-const getDownloadFilename = (proxyAddress, { start, end }) => {
+const getDownloadFilename = (appAddress, { start, end }) => {
   const today = format(Date.now(), 'yyyy-MM-dd')
-  let filename = `finance_${proxyAddress}_${today}.csv`
+  let filename = `finance_${appAddress}_${today}.csv`
   if (start && end) {
     const formattedStart = format(start, 'yyyy-MM-dd')
     const formattedEnd = format(end, 'yyyy-MM-dd')
-    filename = `finance_${proxyAddress}_${formattedStart}_to_${formattedEnd}.csv`
+    filename = `finance_${appAddress}_${formattedStart}_to_${formattedEnd}.csv`
   }
   return filename
 }
 
-const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
+const Transfers = React.memo(({ tokens, transactions }) => {
   const connectedAccount = useConnectedAccount()
+  const currentApp = useCurrentApp()
   const network = useNetwork()
   const theme = useTheme()
   const { layoutName } = useLayout()
@@ -160,7 +161,7 @@ const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
   const tokenDetails = tokens.reduce(getTokenDetails, {})
   const { resolve: resolveAddress } = React.useContext(IdentityContext)
   const handleDownload = React.useCallback(async () => {
-    if (!proxyAddress) {
+    if (!currentApp || !currentApp.appAddress) {
       return
     }
 
@@ -169,9 +170,12 @@ const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
       tokenDetails,
       resolveAddress
     )
-    const filename = getDownloadFilename(proxyAddress, selectedDateRange)
+    const filename = getDownloadFilename(
+      currentApp.appAddress,
+      selectedDateRange
+    )
     saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
-  }, [filteredTransfers, tokenDetails, resolveAddress])
+  }, [currentApp, filteredTransfers, tokenDetails, resolveAddress])
   const emptyResultsViaFilters =
     !filteredTransfers.length &&
     (selectedToken !== 0 ||
@@ -321,7 +325,6 @@ const Transfers = React.memo(({ proxyAddress, tokens, transactions }) => {
 })
 
 Transfers.propTypes = {
-  proxyAddress: PropTypes.string,
   tokens: PropTypes.array.isRequired,
   transactions: PropTypes.array.isRequired,
 }
