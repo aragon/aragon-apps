@@ -18,7 +18,9 @@ const LocalLabelAppBadge = ({ appAddress, label, ...props }) => {
         label: <LocalLabelPopoverActionLabel hasLabel={Boolean(label)} />,
         onClick: handleClick,
       }}
-      popoverTitle={label && <LocalLabelPopoverTitle label={label} />}
+      popoverTitle={
+        localLabel ? <LocalLabelPopoverTitle label={label} /> : undefined
+      }
       {...props}
     />
   )
