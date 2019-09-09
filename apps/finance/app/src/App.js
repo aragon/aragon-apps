@@ -66,7 +66,7 @@ class App extends React.Component {
         // transition but we do the estimation with some breathing room in case it is being
         // forwarded (unlikely in deposit).
         gas:
-          400000 +
+          450000 +
           20000 * Math.ceil(reference.length / 32) +
           80000 * periodTransitions,
       }
