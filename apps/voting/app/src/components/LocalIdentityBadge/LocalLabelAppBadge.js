@@ -15,11 +15,11 @@ const LocalLabelAppBadge = ({ appAddress, label, ...props }) => {
       label={localLabel || label}
       networkType={network && network.type}
       popoverAction={{
-        label: <LocalLabelPopoverActionLabel hasLabel={Boolean(label)} />,
+        label: <LocalLabelPopoverActionLabel hasLabel={Boolean(localLabel)} />,
         onClick: handleClick,
       }}
       popoverTitle={
-        localLabel ? <LocalLabelPopoverTitle label={label} /> : undefined
+        localLabel ? <LocalLabelPopoverTitle label={localLabel} /> : undefined
       }
       {...props}
     />
