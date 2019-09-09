@@ -51,7 +51,7 @@ function VoteCasted({ vote }) {
             margin-bottom: ${0.5 * GU}px;
           `}
           >
-            Your vote was casted successfully
+            Your vote was cast successfully
           </div>
           <div
             css={`
