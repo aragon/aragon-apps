@@ -30,7 +30,7 @@ function FrameModal({ visible, onClose }) {
             ${textStyle('body2')};
           `}
         >
-          <div>To interact with the Agent App you must install Frame</div>
+          <div>To interact with the Agent app, you must install Frame</div>
           <Link
             href="https://frame.sh"
             css={`
