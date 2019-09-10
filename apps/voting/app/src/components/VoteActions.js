@@ -223,8 +223,6 @@ const TokenReference = ({
     <strong>
       {userBalance} {tokenSymbol}
     </strong>{' '}
-    of your <strong>{tokenSymbol}</strong> at block{' '}
-    <strong>{snapshotBlock}</strong>{' '}
     {userBalance !== userBalanceNow ? (
       <span>
         (you currently hold{' '}
@@ -235,8 +233,10 @@ const TokenReference = ({
       </span>
     ) : (
       ''
-    )}{' '}
-    due to the vote starting at <strong>{formatDate(startDate)}</strong>.
+    )}
+    at block{' '}
+    <strong>{snapshotBlock}</strong>{' '}
+    due at <strong>{formatDate(startDate)}</strong>.
   </Info>
 )
 
