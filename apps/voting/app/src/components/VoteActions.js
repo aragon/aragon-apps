@@ -223,11 +223,20 @@ const TokenReference = ({
     <strong>
       {userBalance} {tokenSymbol}
     </strong>{' '}
-    due to snapshot taken at block{' '}
+    due to the snapshot taken at block{' '}
     <strong>{snapshotBlock}</strong>{' '}
-    at <strong>{formatDate(startDate)}</strong>.
-    Yout current balance is{' '}
-    <strong>{userBalanceNow} {tokenSymbol}</strong>.
+    at <strong>{formatDate(startDate)}</strong>.{' '}
+    {userBalance !== userBalanceNow ? (
+      <span>
+        Your current balance is{' '}
+        <strong>
+          {userBalanceNow} {tokenSymbol}
+        </strong>
+        )
+      </span>
+    ) : (
+      ''
+    )}
   </Info>
 )
 
