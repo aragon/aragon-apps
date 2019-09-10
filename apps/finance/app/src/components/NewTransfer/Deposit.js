@@ -309,7 +309,7 @@ class Deposit extends React.Component {
         <Info>
           {isMainnet && (
             <p>
-              Remember, Mainnet organizations use <strong>real tokens</strong>.
+              Remember, Mainnet organizations use <strong>real funds</strong>.
             </p>
           )}
           <p>
