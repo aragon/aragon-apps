@@ -1,10 +1,9 @@
 import React from 'react'
 import { Header, Layout, SyncIndicator, useLayout } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
-import Balances from './components/Balances'
-import Transfers from './components/Transfers'
 import InstallFrame from './components/InstallFrame'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
+import ComingSoon from './components/ComingSoon'
 
 function App({ api, appState, isSyncing }) {
   const { layoutName } = useLayout()
@@ -26,13 +25,7 @@ function App({ api, appState, isSyncing }) {
         <SyncIndicator visible={isSyncing} />
         <Header primary="Agent" />
         <InstallFrame />
-        <Balances balances={balances} compactMode={compactMode} />
-        <Transfers
-          transactions={transactions}
-          dao={proxyAddress}
-          tokens={tokens}
-          compactMode={compactMode}
-        />
+        <ComingSoon />
       </div>
     </IdentityProvider>
   )
