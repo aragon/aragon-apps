@@ -45,7 +45,7 @@ function ComingSoon() {
         `}
       >
         We are currently working on the full version of this app. You’ll soon be
-        able to browse Agent interactions with with other Ethereum applications
+        able to browse Agent interactions with other Ethereum applications
         from here.
         <Link href="https://frame.sh">Learn more about Agent</Link>
       </div>
