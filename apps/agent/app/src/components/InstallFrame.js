@@ -1,12 +1,31 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ButtonBase, GU, Info } from '@aragon/ui'
 import FrameSvg from './FrameSvg'
 import FrameModal from './FrameModal'
 
+const FRAME_SERVER = 'http://localhost:1248'
+
 function InstallFrame() {
+  const [frameInstalled, setFrameInstalled] = useState(false)
   const [opened, setOpened] = useState(false)
   const handleInstallFrameClick = () => setOpened(true)
   const handleClose = () => setOpened(false)
+
+  useEffect(() => {
+    const isFrameInstalled = async () => {
+      try {
+        const res = await fetch(FRAME_SERVER)
+        setFrameInstalled(true)
+      } catch (err) {
+        /*not running*/
+      }
+    }
+    isFrameInstalled()
+  }, [])
+
+  if (frameInstalled) {
+    return null
+  }
 
   return (
     <React.Fragment>
