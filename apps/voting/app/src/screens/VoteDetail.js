@@ -211,13 +211,13 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   ${textStyle('body2')};
                 `}
               >
-                {round(quorumProgress * 100, 2)}%{' '}
+                {round(votesYeaVotersSize * 100, 2)}%{' '}
                 <span
                   css={`
                     color: ${theme.surfaceContentSecondary};
                   `}
                 >
-                  ({round(minAcceptQuorum * 100, 2)}% support needed)
+                  ({round(supportRequired * 100, 2)}% support needed)
                 </span>
               </div>
               <SummaryBar
@@ -234,13 +234,13 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   ${textStyle('body2')};
                 `}
               >
-                {round(votesYeaVotersSize * 100, 2)}%{' '}
+                {round(quorumProgress * 100, 2)}%{' '}
                 <span
                   css={`
                     color: ${theme.surfaceContentSecondary};
                   `}
                 >
-                  ({round(supportRequired * 100, 2)}% approval needed)
+                  ({round(minAcceptQuorum * 100, 2)}% approval needed)
                 </span>
               </div>
               <SummaryBar
