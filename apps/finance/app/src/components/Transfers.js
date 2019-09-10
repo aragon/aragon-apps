@@ -20,6 +20,7 @@ import {
   textStyle,
   useLayout,
   useTheme,
+  useToast,
 } from '@aragon/ui'
 import { useConnectedAccount, useCurrentApp, useNetwork } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
@@ -118,6 +119,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   const connectedAccount = useConnectedAccount()
   const currentApp = useCurrentApp()
   const network = useNetwork()
+  const toast = useToast()
   const theme = useTheme()
   const { layoutName } = useLayout()
 
@@ -175,6 +177,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
       selectedDateRange
     )
     saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
+    toast('Transfers data exported')
   }, [currentApp, filteredTransfers, tokenDetails, resolveAddress])
   const emptyResultsViaFilters =
     !filteredTransfers.length &&
