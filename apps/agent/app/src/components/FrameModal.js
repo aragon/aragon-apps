@@ -50,7 +50,7 @@ function FrameModal({ visible, onClose }) {
         `}
       >
         <Button onClick={onClose}>Cancel</Button>
-        <Button mode="strong" href="https://frame.sh">
+        <Button mode="strong" href="https://aragon.org/agent">
           Install Frame
         </Button>
       </div>
