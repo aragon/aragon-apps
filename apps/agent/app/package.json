@@ -1,0 +1,56 @@
+{
+  "name": "aragon-agent",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "@aragon/api": "^2.0.0-beta.6",
+    "@aragon/api-react": "^2.0.0-beta.6",
+    "@aragon/templates-tokens": "^1.2.0",
+    "@aragon/ui": "^1.0.0-alpha.23",
+    "@babel/polyfill": "^7.0.0",
+    "date-fns": "2.0.0-alpha.22",
+    "file-saver": "^2.0.2",
+    "lodash.throttle": "^4.1.1",
+    "prop-types": "^15.7.2",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "rxjs": "^6.5.2",
+    "styled-components": "^4.3.2",
+    "web3-utils": "^1.2.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/plugin-proposal-class-properties": "^7.0.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-react": "^7.0.0",
+    "babel-eslint": "^10.0.1",
+    "babel-plugin-styled-components": "^1.7.1",
+    "eslint": "^5.6.0",
+    "eslint-config-prettier": "^3.1.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-config-standard-react": "^7.0.2",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-prettier": "^2.7.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-react": "^7.5.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "parcel-bundler": "^1.10.1",
+    "prettier": "^1.11.1"
+  },
+  "scripts": {
+    "lint": "eslint ./src",
+    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build",
+    "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3005 --out-dir build/",
+    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url \".\"",
+    "watch:script": "parcel watch src/script.js --out-dir build/ --no-hmr",
+    "build:script": "parcel build src/script.js --out-dir build/"
+  },
+  "browserslist": [
+    ">2%",
+    "last 1 edge versions",
+    "not ie > 0",
+    "not op_mini all"
+  ]
+}
