@@ -20,7 +20,13 @@ const splitAmount = amount => {
   )
 }
 
-const BalanceToken = ({ amount, compact, symbol, verified, convertedAmount = -1 }) => {
+const BalanceToken = ({
+  amount,
+  compact,
+  symbol,
+  verified,
+  convertedAmount = -1,
+}) => {
   const theme = useTheme()
 
   return (

@@ -22,7 +22,11 @@ import {
   useTheme,
   useToast,
 } from '@aragon/ui'
-import { useConnectedAccount, useCurrentApp, useNetwork } from '@aragon/api-react'
+import {
+  useConnectedAccount,
+  useCurrentApp,
+  useNetwork,
+} from '@aragon/api-react'
 import { saveAs } from 'file-saver'
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'

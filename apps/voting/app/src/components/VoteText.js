@@ -27,21 +27,19 @@ const VoteText = React.memo(
         >
           {text.split('\n').map((line, i) => (
             <React.Fragment key={i}>
-              {transformAddresses(
-                line,
-                (part, isAddress, index) =>
-                  isAddress ? (
-                    <span title={part} key={index}>
-                      {' '}
-                      <LocalIdentityBadge
-                        badgeOnly={disabled}
-                        compact
-                        entity={part}
-                      />{' '}
-                    </span>
-                  ) : (
-                    <span key={index}>{part}</span>
-                  )
+              {transformAddresses(line, (part, isAddress, index) =>
+                isAddress ? (
+                  <span title={part} key={index}>
+                    {' '}
+                    <LocalIdentityBadge
+                      badgeOnly={disabled}
+                      compact
+                      entity={part}
+                    />{' '}
+                  </span>
+                ) : (
+                  <span key={index}>{part}</span>
+                )
               )}
               <br />
             </React.Fragment>
