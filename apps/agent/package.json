@@ -16,6 +16,8 @@
     "truffle:dev": "truffle dev",
     "ganache-cli:test": "./node_modules/@aragon/test-helpers/ganache-cli.sh",
     "abi:extract": "truffle-extract --output abi/ --keys abi",
+    "prepare": "npx apps-shared-scripts-prepare",
+    "install:frontend": "cd app && npm install",
     "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile"
   },
   "files": [
@@ -34,6 +36,7 @@
   "description": "",
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
+    "@aragon/apps-shared-scripts": "^1.0.0",
     "@aragon/cli": "^6.0.0",
     "@aragon/test-helpers": "^2.1.0",
     "eth-ens-namehash": "^2.0.8",
