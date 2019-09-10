@@ -34,7 +34,7 @@ function ComingSoon() {
           margin-bottom: ${2 * GU}px;
         `}
       >
-        Agent is coming soon
+        Agent transaction list is coming soon!
       </h2>
       <div
         css={`
