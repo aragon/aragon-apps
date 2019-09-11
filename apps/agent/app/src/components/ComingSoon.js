@@ -47,7 +47,7 @@ function ComingSoon() {
         We are currently working on the full version of this app. You’ll soon be
         able to browse Agent interactions with other Ethereum applications
         from here.
-        <Link href="https://frame.sh">Learn how you can start using it today</Link>
+        <Link href="https://aragon.org/agent">Learn how you can start using it today</Link>
       </div>
     </Card>
   )
