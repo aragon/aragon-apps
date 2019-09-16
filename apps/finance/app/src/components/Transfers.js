@@ -192,6 +192,15 @@ const Transfers = React.memo(({ tokens, transactions }) => {
 
   const compactMode = layoutName === 'small'
 
+  const sortedTransfers = useMemo(
+    () =>
+      filteredTransfers.sort(({ date: dateLeft }, { date: dateRight }) =>
+        // Sort by date descending
+        compareDesc(dateLeft, dateRight)
+      ),
+    [filteredTransfers, compareDesc]
+  )
+
   if (!transactions.length) {
     return <EmptyTransactions />
   }
@@ -258,11 +267,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
               { label: 'Amount', priority: 2 },
             ]
       }
-      entries={filteredTransfers.sort(
-        ({ date: dateLeft }, { date: dateRight }) =>
-          // Sort by date descending
-          compareDesc(dateLeft, dateRight)
-      )}
+      entries={sortedTransfers}
       renderEntry={({
         date,
         entity,
