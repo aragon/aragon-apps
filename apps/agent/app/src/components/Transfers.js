@@ -98,7 +98,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
             <div
               css={`
                 color: ${theme.content};
-                ${textStyle('body1')}
+                ${textStyle('body1')};
               `}
             >
               Transfers
@@ -220,12 +220,11 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
                 `
                   display: inline-flex;
                   max-width: 150px;
-                `}
-              ${layoutName === 'large' &&
+                `} ${layoutName === 'large' &&
                 `
                   display: inline-flex;
                   max-width: 'unset';
-                `}
+                `};
             `}
           >
             <LocalIdentityBadge
@@ -271,7 +270,8 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
                   color: ${theme.surfaceContent};
                 `}
               >
-                {uniqueTokens} token{uniqueTokens > 1 ? 's' : ''}
+                {uniqueTokens} token
+                {uniqueTokens > 1 ? 's' : ''}
               </div>
             )
           }
@@ -332,8 +332,7 @@ const InnerEntryColumn = styled.div`
           max-width: 250px;
           width: 250px;
         `
-      : ''}
-  ${({ layoutName }) =>
+      : ''} ${({ layoutName }) =>
     layoutName === 'large'
       ? `
           /* max possible length of custom label + from length + some spacing */
@@ -341,19 +340,22 @@ const InnerEntryColumn = styled.div`
           max-width: unset;
           width: unset;
         `
-      : ''}
+      : ''};
 `
 
 const ContextMenuViewTransaction = ({ transactionHash, network, theme }) => {
-  const handleViewTransaction = useCallback(() => {
-    window.open(
-      blockExplorerUrl('transaction', transactionHash, {
-        networkType: network.type,
-      }),
-      '_blank',
-      'noopener'
-    )
-  }, [transactionHash, network])
+  const handleViewTransaction = useCallback(
+    () => {
+      window.open(
+        blockExplorerUrl('transaction', transactionHash, {
+          networkType: network.type,
+        }),
+        '_blank',
+        'noopener'
+      )
+    },
+    [transactionHash, network]
+  )
 
   return (
     <ContextMenuItem onClick={handleViewTransaction}>
