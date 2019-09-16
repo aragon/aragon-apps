@@ -166,8 +166,8 @@ class TokenPanelContent extends React.Component {
             title="Action"
             text={`This action will ${
               mode === 'assign'
-                ? 'mint tokens to the recipient below'
-                : 'burn tokens from the account below'
+                ? 'create tokens and transfer them to the recipient below'
+                : 'remove tokens from the account below'
             }.`}
           />
           <Field
