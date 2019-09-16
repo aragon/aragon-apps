@@ -221,8 +221,8 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 </span>
               </div>
               <SummaryBar
-                positiveSize={quorumProgress}
-                requiredSize={minAcceptQuorum}
+                positiveSize={votesYeaVotersSize}
+                requiredSize={supportRequired}
                 css={`
                   margin-top: ${2 * GU}px;
                 `}
@@ -244,8 +244,8 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 </span>
               </div>
               <SummaryBar
-                positiveSize={votesYeaVotersSize}
-                requiredSize={supportRequired}
+                positiveSize={quorumProgress}
+                requiredSize={minAcceptQuorum}
                 css={`
                   margin-top: ${2 * GU}px;
                 `}
