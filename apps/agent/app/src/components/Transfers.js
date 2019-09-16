@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useMemo, useCallback } from 'react'
 import styled from 'styled-components'
 import PropTypes from 'prop-types'
 import { compareDesc, format } from 'date-fns'
@@ -72,6 +72,14 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
     dao,
   })
   const symbols = tokens.map(({ symbol }) => symbol)
+  const sortedTransfers = useMemo(
+    () =>
+      filteredTransfers.sort(({ date: dateLeft }, { date: dateRight }) =>
+        // Sort by date descending
+        compareDesc(dateLeft, dateRight)
+      ),
+    [filteredTransfers, compareDesc]
+  )
 
   return (
     <DataView
@@ -130,11 +138,7 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
               { label: 'Amount', priority: 4 },
             ]
       }
-      entries={filteredTransfers.sort(
-        ({ date: dateLeft }, { date: dateRight }) =>
-          // Sort by date descending
-          compareDesc(dateLeft, dateRight)
-      )}
+      entries={sortedTransfers}
       renderEntryExpansion={({ tokenTransfers }) => {
         if (tokenTransfers.length === 1) {
           return
