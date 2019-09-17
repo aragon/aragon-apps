@@ -40,6 +40,7 @@ function useDecoratedVotes() {
         if (!targetApp) {
           targetApp = {
             appAddress: targetAddress,
+            icon: () => null,
             name: 'External',
           }
         }
@@ -47,11 +48,11 @@ function useDecoratedVotes() {
 
       let executionTargetData = {}
       if (targetApp) {
-        const { appAddress, name, identifier } = targetApp
+        const { appAddress, icon, identifier, name } = targetApp
         executionTargetData = {
           address: appAddress,
           name,
-          iconSrc: targetApp.icon(24),
+          iconSrc: icon(24),
           identifier,
         }
       }
