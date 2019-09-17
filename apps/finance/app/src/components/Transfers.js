@@ -169,7 +169,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   const symbols = tokens.map(({ symbol }) => symbol)
   const tokenDetails = tokens.reduce(getTokenDetails, {})
   const { resolve: resolveAddress } = React.useContext(IdentityContext)
-  const handleDownload = React.useCallback(
+  const handleDownload = useCallback(
     async () => {
       if (!currentApp || !currentApp.appAddress) {
         return
