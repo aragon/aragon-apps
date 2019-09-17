@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import {
   compareDesc,
@@ -151,12 +151,15 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     },
     [setPage, setSelectedTransferType]
   )
-  const handleClearFilters = useCallback(() => {
-    setPage(0)
-    setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
-    setSelectedToken(UNSELECTED_TOKEN_FILTER)
-    setSelectedDateRange(INITIAL_DATE_RANGE)
-  }, [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange])
+  const handleClearFilters = useCallback(
+    () => {
+      setPage(0)
+      setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
+      setSelectedToken(UNSELECTED_TOKEN_FILTER)
+      setSelectedDateRange(INITIAL_DATE_RANGE)
+    },
+    [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange]
+  )
   const filteredTransfers = getFilteredTransfers({
     transactions,
     selectedToken: selectedToken > 0 ? tokens[selectedToken - 1] : null,
@@ -166,23 +169,26 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   const symbols = tokens.map(({ symbol }) => symbol)
   const tokenDetails = tokens.reduce(getTokenDetails, {})
   const { resolve: resolveAddress } = React.useContext(IdentityContext)
-  const handleDownload = React.useCallback(async () => {
-    if (!currentApp || !currentApp.appAddress) {
-      return
-    }
+  const handleDownload = useCallback(
+    async () => {
+      if (!currentApp || !currentApp.appAddress) {
+        return
+      }
 
-    const data = await getDownloadData(
-      filteredTransfers,
-      tokenDetails,
-      resolveAddress
-    )
-    const filename = getDownloadFilename(
-      currentApp.appAddress,
-      selectedDateRange
-    )
-    saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
-    toast('Transfers data exported')
-  }, [currentApp, filteredTransfers, tokenDetails, resolveAddress])
+      const data = await getDownloadData(
+        filteredTransfers,
+        tokenDetails,
+        resolveAddress
+      )
+      const filename = getDownloadFilename(
+        currentApp.appAddress,
+        selectedDateRange
+      )
+      saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
+      toast('Transfers data exported')
+    },
+    [currentApp, filteredTransfers, tokenDetails, resolveAddress]
+  )
   const emptyResultsViaFilters =
     !filteredTransfers.length &&
     (selectedToken !== 0 ||
@@ -191,6 +197,15 @@ const Transfers = React.memo(({ tokens, transactions }) => {
       selectedDateRange.end)
 
   const compactMode = layoutName === 'small'
+
+  const sortedTransfers = useMemo(
+    () =>
+      filteredTransfers.sort(({ date: dateLeft }, { date: dateRight }) =>
+        // Sort by date descending
+        compareDesc(dateLeft, dateRight)
+      ),
+    [filteredTransfers, compareDesc]
+  )
 
   if (!transactions.length) {
     return <EmptyTransactions />
@@ -213,7 +228,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
             <div
               css={`
                 color: ${theme.content};
-                ${textStyle('body1')}
+                ${textStyle('body1')};
               `}
             >
               Transfers
@@ -258,11 +273,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
               { label: 'Amount', priority: 2 },
             ]
       }
-      entries={filteredTransfers.sort(
-        ({ date: dateLeft }, { date: dateRight }) =>
-          // Sort by date descending
-          compareDesc(dateLeft, dateRight)
-      )}
+      entries={sortedTransfers}
       renderEntry={({
         date,
         entity,
@@ -293,7 +304,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
                     display: inline-flex;
                     max-width: ${layoutName === 'large' ? 'unset' : '150px'};
                   `
-                : ''}
+                : ''};
             `}
           >
             <LocalIdentityBadge
@@ -361,15 +372,18 @@ const ContextMenuItemCustomLabel = ({ entity }) => {
 
 const ContextMenuViewTransaction = ({ transactionHash, network }) => {
   const theme = useTheme()
-  const handleViewTransaction = useCallback(() => {
-    window.open(
-      blockExplorerUrl('transaction', transactionHash, {
-        networkType: network.type,
-      }),
-      '_blank',
-      'noopener'
-    )
-  }, [transactionHash, network])
+  const handleViewTransaction = useCallback(
+    () => {
+      window.open(
+        blockExplorerUrl('transaction', transactionHash, {
+          networkType: network.type,
+        }),
+        '_blank',
+        'noopener'
+      )
+    },
+    [transactionHash, network]
+  )
 
   return (
     <ContextMenuItem onClick={handleViewTransaction}>
