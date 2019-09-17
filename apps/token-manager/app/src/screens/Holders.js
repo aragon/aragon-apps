@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useMemo, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
 import { useConnectedAccount } from '@aragon/api-react'
@@ -34,13 +34,18 @@ function Holders({
   tokenTransfersEnabled,
 }) {
   const connectedAccount = useConnectedAccount()
+  const mappedEntries = useMemo(
+    () => holders.map(({ address, balance }) => [address, balance]),
+    [holders]
+  )
+
   return (
     <Split
       primary={
         <DataView
           mode="table"
           fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
-          entries={holders.map(({ address, balance }) => [address, balance])}
+          entries={mappedEntries}
           renderEntry={([address, balance]) => {
             const isCurrentUser = addressesEqual(address, connectedAccount)
 
