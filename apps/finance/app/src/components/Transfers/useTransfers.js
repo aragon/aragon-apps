@@ -14,6 +14,24 @@ import { IdentityContext } from '../IdentityManager/IdentityManager'
 import { addressesEqual, toChecksumAddress } from '../../lib/web3-utils'
 import { formatTokenAmount } from '../../lib/utils'
 
+const SORT_OPTIONS = {
+  DATE: {
+    ASC: Symbol('date asc'),
+    DESC: Symbol('date desc'),
+  },
+  SOURCE_RECIPIENT: {
+    ASC: Symbol('source recipient asc'),
+    DESC: Symbol('source recipient desc'),
+  },
+  REFERENCE: {
+    ASC: Symbol('reference asc'),
+    DESC: Symbol('reference desc'),
+  },
+  AMOUNT: {
+    ASC: Symbol('amount asc'),
+    DESC: Symbol('amount desc'),
+  },
+}
 const UNSELECTED_TOKEN_FILTER = -1
 const UNSELECTED_TRANSFER_TYPE_FILTER = -1
 const INITIAL_DATE_RANGE = { start: null, end: null }
@@ -145,6 +163,50 @@ function useDownload({ filteredTransfers, tokenDetails, selectedDateRange }) {
   return { download }
 }
 
+function useSort(filteredTransfers) {
+  const [sort, setSort] = useState(SORT_OPTIONS.DATE.DESC)
+
+  const sortedTransfers = filteredTransfers.sort(
+    (
+      {
+        date: dateLeft,
+        reference: referenceLeft,
+        amount: amountLeft,
+        entity: entityLeft,
+      },
+      {
+        date: dateRight,
+        reference: referenceRight,
+        amount: amountRight,
+        entity: entityRight,
+      }
+    ) => {
+      switch (sort) {
+        case SORT_OPTIONS.SOURCE_RECIPIENT.ASC:
+          return entityRight.localeCompare(entityLeft)
+        case SORT_OPTIONS.SOURCE_RECIPIENT.DESC:
+          return entityLeft.localeCompare(entityRight)
+        case SORT_OPTIONS.AMOUNT.ASC:
+          return amountLeft.cmp(amountRight)
+        case SORT_OPTIONS.AMOUNT.DESC:
+          return amountRight.cmp(amountLeft)
+        case SORT_OPTIONS.REFERENCE.ASC:
+          return referenceLeft.localeCompare(referenceRight)
+        case SORT_OPTIONS.REFERENCE.DESC:
+          return referenceRight.localeCompare(referenceLeft)
+        case SORT_OPTIONS.DATE.ASC:
+          return compareDesc(dateRight, dateLeft)
+        case SORT_OPTIONS.DATE.DESC:
+          return compareDesc(dateLeft, dateRight)
+        default:
+      }
+    }
+  )
+  console.log('sorted: ', sortedTransfers, sort)
+
+  return { sortedTransfers, sort, setSort }
+}
+
 function useTransfers({ tokens, transactions }) {
   const [page, setPage] = useState(0)
   const [selectedToken, setSelectedToken] = useState(UNSELECTED_TOKEN_FILTER)
@@ -175,14 +237,7 @@ function useTransfers({ tokens, transactions }) {
     selectedDateRange,
   })
   const symbols = useMemo(() => tokens.map(({ symbol }) => symbol), [tokens])
-  const sortedTransfers = useMemo(
-    () =>
-      filteredTransfers.sort(({ date: dateLeft }, { date: dateRight }) =>
-        // Sort by date descending
-        compareDesc(dateLeft, dateRight)
-      ),
-    [filteredTransfers, compareDesc]
-  )
+  const { sortedTransfers, sort, setSort } = useSort(filteredTransfers)
 
   useEffect(() => {
     setPage(0)
@@ -207,10 +262,13 @@ function useTransfers({ tokens, transactions }) {
       [setSelectedTransferType]
     ),
     setPage,
+    setSort,
+    sort,
     sortedTransfers,
     symbols,
     tokenDetails,
   }
 }
 
+export { SORT_OPTIONS }
 export default useTransfers
