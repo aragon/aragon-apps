@@ -224,17 +224,15 @@ const ContextMenuItemCustomLabel = ({ entity }) => {
 
 const ContextMenuViewTransaction = ({ transactionHash, network }) => {
   const theme = useTheme()
-  const handleViewTransaction = useCallback(
-    () => {
-      window.open(
-        blockExplorerUrl('transaction', transactionHash, {
-          networkType: network.type,
-        }),
-        '_blank',
-        'noopener'
-      )
-    }, [transactionHash, network]
-  )
+  const handleViewTransaction = useCallback(() => {
+    window.open(
+      blockExplorerUrl('transaction', transactionHash, {
+        networkType: network.type,
+      }),
+      '_blank',
+      'noopener'
+    )
+  }, [transactionHash, network])
 
   return (
     <ContextMenuItem onClick={handleViewTransaction}>

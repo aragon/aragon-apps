@@ -82,14 +82,11 @@ function useFilterTransfers({
   setSelectedDateRange,
   setPage,
 }) {
-  const clearFilters = useCallback(
-    () => {
-      setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
-      setSelectedToken(UNSELECTED_TOKEN_FILTER)
-      setSelectedDateRange(INITIAL_DATE_RANGE)
-    },
-    [setSelectedTransferType, setSelectedToken, setSelectedDateRange]
-  )
+  const clearFilters = useCallback(() => {
+    setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
+    setSelectedToken(UNSELECTED_TOKEN_FILTER)
+    setSelectedDateRange(INITIAL_DATE_RANGE)
+  }, [setSelectedTransferType, setSelectedToken, setSelectedDateRange])
   const transferType = TRANSFER_TYPES[selectedTransferType]
   const filteredTransfers = useMemo(
     () =>
@@ -133,25 +130,18 @@ function useDownload({ filteredTransfers, tokenDetails, selectedDateRange }) {
   const currentApp = useCurrentApp()
   const toast = useToast()
   const { resolve } = useContext(IdentityContext)
-  const download = useCallback(
-    async () => {
-      if (!currentApp || !currentApp.appAddress) {
-        return
-      }
-      const data = await getDownloadData(
-        filteredTransfers,
-        tokenDetails,
-        resolve
-      )
-      const filename = getDownloadFilename(
-        currentApp.appAddress,
-        selectedDateRange
-      )
-      saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
-      toast('Transfers data exported')
-    },
-    [currentApp, filteredTransfers, tokenDetails, resolve]
-  )
+  const download = useCallback(async () => {
+    if (!currentApp || !currentApp.appAddress) {
+      return
+    }
+    const data = await getDownloadData(filteredTransfers, tokenDetails, resolve)
+    const filename = getDownloadFilename(
+      currentApp.appAddress,
+      selectedDateRange
+    )
+    saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
+    toast('Transfers data exported')
+  }, [currentApp, filteredTransfers, tokenDetails, resolve])
   return { download }
 }
 
@@ -194,12 +184,9 @@ function useTransfers({ tokens, transactions }) {
     [filteredTransfers, compareDesc]
   )
 
-  useEffect(
-    () => {
-      setPage(0)
-    },
-    [setPage, selectedToken, selectedTransferType, selectedDateRange]
-  )
+  useEffect(() => {
+    setPage(0)
+  }, [setPage, selectedToken, selectedTransferType, selectedDateRange])
 
   return {
     clearFilters,
