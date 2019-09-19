@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAragonApi } from '@aragon/api-react'
 import { Box, LoadingRing, GU, useTheme } from '@aragon/ui'
-import noTransfersPng from './assets/no-transfers.png'
+import noTransfersPng from '../assets/no-transfers.png'
 
 function EmptyTransactions() {
   const { appState } = useAragonApi()

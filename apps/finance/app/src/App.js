@@ -11,7 +11,7 @@ import {
 import { useAragonApi } from '@aragon/api-react'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
-import Transfers from './components/Transfers'
+import Transfers from './components/Transfers/Transfers'
 import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 

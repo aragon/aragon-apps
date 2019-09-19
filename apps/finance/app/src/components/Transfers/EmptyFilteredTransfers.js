@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link, GU, textStyle, useTheme } from '@aragon/ui'
-import noResultsPng from './assets/no-results.png'
+import noResultsPng from '../assets/no-results.png'
 
 function EmptyFilteredTransfers({ onClear }) {
   const theme = useTheme()
