@@ -3,10 +3,13 @@ import PropTypes from 'prop-types'
 import { format } from 'date-fns'
 import {
   Button,
+  ButtonBase,
   ContextMenu,
   ContextMenuItem,
   DataView,
   GU,
+  IconArrowDown,
+  IconArrowUp,
   IconLabel,
   IconExternal,
   IconToken,
@@ -24,7 +27,7 @@ import EmptyFilteredTransfers from './EmptyFilteredTransfers'
 import EmptyTransactions from './EmptyTransactions'
 import { useIdentity } from '../IdentityManager/IdentityManager'
 import LocalIdentityBadge from '../LocalIdentityBadge/LocalIdentityBadge'
-import useTransfers from './useTransfers'
+import useTransfers, { SORT_OPTIONS } from './useTransfers'
 
 const TRANSFER_TYPES = [
   TransferTypes.All,
@@ -40,17 +43,19 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   const network = useNetwork()
   const connectedAccount = useConnectedAccount()
   const {
-    emptyResultsViaFilters,
     clearFilters,
     download,
+    emptyResultsViaFilters,
     page,
     selectedDateRange,
-    setSelectedDateRange,
     selectedToken,
-    setSelectedToken,
     selectedTransferType,
-    setSelectedTransferType,
     setPage,
+    setSelectedDateRange,
+    setSelectedToken,
+    setSelectedTransferType,
+    setSort,
+    sort,
     sortedTransfers,
     symbols,
     tokenDetails,
@@ -119,10 +124,71 @@ const Transfers = React.memo(({ tokens, transactions }) => {
         emptyResultsViaFilters
           ? []
           : [
-              { label: 'Date', priority: 2 },
-              { label: 'Source/recipient', priority: 3 },
-              { label: 'Reference', priority: 1 },
-              { label: 'Amount', priority: 2 },
+              {
+                label: (
+                  <SortButton
+                    options={[SORT_OPTIONS.DATE.DESC, SORT_OPTIONS.DATE.ASC]}
+                    sort={sort}
+                    setSort={setSort}
+                    compactMode={compactMode}
+                  >
+                    Date
+                  </SortButton>
+                ),
+                priority: 2,
+                align: 'start',
+              },
+              {
+                label: (
+                  <SortButton
+                    options={[
+                      SORT_OPTIONS.SOURCE_RECIPIENT.DESC,
+                      SORT_OPTIONS.SOURCE_RECIPIENT.ASC,
+                    ]}
+                    sort={sort}
+                    setSort={setSort}
+                    compactMode={compactMode}
+                  >
+                    Source/recipient
+                  </SortButton>
+                ),
+                priority: 3,
+                align: 'start',
+              },
+              {
+                label: (
+                  <SortButton
+                    options={[
+                      SORT_OPTIONS.REFERENCE.DESC,
+                      SORT_OPTIONS.REFERENCE.ASC,
+                    ]}
+                    sort={sort}
+                    setSort={setSort}
+                    compactMode={compactMode}
+                  >
+                    Reference
+                  </SortButton>
+                ),
+                priority: 1,
+                align: 'start',
+              },
+              {
+                label: (
+                  <SortButton
+                    options={[
+                      SORT_OPTIONS.AMOUNT.DESC,
+                      SORT_OPTIONS.AMOUNT.ASC,
+                    ]}
+                    sort={sort}
+                    setSort={setSort}
+                    compactMode={compactMode}
+                  >
+                    Amount
+                  </SortButton>
+                ),
+                priority: 2,
+                align: 'start',
+              },
             ]
       }
       entries={sortedTransfers}
@@ -199,57 +265,107 @@ Transfers.propTypes = {
   transactions: PropTypes.array.isRequired,
 }
 
-const ContextMenuItemCustomLabel = ({ entity }) => {
-  const theme = useTheme()
-  const [label, showLocalIdentityModal] = useIdentity(entity)
-  const handleEditLabel = useCallback(() => showLocalIdentityModal(entity))
+const SortButton = React.memo(function SortButton({
+  children,
+  options,
+  sort,
+  setSort,
+  compactMode,
+}) {
+  const [desc, asc] = options
+  const handleClick = useCallback(() => {
+    if (sort === desc) {
+      setSort(asc)
+      return
+    }
+    setSort(desc)
+  }, [options, sort])
+
+  if (compactMode) {
+    return children
+  }
 
   return (
-    <ContextMenuItem onClick={handleEditLabel}>
-      <IconLabel
-        css={`
-          color: ${theme.surfaceContentSecondary};
-        `}
-      />
+    <ButtonBase
+      onClick={handleClick}
+      css={`
+        display: flex;
+        align-items: center;
+      `}
+    >
       <span
         css={`
-          margin-left: ${1 * GU}px;
+          margin-right: ${options.includes(sort) ? 1.5 : 0.5 * GU}px;
         `}
       >
-        {label ? 'Edit' : 'Add'} custom label
+        {children}
       </span>
-    </ContextMenuItem>
+      {options.includes(sort) ? (
+        sort === desc ? (
+          <IconArrowDown size="tiny" />
+        ) : (
+          <IconArrowUp size="tiny" />
+        )
+      ) : null}
+    </ButtonBase>
   )
-}
+})
 
-const ContextMenuViewTransaction = ({ transactionHash, network }) => {
-  const theme = useTheme()
-  const handleViewTransaction = useCallback(() => {
-    window.open(
-      blockExplorerUrl('transaction', transactionHash, {
-        networkType: network.type,
-      }),
-      '_blank',
-      'noopener'
+const ContextMenuItemCustomLabel = React.memo(
+  function ContextMenuItemCustomLabel({ entity }) {
+    const theme = useTheme()
+    const [label, showLocalIdentityModal] = useIdentity(entity)
+    const handleEditLabel = useCallback(() => showLocalIdentityModal(entity))
+
+    return (
+      <ContextMenuItem onClick={handleEditLabel}>
+        <IconLabel
+          css={`
+            color: ${theme.surfaceContentSecondary};
+          `}
+        />
+        <span
+          css={`
+            margin-left: ${1 * GU}px;
+          `}
+        >
+          {label ? 'Edit' : 'Add'} custom label
+        </span>
+      </ContextMenuItem>
     )
-  }, [transactionHash, network])
+  }
+)
 
-  return (
-    <ContextMenuItem onClick={handleViewTransaction}>
-      <IconToken
-        css={`
-          color: ${theme.surfaceContentSecondary};
-        `}
-      />
-      <span
-        css={`
-          margin-left: ${1 * GU}px;
-        `}
-      >
-        View transaction
-      </span>
-    </ContextMenuItem>
-  )
-}
+const ContextMenuViewTransaction = React.memo(
+  function ContextMenuViewTransaction({ transactionHash, network }) {
+    const theme = useTheme()
+    const handleViewTransaction = useCallback(() => {
+      window.open(
+        blockExplorerUrl('transaction', transactionHash, {
+          networkType: network.type,
+        }),
+        '_blank',
+        'noopener'
+      )
+    }, [transactionHash, network])
+
+    return (
+      <ContextMenuItem onClick={handleViewTransaction}>
+        <IconToken
+          css={`
+            color: ${theme.surfaceContentSecondary};
+          `}
+        />
+        <span
+          css={`
+            margin-left: ${1 * GU}px;
+          `}
+        >
+          View transaction
+        </span>
+      </ContextMenuItem>
+    )
+  }
+)
 
 export default Transfers
