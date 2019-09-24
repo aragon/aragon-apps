@@ -320,7 +320,12 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
 
     function _mint(address _receiver, uint256 _amount) internal {
         require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_BALANCE_INCREASE_NOT_ALLOWED);
+
+        // We check that, after minting, the total supply increases.
+        // Old MiniMeToken's overflow if totalSupply > 2 ** 128 - 1.
+        uint256 supplyBeforeMint = token.totalSupply();
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
+        require(token.totalSupply() > supplyBeforeMint, ERROR_BALANCE_INCREASE_NOT_ALLOWED);
     }
 
     function _isBalanceIncreaseAllowed(address _receiver, uint256 _inc) internal view returns (bool) {
