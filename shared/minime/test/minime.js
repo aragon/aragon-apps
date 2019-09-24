@@ -23,6 +23,13 @@ contract('MiniMeToken', accounts => {
     })
 
     context('create, destroy, and claim tokens', () => {
+        it('reverts when overflowing the token supply', async () => {
+          const maxUint128 = web3.toBigNumber(2).pow(128).minus(1)
+          const mintAmount = maxUint128.add(1) // Larger than max uint128
+
+          await assertRevert(token.generateTokens(accounts[1], mintAmount))
+        })
+
         it('should generate tokens', async () => {
             await token.generateTokens(accounts[1], 100)
             assert.equal(await token.totalSupply(), 100, 'total supply generated should be 100')
