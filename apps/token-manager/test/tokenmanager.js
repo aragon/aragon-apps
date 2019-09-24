@@ -118,6 +118,27 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         await assertRevert(token.send(1)) // transfer 1 wei to token contract
     })
 
+    it.only('reverts when overflowing the token supply', async () => {
+        await token.changeController(tokenManager.address)
+        await tokenManager.initialize(token.address, true, 0)
+
+        const supplyBefore = await token.totalSupply()
+        console.log(`supply before`, supplyBefore.toString())
+
+        const maxUint128 = web3.toBigNumber(2).pow(128).minus(1)
+        const mintAmount = maxUint128.add(1) // Larger than max uint128
+        console.log(`mint amount`, mintAmount.toString())
+        await tokenManager.issue(mintAmount)
+
+        const supplyAfter = await token.totalSupply()
+        console.log(`supply after`, supplyAfter.toString())
+
+        const deltaSupply = supplyAfter.minus(supplyBefore)
+        console.log(`delta supply`, deltaSupply.toString())
+
+        assert.deepEqual(deltaSupply, mintAmount)
+    })
+
     context('maximum tokens per address limit', async () => {
         const limit = 100
 
