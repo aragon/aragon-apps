@@ -457,7 +457,7 @@ contract MiniMeToken is Controlled {
     /// @param checkpoints The history of data being updated
     /// @param _value The new number of tokens
     function updateValueAtNow(Checkpoint[] storage checkpoints, uint _value) internal {
-        require(_value <= uint128(0) - 1);
+        require(_value <= uint128(-1));
 
         if ((checkpoints.length == 0) || (checkpoints[checkpoints.length - 1].fromBlock < block.number)) {
             Checkpoint storage newCheckPoint = checkpoints[checkpoints.length++];
