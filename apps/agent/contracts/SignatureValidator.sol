@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-// Inspired in https://github.com/horizon-games/multi-token-standard/blob/master/contracts/utils/SignatureValidator.sol
+// Inspired by https://github.com/horizon-games/multi-token-standard/blob/319740cf2a78b8816269ae49a09c537b3fd7303b/contracts/utils/SignatureValidator.sol
 // This should probably be moved into aOS: https://github.com/aragon/aragonOS/pull/442
 
 import "./standards/ERC1271.sol";
@@ -138,7 +138,7 @@ library SignatureValidator {
         return ret;
     }
 
-    // From: https://github.com/Arachnid/solidity-stringutils/blob/master/src/strings.sol
+    // From: https://github.com/Arachnid/solidity-stringutils/blob/01e955c1d6/src/strings.sol
     function memcpy(uint256 dest, uint256 src, uint256 len) private pure {
         // Copy word-length chunks while possible
         for (; len >= 32; len -= 32) {

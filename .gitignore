@@ -16,9 +16,9 @@ node_modules
 lerna-debug.log
 
 # truffle build artifacts
-*/**/abi
-*/**/build
-*/**/.DS_Store
+# Ignore only for first level to select just the contract build directories
+*/*/abi
+*/*/build
 
 # yarn
 yarn-error.log
@@ -26,3 +26,7 @@ yarn-error.log
 # Ignore lock files
 package-lock.json
 yarn.lock
+
+# Misc
+.DS_Store
+.cache

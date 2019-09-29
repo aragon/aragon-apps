@@ -16,4 +16,10 @@ module.exports = {
   },
   build: {},
   mocha: {},
+  solc: {
+    optimizer: {
+      enabled: true,
+      runs: 10000
+    }
+  },
 }

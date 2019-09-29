@@ -1,6 +1,7 @@
 import Aragon, { events } from '@aragon/api'
 import { addressesEqual } from './web3-utils'
 import voteSettings from './vote-settings'
+import { VOTE_ABSENT } from './vote-types'
 import { voteTypeFromContractEnum } from './vote-utils'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -74,7 +75,7 @@ retryEvery(() =>
 
 async function initialize(tokenAddr) {
   return app.store(
-    (state, { event, returnValues }) => {
+    (state, { blockNumber, event, returnValues, transactionHash }) => {
       const nextState = {
         ...state,
       }
@@ -89,7 +90,10 @@ async function initialize(tokenAddr) {
         case 'CastVote':
           return castVote(nextState, returnValues)
         case 'ExecuteVote':
-          return executeVote(nextState, returnValues)
+          return executeVote(nextState, returnValues, {
+            blockNumber,
+            transactionHash,
+          })
         case 'StartVote':
           return startVote(nextState, returnValues)
         default:
@@ -168,7 +172,7 @@ async function castVote(state, { voteId, voter }) {
   // If the connected account was the one who made the vote, update their voter status
   if (addressesEqual(connectedAccount, voter)) {
     // fetch vote state for the connected account for this voteId
-    const { voteType } = await getVoterState({
+    const { voteType } = await loadVoterState({
       connectedAccount,
       voteId,
     })
@@ -186,15 +190,24 @@ async function castVote(state, { voteId, voter }) {
   return updateState({ ...state, connectedAccountVotes }, voteId, transform)
 }
 
-async function executeVote(state, { voteId }) {
-  const transform = ({ data, ...vote }) => ({
+async function executeVote(
+  state,
+  { voteId },
+  { blockNumber, transactionHash }
+) {
+  const transform = async ({ data, ...vote }) => ({
     ...vote,
-    data: { ...data, executed: true },
+    data: {
+      ...data,
+      executed: true,
+      executionDate: await loadBlockTimestamp(blockNumber),
+      executionTransaction: transactionHash,
+    },
   })
   return updateState(state, voteId, transform)
 }
 
-async function startVote(state, { creator, metadata, voteId }) {
+async function startVote(state, { creator, metadata = '', voteId }) {
   return updateState(state, voteId, vote => ({
     ...vote,
     data: {
@@ -210,10 +223,38 @@ async function startVote(state, { creator, metadata, voteId }) {
  *       Helpers       *
  *                     *
  ***********************/
+
+async function updateState(state, voteId, transform) {
+  const { votes = [] } = state
+
+  return {
+    ...state,
+    votes: await updateVotes(votes, voteId, transform),
+  }
+}
+
+async function updateVotes(votes, voteId, transform) {
+  const voteIndex = votes.findIndex(vote => vote.voteId === voteId)
+
+  if (voteIndex === -1) {
+    // If we can't find it, load its data, perform the transformation, and concat
+    return votes.concat(
+      await transform({
+        voteId,
+        data: await loadVoteData(voteId),
+      })
+    )
+  } else {
+    const nextVotes = Array.from(votes)
+    nextVotes[voteIndex] = await transform(nextVotes[voteIndex])
+    return nextVotes
+  }
+}
+
 // Default votes to an empty array to prevent errors on initial load
 async function getAccountVotes({ connectedAccount, votes = [] }) {
   const connectedAccountVotes = await Promise.all(
-    votes.map(({ voteId }) => getVoterState({ connectedAccount, voteId }))
+    votes.map(({ voteId }) => loadVoterState({ connectedAccount, voteId }))
   )
     .then(voteStates =>
       voteStates.reduce((states, { voteId, voteType }) => {
@@ -226,7 +267,13 @@ async function getAccountVotes({ connectedAccount, votes = [] }) {
   return connectedAccountVotes
 }
 
-async function getVoterState({ connectedAccount, voteId }) {
+async function loadVoterState({ connectedAccount, voteId }) {
+  if (!connectedAccount) {
+    return {
+      voteId,
+      voteType: VOTE_ABSENT,
+    }
+  }
   // Wrap with retry in case the vote is somehow not present
   return retryEvery(() =>
     app
@@ -245,6 +292,9 @@ async function getVoterState({ connectedAccount, voteId }) {
 }
 
 async function loadVoteDescription(vote) {
+  vote.description = ''
+  vote.executionTargets = []
+
   if (!vote.script || vote.script === EMPTY_CALLSCRIPT) {
     return vote
   }
@@ -252,6 +302,8 @@ async function loadVoteDescription(vote) {
   try {
     const path = await app.describeScript(vote.script).toPromise()
 
+    // Get unique list of targets
+    vote.executionTargets = [...new Set(path.map(({ to }) => to))]
     vote.description = path
       ? path
           .map(step => {
@@ -284,33 +336,6 @@ function loadVoteData(voteId) {
   )
 }
 
-async function updateVotes(votes, voteId, transform) {
-  const voteIndex = votes.findIndex(vote => vote.voteId === voteId)
-
-  if (voteIndex === -1) {
-    // If we can't find it, load its data, perform the transformation, and concat
-    return votes.concat(
-      await transform({
-        voteId,
-        data: await loadVoteData(voteId),
-      })
-    )
-  } else {
-    const nextVotes = Array.from(votes)
-    nextVotes[voteIndex] = await transform(nextVotes[voteIndex])
-    return nextVotes
-  }
-}
-
-async function updateState(state, voteId, transform) {
-  const { votes = [] } = state
-
-  return {
-    ...state,
-    votes: await updateVotes(votes, voteId, transform),
-  }
-}
-
 function loadVoteSettings() {
   return Promise.all(
     voteSettings.map(([name, key, type = 'string']) =>
@@ -329,6 +354,12 @@ function loadVoteSettings() {
       // Return an empty object to try again later
       return {}
     })
+}
+
+async function loadBlockTimestamp(blockNumber) {
+  const { timestamp } = await app.web3Eth('getBlock', blockNumber).toPromise()
+  // Adjust for solidity time (s => ms)
+  return timestamp * 1000
 }
 
 // Apply transformations to a vote received from web3
@@ -354,7 +385,7 @@ function marshallVote({
     yea,
     // Like times, blocks should be safe to represent as real numbers
     snapshotBlock: parseInt(snapshotBlock, 10),
-    startDate: marshallDate(startDate, 10),
+    startDate: marshallDate(startDate),
   }
 }
 

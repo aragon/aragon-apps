@@ -1,12 +1,15 @@
-import styled from 'styled-components'
-import { Badge } from '@aragon/ui'
+import React from 'react'
+import { Tag, GU } from '@aragon/ui'
 
-const You = styled(Badge.Identity).attrs({
-  title: 'This is your Ethereum address',
-  children: 'you',
-})`
-  font-variant: small-caps;
-  margin-left: 10px;
-`
+const You = () => (
+  <Tag
+    css={`
+      margin-left: ${0.5 * GU}px;
+    `}
+    size="small"
+  >
+    you
+  </Tag>
+)
 
 export default You

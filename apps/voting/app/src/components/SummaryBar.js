@@ -1,35 +1,21 @@
 import React from 'react'
 import styled from 'styled-components'
-import { theme, springs } from '@aragon/ui'
+import { RADIUS, springs, useTheme } from '@aragon/ui'
 import { Spring, animated } from 'react-spring'
 
-class SummaryBar extends React.Component {
-  static defaultProps = {
-    show: true,
-    positiveSize: 0,
-    negativeSize: 0,
-    requiredSize: 0,
-    compact: false,
-  }
-  render() {
-    const {
-      positiveSize,
-      negativeSize,
-      requiredSize,
-      show,
-      compact,
-      ...props
-    } = this.props
-    return (
-      <Spring
-        from={{ progress: 0 }}
-        to={{ progress: Number(show) }}
-        config={springs.lazy}
-        native
-      >
-        {({ progress }) => (
-          <Main compact={compact} {...props}>
-            <CombinedBar>
+function SummaryBar({ positiveSize, negativeSize, requiredSize, ...props }) {
+  const theme = useTheme()
+  return (
+    <Spring
+      from={{ progress: 0 }}
+      to={{ progress: 1 }}
+      config={springs.lazy}
+      native
+    >
+      {({ progress }) => (
+        <Main {...props}>
+          <CombinedBar>
+            {!!positiveSize && (
               <BarPart
                 style={{
                   backgroundColor: theme.positive,
@@ -38,6 +24,8 @@ class SummaryBar extends React.Component {
                   ),
                 }}
               />
+            )}
+            {!!negativeSize && (
               <BarPart
                 style={{
                   backgroundColor: theme.negative,
@@ -49,44 +37,62 @@ class SummaryBar extends React.Component {
                   ),
                 }}
               />
-            </CombinedBar>
-            <RequiredSeparatorClip>
-              <RequiredSeparatorWrapper
-                style={{
-                  transform: progress.interpolate(
-                    v => `
-                      translate3d(${100 * requiredSize * v}%, 0, 0)
-                      scale3d(1, ${requiredSize > 0 ? v : 0}, 1)
-                    `
-                  ),
-                }}
-              >
-                <RequiredSeparator />
-              </RequiredSeparatorWrapper>
-            </RequiredSeparatorClip>
-          </Main>
-        )}
-      </Spring>
-    )
-  }
+            )}
+          </CombinedBar>
+          <RequiredSeparatorClip>
+            <RequiredSeparatorWrapper
+              style={{
+                transform: progress.interpolate(
+                  v => `
+                    translate3d(${100 * requiredSize * v}%, 0, 0)
+                    scale3d(1, ${requiredSize > 0 ? v : 0}, 1)
+                  `
+                ),
+              }}
+            >
+              <div
+                css={`
+                  height: 100%;
+                  border-left: 1px dashed ${theme.surfaceContent};
+                `}
+              />
+            </RequiredSeparatorWrapper>
+          </RequiredSeparatorClip>
+        </Main>
+      )}
+    </Spring>
+  )
+}
+
+SummaryBar.defaultProps = {
+  positiveSize: 0,
+  negativeSize: 0,
+  requiredSize: 0,
 }
 
 const Main = styled.div`
   position: relative;
   display: flex;
   align-items: center;
-  height: ${({ compact }) => (compact ? '30px' : '50px')};
-  margin: ${({ compact }) => (compact ? '0' : '10px 0')};
+  height: 25px;
 `
 
-const CombinedBar = styled.div`
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  height: 6px;
-  border-radius: 2px;
-  background: #edf3f6;
-`
+const CombinedBar = props => {
+  const theme = useTheme()
+  return (
+    <div
+      css={`
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        height: 6px;
+        border-radius: ${RADIUS}px;
+        background: ${theme.surfaceUnder};
+      `}
+      {...props}
+    />
+  )
+}
 
 const BarPart = styled(animated.div)`
   position: absolute;
@@ -109,11 +115,6 @@ const RequiredSeparatorClip = styled.div`
 
 const RequiredSeparatorWrapper = styled(animated.div)`
   height: 100%;
-`
-
-const RequiredSeparator = styled.div`
-  height: 100%;
-  border-left: 1px dashed #979797;
 `
 
 export default SummaryBar

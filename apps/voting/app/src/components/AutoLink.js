@@ -1,11 +1,9 @@
 import React from 'react'
 import Linkify from 'react-linkify'
-import { SafeLink } from '@aragon/ui'
+import { Link } from '@aragon/ui'
 
 const AutoLink = ({ children }) => (
-  <Linkify component={SafeLink} properties={{ target: '_blank' }}>
-    {children}
-  </Linkify>
+  <Linkify component={Link}>{children}</Linkify>
 )
 
 export default AutoLink

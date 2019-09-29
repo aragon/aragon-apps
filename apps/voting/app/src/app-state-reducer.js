@@ -42,9 +42,11 @@ function appStateReducer(state) {
             ...vote,
             data: {
               ...data,
+              executionDate: data.executionDate && new Date(data.executionDate),
               endDate: new Date(data.startDate + voteTime),
               minAcceptQuorum: new BN(data.minAcceptQuorum),
               nay: new BN(data.nay),
+              startDate: new Date(data.startDate),
               supportRequired: new BN(data.supportRequired),
               votingPower: new BN(data.votingPower),
               yea: new BN(data.yea),

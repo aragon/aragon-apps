@@ -7,36 +7,52 @@ import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBa
 // Render a text associated to a vote.
 // Usually vote.data.metadata and vote.data.description.
 const VoteText = React.memo(
-  ({ text = '' }) => {
+  ({ disabled, text = '' }) => {
     // If there is no text, the component doesn’t render anything.
     if (!text.trim()) {
       return null
     }
+    const TextComponent = disabled ? 'span' : AutoLink
 
     return (
-      <AutoLink>
-        {text.split('\n').map((line, i) => (
-          <React.Fragment key={i}>
-            {transformAddresses(line, (part, isAddress, index) =>
-              isAddress ? (
-                <span title={part} key={index}>
-                  {' '}
-                  <LocalIdentityBadge entity={part} compact />{' '}
-                </span>
-              ) : (
-                <span key={index}>{part}</span>
-              )
-            )}
-            <br />
-          </React.Fragment>
-        ))}
-      </AutoLink>
+      <TextComponent>
+        <span
+          css={`
+            a {
+              word-break: break-all;
+              white-space: normal;
+              text-align: left;
+            }
+          `}
+        >
+          {text.split('\n').map((line, i) => (
+            <React.Fragment key={i}>
+              {transformAddresses(line, (part, isAddress, index) =>
+                isAddress ? (
+                  <span title={part} key={index}>
+                    {' '}
+                    <LocalIdentityBadge
+                      badgeOnly={disabled}
+                      compact
+                      entity={part}
+                    />{' '}
+                  </span>
+                ) : (
+                  <span key={index}>{part}</span>
+                )
+              )}
+              <br />
+            </React.Fragment>
+          ))}
+        </span>
+      </TextComponent>
     )
   },
   (prevProps, nextProps) => prevProps.text === nextProps.text
 )
 
 VoteText.propTypes = {
+  disabled: PropTypes.bool,
   text: PropTypes.string,
 }
 
