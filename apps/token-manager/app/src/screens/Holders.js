@@ -11,6 +11,7 @@ import {
   IconRemove,
   Split,
   GU,
+  useLayout,
   useTheme,
 } from '@aragon/ui'
 import { formatBalance } from '../utils'
@@ -33,6 +34,8 @@ function Holders({
   tokenSymbol,
   tokenTransfersEnabled,
 }) {
+  const { layoutName } = useLayout()
+  const compact = layoutName === 'small'
   const connectedAccount = useConnectedAccount()
   const mappedEntries = useMemo(
     () => holders.map(({ address, balance }) => [address, balance]),
@@ -54,6 +57,7 @@ function Holders({
                 css={`
                   display: flex;
                   align-items: center;
+                  max-width: ${compact ? '50vw' : 'unset'};
                 `}
               >
                 <LocalIdentityBadge
