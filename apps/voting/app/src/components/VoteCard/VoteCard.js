@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import { Card, GU, IconCheck, Timer, textStyle, useTheme } from '@aragon/ui'
 import { noop } from '../../utils'
@@ -8,6 +8,18 @@ import VoteOptions from './VoteOptions'
 import VoteStatus from '../VoteStatus'
 import VoteText from '../VoteText'
 import You from '../You'
+
+function useHoverAnimation() {
+  const [animate, setAnimate] = useState(false)
+  const onMouseOver = () => {
+    setAnimate(true)
+  }
+  const onMouseOut = () => {
+    setAnimate(false)
+  }
+
+  return { animate, onMouseOver, onMouseOut }
+}
 
 const VoteCard = ({ vote, onOpen }) => {
   const theme = useTheme()
@@ -49,10 +61,13 @@ const VoteCard = ({ vote, onOpen }) => {
   const handleOpen = useCallback(() => {
     onOpen(voteId)
   }, [voteId, onOpen])
+  const { animate, onMouseOver, onMouseOut } = useHoverAnimation()
 
   return (
     <Card
       onClick={handleOpen}
+      onMouseOver={onMouseOver}
+      onMouseOut={onMouseOut}
       css={`
         display: grid;
         grid-template-columns: 100%;
@@ -75,22 +90,7 @@ const VoteCard = ({ vote, onOpen }) => {
           identifier={executionTargetData.identifier}
           label={executionTargetData.name}
         />
-        {youVoted && (
-          <div
-            css={`
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              width: 20px;
-              height: 20px;
-              border-radius: 50%;
-              background: ${theme.infoSurface.alpha(0.08)};
-              color: ${theme.info};
-            `}
-          >
-            <IconCheck size="tiny" />
-          </div>
-        )}
+        <AnimatedVoted youVoted={youVoted} animate={animate} />
       </div>
       <div
         css={`
@@ -125,6 +125,44 @@ const VoteCard = ({ vote, onOpen }) => {
 
 VoteCard.defaultProps = {
   onOpen: noop,
+}
+
+function AnimatedVoted({ youVoted, animate }) {
+  const theme = useTheme()
+
+  if (!youVoted) {
+    return null
+  }
+
+  return (
+    <div
+      css={`
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        background: ${theme.infoSurface.alpha(0.08)};
+        color: ${theme.info};
+      `}
+    >
+      <IconCheck size="tiny" />
+      <div
+        css={`
+          display: inline-block;
+          transition: ${animate
+            ? 'width 300ms ease-in-out, opacity 150ms 275ms ease-in'
+            : 'width 250ms ease-in-out 75ms, opacity 75ms ease-in'};
+          width: ${animate ? `${4.5 * GU}px` : 0};
+          opacity: ${Number(animate)};
+          ${textStyle('label3')};
+        `}
+      >
+        voted
+      </div>
+    </div>
+  )
 }
 
 const WrapVoteOption = styled.span`
