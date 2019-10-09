@@ -50,11 +50,10 @@ const App = React.memo(function App() {
 
   return (
     <React.Fragment>
-      <SyncIndicator visible={isSyncing} />
-      {!votes.length && (
+      {votes.length === 0 && (
         <div
           css={`
-            height: calc(100vh - ${8 * GU}px);
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -63,8 +62,9 @@ const App = React.memo(function App() {
           <NoVotes onNewVote={newVotePanel.requestOpen} isSyncing={isSyncing} />
         </div>
       )}
-      {!!votes.length && (
+      {votes.length > 0 && (
         <React.Fragment>
+          <SyncIndicator visible={isSyncing} />
           <Header
             primary="Voting"
             secondary={
