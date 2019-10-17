@@ -100,7 +100,8 @@ const VoteCard = ({ vote, onOpen }) => {
         css={`
           overflow: hidden;
           ${textStyle('body1')};
-          height: ${27 * 3}px; // 27px = line-height with body1
+          line-height: ${27}px; // 27px = line-height of textstyle('body1')
+          height: ${27 * 3}px; // 27px * 3 = line-height * 3 lines
           display: -webkit-box;
           -webkit-box-orient: vertical;
           -webkit-line-clamp: 3;
