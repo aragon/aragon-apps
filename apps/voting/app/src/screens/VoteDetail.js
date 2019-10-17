@@ -132,6 +132,13 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   <div
                     css={`
                       ${textStyle('body2')};
+
+                      // overflow-wrap:anywhere and hyphens:auto are not
+                      // supported yet by the latest versions of Webkit / Blink,
+                      // which is why word-break:break-word has been added.
+                      overflow-wrap: anywhere;
+                      hyphens: auto;
+                      word-break: break-word;
                     `}
                   >
                     <VoteText

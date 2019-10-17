@@ -16,35 +16,25 @@ const VoteText = React.memo(
 
     return (
       <TextComponent>
-        <span
-          css={`
-            a {
-              word-break: break-all;
-              white-space: normal;
-              text-align: left;
-            }
-          `}
-        >
-          {text.split('\n').map((line, i) => (
-            <React.Fragment key={i}>
-              {transformAddresses(line, (part, isAddress, index) =>
-                isAddress ? (
-                  <span title={part} key={index}>
-                    {' '}
-                    <LocalIdentityBadge
-                      badgeOnly={disabled}
-                      compact
-                      entity={part}
-                    />{' '}
-                  </span>
-                ) : (
-                  <span key={index}>{part}</span>
-                )
-              )}
-              <br />
-            </React.Fragment>
-          ))}
-        </span>
+        {text.split('\n').map((line, i) => (
+          <React.Fragment key={i}>
+            {transformAddresses(line, (part, isAddress, index) =>
+              isAddress ? (
+                <span title={part} key={index}>
+                  {' '}
+                  <LocalIdentityBadge
+                    badgeOnly={disabled}
+                    compact
+                    entity={part}
+                  />{' '}
+                </span>
+              ) : (
+                <span key={index}>{part}</span>
+              )
+            )}
+            <br />
+          </React.Fragment>
+        ))}
       </TextComponent>
     )
   },

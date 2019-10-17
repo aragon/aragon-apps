@@ -97,11 +97,18 @@ const VoteCard = ({ vote, onOpen }) => {
           ${textStyle('body1')};
           /* lines per font size per line height */
           /* shorter texts align to the top */
-          height: 84px;
+          height: ${10.5 * GU}px;
           display: -webkit-box;
           -webkit-box-orient: vertical;
           -webkit-line-clamp: 3;
           overflow: hidden;
+
+          // overflow-wrap:anywhere and hyphens:auto are not
+          // supported yet by the latest versions of Webkit / Blink,
+          // which is why word-break:break-word has been added.
+          hyphens: auto;
+          overflow-wrap: anywhere;
+          word-break: break-word;
         `}
       >
         <span css="font-weight: bold;">#{voteId}:</span>{' '}
