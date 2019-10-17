@@ -129,15 +129,12 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   >
                     Description
                   </h2>
-                  <div
+                  <VoteText
+                    text={description || metadata || DEFAULT_DESCRIPTION}
                     css={`
                       ${textStyle('body2')};
                     `}
-                  >
-                    <VoteText
-                      text={description || metadata || DEFAULT_DESCRIPTION}
-                    />
-                  </div>
+                  />
                 </div>
                 <div>
                   <h2
