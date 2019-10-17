@@ -81,8 +81,8 @@ const VoteCard = ({ vote, onOpen }) => {
               display: inline-flex;
               align-items: center;
               justify-content: center;
-              width: 20px;
-              height: 20px;
+              width: ${2.5 * GU}px;
+              height: ${2.5 * GU}px;
               border-radius: 50%;
               background: ${theme.infoSurface.alpha(0.08)};
               color: ${theme.info};
@@ -92,28 +92,20 @@ const VoteCard = ({ vote, onOpen }) => {
           </div>
         )}
       </div>
-      <div
+      <VoteText
+        disabled
+        prefix={<span css="font-weight: bold">#{voteId}: </span>}
+        text={description || metadata}
+        title={`#${voteId}: ${description || metadata}`}
         css={`
+          overflow: hidden;
           ${textStyle('body1')};
-          /* lines per font size per line height */
-          /* shorter texts align to the top */
-          height: ${10.5 * GU}px;
+          height: ${27 * 3}px; // 27px = line-height with body1
           display: -webkit-box;
           -webkit-box-orient: vertical;
           -webkit-line-clamp: 3;
-          overflow: hidden;
-
-          // overflow-wrap:anywhere and hyphens:auto are not
-          // supported yet by the latest versions of Webkit / Blink,
-          // which is why word-break:break-word has been added.
-          hyphens: auto;
-          overflow-wrap: anywhere;
-          word-break: break-word;
         `}
-      >
-        <span css="font-weight: bold;">#{voteId}:</span>{' '}
-        <VoteText disabled text={description || metadata} />
-      </div>
+      />
       <VoteOptions options={options} votingPower={votingPower} />
       <div
         css={`
