@@ -68,13 +68,15 @@ const VoteCard = ({ vote, onOpen }) => {
           margin-bottom: ${1 * GU}px;
         `}
       >
-        <LocalLabelAppBadge
-          badgeOnly
-          appAddress={executionTargetData.address}
-          iconSrc={executionTargetData.iconSrc}
-          identifier={executionTargetData.identifier}
-          label={executionTargetData.name}
-        />
+        {executionTargetData && (
+          <LocalLabelAppBadge
+            badgeOnly
+            appAddress={executionTargetData.address}
+            iconSrc={executionTargetData.iconSrc}
+            identifier={executionTargetData.identifier}
+            label={executionTargetData.name}
+          />
+        )}
         {youVoted && (
           <div
             css={`
