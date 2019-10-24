@@ -122,7 +122,6 @@ const getDownloadFilename = (appAddress, { start, end }) => {
 const Transfers = React.memo(({ tokens, transactions }) => {
   const connectedAccount = useConnectedAccount()
   const currentApp = useCurrentApp()
-  const network = useNetwork()
   const toast = useToast()
   const theme = useTheme()
   const { layoutName } = useLayout()
@@ -325,10 +324,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
       }}
       renderEntryActions={({ entity, transactionHash }) => (
         <ContextMenu zIndex={1}>
-          <ContextMenuViewTransaction
-            transactionHash={transactionHash}
-            network={network}
-          />
+          <ContextMenuViewTransaction transactionHash={transactionHash} />
           <ContextMenuItemCustomLabel entity={entity} />
         </ContextMenu>
       )}
@@ -364,10 +360,11 @@ const ContextMenuItemCustomLabel = ({ entity }) => {
   )
 }
 
-const ContextMenuViewTransaction = ({ transactionHash, network }) => {
+const ContextMenuViewTransaction = ({ transactionHash }) => {
   const theme = useTheme()
-  const handleViewTransaction = useCallback(
-    () => {
+  const network = useNetwork()
+  const handleViewTransaction = useCallback(() => {
+    if (network && network.type) {
       window.open(
         blockExplorerUrl('transaction', transactionHash, {
           networkType: network.type,
@@ -375,9 +372,8 @@ const ContextMenuViewTransaction = ({ transactionHash, network }) => {
         '_blank',
         'noopener'
       )
-    },
-    [transactionHash, network]
-  )
+    }
+  }, [transactionHash, network])
 
   return (
     <ContextMenuItem onClick={handleViewTransaction}>
