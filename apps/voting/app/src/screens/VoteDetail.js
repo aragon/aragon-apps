@@ -298,7 +298,7 @@ function Status({ vote }) {
       {executionTransaction && (
         <div>
           <TransactionBadge
-            networkType={network.type}
+            networkType={network && network.type}
             transaction={executionTransaction}
             css={`
               margin-top: ${1 * GU}px;

@@ -62,7 +62,7 @@ function InfoBoxes({
                 address={tokenAddress}
                 name={tokenName}
                 symbol={tokenSymbol}
-                networkType={network.type}
+                networkType={network && network.type}
               />,
             ],
           ].map(([label, content], index) => (
