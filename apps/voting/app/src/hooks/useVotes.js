@@ -49,7 +49,7 @@ function useDecoratedVotes() {
         }
       }
 
-      let executionTargetData = {}
+      let executionTargetData = null
       if (targetApp) {
         const { appAddress, icon, identifier, name } = targetApp
         executionTargetData = {
