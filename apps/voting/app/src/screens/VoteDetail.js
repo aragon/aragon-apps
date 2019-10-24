@@ -85,12 +85,14 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 justify-content: space-between;
               `}
             >
-              <LocalLabelAppBadge
-                appAddress={executionTargetData.address}
-                iconSrc={executionTargetData.iconSrc}
-                identifier={executionTargetData.identifier}
-                label={executionTargetData.name}
-              />
+              {executionTargetData && (
+                <LocalLabelAppBadge
+                  appAddress={executionTargetData.address}
+                  iconSrc={executionTargetData.iconSrc}
+                  identifier={executionTargetData.identifier}
+                  label={executionTargetData.name}
+                />
+              )}
               {youVoted && (
                 <Tag icon={<IconCheck size="small" />} label="Voted" />
               )}

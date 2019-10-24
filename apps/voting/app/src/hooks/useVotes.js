@@ -5,12 +5,6 @@ import { VOTE_ABSENT } from '../vote-types'
 import { EMPTY_ADDRESS } from '../web3-utils'
 import useNow from './useNow'
 
-// Temporary fix to make sure executionTargets always returns an array, until
-// we find out the reason why it can sometimes be missing in the cached data.
-function getVoteExecutionTargets(vote) {
-  return vote.data.executionTargets || []
-}
-
 // Decorate the votes array with more information relevant to the frontend
 function useDecoratedVotes() {
   const { votes, connectedAccountVotes } = useAppState()
@@ -22,10 +16,14 @@ function useDecoratedVotes() {
       return [[], []]
     }
     const decoratedVotes = votes.map((vote, i) => {
-      const executionTargets = getVoteExecutionTargets(vote)
+      const executionTargets = vote.data.executionTargets
 
       let targetApp
-      if (!executionTargets.length) {
+      if (!executionTargets) {
+        console.warn(
+          `Voting: vote #${vote.voteId} does not list any execution targets. The app's cache is likely corrupted and needs to be reset.`
+        )
+      } else if (!executionTargets.length) {
         // If there's no execution target, consider it targetting this Voting app
         targetApp = {
           ...currentApp,
@@ -46,19 +44,19 @@ function useDecoratedVotes() {
         if (!targetApp) {
           targetApp = {
             appAddress: targetAddress,
-            icon: () => null,
             name: 'External',
           }
         }
       }
 
-      let executionTargetData = {}
+      let executionTargetData = null
       if (targetApp) {
         const { appAddress, icon, identifier, name } = targetApp
         executionTargetData = {
           address: appAddress,
           name,
-          iconSrc: icon(24),
+          // Only try to get the icon if it's available
+          iconSrc: typeof icon === 'function' ? icon(24) : null,
           identifier,
         }
       }
@@ -74,7 +72,7 @@ function useDecoratedVotes() {
     const executionTargets = installedApps
       .filter(app =>
         votes.some(vote =>
-          getVoteExecutionTargets(vote).includes(app.appAddress)
+          (vote.data.executionTargets || []).includes(app.appAddress)
         )
       )
       .map(({ appAddress, identifier, name }) => ({
