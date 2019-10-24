@@ -5,7 +5,6 @@ import {
   IconPlus,
   Main,
   SyncIndicator,
-  GU,
   useLayout,
 } from '@aragon/ui'
 import NewVotePanel from './components/NewVotePanel'

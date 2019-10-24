@@ -39,7 +39,7 @@ export function useCreateVoteAction(onDone = noop) {
     question => {
       if (api) {
         // Don't care about response
-        api.newVote(EMPTY_CALLSCRIPT, question).toPromise()
+        api['newVote(bytes,string)'](EMPTY_CALLSCRIPT, question).toPromise()
         onDone()
       }
     },
