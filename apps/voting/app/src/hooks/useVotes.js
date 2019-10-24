@@ -34,7 +34,6 @@ function useDecoratedVotes() {
         // If there's multiple targets, make a "multiple" version
         targetApp = {
           appAddress: EMPTY_ADDRESS,
-          icon: () => null,
           name: 'Multiple',
         }
       } else {
@@ -45,7 +44,6 @@ function useDecoratedVotes() {
         if (!targetApp) {
           targetApp = {
             appAddress: targetAddress,
-            icon: () => null,
             name: 'External',
           }
         }
@@ -57,14 +55,8 @@ function useDecoratedVotes() {
         executionTargetData = {
           address: appAddress,
           name,
-
-          // This check ensures icon() only gets called if it actually exists,
-          // as users were reporting a crash happening in some cases. The
-          // problem seems to come from the multiple targets condition that
-          // was not including icon(), but this ensures it won’t crash anymore,
-          // until we can 100% reproduce the issue.
+          // Only try to get the icon if it's available
           iconSrc: typeof icon === 'function' ? icon(24) : null,
-
           identifier,
         }
       }
