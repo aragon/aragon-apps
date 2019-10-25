@@ -27,9 +27,11 @@ const App = React.memo(function App() {
     selectVote,
     votes,
   } = useAppLogic()
+
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
   const handleBack = useCallback(() => selectVote(-1), [selectVote])
+
   const {
     filteredVotes,
     voteStatusFilter,
