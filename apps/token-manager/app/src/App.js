@@ -131,7 +131,6 @@ class App extends React.PureComponent {
                     align-items: center;
                     flex: 1 1 auto;
                     width: 0;
-                    align-items: center;
                   `}
                 >
                   <h1
