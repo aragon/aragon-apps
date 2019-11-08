@@ -1,27 +1,15 @@
 import React, { useState, useCallback, useMemo } from 'react'
-import styled from 'styled-components'
-import { Card, GU, IconCheck, Timer, textStyle, useTheme } from '@aragon/ui'
+import { Card, GU, Timer, textStyle, useTheme } from '@aragon/ui'
 import { noop } from '../../utils'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 import LocalLabelAppBadge from '..//LocalIdentityBadge/LocalLabelAppBadge'
 import VoteOptions from './VoteOptions'
+import VotedIndicator from './VotedIndicator'
 import VoteStatus from '../VoteStatus'
 import VoteText from '../VoteText'
 import You from '../You'
 
-function useAnimation() {
-  const [animate, setAnimate] = useState(false)
-  const onStartAnimation = () => {
-    setAnimate(true)
-  }
-  const onExitAnimation = () => {
-    setAnimate(false)
-  }
-
-  return { animate, onStartAnimation, onExitAnimation }
-}
-
-const VoteCard = ({ vote, onOpen }) => {
+function VoteCard({ vote, onOpen }) {
   const theme = useTheme()
   const {
     connectedAccountVote,
@@ -56,18 +44,21 @@ const VoteCard = ({ vote, onOpen }) => {
     ],
     [yea, nay, theme, connectedAccountVote]
   )
-  const youVoted =
+  const hasConnectedAccountVoted =
     connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
+
   const handleOpen = useCallback(() => {
     onOpen(voteId)
   }, [voteId, onOpen])
-  const { animate, onStartAnimation, onExitAnimation } = useAnimation()
+
+  // “highlighted” means either focused or hovered
+  const [highlighted, setHighlighted] = useState(false)
 
   return (
     <Card
       onClick={handleOpen}
-      onMouseOver={onStartAnimation}
-      onMouseOut={onExitAnimation}
+      onMouseEnter={() => setHighlighted(true)}
+      onMouseLeave={() => setHighlighted(false)}
       css={`
         display: grid;
         grid-template-columns: 100%;
@@ -92,7 +83,7 @@ const VoteCard = ({ vote, onOpen }) => {
             label={executionTargetData.name}
           />
         )}
-        {youVoted && <VotedIndicator animate={animate} />}
+        {hasConnectedAccountVoted && <VotedIndicator expand={highlighted} />}
       </div>
       <VoteText
         disabled
@@ -129,45 +120,18 @@ VoteCard.defaultProps = {
   onOpen: noop,
 }
 
-function VotedIndicator({ animate }) {
-  const theme = useTheme()
-
+function WrapVoteOption(props) {
   return (
-    <div
+    <span
       css={`
-        display: inline-flex;
+        display: flex;
         align-items: center;
-        justify-content: center;
-        min-width: ${2.5 * GU}px;
-        height: ${2.5 * GU}px;
-        border-radius: 50%;
-        background: ${theme.infoSurface.alpha(0.08)};
-        color: ${theme.info};
+        text-transform: uppercase;
+        ${textStyle('label2')};
       `}
-    >
-      <IconCheck size="tiny" />
-      <div
-        css={`
-          display: inline-block;
-          transition: ${animate
-            ? 'width 300ms ease-in-out, opacity 150ms 275ms ease-in'
-            : 'width 250ms ease-in-out 75ms, opacity 75ms ease-in'};
-          width: ${animate ? `${4.5 * GU}px` : 0};
-          opacity: ${Number(animate)};
-          ${textStyle('label3')};
-        `}
-      >
-        voted
-      </div>
-    </div>
+      {...props}
+    />
   )
 }
-
-const WrapVoteOption = styled.span`
-  display: flex;
-  align-items: center;
-  text-transform: uppercase;
-  ${textStyle('label2')};
-`
 
 export default VoteCard
