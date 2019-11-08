@@ -11,6 +11,9 @@ const VOTE_ID_PATH_RE = /^\/vote\/([0-9]+)\/?$/
 const NO_VOTE_ID = '-1'
 
 function voteIdFromPath(path) {
+  if (!path) {
+    return NO_VOTE_ID
+  }
   const matches = path.match(VOTE_ID_PATH_RE)
   return matches ? matches[1] : NO_VOTE_ID
 }
@@ -22,7 +25,7 @@ export function useSelectedVote(votes) {
 
   // The memoized vote currently selected.
   const selectedVote = useMemo(() => {
-    const voteId = path ? voteIdFromPath(path) : NO_VOTE_ID
+    const voteId = voteIdFromPath(path)
 
     // The `ready` check prevents a vote to be
     // selected until the app state is fully ready.
