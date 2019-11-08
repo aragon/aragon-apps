@@ -9,16 +9,16 @@ import VoteStatus from '../VoteStatus'
 import VoteText from '../VoteText'
 import You from '../You'
 
-function useHoverAnimation() {
+function useAnimation() {
   const [animate, setAnimate] = useState(false)
-  const onMouseOver = () => {
+  const onStartAnimation = () => {
     setAnimate(true)
   }
-  const onMouseOut = () => {
+  const onExitAnimation = () => {
     setAnimate(false)
   }
 
-  return { animate, onMouseOver, onMouseOut }
+  return { animate, onStartAnimation, onExitAnimation }
 }
 
 const VoteCard = ({ vote, onOpen }) => {
@@ -61,13 +61,13 @@ const VoteCard = ({ vote, onOpen }) => {
   const handleOpen = useCallback(() => {
     onOpen(voteId)
   }, [voteId, onOpen])
-  const { animate, onMouseOver, onMouseOut } = useHoverAnimation()
+  const { animate, onStartAnimation, onExitAnimation } = useAnimation()
 
   return (
     <Card
       onClick={handleOpen}
-      onMouseOver={onMouseOver}
-      onMouseOut={onMouseOut}
+      onMouseOver={onStartAnimation}
+      onMouseOut={onExitAnimation}
       css={`
         display: grid;
         grid-template-columns: 100%;
