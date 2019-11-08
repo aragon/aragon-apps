@@ -83,30 +83,32 @@ const VoteCard = ({ vote, onOpen }) => {
           margin-bottom: ${1 * GU}px;
         `}
       >
-        <LocalLabelAppBadge
-          badgeOnly
-          appAddress={executionTargetData.address}
-          iconSrc={executionTargetData.iconSrc}
-          identifier={executionTargetData.identifier}
-          label={executionTargetData.name}
-        />
+        {executionTargetData && (
+          <LocalLabelAppBadge
+            badgeOnly
+            appAddress={executionTargetData.address}
+            iconSrc={executionTargetData.iconSrc}
+            identifier={executionTargetData.identifier}
+            label={executionTargetData.name}
+          />
+        )}
         <AnimatedVoted youVoted={youVoted} animate={animate} />
       </div>
-      <div
+      <VoteText
+        disabled
+        prefix={<span css="font-weight: bold">#{voteId}: </span>}
+        text={description || metadata}
+        title={`#${voteId}: ${description || metadata}`}
         css={`
+          overflow: hidden;
           ${textStyle('body1')};
-          /* lines per font size per line height */
-          /* shorter texts align to the top */
-          height: 84px;
+          line-height: ${27}px; // 27px = line-height of textstyle('body1')
+          height: ${27 * 3}px; // 27px * 3 = line-height * 3 lines
           display: -webkit-box;
           -webkit-box-orient: vertical;
           -webkit-line-clamp: 3;
-          overflow: hidden;
         `}
-      >
-        <span css="font-weight: bold;">#{voteId}:</span>{' '}
-        <VoteText disabled text={description || metadata} />
-      </div>
+      />
       <VoteOptions options={options} votingPower={votingPower} />
       <div
         css={`

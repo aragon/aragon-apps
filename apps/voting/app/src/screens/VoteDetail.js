@@ -85,12 +85,14 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 justify-content: space-between;
               `}
             >
-              <LocalLabelAppBadge
-                appAddress={executionTargetData.address}
-                iconSrc={executionTargetData.iconSrc}
-                identifier={executionTargetData.identifier}
-                label={executionTargetData.name}
-              />
+              {executionTargetData && (
+                <LocalLabelAppBadge
+                  appAddress={executionTargetData.address}
+                  iconSrc={executionTargetData.iconSrc}
+                  identifier={executionTargetData.identifier}
+                  label={executionTargetData.name}
+                />
+              )}
               {youVoted && (
                 <Tag icon={<IconCheck size="small" />} label="Voted" />
               )}
@@ -129,15 +131,12 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   >
                     Description
                   </h2>
-                  <div
+                  <VoteText
+                    text={description || metadata || DEFAULT_DESCRIPTION}
                     css={`
                       ${textStyle('body2')};
                     `}
-                  >
-                    <VoteText
-                      text={description || metadata || DEFAULT_DESCRIPTION}
-                    />
-                  </div>
+                  />
                 </div>
                 <div>
                   <h2
@@ -299,7 +298,7 @@ function Status({ vote }) {
       {executionTransaction && (
         <div>
           <TransactionBadge
-            networkType={network.type}
+            networkType={network && network.type}
             transaction={executionTransaction}
             css={`
               margin-top: ${1 * GU}px;

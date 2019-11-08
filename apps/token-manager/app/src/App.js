@@ -129,6 +129,8 @@ class App extends React.PureComponent {
                   css={`
                     display: flex;
                     align-items: center;
+                    flex: 1 1 auto;
+                    width: 0;
                   `}
                 >
                   <h1
@@ -136,13 +138,19 @@ class App extends React.PureComponent {
                       ${textStyle(
                         layoutName === 'small' ? 'title3' : 'title2'
                       )};
-                      color: ${theme.content};
+                      flex: 0 1 auto;
+                      overflow: hidden;
+                      text-overflow: ellipsis;
+                      white-space: nowrap;
                       margin-right: ${1 * GU}px;
+                      color: ${theme.content};
                     `}
                   >
                     Tokens
                   </h1>
-                  {tokenSymbol && <Tag mode="identifier">{tokenSymbol}</Tag>}
+                  <div css="flex-shrink: 0">
+                    {tokenSymbol && <Tag mode="identifier">{tokenSymbol}</Tag>}
+                  </div>
                 </div>
               }
               secondary={

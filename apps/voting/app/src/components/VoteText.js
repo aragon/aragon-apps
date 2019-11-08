@@ -7,26 +7,31 @@ import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBa
 // Render a text associated to a vote.
 // Usually vote.data.metadata and vote.data.description.
 const VoteText = React.memo(
-  ({ disabled, text = '' }) => {
+  function VoteText({ disabled, text, prefix, ...props }) {
     // If there is no text, the component doesn’t render anything.
     if (!text.trim()) {
       return null
     }
+
     const TextComponent = disabled ? 'span' : AutoLink
 
     return (
-      <TextComponent>
-        <span
-          css={`
-            a {
-              word-break: break-all;
-              white-space: normal;
-              text-align: left;
-            }
-          `}
-        >
+      <div
+        {...props}
+        css={`
+          // overflow-wrap:anywhere and hyphens:auto are not supported yet by
+          // the latest versions of Webkit / Blink (as of October 2019), which
+          // is why word-break:break-word has been added here.
+          hyphens: auto;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        `}
+      >
+        {prefix}
+        <TextComponent>
           {text.split('\n').map((line, i) => (
             <React.Fragment key={i}>
+              {i > 0 && <br />}
               {transformAddresses(line, (part, isAddress, index) =>
                 isAddress ? (
                   <span title={part} key={index}>
@@ -41,11 +46,10 @@ const VoteText = React.memo(
                   <span key={index}>{part}</span>
                 )
               )}
-              <br />
             </React.Fragment>
           ))}
-        </span>
-      </TextComponent>
+        </TextComponent>
+      </div>
     )
   },
   (prevProps, nextProps) => prevProps.text === nextProps.text
@@ -54,6 +58,11 @@ const VoteText = React.memo(
 VoteText.propTypes = {
   disabled: PropTypes.bool,
   text: PropTypes.string,
+  prefix: PropTypes.node,
+}
+
+VoteText.defaultProps = {
+  text: '',
 }
 
 export default VoteText

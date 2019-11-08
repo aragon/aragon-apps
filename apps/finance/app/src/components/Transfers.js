@@ -122,7 +122,6 @@ const getDownloadFilename = (appAddress, { start, end }) => {
 const Transfers = React.memo(({ tokens, transactions }) => {
   const connectedAccount = useConnectedAccount()
   const currentApp = useCurrentApp()
-  const network = useNetwork()
   const toast = useToast()
   const theme = useTheme()
   const { layoutName } = useLayout()
@@ -151,15 +150,12 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     },
     [setPage, setSelectedTransferType]
   )
-  const handleClearFilters = useCallback(
-    () => {
-      setPage(0)
-      setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
-      setSelectedToken(UNSELECTED_TOKEN_FILTER)
-      setSelectedDateRange(INITIAL_DATE_RANGE)
-    },
-    [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange]
-  )
+  const handleClearFilters = useCallback(() => {
+    setPage(0)
+    setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
+    setSelectedToken(UNSELECTED_TOKEN_FILTER)
+    setSelectedDateRange(INITIAL_DATE_RANGE)
+  }, [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange])
   const filteredTransfers = getFilteredTransfers({
     transactions,
     selectedToken: selectedToken > 0 ? tokens[selectedToken - 1] : null,
@@ -169,26 +165,23 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   const symbols = tokens.map(({ symbol }) => symbol)
   const tokenDetails = tokens.reduce(getTokenDetails, {})
   const { resolve: resolveAddress } = React.useContext(IdentityContext)
-  const handleDownload = useCallback(
-    async () => {
-      if (!currentApp || !currentApp.appAddress) {
-        return
-      }
+  const handleDownload = useCallback(async () => {
+    if (!currentApp || !currentApp.appAddress) {
+      return
+    }
 
-      const data = await getDownloadData(
-        filteredTransfers,
-        tokenDetails,
-        resolveAddress
-      )
-      const filename = getDownloadFilename(
-        currentApp.appAddress,
-        selectedDateRange
-      )
-      saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
-      toast('Transfers data exported')
-    },
-    [currentApp, filteredTransfers, tokenDetails, resolveAddress]
-  )
+    const data = await getDownloadData(
+      filteredTransfers,
+      tokenDetails,
+      resolveAddress
+    )
+    const filename = getDownloadFilename(
+      currentApp.appAddress,
+      selectedDateRange
+    )
+    saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
+    toast('Transfers data exported')
+  }, [currentApp, filteredTransfers, tokenDetails, resolveAddress])
   const emptyResultsViaFilters =
     !filteredTransfers.length &&
     (selectedToken !== 0 ||
@@ -331,10 +324,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
       }}
       renderEntryActions={({ entity, transactionHash }) => (
         <ContextMenu zIndex={1}>
-          <ContextMenuViewTransaction
-            transactionHash={transactionHash}
-            network={network}
-          />
+          <ContextMenuViewTransaction transactionHash={transactionHash} />
           <ContextMenuItemCustomLabel entity={entity} />
         </ContextMenu>
       )}
@@ -370,10 +360,11 @@ const ContextMenuItemCustomLabel = ({ entity }) => {
   )
 }
 
-const ContextMenuViewTransaction = ({ transactionHash, network }) => {
+const ContextMenuViewTransaction = ({ transactionHash }) => {
   const theme = useTheme()
-  const handleViewTransaction = useCallback(
-    () => {
+  const network = useNetwork()
+  const handleViewTransaction = useCallback(() => {
+    if (network && network.type) {
       window.open(
         blockExplorerUrl('transaction', transactionHash, {
           networkType: network.type,
@@ -381,9 +372,8 @@ const ContextMenuViewTransaction = ({ transactionHash, network }) => {
         '_blank',
         'noopener'
       )
-    },
-    [transactionHash, network]
-  )
+    }
+  }, [transactionHash, network])
 
   return (
     <ContextMenuItem onClick={handleViewTransaction}>
