@@ -92,7 +92,7 @@ const VoteCard = ({ vote, onOpen }) => {
             label={executionTargetData.name}
           />
         )}
-        <AnimatedVoted youVoted={youVoted} animate={animate} />
+        {youVoted && <VotedIndicator animate={animate} />}
       </div>
       <VoteText
         disabled
@@ -129,12 +129,8 @@ VoteCard.defaultProps = {
   onOpen: noop,
 }
 
-function AnimatedVoted({ youVoted, animate }) {
+function VotedIndicator({ animate }) {
   const theme = useTheme()
-
-  if (!youVoted) {
-    return null
-  }
 
   return (
     <div
@@ -142,9 +138,9 @@ function AnimatedVoted({ youVoted, animate }) {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: 20px;
-        height: 20px;
-        border-radius: 10px;
+        min-width: ${2.5 * GU}px;
+        height: ${2.5 * GU}px;
+        border-radius: 50%;
         background: ${theme.infoSurface.alpha(0.08)};
         color: ${theme.info};
       `}
