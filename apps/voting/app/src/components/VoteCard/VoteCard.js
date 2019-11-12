@@ -1,15 +1,15 @@
-import React, { useCallback, useMemo } from 'react'
-import styled from 'styled-components'
-import { Card, GU, IconCheck, Timer, textStyle, useTheme } from '@aragon/ui'
+import React, { useState, useCallback, useMemo } from 'react'
+import { Card, GU, Timer, textStyle, useTheme } from '@aragon/ui'
 import { noop } from '../../utils'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 import LocalLabelAppBadge from '..//LocalIdentityBadge/LocalLabelAppBadge'
 import VoteOptions from './VoteOptions'
+import VotedIndicator from './VotedIndicator'
 import VoteStatus from '../VoteStatus'
 import VoteText from '../VoteText'
 import You from '../You'
 
-const VoteCard = ({ vote, onOpen }) => {
+function VoteCard({ vote, onOpen }) {
   const theme = useTheme()
   const {
     connectedAccountVote,
@@ -44,15 +44,21 @@ const VoteCard = ({ vote, onOpen }) => {
     ],
     [yea, nay, theme, connectedAccountVote]
   )
-  const youVoted =
+  const hasConnectedAccountVoted =
     connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
+
   const handleOpen = useCallback(() => {
     onOpen(voteId)
   }, [voteId, onOpen])
 
+  // “highlighted” means either focused or hovered
+  const [highlighted, setHighlighted] = useState(false)
+
   return (
     <Card
       onClick={handleOpen}
+      onMouseEnter={() => setHighlighted(true)}
+      onMouseLeave={() => setHighlighted(false)}
       css={`
         display: grid;
         grid-template-columns: 100%;
@@ -77,22 +83,7 @@ const VoteCard = ({ vote, onOpen }) => {
             label={executionTargetData.name}
           />
         )}
-        {youVoted && (
-          <div
-            css={`
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              width: ${2.5 * GU}px;
-              height: ${2.5 * GU}px;
-              border-radius: 50%;
-              background: ${theme.infoSurface.alpha(0.08)};
-              color: ${theme.info};
-            `}
-          >
-            <IconCheck size="tiny" />
-          </div>
-        )}
+        {hasConnectedAccountVoted && <VotedIndicator expand={highlighted} />}
       </div>
       <VoteText
         disabled
@@ -129,11 +120,18 @@ VoteCard.defaultProps = {
   onOpen: noop,
 }
 
-const WrapVoteOption = styled.span`
-  display: flex;
-  align-items: center;
-  text-transform: uppercase;
-  ${textStyle('label2')};
-`
+function WrapVoteOption(props) {
+  return (
+    <span
+      css={`
+        display: flex;
+        align-items: center;
+        text-transform: uppercase;
+        ${textStyle('label2')};
+      `}
+      {...props}
+    />
+  )
+}
 
 export default VoteCard
