@@ -50,6 +50,8 @@ function VoteCard({ vote, onOpen }) {
   const handleOpen = useCallback(() => {
     onOpen(voteId)
   }, [voteId, onOpen])
+  const handleStartHighlight = useCallback(() => setHighlighted(true), [])
+  const handleEndHighlight = useCallback(() => setHighlighted(false), [])
 
   // “highlighted” means either focused or hovered
   const [highlighted, setHighlighted] = useState(false)
@@ -57,8 +59,10 @@ function VoteCard({ vote, onOpen }) {
   return (
     <Card
       onClick={handleOpen}
-      onMouseEnter={() => setHighlighted(true)}
-      onMouseLeave={() => setHighlighted(false)}
+      onMouseEnter={handleStartHighlight}
+      onMouseLeave={handleEndHighlight}
+      onFocus={handleStartHighlight}
+      onBlur={handleEndHighlight}
       css={`
         display: grid;
         grid-template-columns: 100%;
