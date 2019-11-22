@@ -128,6 +128,7 @@ class Balances extends React.Component {
                     `}
                   >
                     <BalanceToken
+                      address={address}
                       amount={amount}
                       compact={compactMode}
                       convertedAmount={convertedAmount}

@@ -22,7 +22,7 @@ import tokenSymbolAbi from '../../abi/token-symbol.json'
 import { fromDecimals, toDecimals } from '../../lib/math-utils'
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
-  tokenDataFallback,
+  tokenDataOverride,
   getTokenSymbol,
 } from '../../lib/token-utils'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
@@ -161,36 +161,32 @@ class Deposit extends React.Component {
       .toPromise()
       .catch(() => '-1')
 
-    const decimalsFallback =
-      tokenDataFallback(address, 'decimals', network.type) || '0'
-    const symbolFallback =
-      tokenDataFallback(address, 'symbol', network.type) || ''
-
-    const tokenData = {
-      userBalance,
-      decimals: parseInt(decimalsFallback, 10),
-      loading: false,
-      symbol: symbolFallback,
+    const fetchSymbol = async () => {
+      const override = tokenDataOverride(address, 'symbol', network.type)
+      return override || getTokenSymbol(api, address).catch(() => '')
+    }
+    const fetchDecimals = async () => {
+      const override = tokenDataOverride(address, 'decimals', network.type)
+      const decimals =
+        override ||
+        (await token
+          .decimals()
+          .toPromise()
+          .catch(() => '0'))
+      return parseInt(decimals, 10)
     }
 
     const [tokenSymbol, tokenDecimals] = await Promise.all([
-      getTokenSymbol(api, address).catch(() => ''),
-      token
-        .decimals()
-        .toPromise()
-        .then(decimals => parseInt(decimals, 10))
-        .catch(() => ''),
+      fetchSymbol(),
+      fetchDecimals(),
     ])
 
-    // If symbol or decimals are resolved, overwrite the fallbacks
-    if (tokenSymbol) {
-      tokenData.symbol = tokenSymbol
+    return {
+      userBalance,
+      decimals: tokenDecimals,
+      loading: false,
+      symbol: tokenSymbol,
     }
-    if (tokenDecimals) {
-      tokenData.decimals = tokenDecimals
-    }
-
-    return tokenData
   }
   validateInputs({ amount, selectedToken } = {}) {
     if (
