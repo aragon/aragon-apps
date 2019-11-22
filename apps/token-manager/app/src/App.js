@@ -191,12 +191,13 @@ class App extends React.PureComponent {
         >
           {appStateReady && (
             <TokenPanelContent
+              getHolderBalance={this.getHolderBalance}
+              holderAddress={assignTokensConfig.holderAddress}
+              maxAccountTokens={maxAccountTokens}
+              onUpdateTokens={this.handleUpdateTokens}
               opened={sidepanelOpened}
               tokenDecimals={numData.tokenDecimals}
               tokenDecimalsBase={tokenDecimalsBase}
-              onUpdateTokens={this.handleUpdateTokens}
-              getHolderBalance={this.getHolderBalance}
-              maxAccountTokens={maxAccountTokens}
               {...assignTokensConfig}
             />
           )}

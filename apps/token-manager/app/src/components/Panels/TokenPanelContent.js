@@ -1,5 +1,5 @@
-import React from 'react'
-import styled from 'styled-components'
+import React, { useCallback, useState } from 'react'
+import PropTypes from 'prop-types'
 import {
   Button,
   Field,
@@ -9,6 +9,7 @@ import {
   GU,
   textStyle,
   useTheme,
+  useSidePanelFocusOnReady,
 } from '@aragon/ui'
 import { isAddress } from '../../web3-utils'
 import { fromDecimals, toDecimals, formatBalance } from '../../utils'
@@ -17,233 +18,279 @@ import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIde
 // Any more and the number input field starts to put numbers in scientific notation
 const MAX_INPUT_DECIMAL_BASE = 6
 
-const initialState = {
-  mode: 'assign',
-  holderField: {
+function usePanelForm({
+  getHolderBalance,
+  initialHolder,
+  maxAccountTokens,
+  mode,
+  tokenDecimals,
+  tokenDecimalsBase,
+}) {
+  const [holderField, setHolderField] = useState({
     error: null,
     warning: null,
-    value: '',
-  },
-  amountField: {
+    value: initialHolder,
+  })
+
+  const [amountField, setAmountField] = useState({
     error: null,
     warning: null,
     value: '',
     max: '',
-  },
-}
+  })
 
-class TokenPanelContent extends React.Component {
-  static defaultProps = {
-    onUpdateTokens: () => {},
-  }
-  state = {
-    ...initialState,
-  }
-  _holderInput = React.createRef()
-  componentWillReceiveProps({ opened, mode, holderAddress }) {
-    if (opened && !this.props.opened) {
-      // setTimeout is needed as a small hack to wait until the input is
-      // on-screen before we call focus
-      this._holderInput.current &&
-        setTimeout(
-          () => this._holderInput.current && this._holderInput.current.focus(),
-          100 // focusing too soon will cause the SidePanel's opening animation to be skipped
-        )
+  const errorMessage = holderField.error || amountField.error
+  const warningMessage = holderField.warning || amountField.warning
 
-      // Upadte holder address from the props
-      this.updateHolderAddress(mode, holderAddress)
-    }
+  const submitDisabled = Boolean(
+    errorMessage ||
+      amountField.max === '0' ||
+      !holderField.value ||
+      !amountField.value ||
+      amountField.value === '0'
+  )
 
-    // Finished closing the panel, its state can be reset
-    if (!opened && this.props.opened) {
-      this.setState({ ...initialState })
-    }
-  }
-  filteredHolderAddress() {
-    const { holderField } = this.state
-    return holderField.value.trim()
-  }
-  filteredAmount() {
-    const { tokenDecimals } = this.props
-    const { amountField } = this.state
-    return toDecimals(amountField.value.trim(), tokenDecimals)
-  }
-  updateHolderAddress(mode, value) {
-    const {
-      maxAccountTokens,
-      tokenDecimalsBase,
-      tokenDecimals,
-      getHolderBalance,
-    } = this.props
+  const filterAmount = useCallback(
+    () => toDecimals(amountField.value.trim(), tokenDecimals),
+    [tokenDecimals, amountField]
+  )
 
-    const holderBalance = getHolderBalance(value.trim())
-    const maxAmount =
-      mode === 'assign' ? maxAccountTokens.sub(holderBalance) : holderBalance
+  const filterHolder = useCallback(() => holderField.value.trim(), [
+    holderField,
+  ])
 
-    this.setState(({ holderField, amountField }) => ({
-      holderField: { ...holderField, value, error: null },
-      amountField: {
+  const updateHolder = useCallback(
+    value => {
+      const holderBalance = getHolderBalance(value.trim())
+      const maxAmount =
+        mode === 'assign' ? maxAccountTokens.sub(holderBalance) : holderBalance
+
+      setHolderField({ ...holderField, value, error: null })
+      setAmountField({
         ...amountField,
         max: formatBalance(maxAmount, tokenDecimalsBase, tokenDecimals),
         warning:
           maxAmount.isZero() &&
           (mode === 'assign'
             ? `
-              The maximum amount of tokens that can be assigned has already been
-              reached
+              The maximum amount of tokens that can be assigned has already
+              been reached.
             `
             : `
-              This account doesn’t have any tokens to remove
+              This account doesn’t have any tokens to remove.
             `),
-      },
-    }))
-  }
-  handleAmountChange = event => {
-    const { amountField } = this.state
-    this.setState({
-      amountField: { ...amountField, value: event.target.value },
-    })
-  }
-  handleHolderChange = value => {
-    this.updateHolderAddress(this.props.mode, value)
-  }
-  handleSubmit = event => {
-    event.preventDefault()
-    const { mode } = this.props
-    const holderAddress = this.filteredHolderAddress()
+      })
+    },
+    [
+      amountField,
+      getHolderBalance,
+      holderField,
+      maxAccountTokens,
+      mode,
+      tokenDecimals,
+      tokenDecimalsBase,
+    ]
+  )
 
-    const holderError = !isAddress(holderAddress)
-      ? `
-        ${mode === 'assign' ? 'Recipient' : 'Account'}
-        must be a valid Ethereum address
-      `
-      : null
+  const updateAmount = useCallback(
+    value => {
+      setAmountField({ ...amountField, value })
+    },
+    [amountField]
+  )
 
-    // Error
+  const validateFields = useCallback(() => {
+    const holderAddress = holderField.value.trim()
+    const holderError = isAddress(holderAddress)
+      ? null
+      : mode === 'assign'
+      ? 'The recipient must be a valid Ethereum address.'
+      : 'The account must be a valid Ethereum address.'
+
     if (holderError) {
-      this.setState(({ holderField }) => ({
-        holderField: { ...holderField, error: holderError },
-      }))
-      return
+      setHolderField({ ...holderField, error: holderError })
+      return null
     }
 
-    // Update tokens
-    this.props.onUpdateTokens({
-      mode,
-      amount: this.filteredAmount(),
-      holder: holderAddress,
-    })
-  }
-  render() {
-    const { holderField, amountField } = this.state
-    const { mode, tokenDecimals } = this.props
+    return { holder: filterHolder(), amount: filterAmount() }
+  }, [mode, holderField, filterHolder, filterAmount])
 
-    const minTokenStep = fromDecimals(
-      '1',
-      Math.min(MAX_INPUT_DECIMAL_BASE, tokenDecimals)
-    )
-
-    const errorMessage = holderField.error || amountField.error
-    const warningMessage = holderField.warning || amountField.warning
-    const accountMaxed = amountField.max === '0'
-    const disabled = Boolean(
-      errorMessage ||
-        accountMaxed ||
-        !holderField.value ||
-        !amountField.value ||
-        amountField.value === '0'
-    )
-
-    return (
-      <div>
-        <form
-          css={`
-            margin-top: ${3 * GU}px;
-          `}
-          onSubmit={this.handleSubmit}
-        >
-          <InfoMessage
-            title="Action"
-            text={`This action will ${
-              mode === 'assign'
-                ? 'create tokens and transfer them to the recipient below'
-                : 'remove tokens from the account below'
-            }.`}
-          />
-          <Field
-            label={`
-              ${mode === 'assign' ? 'Recipient' : 'Account'}
-              (must be a valid Ethereum address)
-            `}
-            css="height: 62px"
-          >
-            <LocalIdentitiesAutoComplete
-              ref={this._holderInput}
-              value={holderField.value}
-              onChange={this.handleHolderChange}
-              wide
-              required
-            />
-          </Field>
-
-          <Field label="Number of tokens">
-            <TextInput.Number
-              value={amountField.value}
-              onChange={this.handleAmountChange}
-              min={minTokenStep}
-              max={amountField.max}
-              disabled={accountMaxed}
-              step={minTokenStep}
-              required
-              wide
-            />
-          </Field>
-          <Button mode="strong" type="submit" disabled={disabled} wide>
-            {mode === 'assign' ? 'Add' : 'Remove'} tokens
-          </Button>
-          <div
-            css={`
-              margin-top: ${2 * GU}px;
-            `}
-          >
-            {errorMessage && <ErrorMessage message={errorMessage} />}
-            {warningMessage && <WarningMessage message={warningMessage} />}
-          </div>
-        </form>
-      </div>
-    )
+  return {
+    amountField,
+    errorMessage,
+    holderField,
+    submitDisabled,
+    updateAmount,
+    updateHolder,
+    validateFields,
+    warningMessage,
   }
 }
 
-const Message = styled.div`
-  & + & {
-    margin-top: ${2 * GU}px;
-  }
-`
+function TokenPanelContent({
+  getHolderBalance,
+  holderAddress,
+  maxAccountTokens,
+  mode,
+  onUpdateTokens,
+  tokenDecimals,
+  tokenDecimalsBase,
+}) {
+  const holderInputRef = useSidePanelFocusOnReady()
 
-const InfoMessage = ({ title, text }) => (
-  <div
-    css={`
-      margin-bottom: ${3 * GU}px;
-    `}
-  >
-    <Info title={title}>{text}</Info>
-  </div>
-)
+  const {
+    amountField,
+    errorMessage,
+    holderField,
+    submitDisabled,
+    updateAmount,
+    updateHolder,
+    validateFields,
+    warningMessage,
+  } = usePanelForm({
+    getHolderBalance,
+    initialHolder: holderAddress,
+    maxAccountTokens,
+    mode,
+    onUpdateTokens,
+    tokenDecimals,
+    tokenDecimalsBase,
+  })
 
-const WarningMessage = ({ message }) => (
-  <Message>
-    <Info mode="warning">{message}</Info>
-  </Message>
-)
+  const tokenStep = fromDecimals(
+    '1',
+    Math.min(MAX_INPUT_DECIMAL_BASE, tokenDecimals)
+  )
 
-const ErrorMessage = ({ message }) => {
+  const handleAmountChange = useCallback(
+    event => updateAmount(event.target.value),
+    [updateAmount]
+  )
+
+  const handleSubmit = useCallback(
+    event => {
+      event.preventDefault()
+
+      const fieldsData = validateFields()
+
+      if (!fieldsData) {
+        return
+      }
+
+      onUpdateTokens({
+        amount: fieldsData.amount,
+        holder: fieldsData.holder,
+        mode,
+      })
+    },
+    [mode, validateFields, onUpdateTokens]
+  )
+
+  return (
+    <div>
+      <form
+        css={`
+          margin-top: ${3 * GU}px;
+        `}
+        onSubmit={handleSubmit}
+      >
+        <InfoMessage
+          title="Action"
+          text={`This action will ${
+            mode === 'assign'
+              ? 'create tokens and transfer them to the recipient below'
+              : 'remove tokens from the account below'
+          }.`}
+        />
+        <Field
+          label={`${
+            mode === 'assign' ? 'Recipient' : 'Account'
+          } (must be a valid Ethereum address)`}
+          css="height: 62px"
+        >
+          <LocalIdentitiesAutoComplete
+            ref={holderInputRef}
+            value={holderField.value}
+            onChange={updateHolder}
+            wide
+            required
+          />
+        </Field>
+
+        <Field label="Number of tokens">
+          <TextInput.Number
+            value={amountField.value}
+            onChange={handleAmountChange}
+            min={tokenStep}
+            max={amountField.max}
+            step={tokenStep}
+            required
+            wide
+          />
+        </Field>
+        <Button mode="strong" type="submit" disabled={submitDisabled} wide>
+          {mode === 'assign' ? 'Add' : 'Remove'} tokens
+        </Button>
+        <div
+          css={`
+            margin-top: ${2 * GU}px;
+          `}
+        >
+          {errorMessage && <ErrorMessage message={errorMessage} />}
+          {warningMessage && <WarningMessage message={warningMessage} />}
+        </div>
+      </form>
+    </div>
+  )
+}
+
+TokenPanelContent.propTypes = {
+  onUpdateTokens: PropTypes.func,
+  mode: PropTypes.string,
+  holderAddress: PropTypes.string,
+}
+
+TokenPanelContent.defaultProps = {
+  onUpdateTokens: () => {},
+  holderAddress: '',
+}
+
+function InfoMessage({ title, text }) {
+  return (
+    <div
+      css={`
+        margin-bottom: ${3 * GU}px;
+      `}
+    >
+      <Info title={title}>{text}</Info>
+    </div>
+  )
+}
+
+function WarningMessage({ message }) {
+  return (
+    <div
+      css={`
+        & + & {
+          margin-top: ${2 * GU}px;
+        }
+      `}
+    >
+      <Info mode="warning">{message}</Info>
+    </div>
+  )
+}
+
+function ErrorMessage({ message }) {
   const theme = useTheme()
   return (
-    <Message
+    <div
       css={`
         display: flex;
         align-items: center;
+        & + & {
+          margin-top: ${2 * GU}px;
+        }
       `}
     >
       <IconCross
@@ -260,7 +307,7 @@ const ErrorMessage = ({ message }) => {
       >
         {message}
       </span>
-    </Message>
+    </div>
   )
 }
 
