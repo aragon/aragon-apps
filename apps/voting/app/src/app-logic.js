@@ -108,7 +108,7 @@ export function useAppLogic() {
     selectedVote,
     votes,
     isSyncing: isSyncing || !ready,
-    newVotePanel: useMemo(() => newVotePanel, [newVotePanel]),
+    newVotePanel,
   }
 }
 
