@@ -409,14 +409,17 @@ const SelectedTokenBalance = ({ network, selectedToken }) => {
           {addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS) ? (
             'ETH'
           ) : (
-            <TokenBadge
-              address={address}
-              symbol={symbol}
-              networkType={network.type}
+            <span
               css={`
                 margin: 0 ${0.5 * GU}px;
               `}
-            />
+            >
+              <TokenBadge
+                address={address}
+                symbol={symbol}
+                networkType={network.type}
+              />
+            </span>
           )}{' '}
           available
         </div>

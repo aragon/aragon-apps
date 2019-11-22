@@ -10,6 +10,19 @@ const CONVERT_THROTTLE_TIME = 5000
 const convertApiUrl = symbols =>
   `${CONVERT_API_BASE}/price?fsym=USD&tsyms=${symbols.join(',')}`
 
+const keyFromBalances = balances =>
+  balances
+    .filter(({ verified }) => verified)
+    .sort(({ addressA, addressB }) => addressA - addressB)
+    .map(({ address, numData: { amount } }) => `${address}:${amount}`)
+    .join(',')
+
+const areSameBalances = (balancesA, balancesB) => {
+  const keyA = keyFromBalances(balancesA)
+  const keyB = keyFromBalances(balancesB)
+  return keyA === keyB
+}
+
 class Balances extends React.Component {
   state = {
     convertRates: {},
@@ -17,8 +30,10 @@ class Balances extends React.Component {
   componentDidMount() {
     this.updateConvertedRates(this.props)
   }
-  componentWillReceiveProps(nextProps) {
-    this.updateConvertedRates(nextProps)
+  componentDidUpdate(prevProps) {
+    if (!areSameBalances(prevProps.balances, this.props.balances)) {
+      this.updateConvertedRates(this.props)
+    }
   }
   updateConvertedRates = throttle(async ({ balances }) => {
     const verifiedSymbols = balances

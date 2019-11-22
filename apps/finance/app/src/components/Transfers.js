@@ -32,7 +32,6 @@ import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
-import EmptyFilteredTransfers from './EmptyFilteredTransfers'
 import EmptyTransactions from './EmptyTransactions'
 import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
@@ -206,8 +205,10 @@ const Transfers = React.memo(({ tokens, transactions }) => {
 
   return (
     <DataView
+      status={emptyResultsViaFilters ? 'empty-filters' : 'default'}
       page={page}
       onPageChange={setPage}
+      onStatusEmptyClear={handleClearFilters}
       heading={
         <React.Fragment>
           <div
@@ -251,21 +252,14 @@ const Transfers = React.memo(({ tokens, transactions }) => {
               transferTypes={TRANSFER_TYPES_STRING}
             />
           )}
-          {emptyResultsViaFilters && (
-            <EmptyFilteredTransfers onClear={handleClearFilters} />
-          )}
         </React.Fragment>
       }
-      fields={
-        emptyResultsViaFilters
-          ? []
-          : [
-              { label: 'Date', priority: 2 },
-              { label: 'Source/recipient', priority: 3 },
-              { label: 'Reference', priority: 1 },
-              { label: 'Amount', priority: 2 },
-            ]
-      }
+      fields={[
+        { label: 'Date', priority: 2 },
+        { label: 'Source/recipient', priority: 3 },
+        { label: 'Reference', priority: 1 },
+        { label: 'Amount', priority: 2 },
+      ]}
       entries={sortedTransfers}
       renderEntry={({
         date,
