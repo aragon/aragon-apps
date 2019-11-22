@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { font, springs } from '@aragon/ui'
+import { springs, GU } from '@aragon/ui'
 import { Transition, animated } from 'react-spring'
 import arrow from './assets/arrow.svg'
 
@@ -37,13 +37,13 @@ class ToggleContent extends React.Component {
 
 const Label = styled.button.attrs({ type: 'button' })`
   cursor: pointer;
-  ${font({ weight: 'bold' })};
+  font-weight: 600;
   background: none;
   border: 0;
   outline: 0;
   padding: 0;
   img {
-    margin-left: 10px;
+    margin-left: ${1 * GU}px;
   }
 `
 const Content = styled(animated.div)`
