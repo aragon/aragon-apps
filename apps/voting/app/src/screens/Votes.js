@@ -7,7 +7,7 @@ import {
   textStyle,
   useLayout,
   useTheme,
-  _DateRange as DateRange,
+  DateRangePicker,
 } from '@aragon/ui'
 import EmptyFilteredVotes from '../components/EmptyFilteredVotes'
 import VoteCard from '../components/VoteCard/VoteCard'
@@ -132,7 +132,7 @@ const Votes = React.memo(function Votes({
               ]}
               width="128px"
             />
-            <DateRange
+            <DateRangePicker
               startDate={voteDateRangeFilter.start}
               endDate={voteDateRangeFilter.end}
               onChange={handleVoteDateRangeFilterChange}
