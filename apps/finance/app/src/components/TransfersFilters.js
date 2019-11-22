@@ -1,5 +1,5 @@
 import React from 'react'
-import { DropDown, GU, _DateRange as DateRange } from '@aragon/ui'
+import { DropDown, GU, DateRangePicker } from '@aragon/ui'
 
 const TransfersFilters = ({
   compactMode,
@@ -38,7 +38,7 @@ const TransfersFilters = ({
         onChange={onTokenChange}
         width="128px"
       />
-      <DateRange
+      <DateRangePicker
         startDate={dateRangeFilter.start}
         endDate={dateRangeFilter.end}
         onChange={onDateRangeChange}
