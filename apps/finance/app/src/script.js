@@ -7,7 +7,7 @@ import {
   getTokenSymbol,
   getTokenName,
   isTokenVerified,
-  tokenDataFallback,
+  tokenDataOverride,
 } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -191,20 +191,20 @@ const initializeState = settings => async cachedState => {
     ),
     vaultAddress: settings.vault.address,
   }
-  const withTokenBalances = await loadTokenBalances(
+  const withInitialTokens = await loadInitialTokens(
     newState,
     getPresetTokens(settings.network.type), // always immediately load some tokens
     settings
   )
   const withTestnetState = await loadTestnetTokenBalances(
-    withTokenBalances,
+    withInitialTokens,
     settings
   )
 
   return withTestnetState
 }
 
-async function loadTokenBalances(state, includedTokenAddresses, settings) {
+async function loadInitialTokens(state, includedTokenAddresses, settings) {
   let newState = {
     ...state,
   }
@@ -222,7 +222,9 @@ async function loadTokenBalances(state, includedTokenAddresses, settings) {
       .concat(includedTokenAddresses || [])
   )
   for (const address of addresses) {
-    newBalances = await updateBalances(newBalances, address, settings)
+    newBalances = await updateBalances(newBalances, address, settings, {
+      reloadEntireToken: true,
+    })
   }
 
   return {
@@ -290,7 +292,12 @@ async function newTransaction(
  *                     *
  ***********************/
 
-async function updateBalances(balances, tokenAddress, settings) {
+async function updateBalances(
+  balances,
+  tokenAddress,
+  settings,
+  { reloadEntireToken } = {}
+) {
   const newBalances = Array.from(balances || [])
 
   const tokenContract = tokenContracts.has(tokenAddress)
@@ -306,9 +313,14 @@ async function updateBalances(balances, tokenAddress, settings) {
       await newBalanceEntry(tokenContract, tokenAddress, settings)
     )
   } else {
+    const updatedState = reloadEntireToken
+      ? await newBalanceEntry(tokenContract, tokenAddress, settings)
+      : {
+          amount: await loadTokenBalance(tokenAddress, settings),
+        }
     newBalances[balancesIndex] = {
       ...newBalances[balancesIndex],
-      amount: await loadTokenBalance(tokenAddress, settings),
+      ...updatedState,
     }
     return newBalances
   }
@@ -369,16 +381,15 @@ async function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
     return tokenDecimals.get(tokenContract)
   }
 
-  const fallback =
-    tokenDataFallback(tokenAddress, 'decimals', network.type) || '0'
+  const override = tokenDataOverride(tokenAddress, 'decimals', network.type)
 
   let decimals
   try {
-    decimals = (await tokenContract.decimals().toPromise()) || fallback
+    decimals = override || (await tokenContract.decimals().toPromise())
     tokenDecimals.set(tokenContract, decimals)
   } catch (err) {
     // decimals is optional
-    decimals = fallback
+    decimals = '0'
   }
   return decimals
 }
@@ -387,15 +398,15 @@ async function loadTokenName(tokenContract, tokenAddress, { network }) {
   if (tokenNames.has(tokenContract)) {
     return tokenNames.get(tokenContract)
   }
-  const fallback = tokenDataFallback(tokenAddress, 'name', network.type) || ''
+  const override = tokenDataOverride(tokenAddress, 'name', network.type)
 
   let name
   try {
-    name = (await getTokenName(app, tokenAddress)) || fallback
+    name = override || (await getTokenName(app, tokenAddress))
     tokenNames.set(tokenContract, name)
   } catch (err) {
     // name is optional
-    name = fallback
+    name = ''
   }
   return name
 }
@@ -404,15 +415,15 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
   if (tokenSymbols.has(tokenContract)) {
     return tokenSymbols.get(tokenContract)
   }
-  const fallback = tokenDataFallback(tokenAddress, 'symbol', network.type) || ''
+  const override = tokenDataOverride(tokenAddress, 'symbol', network.type)
 
   let symbol
   try {
-    symbol = (await getTokenSymbol(app, tokenAddress)) || fallback
+    symbol = override || (await getTokenSymbol(app, tokenAddress))
     tokenSymbols.set(tokenContract, symbol)
   } catch (err) {
     // symbol is optional
-    symbol = fallback
+    symbol = ''
   }
   return symbol
 }
