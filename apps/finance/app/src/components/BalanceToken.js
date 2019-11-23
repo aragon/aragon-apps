@@ -1,5 +1,7 @@
 import React from 'react'
 import { GU, textStyle, useTheme } from '@aragon/ui'
+import { useNetwork } from '@aragon/api-react'
+import { tokenIconUrl } from '../lib/icon-utils'
 import { formatTokenAmount } from '../lib/utils'
 
 const splitAmount = amount => {
@@ -21,6 +23,7 @@ const splitAmount = amount => {
 }
 
 const BalanceToken = ({
+  address,
   amount,
   compact,
   symbol,
@@ -28,6 +31,7 @@ const BalanceToken = ({
   convertedAmount = -1,
 }) => {
   const theme = useTheme()
+  const network = useNetwork()
 
   return (
     <div css="display: inline-block">
@@ -41,12 +45,12 @@ const BalanceToken = ({
           text-transform: uppercase;
         `}
       >
-        {verified && symbol && (
+        {verified && address && (
           <img
             alt=""
             width="20"
             height="20"
-            src={`https://chasing-coins.com/coin/logo/${symbol}`}
+            src={tokenIconUrl(address, symbol, network && network.type)}
             css={`
               margin-right: ${0.75 * GU}px;
             `}
