@@ -10,6 +10,7 @@ import {
   tokenDataOverride,
 } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
+import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenNameAbi from './abi/token-name.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
@@ -17,7 +18,12 @@ import vaultBalanceAbi from './abi/vault-balance.json'
 import vaultGetInitializationBlockAbi from './abi/vault-getinitializationblock.json'
 import vaultEventAbi from './abi/vault-events.json'
 
-const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi)
+const tokenAbi = [].concat(
+  tokenBalanceOfAbi,
+  tokenDecimalsAbi,
+  tokenNameAbi,
+  tokenSymbolAbi
+)
 const vaultAbi = [].concat(
   vaultBalanceAbi,
   vaultGetInitializationBlockAbi,
@@ -316,7 +322,7 @@ async function updateBalances(
     const updatedState = reloadEntireToken
       ? await newBalanceEntry(tokenContract, tokenAddress, settings)
       : {
-          amount: await loadTokenBalance(tokenAddress, settings),
+          amount: await loadTokenBalance(tokenContract, tokenAddress, settings),
         }
     newBalances[balancesIndex] = {
       ...newBalances[balancesIndex],
@@ -354,7 +360,7 @@ function updateTransactions(transactions, transactionDetails) {
 
 async function newBalanceEntry(tokenContract, tokenAddress, settings) {
   const [balance, decimals, name, symbol] = await Promise.all([
-    loadTokenBalance(tokenAddress, settings),
+    loadTokenBalance(tokenContract, tokenAddress, settings),
     loadTokenDecimals(tokenContract, tokenAddress, settings),
     loadTokenName(tokenContract, tokenAddress, settings),
     loadTokenSymbol(tokenContract, tokenAddress, settings),
@@ -372,8 +378,15 @@ async function newBalanceEntry(tokenContract, tokenAddress, settings) {
   }
 }
 
-function loadTokenBalance(tokenAddress, { vault }) {
-  return vault.contract.balance(tokenAddress).toPromise()
+function loadTokenBalance(tokenContract, tokenAddress, { ethToken, vault }) {
+  if (addressesEqual(tokenAddress, ethToken.address)) {
+    return vault.contract.balance(tokenAddress).toPromise()
+  } else {
+    // Prefer using the token contract directly to ask for the Vault's balance
+    // Web3.js does not handle revert strings yet, so a failing call to Vault.balance()
+    // results in organizations looking like whales.
+    return tokenContract.balanceOf(vault.address).toPromise()
+  }
 }
 
 async function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
