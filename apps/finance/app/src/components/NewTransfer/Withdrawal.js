@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useLayoutEffect, useState } from 'react'
 import styled from 'styled-components'
 import {
   Button,
@@ -22,38 +22,29 @@ const DECIMALS_TOO_MANY_ERROR = Symbol('DECIMALS_TOO_MANY_ERROR')
 
 const NULL_SELECTED_TOKEN = -1
 
-const initialState = {
-  amount: {
-    error: NO_ERROR,
-    value: '',
-  },
-  recipient: {
-    error: NO_ERROR,
-    value: '',
-  },
-  reference: '',
-  selectedToken: NULL_SELECTED_TOKEN,
-}
-
 class Withdrawal extends React.Component {
   static defaultProps = {
     tokens: [],
     onWithdraw: () => {},
   }
   state = {
-    ...initialState,
+    amount: {
+      error: NO_ERROR,
+      value: '',
+    },
+    recipient: {
+      error: NO_ERROR,
+      value: '',
+    },
+    reference: '',
+    selectedToken: NULL_SELECTED_TOKEN,
   }
   _recipientInput = React.createRef()
-  componentDidMount() {
-    // setTimeout is needed as a small hack to wait until the input is
-    // on-screen before we call focus
-    this._recipientInput.current &&
-      setTimeout(() => this._recipientInput.current.focus(), 0)
-  }
-  componentWillReceiveProps({ opened }) {
-    if (!opened && this.props.opened) {
-      // Panel closing; reset state
-      this.setState({ ...initialState })
+  componentDidUpdate(prevProps) {
+    const { readyToFocus } = this.props
+    const input = this._recipientInput.current
+    if (readyToFocus && !prevProps.readyToFocus && input) {
+      input.focus()
     }
   }
   nonZeroTokens() {
@@ -247,4 +238,10 @@ const ValidationError = ({ message }) => {
   )
 }
 
-export default Withdrawal
+export default props => {
+  const [readyToFocus, setReadyToFocus] = useState(false)
+  useLayoutEffect(() => {
+    setReadyToFocus(true)
+  }, [])
+  return <Withdrawal readyToFocus={readyToFocus} {...props} />
+}
