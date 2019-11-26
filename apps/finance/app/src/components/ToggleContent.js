@@ -1,59 +1,60 @@
-import React from 'react'
-import styled from 'styled-components'
-import { springs, GU } from '@aragon/ui'
+import React, { useState } from 'react'
+import { ButtonBase, GU, IconUp, RADIUS, springs, useTheme } from '@aragon/ui'
 import { Transition, animated } from 'react-spring'
-import arrow from './assets/arrow.svg'
 
-class ToggleContent extends React.Component {
-  state = { opened: false }
-  handleClick = () => {
-    this.setState(({ opened }) => ({ opened: !opened }))
-  }
-  render() {
-    const { opened } = this.state
-    const { label, children } = this.props
-    return (
-      <div>
-        <Label onClick={this.handleClick}>
-          {label} <Arrow opened={opened} />
-        </Label>
+const AnimatedDiv = animated.div
 
-        <Transition
-          items={opened}
-          config={springs.swift}
-          from={{ height: 0, opacity: 0 }}
-          enter={{ height: 'auto', opacity: 1 }}
-          leave={{ height: 0, opacity: 0 }}
-          native
-        >
-          {show =>
-            show && (props => <Content style={props}>{children}</Content>)
+function ToggleContent({ label, children }) {
+  const theme = useTheme()
+  const [opened, setOpened] = useState()
+  return (
+    <React.Fragment>
+      <ButtonBase
+        onClick={() => setOpened(opened => !opened)}
+        focusRingRadius={RADIUS}
+        focusRingSpacing={0.5 * GU}
+        css={`
+          display: flex;
+          align-items: center;
+          width: calc(100%);
+          &:active {
+            color: ${theme.surfaceContentSecondary};
           }
-        </Transition>
-      </div>
-    )
-  }
+        `}
+      >
+        {label}{' '}
+        <IconUp
+          size="small"
+          css={`
+            position: relative;
+            top: -1px;
+            margin-left: ${1 * GU}px;
+            transform-origin: 50% 50%;
+            transform: rotate(${opened ? 180 : 0}deg);
+            transition: transform 200ms ease-in-out;
+          `}
+        />
+      </ButtonBase>
+
+      <Transition
+        items={opened}
+        config={springs.swift}
+        from={{ height: 0, opacity: 0 }}
+        enter={{ height: 'auto', opacity: 1 }}
+        leave={{ height: 0, opacity: 0 }}
+        native
+      >
+        {show =>
+          show &&
+          (props => (
+            <AnimatedDiv style={props} css="overflow: hidden">
+              {children}
+            </AnimatedDiv>
+          ))
+        }
+      </Transition>
+    </React.Fragment>
+  )
 }
-
-const Label = styled.button.attrs({ type: 'button' })`
-  cursor: pointer;
-  font-weight: 600;
-  background: none;
-  border: 0;
-  outline: 0;
-  padding: 0;
-  img {
-    margin-left: ${1 * GU}px;
-  }
-`
-const Content = styled(animated.div)`
-  overflow: hidden;
-`
-
-const Arrow = styled.img.attrs({ src: arrow, alt: '' })`
-  transform-origin: 50% 50%;
-  transform: rotate(${p => (p.opened ? 180 : 0)}deg);
-  transition: transform 200ms ease-in-out;
-`
 
 export default ToggleContent
