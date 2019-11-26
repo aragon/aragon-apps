@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
 import {
@@ -6,16 +6,16 @@ import {
   GU,
   Header,
   IconPlus,
-  SidePanel,
   SyncIndicator,
   Tag,
   textStyle,
   useLayout,
   useTheme,
+  useThemeMode,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
-import TokenPanelContent from './components/Panels/TokenPanelContent'
+import UpdateTokenPanel from './components/UpdateTokenPanel/UpdateTokenPanel'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import { addressesEqual } from './web3-utils'
@@ -179,29 +179,21 @@ class App extends React.PureComponent {
           </React.Fragment>
         )}
 
-        <SidePanel
-          title={
-            assignTokensConfig.mode === 'assign'
-              ? 'Add tokens'
-              : 'Remove tokens'
-          }
-          opened={sidepanelOpened}
-          onClose={this.handleSidepanelClose}
-          onTransitionEnd={this.handleSidepanelTransitionEnd}
-        >
-          {appStateReady && (
-            <TokenPanelContent
-              getHolderBalance={this.getHolderBalance}
-              holderAddress={assignTokensConfig.holderAddress}
-              maxAccountTokens={maxAccountTokens}
-              onUpdateTokens={this.handleUpdateTokens}
-              opened={sidepanelOpened}
-              tokenDecimals={numData.tokenDecimals}
-              tokenDecimalsBase={tokenDecimalsBase}
-              {...assignTokensConfig}
-            />
-          )}
-        </SidePanel>
+        {appStateReady && (
+          <UpdateTokenPanel
+            getHolderBalance={this.getHolderBalance}
+            holderAddress={assignTokensConfig.holderAddress}
+            maxAccountTokens={maxAccountTokens}
+            mode={assignTokensConfig.mode}
+            onClose={this.handleSidepanelClose}
+            onTransitionEnd={this.handleSidepanelTransitionEnd}
+            onUpdateTokens={this.handleUpdateTokens}
+            opened={sidepanelOpened}
+            tokenDecimals={numData.tokenDecimals}
+            tokenDecimalsBase={tokenDecimalsBase}
+            tokenSymbol={tokenSymbol}
+          />
+        )}
       </IdentityProvider>
     )
   }
@@ -211,6 +203,11 @@ export default () => {
   const { api, appState } = useAragonApi()
   const theme = useTheme()
   const { layoutName } = useLayout()
+
+  const themeMode = useThemeMode()
+  useEffect(() => {
+    // themeMode.set('dark')
+  }, [themeMode])
 
   return <App api={api} layoutName={layoutName} theme={theme} {...appState} />
 }
