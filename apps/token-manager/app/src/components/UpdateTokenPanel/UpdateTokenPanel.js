@@ -161,7 +161,7 @@ function usePanelForm({
           value,
           warning: `You are trying to ${
             mode === 'assign' ? 'assign' : 'remove'
-          } an amount that includes more decimals places than the token allows.`,
+          } an amount that includes more decimals than the token allows.`,
         }))
         return
       }

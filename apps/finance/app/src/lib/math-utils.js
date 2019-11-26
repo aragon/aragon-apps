@@ -74,7 +74,7 @@ export function fromDecimals(num, decimals, { truncate = true } = {}) {
  */
 export function toDecimals(num, decimals, { truncate = true } = {}) {
   const [whole, dec] = splitDecimalNumber(num)
-  if (!whole && !dec) {
+  if (!whole && (!dec || !decimals)) {
     return '0'
   }
 
