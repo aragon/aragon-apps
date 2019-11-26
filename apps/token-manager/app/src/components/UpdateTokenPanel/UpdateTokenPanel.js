@@ -11,7 +11,12 @@ import {
   useSidePanelFocusOnReady,
 } from '@aragon/ui'
 import { isAddress } from '../../web3-utils'
-import { fromDecimals, toDecimals, formatBalance } from '../../utils'
+import {
+  fromDecimals,
+  toDecimals,
+  formatBalance,
+  splitDecimalNumber,
+} from '../../utils'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
 
 // Any more and the number input field starts to put numbers in scientific notation
@@ -135,7 +140,33 @@ function usePanelForm({
 
   const updateAmount = useCallback(
     value => {
-      const amount = new BN(value).mul(tokenDecimalsBase)
+      const formattedAmount = toDecimals(value.trim(), tokenDecimals)
+      if (formattedAmount === '0') {
+        // Given value is smaller than the accepted decimal base (e.g. gave 0.5 to a token base of 1)
+        setAmountField(amountField => ({
+          ...amountField,
+          value,
+          warning: `You are trying to ${
+            mode === 'assign' ? 'assign' : 'remove'
+          } an amount that is smaller than the minimum amount of tokens possible.`,
+        }))
+        return
+      }
+
+      const decimals = splitDecimalNumber(value.trim())[1]
+      if (decimals.length > tokenDecimals) {
+        // Given value has more precision than we expected
+        setAmountField(amountField => ({
+          ...amountField,
+          value,
+          warning: `You are trying to ${
+            mode === 'assign' ? 'assign' : 'remove'
+          } an amount that includes more decimals places than the token allows.`,
+        }))
+        return
+      }
+
+      const amount = new BN(formattedAmount)
       const maxAmount = getMaxAmountFromBalance(holderBalance)
 
       setAmountField(amountField => ({
