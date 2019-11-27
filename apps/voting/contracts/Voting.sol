@@ -308,7 +308,15 @@ contract Voting is IForwarder, AragonApp {
         emit StartVote(voteId, msg.sender, _metadata, _evmScript);
 
         if (_castVote && _canVote(voteId, msg.sender)) {
-            _vote(voteId, true, msg.sender, _executesIfDecided ? _evmScript : new bytes(0));
+            bytes memory executingEvmScriptIfDecided;
+            if (_executesIfDecided) {
+                executingEvmScriptIfDecided = _evmScript;
+            } else {
+                executingEvmScriptIfDecided = new bytes(1);
+                executingEvmScriptIfDecided[0] = NO_EXECUTE_MAGIC_NUMBER;
+            }
+
+            _vote(voteId, true, msg.sender, executingEvmScriptIfDecided);
         }
     }
 

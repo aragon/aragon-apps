@@ -32,6 +32,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
     let APP_MANAGER_ROLE
     let CREATE_VOTES_ROLE, MODIFY_SUPPORT_ROLE, MODIFY_QUORUM_ROLE
+    let NO_EXECUTE_SCRIPT
 
     // Error strings
     const errors = makeErrorMappingProxy({
@@ -52,6 +53,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         VOTING_CAN_NOT_EXECUTE: "VOTING_CAN_NOT_EXECUTE",
         VOTING_CAN_NOT_FORWARD: "VOTING_CAN_NOT_FORWARD",
         VOTING_NO_VOTING_POWER: "VOTING_NO_VOTING_POWER",
+        VOTING_BAD_SCRIPT: "ERROR_BAD_SCRIPT",
     })
 
     const NOW = 1
@@ -69,6 +71,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         CREATE_VOTES_ROLE = await votingBase.CREATE_VOTES_ROLE()
         MODIFY_SUPPORT_ROLE = await votingBase.MODIFY_SUPPORT_ROLE()
         MODIFY_QUORUM_ROLE = await votingBase.MODIFY_QUORUM_ROLE()
+
+        NO_EXECUTE_SCRIPT = await votingBase.NO_EXECUTE_MAGIC_NUMBER()
     })
 
     beforeEach(async () => {
@@ -181,7 +185,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             })
 
             it('execution script can be empty', async () => {
-                await voting.newVote(encodeCallScript([]), '', { from: holder51 })
+                await voting.newVote(EMPTY_SCRIPT, '', { from: holder51 })
             })
 
             it('execution throws if any action on script throws', async () => {
@@ -199,7 +203,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             })
 
             context('creating vote', () => {
-                let script, voteId, creator, metadata
+                let script, voteId, creator, metadata, evmScript
 
                 beforeEach(async () => {
                     const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
@@ -209,10 +213,11 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     voteId = getEventArgument(receipt, 'StartVote', 'voteId')
                     creator = getEventArgument(receipt, 'StartVote', 'creator')
                     metadata = getEventArgument(receipt, 'StartVote', 'metadata')
+                    evmScript = getEventArgument(receipt, 'StartVote', 'evmScript')
                 })
 
                 it('has correct state', async () => {
-                    const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower, execScript] = await voting.getVote(voteId)
+                    const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower] = await voting.getVote(voteId)
 
                     assert.isTrue(isOpen, 'vote should be open')
                     assert.isFalse(isExecuted, 'vote should not be executed')
@@ -223,7 +228,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     assert.equal(y, 0, 'initial yea should be 0')
                     assert.equal(n, 0, 'initial nay should be 0')
                     assert.equal(votingPower.toString(), bigExp(100, decimals).toString(), 'voting power should be 100')
-                    assert.equal(execScript, script, 'script should be correct')
+                    assert.equal(evmScript, script, 'script should be correct')
                     assert.equal(metadata, 'metadata', 'should have returned correct metadata')
                     assert.equal(await voting.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')
                 })
@@ -239,14 +244,14 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     // with new quorum at 70% it shouldn't have, but since min quorum is snapshotted
                     // it will succeed
 
-                    await voting.vote(voteId, true, false, { from: holder51 })
-                    await voting.vote(voteId, true, false, { from: holder20 })
-                    await voting.vote(voteId, false, false, { from: holder29 })
+                    await voting.vote(voteId, true, NO_EXECUTE_SCRIPT, { from: holder51 })
+                    await voting.vote(voteId, true, NO_EXECUTE_SCRIPT, { from: holder20 })
+                    await voting.vote(voteId, false, NO_EXECUTE_SCRIPT, { from: holder29 })
                     await voting.mockIncreaseTime(votingDuration + 1)
 
                     const state = await voting.getVote(voteId)
                     assert.equal(state[4].toString(), neededSupport.toString(), 'required support in vote should stay equal')
-                    await voting.executeVote(voteId) // exec doesn't fail
+                    await voting.executeVote(voteId, script) // exec doesn't fail
                 })
 
                 it('changing min quorum doesnt affect vote min quorum', async () => {
@@ -256,16 +261,16 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     // with new quorum at 50% it shouldn't have, but since min quorum is snapshotted
                     // it will succeed
 
-                    await voting.vote(voteId, true, true, { from: holder29 })
+                    await voting.vote(voteId, true, script, { from: holder29 })
                     await voting.mockIncreaseTime(votingDuration + 1)
 
                     const state = await voting.getVote(voteId)
                     assert.equal(state[5].toString(), minimumAcceptanceQuorum.toString(), 'acceptance quorum in vote should stay equal')
-                    await voting.executeVote(voteId) // exec doesn't fail
+                    await voting.executeVote(voteId, script) // exec doesn't fail
                 })
 
                 it('holder can vote', async () => {
-                    await voting.vote(voteId, false, true, { from: holder29 })
+                    await voting.vote(voteId, false, script, { from: holder29 })
                     const state = await voting.getVote(voteId)
                     const voterState = await voting.getVoterState(voteId, holder29)
 
@@ -274,9 +279,9 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 })
 
                 it('holder can modify vote', async () => {
-                    await voting.vote(voteId, true, true, { from: holder29 })
-                    await voting.vote(voteId, false, true, { from: holder29 })
-                    await voting.vote(voteId, true, true, { from: holder29 })
+                    await voting.vote(voteId, true, script, { from: holder29 })
+                    await voting.vote(voteId, false, script, { from: holder29 })
+                    await voting.vote(voteId, true, script, { from: holder29 })
                     const state = await voting.getVote(voteId)
 
                     assert.equal(state[6].toString(), bigExp(29, decimals).toString(), 'yea vote should have been counted')
@@ -286,7 +291,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 it('token transfers dont affect voting', async () => {
                     await token.transfer(nonHolder, bigExp(29, decimals), { from: holder29 })
 
-                    await voting.vote(voteId, true, true, { from: holder29 })
+                    await voting.vote(voteId, true, script, { from: holder29 })
                     const state = await voting.getVote(voteId)
 
                     assert.equal(state[6].toString(), bigExp(29, decimals).toString(), 'yea vote should have been counted')
@@ -294,54 +299,54 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 })
 
                 it('throws when non-holder votes', async () => {
-                    await assertRevert(voting.vote(voteId, true, true, { from: nonHolder }), errors.VOTING_CAN_NOT_VOTE)
+                    await assertRevert(voting.vote(voteId, true, script, { from: nonHolder }), errors.VOTING_CAN_NOT_VOTE)
                 })
 
                 it('throws when voting after voting closes', async () => {
                     await voting.mockIncreaseTime(votingDuration + 1)
-                    await assertRevert(voting.vote(voteId, true, true, { from: holder29 }), errors.VOTING_CAN_NOT_VOTE)
+                    await assertRevert(voting.vote(voteId, true, script, { from: holder29 }), errors.VOTING_CAN_NOT_VOTE)
                 })
 
                 it('can execute if vote is approved with support and quorum', async () => {
-                    await voting.vote(voteId, true, true, { from: holder29 })
-                    await voting.vote(voteId, false, true, { from: holder20 })
+                    await voting.vote(voteId, true, script, { from: holder29 })
+                    await voting.vote(voteId, false, script, { from: holder20 })
                     await voting.mockIncreaseTime(votingDuration + 1)
-                    await voting.executeVote(voteId)
+                    await voting.executeVote(voteId, script)
                     assert.equal(await executionTarget.counter(), 2, 'should have executed result')
                 })
 
                 it('cannot execute vote if not enough quorum met', async () => {
-                    await voting.vote(voteId, true, true, { from: holder20 })
+                    await voting.vote(voteId, true, script, { from: holder20 })
                     await voting.mockIncreaseTime(votingDuration + 1)
-                    await assertRevert(voting.executeVote(voteId), errors.VOTING_CAN_NOT_EXECUTE)
+                    await assertRevert(voting.executeVote(voteId, script), errors.VOTING_CAN_NOT_EXECUTE)
                 })
 
                 it('cannot execute vote if not support met', async () => {
-                    await voting.vote(voteId, false, true, { from: holder29 })
-                    await voting.vote(voteId, false, true, { from: holder20 })
+                    await voting.vote(voteId, false, script, { from: holder29 })
+                    await voting.vote(voteId, false, script, { from: holder20 })
                     await voting.mockIncreaseTime(votingDuration + 1)
-                    await assertRevert(voting.executeVote(voteId), errors.VOTING_CAN_NOT_EXECUTE)
+                    await assertRevert(voting.executeVote(voteId, script), errors.VOTING_CAN_NOT_EXECUTE)
                 })
 
                 it('vote can be executed automatically if decided', async () => {
-                    await voting.vote(voteId, true, true, { from: holder51 }) // causes execution
+                    await voting.vote(voteId, true, script, { from: holder51 }) // causes execution
                     assert.equal(await executionTarget.counter(), 2, 'should have executed result')
                 })
 
                 it('vote can be not executed automatically if decided', async () => {
-                    await voting.vote(voteId, true, false, { from: holder51 }) // doesnt cause execution
-                    await voting.executeVote(voteId)
+                    await voting.vote(voteId, true, NO_EXECUTE_SCRIPT, { from: holder51 }) // doesnt cause execution
+                    await voting.executeVote(voteId, script)
                     assert.equal(await executionTarget.counter(), 2, 'should have executed result')
                 })
 
                 it('cannot re-execute vote', async () => {
-                    await voting.vote(voteId, true, true, { from: holder51 }) // causes execution
-                    await assertRevert(voting.executeVote(voteId), errors.VOTING_CAN_NOT_EXECUTE)
+                    await voting.vote(voteId, true, script, { from: holder51 }) // causes execution
+                    await assertRevert(voting.executeVote(voteId, script), errors.VOTING_CAN_NOT_EXECUTE)
                 })
 
                 it('cannot vote on executed vote', async () => {
-                    await voting.vote(voteId, true, true, { from: holder51 }) // causes execution
-                    await assertRevert(voting.vote(voteId, true, true, { from: holder20 }), errors.VOTING_CAN_NOT_VOTE)
+                    await voting.vote(voteId, true, script, { from: holder51 }) // causes execution
+                    await assertRevert(voting.vote(voteId, true, script, { from: holder20 }), errors.VOTING_CAN_NOT_VOTE)
                 })
             })
         })
@@ -398,7 +403,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
             assert.isFalse(await voting.canExecute(voteId), 'vote cannot be executed')
 
-            await voting.vote(voteId, true, true, { from: holder1 })
+            await voting.vote(voteId, true, EMPTY_SCRIPT, { from: holder1 })
 
             const [isOpen, isExecuted] = await voting.getVote(voteId)
 
@@ -444,8 +449,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
             assert.isFalse(await voting.canExecute(voteId), 'vote cannot be executed')
 
-            await voting.vote(voteId, true, true, { from: holder1 })
-            await voting.vote(voteId, true, true, { from: holder2 })
+            await voting.vote(voteId, true, EMPTY_SCRIPT, { from: holder1 })
+            await voting.vote(voteId, true, EMPTY_SCRIPT, { from: holder2 })
 
             const [isOpen, isExecuted] = await voting.getVote(voteId)
 
@@ -480,7 +485,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             const voteId = createdVoteId(await voting.newVote(EMPTY_SCRIPT, 'metadata'))
             await token.generateTokens(holder2, 1)
 
-            const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower, execScript] = await voting.getVote(voteId)
+            const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower] = await voting.getVote(voteId)
 
             // Generating tokens advanced the block by one
             assert.equal(snapshotBlock.toString(), await getBlockNumber() - 2, 'snapshot block should be correct')
@@ -494,7 +499,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             await token.changeController(voting.address)
             const voteId = createdVoteId(await voting.newTokenAndVote(holder2, 1, 'metadata'))
 
-            const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower, execScript] = await voting.getVote(voteId)
+            const [isOpen, isExecuted, startDate, snapshotBlock, supportRequired, minQuorum, y, n, votingPower] = await voting.getVote(voteId)
 
             assert.equal(snapshotBlock.toString(), await getBlockNumber() - 1, 'snapshot block should be correct')
             assert.equal(votingPower.toString(), (await token.totalSupplyAt(snapshotBlock)).toString(), 'voting power should match snapshot supply')
