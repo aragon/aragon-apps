@@ -7,7 +7,7 @@ import BN from 'bn.js'
  * @param {string} num the number
  * @returns {Array<string>} array with the [<whole>, <decimal>] parts of the number
  */
-function splitDecimalNumber(num) {
+export function splitDecimalNumber(num) {
   const [whole = '', dec = ''] = num.split('.')
   return [
     whole.replace(/^0*/, ''), // trim leading zeroes
@@ -60,7 +60,7 @@ export function fromDecimals(num, decimals, { truncate = true } = {}) {
  */
 export function toDecimals(num, decimals, { truncate = true } = {}) {
   const [whole, dec] = splitDecimalNumber(num)
-  if (!whole && !dec) {
+  if (!whole && (!dec || !decimals)) {
     return '0'
   }
 
