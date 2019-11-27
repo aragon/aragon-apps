@@ -22,6 +22,7 @@ contract Voting is IForwarder, AragonApp {
     bytes32 public constant MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
 
     uint64 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
+    byte public constant NO_EXECUTE_MAGIC_NUMBER = 0xff;
 
     string private constant ERROR_NO_VOTE = "VOTING_NO_VOTE";
     string private constant ERROR_INIT_PCTS = "VOTING_INIT_PCTS";
@@ -338,10 +339,15 @@ contract Voting is IForwarder, AragonApp {
 
         emit CastVote(_voteId, _voter, _supports, voterStake);
 
-        if (_executingEvmScriptIfDecided.length > 0 && _canExecute(_voteId)) {
+        bool executesIfDecided = _isExecutableScript(_executingEvmScriptIfDecided);
+        if (executesIfDecided && _canExecute(_voteId)) {
             // We've already checked if the vote can be executed with `_canExecute()`
             _unsafeExecuteVote(_voteId, _executingEvmScriptIfDecided);
         }
+    }
+
+    function _isExecutableScript(bytes _evmScript) internal returns (bool) {
+        return _evmScript.length != 1 && _evmScript[0] != NO_EXECUTE_MAGIC_NUMBER;
     }
 
     /**
