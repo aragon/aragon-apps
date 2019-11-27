@@ -23,7 +23,7 @@ jobs:
     - name: now
       run: now
     - name: now (production)
-      if: {{ github.ref == 'refs/heads/master ' }}
+      if: github.ref == 'refs/heads/master'
       run: now --target production
     env:
       CI: true
