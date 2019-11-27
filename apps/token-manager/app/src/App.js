@@ -11,6 +11,7 @@ import {
   textStyle,
   useLayout,
   useTheme,
+  useThemeMode,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
@@ -199,9 +200,23 @@ class App extends React.PureComponent {
 }
 
 export default () => {
-  const { api, appState } = useAragonApi()
   const theme = useTheme()
+  const themeMode = useThemeMode()
+  const { api, appState, guiStyle } = useAragonApi()
   const { layoutName } = useLayout()
+  const { appearance } = guiStyle
 
-  return <App api={api} layoutName={layoutName} theme={theme} {...appState} />
+  useEffect(() => {
+    themeMode.set(appearance)
+  }, [appearance, themeMode])
+
+  return (
+    <App
+      api={api}
+      layoutName={layoutName}
+      guiStyle={guiStyle}
+      theme={theme}
+      {...appState}
+    />
+  )
 }

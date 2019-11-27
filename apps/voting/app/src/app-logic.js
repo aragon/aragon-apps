@@ -1,5 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { AragonApi, useApi, useAppState, usePath } from '@aragon/api-react'
+import {
+  AragonApi,
+  useApi,
+  useAppState,
+  usePath,
+  useGuiStyle,
+} from '@aragon/api-react'
 import appStateReducer from './app-state-reducer'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import usePanelState from './hooks/usePanelState'
@@ -101,14 +107,17 @@ export function useAppLogic() {
     execute: useExecuteAction(),
   }
 
+  const { appearance } = useGuiStyle()
+
   return {
     actions,
+    appearance,
     executionTargets,
+    isSyncing: isSyncing || !ready,
+    newVotePanel,
     selectVote,
     selectedVote,
     votes,
-    isSyncing: isSyncing || !ready,
-    newVotePanel,
   }
 }
 

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import {
   Button,
@@ -7,6 +7,7 @@ import {
   SidePanel,
   SyncIndicator,
   useLayout,
+  useThemeMode,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import Balances from './components/Balances'
@@ -129,8 +130,14 @@ class App extends React.Component {
 }
 
 export default () => {
-  const { api, appState } = useAragonApi()
+  const { api, appState, guiStyle } = useAragonApi()
+  const themeMode = useThemeMode()
   const { layoutName } = useLayout()
+  const { appearance } = guiStyle
+
+  useEffect(() => {
+    themeMode.set(appearance)
+  }, [appearance, themeMode])
 
   return (
     <App

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import {
   Button,
   Header,
@@ -6,6 +6,7 @@ import {
   Main,
   SyncIndicator,
   useLayout,
+  useThemeMode,
 } from '@aragon/ui'
 import NewVotePanel from './components/NewVotePanel'
 import useFilterVotes from './hooks/useFilterVotes'
@@ -20,11 +21,12 @@ import { SettingsProvider } from './vote-settings-manager'
 const App = React.memo(function App() {
   const {
     actions,
+    appearance,
     executionTargets,
     isSyncing,
     newVotePanel,
-    selectedVote,
     selectVote,
+    selectedVote,
     votes,
   } = useAppLogic()
 
@@ -47,7 +49,13 @@ const App = React.memo(function App() {
     handleClearFilters,
   } = useFilterVotes(votes, executionTargets)
 
+  const themeMode = useThemeMode()
+
   useScrollTop(selectedVote)
+
+  useEffect(() => {
+    themeMode.set(appearance)
+  }, [appearance, themeMode])
 
   return (
     <React.Fragment>
