@@ -24,7 +24,8 @@ jobs:
       run: now --token=${{ secrets.ZEIT_TOKEN }}
       working-directory: apps/finance/app
     - name: now (production)
-      run: now --target production --token=${{ secrets.ZEIT_TOKEN }}
+      if: github.ref == 'refs/heads/master'
+      run: now --prod --token=${{ secrets.ZEIT_TOKEN }}
       working-directory: apps/finance/app
     env:
       CI: true
