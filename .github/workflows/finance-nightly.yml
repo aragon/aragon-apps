@@ -10,19 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: cd
-      run: cd apps/finance/app
     - name: Install node
       uses: actions/setup-node@v1
       with:
         node-version: 10
     - name: npm install
       run: npm install
+      working-directory: apps/finance/app
     - name: npm lint
       run: npm run lint
+      working-directory: apps/finance/app
     - name: now
       run: now --token=${{ secrets.ZEIT_TOKEN }}
+      working-directory: apps/finance/app
     - name: now (production)
       run: now --target production --token=${{ secrets.ZEIT_TOKEN }}
+      working-directory: apps/finance/app
     env:
       CI: true
