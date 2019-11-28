@@ -1,0 +1,31 @@
+name: Voting nightly deployment
+
+on:
+  push:
+    paths:
+    - 'apps/voting/app/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - name: npm install
+      run: npm install
+      working-directory: apps/voting/app
+    - name: npm lint
+      run: npm run lint
+      working-directory: apps/voting/app
+    - name: now
+      run: now --token=${{ secrets.ZEIT_TOKEN }}
+      working-directory: apps/voting/app
+    - name: now (production)
+      if: github.ref == 'refs/heads/master'
+      run: now --prod --token=${{ secrets.ZEIT_TOKEN }}
+      working-directory: apps/voting/app
+    env:
+      CI: true
