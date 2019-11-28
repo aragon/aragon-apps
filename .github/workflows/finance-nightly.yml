@@ -21,8 +21,8 @@ jobs:
     - name: npm lint
       run: npm run lint
     - name: now
-      run: now
+      run: now --token=${{ secrets.ZEIT_TOKEN }}
     - name: now (production)
-      run: now --target production
+      run: now --target production --token=${{ secrets.ZEIT_TOKEN }}
     env:
       CI: true
