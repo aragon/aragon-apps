@@ -22,6 +22,8 @@ contract Voting is IForwarder, AragonApp {
     bytes32 public constant MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
 
     uint64 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
+
+    byte public constant SCRIPT_FROM_STORAGE_MAGIC_NUMBER = 0xfe;
     byte public constant NO_EXECUTE_MAGIC_NUMBER = 0xff;
 
     string private constant ERROR_NO_VOTE = "VOTING_NO_VOTE";
@@ -47,6 +49,7 @@ contract Voting is IForwarder, AragonApp {
         uint256 yea;
         uint256 nay;
         uint256 votingPower;
+        bytes evmScript;
         bytes32 evmScriptHash;
         mapping (address => VoterState) voters;
     }
@@ -60,7 +63,8 @@ contract Voting is IForwarder, AragonApp {
     mapping (uint256 => Vote) internal votes;
     uint256 public votesLength;
 
-    event StartVote(uint256 indexed voteId, address indexed creator, string metadata, bytes evmScript);
+    event StartVote(uint256 indexed voteId, address indexed creator, string metadata);
+    event StartVoteWithScript(uint256 indexed voteId, bytes evmScript);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
     event ChangeSupportRequired(uint64 supportRequiredPct);
@@ -250,6 +254,7 @@ contract Voting is IForwarder, AragonApp {
             uint256 yea,
             uint256 nay,
             uint256 votingPower
+            // TODO: evmScript + evmScriptHash
         )
     {
         Vote storage vote_ = votes[_voteId];
