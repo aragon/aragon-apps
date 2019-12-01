@@ -213,7 +213,9 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     voteId = getEventArgument(receipt, 'StartVote', 'voteId')
                     creator = getEventArgument(receipt, 'StartVote', 'creator')
                     metadata = getEventArgument(receipt, 'StartVote', 'metadata')
-                    evmScript = getEventArgument(receipt, 'StartVote', 'evmScript')
+                    evmScript = getEventArgument(receipt, 'StartVoteWithScript', 'evmScript')
+
+                    assert.equal(voteId, getEventArgument(receipt, 'StartVoteWithScript', 'voteId'))
                 })
 
                 it('has correct state', async () => {
@@ -229,6 +231,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     assert.equal(n, 0, 'initial nay should be 0')
                     assert.equal(votingPower.toString(), bigExp(100, decimals).toString(), 'voting power should be 100')
                     assert.equal(evmScript, script, 'script should be correct')
+                    // TODO: Check that script hash is the hash of the script
                     assert.equal(metadata, 'metadata', 'should have returned correct metadata')
                     assert.equal(await voting.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')
                 })
