@@ -10,6 +10,7 @@ function ComingSoon() {
       css={`
         width: 100%;
         min-height: ${72 * GU}px;
+        text-align: center;
       `}
     >
       <div
@@ -32,6 +33,7 @@ function ComingSoon() {
           color: ${theme.content};
           ${textStyle('title2')};
           margin-bottom: ${2 * GU}px;
+          padding: 0 ${2 * GU}px;
         `}
       >
         Agent transaction list is coming soon!
@@ -42,12 +44,15 @@ function ComingSoon() {
           max-width: ${52 * GU}px;
           color: ${theme.contentSecondary};
           ${textStyle('body2')};
+          padding: 0 ${2 * GU}px;
         `}
       >
         We are currently working on the full version of this app. You’ll soon be
-        able to browse Agent interactions with other Ethereum applications
-        from here.
-        <Link href="https://aragon.org/agent">Learn how you can start using it today</Link>
+        able to browse Agent interactions with other Ethereum applications from
+        here.
+        <Link href="https://aragon.org/agent">
+          Learn how you can start using it today
+        </Link>
       </div>
     </Card>
   )

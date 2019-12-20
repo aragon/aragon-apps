@@ -104,11 +104,11 @@ export function useAppLogic() {
   return {
     actions,
     executionTargets,
+    isSyncing: isSyncing || !ready,
+    newVotePanel,
     selectVote,
     selectedVote,
     votes,
-    isSyncing: isSyncing || !ready,
-    newVotePanel,
   }
 }
 

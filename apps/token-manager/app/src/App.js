@@ -6,6 +6,7 @@ import {
   GU,
   Header,
   IconPlus,
+  Main,
   SyncIndicator,
   Tag,
   textStyle,
@@ -199,9 +200,14 @@ class App extends React.PureComponent {
 }
 
 export default () => {
-  const { api, appState } = useAragonApi()
   const theme = useTheme()
+  const { api, appState, guiStyle } = useAragonApi()
   const { layoutName } = useLayout()
+  const { appearance } = guiStyle
 
-  return <App api={api} layoutName={layoutName} theme={theme} {...appState} />
+  return (
+    <Main assetsUrl="./aragon-ui" theme={appearance}>
+      <App api={api} layoutName={layoutName} theme={theme} {...appState} />
+    </Main>
+  )
 }

@@ -1,5 +1,5 @@
-import React from 'react'
-import { Header, Layout, SyncIndicator, useLayout } from '@aragon/ui'
+import React, { useEffect } from 'react'
+import { Main, Header, SyncIndicator, useLayout } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import InstallFrame from './components/InstallFrame'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
@@ -32,11 +32,12 @@ function App({ api, appState, isSyncing }) {
 }
 
 export default () => {
-  const { api, appState } = useAragonApi()
+  const { api, appState, guiStyle } = useAragonApi()
+  const { appearance } = guiStyle
 
   return (
-    <Layout>
+    <Main theme={appearance} assetsUrl="./aragon-ui">
       <App api={api} appState={appState} isSyncing={appState.isSyncing} />
-    </Layout>
+    </Main>
   )
 }
