@@ -207,13 +207,7 @@ export default () => {
 
   return (
     <Main assetsUrl="./aragon-ui" theme={appearance}>
-      <App
-        api={api}
-        layoutName={layoutName}
-        guiStyle={guiStyle}
-        theme={theme}
-        {...appState}
-      />
+      <App api={api} layoutName={layoutName} theme={theme} {...appState} />
     </Main>
   )
 }
