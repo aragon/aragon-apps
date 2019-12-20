@@ -4,10 +4,10 @@ import {
   Button,
   Header,
   IconPlus,
+  Main,
   SidePanel,
   SyncIndicator,
   useLayout,
-  useThemeMode,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import Balances from './components/Balances'
@@ -131,20 +131,17 @@ class App extends React.Component {
 
 export default () => {
   const { api, appState, guiStyle } = useAragonApi()
-  const themeMode = useThemeMode()
   const { layoutName } = useLayout()
   const { appearance } = guiStyle
 
-  useEffect(() => {
-    themeMode.set(appearance)
-  }, [appearance, themeMode])
-
   return (
-    <App
-      api={api}
-      appState={appState}
-      isSyncing={appState.isSyncing}
-      compactMode={layoutName === 'small'}
-    />
+    <Main theme={appearance} assetsUrl="./aragon-ui">
+      <App
+        api={api}
+        appState={appState}
+        isSyncing={appState.isSyncing}
+        compactMode={layoutName === 'small'}
+      />
+    </Main>
   )
 }

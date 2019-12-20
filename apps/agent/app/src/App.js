@@ -1,11 +1,5 @@
 import React, { useEffect } from 'react'
-import {
-  Header,
-  Layout,
-  SyncIndicator,
-  useLayout,
-  useThemeMode,
-} from '@aragon/ui'
+import { Main, Header, SyncIndicator, useLayout } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import InstallFrame from './components/InstallFrame'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
@@ -39,16 +33,11 @@ function App({ api, appState, isSyncing }) {
 
 export default () => {
   const { api, appState, guiStyle } = useAragonApi()
-  const themeMode = useThemeMode()
   const { appearance } = guiStyle
 
-  useEffect(() => {
-    themeMode.set(appearance)
-  }, [appearance, themeMode])
-
   return (
-    <Layout>
+    <Main theme={appearance} assetsUrl="./aragon-ui">
       <App api={api} appState={appState} isSyncing={appState.isSyncing} />
-    </Layout>
+    </Main>
   )
 }

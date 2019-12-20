@@ -6,12 +6,12 @@ import {
   GU,
   Header,
   IconPlus,
+  Main,
   SyncIndicator,
   Tag,
   textStyle,
   useLayout,
   useTheme,
-  useThemeMode,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
@@ -201,22 +201,19 @@ class App extends React.PureComponent {
 
 export default () => {
   const theme = useTheme()
-  const themeMode = useThemeMode()
   const { api, appState, guiStyle } = useAragonApi()
   const { layoutName } = useLayout()
   const { appearance } = guiStyle
 
-  useEffect(() => {
-    themeMode.set(appearance)
-  }, [appearance, themeMode])
-
   return (
-    <App
-      api={api}
-      layoutName={layoutName}
-      guiStyle={guiStyle}
-      theme={theme}
-      {...appState}
-    />
+    <Main assetsUrl="./aragon-ui" theme={appearance}>
+      <App
+        api={api}
+        layoutName={layoutName}
+        guiStyle={guiStyle}
+        theme={theme}
+        {...appState}
+      />
+    </Main>
   )
 }
