@@ -7,6 +7,7 @@ import {
   SyncIndicator,
   useLayout,
 } from '@aragon/ui'
+import { useGuiStyle } from '@aragon/api-react'
 import NewVotePanel from './components/NewVotePanel'
 import useFilterVotes from './hooks/useFilterVotes'
 import useScrollTop from './hooks/useScrollTop'
@@ -20,7 +21,6 @@ import { SettingsProvider } from './vote-settings-manager'
 const App = React.memo(function App() {
   const {
     actions,
-    appearance,
     executionTargets,
     isSyncing,
     newVotePanel,
@@ -29,6 +29,7 @@ const App = React.memo(function App() {
     votes,
   } = useAppLogic()
 
+  const { appearance } = useGuiStyle()
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
   const handleBack = useCallback(() => selectVote(-1), [selectVote])
