@@ -1,19 +1,9 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import {
-  Button,
-  GU,
-  Header,
-  IconPlus,
-  Main,
-  SyncIndicator,
-  Tag,
-  textStyle,
-  useLayout,
-  useTheme,
-} from '@aragon/ui'
+import { Main, SyncIndicator } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
+import AppHeader from './components/AppHeader'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 import UpdateTokenPanel from './components/UpdateTokenPanel/UpdateTokenPanel'
 import EmptyState from './screens/EmptyState'
@@ -97,10 +87,8 @@ class App extends React.PureComponent {
       groupMode,
       holders,
       isSyncing,
-      layoutName,
       maxAccountTokens,
       numData,
-      theme,
       tokenAddress,
       tokenDecimalsBase,
       tokenName,
@@ -123,45 +111,9 @@ class App extends React.PureComponent {
         )}
         {appStateReady && holders.length !== 0 && (
           <React.Fragment>
-            <Header
-              primary={
-                <div
-                  css={`
-                    display: flex;
-                    align-items: center;
-                    flex: 1 1 auto;
-                    width: 0;
-                  `}
-                >
-                  <h1
-                    css={`
-                      ${textStyle(
-                        layoutName === 'small' ? 'title3' : 'title2'
-                      )};
-                      flex: 0 1 auto;
-                      overflow: hidden;
-                      text-overflow: ellipsis;
-                      white-space: nowrap;
-                      margin-right: ${1 * GU}px;
-                      color: ${theme.content};
-                    `}
-                  >
-                    Tokens
-                  </h1>
-                  <div css="flex-shrink: 0">
-                    {tokenSymbol && <Tag mode="identifier">{tokenSymbol}</Tag>}
-                  </div>
-                </div>
-              }
-              secondary={
-                <Button
-                  mode="strong"
-                  onClick={this.handleLaunchAssignTokensNoHolder}
-                  label="Add tokens"
-                  icon={<IconPlus />}
-                  display={layoutName === 'small' ? 'icon' : 'label'}
-                />
-              }
+            <AppHeader
+              onAssignHolder={this.handleLaunchAssignTokensNoHolder}
+              tokenSymbol={tokenSymbol}
             />
             <Holders
               holders={holders}
@@ -200,14 +152,12 @@ class App extends React.PureComponent {
 }
 
 export default () => {
-  const theme = useTheme()
   const { api, appState, guiStyle } = useAragonApi()
-  const { layoutName } = useLayout()
   const { appearance } = guiStyle
 
   return (
     <Main assetsUrl="./aragon-ui" theme={appearance}>
-      <App api={api} layoutName={layoutName} theme={theme} {...appState} />
+      <App api={api} {...appState} />
     </Main>
   )
 }
