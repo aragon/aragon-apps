@@ -9,10 +9,13 @@ import You from './You'
 const DISTRIBUTION_ITEMS_MAX = 7
 
 function displayedStakes(accounts, total) {
-  return stakesPercentages(accounts.map(({ balance }) => balance), {
-    total,
-    maxIncluded: DISTRIBUTION_ITEMS_MAX,
-  }).map((stake, index) => ({
+  return stakesPercentages(
+    accounts.map(({ balance }) => balance),
+    {
+      total,
+      maxIncluded: DISTRIBUTION_ITEMS_MAX,
+    }
+  ).map((stake, index) => ({
     item: stake.index === -1 ? 'Rest' : accounts[index].address,
     percentage: stake.percentage,
   }))
