@@ -217,6 +217,19 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     }
 
     /**
+     * @notice Tells whether this contract supports a given ERC-165 interface
+     * @dev Implements conformance to ERC-165
+     * @param _interfaceId Interface bytes to check
+     * @return True if this contract supports the interface
+     */
+    function supportsInterface(bytes4 _interfaceId) external pure returns (bool) {
+        return
+            _interfaceId == ERC1271_INTERFACE_ID ||
+            _interfaceId == ERC721_RECEIVED ||
+            _interfaceId == ERC165_INTERFACE_ID;
+    }
+
+    /**
     * @notice Execute the script as the Agent app
     * @dev IForwarder interface conformance. Forwards any token holder action.
     * @param _evmScript Script being executed
@@ -239,20 +252,6 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     function canForward(address _sender, bytes _evmScript) public view returns (bool) {
         // Note that `canPerform()` implicitly does an initialization check itself
         return canPerform(_sender, RUN_SCRIPT_ROLE, arr(_getScriptACLParam(_evmScript)));
-    }
-
-    // ERC-165 conformance
-
-    /**
-     * @notice Tells whether this contract supports a given ERC-165 interface
-     * @param _interfaceId Interface bytes to check
-     * @return True if this contract supports the interface
-     */
-    function supportsInterface(bytes4 _interfaceId) external pure returns (bool) {
-        return
-            _interfaceId == ERC1271_INTERFACE_ID ||
-            _interfaceId == ERC721_RECEIVED ||
-            _interfaceId == ERC165_INTERFACE_ID;
     }
 
     // ERC-1271 conformance
