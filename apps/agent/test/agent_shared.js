@@ -755,7 +755,7 @@ module.exports = (
           assert.isTrue(await agent.supportsInterface(ERC165_SUPPORT_INTERFACE_ID))
           assert.isFalse(await agent.supportsInterface(ERC165_SUPPORT_INVALID_ID))
         })
-        
+
         it('supports ERC1271 interface', async () => {
           assert.isTrue(await agent.supportsInterface(ERC1271_INTERFACE_ID))
         })
