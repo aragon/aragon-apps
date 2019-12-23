@@ -7,13 +7,14 @@ pragma solidity 0.4.24;
 import "./SignatureValidator.sol";
 import "./standards/IERC165.sol";
 import "./standards/ERC1271.sol";
+import "./standards/IERC721Receiver.sol";
 
 import "@aragon/apps-vault/contracts/Vault.sol";
 
 import "@aragon/os/contracts/common/IForwarder.sol";
 
 
-contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
+contract Agent is IERC165, IERC721Receiver, ERC1271Bytes, IForwarder, IsContract, Vault {
     /* Hardcoded constants to save gas
     bytes32 public constant EXECUTE_ROLE = keccak256("EXECUTE_ROLE");
     bytes32 public constant SAFE_EXECUTE_ROLE = keccak256("SAFE_EXECUTE_ROLE");
@@ -35,7 +36,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     uint256 public constant PROTECTED_TOKENS_CAP = 10;
 
     bytes4 private constant ERC165_INTERFACE_ID = 0x01ffc9a7;
-    bytes4 private constant ERC721_RECEIVED = 0x150b7a02; // bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))
+    bytes4 private constant ERC721_RECEIVED_INTERFACE_ID = 0x150b7a02; // bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))
 
     string private constant ERROR_TARGET_PROTECTED = "AGENT_TARGET_PROTECTED";
     string private constant ERROR_PROTECTED_TOKENS_MODIFIED = "AGENT_PROTECTED_TOKENS_MODIFIED";
@@ -57,7 +58,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     event RemoveProtectedToken(address indexed token);
     event PresignHash(address indexed sender, bytes32 indexed hash);
     event SetDesignatedSigner(address indexed sender, address indexed oldSigner, address indexed newSigner);
-    event ReceiveERC721(address indexed token, address operator, address from, uint256 tokenId, bytes data);
+    event ReceiveERC721(address indexed token, address indexed operator, address indexed from, uint256 tokenId, bytes data);
 
     /**
     * @notice Execute '`@radspec(_target, _data)`' on `_target``_ethValue == 0 ? '' : ' (Sending ' + @tokenAmount(0x0000000000000000000000000000000000000000, _ethValue) + ')'`
@@ -202,7 +203,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes _data) external returns (bytes4) {
         emit ReceiveERC721(msg.sender, _operator, _from, _tokenId, _data);
 
-        return ERC721_RECEIVED;
+        return ERC721_RECEIVED_INTERFACE_ID;
     }
 
     // Forwarding fns
@@ -225,7 +226,7 @@ contract Agent is IERC165, ERC1271Bytes, IForwarder, IsContract, Vault {
     function supportsInterface(bytes4 _interfaceId) external pure returns (bool) {
         return
             _interfaceId == ERC1271_INTERFACE_ID ||
-            _interfaceId == ERC721_RECEIVED ||
+            _interfaceId == ERC721_RECEIVED_INTERFACE_ID ||
             _interfaceId == ERC165_INTERFACE_ID;
     }
 
