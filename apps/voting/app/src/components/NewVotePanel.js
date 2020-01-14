@@ -10,10 +10,6 @@ import {
   useSidePanelFocusOnReady,
 } from '@aragon/ui'
 
-const initialState = {
-  question: '',
-}
-
 const NewVotePanel = React.memo(function NewVotePanel({
   panelState,
   onCreateVote,

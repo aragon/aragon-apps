@@ -175,7 +175,10 @@ const ThisVoting = ({ showTag }) => (
 )
 
 const VoteGroups = React.memo(({ openVotes, closedVotes, onSelectVote }) => {
-  const voteGroups = [['Open votes', openVotes], ['Closed votes', closedVotes]]
+  const voteGroups = [
+    ['Open votes', openVotes],
+    ['Closed votes', closedVotes],
+  ]
 
   return (
     <React.Fragment>
