@@ -36,6 +36,7 @@ module.exports = (
   const NO_DATA = '0x'
   const ERC165_SUPPORT_INVALID_ID = '0xffffffff'
   const ERC165_SUPPORT_INTERFACE_ID = '0x01ffc9a7'
+  const ERC721_RECEIVED_INTERFACE_ID = '0x150b7a02'
 
   const AgentLike = artifacts.require(agentName)
 
@@ -757,6 +758,10 @@ module.exports = (
 
         it('supports ERC1271 interface', async () => {
           assert.isTrue(await agent.supportsInterface(ERC1271_INTERFACE_ID))
+        })
+
+        it('supports ERC721Receiver interface', async () => {
+          assert.isTrue(await agent.supportsInterface(ERC721_RECEIVED_INTERFACE_ID))
         })
 
         it('doesn\'t support any other interface', async () => {
