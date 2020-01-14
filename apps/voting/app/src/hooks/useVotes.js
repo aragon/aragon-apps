@@ -80,7 +80,9 @@ function useDecoratedVotes() {
         identifier,
         name,
       }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => {
+        return a.name ? a.name.localeCompare(b.name) : 1
+      })
 
     return [decoratedVotes, executionTargets]
   }, [votes, connectedAccountVotes, currentApp, installedApps])
