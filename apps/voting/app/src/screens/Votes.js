@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
   Bar,
   DropDown,
@@ -47,10 +47,14 @@ const Votes = React.memo(function Votes({
   const { layoutName } = useLayout()
   const { openVotes, closedVotes } = useVotes(filteredVotes)
 
-  const multipleOfTarget = executionTargets.reduce((map, { name }) => {
-    map.set(name, map.has(name))
-    return map
-  }, new Map())
+  const multipleOfTarget = useMemo(
+    () =>
+      executionTargets.reduce((map, { appAddress }) => {
+        map.set(appAddress, map.has(appAddress))
+        return map
+      }, new Map()),
+    [executionTargets]
+  )
 
   return (
     <React.Fragment>
@@ -121,9 +125,9 @@ const Votes = React.memo(function Votes({
                 'All',
                 <ThisVoting showTag={multipleOfTarget.get('Voting')} />,
                 ...executionTargets.map(
-                  ({ name, identifier }) =>
+                  ({ appAddress, name, identifier }) =>
                     `${name}${
-                      multipleOfTarget.get(name) && identifier
+                      multipleOfTarget.get(appAddress) && identifier
                         ? ` (${identifier})`
                         : ''
                     }`
@@ -175,7 +179,10 @@ const ThisVoting = ({ showTag }) => (
 )
 
 const VoteGroups = React.memo(({ openVotes, closedVotes, onSelectVote }) => {
-  const voteGroups = [['Open votes', openVotes], ['Closed votes', closedVotes]]
+  const voteGroups = [
+    ['Open votes', openVotes],
+    ['Closed votes', closedVotes],
+  ]
 
   return (
     <React.Fragment>

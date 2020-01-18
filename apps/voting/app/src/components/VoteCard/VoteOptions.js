@@ -30,7 +30,10 @@ class VoteOptions extends React.Component {
 
     const percentages =
       votingPower > 0
-        ? percentageList(options.map(o => o.power / votingPower), 2)
+        ? percentageList(
+            options.map(o => o.power / votingPower),
+            2
+          )
         : [0, 0]
 
     return (

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useAppState, useCurrentApp, useInstalledApps } from '@aragon/api-react'
 import { isVoteOpen } from '../vote-utils'
 import { VOTE_ABSENT } from '../vote-types'
-import { EMPTY_ADDRESS } from '../web3-utils'
+import { EMPTY_ADDRESS, shortenAddress } from '../web3-utils'
 import useNow from './useNow'
 
 // Decorate the votes array with more information relevant to the frontend
@@ -24,12 +24,10 @@ function useDecoratedVotes() {
           `Voting: vote #${vote.voteId} does not list any execution targets. The app's cache is likely corrupted and needs to be reset.`
         )
       } else if (!executionTargets.length) {
-        // If there's no execution target, consider it targetting this Voting app
-        targetApp = {
-          ...currentApp,
-          // Don't attach an identifier for this Voting app
-          identifier: undefined,
-        }
+        // If there's no execution target, consider it targeting this Voting app
+        targetApp = { ...currentApp }
+        // Don't attach an identifier for this Voting app
+        delete targetApp.identifier
       } else if (executionTargets.length > 1) {
         // If there's multiple targets, make a "multiple" version
         targetApp = {
@@ -53,11 +51,12 @@ function useDecoratedVotes() {
       if (targetApp) {
         const { appAddress, icon, identifier, name } = targetApp
         executionTargetData = {
+          identifier,
           address: appAddress,
-          name,
+          // If the app name was not loaded, use the app's address
+          name: name || shortenAddress(appAddress),
           // Only try to get the icon if it's available
           iconSrc: typeof icon === 'function' ? icon(24) : null,
-          identifier,
         }
       }
 
@@ -78,9 +77,12 @@ function useDecoratedVotes() {
       .map(({ appAddress, identifier, name }) => ({
         appAddress,
         identifier,
-        name,
+        // If the app name was not loaded, use the app's address
+        name: name || shortenAddress(appAddress),
       }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => {
+        return a.name ? a.name.localeCompare(b.name) : 1
+      })
 
     return [decoratedVotes, executionTargets]
   }, [votes, connectedAccountVotes, currentApp, installedApps])
