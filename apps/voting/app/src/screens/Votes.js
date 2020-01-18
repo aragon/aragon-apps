@@ -126,7 +126,7 @@ const Votes = React.memo(function Votes({
                 <ThisVoting showTag={multipleOfTarget.get('Voting')} />,
                 ...executionTargets.map(
                   ({ appAddress, name, identifier }) =>
-                    `${name || appAddress}${
+                    `${name}${
                       multipleOfTarget.get(appAddress) && identifier
                         ? ` (${identifier})`
                         : ''

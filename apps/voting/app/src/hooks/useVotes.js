@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useAppState, useCurrentApp, useInstalledApps } from '@aragon/api-react'
 import { isVoteOpen } from '../vote-utils'
 import { VOTE_ABSENT } from '../vote-types'
-import { EMPTY_ADDRESS } from '../web3-utils'
+import { EMPTY_ADDRESS, shortenAddress } from '../web3-utils'
 import useNow from './useNow'
 
 // Decorate the votes array with more information relevant to the frontend
@@ -54,7 +54,7 @@ function useDecoratedVotes() {
           identifier,
           address: appAddress,
           // If the app name was not loaded, use the app's address
-          name: name || appAddress,
+          name: name || shortenAddress(appAddress),
           // Only try to get the icon if it's available
           iconSrc: typeof icon === 'function' ? icon(24) : null,
         }
@@ -77,7 +77,8 @@ function useDecoratedVotes() {
       .map(({ appAddress, identifier, name }) => ({
         appAddress,
         identifier,
-        name,
+        // If the app name was not loaded, use the app's address
+        name: name || shortenAddress(appAddress),
       }))
       .sort((a, b) => {
         return a.name ? a.name.localeCompare(b.name) : 1
