@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react'
-import { noop } from '../utils'
 
 // Handles the state of a panel.
 export default function usePanelState() {
