@@ -42,6 +42,7 @@
     "@aragon/apps-shared-scripts": "^1.0.0",
     "@aragon/cli": "^6.0.0",
     "@aragon/test-helpers": "^2.1.0",
+    "@aragon/truffle-config-v4": "^1.0.1",
     "eth-gas-reporter": "^0.2.0",
     "ethereumjs-testrpc-sc": "^6.5.1-sc.0",
     "ganache-cli": "^6.4.3",
