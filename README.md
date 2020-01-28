@@ -9,6 +9,7 @@ This repository contains the following apps:
 - **[Tokens](apps/token-manager)**: Manages organization tokens.
 - **[Vault](apps/vault)**: Securely owns and manages tokens on behalf of a DAO.
 - **[Voting](apps/voting)**: Create votes that execute actions on behalf of token holders.
+- **[Agent](apps/agent)**: Fully-fledged Ethereum account owned by an Aragon organization.
 
 Each of the individual apps come with a frontend that is intended to be installed and used through the [Aragon client](http://github.com/aragon/aragon).
 
