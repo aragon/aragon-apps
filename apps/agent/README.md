@@ -11,10 +11,12 @@ The following function can be used to execute arbitrary calls:
 - `execute(address _target, uint256 _ethValue, bytes _data)` 
   - Protected by the `EXECUTE_ROLE` permission.
 
-If the sender has the right ACL permissions, it will execute an EVM call to `_target`, sending the specified ETH amount (in Wei) and `_data` as the calldata.
+If the sender has the right ACL permissions, it will interact with the `_target` address, sending the specified ETH amount (in Wei) and `_data` as the calldata.
 
 - If the call reverts, it will revert by forwarding the error data from the `_target`, if any.
 - If the call succeeds, it will emit the [Execute](#311-execute) event.
+
+Agent can interact with any contracts, including apps from other Aragon DAOs, opening countless possibilities like creating new votes, mint tokens or withdraw funds.
 
 Since any data can be passed as argument, it is important to note that `execute()` may open an attack vector into your organization and the assets it controls (e.g. ERC-20 tokens). Consider using `safeExecute()` for all calls that don't require the transfer of funds. See the [Security](#14-security) section for further details.
 
@@ -44,7 +46,7 @@ In all, 3 different signature modes are supported, encoded in the first byte of 
 
 ### 1.3. Vault
 
-The Agent app is a superset of the [Vault](../vault/README.md) contract, which means that it can store or transfer the tokens and Ether of the DAO in which it is installed. Specifically, the following functions are available: 
+Agent is a superset of the [Vault](../vault/README.md) app, which means it can store or transfer the tokens and Ether of the DAO in which it is installed. Specifically, the following functions are available: 
 
  - `deposit(address _token, uint256 _value)` 
  - `transfer(address _token, address _to, uint256 _value)` 
@@ -52,6 +54,8 @@ The Agent app is a superset of the [Vault](../vault/README.md) contract, which m
  - `balance(address _token)`
 
 More importantly, this property means that Agent is capable of using the DAO's funds to interact seemlessly with any contracts that require the sender to possess Ether or ERC-20 tokens (e.g. Exchanging tokens on [Uniswap](https://uniswap.io), participating in a [PoolTogether](https://www.pooltogether.com) lottery).
+
+It can also be used by contracts that need to interact with a `Vault`, like the [Finance app](../finance/README.md).
 
 ### 1.4. Security
 
@@ -80,15 +84,7 @@ Note that granting the `RUN_SCRIPT_ROLE` is virtually like granting `TRANSFER_TO
 
 ## 2. Entry points
 
-### 2.1. Initialize
- - **Actor:** External entity, ultimately calling the function through the `Kernel`
- - **Inputs:** None
- - **Pre-flight checks:**
-   - Ensure the app has not already been initialized
- - **State transitions:**
-   - Initialize the app
-
-### 2.2. Execute
+### 2.1. Execute
  - **Actor:** External entity
  - **Inputs:** 
    - **Target:** Address where the action is being executed
@@ -103,7 +99,7 @@ Note that granting the `RUN_SCRIPT_ROLE` is virtually like granting `TRANSFER_TO
    - Decrease the contract's ETH amount by `ETH value` passed as input
    - May increase or decrease the amount of tokens stored in the contract
 
-### 2.3. Safe execute
+### 2.2. Safe execute
  - **Actor:** External entity
  - **Inputs:** 
    - **Target:** Address where the action is being executed
@@ -114,7 +110,7 @@ Note that granting the `RUN_SCRIPT_ROLE` is virtually like granting `TRANSFER_TO
      - Data signature
  - **State transitions:** None
 
-### 2.4. Add protected token
+### 2.3. Add protected token
  - **Actor:** External entity
  - **Inputs:** 
    - **Token:** Address of the protected token
@@ -126,7 +122,7 @@ Note that granting the `RUN_SCRIPT_ROLE` is virtually like granting `TRANSFER_TO
  - **State transitions:** 
    - Add the token address to the protected tokens list
 
-### 2.5. Remove protected token
+### 2.4. Remove protected token
  - **Actor:** External entity
  - **Inputs:** 
    - **Token:** Address of the protected token
@@ -137,7 +133,7 @@ Note that granting the `RUN_SCRIPT_ROLE` is virtually like granting `TRANSFER_TO
  - **State transitions:** 
    - Remove the token address from the protected tokens list
 
-### 2.6. Presign hash
+### 2.5. Presign hash
  - **Actor:** External entity
  - **Inputs:** 
    - **Hash:** Hash to presign
@@ -147,7 +143,7 @@ Note that granting the `RUN_SCRIPT_ROLE` is virtually like granting `TRANSFER_TO
  - **State transitions:** 
    - Add the hash to the presigned hash list
 
-### 2.7. Set designated signer
+### 2.6. Set designated signer
  - **Actor:** External entity
  - **Inputs:** 
    - **Designated signer:** Address of the designated signer
@@ -158,7 +154,7 @@ Note that granting the `RUN_SCRIPT_ROLE` is virtually like granting `TRANSFER_TO
  - **State transitions:** 
    - Set the designated signer
 
-### 2.8. Forward
+### 2.7. Forward
  - **Actor:** External entity
  - **Inputs:** 
    - **EVM script:** Script to be executed
@@ -272,7 +268,13 @@ The following events are emitted by `Agent`:
 
 ## 4. Architecture
 
-### 4.1. Inheritance and implementation
+### 4.1. Initialization
+
+Aragon apps use the ERC-897 [DelegateProxy](https://eips.ethereum.org/EIPS/eip-897) pattern to separate the contract implementation code from the actual instances of the apps, therefore giving the possibility to modify the implementation while keeping the contract's original address. 
+
+One drawback of this approach is that the implementation's constructor cannot be called directly. An `initialize()` function is however available that will be called once during the initialization of the contract. See the [Constructor and initialization](https://hack.aragon.org/docs/aragonos-building#constructor-and-initialization) of the aragonOS documentation for more information.
+
+### 4.2. Inheritance and implementation
 
 - [Vault](../vault/README.md)
 - [Forwarder](https://hack.aragon.org/docs/forwarding-intro)
@@ -280,6 +282,6 @@ The following events are emitted by `Agent`:
 - [ERC1271Bytes](https://eips.ethereum.org/EIPS/eip-1271)
 - [IsContract](https://github.com/aragon/aragonOS/blob/master/contracts/common/IsContract.sol)
 
-### 4.2. Libraries
+### 4.3. Libraries
 
 - [SignatureValidator](./contracts/SignatureValidator.sol)
