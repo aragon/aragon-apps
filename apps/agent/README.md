@@ -22,7 +22,7 @@ Since any data can be passed as argument, it is important to note that `execute(
 
 ### 1.2. Signature handling
 
-Agent implements the [ERC-1271](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1271.md) standard, which means it can provide signature validation without actually having a private key. Two options are available to validate a signature (both options can be used together):
+Agent implements the [ERC-1271](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1271.md) standard, which means it can provide signature validation without actually owning a private key. Two options are available to validate a signature (both options can be used together):
 
 1\. An entity can pre-sign a specific hash, which will basically add the hash to a whitelist:
 
@@ -53,7 +53,7 @@ Agent is a superset of the [Vault](../vault/README.md) app, which means it can s
    - Protected by the `TRANSFER_ROLE` permission.
  - `balance(address _token)`
 
-More importantly, this property means that Agent is capable of using the DAO's funds to interact seemlessly with any contracts that require the sender to possess Ether or ERC-20 tokens (e.g. Exchanging tokens on [Uniswap](https://uniswap.io), participating in a [PoolTogether](https://www.pooltogether.com) lottery).
+More importantly, this property means that Agent is capable of using the DAO's funds to interact seamlessly with any contracts that require the sender to possess Ether or ERC-20 tokens (e.g. Exchanging tokens on [Uniswap](https://uniswap.io), participating in a [PoolTogether](https://www.pooltogether.com) lottery).
 
 It can also be used by contracts that need to interact with a `Vault`, like the [Finance app](../finance/README.md).
 
@@ -75,7 +75,7 @@ The following functions can be used to add or remove a token address to the prot
 
 ### 1.5. Forwarder
 
-Agent implements the [Forwarder](https://hack.aragon.org/docs/forwarding-intro) interface, which allow the possibility to execute EVMScripts and higher flexibility in inter-DAO interactions.
+Agent implements the [Forwarder](https://hack.aragon.org/docs/forwarding-intro) interface, which allows the possibility to execute EVMScripts, resulting in higher flexibility in inter-DAO interactions. A great example about how you can use the Agent app in very complex scenarios can be found [here](https://blog.aragon.one/riding-the-evm-with-agent-and-evm-scripts), where the Aragon Network used it to cast multiple votes in a single call, forwarded through a Voting and a Token Manager app.
 
 Executing EVMScripts with the Agent app requires the `RUN_SCRIPT_ROLE` permission and can be parametrized with the `keccak256` hash of the script.
 
@@ -272,7 +272,7 @@ The following events are emitted by `Agent`:
 
 Aragon apps use the ERC-897 [DelegateProxy](https://eips.ethereum.org/EIPS/eip-897) pattern to separate the contract implementation code from the actual instances of the apps, therefore giving the possibility to modify the implementation while keeping the contract's original address. 
 
-One drawback of this approach is that the implementation's constructor cannot be called directly. An `initialize()` function is however available that will be called once during the initialization of the contract. See the [Constructor and initialization](https://hack.aragon.org/docs/aragonos-building#constructor-and-initialization) of the aragonOS documentation for more information.
+One drawback of this approach is that the implementation's constructor cannot be called directly. An `initialize()` function is however available that will be called only once during the initialization of the contract. See the [Constructor and initialization](https://hack.aragon.org/docs/aragonos-building#constructor-and-initialization) of the aragonOS documentation for more information.
 
 ### 4.2. Inheritance and implementation
 
