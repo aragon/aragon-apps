@@ -89,7 +89,7 @@ Note that granting the `RUN_SCRIPT_ROLE` is virtually like granting `TRANSFER_TO
  - **Inputs:** 
    - **Target:** Address where the action is being executed
    - **ETH value:** Amount of ETH (in Wei) sent with the action
-   - **Data:** Calldata for the action
+   - **Data:** Calldata for the action. Data can be of length 0, in which case ETH is sent to the contract.
  - **Pre-flight checks:**
    - Ensure the actor has the `EXECUTE_ROLE` permission with the following ACL parameters:
      - Target address
