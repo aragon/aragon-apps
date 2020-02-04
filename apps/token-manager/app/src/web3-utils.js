@@ -1,4 +1,4 @@
-import { isAddress } from 'web3-utils'
+import { isAddress } from '@aragon/ui'
 
 // Check address equality
 export function addressesEqual(first, second) {
@@ -9,5 +9,5 @@ export function addressesEqual(first, second) {
   )
 }
 
-// Re-export some web3-utils functions
-export { isAddress } from 'web3-utils'
+// Re-export isAddress
+export { isAddress }
