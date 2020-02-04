@@ -36,7 +36,7 @@
     "eslint-plugin-react": "^7.5.1",
     "eslint-plugin-standard": "^4.0.0",
     "jest": "^23.6.0",
-    "prettier": "^1.8.2"
+    "prettier": "^1.8.2",
     "parcel-bundler": "1.12.4",
     "parcel-plugin-bundle-visualiser": "^1.2.0",
   },
