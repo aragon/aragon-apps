@@ -20,12 +20,11 @@ class App extends React.Component {
   static propTypes = {
     api: PropTypes.object,
     appState: PropTypes.object,
+    isSyncing: PropTypes.bool,
+    compactMode: PropTypes.bool,
   }
   static defaultProps = {
     isSyncing: true,
-    balances: [],
-    transactions: [],
-    tokens: [],
   }
   state = {
     newTransferOpened: false,
