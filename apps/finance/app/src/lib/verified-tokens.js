@@ -1417,7 +1417,14 @@ const VERIFIED_TOKENS = [
   ['ZXC', '0x83e2be8d114f9661221384b3a50d24b96a5653f5'],
 ]
 
-export const ETHER_TOKEN_VERIFIED_BY_SYMBOL = new Map(VERIFIED_TOKENS)
+// Additional tokens added for Aragon
+const ARAGON_VERIFIED_TOKENS = [
+  ['rDAI', '0x261b45d85ccfeabb11f022eba346ee8d1cd488c0'],
+]
+
+export const ETHER_TOKEN_VERIFIED_BY_SYMBOL = new Map(
+  VERIFIED_TOKENS.concat(ARAGON_VERIFIED_TOKENS)
+)
 export const ETHER_TOKEN_VERIFIED_ADDRESSES = new Set(
   ETHER_TOKEN_VERIFIED_BY_SYMBOL.values()
 )
