@@ -20,8 +20,8 @@ class App extends React.Component {
   static propTypes = {
     api: PropTypes.object,
     appState: PropTypes.object,
-    isSyncing: PropTypes.bool,
     compactMode: PropTypes.bool,
+    isSyncing: PropTypes.bool,
   }
   static defaultProps = {
     isSyncing: true,
