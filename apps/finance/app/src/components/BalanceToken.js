@@ -3,13 +3,13 @@ import { GU, textStyle, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { tokenIconUrl } from '../lib/icon-utils'
 import { formatTokenAmount } from '../lib/utils'
-import { numberWithCommas } from '../lib/web3-utils'
+import { separateThousands } from '../lib/utils'
 
 const splitAmount = amount => {
   const [integer, fractional] = formatTokenAmount(amount).split('.')
   return (
     <span>
-      <span>{numberWithCommas(integer)}</span>
+      <span>{separateThousands(integer)}</span>
       {fractional && (
         <span
           css={`
@@ -75,7 +75,7 @@ const BalanceToken = ({
           `}
         >
           {convertedAmount >= 0
-            ? `$${numberWithCommas(formatTokenAmount(convertedAmount.toFixed(2)))}`
+            ? `$${separateThousands(formatTokenAmount(convertedAmount.toFixed(2)))}`
             : '−'}
         </div>
       </div>
