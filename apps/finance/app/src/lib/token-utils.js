@@ -5,6 +5,7 @@ import tokenSymbolBytesAbi from '../abi/token-symbol-bytes.json'
 import tokenNameAbi from '../abi/token-name.json'
 import tokenNameBytesAbi from '../abi/token-name-bytes.json'
 
+const ANJ_MAINNET_TOKEN_ADDRESS = '0xcD62b1C403fa761BAadFC74C525ce2B51780b184'
 const ANT_MAINNET_TOKEN_ADDRESS = '0x960b236a07cf122663c4303350609a66a7b288c0'
 const DAI_MAINNET_TOKEN_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f'
 const SAI_MAINNET_TOKEN_ADDRESS = '0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359'
@@ -18,6 +19,7 @@ const PRESET_TOKENS = new Map([
     'main',
     [
       ETHER_TOKEN_FAKE_ADDRESS,
+      ANJ_MAINNET_TOKEN_ADDRESS,
       ANT_MAINNET_TOKEN_ADDRESS,
       DAI_MAINNET_TOKEN_ADDRESS,
       SAI_MAINNET_TOKEN_ADDRESS,
