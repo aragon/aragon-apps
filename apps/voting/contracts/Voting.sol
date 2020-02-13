@@ -23,6 +23,9 @@ contract Voting is IForwarder, AragonApp {
 
     uint64 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
 
+    byte public constant SCRIPT_FROM_STORAGE_MAGIC_NUMBER = 0xfe;
+    byte public constant NO_EXECUTE_MAGIC_NUMBER = 0xff;
+
     string private constant ERROR_NO_VOTE = "VOTING_NO_VOTE";
     string private constant ERROR_INIT_PCTS = "VOTING_INIT_PCTS";
     string private constant ERROR_CHANGE_SUPPORT_PCTS = "VOTING_CHANGE_SUPPORT_PCTS";
@@ -33,6 +36,7 @@ contract Voting is IForwarder, AragonApp {
     string private constant ERROR_CAN_NOT_EXECUTE = "VOTING_CAN_NOT_EXECUTE";
     string private constant ERROR_CAN_NOT_FORWARD = "VOTING_CAN_NOT_FORWARD";
     string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
+    string private constant ERROR_BAD_SCRIPT = "VOTING_BAD_SCRIPT";
 
     enum VoterState { Absent, Yea, Nay }
 
@@ -45,7 +49,8 @@ contract Voting is IForwarder, AragonApp {
         uint256 yea;
         uint256 nay;
         uint256 votingPower;
-        bytes executionScript;
+        bytes evmScript;
+        bytes32 evmScriptHash;
         mapping (address => VoterState) voters;
     }
 
@@ -59,6 +64,7 @@ contract Voting is IForwarder, AragonApp {
     uint256 public votesLength;
 
     event StartVote(uint256 indexed voteId, address indexed creator, string metadata);
+    event StartVoteWithScript(uint256 indexed voteId, bytes evmScript);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ExecuteVote(uint256 indexed voteId);
     event ChangeSupportRequired(uint64 supportRequiredPct);
@@ -119,28 +125,28 @@ contract Voting is IForwarder, AragonApp {
 
     /**
     * @notice Create a new vote about "`_metadata`"
-    * @param _executionScript EVM script to be executed on approval
+    * @param _evmScript EVM script to be executed on approval
     * @param _metadata Vote metadata
     * @return voteId Id for newly created vote
     */
-    function newVote(bytes _executionScript, string _metadata) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
-        return _newVote(_executionScript, _metadata, true, true);
+    function newVote(bytes _evmScript, string _metadata) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
+        return _newVote(_evmScript, _metadata, true, true);
     }
 
     /**
     * @notice Create a new vote about "`_metadata`"
-    * @param _executionScript EVM script to be executed on approval
+    * @param _evmScript EVM script to be executed on approval
     * @param _metadata Vote metadata
     * @param _castVote Whether to also cast newly created vote
     * @param _executesIfDecided Whether to also immediately execute newly created vote if decided
     * @return voteId id for newly created vote
     */
-    function newVote(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided)
+    function newVote(bytes _evmScript, string _metadata, bool _castVote, bool _executesIfDecided)
         external
         auth(CREATE_VOTES_ROLE)
         returns (uint256 voteId)
     {
-        return _newVote(_executionScript, _metadata, _castVote, _executesIfDecided);
+        return _newVote(_evmScript, _metadata, _castVote, _executesIfDecided);
     }
 
     /**
@@ -149,11 +155,11 @@ contract Voting is IForwarder, AragonApp {
     *      created via `newVote(),` which requires initialization
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
-    * @param _executesIfDecided Whether the vote should execute its action if it becomes decided
+    * @param _executingEvmScriptIfDecided EVMScript for the vote if it should execute if decided, empty byte array otherwise
     */
-    function vote(uint256 _voteId, bool _supports, bool _executesIfDecided) external voteExists(_voteId) {
+    function vote(uint256 _voteId, bool _supports, bytes _executingEvmScriptIfDecided) external voteExists(_voteId) {
         require(_canVote(_voteId, msg.sender), ERROR_CAN_NOT_VOTE);
-        _vote(_voteId, _supports, msg.sender, _executesIfDecided);
+        _vote(_voteId, _supports, msg.sender, _executingEvmScriptIfDecided);
     }
 
     /**
@@ -161,9 +167,10 @@ contract Voting is IForwarder, AragonApp {
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote(),` which requires initialization
     * @param _voteId Id for vote
+    * @param _evmScript EVMScript for the vote
     */
-    function executeVote(uint256 _voteId) external voteExists(_voteId) {
-        _executeVote(_voteId);
+    function executeVote(uint256 _voteId, bytes _evmScript) external voteExists(_voteId) {
+        _executeVote(_voteId, _evmScript);
     }
 
     // Forwarding fns
@@ -232,7 +239,6 @@ contract Voting is IForwarder, AragonApp {
     * @return Vote yeas amount
     * @return Vote nays amount
     * @return Vote power
-    * @return Vote script
     */
     function getVote(uint256 _voteId)
         public
@@ -247,8 +253,8 @@ contract Voting is IForwarder, AragonApp {
             uint64 minAcceptQuorum,
             uint256 yea,
             uint256 nay,
-            uint256 votingPower,
-            bytes script
+            uint256 votingPower
+            // TODO: evmScript + evmScriptHash
         )
     {
         Vote storage vote_ = votes[_voteId];
@@ -262,7 +268,6 @@ contract Voting is IForwarder, AragonApp {
         yea = vote_.yea;
         nay = vote_.nay;
         votingPower = vote_.votingPower;
-        script = vote_.executionScript;
     }
 
     /**
@@ -274,13 +279,23 @@ contract Voting is IForwarder, AragonApp {
         return votes[_voteId].voters[_voter];
     }
 
+    /**
+    * @dev Return whether a script is the registerred script for a vote
+    * @param _voteId Vote identifier
+    * @param _evmScript A script that may be the vote's associated script
+    * @return Boolean indicating whether the script is the registerred script for a vote
+    */
+    function isValidScriptForVote(uint256 _voteId, bytes _evmScript) public view voteExists(_voteId) returns (bool) {
+        return votes[_voteId].evmScriptHash == keccak256(_evmScript);
+    }
+
     // Internal fns
 
     /**
     * @dev Internal function to create a new vote
     * @return voteId id for newly created vote
     */
-    function _newVote(bytes _executionScript, string _metadata, bool _castVote, bool _executesIfDecided) internal returns (uint256 voteId) {
+    function _newVote(bytes _evmScript, string _metadata, bool _castVote, bool _executesIfDecided) internal returns (uint256 voteId) {
         uint64 snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
         uint256 votingPower = token.totalSupplyAt(snapshotBlock);
         require(votingPower > 0, ERROR_NO_VOTING_POWER);
@@ -293,19 +308,27 @@ contract Voting is IForwarder, AragonApp {
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
         vote_.votingPower = votingPower;
-        vote_.executionScript = _executionScript;
+        vote_.evmScriptHash = keccak256(_evmScript);
 
-        emit StartVote(voteId, msg.sender, _metadata);
+        emit StartVote(voteId, msg.sender, _metadata, _evmScript);
 
         if (_castVote && _canVote(voteId, msg.sender)) {
-            _vote(voteId, true, msg.sender, _executesIfDecided);
+            bytes memory executingEvmScriptIfDecided;
+            if (_executesIfDecided) {
+                executingEvmScriptIfDecided = _evmScript;
+            } else {
+                executingEvmScriptIfDecided = new bytes(1);
+                executingEvmScriptIfDecided[0] = NO_EXECUTE_MAGIC_NUMBER;
+            }
+
+            _vote(voteId, true, msg.sender, executingEvmScriptIfDecided);
         }
     }
 
     /**
     * @dev Internal function to cast a vote. It assumes the queried vote exists.
     */
-    function _vote(uint256 _voteId, bool _supports, address _voter, bool _executesIfDecided) internal {
+    function _vote(uint256 _voteId, bool _supports, address _voter, bytes _executingEvmScriptIfDecided) internal {
         Vote storage vote_ = votes[_voteId];
 
         // This could re-enter, though we can assume the governance token is not malicious
@@ -329,30 +352,36 @@ contract Voting is IForwarder, AragonApp {
 
         emit CastVote(_voteId, _voter, _supports, voterStake);
 
-        if (_executesIfDecided && _canExecute(_voteId)) {
+        bool executesIfDecided = _isExecutableScript(_executingEvmScriptIfDecided);
+        if (executesIfDecided && _canExecute(_voteId)) {
             // We've already checked if the vote can be executed with `_canExecute()`
-            _unsafeExecuteVote(_voteId);
+            _unsafeExecuteVote(_voteId, _executingEvmScriptIfDecided);
         }
+    }
+
+    function _isExecutableScript(bytes _evmScript) internal returns (bool) {
+        return _evmScript.length != 1 && _evmScript[0] != NO_EXECUTE_MAGIC_NUMBER;
     }
 
     /**
     * @dev Internal function to execute a vote. It assumes the queried vote exists.
     */
-    function _executeVote(uint256 _voteId) internal {
+    function _executeVote(uint256 _voteId, bytes _evmScript) internal {
         require(_canExecute(_voteId), ERROR_CAN_NOT_EXECUTE);
-        _unsafeExecuteVote(_voteId);
+        _unsafeExecuteVote(_voteId, _evmScript);
     }
 
     /**
     * @dev Unsafe version of _executeVote that assumes you have already checked if the vote can be executed and exists
     */
-    function _unsafeExecuteVote(uint256 _voteId) internal {
+    function _unsafeExecuteVote(uint256 _voteId, bytes _evmScript) internal {
         Vote storage vote_ = votes[_voteId];
+        require(isValidScriptForVote(_voteId, _evmScript), ERROR_BAD_SCRIPT);
 
         vote_.executed = true;
 
         bytes memory input = new bytes(0); // TODO: Consider input for voting scripts
-        runScript(vote_.executionScript, input, new address[](0));
+        runScript(_evmScript, input, new address[](0));
 
         emit ExecuteVote(_voteId);
     }
