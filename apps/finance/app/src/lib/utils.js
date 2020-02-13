@@ -28,3 +28,8 @@ export function formatTokenAmount(
     formatDecimals(round(amount / Math.pow(10, decimals), rounding), 18)
   )
 }
+
+// Thousands Separator
+export function separateThousands(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
