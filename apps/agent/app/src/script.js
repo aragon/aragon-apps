@@ -79,12 +79,12 @@ retryEvery(() =>
   // TODO: add call to fetch current agent app's address once available in aragon.js
   //       and add it to settings
   app
-    .call('initialized')
+    .call('hasInitialized')
     .toPromise()
     .then(() => initialize())
     .catch(_ => {
       throw new Error(
-        'Could not start background script execution due to the contract not being connected to a network:'
+        'Could not start background script execution due to the contract not being connected to a network'
       )
     })
 )
@@ -95,7 +95,7 @@ async function initialize() {
     .pipe(first())
     .toPromise()
   TEST_TOKEN_ADDRESSES.push(...getTestTokenAddresses(network.type))
-
+  const proxyAddress = await app.currentApp.toPromise().proxyAddress
   // Set up ETH placeholders
   const ethAddress = ETHER_TOKEN_FAKE_ADDRESS
   tokenContracts.set(ethAddress, ETH_CONTRACT)
@@ -108,6 +108,7 @@ async function initialize() {
     ethToken: {
       address: ethAddress,
     },
+    proxyAddress,
   }
 
   return app.store(

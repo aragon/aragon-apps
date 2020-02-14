@@ -52,12 +52,12 @@ function useFilteredTransfers({ transactions, tokens }) {
           end: endOfDay(selectedDateRange.end),
         })) &&
         // token
-        ((selectedToken < 1 ||
+        (selectedToken < 1 ||
           tokenTransfers.find(({ token }) =>
             addressesEqual(token, tokens[selectedToken - 1].address)
           )) &&
-          // type
-          selectedTransferType < 1)) ||
+        // type
+        selectedTransferType < 1) ||
       (selectedTransferType === TRANSFER_TYPE_INCOMING && isIncoming) ||
       (selectedTransferType === TRANSFER_TYPE_OUTGOING && isOutgoing)
   )
@@ -83,4 +83,4 @@ function useFilteredTransfers({ transactions, tokens }) {
   }
 }
 
-export default useFilteredTransfers
+ export default useFilteredTransfers

@@ -36,7 +36,8 @@ const TRANSFER_TYPES = [
   TransferTypes.Outgoing,
 ]
 const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
-const getTokenDetails = (details, { address, decimals, symbol }) => {
+
+function getTokenDetails(details, { address, decimals, symbol }) {
   details[toChecksumAddress(address)] = {
     decimals,
     symbol,
@@ -44,7 +45,7 @@ const getTokenDetails = (details, { address, decimals, symbol }) => {
   return details
 }
 
-const Transfers = React.memo(({ dao, tokens, transactions }) => {
+const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
   const network = useNetwork()
@@ -87,36 +88,28 @@ const Transfers = React.memo(({ dao, tokens, transactions }) => {
               justify-content: space-between;
             `}
           >
-            <div
-              css={`
-                color: ${theme.content};
-                ${textStyle('body1')}
-              `}
-            >
-              Transfers
-            </div>
+            {layoutName !== 'small' && (
+              <TransfersFilters
+                dateRangeFilter={selectedDateRange}
+                onDateRangeChange={handleSelectedDateRangeChange}
+                tokenFilter={selectedToken}
+                onTokenChange={handleTokenChange}
+                transferTypeFilter={selectedTransferType}
+                onTransferTypeChange={handleTransferTypeChange}
+                compactMode={compactMode}
+                symbols={['All tokens', ...symbols]}
+                transferTypes={TRANSFER_TYPES_STRING}
+              />
+            )}
+            {emptyResultsViaFilters && (
+              <EmptyFilteredTransfers onClear={handleClearFilters} />
+            )}
             <div css="text-align: right;">
               <Button onClick={onDownload}>
                 <IconExternal /> Export
               </Button>
             </div>
           </div>
-          {layoutName !== 'small' && (
-            <TransfersFilters
-              dateRangeFilter={selectedDateRange}
-              onDateRangeChange={handleSelectedDateRangeChange}
-              tokenFilter={selectedToken}
-              onTokenChange={handleTokenChange}
-              transferTypeFilter={selectedTransferType}
-              onTransferTypeChange={handleTransferTypeChange}
-              compactMode={compactMode}
-              symbols={['All tokens', ...symbols]}
-              transferTypes={TRANSFER_TYPES_STRING}
-            />
-          )}
-          {emptyResultsViaFilters && (
-            <EmptyFilteredTransfers onClear={handleClearFilters} />
-          )}
         </React.Fragment>
       }
       fields={

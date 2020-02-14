@@ -1,13 +1,22 @@
 import React from 'react'
-import { Header, Layout, SyncIndicator, useLayout } from '@aragon/ui'
+import {
+  Header,
+  Main,
+  Layout,
+  SyncIndicator,
+  useLayout,
+  useTheme,
+} from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
+import Balances from './components/Balances'
 import InstallFrame from './components/InstallFrame'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
-import ComingSoon from './components/ComingSoon'
+import Transfers from './components/Transfers'
 
 function App({ api, appState, isSyncing }) {
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
+
   const { balances, transactions, tokens, proxyAddress } = appState
   const handleResolveLocalIdentity = address => {
     return api.resolveAddressIdentity(address).toPromise()
@@ -21,22 +30,21 @@ function App({ api, appState, isSyncing }) {
       onResolve={handleResolveLocalIdentity}
       onShowLocalIdentityModal={handleShowLocalIdentityModal}
     >
-      <div css="min-width: 320px">
-        <SyncIndicator visible={isSyncing} />
-        <Header primary="Agent" />
-        <InstallFrame />
-        <ComingSoon />
-      </div>
+      <SyncIndicator visible={isSyncing} />
+      <Header primary="Agent" />
+      <InstallFrame />
+      <Balances balances={balances} compactMode={compactMode} />
+      <Transfers transactions={transactions} tokens={tokens} />
     </IdentityProvider>
   )
 }
 
 export default () => {
-  const { api, appState } = useAragonApi()
-
+  const { api, appState, guiStyle } = useAragonApi()
+  const { appearance } = guiStyle
   return (
-    <Layout>
+    <Main assetsUrl="./aragon-ui" theme={appearance}>
       <App api={api} appState={appState} isSyncing={appState.isSyncing} />
-    </Layout>
+    </Main>
   )
 }
