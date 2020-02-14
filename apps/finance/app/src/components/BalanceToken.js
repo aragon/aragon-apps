@@ -2,8 +2,7 @@ import React from 'react'
 import { GU, textStyle, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { tokenIconUrl } from '../lib/icon-utils'
-import { formatTokenAmount } from '../lib/utils'
-import { separateThousands } from '../lib/utils'
+import { formatTokenAmount, separateThousands } from '../lib/utils'
 
 const splitAmount = amount => {
   const [integer, fractional] = formatTokenAmount(amount).split('.')
