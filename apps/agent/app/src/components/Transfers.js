@@ -108,9 +108,6 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
                 transferTypes={TRANSACTION_TYPES_STRING}
               />
             )}
-            {emptyResultsViaFilters && (
-              <EmptyFilteredTransfers onClear={handleClearFilters} />
-            )}
             <div css="text-align: right;">
               <Button onClick={onDownload}>
                 <IconExternal /> Export
@@ -136,7 +133,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
           compareDesc(dateLeft, dateRight)
       )}
       renderEntryExpansion={({ tokenTransfers }) => {
-        if (tokenTransfers.length === 1) {
+        if (tokenTransfers.length <= 1) {
           return
         }
 
@@ -197,6 +194,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
       }) => {
         // FIXME: Correct errors related to empty token transfers
         const [{ token, amount, to, from } = {}] = tokenTransfers
+        console.log(date, onlyOne)
         const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss")
         const dateDiv = (
           <time
@@ -243,7 +241,6 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
             {TRANSACTION_TYPES_LABELS[type]}
           </div>
         )
-        console.log(TRANSACTION_TYPES_LABELS, type)
         const referenceDiv = (
           <div
             css={`
@@ -269,7 +266,8 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
                   color: ${theme.surfaceContent};
                 `}
               >
-                {uniqueTokens} token{uniqueTokens > 1 ? 's' : ''}
+                {uniqueTokens} token
+                {uniqueTokens > 1 || uniqueTokens === 0 ? 's' : ''}
               </div>
             )
           }
@@ -282,11 +280,17 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
             true,
             { rounding: 5 }
           )
+          const amountColor = isIncoming
+            ? theme.positive
+            : formattedAmount.includes('-')
+            ? theme.negative
+            : theme.surfaceContent
+
           return (
             <span
               css={`
                 ${textStyle('body2')};
-                color: ${isIncoming ? theme.positive : theme.surfaceContent};
+                color: ${amountColor};
               `}
             >
               {formattedAmount} {symbol}

@@ -249,8 +249,9 @@ async function newVaultTransaction(state, event, settings) {
 async function newExecution(state, event, settings) {
   const {
     transactionHash,
-    returnValues: { ethValue, data },
+    returnValues: { ethValue },
   } = event
+  console.log('alo')
   // Let's try to find some more information about this particular execution
   // by using the transaction receipt:
   //   - To address
@@ -258,10 +259,14 @@ async function newExecution(state, event, settings) {
   const transactionReceipt = await app
     .web3Eth('getTransactionReceipt', transactionHash)
     .toPromise()
-  console.log('receipt->', findTransfersFromReceipt(transactionReceipt))
+  console.log(
+    'receipt->',
+    findTransfersFromReceipt(transactionReceipt),
+    transactionReceipt
+  )
   const tokenTransfers = findTransfersFromReceipt(transactionReceipt)
-    .map(({ token, returnValues }) => {
-      const { from, to, value } = returnValues
+    .map(({ token, returnData }) => {
+      const { from, to, value } = returnData
       const fromAgent = addressesEqual(from, settings.proxyAddress)
       const toAgent = addressesEqual(to, settings.proxyAddress)
 
@@ -286,7 +291,8 @@ async function newExecution(state, event, settings) {
   }
   console.log('beep', tokenTransfers)
   let newBalances = state.balances
-  const updatedTokenAddresses = tokenTransfers.forEach(({ address }) => address)
+  const updatedTokenAddresses =
+    tokenTransfers.forEach(({ address }) => address) || []
   for (const address of updatedTokenAddresses) {
     newBalances = await updateBalances(newBalances, address, settings)
   }

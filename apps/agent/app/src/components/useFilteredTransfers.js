@@ -17,6 +17,7 @@ function useFilteredTransfers({ transactions, tokens }) {
   const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
 
   const handleSelectedDateRangeChange = range => {
+    // TODO: Remove
     console.log('Date change: ', range)
     setPage(0)
     setSelectedDateRange(range)

@@ -13,7 +13,6 @@ const compareBalancesByEthAndSymbol = (tokenA, tokenB) => {
 }
 
 function appStateReducer(state) {
-  console.log('got state,', state)
   const { balances = [], transactions = [] } = state || {
     balances: [],
     transactions: [],

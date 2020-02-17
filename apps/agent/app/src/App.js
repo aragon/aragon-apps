@@ -11,7 +11,7 @@ function App({ api, appState, isSyncing }) {
   const compactMode = layoutName === 'small'
 
   const { balances, transactions, tokens, proxyAddress } = appState
-  console.log('balances from app', balances)
+  console.log('balances from app', balances, transactions, tokens, proxyAddress)
   const handleResolveLocalIdentity = address => {
     return api.resolveAddressIdentity(address).toPromise()
   }
