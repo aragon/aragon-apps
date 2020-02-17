@@ -81,21 +81,22 @@ retryEvery(() =>
   app
     .call('hasInitialized')
     .toPromise()
-    .then(() => initialize())
-    .catch(_ => {
-      throw new Error(
-        'Could not start background script execution due to the contract not being connected to a network'
-      )
-    })
-)
+    .then(a => initialize(a))
+).catch(_ => {
+  throw new Error(
+    'Could not start background script execution due to the contract not being connected to a network'
+  )
+})
 
-async function initialize() {
+async function initialize(a) {
+  console.log(a)
   const network = await app
     .network()
     .pipe(first())
     .toPromise()
   TEST_TOKEN_ADDRESSES.push(...getTestTokenAddresses(network.type))
-  const proxyAddress = await app.currentApp.toPromise().proxyAddress
+  // Fetch proxy address to add it to settings
+  const proxyAddress = await app.currentApp().toPromise().proxyAddress
   // Set up ETH placeholders
   const ethAddress = ETHER_TOKEN_FAKE_ADDRESS
   tokenContracts.set(ethAddress, ETH_CONTRACT)
@@ -117,7 +118,7 @@ async function initialize() {
       const nextState = {
         ...state,
       }
-
+      console.log('here', state, event, nextState)
       if (eventName === events.SYNC_STATUS_SYNCING) {
         return { ...nextState, isSyncing: true }
       } else if (eventName === events.SYNC_STATUS_SYNCED) {
@@ -248,9 +249,8 @@ async function newVaultTransaction(state, event, settings) {
 async function newExecution(state, event, settings) {
   const {
     transactionHash,
-    returnData: { ethValue, data },
+    returnValues: { ethValue, data },
   } = event
-
   // Let's try to find some more information about this particular execution
   // by using the transaction receipt:
   //   - To address
@@ -258,9 +258,10 @@ async function newExecution(state, event, settings) {
   const transactionReceipt = await app
     .web3Eth('getTransactionReceipt', transactionHash)
     .toPromise()
+  console.log('receipt->', findTransfersFromReceipt(transactionReceipt))
   const tokenTransfers = findTransfersFromReceipt(transactionReceipt)
-    .map(({ token, returnData }) => {
-      const { from, to, value } = returnData
+    .map(({ token, returnValues }) => {
+      const { from, to, value } = returnValues
       const fromAgent = addressesEqual(from, settings.proxyAddress)
       const toAgent = addressesEqual(to, settings.proxyAddress)
 
@@ -283,7 +284,7 @@ async function newExecution(state, event, settings) {
       token: settings.ethToken.address,
     })
   }
-
+  console.log('beep', tokenTransfers)
   let newBalances = state.balances
   const updatedTokenAddresses = tokenTransfers.forEach(({ address }) => address)
   for (const address of updatedTokenAddresses) {

@@ -1,12 +1,5 @@
 import React from 'react'
-import {
-  Header,
-  Main,
-  Layout,
-  SyncIndicator,
-  useLayout,
-  useTheme,
-} from '@aragon/ui'
+import { Header, Main, SyncIndicator, useLayout } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import Balances from './components/Balances'
 import InstallFrame from './components/InstallFrame'
@@ -18,6 +11,7 @@ function App({ api, appState, isSyncing }) {
   const compactMode = layoutName === 'small'
 
   const { balances, transactions, tokens, proxyAddress } = appState
+  console.log('balances from app', balances)
   const handleResolveLocalIdentity = address => {
     return api.resolveAddressIdentity(address).toPromise()
   }

@@ -17,6 +17,7 @@ import {
 } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import * as TransferTypes from '../transfer-types'
+import * as TransactionTypes from '../transaction-types'
 import { toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
@@ -25,17 +26,23 @@ import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import useFilteredTransfers from './useFilteredTransfers'
 import useDownloadData from './useDownloadData'
 
-const TRANSFER_TYPES_LABELS = {
-  'direct transfer': 'Transfer',
-  'direct deposit': 'Deposit',
-  'contract interaction': 'Contract interaction',
-}
-const TRANSFER_TYPES = [
-  TransferTypes.All,
-  TransferTypes.Incoming,
-  TransferTypes.Outgoing,
+const TRANSACTION_TYPES = [
+  TransactionTypes.Transfer,
+  TransactionTypes.Deposit,
+  TransactionTypes.Execution,
+  TransactionTypes.Unknown,
 ]
-const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
+
+const TRANSACTION_TYPES_LABELS = {
+  [TransactionTypes.Transfer]: 'Transfer',
+  [TransactionTypes.Deposit]: 'Deposit',
+  [TransactionTypes.Execution]: 'Execution',
+  [TransactionTypes.Unknown]: 'Unknown',
+}
+
+const TRANSACTION_TYPES_STRING = TRANSACTION_TYPES.map(
+  TransactionTypes.convertToString
+)
 
 function getTokenDetails(details, { address, decimals, symbol }) {
   details[toChecksumAddress(address)] = {
@@ -98,7 +105,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
                 onTransferTypeChange={handleTransferTypeChange}
                 compactMode={compactMode}
                 symbols={['All tokens', ...symbols]}
-                transferTypes={TRANSFER_TYPES_STRING}
+                transferTypes={TRANSACTION_TYPES_STRING}
               />
             )}
             {emptyResultsViaFilters && (
@@ -188,7 +195,8 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
         onlyOne,
         isIncoming,
       }) => {
-        const [{ token, amount, to, from }] = tokenTransfers
+        // FIXME: Correct errors related to empty token transfers
+        // const [{ token, amount, to, from }] = tokenTransfers
         const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss")
         const dateDiv = (
           <time
@@ -232,9 +240,10 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
               color: ${theme.surfaceContent};
             `}
           >
-            {TRANSFER_TYPES_LABELS[type]}
+            {TRANSACTION_TYPES_LABELS[type]}
           </div>
         )
+        console.log(TRANSACTION_TYPES_LABELS, type)
         const referenceDiv = (
           <div
             css={`

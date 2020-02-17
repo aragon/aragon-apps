@@ -13,33 +13,33 @@ const compareBalancesByEthAndSymbol = (tokenA, tokenB) => {
 }
 
 function appStateReducer(state) {
-  const { balances, transactions } = state || { balances: [], transactions: [] }
+  console.log('got state,', state)
+  const { balances = [], transactions = [] } = state || {
+    balances: [],
+    transactions: [],
+  }
   let balancesBn = []
-  if (balances && balances.length !== 0) {
-    balancesBn = balances
-      .map(balance => ({
-        ...balance,
-        amount: new BN(balance.amount),
-        decimals: new BN(balance.decimals),
+  balancesBn = balances
+    .map(balance => ({
+      ...balance,
+      amount: new BN(balance.amount),
+      decimals: new BN(balance.decimals),
 
-        // Note that numbers in `numData` are not safe for accurate
-        // computations (but are useful for making divisions easier).
-        numData: {
-          amount: parseInt(balance.amount, 10),
-          decimals: parseInt(balance.decimals, 10),
-        },
-      }))
-      .sort(compareBalancesByEthAndSymbol)
-  }
-  let transactionsBn = []
-  if (transactions && transactions.length !== 0) {
-    transactionsBn = transactions.map(transaction => ({
-      ...transaction,
-      onlyOne: transaction.tokenTransfers.length === 1,
-      isIncoming: transaction.tokenTransfers.some(({ from }) => !!from),
-      isOutgoing: transaction.tokenTransfers.some(({ to }) => !!to),
+      // Note that numbers in `numData` are not safe for accurate
+      // computations (but are useful for making divisions easier).
+      numData: {
+        amount: parseInt(balance.amount, 10),
+        decimals: parseInt(balance.decimals, 10),
+      },
     }))
-  }
+    .sort(compareBalancesByEthAndSymbol)
+  let transactionsBn = []
+  transactionsBn = transactions.map(transaction => ({
+    ...transaction,
+    onlyOne: transaction.tokenTransfers.length === 1,
+    isIncoming: transaction.tokenTransfers.some(({ from }) => !!from),
+    isOutgoing: transaction.tokenTransfers.some(({ to }) => !!to),
+  }))
 
   return {
     ...state,

@@ -57,6 +57,10 @@ const Balances = React.memo(function Balances({ balances, compactMode }) {
     setBalanceItems(balanceItems)
   }, [balances, convertRates])
 
+  useEffect(() => {
+    console.log(balances)
+  }, [balances])
+
   return (
     <Box heading="Token Balances">
       <div
