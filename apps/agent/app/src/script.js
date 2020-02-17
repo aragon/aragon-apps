@@ -172,7 +172,7 @@ const initializeState = settings => async cachedState => {
 }
 
 async function newProxyDeposit(state, event, settings) {
-  const { sender, value } = event.returnData
+  const { sender, value } = event.returnValues
   const newBalances = await updateBalances(
     state.balances,
     settings.ethToken.address,
@@ -200,7 +200,7 @@ async function newProxyDeposit(state, event, settings) {
 async function newVaultTransaction(state, event, settings) {
   const {
     event: eventName,
-    returnData: { amount, token },
+    returnValues: { amount, token },
   } = event
 
   const transactionDetailOptions =
@@ -211,7 +211,7 @@ async function newVaultTransaction(state, event, settings) {
             {
               amount,
               token,
-              from: event.returnData.sender,
+              from: event.returnValues.sender,
               to: null,
             },
           ],
@@ -224,7 +224,7 @@ async function newVaultTransaction(state, event, settings) {
               amount,
               token,
               from: null,
-              to: event.returnData.to,
+              to: event.returnValues.to,
             },
           ],
         }
