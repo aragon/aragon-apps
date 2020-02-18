@@ -1,5 +1,5 @@
 import React from 'react'
-import { textStyle, useTheme } from '@aragon/ui'
+import { textStyle, tokenIconUrl, useTheme } from '@aragon/ui'
 import { formatTokenAmount } from '../lib/utils'
 
 const splitAmount = amount => {
@@ -12,9 +12,15 @@ const splitAmount = amount => {
   )
 }
 
-const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => {
+const BalanceToken = ({
+  address = '',
+  amount,
+  symbol,
+  verified,
+  convertedAmount = -1,
+}) => {
   const theme = useTheme()
-
+  console.log('address token', address, tokenIconUrl(address))
   return (
     <React.Fragment>
       <div
@@ -31,12 +37,7 @@ const BalanceToken = ({ amount, symbol, verified, convertedAmount = -1 }) => {
         `}
       >
         {verified && symbol && (
-          <img
-            alt=""
-            width="20"
-            height="20"
-            src={`https://chasing-coins.com/coin/logo/${symbol}`}
-          />
+          <img alt="" width="20" height="20" src={tokenIconUrl(address)} />
         )}
         {symbol || '?'}
       </div>

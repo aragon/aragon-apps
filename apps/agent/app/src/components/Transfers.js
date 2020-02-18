@@ -16,12 +16,10 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
-import * as TransferTypes from '../transfer-types'
 import * as TransactionTypes from '../transaction-types'
 import { toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
-import EmptyFilteredTransfers from './EmptyFilteredTransfers'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import useFilteredTransfers from './useFilteredTransfers'
 import useDownloadData from './useDownloadData'
@@ -133,7 +131,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
           compareDesc(dateLeft, dateRight)
       )}
       renderEntryExpansion={({ tokenTransfers }) => {
-        if (tokenTransfers.length <= 1) {
+        if (tokenTransfers.length === 1) {
           return
         }
 

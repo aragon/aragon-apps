@@ -17,8 +17,7 @@ function appStateReducer(state) {
     balances: [],
     transactions: [],
   }
-  let balancesBn = []
-  balancesBn = balances
+  const balancesBn = balances
     .map(balance => ({
       ...balance,
       amount: new BN(balance.amount),
@@ -32,8 +31,8 @@ function appStateReducer(state) {
       },
     }))
     .sort(compareBalancesByEthAndSymbol)
-  let transactionsBn = []
-  transactionsBn = transactions.map(transaction => ({
+
+  const transactionsBn = transactions.map(transaction => ({
     ...transaction,
     onlyOne: transaction.tokenTransfers.length === 1,
     isIncoming: transaction.tokenTransfers.some(({ from }) => !!from),

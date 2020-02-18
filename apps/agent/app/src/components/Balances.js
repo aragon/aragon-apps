@@ -91,6 +91,7 @@ const Balances = React.memo(function Balances({ balances, compactMode }) {
               >
                 <div css="display:inline-block;">
                   <BalanceToken
+                    address={address}
                     amount={amount}
                     convertedAmount={convertedAmount}
                     symbol={symbol}
