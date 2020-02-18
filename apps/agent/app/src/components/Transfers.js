@@ -194,7 +194,6 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
       }) => {
         // FIXME: Correct errors related to empty token transfers
         const [{ token, amount, to, from } = {}] = tokenTransfers
-        console.log(date, onlyOne)
         const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss")
         const dateDiv = (
           <time

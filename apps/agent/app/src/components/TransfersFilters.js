@@ -1,18 +1,19 @@
 import React from 'react'
 import { DateRangePicker, DropDown, GU } from '@aragon/ui'
+import { noop } from '../lib/utils'
 
-const TransfersFilters = ({
+function TransfersFilters({
   compactMode,
-  opened,
   dateRangeFilter,
-  onDateRangeChange,
-  onTokenChange,
+  onDateRangeChange = noop,
+  opened,
+  onTokenChange = noop,
+  onTransferTypeChange = noop,
   symbols = [],
   tokenFilter,
   transferTypes = [],
   transferTypeFilter,
-  onTransferTypeChange,
-}) => {
+}) {
   return (
     <div
       css={`
@@ -26,6 +27,7 @@ const TransfersFilters = ({
       `}
     >
       <DropDown
+        compactMode
         placeholder="Type"
         header="Type"
         items={transferTypes}
@@ -39,7 +41,7 @@ const TransfersFilters = ({
         selected={tokenFilter}
         onChange={onTokenChange}
       />
-      <DateRangePicker onChange={() => {}} />
+      <DateRangePicker onChange={noop} />
     </div>
   )
 }

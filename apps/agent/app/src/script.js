@@ -81,22 +81,22 @@ retryEvery(() =>
   app
     .call('hasInitialized')
     .toPromise()
-    .then(a => initialize(a))
+    .then(() => initialize())
 ).catch(_ => {
   throw new Error(
     'Could not start background script execution due to the contract not being connected to a network'
   )
 })
 
-async function initialize(a) {
-  console.log(a)
+async function initialize() {
   const network = await app
     .network()
     .pipe(first())
     .toPromise()
   TEST_TOKEN_ADDRESSES.push(...getTestTokenAddresses(network.type))
   // Fetch proxy address to add it to settings
-  const proxyAddress = await app.currentApp().toPromise().proxyAddress
+  const currentApp = await app.currentApp().toPromise()
+  const proxyAddress = currentApp.appAddress
   // Set up ETH placeholders
   const ethAddress = ETHER_TOKEN_FAKE_ADDRESS
   tokenContracts.set(ethAddress, ETH_CONTRACT)
@@ -118,7 +118,6 @@ async function initialize(a) {
       const nextState = {
         ...state,
       }
-      console.log('here', state, event, nextState)
       if (eventName === events.SYNC_STATUS_SYNCING) {
         return { ...nextState, isSyncing: true }
       } else if (eventName === events.SYNC_STATUS_SYNCED) {
@@ -251,7 +250,6 @@ async function newExecution(state, event, settings) {
     transactionHash,
     returnValues: { ethValue },
   } = event
-  console.log('alo')
   // Let's try to find some more information about this particular execution
   // by using the transaction receipt:
   //   - To address
@@ -259,17 +257,14 @@ async function newExecution(state, event, settings) {
   const transactionReceipt = await app
     .web3Eth('getTransactionReceipt', transactionHash)
     .toPromise()
-  console.log(
-    'receipt->',
-    findTransfersFromReceipt(transactionReceipt),
-    transactionReceipt
-  )
   const tokenTransfers = findTransfersFromReceipt(transactionReceipt)
     .map(({ token, returnData }) => {
       const { from, to, value } = returnData
-      const fromAgent = addressesEqual(from, settings.proxyAddress)
-      const toAgent = addressesEqual(to, settings.proxyAddress)
-
+      const fromAgent = addressesEqual(
+        from.toLowerCase(),
+        settings.proxyAddress
+      )
+      const toAgent = addressesEqual(to.toLowerCase(), settings.proxyAddress)
       // Filter out token transfers not to the agent
       return fromAgent || toAgent
         ? {
@@ -289,10 +284,8 @@ async function newExecution(state, event, settings) {
       token: settings.ethToken.address,
     })
   }
-  console.log('beep', tokenTransfers)
   let newBalances = state.balances
-  const updatedTokenAddresses =
-    tokenTransfers.forEach(({ address }) => address) || []
+  const updatedTokenAddresses = tokenTransfers.map(({ token }) => token)
   for (const address of updatedTokenAddresses) {
     newBalances = await updateBalances(newBalances, address, settings)
   }
@@ -303,7 +296,6 @@ async function newExecution(state, event, settings) {
     description: 'Contract interaction',
     tokenTransfers,
   })
-
   return {
     ...state,
     balances: newBalances,

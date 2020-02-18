@@ -103,7 +103,6 @@ export function getPresetTokens(networkType) {
 }
 
 export function findTransfersFromReceipt(receipt) {
-  console.log('receipt,', receipt)
   const { logs = [] } = receipt
   const transferLogs = logs.filter(
     ({ topics = [] }) => topics[0] === TOKEN_TRANSFER_EVENT_SIGNATURE

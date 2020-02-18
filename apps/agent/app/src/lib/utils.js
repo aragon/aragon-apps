@@ -1,5 +1,7 @@
 import { round } from './math-utils'
 
+export function noop() {}
+
 export function formatDecimals(value, digits) {
   try {
     return value.toLocaleString('latn', {
