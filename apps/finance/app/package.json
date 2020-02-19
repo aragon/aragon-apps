@@ -47,7 +47,7 @@
   "scripts": {
     "lint": "eslint ./src",
     "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3002 --out-dir build/",
-    "build": "npm run sync-assets && npm run build:script && parcel build index.html --no-cache --experimental-scope-hoisting --out-dir build/ --public-url \".\"",
+    "build": "npm run sync-assets && npm run build:script && parcel build index.html --no-cache --out-dir build/ --public-url \".\"",
     "build:script": "parcel build src/script.js --out-dir build/",
     "watch:script": "parcel watch src/script.js --out-dir build/ --no-hmr",
     "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build",
