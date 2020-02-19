@@ -84,6 +84,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
 
   return (
     <DataView
+      status={'loading'}
       page={page}
       onPageChange={setPage}
       heading={
@@ -148,7 +149,11 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
             true,
             { rounding: 5 }
           )
-
+          const amountColor = isIncoming
+            ? theme.positive
+            : formattedAmount.includes('-')
+            ? theme.negative
+            : theme.surfaceContent
           return (
             <div
               css={`
@@ -174,9 +179,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
               <div
                 css={`
                   text-align: right;
-                  color: ${isIncoming
-                    ? theme.positive
-                    : theme.surfaceContentSecondary};
+                  color: ${amountColor};
                 `}
               >
                 {formattedAmount} {symbol}
@@ -252,7 +255,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
             {reference}
           </div>
         )
-        const amountDiv = () => {
+        const amountDiv = (() => {
           if (!onlyOne) {
             const uniqueTokens = Object.keys(
               tokenTransfers.reduce((p, { token }) => {
@@ -296,7 +299,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
               {formattedAmount} {symbol}
             </span>
           )
-        }
+        })()
 
         return [dateDiv, badgeDiv, typeDiv, referenceDiv, amountDiv]
       }}

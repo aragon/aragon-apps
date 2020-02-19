@@ -8,9 +8,8 @@ import Transfers from './components/Transfers'
 
 function App({ api, appState, isSyncing }) {
   const { layoutName } = useLayout()
-  const compactMode = layoutName === 'small'
-
   const { balances, transactions, tokens } = appState
+  const compactMode = layoutName === 'small'
   const handleResolveLocalIdentity = address => {
     return api.resolveAddressIdentity(address).toPromise()
   }
