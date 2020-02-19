@@ -10,19 +10,21 @@ import {
   GU,
   IconExternal,
   IconToken,
+  IconLabel,
   blockExplorerUrl,
   textStyle,
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { useNetwork } from '@aragon/api-react'
+import { useConnectedAccount, useNetwork } from '@aragon/api-react'
 import * as TransactionTypes from '../transaction-types'
-import { toChecksumAddress } from '../lib/web3-utils'
+import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import useFilteredTransfers from './useFilteredTransfers'
 import useDownloadData from './useDownloadData'
+import { useIdentity } from './IdentityManager/IdentityManager'
 
 const TRANSACTION_TYPES = [
   TransactionTypes.Transfer,
@@ -51,6 +53,7 @@ function getTokenDetails(details, { address, decimals, symbol }) {
 }
 
 const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
+  const connectedAccount = useConnectedAccount()
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
   const network = useNetwork()
@@ -190,8 +193,8 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
         onlyOne,
         isIncoming,
       }) => {
-        // FIXME: Correct errors related to empty token transfers
         const [{ token, amount, to, from } = {}] = tokenTransfers
+        const entity = to || from
         const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss")
         const dateDiv = (
           <time
@@ -221,6 +224,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
             `}
           >
             <LocalIdentityBadge
+              connectedAccount={addressesEqual(entity, connectedAccount)}
               networkType={network.type}
               entity={to || from}
             />
@@ -248,7 +252,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
             {reference}
           </div>
         )
-        const amountDiv = (() => {
+        const amountDiv = () => {
           if (!onlyOne) {
             const uniqueTokens = Object.keys(
               tokenTransfers.reduce((p, { token }) => {
@@ -282,7 +286,6 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
             : formattedAmount.includes('-')
             ? theme.negative
             : theme.surfaceContent
-
           return (
             <span
               css={`
@@ -293,19 +296,26 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
               {formattedAmount} {symbol}
             </span>
           )
-        })()
+        }
 
         return [dateDiv, badgeDiv, typeDiv, referenceDiv, amountDiv]
       }}
-      renderEntryActions={({ transactionHash }) => (
-        <ContextMenu>
-          <ContextMenuViewTransaction
-            theme={theme}
-            transactionHash={transactionHash}
-            network={network}
-          />
-        </ContextMenu>
-      )}
+      renderEntryActions={({ transactionHash, tokenTransfers }) => {
+        const [{ to, from } = {}] = tokenTransfers
+        const entity = to || from
+        return (
+          <ContextMenu>
+            <ContextMenuViewTransaction
+              theme={theme}
+              transactionHash={transactionHash}
+              network={network}
+            />
+            {tokenTransfers.length === 1 && (
+              <ContextMenuItemCustomLabel theme={theme} entity={entity} />
+            )}
+          </ContextMenu>
+        )
+      }}
     />
   )
 })
@@ -342,6 +352,28 @@ const InnerEntryColumn = styled.div`
         `
       : ''}
 `
+
+const ContextMenuItemCustomLabel = ({ entity, theme }) => {
+  const [label, showLocalIdentityModal] = useIdentity(entity)
+  const handleEditLabel = useCallback(() => showLocalIdentityModal(entity))
+
+  return (
+    <ContextMenuItem onClick={handleEditLabel}>
+      <IconLabel
+        css={`
+          color: ${theme.surfaceContentSecondary};
+        `}
+      />
+      <span
+        css={`
+          margin-left: ${1 * GU}px;
+        `}
+      >
+        {label ? 'Edit' : 'Add'} custom label
+      </span>
+    </ContextMenuItem>
+  )
+}
 
 const ContextMenuViewTransaction = ({ transactionHash, network, theme }) => {
   const handleViewTransaction = useCallback(() => {
