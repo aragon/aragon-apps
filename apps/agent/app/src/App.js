@@ -22,7 +22,7 @@ function App({ api, appState, isSyncing }) {
       onResolve={handleResolveLocalIdentity}
       onShowLocalIdentityModal={handleShowLocalIdentityModal}
     >
-      <SyncIndicator visible={isSyncing} />
+      <SyncIndicator visible={isSyncing} shift={50} />
       <Header primary="Agent" />
       <InstallFrame />
       <Balances balances={balances} compactMode={compactMode} />
