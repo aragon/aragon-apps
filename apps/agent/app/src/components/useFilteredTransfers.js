@@ -1,18 +1,17 @@
 import React, { useState, useCallback } from 'react'
 import { addressesEqual } from '../lib/web3-utils'
 import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
+import { TRANSACTION_TYPES } from '../transaction-types'
 
 const INITIAL_DATE_RANGE = { start: null, end: null }
-const INITIAL_TRANSFER_TYPE = -1
 const INITIAL_TOKEN = -1
-const TRANSFER_TYPE_INCOMING = 1
-const TRANSFER_TYPE_OUTGOING = 2
+const INITIAL_TRANSACTION_TYPE = -1
 
 function useFilteredTransfers({ transactions, tokens }) {
   const [page, setPage] = useState(0)
   const [selectedToken, setSelectedToken] = useState(INITIAL_TOKEN)
-  const [selectedTransferType, setSelectedTransferType] = useState(
-    INITIAL_TRANSFER_TYPE
+  const [selectedTransactionType, setSelectedTransactionType] = useState(
+    INITIAL_TRANSACTION_TYPE
   )
   const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
 
@@ -27,43 +26,51 @@ function useFilteredTransfers({ transactions, tokens }) {
     },
     [setPage, setSelectedToken]
   )
-  const handleTransferTypeChange = React.useCallback(
+  const handleTransactionTypeChange = React.useCallback(
     index => {
       setPage(0)
-      setSelectedTransferType(index || INITIAL_TRANSFER_TYPE)
+      setSelectedTransactionType(index || INITIAL_TRANSACTION_TYPE)
     },
-    [setPage, setSelectedTransferType]
+    [setPage, setSelectedTransactionType]
   )
   const handleClearFilters = useCallback(() => {
     setPage(0)
-    setSelectedTransferType(INITIAL_TRANSFER_TYPE)
+    setSelectedTransactionType(INITIAL_TRANSACTION_TYPE)
     setSelectedToken(INITIAL_TOKEN)
     setSelectedDateRange(INITIAL_DATE_RANGE)
-  }, [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange])
+  }, [
+    setPage,
+    setSelectedTransactionType,
+    setSelectedToken,
+    setSelectedDateRange,
+  ])
 
   const filteredTransfers = transactions.filter(
     // date
-    ({ tokenTransfers, isIncoming, isOutgoing, date }) =>
-      ((!selectedDateRange.start ||
-        !selectedDateRange.end ||
-        isWithinInterval(new Date(date), {
-          start: startOfDay(selectedDateRange.start),
-          end: endOfDay(selectedDateRange.end),
-        })) &&
-        // token
-        (selectedToken < 1 ||
-          tokenTransfers.find(({ token }) =>
-            addressesEqual(token, tokens[selectedToken - 1].address)
-          )) &&
-        // type
-        selectedTransferType < 1) ||
-      (selectedTransferType === TRANSFER_TYPE_INCOMING && isIncoming) ||
-      (selectedTransferType === TRANSFER_TYPE_OUTGOING && isOutgoing)
+    ({ tokenTransfers, type, date }) => {
+      const mappedTransactionType = TRANSACTION_TYPES[selectedTransactionType]
+      return (
+        ((!selectedDateRange.start ||
+          !selectedDateRange.end ||
+          isWithinInterval(new Date(date), {
+            start: startOfDay(selectedDateRange.start),
+            end: endOfDay(selectedDateRange.end),
+          })) &&
+          // token
+          (selectedToken < 1 ||
+            tokenTransfers.find(({ token }) =>
+              addressesEqual(token, tokens[selectedToken - 1].address)
+            )) &&
+          // type
+          selectedTransactionType < 1) ||
+        mappedTransactionType === type
+      )
+    }
   )
   const emptyResultsViaFilters =
     !filteredTransfers.length &&
     (selectedToken > 1 ||
-      selectedTransferType > 1 ||
+      selectedTransactionType > 1 ||
       selectedDateRange.start ||
       selectedDateRange.end)
 
@@ -73,12 +80,12 @@ function useFilteredTransfers({ transactions, tokens }) {
     handleClearFilters,
     handleSelectedDateRangeChange,
     handleTokenChange,
-    handleTransferTypeChange,
+    handleTransactionTypeChange,
     page,
     setPage,
     selectedDateRange,
     selectedToken,
-    selectedTransferType,
+    selectedTransactionType,
   }
 }
 

@@ -3,12 +3,10 @@ import { DateRangePicker, DropDown, GU } from '@aragon/ui'
 import { noop } from '../lib/utils'
 
 function TransfersFilters({
-  compactMode,
   dateRangeFilter,
   onDateRangeChange = noop,
-  opened,
   onTokenChange = noop,
-  onTransferTypeChange = noop,
+  onTransactionTypeChange = noop,
   symbols = [],
   tokenFilter,
   transferTypes = [],
@@ -27,21 +25,24 @@ function TransfersFilters({
       `}
     >
       <DropDown
-        compactMode
         placeholder="Type"
         header="Type"
         items={transferTypes}
         selected={transferTypeFilter}
-        onChange={onTransferTypeChange}
+        onChange={onTransactionTypeChange}
       />
       <DropDown
-        placeholder="Token Type"
-        header="Token Type"
+        placeholder="Token"
+        header="Token"
         items={symbols}
         selected={tokenFilter}
         onChange={onTokenChange}
       />
-      <DateRangePicker onChange={noop} />
+      <DateRangePicker
+        endDate={dateRangeFilter.end}
+        onChange={onDateRangeChange}
+        startDate={dateRangeFilter.start}
+      />
     </div>
   )
 }

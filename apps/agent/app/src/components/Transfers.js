@@ -17,7 +17,10 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useConnectedAccount, useNetwork } from '@aragon/api-react'
-import * as TransactionTypes from '../transaction-types'
+import {
+  TRANSACTION_TYPES_LABELS,
+  TRANSACTION_TYPES_STRING,
+} from '../transaction-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
@@ -25,24 +28,6 @@ import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import useFilteredTransfers from './useFilteredTransfers'
 import useDownloadData from './useDownloadData'
 import { useIdentity } from './IdentityManager/IdentityManager'
-
-const TRANSACTION_TYPES = [
-  TransactionTypes.Transfer,
-  TransactionTypes.Deposit,
-  TransactionTypes.Execution,
-  TransactionTypes.Unknown,
-]
-
-const TRANSACTION_TYPES_LABELS = {
-  [TransactionTypes.Transfer]: 'Transfer',
-  [TransactionTypes.Deposit]: 'Deposit',
-  [TransactionTypes.Execution]: 'Execution',
-  [TransactionTypes.Unknown]: 'Unknown',
-}
-
-const TRANSACTION_TYPES_STRING = TRANSACTION_TYPES.map(
-  TransactionTypes.convertToString
-)
 
 function getTokenDetails(details, { address, decimals, symbol }) {
   details[toChecksumAddress(address)] = {
@@ -65,7 +50,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
     handleClearFilters,
     handleSelectedDateRangeChange,
     handleTokenChange,
-    handleTransferTypeChange,
+    handleTransactionTypeChange,
     page,
     setPage,
     selectedDateRange,
@@ -104,7 +89,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
                 tokenFilter={selectedToken}
                 onTokenChange={handleTokenChange}
                 transferTypeFilter={selectedTransferType}
-                onTransferTypeChange={handleTransferTypeChange}
+                onTransactionTypeChange={handleTransactionTypeChange}
                 compactMode={compactMode}
                 symbols={['All tokens', ...symbols]}
                 transferTypes={TRANSACTION_TYPES_STRING}
@@ -195,6 +180,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
         tokenTransfers,
         onlyOne,
         isIncoming,
+        ...props
       }) => {
         const [{ token, amount, to, from } = {}] = tokenTransfers
         const entity = to || from
@@ -229,7 +215,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
             <LocalIdentityBadge
               connectedAccount={addressesEqual(entity, connectedAccount)}
               networkType={network && network.type}
-              entity={to || from}
+              entity={entity}
             />
           </div>
         ) : (
