@@ -119,11 +119,13 @@ async function initialize() {
       const nextState = {
         ...state,
       }
+
       if (eventName === events.SYNC_STATUS_SYNCING) {
         return { ...nextState, isSyncing: true }
       } else if (eventName === events.SYNC_STATUS_SYNCED) {
         return { ...nextState, isSyncing: false }
       }
+
       switch (eventName) {
         // AppProxy events
         case 'ProxyDeposit':
@@ -276,6 +278,7 @@ async function newExecution(state, event, settings) {
         : null
     })
     .filter(Boolean)
+
   if (ethValue && ethValue !== '0') {
     tokenTransfers.push({
       amount: ethValue,

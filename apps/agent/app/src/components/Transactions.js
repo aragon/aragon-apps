@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import PropTypes from 'prop-types'
 import { compareDesc, format } from 'date-fns'
@@ -60,7 +60,7 @@ const Transactions = React.memo(function Transactions({
     setPage,
     selectedDateRange,
     selectedToken,
-    selectedTransferType,
+    selectedTransactionType,
   } = useFilteredTransactions({ transactions, tokens })
   const tokenDetails = tokens.reduce(getTokenDetails, {})
   const { onDownload } = useDownloadData({
@@ -71,6 +71,13 @@ const Transactions = React.memo(function Transactions({
     dao,
   })
   const symbols = tokens.map(({ symbol }) => symbol)
+
+  const sortedTransactions = useMemo(() =>
+    filteredTransactions.sort(({ date: dateLeft }, { date: dateRight }) =>
+      // Sort by date descending
+      compareDesc(dateLeft, dateRight)
+    )
+  )
 
   if (!transactions.length) {
     return <EmptyTransactions />
@@ -100,7 +107,7 @@ const Transactions = React.memo(function Transactions({
                 onTokenChange={handleTokenChange}
                 onTransactionTypeChange={handleTransactionTypeChange}
                 tokenFilter={selectedToken}
-                transactionTypeFilter={selectedTransferType}
+                transactionTypeFilter={selectedTransactionType}
                 transactionTypes={TRANSACTION_TYPES_STRING}
                 symbols={['All tokens', ...symbols]}
               />
@@ -124,11 +131,7 @@ const Transactions = React.memo(function Transactions({
               { label: 'Amount', priority: 4 },
             ]
       }
-      entries={filteredTransactions.sort(
-        ({ date: dateLeft }, { date: dateRight }) =>
-          // Sort by date descending
-          compareDesc(dateLeft, dateRight)
-      )}
+      entries={sortedTransactions}
       renderEntryExpansion={({ tokenTransfers }) => {
         if (tokenTransfers.length === 1) {
           return
