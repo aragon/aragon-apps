@@ -23,10 +23,10 @@ import {
 } from '../transaction-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
-import TransfersFilters from './TransfersFilters'
+import TransactionFilters from './TransactionFilters'
 import EmptyTransactions from './EmptyTransactions'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
-import useFilteredTransfers from './useFilteredTransfers'
+import useFilteredTransactions from './useFilteredTransactions'
 import useDownloadData from './useDownloadData'
 import { useIdentity } from './IdentityManager/IdentityManager'
 
@@ -38,7 +38,11 @@ function getTokenDetails(details, { address, decimals, symbol }) {
   return details
 }
 
-const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
+const Transactions = React.memo(function Transactions({
+  dao,
+  tokens,
+  transactions,
+}) {
   const connectedAccount = useConnectedAccount()
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
@@ -47,7 +51,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
 
   const {
     emptyResultsViaFilters,
-    filteredTransfers,
+    filteredTransactions,
     handleClearFilters,
     handleSelectedDateRangeChange,
     handleTokenChange,
@@ -57,10 +61,10 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
     selectedDateRange,
     selectedToken,
     selectedTransferType,
-  } = useFilteredTransfers({ transactions, tokens })
+  } = useFilteredTransactions({ transactions, tokens })
   const tokenDetails = tokens.reduce(getTokenDetails, {})
   const { onDownload } = useDownloadData({
-    filteredTransfers,
+    filteredTransactions,
     tokenDetails,
     tokens,
     selectedDateRange,
@@ -89,16 +93,16 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
             `}
           >
             {layoutName !== 'small' && (
-              <TransfersFilters
+              <TransactionFilters
+                compactMode={compactMode}
                 dateRangeFilter={selectedDateRange}
                 onDateRangeChange={handleSelectedDateRangeChange}
-                tokenFilter={selectedToken}
                 onTokenChange={handleTokenChange}
-                transferTypeFilter={selectedTransferType}
                 onTransactionTypeChange={handleTransactionTypeChange}
-                compactMode={compactMode}
+                tokenFilter={selectedToken}
+                transactionTypeFilter={selectedTransferType}
+                transactionTypes={TRANSACTION_TYPES_STRING}
                 symbols={['All tokens', ...symbols]}
-                transferTypes={TRANSACTION_TYPES_STRING}
               />
             )}
             <div css="text-align: right;">
@@ -120,7 +124,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
               { label: 'Amount', priority: 4 },
             ]
       }
-      entries={filteredTransfers.sort(
+      entries={filteredTransactions.sort(
         ({ date: dateLeft }, { date: dateRight }) =>
           // Sort by date descending
           compareDesc(dateLeft, dateRight)
@@ -323,7 +327,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
   )
 })
 
-Transfers.propTypes = {
+Transactions.propTypes = {
   dao: PropTypes.string,
   tokens: PropTypes.array.isRequired,
   transactions: PropTypes.array.isRequired,
@@ -402,4 +406,4 @@ const ContextMenuViewTransaction = ({ transactionHash, network, theme }) => {
   )
 }
 
-export default Transfers
+export default Transactions

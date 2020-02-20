@@ -7,12 +7,13 @@ import { formatTokenAmount } from '../lib/utils'
 
 const formatDate = date => format(date, 'MM/dd/yy')
 
-const getDownloadData = async ({ transfers, tokenDetails, resolveAddress }) => {
-  const mappedData = await transfers.reduce(
-    async (
-      promise,
-      { tokenTransfers, date, description, type, isIncoming, onlyOne }
-    ) => {
+const getDownloadData = async ({
+  transactions,
+  tokenDetails,
+  resolveAddress,
+}) => {
+  const mappedData = await transactions.reduce(
+    async (promise, { tokenTransfers, date, description }) => {
       const previous = await promise
       const mappedTokenTransfersData = await Promise.all(
         tokenTransfers.map(async ({ amount, from, to, token }) => {
@@ -64,7 +65,7 @@ const getDownloadFilename = (dao, { start, end }) => {
 }
 
 function useDownloadData({
-  filteredTransfers,
+  filteredTransactions,
   tokenDetails,
   tokens,
   selectedDateRange,
@@ -86,7 +87,7 @@ function useDownloadData({
   useEffect(() => {
     const fetch = async () => {
       const data = await getDownloadData({
-        transfers: filteredTransfers,
+        transactions: filteredTransactions,
         tokenDetails,
         resolveAddress: resolve,
         tokens,
@@ -94,7 +95,7 @@ function useDownloadData({
       setDownloadData(data)
     }
     fetch()
-  }, [filteredTransfers, tokens, tokenDetails, resolve])
+  }, [filteredTransactions, tokens, tokenDetails, resolve])
 
   useEffect(() => {
     const filename = getDownloadFilename(dao, selectedDateRange)

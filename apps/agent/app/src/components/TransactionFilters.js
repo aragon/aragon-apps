@@ -2,15 +2,15 @@ import React from 'react'
 import { DateRangePicker, DropDown, GU } from '@aragon/ui'
 import { noop } from '../lib/utils'
 
-function TransfersFilters({
+function TransactionFilters({
   dateRangeFilter,
   onDateRangeChange = noop,
   onTokenChange = noop,
   onTransactionTypeChange = noop,
   symbols = [],
   tokenFilter,
-  transferTypes = [],
-  transferTypeFilter,
+  transactionTypes = [],
+  transactionTypeFilter,
 }) {
   return (
     <div
@@ -27,8 +27,8 @@ function TransfersFilters({
       <DropDown
         placeholder="Type"
         header="Type"
-        items={transferTypes}
-        selected={transferTypeFilter}
+        items={transactionTypes}
+        selected={transactionTypeFilter}
         onChange={onTransactionTypeChange}
       />
       <DropDown
@@ -47,4 +47,4 @@ function TransfersFilters({
   )
 }
 
-export default TransfersFilters
+export default TransactionFilters

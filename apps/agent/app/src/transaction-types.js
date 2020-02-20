@@ -1,8 +1,3 @@
-// TODO: Rename better these functions
-export function convertFromString(str) {
-  return constantMapping[str]
-}
-
 export function convertToString(constant) {
   return stringMapping[constant]
 }
@@ -21,14 +16,6 @@ const stringMapping = {
   [Deposit]: 'Deposit',
   [Execution]: 'Execution',
   [Unknown]: 'Unknown',
-}
-
-const constantMapping = {
-  All: [All],
-  Transfer: [Transfer],
-  Deposit: [Deposit],
-  Execution: [Execution],
-  Unknown: [Unknown],
 }
 
 export const TRANSACTION_TYPES = [All, Transfer, Deposit, Execution, Unknown]

@@ -7,7 +7,7 @@ const INITIAL_DATE_RANGE = { start: null, end: null }
 const INITIAL_TOKEN = -1
 const INITIAL_TRANSACTION_TYPE = -1
 
-function useFilteredTransfers({ transactions, tokens }) {
+function useFilteredTransactions({ transactions, tokens }) {
   const [page, setPage] = useState(0)
   const [selectedToken, setSelectedToken] = useState(INITIAL_TOKEN)
   const [selectedTransactionType, setSelectedTransactionType] = useState(
@@ -45,7 +45,7 @@ function useFilteredTransfers({ transactions, tokens }) {
     setSelectedDateRange,
   ])
 
-  const filteredTransfers = transactions.filter(
+  const filteredTransactions = transactions.filter(
     // date
     ({ tokenTransfers, type, date }) => {
       const mappedTransactionType = TRANSACTION_TYPES[selectedTransactionType]
@@ -68,7 +68,7 @@ function useFilteredTransfers({ transactions, tokens }) {
     }
   )
   const emptyResultsViaFilters =
-    !filteredTransfers.length &&
+    !filteredTransactions.length &&
     (selectedToken > 1 ||
       selectedTransactionType > 1 ||
       selectedDateRange.start ||
@@ -76,7 +76,7 @@ function useFilteredTransfers({ transactions, tokens }) {
 
   return {
     emptyResultsViaFilters,
-    filteredTransfers,
+    filteredTransactions,
     handleClearFilters,
     handleSelectedDateRangeChange,
     handleTokenChange,
@@ -89,4 +89,4 @@ function useFilteredTransfers({ transactions, tokens }) {
   }
 }
 
-export default useFilteredTransfers
+export default useFilteredTransactions

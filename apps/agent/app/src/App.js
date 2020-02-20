@@ -1,10 +1,10 @@
 import React from 'react'
-import { Header, Main, SyncIndicator, useLayout } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
+import { Header, Main, SyncIndicator, useLayout } from '@aragon/ui'
 import Balances from './components/Balances'
 import InstallFrame from './components/InstallFrame'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
-import Transfers from './components/Transfers'
+import Transactions from './components/Transactions'
 
 function App({ api, appState, isSyncing }) {
   const { layoutName } = useLayout()
@@ -26,7 +26,7 @@ function App({ api, appState, isSyncing }) {
       <Header primary="Agent" />
       <InstallFrame />
       <Balances balances={balances} compactMode={compactMode} />
-      <Transfers transactions={transactions} tokens={tokens} />
+      <Transactions transactions={transactions} tokens={tokens} />
     </IdentityProvider>
   )
 }
