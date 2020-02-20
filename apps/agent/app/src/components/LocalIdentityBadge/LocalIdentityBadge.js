@@ -1,19 +1,15 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { Badge, IdentityBadge, font, useTheme } from '@aragon/ui'
+import { Badge, IdentityBadge, font } from '@aragon/ui'
 import { useIdentity } from '../IdentityManager/IdentityManager'
 
 const LocalIdentityBadge = ({ entity, ...props }) => {
-  const theme = useTheme()
   const [label, showLocalIdentityModal] = useIdentity(entity)
   const handleClick = () => showLocalIdentityModal(entity)
   return (
     <IdentityBadge
       {...props}
-      css={`
-        background: ${theme.surface};
-      `}
       customLabel={label || ''}
       entity={entity}
       popoverAction={{

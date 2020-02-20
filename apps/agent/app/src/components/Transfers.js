@@ -24,6 +24,7 @@ import {
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
+import EmptyTransactions from './EmptyTransactions'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import useFilteredTransfers from './useFilteredTransfers'
 import useDownloadData from './useDownloadData'
@@ -67,11 +68,16 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
   })
   const symbols = tokens.map(({ symbol }) => symbol)
 
+  if (!transactions.length) {
+    return <EmptyTransactions />
+  }
+
   return (
     <DataView
-      status={'loading'}
+      status={emptyResultsViaFilters ? 'empty-filters' : 'default'}
       page={page}
       onPageChange={setPage}
+      onStatusEmptyClear={handleClearFilters}
       heading={
         <React.Fragment>
           <div
@@ -180,7 +186,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
         tokenTransfers,
         onlyOne,
         isIncoming,
-        ...props
+        targetContract,
       }) => {
         const [{ token, amount, to, from } = {}] = tokenTransfers
         const entity = to || from
@@ -219,7 +225,15 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
             />
           </div>
         ) : (
-          <LocalIdentityBadge badgeOnly entity="Multiple accounts" />
+          <LocalIdentityBadge
+            badgeOnly={typeof targetContract !== 'string'}
+            entity={
+              (!tokenTransfers.length && targetContract) || 'Multiple accounts'
+            }
+            networkType={
+              typeof targetContract === 'string' && network && network.type
+            }
+          />
         )
         const typeDiv = (
           <div

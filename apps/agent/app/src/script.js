@@ -10,6 +10,7 @@ import {
   getTokenName,
   isTokenVerified,
   tokenDataFallback,
+  findTargetFromReceipt,
 } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -123,7 +124,6 @@ async function initialize() {
       } else if (eventName === events.SYNC_STATUS_SYNCED) {
         return { ...nextState, isSyncing: false }
       }
-
       switch (eventName) {
         // AppProxy events
         case 'ProxyDeposit':
@@ -284,6 +284,12 @@ async function newExecution(state, event, settings) {
       token: settings.ethToken.address,
     })
   }
+  // Also try to find the target contract for contract interactions,
+  // which do not necessarily have token transfers
+  const targetContract = findTargetFromReceipt(
+    transactionReceipt,
+    settings.proxyAddress
+  )
   let newBalances = state.balances
   const updatedTokenAddresses = tokenTransfers.map(({ token }) => token)
   for (const address of updatedTokenAddresses) {
@@ -295,6 +301,7 @@ async function newExecution(state, event, settings) {
     // (see https://metamask.github.io/metamask-docs/Best_Practices/Registering_Function_Names)
     description: 'Contract interaction',
     tokenTransfers,
+    targetContract,
   })
   return {
     ...state,
@@ -464,7 +471,7 @@ async function updateTransactions(transactions, event, detailOptions) {
 
 async function createTransactionDetails(
   event,
-  { tokenTransfers = [], description = '' } = {}
+  { tokenTransfers = [], description = '', targetContract = null } = {}
 ) {
   const {
     blockNumber,
@@ -498,6 +505,7 @@ async function createTransactionDetails(
     transactionHash,
     type,
     id: transactionId,
+    targetContract,
   }
 }
 

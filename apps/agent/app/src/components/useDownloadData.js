@@ -7,12 +7,7 @@ import { formatTokenAmount } from '../lib/utils'
 
 const formatDate = date => format(date, 'MM/dd/yy')
 
-const getDownloadData = async ({
-  transfers,
-  tokenDetails,
-  resolveAddress,
-  tokens,
-}) => {
+const getDownloadData = async ({ transfers, tokenDetails, resolveAddress }) => {
   const mappedData = await transfers.reduce(
     async (
       promise,
@@ -59,11 +54,11 @@ const getDownloadData = async ({
 }
 const getDownloadFilename = (dao, { start, end }) => {
   const today = format(Date.now(), 'yyyy-MM-dd')
-  let filename = `finance_${dao}_${today}.csv`
+  let filename = `agent_${dao}_${today}.csv`
   if (start && end) {
     const formattedStart = format(start, 'yyyy-MM-dd')
     const formattedEnd = format(end, 'yyyy-MM-dd')
-    filename = `finance_${dao}_${formattedStart}_to_${formattedEnd}.csv`
+    filename = `agent_${dao}_${formattedStart}_to_${formattedEnd}.csv`
   }
   return filename
 }

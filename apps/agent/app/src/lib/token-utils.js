@@ -116,3 +116,15 @@ export function findTransfersFromReceipt(receipt) {
     return []
   }
 }
+
+export function findTargetFromReceipt(receipt, proxyAddress) {
+  const { logs = [] } = receipt
+  const agentLog = logs.find(
+    ({ address }) => address.toLowerCase() === proxyAddress.toLowerCase()
+  )
+  if (agentLog.topics.length < 3) {
+    return null
+  }
+  const targetContract = `0x${agentLog.topics[2].slice(26)}`
+  return targetContract
+}
