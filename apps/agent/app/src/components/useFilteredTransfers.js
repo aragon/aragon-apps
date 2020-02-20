@@ -82,4 +82,4 @@ function useFilteredTransfers({ transactions, tokens }) {
   }
 }
 
- export default useFilteredTransfers
+export default useFilteredTransfers

@@ -228,7 +228,7 @@ const Transfers = React.memo(function Transfers({ dao, tokens, transactions }) {
           >
             <LocalIdentityBadge
               connectedAccount={addressesEqual(entity, connectedAccount)}
-              networkType={network.type}
+              networkType={network && network.type}
               entity={to || from}
             />
           </div>
@@ -382,7 +382,7 @@ const ContextMenuViewTransaction = ({ transactionHash, network, theme }) => {
   const handleViewTransaction = useCallback(() => {
     window.open(
       blockExplorerUrl('transaction', transactionHash, {
-        networkType: network.type,
+        networkType: network && network.type,
       }),
       '_blank',
       'noopener'
