@@ -53,6 +53,7 @@ const getDownloadData = async ({
     .concat(mappedData)
     .join('\n')
 }
+
 const getDownloadFilename = (dao, { start, end }) => {
   const today = format(Date.now(), 'yyyy-MM-dd')
   let filename = `agent_${dao}_${today}.csv`
@@ -65,11 +66,11 @@ const getDownloadFilename = (dao, { start, end }) => {
 }
 
 function useDownloadData({
+  dao,
   filteredTransactions,
   tokenDetails,
   tokens,
   selectedDateRange,
-  dao,
 }) {
   const { resolve } = useContext(IdentityContext)
   const [downloadData, setDownloadData] = useState(null)

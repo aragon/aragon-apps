@@ -1,21 +1,23 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useAragonApi } from '@aragon/api-react'
 import { Header, Main, SyncIndicator, useLayout } from '@aragon/ui'
 import Balances from './components/Balances'
-import InstallFrame from './components/InstallFrame'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
+import InstallFrame from './components/InstallFrame'
 import Transactions from './components/Transactions'
 
 function App({ api, appState, isSyncing }) {
   const { layoutName } = useLayout()
   const { balances, transactions, tokens } = appState
   const compactMode = layoutName === 'small'
-  const handleResolveLocalIdentity = address => {
+
+  const handleResolveLocalIdentity = useCallback(address => {
     return api.resolveAddressIdentity(address).toPromise()
-  }
-  const handleShowLocalIdentityModal = address => {
+  }, [])
+
+  const handleShowLocalIdentityModal = useCallback(address => {
     return api.requestAddressIdentityModification(address).toPromise()
-  }
+  }, [])
 
   return (
     <IdentityProvider

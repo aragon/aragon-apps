@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo } from 'react'
-import styled from 'styled-components'
 import PropTypes from 'prop-types'
+import styled from 'styled-components'
 import { compareDesc, format } from 'date-fns'
 import {
+  blockExplorerUrl,
   Button,
   ContextMenu,
   ContextMenuItem,
@@ -11,24 +12,23 @@ import {
   IconExternal,
   IconToken,
   IconLabel,
-  blockExplorerUrl,
   textStyle,
   useLayout,
   useTheme,
 } from '@aragon/ui'
 import { useConnectedAccount, useNetwork } from '@aragon/api-react'
+import EmptyTransactions from './EmptyTransactions'
+import { useIdentity } from './IdentityManager/IdentityManager'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
+import TransactionFilters from './TransactionFilters'
 import {
   TRANSACTION_TYPES_LABELS,
   TRANSACTION_TYPES_STRING,
 } from '../transaction-types'
-import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
-import { formatTokenAmount } from '../lib/utils'
-import TransactionFilters from './TransactionFilters'
-import EmptyTransactions from './EmptyTransactions'
-import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import useFilteredTransactions from './useFilteredTransactions'
 import useDownloadData from './useDownloadData'
-import { useIdentity } from './IdentityManager/IdentityManager'
+import { formatTokenAmount } from '../lib/utils'
+import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 
 function getTokenDetails(details, { address, decimals, symbol }) {
   details[toChecksumAddress(address)] = {
@@ -45,10 +45,10 @@ const Transactions = React.memo(function Transactions({
 }) {
   const connectedAccount = useConnectedAccount()
   const { layoutName } = useLayout()
-  const compactMode = layoutName === 'small'
   const network = useNetwork()
   const theme = useTheme()
 
+  const compactMode = layoutName === 'small'
   const {
     emptyResultsViaFilters,
     filteredTransactions,
@@ -72,11 +72,13 @@ const Transactions = React.memo(function Transactions({
   })
   const symbols = tokens.map(({ symbol }) => symbol)
 
-  const sortedTransactions = useMemo(() =>
-    filteredTransactions.sort(({ date: dateLeft }, { date: dateRight }) =>
-      // Sort by date descending
-      compareDesc(dateLeft, dateRight)
-    )
+  const sortedTransactions = useMemo(
+    () =>
+      filteredTransactions.sort(({ date: dateLeft }, { date: dateRight }) =>
+        // Sort by date descending
+        compareDesc(dateLeft, dateRight)
+      ),
+    [filteredTransactions]
   )
 
   if (!transactions.length) {
@@ -198,6 +200,7 @@ const Transactions = React.memo(function Transactions({
         const [{ token, amount, to, from } = {}] = tokenTransfers
         const entity = to || from
         const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss")
+
         const dateDiv = (
           <time
             dateTime={formattedDate}

@@ -1,32 +1,35 @@
-import React, { useState, useCallback } from 'react'
-import { addressesEqual } from '../lib/web3-utils'
+import React, { useState, useCallback, useMemo } from 'react'
 import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
 import { TRANSACTION_TYPES } from '../transaction-types'
+import { addressesEqual } from '../lib/web3-utils'
 
 const INITIAL_DATE_RANGE = { start: null, end: null }
-const INITIAL_TOKEN = -1
 const INITIAL_TRANSACTION_TYPE = -1
+const INITIAL_TOKEN = -1
 
 function useFilteredTransactions({ transactions, tokens }) {
   const [page, setPage] = useState(0)
-  const [selectedToken, setSelectedToken] = useState(INITIAL_TOKEN)
+  const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
   const [selectedTransactionType, setSelectedTransactionType] = useState(
     INITIAL_TRANSACTION_TYPE
   )
-  const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
+  const [selectedToken, setSelectedToken] = useState(INITIAL_TOKEN)
 
-  const handleSelectedDateRangeChange = range => {
-    setPage(0)
-    setSelectedDateRange(range)
-  }
-  const handleTokenChange = React.useCallback(
+  const handleSelectedDateRangeChange = useCallback(
+    range => {
+      setPage(0)
+      setSelectedDateRange(range)
+    },
+    [setPage, setSelectedDateRange]
+  )
+  const handleTokenChange = useCallback(
     index => {
       setPage(0)
       setSelectedToken(index || INITIAL_TOKEN)
     },
     [setPage, setSelectedToken]
   )
-  const handleTransactionTypeChange = React.useCallback(
+  const handleTransactionTypeChange = useCallback(
     index => {
       setPage(0)
       setSelectedTransactionType(index || INITIAL_TRANSACTION_TYPE)
@@ -46,33 +49,42 @@ function useFilteredTransactions({ transactions, tokens }) {
   ])
 
   const filteredTransactions = transactions.filter(
-    // date
     ({ tokenTransfers, type, date }) => {
+      // Let's get the mapped index to transaction type for matching
       const mappedTransactionType = TRANSACTION_TYPES[selectedTransactionType]
       return (
+        // First, let's filter transactions by date
         ((!selectedDateRange.start ||
           !selectedDateRange.end ||
           isWithinInterval(new Date(date), {
             start: startOfDay(selectedDateRange.start),
             end: endOfDay(selectedDateRange.end),
           })) &&
-          // token
+          // Then, we filter by tokens
           (selectedToken < 1 ||
             tokenTransfers.find(({ token }) =>
               addressesEqual(token, tokens[selectedToken - 1].address)
             )) &&
-          // type
+          // Last, by type
           selectedTransactionType < 1) ||
         mappedTransactionType === type
       )
     }
   )
-  const emptyResultsViaFilters =
-    !filteredTransactions.length &&
-    (selectedToken > 1 ||
-      selectedTransactionType > 1 ||
-      selectedDateRange.start ||
-      selectedDateRange.end)
+  const emptyResultsViaFilters = useMemo(
+    () =>
+      !filteredTransactions.length &&
+      (selectedToken > 1 ||
+        selectedTransactionType > 1 ||
+        selectedDateRange.start ||
+        selectedDateRange.end),
+    [
+      filteredTransactions,
+      selectedToken,
+      selectedTransactionType,
+      selectedDateRange,
+    ]
+  )
 
   return {
     emptyResultsViaFilters,
