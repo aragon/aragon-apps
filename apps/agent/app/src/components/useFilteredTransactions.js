@@ -71,20 +71,12 @@ function useFilteredTransactions({ transactions, tokens }) {
       )
     }
   )
-  const emptyResultsViaFilters = useMemo(
-    () =>
-      !filteredTransactions.length &&
-      (selectedToken > 1 ||
-        selectedTransactionType > 1 ||
-        selectedDateRange.start ||
-        selectedDateRange.end),
-    [
-      filteredTransactions,
-      selectedToken,
-      selectedTransactionType,
-      selectedDateRange,
-    ]
-  )
+  const emptyResultsViaFilters =
+    !filteredTransactions.length &&
+    (selectedToken > 1 ||
+      selectedTransactionType > 1 ||
+      selectedDateRange.start ||
+      selectedDateRange.end)
 
   return {
     emptyResultsViaFilters,
