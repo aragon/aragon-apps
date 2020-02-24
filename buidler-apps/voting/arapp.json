@@ -1,0 +1,32 @@
+{
+  "roles": [
+    {
+      "name": "Create new votes",
+      "id": "CREATE_VOTES_ROLE",
+      "params": []
+    },
+    {
+      "name": "Modify support",
+      "id": "MODIFY_SUPPORT_ROLE",
+      "params": [
+        "New support",
+        "Current support"
+      ]
+    },
+    {
+      "name": "Modify quorum",
+      "id": "MODIFY_QUORUM_ROLE",
+      "params": [
+        "New quorum",
+        "Current quorum"
+      ]
+    }
+  ],
+  "environments": {
+    "default": {
+      "network": "rpc",
+      "appName": "voting.aragonpm.eth"
+    }
+  },
+  "path": "contracts/Voting.sol"
+}
