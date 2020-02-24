@@ -7,9 +7,9 @@ let token
 module.exports = {
   postDao: async function(dao, bre) {
     await _deployToken(bre.artifacts)
-    await _mintTokens(bre.web3)
-
     console.log(`> Token deployed: ${token.address}`)
+
+    await _mintTokens(bre.web3)
   },
 
   preInit: async function(proxy, bre) {
@@ -31,8 +31,14 @@ module.exports = {
 async function _mintTokens(web3) {
   const accounts = await web3.eth.getAccounts()
 
-  await token.generateTokens(accounts[0], _bigExp(100, 18))
-  await token.generateTokens(accounts[1], _bigExp(100, 18))
+  await _mintTokensFor(accounts[0], 100)
+  await _mintTokensFor(accounts[1], 100)
+}
+
+async function _mintTokensFor(account, amount) {
+  await token.generateTokens(account, _bigExp(amount, 18))
+
+  console.log(`> Minted ${amount} tokens to ${account}`)
 }
 
 async function _deployToken(artifacts) {
