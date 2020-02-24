@@ -1,0 +1,49 @@
+{
+  "environments": {
+    "default": {
+      "network": "rpc",
+      "appName": "token-manager.aragonpm.eth"
+    }
+  },
+  "roles": [
+    {
+      "name": "Mint tokens",
+      "id": "MINT_ROLE",
+      "params": [
+        "Receiver",
+        "Token amount"
+      ]
+    },
+    {
+      "name": "Issue tokens",
+      "id": "ISSUE_ROLE",
+      "params": [
+        "Token amount"
+      ]
+    },
+    {
+      "name": "Assign tokens",
+      "id": "ASSIGN_ROLE",
+      "params": [
+        "Receiver",
+        "Token amount"
+      ]
+    },
+    {
+      "name": "Revoke vesting",
+      "id": "REVOKE_VESTINGS_ROLE",
+      "params": [
+        "Holder"
+      ]
+    },
+    {
+      "name": "Burn tokens",
+      "id": "BURN_ROLE",
+      "params": [
+        "Holder",
+        "Token amount"
+      ]
+    }
+  ],
+  "path": "contracts/TokenManager.sol"
+}
