@@ -1,0 +1,25 @@
+{
+  "name": "test123",
+  "version": "0.0.1",
+  "description": "placeholder-app-description",
+  "scripts": {
+    "postinstall": "npm run build-app",
+    "build-app": "cd app && npm install && cd ..",
+    "compile": "buidler compile --force",
+    "start": "buidler start",
+    "test": "buidler test --network buidlerevm"
+  },
+  "dependencies": {
+    "@aragon/os": "^4.3.0",
+    "@aragon/apps-shared-minime": "^1.0.2"
+  },
+  "devDependencies": {
+    "@aragon/buidler-aragon": "^0.1.0-beta.1",
+    "@aragon/test-helpers": "^2.1.0",
+    "@nomiclabs/buidler": "^1.0.2",
+    "@nomiclabs/buidler-truffle5": "^1.1.2",
+    "@nomiclabs/buidler-web3": "^1.1.2",
+    "bignumber.js": "^9.0.0",
+    "web3": "^1.2.6"
+  }
+}

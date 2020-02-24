@@ -1,0 +1,20 @@
+{
+  "roles": [
+    {
+      "name": "Transfer Vault's tokens",
+      "id": "TRANSFER_ROLE",
+      "params": [
+        "Token address",
+        "Receiver address",
+        "Token amount"
+      ]
+    }
+  ],
+  "environments": {
+    "default": {
+      "network": "rpc",
+      "appName": "voting.aragonpm.eth"
+    }
+  },
+  "path": "contracts/Vault.sol"
+}
