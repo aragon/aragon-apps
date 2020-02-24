@@ -1,0 +1,14 @@
+{
+  "name": "Agent",
+  "author": "Aragon Association",
+  "description": "Hold assets and perform actions from DAOs",
+  "changelog_url": "https://github.com/aragon/aragon-apps/releases",
+  "details_url": "/meta/details.md",
+  "source_url": "https://github.com/aragon/aragon-apps/blob/master/apps/agent",
+  "icons": [
+    { "src": "/meta/icon.svg", "sizes": "56x56" }
+  ],
+  "script": "/script.js",
+  "start_url": "/index.html"
+}
+
