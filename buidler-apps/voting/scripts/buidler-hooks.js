@@ -23,7 +23,7 @@ module.exports = {
       token.address,
       _bigExp(50, 16), /* supportRequiredPct */
       _bigExp(20, 16), /* minAcceptQuorumPct */
-      1000,                  /* voteTime */
+      1000,            /* voteTime */
     ]
   }
 }
