@@ -69,8 +69,12 @@ module.exports = (
     const authorized = accounts[1]
     const unauthorized = accounts[2]
 
-    const encodeFunctionCall = (contract, functionName, ...params) =>
-      contract[functionName].request(...params).params[0]
+    const encodeFunctionCall = (target, functionName, ...params) => {
+      let fnParams = params.length > 0 ? params.splice(0, params.length - 1) : []
+      let callParams = params.length > 0 ? params.pop() : {}
+      const txObj = target.contract.methods[functionName](...fnParams).call.request(callParams)
+      return txObj.params[0]
+    }
 
     before(async () => {
       const kernelBase = await Kernel.new(true) // petrify immediately
@@ -91,7 +95,7 @@ module.exports = (
       RUN_SCRIPT_ROLE = await agentBase.RUN_SCRIPT_ROLE()
       ERC1271_INTERFACE_ID = await agentBase.ERC1271_INTERFACE_ID()
 
-      // const ethConstant = await EtherTokenConstantMock.new()
+      const ethConstant = await EtherTokenConstantMock.new()
       ETH = await ethConstant.getETHConstant()
     })
 
@@ -154,7 +158,7 @@ module.exports = (
       })
 
       it('cannot forward actions', async () => {
-        const action = { to: agent.address, calldata: agent.contract.presignHash.getData(accounts[8]) }
+        const action = { to: agent.address, calldata: agent.contract.methods.presignHash(accounts[8]).encodeABI() }
         const script = encodeCallScript([action])
 
         await acl.createPermission(root, agent.address, RUN_SCRIPT_ROLE, root, { from: root })
@@ -193,7 +197,7 @@ module.exports = (
             it('can execute actions', async () => {
               const N = 1102
 
-              const data = executionTarget.contract.setCounter.getData(N)
+              const data = executionTarget.contract.methods.setCounter(N).encodeABI()
               const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: executor })
 
               assertAmountOfEvents(receipt, 'Execute')
@@ -236,35 +240,35 @@ module.exports = (
 
             it('can execute with data when target is not a contract', async () => {
               const nonContract = accounts[8] // random account
-              const nonContractBalance = await getBalance(nonContract)
+              const nonContractBalance = web3.utils.toBN(await getBalance(nonContract))
               const randomData = '0x12345678'
 
               const receipt = await agent.execute(nonContract, depositAmount, randomData, { from: executor })
 
               assertAmountOfEvents(receipt, 'Execute')
-              assert.equal((await getBalance(nonContract)).toString(), nonContractBalance.add(depositAmount).toString(), 'expected ending balance of non-contract to be correct')
+              assert.equal((await getBalance(nonContract)).toString(), nonContractBalance.add(web3.utils.toBN(depositAmount)).toString(), 'expected ending balance of non-contract to be correct')
               assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
             })
 
             it('can execute without data when target is not a contract', async () => {
               const nonContract = accounts[8] // random account
-              const nonContractBalance = await getBalance(nonContract)
+              const nonContractBalance = web3.utils.toBN(await getBalance(nonContract))
 
               const receipt = await agent.execute(nonContract, depositAmount, NO_DATA, { from: executor })
 
               assertAmountOfEvents(receipt, 'Execute')
-              assert.equal((await getBalance(nonContract)).toString(), nonContractBalance.add(depositAmount).toString(), 'expected ending balance of non-contract to be correct')
+              assert.equal((await getBalance(nonContract)).toString(), nonContractBalance.add(web3.utils.toBN(depositAmount)).toString(), 'expected ending balance of non-contract to be correct')
               assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
             })
 
             it('fails to execute without permissions', async () => {
-              const data = executionTarget.contract.execute.getData()
+              const data = executionTarget.contract.methods.execute().encodeABI()
 
               await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: nonExecutor }), errors.APP_AUTH_FAILED)
             })
 
             it('fails to execute actions with more ETH than the agent owns', async () => {
-              const data = executionTarget.contract.execute.getData()
+              const data = executionTarget.contract.methods.execute().encodeABI()
 
               await assertRevert(agent.execute(executionTarget.address, depositAmount + 1, data, { from: executor }))
             })
@@ -285,7 +289,7 @@ module.exports = (
               // TODO: Check revert data was correctly forwarded
               // ganache currently doesn't support fetching this data
 
-              const data = executionTarget.contract.fail.getData()
+              const data = executionTarget.contract.methods.fail().encodeABI()
               await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: executor }))
             })
 
@@ -293,14 +297,14 @@ module.exports = (
               const [granteeEqualToSig, granteeUnequalToSig] = accounts.slice(6) // random slice from accounts
 
               beforeEach(async () => {
-                const sig = executionTarget.contract.setCounter.getData(1).slice(2, 10)
+                const sig = executionTarget.contract.methods.setCounter(1).encodeABI().slice(2, 10)
                 const argId = '0x02' // arg 2
                 const equalOp = '01'
                 const nonEqualOp = '02'
                 const value = `${'00'.repeat(30 - 4)}${sig}`
 
-                const equalParam = new web3.BigNumber(`${argId}${equalOp}${value}`)
-                const nonEqualParam = new web3.BigNumber(`${argId}${nonEqualOp}${value}`)
+                const equalParam = web3.utils.toBN(`${argId}${equalOp}${value}`)
+                const nonEqualParam = web3.utils.toBN(`${argId}${nonEqualOp}${value}`)
 
                 await acl.grantPermissionP(granteeEqualToSig, agent.address, EXECUTE_ROLE, [equalParam], { from: root })
                 await acl.grantPermissionP(granteeUnequalToSig, agent.address, EXECUTE_ROLE, [nonEqualParam], { from: root })
@@ -309,7 +313,7 @@ module.exports = (
               it('equal param: can execute if the signature matches', async () => {
                 const N = 1102
 
-                const data = executionTarget.contract.setCounter.getData(N)
+                const data = executionTarget.contract.methods.setCounter(N).encodeABI()
                 const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig })
 
                 assertAmountOfEvents(receipt, 'Execute')
@@ -319,7 +323,7 @@ module.exports = (
               })
 
               it('not equal param: can execute if the signature doesn\'t match', async () => {
-                const data = executionTarget.contract.execute.getData()
+                const data = executionTarget.contract.methods.execute().encodeABI()
                 const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig })
 
                 assertAmountOfEvents(receipt, 'Execute')
@@ -329,7 +333,7 @@ module.exports = (
               })
 
               it('equal param: fails to execute if signature doesn\'t match', async () => {
-                const data = executionTarget.contract.execute.getData()
+                const data = executionTarget.contract.methods.execute().encodeABI()
 
                 await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig }), errors.APP_AUTH_FAILED)
               })
@@ -337,7 +341,7 @@ module.exports = (
               it('not equal param: fails to execute if the signature matches', async () => {
                 const N = 1102
 
-                const data = executionTarget.contract.setCounter.getData(N)
+                const data = executionTarget.contract.methods.setCounter(N).encodeABI()
                 await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig }), errors.APP_AUTH_FAILED)
               })
             })
@@ -370,7 +374,7 @@ module.exports = (
           context('> and target is not a protected ERC20', () => {
             it('it can execute actions', async () => {
               const N = 1102
-              const data = target.contract.setCounter.getData(N)
+              const data = target.contract.methods.setCounter(N).encodeABI()
               const receipt = await agent.safeExecute(target.address, data, { from: authorized })
 
               assertAmountOfEvents(receipt, 'SafeExecute')
@@ -430,7 +434,7 @@ module.exports = (
             it('it should revert if executed action reverts', async () => {
               // TODO: Check revert data was correctly forwarded
               // ganache currently doesn't support fetching this data
-              const data = target.contract.fail.getData()
+              const data = target.contract.methods.fail().encodeABI()
               await assertRevert(agent.safeExecute(target.address, data, { from: authorized }))
             })
 
@@ -446,11 +450,11 @@ module.exports = (
                   const newToken = await TokenMock.new(agent.address, amount)
                   const initialBalance = (await newToken.balanceOf(agent.address)).toNumber()
 
-                  const approve = newToken.contract.approve.getData(tokenInteractionTarget.address, 10)
+                  const approve = newToken.contract.methods.approve(tokenInteractionTarget.address, 10).encodeABI()
                   await agent.safeExecute(newToken.address, approve, { from: authorized }) // target is now allowed to transfer on behalf of agent
 
                   await agent.addProtectedToken(newToken.address, { from: authorized }) // new token is now protected (must do this after execution)
-                  const data = tokenInteractionTarget.contract.transferTokenFrom.getData(newToken.address)
+                  const data = tokenInteractionTarget.contract.methods.transferTokenFrom(newToken.address).encodeABI()
 
                   await assertRevert(agent.safeExecute(tokenInteractionTarget.address, data, { from: authorized }), errors.AGENT_PROTECTED_BALANCE_LOWERED)
                   const newBalance = (await newToken.balanceOf(agent.address)).toNumber()
@@ -465,7 +469,7 @@ module.exports = (
                   const initialBalance = (await newToken.balanceOf(agent.address)).toNumber()
                   await agent.addProtectedToken(newToken.address, { from: authorized }) // newToken is now protected
 
-                  const data = tokenInteractionTarget.contract.transferTokenTo.getData(newToken.address)
+                  const data = tokenInteractionTarget.contract.methods.transferTokenTo(newToken.address).encodeABI()
                   await agent.safeExecute(tokenInteractionTarget.address, data, { from: authorized })
                   const newBalance = (await newToken.balanceOf(agent.address)).toNumber()
 
@@ -484,7 +488,7 @@ module.exports = (
 
               it('it should revert', async () => {
                 await acl.grantPermission(tokenInteractionTarget.address, agent.address, REMOVE_PROTECTED_TOKEN_ROLE, { from: root }) // grant target permission to remove protected tokens
-                const data = tokenInteractionTarget.contract.removeProtectedToken.getData(token2.address)
+                const data = tokenInteractionTarget.contract.methods.removeProtectedToken(token2.address).encodeABI()
 
                 await assertRevert(agent.safeExecute(tokenInteractionTarget.address, data, { from: authorized }), errors.AGENT_PROTECTED_TOKENS_MODIFIED)
               })
@@ -493,7 +497,7 @@ module.exports = (
 
           context('> but target is a protected ERC20', () => {
             it('it should revert', async () => {
-              const approve = token1.contract.approve.getData(target.address, 10)
+              const approve = token1.contract.methods.approve(target.address, 10).encodeABI()
 
               await assertRevert(agent.safeExecute(token1.address, approve, { from: authorized }), errors.AGENT_TARGET_PROTECTED)
             })
@@ -502,7 +506,7 @@ module.exports = (
 
         context('> sender does not have SAFE_EXECUTE_ROLE', () => {
           it('it should revert', async () => {
-            const data = target.contract.execute.getData()
+            const data = target.contract.methods.execute().encodeABI()
 
             await assertRevert(agent.safeExecute(target.address, data, { from: unauthorized }), errors.APP_AUTH_FAILED)
           })
@@ -516,7 +520,7 @@ module.exports = (
         beforeEach(async () => {
           executionTarget = await ExecutionTarget.new()
           // prepare script
-          const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+          const action = { to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }
           script = encodeCallScript([action, action]) // perform action twice
 
           await acl.createPermission(scriptRunner, agent.address, RUN_SCRIPT_ROLE, root, { from: root })
@@ -768,7 +772,7 @@ module.exports = (
           assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
         })
 
-        it('presigns a hash', async () => {
+        it.only('presigns a hash', async () => {
           await agent.presignHash(HASH, { from: presigner })
 
           assertIsValidSignature(true, await agent.isValidSignature(HASH, NO_SIG))
