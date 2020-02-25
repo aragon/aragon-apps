@@ -1,0 +1,57 @@
+{
+  "roles": [
+    {
+      "name": "Create new payments",
+      "id": "CREATE_PAYMENTS_ROLE",
+      "params": [
+        "Token address",
+        "Receiver address",
+        "Token amount",
+        "Payment interval",
+        "Max repeats",
+        "Initial payment time"
+      ]
+    },
+    {
+      "name": "Change period duration",
+      "id": "CHANGE_PERIOD_ROLE",
+      "params": [
+        "New period duration",
+        "Old period duration"
+      ]
+    },
+    {
+      "name": "Change budgets",
+      "id": "CHANGE_BUDGETS_ROLE",
+      "params": [
+        "Token address",
+        "New budget amount",
+        "Old budget amount",
+        "Has budget flag"
+      ]
+    },
+    {
+      "name": "Execute payments",
+      "id": "EXECUTE_PAYMENTS_ROLE",
+      "params": [
+        "Payment ID",
+        "Payment amount"
+      ]
+    },
+    {
+      "name": "Manage payments",
+      "id": "MANAGE_PAYMENTS_ROLE",
+      "params": [
+        "Payment ID",
+        "Payment active"
+      ]
+    }
+  ],
+  "environments": {
+    "default": {
+      "network": "rpc",
+      "appName": "finance.aragonpm.eth"
+    }
+  },
+  "path": "contracts/Finance.sol"
+}
