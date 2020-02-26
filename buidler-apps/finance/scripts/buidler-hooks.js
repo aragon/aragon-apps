@@ -9,7 +9,7 @@ let accounts, acl;
 let vault, TRANSFER_ROLE;
 
 module.exports = {
-  postDao: async function(dao, bre) {
+  postDao: async function({ dao }, bre) {
     accounts = await bre.web3.eth.getAccounts();
     acl = await bre.artifacts.require("ACL").at(await dao.acl());
 
@@ -18,7 +18,7 @@ module.exports = {
     console.log(`> Vault app installed: ${vault.address}`);
   },
 
-  preInit: async function(proxy, bre) {
+  preInit: async function({ proxy }, bre) {
     await acl.createPermission(
       proxy.address,
       vault.address,
@@ -31,7 +31,7 @@ module.exports = {
     console.log(`> TRANSFER_ROLE assigned to ${proxy.address}`);
   },
 
-  getInitParams: async function(bre) {
+  getInitParams: async function({}, bre) {
     const ONE_DAY = 60 * 60 * 24; // One day in seconds
     const PERIOD_DURATION = ONE_DAY;
 
