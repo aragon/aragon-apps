@@ -37,6 +37,9 @@ const tokenTestGroups = [
   }
 ];
 
+// Hack to make test-helpers work with Web3 1.x.
+web3.BigNumber = web3.utils.BN
+
 contract("Finance App", ([root, owner, recipient]) => {
   let daoFact, financeBase, finance, vaultBase, vault, token1, token2;
 
@@ -126,7 +129,7 @@ contract("Finance App", ([root, owner, recipient]) => {
       false,
       { from: root }
     );
-    const recoveryVault = Vault.at(getNewProxyAddress(vaultReceipt));
+    const recoveryVault = await Vault.at(getNewProxyAddress(vaultReceipt));
     await recoveryVault.initialize();
     await dao.setApp(
       await dao.APP_ADDR_NAMESPACE(),
@@ -140,10 +143,10 @@ contract("Finance App", ([root, owner, recipient]) => {
 
   const newProxyFinance = async () => {
     const r = await daoFact.newDAO(root);
-    const dao = getContract("Kernel").at(
+    const dao = await getContract("Kernel").at(
       getEventArgument(r, "DeployDAO", "dao")
     );
-    const acl = getContract("ACL").at(await dao.acl());
+    const acl = await getContract("ACL").at(await dao.acl());
 
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, {
       from: root
@@ -157,7 +160,7 @@ contract("Finance App", ([root, owner, recipient]) => {
       false,
       { from: root }
     );
-    const financeApp = Finance.at(getNewProxyAddress(receipt2));
+    const financeApp = await Finance.at(getNewProxyAddress(receipt2));
     await financeApp.mockSetTimestamp(NOW);
     await financeApp.mock_setMaxPeriodTransitions(MAX_UINT64);
 
@@ -220,8 +223,8 @@ contract("Finance App", ([root, owner, recipient]) => {
       false,
       { from: root }
     );
-    vault = getContract("Vault").at(getNewProxyAddress(receipt1));
-    const acl = getContract("ACL").at(await dao.acl());
+    vault = await getContract("Vault").at(getNewProxyAddress(receipt1));
+    const acl = await getContract("ACL").at(await dao.acl());
     await acl.createPermission(
       finance.address,
       vault.address,
@@ -266,13 +269,13 @@ contract("Finance App", ([root, owner, recipient]) => {
     await financeApp.mockIncreaseTime(100); // to make sure it overflows with MAX_UINT64 period length
     // initialize with MAX_UINT64 as period duration
     await financeApp.initialize(vault.address, MAX_UINT64);
-    const [isCurrent, start, end, firstTx, lastTx] = await financeApp.getPeriod(
+    const data = await financeApp.getPeriod(
       await financeApp.currentPeriodId()
     );
 
-    assert.equal(
-      end.valueOf(),
-      MAX_UINT64.valueOf(),
+    assert.deepEqual(
+      data.endTime,
+      MAX_UINT64,
       "should have set the period's end date to MAX_UINT64"
     );
   });
@@ -297,7 +300,7 @@ contract("Finance App", ([root, owner, recipient]) => {
     const { financeApp } = await newProxyFinance();
 
     await assertRevert(
-      financeApp.initialize(0, PERIOD_DURATION),
+      financeApp.initialize('0x0000000000000000000000000000000000000000', PERIOD_DURATION),
       errors.FINANCE_VAULT_NOT_CONTRACT
     );
     await assertRevert(
@@ -319,12 +322,13 @@ contract("Finance App", ([root, owner, recipient]) => {
   it("adds new token to budget", async () => {
     await finance.setBudget(token1.address, 10);
 
-    const [budget, hasBudget] = await finance.getBudget.call(token1.address);
+    const data = await finance.getBudget.call(token1.address);
+
     const remainingBudget = await finance.getRemainingBudget.call(
       token1.address
     );
-    assert.equal(budget, 10, "should have correct budget");
-    assert.isTrue(hasBudget, "has budget should be true");
+    assert.equal(data.budget, 10, "should have correct budget");
+    assert.isTrue(data.hasBudget, "has budget should be true");
     assert.equal(remainingBudget, 10, "all budget is remaining");
   });
 
@@ -422,28 +426,20 @@ contract("Finance App", ([root, owner, recipient]) => {
           "deposited tokens must be in vault"
         );
 
-        const [
-          periodId,
-          amount,
-          paymentId,
-          paymentExecutionNumber,
-          token,
-          entity,
-          incoming,
-          date
-        ] = await finance.getTransaction(1);
-        assert.equal(periodId, 0, "period id should be correct");
-        assert.equal(amount, transferAmount, "amount should be correct");
-        assert.equal(paymentId, 0, "payment id should be 0");
+        const data = await finance.getTransaction(1);
+
+        assert.equal(data.periodId, 0, "period id should be correct");
+        assert.equal(data.amount, transferAmount, "amount should be correct");
+        assert.equal(data.paymentId, 0, "payment id should be 0");
         assert.equal(
-          paymentExecutionNumber,
+          data.paymentExecutionNumber,
           0,
           "payment execution number should be 0"
         );
-        assert.equal(token, tokenInstance.address, "token should be correct");
-        assert.equal(entity, owner, "entity should be correct");
-        assert.isTrue(incoming, "tx should be incoming");
-        assert.equal(date, 1, "date should be correct");
+        assert.equal(data.token, tokenInstance.address, "token should be correct");
+        assert.equal(data.entity, owner, "entity should be correct");
+        assert.isTrue(data.isIncoming, "tx should be incoming");
+        assert.equal(data.date, 1, "date should be correct");
 
         assertEvent(receipt, "NewTransaction", { reference: "ref" });
       });
@@ -473,34 +469,25 @@ contract("Finance App", ([root, owner, recipient]) => {
         "transactionId"
       );
 
-      const [
-        periodId,
-        amount,
-        paymentId,
-        paymentExecutionNumber,
-        token,
-        entity,
-        incoming,
-        date
-      ] = await finance.getTransaction(transactionId);
+      const data = await finance.getTransaction(transactionId);
 
       assert.equal(
         await vault.balance(ETH),
         VAULT_INITIAL_ETH_BALANCE + sentWei,
         "deposited ETH must be in vault"
       );
-      assert.equal(periodId, 0, "period id should be correct");
-      assert.equal(amount, sentWei, "amount should be correct");
-      assert.equal(paymentId, 0, "payment id should be 0");
+      assert.equal(data.periodId, 0, "period id should be correct");
+      assert.equal(data.amount, sentWei, "amount should be correct");
+      assert.equal(data.paymentId, 0, "payment id should be 0");
       assert.equal(
-        paymentExecutionNumber,
+        data.paymentExecutionNumber,
         0,
         "payment execution number should be 0"
       );
-      assert.equal(token, ETH, "token should be ETH token");
-      assert.equal(entity, owner, "entity should be correct");
-      assert.isTrue(incoming, "tx should be incoming");
-      assert.equal(date, 1, "date should be correct");
+      assert.equal(data.token, ETH, "token should be ETH token");
+      assert.equal(data.entity, owner, "entity should be correct");
+      assert.isTrue(data.isIncoming, "tx should be incoming");
+      assert.equal(data.date, 1, "date should be correct");
 
       assertEvent(receipt, "NewTransaction", { reference });
     });
@@ -516,34 +503,25 @@ contract("Finance App", ([root, owner, recipient]) => {
         "transactionId"
       );
 
-      const [
-        periodId,
-        amount,
-        paymentId,
-        paymentExecutionNumber,
-        token,
-        entity,
-        incoming,
-        date
-      ] = await finance.getTransaction(transactionId);
+      const data = await finance.getTransaction(transactionId);
 
       assert.equal(
         await vault.balance(ETH),
         VAULT_INITIAL_ETH_BALANCE + sentWei,
         "deposited ETH must be in vault"
       );
-      assert.equal(periodId, 0, "period id should be correct");
-      assert.equal(amount, sentWei, "amount should be correct");
-      assert.equal(paymentId, 0, "payment id should be 0");
+      assert.equal(data.periodId, 0, "period id should be correct");
+      assert.equal(data.amount, sentWei, "amount should be correct");
+      assert.equal(data.paymentId, 0, "payment id should be 0");
       assert.equal(
-        paymentExecutionNumber,
+        data.paymentExecutionNumber,
         0,
         "payment execution number should be 0"
       );
-      assert.equal(token, ETH, "token should be ETH token");
-      assert.equal(entity, owner, "entity should be correct");
-      assert.isTrue(incoming, "tx should be incoming");
-      assert.equal(date, 1, "date should be correct");
+      assert.equal(data.token, ETH, "token should be ETH token");
+      assert.equal(data.entity, owner, "entity should be correct");
+      assert.isTrue(data.isIncoming, "tx should be incoming");
+      assert.equal(data.date, 1, "date should be correct");
 
       assertEvent(receipt, "NewTransaction", {
         reference: "Ether transfer to Finance app"
@@ -601,28 +579,19 @@ contract("Finance App", ([root, owner, recipient]) => {
           "finance shouldn't have tokens"
         );
 
-        const [
-          periodId,
-          amount,
-          paymentId,
-          paymentExecutionNumber,
-          token,
-          entity,
-          incoming,
-          date
-        ] = await finance.getTransaction(1);
-        assert.equal(periodId, 0, "period id should be correct");
-        assert.equal(amount, lockedTokenAmount, "amount should be correct");
-        assert.equal(paymentId, 0, "payment id should be 0");
+        const data = await finance.getTransaction(1);
+        assert.equal(data.periodId, 0, "period id should be correct");
+        assert.equal(data.amount, lockedTokenAmount, "amount should be correct");
+        assert.equal(data.paymentId, 0, "payment id should be 0");
         assert.equal(
-          paymentExecutionNumber,
+          data.paymentExecutionNumber,
           0,
           "payment execution number should be 0"
         );
-        assert.equal(token, tokenInstance.address, "token should be correct");
-        assert.equal(entity, finance.address, "entity should be correct");
-        assert.isTrue(incoming, "tx should be incoming");
-        assert.equal(date, 1, "date should be correct");
+        assert.equal(data.token, tokenInstance.address, "token should be correct");
+        assert.equal(data.entity, finance.address, "entity should be correct");
+        assert.isTrue(data.isIncoming, "tx should be incoming");
+        assert.equal(data.date, 1, "date should be correct");
 
         assertEvent(receipt, "NewTransaction", {
           reference: "Recover to Vault"
@@ -665,16 +634,7 @@ contract("Finance App", ([root, owner, recipient]) => {
     it("is recovered using Finance#recoverToVault", async () => {
       const receipt = await finance.recoverToVault(ETH);
 
-      const [
-        periodId,
-        amount,
-        paymentId,
-        paymentExecutionNumber,
-        token,
-        entity,
-        incoming,
-        date
-      ] = await finance.getTransaction(1);
+      const data = await finance.getTransaction(1);
 
       assert.equal(
         await vault.balance(ETH),
@@ -686,18 +646,18 @@ contract("Finance App", ([root, owner, recipient]) => {
         0,
         "finance shouldn't have ETH"
       );
-      assert.equal(periodId, 0, "period id should be correct");
-      assert.equal(amount, lockedETH, "amount should be correct");
-      assert.equal(paymentId, 0, "payment id should be 0");
+      assert.equal(data.periodId, 0, "period id should be correct");
+      assert.equal(data.amount, lockedETH, "amount should be correct");
+      assert.equal(data.paymentId, 0, "payment id should be 0");
       assert.equal(
-        paymentExecutionNumber,
+        data.paymentExecutionNumber,
         0,
         "payment execution number should be 0"
       );
-      assert.equal(token, ETH, "token should be correct");
-      assert.equal(entity, finance.address, "entity should be correct");
-      assert.isTrue(incoming, "tx should be incoming");
-      assert.equal(date, 1, "date should be correct");
+      assert.equal(data.token, ETH, "token should be correct");
+      assert.equal(data.entity, finance.address, "entity should be correct");
+      assert.isTrue(data.isIncoming, "tx should be incoming");
+      assert.equal(data.date, 1, "date should be correct");
 
       assertEvent(receipt, "NewTransaction", { reference: "Recover to Vault" });
     });
@@ -741,27 +701,17 @@ contract("Finance App", ([root, owner, recipient]) => {
       );
       assertEvent(receipt, "NewPayment", { reference: "ref" });
 
-      const [
-        token,
-        receiver,
-        txAmount,
-        initialTime,
-        interval,
-        maxExecutions,
-        disabled,
-        executions,
-        createdBy
-      ] = await finance.getPayment(1);
+      const data = await finance.getPayment(1);
 
-      assert.equal(token, token1.address, "token address should match");
-      assert.equal(receiver, recipient, "receiver should match");
-      assert.equal(amount, txAmount, "amount should match");
-      assert.equal(initialTime, NOW, "time should match");
-      assert.equal(interval, 2, "interval should match");
-      assert.equal(maxExecutions, 10, "max executionss should match");
-      assert.isFalse(disabled, "should be enabled");
-      assert.equal(executions, 1, "should be on first execution");
-      assert.equal(createdBy, root, "should have correct creator");
+      assert.equal(data.token, token1.address, "token address should match");
+      assert.equal(data.receiver, recipient, "receiver should match");
+      assert.equal(data.amount, amount, "amount should match");
+      assert.equal(data.initialPaymentTime, NOW, "time should match");
+      assert.equal(data.interval, 2, "interval should match");
+      assert.equal(data.maxExecutions, 10, "max executionss should match");
+      assert.isFalse(data.inactive, "should be enabled");
+      assert.equal(data.executions, 1, "should be on first execution");
+      assert.equal(data.createdBy, root, "should have correct creator");
     });
 
     it("fails trying to get payment out of bounds", async () => {
@@ -823,28 +773,19 @@ contract("Finance App", ([root, owner, recipient]) => {
         "recipient should have received tokens"
       );
 
-      const [
-        periodId,
-        txAmount,
-        paymentId,
-        paymentExecutionNumber,
-        token,
-        entity,
-        isIncoming,
-        date
-      ] = await finance.getTransaction(1);
-      assert.equal(periodId, 0, "period id should be correct");
-      assert.equal(txAmount, amount, "amount should match");
-      assert.equal(paymentId, 0, "payment id should be 0 for single payment");
+      const data = await finance.getTransaction(1);
+      assert.equal(data.periodId, 0, "period id should be correct");
+      assert.equal(data.amount, amount, "amount should match");
+      assert.equal(data.paymentId, 0, "payment id should be 0 for single payment");
       assert.equal(
-        paymentExecutionNumber,
+        data.paymentExecutionNumber,
         0,
         "payment execution number should be 0"
       );
-      assert.equal(token, token1.address, "token address should match");
-      assert.equal(entity, recipient, "receiver should match");
-      assert.isFalse(isIncoming, "single payment should be outgoing");
-      assert.equal(date.valueOf(), NOW, "date should be correct");
+      assert.equal(data.token, token1.address, "token address should match");
+      assert.equal(data.entity, recipient, "receiver should match");
+      assert.isFalse(data.isIncoming, "single payment should be outgoing");
+      assert.equal(data.date.valueOf(), NOW, "date should be correct");
     });
 
     it("can decrease budget after spending", async () => {
@@ -855,22 +796,22 @@ contract("Finance App", ([root, owner, recipient]) => {
       const newBudgetAmount = 5;
       await finance.setBudget(token1.address, newBudgetAmount);
 
-      const [budget, hasBudget] = await finance.getBudget.call(token1.address);
+      const data = await finance.getBudget.call(token1.address);
       const remainingBudget = await finance.getRemainingBudget.call(
         token1.address
       );
 
-      assert.equal(budget, newBudgetAmount, "new budget should be correct");
-      assert.isTrue(hasBudget, "should have budget");
+      assert.equal(data.budget, newBudgetAmount, "new budget should be correct");
+      assert.isTrue(data.hasBudget, "should have budget");
       assert.equal(remainingBudget, 0, "remaining budget should be 0");
     });
 
     it("removing budget allows unlimited spending", async () => {
       await finance.removeBudget(token2.address);
 
-      const [budget, hasBudget] = await finance.getBudget.call(token2.address);
-      assert.equal(budget, 0, "removed budget should be 0");
-      assert.isFalse(hasBudget, "should not have budget");
+      const data = await finance.getBudget.call(token2.address);
+      assert.equal(data.budget, 0, "removed budget should be 0");
+      assert.isFalse(data.hasBudget, "should not have budget");
 
       // budget was 100
       await finance.newImmediatePayment(token2.address, recipient, 190, "");
@@ -917,21 +858,12 @@ contract("Finance App", ([root, owner, recipient]) => {
             "NewTransaction",
             "transactionId"
           );
-          const [
-            periodId,
-            txAmount,
-            paymentId,
-            paymentExecutionNumber,
-            token,
-            entity,
-            incoming,
-            date
-          ] = await finance.getTransaction(transactionId);
+          const data = await finance.getTransaction(transactionId);
 
-          assert.equal(txAmount, amount, "amount should be correct");
-          assert.equal(paymentId, 1, "payment id should be 1");
+          assert.equal(data.amount, amount, "amount should be correct");
+          assert.equal(data.paymentId, 1, "payment id should be 1");
           assert.equal(
-            paymentExecutionNumber.valueOf(),
+            data.paymentExecutionNumber.valueOf(),
             executionNum,
             `payment execution number should be ${executionNum}`
           );
@@ -999,43 +931,37 @@ contract("Finance App", ([root, owner, recipient]) => {
       });
 
       it("has correct token statements", async () => {
-        const [t1expense, t1income] = await finance.getPeriodTokenStatement(
+        const data1 = await finance.getPeriodTokenStatement(
           0,
           token1.address
         );
-        const [t2expense, t2income] = await finance.getPeriodTokenStatement(
+        const data2 = await finance.getPeriodTokenStatement(
           0,
           token2.address
         );
 
-        assert.equal(t1expense, 10, "token 1 expenses should be correct");
-        assert.equal(t1income, 5, "token 1 income should be correct");
+        assert.equal(data1.expenses, 10, "token 1 expenses should be correct");
+        assert.equal(data1.income, 5, "token 1 income should be correct");
 
-        assert.equal(t2expense, 10, "token 2 expenses should be correct");
-        assert.equal(t2income, 0, "token 2 income should be correct");
+        assert.equal(data2.expenses, 10, "token 2 expenses should be correct");
+        assert.equal(data2.income, 0, "token 2 income should be correct");
       });
 
       it("finishes accounting period correctly", async () => {
         await finance.mockIncreaseTime(PERIOD_DURATION + 1);
         await finance.tryTransitionAccountingPeriod(1);
 
-        const [
-          isCurrent,
-          start,
-          end,
-          firstTx,
-          lastTx
-        ] = await finance.getPeriod(0);
+        const data = await finance.getPeriod(0);
 
-        assert.isFalse(isCurrent, "shouldnt be current period");
-        assert.equal(start.valueOf(), NOW, "should have correct start date");
+        assert.isFalse(data.isCurrent, "shouldnt be current period");
+        assert.equal(data.startTime.toNumber(), NOW, "should have correct start date");
         assert.equal(
-          end.valueOf(),
+          data.endTime.toNumber(),
           NOW + PERIOD_DURATION - 1,
           "should have correct end date"
         );
-        assert.equal(firstTx.valueOf(), 1, "should have correct first tx");
-        assert.equal(lastTx.valueOf(), 4, "should have correct last tx");
+        assert.equal(data.firstTransactionId.valueOf(), 1, "should have correct first tx");
+        assert.equal(data.lastTransactionId.valueOf(), 4, "should have correct last tx");
       });
 
       it("fails trying to access period out of bounds", async () => {
@@ -1059,7 +985,7 @@ contract("Finance App", ([root, owner, recipient]) => {
         await finance.mockIncreaseTime((maxTransitions + 2) * PERIOD_DURATION);
       });
 
-      it("fails when too many period transitions are needed", async () => {
+      it.only("fails when too many period transitions are needed", async () => {
         // Normal payments
         await assertRevert(
           finance.newImmediatePayment(token1.address, recipient, 10, ""),
@@ -1086,7 +1012,7 @@ contract("Finance App", ([root, owner, recipient]) => {
 
       it("can transition periods externally to remove deadlock for direct deposits", async () => {
         const sentWei = 10;
-        const prevVaultBalance = (await getBalance(vault.address)).toNumber();
+        const prevVaultBalance = await getBalance(vault.address);
 
         await finance.tryTransitionAccountingPeriod(maxTransitions);
 
@@ -1096,19 +1022,10 @@ contract("Finance App", ([root, owner, recipient]) => {
           "NewTransaction",
           "transactionId"
         );
-        const [
-          periodId,
-          amount,
-          paymentId,
-          paymentExecutionNumber,
-          token,
-          entity,
-          incoming,
-          date
-        ] = await finance.getTransaction(transactionId);
+        const data = await finance.getTransaction(transactionId);
 
         assert.equal(
-          amount,
+          data.amount,
           sentWei,
           "app should have received ETH and sent it to vault"
         );
@@ -1122,27 +1039,21 @@ contract("Finance App", ([root, owner, recipient]) => {
       it("non-activity accounting periods have no transactions", async () => {
         await finance.tryTransitionAccountingPeriod(5);
 
-        const [
-          isCurrent,
-          start,
-          end,
-          firstTx,
-          lastTx
-        ] = await finance.getPeriod(2);
+        const data = await finance.getPeriod(2);
 
-        assert.isFalse(isCurrent, "shouldnt be current period");
+        assert.isFalse(data.isCurrent, "shouldnt be current period");
         assert.equal(
-          start.valueOf(),
+          data.startTime.toNumber(),
           PERIOD_DURATION * 2 + 1,
           "should have correct start date"
         );
         assert.equal(
-          end.valueOf(),
+          data.endTime.toNumber(),
           PERIOD_DURATION * 3,
           "should have correct end date"
         );
-        assert.equal(firstTx, 0, "should have empty txs");
-        assert.equal(lastTx, 0, "should have empty txs");
+        assert.equal(data.firstTransactionId, 0, "should have empty txs");
+        assert.equal(data.lastTransactionId, 0, "should have empty txs");
       });
     });
 
