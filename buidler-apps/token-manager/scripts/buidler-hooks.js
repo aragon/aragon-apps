@@ -3,19 +3,19 @@ const EMPTY_ADDR = '0x0000000000000000000000000000000000000000'
 let token
 
 module.exports = {
-  postDao: async function(dao, bre) {
+  postDao: async function({ dao }, bre) {
     await _deployToken(bre.artifacts)
 
     console.log(`> Token deployed: ${token.address}`)
   },
 
-  preInit: async function(proxy, bre) {
+  preInit: async function({ proxy }, bre) {
     await token.changeController(proxy.address)
 
     console.log(`> Changed token controller to ${proxy.address}`)
   },
 
-  getInitParams: async function(bre) {
+  getInitParams: async function({}, bre) {
     return [
       token.address,
       true, /* transferable */
