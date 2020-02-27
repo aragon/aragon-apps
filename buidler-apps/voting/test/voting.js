@@ -2,7 +2,7 @@ const { assertRevert } = require('@aragon/contract-test-helpers/assertThrow')
 const { assertAmountOfEvents } = require('@aragon/contract-test-helpers/assertEvent')
 const { getEventAt, getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-helpers/events')
 const getBlockNumber = require('@aragon/contract-test-helpers/blockNumber')(web3)
-const { encodeCallScript, EMPTY_SCRIPT } = require('@aragon/contract-test-helpers/evmScript')
+const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
 const { makeErrorMappingProxy } = require('@aragon/contract-test-helpers/utils')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
@@ -20,6 +20,7 @@ const createdVoteId = receipt => getEventArgument(receipt, 'StartVote', 'voteId'
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+const EMPTY_SCRIPT = '0x00000001'
 
 const VOTER_STATE = ['ABSENT', 'YEA', 'NAY'].reduce((state, key, index) => {
     state[key] = index;
