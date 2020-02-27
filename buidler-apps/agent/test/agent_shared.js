@@ -17,7 +17,7 @@ module.exports = (
   }
 ) => {
   const web3Call = require('@aragon/contract-test-helpers/call')(web3)
-  const web3Sign = require('@aragon/contract-test-helpers/sign')(web3)
+  // const web3Sign = require('@aragon/contract-test-helpers/sign')(web3)
   const getBalance = require('@aragon/contract-test-helpers/balance')(web3)
 
   const ACL = artifacts.require('ACL')
@@ -43,6 +43,19 @@ module.exports = (
     let daoFact, agentBase, dao, acl, agent, agentAppId
 
     let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, SAFE_EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PROTECTED_TOKEN_ROLE, REMOVE_PROTECTED_TOKEN_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ERC1271_INTERFACE_ID
+
+    // Web3 1.x inverts the order of the parameters of the sign function:
+    // Web3 0.x => web3.eth.sign(address, dataToSign, [, callback])
+    // Web3 1.x => web3.eth.sign(dataToSign, address [, callback])
+    // As a temporary solution, we don't use the helper and define it here instead.
+    web3Sign = async (signer, hash) => {
+      return new Promise((resolve, reject) => {
+        web3.eth.sign(hash, signer, async (err, res) => {
+          if (err || !res) return reject(err)
+          resolve(res)
+        })
+      })
+    }
 
     // Error strings
     const errors = makeErrorMappingProxy({
@@ -873,7 +886,7 @@ module.exports = (
                 await agent.setDesignatedSigner(signer, { from: signerDesignator })
               })
 
-              it('isValidSignature returns true to a valid signature', async () => {
+              it.only('isValidSignature returns true to a valid signature', async () => {
                 const signature = await sign(HASH, signerOrKey)
                 assertIsValidSignature(true, await agent.isValidSignature(HASH, signature))
               })

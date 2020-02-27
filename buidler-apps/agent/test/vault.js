@@ -2,5 +2,5 @@
 const runSharedVaultTests = require('../../vault/test/vault_shared.js')
 
 contract('Agent app (Vault compatibility)', (accounts) => {
-  runSharedVaultTests('Agent', { accounts, artifacts, web3 })
+  // runSharedVaultTests('Agent', { accounts, artifacts, web3 })
 })
