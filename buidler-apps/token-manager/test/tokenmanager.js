@@ -1,9 +1,9 @@
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
-const getBalance = require('@aragon/test-helpers/balance')(web3)
-const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
+const { assertRevert } = require('@aragon/contract-test-helpers/assertThrow')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-helpers/events')
+const getBalance = require('@aragon/contract-test-helpers/balance')(web3)
+const { makeErrorMappingProxy } = require('@aragon/contract-test-helpers/utils')
 
-const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
+const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const TokenManager = artifacts.require('TokenManagerMock')
