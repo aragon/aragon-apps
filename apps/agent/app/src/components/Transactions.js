@@ -109,7 +109,7 @@ const Transactions = React.memo(function Transactions({
               justify-content: space-between;
             `}
           >
-            {layoutName !== 'small' && (
+            {!compactMode && (
               <TransactionFilters
                 compactMode={compactMode}
                 dateRangeFilter={selectedDateRange}
@@ -307,7 +307,7 @@ const Transactions = React.memo(function Transactions({
                 grid-gap: ${3 * GU}px;
                 align-items: center;
                 justify-content: space-between;
-                ${layoutName === 'small' &&
+                ${compactMode &&
                   `
                 width: 100%;
                 display: flex;
@@ -320,7 +320,7 @@ const Transactions = React.memo(function Transactions({
               `}
               `}
             >
-              <InnerEntryColumn layoutName={layoutName} theme={theme}>
+              <InnerEntryColumn compactMode={compactMode} theme={theme}>
                 From{' '}
                 {!from ? (
                   <AppBadge
@@ -335,7 +335,7 @@ const Transactions = React.memo(function Transactions({
                   />
                 )}
               </InnerEntryColumn>
-              <InnerEntryColumn layoutName={layoutName} theme={theme}>
+              <InnerEntryColumn compactMode={compactMode} theme={theme}>
                 To{' '}
                 {!to ? (
                   <AppBadge
@@ -349,12 +349,10 @@ const Transactions = React.memo(function Transactions({
               </InnerEntryColumn>
               <AmountColumn
                 amountColor={amountColor}
-                layoutName={layoutName}
+                compactMode={compactMode}
                 theme={theme}
               >
-                {layoutName === 'small' && (
-                  <span className="amount-label">Amount</span>
-                )}
+                {compactMode && <span className="amount-label">Amount</span>}
                 <span className="token-amount">
                   {' '}
                   {formattedAmount} {symbol}
@@ -363,7 +361,7 @@ const Transactions = React.memo(function Transactions({
             </div>
           )
         })
-        return layoutName === 'small' ? (
+        return compactMode ? (
           <div
             css={`
               width: 100%;
@@ -393,17 +391,17 @@ const InnerEntryColumn = styled.div`
   grid-gap: ${1 * GU}px;
   align-items: center;
   width: 200px;
-  ${({ layoutName }) =>
-    layoutName === 'small' &&
+  ${({ compactMode }) =>
+    compactMode &&
     `
-  display: flex;
-  flex-direction: row;
-  align-items: space-between;
-  justify-content: space-between;
-  width: 100%;
-  margin-right: ${5 * GU}px;
-  margin-bottom: ${5 * GU}px;
-  `};
+      display: flex;
+      flex-direction: row;
+      align-items: space-between;
+      justify-content: space-between;
+      width: 100%;
+      margin-right: ${5 * GU}px;
+      margin-bottom: ${5 * GU}px;
+    `};
 `
 
 const AmountColumn = styled.div`
@@ -416,16 +414,16 @@ const AmountColumn = styled.div`
   .token-amount {
     color: ${({ amountColor }) => amountColor};
   }
-  ${({ layoutName }) =>
-    layoutName === 'small' &&
+  ${({ compactMode }) =>
+    compactMode &&
     `
-    display: flex;
-  display: flex;
-  flex-direction: row;
-  align-items: space-between;
-  justify-content: space-between;
-  width: 100%;
-    margin-right: ${5 * GU}px;
+      display: flex;
+      display: flex;
+      flex-direction: row;
+      align-items: space-between;
+      justify-content: space-between;
+      width: 100%;
+      margin-right: ${5 * GU}px;
     `}
 `
 
