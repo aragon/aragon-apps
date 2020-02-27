@@ -1,14 +1,14 @@
-const getBalance = require("@aragon/test-helpers/balance")(web3);
-const { assertRevert } = require("@aragon/test-helpers/assertThrow");
-const { makeErrorMappingProxy } = require("@aragon/test-helpers/utils");
+const getBalance = require("@aragon/contract-test-helpers/balance")(web3);
+const { assertRevert } = require("@aragon/contract-test-helpers/assertThrow");
+const { makeErrorMappingProxy } = require("@aragon/contract-test-helpers/utils");
 const {
   getEventArgument,
   getNewProxyAddress
-} = require("@aragon/test-helpers/events");
+} = require("@aragon/contract-test-helpers/events");
 const {
   assertEvent,
   assertAmountOfEvents
-} = require("@aragon/test-helpers/assertEvent")(web3);
+} = require("@aragon/contract-test-helpers/assertEvent");
 
 const Finance = artifacts.require("FinanceMock");
 const Vault = artifacts.require("Vault");
@@ -985,7 +985,7 @@ contract("Finance App", ([root, owner, recipient]) => {
         await finance.mockIncreaseTime((maxTransitions + 2) * PERIOD_DURATION);
       });
 
-      it.only("fails when too many period transitions are needed", async () => {
+      it("fails when too many period transitions are needed", async () => {
         // Normal payments
         await assertRevert(
           finance.newImmediatePayment(token1.address, recipient, 10, ""),

@@ -1,4 +1,4 @@
-const { getNewProxyAddress } = require("@aragon/test-helpers/events");
+const { getNewProxyAddress } = require("@aragon/contract-test-helpers/events");
 
 // vault.aragonpm.eth
 const vaultAppId =
