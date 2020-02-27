@@ -40,6 +40,7 @@ function TransactionFilters({
       />
       <DateRangePicker
         endDate={dateRangeFilter.end}
+        format="MM/DD/YY"
         onChange={onDateRangeChange}
         startDate={dateRangeFilter.start}
       />

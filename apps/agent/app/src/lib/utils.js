@@ -1,6 +1,11 @@
+import { format } from 'date-fns'
 import { round } from './math-utils'
 
 export function noop() {}
+
+export function formatDate(date) {
+  return format(date, 'MM/dd/yy')
+}
 
 export function formatDecimals(value, digits) {
   try {

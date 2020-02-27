@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { compareDesc, format } from 'date-fns'
 import {
+  AppBadge,
   blockExplorerUrl,
   Button,
   ContextMenu,
@@ -17,6 +18,7 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useConnectedAccount, useNetwork } from '@aragon/api-react'
+import AgentSvg from './assets/agent_badge.svg'
 import EmptyTransactions from './EmptyTransactions'
 import { useIdentity } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
@@ -30,7 +32,7 @@ import useDownloadData from './useDownloadData'
 import { formatTokenAmount } from '../lib/utils'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 
-function getTokenDetails(details, { address, decimals, symbol }) {
+const getTokenDetails = (details, { address, decimals, symbol }) => {
   details[toChecksumAddress(address)] = {
     decimals,
     symbol,
@@ -39,7 +41,7 @@ function getTokenDetails(details, { address, decimals, symbol }) {
 }
 
 const Transactions = React.memo(function Transactions({
-  dao,
+  agentAddress,
   tokens,
   transactions,
 }) {
@@ -47,7 +49,6 @@ const Transactions = React.memo(function Transactions({
   const { layoutName } = useLayout()
   const network = useNetwork()
   const theme = useTheme()
-
   const compactMode = layoutName === 'small'
   const {
     emptyResultsViaFilters,
@@ -68,7 +69,6 @@ const Transactions = React.memo(function Transactions({
     tokenDetails,
     tokens,
     selectedDateRange,
-    dao,
   })
   const symbols = tokens.map(({ symbol }) => symbol)
 
@@ -87,10 +87,18 @@ const Transactions = React.memo(function Transactions({
 
   return (
     <DataView
-      status={emptyResultsViaFilters ? 'empty-filters' : 'default'}
-      page={page}
-      onPageChange={setPage}
-      onStatusEmptyClear={handleClearFilters}
+      entries={sortedTransactions}
+      fields={
+        emptyResultsViaFilters
+          ? []
+          : [
+              { label: 'Date', priority: 2 },
+              { label: 'Source/recipient', priority: 5, childStart: true },
+              { label: 'Type', priority: 3 },
+              { label: 'Reference', priority: 1 },
+              { label: 'Amount', priority: 4 },
+            ]
+      }
       heading={
         <React.Fragment>
           <div
@@ -108,86 +116,26 @@ const Transactions = React.memo(function Transactions({
                 onDateRangeChange={handleSelectedDateRangeChange}
                 onTokenChange={handleTokenChange}
                 onTransactionTypeChange={handleTransactionTypeChange}
+                symbols={['All tokens', ...symbols]}
                 tokenFilter={selectedToken}
                 transactionTypeFilter={selectedTransactionType}
                 transactionTypes={TRANSACTION_TYPES_STRING}
-                symbols={['All tokens', ...symbols]}
               />
             )}
             <div css="text-align: right;">
-              <Button onClick={onDownload}>
-                <IconExternal /> Export
-              </Button>
+              <Button
+                icon={<IconExternal />}
+                label="Export"
+                onClick={onDownload}
+              />
             </div>
           </div>
         </React.Fragment>
       }
-      fields={
-        emptyResultsViaFilters
-          ? []
-          : [
-              { label: 'Date', priority: 2 },
-              { label: 'Source/recipient', priority: 5 },
-              { label: 'Type', priority: 3 },
-              { label: 'Reference', priority: 1 },
-              { label: 'Amount', priority: 4 },
-            ]
-      }
-      entries={sortedTransactions}
-      renderEntryExpansion={({ tokenTransfers }) => {
-        if (tokenTransfers.length === 1) {
-          return
-        }
-
-        return tokenTransfers.map(({ to, from, amount, token }) => {
-          const isIncoming = !!from
-          const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
-          const formattedAmount = formatTokenAmount(
-            amount,
-            isIncoming,
-            decimals,
-            true,
-            { rounding: 5 }
-          )
-          const amountColor = isIncoming
-            ? theme.positive
-            : formattedAmount.includes('-')
-            ? theme.negative
-            : theme.surfaceContent
-          return (
-            <div
-              css={`
-                width: 100%;
-                display: grid;
-                grid-template-columns: auto auto 1fr;
-                grid-gap: ${3 * GU}px;
-                align-items: center;
-                justify-content: space-between;
-              `}
-            >
-              <InnerEntryColumn layoutName={layoutName} theme={theme}>
-                From:{' '}
-                <LocalIdentityBadge
-                  entity={from || 'Agent'}
-                  badgeOnly={!from}
-                />
-              </InnerEntryColumn>
-              <InnerEntryColumn layoutName={layoutName} theme={theme}>
-                To:{' '}
-                <LocalIdentityBadge entity={to || 'Agent'} badgeOnly={!to} />
-              </InnerEntryColumn>
-              <div
-                css={`
-                  text-align: right;
-                  color: ${amountColor};
-                `}
-              >
-                {formattedAmount} {symbol}
-              </div>
-            </div>
-          )
-        })
-      }}
+      onPageChange={setPage}
+      onStatusEmptyClear={handleClearFilters}
+      page={page}
+      status={emptyResultsViaFilters ? 'empty-filters' : 'default'}
       renderEntry={({
         date,
         description: reference,
@@ -241,7 +189,7 @@ const Transactions = React.memo(function Transactions({
               (!tokenTransfers.length && targetContract) || 'Multiple accounts'
             }
             networkType={
-              typeof targetContract === 'string' && network && network.type
+              typeof targetContract === 'string' && network ? network.type : ''
             }
           />
         )
@@ -329,12 +277,109 @@ const Transactions = React.memo(function Transactions({
           </ContextMenu>
         )
       }}
+      renderEntryExpansion={({ tokenTransfers }) => {
+        if (tokenTransfers.length === 1) {
+          return
+        }
+
+        const transfers = tokenTransfers.map(({ to, from, amount, token }) => {
+          const isIncoming = !!from
+          const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
+          const formattedAmount = formatTokenAmount(
+            amount,
+            isIncoming,
+            decimals,
+            true,
+            { rounding: 5 }
+          )
+          const amountColor = isIncoming
+            ? theme.positive
+            : formattedAmount.includes('-')
+            ? theme.negative
+            : theme.surfaceContent
+          return (
+            <div
+              key={to || from}
+              css={`
+                width: 100%;
+                display: grid;
+                grid-template-columns: auto auto 1fr;
+                grid-gap: ${3 * GU}px;
+                align-items: center;
+                justify-content: space-between;
+                ${layoutName === 'small' &&
+                  `
+                width: 100%;
+                display: flex;
+                flex-direction: column
+                align-items: flex-end;
+                justify-content: space-between;
+                margin-top: ${5 * GU}px;
+                margin-left: ${4 * GU}px;
+                margin-bottom: ${5 * GU}px;
+              `}
+              `}
+            >
+              <InnerEntryColumn layoutName={layoutName} theme={theme}>
+                From{' '}
+                {!from ? (
+                  <AppBadge
+                    appAddress={agentAddress}
+                    iconSrc={AgentSvg}
+                    label="Agent"
+                  />
+                ) : (
+                  <LocalIdentityBadge
+                    entity={from || 'Agent'}
+                    badgeOnly={!from}
+                  />
+                )}
+              </InnerEntryColumn>
+              <InnerEntryColumn layoutName={layoutName} theme={theme}>
+                To{' '}
+                {!to ? (
+                  <AppBadge
+                    appAddress={agentAddress}
+                    iconSrc={AgentSvg}
+                    label="Agent"
+                  />
+                ) : (
+                  <LocalIdentityBadge entity={to || 'Agent'} badgeOnly={!to} />
+                )}
+              </InnerEntryColumn>
+              <AmountColumn
+                amountColor={amountColor}
+                layoutName={layoutName}
+                theme={theme}
+              >
+                {layoutName === 'small' && (
+                  <span className="amount-label">Amount</span>
+                )}
+                <span className="token-amount">
+                  {' '}
+                  {formattedAmount} {symbol}
+                </span>
+              </AmountColumn>
+            </div>
+          )
+        })
+        return layoutName === 'small' ? (
+          <div
+            css={`
+              width: 100%;
+            `}
+          >
+            {transfers}
+          </div>
+        ) : (
+          transfers
+        )
+      }}
     />
   )
 })
 
 Transactions.propTypes = {
-  dao: PropTypes.string,
   tokens: PropTypes.array.isRequired,
   transactions: PropTypes.array.isRequired,
 }
@@ -342,31 +387,49 @@ Transactions.propTypes = {
 const InnerEntryColumn = styled.div`
   color: ${({ theme }) => theme.surfaceContentSecondary};
   ${textStyle('label2')};
+  font-weight: 400;
   display: inline-grid;
   grid-template-columns: auto 1fr;
   grid-gap: ${1 * GU}px;
   align-items: center;
   width: 200px;
-
   ${({ layoutName }) =>
-    layoutName === 'medium'
-      ? `
-          max-width: 250px;
-          width: 250px;
-        `
-      : ''}
-  ${({ layoutName }) =>
-    layoutName === 'large'
-      ? `
-          /* max possible length of custom label + from length + some spacing */
-          min-width: 342px;
-          max-width: unset;
-          width: unset;
-        `
-      : ''}
+    layoutName === 'small' &&
+    `
+  display: flex;
+  flex-direction: row;
+  align-items: space-between;
+  justify-content: space-between;
+  width: 100%;
+  margin-right: ${5 * GU}px;
+  margin-bottom: ${5 * GU}px;
+  `};
 `
 
-const ContextMenuItemCustomLabel = ({ entity, theme }) => {
+const AmountColumn = styled.div`
+  text-align: right;
+  .amount-label {
+    color: ${({ theme }) => theme.surfaceContentSecondary};
+    ${textStyle('label2')};
+    font-weight: 400;
+  }
+  .token-amount {
+    color: ${({ amountColor }) => amountColor};
+  }
+  ${({ layoutName }) =>
+    layoutName === 'small' &&
+    `
+    display: flex;
+  display: flex;
+  flex-direction: row;
+  align-items: space-between;
+  justify-content: space-between;
+  width: 100%;
+    margin-right: ${5 * GU}px;
+    `}
+`
+
+function ContextMenuItemCustomLabel({ entity, theme }) {
   const [label, showLocalIdentityModal] = useIdentity(entity)
   const handleEditLabel = useCallback(() => showLocalIdentityModal(entity))
 
@@ -388,7 +451,7 @@ const ContextMenuItemCustomLabel = ({ entity, theme }) => {
   )
 }
 
-const ContextMenuViewTransaction = ({ transactionHash, network, theme }) => {
+function ContextMenuViewTransaction({ transactionHash, network, theme }) {
   const handleViewTransaction = useCallback(() => {
     window.open(
       blockExplorerUrl('transaction', transactionHash, {

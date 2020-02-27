@@ -8,7 +8,7 @@ import Transactions from './components/Transactions'
 
 function App({ api, appState, isSyncing }) {
   const { layoutName } = useLayout()
-  const { balances, transactions, tokens } = appState
+  const { balances, transactions, tokens, proxyAddress } = appState
   const compactMode = layoutName === 'small'
 
   const handleResolveLocalIdentity = useCallback(address => {
@@ -28,7 +28,11 @@ function App({ api, appState, isSyncing }) {
       <Header primary="Agent" />
       <InstallFrame />
       <Balances balances={balances} compactMode={compactMode} />
-      <Transactions transactions={transactions} tokens={tokens} />
+      <Transactions
+        agentAddress={proxyAddress}
+        transactions={transactions}
+        tokens={tokens}
+      />
     </IdentityProvider>
   )
 }

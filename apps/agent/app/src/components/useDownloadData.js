@@ -3,15 +3,9 @@ import { format } from 'date-fns'
 import { saveAs } from 'file-saver'
 import { IdentityContext } from './IdentityManager/IdentityManager'
 import { toChecksumAddress } from '../lib/web3-utils'
-import { formatTokenAmount } from '../lib/utils'
+import { formatDate, formatTokenAmount } from '../lib/utils'
 
-const formatDate = date => format(date, 'MM/dd/yy')
-
-const getDownloadData = async ({
-  transactions,
-  tokenDetails,
-  resolveAddress,
-}) => {
+async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
   const mappedData = await transactions.reduce(
     async (promise, { tokenTransfers, date, description }) => {
       const previous = await promise
@@ -54,19 +48,18 @@ const getDownloadData = async ({
     .join('\n')
 }
 
-const getDownloadFilename = (dao, { start, end }) => {
+function getDownloadFilename({ start, end }) {
   const today = format(Date.now(), 'yyyy-MM-dd')
-  let filename = `agent_${dao}_${today}.csv`
+  let filename = `agent_${today}.csv`
   if (start && end) {
     const formattedStart = format(start, 'yyyy-MM-dd')
     const formattedEnd = format(end, 'yyyy-MM-dd')
-    filename = `agent_${dao}_${formattedStart}_to_${formattedEnd}.csv`
+    filename = `agent_${formattedStart}_to_${formattedEnd}.csv`
   }
   return filename
 }
 
 function useDownloadData({
-  dao,
   filteredTransactions,
   tokenDetails,
   tokens,
@@ -75,7 +68,7 @@ function useDownloadData({
   const { resolve } = useContext(IdentityContext)
   const [downloadData, setDownloadData] = useState(null)
   const [filename, setFilename] = useState(
-    getDownloadFilename(dao, selectedDateRange)
+    getDownloadFilename(selectedDateRange)
   )
 
   const onDownload = useCallback(async () => {
@@ -99,9 +92,9 @@ function useDownloadData({
   }, [filteredTransactions, tokens, tokenDetails, resolve])
 
   useEffect(() => {
-    const filename = getDownloadFilename(dao, selectedDateRange)
+    const filename = getDownloadFilename(selectedDateRange)
     setFilename(filename)
-  }, [dao, selectedDateRange])
+  }, [selectedDateRange])
 
   return { onDownload }
 }

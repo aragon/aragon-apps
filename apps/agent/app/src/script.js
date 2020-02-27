@@ -118,6 +118,7 @@ async function initialize() {
       const { event: eventName } = event
       const nextState = {
         ...state,
+        proxyAddress,
       }
 
       if (eventName === events.SYNC_STATUS_SYNCING) {

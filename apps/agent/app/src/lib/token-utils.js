@@ -46,12 +46,12 @@ const KNOWN_TOKENS_FALLBACK = new Map([
   ],
 ])
 
-export const isTokenVerified = (tokenAddress, networkType) =>
+export function isTokenVerified(tokenAddress, networkType) {
   // The verified list is without checksums
-  networkType === 'main'
+  return networkType === 'main'
     ? ETHER_TOKEN_VERIFIED_ADDRESSES.has(tokenAddress.toLowerCase())
     : true
-
+}
 export const tokenDataFallback = (tokenAddress, fieldName, networkType) => {
   // The fallback list is without checksums
   const addressWithoutChecksum = tokenAddress.toLowerCase()

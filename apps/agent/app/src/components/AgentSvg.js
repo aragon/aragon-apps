@@ -621,4 +621,3 @@ const SvgAgent = props => (
 )
 
 export default SvgAgent
-
