@@ -312,7 +312,7 @@ module.exports = (
           token = await TokenMock.new(accounts[0], 10000)
         })
 
-        it('set up the default vault correctly to recover ETH from the kernel', async () => {
+        it.only('set up the default vault correctly to recover ETH from the kernel', async () => {
           await kernel.sendTransaction({ value: 1, gas: 31000 })
           assert.equal((await getBalance(kernel.address)).valueOf(), 1, 'kernel should have 1 balance')
 
