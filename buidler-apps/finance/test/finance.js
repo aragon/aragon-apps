@@ -993,10 +993,7 @@ contract("Finance App", ([root, owner, recipient]) => {
         );
 
         // Direct ETH transfers
-        await assertRevert(
-          finance.send(10, { gas: 3e5 }),
-          errors.FINANCE_COMPLETE_TRANSITION
-        );
+        await assertRevert(finance.send(10, { gas: 3e5 }), errors.FINANCE_COMPLETE_TRANSITION)
       });
 
       it("can transition periods externally to remove deadlock for payments", async () => {
@@ -1012,7 +1009,7 @@ contract("Finance App", ([root, owner, recipient]) => {
 
       it("can transition periods externally to remove deadlock for direct deposits", async () => {
         const sentWei = 10;
-        const prevVaultBalance = await getBalance(vault.address);
+        const prevVaultBalance = parseInt(await getBalance(vault.address), 10);
 
         await finance.tryTransitionAccountingPeriod(maxTransitions);
 
@@ -1030,7 +1027,7 @@ contract("Finance App", ([root, owner, recipient]) => {
           "app should have received ETH and sent it to vault"
         );
         assert.equal(
-          (await getBalance(vault.address)).valueOf(),
+          parseInt(await getBalance(vault.address), 10),
           prevVaultBalance + sentWei,
           "app should have received ETH and sent it to vault"
         );
