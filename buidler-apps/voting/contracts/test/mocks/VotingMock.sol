@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
 import "../../Voting.sol";
-import "@aragon/test-helpers/contracts/TimeHelpersMock.sol";
+import "@aragon/contract-test-helpers/contracts/TimeHelpersMock.sol";
 
 
 contract VotingMock is Voting, TimeHelpersMock {
