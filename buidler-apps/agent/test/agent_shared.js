@@ -1,11 +1,11 @@
 const { hash: namehash } = require('eth-ens-namehash')
 const ethUtil = require('ethereumjs-util')
 const ethABI = require('web3-eth-abi')
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
-const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
-const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
-const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
+const { assertRevert } = require('@aragon/contract-test-helpers/assertThrow')
+const { assertAmountOfEvents } = require('@aragon/contract-test-helpers/assertEvent')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-helpers/events')
+const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
+const { makeErrorMappingProxy } = require('@aragon/contract-test-helpers/utils')
 
 // Allow for sharing this test across other agent implementations and subclasses
 module.exports = (
@@ -16,9 +16,9 @@ module.exports = (
     web3
   }
 ) => {
-  const web3Call = require('@aragon/test-helpers/call')(web3)
-  const web3Sign = require('@aragon/test-helpers/sign')(web3)
-  const getBalance = require('@aragon/test-helpers/balance')(web3)
+  const web3Call = require('@aragon/contract-test-helpers/call')(web3)
+  const web3Sign = require('@aragon/contract-test-helpers/sign')(web3)
+  const getBalance = require('@aragon/contract-test-helpers/balance')(web3)
 
   const ACL = artifacts.require('ACL')
   const Kernel = artifacts.require('Kernel')
@@ -772,7 +772,7 @@ module.exports = (
           assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
         })
 
-        it.only('presigns a hash', async () => {
+        it('presigns a hash', async () => {
           await agent.presignHash(HASH, { from: presigner })
 
           assertIsValidSignature(true, await agent.isValidSignature(HASH, NO_SIG))

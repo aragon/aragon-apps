@@ -1,8 +1,8 @@
 const { hash } = require('eth-ens-namehash')
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
-const getBalanceFn = require('@aragon/test-helpers/balance')
-const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
+const { assertRevert } = require('@aragon/contract-test-helpers/assertThrow')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-helpers/events')
+const getBalanceFn = require('@aragon/contract-test-helpers/balance')
+const { makeErrorMappingProxy } = require('@aragon/contract-test-helpers/utils')
 
 // Allow for sharing this test across other vault implementations and subclasses
 module.exports = (

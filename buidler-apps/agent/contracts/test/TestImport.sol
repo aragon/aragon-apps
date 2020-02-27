@@ -13,10 +13,10 @@ import "@aragon/os/contracts/lib/ens/AbstractENS.sol";
 import "@aragon/os/contracts/lib/ens/PublicResolver.sol";
 
 import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
-import "@aragon/test-helpers/contracts/EtherTokenConstantMock.sol";
-import "@aragon/test-helpers/contracts/TokenMock.sol";
-import "@aragon/test-helpers/contracts/TokenReturnFalseMock.sol";
-import "@aragon/test-helpers/contracts/TokenReturnMissingMock.sol";
+import "@aragon/contract-test-helpers/contracts/EtherTokenConstantMock.sol";
+import "@aragon/contract-test-helpers/contracts/TokenMock.sol";
+import "@aragon/contract-test-helpers/contracts/TokenReturnFalseMock.sol";
+import "@aragon/contract-test-helpers/contracts/TokenReturnMissingMock.sol";
 
 
 contract Imports {
