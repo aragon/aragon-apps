@@ -10,7 +10,7 @@
     "test": "buidler test --network buidlerevm"
   },
   "dependencies": {
-    "@aragon/os": "^4.3.0",
+    "@aragon/os": "4.2.0",
     "@aragon/apps-shared-minime": "^1.0.2"
   },
   "devDependencies": {
