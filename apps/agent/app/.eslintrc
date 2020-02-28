@@ -15,6 +15,7 @@
     "valid-jsdoc": "error",
     "react/prop-types": 0,
     "linebreak-style": ["error", "unix"],
-    "react-hooks/rules-of-hooks": "error"
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
   }
 }
