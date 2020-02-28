@@ -1007,7 +1007,7 @@ contract("Finance App", ([root, owner, recipient]) => {
         );
       });
 
-      it.only("can transition periods externally to remove deadlock for direct deposits", async () => {
+      it("can transition periods externally to remove deadlock for direct deposits", async () => {
         const sentWei = 10;
         const prevVaultBalance = parseInt(await getBalance(vault.address), 10);
 
