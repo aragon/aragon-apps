@@ -1007,7 +1007,7 @@ contract("Finance App", ([root, owner, recipient]) => {
         );
       });
 
-      it("can transition periods externally to remove deadlock for direct deposits", async () => {
+      it.only("can transition periods externally to remove deadlock for direct deposits", async () => {
         const sentWei = 10;
         const prevVaultBalance = parseInt(await getBalance(vault.address), 10);
 
@@ -1591,7 +1591,7 @@ contract("Finance App", ([root, owner, recipient]) => {
         assert.isTrue(await nonInit.allowRecoverability(ETH));
       });
 
-      it.only("can recover ETH using AragonApp#transferToVault", async () => {
+      it("can recover ETH using AragonApp#transferToVault", async () => {
         await nonInit.transferToVault(ETH);
 
         assert.equal(await recVault.balance(ETH), lockedETH);

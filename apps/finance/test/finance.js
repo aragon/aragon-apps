@@ -616,7 +616,7 @@ contract('Finance App', ([root, owner, recipient]) => {
                 await finance.mockIncreaseTime((maxTransitions + 2) * PERIOD_DURATION)
             })
 
-            it('fails when too many period transitions are needed', async () => {
+            it.only('fails when too many period transitions are needed', async () => {
                 // Normal payments
                 await assertRevert(
                   finance.newImmediatePayment(token1.address, recipient, 10, ''),
