@@ -34,7 +34,7 @@ const Balances = React.memo(function Balances({ balances, compactMode }) {
 
   useEffect(() => {
     updateConvertedRates(balances)
-  }, [balances])
+  }, [balances, updateConvertedRates])
 
   useEffect(() => {
     const balanceItems = balances.map(

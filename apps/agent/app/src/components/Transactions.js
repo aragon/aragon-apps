@@ -429,7 +429,10 @@ const AmountColumn = styled.div`
 
 function ContextMenuItemCustomLabel({ entity, theme }) {
   const [label, showLocalIdentityModal] = useIdentity(entity)
-  const handleEditLabel = useCallback(() => showLocalIdentityModal(entity))
+  const handleEditLabel = useCallback(() => showLocalIdentityModal(entity), [
+    showLocalIdentityModal,
+    entity,
+  ])
 
   return (
     <ContextMenuItem onClick={handleEditLabel}>

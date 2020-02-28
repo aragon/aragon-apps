@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
 import { TRANSACTION_TYPES } from '../transaction-types'
 import { addressesEqual } from '../lib/web3-utils'

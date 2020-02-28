@@ -39,7 +39,7 @@ function useIdentity(address) {
       }
     })
     return () => subscription.unsubscribe()
-  }, [address, handleNameChange, updates$])
+  }, [address, handleNameChange, updates$, resolve])
 
   return [name, handleShowLocalIdentityModal]
 }

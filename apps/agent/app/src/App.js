@@ -11,13 +11,19 @@ function App({ api, appState, isSyncing }) {
   const { balances, transactions, tokens, proxyAddress } = appState
   const compactMode = layoutName === 'small'
 
-  const handleResolveLocalIdentity = useCallback(address => {
-    return api.resolveAddressIdentity(address).toPromise()
-  }, [])
+  const handleResolveLocalIdentity = useCallback(
+    address => {
+      return api.resolveAddressIdentity(address).toPromise()
+    },
+    [api]
+  )
 
-  const handleShowLocalIdentityModal = useCallback(address => {
-    return api.requestAddressIdentityModification(address).toPromise()
-  }, [])
+  const handleShowLocalIdentityModal = useCallback(
+    address => {
+      return api.requestAddressIdentityModification(address).toPromise()
+    },
+    [api]
+  )
 
   return (
     <IdentityProvider
