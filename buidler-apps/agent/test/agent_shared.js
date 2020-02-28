@@ -124,6 +124,10 @@ module.exports = (
 
       const agentReceipt = await dao.newAppInstance(agentAppId, agentBase.address, '0x', false)
       agent = await AgentLike.at(getNewProxyAddress(agentReceipt))
+
+      // Instruct Truffle to point to the correct overloaded method for 'isValidSignature'.
+      // See: ERC1271.sol, where the two methods are defined.
+      agent.isValidSignature = agent.methods['isValidSignature(bytes32,bytes)']
     })
 
     context('> Uninitialized', () => {
@@ -803,7 +807,7 @@ module.exports = (
             return {
               r: ethUtil.toBuffer('0x' + packedSig.substring(2, 66)),
               s: ethUtil.toBuffer('0x' + packedSig.substring(66, 130)),
-              v: parseInt(packedSig.substring(130, 132), 16) + 27,
+              v: parseInt(packedSig.substring(130, 132), 16),
               mode: ethUtil.toBuffer(SIGNATURE_MODES.EthSign)
             }
           }
@@ -886,7 +890,7 @@ module.exports = (
                 await agent.setDesignatedSigner(signer, { from: signerDesignator })
               })
 
-              it.only('isValidSignature returns true to a valid signature', async () => {
+              it('isValidSignature returns true to a valid signature', async () => {
                 const signature = await sign(HASH, signerOrKey)
                 assertIsValidSignature(true, await agent.isValidSignature(HASH, signature))
               })
