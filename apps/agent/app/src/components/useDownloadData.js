@@ -60,35 +60,20 @@ function useDownloadData({
   selectedDateRange,
 }) {
   const { resolve } = useContext(IdentityContext)
-  const [downloadData, setDownloadData] = useState(null)
-  const [filename, setFilename] = useState(
-    getDownloadFilename(selectedDateRange)
-  )
 
   const onDownload = useCallback(async () => {
+    const downloadData = await getDownloadData({
+      transactions: filteredTransactions,
+      tokenDetails,
+      resolveAddress: resolve,
+      tokens,
+    })
+
     saveAs(
       new Blob([downloadData], { type: 'text/csv;charset=utf-8' }),
-      filename
+      getDownloadFilename(selectedDateRange)
     )
-  }, [downloadData, filename])
-
-  useEffect(() => {
-    const fetch = async () => {
-      const data = await getDownloadData({
-        transactions: filteredTransactions,
-        tokenDetails,
-        resolveAddress: resolve,
-        tokens,
-      })
-      setDownloadData(data)
-    }
-    fetch()
-  }, [filteredTransactions, tokens, tokenDetails, resolve])
-
-  useEffect(() => {
-    const filename = getDownloadFilename(selectedDateRange)
-    setFilename(filename)
-  }, [selectedDateRange])
+  }, [filteredTransactions, resolve, selectedDateRange, tokenDetails, tokens])
 
   return { onDownload }
 }
