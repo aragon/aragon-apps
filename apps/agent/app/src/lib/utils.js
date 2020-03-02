@@ -1,15 +1,13 @@
-import { format } from 'date-fns'
 import { round } from './math-utils'
+import { LOCALE_US_FORMAT } from './date-utils'
+
+export const ROUNDING_AMOUNT = 5
 
 export function noop() {}
 
-export function formatDate(date) {
-  return format(date, 'MM/dd/yy')
-}
-
 export function formatDecimals(value, digits) {
   try {
-    return value.toLocaleString('latn', {
+    return value.toLocaleString(LOCALE_US_FORMAT, {
       style: 'decimal',
       maximumFractionDigits: digits,
     })

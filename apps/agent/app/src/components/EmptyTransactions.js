@@ -1,9 +1,9 @@
 import React from 'react'
 import { useAragonApi } from '@aragon/api-react'
-import { Box, LoadingRing, GU, useTheme } from '@aragon/ui'
-import noResultsPng from './assets/no-results.svg'
+import { Box, LoadingRing, GU, textStyle, useTheme } from '@aragon/ui'
+import noResultsSvg from './assets/no-results.svg'
 
-function EmptyTransactions() {
+const EmptyTransactions = React.memo(function EmptyTransactions() {
   const { appState } = useAragonApi()
   const theme = useTheme()
 
@@ -22,13 +22,13 @@ function EmptyTransactions() {
             margin: ${4 * GU}px 0;
             height: 176px;
           `}
-          src={noResultsPng}
-          alt="No transfers"
+          src={noResultsSvg}
+          alt=""
         />
         <h3
           css={`
-            font-size: 28px;
-            color: ${theme.content};
+            ${textStyle('title2')}
+            color: ${theme.surfaceContent}
           `}
         >
           {appState.isSyncing ? (
@@ -51,6 +51,6 @@ function EmptyTransactions() {
       </div>
     </Box>
   )
-}
+})
 
-export default React.memo(EmptyTransactions)
+export default EmptyTransactions

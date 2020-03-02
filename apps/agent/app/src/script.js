@@ -74,11 +74,9 @@ const retryEvery = async (
   return attempt()
 }
 
-// There are no settings to check, so we do a throwaway check to `initialized()`
-// just to make sure we can connect properly
 retryEvery(() =>
-  // TODO: add call to fetch current agent app's address once available in aragon.js
-  //       and add it to settings
+  // There are no settings to check, so we do a throwaway check to `initialized()`
+  // just to make sure we can connect properly
   app
     .call('hasInitialized')
     .toPromise()

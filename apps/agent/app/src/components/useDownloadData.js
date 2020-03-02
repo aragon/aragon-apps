@@ -3,12 +3,13 @@ import { format } from 'date-fns'
 import { saveAs } from 'file-saver'
 import { IdentityContext } from './IdentityManager/IdentityManager'
 import { toChecksumAddress } from '../lib/web3-utils'
-import { formatDate, formatTokenAmount } from '../lib/utils'
+import { formatTokenAmount, ROUNDING_AMOUNT } from '../lib/utils'
+import { formatDate } from '../lib/date-utils'
 
 async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
-  const mappedData = await transactions.reduce(
-    async (promise, { tokenTransfers, date, description }) => {
-      const previous = await promise
+  const processedTransactions = await transactions.reduce(
+    async (transactionList, { tokenTransfers, date, description }) => {
+      const previous = await transactionList
       const mappedTokenTransfersData = await Promise.all(
         tokenTransfers.map(async ({ amount, from, to, token }) => {
           const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
@@ -17,22 +18,15 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
             !!from,
             decimals,
             true,
-            { rounding: 5 }
+            { rounding: ROUNDING_AMOUNT }
           )
-          const name = await (async () => {
-            if (!from) {
-              return 'Agent'
-            }
-            const { name } = (await resolveAddress(from)) || { name: '' }
-            return name
-          })()
-          const entity = await (async () => {
-            if (!to) {
-              return 'Agent'
-            }
-            const { name } = (await resolveAddress(to)) || { name: '' }
-            return name
-          })()
+          const [name, entity] = await Promise.all(
+            [from, to].map(address =>
+              address
+                ? resolveAddress(address).then(res => (res && res.name) || '')
+                : 'Agent'
+            )
+          )
           return `${formatDate(
             date
           )},${name},${entity},${description},${`"${formattedAmount} ${symbol}"`}`
@@ -44,7 +38,7 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
     Promise.resolve([])
   )
   return ['Date,Name,Source/Recipient,Reference,Amount']
-    .concat(mappedData)
+    .concat(processedTransactions)
     .join('\n')
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import throttle from 'lodash.throttle'
-import { Box, GU } from '@aragon/ui'
+import { Box, GU, useLayout } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
 import { round } from '../lib/math-utils'
 
@@ -10,10 +10,11 @@ const CONVERT_THROTTLE_TIME = 5000
 const convertApiUrl = symbols =>
   `${CONVERT_API_BASE}/price?fsym=USD&tsyms=${symbols.join(',')}`
 
-const Balances = React.memo(function Balances({ balances, compactMode }) {
+const Balances = React.memo(function Balances({ balances }) {
   const [convertRates, setConvertRates] = useState({})
   const [balanceItems, setBalanceItems] = useState([])
-
+  const { layoutName } = useLayout
+  const compactMode = layoutName === 'small'
   // Fetches the conversion rate for the verified tokens
   const updateConvertedRates = useCallback(
     throttle(async balances => {
@@ -33,7 +34,28 @@ const Balances = React.memo(function Balances({ balances, compactMode }) {
   )
 
   useEffect(() => {
+    let cancelled = false
+
+    const updateConvertedRates = throttle(async balances => {
+      const verifiedSymbols = balances
+        .filter(({ verified }) => verified)
+        .map(({ symbol }) => symbol)
+
+      if (!verifiedSymbols.length) {
+        return
+      }
+
+      const res = await fetch(convertApiUrl(verifiedSymbols))
+      const convertRates = await res.json()
+      if (!cancelled) {
+        setConvertRates(convertRates)
+      }
+    }, CONVERT_THROTTLE_TIME)
+
     updateConvertedRates(balances)
+    return () => {
+      cancelled = true
+    }
   }, [balances, updateConvertedRates])
 
   useEffect(() => {
@@ -72,7 +94,7 @@ const Balances = React.memo(function Balances({ balances, compactMode }) {
       >
         <ul
           css={`
-            min-height: 132px;
+            min-height: ${16.5 * GU}px;
             list-style: none;
             padding: 0;
             margin: 0;
@@ -83,11 +105,11 @@ const Balances = React.memo(function Balances({ balances, compactMode }) {
           {balanceItems.map(
             ({ address, amount, convertedAmount, symbol, verified }) => (
               <li
+                key={address}
                 css={`
                   display: block;
                   padding: ${3 * GU}px;
                 `}
-                key={address}
               >
                 <div css="display:inline-block;">
                   <BalanceToken

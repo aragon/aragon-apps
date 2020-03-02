@@ -13,6 +13,7 @@ const TOKEN_TRANSFER_EVENT_SIGNATURE = abi.encodeEventSignature(
   tokenTransferEventAbi[0]
 )
 
+const ANJ_MAINNET_TOKEN_ADDRESS = '0xcD62b1C403fa761BAadFC74C525ce2B51780b184'
 const ANT_MAINNET_TOKEN_ADDRESS = '0x960b236A07cf122663c4303350609A66A7B288C0'
 const DAI_MAINNET_TOKEN_ADDRESS = '0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359'
 export const ETHER_TOKEN_FAKE_ADDRESS =
@@ -24,6 +25,7 @@ const PRESET_TOKENS = new Map([
     'main',
     [
       ETHER_TOKEN_FAKE_ADDRESS,
+      ANJ_MAINNET_TOKEN_ADDRESS,
       ANT_MAINNET_TOKEN_ADDRESS,
       DAI_MAINNET_TOKEN_ADDRESS,
     ],
@@ -107,14 +109,18 @@ export function findTransfersFromReceipt(receipt) {
   const transferLogs = logs.filter(
     ({ topics = [] }) => topics[0] === TOKEN_TRANSFER_EVENT_SIGNATURE
   )
-  try {
-    return transferLogs.map(({ address, data, topics }) => ({
-      token: address,
-      returnData: abi.decodeLog(TOKEN_TRANSFER_EVENT_INPUTS, data, topics),
-    }))
-  } catch (_) {
-    return []
-  }
+  return transferLogs
+    .map(({ address, data, topics }) => {
+      try {
+        return {
+          token: address,
+          returnData: abi.decodeLog(TOKEN_TRANSFER_EVENT_INPUTS, data, topics),
+        }
+      } catch (_) {
+        return null
+      }
+    })
+    .filter(Boolean)
 }
 
 /**

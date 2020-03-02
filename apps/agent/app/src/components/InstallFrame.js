@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ButtonBase, GU, Info, useTheme } from '@aragon/ui'
+import { ButtonBase, GU, Info, Link, useTheme } from '@aragon/ui'
 import FrameSvg from './FrameSvg'
 import FrameModal from './FrameModal'
 
@@ -7,7 +7,6 @@ function InstallFrame() {
   const [opened, setOpened] = useState(false)
   const handleInstallFrameClick = () => setOpened(true)
   const handleClose = () => setOpened(false)
-  const theme = useTheme()
 
   return (
     <React.Fragment>
@@ -38,15 +37,7 @@ function InstallFrame() {
               To interact with the Agent app you must install Frame.
             </div>
             <div>
-              <ButtonBase
-                onClick={handleInstallFrameClick}
-                css={`
-                  font-weight: 600;
-                  color: ${theme.link};
-                `}
-              >
-                Install Frame
-              </ButtonBase>
+              <Link onClick={handleInstallFrameClick}>Install Frame</Link>
             </div>
           </div>
         </div>

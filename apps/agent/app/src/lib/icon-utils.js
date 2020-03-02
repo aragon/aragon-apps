@@ -2,6 +2,7 @@ import { tokenIconUrl as _tokenIconUrl } from '@aragon/ui'
 import { getTestTokenAddresses } from '../testnet'
 import { ETHER_TOKEN_FAKE_ADDRESS } from './token-utils'
 import { ETHER_TOKEN_VERIFIED_BY_SYMBOL } from './verified-tokens'
+import BccToken from '../components/assets/BCC.png'
 
 // Small shim on top of @aragon/ui's tokenIconUrl, to handle our testnet tokens
 export const tokenIconUrl = (tokenAddress, tokenSymbol, networkType) => {
@@ -14,7 +15,7 @@ export const tokenIconUrl = (tokenAddress, tokenSymbol, networkType) => {
   if (testTokens.has(tokenAddress.toLowerCase())) {
     // For the memez
     if (tokenSymbol === 'BCC') {
-      return 'htps://chasing-coins.com/coin/logo/BCC'
+      return BccToken
     }
 
     const mainnetEquivalent = ETHER_TOKEN_VERIFIED_BY_SYMBOL.get(tokenSymbol)
