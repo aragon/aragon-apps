@@ -227,7 +227,7 @@ const Transactions = React.memo(function Transactions({
                   color: ${theme.surfaceContent};
                 `}
               >
-                {uniqueTokens} token
+                {uniqueTokens}&nbsp;token
                 {uniqueTokens > 1 || uniqueTokens === 0 ? 's' : ''}
               </div>
             )
@@ -249,7 +249,7 @@ const Transactions = React.memo(function Transactions({
                 color: ${amountColor};
               `}
             >
-              {formattedAmount} {symbol}
+              {formattedAmount}&nbsp;{symbol}
             </span>
           )
         })()
