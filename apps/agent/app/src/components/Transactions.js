@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import PropTypes from 'prop-types'
+import { useAragonApi } from '@aragon/api-react'
 import { compareDesc, format } from 'date-fns'
 import {
   AppBadge,
@@ -17,7 +18,6 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { useConnectedAccount, useNetwork } from '@aragon/api-react'
-import EmptyTransactions from './EmptyTransactions'
 import { useIdentity } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import TransactionFilters from './TransactionFilters'
@@ -45,11 +45,12 @@ const Transactions = React.memo(function Transactions({
   tokens,
   transactions,
 }) {
+  const { appState } = useAragonApi()
   const connectedAccount = useConnectedAccount()
   const { layoutName } = useLayout()
   const network = useNetwork()
   const theme = useTheme()
-  const compactMode = layoutName === 'small'
+
   const {
     emptyResultsViaFilters,
     filteredTransactions,
@@ -63,14 +64,19 @@ const Transactions = React.memo(function Transactions({
     selectedToken,
     selectedTransactionType,
   } = useFilteredTransactions({ transactions, tokens })
+
   const tokenDetails = tokens.reduce(tokenDetailsReducer, {})
+
   const { onDownload } = useDownloadData({
     filteredTransactions,
     tokenDetails,
     tokens,
     selectedDateRange,
   })
+
+  const { isSyncing } = appState
   const symbols = tokens.map(({ symbol }) => symbol)
+  const compactMode = layoutName === 'small'
 
   const sortedTransactions = useMemo(
     () =>
@@ -81,15 +87,22 @@ const Transactions = React.memo(function Transactions({
     [filteredTransactions]
   )
 
+  // Reset the filters when switching to the compact view
   useEffect(() => {
     if (compactMode) {
       handleClearFilters()
     }
   }, [compactMode, handleClearFilters])
 
-  if (!transactions.length) {
-    return <EmptyTransactions />
-  }
+  const dataViewStatus = useMemo(() => {
+    if (emptyResultsViaFilters) {
+      return 'empty-filters'
+    }
+    if (appState.isSyncing) {
+      return 'loading'
+    }
+    return 'default'
+  }, [isSyncing, emptyResultsViaFilters])
 
   return (
     <DataView
@@ -106,7 +119,7 @@ const Transactions = React.memo(function Transactions({
             ]
       }
       heading={
-        <React.Fragment>
+        transactions.length > 0 && (
           <div
             css={`
               padding: ${2 * GU}px 0;
@@ -133,12 +146,21 @@ const Transactions = React.memo(function Transactions({
               onClick={onDownload}
             />
           </div>
-        </React.Fragment>
+        )
       }
       onPageChange={setPage}
       onStatusEmptyClear={handleClearFilters}
       page={page}
-      status={emptyResultsViaFilters ? 'empty-filters' : 'default'}
+      status={dataViewStatus}
+      statusEmpty={
+        <p
+          css={`
+            ${textStyle('title2')};
+          `}
+        >
+          No transfers yet.
+        </p>
+      }
       renderEntry={({
         date,
         description: reference,
