@@ -82,8 +82,7 @@ function useFilteredTransactions({ transactions, tokens }) {
     !filteredTransactions.length &&
     (selectedToken > 1 ||
       selectedTransactionType > 1 ||
-      selectedDateRange.start ||
-      selectedDateRange.end)
+      selectedDateRange.start)
 
   return {
     emptyResultsViaFilters,

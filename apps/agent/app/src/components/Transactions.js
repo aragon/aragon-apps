@@ -89,8 +89,7 @@ const Transactions = React.memo(function Transactions({
   if (!transactions.length) {
     return <EmptyTransactions />
   }
-  console.log(sortedTransactions)
-  console.log(filteredTransactions)
+
   return (
     <DataView
       entries={sortedTransactions}
