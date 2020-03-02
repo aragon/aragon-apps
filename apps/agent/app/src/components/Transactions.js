@@ -116,7 +116,6 @@ const Transactions = React.memo(function Transactions({
           >
             {!compactMode && (
               <TransactionFilters
-                compactMode={compactMode}
                 dateRangeFilter={selectedDateRange}
                 onDateRangeChange={handleSelectedDateRangeChange}
                 onTokenChange={handleTokenChange}
