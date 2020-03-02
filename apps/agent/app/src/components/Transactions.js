@@ -342,10 +342,12 @@ const Transactions = React.memo(function Transactions({
                     />
                   </div>
                 ) : (
-                  <LocalIdentityBadge
-                    entity={from || 'Agent'}
-                    badgeOnly={!from}
-                  />
+                  <div>
+                    <LocalIdentityBadge
+                      entity={from || 'Agent'}
+                      badgeOnly={!from}
+                    />
+                  </div>
                 )}
               </div>
               <div
@@ -380,7 +382,12 @@ const Transactions = React.memo(function Transactions({
                     />
                   </div>
                 ) : (
-                  <LocalIdentityBadge entity={to || 'Agent'} badgeOnly={!to} />
+                  <div>
+                    <LocalIdentityBadge
+                      entity={to || 'Agent'}
+                      badgeOnly={!to}
+                    />
+                  </div>
                 )}
               </div>
               <div
