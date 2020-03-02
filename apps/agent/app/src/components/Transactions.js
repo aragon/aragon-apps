@@ -239,7 +239,7 @@ const Transactions = React.memo(function Transactions({
             isIncoming,
             decimals,
             true,
-            { rounding: 5 }
+            { rounding: ROUNDING_AMOUNT }
           )
           const amountColor = isIncoming ? theme.positive : theme.negative
           return (
