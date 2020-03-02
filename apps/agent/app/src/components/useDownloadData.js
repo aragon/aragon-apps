@@ -21,11 +21,13 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
             { rounding: ROUNDING_AMOUNT }
           )
           const [name, entity] = await Promise.all(
-            [from, to].map(address =>
-              address
-                ? resolveAddress(address).then(res => (res && res.name) || '')
+            [from, to].map(address => {
+              return address
+                ? resolveAddress(address).then(
+                    res => (res && res.name) || address
+                  )
                 : 'Agent'
-            )
+            })
           )
           return `${formatDate(
             date
@@ -37,7 +39,7 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
     /* https://gyandeeps.com/array-reduce-async-await/ */
     Promise.resolve([])
   )
-  return ['Date,Name,Source/Recipient,Reference,Amount']
+  return ['Date,Source,Recipient,Reference,Amount']
     .concat(processedTransactions)
     .join('\n')
 }
