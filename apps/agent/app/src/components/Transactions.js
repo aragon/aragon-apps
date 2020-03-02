@@ -426,14 +426,13 @@ const Transactions = React.memo(function Transactions({
                   }
                   ${compactMode &&
                     `
-                      display: flex;
-                      display: flex;
-                      flex-direction: row;
-                      align-items: space-between;
-                      justify-content: space-between;
-                      width: 100%;
-                      margin-right: ${5 * GU}px;
-                    `}
+                          display: flex;
+                          flex-direction: row;
+                          align-items: space-between;
+                          justify-content: space-between;
+                          width: 100%;
+                          margin-right: ${5 * GU}px;
+                        `}
                 `}
               >
                 {compactMode && <span className="amount-label">Amount</span>}
@@ -445,14 +444,9 @@ const Transactions = React.memo(function Transactions({
             </div>
           )
         })
+
         return compactMode ? (
-          <div
-            css={`
-              width: 100%;
-            `}
-          >
-            {transfers}
-          </div>
+          <div css="width: 100%">{transfers}</div>
         ) : (
           transfers
         )
