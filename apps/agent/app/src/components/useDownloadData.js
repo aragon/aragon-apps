@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver'
 import { IdentityContext } from './IdentityManager/IdentityManager'
 import { toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount, ROUNDING_AMOUNT } from '../lib/utils'
-import { formatDate } from '../lib/date-utils'
+import { formatDate, ISO_SHORT_FORMAT } from '../lib/date-utils'
 
 async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
   const processedTransactions = await transactions.reduce(
@@ -45,11 +45,11 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
 }
 
 function getDownloadFilename({ start, end }) {
-  const today = format(Date.now(), 'yyyy-MM-dd')
+  const today = format(Date.now(), ISO_SHORT_FORMAT)
   let filename = `agent_${today}.csv`
   if (start && end) {
-    const formattedStart = format(start, 'yyyy-MM-dd')
-    const formattedEnd = format(end, 'yyyy-MM-dd')
+    const formattedStart = format(start, ISO_SHORT_FORMAT)
+    const formattedEnd = format(end, ISO_SHORT_FORMAT)
     filename = `agent_${formattedStart}_to_${formattedEnd}.csv`
   }
   return filename

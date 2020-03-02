@@ -28,6 +28,7 @@ import {
 import useFilteredTransactions from './useFilteredTransactions'
 import useDownloadData from './useDownloadData'
 import { formatTokenAmount, ROUNDING_AMOUNT } from '../lib/utils'
+import { ISO_FORMAT, MMDDYY_FUNC_FORMAT } from '../lib/date-utils'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import AgentSvg from './assets/agent_badge.svg'
 
@@ -149,7 +150,7 @@ const Transactions = React.memo(function Transactions({
       }) => {
         const [{ token, amount, to, from } = {}] = tokenTransfers
         const entity = to || from
-        const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss")
+        const formattedDate = format(date, ISO_FORMAT)
 
         const dateNode = (
           <time
@@ -160,7 +161,7 @@ const Transactions = React.memo(function Transactions({
               color: ${theme.surfaceContent};
             `}
           >
-            {format(date, 'MM/dd/yy')}
+            {format(date, MMDDYY_FUNC_FORMAT)}
           </time>
         )
         const badgeNode = onlyOne ? (
