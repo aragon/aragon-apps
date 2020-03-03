@@ -6,6 +6,14 @@ import { toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount, ROUNDING_AMOUNT } from '../lib/utils'
 import { formatDate, ISO_SHORT_FORMAT } from '../lib/date-utils'
 
+// Transforms a two dimensional array into a CSV data structure
+// Surround every field with double quotes + escape double quotes inside.
+function csv(data) {
+  return data
+    .map(cells => cells.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+    .join('\n')
+}
+
 async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
   const processedTransactions = await transactions.reduce(
     async (transactionList, { tokenTransfers, date, description }) => {
@@ -15,7 +23,7 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
           const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
           const formattedAmount = formatTokenAmount(
             amount,
-            !!from,
+            Boolean(from),
             decimals,
             true,
             { rounding: ROUNDING_AMOUNT }
@@ -29,9 +37,13 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
                 : 'Agent'
             })
           )
-          return `${formatDate(
-            date
-          )},${name},${entity},${description},${`"${formattedAmount} ${symbol}"`}`
+          return [
+            formatDate(date),
+            name,
+            entity,
+            description,
+            `${formattedAmount} ${symbol}`,
+          ]
         })
       )
       return [...previous, ...mappedTokenTransfersData]
@@ -39,9 +51,11 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
     /* https://gyandeeps.com/array-reduce-async-await/ */
     Promise.resolve([])
   )
-  return ['Date,Source,Recipient,Reference,Amount']
-    .concat(processedTransactions)
-    .join('\n')
+
+  return csv([
+    ['Date', 'Source', 'Recipient', 'Reference', 'Amount'],
+    ...processedTransactions,
+  ])
 }
 
 function getDownloadFilename({ start, end }) {
