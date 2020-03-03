@@ -246,16 +246,12 @@ const Transfers = React.memo(({ tokens, transactions }) => {
               Transfers
             </div>
             {transactions.length > 0 && (
-              <div css="text-align: right;">
-                <Button onClick={handleDownload}>
-                  <IconExternal
-                    css={`
-                      margin-right: ${1.5 * GU}px;
-                      color: ${theme.surfaceIcon};
-                    `}
-                  />{' '}
-                  Export
-                </Button>
+              <div>
+                <Button
+                  icon={<IconExternal />}
+                  label="Export"
+                  onClick={handleDownload}
+                />
               </div>
             )}
           </div>
