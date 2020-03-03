@@ -210,7 +210,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
       return 'loading'
     }
     return 'default'
-  }, [isSyncing, emptyResultsViaFilters])
+  }, [isSyncing, emptyResultsViaFilters, transactions])
 
   return (
     <DataView
