@@ -5,6 +5,7 @@ import { IdentityContext } from './IdentityManager/IdentityManager'
 import { toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount, ROUNDING_AMOUNT } from '../lib/utils'
 import { formatDate, ISO_SHORT_FORMAT } from '../lib/date-utils'
+import { TRANSACTION_TYPES_LABELS } from '../transaction-types'
 
 // Transforms a two dimensional array into a CSV data structure
 // Surround every field with double quotes + escape double quotes inside.
@@ -16,7 +17,7 @@ function csv(data) {
 
 async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
   const processedTransactions = await transactions.reduce(
-    async (transactionList, { tokenTransfers, date, description }) => {
+    async (transactionList, { date, description, tokenTransfers, type }) => {
       const previous = await transactionList
       const mappedTokenTransfersData = await Promise.all(
         tokenTransfers.map(async ({ amount, from, to, token }) => {
@@ -41,6 +42,7 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
             formatDate(date),
             name,
             entity,
+            TRANSACTION_TYPES_LABELS[type],
             description,
             `${formattedAmount} ${symbol}`,
           ]
@@ -53,7 +55,7 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
   )
 
   return csv([
-    ['Date', 'Source', 'Recipient', 'Reference', 'Amount'],
+    ['Date', 'Source', 'Recipient', 'Type', 'Reference', 'Amount'],
     ...processedTransactions,
   ])
 }
