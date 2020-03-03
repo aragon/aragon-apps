@@ -21,10 +21,7 @@ import { useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { useIdentity } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import TransactionFilters from './TransactionFilters'
-import {
-  TRANSACTION_TYPES_LABELS,
-  TRANSACTION_TYPES_STRING,
-} from '../transaction-types'
+import { TRANSACTION_TYPES_LABELS } from '../transaction-types'
 import useFilteredTransactions from './useFilteredTransactions'
 import useDownloadData from './useDownloadData'
 import { formatTokenAmount, ROUNDING_AMOUNT } from '../lib/utils'
@@ -137,7 +134,7 @@ const Transactions = React.memo(function Transactions({
                 symbols={['All tokens', ...symbols]}
                 tokenFilter={selectedToken}
                 transactionTypeFilter={selectedTransactionType}
-                transactionTypes={TRANSACTION_TYPES_STRING}
+                transactionTypes={Object.values(TRANSACTION_TYPES_LABELS)}
               />
             )}
             <Button
