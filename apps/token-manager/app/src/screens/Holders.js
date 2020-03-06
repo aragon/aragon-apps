@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useMemo, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
 import { useConnectedAccount } from '@aragon/api-react'
@@ -11,6 +11,7 @@ import {
   IconRemove,
   Split,
   GU,
+  useLayout,
   useTheme,
 } from '@aragon/ui'
 import { formatBalance } from '../utils'
@@ -33,14 +34,21 @@ function Holders({
   tokenSymbol,
   tokenTransfersEnabled,
 }) {
+  const { layoutName } = useLayout()
+  const compact = layoutName === 'small'
   const connectedAccount = useConnectedAccount()
+  const mappedEntries = useMemo(
+    () => holders.map(({ address, balance }) => [address, balance]),
+    [holders]
+  )
+
   return (
     <Split
       primary={
         <DataView
           mode="table"
           fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
-          entries={holders.map(({ address, balance }) => [address, balance])}
+          entries={mappedEntries}
           renderEntry={([address, balance]) => {
             const isCurrentUser = addressesEqual(address, connectedAccount)
 
@@ -49,6 +57,7 @@ function Holders({
                 css={`
                   display: flex;
                   align-items: center;
+                  max-width: ${compact ? '50vw' : 'unset'};
                 `}
               >
                 <LocalIdentityBadge

@@ -1,21 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import {
-  Button,
-  GU,
-  Header,
-  IconPlus,
-  SidePanel,
-  SyncIndicator,
-  Tag,
-  textStyle,
-  useLayout,
-  useTheme,
-} from '@aragon/ui'
+import { Main, SyncIndicator } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
+import AppHeader from './components/AppHeader'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
-import TokenPanelContent from './components/Panels/TokenPanelContent'
+import UpdateTokenPanel from './components/UpdateTokenPanel/UpdateTokenPanel'
 import EmptyState from './screens/EmptyState'
 import Holders from './screens/Holders'
 import { addressesEqual } from './web3-utils'
@@ -97,10 +87,8 @@ class App extends React.PureComponent {
       groupMode,
       holders,
       isSyncing,
-      layoutName,
       maxAccountTokens,
       numData,
-      theme,
       tokenAddress,
       tokenDecimalsBase,
       tokenName,
@@ -123,37 +111,9 @@ class App extends React.PureComponent {
         )}
         {appStateReady && holders.length !== 0 && (
           <React.Fragment>
-            <Header
-              primary={
-                <div
-                  css={`
-                    display: flex;
-                    align-items: center;
-                  `}
-                >
-                  <h1
-                    css={`
-                      ${textStyle(
-                        layoutName === 'small' ? 'title3' : 'title2'
-                      )};
-                      color: ${theme.content};
-                      margin-right: ${1 * GU}px;
-                    `}
-                  >
-                    Tokens
-                  </h1>
-                  {tokenSymbol && <Tag mode="identifier">{tokenSymbol}</Tag>}
-                </div>
-              }
-              secondary={
-                <Button
-                  mode="strong"
-                  onClick={this.handleLaunchAssignTokensNoHolder}
-                  label="Add tokens"
-                  icon={<IconPlus />}
-                  display={layoutName === 'small' ? 'icon' : 'label'}
-                />
-              }
+            <AppHeader
+              onAssignHolder={this.handleLaunchAssignTokensNoHolder}
+              tokenSymbol={tokenSymbol}
             />
             <Holders
               holders={holders}
@@ -171,37 +131,33 @@ class App extends React.PureComponent {
           </React.Fragment>
         )}
 
-        <SidePanel
-          title={
-            assignTokensConfig.mode === 'assign'
-              ? 'Add tokens'
-              : 'Remove tokens'
-          }
-          opened={sidepanelOpened}
-          onClose={this.handleSidepanelClose}
-          onTransitionEnd={this.handleSidepanelTransitionEnd}
-        >
-          {appStateReady && (
-            <TokenPanelContent
-              opened={sidepanelOpened}
-              tokenDecimals={numData.tokenDecimals}
-              tokenDecimalsBase={tokenDecimalsBase}
-              onUpdateTokens={this.handleUpdateTokens}
-              getHolderBalance={this.getHolderBalance}
-              maxAccountTokens={maxAccountTokens}
-              {...assignTokensConfig}
-            />
-          )}
-        </SidePanel>
+        {appStateReady && (
+          <UpdateTokenPanel
+            getHolderBalance={this.getHolderBalance}
+            holderAddress={assignTokensConfig.holderAddress}
+            maxAccountTokens={maxAccountTokens}
+            mode={assignTokensConfig.mode}
+            onClose={this.handleSidepanelClose}
+            onTransitionEnd={this.handleSidepanelTransitionEnd}
+            onUpdateTokens={this.handleUpdateTokens}
+            opened={sidepanelOpened}
+            tokenDecimals={numData.tokenDecimals}
+            tokenDecimalsBase={tokenDecimalsBase}
+            tokenSymbol={tokenSymbol}
+          />
+        )}
       </IdentityProvider>
     )
   }
 }
 
 export default () => {
-  const { api, appState } = useAragonApi()
-  const theme = useTheme()
-  const { layoutName } = useLayout()
+  const { api, appState, guiStyle } = useAragonApi()
+  const { appearance } = guiStyle
 
-  return <App api={api} layoutName={layoutName} theme={theme} {...appState} />
+  return (
+    <Main assetsUrl="./aragon-ui" theme={appearance}>
+      <App api={api} {...appState} />
+    </Main>
+  )
 }

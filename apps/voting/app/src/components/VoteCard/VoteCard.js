@@ -1,15 +1,15 @@
-import React, { useCallback, useMemo } from 'react'
-import styled from 'styled-components'
-import { Card, GU, IconCheck, Timer, textStyle, useTheme } from '@aragon/ui'
+import React, { useState, useCallback, useMemo } from 'react'
+import { Card, GU, Timer, textStyle, useTheme } from '@aragon/ui'
 import { noop } from '../../utils'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 import LocalLabelAppBadge from '..//LocalIdentityBadge/LocalLabelAppBadge'
 import VoteOptions from './VoteOptions'
+import VotedIndicator from './VotedIndicator'
 import VoteStatus from '../VoteStatus'
 import VoteText from '../VoteText'
 import You from '../You'
 
-const VoteCard = ({ vote, onOpen }) => {
+function VoteCard({ vote, onOpen }) {
   const theme = useTheme()
   const {
     connectedAccountVote,
@@ -44,15 +44,25 @@ const VoteCard = ({ vote, onOpen }) => {
     ],
     [yea, nay, theme, connectedAccountVote]
   )
-  const youVoted =
+  const hasConnectedAccountVoted =
     connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
+
   const handleOpen = useCallback(() => {
     onOpen(voteId)
   }, [voteId, onOpen])
+  const handleStartHighlight = useCallback(() => setHighlighted(true), [])
+  const handleEndHighlight = useCallback(() => setHighlighted(false), [])
+
+  // “highlighted” means either focused or hovered
+  const [highlighted, setHighlighted] = useState(false)
 
   return (
     <Card
       onClick={handleOpen}
+      onMouseEnter={handleStartHighlight}
+      onMouseLeave={handleEndHighlight}
+      onFocus={handleStartHighlight}
+      onBlur={handleEndHighlight}
       css={`
         display: grid;
         grid-template-columns: 100%;
@@ -68,45 +78,32 @@ const VoteCard = ({ vote, onOpen }) => {
           margin-bottom: ${1 * GU}px;
         `}
       >
-        <LocalLabelAppBadge
-          badgeOnly
-          appAddress={executionTargetData.address}
-          iconSrc={executionTargetData.iconSrc}
-          identifier={executionTargetData.identifier}
-          label={executionTargetData.name}
-        />
-        {youVoted && (
-          <div
-            css={`
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              width: 20px;
-              height: 20px;
-              border-radius: 50%;
-              background: ${theme.infoSurface.alpha(0.08)};
-              color: ${theme.info};
-            `}
-          >
-            <IconCheck size="tiny" />
-          </div>
+        {executionTargetData && (
+          <LocalLabelAppBadge
+            badgeOnly
+            appAddress={executionTargetData.address}
+            iconSrc={executionTargetData.iconSrc}
+            identifier={executionTargetData.identifier}
+            label={executionTargetData.name}
+          />
         )}
+        {hasConnectedAccountVoted && <VotedIndicator expand={highlighted} />}
       </div>
-      <div
+      <VoteText
+        disabled
+        prefix={<span css="font-weight: bold">#{voteId}: </span>}
+        text={description || metadata}
+        title={`#${voteId}: ${description || metadata}`}
         css={`
+          overflow: hidden;
           ${textStyle('body1')};
-          /* lines per font size per line height */
-          /* shorter texts align to the top */
-          height: 84px;
+          line-height: ${27}px; // 27px = line-height of textstyle('body1')
+          height: ${27 * 3}px; // 27px * 3 = line-height * 3 lines
           display: -webkit-box;
           -webkit-box-orient: vertical;
           -webkit-line-clamp: 3;
-          overflow: hidden;
         `}
-      >
-        <span css="font-weight: bold;">#{voteId}:</span>{' '}
-        <VoteText disabled text={description || metadata} />
-      </div>
+      />
       <VoteOptions options={options} votingPower={votingPower} />
       <div
         css={`
@@ -127,11 +124,18 @@ VoteCard.defaultProps = {
   onOpen: noop,
 }
 
-const WrapVoteOption = styled.span`
-  display: flex;
-  align-items: center;
-  text-transform: uppercase;
-  ${textStyle('label2')};
-`
+function WrapVoteOption(props) {
+  return (
+    <span
+      css={`
+        display: flex;
+        align-items: center;
+        text-transform: uppercase;
+        ${textStyle('label2')};
+      `}
+      {...props}
+    />
+  )
+}
 
 export default VoteCard

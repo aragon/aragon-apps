@@ -5,9 +5,9 @@ import {
   IconPlus,
   Main,
   SyncIndicator,
-  GU,
   useLayout,
 } from '@aragon/ui'
+import { useGuiStyle } from '@aragon/api-react'
 import NewVotePanel from './components/NewVotePanel'
 import useFilterVotes from './hooks/useFilterVotes'
 import useScrollTop from './hooks/useScrollTop'
@@ -24,13 +24,16 @@ const App = React.memo(function App() {
     executionTargets,
     isSyncing,
     newVotePanel,
-    selectedVote,
     selectVote,
+    selectedVote,
     votes,
   } = useAppLogic()
+
+  const { appearance } = useGuiStyle()
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
   const handleBack = useCallback(() => selectVote(-1), [selectVote])
+
   const {
     filteredVotes,
     voteStatusFilter,
@@ -49,82 +52,87 @@ const App = React.memo(function App() {
   useScrollTop(selectedVote)
 
   return (
-    <React.Fragment>
-      <SyncIndicator visible={isSyncing} />
-      {!votes.length && (
-        <div
-          css={`
-            height: calc(100vh - ${8 * GU}px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          `}
-        >
-          <NoVotes onNewVote={newVotePanel.requestOpen} isSyncing={isSyncing} />
-        </div>
-      )}
-      {!!votes.length && (
-        <React.Fragment>
-          <Header
-            primary="Voting"
-            secondary={
-              !selectedVote && (
-                <Button
-                  mode="strong"
-                  onClick={newVotePanel.requestOpen}
-                  label="New vote"
-                  icon={<IconPlus />}
-                  display={compactMode ? 'icon' : 'label'}
-                />
-              )
-            }
-          />
-          {selectedVote ? (
-            <VoteDetail
-              vote={selectedVote}
-              onBack={handleBack}
-              onVote={actions.vote}
-              onExecute={actions.execute}
+    <Main theme={appearance} assetsUrl="./aragon-ui">
+      <React.Fragment>
+        {votes.length === 0 && (
+          <div
+            css={`
+              height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            `}
+          >
+            <NoVotes
+              onNewVote={newVotePanel.requestOpen}
+              isSyncing={isSyncing}
             />
-          ) : (
-            <Votes
-              votes={votes}
-              selectVote={selectVote}
-              executionTargets={executionTargets}
-              filteredVotes={filteredVotes}
-              voteStatusFilter={voteStatusFilter}
-              handleVoteStatusFilterChange={handleVoteStatusFilterChange}
-              voteOutcomeFilter={voteOutcomeFilter}
-              handleVoteOutcomeFilterChange={handleVoteOutcomeFilterChange}
-              voteTrendFilter={voteTrendFilter}
-              handleVoteTrendFilterChange={handleVoteTrendFilterChange}
-              voteAppFilter={voteAppFilter}
-              handleVoteAppFilterChange={handleVoteAppFilterChange}
-              voteDateRangeFilter={voteDateRangeFilter}
-              handleVoteDateRangeFilterChange={handleVoteDateRangeFilterChange}
-              handleClearFilters={handleClearFilters}
+          </div>
+        )}
+        {votes.length > 0 && (
+          <React.Fragment>
+            <SyncIndicator visible={isSyncing} />
+            <Header
+              primary="Voting"
+              secondary={
+                !selectedVote && (
+                  <Button
+                    mode="strong"
+                    onClick={newVotePanel.requestOpen}
+                    label="New vote"
+                    icon={<IconPlus />}
+                    display={compactMode ? 'icon' : 'label'}
+                  />
+                )
+              }
             />
-          )}
-        </React.Fragment>
-      )}
-      <NewVotePanel
-        onCreateVote={actions.createVote}
-        panelState={newVotePanel}
-      />
-    </React.Fragment>
+            {selectedVote ? (
+              <VoteDetail
+                vote={selectedVote}
+                onBack={handleBack}
+                onVote={actions.vote}
+                onExecute={actions.execute}
+              />
+            ) : (
+              <Votes
+                votes={votes}
+                selectVote={selectVote}
+                executionTargets={executionTargets}
+                filteredVotes={filteredVotes}
+                voteStatusFilter={voteStatusFilter}
+                handleVoteStatusFilterChange={handleVoteStatusFilterChange}
+                voteOutcomeFilter={voteOutcomeFilter}
+                handleVoteOutcomeFilterChange={handleVoteOutcomeFilterChange}
+                voteTrendFilter={voteTrendFilter}
+                handleVoteTrendFilterChange={handleVoteTrendFilterChange}
+                voteAppFilter={voteAppFilter}
+                handleVoteAppFilterChange={handleVoteAppFilterChange}
+                voteDateRangeFilter={voteDateRangeFilter}
+                handleVoteDateRangeFilterChange={
+                  handleVoteDateRangeFilterChange
+                }
+                handleClearFilters={handleClearFilters}
+              />
+            )}
+          </React.Fragment>
+        )}
+        <NewVotePanel
+          onCreateVote={actions.createVote}
+          panelState={newVotePanel}
+        />
+      </React.Fragment>
+    </Main>
   )
 })
 
 export default function Voting() {
   return (
-    <Main assetsUrl="./aragon-ui">
-      <AppLogicProvider>
-        <IdentityProvider>
-          <SettingsProvider>
-            <App />
-          </SettingsProvider>
-        </IdentityProvider>
-      </AppLogicProvider>
-    </Main>
+    <AppLogicProvider>
+      <IdentityProvider>
+        <SettingsProvider>
+          <App />
+        </SettingsProvider>
+      </IdentityProvider>
+    </AppLogicProvider>
   )
 }

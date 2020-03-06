@@ -5,8 +5,11 @@ import tokenSymbolBytesAbi from '../abi/token-symbol-bytes.json'
 import tokenNameAbi from '../abi/token-name.json'
 import tokenNameBytesAbi from '../abi/token-name-bytes.json'
 
-const ANT_MAINNET_TOKEN_ADDRESS = '0x960b236A07cf122663c4303350609A66A7B288C0'
-const DAI_MAINNET_TOKEN_ADDRESS = '0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359'
+const ANJ_MAINNET_TOKEN_ADDRESS = '0xcD62b1C403fa761BAadFC74C525ce2B51780b184'
+const ANT_MAINNET_TOKEN_ADDRESS = '0x960b236a07cf122663c4303350609a66a7b288c0'
+const DAI_MAINNET_TOKEN_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f'
+const SAI_MAINNET_TOKEN_ADDRESS = '0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359'
+const USDC_MAINNET_TOKEN_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
 export const ETHER_TOKEN_FAKE_ADDRESS =
   '0x0000000000000000000000000000000000000000'
 
@@ -16,23 +19,26 @@ const PRESET_TOKENS = new Map([
     'main',
     [
       ETHER_TOKEN_FAKE_ADDRESS,
+      ANJ_MAINNET_TOKEN_ADDRESS,
       ANT_MAINNET_TOKEN_ADDRESS,
       DAI_MAINNET_TOKEN_ADDRESS,
+      SAI_MAINNET_TOKEN_ADDRESS,
+      USDC_MAINNET_TOKEN_ADDRESS,
     ],
   ],
 ])
 
 // Some known tokens don’t strictly follow ERC-20 and it would be difficult to
-// adapt to every situation. The data listed in this map is used as a fallback
+// adapt to every situation. The data listed in this map is used as an override
 // if either some part of their interface doesn't conform to a standard we
 // support.
-const KNOWN_TOKENS_FALLBACK = new Map([
+const KNOWN_TOKENS_OVERRIDE = new Map([
   [
     'main',
     new Map([
       [
-        DAI_MAINNET_TOKEN_ADDRESS,
-        { symbol: 'DAI', name: 'Dai Stablecoin v1.0', decimals: '18' },
+        SAI_MAINNET_TOKEN_ADDRESS,
+        { symbol: 'SAI', name: 'Sai Stablecoin v1.0', decimals: '18' },
       ],
     ]),
   ],
@@ -44,18 +50,18 @@ export const isTokenVerified = (tokenAddress, networkType) =>
     ? ETHER_TOKEN_VERIFIED_ADDRESSES.has(tokenAddress.toLowerCase())
     : true
 
-export const tokenDataFallback = (tokenAddress, fieldName, networkType) => {
-  // The fallback list is without checksums
+export const tokenDataOverride = (tokenAddress, fieldName, networkType) => {
+  // The override list is without checksums
   const addressWithoutChecksum = tokenAddress.toLowerCase()
 
-  const fallbacksForNetwork = KNOWN_TOKENS_FALLBACK.get(networkType)
+  const overridesForNetwork = KNOWN_TOKENS_OVERRIDE.get(networkType)
   if (
-    fallbacksForNetwork == null ||
-    !fallbacksForNetwork.has(addressWithoutChecksum)
+    overridesForNetwork == null ||
+    !overridesForNetwork.has(addressWithoutChecksum)
   ) {
     return null
   }
-  return fallbacksForNetwork.get(addressWithoutChecksum)[fieldName] || null
+  return overridesForNetwork.get(addressWithoutChecksum)[fieldName] || null
 }
 
 export async function getTokenSymbol(app, address) {

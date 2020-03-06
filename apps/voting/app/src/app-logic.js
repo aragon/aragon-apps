@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react'
-import { AragonApi, useApi, useAppState } from '@aragon/api-react'
+import React, { useCallback, useMemo } from 'react'
+import { AragonApi, useApi, useAppState, usePath } from '@aragon/api-react'
 import appStateReducer from './app-state-reducer'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import usePanelState from './hooks/usePanelState'
@@ -7,29 +7,43 @@ import useVotes from './hooks/useVotes'
 import { noop } from './utils'
 import { VOTE_YEA } from './vote-types'
 
+const VOTE_ID_PATH_RE = /^\/vote\/([0-9]+)\/?$/
+const NO_VOTE_ID = '-1'
+
+function voteIdFromPath(path) {
+  if (!path) {
+    return NO_VOTE_ID
+  }
+  const matches = path.match(VOTE_ID_PATH_RE)
+  return matches ? matches[1] : NO_VOTE_ID
+}
+
 // Get the vote currently selected, or null otherwise.
 export function useSelectedVote(votes) {
-  const [selectedVoteId, setSelectedVoteId] = useState('-1')
+  const [path, requestPath] = usePath()
   const { ready } = useAppState()
 
   // The memoized vote currently selected.
   const selectedVote = useMemo(() => {
-    // The `ready` check prevents a vote to be selected
-    // until the app state is fully ready.
-    if (!ready || selectedVoteId === '-1') {
+    const voteId = voteIdFromPath(path)
+
+    // The `ready` check prevents a vote to be
+    // selected until the app state is fully ready.
+    if (!ready || voteId === NO_VOTE_ID) {
       return null
     }
-    return votes.find(vote => vote.voteId === selectedVoteId) || null
-  }, [selectedVoteId, votes, ready])
 
-  return [
-    selectedVote,
+    return votes.find(vote => vote.voteId === voteId) || null
+  }, [path, ready, votes])
 
-    // setSelectedVoteId() is exported directly: since `selectedVoteId` is
-    // set in the `selectedVote` dependencies, it means that the useMemo()
-    // will be updated every time `selectedVoteId` changes.
-    setSelectedVoteId,
-  ]
+  const selectVote = useCallback(
+    voteId => {
+      requestPath(String(voteId) === NO_VOTE_ID ? '' : `/vote/${voteId}/`)
+    },
+    [requestPath]
+  )
+
+  return [selectedVote, selectVote]
 }
 
 // Create a new vote
@@ -39,7 +53,7 @@ export function useCreateVoteAction(onDone = noop) {
     question => {
       if (api) {
         // Don't care about response
-        api.newVote(EMPTY_CALLSCRIPT, question).toPromise()
+        api['newVote(bytes,string)'](EMPTY_CALLSCRIPT, question).toPromise()
         onDone()
       }
     },
@@ -90,11 +104,11 @@ export function useAppLogic() {
   return {
     actions,
     executionTargets,
+    isSyncing: isSyncing || !ready,
+    newVotePanel,
     selectVote,
     selectedVote,
     votes,
-    isSyncing: isSyncing || !ready,
-    newVotePanel: useMemo(() => newVotePanel, [newVotePanel]),
   }
 }
 
