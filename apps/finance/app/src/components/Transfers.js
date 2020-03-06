@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useMemo, useState, useCallback, useContext } from 'react'
 import PropTypes from 'prop-types'
 import {
   compareDesc,
@@ -22,14 +22,17 @@ import {
   useTheme,
   useToast,
 } from '@aragon/ui'
-import { useConnectedAccount, useCurrentApp, useNetwork } from '@aragon/api-react'
+import {
+  useAragonApi,
+  useConnectedAccount,
+  useCurrentApp,
+  useNetwork,
+} from '@aragon/api-react'
 import { saveAs } from 'file-saver'
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
-import EmptyFilteredTransfers from './EmptyFilteredTransfers'
-import EmptyTransactions from './EmptyTransactions'
 import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
@@ -104,6 +107,7 @@ const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
     .concat(mappedData)
     .join('\n')
 }
+
 const getDownloadFilename = (appAddress, { start, end }) => {
   const today = format(Date.now(), 'yyyy-MM-dd')
   let filename = `finance_${appAddress}_${today}.csv`
@@ -116,6 +120,7 @@ const getDownloadFilename = (appAddress, { start, end }) => {
 }
 
 const Transfers = React.memo(({ tokens, transactions }) => {
+  const { appState } = useAragonApi()
   const connectedAccount = useConnectedAccount()
   const currentApp = useCurrentApp()
   const network = useNetwork()
@@ -133,14 +138,14 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     setPage(0)
     setSelectedDateRange(range)
   }
-  const handleTokenChange = React.useCallback(
+  const handleTokenChange = useCallback(
     index => {
       setPage(0)
       setSelectedToken(index || UNSELECTED_TOKEN_FILTER)
     },
     [setPage, setSelectedToken]
   )
-  const handleTransferTypeChange = React.useCallback(
+  const handleTransferTypeChange = useCallback(
     index => {
       setPage(0)
       setSelectedTransferType(index || UNSELECTED_TOKEN_FILTER)
@@ -159,10 +164,11 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     selectedTransferType,
     selectedDateRange,
   })
+  const { isSyncing } = appState
   const symbols = tokens.map(({ symbol }) => symbol)
   const tokenDetails = tokens.reduce(getTokenDetails, {})
-  const { resolve: resolveAddress } = React.useContext(IdentityContext)
-  const handleDownload = React.useCallback(async () => {
+  const { resolve: resolveAddress } = useContext(IdentityContext)
+  const handleDownload = useCallback(async () => {
     if (!currentApp || !currentApp.appAddress) {
       return
     }
@@ -188,12 +194,40 @@ const Transfers = React.memo(({ tokens, transactions }) => {
 
   const compactMode = layoutName === 'small'
 
-  if (!transactions.length) {
-    return <EmptyTransactions />
-  }
+  return (
+    <DataView
+
+  const sortedTransfers = useMemo(
+    () =>
+      filteredTransfers.sort(({ date: dateLeft }, { date: dateRight }) =>
+        // Sort by date descending
+        compareDesc(dateLeft, dateRight)
+      ),
+    [filteredTransfers, compareDesc]
+  )
+
+  const dataViewStatus = useMemo(() => {
+    if (emptyResultsViaFilters && transactions.length > 0) {
+      return 'empty-filters'
+    }
+    if (appState.isSyncing) {
+      return 'loading'
+    }
+    return 'default'
+  }, [isSyncing, emptyResultsViaFilters, transactions])
 
   return (
     <DataView
+      status={dataViewStatus}
+      statusEmpty={
+        <p
+          css={`
+            ${textStyle('title2')};
+          `}
+        >
+          No transfers yet.
+        </p>
+      }
       page={page}
       onPageChange={setPage}
       heading={
@@ -214,17 +248,15 @@ const Transfers = React.memo(({ tokens, transactions }) => {
             >
               Transfers
             </div>
-            <div css="text-align: right;">
-              <Button onClick={handleDownload}>
-                <IconExternal
-                  css={`
-                    margin-right: ${1.5 * GU}px;
-                    color: ${theme.surfaceIcon};
-                  `}
-                />{' '}
-                Export
-              </Button>
-            </div>
+            {transactions.length > 0 && (
+              <div>
+                <Button
+                  icon={<IconExternal />}
+                  label="Export"
+                  onClick={handleDownload}
+                />
+              </div>
+            )}
           </div>
           {!compactMode && (
             <TransfersFilters

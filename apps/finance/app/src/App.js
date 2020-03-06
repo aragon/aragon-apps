@@ -96,7 +96,7 @@ class App extends React.Component {
         onResolve={this.handleResolveLocalIdentity}
         onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
       >
-        <SyncIndicator visible={isSyncing} />
+        <SyncIndicator visible={isSyncing} shift={50} />
         <Header
           primary="Finance"
           secondary={
