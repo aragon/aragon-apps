@@ -29,6 +29,7 @@ import {
   useNetwork,
 } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
+import EmptyFilteredTransfers from './EmptyFilteredTransfers'
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
@@ -193,18 +194,6 @@ const Transfers = React.memo(({ tokens, transactions }) => {
       selectedDateRange.end)
 
   const compactMode = layoutName === 'small'
-
-  return (
-    <DataView
-
-  const sortedTransfers = useMemo(
-    () =>
-      filteredTransfers.sort(({ date: dateLeft }, { date: dateRight }) =>
-        // Sort by date descending
-        compareDesc(dateLeft, dateRight)
-      ),
-    [filteredTransfers, compareDesc]
-  )
 
   const dataViewStatus = useMemo(() => {
     if (emptyResultsViaFilters && transactions.length > 0) {
