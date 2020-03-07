@@ -33,7 +33,7 @@
   "description": "",
   "devDependencies": {
     "@aragon/cli": "^6.0.0",
-    "@aragon/test-helpers": "^2.1.0",
+    "@aragon/contract-test-helpers": "0.0.1",
     "eth-ens-namehash": "^2.0.8",
     "eth-gas-reporter": "^0.2.0",
     "ethereumjs-testrpc-sc": "^6.5.1-sc.0",
