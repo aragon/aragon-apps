@@ -50,6 +50,7 @@
     "web3": "^1.2.6"
   },
   "dependencies": {
+    "@aragon/apps-shared-minime": "^1.0.2",
     "@aragon/apps-vault": "4.1.0",
     "@aragon/os": "4.2.0"
   }
