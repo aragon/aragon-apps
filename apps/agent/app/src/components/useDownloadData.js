@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect, useCallback } from 'react'
+import { useContext, useCallback } from 'react'
 import { format } from 'date-fns'
 import { saveAs } from 'file-saver'
 import { IdentityContext } from './IdentityManager/IdentityManager'
@@ -17,8 +17,11 @@ function csv(data) {
 
 async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
   const processedTransactions = await transactions.reduce(
-    async (transactionList, { date, description, tokenTransfers, type }) => {
-      const previous = await transactionList
+    async (
+      transactionListPromise,
+      { date, description, tokenTransfers, type }
+    ) => {
+      const previous = await transactionListPromise
       const mappedTokenTransfersData = await Promise.all(
         tokenTransfers.map(async ({ amount, from, to, token }) => {
           const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
@@ -29,7 +32,7 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
             true,
             { rounding: ROUNDING_AMOUNT }
           )
-          const [name, entity] = await Promise.all(
+          const [source, recipient] = await Promise.all(
             [from, to].map(address => {
               return address
                 ? resolveAddress(address).then(
@@ -40,8 +43,8 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
           )
           return [
             formatDate(date),
-            name,
-            entity,
+            source,
+            recipient,
             TRANSACTION_TYPES_LABELS[type],
             description,
             `${formattedAmount} ${symbol}`,

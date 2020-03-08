@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ButtonBase, GU, Info, Link, useTheme } from '@aragon/ui'
+import { GU, Info, Link } from '@aragon/ui'
 import FrameSvg from './FrameSvg'
 import FrameModal from './FrameModal'
 

@@ -14,7 +14,6 @@ function useFilteredTransactions({ transactions, tokens }) {
     INITIAL_TRANSACTION_TYPE
   )
   const [selectedToken, setSelectedToken] = useState(INITIAL_TOKEN)
-
   const handleSelectedDateRangeChange = useCallback(range => {
     setPage(0)
     setSelectedDateRange(range)
@@ -34,6 +33,10 @@ function useFilteredTransactions({ transactions, tokens }) {
     setSelectedDateRange(INITIAL_DATE_RANGE)
   }, [])
 
+  const tokensToFilter = useMemo(() => [{ symbol: 'All tokens' }, ...tokens], [
+    tokens,
+  ])
+
   const filteredTransactions = useMemo(
     () =>
       transactions.filter(({ tokenTransfers, type, date }) => {
@@ -47,6 +50,8 @@ function useFilteredTransactions({ transactions, tokens }) {
 
         // Exclude by date range
         if (
+          // We're not checking for and end date because we will always
+          // have a start date for defining a range.
           selectedDateRange.start &&
           !isWithinInterval(new Date(date), {
             start: startOfDay(selectedDateRange.start),
@@ -55,12 +60,11 @@ function useFilteredTransactions({ transactions, tokens }) {
         ) {
           return false
         }
-
         // Exclude by token
         if (
           selectedToken > 0 &&
           tokenTransfers.findIndex(({ token }) =>
-            addressesEqual(token, tokens[selectedToken - 1].address)
+            addressesEqual(token, tokensToFilter[selectedToken].address)
           ) === -1
         ) {
           return false
@@ -73,17 +77,16 @@ function useFilteredTransactions({ transactions, tokens }) {
       selectedDateRange,
       selectedTransactionType,
       selectedToken,
-      tokens,
+      tokensToFilter,
       transactions,
     ]
   )
-
+  const symbols = tokensToFilter.map(({ symbol }) => symbol)
   const emptyResultsViaFilters =
     !filteredTransactions.length &&
-    (selectedToken > 1 ||
-      selectedTransactionType > 1 ||
+    (selectedToken > 0 ||
+      selectedTransactionType > 0 ||
       selectedDateRange.start)
-
   return {
     emptyResultsViaFilters,
     filteredTransactions,
@@ -96,6 +99,7 @@ function useFilteredTransactions({ transactions, tokens }) {
     selectedDateRange,
     selectedToken,
     selectedTransactionType,
+    symbols,
   }
 }
 

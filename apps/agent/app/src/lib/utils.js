@@ -1,5 +1,5 @@
 import { round } from './math-utils'
-import { LOCALE_US_FORMAT } from './date-utils'
+import { LOCALE_US_FORMAT } from './locales'
 
 export const ROUNDING_AMOUNT = 5
 

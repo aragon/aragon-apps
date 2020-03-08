@@ -1,7 +1,12 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import PropTypes from 'prop-types'
-import { useAragonApi } from '@aragon/api-react'
 import { compareDesc, format } from 'date-fns'
+import styled from 'styled-components'
+import {
+  useAragonApi,
+  useConnectedAccount,
+  useNetwork,
+} from '@aragon/api-react'
 import {
   AppBadge,
   blockExplorerUrl,
@@ -11,31 +16,22 @@ import {
   DataView,
   GU,
   IconExternal,
-  IconToken,
   IconLabel,
+  IconToken,
   textStyle,
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { useIdentity } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import TransactionFilters from './TransactionFilters'
 import { TRANSACTION_TYPES_LABELS } from '../transaction-types'
-import useFilteredTransactions from './useFilteredTransactions'
 import useDownloadData from './useDownloadData'
+import useFilteredTransactions from './useFilteredTransactions'
 import { formatTokenAmount, ROUNDING_AMOUNT } from '../lib/utils'
 import { ISO_FORMAT, MMDDYY_FUNC_FORMAT } from '../lib/date-utils'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import AgentSvg from './assets/agent_badge.svg'
-
-const tokenDetailsReducer = (details, { address, decimals, symbol }) => {
-  details[toChecksumAddress(address)] = {
-    decimals,
-    symbol,
-  }
-  return details
-}
 
 const Transactions = React.memo(function Transactions({
   agentAddress,
@@ -60,9 +56,19 @@ const Transactions = React.memo(function Transactions({
     selectedDateRange,
     selectedToken,
     selectedTransactionType,
+    symbols,
   } = useFilteredTransactions({ transactions, tokens })
 
-  const tokenDetails = tokens.reduce(tokenDetailsReducer, {})
+  const tokenDetails = tokens.reduce(
+    (details, { address, decimals, symbol }) => {
+      details[toChecksumAddress(address)] = {
+        decimals,
+        symbol,
+      }
+      return details
+    },
+    {}
+  )
 
   const { onDownload } = useDownloadData({
     filteredTransactions,
@@ -72,7 +78,6 @@ const Transactions = React.memo(function Transactions({
   })
 
   const { isSyncing } = appState
-  const symbols = tokens.map(({ symbol }) => symbol)
   const compactMode = layoutName === 'small'
 
   const sortedTransactions = useMemo(
@@ -95,7 +100,7 @@ const Transactions = React.memo(function Transactions({
     if (emptyResultsViaFilters) {
       return 'empty-filters'
     }
-    if (appState.isSyncing) {
+    if (isSyncing) {
       return 'loading'
     }
     return 'default'
@@ -131,7 +136,7 @@ const Transactions = React.memo(function Transactions({
                 onDateRangeChange={handleSelectedDateRangeChange}
                 onTokenChange={handleTokenChange}
                 onTransactionTypeChange={handleTransactionTypeChange}
-                symbols={['All tokens', ...symbols]}
+                symbols={symbols}
                 tokenFilter={selectedToken}
                 transactionTypeFilter={selectedTransactionType}
                 transactionTypes={Object.values(TRANSACTION_TYPES_LABELS)}
@@ -170,6 +175,8 @@ const Transactions = React.memo(function Transactions({
         const [{ token, amount, to, from } = {}] = tokenTransfers
         const entity = to || from
         const formattedDate = format(date, ISO_FORMAT)
+        const isValidEntity =
+          typeof targetContract === 'string' && tokenTransfers.length > 0
 
         const dateNode = (
           <time
@@ -200,19 +207,13 @@ const Transactions = React.memo(function Transactions({
           >
             <LocalIdentityBadge
               connectedAccount={addressesEqual(entity, connectedAccount)}
-              networkType={network && network.type}
               entity={entity}
             />
           </div>
         ) : (
           <LocalIdentityBadge
-            badgeOnly={typeof targetContract !== 'string'}
-            entity={
-              (!tokenTransfers.length && targetContract) || 'Multiple accounts'
-            }
-            networkType={
-              typeof targetContract === 'string' && network ? network.type : ''
-            }
+            badgeOnly={isValidEntity}
+            entity={!isValidEntity ? targetContract : 'Multiple accounts'}
           />
         )
         const typeNode = (
@@ -307,6 +308,7 @@ const Transactions = React.memo(function Transactions({
             { rounding: ROUNDING_AMOUNT }
           )
           const amountColor = isIncoming ? theme.positive : theme.negative
+
           return (
             <div
               key={to || from}
@@ -319,38 +321,20 @@ const Transactions = React.memo(function Transactions({
                 justify-content: space-between;
                 ${compactMode &&
                   `
-                width: 100%;
-                display: flex;
-                flex-direction: column
-                align-items: flex-end;
-                justify-content: space-between;
-                margin-top: ${5 * GU}px;
-                margin-left: ${4 * GU}px;
-                margin-bottom: ${5 * GU}px;
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column
+                    align-items: flex-end;
+                    justify-content: space-between;
+                    margin-top: ${5 * GU}px;
+                    margin-left: ${4 * GU}px;
+                    margin-bottom: ${5 * GU}px;
               `}
               `}
             >
-              <div
-                css={`
-                  color: ${theme.surfaceContentSecondary};
-                  ${textStyle('label2')};
-                  font-weight: 400;
-                  display: inline-grid;
-                  grid-template-columns: auto 1fr;
-                  grid-gap: ${1 * GU}px;
-                  align-items: center;
-                  width: 200px;
-                  ${compactMode &&
-                    `
-                    display: flex;
-                    flex-direction: row;
-                    align-items: space-between;
-                    justify-content: space-between;
-                    width: 100%;
-                    margin-right: ${5 * GU}px;
-                    margin-bottom: ${5 * GU}px;
-                  `};
-                `}
+              <BadgeContainer
+                color={theme.surfaceContentSecondary}
+                compactMode={compactMode}
               >
                 From{' '}
                 {!from ? (
@@ -369,28 +353,10 @@ const Transactions = React.memo(function Transactions({
                     />
                   </div>
                 )}
-              </div>
-              <div
-                css={`
-                  color: ${theme.surfaceContentSecondary};
-                  ${textStyle('label2')};
-                  font-weight: 400;
-                  display: inline-grid;
-                  grid-template-columns: auto 1fr;
-                  grid-gap: ${1 * GU}px;
-                  align-items: center;
-                  width: 200px;
-                  ${compactMode &&
-                    `
-                    display: flex;
-                    flex-direction: row;
-                    align-items: space-between;
-                    justify-content: space-between;
-                    width: 100%;
-                    margin-right: ${5 * GU}px;
-                    margin-bottom: ${5 * GU}px;
-                  `};
-                `}
+              </BadgeContainer>
+              <BadgeContainer
+                color={theme.surfaceContentSecondary}
+                compactMode={compactMode}
               >
                 To{' '}
                 {!to ? (
@@ -409,32 +375,37 @@ const Transactions = React.memo(function Transactions({
                     />
                   </div>
                 )}
-              </div>
+              </BadgeContainer>
               <div
                 css={`
                   text-align: right;
-                  .amount-label {
-                    color: ${theme.surfaceContentSecondary};
-                    ${textStyle('label2')};
-                    font-weight: 400;
-                  }
-                  .token-amount {
-                    color: ${amountColor};
-                  }
                   ${compactMode &&
                     `
-                          display: flex;
-                          flex-direction: row;
-                          align-items: space-between;
-                          justify-content: space-between;
-                          width: 100%;
-                          margin-right: ${5 * GU}px;
-                        `}
+                      display: flex;
+                      flex-direction: row;
+                      align-items: space-between;
+                      justify-content: space-between;
+                      width: 100%;
+                      margin-right: ${5 * GU}px;
+                  `}
                 `}
               >
-                {compactMode && <span className="amount-label">Amount</span>}
-                <span className="token-amount">
-                  {' '}
+                {compactMode && (
+                  <span
+                    css={`
+                      color: ${theme.surfaceContentSecondary};
+                      ${textStyle('label2')};
+                      font-weight: 400;
+                    `}
+                  >
+                    Amount
+                  </span>
+                )}
+                <span
+                  css={`
+                    color: ${amountColor};
+                  `}
+                >
                   {formattedAmount} {symbol}
                 </span>
               </div>
@@ -500,5 +471,27 @@ function ContextMenuViewTransaction({ transactionHash, network }) {
     </ContextMenuItem>
   )
 }
+
+const BadgeContainer = styled.div`
+  color: ${({ surfaceColor }) => surfaceColor};
+  ${textStyle('label2')};
+  font-weight: 400;
+  display: inline-grid;
+  grid-template-columns: auto 1fr;
+  grid-gap: ${1 * GU}px;
+  align-items: center;
+  width: 200px;
+  ${({ compactMode }) =>
+    compactMode &&
+    `
+      display: flex;
+      flex-direction: row;
+      align-items: space-between;
+      justify-content: space-between;
+      width: 100%;
+      margin-right: ${5 * GU}px;
+      margin-bottom: ${5 * GU}px;
+    `};
+`
 
 export default Transactions

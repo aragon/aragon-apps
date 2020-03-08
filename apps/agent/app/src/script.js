@@ -4,13 +4,13 @@ import { getTestTokenAddresses } from './testnet'
 import * as transactionTypes from './transaction-types'
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
+  findTargetFromReceipt,
   findTransfersFromReceipt,
   getPresetTokens,
   getTokenSymbol,
   getTokenName,
   isTokenVerified,
   tokenDataFallback,
-  findTargetFromReceipt,
 } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
@@ -319,7 +319,7 @@ async function newExecution(state, event, settings) {
  ***********************/
 
 async function loadTokenBalances(state, includedTokenAddresses, settings) {
-  let newState = {
+  const newState = {
     ...state,
   }
   if (
@@ -455,10 +455,7 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
 async function updateTransactions(transactions, event, detailOptions) {
   const newTransactions = Array.from(transactions || [])
 
-  const transactionDetails = await createTransactionDetails(
-    event,
-    detailOptions
-  )
+  const transactionDetails = await marshall(event, detailOptions)
 
   const transactionsIndex = newTransactions.findIndex(
     ({ id }) => id === transactionDetails.id
@@ -471,7 +468,7 @@ async function updateTransactions(transactions, event, detailOptions) {
   }
 }
 
-async function createTransactionDetails(
+async function marshall(
   event,
   { tokenTransfers = [], description = '', targetContract = null } = {}
 ) {
@@ -503,11 +500,11 @@ async function createTransactionDetails(
     date,
     description,
     safe,
+    targetContract,
     tokenTransfers,
     transactionHash,
     type,
     id: transactionId,
-    targetContract,
   }
 }
 
