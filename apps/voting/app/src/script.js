@@ -356,10 +356,26 @@ function loadVoteSettings() {
     })
 }
 
-async function loadBlockTimestamp(blockNumber) {
-  const { timestamp } = await app.web3Eth('getBlock', blockNumber).toPromise()
-  // Adjust for solidity time (s => ms)
-  return timestamp * 1000
+function loadBlockTimestamp(blockNumber) {
+  // Wrap with retry in case the block is somehow not present
+  return retryEvery(() =>
+    app
+      .web3Eth('getBlock', blockNumber)
+      .toPromise()
+      .then(block => {
+        const { timestamp } = block || {}
+        if (!timestamp) {
+          throw new Error(`Block ${blockNumber} not yet mined`)
+        }
+
+        // Adjust for solidity time (s => ms)
+        return timestamp * 1000
+      })
+      .catch(err => {
+        console.log(`Error fetching block (${blockNumber})`, err)
+        throw err
+      })
+  )
 }
 
 // Apply transformations to a vote received from web3

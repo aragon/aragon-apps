@@ -6,7 +6,7 @@
       "network": "rpc"
     },
     "mainnet": {
-      "registry": "0x314159265dd8dbb310642f98f50c066173c1259b",
+      "registry": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
       "appName": "agent.aragonpm.eth",
       "network": "mainnet"
     },
@@ -15,15 +15,15 @@
       "appName": "agent.aragonpm.eth",
       "network": "rinkeby"
     },
-    "staging": {
-      "registry": "0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939",
-      "appName": "agent.aragonpm.eth",
-      "network": "rinkeby"
-    },
     "ropsten": {
       "registry": "0x6afe2cacee211ea9179992f89dc61ff25c61e923",
       "appName": "agent.aragonpm.eth",
       "network": "ropsten"
+    },
+    "staging": {
+      "registry": "0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939",
+      "appName": "agent.aragonpm.eth",
+      "network": "rinkeby"
     }
   },
   "roles": [

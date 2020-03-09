@@ -29,7 +29,6 @@ import {
   useNetwork,
 } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
-import EmptyFilteredTransfers from './EmptyFilteredTransfers'
 import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
@@ -124,7 +123,6 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   const { appState } = useAragonApi()
   const connectedAccount = useConnectedAccount()
   const currentApp = useCurrentApp()
-  const network = useNetwork()
   const toast = useToast()
   const theme = useTheme()
   const { layoutName } = useLayout()
@@ -195,6 +193,15 @@ const Transfers = React.memo(({ tokens, transactions }) => {
 
   const compactMode = layoutName === 'small'
 
+  const sortedTransfers = useMemo(
+    () =>
+      filteredTransfers.sort(({ date: dateLeft }, { date: dateRight }) =>
+        // Sort by date descending
+        compareDesc(dateLeft, dateRight)
+      ),
+    [filteredTransfers, compareDesc]
+  )
+
   const dataViewStatus = useMemo(() => {
     if (emptyResultsViaFilters && transactions.length > 0) {
       return 'empty-filters'
@@ -219,6 +226,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
       }
       page={page}
       onPageChange={setPage}
+      onStatusEmptyClear={handleClearFilters}
       heading={
         <React.Fragment>
           <div
@@ -232,7 +240,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
             <div
               css={`
                 color: ${theme.content};
-                ${textStyle('body1')}
+                ${textStyle('body1')};
               `}
             >
               Transfers
@@ -260,26 +268,15 @@ const Transfers = React.memo(({ tokens, transactions }) => {
               transferTypes={TRANSFER_TYPES_STRING}
             />
           )}
-          {emptyResultsViaFilters && (
-            <EmptyFilteredTransfers onClear={handleClearFilters} />
-          )}
         </React.Fragment>
       }
-      fields={
-        emptyResultsViaFilters
-          ? []
-          : [
-              { label: 'Date', priority: 2 },
-              { label: 'Source/recipient', priority: 3 },
-              { label: 'Reference', priority: 1 },
-              { label: 'Amount', priority: 2 },
-            ]
-      }
-      entries={filteredTransfers.sort(
-        ({ date: dateLeft }, { date: dateRight }) =>
-          // Sort by date descending
-          compareDesc(dateLeft, dateRight)
-      )}
+      fields={[
+        { label: 'Date', priority: 2 },
+        { label: 'Source/recipient', priority: 3 },
+        { label: 'Reference', priority: 1 },
+        { label: 'Amount', priority: 2 },
+      ]}
+      entries={sortedTransfers}
       renderEntry={({
         date,
         entity,
@@ -310,7 +307,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
                     display: inline-flex;
                     max-width: ${layoutName === 'large' ? 'unset' : '150px'};
                   `
-                : ''}
+                : ''};
             `}
           >
             <LocalIdentityBadge
@@ -337,10 +334,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
       }}
       renderEntryActions={({ entity, transactionHash }) => (
         <ContextMenu zIndex={1}>
-          <ContextMenuViewTransaction
-            transactionHash={transactionHash}
-            network={network}
-          />
+          <ContextMenuViewTransaction transactionHash={transactionHash} />
           <ContextMenuItemCustomLabel entity={entity} />
         </ContextMenu>
       )}
@@ -376,16 +370,19 @@ const ContextMenuItemCustomLabel = ({ entity }) => {
   )
 }
 
-const ContextMenuViewTransaction = ({ transactionHash, network }) => {
+const ContextMenuViewTransaction = ({ transactionHash }) => {
   const theme = useTheme()
+  const network = useNetwork()
   const handleViewTransaction = useCallback(() => {
-    window.open(
-      blockExplorerUrl('transaction', transactionHash, {
-        networkType: network.type,
-      }),
-      '_blank',
-      'noopener'
-    )
+    if (network && network.type) {
+      window.open(
+        blockExplorerUrl('transaction', transactionHash, {
+          networkType: network.type,
+        }),
+        '_blank',
+        'noopener'
+      )
+    }
   }, [transactionHash, network])
 
   return (

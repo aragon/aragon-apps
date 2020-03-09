@@ -7,9 +7,10 @@ import {
   getTokenSymbol,
   getTokenName,
   isTokenVerified,
-  tokenDataFallback,
+  tokenDataOverride,
 } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
+import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenNameAbi from './abi/token-name.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
@@ -17,7 +18,12 @@ import vaultBalanceAbi from './abi/vault-balance.json'
 import vaultGetInitializationBlockAbi from './abi/vault-getinitializationblock.json'
 import vaultEventAbi from './abi/vault-events.json'
 
-const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi)
+const tokenAbi = [].concat(
+  tokenBalanceOfAbi,
+  tokenDecimalsAbi,
+  tokenNameAbi,
+  tokenSymbolAbi
+)
 const vaultAbi = [].concat(
   vaultBalanceAbi,
   vaultGetInitializationBlockAbi,
@@ -191,20 +197,20 @@ const initializeState = settings => async cachedState => {
     ),
     vaultAddress: settings.vault.address,
   }
-  const withTokenBalances = await loadTokenBalances(
+  const withInitialTokens = await loadInitialTokens(
     newState,
     getPresetTokens(settings.network.type), // always immediately load some tokens
     settings
   )
   const withTestnetState = await loadTestnetTokenBalances(
-    withTokenBalances,
+    withInitialTokens,
     settings
   )
 
   return withTestnetState
 }
 
-async function loadTokenBalances(state, includedTokenAddresses, settings) {
+async function loadInitialTokens(state, includedTokenAddresses, settings) {
   let newState = {
     ...state,
   }
@@ -222,7 +228,9 @@ async function loadTokenBalances(state, includedTokenAddresses, settings) {
       .concat(includedTokenAddresses || [])
   )
   for (const address of addresses) {
-    newBalances = await updateBalances(newBalances, address, settings)
+    newBalances = await updateBalances(newBalances, address, settings, {
+      reloadEntireToken: true,
+    })
   }
 
   return {
@@ -290,7 +298,12 @@ async function newTransaction(
  *                     *
  ***********************/
 
-async function updateBalances(balances, tokenAddress, settings) {
+async function updateBalances(
+  balances,
+  tokenAddress,
+  settings,
+  { reloadEntireToken } = {}
+) {
   const newBalances = Array.from(balances || [])
 
   const tokenContract = tokenContracts.has(tokenAddress)
@@ -306,9 +319,14 @@ async function updateBalances(balances, tokenAddress, settings) {
       await newBalanceEntry(tokenContract, tokenAddress, settings)
     )
   } else {
+    const updatedState = reloadEntireToken
+      ? await newBalanceEntry(tokenContract, tokenAddress, settings)
+      : {
+          amount: await loadTokenBalance(tokenContract, tokenAddress, settings),
+        }
     newBalances[balancesIndex] = {
       ...newBalances[balancesIndex],
-      amount: await loadTokenBalance(tokenAddress, settings),
+      ...updatedState,
     }
     return newBalances
   }
@@ -342,7 +360,7 @@ function updateTransactions(transactions, transactionDetails) {
 
 async function newBalanceEntry(tokenContract, tokenAddress, settings) {
   const [balance, decimals, name, symbol] = await Promise.all([
-    loadTokenBalance(tokenAddress, settings),
+    loadTokenBalance(tokenContract, tokenAddress, settings),
     loadTokenDecimals(tokenContract, tokenAddress, settings),
     loadTokenName(tokenContract, tokenAddress, settings),
     loadTokenSymbol(tokenContract, tokenAddress, settings),
@@ -360,8 +378,15 @@ async function newBalanceEntry(tokenContract, tokenAddress, settings) {
   }
 }
 
-function loadTokenBalance(tokenAddress, { vault }) {
-  return vault.contract.balance(tokenAddress).toPromise()
+function loadTokenBalance(tokenContract, tokenAddress, { ethToken, vault }) {
+  if (addressesEqual(tokenAddress, ethToken.address)) {
+    return vault.contract.balance(tokenAddress).toPromise()
+  } else {
+    // Prefer using the token contract directly to ask for the Vault's balance
+    // Web3.js does not handle revert strings yet, so a failing call to Vault.balance()
+    // results in organizations looking like whales.
+    return tokenContract.balanceOf(vault.address).toPromise()
+  }
 }
 
 async function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
@@ -369,16 +394,15 @@ async function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
     return tokenDecimals.get(tokenContract)
   }
 
-  const fallback =
-    tokenDataFallback(tokenAddress, 'decimals', network.type) || '0'
+  const override = tokenDataOverride(tokenAddress, 'decimals', network.type)
 
   let decimals
   try {
-    decimals = (await tokenContract.decimals().toPromise()) || fallback
+    decimals = override || (await tokenContract.decimals().toPromise())
     tokenDecimals.set(tokenContract, decimals)
   } catch (err) {
     // decimals is optional
-    decimals = fallback
+    decimals = '0'
   }
   return decimals
 }
@@ -387,15 +411,15 @@ async function loadTokenName(tokenContract, tokenAddress, { network }) {
   if (tokenNames.has(tokenContract)) {
     return tokenNames.get(tokenContract)
   }
-  const fallback = tokenDataFallback(tokenAddress, 'name', network.type) || ''
+  const override = tokenDataOverride(tokenAddress, 'name', network.type)
 
   let name
   try {
-    name = (await getTokenName(app, tokenAddress)) || fallback
+    name = override || (await getTokenName(app, tokenAddress))
     tokenNames.set(tokenContract, name)
   } catch (err) {
     // name is optional
-    name = fallback
+    name = ''
   }
   return name
 }
@@ -404,15 +428,15 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
   if (tokenSymbols.has(tokenContract)) {
     return tokenSymbols.get(tokenContract)
   }
-  const fallback = tokenDataFallback(tokenAddress, 'symbol', network.type) || ''
+  const override = tokenDataOverride(tokenAddress, 'symbol', network.type)
 
   let symbol
   try {
-    symbol = (await getTokenSymbol(app, tokenAddress)) || fallback
+    symbol = override || (await getTokenSymbol(app, tokenAddress))
     tokenSymbols.set(tokenContract, symbol)
   } catch (err) {
     // symbol is optional
-    symbol = fallback
+    symbol = ''
   }
   return symbol
 }

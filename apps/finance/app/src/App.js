@@ -4,6 +4,7 @@ import {
   Button,
   Header,
   IconPlus,
+  Main,
   SidePanel,
   SyncIndicator,
   useLayout,
@@ -19,12 +20,11 @@ class App extends React.Component {
   static propTypes = {
     api: PropTypes.object,
     appState: PropTypes.object,
+    compactMode: PropTypes.bool,
+    isSyncing: PropTypes.bool,
   }
   static defaultProps = {
     isSyncing: true,
-    balances: [],
-    transactions: [],
-    tokens: [],
   }
   state = {
     newTransferOpened: false,
@@ -129,15 +129,18 @@ class App extends React.Component {
 }
 
 export default () => {
-  const { api, appState } = useAragonApi()
+  const { api, appState, guiStyle } = useAragonApi()
   const { layoutName } = useLayout()
+  const { appearance } = guiStyle
 
   return (
-    <App
-      api={api}
-      appState={appState}
-      isSyncing={appState.isSyncing}
-      compactMode={layoutName === 'small'}
-    />
+    <Main theme={appearance} assetsUrl="./aragon-ui">
+      <App
+        api={api}
+        appState={appState}
+        isSyncing={appState.isSyncing}
+        compactMode={layoutName === 'small'}
+      />
+    </Main>
   )
 }
