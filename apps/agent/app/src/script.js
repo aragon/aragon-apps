@@ -455,7 +455,10 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
 async function updateTransactions(transactions, event, detailOptions) {
   const newTransactions = Array.from(transactions || [])
 
-  const transactionDetails = await marshall(event, detailOptions)
+  const transactionDetails = await marshallTransactionDetails(
+    event,
+    detailOptions
+  )
 
   const transactionsIndex = newTransactions.findIndex(
     ({ id }) => id === transactionDetails.id
@@ -468,7 +471,7 @@ async function updateTransactions(transactions, event, detailOptions) {
   }
 }
 
-async function marshall(
+async function marshallTransactionDetails(
   event,
   { tokenTransfers = [], description = '', targetContract = null } = {}
 ) {
