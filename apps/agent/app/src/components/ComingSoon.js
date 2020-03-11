@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, Link, GU, Tag, textStyle, useTheme } from '@aragon/ui'
+import { Card, Link, GU, textStyle, useTheme } from '@aragon/ui'
 import AgentSvg from './AgentSvg'
 
 function ComingSoon() {
@@ -39,7 +39,7 @@ function ComingSoon() {
           padding: 0 ${2 * GU}px;
         `}
       >
-        <p>We have released the new Agent UI in v5. </p>
+        <p>We have released the new Agent UI in v5.</p>
         <p>
           To obtain it, you must update your app to the latest version through
           the{' '}
