@@ -36,7 +36,7 @@ function ComingSoon() {
           padding: 0 ${2 * GU}px;
         `}
       >
-        Agent transaction list is coming soon!
+        Agent transaction list is here!
       </h2>
       <div
         css={`
@@ -47,9 +47,8 @@ function ComingSoon() {
           padding: 0 ${2 * GU}px;
         `}
       >
-        We are currently working on the full version of this app. You’ll soon be
-        able to browse Agent interactions with other Ethereum applications from
-        here.
+        We have released the new Agent UI. To obtain it, you must update your
+        app to the latest version.
         <Link href="https://aragon.org/agent">
           Learn how you can start using it today
         </Link>
