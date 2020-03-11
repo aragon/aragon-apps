@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
+import { endOfDay, isAfter, isWithinInterval, startOfDay } from 'date-fns'
 import { TRANSACTION_TYPES } from '../transaction-types'
 import { addressesEqual } from '../lib/web3-utils'
 
@@ -50,7 +50,7 @@ function useFilteredTransactions({ transactions, tokens }) {
 
         // Exclude by date range
         if (
-          // We're not checking for and end date because we will always
+          // We're not checking for an end date because we will always
           // have a start date for defining a range.
           selectedDateRange.start &&
           !isWithinInterval(new Date(date), {

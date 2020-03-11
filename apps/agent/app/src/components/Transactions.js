@@ -337,44 +337,34 @@ const Transactions = React.memo(function Transactions({
                 compactMode={compactMode}
               >
                 From{' '}
-                {!from ? (
-                  <div>
+                <div>
+                  {!from ? (
                     <AppBadge
                       appAddress={agentAddress}
                       iconSrc={AgentSvg}
                       label="Agent"
                     />
-                  </div>
-                ) : (
-                  <div>
-                    <LocalIdentityBadge
-                      entity={from || 'Agent'}
-                      badgeOnly={!from}
-                    />
-                  </div>
-                )}
+                  ) : (
+                    <LocalIdentityBadge entity={from} />
+                  )}
+                </div>
               </BadgeContainer>
               <BadgeContainer
                 color={theme.surfaceContentSecondary}
                 compactMode={compactMode}
               >
                 To{' '}
-                {!to ? (
-                  <div>
+                <div>
+                  {!to ? (
                     <AppBadge
                       appAddress={agentAddress}
                       iconSrc={AgentSvg}
                       label="Agent"
                     />
-                  </div>
-                ) : (
-                  <div>
-                    <LocalIdentityBadge
-                      entity={to || 'Agent'}
-                      badgeOnly={!to}
-                    />
-                  </div>
-                )}
+                  ) : (
+                    <LocalIdentityBadge entity={to} />
+                  )}
+                </div>
               </BadgeContainer>
               <div
                 css={`
@@ -480,7 +470,7 @@ const BadgeContainer = styled.div`
   grid-template-columns: auto 1fr;
   grid-gap: ${1 * GU}px;
   align-items: center;
-  width: 200px;
+  width: ${25 * GU}px;
   ${({ compactMode }) =>
     compactMode &&
     `
