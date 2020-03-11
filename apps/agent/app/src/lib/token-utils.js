@@ -128,27 +128,3 @@ export function findTransfersFromReceipt(receipt) {
     })
     .filter(Boolean)
 }
-
-/**
- * Finds the target address from a receipt, given the proxyAddress of the agent.
- * Note that this targetAddress will only be accurate if there are no token transfers,
- * meaning that this was an execution of some kind. In this case, the 3rd topic contained
- * in the obtained log will be the target address.
- * @param {object} receipt - Transaction receipt.
- * @param {string} proxyAddress - Agent proxy address.
- * @returns {string} - the target contract address.
- */
-export function findTargetFromReceipt(receipt, proxyAddress) {
-  const { logs = [] } = receipt
-  const agentLog = logs.find(
-    ({ address }) => address.toLowerCase() === proxyAddress.toLowerCase()
-  )
-  // If the agent log we've found has less than 3 topics,
-  // then this is not an execution, so we don't return an address.
-  if (agentLog.topics.length < 3) {
-    return null
-  }
-  // Construct the real contract address by shaving off the left zero padding
-  const targetContract = `0x${agentLog.topics[2].slice(26)}`
-  return targetContract
-}

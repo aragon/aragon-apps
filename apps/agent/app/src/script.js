@@ -258,7 +258,6 @@ async function newExecution(state, event, settings) {
   const transactionReceipt = await app
     .web3Eth('getTransactionReceipt', transactionHash)
     .toPromise()
-  console.log('event', event)
   const ethTransfers = []
   if (ethValue && ethValue !== '0') {
     ethTransfers.push({
