@@ -47,10 +47,11 @@ function ComingSoon() {
           padding: 0 ${2 * GU}px;
         `}
       >
-        We have released the new Agent UI. To obtain it, you must update your
-        app to the latest version.
-        <Link href="https://aragon.org/agent">
-          Learn how you can start using it today
+        We have released the new Agent UI in v5.
+        <br /> To obtain it, you must update your app to the latest version
+        through the{' '}
+        <Link href="https://help.aragon.org/article/22-app-center">
+          App Center.
         </Link>
       </div>
     </Card>
