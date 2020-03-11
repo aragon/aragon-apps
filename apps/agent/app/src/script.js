@@ -249,7 +249,7 @@ async function newVaultTransaction(state, event, settings) {
 async function newExecution(state, event, settings) {
   const {
     transactionHash,
-    returnValues: { ethValue },
+    returnValues: { ethValue, target },
   } = event
   // Let's try to find some more information about this particular execution
   // by using the transaction receipt:
@@ -258,7 +258,18 @@ async function newExecution(state, event, settings) {
   const transactionReceipt = await app
     .web3Eth('getTransactionReceipt', transactionHash)
     .toPromise()
-  const tokenTransfers = findTransfersFromReceipt(transactionReceipt)
+  console.log('event', event)
+  const ethTransfers = []
+  if (ethValue && ethValue !== '0') {
+    ethTransfers.push({
+      amount: ethValue,
+      from: null,
+      to: transactionReceipt.to,
+      token: settings.ethToken.address,
+    })
+  }
+
+  const transfersFromReceipts = findTransfersFromReceipt(transactionReceipt)
     .map(({ token, returnData }) => {
       const { from, to, value } = returnData
       const fromAgent = addressesEqual(
@@ -278,20 +289,9 @@ async function newExecution(state, event, settings) {
     })
     .filter(Boolean)
 
-  if (ethValue && ethValue !== '0') {
-    tokenTransfers.push({
-      amount: ethValue,
-      from: null,
-      to: transactionReceipt.to,
-      token: settings.ethToken.address,
-    })
-  }
+  const tokenTransfers = [...ethTransfers, ...transfersFromReceipts]
   // Also try to find the target contract for contract interactions,
   // which do not necessarily have token transfers
-  const targetContract = findTargetFromReceipt(
-    transactionReceipt,
-    settings.proxyAddress
-  )
   let newBalances = state.balances
   const updatedTokenAddresses = tokenTransfers.map(({ token }) => token)
   for (const address of updatedTokenAddresses) {
@@ -303,7 +303,7 @@ async function newExecution(state, event, settings) {
     // (see https://metamask.github.io/metamask-docs/Best_Practices/Registering_Function_Names)
     description: 'Contract interaction',
     tokenTransfers,
-    targetContract,
+    targetContract: target,
   })
   return {
     ...state,
