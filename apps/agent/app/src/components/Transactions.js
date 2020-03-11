@@ -334,7 +334,7 @@ const Transactions = React.memo(function Transactions({
               `}
             >
               <BadgeContainer
-                color={theme.surfaceContentSecondary}
+                surfaceColor={theme.surfaceContentSecondary}
                 compactMode={compactMode}
               >
                 From{' '}
@@ -351,7 +351,7 @@ const Transactions = React.memo(function Transactions({
                 </div>
               </BadgeContainer>
               <BadgeContainer
-                color={theme.surfaceContentSecondary}
+                surfaceColor={theme.surfaceContentSecondary}
                 compactMode={compactMode}
               >
                 To{' '}
