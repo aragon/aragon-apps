@@ -2,8 +2,6 @@ import abi from 'web3-eth-abi'
 
 import { ETHER_TOKEN_VERIFIED_ADDRESSES } from './verified-tokens'
 import { toUtf8 } from './web3-utils'
-import agentExecuteEventAbi from '../abi/agent-execute-event.json'
-import agentSafeExecuteEventAbi from '../abi/agent-safe-execute-event.json'
 import tokenNameAbi from '../abi/token-name.json'
 import tokenNameBytesAbi from '../abi/token-name-bytes.json'
 import tokenSymbolAbi from '../abi/token-symbol.json'
@@ -13,10 +11,6 @@ import tokenTransferEventAbi from '../abi/token-transfer-event.json'
 const TOKEN_TRANSFER_EVENT_INPUTS = tokenTransferEventAbi[0].inputs
 const TOKEN_TRANSFER_EVENT_SIGNATURE = abi.encodeEventSignature(
   tokenTransferEventAbi[0]
-)
-const EXECUTION_EVENT_SIGNATURE = abi.encodeEventSignature(agentExecuteEventAbi)
-const SAFE_EXECUTION_EVENT_SIGNATURE = abi.encodeEventSignature(
-  agentSafeExecuteEventAbi
 )
 
 const ANJ_MAINNET_TOKEN_ADDRESS = '0xcD62b1C403fa761BAadFC74C525ce2B51780b184'

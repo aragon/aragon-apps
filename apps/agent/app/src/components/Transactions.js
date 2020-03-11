@@ -71,6 +71,7 @@ const Transactions = React.memo(function Transactions({
   )
 
   const { onDownload } = useDownloadData({
+    agentAddress,
     filteredTransactions,
     tokenDetails,
     tokens,

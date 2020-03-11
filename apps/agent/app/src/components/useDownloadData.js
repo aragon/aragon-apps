@@ -19,7 +19,7 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
   const processedTransactions = await transactions.reduce(
     async (
       transactionListPromise,
-      { date, description, tokenTransfers, type }
+      { date, description, tokenTransfers, type, transactionHash }
     ) => {
       const previous = await transactionListPromise
       const mappedTokenTransfersData = await Promise.all(
@@ -48,6 +48,7 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
             TRANSACTION_TYPES_LABELS[type],
             description,
             `${formattedAmount} ${symbol}`,
+            transactionHash,
           ]
         })
       )
@@ -58,23 +59,32 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
   )
 
   return csv([
-    ['Date', 'Source', 'Recipient', 'Type', 'Reference', 'Amount'],
+    [
+      'Date',
+      'Source',
+      'Recipient',
+      'Type',
+      'Reference',
+      'Amount',
+      'Transaction Hash',
+    ],
     ...processedTransactions,
   ])
 }
 
-function getDownloadFilename({ start, end }) {
+function getDownloadFilename(agentAddress, { start, end }) {
   const today = format(Date.now(), ISO_SHORT_FORMAT)
-  let filename = `agent_${today}.csv`
+  let filename = `agent_${agentAddress}_${today}.csv`
   if (start && end) {
     const formattedStart = format(start, ISO_SHORT_FORMAT)
     const formattedEnd = format(end, ISO_SHORT_FORMAT)
-    filename = `agent_${formattedStart}_to_${formattedEnd}.csv`
+    filename = `agent_${agentAddress}_${formattedStart}_to_${formattedEnd}.csv`
   }
   return filename
 }
 
 function useDownloadData({
+  agentAddress,
   filteredTransactions,
   tokenDetails,
   tokens,
@@ -92,9 +102,16 @@ function useDownloadData({
 
     saveAs(
       new Blob([downloadData], { type: 'text/csv;charset=utf-8' }),
-      getDownloadFilename(selectedDateRange)
+      getDownloadFilename(agentAddress, selectedDateRange)
     )
-  }, [filteredTransactions, resolve, selectedDateRange, tokenDetails, tokens])
+  }, [
+    agentAddress,
+    filteredTransactions,
+    resolve,
+    selectedDateRange,
+    tokenDetails,
+    tokens,
+  ])
 
   return { onDownload }
 }
