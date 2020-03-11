@@ -20,14 +20,6 @@ function ComingSoon() {
       >
         <AgentSvg />
       </div>
-      <Tag
-        mode="new"
-        css={`
-          margin-bottom: ${2 * GU}px;
-        `}
-      >
-        Coming soon
-      </Tag>
       <h2
         css={`
           color: ${theme.content};
@@ -47,12 +39,15 @@ function ComingSoon() {
           padding: 0 ${2 * GU}px;
         `}
       >
-        We have released the new Agent UI in v5.
-        <br /> To obtain it, you must update your app to the latest version
-        through the{' '}
-        <Link href="https://help.aragon.org/article/22-app-center">
-          App Center.
-        </Link>
+        <p>We have released the new Agent UI in v5. </p>
+        <p>
+          To obtain it, you must update your app to the latest version through
+          the{' '}
+          <Link href="https://help.aragon.org/article/22-app-center">
+            App Center
+          </Link>
+          .
+        </p>
       </div>
     </Card>
   )
