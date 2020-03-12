@@ -1,42 +1,46 @@
-import React from 'react'
-import throttle from 'lodash.throttle'
-import { Box, GU } from '@aragon/ui'
+import React, { useState, useEffect } from 'react'
+import { Box, GU, useLayout } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
 import { round } from '../lib/math-utils'
 
 const CONVERT_API_BASE = 'https://min-api.cryptocompare.com/data'
-const CONVERT_THROTTLE_TIME = 5000
 
 const convertApiUrl = symbols =>
   `${CONVERT_API_BASE}/price?fsym=USD&tsyms=${symbols.join(',')}`
 
-class Balances extends React.Component {
-  state = {
-    convertRates: {},
-  }
-  componentDidMount() {
-    this.updateConvertedRates(this.props)
-  }
-  componentWillReceiveProps(nextProps) {
-    this.updateConvertedRates(nextProps)
-  }
-  updateConvertedRates = throttle(async ({ balances }) => {
-    const verifiedSymbols = balances
-      .filter(({ verified }) => verified)
-      .map(({ symbol }) => symbol)
+const Balances = React.memo(function Balances({ balances }) {
+  const [convertRates, setConvertRates] = useState({})
+  const [balanceItems, setBalanceItems] = useState([])
+  const { layoutName } = useLayout
+  const compactMode = layoutName === 'small'
 
-    if (!verifiedSymbols.length) {
-      return
+  useEffect(() => {
+    let cancelled = false
+
+    // Fetches the conversion rate for the verified tokens
+    const updateConvertedRates = async balances => {
+      const verifiedSymbols = balances
+        .filter(({ verified }) => verified)
+        .map(({ symbol }) => symbol)
+
+      if (!verifiedSymbols.length) {
+        return
+      }
+
+      const res = await fetch(convertApiUrl(verifiedSymbols))
+      const convertRates = await res.json()
+      if (!cancelled) {
+        setConvertRates(convertRates)
+      }
     }
 
-    const res = await fetch(convertApiUrl(verifiedSymbols))
-    const convertRates = await res.json()
-    this.setState({ convertRates })
-  }, CONVERT_THROTTLE_TIME)
+    updateConvertedRates(balances)
+    return () => {
+      cancelled = true
+    }
+  }, [balances])
 
-  render() {
-    const { compactMode, balances } = this.props
-    const { convertRates } = this.state
+  useEffect(() => {
     const balanceItems = balances.map(
       ({ address, numData: { amount, decimals }, symbol, verified }) => {
         const adjustedAmount = amount / Math.pow(10, decimals)
@@ -44,6 +48,7 @@ class Balances extends React.Component {
           verified && convertRates[symbol]
             ? adjustedAmount / convertRates[symbol]
             : -1
+
         return {
           address,
           symbol,
@@ -53,55 +58,51 @@ class Balances extends React.Component {
         }
       }
     )
+    setBalanceItems(balanceItems)
+  }, [balances, convertRates])
 
-    return (
-      <Box heading="Token Balances">
-        <div
+  return (
+    <Box heading="Token Balances">
+      <div
+        css={`
+          overflow-x: auto;
+        `}
+      >
+        <ul
           css={`
-            /*
-            * translate3d() fixes an issue on recent Firefox versions where the
-            * scrollbar would briefly appear on top of everything (including the
-            * sidepanel overlay).
-            */
-            transform: translate3d(0, 0, 0);
-            overflow-x: auto;
+            min-height: ${16.5 * GU}px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            ${compactMode && `flex-direction: column;`}
           `}
         >
-          <ul
-            css={`
-              min-height: 132px;
-              list-style: none;
-              padding: 0;
-              margin: 0;
-              display: flex;
-              ${compactMode && `flex-direction: column;`}
-            `}
-          >
-            {balanceItems.map(
-              ({ address, amount, convertedAmount, symbol, verified }) => (
-                <li
-                  css={`
-                    display: block;
-                    padding: ${3 * GU}px;
-                  `}
-                  key={address}
-                >
-                  <div css="display:inline-block;">
-                    <BalanceToken
-                      amount={amount}
-                      convertedAmount={convertedAmount}
-                      symbol={symbol}
-                      verified={verified}
-                    />
-                  </div>
-                </li>
-              )
-            )}
-          </ul>
-        </div>
-      </Box>
-    )
-  }
-}
+          {balanceItems.map(
+            ({ address, amount, convertedAmount, symbol, verified }) => (
+              <li
+                key={address}
+                css={`
+                  display: block;
+                  padding: ${3 * GU}px;
+                `}
+              >
+                <div css="display:inline-block;">
+                  <BalanceToken
+                    address={address}
+                    amount={amount}
+                    convertedAmount={convertedAmount}
+                    symbol={symbol}
+                    verified={verified}
+                  />
+                </div>
+              </li>
+            )
+          )}
+        </ul>
+      </div>
+    </Box>
+  )
+})
 
 export default Balances
