@@ -1,51 +1,55 @@
-import { useContext, useState, useEffect, useCallback } from 'react'
+import { useContext, useCallback } from 'react'
 import { format } from 'date-fns'
 import { saveAs } from 'file-saver'
 import { IdentityContext } from './IdentityManager/IdentityManager'
 import { toChecksumAddress } from '../lib/web3-utils'
-import { formatTokenAmount } from '../lib/utils'
+import { formatTokenAmount, ROUNDING_AMOUNT } from '../lib/utils'
+import { formatDate, ISO_SHORT_FORMAT } from '../lib/date-utils'
+import { TRANSACTION_TYPES_LABELS } from '../transaction-types'
 
-const formatDate = date => format(date, 'MM/dd/yy')
+// Transforms a two dimensional array into a CSV data structure
+// Surround every field with double quotes + escape double quotes inside.
+function csv(data) {
+  return data
+    .map(cells => cells.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+    .join('\n')
+}
 
-const getDownloadData = async ({
-  transfers,
-  tokenDetails,
-  resolveAddress,
-  tokens,
-}) => {
-  const mappedData = await transfers.reduce(
+async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
+  const processedTransactions = await transactions.reduce(
     async (
-      promise,
-      { tokenTransfers, date, description, type, isIncoming, onlyOne }
+      transactionListPromise,
+      { date, description, tokenTransfers, type, transactionHash }
     ) => {
-      const previous = await promise
+      const previous = await transactionListPromise
       const mappedTokenTransfersData = await Promise.all(
         tokenTransfers.map(async ({ amount, from, to, token }) => {
           const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
           const formattedAmount = formatTokenAmount(
             amount,
-            !!from,
+            Boolean(from),
             decimals,
             true,
-            { rounding: 5 }
+            { rounding: ROUNDING_AMOUNT }
           )
-          const name = await (async () => {
-            if (!from) {
-              return 'Agent'
-            }
-            const { name } = (await resolveAddress(from)) || { name: '' }
-            return name
-          })()
-          const entity = await (async () => {
-            if (!to) {
-              return 'Agent'
-            }
-            const { name } = (await resolveAddress(to)) || { name: '' }
-            return name
-          })()
-          return `${formatDate(
-            date
-          )},${name},${entity},${description},${`"${formattedAmount} ${symbol}"`}`
+          const [source, recipient] = await Promise.all(
+            [from, to].map(address => {
+              return address
+                ? resolveAddress(address).then(
+                    res => (res && res.name) || address
+                  )
+                : 'Agent'
+            })
+          )
+          return [
+            formatDate(date),
+            source,
+            recipient,
+            TRANSACTION_TYPES_LABELS[type],
+            description,
+            `${formattedAmount} ${symbol}`,
+            transactionHash,
+          ]
         })
       )
       return [...previous, ...mappedTokenTransfersData]
@@ -53,58 +57,61 @@ const getDownloadData = async ({
     /* https://gyandeeps.com/array-reduce-async-await/ */
     Promise.resolve([])
   )
-  return ['Date,Name,Source/Recipient,Reference,Amount']
-    .concat(mappedData)
-    .join('\n')
+
+  return csv([
+    [
+      'Date',
+      'Source',
+      'Recipient',
+      'Type',
+      'Reference',
+      'Amount',
+      'Transaction Hash',
+    ],
+    ...processedTransactions,
+  ])
 }
-const getDownloadFilename = (dao, { start, end }) => {
-  const today = format(Date.now(), 'yyyy-MM-dd')
-  let filename = `finance_${dao}_${today}.csv`
+
+function getDownloadFilename(agentAddress, { start, end }) {
+  const today = format(Date.now(), ISO_SHORT_FORMAT)
+  let filename = `agent_${agentAddress}_${today}.csv`
   if (start && end) {
-    const formattedStart = format(start, 'yyyy-MM-dd')
-    const formattedEnd = format(end, 'yyyy-MM-dd')
-    filename = `finance_${dao}_${formattedStart}_to_${formattedEnd}.csv`
+    const formattedStart = format(start, ISO_SHORT_FORMAT)
+    const formattedEnd = format(end, ISO_SHORT_FORMAT)
+    filename = `agent_${agentAddress}_${formattedStart}_to_${formattedEnd}.csv`
   }
   return filename
 }
 
 function useDownloadData({
-  filteredTransfers,
+  agentAddress,
+  filteredTransactions,
   tokenDetails,
   tokens,
   selectedDateRange,
-  dao,
 }) {
   const { resolve } = useContext(IdentityContext)
-  const [downloadData, setDownloadData] = useState(null)
-  const [filename, setFilename] = useState(
-    getDownloadFilename(dao, selectedDateRange)
-  )
 
   const onDownload = useCallback(async () => {
+    const downloadData = await getDownloadData({
+      transactions: filteredTransactions,
+      tokenDetails,
+      resolveAddress: resolve,
+      tokens,
+    })
+
     saveAs(
       new Blob([downloadData], { type: 'text/csv;charset=utf-8' }),
-      filename
+      getDownloadFilename(agentAddress, selectedDateRange)
     )
-  }, [downloadData, filename])
-
-  useEffect(() => {
-    const fetch = async () => {
-      const data = await getDownloadData({
-        transfers: filteredTransfers,
-        tokenDetails,
-        resolveAddress: resolve,
-        tokens,
-      })
-      setDownloadData(data)
-    }
-    fetch()
-  }, [filteredTransfers, tokens, tokenDetails, resolve])
-
-  useEffect(() => {
-    const filename = getDownloadFilename(dao, selectedDateRange)
-    setFilename(filename)
-  }, [dao, selectedDateRange])
+  }, [
+    agentAddress,
+    filteredTransactions,
+    resolve,
+    selectedDateRange,
+    tokenDetails,
+    tokens,
+  ])
 
   return { onDownload }
 }

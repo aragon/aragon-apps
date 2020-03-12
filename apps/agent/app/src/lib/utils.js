@@ -1,8 +1,13 @@
 import { round } from './math-utils'
+import { LOCALE_US_FORMAT } from './locales'
+
+export const ROUNDING_AMOUNT = 5
+
+export function noop() {}
 
 export function formatDecimals(value, digits) {
   try {
-    return value.toLocaleString('latn', {
+    return value.toLocaleString(LOCALE_US_FORMAT, {
       style: 'decimal',
       maximumFractionDigits: digits,
     })

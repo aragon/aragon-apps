@@ -1,43 +1,48 @@
-import React, { useEffect } from 'react'
-import { Main, Header, SyncIndicator, useLayout } from '@aragon/ui'
+import React, { useCallback } from 'react'
 import { useAragonApi } from '@aragon/api-react'
-import InstallFrame from './components/InstallFrame'
+import { Header, Main, SyncIndicator } from '@aragon/ui'
+import Balances from './components/Balances'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
-import ComingSoon from './components/ComingSoon'
+import InstallFrame from './components/InstallFrame'
+import Transactions from './components/Transactions'
 
-function App({ api, appState, isSyncing }) {
-  const { layoutName } = useLayout()
-  const compactMode = layoutName === 'small'
-  const { balances, transactions, tokens, proxyAddress } = appState
-  const handleResolveLocalIdentity = address => {
-    return api.resolveAddressIdentity(address).toPromise()
-  }
-  const handleShowLocalIdentityModal = address => {
-    return api.requestAddressIdentityModification(address).toPromise()
-  }
-
-  return (
-    <IdentityProvider
-      onResolve={handleResolveLocalIdentity}
-      onShowLocalIdentityModal={handleShowLocalIdentityModal}
-    >
-      <div css="min-width: 320px">
-        <SyncIndicator visible={isSyncing} />
-        <Header primary="Agent" />
-        <InstallFrame />
-        <ComingSoon />
-      </div>
-    </IdentityProvider>
-  )
-}
-
-export default () => {
+function App() {
   const { api, appState, guiStyle } = useAragonApi()
+  const { balances, isSyncing, transactions, tokens, proxyAddress } = appState
   const { appearance } = guiStyle
 
+  const handleResolveLocalIdentity = useCallback(
+    address => {
+      return api.resolveAddressIdentity(address).toPromise()
+    },
+    [api]
+  )
+
+  const handleShowLocalIdentityModal = useCallback(
+    address => {
+      return api.requestAddressIdentityModification(address).toPromise()
+    },
+    [api]
+  )
+
   return (
-    <Main theme={appearance} assetsUrl="./aragon-ui">
-      <App api={api} appState={appState} isSyncing={appState.isSyncing} />
+    <Main assetsUrl="./aragon-ui" theme={appearance}>
+      <IdentityProvider
+        onResolve={handleResolveLocalIdentity}
+        onShowLocalIdentityModal={handleShowLocalIdentityModal}
+      >
+        <SyncIndicator visible={isSyncing} shift={50} />
+        <Header primary="Agent" />
+        <InstallFrame />
+        <Balances balances={balances} />
+        <Transactions
+          agentAddress={proxyAddress}
+          transactions={transactions}
+          tokens={tokens}
+        />
+      </IdentityProvider>
     </Main>
   )
 }
+
+export default App
