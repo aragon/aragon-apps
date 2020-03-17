@@ -294,7 +294,7 @@ const Transactions = React.memo(function Transactions({
         )
       }}
       renderEntryExpansion={({ tokenTransfers }) => {
-        if (tokenTransfers.length === 1) {
+        if (tokenTransfers.length <= 1) {
           return null
         }
 
