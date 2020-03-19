@@ -1,49 +1,52 @@
 import { useState, useCallback, useMemo } from 'react'
 import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
-import { TRANSACTION_TYPES } from '../transaction-types'
+import { TRANSFER_TYPES, Incoming, Outgoing } from '../transfer-types'
 import { addressesEqual } from '../lib/web3-utils'
 
-const INITIAL_DATE_RANGE = { start: null, end: null }
-const INITIAL_TRANSACTION_TYPE = -1
-const INITIAL_TOKEN = -1
+const UNSELECTED_TOKEN_FILTER = -1
+const UNSELECTED_TRANSFER_TYPE_FILTER = -1
+const UNSELECTED_DATE_RANGE_FILTER = { start: null, end: null }
 
-function useFilteredTransactions({ transactions, tokens }) {
+function useFilteredTransfers({ transactions, tokens }) {
   const [page, setPage] = useState(0)
-  const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
-  const [selectedTransactionType, setSelectedTransactionType] = useState(
-    INITIAL_TRANSACTION_TYPE
+  const [selectedDateRange, setSelectedDateRange] = useState(
+    UNSELECTED_DATE_RANGE_FILTER
   )
-  const [selectedToken, setSelectedToken] = useState(INITIAL_TOKEN)
+  const [selectedTransferType, setSelectedTransferType] = useState(
+    UNSELECTED_TRANSFER_TYPE_FILTER
+  )
+  const [selectedToken, setSelectedToken] = useState(UNSELECTED_TOKEN_FILTER)
   const handleSelectedDateRangeChange = useCallback(range => {
     setPage(0)
     setSelectedDateRange(range)
   }, [])
   const handleTokenChange = useCallback(index => {
     setPage(0)
-    setSelectedToken(index || INITIAL_TOKEN)
+    setSelectedToken(index || UNSELECTED_TOKEN_FILTER)
   }, [])
-  const handleTransactionTypeChange = useCallback(index => {
+  const handleTransferTypeChange = useCallback(index => {
     setPage(0)
-    setSelectedTransactionType(index || INITIAL_TRANSACTION_TYPE)
+    setSelectedTransferType(index || UNSELECTED_TRANSFER_TYPE_FILTER)
   }, [])
   const handleClearFilters = useCallback(() => {
     setPage(0)
-    setSelectedTransactionType(INITIAL_TRANSACTION_TYPE)
-    setSelectedToken(INITIAL_TOKEN)
-    setSelectedDateRange(INITIAL_DATE_RANGE)
+    setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
+    setSelectedToken(UNSELECTED_TOKEN_FILTER)
+    setSelectedDateRange(UNSELECTED_DATE_RANGE_FILTER)
   }, [])
 
   const tokensToFilter = useMemo(() => [{ symbol: 'All tokens' }, ...tokens], [
     tokens,
   ])
 
-  const filteredTransactions = useMemo(
+  const filteredTransfers = useMemo(
     () =>
-      transactions.filter(({ tokenTransfers, type, date }) => {
+      transactions.filter(({ date, isIncoming, token }) => {
+        const type = isIncoming ? Incoming : Outgoing
         // Exclude by transaction type
         if (
-          selectedTransactionType !== -1 &&
-          TRANSACTION_TYPES[selectedTransactionType] !== type
+          selectedTransferType !== -1 &&
+          TRANSFER_TYPES[selectedTransferType] !== type
         ) {
           return false
         }
@@ -63,9 +66,7 @@ function useFilteredTransactions({ transactions, tokens }) {
         // Exclude by token
         if (
           selectedToken > 0 &&
-          tokenTransfers.findIndex(({ token }) =>
-            addressesEqual(token, tokensToFilter[selectedToken].address)
-          ) === -1
+          !addressesEqual(token, tokensToFilter[selectedToken].address)
         ) {
           return false
         }
@@ -75,7 +76,7 @@ function useFilteredTransactions({ transactions, tokens }) {
       }),
     [
       selectedDateRange,
-      selectedTransactionType,
+      selectedTransferType,
       selectedToken,
       tokensToFilter,
       transactions,
@@ -83,24 +84,23 @@ function useFilteredTransactions({ transactions, tokens }) {
   )
   const symbols = tokensToFilter.map(({ symbol }) => symbol)
   const emptyResultsViaFilters =
-    !filteredTransactions.length &&
-    (selectedToken > 0 ||
-      selectedTransactionType > 0 ||
-      selectedDateRange.start)
+    !filteredTransfers &&
+    (selectedToken > 0 || selectedTransferType > 0 || selectedDateRange.start)
+
   return {
     emptyResultsViaFilters,
-    filteredTransactions,
+    filteredTransfers,
     handleClearFilters,
     handleSelectedDateRangeChange,
     handleTokenChange,
-    handleTransactionTypeChange,
+    handleTransferTypeChange,
     page,
     setPage,
     selectedDateRange,
     selectedToken,
-    selectedTransactionType,
+    selectedTransferType,
     symbols,
   }
 }
 
-export default useFilteredTransactions
+export default useFilteredTransfers
