@@ -3,9 +3,9 @@
 addReviewers: true
 addAssignees: false
 
-reviewers: 
-  - sohkai
+reviewers:
   - bpierre
+  - evalir
 
 skipKeywords:
   - wip
