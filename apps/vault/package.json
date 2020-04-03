@@ -3,14 +3,16 @@
   "version": "4.1.0",
   "main": "index.js",
   "scripts": {
+    "postinstall": "npm run compile && npm run copy-artifacts",
+    "copy-artifacts": "cp -R node_modules/@aragon/os/build/contracts/. artifacts/.",
     "compile": "buidler compile --force",
     "start": "buidler start",
     "test": "buidler test --network buidlerevm",
-    "apm:publish:major": "buidler publish major",
-    "apm:publish:minor": "buidler publish minor",
-    "apm:publish:patch": "buidler publish patch",
+    "publish:major": "buidler publish major",
+    "publish:minor": "buidler publish minor",
+    "publish:patch": "buidler publish patch",
     "lint": "buidler check",
-    "test:gas": "GAS_REPORTER=true buidler test --network buidlerevm",
+    "test:gas": "GAS_REPORTER=true npm test",
     "coverage": "buidler coverage --network buidlerevm",
     "console": "buidler console"
   },
@@ -36,7 +38,7 @@
     "@aragon/os": "4.2.0"
   },
   "devDependencies": {
-    "@aragon/buidler-aragon": "^0.2.0-beta.1",
+    "@aragon/buidler-aragon": "^0.2.0-beta.2",
     "@aragon/contract-test-helpers": "0.0.1",
     "@nomiclabs/buidler": "^1.0.2",
     "@nomiclabs/buidler-etherscan": "^1.2.0",
