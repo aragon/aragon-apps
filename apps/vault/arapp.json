@@ -32,5 +32,6 @@
       ]
     }
   ],
+  "appName": "vault.aragonpm.eth",
   "path": "contracts/Vault.sol"
 }
