@@ -18,14 +18,14 @@ function SummaryRows({ yea, nay, symbol, connectedAccountVote }) {
         color={theme.positive}
         label="Yes"
         pct={yea.pct}
-        token={{ amount: yea.amount, symbol }}
+        token={{ amount: yea.amount.toFixed(3), symbol }}
         youVoted={connectedAccountVote === VOTE_YEA}
       />
       <SummaryRow
         color={theme.negative}
         label="No"
         pct={nay.pct}
-        token={{ amount: nay.amount, symbol }}
+        token={{ amount: nay.amount.toFixed(3), symbol }}
         youVoted={connectedAccountVote === VOTE_NAY}
       />
     </div>
