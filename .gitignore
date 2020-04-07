@@ -19,6 +19,7 @@ lerna-debug.log
 # Ignore only for first level to select just the contract build directories
 */*/abi
 */*/build
+*/*/artifacts
 
 # yarn
 yarn-error.log
@@ -30,3 +31,4 @@ yarn.lock
 # Misc
 .DS_Store
 .cache
+*/*/cache
