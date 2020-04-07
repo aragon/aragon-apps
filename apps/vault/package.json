@@ -4,17 +4,17 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "npm run compile && npm run copy-artifacts",
-    "copy-artifacts": "cp -R node_modules/@aragon/os/build/contracts/. artifacts/.",
+    "console": "buidler console",
     "compile": "buidler compile --force",
-    "start": "buidler start",
-    "test": "buidler test --network buidlerevm",
-    "publish:major": "buidler publish major",
-    "publish:minor": "buidler publish minor",
-    "publish:patch": "buidler publish patch",
-    "lint": "buidler check",
-    "test:gas": "GAS_REPORTER=true npm test",
-    "coverage": "buidler coverage --network buidlerevm",
-    "console": "buidler console"
+    "devchain": "buidler node",
+    "copy-artifacts": "cp -R node_modules/@aragon/os/build/contracts/. artifacts/.",
+    "lint": "buidler check && echo 'Lint complete.'",
+    "test": "buidler test",
+    "test:gas": "GAS_REPORTER=true buidler test",
+    "coverage": "buidler coverage --network coverage",
+    "apm:publish:major": "buidler publish major",
+    "apm:publish:minor": "buidler publish minor",
+    "apm:publish:patch": "buidler publish patch"
   },
   "keywords": [],
   "files": [
@@ -34,11 +34,10 @@
   "license": "GPL-3.0-or-later",
   "description": "",
   "dependencies": {
-    "@aragon/apps-vault": "^4.1.0",
     "@aragon/os": "4.2.0"
   },
   "devDependencies": {
-    "@aragon/buidler-aragon": "^0.2.0-beta.2",
+    "@aragon/buidler-aragon": "^0.2.2",
     "@aragon/contract-test-helpers": "0.0.1",
     "@nomiclabs/buidler": "^1.0.2",
     "@nomiclabs/buidler-etherscan": "^1.2.0",

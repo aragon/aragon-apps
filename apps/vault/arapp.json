@@ -1,23 +1,25 @@
 {
+  "appName": "vault.aragonpm.eth",
+  "path": "contracts/Vault.sol",
   "environments": {
     "default": {
       "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1",
-      "appName": "vault.aragonpm.eth",
       "network": "rpc"
     },
     "mainnet": {
       "registry": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
-      "appName": "vault.aragonpm.eth",
       "network": "mainnet"
     },
     "rinkeby": {
       "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
-      "appName": "vault.aragonpm.eth",
       "network": "rinkeby"
+    },
+    "ropsten": {	
+      "registry": "0x6afe2cacee211ea9179992f89dc61ff25c61e923",	
+      "network": "ropsten"	
     },
     "staging": {
       "registry": "0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939",
-      "appName": "vault.aragonpm.eth",
       "network": "rinkeby"
     }
   },
@@ -25,13 +27,7 @@
     {
       "name": "Transfer Vault's tokens",
       "id": "TRANSFER_ROLE",
-      "params": [
-        "Token address",
-        "Receiver address",
-        "Token amount"
-      ]
+      "params": ["Token address", "Receiver address", "Token amount"]
     }
-  ],
-  "appName": "vault.aragonpm.eth",
-  "path": "contracts/Vault.sol"
+  ]
 }
