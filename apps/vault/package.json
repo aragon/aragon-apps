@@ -34,7 +34,6 @@
   "license": "GPL-3.0-or-later",
   "description": "",
   "dependencies": {
-    "@aragon/apps-vault": "^4.1.0",
     "@aragon/os": "4.2.0"
   },
   "devDependencies": {
