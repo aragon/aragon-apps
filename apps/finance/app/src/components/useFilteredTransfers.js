@@ -1,6 +1,11 @@
 import { useState, useCallback, useMemo } from 'react'
 import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
-import { TRANSFER_TYPES, Incoming, Outgoing } from '../transfer-types'
+import {
+  TRANSFER_TYPES,
+  TRANSFER_TYPES_LABELS,
+  Incoming,
+  Outgoing,
+} from '../transfer-types'
 import { addressesEqual } from '../lib/web3-utils'
 
 const UNSELECTED_TOKEN_FILTER = -1
@@ -100,6 +105,7 @@ function useFilteredTransfers({ transactions, tokens }) {
     selectedToken,
     selectedTransferType,
     symbols,
+    transferTypes: TRANSFER_TYPES_LABELS,
   }
 }
 
