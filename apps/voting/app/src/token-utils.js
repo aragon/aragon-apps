@@ -46,7 +46,6 @@ export function formatBalance(amount, base, precision = 2) {
   if (fraction === '' || parseInt(fraction, 10) === 0) {
     return whole
   }
-
-  console.log('return value ', `${whole}.${fraction}`)
+  
   return `${whole}.${fraction}`
 }

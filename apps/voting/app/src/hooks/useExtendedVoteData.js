@@ -40,14 +40,20 @@ export default function useExtendedVoteData(vote) {
   }, [connectedAccount, tokenContract, tokenDecimals, vote])
   const userBalanceResolved = usePromise(userBalancePromise, [], -1)
 
+
   const userBalanceBN = new BN(userBalanceResolved)
-  const userBalance = userBalanceResolved != -1 ? formatBalance(userBalanceBN, tokenDecimals) : userBalanceResolved
+  const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
+
+  const userBalance = userBalanceResolved != -1 ? formatBalance(userBalanceBN, tokenDecimalsBase) : userBalanceResolved
 
   const userBalanceNowPromise = useMemo(
     () => getUserBalanceNow(connectedAccount, tokenContract, tokenDecimals),
     [connectedAccount, tokenContract, tokenDecimals]
   )
-  const userBalanceNow = usePromise(userBalanceNowPromise, [], -1)
+  const userBalanceNowResolved = usePromise(userBalanceNowPromise, [], -1)
+  const userBalanceNowBN = new BN(userBalanceResolved)
+
+  const userBalanceNow = userBalanceNowResolved != -1 ?  formatBalance(userBalanceNowBN, tokenDecimalsBase) : userBalanceNowResolved
 
   return {
     canExecute,
