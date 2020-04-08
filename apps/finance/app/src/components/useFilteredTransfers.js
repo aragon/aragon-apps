@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
 import {
   TRANSFER_TYPES,
@@ -21,20 +21,23 @@ function useFilteredTransfers({ transactions, tokens }) {
     UNSELECTED_TRANSFER_TYPE_FILTER
   )
   const [selectedToken, setSelectedToken] = useState(UNSELECTED_TOKEN_FILTER)
+
+  useEffect(() => setPage(0), [
+    selectedDateRange,
+    selectedTransferType,
+    selectedToken,
+  ])
+
   const handleSelectedDateRangeChange = useCallback(range => {
-    setPage(0)
     setSelectedDateRange(range)
   }, [])
   const handleTokenChange = useCallback(index => {
-    setPage(0)
     setSelectedToken(index || UNSELECTED_TOKEN_FILTER)
   }, [])
   const handleTransferTypeChange = useCallback(index => {
-    setPage(0)
     setSelectedTransferType(index || UNSELECTED_TRANSFER_TYPE_FILTER)
   }, [])
   const handleClearFilters = useCallback(() => {
-    setPage(0)
     setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
     setSelectedToken(UNSELECTED_TOKEN_FILTER)
     setSelectedDateRange(UNSELECTED_DATE_RANGE_FILTER)
