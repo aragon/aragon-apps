@@ -48,7 +48,7 @@
     "lint": "eslint ./src",
     "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3002 --out-dir ../dist/",
     "watch": "npm run watch:script",
-    "build": "npm run sync-assets && npm run build:app && npm run build:script",
+    "build": "npm run sync-assets && npm run build:frontend && npm run build:script",
     "build:frontend": "parcel build index.html -p 3002 -d ../dist/ --public-url \".\" --no-cache",
     "build:script": "parcel build src/script.js --out-dir ../dist/ --no-cache",
     "serve": "parcel serve index.html --out-dir ../dist/ --no-cache",
