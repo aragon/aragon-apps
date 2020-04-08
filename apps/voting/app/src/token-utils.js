@@ -25,7 +25,7 @@ export async function getUserBalanceNow(
 
   const balance = await tokenContract.balanceOf(connectedAccount).toPromise()
 
-  return Math.floor(parseInt(balance, 10) / Math.pow(10, tokenDecimals))
+  return balance
 }
 
 /**
@@ -46,6 +46,6 @@ export function formatBalance(amount, base, precision = 2) {
   if (fraction === '' || parseInt(fraction, 10) === 0) {
     return whole
   }
-  
+
   return `${whole}.${fraction}`
 }
