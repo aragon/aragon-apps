@@ -1,4 +1,4 @@
-The Finance app makes it easy to manage an organization's financial assets. 
+The Finance app makes it easy to manage an organization's financial assets.
 
 ## Features
 - Deposit and withdraw ETH, ERC-20-, and ERC-677-compatible tokens.

@@ -42,7 +42,7 @@ If the answer to either of those two questions are "yes", then you're probably d
 ## Fixing issues
 
 1. [Find an issue](https://github.com/aragon/aragon-apps/issues) that you are interested in.
-    - You may want to ask on the issue or on Aragon Chat's [#dev channel](https://aragon.chat/channel/dev) if anyone has already started working on the issue.
+    - You may want to ask on the issue or in our Spectrum [App development channel](https://spectrum.chat/aragon/app-development) if anyone has already started working on the issue.
 1. Fork and clone a local copy of the repository.
 1. Make the appropriate changes for the issue you are trying to address or the feature that you want to add.
 1. Push the changes to the remote repository.
@@ -93,4 +93,4 @@ As `next` becomes ready, merge `next` onto `master` with a rebase.
 
 ## Community
 
-If you need help, please reach out to Aragon core contributors and community members in the Aragon Chat [#dev](https://aragon.chat/channel/dev) and [#dev-help](https://aragon.chat/channel/dev-help) channels. We'd love to hear from you and know what you're working on!
+If you need help, please reach out to Aragon core contributors and community members in our Spectrum [App development channel](https://spectrum.chat/aragon/app-development).  We'd love to hear from you and know what you're working on!

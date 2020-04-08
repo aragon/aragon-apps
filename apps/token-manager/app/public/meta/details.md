@@ -3,4 +3,4 @@ The Tokens app is used to manage the supply and distribution of an organization'
 ## Features
 - Issue new tokens and remove existing tokens.
 - Browse a list of all tokenholders and see how tokens are distributed among them.
-- Get an at-a-glance view of stats about the token, such as the token name and ticker symbol, the total supply, and whether or not the token is transferable. 
+- Get an at-a-glance view of stats about the token, such as the token name and ticker symbol, the total supply, and whether or not the token is transferable.
