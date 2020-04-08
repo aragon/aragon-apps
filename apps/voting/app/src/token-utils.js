@@ -38,7 +38,6 @@ export async function getUserBalanceNow(
  */
 export function formatBalance(amount, base, precision = 2) {
   const baseLength = base.toString().length
-
   const whole = amount.div(base).toString()
   let fraction = amount.mod(base).toString()
   const zeros = '0'.repeat(Math.max(0, baseLength - fraction.length - 1))
@@ -48,5 +47,6 @@ export function formatBalance(amount, base, precision = 2) {
     return whole
   }
 
+  console.log('return value ', `${whole}.${fraction}`)
   return `${whole}.${fraction}`
 }

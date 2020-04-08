@@ -4,6 +4,7 @@ import { getUserBalanceAt, getUserBalanceNow, formatBalance } from '../token-uti
 import { getCanExecute, getCanVote } from '../vote-utils'
 import useTokenContract from './useTokenContract'
 import usePromise from './usePromise'
+import BN from 'bn.js'
 
 // Get the extended data related to a vote
 export default function useExtendedVoteData(vote) {
@@ -34,10 +35,13 @@ export default function useExtendedVoteData(vote) {
       tokenContract,
     )
     
-    return formatBalance(userBalance, tokenDecimals)
+    return userBalance
 
   }, [connectedAccount, tokenContract, tokenDecimals, vote])
-  const userBalance = usePromise(userBalancePromise, [], -1)
+  const userBalanceResolved = usePromise(userBalancePromise, [], -1)
+
+  const userBalanceBN = new BN(userBalanceResolved)
+  const userBalance = userBalanceResolved != -1 ? formatBalance(userBalanceBN, tokenDecimals) : userBalanceResolved
 
   const userBalanceNowPromise = useMemo(
     () => getUserBalanceNow(connectedAccount, tokenContract, tokenDecimals),
