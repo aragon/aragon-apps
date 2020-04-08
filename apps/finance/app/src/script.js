@@ -361,6 +361,12 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
   return symbol
 }
 
+/*****************************
+ *                           *
+ *    Transaction Helpers    *
+ *                           *
+ *****************************/
+
 async function updateBalances(
   balances,
   tokenAddress,
