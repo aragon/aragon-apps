@@ -2,6 +2,7 @@ import { useContext, useCallback } from 'react'
 import { format } from 'date-fns'
 import { saveAs } from 'file-saver'
 import { useCurrentApp } from '@aragon/api-react'
+import { useToast } from '@aragon/ui'
 import { IdentityContext } from './IdentityManager/IdentityManager'
 import { toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
@@ -66,11 +67,11 @@ const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
 function useDownloadData({
   filteredTransfers,
   selectedDateRange,
-  toast,
   tokenDetails,
 }) {
   const { resolve: resolveAddress } = useContext(IdentityContext)
   const currentApp = useCurrentApp()
+  const toast = useToast()
 
   const handleDownload = useCallback(async () => {
     const { appAddress: financeAddress } = currentApp

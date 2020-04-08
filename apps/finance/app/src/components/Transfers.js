@@ -14,7 +14,6 @@ import {
   textStyle,
   useLayout,
   useTheme,
-  useToast,
 } from '@aragon/ui'
 import {
   useAragonApi,
@@ -35,7 +34,6 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   const connectedAccount = useConnectedAccount()
   const { layoutName } = useLayout()
   const theme = useTheme()
-  const toast = useToast()
 
   const {
     emptyResultsViaFilters,
@@ -66,7 +64,6 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   const { handleDownload } = useDownloadData({
     filteredTransfers,
     selectedDateRange,
-    toast,
     tokenDetails,
   })
 
