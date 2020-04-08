@@ -23,7 +23,7 @@ import {
   useNetwork,
 } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
-import { READABLE_TRANSFER_TYPES } from '../transfer-types'
+import { TRANSFER_TYPES_LABELS } from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
@@ -200,7 +200,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
               onTransferTypeChange={handleTransferTypeChange}
               tokenFilter={selectedToken}
               transferTypeFilter={selectedTransferType}
-              transferTypes={READABLE_TRANSFER_TYPES}
+              transferTypes={TRANSFER_TYPES_LABELS}
               symbols={symbols}
             />
           )}
