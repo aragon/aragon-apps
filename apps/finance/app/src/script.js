@@ -294,9 +294,78 @@ async function newTransaction(
 
 /***********************
  *                     *
- *       Helpers       *
+ *    Token Helpers    *
  *                     *
  ***********************/
+
+function loadTokenBalance(tokenContract, tokenAddress, { ethToken, vault }) {
+  if (addressesEqual(tokenAddress, ethToken.address)) {
+    return vault.contract.balance(tokenAddress).toPromise()
+  } else {
+    // Prefer using the token contract directly to ask for the Vault's balance
+    // Web3.js does not handle revert strings yet, so a failing call to Vault.balance()
+    // results in organizations looking like whales.
+    return tokenContract.balanceOf(vault.address).toPromise()
+  }
+}
+
+async function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
+  if (tokenDecimals.has(tokenContract)) {
+    return tokenDecimals.get(tokenContract)
+  }
+
+  const override = tokenDataOverride(tokenAddress, 'decimals', network.type)
+
+  let decimals
+  try {
+    decimals = override || (await tokenContract.decimals().toPromise())
+    tokenDecimals.set(tokenContract, decimals)
+  } catch (err) {
+    // decimals is optional
+    decimals = '0'
+  }
+  return decimals
+}
+
+async function loadTokenName(tokenContract, tokenAddress, { network }) {
+  if (tokenNames.has(tokenContract)) {
+    return tokenNames.get(tokenContract)
+  }
+  const override = tokenDataOverride(tokenAddress, 'name', network.type)
+
+  let name
+  try {
+    name = override || (await getTokenName(app, tokenAddress))
+    tokenNames.set(tokenContract, name)
+  } catch (err) {
+    // name is optional
+    name = ''
+  }
+  return name
+}
+
+async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
+  if (tokenSymbols.has(tokenContract)) {
+    return tokenSymbols.get(tokenContract)
+  }
+  const override = tokenDataOverride(tokenAddress, 'symbol', network.type)
+
+  let symbol
+  try {
+    symbol = override || (await getTokenSymbol(app, tokenAddress))
+    tokenSymbols.set(tokenContract, symbol)
+  } catch (err) {
+    // symbol is optional
+    symbol = ''
+  }
+  return symbol
+}
+
+/*****************************
+ *                           *
+ *    Transaction Helpers    *
+ *                           *
+ *****************************/
 
 async function updateBalances(
   balances,
@@ -376,69 +445,6 @@ async function newBalanceEntry(tokenContract, tokenAddress, settings) {
       isTokenVerified(tokenAddress, settings.network.type) ||
       addressesEqual(tokenAddress, settings.ethToken.address),
   }
-}
-
-function loadTokenBalance(tokenContract, tokenAddress, { ethToken, vault }) {
-  if (addressesEqual(tokenAddress, ethToken.address)) {
-    return vault.contract.balance(tokenAddress).toPromise()
-  } else {
-    // Prefer using the token contract directly to ask for the Vault's balance
-    // Web3.js does not handle revert strings yet, so a failing call to Vault.balance()
-    // results in organizations looking like whales.
-    return tokenContract.balanceOf(vault.address).toPromise()
-  }
-}
-
-async function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
-  if (tokenDecimals.has(tokenContract)) {
-    return tokenDecimals.get(tokenContract)
-  }
-
-  const override = tokenDataOverride(tokenAddress, 'decimals', network.type)
-
-  let decimals
-  try {
-    decimals = override || (await tokenContract.decimals().toPromise())
-    tokenDecimals.set(tokenContract, decimals)
-  } catch (err) {
-    // decimals is optional
-    decimals = '0'
-  }
-  return decimals
-}
-
-async function loadTokenName(tokenContract, tokenAddress, { network }) {
-  if (tokenNames.has(tokenContract)) {
-    return tokenNames.get(tokenContract)
-  }
-  const override = tokenDataOverride(tokenAddress, 'name', network.type)
-
-  let name
-  try {
-    name = override || (await getTokenName(app, tokenAddress))
-    tokenNames.set(tokenContract, name)
-  } catch (err) {
-    // name is optional
-    name = ''
-  }
-  return name
-}
-
-async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
-  if (tokenSymbols.has(tokenContract)) {
-    return tokenSymbols.get(tokenContract)
-  }
-  const override = tokenDataOverride(tokenAddress, 'symbol', network.type)
-
-  let symbol
-  try {
-    symbol = override || (await getTokenSymbol(app, tokenAddress))
-    tokenSymbols.set(tokenContract, symbol)
-  } catch (err) {
-    // symbol is optional
-    symbol = ''
-  }
-  return symbol
 }
 
 async function loadTransactionDetails(id) {
