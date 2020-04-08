@@ -30,7 +30,7 @@ module.exports = {
     apiKey: '',
   },
   aragon: {
-    appServePort: 8002,
+    appServePort: 3002,
     clientServePort: 3000,
     appSrcPath: 'app/',
     appBuildOutputPath: 'dist/',
