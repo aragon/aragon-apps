@@ -44,10 +44,10 @@
     "sync-assets": "copy-aragon-ui-assets -n aragon-ui ../dist && rsync -rtu ./public/ ../dist",
     "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3005 --out-dir ../dist",
     "watch:script": "parcel watch src/script.js --out-dir ../dist --no-hmr",
-    "build": "npm run sync-assets && npm run build:app && npm run build:script",
-    "build:app": "parcel build index.html -d ../dist/ --public-url \".\" --no-cache",
+    "build": "npm run sync-assets && npm run build:frontend && npm run build:script",
+    "build:frontend": "parcel build index.html -d ../dist/ --public-url \".\" --no-cache",
     "build:script": "parcel build src/script.js --out-dir ../dist/ --no-cache",
-    "serve": "parcel serve index.html --out-dir ../dist/ --no-cache",
+    "serve": "parcel serve index.html -p 3005 --out-dir ../dist/ --no-cache",
     "watch": "npm run watch:script"
   },
   "browserslist": [
