@@ -32,10 +32,12 @@ function useFilteredTransfers({ transactions, tokens }) {
     setSelectedDateRange(range)
   }, [])
   const handleTokenChange = useCallback(index => {
-    setSelectedToken(index || UNSELECTED_TOKEN_FILTER)
+    const tokenIndex = index === 0 ? -1 : index
+    setSelectedToken(tokenIndex)
   }, [])
   const handleTransferTypeChange = useCallback(index => {
-    setSelectedTransferType(index || UNSELECTED_TRANSFER_TYPE_FILTER)
+    const transferTypeIndex = index === 0 ? -1 : index
+    setSelectedTransferType(transferTypeIndex)
   }, [])
   const handleClearFilters = useCallback(() => {
     setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
