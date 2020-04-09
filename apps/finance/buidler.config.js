@@ -26,9 +26,6 @@ module.exports = {
   gasReporter: {
     enabled: process.env.GAS_REPORTER ? true : false,
   },
-  etherscan: {
-    apiKey: '',
-  },
   aragon: {
     appServePort: 3002,
     clientServePort: 3000,
