@@ -115,8 +115,9 @@ function InfoBoxes({
                 <LocalIdentityBadge
                   entity={account}
                   connectedAccount={isCurrentUser}
+                  label={isCurrentUser && 'YOU'}
+                  labelStyle={isCurrentUser && `color: ${theme.tagIndicatorContent};`}
                 />
-                {isCurrentUser && <You />}
               </div>
             )
           }}
