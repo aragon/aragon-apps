@@ -209,11 +209,11 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
               heading={
                 <React.Fragment>
                   Support %
-                  <Help hint="What’s the support?">
+                  <Help hint="What is Support?">
                     <strong>Support</strong> is the relative percentage of
                     tokens that are required to vote “Yes” for a proposal to be
-                    approved. For example, if “Support” is set to 51%, then more
-                    than 51% of the tokens used to vote on a proposal must be
+                    approved. For example, if “Support” is set to 50%, then more
+                    than 50% of the tokens used to vote on a proposal must vote
                     “Yes” for it to pass.
                   </Help>
                 </React.Fragment>
@@ -245,10 +245,10 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
               heading={
                 <React.Fragment>
                   Approval %
-                  <Help hint="What’s the vote duration?">
+                  <Help hint="What is the Vote Duration?">
                     <strong>Vote Duration</strong> is the length of time that
                     the vote will be open for participation. For example, if the
-                    Vote Duration is set to 24 hours, then token holders have 24
+                    Vote Duration is set to 24 hours, then tokenholders have 24
                     hours to participate in the vote.
                   </Help>
                 </React.Fragment>
