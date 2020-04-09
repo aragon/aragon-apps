@@ -250,7 +250,6 @@ function BlockNumber({ blockNumber }) {
       href={blockExplorerUrl('block', blockNumber, {
         networkType: network.type,
       })}
-      title={blockNumber}
     >
       {blockNumber}
     </Link>
