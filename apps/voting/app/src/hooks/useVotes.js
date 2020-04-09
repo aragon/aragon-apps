@@ -12,7 +12,8 @@ function useDecoratedVotes() {
   const installedApps = useInstalledApps()
 
   return useMemo(() => {
-    if (!votes) {
+    // Make sure we have loaded information about the current app and other installed apps before showing votes
+    if (!(votes && currentApp && installedApps)) {
       return [[], []]
     }
     const decoratedVotes = votes.map((vote, i) => {
