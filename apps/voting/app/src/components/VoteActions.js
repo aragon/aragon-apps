@@ -225,9 +225,9 @@ const TokenReference = ({
     <strong>
       {userBalance} {tokenSymbol}
     </strong>{' '}
-    as that was your balance during the snapshot taken at block{' '}
-    <BlockNumber blockNumber={snapshotBlock} /> at{' '}
-    <strong>{formatDate(startDate)}</strong>.{' '}
+    . This was your balance when the vote started (block{' '}
+    <BlockNumber blockNumber={snapshotBlock} />, mined at{' '}
+    <strong>{formatDate(startDate)}</strong>).{' '}
     {userBalance !== userBalanceNow ? (
       <span>
         Your current balance is{' '}
@@ -241,7 +241,7 @@ const TokenReference = ({
     )}
   </Info>
 )
-
+// Voting with <tokens>. This was your balance when the vote started (block <block>, mined at <date>).
 function BlockNumber({ blockNumber }) {
   const network = useNetwork()
 
