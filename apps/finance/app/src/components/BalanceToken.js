@@ -1,11 +1,10 @@
 import React from 'react'
-import { GU, textStyle, useTheme } from '@aragon/ui'
+import { GU, Help, textStyle, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { tokenIconUrl } from '../lib/icon-utils'
 import { formatTokenAmount } from '../lib/utils'
 
-const splitAmount = amount => {
-  const [integer, fractional] = formatTokenAmount(amount).split('.')
+const splitAmount = (integer, fractional) => {
   return (
     <span>
       <span>{integer}</span>
@@ -32,6 +31,13 @@ const BalanceToken = ({
 }) => {
   const theme = useTheme()
   const network = useNetwork()
+
+  const [integerAmount, fractionalAmount] = formatTokenAmount(
+    amount.toFixed(3)
+  ).split('.')
+
+  const amountWasRounded =
+    amount.toString() !== `${integerAmount}.${fractionalAmount}`
 
   return (
     <div css="display: inline-block">
@@ -63,9 +69,21 @@ const BalanceToken = ({
           css={`
             ${textStyle('title2')}
             margin: ${(compact ? 1 : 1.5) * GU}px 0;
+            display:flex;
           `}
         >
-          {splitAmount(amount.toFixed(3))}
+          {splitAmount(integerAmount, fractionalAmount)}
+          {amountWasRounded && (
+            <div
+              css={`
+                display: flex;
+                align-items: center;
+                margin-left: ${GU}px;
+              `}
+            >
+              <Help>{amount}</Help>
+            </div>
+          )}
         </div>
         <div
           css={`

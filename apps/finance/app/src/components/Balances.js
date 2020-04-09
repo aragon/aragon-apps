@@ -63,7 +63,7 @@ class Balances extends React.Component {
           address,
           symbol,
           verified,
-          amount: round(adjustedAmount, 5),
+          amount: adjustedAmount,
           convertedAmount: round(convertedAmount, 5),
         }
       }
