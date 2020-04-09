@@ -241,7 +241,7 @@ const TokenReference = ({
     )}
   </Info>
 )
-// Voting with <tokens>. This was your balance when the vote started (block <block>, mined at <date>).
+
 function BlockNumber({ blockNumber }) {
   const network = useNetwork()
 
