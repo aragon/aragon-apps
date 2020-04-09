@@ -244,12 +244,13 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
             <Box
               heading={
                 <React.Fragment>
-                  Approval %
-                  <Help hint="What is the Vote Duration?">
-                    <strong>Vote Duration</strong> is the length of time that
-                    the vote will be open for participation. For example, if the
-                    Vote Duration is set to 24 hours, then tokenholders have 24
-                    hours to participate in the vote.
+                  Minimum Approval %
+                  <Help hint="What is Minimum Approval?">
+                    <strong>Minimum Approval</strong> is the percentage of 
+                    the total token supply that is required to vote “Yes” on 
+                    a proposal before it can be approved. For example, if the 
+                    “Minimum Approval” is set to 20%, then more than 20% of the 
+                    outstanding token supply must vote “Yes” on a proposal for it to pass.
                   </Help>
                 </React.Fragment>
               }
