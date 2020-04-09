@@ -1,12 +1,6 @@
-import React, { useMemo, useState, useCallback, useContext } from 'react'
+import React, { useMemo, useCallback, useContext } from 'react'
 import PropTypes from 'prop-types'
-import {
-  compareDesc,
-  endOfDay,
-  format,
-  isWithinInterval,
-  startOfDay,
-} from 'date-fns'
+import { compareDesc, format } from 'date-fns'
 import {
   Button,
   ContextMenu,
@@ -29,54 +23,15 @@ import {
   useNetwork,
 } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
-import * as TransferTypes from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
 import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
+import useFilteredTransfers from './useFilteredTransfers'
 
-const UNSELECTED_TOKEN_FILTER = -1
-const UNSELECTED_TRANSFER_TYPE_FILTER = -1
-const INITIAL_DATE_RANGE = { start: null, end: null }
-const TRANSFER_TYPES = [
-  TransferTypes.All,
-  TransferTypes.Incoming,
-  TransferTypes.Outgoing,
-]
-const TRANSFER_TYPES_STRING = TRANSFER_TYPES.map(TransferTypes.convertToString)
 const formatDate = date => format(date, 'dd/MM/yy')
-const getTokenDetails = (details, { address, decimals, symbol }) => {
-  details[toChecksumAddress(address)] = {
-    decimals,
-    symbol,
-  }
-  return details
-}
-// Filter transfer based on the selected filters
-const getFilteredTransfers = ({
-  transactions,
-  selectedToken,
-  selectedTransferType,
-  selectedDateRange,
-}) => {
-  const transferType = TRANSFER_TYPES[selectedTransferType]
-  return transactions.filter(
-    ({ token, isIncoming, date }) =>
-      (!selectedDateRange.start ||
-        !selectedDateRange.end ||
-        isWithinInterval(new Date(date), {
-          start: startOfDay(selectedDateRange.start),
-          end: endOfDay(selectedDateRange.end),
-        })) &&
-      (selectedToken === null ||
-        addressesEqual(token, selectedToken.address)) &&
-      (transferType === TransferTypes.All ||
-        selectedTransferType === UNSELECTED_TRANSFER_TYPE_FILTER ||
-        (transferType === TransferTypes.Incoming && isIncoming) ||
-        (transferType === TransferTypes.Outgoing && !isIncoming))
-  )
-}
+
 const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
   const mappedData = await Promise.all(
     transfers.map(
@@ -123,49 +78,37 @@ const Transfers = React.memo(({ tokens, transactions }) => {
   const { appState } = useAragonApi()
   const connectedAccount = useConnectedAccount()
   const currentApp = useCurrentApp()
-  const toast = useToast()
-  const theme = useTheme()
   const { layoutName } = useLayout()
+  const theme = useTheme()
+  const toast = useToast()
 
-  const [page, setPage] = useState(0)
-  const [selectedToken, setSelectedToken] = useState(UNSELECTED_TOKEN_FILTER)
-  const [selectedTransferType, setSelectedTransferType] = useState(
-    UNSELECTED_TRANSFER_TYPE_FILTER
-  )
-  const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
-  const handleSelectedDateRangeChange = range => {
-    setPage(0)
-    setSelectedDateRange(range)
-  }
-  const handleTokenChange = useCallback(
-    index => {
-      setPage(0)
-      setSelectedToken(index || UNSELECTED_TOKEN_FILTER)
-    },
-    [setPage, setSelectedToken]
-  )
-  const handleTransferTypeChange = useCallback(
-    index => {
-      setPage(0)
-      setSelectedTransferType(index || UNSELECTED_TOKEN_FILTER)
-    },
-    [setPage, setSelectedTransferType]
-  )
-  const handleClearFilters = useCallback(() => {
-    setPage(0)
-    setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
-    setSelectedToken(UNSELECTED_TOKEN_FILTER)
-    setSelectedDateRange(INITIAL_DATE_RANGE)
-  }, [setPage, setSelectedTransferType, setSelectedToken, setSelectedDateRange])
-  const filteredTransfers = getFilteredTransfers({
-    transactions,
-    selectedToken: selectedToken > 0 ? tokens[selectedToken - 1] : null,
-    selectedTransferType,
+  const {
+    emptyResultsViaFilters,
+    filteredTransfers,
+    handleClearFilters,
+    handleSelectedDateRangeChange,
+    handleTokenChange,
+    handleTransferTypeChange,
+    page,
+    setPage,
     selectedDateRange,
-  })
+    selectedToken,
+    selectedTransferType,
+    symbols,
+    transferTypes,
+  } = useFilteredTransfers({ transactions, tokens })
+
   const { isSyncing } = appState
-  const symbols = tokens.map(({ symbol }) => symbol)
-  const tokenDetails = tokens.reduce(getTokenDetails, {})
+  const tokenDetails = tokens.reduce(
+    (details, { address, decimals, symbol }) => {
+      details[toChecksumAddress(address)] = {
+        decimals,
+        symbol,
+      }
+      return details
+    },
+    {}
+  )
   const { resolve: resolveAddress } = useContext(IdentityContext)
   const handleDownload = useCallback(async () => {
     if (!currentApp || !currentApp.appAddress) {
@@ -184,12 +127,6 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     saveAs(new Blob([data], { type: 'text/csv;charset=utf-8' }), filename)
     toast('Transfers data exported')
   }, [currentApp, filteredTransfers, tokenDetails, resolveAddress])
-  const emptyResultsViaFilters =
-    !filteredTransfers.length &&
-    (selectedToken !== 0 ||
-      selectedTransferType !== 0 ||
-      selectedDateRange.start ||
-      selectedDateRange.end)
 
   const compactMode = layoutName === 'small'
 
@@ -259,13 +196,12 @@ const Transfers = React.memo(({ tokens, transactions }) => {
             <TransfersFilters
               dateRangeFilter={selectedDateRange}
               onDateRangeChange={handleSelectedDateRangeChange}
-              tokenFilter={selectedToken}
               onTokenChange={handleTokenChange}
-              transferTypeFilter={selectedTransferType}
               onTransferTypeChange={handleTransferTypeChange}
-              compactMode={compactMode}
-              symbols={['All tokens', ...symbols]}
-              transferTypes={TRANSFER_TYPES_STRING}
+              tokenFilter={selectedToken}
+              transferTypeFilter={selectedTransferType}
+              transferTypes={transferTypes}
+              symbols={symbols}
             />
           )}
         </React.Fragment>
