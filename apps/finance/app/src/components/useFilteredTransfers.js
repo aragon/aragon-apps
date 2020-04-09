@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
+import { endOfDay, isEqual, isWithinInterval, startOfDay } from 'date-fns'
 import {
   TRANSFER_TYPES,
   TRANSFER_TYPES_LABELS,
@@ -60,16 +60,32 @@ function useFilteredTransfers({ transactions, tokens }) {
         ) {
           return false
         }
-
         // Exclude by date range
+        // Case 1: we have both a start and end date.
         if (
-          // We're not checking for an end date because we will always
-          // have a start date for defining a range.
           selectedDateRange.start &&
+          selectedDateRange.end &&
           !isWithinInterval(new Date(date), {
             start: startOfDay(selectedDateRange.start),
             end: endOfDay(selectedDateRange.end),
           })
+        ) {
+          return false
+        }
+
+        // Case 2: we have a start date, but not an end date.
+        if (
+          selectedDateRange.start &&
+          !selectedDateRange.end &&
+          !isEqual(new Date(date), selectedDateRange.start)
+        ) {
+          return false
+        }
+
+        // Case 3: we don't have a start date, but do have an end date.
+        if (
+          selectedDateRange.end &&
+          !isEqual(new Date(date), selectedDateRange.end)
         ) {
           return false
         }
