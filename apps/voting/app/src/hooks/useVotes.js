@@ -12,6 +12,7 @@ function useDecoratedVotes() {
   const installedApps = useInstalledApps()
 
   return useMemo(() => {
+    // Make sure we have loaded information about the current app and other installed apps before showing votes
     if (!(votes && currentApp && installedApps)) {
       return [[], []]
     }
@@ -68,7 +69,6 @@ function useDecoratedVotes() {
     })
 
     // Reduce the list of installed apps to just those that have been targetted by apps
-    console.log('installed apps ', installedApps)
     const executionTargets = installedApps
       .filter(app =>
         votes.some(vote =>
