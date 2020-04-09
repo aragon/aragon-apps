@@ -255,7 +255,7 @@ function BlockNumber({ blockNumber }) {
       {blockNumber}
     </Link>
   ) : (
-    <span>{blockNumber}</span>
+    <strong>{blockNumber}</strong>
   )
 }
 
