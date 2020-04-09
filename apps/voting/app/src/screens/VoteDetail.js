@@ -4,6 +4,7 @@ import {
   Bar,
   Box,
   GU,
+  Help,
   IconCheck,
   IconTime,
   Split,
@@ -204,7 +205,20 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
             <Box heading="Status">
               <Status vote={vote} />
             </Box>
-            <Box heading="Relative support %">
+            <Box
+              heading={
+                <React.Fragment>
+                  Support %
+                  <Help hint="What’s the support?">
+                    <strong>Support</strong> is the relative percentage of
+                    tokens that are required to vote “Yes” for a proposal to be
+                    approved. For example, if “Support” is set to 51%, then more
+                    than 51% of the tokens used to vote on a proposal must be
+                    “Yes” for it to pass.
+                  </Help>
+                </React.Fragment>
+              }
+            >
               <div
                 css={`
                   ${textStyle('body2')};
@@ -216,7 +230,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     color: ${theme.surfaceContentSecondary};
                   `}
                 >
-                  (>{round(supportRequired * 100, 2)}% support needed)
+                  (>{round(supportRequired * 100, 2)}% needed)
                 </span>
               </div>
               <SummaryBar
@@ -227,7 +241,19 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 `}
               />
             </Box>
-            <Box heading="Minimum approval %">
+            <Box
+              heading={
+                <React.Fragment>
+                  Approval %
+                  <Help hint="What’s the vote duration?">
+                    <strong>Vote Duration</strong> is the length of time that
+                    the vote will be open for participation. For example, if the
+                    Vote Duration is set to 24 hours, then token holders have 24
+                    hours to participate in the vote.
+                  </Help>
+                </React.Fragment>
+              }
+            >
               <div
                 css={`
                   ${textStyle('body2')};
@@ -239,7 +265,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     color: ${theme.surfaceContentSecondary};
                   `}
                 >
-                  (>{round(minAcceptQuorum * 100, 2)}% approval needed)
+                  (>{round(minAcceptQuorum * 100, 2)}% needed)
                 </span>
               </div>
               <SummaryBar
