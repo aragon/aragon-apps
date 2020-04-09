@@ -1,6 +1,7 @@
 import React, { useMemo, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { compareDesc, format } from 'date-fns'
+import { saveAs } from 'file-saver'
 import {
   Button,
   ContextMenu,
@@ -20,7 +21,6 @@ import {
   useConnectedAccount,
   useNetwork,
 } from '@aragon/api-react'
-import { READABLE_TRANSFER_TYPES } from '../transfer-types'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
@@ -48,6 +48,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
     selectedToken,
     selectedTransferType,
     symbols,
+    transferTypes,
   } = useFilteredTransfers({ transactions, tokens })
   const { isSyncing } = appState
   const tokenDetails = tokens.reduce(
@@ -139,7 +140,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
               onTransferTypeChange={handleTransferTypeChange}
               tokenFilter={selectedToken}
               transferTypeFilter={selectedTransferType}
-              transferTypes={READABLE_TRANSFER_TYPES}
+              transferTypes={transferTypes}
               symbols={symbols}
             />
           )}

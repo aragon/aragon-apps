@@ -1,6 +1,11 @@
-import { useState, useCallback, useMemo } from 'react'
-import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
-import { TRANSFER_TYPES, Incoming, Outgoing } from '../transfer-types'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { endOfDay, isAfter, isBefore, startOfDay } from 'date-fns'
+import {
+  TRANSFER_TYPES,
+  TRANSFER_TYPES_LABELS,
+  Incoming,
+  Outgoing,
+} from '../transfer-types'
 import { addressesEqual } from '../lib/web3-utils'
 
 const UNSELECTED_TOKEN_FILTER = -1
@@ -16,20 +21,26 @@ function useFilteredTransfers({ transactions, tokens }) {
     UNSELECTED_TRANSFER_TYPE_FILTER
   )
   const [selectedToken, setSelectedToken] = useState(UNSELECTED_TOKEN_FILTER)
+
+  useEffect(() => setPage(0), [
+    selectedDateRange,
+    selectedTransferType,
+    selectedToken,
+  ])
+
   const handleSelectedDateRangeChange = useCallback(range => {
-    setPage(0)
     setSelectedDateRange(range)
   }, [])
   const handleTokenChange = useCallback(index => {
-    setPage(0)
-    setSelectedToken(index || UNSELECTED_TOKEN_FILTER)
+    const tokenIndex = index === 0 ? UNSELECTED_TOKEN_FILTER : index
+    setSelectedToken(tokenIndex)
   }, [])
   const handleTransferTypeChange = useCallback(index => {
-    setPage(0)
-    setSelectedTransferType(index || UNSELECTED_TRANSFER_TYPE_FILTER)
+    const transferTypeIndex =
+      index === 0 ? UNSELECTED_TRANSFER_TYPE_FILTER : index
+    setSelectedTransferType(transferTypeIndex)
   }, [])
   const handleClearFilters = useCallback(() => {
-    setPage(0)
     setSelectedTransferType(UNSELECTED_TRANSFER_TYPE_FILTER)
     setSelectedToken(UNSELECTED_TOKEN_FILTER)
     setSelectedDateRange(UNSELECTED_DATE_RANGE_FILTER)
@@ -50,16 +61,16 @@ function useFilteredTransfers({ transactions, tokens }) {
         ) {
           return false
         }
-
-        // Exclude by date range
+        // Filter separately by start and end date.
         if (
-          // We're not checking for an end date because we will always
-          // have a start date for defining a range.
           selectedDateRange.start &&
-          !isWithinInterval(new Date(date), {
-            start: startOfDay(selectedDateRange.start),
-            end: endOfDay(selectedDateRange.end),
-          })
+          isBefore(new Date(date), startOfDay(selectedDateRange.start))
+        ) {
+          return false
+        }
+        if (
+          selectedDateRange.end &&
+          isAfter(new Date(date), endOfDay(selectedDateRange.end))
         ) {
           return false
         }
@@ -100,6 +111,7 @@ function useFilteredTransfers({ transactions, tokens }) {
     selectedToken,
     selectedTransferType,
     symbols,
+    transferTypes: TRANSFER_TYPES_LABELS,
   }
 }
 
