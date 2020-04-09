@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { endOfDay, isEqual, isWithinInterval, startOfDay } from 'date-fns'
+import { endOfDay, isAfter, isBefore, startOfDay } from 'date-fns'
 import {
   TRANSFER_TYPES,
   TRANSFER_TYPES_LABELS,
@@ -32,11 +32,12 @@ function useFilteredTransfers({ transactions, tokens }) {
     setSelectedDateRange(range)
   }, [])
   const handleTokenChange = useCallback(index => {
-    const tokenIndex = index === 0 ? -1 : index
+    const tokenIndex = index === 0 ? UNSELECTED_TOKEN_FILTER : index
     setSelectedToken(tokenIndex)
   }, [])
   const handleTransferTypeChange = useCallback(index => {
-    const transferTypeIndex = index === 0 ? -1 : index
+    const transferTypeIndex =
+      index === 0 ? UNSELECTED_TRANSFER_TYPE_FILTER : index
     setSelectedTransferType(transferTypeIndex)
   }, [])
   const handleClearFilters = useCallback(() => {
@@ -60,32 +61,16 @@ function useFilteredTransfers({ transactions, tokens }) {
         ) {
           return false
         }
-        // Exclude by date range
-        // Case 1: we have both a start and end date.
+        // Filter separately by start and end date.
         if (
           selectedDateRange.start &&
-          selectedDateRange.end &&
-          !isWithinInterval(new Date(date), {
-            start: startOfDay(selectedDateRange.start),
-            end: endOfDay(selectedDateRange.end),
-          })
+          isBefore(new Date(date), startOfDay(selectedDateRange.start))
         ) {
           return false
         }
-
-        // Case 2: we have a start date, but not an end date.
-        if (
-          selectedDateRange.start &&
-          !selectedDateRange.end &&
-          !isEqual(new Date(date), selectedDateRange.start)
-        ) {
-          return false
-        }
-
-        // Case 3: we don't have a start date, but do have an end date.
         if (
           selectedDateRange.end &&
-          !isEqual(new Date(date), selectedDateRange.end)
+          isAfter(new Date(date), endOfDay(selectedDateRange.end))
         ) {
           return false
         }
