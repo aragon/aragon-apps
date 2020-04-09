@@ -1,11 +1,10 @@
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
-const getBalance = require('@aragon/test-helpers/balance')(web3)
-const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
+const { assertRevert } = require('@aragon/contract-test-helpers/assertThrow')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-helpers/events')
+const getBalanceFn = require('@aragon/contract-test-helpers/balance')
+const { makeErrorMappingProxy } = require('@aragon/contract-test-helpers/utils')
+const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
 
-const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
-
 const TokenManager = artifacts.require('TokenManagerMock')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const ACL = artifacts.require('ACL')
@@ -14,10 +13,13 @@ const DAOFactory = artifacts.require('DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
 
-const n = '0x00'
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
+const withdrawAddr = '0x0000000000000000000000000000000000001234'
 
 contract('Token Manager', ([root, holder, holder2, anyone]) => {
+    const getBalance = getBalanceFn(web3)
+
     let tokenManagerBase, daoFact, tokenManager, token
 
     let APP_MANAGER_ROLE
@@ -70,14 +72,14 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
 
     beforeEach(async () => {
         const r = await daoFact.newDAO(root)
-        const dao = Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
-        const acl = ACL.at(await dao.acl())
+        const dao = await Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
+        const acl = await ACL.at(await dao.acl())
 
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
-        const receipt = await dao.newAppInstance('0x1234', tokenManagerBase.address, '0x', false, { from: root })
-        tokenManager = TokenManager.at(getNewProxyAddress(receipt))
-        tokenManager.mockSetTimestamp(NOW)
+        const receipt = await dao.newAppInstance(withdrawAddr, tokenManagerBase.address, '0x', false, { from: root })
+        tokenManager = await TokenManager.at(getNewProxyAddress(receipt))
+        await tokenManager.mockSetTimestamp(NOW)
 
         await acl.createPermission(ANY_ADDR, tokenManager.address, MINT_ROLE, root, { from: root })
         await acl.createPermission(ANY_ADDR, tokenManager.address, ISSUE_ROLE, root, { from: root })
@@ -85,7 +87,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
         await acl.createPermission(ANY_ADDR, tokenManager.address, REVOKE_VESTINGS_ROLE, root, { from: root })
         await acl.createPermission(ANY_ADDR, tokenManager.address, BURN_ROLE, root, { from: root })
 
-        token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
+        token = await MiniMeToken.new(ZERO_ADDR, ZERO_ADDR, 0, 'n', 0, 'n', true)
     })
 
     it('checks it is forwarder', async () => {
@@ -250,7 +252,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
                 const executionTarget = await ExecutionTarget.new()
                 await tokenManager.mint(holder, 100)
 
-                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                const action = { to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }
                 const script = encodeCallScript([action])
 
                 await tokenManager.forward(script, { from: holder })
@@ -259,7 +261,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
 
             it('disallows non-token holders from forwarding actions', async () => {
                 const executionTarget = await ExecutionTarget.new()
-                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                const action = { to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }
                 const script = encodeCallScript([action])
 
                 await assertRevert(tokenManager.forward(script, { from: anyone }), errors.TM_CAN_NOT_FORWARD)
@@ -291,13 +293,13 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
 
             it("cannot call proxyPayment() from outside of the token's context", async () => {
                 const value = 10
-                const prevTokenManagerBalance = (await getBalance(tokenManager.address)).toNumber()
+                const prevTokenManagerBalance = parseInt(await getBalance(tokenManager.address), 10)
 
                 // Make sure this callback fails when called out-of-context
                 await assertRevert(tokenManager.proxyPayment(root, { value }), errors.TM_CALLER_NOT_TOKEN)
 
                 // Make sure no ETH was transferred
-                assert.equal((await getBalance(tokenManager.address)).toNumber(), prevTokenManagerBalance, 'token manager ETH balance should be the same')
+                assert.equal(parseInt(await getBalance(tokenManager.address), 10), prevTokenManagerBalance, 'token manager ETH balance should be the same')
             })
 
             it('fails when assigning invalid vesting schedule', async () => {
@@ -308,7 +310,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
 
             it('allows to recover external tokens', async () => {
                 assert.isTrue(await tokenManager.allowRecoverability(ETH))
-                assert.isTrue(await tokenManager.allowRecoverability('0x1234'))
+                assert.isTrue(await tokenManager.allowRecoverability(withdrawAddr))
             })
 
             it('does not allow to recover own tokens', async () => {
@@ -345,12 +347,12 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
                     })
 
                     it('can get vesting details before being revoked', async () => {
-                        const [vAmount, vStartDate, vCliffDate, vVestingDate, vRevokable] = await tokenManager.getVesting(holder, 0)
-                        assert.equal(vAmount, totalTokens)
-                        assert.equal(vStartDate, startDate)
-                        assert.equal(vCliffDate, cliffDate)
-                        assert.equal(vVestingDate, vestingDate)
-                        assert.equal(vRevokable, revokable)
+                        const data = await tokenManager.getVesting(holder, 0)
+                        assert.equal(data.amount, totalTokens)
+                        assert.equal(data.start, startDate)
+                        assert.equal(data.cliff, cliffDate)
+                        assert.equal(data.vesting, vestingDate)
+                        assert.equal(data.revokable, revokable)
                     })
 
                     it('can start transferring on cliff', async () => {
@@ -456,7 +458,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
 
         it('disallows forwarding actions', async () => {
             const executionTarget = await ExecutionTarget.new()
-            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+            const action = { to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }
             const script = encodeCallScript([action])
 
             await assertRevert(tokenManager.forward(script, { from: anyone }), errors.TM_CAN_NOT_FORWARD)
