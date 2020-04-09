@@ -4,9 +4,9 @@ import { saveAs } from 'file-saver'
 import { useCurrentApp } from '@aragon/api-react'
 import { useToast } from '@aragon/ui'
 import { IdentityContext } from './IdentityManager/IdentityManager'
-import { toChecksumAddress } from '../lib/web3-utils'
-import { formatTokenAmount } from '../lib/utils'
 import { formatDate, YYMMDD_LONG_FORMAT } from '../lib/date-utils'
+import { formatTokenAmount } from '../lib/utils'
+import { toChecksumAddress } from '../lib/web3-utils'
 
 // Transforms a two dimensional array into a CSV data structure
 // Surround every field with double quotes + escape double quotes inside.
