@@ -3,7 +3,6 @@ import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
 import { addressesEqual } from './web3-utils'
 import tokenAbi from './abi/minimeToken.json'
 
-const IDENTIFIER_MAX_LENGTH = 16
 const app = new Aragon()
 
 /*
@@ -111,7 +110,15 @@ async function initialize(tokenAddress) {
 
 function initState({ token, tokenAddress }) {
   return async cachedState => {
-    await identifyApp(token, tokenAddress)
+    try {
+      const tokenName = await token.name().toPromise()
+      return app.identify(tokenName)
+    } catch (err) {
+      console.error(
+        `Failed to load token name for token at ${tokenAddress} due to:`,
+        err
+      )
+    }
 
     const tokenSettings = hasLoadedTokenSettings(cachedState)
       ? {}
@@ -134,22 +141,6 @@ function initState({ token, tokenAddress }) {
   }
 }
 
-async function identifyApp(token, tokenAddress) {
-  try {
-    const tokenName = await token.name().toPromise()
-    if (tokenName.length <= IDENTIFIER_MAX_LENGTH) {
-      return app.identify(tokenName)
-    }
-
-    const tokenSymbol = await token.symbol().toPromise()
-    return app.identify(tokenSymbol)
-  } catch (err) {
-    console.error(
-      `Failed to load token name or symbol for token at ${tokenAddress} due to:`,
-      err
-    )
-  }
-}
 /***********************
  *                     *
  *   Event Handlers    *
