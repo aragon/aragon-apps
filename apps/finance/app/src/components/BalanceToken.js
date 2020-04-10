@@ -36,8 +36,17 @@ const BalanceToken = ({
     amount.toFixed(3)
   ).split('.')
 
-  const amountWasRounded =
-    amount.toString() !== `${integerAmount}.${fractionalAmount}`
+  const [_, notRoundedFractionalAmount] = formatTokenAmount(
+    amount,
+    false,
+    0,
+    false,
+    {
+      rounding: 18,
+    }
+  ).split('.')
+
+  const amountWasRounded = fractionalAmount !== notRoundedFractionalAmount
 
   return (
     <div css="display: inline-block">
@@ -81,7 +90,9 @@ const BalanceToken = ({
                 margin-left: ${GU}px;
               `}
             >
-              <Help>{amount}</Help>
+              <Help hint={'This is an approximation, see the complete amount'}>
+                {amount}
+              </Help>
             </div>
           )}
         </div>
