@@ -182,7 +182,7 @@ contract('Finance App', ([root, owner, recipient]) => {
         await financeApp.initialize(vault.address, MAX_UINT64)
         const data = await financeApp.getPeriod(await financeApp.currentPeriodId())
 
-        assert.equal(data.endTime, MAX_UINT64, "should have set the period's end date to MAX_UINT64")
+        assert.equal(data.endTime.eq(MAX_UINT64), true, "should have set the period's end date to MAX_UINT64")
     })
 
     it('fails on reinitialization', async () => {
