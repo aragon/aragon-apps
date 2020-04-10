@@ -106,7 +106,7 @@ function InfoBoxes({
       </Box>
       <Box heading="Ownership Distribution">
         <Distribution
-          heading="Token holder stakes"
+          heading="Tokenholder stakes"
           items={stakes}
           renderLegendItem={({ item: account }) => {
             const isCurrentUser = addressesEqual(account, connectedAccount)
