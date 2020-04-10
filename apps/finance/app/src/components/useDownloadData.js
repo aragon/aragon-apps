@@ -1,10 +1,9 @@
 import { useContext, useCallback } from 'react'
-import { format } from 'date-fns'
 import { saveAs } from 'file-saver'
 import { useCurrentApp } from '@aragon/api-react'
 import { useToast } from '@aragon/ui'
 import { IdentityContext } from './IdentityManager/IdentityManager'
-import { formatDate, YYMMDD_LONG_FORMAT } from '../lib/date-utils'
+import { formatDate } from '../lib/date-utils'
 import { formatTokenAmount } from '../lib/utils'
 import { toChecksumAddress } from '../lib/web3-utils'
 
@@ -17,11 +16,11 @@ function csv(data) {
 }
 
 const getDownloadFilename = (appAddress, { start, end }) => {
-  const today = format(Date.now(), YYMMDD_LONG_FORMAT)
+  const today = formatDate(Date.now())
   let filename = `finance_${appAddress}_${today}.csv`
   if (start && end) {
-    const formattedStart = format(start, YYMMDD_LONG_FORMAT)
-    const formattedEnd = format(end, YYMMDD_LONG_FORMAT)
+    const formattedStart = formatDate(start)
+    const formattedEnd = formatDate(end)
     filename = `finance_${appAddress}_${formattedStart}_to_${formattedEnd}.csv`
   }
   return filename
