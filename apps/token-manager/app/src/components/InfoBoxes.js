@@ -5,6 +5,7 @@ import { formatBalance, stakesPercentages } from '../utils'
 import { addressesEqual } from '../web3-utils'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import You from './You'
+import { useIdentity } from './IdentityManager/IdentityManager'
 
 const DISTRIBUTION_ITEMS_MAX = 7
 
@@ -110,14 +111,17 @@ function InfoBoxes({
           items={stakes}
           renderLegendItem={({ item: account }) => {
             const isCurrentUser = addressesEqual(account, connectedAccount)
+            const [label, showLocalIdentityModal] = useIdentity(account)
+            
             return (
               <div>
                 <LocalIdentityBadge
                   entity={account}
                   connectedAccount={isCurrentUser}
-                  label={isCurrentUser && 'YOU'}
-                  labelStyle={isCurrentUser && `color: ${theme.tagIndicatorContent};`}
+                  customLabel={!Boolean(label) && isCurrentUser && 'YOU'}
+                  labelStyle={(!Boolean(label) && isCurrentUser ? `color: ${theme.tagIndicatorContent};` : '')}
                 />
+                {isCurrentUser && Boolean(label) && <You />}
               </div>
             )
           }}

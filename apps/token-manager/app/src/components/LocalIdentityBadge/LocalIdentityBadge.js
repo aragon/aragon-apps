@@ -9,9 +9,10 @@ const LocalIdentityBadge = ({ entity, ...props }) => {
   const network = useNetwork()
   const [label, showLocalIdentityModal] = useIdentity(entity)
   const handleClick = () => showLocalIdentityModal(entity)
+  
   return (
     <IdentityBadge
-      label={label || ''}
+      label={label || props.customLabel }
       entity={entity}
       networkType={network && network.type}
       popoverAction={{
