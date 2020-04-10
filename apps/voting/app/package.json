@@ -43,13 +43,13 @@
     "prettier": "^1.8.2"
   },
   "scripts": {
-    "lint": "eslint ./src",
-    "test": "jest",
-    "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3001 --out-dir build/",
-    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url \".\"",
-    "build:script": "parcel build src/script.js --out-dir build/",
-    "watch:script": "parcel watch src/script.js --out-dir build/ --no-hmr",
-    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build",
+    "start": "npm run sync-assets && npm run watch & parcel serve index.html -p 3001 --out-dir ../dist/",
+    "watch": "parcel watch src/script.js --out-dir ../dist/ --no-hmr",
+    "serve": "parcel serve index.html --out-dir ../dist/ --no-cache",
+    "build": "npm run sync-assets && npm run build:frontend && npm run build:script",
+    "build:frontend": "parcel build index.html -d ../dist/ --public-url \".\" --no-cache",
+    "build:script": "parcel build src/script.js --out-dir ../dist/ --no-cache",
+    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ../dist && rsync -rtu ./public/ ../dist",
     "now-build": "npm run build"
   },
   "browserslist": [

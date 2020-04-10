@@ -1,33 +1,25 @@
 {
+  "appName": "voting.aragonpm.eth",
+  "path": "contracts/Voting.sol",
   "environments": {
     "default": {
       "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1",
-      "appName": "voting.aragonpm.eth",
       "network": "rpc"
     },
     "mainnet": {
       "registry": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
-      "appName": "voting.aragonpm.eth",
       "network": "mainnet"
     },
     "rinkeby": {
       "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
-      "appName": "voting.aragonpm.eth",
       "network": "rinkeby"
     },
     "ropsten": {
       "registry": "0x6afe2cacee211ea9179992f89dc61ff25c61e923",
-      "appName": "voting.aragonpm.eth",
       "network": "ropsten"
     },
     "staging": {
       "registry": "0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939",
-      "appName": "voting.aragonpm.eth",
-      "network": "rinkeby"
-    },
-    "rinkeby-old": {
-      "registry": "0xfbae32d1cde62858bc45f51efc8cc4fa1415447e",
-      "appName": "voting.aragonpm.eth",
       "network": "rinkeby"
     }
   },
@@ -53,6 +45,5 @@
         "Current quorum"
       ]
     }
-  ],
-  "path": "contracts/Voting.sol"
+  ]
 }
