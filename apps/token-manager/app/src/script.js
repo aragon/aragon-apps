@@ -134,7 +134,7 @@ function initState({ token, tokenAddress }) {
       ...tokenSettings,
     }
 
-    // It's safe to not refresh the balances of all token holders
+    // It's safe to not refresh the balances of all tokenholders
     // because we process any event that could change balances, even with block caching
 
     return inititalState
