@@ -157,7 +157,7 @@ async function updateConnectedAccount(state, { account }) {
   connectedAccount = account
   return {
     ...state,
-    // fetch all the votes casted by the connected account
+    // Fetch all the votes cast by the connected account
     connectedAccountVotes: state.votes
       ? await getAccountVotes({
           connectedAccount: account,

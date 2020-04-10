@@ -22,9 +22,9 @@ import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBa
 import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
 import VoteActions from '../components/VoteActions'
+import VoteCast from '../components/VoteCast'
 import VoteStatus from '../components/VoteStatus'
 import VoteText from '../components/VoteText'
-import VoteCasted from '../components/VoteCasted'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
@@ -189,7 +189,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   symbol={tokenSymbol}
                   connectedAccountVote={connectedAccountVote}
                 />
-                {youVoted && <VoteCasted vote={vote} />}
+                {youVoted && <VoteCast vote={vote} />}
               </div>
               <VoteActions
                 onExecute={handleExecute}
@@ -246,11 +246,12 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 <React.Fragment>
                   Minimum Approval %
                   <Help hint="What is Minimum Approval?">
-                    <strong>Minimum Approval</strong> is the percentage of 
-                    the total token supply that is required to vote “Yes” on 
-                    a proposal before it can be approved. For example, if the 
-                    “Minimum Approval” is set to 20%, then more than 20% of the 
-                    outstanding token supply must vote “Yes” on a proposal for it to pass.
+                    <strong>Minimum Approval</strong> is the percentage of the
+                    total token supply that is required to vote “Yes” on a
+                    proposal before it can be approved. For example, if the
+                    “Minimum Approval” is set to 20%, then more than 20% of the
+                    outstanding token supply must vote “Yes” on a proposal for
+                    it to pass.
                   </Help>
                 </React.Fragment>
               }
