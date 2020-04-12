@@ -35,14 +35,7 @@ const formatDate = date => format(date, 'dd/MM/yy')
 const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
   const mappedData = await Promise.all(
     transfers.map(
-      async ({
-        date,
-        numData: { amount },
-        reference,
-        isIncoming,
-        entity,
-        token,
-      }) => {
+      async ({ date, amount, reference, isIncoming, entity, token }) => {
         const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
         const formattedAmount = formatTokenAmount(
           amount,
