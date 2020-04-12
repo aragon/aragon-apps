@@ -31,13 +31,13 @@ export function formatTokenAmount(
   return (displaySign ? (isIncoming ? '+' : '-') : '') + formattedAmount
 }
 
-function formatAmountBN(amount, decimals = 0, rounding) {
+function formatAmountBN(amount, decimals, rounding) {
   const amountBN = new BN(amount)
   const decimalBase = new BN(10).pow(new BN(decimals)) // 10e(decimals)
 
   // Split into integer and fractional parts
   const intAmount = amountBN.div(decimalBase).toString()
-  let fractionAmount = amountBN.mod(decimalBase)
+  const fractionAmount = amountBN.mod(decimalBase)
 
   const roundedFractionAmount = roundFractionAmountBN(
     fractionAmount,
@@ -53,7 +53,7 @@ function formatAmountBN(amount, decimals = 0, rounding) {
 function roundFractionAmountBN(amount, decimals, rounding) {
   const decimalBaseRounding = new BN(10).pow(new BN(decimals - rounding))
 
-  // Apply rounding to fractional part
+  // Apply rounding
   const roundedFractionAmount = amount.divRound(decimalBaseRounding)
 
   // Add leading zeros
