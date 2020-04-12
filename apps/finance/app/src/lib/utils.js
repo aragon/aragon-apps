@@ -62,5 +62,5 @@ function roundFractionAmountBN(amount, decimals, rounding) {
     : ''
 
   // Remove trailing zeros
-  return paddedFractionAmount.replace(/^(0?\d*?)(0*?)$/, '$1')
+  return paddedFractionAmount.replace(/^(\d*?)(0*?)$/, '$1')
 }
