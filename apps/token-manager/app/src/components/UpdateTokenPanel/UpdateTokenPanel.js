@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
 import {
+  ButtonBase,
   Button,
   Field,
   GU,
@@ -335,7 +336,6 @@ function TokenPanelContent({
         }
       >
         <TextInput
-          type="number"
           ref={holderAddress ? amountInputRef : undefined}
           value={amountField.value}
           onChange={handleAmountChange}
@@ -344,6 +344,17 @@ function TokenPanelContent({
           step={tokenStep}
           required
           wide
+          adornment={
+            <ButtonBase
+              css={`
+                margin-right: ${1 * GU}px;
+              `}
+              onClick={() => updateAmount(amountField.max)}
+            >
+              MAX
+            </ButtonBase>
+          }
+          adornmentPosition="end"
         />
       </Field>
 
