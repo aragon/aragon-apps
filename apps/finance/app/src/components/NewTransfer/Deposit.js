@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import BN from 'bn.js'
 import {
   Button,
+  ButtonBase,
   Field,
   IconCross,
   IdentityBadge,
@@ -248,11 +249,17 @@ class Deposit extends React.Component {
     })
     return true
   }
-
+  setMaxUserBalance = () => {
+    const { selectedToken, amount } = this.state
+    const { userBalance, decimals } = selectedToken.data
+    const adjustedAmount = fromDecimals(userBalance, decimals)
+    this.setState({
+      amount: { ...amount, value: adjustedAmount },
+    })
+  }
   render() {
     const { appAddress, network, title, tokens } = this.props
     const { amount, reference, selectedToken } = this.state
-
     let errorMessage
     if (selectedToken.error === TOKEN_NOT_FOUND_ERROR) {
       errorMessage = 'Token not found'
@@ -268,6 +275,7 @@ class Deposit extends React.Component {
       addressesEqual(selectedToken.value, ETHER_TOKEN_FAKE_ADDRESS)
     const tokenSelected = selectedToken.value && !ethSelected
     const isMainnet = network.type === 'main'
+    const isMaxButtonVisible = selectedToken && selectedToken.data.symbol
 
     return (
       <form onSubmit={this.handleSubmit}>
@@ -280,13 +288,25 @@ class Deposit extends React.Component {
         <SelectedTokenBalance network={network} selectedToken={selectedToken} />
         <Field label="Amount">
           <TextInput
-            type="number"
             value={amount.value}
             onChange={this.handleAmountUpdate}
             min={0}
             step="any"
             required
             wide
+            adornment={
+              isMaxButtonVisible && (
+                <ButtonBase
+                  css={`
+                    margin-right: ${1 * GU}px;
+                  `}
+                  onClick={this.setMaxUserBalance}
+                >
+                  MAX
+                </ButtonBase>
+              )
+            }
+            adornmentPosition="end"
           />
         </Field>
         <Field label="Reference (optional)">
