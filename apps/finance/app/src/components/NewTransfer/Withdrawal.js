@@ -10,9 +10,10 @@ import {
   GU,
   textStyle,
   useTheme,
+  ButtonBase,
 } from '@aragon/ui'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
-import { toDecimals } from '../../lib/math-utils'
+import { toDecimals, fromDecimals } from '../../lib/math-utils'
 import { addressPattern, isAddress } from '../../lib/web3-utils'
 
 const NO_ERROR = Symbol('NO_ERROR')
@@ -112,6 +113,15 @@ class Withdrawal extends React.Component {
     onWithdraw(token.address, recipientAddress, adjustedAmount, reference)
   }
 
+  setMaxUserBalance = () => {
+    const { selectedToken, amount } = this.state
+    const token = this.nonZeroTokens()[selectedToken]
+    const adjustedAmount = fromDecimals(token.amount.toString(), token.decimals)
+    this.setState({
+      amount: { ...amount, value: adjustedAmount },
+    })
+  }
+
   render() {
     const { title } = this.props
     const { amount, recipient, reference, selectedToken } = this.state
@@ -135,6 +145,8 @@ class Withdrawal extends React.Component {
         selectedToken === NULL_SELECTED_TOKEN
     )
 
+    const isVisibleMaxButton = Boolean(selectedToken !== NULL_SELECTED_TOKEN)
+
     return tokens.length ? (
       <form onSubmit={this.handleSubmit}>
         <h1>{title}</h1>
@@ -157,13 +169,25 @@ class Withdrawal extends React.Component {
         <Field label="Amount" required>
           <CombinedInput>
             <TextInput
-              type="number"
               value={amount.value}
               onChange={this.handleAmountUpdate}
               min={0}
               step="any"
               required
               wide
+              adornment={
+                isVisibleMaxButton && (
+                  <ButtonBase
+                    css={`
+                      margin-right: ${1 * GU}px;
+                    `}
+                    onClick={this.setMaxUserBalance}
+                  >
+                    MAX
+                  </ButtonBase>
+                )
+              }
+              adornmentPosition="end"
             />
             <DropDown
               header="Token"
@@ -199,15 +223,6 @@ class Withdrawal extends React.Component {
 
 const CombinedInput = styled.div`
   display: flex;
-  input[type='text'] {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    border-right: 0;
-  }
-  input[type='text'] + div > div:first-child {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-  }
 `
 
 const ValidationError = ({ message }) => {
