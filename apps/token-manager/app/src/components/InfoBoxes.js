@@ -111,15 +111,18 @@ function InfoBoxes({
           items={stakes}
           renderLegendItem={({ item: account }) => {
             const isCurrentUser = addressesEqual(account, connectedAccount)
-            const [label, showLocalIdentityModal] = useIdentity(account)
-            
+            const [label] = useIdentity(account)
+
+            const identityBadgeProps = {
+              defaultLabel: !Boolean(label) && isCurrentUser ? 'YOU' : '',
+              labelStyle: isCurrentUser ? '' + (Boolean(label) ? 'max-width: 83px;' : `color: ${theme.tagIndicatorContent};` ) : 'max-width: 117px;'
+            }
             return (
               <div>
                 <LocalIdentityBadge
                   entity={account}
                   connectedAccount={isCurrentUser}
-                  customLabel={!Boolean(label) && isCurrentUser && 'YOU'}
-                  labelStyle={(!Boolean(label) && isCurrentUser ? `color: ${theme.tagIndicatorContent};` : '')}
+                  {...identityBadgeProps}
                 />
                 {isCurrentUser && Boolean(label) && <You />}
               </div>
