@@ -11,6 +11,9 @@ module.exports = {
   networks: {
     localhost: {
       url: 'http://localhost:8545',
+      accounts: {
+        mnemonic: "explain tackle mirror kit van hammer degree position ginger unfair soup bonus"
+      }
     },
     coverage: {
       url: 'http://localhost:8555',
