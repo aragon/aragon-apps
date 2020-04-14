@@ -3,17 +3,17 @@
   "version": "2.1.0",
   "main": "index.js",
   "scripts": {
-    "postinstall": "npm run compile && npm run copy-artifacts",
+    "postinstall": "npm run compile",
     "start": "buidler start",
     "console": "buidler console",
     "compile": "buidler compile --force",
     "devchain": "buidler node",
     "build": "cd app && npm run build",
-    "copy-artifacts": "cp -R node_modules/@aragon/os/build/contracts/. artifacts/.",
     "lint": "buidler check && echo 'Lint complete.'",
-    "test": "buidler test",
-    "test:gas": "GAS_REPORTER=true buidler test",
-    "coverage": "buidler coverage --network coverage",
+    "test": "npm run ganache-cli:test",
+    "test:gas": "GAS_REPORTER=true npm run ganache-cli:test",
+    "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
+    "ganache-cli:test": "./node_modules/@aragon/contract-test-helpers/ganache-cli.sh",
     "apm:publish:major": "buidler publish major",
     "apm:publish:minor": "buidler publish minor",
     "apm:publish:patch": "buidler publish patch"
@@ -48,9 +48,9 @@
     "@nomiclabs/buidler-solhint": "^1.2.0",
     "@nomiclabs/buidler-truffle5": "^1.1.2",
     "@nomiclabs/buidler-web3": "^1.1.2",
-    "bignumber.js": "^9.0.0",
     "buidler-gas-reporter": "^0.1.3",
     "eth-ens-namehash": "^2.0.8",
+    "ganache-cli": "^6.9.1",
     "solidity-coverage": "^0.7.0-beta.3",
     "web3": "^1.2.6"
   }
