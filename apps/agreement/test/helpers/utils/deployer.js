@@ -74,13 +74,13 @@ class AgreementDeployer {
 
   async deployAndInitializeWrapper(options = {}) {
     await this.deployAndInitialize(options)
-    const [content, tokenAddress, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage, arbitratorAddress] = await this.agreement.getCurrentSetting()
+    const [content, collateralAmount, challengeLeverage, arbitratorAddress, delayPeriod, settlementPeriod] = await this.agreement.getCurrentSetting()
 
     const IArbitrator = this._getContract('IArbitrator')
     const arbitrator = IArbitrator.at(arbitratorAddress)
 
     const MiniMeToken = this._getContract('MiniMeToken')
-    const collateralToken = MiniMeToken.at(tokenAddress)
+    const collateralToken = options.collateralToken ? MiniMeToken.at(options.collateralToken) : this.collateralToken
 
     const setting = { content, collateralToken, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage, arbitrator }
     return new AgreementHelper(this.artifacts, this.web3, this.agreement, setting)
@@ -98,7 +98,7 @@ class AgreementDeployer {
     const defaultOptions = { ...DEFAULT_INITIALIZE_OPTIONS, ...options }
     const { title, content, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage } = defaultOptions
 
-    await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage, arbitrator.address)
+    await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod)
     return this.agreement
   }
 
