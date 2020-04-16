@@ -308,14 +308,14 @@ contract('Agreement', ([_, someone, signer]) => {
         const amount = initialStake.add(1)
 
         it('reverts', async () => {
-          await assertRevert(agreement.unstake({ signer, amount }), ERRORS.ERROR_INVALID_UNSTAKE_AMOUNT)
+          await assertRevert(agreement.unstake({ signer, amount }), ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
         })
       })
     })
 
     context('when the sender does not have an amount staked before', () => {
       it('reverts', async () => {
-        await assertRevert(agreement.unstake({ signer, amount: initialStake }), ERRORS.ERROR_INVALID_UNSTAKE_AMOUNT)
+        await assertRevert(agreement.unstake({ signer, amount: initialStake }), ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
       })
     })
   })
