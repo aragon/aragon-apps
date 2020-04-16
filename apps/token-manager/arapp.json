@@ -56,6 +56,15 @@
       ]
     },
     {
+      "name": "Move tokens",
+      "id": "TRANSFER_FROM_TO_ROLE",
+      "params": [
+	"Holder",
+	"Receiver",
+	"Token amount"
+      ]
+    },
+    {
       "name": "Revoke vesting",
       "id": "REVOKE_VESTINGS_ROLE",
       "params": [

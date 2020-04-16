@@ -21,6 +21,7 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     bytes32 public constant MINT_ROLE = keccak256("MINT_ROLE");
     bytes32 public constant ISSUE_ROLE = keccak256("ISSUE_ROLE");
     bytes32 public constant ASSIGN_ROLE = keccak256("ASSIGN_ROLE");
+    bytes32 public constant TRANSFER_FROM_TO_ROLE = keccak256("TRANSFER_FROM_TO_ROLE");
     bytes32 public constant REVOKE_VESTINGS_ROLE = keccak256("REVOKE_VESTINGS_ROLE");
     bytes32 public constant BURN_ROLE = keccak256("BURN_ROLE");
 
@@ -131,6 +132,16 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     function burn(address _holder, uint256 _amount) external authP(BURN_ROLE, arr(_holder, _amount)) {
         // minime.destroyTokens() never returns false, only reverts on failure
         token.destroyTokens(_holder, _amount);
+    }
+
+    /**
+    * @notice Transfer `@tokenAmount(self.token(): address, _amount, false)` tokens from `_holder` to `_receiver`
+    * @param _holder Holder of tokens being transferred
+    * @param _receiver The address receiving the tokens
+    * @param _amount Number of tokens transferred
+    */
+    function transfer_from_to(address _holder, address _receiver, uint256 _amount) external authP(TRANSFER_FROM_TO_ROLE, arr(_holder, _receiver, _amount)) {
+        _transfer_from_to(_holder, _receiver, _amount);
     }
 
     /**
@@ -321,6 +332,11 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     function _mint(address _receiver, uint256 _amount) internal {
         require(_isBalanceIncreaseAllowed(_receiver, _amount), ERROR_BALANCE_INCREASE_NOT_ALLOWED);
         token.generateTokens(_receiver, _amount); // minime.generateTokens() never returns false
+    }
+
+    function _transfer_from_to(address _holder, address _receiver, uint256 _amount) internal {
+	require(_isBalanceIncreaseAllowed(_holder, _receiver, _amount), ERROR_BALANCE_INCREASE_NOT_ALLOWED);
+	require(token.transferFrom(_holder, _receiver, _amount), ERROR_ASSIGN_TRANSFER_FROM_REVERTED);
     }
 
     function _isBalanceIncreaseAllowed(address _receiver, uint256 _inc) internal view returns (bool) {
