@@ -23,35 +23,42 @@ contract Agreement is IArbitrable, AragonApp {
     using SafeERC20 for ERC20;
     using PctHelpers for uint256;
 
+    /* Arbitrator outcomes constants */
     uint256 private constant DISPUTES_POSSIBLE_OUTCOMES = 2;
     uint256 private constant DISPUTES_RULING_SUBMITTER = 3;
     uint256 private constant DISPUTES_RULING_CHALLENGER = 4;
 
+    /* Validation errors */
     string internal constant ERROR_SENDER_NOT_ALLOWED = "AGR_SENDER_NOT_ALLOWED";
-    string internal constant ERROR_ACTION_DOES_NOT_EXIST = "AGR_ACTION_DOES_NOT_EXIST";
-    string internal constant ERROR_ACTION_IS_NOT_SCHEDULED = "AGR_ACTION_IS_NOT_SCHEDULED";
-    string internal constant ERROR_DISPUTE_DOES_NOT_EXIST = "AGR_DISPUTE_DOES_NOT_EXIST";
-    string internal constant ERROR_CANNOT_CHALLENGE_ACTION = "AGR_CANNOT_CHALLENGE_ACTION";
     string internal constant ERROR_INVALID_SETTLEMENT_OFFER = "AGR_INVALID_SETTLEMENT_OFFER";
-    string internal constant ERROR_ACTION_NOT_RULED_YET = "AGR_ACTION_NOT_RULED_YET";
-    string internal constant ERROR_CANNOT_SETTLE_ACTION = "AGR_CANNOT_SETTLE_ACTION";
-    string internal constant ERROR_CANNOT_DISPUTE_ACTION = "AGR_CANNOT_DISPUTE_ACTION";
-    string internal constant ERROR_CANNOT_RULE_DISPUTE = "AGR_CANNOT_RULE_DISPUTE";
-    string internal constant ERROR_CANNOT_SUBMIT_EVIDENCE = "AGR_CANNOT_SUBMIT_EVIDENCE";
-    string internal constant ERROR_SENDER_CANNOT_RULE_DISPUTE = "AGR_SENDER_CANNOT_RULE_DISPUTE";
-    string internal constant ERROR_INVALID_UNSTAKE_AMOUNT = "AGR_INVALID_UNSTAKE_AMOUNT";
     string internal constant ERROR_NOT_ENOUGH_AVAILABLE_STAKE = "AGR_NOT_ENOUGH_AVAILABLE_STAKE";
     string internal constant ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL = "AGR_AVAIL_BAL_BELOW_COLLATERAL";
-    string internal constant ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED = "AGR_COLLATERAL_TOKEN_TRANSF_FAIL";
+
+    /* Action related errors */
+    string internal constant ERROR_ACTION_DOES_NOT_EXIST = "AGR_ACTION_DOES_NOT_EXIST";
+    string internal constant ERROR_DISPUTE_DOES_NOT_EXIST = "AGR_DISPUTE_DOES_NOT_EXIST";
+    string internal constant ERROR_CANNOT_CANCEL_ACTION = "AGR_CANNOT_CANCEL_ACTION";
+    string internal constant ERROR_CANNOT_EXECUTE_ACTION = "AGR_CANNOT_EXECUTE_ACTION";
+    string internal constant ERROR_CANNOT_CHALLENGE_ACTION = "AGR_CANNOT_CHALLENGE_ACTION";
+    string internal constant ERROR_CANNOT_SETTLE_ACTION = "AGR_CANNOT_SETTLE_ACTION";
+    string internal constant ERROR_CANNOT_DISPUTE_ACTION = "AGR_CANNOT_DISPUTE_ACTION";
+    string internal constant ERROR_CANNOT_RULE_ACTION = "AGR_CANNOT_RULE_ACTION";
+    string internal constant ERROR_CANNOT_SUBMIT_EVIDENCE = "AGR_CANNOT_SUBMIT_EVIDENCE";
+
+    /* Evidence related errors */
     string internal constant ERROR_SUBMITTER_FINISHED_EVIDENCE = "AGR_SUBMITTER_FINISHED_EVIDENCE";
     string internal constant ERROR_CHALLENGER_FINISHED_EVIDENCE = "AGR_CHALLENGER_FINISHED_EVIDENCE";
-    string internal constant ERROR_EVIDENCE_SUBMITTER_NOT_ALLOWED = "AGR_EVIDENCE_SUBMITTER_NOT_ALLOW";
-    string internal constant ERROR_ARBITRATOR_FEE_RETURN_FAILED = "AGR_ARBITRATOR_FEE_RETURN_FAILED";
-    string internal constant ERROR_ARBITRATOR_FEE_DEPOSIT_FAILED = "AGR_ARBITRATOR_FEE_DEPOSIT_FAILED";
-    string internal constant ERROR_ARBITRATOR_FEE_APPROVAL_FAILED = "AGR_ARBITRATOR_FEE_APPROVAL_FAILED";
-    string internal constant ERROR_ARBITRATOR_FEE_TRANSFER_FAILED = "AGR_ARBITRATOR_FEE_TRANSFER_FAILED";
+
+    /* Arbitrator related errors */
     string internal constant ERROR_ARBITRATOR_NOT_CONTRACT = "AGR_ARBITRATOR_NOT_CONTRACT";
-    string internal constant ERROR_COLLATERAL_TOKEN_NOT_CONTRACT = "AGR_COLLATERAL_TOKEN_NOT_CONTRACT";
+    string internal constant ERROR_ARBITRATOR_FEE_RETURN_FAILED = "AGR_ARBITRATOR_FEE_RETURN_FAIL";
+    string internal constant ERROR_ARBITRATOR_FEE_DEPOSIT_FAILED = "AGR_ARBITRATOR_FEE_DEPOSIT_FAIL";
+    string internal constant ERROR_ARBITRATOR_FEE_APPROVAL_FAILED = "AGR_ARBITRATOR_FEE_APPROVAL_FAIL";
+    string internal constant ERROR_ARBITRATOR_FEE_TRANSFER_FAILED = "AGR_ARBITRATOR_FEE_TRANSFER_FAIL";
+
+    /* Collateral token related errors */
+    string internal constant ERROR_COLLATERAL_TOKEN_NOT_CONTRACT = "AGR_COL_TOKEN_NOT_CONTRACT";
+    string internal constant ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED = "AGR_COL_TOKEN_TRANSFER_FAILED";
 
     // bytes32 public constant STAKE_ROLE = keccak256("STAKE_ROLE");
     bytes32 public constant STAKE_ROLE = 0xeaea87345c0a5b2ecb49cde771d9ac5bfe2528357e00d43a1e06a12c2779f3ca;
@@ -200,7 +207,7 @@ contract Agreement is IArbitrable, AragonApp {
 
     function execute(uint256 _actionId) external {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        require(_canExecute(action, setting), ERROR_ACTION_IS_NOT_SCHEDULED);
+        require(_canExecute(action, setting), ERROR_CANNOT_EXECUTE_ACTION);
 
         action.state = ActionState.Executed;
         runScript(action.script, new bytes(0), new address[](0));
@@ -209,7 +216,7 @@ contract Agreement is IArbitrable, AragonApp {
 
     function cancel(uint256 _actionId) external {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        require(_canCancel(action), ERROR_ACTION_IS_NOT_SCHEDULED);
+        require(_canCancel(action), ERROR_CANNOT_CANCEL_ACTION);
         require(msg.sender == action.submitter, ERROR_SENDER_NOT_ALLOWED);
 
         _unlockBalance(msg.sender, setting.collateralAmount);
@@ -280,7 +287,7 @@ contract Agreement is IArbitrable, AragonApp {
 
     function executeRuling(uint256 _actionId) external {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        require(_canRuleDispute(action), ERROR_CANNOT_RULE_DISPUTE);
+        require(_canRuleDispute(action), ERROR_CANNOT_RULE_ACTION);
 
         uint256 disputeId = action.challenge.disputeId;
         setting.arbitrator.executeRuling(disputeId);
@@ -288,11 +295,11 @@ contract Agreement is IArbitrable, AragonApp {
 
     function rule(uint256 _disputeId, uint256 _ruling) external {
         (Action storage action, Dispute storage dispute) = _getActionAndDispute(_disputeId);
-        require(_canRuleDispute(action), ERROR_CANNOT_RULE_DISPUTE);
+        require(_canRuleDispute(action), ERROR_CANNOT_RULE_ACTION);
 
         Setting storage setting = _getSetting(action);
         IArbitrator arbitrator = setting.arbitrator;
-        require(msg.sender == address(arbitrator), ERROR_SENDER_CANNOT_RULE_DISPUTE);
+        require(msg.sender == address(arbitrator), ERROR_SENDER_NOT_ALLOWED);
 
         dispute.ruling = _ruling;
         emit Ruled(arbitrator, _disputeId, _ruling);
@@ -527,7 +534,7 @@ contract Agreement is IArbitrable, AragonApp {
                 _dispute.challengerFinishedEvidence = _finished;
             }
         } else {
-            revert(ERROR_EVIDENCE_SUBMITTER_NOT_ALLOWED);
+            revert(ERROR_SENDER_NOT_ALLOWED);
         }
 
         return submitterFinishedEvidence && challengerFinishedEvidence;
@@ -616,7 +623,7 @@ contract Agreement is IArbitrable, AragonApp {
 
     function _unstakeBalance(address _signer, uint256 _amount) internal {
         Stake storage balance = stakeBalances[_signer];
-        require(_amount <= balance.available, ERROR_INVALID_UNSTAKE_AMOUNT);
+        require(balance.available >= _amount, ERROR_NOT_ENOUGH_AVAILABLE_STAKE);
 
         balance.available = balance.available.sub(_amount);
         emit BalanceUnstaked(_signer, _amount);
