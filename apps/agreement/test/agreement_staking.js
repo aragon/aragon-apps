@@ -93,6 +93,14 @@ contract('Agreement', ([_, someone, signer]) => {
         await assertRevert(agreement.stake({ amount, signer, approve }), ERRORS.ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL)
       })
     })
+
+    context('when the amount is zero', () => {
+      const amount = 0
+
+      it('reverts', async () => {
+        await assertRevert(agreement.stake({ amount, signer, approve }), ERRORS.ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL)
+      })
+    })
   })
 
   describe('stakeFor', () => {
@@ -171,9 +179,17 @@ contract('Agreement', ([_, someone, signer]) => {
         await assertRevert(agreement.stake({ signer, amount, from, approve }), ERRORS.ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL)
       })
     })
+
+    context('when the amount is zero', () => {
+      const amount = 0
+
+      it('reverts', async () => {
+        await assertRevert(agreement.stake({ signer, amount, from, approve }), ERRORS.ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL)
+      })
+    })
   })
 
-  describe('aproveAndCall', () => {
+  describe('approveAndCall', () => {
     const from = signer
 
     const itStakesCollateralProperly = amount => {
@@ -241,6 +257,14 @@ contract('Agreement', ([_, someone, signer]) => {
         await assertRevert(agreement.approveAndCall({ amount, from, mint: false }), ERRORS.ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL)
       })
     })
+
+    context('when the amount is zero', () => {
+      const amount = 0
+
+      it('reverts', async () => {
+        await assertRevert(agreement.approveAndCall({ amount, from, mint: false }), ERRORS.ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL)
+      })
+    })
   })
 
   describe('unstake', () => {
@@ -251,71 +275,109 @@ contract('Agreement', ([_, someone, signer]) => {
         await agreement.stake({ signer, amount: initialStake })
       })
 
-      const itUnstakesCollateralProperly = amount => {
-        it('reduces the signer available balance', async () => {
-          const { available: previousAvailableBalance } = await agreement.getBalance(signer)
+      context('when the requested amount greater than zero', () => {
+        const itUnstakesCollateralProperly = amount => {
+          it('reduces the signer available balance', async () => {
+            const { available: previousAvailableBalance } = await agreement.getBalance(signer)
 
-          await agreement.unstake({ signer, amount })
+            await agreement.unstake({ signer, amount })
 
-          const { available: currentAvailableBalance } = await agreement.getBalance(signer)
-          assertBn(currentAvailableBalance, previousAvailableBalance.sub(amount), 'available balance does not match')
+            const { available: currentAvailableBalance } = await agreement.getBalance(signer)
+            assertBn(currentAvailableBalance, previousAvailableBalance.sub(amount), 'available balance does not match')
+          })
+
+          it('does not affect the locked or challenged balances of the signer', async () => {
+            const { locked: previousLockedBalance, challenged: previousChallengedBalance } = await agreement.getBalance(signer)
+
+            await agreement.unstake({ signer, amount })
+
+            const { locked: currentLockedBalance, challenged: currentChallengedBalance } = await agreement.getBalance(signer)
+            assertBn(currentLockedBalance, previousLockedBalance, 'locked balance does not match')
+            assertBn(currentChallengedBalance, previousChallengedBalance, 'challenged balance does not match')
+          })
+
+          it('transfers the staked tokens to the signer', async () => {
+            const previousSignerBalance = await collateralToken.balanceOf(signer)
+            const previousAgreementBalance = await collateralToken.balanceOf(agreement.address)
+
+            await agreement.unstake({ signer, amount })
+
+            const currentSignerBalance = await collateralToken.balanceOf(signer)
+            assertBn(currentSignerBalance, previousSignerBalance.add(amount), 'signer balance does not match')
+
+            const currentAgreementBalance = await collateralToken.balanceOf(agreement.address)
+            assertBn(currentAgreementBalance, previousAgreementBalance.sub(amount), 'agreement balance does not match')
+          })
+
+          it('emits an event', async () => {
+            const receipt = await agreement.unstake({ signer, amount })
+
+            assertAmountOfEvents(receipt, EVENTS.BALANCE_UNSTAKED, 1)
+            assertEvent(receipt, EVENTS.BALANCE_UNSTAKED, { signer, amount })
+          })
+        }
+
+        context('when the requested amount is lower than or equal to the actual available balance', () => {
+          context('when the remaining amount is above the collateral amount', () => {
+            const amount = initialStake.sub(collateralAmount).sub(1)
+
+            itUnstakesCollateralProperly(amount)
+          })
+
+          context('when the remaining amount is equal to the collateral amount', () => {
+            const amount = initialStake.sub(collateralAmount)
+
+            itUnstakesCollateralProperly(amount)
+          })
+
+          context('when the remaining amount is below the collateral amount', () => {
+            const amount = initialStake.sub(collateralAmount).add(1)
+
+            it('reverts', async () => {
+              await assertRevert(agreement.unstake({ signer, amount }), ERRORS.ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL)
+            })
+          })
+
+          context('when the remaining amount is zero', () => {
+            const amount = initialStake
+
+            itUnstakesCollateralProperly(amount)
+          })
         })
 
-        it('does not affect the locked or challenged balances of the signer', async () => {
-          const { locked: previousLockedBalance, challenged: previousChallengedBalance } = await agreement.getBalance(signer)
+        context('when the requested amount is higher than the actual available balance', () => {
+          const amount = initialStake.add(1)
 
-          await agreement.unstake({ signer, amount })
-
-          const { locked: currentLockedBalance, challenged: currentChallengedBalance } = await agreement.getBalance(signer)
-          assertBn(currentLockedBalance, previousLockedBalance, 'locked balance does not match')
-          assertBn(currentChallengedBalance, previousChallengedBalance, 'challenged balance does not match')
+          it('reverts', async () => {
+            await assertRevert(agreement.unstake({ signer, amount }), ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
+          })
         })
-
-        it('transfers the staked tokens to the signer', async () => {
-          const previousSignerBalance = await collateralToken.balanceOf(signer)
-          const previousAgreementBalance = await collateralToken.balanceOf(agreement.address)
-
-          await agreement.unstake({ signer, amount })
-
-          const currentSignerBalance = await collateralToken.balanceOf(signer)
-          assertBn(currentSignerBalance, previousSignerBalance.add(amount), 'signer balance does not match')
-
-          const currentAgreementBalance = await collateralToken.balanceOf(agreement.address)
-          assertBn(currentAgreementBalance, previousAgreementBalance.sub(amount), 'agreement balance does not match')
-        })
-
-        it('emits an event', async () => {
-          const receipt = await agreement.unstake({ signer, amount })
-
-          assertAmountOfEvents(receipt, EVENTS.BALANCE_UNSTAKED, 1)
-          assertEvent(receipt, EVENTS.BALANCE_UNSTAKED, { signer, amount })
-        })
-      }
-
-      context('when the remaining amount is above the collateral amount', () => {
-        const amount = initialStake.sub(1)
-
-        itUnstakesCollateralProperly(amount)
       })
 
-      context('when the remaining amount is equal to the collateral amount', () => {
-        const amount = initialStake
-
-        itUnstakesCollateralProperly(amount)
-      })
-
-      context('when the remaining amount is bellow to the collateral amount', () => {
-        const amount = initialStake.add(1)
+      context('when the requested amount is zero', () => {
+        const amount = 0
 
         it('reverts', async () => {
-          await assertRevert(agreement.unstake({ signer, amount }), ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
+          await assertRevert(agreement.unstake({ signer, amount }), ERRORS.ERROR_INVALID_UNSTAKE_AMOUNT)
         })
       })
     })
 
     context('when the sender does not have an amount staked before', () => {
-      it('reverts', async () => {
-        await assertRevert(agreement.unstake({ signer, amount: initialStake }), ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
+      const amount = initialStake
+
+      context('when the requested amount greater than zero', () => {
+        it('reverts', async () => {
+          await assertRevert(agreement.unstake({ signer, amount }), ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
+        })
+      })
+
+      context('when the requested amount is zero', () => {
+        const amount = 0
+
+        it('reverts', async () => {
+          await assertRevert(agreement.unstake({ signer, amount }), ERRORS.ERROR_INVALID_UNSTAKE_AMOUNT)
+        })
       })
     })
   })
