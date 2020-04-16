@@ -30,6 +30,7 @@ contract Agreement is IArbitrable, AragonApp {
 
     /* Validation errors */
     string internal constant ERROR_SENDER_NOT_ALLOWED = "AGR_SENDER_NOT_ALLOWED";
+    string internal constant ERROR_INVALID_UNSTAKE_AMOUNT = "AGR_INVALID_UNSTAKE_AMOUNT";
     string internal constant ERROR_INVALID_SETTLEMENT_OFFER = "AGR_INVALID_SETTLEMENT_OFFER";
     string internal constant ERROR_NOT_ENOUGH_AVAILABLE_STAKE = "AGR_NOT_ENOUGH_AVAILABLE_STAKE";
     string internal constant ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL = "AGR_AVAIL_BAL_BELOW_COLLATERAL";
@@ -183,6 +184,7 @@ contract Agreement is IArbitrable, AragonApp {
     }
 
     function unstake(uint256 _amount) external {
+        require(_amount > 0, ERROR_INVALID_UNSTAKE_AMOUNT);
         _unstakeBalance(msg.sender, _amount);
     }
 
@@ -209,6 +211,9 @@ contract Agreement is IArbitrable, AragonApp {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
         require(_canExecute(action, setting), ERROR_CANNOT_EXECUTE_ACTION);
 
+        if (action.state == ActionState.Scheduled) {
+            _unlockBalance(action.submitter, setting.collateralAmount);
+        }
         action.state = ActionState.Executed;
         runScript(action.script, new bytes(0), new address[](0));
         emit ActionExecuted(_actionId);
@@ -217,9 +222,13 @@ contract Agreement is IArbitrable, AragonApp {
     function cancel(uint256 _actionId) external {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
         require(_canCancel(action), ERROR_CANNOT_CANCEL_ACTION);
-        require(msg.sender == action.submitter, ERROR_SENDER_NOT_ALLOWED);
 
-        _unlockBalance(msg.sender, setting.collateralAmount);
+        address submitter = action.submitter;
+        require(msg.sender == submitter, ERROR_SENDER_NOT_ALLOWED);
+
+        if (action.state == ActionState.Scheduled) {
+            _unlockBalance(submitter, setting.collateralAmount);
+        }
         action.state = ActionState.Cancelled;
         emit ActionCancelled(_actionId);
     }
@@ -278,7 +287,9 @@ contract Agreement is IArbitrable, AragonApp {
         require(_canSubmitEvidence(action), ERROR_CANNOT_SUBMIT_EVIDENCE);
 
         bool finished = _registerEvidence(action, dispute, msg.sender, _finished);
-        emit EvidenceSubmitted(_disputeId, msg.sender, _evidence, _finished);
+        if (_evidence.length > 0) {
+            emit EvidenceSubmitted(_disputeId, msg.sender, _evidence, _finished);
+        }
         if (finished) {
             Setting storage setting = _getSetting(action);
             setting.arbitrator.closeEvidencePeriod(_disputeId);
@@ -623,9 +634,14 @@ contract Agreement is IArbitrable, AragonApp {
 
     function _unstakeBalance(address _signer, uint256 _amount) internal {
         Stake storage balance = stakeBalances[_signer];
-        require(balance.available >= _amount, ERROR_NOT_ENOUGH_AVAILABLE_STAKE);
+        uint256 availableBalance = balance.available;
+        require(availableBalance >= _amount, ERROR_NOT_ENOUGH_AVAILABLE_STAKE);
 
-        balance.available = balance.available.sub(_amount);
+        Setting storage currentSetting = _getCurrentSetting();
+        uint256 newAvailableBalance = availableBalance.sub(_amount);
+        require(newAvailableBalance == 0 || newAvailableBalance >= currentSetting.collateralAmount, ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL);
+
+        balance.available = newAvailableBalance;
         emit BalanceUnstaked(_signer, _amount);
 
         require(collateralToken.safeTransfer(_signer, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
@@ -666,7 +682,7 @@ contract Agreement is IArbitrable, AragonApp {
     function _wasDisputed(Action storage _action) internal view returns (bool) {
         Challenge storage challenge = _action.challenge;
         ChallengeState state = challenge.state;
-        return state == ChallengeState.Disputed || state == ChallengeState.Rejected || state == ChallengeState.Accepted;
+        return state != ChallengeState.Waiting && state != ChallengeState.Settled;
     }
 
     function _canCancel(Action storage _action) internal view returns (bool) {
