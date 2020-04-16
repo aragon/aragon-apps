@@ -62,8 +62,8 @@ class AgreementHelper {
   }
 
   async getSetting(settingId) {
-    const [content, collateralToken, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage, arbitrator] = await this.agreement.getSetting(settingId)
-    return { content, collateralToken, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage, arbitrator }
+    const [content, collateralAmount, challengeLeverage, arbitrator, delayPeriod, settlementPeriod] = await this.agreement.getSetting(settingId)
+    return { content, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage, arbitrator }
   }
 
   async getAllowedPaths(actionId) {
