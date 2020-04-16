@@ -76,11 +76,11 @@ class AgreementHelper {
     return { canCancel, canChallenge, canAnswerChallenge, canRuleDispute, canSubmitEvidence, canExecute }
   }
 
-  async approve({ amount, from = undefined }) {
+  async approve({ amount, from = undefined, accumulate = true }) {
     if (!from) from = this._getSender()
 
     await this.collateralToken.generateTokens(from, amount)
-    return this.safeApprove(this.collateralToken, from, this.address, amount)
+    return this.safeApprove(this.collateralToken, from, this.address, amount, accumulate)
   }
 
   async approveAndCall({ amount, from = undefined, mint = true }) {
@@ -92,8 +92,8 @@ class AgreementHelper {
 
   async stake({ signer = undefined, amount = undefined, from = undefined, approve = undefined }) {
     if (!signer) signer = this._getSender()
-    if (!amount) amount = this.collateralAmount
     if (!from) from = signer
+    if (amount === undefined) amount = this.collateralAmount
 
     if (approve === undefined) approve = amount
     if (approve) await this.approve({ amount: approve, from })
@@ -104,7 +104,7 @@ class AgreementHelper {
   }
 
   async unstake({ signer, amount = undefined }) {
-    if (!amount) amount = (await this.getBalance(signer)).available
+    if (amount === undefined) amount = (await this.getBalance(signer)).available
 
     return this.agreement.unstake(amount, { from: signer })
   }
@@ -117,7 +117,7 @@ class AgreementHelper {
     if (stake) await this.approveAndCall({ amount: stake, from: submitter })
 
     const receipt = await this.agreement.schedule(actionContext, script, { from: submitter })
-    const actionId = getEventArgument(receipt, EVENTS.ACTION_SCHEDULED, 'actionId');
+    const actionId = getEventArgument(receipt, EVENTS.ACTION_SCHEDULED, 'actionId')
     return { receipt, actionId }
   }
 
@@ -162,20 +162,26 @@ class AgreementHelper {
     return this.agreement.submitEvidence(disputeId, evidence, finished, { from })
   }
 
-  async rule({ actionId, ruling }) {
-    const { disputeId } = await this.getChallenge(actionId)
-    const ArbitratorMock = this._getContract('ArbitratorMock')
-    await ArbitratorMock.at(this.arbitrator.address).rule(disputeId, ruling)
+  async finishEvidence({ actionId, from }) {
+    return this.submitEvidence({ actionId, from, evidence: '0x', finished: true })
+  }
+
+  async executeRuling({ actionId, ruling, mockRuling = true }) {
+    if (mockRuling) {
+      const { disputeId } = await this.getChallenge(actionId)
+      const ArbitratorMock = this._getContract('ArbitratorMock')
+      await ArbitratorMock.at(this.arbitrator.address).rule(disputeId, ruling)
+    }
     return this.agreement.executeRuling(actionId)
   }
 
-  async approveArbitrationFees({ amount = undefined, from = undefined }) {
+  async approveArbitrationFees({ amount = undefined, from = undefined, accumulate = false }) {
     if (!from) from = this._getSender()
-    if (!amount) amount = await this.halfArbitrationFees()
+    if (amount === undefined) amount = await this.halfArbitrationFees()
 
     const feeToken = await this.arbitratorToken()
     await feeToken.generateTokens(from, amount)
-    await this.safeApprove(feeToken, from, this.address, amount)
+    await this.safeApprove(feeToken, from, this.address, amount, accumulate)
   }
 
   async arbitratorToken() {
@@ -194,24 +200,70 @@ class AgreementHelper {
     return missingFees
   }
 
+  async challengePeriodEndDate(actionId) {
+    const { createdAt, settingId } = await this.getAction(actionId)
+    const { delayPeriod } = await this.getSetting(settingId)
+    return createdAt.add(delayPeriod)
+  }
+
+  async settlementPeriodEndDate(actionId) {
+    const { settingId } = await this.getAction(actionId)
+    const { createdAt } = await this.getChallenge(settingId)
+    const { settlementPeriod } = await this.getSetting(settingId)
+    return createdAt.add(settlementPeriod)
+  }
+
   async buildEvmScript() {
     const ExecutionTarget = this._getContract('ExecutionTarget')
     const executionTarget = await ExecutionTarget.new()
     return encodeCallScript([{ to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }])
   }
 
-  async safeApprove(token, from, to, amount) {
+  async safeApprove(token, from, to, amount, accumulate = true) {
     const allowance = await token.allowance(from, to)
     if (allowance.gt(bn(0))) await token.approve(to, 0, { from })
-    return token.approve(to, amount.add(allowance), { from })
+    const newAllowance = accumulate ? amount.add(allowance) : amount
+    return token.approve(to, newAllowance, { from })
+  }
+
+  async currentTimestamp() {
+    return this.agreement.getTimestampPublic()
+  }
+
+  async moveBeforeEndOfChallengePeriod(actionId) {
+    const challengePeriodEndDate = await this.challengePeriodEndDate(actionId)
+    return this.moveTo(challengePeriodEndDate.sub(1))
+  }
+
+  async moveToEndOfChallengePeriod(actionId) {
+    const challengePeriodEndDate = await this.challengePeriodEndDate(actionId)
+    return this.moveTo(challengePeriodEndDate)
   }
 
   async moveAfterChallengePeriod(actionId) {
-    const { createdAt, settingId } = await this.getAction(actionId)
-    const { delayPeriod } = await this.getSetting(settingId)
-    const challengePeriodEndDate = createdAt.add(delayPeriod)
-    const currentTimestamp = await this.agreement.getTimestampPublic()
-    const timeDiff = challengePeriodEndDate.sub(currentTimestamp).add(1)
+    const challengePeriodEndDate = await this.challengePeriodEndDate(actionId)
+    return this.moveTo(challengePeriodEndDate.add(1))
+  }
+
+  async moveBeforeEndOfSettlementPeriod(actionId) {
+    const settlementPeriodEndDate = await this.settlementPeriodEndDate(actionId)
+    return this.moveTo(settlementPeriodEndDate.sub(1))
+  }
+
+  async moveToEndOfSettlementPeriod(actionId) {
+    const settlementPeriodEndDate = await this.settlementPeriodEndDate(actionId)
+    return this.moveTo(settlementPeriodEndDate)
+  }
+
+  async moveAfterSettlementPeriod(actionId) {
+    const settlementPeriodEndDate = await this.settlementPeriodEndDate(actionId)
+    return this.moveTo(settlementPeriodEndDate.add(1))
+  }
+
+  async moveTo(timestamp) {
+    const currentTimestamp = await this.currentTimestamp()
+    if (timestamp.lt(currentTimestamp)) return this.agreement.mockSetTimestamp(timestamp)
+    const timeDiff = timestamp.sub(currentTimestamp)
     return this.agreement.mockIncreaseTime(timeDiff)
   }
 
