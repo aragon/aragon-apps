@@ -132,16 +132,16 @@ contract Agreement is IArbitrable, AragonApp {
 
     struct Setting {
         bytes content;
-        ERC20 collateralToken;
         uint256 collateralAmount;
-        uint64 delayPeriod;
-        uint64 settlementPeriod;
         uint256 challengeLeverage;
         IArbitrator arbitrator;
-        uint64 createdAt;
+        uint64 delayPeriod;
+        uint64 settlementPeriod;
     }
 
     string public title;
+    ERC20 public collateralToken;
+
     Action[] private actions;
     Setting[] private settings;
     mapping (address => Stake) private stakeBalances;
@@ -152,37 +152,36 @@ contract Agreement is IArbitrable, AragonApp {
         bytes _content,
         ERC20 _collateralToken,
         uint256 _collateralAmount,
-        uint64 _delayPeriod,
-        uint64 _settlementPeriod,
         uint256 _challengeLeverage,
-        IArbitrator _arbitrator
+        IArbitrator _arbitrator,
+        uint64 _delayPeriod,
+        uint64 _settlementPeriod
     )
         external
     {
         initialized();
+        require(isContract(address(_collateralToken)), ERROR_COLLATERAL_TOKEN_NOT_CONTRACT);
+
         title = _title;
-        _newSetting(_content, _collateralToken, _collateralAmount, _delayPeriod, _settlementPeriod, _challengeLeverage, _arbitrator);
+        collateralToken = _collateralToken;
+        _newSetting(_content, _collateralAmount, _challengeLeverage, _arbitrator, _delayPeriod, _settlementPeriod);
     }
 
     function stake(uint256 _amount) external authP(STAKE_ROLE, arr(msg.sender)) {
-        Setting storage currentSetting = _getCurrentSetting();
-        _stakeBalance(msg.sender, msg.sender, _amount, currentSetting);
+        _stakeBalance(msg.sender, msg.sender, _amount);
     }
 
     function stakeFor(address _signer, uint256 _amount) external authP(STAKE_ROLE, arr(_signer)) {
-        Setting storage currentSetting = _getCurrentSetting();
-        _stakeBalance(msg.sender, _signer, _amount, currentSetting);
+        _stakeBalance(msg.sender, _signer, _amount);
     }
 
     function unstake(uint256 _amount) external {
-        Setting storage currentSetting = _getCurrentSetting();
-        _unstakeBalance(msg.sender, _amount, currentSetting);
+        _unstakeBalance(msg.sender, _amount);
     }
 
     function receiveApproval(address _from, uint256 _amount, address _token, bytes /* _data */) external authP(STAKE_ROLE, arr(_from)) {
-        Setting storage currentSetting = _getCurrentSetting();
-        require(msg.sender == _token && _token == address(currentSetting.collateralToken), ERROR_SENDER_NOT_ALLOWED);
-        _stakeBalance(_from, _from, _amount, currentSetting);
+        require(msg.sender == _token && _token == address(collateralToken), ERROR_SENDER_NOT_ALLOWED);
+        _stakeBalance(_from, _from, _amount);
     }
 
     function schedule(bytes _context, bytes _script) external {
@@ -250,7 +249,7 @@ contract Agreement is IArbitrable, AragonApp {
 
         challenge.state = ChallengeState.Settled;
         _unchallengeBalance(submitter, unchallengedAmount);
-        _slashBalance(submitter, challenger, slashedAmount, setting);
+        _slashBalance(submitter, challenger, slashedAmount);
         emit ActionSettled(_actionId);
     }
 
@@ -280,11 +279,10 @@ contract Agreement is IArbitrable, AragonApp {
     }
 
     function executeRuling(uint256 _actionId) external {
-        Action storage action = _getAction(_actionId);
+        (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
         require(_canRuleDispute(action), ERROR_CANNOT_RULE_DISPUTE);
 
         uint256 disputeId = action.challenge.disputeId;
-        Setting storage setting = _getSetting(action);
         setting.arbitrator.executeRuling(disputeId);
     }
 
@@ -313,17 +311,16 @@ contract Agreement is IArbitrable, AragonApp {
 
     function changeSetting(
         bytes _content,
-        ERC20 _collateralToken,
         uint256 _collateralAmount,
-        uint64 _delayPeriod,
-        uint64 _settlementPeriod,
         uint256 _challengeLeverage,
-        IArbitrator _arbitrator
+        IArbitrator _arbitrator,
+        uint64 _delayPeriod,
+        uint64 _settlementPeriod
     )
         external
         auth(CHANGE_AGREEMENT_ROLE)
     {
-        _newSetting(_content, _collateralToken, _collateralAmount, _delayPeriod, _settlementPeriod, _challengeLeverage, _arbitrator);
+        _newSetting(_content, _collateralAmount, _challengeLeverage, _arbitrator, _delayPeriod, _settlementPeriod);
     }
 
     function getBalance(address _signer) external view returns (uint256 available, uint256 locked, uint256 challenged) {
@@ -396,12 +393,11 @@ contract Agreement is IArbitrable, AragonApp {
     function getCurrentSetting() external view
         returns (
             bytes content,
-            ERC20 collateralToken,
             uint256 collateralAmount,
-            uint64 delayPeriod,
-            uint64 settlementPeriod,
             uint256 challengeLeverage,
-            IArbitrator arbitrator
+            IArbitrator arbitrator,
+            uint64 delayPeriod,
+            uint64 settlementPeriod
         )
     {
         Setting storage setting = _getCurrentSetting();
@@ -411,12 +407,11 @@ contract Agreement is IArbitrable, AragonApp {
     function getSetting(uint256 _settingId) external view
         returns (
             bytes content,
-            ERC20 collateralToken,
             uint256 collateralAmount,
-            uint64 delayPeriod,
-            uint64 settlementPeriod,
             uint256 challengeLeverage,
-            IArbitrator arbitrator
+            IArbitrator arbitrator,
+            uint64 delayPeriod,
+            uint64 settlementPeriod
         )
     {
         Setting storage setting = _getSetting(_settingId);
@@ -474,7 +469,6 @@ contract Agreement is IArbitrable, AragonApp {
         challenge.createdAt = getTimestamp64();
 
         // Transfer challenge collateral
-        ERC20 collateralToken = _setting.collateralToken;
         uint256 challengeStake = _getChallengeStake(_setting);
         require(collateralToken.safeTransferFrom(_challenger, address(this), challengeStake), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
 
@@ -543,7 +537,7 @@ contract Agreement is IArbitrable, AragonApp {
         Challenge storage challenge = _action.challenge;
         challenge.state = ChallengeState.Accepted;
 
-        _slashBalance(_action.submitter, challenge.challenger, _setting.collateralAmount, _setting);
+        _slashBalance(_action.submitter, challenge.challenger, _setting.collateralAmount);
         _transferChallengeStake(challenge.challenger, _setting);
     }
 
@@ -563,15 +557,16 @@ contract Agreement is IArbitrable, AragonApp {
         _transferChallengeStake(challenge.challenger, _setting);
     }
 
-    function _stakeBalance(address _from, address _to, uint256 _amount, Setting storage _setting) internal {
+    function _stakeBalance(address _from, address _to, uint256 _amount) internal {
         Stake storage balance = stakeBalances[_to];
+        Setting storage currentSetting = _getCurrentSetting();
         uint256 newAvailableBalance = balance.available.add(_amount);
-        require(newAvailableBalance >= _setting.collateralAmount, ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL);
+        require(newAvailableBalance >= currentSetting.collateralAmount, ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL);
 
         balance.available = newAvailableBalance;
         emit BalanceStaked(_to, _amount);
 
-        require(_setting.collateralToken.safeTransferFrom(_from, address(this), _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+        require(collateralToken.safeTransferFrom(_from, address(this), _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
     }
 
     function _lockBalance(address _signer, uint256 _amount) internal {
@@ -607,7 +602,7 @@ contract Agreement is IArbitrable, AragonApp {
         emit BalanceUnchallenged(_signer, _amount);
     }
 
-    function _slashBalance(address _signer, address _challenger, uint256 _amount, Setting _setting) internal {
+    function _slashBalance(address _signer, address _challenger, uint256 _amount) internal {
         if (_amount == 0) {
             return;
         }
@@ -616,50 +611,46 @@ contract Agreement is IArbitrable, AragonApp {
         balance.challenged = balance.challenged.sub(_amount);
         emit BalanceSlashed(_signer, _amount);
 
-        require(_setting.collateralToken.transfer(_challenger, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+        require(collateralToken.transfer(_challenger, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
     }
 
-    function _unstakeBalance(address _signer, uint256 _amount, Setting storage _setting) internal {
+    function _unstakeBalance(address _signer, uint256 _amount) internal {
         Stake storage balance = stakeBalances[_signer];
         require(_amount <= balance.available, ERROR_INVALID_UNSTAKE_AMOUNT);
 
         balance.available = balance.available.sub(_amount);
         emit BalanceUnstaked(_signer, _amount);
 
-        require(_setting.collateralToken.safeTransfer(_signer, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+        require(collateralToken.safeTransfer(_signer, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
     }
 
     function _transferChallengeStake(address _to, Setting storage _setting) internal {
         uint256 amount = _getChallengeStake(_setting);
         if (amount > 0) {
-            require(_setting.collateralToken.transfer(_to, amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+            require(collateralToken.transfer(_to, amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
         }
     }
 
     function _newSetting(
         bytes _content,
-        ERC20 _collateralToken,
         uint256 _collateralAmount,
-        uint64 _delayPeriod,
-        uint64 _settlementPeriod,
         uint256 _challengeLeverage,
-        IArbitrator _arbitrator
+        IArbitrator _arbitrator,
+        uint64 _delayPeriod,
+        uint64 _settlementPeriod
     )
         internal
     {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
-        require(isContract(address(_collateralToken)), ERROR_COLLATERAL_TOKEN_NOT_CONTRACT);
 
         uint256 id = settings.length++;
         settings[id] = Setting({
             content: _content,
-            collateralToken: _collateralToken,
             collateralAmount: _collateralAmount,
-            delayPeriod: _delayPeriod,
-            settlementPeriod: _settlementPeriod,
             challengeLeverage: _challengeLeverage,
             arbitrator: _arbitrator,
-            createdAt: getTimestamp64()
+            delayPeriod: _delayPeriod,
+            settlementPeriod: _settlementPeriod
         });
 
         emit SettingChanged(id);
@@ -778,16 +769,14 @@ contract Agreement is IArbitrable, AragonApp {
     function _getSettingData(Setting storage _setting) internal view
         returns (
             bytes content,
-            ERC20 collateralToken,
             uint256 collateralAmount,
-            uint64 delayPeriod,
-            uint64 settlementPeriod,
             uint256 challengeLeverage,
-            IArbitrator arbitrator
+            IArbitrator arbitrator,
+            uint64 delayPeriod,
+            uint64 settlementPeriod
         )
     {
         content = _setting.content;
-        collateralToken = _setting.collateralToken;
         collateralAmount = _setting.collateralAmount;
         delayPeriod = _setting.delayPeriod;
         settlementPeriod = _setting.settlementPeriod;
