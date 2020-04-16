@@ -6,6 +6,8 @@ import "@aragon/os/contracts/lib/token/ERC20.sol";
 
 
 contract ArbitratorMock is IArbitrator {
+    string internal constant ERROR_DISPUTE_NOT_RULED_YET = "ARBITRATOR_DISPUTE_NOT_RULED_YET";
+
     struct Dispute {
         IArbitrable arbitrable;
         uint256 ruling;
@@ -38,6 +40,7 @@ contract ArbitratorMock is IArbitrator {
 
     function executeRuling(uint256 _disputeId) external {
         Dispute storage dispute = disputes[_disputeId];
+        require(dispute.ruling != 0, ERROR_DISPUTE_NOT_RULED_YET);
         dispute.arbitrable.rule(_disputeId, dispute.ruling);
     }
 
