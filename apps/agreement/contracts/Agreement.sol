@@ -24,11 +24,12 @@ contract Agreement is IArbitrable, AragonApp {
     using PctHelpers for uint256;
 
     /* Arbitrator outcomes constants */
-    uint256 private constant DISPUTES_POSSIBLE_OUTCOMES = 2;
-    uint256 private constant DISPUTES_RULING_SUBMITTER = 3;
-    uint256 private constant DISPUTES_RULING_CHALLENGER = 4;
+    uint256 internal constant DISPUTES_POSSIBLE_OUTCOMES = 2;
+    uint256 internal constant DISPUTES_RULING_SUBMITTER = 3;
+    uint256 internal constant DISPUTES_RULING_CHALLENGER = 4;
 
     /* Validation errors */
+    string internal constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
     string internal constant ERROR_SENDER_NOT_ALLOWED = "AGR_SENDER_NOT_ALLOWED";
     string internal constant ERROR_INVALID_UNSTAKE_AMOUNT = "AGR_INVALID_UNSTAKE_AMOUNT";
     string internal constant ERROR_INVALID_SETTLEMENT_OFFER = "AGR_INVALID_SETTLEMENT_OFFER";
@@ -147,6 +148,11 @@ contract Agreement is IArbitrable, AragonApp {
         uint64 settlementPeriod;
     }
 
+    modifier authAddr(address _addr, bytes32 _role) {
+        require(canPerform(_addr, _role, arr(_addr)), ERROR_AUTH_FAILED);
+        _;
+    }
+
     string public title;
     ERC20 public collateralToken;
 
@@ -175,11 +181,11 @@ contract Agreement is IArbitrable, AragonApp {
         _newSetting(_content, _collateralAmount, _challengeLeverage, _arbitrator, _delayPeriod, _settlementPeriod);
     }
 
-    function stake(uint256 _amount) external authP(STAKE_ROLE, arr(msg.sender)) {
+    function stake(uint256 _amount) external authAddr(msg.sender, STAKE_ROLE) {
         _stakeBalance(msg.sender, msg.sender, _amount);
     }
 
-    function stakeFor(address _signer, uint256 _amount) external authP(STAKE_ROLE, arr(_signer)) {
+    function stakeFor(address _signer, uint256 _amount) external authAddr(_signer, STAKE_ROLE) {
         _stakeBalance(msg.sender, _signer, _amount);
     }
 
@@ -188,7 +194,7 @@ contract Agreement is IArbitrable, AragonApp {
         _unstakeBalance(msg.sender, _amount);
     }
 
-    function receiveApproval(address _from, uint256 _amount, address _token, bytes /* _data */) external authP(STAKE_ROLE, arr(_from)) {
+    function receiveApproval(address _from, uint256 _amount, address _token, bytes /* _data */) external authAddr(_from, STAKE_ROLE) {
         require(msg.sender == _token && _token == address(collateralToken), ERROR_SENDER_NOT_ALLOWED);
         _stakeBalance(_from, _from, _amount);
     }
@@ -233,10 +239,7 @@ contract Agreement is IArbitrable, AragonApp {
         emit ActionCancelled(_actionId);
     }
 
-    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bytes _context)
-        external
-        authP(CHALLENGE_ROLE, arr(msg.sender, _actionId))
-    {
+    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bytes _context) external authP(CHALLENGE_ROLE, arr(_actionId)) {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
         require(_canChallenge(action, setting), ERROR_CANNOT_CHALLENGE_ACTION);
         require(setting.collateralAmount >= _settlementOffer, ERROR_INVALID_SETTLEMENT_OFFER);
