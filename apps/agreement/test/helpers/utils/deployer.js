@@ -111,10 +111,16 @@ class AgreementDeployer {
     const agreement = Agreement.at(getNewProxyAddress(receipt))
 
     const STAKE_ROLE = await agreement.STAKE_ROLE()
-    await this.acl.createPermission(ANY_ADDR, agreement.address, STAKE_ROLE, owner, { from: owner })
+    const signers = options.signers || [ANY_ADDR]
+    for (const signer of signers) {
+      await this.acl.createPermission(signer, agreement.address, STAKE_ROLE, owner, { from: owner })
+    }
 
     const CHALLENGE_ROLE = await agreement.CHALLENGE_ROLE()
-    await this.acl.createPermission(ANY_ADDR, agreement.address, CHALLENGE_ROLE, owner, { from: owner })
+    const challengers = options.challengers || [ANY_ADDR]
+    for (const challenger of challengers) {
+      await this.acl.createPermission(challenger, agreement.address, CHALLENGE_ROLE, owner, { from: owner })
+    }
 
     const CHANGE_AGREEMENT_ROLE = await agreement.CHANGE_AGREEMENT_ROLE()
     await this.acl.createPermission(owner, agreement.address, CHANGE_AGREEMENT_ROLE, owner, { from: owner })
