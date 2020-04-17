@@ -287,9 +287,7 @@ contract Agreement is IArbitrable, AragonApp {
         require(_canSubmitEvidence(action), ERROR_CANNOT_SUBMIT_EVIDENCE);
 
         bool finished = _registerEvidence(action, dispute, msg.sender, _finished);
-        if (_evidence.length > 0) {
-            emit EvidenceSubmitted(_disputeId, msg.sender, _evidence, _finished);
-        }
+        _submitEvidence(_disputeId, msg.sender, _evidence, _finished);
         if (finished) {
             Setting storage setting = _getSetting(action);
             setting.arbitrator.closeEvidencePeriod(_disputeId);
@@ -517,8 +515,8 @@ contract Agreement is IArbitrable, AragonApp {
 
         // Update action and submit evidences
         address challenger = challenge.challenger;
-        emit EvidenceSubmitted(disputeId, submitter, _action.context, false);
-        emit EvidenceSubmitted(disputeId, challenger, challenge.context, false);
+        _submitEvidence(disputeId, submitter, _action.context, false);
+        _submitEvidence(disputeId, challenger, challenge.context, false);
 
         // Return arbitrator fees to challenger if necessary
         if (challenge.arbitratorFeeToken != feeToken) {
@@ -549,6 +547,12 @@ contract Agreement is IArbitrable, AragonApp {
         }
 
         return submitterFinishedEvidence && challengerFinishedEvidence;
+    }
+
+    function _submitEvidence(uint256 _disputeId, address _submitter, bytes _evidence, bool _finished) internal {
+        if (_evidence.length > 0) {
+            emit EvidenceSubmitted(_disputeId, _submitter, _evidence, _finished);
+        }
     }
 
     function _acceptChallenge(Action storage _action, Setting storage _setting) internal {
