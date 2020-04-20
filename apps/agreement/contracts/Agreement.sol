@@ -252,12 +252,16 @@ contract Agreement is IArbitrable, AragonApp {
 
     function settle(uint256 _actionId) external {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        require(_canAnswerChallenge(action, setting), ERROR_CANNOT_SETTLE_ACTION);
-        require(msg.sender == action.submitter, ERROR_SENDER_NOT_ALLOWED);
-
-        address submitter = action.submitter;
         Challenge storage challenge = action.challenge;
+        address submitter = action.submitter;
         address challenger = challenge.challenger;
+
+        if (msg.sender == submitter) {
+            require(_canSettle(action, setting), ERROR_CANNOT_SETTLE_ACTION);
+        } else {
+            require(_canClaimSettlement(action, setting), ERROR_CANNOT_SETTLE_ACTION);
+        }
+
         uint256 settlementOffer = challenge.settlementOffer;
         uint256 collateralAmount = setting.collateralAmount;
 
@@ -269,12 +273,13 @@ contract Agreement is IArbitrable, AragonApp {
         challenge.state = ChallengeState.Settled;
         _unchallengeBalance(submitter, unchallengedAmount);
         _slashBalance(submitter, challenger, slashedAmount);
+        _returnArbitratorFees(challenge);
         emit ActionSettled(_actionId);
     }
 
     function disputeChallenge(uint256 _actionId) external {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        require(_canAnswerChallenge(action, setting), ERROR_CANNOT_DISPUTE_ACTION);
+        require(_canDispute(action, setting), ERROR_CANNOT_DISPUTE_ACTION);
         require(msg.sender == action.submitter, ERROR_SENDER_NOT_ALLOWED);
 
         Challenge storage challenge = action.challenge;
@@ -457,9 +462,19 @@ contract Agreement is IArbitrable, AragonApp {
         return _canChallenge(action, setting);
     }
 
-    function canAnswerChallenge(uint256 _actionId) external view returns (bool) {
+    function canSettle(uint256 _actionId) external view returns (bool) {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        return _canAnswerChallenge(action, setting);
+        return _canSettle(action, setting);
+    }
+
+    function canDispute(uint256 _actionId) external view returns (bool) {
+        (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
+        return _canDispute(action, setting);
+    }
+
+    function canClaimSettlement(uint256 _actionId) external view returns (bool) {
+        (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
+        return _canClaimSettlement(action, setting);
     }
 
     function canRuleDispute(uint256 _actionId) external view returns (bool) {
@@ -661,6 +676,13 @@ contract Agreement is IArbitrable, AragonApp {
         }
     }
 
+    function _returnArbitratorFees(Challenge storage _challenge) internal {
+        uint256 amount = _challenge.arbitratorFeeAmount;
+        if (amount > 0) {
+            require(_challenge.arbitratorFeeToken.transfer(_challenge.challenger, amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+        }
+    }
+
     function _newSetting(
         bytes _content,
         uint256 _collateralAmount,
@@ -715,18 +737,33 @@ contract Agreement is IArbitrable, AragonApp {
         return challengeEndDate >= getTimestamp64();
     }
 
-    function _canAnswerChallenge(Action storage _action, Setting storage _setting) internal view returns (bool) {
+    function _canSettle(Action storage _action, Setting storage _setting) internal view returns (bool) {
         if (_action.state != ActionState.Challenged) {
             return false;
         }
 
         Challenge storage challenge = _action.challenge;
-        if (challenge.state != ChallengeState.Waiting) {
+        return challenge.state == ChallengeState.Waiting;
+    }
+
+    function _canDispute(Action storage _action, Setting storage _setting) internal view returns (bool) {
+        if (!_canSettle(_action, _setting)) {
             return false;
         }
 
+        Challenge storage challenge = _action.challenge;
         uint64 settlementEndDate = challenge.createdAt.add(_setting.settlementPeriod);
         return settlementEndDate >= getTimestamp64();
+    }
+
+    function _canClaimSettlement(Action storage _action, Setting storage _setting) internal view returns (bool) {
+        if (!_canSettle(_action, _setting)) {
+            return false;
+        }
+
+        Challenge storage challenge = _action.challenge;
+        uint64 settlementEndDate = challenge.createdAt.add(_setting.settlementPeriod);
+        return getTimestamp64() > settlementEndDate;
     }
 
     function _canRuleDispute(Action storage _action) internal view returns (bool) {

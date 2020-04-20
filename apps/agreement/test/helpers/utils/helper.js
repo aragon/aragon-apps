@@ -69,11 +69,13 @@ class AgreementHelper {
   async getAllowedPaths(actionId) {
     const canCancel = await this.agreement.canCancel(actionId)
     const canChallenge = await this.agreement.canChallenge(actionId)
-    const canAnswerChallenge = await this.agreement.canAnswerChallenge(actionId)
+    const canSettle = await this.agreement.canSettle(actionId)
+    const canDispute = await this.agreement.canDispute(actionId)
+    const canClaimSettlement = await this.agreement.canClaimSettlement(actionId)
     const canRuleDispute = await this.agreement.canRuleDispute(actionId)
     const canSubmitEvidence = await this.agreement.canSubmitEvidence(actionId)
     const canExecute = await this.agreement.canExecute(actionId)
-    return { canCancel, canChallenge, canAnswerChallenge, canRuleDispute, canSubmitEvidence, canExecute }
+    return { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canSubmitEvidence, canExecute }
   }
 
   async approve({ amount, from = undefined, accumulate = true }) {
