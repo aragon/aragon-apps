@@ -68,6 +68,11 @@ class AgreementHelper {
     return { content, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage, arbitrator }
   }
 
+  async getTokenBalancePermission() {
+    const [permissionToken, permissionBalance] = await this.agreement.getTokenBalancePermission()
+    return { permissionToken, permissionBalance }
+  }
+
   async getAllowedPaths(actionId) {
     const canCancel = await this.agreement.canCancel(actionId)
     const canChallenge = await this.agreement.canChallenge(actionId)
@@ -233,7 +238,14 @@ class AgreementHelper {
     const challengeLeverage = options.challengeLeverage || currentSettings.challengeLeverage
     const arbitrator = options.arbitrator ? options.arbitrator.address : currentSettings.arbitrator
 
-    return this.agreement.changeSetting(content, collateralAmount, challengeLeverage, arbitrator, delayPeriod, settlementPeriod, { from })
+    if (this.agreement.constructor.contractName.includes('PermissionAgreement')) {
+      return this.agreement.changeSetting(content, collateralAmount, challengeLeverage, arbitrator, delayPeriod, settlementPeriod, { from })
+    } else {
+      const tokenBalancePermission = await this.agreement.getTokenBalancePermission()
+      const permissionToken = options.permissionToken ? options.permissionToken.address : tokenBalancePermission[0]
+      const permissionBalance = options.permissionBalance || tokenBalancePermission[1]
+      return this.agreement.changeSetting(content, collateralAmount, challengeLeverage, arbitrator, delayPeriod, settlementPeriod, permissionToken, permissionBalance, { from })
+    }
   }
 
   async safeApprove(token, from, to, amount, accumulate = true) {

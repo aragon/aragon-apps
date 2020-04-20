@@ -1,5 +1,6 @@
 module.exports = {
   SETTING_CHANGED: 'SettingChanged',
+  PERMISSION_CHANGED: 'PermissionChanged',
   ACTION_SCHEDULED: 'ActionScheduled',
   ACTION_CHALLENGED: 'ActionChallenged',
   ACTION_SETTLED: 'ActionSettled',
