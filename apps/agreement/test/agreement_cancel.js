@@ -96,10 +96,11 @@ contract('Agreement', ([_, submitter, someone]) => {
           it('there are no more paths allowed', async () => {
             await agreement.cancel({ actionId, from })
 
-            const { canCancel, canChallenge, canAnswerChallenge, canRuleDispute, canSubmitEvidence, canExecute } = await agreement.getAllowedPaths(actionId)
+            const { canCancel, canChallenge, canSettle, canDispute, canRuleDispute, canSubmitEvidence, canExecute } = await agreement.getAllowedPaths(actionId)
             assert.isFalse(canCancel, 'action can be cancelled')
             assert.isFalse(canChallenge, 'action can be challenged')
-            assert.isFalse(canAnswerChallenge, 'action challenge can be answered')
+            assert.isFalse(canSettle, 'action can be settled')
+            assert.isFalse(canDispute, 'action can be disputed')
             assert.isFalse(canRuleDispute, 'action dispute can be ruled')
             assert.isFalse(canSubmitEvidence, 'action evidence can be submitted')
             assert.isFalse(canExecute, 'action can be executed')

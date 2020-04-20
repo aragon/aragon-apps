@@ -83,11 +83,13 @@ contract('Agreement', ([_, submitter]) => {
         it('can be challenged or cancelled', async () => {
           const { actionId } = await agreement.schedule({ submitter, script, actionContext, stake })
 
-          const { canCancel, canChallenge, canAnswerChallenge, canRuleDispute, canSubmitEvidence, canExecute } = await agreement.getAllowedPaths(actionId)
+          const { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canSubmitEvidence, canExecute } = await agreement.getAllowedPaths(actionId)
           assert.isTrue(canCancel, 'action cannot be cancelled')
           assert.isTrue(canChallenge, 'action cannot be challenged')
-          assert.isFalse(canAnswerChallenge, 'action challenge can be answered')
+          assert.isFalse(canSettle, 'action can be settled')
+          assert.isFalse(canDispute, 'action can be disputed')
           assert.isFalse(canRuleDispute, 'action dispute can be ruled')
+          assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
           assert.isFalse(canSubmitEvidence, 'action evidence can be submitted')
           assert.isFalse(canExecute, 'action can be executed')
         })
