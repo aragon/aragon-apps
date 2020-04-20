@@ -61,8 +61,10 @@ class AgreementHelper {
     return { ruling, submitterFinishedEvidence, challengerFinishedEvidence }
   }
 
-  async getSetting(settingId) {
-    const [content, collateralAmount, challengeLeverage, arbitrator, delayPeriod, settlementPeriod] = await this.agreement.getSetting(settingId)
+  async getSetting(settingId = undefined) {
+    const [content, collateralAmount, challengeLeverage, arbitrator, delayPeriod, settlementPeriod] = settingId
+      ? (await this.agreement.getSetting(settingId))
+      : (await this.agreement.getCurrentSetting())
     return { content, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage, arbitrator }
   }
 
@@ -219,6 +221,19 @@ class AgreementHelper {
     const ExecutionTarget = this._getContract('ExecutionTarget')
     const executionTarget = await ExecutionTarget.new()
     return encodeCallScript([{ to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }])
+  }
+
+  async changeSetting(options = {}) {
+    const currentSettings = await this.getSetting()
+    const from = options.from || this._getSender()
+    const content = options.content || currentSettings.content
+    const collateralAmount = options.collateralAmount || currentSettings.collateralAmount
+    const delayPeriod = options.delayPeriod || currentSettings.delayPeriod
+    const settlementPeriod = options.settlementPeriod || currentSettings.settlementPeriod
+    const challengeLeverage = options.challengeLeverage || currentSettings.challengeLeverage
+    const arbitrator = options.arbitrator ? options.arbitrator.address : currentSettings.arbitrator
+
+    return this.agreement.changeSetting(content, collateralAmount, challengeLeverage, arbitrator, delayPeriod, settlementPeriod, { from })
   }
 
   async safeApprove(token, from, to, amount, accumulate = true) {
