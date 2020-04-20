@@ -17,7 +17,7 @@ import "./arbitration/IArbitrable.sol";
 import "./arbitration/IArbitrator.sol";
 
 
-contract Agreement is IArbitrable, AragonApp {
+contract BaseAgreement is IArbitrable, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
@@ -61,9 +61,6 @@ contract Agreement is IArbitrable, AragonApp {
     /* Collateral token related errors */
     string internal constant ERROR_COLLATERAL_TOKEN_NOT_CONTRACT = "AGR_COL_TOKEN_NOT_CONTRACT";
     string internal constant ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED = "AGR_COL_TOKEN_TRANSFER_FAILED";
-
-    // bytes32 public constant STAKE_ROLE = keccak256("STAKE_ROLE");
-    bytes32 public constant STAKE_ROLE = 0xeaea87345c0a5b2ecb49cde771d9ac5bfe2528357e00d43a1e06a12c2779f3ca;
 
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
@@ -148,8 +145,8 @@ contract Agreement is IArbitrable, AragonApp {
         uint64 settlementPeriod;
     }
 
-    modifier authAddr(address _addr, bytes32 _role) {
-        require(canPerform(_addr, _role, arr(_addr)), ERROR_AUTH_FAILED);
+    modifier onlySigner(address _signer) {
+        require(_canSign(_signer), ERROR_AUTH_FAILED);
         _;
     }
 
@@ -161,42 +158,22 @@ contract Agreement is IArbitrable, AragonApp {
     mapping (address => Stake) private stakeBalances;
     mapping (uint256 => Dispute) private disputes;
 
-    function initialize(
-        string _title,
-        bytes _content,
-        ERC20 _collateralToken,
-        uint256 _collateralAmount,
-        uint256 _challengeLeverage,
-        IArbitrator _arbitrator,
-        uint64 _delayPeriod,
-        uint64 _settlementPeriod
-    )
-        external
-    {
-        initialized();
-        require(isContract(address(_collateralToken)), ERROR_COLLATERAL_TOKEN_NOT_CONTRACT);
-
-        title = _title;
-        collateralToken = _collateralToken;
-        _newSetting(_content, _collateralAmount, _challengeLeverage, _arbitrator, _delayPeriod, _settlementPeriod);
-    }
-
-    function stake(uint256 _amount) external authAddr(msg.sender, STAKE_ROLE) {
+    function stake(uint256 _amount) external onlySigner(msg.sender) {
         _stakeBalance(msg.sender, msg.sender, _amount);
     }
 
-    function stakeFor(address _signer, uint256 _amount) external authAddr(_signer, STAKE_ROLE) {
+    function stakeFor(address _signer, uint256 _amount) external onlySigner(_signer) {
         _stakeBalance(msg.sender, _signer, _amount);
+    }
+
+    function receiveApproval(address _from, uint256 _amount, address _token, bytes /* _data */) external onlySigner(_from) {
+        require(msg.sender == _token && _token == address(collateralToken), ERROR_SENDER_NOT_ALLOWED);
+        _stakeBalance(_from, _from, _amount);
     }
 
     function unstake(uint256 _amount) external {
         require(_amount > 0, ERROR_INVALID_UNSTAKE_AMOUNT);
         _unstakeBalance(msg.sender, _amount);
-    }
-
-    function receiveApproval(address _from, uint256 _amount, address _token, bytes /* _data */) external authAddr(_from, STAKE_ROLE) {
-        require(msg.sender == _token && _token == address(collateralToken), ERROR_SENDER_NOT_ALLOWED);
-        _stakeBalance(_from, _from, _amount);
     }
 
     function schedule(bytes _context, bytes _script) external {
@@ -257,7 +234,7 @@ contract Agreement is IArbitrable, AragonApp {
         address challenger = challenge.challenger;
 
         if (msg.sender == submitter) {
-            require(_canSettle(action, setting), ERROR_CANNOT_SETTLE_ACTION);
+            require(_canSettle(action), ERROR_CANNOT_SETTLE_ACTION);
         } else {
             require(_canClaimSettlement(action, setting), ERROR_CANNOT_SETTLE_ACTION);
         }
@@ -331,20 +308,6 @@ contract Agreement is IArbitrable, AragonApp {
             _voidChallenge(action, setting);
             emit ActionVoided(dispute.actionId);
         }
-    }
-
-    function changeSetting(
-        bytes _content,
-        uint256 _collateralAmount,
-        uint256 _challengeLeverage,
-        IArbitrator _arbitrator,
-        uint64 _delayPeriod,
-        uint64 _settlementPeriod
-    )
-        external
-        auth(CHANGE_AGREEMENT_ROLE)
-    {
-        _newSetting(_content, _collateralAmount, _challengeLeverage, _arbitrator, _delayPeriod, _settlementPeriod);
     }
 
     function getBalance(address _signer) external view returns (uint256 available, uint256 locked, uint256 challenged) {
@@ -452,6 +415,10 @@ contract Agreement is IArbitrable, AragonApp {
         return (feeToken, missingFees, totalFees);
     }
 
+    function canSign(address _signer) external view returns (bool) {
+        return _canSign(_signer);
+    }
+
     function canCancel(uint256 _actionId) external view returns (bool) {
         Action storage action = _getAction(_actionId);
         return _canCancel(action);
@@ -463,8 +430,8 @@ contract Agreement is IArbitrable, AragonApp {
     }
 
     function canSettle(uint256 _actionId) external view returns (bool) {
-        (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        return _canSettle(action, setting);
+        Action storage action = _getAction(_actionId);
+        return _canSettle(action);
     }
 
     function canDispute(uint256 _actionId) external view returns (bool) {
@@ -683,6 +650,26 @@ contract Agreement is IArbitrable, AragonApp {
         }
     }
 
+    function _initialize(
+        string _title,
+        bytes _content,
+        ERC20 _collateralToken,
+        uint256 _collateralAmount,
+        uint256 _challengeLeverage,
+        IArbitrator _arbitrator,
+        uint64 _delayPeriod,
+        uint64 _settlementPeriod
+    )
+        internal
+    {
+        initialized();
+        require(isContract(address(_collateralToken)), ERROR_COLLATERAL_TOKEN_NOT_CONTRACT);
+
+        title = _title;
+        collateralToken = _collateralToken;
+        _newSetting(_content, _collateralAmount, _challengeLeverage, _arbitrator, _delayPeriod, _settlementPeriod);
+    }
+
     function _newSetting(
         bytes _content,
         uint256 _collateralAmount,
@@ -708,11 +695,7 @@ contract Agreement is IArbitrable, AragonApp {
         emit SettingChanged(id);
     }
 
-    function _wasDisputed(Action storage _action) internal view returns (bool) {
-        Challenge storage challenge = _action.challenge;
-        ChallengeState state = challenge.state;
-        return state != ChallengeState.Waiting && state != ChallengeState.Settled;
-    }
+    function _canSign(address _signer) internal view returns (bool);
 
     function _canCancel(Action storage _action) internal view returns (bool) {
         ActionState state = _action.state;
@@ -737,7 +720,7 @@ contract Agreement is IArbitrable, AragonApp {
         return challengeEndDate >= getTimestamp64();
     }
 
-    function _canSettle(Action storage _action, Setting storage _setting) internal view returns (bool) {
+    function _canSettle(Action storage _action) internal view returns (bool) {
         if (_action.state != ActionState.Challenged) {
             return false;
         }
@@ -747,7 +730,7 @@ contract Agreement is IArbitrable, AragonApp {
     }
 
     function _canDispute(Action storage _action, Setting storage _setting) internal view returns (bool) {
-        if (!_canSettle(_action, _setting)) {
+        if (!_canSettle(_action)) {
             return false;
         }
 
@@ -757,7 +740,7 @@ contract Agreement is IArbitrable, AragonApp {
     }
 
     function _canClaimSettlement(Action storage _action, Setting storage _setting) internal view returns (bool) {
-        if (!_canSettle(_action, _setting)) {
+        if (!_canSettle(_action)) {
             return false;
         }
 
@@ -796,6 +779,12 @@ contract Agreement is IArbitrable, AragonApp {
 
         Challenge storage challenge = _action.challenge;
         return  challenge.state == ChallengeState.Rejected;
+    }
+
+    function _wasDisputed(Action storage _action) internal view returns (bool) {
+        Challenge storage challenge = _action.challenge;
+        ChallengeState state = challenge.state;
+        return state != ChallengeState.Waiting && state != ChallengeState.Settled;
     }
 
     function _getAction(uint256 _actionId) internal view returns (Action storage) {
