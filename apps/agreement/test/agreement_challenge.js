@@ -60,7 +60,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     assert.equal(challenge.context, challengeContext, 'challenge context does not match')
                     assert.equal(challenge.challenger, challenger, 'challenger does not match')
                     assertBn(challenge.settlementOffer, settlementOffer, 'settlement offer does not match')
-                    assertBn(challenge.createdAt, currentTimestamp, 'created at does not match')
+                    assertBn(challenge.settlementEndDate, currentTimestamp.add(agreement.settlementPeriod), 'settlement end date does not match')
                     assertBn(challenge.arbitratorFeeAmount, feeAmount.div(2), 'arbitrator amount does not match')
                     assert.equal(challenge.arbitratorFeeToken, feeToken, 'arbitrator token does not match')
                     assertBn(challenge.state, CHALLENGES_STATE.WAITING, 'challenge state does not match')
@@ -78,7 +78,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     assert.equal(currentActionState.script, previousActionState.script, 'action script does not match')
                     assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
                     assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
-                    assertBn(currentActionState.createdAt, previousActionState.createdAt, 'created at does not match')
+                    assertBn(currentActionState.challengeEndDate, previousActionState.challengeEndDate, 'challenge end date does not match')
                     assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
                   })
 
@@ -141,7 +141,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                   it('it can be answered only', async () => {
                     await agreement.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitrationFees, stake })
 
-                    const { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canSubmitEvidence, canExecute } = await agreement.getAllowedPaths(actionId)
+                    const { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canExecute } = await agreement.getAllowedPaths(actionId)
                     assert.isTrue(canSettle, 'action cannot be settled')
                     assert.isTrue(canDispute, 'action cannot be disputed')
                     assert.isFalse(canCancel, 'action can be cancelled')
