@@ -17,7 +17,7 @@ import "./arbitration/IArbitrable.sol";
 import "./arbitration/IArbitrator.sol";
 
 
-contract BaseAgreement is IArbitrable, AragonApp {
+contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
@@ -30,6 +30,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
 
     /* Validation errors */
     string internal constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
+    string internal constant ERROR_CAN_NOT_FORWARD = "AGR_CAN_NOT_FORWARD";
     string internal constant ERROR_SENDER_NOT_ALLOWED = "AGR_SENDER_NOT_ALLOWED";
     string internal constant ERROR_INVALID_UNSTAKE_AMOUNT = "AGR_INVALID_UNSTAKE_AMOUNT";
     string internal constant ERROR_INVALID_SETTLEMENT_OFFER = "AGR_INVALID_SETTLEMENT_OFFER";
@@ -177,17 +178,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
     }
 
     function schedule(bytes _context, bytes _script) external {
-        (uint256 settingId, Setting storage currentSetting) = _getCurrentSettingWithId();
-        _lockBalance(msg.sender, currentSetting.collateralAmount);
-
-        uint256 id = actions.length++;
-        Action storage action = actions[id];
-        action.submitter = msg.sender;
-        action.context = _context;
-        action.script = _script;
-        action.settingId = settingId;
-        action.challengeEndDate = getTimestamp64().add(currentSetting.delayPeriod);
-        emit ActionScheduled(id);
+        _createAction(msg.sender, _context, _script);
     }
 
     function execute(uint256 _actionId) external {
@@ -308,6 +299,19 @@ contract BaseAgreement is IArbitrable, AragonApp {
             _voidChallenge(action, setting);
             emit ActionVoided(dispute.actionId);
         }
+    }
+
+    function isForwarder() external pure returns (bool) {
+        return true;
+    }
+
+    function forward(bytes _script) public {
+        require(canForward(msg.sender, _script), ERROR_CAN_NOT_FORWARD);
+        _createAction(msg.sender, new bytes(0), _script);
+    }
+
+    function canForward(address _sender, bytes /* _script */) public view returns (bool) {
+        return _canSchedule(_sender);
     }
 
     function getBalance(address _signer) external view returns (uint256 available, uint256 locked, uint256 challenged) {
@@ -452,6 +456,20 @@ contract BaseAgreement is IArbitrable, AragonApp {
     function canExecute(uint256 _actionId) external view returns (bool) {
         Action storage action  = _getAction(_actionId);
         return _canExecute(action);
+    }
+
+    function _createAction(address _submitter, bytes _context, bytes _script) internal {
+        (uint256 settingId, Setting storage currentSetting) = _getCurrentSettingWithId();
+        _lockBalance(msg.sender, currentSetting.collateralAmount);
+
+        uint256 id = actions.length++;
+        Action storage action = actions[id];
+        action.submitter = _submitter;
+        action.context = _context;
+        action.script = _script;
+        action.settingId = settingId;
+        action.challengeEndDate = getTimestamp64().add(currentSetting.delayPeriod);
+        emit ActionScheduled(id);
     }
 
     function _createChallenge(Action storage _action, address _challenger, uint256 _settlementOffer, bytes _context, Setting storage _setting)
@@ -688,6 +706,12 @@ contract BaseAgreement is IArbitrable, AragonApp {
     }
 
     function _canSign(address _signer) internal view returns (bool);
+
+    function _canSchedule(address _sender) internal view returns (bool) {
+        Stake storage balance = stakeBalances[_sender];
+        Setting storage currentSetting = _getCurrentSetting();
+        return balance.available >= currentSetting.collateralAmount;
+    }
 
     function _canCancel(Action storage _action) internal view returns (bool) {
         ActionState state = _action.state;
