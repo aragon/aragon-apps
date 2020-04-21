@@ -16,20 +16,20 @@ contract PermissionAgreement is BaseAgreement {
         bytes _content,
         ERC20 _collateralToken,
         uint256 _collateralAmount,
-        uint256 _challengeLeverage,
+        uint256 _challengeCollateral,
         IArbitrator _arbitrator,
         uint64 _delayPeriod,
         uint64 _settlementPeriod
     )
         external
     {
-        _initialize(_title, _content, _collateralToken, _collateralAmount, _challengeLeverage, _arbitrator, _delayPeriod, _settlementPeriod);
+        _initialize(_title, _content, _collateralToken, _collateralAmount, _challengeCollateral, _arbitrator, _delayPeriod, _settlementPeriod);
     }
 
     function changeSetting(
         bytes _content,
         uint256 _collateralAmount,
-        uint256 _challengeLeverage,
+        uint256 _challengeCollateral,
         IArbitrator _arbitrator,
         uint64 _delayPeriod,
         uint64 _settlementPeriod
@@ -37,7 +37,7 @@ contract PermissionAgreement is BaseAgreement {
         external
         auth(CHANGE_AGREEMENT_ROLE)
     {
-        _newSetting(_content, _collateralAmount, _challengeLeverage, _arbitrator, _delayPeriod, _settlementPeriod);
+        _newSetting(_content, _collateralAmount, _challengeCollateral, _arbitrator, _delayPeriod, _settlementPeriod);
     }
 
     function _canSign(address _signer) internal view returns (bool) {

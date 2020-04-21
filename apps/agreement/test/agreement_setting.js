@@ -17,7 +17,7 @@ contract('Agreement', ([_, owner, someone]) => {
     delayPeriod: 2 * DAY,
     settlementPeriod: 3 * DAY,
     collateralAmount: bigExp(200, 18),
-    challengeLeverage: 100,
+    challengeCollateral: bigExp(100, 18),
   }
 
   let newSettings = {
@@ -25,7 +25,7 @@ contract('Agreement', ([_, owner, someone]) => {
     delayPeriod: 5 * DAY,
     settlementPeriod: 10 * DAY,
     collateralAmount: bigExp(100, 18),
-    challengeLeverage: 50,
+    challengeCollateral: bigExp(50, 18),
   }
 
   before('setup arbitrators', async () => {
@@ -36,9 +36,9 @@ contract('Agreement', ([_, owner, someone]) => {
   const assertCurrentSettings = async (actualSettings, expectedSettings) => {
     assert.equal(actualSettings.content, expectedSettings.content, 'content does not match')
     assertBn(actualSettings.collateralAmount, expectedSettings.collateralAmount, 'collateral amount does not match')
-    assertBn(actualSettings.delayPeriod, expectedSettings.delayPeriod, 'delay period amount does not match')
-    assertBn(actualSettings.settlementPeriod, expectedSettings.settlementPeriod, 'settlement period amount does not match')
-    assertBn(actualSettings.challengeLeverage, expectedSettings.challengeLeverage, 'challenge leverage period amount does not match')
+    assertBn(actualSettings.delayPeriod, expectedSettings.delayPeriod, 'delay period does not match')
+    assertBn(actualSettings.settlementPeriod, expectedSettings.settlementPeriod, 'settlement period does not match')
+    assertBn(actualSettings.challengeCollateral, expectedSettings.challengeCollateral, 'challenge collateral does not match')
     assert.equal(actualSettings.arbitrator, expectedSettings.arbitrator.address, 'arbitrator does not match')
   }
 

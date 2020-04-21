@@ -40,7 +40,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
             const itChallengesTheActionProperly = () => {
               context('when the challenger has staked enough collateral', () => {
                 beforeEach('stake challenge collateral', async () => {
-                  const amount = agreement.challengeStake
+                  const amount = agreement.challengeCollateral
                   await agreement.approve({ amount, from: challenger })
                 })
 
@@ -102,17 +102,17 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                   })
 
                   it('transfers the challenge collateral to the contract', async () => {
-                    const { collateralToken, challengeStake } = agreement
+                    const { collateralToken, challengeCollateral } = agreement
                     const previousAgreementBalance = await collateralToken.balanceOf(agreement.address)
                     const previousChallengerBalance = await collateralToken.balanceOf(challenger)
 
                     await agreement.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitrationFees, stake })
 
                     const currentAgreementBalance = await collateralToken.balanceOf(agreement.address)
-                    assertBn(currentAgreementBalance, previousAgreementBalance.add(challengeStake), 'agreement balance does not match')
+                    assertBn(currentAgreementBalance, previousAgreementBalance.add(challengeCollateral), 'agreement balance does not match')
 
                     const currentChallengerBalance = await collateralToken.balanceOf(challenger)
-                    assertBn(currentChallengerBalance, previousChallengerBalance.sub(challengeStake), 'challenger balance does not match')
+                    assertBn(currentChallengerBalance, previousChallengerBalance.sub(challengeCollateral), 'challenger balance does not match')
                   })
 
                   it('transfers half of the arbitration fees to the contract', async () => {
