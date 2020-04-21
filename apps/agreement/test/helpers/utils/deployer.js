@@ -87,18 +87,17 @@ class AgreementDeployer {
 
   async deployAndInitializeWrapper(options = {}) {
     await this.deployAndInitialize(options)
+
+    const arbitrator = options.arbitrator || this.arbitrator
+    const collateralToken = options.collateralToken || this.collateralToken
+
     const [token, balance] = await this.agreement.getTokenBalancePermission()
-    const [content, collateralAmount, challengeCollateral, arbitratorAddress, delayPeriod, settlementPeriod] = await this.agreement.getCurrentSetting()
-
-    const IArbitrator = this._getContract('IArbitrator')
-    const arbitrator = IArbitrator.at(arbitratorAddress)
-
-    const MiniMeToken = this._getContract('MiniMeToken')
-    const collateralToken = options.collateralToken ? MiniMeToken.at(options.collateralToken) : this.collateralToken
-
     const tokenBalancePermission = { token, balance }
-    const setting = { content, collateralToken, collateralAmount, delayPeriod, settlementPeriod, challengeCollateral, arbitrator, tokenBalancePermission }
-    return new AgreementHelper(this.artifacts, this.web3, this.agreement, setting)
+
+    const [content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral] = await this.agreement.getCurrentSetting()
+    const initialSetting = { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral }
+
+    return new AgreementHelper(this.artifacts, this.web3, this.agreement, arbitrator, collateralToken, tokenBalancePermission, initialSetting)
   }
 
   async deployAndInitialize(options = {}) {

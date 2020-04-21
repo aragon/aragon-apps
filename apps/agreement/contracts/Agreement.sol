@@ -146,11 +146,10 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
 
     struct Setting {
         bytes content;
-        uint256 collateralAmount;
-        uint256 challengeCollateral;
-        IArbitrator arbitrator;
         uint64 delayPeriod;
         uint64 settlementPeriod;
+        uint256 collateralAmount;
+        uint256 challengeCollateral;
     }
 
     struct TokenBalancePermission {
@@ -165,6 +164,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
 
     string public title;
     ERC20 public collateralToken;
+    IArbitrator public arbitrator;
 
     Action[] private actions;
     Setting[] private settings;
@@ -187,11 +187,14 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         external
     {
         initialized();
+        require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
         require(isContract(address(_collateralToken)), ERROR_COLLATERAL_TOKEN_NOT_CONTRACT);
 
         title = _title;
+        arbitrator = _arbitrator;
         collateralToken = _collateralToken;
-        _newSetting(_content, _collateralAmount, _challengeCollateral, _arbitrator, _delayPeriod, _settlementPeriod);
+
+        _newSetting(_content, _delayPeriod, _settlementPeriod, _collateralAmount, _challengeCollateral);
         _newTokenBalancePermission(_permissionToken, _permissionBalance);
     }
 
@@ -302,7 +305,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         _submitEvidence(_disputeId, msg.sender, _evidence, _finished);
         if (finished) {
             Setting storage setting = _getSetting(action);
-            setting.arbitrator.closeEvidencePeriod(_disputeId);
+            arbitrator.closeEvidencePeriod(_disputeId);
         }
     }
 
@@ -311,7 +314,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         require(_canRuleDispute(action), ERROR_CANNOT_RULE_ACTION);
 
         uint256 disputeId = action.challenge.disputeId;
-        setting.arbitrator.executeRuling(disputeId);
+        arbitrator.executeRuling(disputeId);
     }
 
     function rule(uint256 _disputeId, uint256 _ruling) external {
@@ -319,11 +322,11 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         require(_canRuleDispute(action), ERROR_CANNOT_RULE_ACTION);
 
         Setting storage setting = _getSetting(action);
-        IArbitrator arbitrator = setting.arbitrator;
-        require(msg.sender == address(arbitrator), ERROR_SENDER_NOT_ALLOWED);
+        address arbitratorAddress = address(arbitrator);
+        require(msg.sender == arbitratorAddress, ERROR_SENDER_NOT_ALLOWED);
 
         dispute.ruling = _ruling;
-        emit Ruled(arbitrator, _disputeId, _ruling);
+        emit Ruled(IArbitrator(arbitratorAddress), _disputeId, _ruling);
 
         if (_ruling == DISPUTES_RULING_SUBMITTER) {
             _rejectChallenge(action, setting);
@@ -339,33 +342,26 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
 
     function changeSetting(
         bytes _content,
-        uint256 _collateralAmount,
-        uint256 _challengeCollateral,
-        IArbitrator _arbitrator,
         uint64 _delayPeriod,
-        uint64 _settlementPeriod
+        uint64 _settlementPeriod,
+        uint256 _collateralAmount,
+        uint256 _challengeCollateral
     )
         external
         auth(CHANGE_AGREEMENT_ROLE)
     {
-        _newSetting(_content, _collateralAmount, _challengeCollateral, _arbitrator, _delayPeriod, _settlementPeriod);
+        _newSetting(_content, _delayPeriod, _settlementPeriod, _collateralAmount, _challengeCollateral);
     }
 
-    function changeTokenBalancePermission(ERC20 _permissionToken, uint256 _permissionBalance) external auth(CHANGE_TOKEN_BALANCE_PERMISSION_ROLE) {
+    function changeTokenBalancePermission(ERC20 _permissionToken, uint256 _permissionBalance)
+        external
+        auth(CHANGE_TOKEN_BALANCE_PERMISSION_ROLE)
+    {
         _newTokenBalancePermission(_permissionToken, _permissionBalance);
     }
 
     function isForwarder() external pure returns (bool) {
         return true;
-    }
-
-    function forward(bytes _script) public {
-        require(canForward(msg.sender, _script), ERROR_CAN_NOT_FORWARD);
-        _createAction(msg.sender, new bytes(0), _script);
-    }
-
-    function canForward(address _sender, bytes /* _script */) public view returns (bool) {
-        return _canSchedule(_sender);
     }
 
     function getBalance(address _signer) external view returns (uint256 available, uint256 locked, uint256 challenged) {
@@ -438,11 +434,10 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     function getCurrentSetting() external view
         returns (
             bytes content,
-            uint256 collateralAmount,
-            uint256 challengeCollateral,
-            IArbitrator arbitrator,
             uint64 delayPeriod,
-            uint64 settlementPeriod
+            uint64 settlementPeriod,
+            uint256 collateralAmount,
+            uint256 challengeCollateral
         )
     {
         Setting storage setting = _getCurrentSetting();
@@ -452,11 +447,10 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     function getSetting(uint256 _settingId) external view
         returns (
             bytes content,
-            uint256 collateralAmount,
-            uint256 challengeCollateral,
-            IArbitrator arbitrator,
             uint64 delayPeriod,
-            uint64 settlementPeriod
+            uint64 settlementPeriod,
+            uint256 collateralAmount,
+            uint256 challengeCollateral
         )
     {
         Setting storage setting = _getSetting(_settingId);
@@ -469,12 +463,12 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     }
 
     function getMissingArbitratorFees(uint256 _actionId) external view returns (ERC20, uint256, uint256) {
-        (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
+        Action storage action = _getAction(_actionId);
         Challenge storage challenge = action.challenge;
         ERC20 challengerFeeToken = challenge.arbitratorFeeToken;
         uint256 challengerFeeAmount = challenge.arbitratorFeeAmount;
 
-        (,ERC20 feeToken, uint256 missingFees, uint256 totalFees) = _getMissingArbitratorFees(setting, challengerFeeToken, challengerFeeAmount);
+        (,ERC20 feeToken, uint256 missingFees, uint256 totalFees) = _getMissingArbitratorFees(challengerFeeToken, challengerFeeAmount);
         return (feeToken, missingFees, totalFees);
     }
 
@@ -513,8 +507,17 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     }
 
     function canExecute(uint256 _actionId) external view returns (bool) {
-        Action storage action  = _getAction(_actionId);
+        Action storage action = _getAction(_actionId);
         return _canExecute(action);
+    }
+
+    function forward(bytes _script) public {
+        require(canForward(msg.sender, _script), ERROR_CAN_NOT_FORWARD);
+        _createAction(msg.sender, new bytes(0), _script);
+    }
+
+    function canForward(address _sender, bytes /* _script */) public view returns (bool) {
+        return _canSchedule(_sender);
     }
 
     function _createAction(address _submitter, bytes _context, bytes _script) internal {
@@ -534,16 +537,19 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     function _createChallenge(Action storage _action, address _challenger, uint256 _settlementOffer, bytes _context, Setting storage _setting)
         internal
     {
-        // Store challenge and transfer collateral
+        // Store challenge
         Challenge storage challenge = _action.challenge;
         challenge.challenger = _challenger;
         challenge.context = _context;
         challenge.settlementOffer = _settlementOffer;
         challenge.settlementEndDate = getTimestamp64().add(_setting.settlementPeriod);
-        require(collateralToken.safeTransferFrom(_challenger, address(this), _setting.challengeCollateral), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+
+        // Transfer challenge collateral
+        uint256 challengeCollateral = _setting.challengeCollateral;
+        require(collateralToken.safeTransferFrom(_challenger, address(this), challengeCollateral), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
 
         // Transfer half of the Arbitrator fees
-        (, ERC20 feeToken, uint256 feeAmount) = _setting.arbitrator.getDisputeFees();
+        (, ERC20 feeToken, uint256 feeAmount) = arbitrator.getDisputeFees();
         uint256 arbitratorFees = feeAmount.div(2);
         challenge.arbitratorFeeToken = feeToken;
         challenge.arbitratorFeeAmount = arbitratorFees;
@@ -556,7 +562,6 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         ERC20 challengerFeeToken = challenge.arbitratorFeeToken;
         uint256 challengerFeeAmount = challenge.arbitratorFeeAmount;
         (address recipient, ERC20 feeToken, uint256 missingFees, uint256 totalFees) = _getMissingArbitratorFees(
-            _setting,
             challengerFeeToken,
             challengerFeeAmount
         );
@@ -565,7 +570,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         address submitter = _action.submitter;
         require(feeToken.safeTransferFrom(submitter, address(this), missingFees), ERROR_ARBITRATOR_FEE_DEPOSIT_FAILED);
         require(feeToken.safeApprove(recipient, totalFees), ERROR_ARBITRATOR_FEE_APPROVAL_FAILED);
-        uint256 disputeId = _setting.arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _setting.content);
+        uint256 disputeId = arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _setting.content);
 
         // Update action and submit evidences
         address challenger = challenge.challenger;
@@ -719,26 +724,16 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         }
     }
 
-    function _newSetting(
-        bytes _content,
-        uint256 _collateralAmount,
-        uint256 _challengeCollateral,
-        IArbitrator _arbitrator,
-        uint64 _delayPeriod,
-        uint64 _settlementPeriod
-    )
+    function _newSetting(bytes _content, uint64 _delayPeriod, uint64 _settlementPeriod, uint256 _collateralAmount, uint256 _challengeCollateral)
         internal
     {
-        require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
-
         uint256 id = settings.length++;
         settings[id] = Setting({
             content: _content,
-            collateralAmount: _collateralAmount,
-            challengeCollateral: _challengeCollateral,
-            arbitrator: _arbitrator,
             delayPeriod: _delayPeriod,
-            settlementPeriod: _settlementPeriod
+            settlementPeriod: _settlementPeriod,
+            collateralAmount: _collateralAmount,
+            challengeCollateral: _challengeCollateral
         });
 
         emit SettingChanged(id);
@@ -859,11 +854,10 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     function _getSettingData(Setting storage _setting) internal view
         returns (
             bytes content,
-            uint256 collateralAmount,
-            uint256 challengeCollateral,
-            IArbitrator arbitrator,
             uint64 delayPeriod,
-            uint64 settlementPeriod
+            uint64 settlementPeriod,
+            uint256 collateralAmount,
+            uint256 challengeCollateral
         )
     {
         content = _setting.content;
@@ -871,13 +865,12 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         delayPeriod = _setting.delayPeriod;
         settlementPeriod = _setting.settlementPeriod;
         challengeCollateral = _setting.challengeCollateral;
-        arbitrator = _setting.arbitrator;
     }
 
-    function _getMissingArbitratorFees(Setting storage _setting, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) internal view
+    function _getMissingArbitratorFees(ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) internal view
         returns (address, ERC20, uint256, uint256)
     {
-        (address recipient, ERC20 feeToken, uint256 disputeFees) = _setting.arbitrator.getDisputeFees();
+        (address recipient, ERC20 feeToken, uint256 disputeFees) = arbitrator.getDisputeFees();
 
         uint256 missingFees;
         if (_challengerFeeToken == feeToken) {
