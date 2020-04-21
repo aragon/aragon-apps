@@ -228,7 +228,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
             _unlockBalance(action.submitter, setting.collateralAmount);
         }
         action.state = ActionState.Executed;
-        runScript(action.script, new bytes(0), new address[](0));
+        runScript(action.script, new bytes(0), _getScriptExecutionBlacklist());
         emit ActionExecuted(_actionId);
     }
 
@@ -874,5 +874,19 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         }
 
         return (recipient, feeToken, missingFees, disputeFees);
+    }
+
+    function _getScriptExecutionBlacklist() internal view returns (address[] memory) {
+        // The collateral token, the arbitrator token and the arbitrator itself are blacklisted
+        // to make sure tokens or disputes cannot be affected through evm scripts
+
+        address arbitratorAddress = address(arbitrator);
+        (, ERC20 currentArbitratorToken,) = IArbitrator(arbitratorAddress).getDisputeFees();
+
+        address[] memory blacklist = new address[](3);
+        blacklist[0] = arbitratorAddress;
+        blacklist[1] = address(collateralToken);
+        blacklist[2] = address(currentArbitratorToken);
+        return blacklist;
     }
 }
