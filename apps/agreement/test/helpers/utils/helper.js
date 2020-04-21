@@ -121,6 +121,14 @@ class AgreementHelper {
     return this.agreement.unstake(amount, { from: signer })
   }
 
+  async forward({ script = undefined, from }) {
+    if (!from) from = this._getSender()
+    if (!script) script = await this.buildEvmScript()
+    const receipt = await this.agreement.forward(script, { from })
+    const actionId = getEventArgument(receipt, EVENTS.ACTION_SCHEDULED, 'actionId')
+    return { receipt, actionId }
+  }
+
   async schedule({ actionContext = '0xabcd', script = undefined, submitter = undefined, stake = undefined }) {
     if (!submitter) submitter = this._getSender()
     if (!script) script = await this.buildEvmScript()
