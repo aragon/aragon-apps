@@ -75,10 +75,10 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     // bytes32 public constant CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = keccak256("CHANGE_TOKEN_BALANCE_PERMISSION_ROLE");
     bytes32 public constant CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = 0x4413cad936c22452a3bdddec48f42af1848858d1e8a8b62b7c0ba489d6d77286;
 
-    event ActionScheduled(uint256 indexed actionId);
-    event ActionChallenged(uint256 indexed actionId);
-    event ActionSettled(uint256 indexed actionId);
-    event ActionDisputed(uint256 indexed actionId);
+    event ActionScheduled(uint256 indexed actionId, address indexed submitter);
+    event ActionChallenged(uint256 indexed actionId, address indexed challenger);
+    event ActionSettled(uint256 indexed actionId, uint256 offer);
+    event ActionDisputed(uint256 indexed actionId, IArbitrator indexed arbtirator, uint256 disputeId);
     event ActionAccepted(uint256 indexed actionId);
     event ActionVoided(uint256 indexed actionId);
     event ActionRejected(uint256 indexed actionId);
@@ -91,7 +91,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     event BalanceChallenged(address indexed signer, uint256 amount);
     event BalanceUnchallenged(address indexed signer, uint256 amount);
     event BalanceSlashed(address indexed signer, uint256 amount);
-    event SettingChanged(uint256 indexed settingId);
+    event SettingChanged(uint256 settingId);
     event TokenBalancePermissionChanged(ERC20 token, uint256 balance);
 
     enum ActionState {
@@ -254,7 +254,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         action.state = ActionState.Challenged;
         _challengeBalance(action.submitter, setting.collateralAmount);
         _createChallenge(action, msg.sender, _settlementOffer, _context, setting);
-        emit ActionChallenged(_actionId);
+        emit ActionChallenged(_actionId, msg.sender);
     }
 
     function settle(uint256 _actionId) external {
@@ -281,7 +281,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         _unchallengeBalance(submitter, unchallengedAmount);
         _slashBalance(submitter, challenger, slashedAmount);
         _returnArbitratorFees(challenge);
-        emit ActionSettled(_actionId);
+        emit ActionSettled(_actionId, slashedAmount);
     }
 
     function disputeChallenge(uint256 _actionId) external {
@@ -294,7 +294,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         challenge.state = ChallengeState.Disputed;
         challenge.disputeId = disputeId;
         disputes[disputeId].actionId = _actionId;
-        emit ActionDisputed(_actionId);
+        emit ActionDisputed(_actionId, arbitrator, disputeId);
     }
 
     function submitEvidence(uint256 _disputeId, bytes _evidence, bool _finished) external {
@@ -304,13 +304,12 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         bool finished = _registerEvidence(action, dispute, msg.sender, _finished);
         _submitEvidence(_disputeId, msg.sender, _evidence, _finished);
         if (finished) {
-            Setting storage setting = _getSetting(action);
             arbitrator.closeEvidencePeriod(_disputeId);
         }
     }
 
     function executeRuling(uint256 _actionId) external {
-        (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
+        Action storage action = _getAction(_actionId);
         require(_canRuleDispute(action), ERROR_CANNOT_RULE_ACTION);
 
         uint256 disputeId = action.challenge.disputeId;
@@ -431,17 +430,8 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         challengerFinishedEvidence = dispute.challengerFinishedEvidence;
     }
 
-    function getCurrentSetting() external view
-        returns (
-            bytes content,
-            uint64 delayPeriod,
-            uint64 settlementPeriod,
-            uint256 collateralAmount,
-            uint256 challengeCollateral
-        )
-    {
-        Setting storage setting = _getCurrentSetting();
-        return _getSettingData(setting);
+    function getCurrentSettingId() external view returns (uint256) {
+        return _getCurrentSettingId();
     }
 
     function getSetting(uint256 _settingId) external view
@@ -531,7 +521,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         action.script = _script;
         action.settingId = settingId;
         action.challengeEndDate = getTimestamp64().add(currentSetting.delayPeriod);
-        emit ActionScheduled(id);
+        emit ActionScheduled(id, _submitter);
     }
 
     function _createChallenge(Action storage _action, address _challenger, uint256 _settlementOffer, bytes _context, Setting storage _setting)
@@ -838,12 +828,16 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         return _getSetting(_action.settingId);
     }
 
+    function _getCurrentSettingId() internal view returns (uint256) {
+        return settings.length - 1;
+    }
+
     function _getCurrentSetting() internal view returns (Setting storage) {
-        return _getSetting(settings.length - 1);
+        return _getSetting(_getCurrentSettingId());
     }
 
     function _getCurrentSettingWithId() internal view returns (uint256, Setting storage) {
-        uint256 id = settings.length - 1;
+        uint256 id = _getCurrentSettingId();
         return (id, _getSetting(id));
     }
 

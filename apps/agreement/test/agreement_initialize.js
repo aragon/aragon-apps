@@ -74,7 +74,7 @@ contract('Agreement', ([_, EOA]) => {
         const actualCollateralToken = await agreement.collateralToken()
         assert.equal(actualCollateralToken, collateralToken.address, 'collateral token does not match')
 
-        const [actualContent, actualDelayPeriod, actualSettlementPeriod, actualCollateralAmount, actualChallengeCollateral] = await agreement.getCurrentSetting()
+        const [actualContent, actualDelayPeriod, actualSettlementPeriod, actualCollateralAmount, actualChallengeCollateral] = await agreement.getSetting(0)
         assert.equal(actualContent, content, 'content does not match')
         assertBn(actualDelayPeriod, delayPeriod, 'delay period does not match')
         assertBn(actualSettlementPeriod, settlementPeriod, 'settlement period does not match')
