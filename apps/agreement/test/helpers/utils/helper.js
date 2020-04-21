@@ -59,9 +59,8 @@ class AgreementHelper {
   }
 
   async getSetting(settingId = undefined) {
-    const [content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral] = settingId
-      ? (await this.agreement.getSetting(settingId))
-      : (await this.agreement.getCurrentSetting())
+    if (!settingId) settingId = await this.agreement.getCurrentSettingId()
+    const [content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral] = await this.agreement.getSetting(settingId)
     return { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral }
   }
 
