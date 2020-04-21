@@ -31,7 +31,7 @@ contract('Agreement', ([_, signer]) => {
     })
 
     context('schedule', () => {
-      itCostsAtMost(164e3, async () => (await agreement.schedule({})).receipt)
+      itCostsAtMost(165e3, async () => (await agreement.schedule({})).receipt)
     })
 
     context('cancel', () => {

@@ -36,7 +36,7 @@ contract('Agreement', ([_, submitter]) => {
           assert.equal(actionData.context, actionContext, 'action context does not match')
           assert.equal(actionData.state, ACTIONS_STATE.SCHEDULED, 'action state does not match')
           assert.equal(actionData.submitter, submitter, 'submitter does not match')
-          assertBn(actionData.createdAt, NOW, 'created at does not match')
+          assertBn(actionData.challengeEndDate, agreement.delayPeriod.add(NOW), 'challenge end date does not match')
           assertBn(actionData.settingId, 0, 'setting ID does not match')
         })
 
@@ -83,7 +83,7 @@ contract('Agreement', ([_, submitter]) => {
         it('can be challenged or cancelled', async () => {
           const { actionId } = await agreement.schedule({ submitter, script, actionContext, stake })
 
-          const { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canSubmitEvidence, canExecute } = await agreement.getAllowedPaths(actionId)
+          const { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canExecute } = await agreement.getAllowedPaths(actionId)
           assert.isTrue(canCancel, 'action cannot be cancelled')
           assert.isTrue(canChallenge, 'action cannot be challenged')
           assert.isFalse(canSettle, 'action can be settled')

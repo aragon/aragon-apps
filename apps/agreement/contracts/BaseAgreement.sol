@@ -106,7 +106,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
         bytes script;
         bytes context;
         ActionState state;
-        uint64 createdAt;
+        uint64 challengeEndDate;
         address submitter;
         uint256 settingId;
         Challenge challenge;
@@ -114,7 +114,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
 
     struct Challenge {
         bytes context;
-        uint64 createdAt;
+        uint64 settlementEndDate;
         address challenger;
         uint256 settlementOffer;
         uint256 arbitratorFeeAmount;
@@ -185,14 +185,14 @@ contract BaseAgreement is IArbitrable, AragonApp {
         action.submitter = msg.sender;
         action.context = _context;
         action.script = _script;
-        action.createdAt = getTimestamp64();
         action.settingId = settingId;
+        action.challengeEndDate = getTimestamp64().add(currentSetting.delayPeriod);
         emit ActionScheduled(id);
     }
 
     function execute(uint256 _actionId) external {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        require(_canExecute(action, setting), ERROR_CANNOT_EXECUTE_ACTION);
+        require(_canExecute(action), ERROR_CANNOT_EXECUTE_ACTION);
 
         if (action.state == ActionState.Scheduled) {
             _unlockBalance(action.submitter, setting.collateralAmount);
@@ -218,7 +218,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
 
     function challengeAction(uint256 _actionId, uint256 _settlementOffer, bytes _context) external authP(CHALLENGE_ROLE, arr(_actionId)) {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        require(_canChallenge(action, setting), ERROR_CANNOT_CHALLENGE_ACTION);
+        require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
         require(setting.collateralAmount >= _settlementOffer, ERROR_INVALID_SETTLEMENT_OFFER);
 
         action.state = ActionState.Challenged;
@@ -236,7 +236,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
         if (msg.sender == submitter) {
             require(_canSettle(action), ERROR_CANNOT_SETTLE_ACTION);
         } else {
-            require(_canClaimSettlement(action, setting), ERROR_CANNOT_SETTLE_ACTION);
+            require(_canClaimSettlement(action), ERROR_CANNOT_SETTLE_ACTION);
         }
 
         uint256 settlementOffer = challenge.settlementOffer;
@@ -256,7 +256,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
 
     function disputeChallenge(uint256 _actionId) external {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        require(_canDispute(action, setting), ERROR_CANNOT_DISPUTE_ACTION);
+        require(_canDispute(action), ERROR_CANNOT_DISPUTE_ACTION);
         require(msg.sender == action.submitter, ERROR_SENDER_NOT_ALLOWED);
 
         Challenge storage challenge = action.challenge;
@@ -322,7 +322,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
             bytes script,
             bytes context,
             ActionState state,
-            uint64 createdAt,
+            uint64 challengeEndDate,
             address submitter,
             uint256 settingId
         )
@@ -331,7 +331,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
         script = action.script;
         context = action.context;
         state = action.state;
-        createdAt = action.createdAt;
+        challengeEndDate = action.challengeEndDate;
         submitter = action.submitter;
         settingId = action.settingId;
     }
@@ -339,7 +339,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
     function getChallenge(uint256 _actionId) external view
         returns (
             bytes context,
-            uint64 createdAt,
+            uint64 settlementEndDate,
             address challenger,
             uint256 settlementOffer,
             uint256 arbitratorFeeAmount,
@@ -352,7 +352,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
         Challenge storage challenge = action.challenge;
 
         context = challenge.context;
-        createdAt = challenge.createdAt;
+        settlementEndDate = challenge.settlementEndDate;
         challenger = challenge.challenger;
         settlementOffer = challenge.settlementOffer;
         arbitratorFeeAmount = challenge.arbitratorFeeAmount;
@@ -425,8 +425,8 @@ contract BaseAgreement is IArbitrable, AragonApp {
     }
 
     function canChallenge(uint256 _actionId) external view returns (bool) {
-        (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        return _canChallenge(action, setting);
+        Action storage action = _getAction(_actionId);
+        return _canChallenge(action);
     }
 
     function canSettle(uint256 _actionId) external view returns (bool) {
@@ -435,13 +435,13 @@ contract BaseAgreement is IArbitrable, AragonApp {
     }
 
     function canDispute(uint256 _actionId) external view returns (bool) {
-        (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        return _canDispute(action, setting);
+        Action storage action = _getAction(_actionId);
+        return _canDispute(action);
     }
 
     function canClaimSettlement(uint256 _actionId) external view returns (bool) {
-        (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        return _canClaimSettlement(action, setting);
+        Action storage action = _getAction(_actionId);
+        return _canClaimSettlement(action);
     }
 
     function canRuleDispute(uint256 _actionId) external view returns (bool) {
@@ -450,8 +450,8 @@ contract BaseAgreement is IArbitrable, AragonApp {
     }
 
     function canExecute(uint256 _actionId) external view returns (bool) {
-        (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        return _canExecute(action, setting);
+        Action storage action  = _getAction(_actionId);
+        return _canExecute(action);
     }
 
     function _createChallenge(Action storage _action, address _challenger, uint256 _settlementOffer, bytes _context, Setting storage _setting)
@@ -462,7 +462,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
         challenge.challenger = _challenger;
         challenge.context = _context;
         challenge.settlementOffer = _settlementOffer;
-        challenge.createdAt = getTimestamp64();
+        challenge.settlementEndDate = getTimestamp64().add(_setting.settlementPeriod);
 
         // Transfer challenge collateral
         uint256 challengeStake = _getChallengeStake(_setting);
@@ -701,48 +701,42 @@ contract BaseAgreement is IArbitrable, AragonApp {
         return state == ActionState.Challenged && _action.challenge.state == ChallengeState.Rejected;
     }
 
-    function _canChallenge(Action storage _action, Setting storage _setting) internal view returns (bool) {
+    function _canChallenge(Action storage _action) internal view returns (bool) {
         if (_action.state != ActionState.Scheduled) {
             return false;
         }
 
-        uint64 challengeEndDate = _action.createdAt.add(_setting.delayPeriod);
-        return challengeEndDate >= getTimestamp64();
+        return _action.challengeEndDate >= getTimestamp64();
     }
 
     function _canSettle(Action storage _action) internal view returns (bool) {
         return _action.state == ActionState.Challenged && _action.challenge.state == ChallengeState.Waiting;
     }
 
-    function _canDispute(Action storage _action, Setting storage _setting) internal view returns (bool) {
+    function _canDispute(Action storage _action) internal view returns (bool) {
         if (!_canSettle(_action)) {
             return false;
         }
 
-        Challenge storage challenge = _action.challenge;
-        uint64 settlementEndDate = challenge.createdAt.add(_setting.settlementPeriod);
-        return settlementEndDate >= getTimestamp64();
+        return _action.challenge.settlementEndDate >= getTimestamp64();
     }
 
-    function _canClaimSettlement(Action storage _action, Setting storage _setting) internal view returns (bool) {
+    function _canClaimSettlement(Action storage _action) internal view returns (bool) {
         if (!_canSettle(_action)) {
             return false;
         }
 
-        Challenge storage challenge = _action.challenge;
-        uint64 settlementEndDate = challenge.createdAt.add(_setting.settlementPeriod);
-        return getTimestamp64() > settlementEndDate;
+        return getTimestamp64() > _action.challenge.settlementEndDate;
     }
 
     function _canRuleDispute(Action storage _action) internal view returns (bool) {
         return _action.state == ActionState.Challenged && _action.challenge.state == ChallengeState.Disputed;
     }
 
-    function _canExecute(Action storage _action, Setting storage _setting) internal view returns (bool) {
+    function _canExecute(Action storage _action) internal view returns (bool) {
         ActionState state = _action.state;
         if (state == ActionState.Scheduled) {
-            uint64 challengeEndDate = _action.createdAt.add(_setting.delayPeriod);
-            return getTimestamp64() > challengeEndDate;
+            return getTimestamp64() > _action.challengeEndDate;
         }
 
         return state == ActionState.Challenged && _action.challenge.state == ChallengeState.Rejected;

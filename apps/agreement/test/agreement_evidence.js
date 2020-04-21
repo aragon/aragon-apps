@@ -161,7 +161,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     it('can be ruled or submit evidence', async () => {
                       await agreement.submitEvidence({ actionId, evidence, from, finished })
 
-                      const { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canSubmitEvidence, canExecute } = await agreement.getAllowedPaths(actionId)
+                      const { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canExecute } = await agreement.getAllowedPaths(actionId)
                       assert.isTrue(canRuleDispute, 'action dispute cannot be ruled')
                       assert.isFalse(canCancel, 'action can be cancelled')
                       assert.isFalse(canChallenge, 'action can be challenged')
