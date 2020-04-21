@@ -1,6 +1,4 @@
 module.exports = {
-  SETTING_CHANGED: 'SettingChanged',
-  PERMISSION_CHANGED: 'PermissionChanged',
   ACTION_SCHEDULED: 'ActionScheduled',
   ACTION_CHALLENGED: 'ActionChallenged',
   ACTION_SETTLED: 'ActionSettled',
@@ -17,4 +15,6 @@ module.exports = {
   BALANCE_CHALLENGED: 'BalanceChallenged',
   BALANCE_UNCHALLENGED: 'BalanceUnchallenged',
   BALANCE_SLAHED: 'BalanceSlashed',
+  SETTING_CHANGED: 'SettingChanged',
+  PERMISSION_CHANGED: 'TokenBalancePermissionChanged',
 }

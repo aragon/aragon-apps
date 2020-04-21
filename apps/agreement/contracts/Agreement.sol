@@ -17,7 +17,7 @@ import "./arbitration/IArbitrable.sol";
 import "./arbitration/IArbitrator.sol";
 
 
-contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
+contract Agreement is IArbitrable, IForwarder, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
@@ -63,11 +63,17 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
     string internal constant ERROR_COLLATERAL_TOKEN_NOT_CONTRACT = "AGR_COL_TOKEN_NOT_CONTRACT";
     string internal constant ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED = "AGR_COL_TOKEN_TRANSFER_FAILED";
 
+    // bytes32 public constant SIGN_ROLE = keccak256("SIGN_ROLE");
+    bytes32 public constant SIGN_ROLE = 0xfbd6b3ad612c81ecfcef77ba888ef41173779a71e0dbe944f953d7c64fd9dc5d;
+
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
 
     // bytes32 public constant CHANGE_AGREEMENT_ROLE = keccak256("CHANGE_AGREEMENT_ROLE");
     bytes32 public constant CHANGE_AGREEMENT_ROLE = 0x4af6231bf2561f502301de36b9a7706e940a025496b174607b9d2f58f9840b46;
+
+    // bytes32 public constant CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = keccak256("CHANGE_TOKEN_BALANCE_PERMISSION_ROLE");
+    bytes32 public constant CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = 0x4413cad936c22452a3bdddec48f42af1848858d1e8a8b62b7c0ba489d6d77286;
 
     event ActionScheduled(uint256 indexed actionId);
     event ActionChallenged(uint256 indexed actionId);
@@ -78,7 +84,6 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
     event ActionRejected(uint256 indexed actionId);
     event ActionCancelled(uint256 indexed actionId);
     event ActionExecuted(uint256 indexed actionId);
-    event SettingChanged(uint256 indexed settingId);
     event BalanceStaked(address indexed signer, uint256 amount);
     event BalanceUnstaked(address indexed signer, uint256 amount);
     event BalanceLocked(address indexed signer, uint256 amount);
@@ -86,6 +91,8 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
     event BalanceChallenged(address indexed signer, uint256 amount);
     event BalanceUnchallenged(address indexed signer, uint256 amount);
     event BalanceSlashed(address indexed signer, uint256 amount);
+    event SettingChanged(uint256 indexed settingId);
+    event TokenBalancePermissionChanged(ERC20 token, uint256 balance);
 
     enum ActionState {
         Scheduled,
@@ -146,6 +153,11 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
         uint64 settlementPeriod;
     }
 
+    struct TokenBalancePermission {
+        ERC20 token;
+        uint256 balance;
+    }
+
     modifier onlySigner(address _signer) {
         require(_canSign(_signer), ERROR_AUTH_FAILED);
         _;
@@ -156,8 +168,32 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
 
     Action[] private actions;
     Setting[] private settings;
+    TokenBalancePermission private tokenBalancePermission;
     mapping (address => Stake) private stakeBalances;
     mapping (uint256 => Dispute) private disputes;
+
+    function initialize(
+        string _title,
+        bytes _content,
+        ERC20 _collateralToken,
+        uint256 _collateralAmount,
+        uint256 _challengeCollateral,
+        IArbitrator _arbitrator,
+        uint64 _delayPeriod,
+        uint64 _settlementPeriod,
+        ERC20 _permissionToken,
+        uint256 _permissionBalance
+    )
+        external
+    {
+        initialized();
+        require(isContract(address(_collateralToken)), ERROR_COLLATERAL_TOKEN_NOT_CONTRACT);
+
+        title = _title;
+        collateralToken = _collateralToken;
+        _newSetting(_content, _collateralAmount, _challengeCollateral, _arbitrator, _delayPeriod, _settlementPeriod);
+        _newTokenBalancePermission(_permissionToken, _permissionBalance);
+    }
 
     function stake(uint256 _amount) external onlySigner(msg.sender) {
         _stakeBalance(msg.sender, msg.sender, _amount);
@@ -301,6 +337,24 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
         }
     }
 
+    function changeSetting(
+        bytes _content,
+        uint256 _collateralAmount,
+        uint256 _challengeCollateral,
+        IArbitrator _arbitrator,
+        uint64 _delayPeriod,
+        uint64 _settlementPeriod
+    )
+        external
+        auth(CHANGE_AGREEMENT_ROLE)
+    {
+        _newSetting(_content, _collateralAmount, _challengeCollateral, _arbitrator, _delayPeriod, _settlementPeriod);
+    }
+
+    function changeTokenBalancePermission(ERC20 _permissionToken, uint256 _permissionBalance) external auth(CHANGE_TOKEN_BALANCE_PERMISSION_ROLE) {
+        _newTokenBalancePermission(_permissionToken, _permissionBalance);
+    }
+
     function isForwarder() external pure returns (bool) {
         return true;
     }
@@ -407,6 +461,11 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
     {
         Setting storage setting = _getSetting(_settingId);
         return _getSettingData(setting);
+    }
+
+    function getTokenBalancePermission() external view returns (ERC20, uint256) {
+        TokenBalancePermission storage permission = tokenBalancePermission;
+        return (permission.token, permission.balance);
     }
 
     function getMissingArbitratorFees(uint256 _actionId) external view returns (ERC20, uint256, uint256) {
@@ -555,7 +614,7 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
         challenge.state = ChallengeState.Accepted;
 
         _slashBalance(_action.submitter, challenge.challenger, _setting.collateralAmount);
-        _transferchallengeCollateral(challenge.challenger, _setting);
+        _transferChallengeCollateral(challenge.challenger, _setting);
     }
 
     function _rejectChallenge(Action storage _action, Setting storage _setting) internal {
@@ -563,7 +622,7 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
         challenge.state = ChallengeState.Rejected;
 
         _unchallengeBalance(_action.submitter, _setting.collateralAmount);
-        _transferchallengeCollateral(_action.submitter, _setting);
+        _transferChallengeCollateral(_action.submitter, _setting);
     }
 
     function _voidChallenge(Action storage _action, Setting storage _setting) internal {
@@ -571,7 +630,7 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
         challenge.state = ChallengeState.Voided;
 
         _unchallengeBalance(_action.submitter, _setting.collateralAmount);
-        _transferchallengeCollateral(challenge.challenger, _setting);
+        _transferChallengeCollateral(challenge.challenger, _setting);
     }
 
     function _stakeBalance(address _from, address _to, uint256 _amount) internal {
@@ -646,7 +705,7 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
         require(collateralToken.safeTransfer(_signer, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
     }
 
-    function _transferchallengeCollateral(address _to, Setting storage _setting) internal {
+    function _transferChallengeCollateral(address _to, Setting storage _setting) internal {
         uint256 amount = _setting.challengeCollateral;
         if (amount > 0) {
             require(collateralToken.safeTransfer(_to, amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
@@ -658,26 +717,6 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
         if (amount > 0) {
             require(_challenge.arbitratorFeeToken.safeTransfer(_challenge.challenger, amount), ERROR_ARBITRATOR_FEE_RETURN_FAILED);
         }
-    }
-
-    function _initialize(
-        string _title,
-        bytes _content,
-        ERC20 _collateralToken,
-        uint256 _collateralAmount,
-        uint256 _challengeCollateral,
-        IArbitrator _arbitrator,
-        uint64 _delayPeriod,
-        uint64 _settlementPeriod
-    )
-        internal
-    {
-        initialized();
-        require(isContract(address(_collateralToken)), ERROR_COLLATERAL_TOKEN_NOT_CONTRACT);
-
-        title = _title;
-        collateralToken = _collateralToken;
-        _newSetting(_content, _collateralAmount, _challengeCollateral, _arbitrator, _delayPeriod, _settlementPeriod);
     }
 
     function _newSetting(
@@ -705,7 +744,20 @@ contract BaseAgreement is IArbitrable, IForwarder, AragonApp {
         emit SettingChanged(id);
     }
 
-    function _canSign(address _signer) internal view returns (bool);
+    function _newTokenBalancePermission(ERC20 _permissionToken, uint256 _permissionBalance) internal {
+        tokenBalancePermission.token = _permissionToken;
+        tokenBalancePermission.balance = _permissionBalance;
+        emit TokenBalancePermissionChanged(_permissionToken, _permissionBalance);
+    }
+
+    function _canSign(address _signer) internal view returns (bool) {
+        TokenBalancePermission storage permission = tokenBalancePermission;
+        ERC20 permissionToken = permission.token;
+
+        return isContract(address(permissionToken))
+            ? permissionToken.balanceOf(_signer) >= permission.balance
+            : canPerform(_signer, SIGN_ROLE, arr(_signer));
+    }
 
     function _canSchedule(address _sender) internal view returns (bool) {
         Stake storage balance = stakeBalances[_sender];

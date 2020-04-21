@@ -3,8 +3,6 @@ const { bn } = require('../lib/numbers')
 const { getEventArgument } = require('@aragon/test-helpers/events')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 
-const PCT_BASE = bn(100)
-
 class AgreementHelper {
   constructor(artifacts, web3, agreement, setting = {}) {
     this.artifacts = artifacts
@@ -43,6 +41,10 @@ class AgreementHelper {
 
   get settlementPeriod() {
     return this.setting.settlementPeriod
+  }
+
+  get tokenBalancePermission() {
+    return this.setting.tokenBalancePermission
   }
 
   async getBalance(signer) {
@@ -236,14 +238,16 @@ class AgreementHelper {
     const challengeCollateral = options.challengeCollateral || currentSettings.challengeCollateral
     const arbitrator = options.arbitrator ? options.arbitrator.address : currentSettings.arbitrator
 
-    if (this.agreement.constructor.contractName.includes('PermissionAgreement')) {
-      return this.agreement.changeSetting(content, collateralAmount, challengeCollateral, arbitrator, delayPeriod, settlementPeriod, { from })
-    } else {
-      const tokenBalancePermission = await this.agreement.getTokenBalancePermission()
-      const permissionToken = options.permissionToken ? options.permissionToken.address : tokenBalancePermission[0]
-      const permissionBalance = options.permissionBalance || tokenBalancePermission[1]
-      return this.agreement.changeSetting(content, collateralAmount, challengeCollateral, arbitrator, delayPeriod, settlementPeriod, permissionToken, permissionBalance, { from })
-    }
+    return this.agreement.changeSetting(content, collateralAmount, challengeCollateral, arbitrator, delayPeriod, settlementPeriod, { from })
+  }
+
+  async changeTokenBalancePermission(options = {}) {
+    const from = options.from || this._getSender()
+    const permission = await this.getTokenBalancePermission()
+    const permissionToken = options.permissionToken ? options.permissionToken.address : permission.permissionToken
+    const permissionBalance = options.permissionBalance || permission.permissionBalance
+
+    return this.agreement.changeTokenBalancePermission(permissionToken, permissionBalance, { from })
   }
 
   async safeApprove(token, from, to, amount, accumulate = true) {

@@ -13,12 +13,7 @@ contract('Agreement', ([_, someone, signer]) => {
 
   const collateralAmount = bigExp(200, 18)
 
-  const itManagesStakingProperly = type => {
-    beforeEach('deploy agreement instance', async () => {
-      agreement = await deployer.deployAndInitializeWrapper({ collateralAmount, signers: [signer], type })
-      collateralToken = await agreement.collateralToken
-    })
-
+  const itManagesStakingProperly = () => {
     describe('stake', () => {
       context('when the sender has permissions', () => {
         const approve = false // do not approve tokens before staking
@@ -417,22 +412,21 @@ contract('Agreement', ([_, someone, signer]) => {
   }
 
   describe('token balance based permission', () => {
-    const type = 'permission'
-
-    before('deploy agreement instance', async () => {
-      await deployer.deployBase({ type })
+    beforeEach('deploy agreement instance', async () => {
+      agreement = await deployer.deployAndInitializeWrapper({ collateralAmount, signers: [signer] })
+      collateralToken = await agreement.collateralToken
     })
 
-    itManagesStakingProperly(type)
+    itManagesStakingProperly()
   })
 
   describe('token balance based agreement', () => {
-    const type = 'token'
-
-    before('deploy agreement base', async () => {
-      await deployer.deployBase({ type })
+    beforeEach('deploy agreement instance', async () => {
+      await deployer.deployPermissionToken()
+      agreement = await deployer.deployAndInitializeWrapper({ collateralAmount, signers: [signer] })
+      collateralToken = await agreement.collateralToken
     })
 
-    itManagesStakingProperly(type)
+    itManagesStakingProperly()
   })
 })

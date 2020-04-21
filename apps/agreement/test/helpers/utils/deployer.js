@@ -1,10 +1,11 @@
 const AgreementHelper = require('./helper')
-const { bigExp } = require('../lib/numbers')
 const { NOW, DAY } = require('../lib/time')
 const { utf8ToHex } = require('web3-utils')
+const { bigExp, bn } = require('../lib/numbers')
 const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 const DEFAULT_INITIALIZE_OPTIONS = {
   title: 'Sample Agreement',
@@ -84,12 +85,9 @@ class AgreementDeployer {
     return this.base.contract.abi
   }
 
-  get isPermissionBased() {
-    return this.base.constructor.contractName.includes('PermissionAgreement')
-  }
-
   async deployAndInitializeWrapper(options = {}) {
     await this.deployAndInitialize(options)
+    const [token, balance] = await this.agreement.getTokenBalancePermission()
     const [content, collateralAmount, challengeCollateral, arbitratorAddress, delayPeriod, settlementPeriod] = await this.agreement.getCurrentSetting()
 
     const IArbitrator = this._getContract('IArbitrator')
@@ -98,7 +96,8 @@ class AgreementDeployer {
     const MiniMeToken = this._getContract('MiniMeToken')
     const collateralToken = options.collateralToken ? MiniMeToken.at(options.collateralToken) : this.collateralToken
 
-    const setting = { content, collateralToken, collateralAmount, delayPeriod, settlementPeriod, challengeCollateral, arbitrator }
+    const tokenBalancePermission = { token, balance }
+    const setting = { content, collateralToken, collateralAmount, delayPeriod, settlementPeriod, challengeCollateral, arbitrator, tokenBalancePermission }
     return new AgreementHelper(this.artifacts, this.web3, this.agreement, setting)
   }
 
@@ -114,31 +113,40 @@ class AgreementDeployer {
     const defaultOptions = { ...DEFAULT_INITIALIZE_OPTIONS, ...options }
     const { title, content, collateralAmount, delayPeriod, settlementPeriod, challengeCollateral } = defaultOptions
 
-    if (this.isPermissionBased) await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod)
-    else {
-      if (!options.permissionToken && !this.permissionToken) await this.deployPermissionToken(options)
-      const permissionToken = options.permissionToken || this.permissionToken
-      const permissionBalance = options.permissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance
-      await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance)
-      for (const signer of (options.signers || [])) await permissionToken.generateTokens(signer, permissionBalance)
+    let permissionToken, permissionBalance
+
+    if (options.permissionToken) {
+      permissionToken = options
+      permissionBalance = options.permissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance
+    } else if (this.permissionToken) {
+      permissionToken = this.permissionToken
+      permissionBalance = DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance
     }
+
+    if (permissionToken)  {
+      const signers = options.signers || []
+      for (const signer of signers) await permissionToken.generateTokens(signer, permissionBalance)
+    } else {
+      permissionToken = { address: ZERO_ADDR }
+      permissionBalance = bn(0)
+    }
+
+    await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance)
     return this.agreement
   }
 
   async deploy(options = {}) {
-    if (!this.dao) await this.deployDAO(options)
-    if (!this.base) await this.deployBase(options)
-
     const owner = options.owner || this._getSender()
-    const receipt = await this.dao.newAppInstance(this.base.appId, this.base.address, '0x', false, { from: owner })
+    if (!this.dao) await this.deployDAO(owner)
+    if (!this.base) await this.deployBase()
+
+    const receipt = await this.dao.newAppInstance('0x1234', this.base.address, '0x', false, { from: owner })
     const agreement = this.base.constructor.at(getNewProxyAddress(receipt))
 
-    if (this.isPermissionBased) {
-      const SIGN_ROLE = await agreement.SIGN_ROLE()
-      const signers = options.signers || [ANY_ADDR]
-      for (const signer of signers) {
-        await this.acl.createPermission(signer, agreement.address, SIGN_ROLE, owner, { from: owner })
-      }
+    const SIGN_ROLE = await agreement.SIGN_ROLE()
+    const signers = options.signers || [ANY_ADDR]
+    for (const signer of signers) {
+      await this.acl.createPermission(signer, agreement.address, SIGN_ROLE, owner, { from: owner })
     }
 
     const CHALLENGE_ROLE = await agreement.CHALLENGE_ROLE()
@@ -149,6 +157,9 @@ class AgreementDeployer {
 
     const CHANGE_AGREEMENT_ROLE = await agreement.CHANGE_AGREEMENT_ROLE()
     await this.acl.createPermission(owner, agreement.address, CHANGE_AGREEMENT_ROLE, owner, { from: owner })
+
+    const CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = await agreement.CHANGE_TOKEN_BALANCE_PERMISSION_ROLE()
+    await this.acl.createPermission(owner, agreement.address, CHANGE_TOKEN_BALANCE_PERMISSION_ROLE, owner, { from: owner })
 
     const { currentTimestamp } = { ...DEFAULT_INITIALIZE_OPTIONS, ...options }
     await agreement.mockSetTimestamp(currentTimestamp)
@@ -188,17 +199,14 @@ class AgreementDeployer {
     return arbitratorToken
   }
 
-  async deployBase(options = {}) {
-    const { Agreement, appId } = this._getAgreementContract(options.type)
+  async deployBase() {
+    const Agreement = this._getContract('AgreementMock')
     const base = await Agreement.new()
-    base.appId = appId
     this.previousDeploy = { ...this.previousDeploy, base }
     return base
   }
 
-  async deployDAO(options = {}) {
-    const owner = options.owner || this._getSender()
-
+  async deployDAO(owner) {
     const Kernel = this._getContract('Kernel')
     const kernelBase = await Kernel.new(true)
 
@@ -229,12 +237,6 @@ class AgreementDeployer {
 
   _getContract(name) {
     return this.artifacts.require(name)
-  }
-
-  _getAgreementContract(type = undefined) {
-    return type === 'token'
-      ? { Agreement: this._getContract('TokenBalanceAgreementMock'), appId: '0x1234' }
-      : { Agreement: this._getContract('PermissionAgreementMock'), appId: '0x4312' }
   }
 
   _getSender() {
