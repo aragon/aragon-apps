@@ -4,10 +4,13 @@ const { getEventArgument } = require('@aragon/test-helpers/events')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 
 class AgreementHelper {
-  constructor(artifacts, web3, agreement, setting = {}) {
+  constructor(artifacts, web3, agreement, arbitrator, collateralToken, tokenBalancePermission, setting = {}) {
     this.artifacts = artifacts
     this.web3 = web3
     this.agreement = agreement
+    this.arbitrator = arbitrator
+    this.collateralToken = collateralToken
+    this.tokenBalancePermission = tokenBalancePermission
     this.setting = setting
   }
 
@@ -15,24 +18,8 @@ class AgreementHelper {
     return this.agreement.address
   }
 
-  get arbitrator() {
-    return this.setting.arbitrator
-  }
-
   get content() {
     return this.setting.content
-  }
-
-  get collateralAmount() {
-    return this.setting.collateralAmount
-  }
-
-  get collateralToken() {
-    return this.setting.collateralToken
-  }
-
-  get challengeCollateral() {
-    return this.setting.challengeCollateral
   }
 
   get delayPeriod() {
@@ -43,8 +30,12 @@ class AgreementHelper {
     return this.setting.settlementPeriod
   }
 
-  get tokenBalancePermission() {
-    return this.setting.tokenBalancePermission
+  get collateralAmount() {
+    return this.setting.collateralAmount
+  }
+
+  get challengeCollateral() {
+    return this.setting.challengeCollateral
   }
 
   async getBalance(signer) {
@@ -68,10 +59,10 @@ class AgreementHelper {
   }
 
   async getSetting(settingId = undefined) {
-    const [content, collateralAmount, challengeCollateral, arbitrator, delayPeriod, settlementPeriod] = settingId
+    const [content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral] = settingId
       ? (await this.agreement.getSetting(settingId))
       : (await this.agreement.getCurrentSetting())
-    return { content, collateralAmount, delayPeriod, settlementPeriod, challengeCollateral, arbitrator }
+    return { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral }
   }
 
   async getTokenBalancePermission() {
@@ -236,9 +227,8 @@ class AgreementHelper {
     const delayPeriod = options.delayPeriod || currentSettings.delayPeriod
     const settlementPeriod = options.settlementPeriod || currentSettings.settlementPeriod
     const challengeCollateral = options.challengeCollateral || currentSettings.challengeCollateral
-    const arbitrator = options.arbitrator ? options.arbitrator.address : currentSettings.arbitrator
 
-    return this.agreement.changeSetting(content, collateralAmount, challengeCollateral, arbitrator, delayPeriod, settlementPeriod, { from })
+    return this.agreement.changeSetting(content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral, { from })
   }
 
   async changeTokenBalancePermission(options = {}) {
