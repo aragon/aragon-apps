@@ -269,7 +269,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
 
     function submitEvidence(uint256 _disputeId, bytes _evidence, bool _finished) external {
         (Action storage action, Dispute storage dispute) = _getActionAndDispute(_disputeId);
-        require(_canSubmitEvidence(action), ERROR_CANNOT_SUBMIT_EVIDENCE);
+        require(_canRuleDispute(action), ERROR_CANNOT_SUBMIT_EVIDENCE);
 
         bool finished = _registerEvidence(action, dispute, msg.sender, _finished);
         _submitEvidence(_disputeId, msg.sender, _evidence, _finished);
@@ -447,11 +447,6 @@ contract BaseAgreement is IArbitrable, AragonApp {
     function canRuleDispute(uint256 _actionId) external view returns (bool) {
         Action storage action = _getAction(_actionId);
         return _canRuleDispute(action);
-    }
-
-    function canSubmitEvidence(uint256 _actionId) external view returns (bool) {
-        Action storage action = _getAction(_actionId);
-        return _canSubmitEvidence(action);
     }
 
     function canExecute(uint256 _actionId) external view returns (bool) {
@@ -703,12 +698,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
             return true;
         }
 
-        if (state != ActionState.Challenged) {
-            return false;
-        }
-
-        Challenge storage challenge = _action.challenge;
-        return challenge.state == ChallengeState.Rejected;
+        return state == ActionState.Challenged && _action.challenge.state == ChallengeState.Rejected;
     }
 
     function _canChallenge(Action storage _action, Setting storage _setting) internal view returns (bool) {
@@ -721,12 +711,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
     }
 
     function _canSettle(Action storage _action) internal view returns (bool) {
-        if (_action.state != ActionState.Challenged) {
-            return false;
-        }
-
-        Challenge storage challenge = _action.challenge;
-        return challenge.state == ChallengeState.Waiting;
+        return _action.state == ActionState.Challenged && _action.challenge.state == ChallengeState.Waiting;
     }
 
     function _canDispute(Action storage _action, Setting storage _setting) internal view returns (bool) {
@@ -750,35 +735,17 @@ contract BaseAgreement is IArbitrable, AragonApp {
     }
 
     function _canRuleDispute(Action storage _action) internal view returns (bool) {
-        if (_action.state != ActionState.Challenged) {
-            return false;
-        }
-
-        Challenge storage challenge = _action.challenge;
-        return challenge.state == ChallengeState.Disputed;
-    }
-
-    function _canSubmitEvidence(Action storage _action) internal view returns (bool) {
-        if (_action.state != ActionState.Challenged) {
-            return false;
-        }
-
-        Challenge storage challenge = _action.challenge;
-        return challenge.state == ChallengeState.Disputed;
+        return _action.state == ActionState.Challenged && _action.challenge.state == ChallengeState.Disputed;
     }
 
     function _canExecute(Action storage _action, Setting storage _setting) internal view returns (bool) {
-        if (_action.state == ActionState.Scheduled) {
+        ActionState state = _action.state;
+        if (state == ActionState.Scheduled) {
             uint64 challengeEndDate = _action.createdAt.add(_setting.delayPeriod);
             return getTimestamp64() > challengeEndDate;
         }
 
-        if (_action.state != ActionState.Challenged) {
-            return false;
-        }
-
-        Challenge storage challenge = _action.challenge;
-        return  challenge.state == ChallengeState.Rejected;
+        return state == ActionState.Challenged && _action.challenge.state == ChallengeState.Rejected;
     }
 
     function _wasDisputed(Action storage _action) internal view returns (bool) {
