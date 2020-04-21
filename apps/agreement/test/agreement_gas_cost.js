@@ -19,7 +19,7 @@ contract('Agreement', ([_, signer]) => {
     }
 
     context('stake', () => {
-      itCostsAtMost(175e3, () => agreement.stake({ signer }))
+      itCostsAtMost(176e3, () => agreement.stake({ signer }))
     })
 
     context('unstake', () => {
