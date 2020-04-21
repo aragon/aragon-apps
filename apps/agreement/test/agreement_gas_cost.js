@@ -31,7 +31,7 @@ contract('Agreement', ([_, signer]) => {
     })
 
     context('schedule', () => {
-      itCostsAtMost(165e3, async () => (await agreement.schedule({})).receipt)
+      itCostsAtMost(166e3, async () => (await agreement.schedule({})).receipt)
     })
 
     context('cancel', () => {
@@ -65,7 +65,7 @@ contract('Agreement', ([_, signer]) => {
         await agreement.challenge({ actionId })
       })
 
-      itCostsAtMost(286e3, () => agreement.dispute({ actionId }))
+      itCostsAtMost(293e3, () => agreement.dispute({ actionId }))
     })
 
     context('executeRuling', () => {
