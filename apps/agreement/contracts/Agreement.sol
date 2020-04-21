@@ -536,7 +536,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
 
         // Transfer challenge collateral
         uint256 challengeCollateral = _setting.challengeCollateral;
-        require(collateralToken.safeTransferFrom(_challenger, address(this), challengeCollateral), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+        _transferCollateralTokensFrom(_challenger, address(this), challengeCollateral);
 
         // Transfer half of the Arbitrator fees
         (, ERC20 feeToken, uint256 feeAmount) = arbitrator.getDisputeFees();
@@ -559,7 +559,8 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         // Create dispute
         address submitter = _action.submitter;
         require(feeToken.safeTransferFrom(submitter, address(this), missingFees), ERROR_ARBITRATOR_FEE_DEPOSIT_FAILED);
-        require(feeToken.safeApprove(recipient, totalFees), ERROR_ARBITRATOR_FEE_APPROVAL_FAILED);
+        _approveArbitratorFeeTokens(feeToken, recipient, 0);
+        _approveArbitratorFeeTokens(feeToken, recipient, totalFees);
         uint256 disputeId = arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _setting.content);
 
         // Update action and submit evidences
@@ -609,7 +610,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         challenge.state = ChallengeState.Accepted;
 
         _slashBalance(_action.submitter, challenge.challenger, _setting.collateralAmount);
-        _transferChallengeCollateral(challenge.challenger, _setting);
+        _transferCollateralTokens(challenge.challenger, _setting.challengeCollateral);
     }
 
     function _rejectChallenge(Action storage _action, Setting storage _setting) internal {
@@ -617,7 +618,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         challenge.state = ChallengeState.Rejected;
 
         _unchallengeBalance(_action.submitter, _setting.collateralAmount);
-        _transferChallengeCollateral(_action.submitter, _setting);
+        _transferCollateralTokens(_action.submitter, _setting.challengeCollateral);
     }
 
     function _voidChallenge(Action storage _action, Setting storage _setting) internal {
@@ -625,7 +626,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         challenge.state = ChallengeState.Voided;
 
         _unchallengeBalance(_action.submitter, _setting.collateralAmount);
-        _transferChallengeCollateral(challenge.challenger, _setting);
+        _transferCollateralTokens(challenge.challenger, _setting.challengeCollateral);
     }
 
     function _stakeBalance(address _from, address _to, uint256 _amount) internal {
@@ -635,14 +636,14 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         require(newAvailableBalance >= currentSetting.collateralAmount, ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL);
 
         balance.available = newAvailableBalance;
+        _transferCollateralTokensFrom(_from, address(this), _amount);
         emit BalanceStaked(_to, _amount);
-
-        require(collateralToken.safeTransferFrom(_from, address(this), _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
     }
 
     function _lockBalance(address _signer, uint256 _amount) internal {
         Stake storage balance = stakeBalances[_signer];
         require(balance.available >= _amount, ERROR_NOT_ENOUGH_AVAILABLE_STAKE);
+
         balance.available = balance.available.sub(_amount);
         balance.locked = balance.locked.add(_amount);
         emit BalanceLocked(_signer, _amount);
@@ -680,9 +681,8 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
 
         Stake storage balance = stakeBalances[_signer];
         balance.challenged = balance.challenged.sub(_amount);
+        _transferCollateralTokens(_challenger, _amount);
         emit BalanceSlashed(_signer, _amount);
-
-        require(collateralToken.safeTransfer(_challenger, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
     }
 
     function _unstakeBalance(address _signer, uint256 _amount) internal {
@@ -695,16 +695,24 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         require(newAvailableBalance == 0 || newAvailableBalance >= currentSetting.collateralAmount, ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL);
 
         balance.available = newAvailableBalance;
+        _transferCollateralTokens(_signer, _amount);
         emit BalanceUnstaked(_signer, _amount);
-
-        require(collateralToken.safeTransfer(_signer, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
     }
 
-    function _transferChallengeCollateral(address _to, Setting storage _setting) internal {
-        uint256 amount = _setting.challengeCollateral;
-        if (amount > 0) {
-            require(collateralToken.safeTransfer(_to, amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+    function _transferCollateralTokens(address _to, uint256 _amount) internal {
+        if (_amount > 0) {
+            require(collateralToken.safeTransfer(_to, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
         }
+    }
+
+    function _transferCollateralTokensFrom(address _from, address _to, uint256 _amount) internal {
+        if (_amount > 0) {
+            require(collateralToken.safeTransferFrom(_from, _to, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+        }
+    }
+
+    function _approveArbitratorFeeTokens(ERC20 _arbitratorFeeToken, address _to, uint256 _amount) internal {
+        require(_arbitratorFeeToken.safeApprove(_to, _amount), ERROR_ARBITRATOR_FEE_APPROVAL_FAILED);
     }
 
     function _returnArbitratorFees(Challenge storage _challenge) internal {
