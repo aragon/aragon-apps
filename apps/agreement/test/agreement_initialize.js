@@ -66,16 +66,19 @@ contract('Agreement', ([_, EOA]) => {
 
       it('initializes the agreement setting', async () => {
         const actualTitle = await agreement.title()
-        const actualCollateralToken = await agreement.collateralToken()
-        const [actualContent, actualCollateralAmount, actualChallengeCollateral, actualArbitratorAddress, actualDelayPeriod, actualSettlementPeriod] = await agreement.getCurrentSetting()
-
         assert.equal(actualTitle, title, 'title does not match')
-        assert.equal(actualContent, content, 'content does not match')
-        assert.equal(actualArbitratorAddress, arbitrator.address, 'arbitrator does not match')
+
+        const actualArbitrator = await agreement.arbitrator()
+        assert.equal(actualArbitrator, arbitrator.address, 'arbitrator does not match')
+
+        const actualCollateralToken = await agreement.collateralToken()
         assert.equal(actualCollateralToken, collateralToken.address, 'collateral token does not match')
-        assertBn(actualCollateralAmount, collateralAmount, 'collateral amount does not match')
+
+        const [actualContent, actualDelayPeriod, actualSettlementPeriod, actualCollateralAmount, actualChallengeCollateral] = await agreement.getCurrentSetting()
+        assert.equal(actualContent, content, 'content does not match')
         assertBn(actualDelayPeriod, delayPeriod, 'delay period does not match')
         assertBn(actualSettlementPeriod, settlementPeriod, 'settlement period does not match')
+        assertBn(actualCollateralAmount, collateralAmount, 'collateral amount does not match')
         assertBn(actualChallengeCollateral, challengeCollateral, 'challenge collateral does not match')
 
         const [actualPermissionToken, actualPermissionAmount] = await agreement.getTokenBalancePermission()
