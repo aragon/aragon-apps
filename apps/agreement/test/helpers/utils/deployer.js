@@ -94,7 +94,7 @@ class AgreementDeployer {
     const [token, balance] = await this.agreement.getTokenBalancePermission()
     const tokenBalancePermission = { token, balance }
 
-    const [content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral] = await this.agreement.getCurrentSetting()
+    const [content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral] = await this.agreement.getSetting(0)
     const initialSetting = { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral }
 
     return new AgreementHelper(this.artifacts, this.web3, this.agreement, arbitrator, collateralToken, tokenBalancePermission, initialSetting)
