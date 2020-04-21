@@ -17,7 +17,7 @@ contract('Agreement', ([_, EOA]) => {
   const collateralAmount = bigExp(100, 18)
   const delayPeriod = 5 * DAY
   const settlementPeriod = 2 * DAY
-  const challengeLeverage = 200
+  const challengeCollateral = bigExp(200, 18)
   const permissionBalance = bigExp(64, 18)
 
   before('deploy base instances', async () => {
@@ -39,38 +39,38 @@ contract('Agreement', ([_, EOA]) => {
         const base = deployer.base
 
         assert(await base.isPetrified(), 'base agreement contract should be petrified')
-        await assertRevert(base.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod), 'INIT_ALREADY_INITIALIZED')
+        await assertRevert(base.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod), 'INIT_ALREADY_INITIALIZED')
       })
 
       context('when the initialization fails', () => {
         it('fails when using a non-contract collateral token', async () => {
           const collateralToken = EOA
 
-          await assertRevert(agreement.initialize(title, content, collateralToken, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod), ERRORS.ERROR_COLLATERAL_TOKEN_NOT_CONTRACT)
+          await assertRevert(agreement.initialize(title, content, collateralToken, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod), ERRORS.ERROR_COLLATERAL_TOKEN_NOT_CONTRACT)
         })
 
         it('fails when using a non-contract arbitrator', async () => {
           const court = EOA
 
-          await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, court, delayPeriod, settlementPeriod), ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
+          await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, court, delayPeriod, settlementPeriod), ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
         })
       })
 
       context('when the initialization succeeds', () => {
         before('initialize agreement DAO', async () => {
-          const receipt = await agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod)
+          const receipt = await agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod)
           const logs = decodeEventsOfType(receipt, deployer.abi, EVENTS.SETTING_CHANGED)
           assertEvent({ logs }, EVENTS.SETTING_CHANGED, { settingId: 0 })
         })
 
         it('cannot be initialized again', async () => {
-          await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod), ERRORS.ERROR_ALREADY_INITIALIZED)
+          await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod), ERRORS.ERROR_ALREADY_INITIALIZED)
         })
 
         it('initializes the agreement setting', async () => {
           const actualTitle = await agreement.title()
           const actualCollateralToken = await agreement.collateralToken()
-          const [actualContent, actualCollateralAmount, actualChallengeLeverage, actualArbitratorAddress, actualDelayPeriod, actualSettlementPeriod] = await agreement.getCurrentSetting()
+          const [actualContent, actualCollateralAmount, actualChallengeCollateral, actualArbitratorAddress, actualDelayPeriod, actualSettlementPeriod] = await agreement.getCurrentSetting()
 
           assert.equal(actualTitle, title, 'title does not match')
           assert.equal(actualContent, content, 'content does not match')
@@ -79,7 +79,7 @@ contract('Agreement', ([_, EOA]) => {
           assertBn(actualCollateralAmount, collateralAmount, 'collateral amount does not match')
           assertBn(actualDelayPeriod, delayPeriod, 'delay period does not match')
           assertBn(actualSettlementPeriod, settlementPeriod, 'settlement period does not match')
-          assertBn(actualChallengeLeverage, challengeLeverage, 'challenge leverage does not match')
+          assertBn(actualChallengeCollateral, challengeCollateral, 'challenge collateral does not match')
         })
       })
     })
@@ -96,32 +96,32 @@ contract('Agreement', ([_, EOA]) => {
         const base = deployer.base
 
         assert(await base.isPetrified(), 'base agreement contract should be petrified')
-        await assertRevert(base.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), 'INIT_ALREADY_INITIALIZED')
+        await assertRevert(base.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), 'INIT_ALREADY_INITIALIZED')
       })
 
       context('when the initialization fails', () => {
         it('fails when using a non-contract collateral token', async () => {
           const collateralToken = EOA
 
-          await assertRevert(agreement.initialize(title, content, collateralToken, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), ERRORS.ERROR_COLLATERAL_TOKEN_NOT_CONTRACT)
+          await assertRevert(agreement.initialize(title, content, collateralToken, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), ERRORS.ERROR_COLLATERAL_TOKEN_NOT_CONTRACT)
         })
 
         it('fails when using a non-contract arbitrator', async () => {
           const court = EOA
 
-          await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, court, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
+          await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, court, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
         })
 
         it('fails when using a non-contract token permission', async () => {
           const permissionToken = EOA
 
-          await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod, permissionToken, permissionBalance), ERRORS.ERROR_PERMISSION_TOKEN_NOT_CONTRACT)
+          await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken, permissionBalance), ERRORS.ERROR_PERMISSION_TOKEN_NOT_CONTRACT)
         })
       })
 
       context('when the initialization succeeds', () => {
         before('initialize agreement DAO', async () => {
-          const receipt = await agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance)
+          const receipt = await agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance)
 
           const settingChangedLogs = decodeEventsOfType(receipt, deployer.abi, EVENTS.SETTING_CHANGED)
           assertEvent({ logs: settingChangedLogs }, EVENTS.SETTING_CHANGED, { settingId: 0 })
@@ -131,13 +131,13 @@ contract('Agreement', ([_, EOA]) => {
         })
 
         it('cannot be initialized again', async () => {
-          await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), ERRORS.ERROR_ALREADY_INITIALIZED)
+          await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), ERRORS.ERROR_ALREADY_INITIALIZED)
         })
 
         it('initializes the agreement setting', async () => {
           const actualTitle = await agreement.title()
           const actualCollateralToken = await agreement.collateralToken()
-          const [actualContent, actualCollateralAmount, actualChallengeLeverage, actualArbitratorAddress, actualDelayPeriod, actualSettlementPeriod] = await agreement.getCurrentSetting()
+          const [actualContent, actualCollateralAmount, actualChallengeCollateral, actualArbitratorAddress, actualDelayPeriod, actualSettlementPeriod] = await agreement.getCurrentSetting()
 
           assert.equal(actualTitle, title, 'title does not match')
           assert.equal(actualContent, content, 'content does not match')
@@ -146,7 +146,7 @@ contract('Agreement', ([_, EOA]) => {
           assertBn(actualCollateralAmount, collateralAmount, 'collateral amount does not match')
           assertBn(actualDelayPeriod, delayPeriod, 'delay period does not match')
           assertBn(actualSettlementPeriod, settlementPeriod, 'settlement period does not match')
-          assertBn(actualChallengeLeverage, challengeLeverage, 'challenge leverage does not match')
+          assertBn(actualChallengeCollateral, challengeCollateral, 'challenge collateral does not match')
 
           const [actualPermissionToken, actualPermissionAmount] = await agreement.getTokenBalancePermission()
           assert.equal(actualPermissionToken, permissionToken.address, 'permission token does not match')

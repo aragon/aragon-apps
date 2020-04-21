@@ -33,12 +33,8 @@ class AgreementHelper {
     return this.setting.collateralToken
   }
 
-  get challengeLeverage() {
-    return this.setting.challengeLeverage
-  }
-
-  get challengeStake() {
-    return this.collateralAmount.mul(this.challengeLeverage).div(PCT_BASE)
+  get challengeCollateral() {
+    return this.setting.challengeCollateral
   }
 
   get delayPeriod() {
@@ -70,10 +66,10 @@ class AgreementHelper {
   }
 
   async getSetting(settingId = undefined) {
-    const [content, collateralAmount, challengeLeverage, arbitrator, delayPeriod, settlementPeriod] = settingId
+    const [content, collateralAmount, challengeCollateral, arbitrator, delayPeriod, settlementPeriod] = settingId
       ? (await this.agreement.getSetting(settingId))
       : (await this.agreement.getCurrentSetting())
-    return { content, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage, arbitrator }
+    return { content, collateralAmount, delayPeriod, settlementPeriod, challengeCollateral, arbitrator }
   }
 
   async getTokenBalancePermission() {
@@ -143,7 +139,7 @@ class AgreementHelper {
     if (arbitrationFees === undefined) arbitrationFees = await this.halfArbitrationFees()
     if (arbitrationFees) await this.approveArbitrationFees({ amount: arbitrationFees, from: challenger })
 
-    if (stake === undefined) stake = this.challengeStake
+    if (stake === undefined) stake = this.challengeCollateral
     if (stake) await this.approve({ amount: stake, from: challenger })
 
     return this.agreement.challengeAction(actionId, settlementOffer, challengeContext, { from: challenger })
@@ -229,16 +225,16 @@ class AgreementHelper {
     const collateralAmount = options.collateralAmount || currentSettings.collateralAmount
     const delayPeriod = options.delayPeriod || currentSettings.delayPeriod
     const settlementPeriod = options.settlementPeriod || currentSettings.settlementPeriod
-    const challengeLeverage = options.challengeLeverage || currentSettings.challengeLeverage
+    const challengeCollateral = options.challengeCollateral || currentSettings.challengeCollateral
     const arbitrator = options.arbitrator ? options.arbitrator.address : currentSettings.arbitrator
 
     if (this.agreement.constructor.contractName.includes('PermissionAgreement')) {
-      return this.agreement.changeSetting(content, collateralAmount, challengeLeverage, arbitrator, delayPeriod, settlementPeriod, { from })
+      return this.agreement.changeSetting(content, collateralAmount, challengeCollateral, arbitrator, delayPeriod, settlementPeriod, { from })
     } else {
       const tokenBalancePermission = await this.agreement.getTokenBalancePermission()
       const permissionToken = options.permissionToken ? options.permissionToken.address : tokenBalancePermission[0]
       const permissionBalance = options.permissionBalance || tokenBalancePermission[1]
-      return this.agreement.changeSetting(content, collateralAmount, challengeLeverage, arbitrator, delayPeriod, settlementPeriod, permissionToken, permissionBalance, { from })
+      return this.agreement.changeSetting(content, collateralAmount, challengeCollateral, arbitrator, delayPeriod, settlementPeriod, permissionToken, permissionBalance, { from })
     }
   }
 
