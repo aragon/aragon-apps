@@ -613,7 +613,7 @@ contract BaseAgreement is IArbitrable, AragonApp {
         balance.challenged = balance.challenged.sub(_amount);
         emit BalanceSlashed(_signer, _amount);
 
-        require(collateralToken.transfer(_challenger, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+        require(collateralToken.safeTransfer(_challenger, _amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
     }
 
     function _unstakeBalance(address _signer, uint256 _amount) internal {
@@ -634,14 +634,14 @@ contract BaseAgreement is IArbitrable, AragonApp {
     function _transferChallengeStake(address _to, Setting storage _setting) internal {
         uint256 amount = _getChallengeStake(_setting);
         if (amount > 0) {
-            require(collateralToken.transfer(_to, amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+            require(collateralToken.safeTransfer(_to, amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
         }
     }
 
     function _returnArbitratorFees(Challenge storage _challenge) internal {
         uint256 amount = _challenge.arbitratorFeeAmount;
         if (amount > 0) {
-            require(_challenge.arbitratorFeeToken.transfer(_challenge.challenger, amount), ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED);
+            require(_challenge.arbitratorFeeToken.safeTransfer(_challenge.challenger, amount), ERROR_ARBITRATOR_FEE_RETURN_FAILED);
         }
     }
 
