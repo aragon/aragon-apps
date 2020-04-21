@@ -116,7 +116,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     assert.equal(currentChallengeState.context, previousChallengeState.context, 'challenge context does not match')
                     assert.equal(currentChallengeState.challenger, previousChallengeState.challenger, 'challenger does not match')
                     assertBn(currentChallengeState.settlementOffer, previousChallengeState.settlementOffer, 'challenge settlement offer does not match')
-                    assertBn(currentChallengeState.createdAt, previousChallengeState.createdAt, 'challenge created at does not match')
+                    assertBn(currentChallengeState.settlementEndDate, previousChallengeState.settlementEndDate, 'settlement end date does not match')
                     assertBn(currentChallengeState.arbitratorFeeAmount, previousChallengeState.arbitratorFeeAmount, 'arbitrator amount does not match')
                     assert.equal(currentChallengeState.arbitratorFeeToken, previousChallengeState.arbitratorFeeToken, 'arbitrator token does not match')
                   })
@@ -131,7 +131,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
                     assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                     assertBn(currentActionState.state, previousActionState.state, 'action state does not match')
-                    assertBn(currentActionState.createdAt, previousActionState.createdAt, 'action created at does not match')
+                    assertBn(currentActionState.challengeEndDate, previousActionState.challengeEndDate, 'challenge end date does not match')
                     assertBn(currentActionState.settingId, previousActionState.settingId, 'action setting ID does not match')
                   })
 
@@ -202,7 +202,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   it('can only be ruled or submit evidence', async () => {
                     await agreement.dispute({ actionId, from, arbitrationFees })
 
-                    const { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canSubmitEvidence, canExecute } = await agreement.getAllowedPaths(actionId)
+                    const { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canExecute } = await agreement.getAllowedPaths(actionId)
                     assert.isTrue(canRuleDispute, 'action dispute cannot be ruled')
                     assert.isFalse(canCancel, 'action can be cancelled')
                     assert.isFalse(canChallenge, 'action can be challenged')

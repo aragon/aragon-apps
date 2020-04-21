@@ -49,7 +49,7 @@ contract('Agreement', ([_, submitter]) => {
           assert.equal(currentActionState.script, previousActionState.script, 'action script does not match')
           assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
           assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
-          assertBn(currentActionState.createdAt, previousActionState.createdAt, 'created at does not match')
+          assertBn(currentActionState.challengeEndDate, previousActionState.challengeEndDate, 'challenge end date does not match')
           assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
         })
 
@@ -110,7 +110,7 @@ contract('Agreement', ([_, submitter]) => {
         it('there are no more paths allowed', async () => {
           await agreement.execute({ actionId })
 
-          const { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canSubmitEvidence, canExecute } = await agreement.getAllowedPaths(actionId)
+          const { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canExecute } = await agreement.getAllowedPaths(actionId)
           assert.isFalse(canCancel, 'action can be cancelled')
           assert.isFalse(canChallenge, 'action can be challenged')
           assert.isFalse(canSettle, 'action can be settled')

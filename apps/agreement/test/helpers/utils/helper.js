@@ -41,19 +41,27 @@ class AgreementHelper {
     return this.collateralAmount.mul(this.challengeLeverage).div(PCT_BASE)
   }
 
+  get delayPeriod() {
+    return this.setting.delayPeriod
+  }
+
+  get settlementPeriod() {
+    return this.setting.settlementPeriod
+  }
+
   async getBalance(signer) {
     const [available, locked, challenged] = await this.agreement.getBalance(signer)
     return { available, locked, challenged }
   }
 
   async getAction(actionId) {
-    const [script, context, state, createdAt, submitter, settingId] = await this.agreement.getAction(actionId)
-    return { script, context, state, createdAt, submitter, settingId }
+    const [script, context, state, challengeEndDate, submitter, settingId] = await this.agreement.getAction(actionId)
+    return { script, context, state, challengeEndDate, submitter, settingId }
   }
 
   async getChallenge(actionId) {
-    const [context, createdAt, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId] = await this.agreement.getChallenge(actionId)
-    return { context, createdAt, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId }
+    const [context, settlementEndDate, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId] = await this.agreement.getChallenge(actionId)
+    return { context, settlementEndDate, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId }
   }
 
   async getDispute(actionId) {
@@ -80,9 +88,8 @@ class AgreementHelper {
     const canDispute = await this.agreement.canDispute(actionId)
     const canClaimSettlement = await this.agreement.canClaimSettlement(actionId)
     const canRuleDispute = await this.agreement.canRuleDispute(actionId)
-    const canSubmitEvidence = await this.agreement.canSubmitEvidence(actionId)
     const canExecute = await this.agreement.canExecute(actionId)
-    return { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canSubmitEvidence, canExecute }
+    return { canCancel, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute, canExecute }
   }
 
   async approve({ amount, from = undefined, accumulate = true }) {
@@ -209,19 +216,6 @@ class AgreementHelper {
     return missingFees
   }
 
-  async challengePeriodEndDate(actionId) {
-    const { createdAt, settingId } = await this.getAction(actionId)
-    const { delayPeriod } = await this.getSetting(settingId)
-    return createdAt.add(delayPeriod)
-  }
-
-  async settlementPeriodEndDate(actionId) {
-    const { settingId } = await this.getAction(actionId)
-    const { createdAt } = await this.getChallenge(settingId)
-    const { settlementPeriod } = await this.getSetting(settingId)
-    return createdAt.add(settlementPeriod)
-  }
-
   async buildEvmScript() {
     const ExecutionTarget = this._getContract('ExecutionTarget')
     const executionTarget = await ExecutionTarget.new()
@@ -260,33 +254,33 @@ class AgreementHelper {
   }
 
   async moveBeforeEndOfChallengePeriod(actionId) {
-    const challengePeriodEndDate = await this.challengePeriodEndDate(actionId)
-    return this.moveTo(challengePeriodEndDate.sub(1))
+    const { challengeEndDate } = await this.getAction(actionId)
+    return this.moveTo(challengeEndDate.sub(1))
   }
 
   async moveToEndOfChallengePeriod(actionId) {
-    const challengePeriodEndDate = await this.challengePeriodEndDate(actionId)
-    return this.moveTo(challengePeriodEndDate)
+    const { challengeEndDate } = await this.getAction(actionId)
+    return this.moveTo(challengeEndDate)
   }
 
   async moveAfterChallengePeriod(actionId) {
-    const challengePeriodEndDate = await this.challengePeriodEndDate(actionId)
-    return this.moveTo(challengePeriodEndDate.add(1))
+    const { challengeEndDate } = await this.getAction(actionId)
+    return this.moveTo(challengeEndDate.add(1))
   }
 
   async moveBeforeEndOfSettlementPeriod(actionId) {
-    const settlementPeriodEndDate = await this.settlementPeriodEndDate(actionId)
-    return this.moveTo(settlementPeriodEndDate.sub(1))
+    const { settlementEndDate } = await this.getChallenge(actionId)
+    return this.moveTo(settlementEndDate.sub(1))
   }
 
   async moveToEndOfSettlementPeriod(actionId) {
-    const settlementPeriodEndDate = await this.settlementPeriodEndDate(actionId)
-    return this.moveTo(settlementPeriodEndDate)
+    const { settlementEndDate } = await this.getChallenge(actionId)
+    return this.moveTo(settlementEndDate)
   }
 
   async moveAfterSettlementPeriod(actionId) {
-    const settlementPeriodEndDate = await this.settlementPeriodEndDate(actionId)
-    return this.moveTo(settlementPeriodEndDate.add(1))
+    const { settlementEndDate } = await this.getChallenge(actionId)
+    return this.moveTo(settlementEndDate.add(1))
   }
 
   async moveTo(timestamp) {
