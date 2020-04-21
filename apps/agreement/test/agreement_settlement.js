@@ -186,7 +186,6 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 assert.isFalse(canDispute, 'action can be disputed')
                 assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
                 assert.isFalse(canRuleDispute, 'action dispute can be ruled')
-                assert.isFalse(canSubmitEvidence, 'action evidence can be submitted')
                 assert.isFalse(canExecute, 'action can be executed')
               })
             }
