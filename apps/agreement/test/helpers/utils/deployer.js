@@ -11,9 +11,9 @@ const DEFAULT_INITIALIZE_OPTIONS = {
   content: utf8ToHex('ipfs:QmdLu3XXT9uUYxqDKXXsTYG77qNYNPbhzL27ZYT9kErqcZ'),
   delayPeriod: 5 * DAY,                  // 5 days
   settlementPeriod: 2 * DAY,             // 2 days
-  challengeLeverage: 200,                // 2x
   currentTimestamp: NOW,                 // fixed timestamp
   collateralAmount: bigExp(100, 18),     // 100 DAI
+  challengeCollateral: bigExp(200, 18),    // 200 DAI
   collateralToken: {
     symbol: 'DAI',
     decimals: 18,
@@ -90,7 +90,7 @@ class AgreementDeployer {
 
   async deployAndInitializeWrapper(options = {}) {
     await this.deployAndInitialize(options)
-    const [content, collateralAmount, challengeLeverage, arbitratorAddress, delayPeriod, settlementPeriod] = await this.agreement.getCurrentSetting()
+    const [content, collateralAmount, challengeCollateral, arbitratorAddress, delayPeriod, settlementPeriod] = await this.agreement.getCurrentSetting()
 
     const IArbitrator = this._getContract('IArbitrator')
     const arbitrator = IArbitrator.at(arbitratorAddress)
@@ -98,7 +98,7 @@ class AgreementDeployer {
     const MiniMeToken = this._getContract('MiniMeToken')
     const collateralToken = options.collateralToken ? MiniMeToken.at(options.collateralToken) : this.collateralToken
 
-    const setting = { content, collateralToken, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage, arbitrator }
+    const setting = { content, collateralToken, collateralAmount, delayPeriod, settlementPeriod, challengeCollateral, arbitrator }
     return new AgreementHelper(this.artifacts, this.web3, this.agreement, setting)
   }
 
@@ -112,14 +112,14 @@ class AgreementDeployer {
     const arbitrator = options.arbitrator || this.arbitrator
 
     const defaultOptions = { ...DEFAULT_INITIALIZE_OPTIONS, ...options }
-    const { title, content, collateralAmount, delayPeriod, settlementPeriod, challengeLeverage } = defaultOptions
+    const { title, content, collateralAmount, delayPeriod, settlementPeriod, challengeCollateral } = defaultOptions
 
-    if (this.isPermissionBased) await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod)
+    if (this.isPermissionBased) await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod)
     else {
       if (!options.permissionToken && !this.permissionToken) await this.deployPermissionToken(options)
       const permissionToken = options.permissionToken || this.permissionToken
       const permissionBalance = options.permissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance
-      await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeLeverage, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance)
+      await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance)
       for (const signer of (options.signers || [])) await permissionToken.generateTokens(signer, permissionBalance)
     }
     return this.agreement
