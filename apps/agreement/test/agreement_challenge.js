@@ -352,13 +352,13 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
         })
       })
     })
-  })
 
-  context('when the challenger does not have permissions', () => {
-    const challenger = someone
+    context('when the challenger does not have permissions', () => {
+      const challenger = someone
 
-    it('reverts', async () => {
-      await assertRevert(agreement.challenge({ actionId: 0, challenger }), ERRORS.ERROR_AUTH_FAILED)
+      it('reverts', async () => {
+        await assertRevert(agreement.challenge({ actionId: 0, challenger }), ERRORS.ERROR_AUTH_FAILED)
+      })
     })
   })
 })

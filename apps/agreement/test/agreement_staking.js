@@ -64,7 +64,7 @@ contract('Agreement', ([_, someone, signer]) => {
             })
           })
 
-          context('when the signer has approved the requested amount', () => {
+          context('when the signer has not approved the requested amount', () => {
             it('reverts', async () => {
               await assertRevert(agreement.stake({ amount, signer, approve }), ERRORS.ERROR_COLLATERAL_TOKEN_TRANSFER_FAILED)
             })

@@ -196,15 +196,21 @@ class AgreementHelper {
     await this.safeApprove(feeToken, from, this.address, amount, accumulate)
   }
 
-  async arbitratorToken() {
-    const [, feeTokenAddress] = await this.arbitrator.getDisputeFees()
+  async arbitratorFees() {
+    const [, feeTokenAddress, feeAmount] = await this.arbitrator.getDisputeFees()
     const MiniMeToken = this._getContract('MiniMeToken')
-    return MiniMeToken.at(feeTokenAddress)
+    const feeToken = MiniMeToken.at(feeTokenAddress)
+    return { feeToken, feeAmount }
+  }
+
+  async arbitratorToken() {
+    const { feeToken } = await this.arbitratorFees()
+    return feeToken
   }
 
   async halfArbitrationFees() {
-    const [,, feeTokenAmount] = await this.arbitrator.getDisputeFees()
-    return feeTokenAmount.div(2)
+    const { feeAmount } = await this.arbitratorFees()
+    return feeAmount.div(2)
   }
 
   async missingArbitrationFees(actionId) {

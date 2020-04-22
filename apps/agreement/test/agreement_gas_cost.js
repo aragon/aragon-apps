@@ -19,7 +19,7 @@ contract('Agreement', ([_, signer]) => {
     }
 
     context('stake', () => {
-      itCostsAtMost(176e3, () => agreement.stake({ signer }))
+      itCostsAtMost(175e3, () => agreement.stake({ signer }))
     })
 
     context('unstake', () => {
@@ -47,7 +47,7 @@ contract('Agreement', ([_, signer]) => {
         ({ actionId } = await agreement.schedule({}))
       })
 
-      itCostsAtMost(355e3, () => agreement.challenge({ actionId }))
+      itCostsAtMost(353e3, () => agreement.challenge({ actionId }))
     })
 
     context('settle', () => {
@@ -56,7 +56,7 @@ contract('Agreement', ([_, signer]) => {
         await agreement.challenge({ actionId })
       })
 
-      itCostsAtMost(153e3, () => agreement.settle({ actionId }))
+      itCostsAtMost(240e3, () => agreement.settle({ actionId }))
     })
 
     context('dispute', () => {
@@ -76,15 +76,15 @@ contract('Agreement', ([_, signer]) => {
       })
 
       context('in favor of the submitter', () => {
-        itCostsAtMost(205e3, () => agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER }))
+        itCostsAtMost(200e3, () => agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER }))
       })
 
       context('in favor of the challenger', () => {
-        itCostsAtMost(220e3, () => agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
+        itCostsAtMost(215e3, () => agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
       })
 
       context('refused', () => {
-        itCostsAtMost(205e3, () => agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED }))
+        itCostsAtMost(200e3, () => agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED }))
       })
     })
   })

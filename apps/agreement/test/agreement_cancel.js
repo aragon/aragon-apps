@@ -287,11 +287,11 @@ contract('Agreement', ([_, submitter, someone]) => {
         itCannotBeCancelled()
       })
     })
-  })
 
-  context('when the given action does not exist', () => {
-    it('reverts', async () => {
-      await assertRevert(agreement.cancel({ actionId: 0 }), ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
+    context('when the given action does not exist', () => {
+      it('reverts', async () => {
+        await assertRevert(agreement.cancel({ actionId: 0 }), ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
+      })
     })
   })
 })

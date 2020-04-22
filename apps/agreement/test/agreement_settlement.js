@@ -137,8 +137,8 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 assertBn(currentLockedBalance, previousLockedBalance, 'locked balance does not match')
               })
 
-              it('transfers the settlement offer to the challenger', async () => {
-                const { collateralToken } = agreement
+              it('transfers the settlement offer and the collateral to the challenger', async () => {
+                const { collateralToken, challengeCollateral } = agreement
                 const { settlementOffer } = await agreement.getChallenge(actionId)
 
                 const previousAgreementBalance = await collateralToken.balanceOf(agreement.address)
@@ -147,10 +147,10 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 await agreement.settle({ actionId, from })
 
                 const currentAgreementBalance = await collateralToken.balanceOf(agreement.address)
-                assertBn(currentAgreementBalance, previousAgreementBalance.sub(settlementOffer), 'agreement balance does not match')
+                assertBn(currentAgreementBalance, previousAgreementBalance.sub(settlementOffer.add(challengeCollateral)), 'agreement balance does not match')
 
                 const currentChallengerBalance = await collateralToken.balanceOf(challenger)
-                assertBn(currentChallengerBalance, previousChallengerBalance.add(settlementOffer), 'challenger balance does not match')
+                assertBn(currentChallengerBalance, previousChallengerBalance.add(settlementOffer.add(challengeCollateral)), 'challenger balance does not match')
               })
 
               it('transfers the arbitrator fees back to the challenger', async () => {
@@ -339,11 +339,11 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
         itCannotSettleAction()
       })
     })
-  })
 
-  context('when the given action does not exist', () => {
-    it('reverts', async () => {
-      await assertRevert(agreement.settle({ actionId: 0 }), ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
+    context('when the given action does not exist', () => {
+      it('reverts', async () => {
+        await assertRevert(agreement.settle({ actionId: 0 }), ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
+      })
     })
   })
 })
