@@ -112,22 +112,12 @@ class AgreementDeployer {
     const defaultOptions = { ...DEFAULT_INITIALIZE_OPTIONS, ...options }
     const { title, content, collateralAmount, delayPeriod, settlementPeriod, challengeCollateral } = defaultOptions
 
-    let permissionToken, permissionBalance
+    const permissionToken = options.permissionToken || this.permissionToken || { address: ZERO_ADDR }
+    const permissionBalance = permissionToken.address === ZERO_ADDR ? bn(0) : (options.permissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance)
 
-    if (options.permissionToken) {
-      permissionToken = options
-      permissionBalance = options.permissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance
-    } else if (this.permissionToken) {
-      permissionToken = this.permissionToken
-      permissionBalance = DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance
-    }
-
-    if (permissionToken)  {
+    if (permissionBalance.gt(0))  {
       const signers = options.signers || []
       for (const signer of signers) await permissionToken.generateTokens(signer, permissionBalance)
-    } else {
-      permissionToken = { address: ZERO_ADDR }
-      permissionBalance = bn(0)
     }
 
     await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance)
@@ -145,13 +135,15 @@ class AgreementDeployer {
     const SIGN_ROLE = await agreement.SIGN_ROLE()
     const signers = options.signers || [ANY_ADDR]
     for (const signer of signers) {
-      await this.acl.createPermission(signer, agreement.address, SIGN_ROLE, owner, { from: owner })
+      if (signers.indexOf(signer) === 0) await this.acl.createPermission(signer, agreement.address, SIGN_ROLE, owner, { from: owner })
+      else await this.acl.grantPermission(signer, agreement.address, SIGN_ROLE, { from: owner })
     }
 
     const CHALLENGE_ROLE = await agreement.CHALLENGE_ROLE()
     const challengers = options.challengers || [ANY_ADDR]
     for (const challenger of challengers) {
-      await this.acl.createPermission(challenger, agreement.address, CHALLENGE_ROLE, owner, { from: owner })
+      if (challengers.indexOf(challenger) === 0) await this.acl.createPermission(challenger, agreement.address, CHALLENGE_ROLE, owner, { from: owner })
+      else await this.acl.grantPermission(challenger, agreement.address, CHALLENGE_ROLE, { from: owner })
     }
 
     const CHANGE_AGREEMENT_ROLE = await agreement.CHANGE_AGREEMENT_ROLE()

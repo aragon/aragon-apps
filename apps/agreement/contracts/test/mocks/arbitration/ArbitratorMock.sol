@@ -49,6 +49,11 @@ contract ArbitratorMock is IArbitrator {
         dispute.ruling = _ruling;
     }
 
+    function setFees(ERC20 _feeToken, uint256 _feeAmount) external {
+        feeToken = _feeToken;
+        feeAmount = _feeAmount;
+    }
+
     function getDisputeFees() public view returns (address, ERC20, uint256) {
         return (address(this), feeToken, feeAmount);
     }
