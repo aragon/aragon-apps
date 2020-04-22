@@ -70,6 +70,19 @@ contract('Agreement', ([_, owner, someone]) => {
         assertAmountOfEvents(receipt, EVENTS.SETTING_CHANGED, 1)
         assertEvent(receipt, EVENTS.SETTING_CHANGED, { settingId: 1 })
       })
+
+      it('affects new actions', async () => {
+        const { actionId: oldActionId } = await agreement.schedule({})
+
+        await agreement.changeSetting({ ...newSettings, from })
+        const { actionId: newActionId } = await agreement.schedule({})
+
+        const { settingId: oldActionSettingId } = await agreement.getAction(oldActionId)
+        assertBn(oldActionSettingId, 0, 'old action setting ID does not match')
+
+        const { settingId: newActionSettingId } = await agreement.getAction(newActionId)
+        assertBn(newActionSettingId, 1, 'new action setting ID does not match')
+      })
     })
 
     context('when the sender does not have permissions', () => {
@@ -86,7 +99,7 @@ contract('Agreement', ([_, owner, someone]) => {
 
     beforeEach('deploy token balance permission', async () => {
       const permissionBalance = bigExp(101, 18)
-      const permissionToken = await deployer.deployPermissionToken()
+      const permissionToken = await deployer.deployToken({ name: 'Permission Token Balance', symbol: 'PTB', decimals: 18 })
       newTokenBalancePermission = { permissionToken, permissionBalance }
     })
 

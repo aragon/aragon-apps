@@ -280,6 +280,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         challenge.state = ChallengeState.Settled;
         _unchallengeBalance(submitter, unchallengedAmount);
         _slashBalance(submitter, challenger, slashedAmount);
+        _transferCollateralTokens(challenger, setting.challengeCollateral);
         _returnArbitratorFees(challenge);
         emit ActionSettled(_actionId, slashedAmount);
     }
