@@ -4,6 +4,8 @@
 
 This repository contains the following apps:
 
+- **[Agent](apps/agent)**: Hold assets and perform actions from Aragon organizations.
+- **[Agreement](apps/agreement)**: Govern organizations through a subjective rules.
 - **[Finance](apps/finance)**: Send payments and manage expenses with budgeting.
 - **[Survey](apps/survey)**: Create polls to gauge community opinions.
 - **[Tokens](apps/token-manager)**: Manages organization tokens.
