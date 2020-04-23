@@ -95,9 +95,17 @@ async function initialize(tokenAddress) {
     }
 
     // Token Manager event
-    // TODO: add handlers for the vesting events from token Manager
-
-    return nextState
+    switch (event) {
+      case 'NewVesting':
+        return getVesting(
+          nextState,
+          returnValues.receiver,
+          returnValues.vestingId
+        )
+        return nextState
+      default:
+        return nextState
+    }
   }
 
   const storeOptions = {
@@ -148,14 +156,14 @@ function initState({ token, tokenAddress }) {
 
 async function claimedTokens(token, state, { _token, _controller }) {
   const changes = await loadNewBalances(token, _token, _controller)
-  return updateState(state, changes)
+  return updateTokenState(state, changes)
 }
 
 async function transfer(token, state, { _from, _to }) {
   const changes = await loadNewBalances(token, _from, _to)
   // The transfer may have increased the token's total supply, so let's refresh it
   const tokenSupply = await token.totalSupply().toPromise()
-  return updateState(
+  return updateTokenState(
     {
       ...state,
       tokenSupply,
@@ -164,13 +172,21 @@ async function transfer(token, state, { _from, _to }) {
   )
 }
 
+async function getVesting(state, receiver, vestingId) {
+  const vestingInfo = await app
+    .call("getVesting", receiver, vestingId)
+    .toPromise()
+
+  return updateVestingState(state, receiver, vestingId, vestingInfo)
+}
+
 /***********************
  *                     *
  *       Helpers       *
  *                     *
  ***********************/
 
-function updateState(state, changes) {
+function updateTokenState(state, changes) {
   const { holders = [] } = state
   return {
     ...state,
@@ -193,6 +209,32 @@ function updateHolders(holders, changed) {
     const nextHolders = Array.from(holders)
     nextHolders[holderIndex] = changed
     return nextHolders
+  }
+}
+
+function updateVestingState(state, receiver, vestingId, vestingInfo) {
+  const { vestings = [] } = state
+  let vesting = vestingInfo
+  vesting.vestingId = vestingId
+
+  return {
+    ...state,
+    vestings: updateVestings(vestings, receiver, vesting)
+  };
+}
+
+function updateVestings(vestings, receiver, changed) {
+  const receiverIndex = vestings.findIndex(vesting =>
+    addressesEqual(vesting.receiver, receiver)
+  )
+
+  if (receiverIndex === -1) {
+    // If we can't find it, concat
+    return vestings.concat({ receiver: receiver, vestings: [changed] })
+  } else {
+    const nextVestings = Array.from(vestings)
+    nextVestings[receiverIndex].vestings = nextVestings[receiverIndex].vestings.concat(changed)
+    return nextVestings
   }
 }
 
