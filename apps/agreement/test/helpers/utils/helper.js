@@ -69,6 +69,10 @@ class AgreementHelper {
     return { permissionToken, permissionBalance }
   }
 
+  async canSign(signer) {
+    return this.agreement.canSign(signer)
+  }
+
   async getAllowedPaths(actionId) {
     const canCancel = await this.agreement.canCancel(actionId)
     const canChallenge = await this.agreement.canChallenge(actionId)

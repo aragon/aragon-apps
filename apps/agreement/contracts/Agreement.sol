@@ -265,7 +265,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _context Link to a human-readable text giving context for the given action
     * @param _script Action script to be executed
     */
-    function schedule(bytes _context, bytes _script) external {
+    function schedule(bytes _context, bytes _script) external onlySigner(msg.sender) {
         _createAction(msg.sender, _context, _script);
     }
 

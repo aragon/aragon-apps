@@ -56,14 +56,12 @@ contract('Agreement', ([_, challenger, holder0, holder10, holder20, holder30, ho
 
   describe('integration', () => {
     it('only holders with more than 10 permission tokens can sign', async () => {
-      const { agreement: contract } = agreement
-
-      assert.isFalse(await contract.canSign(holder0), 'holder 0 can sign')
-      assert.isTrue(await contract.canSign(holder10), 'holder 10 cannot sign')
-      assert.isTrue(await contract.canSign(holder20), 'holder 20 cannot sign')
-      assert.isTrue(await contract.canSign(holder30), 'holder 30 cannot sign')
-      assert.isTrue(await contract.canSign(holder40), 'holder 40 cannot sign')
-      assert.isTrue(await contract.canSign(holder50), 'holder 50 cannot sign')
+      assert.isFalse(await agreement.canSign(holder0), 'holder 0 can sign')
+      assert.isTrue(await agreement.canSign(holder10), 'holder 10 cannot sign')
+      assert.isTrue(await agreement.canSign(holder20), 'holder 20 cannot sign')
+      assert.isTrue(await agreement.canSign(holder30), 'holder 30 cannot sign')
+      assert.isTrue(await agreement.canSign(holder40), 'holder 40 cannot sign')
+      assert.isTrue(await agreement.canSign(holder50), 'holder 50 cannot sign')
     })
 
     it('submits the expected actions', async () => {
