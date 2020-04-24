@@ -10,7 +10,7 @@ const { decodeEventsOfType } = require('./helpers/lib/decodeEvent')
 const deployer = require('./helpers/utils/deployer')(web3, artifacts)
 
 contract('Agreement', ([_, EOA]) => {
-  let arbitrator, collateralToken, permissionToken, agreement
+  let arbitrator, collateralToken, signPermissionToken, challengePermissionToken, agreement
 
   const title = 'Sample Agreement'
   const content = '0xabcd'
@@ -18,12 +18,14 @@ contract('Agreement', ([_, EOA]) => {
   const delayPeriod = 5 * DAY
   const settlementPeriod = 2 * DAY
   const challengeCollateral = bigExp(200, 18)
-  const permissionBalance = bigExp(64, 18)
+  const signPermissionBalance = bigExp(64, 18)
+  const challengePermissionBalance = bigExp(2, 18)
 
   before('deploy instances', async () => {
     arbitrator = await deployer.deployArbitrator()
     collateralToken = await deployer.deployCollateralToken()
-    permissionToken = await deployer.deployPermissionToken()
+    signPermissionToken = await deployer.deploySignPermissionToken()
+    challengePermissionToken = await deployer.deployChallengePermissionToken()
     agreement = await deployer.deploy()
   })
 
@@ -32,36 +34,36 @@ contract('Agreement', ([_, EOA]) => {
       const base = deployer.base
 
       assert(await base.isPetrified(), 'base agreement contract should be petrified')
-      await assertRevert(base.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), 'INIT_ALREADY_INITIALIZED')
+      await assertRevert(base.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, signPermissionToken.address, signPermissionBalance, challengePermissionToken.address, challengePermissionBalance), 'INIT_ALREADY_INITIALIZED')
     })
 
     context('when the initialization fails', () => {
       it('fails when using a non-contract collateral token', async () => {
         const collateralToken = EOA
 
-        await assertRevert(agreement.initialize(title, content, collateralToken, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), ERRORS.ERROR_COLLATERAL_TOKEN_NOT_CONTRACT)
+        await assertRevert(agreement.initialize(title, content, collateralToken, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, signPermissionToken.address, signPermissionBalance, challengePermissionToken.address, challengePermissionBalance), ERRORS.ERROR_COLLATERAL_TOKEN_NOT_CONTRACT)
       })
 
       it('fails when using a non-contract arbitrator', async () => {
         const court = EOA
 
-        await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, court, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
+        await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, court, delayPeriod, settlementPeriod, signPermissionToken.address, signPermissionBalance, challengePermissionToken.address, challengePermissionBalance), ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
       })
     })
 
     context('when the initialization succeeds', () => {
       before('initialize agreement DAO', async () => {
-        const receipt = await agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance)
+        const receipt = await agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, signPermissionToken.address, signPermissionBalance, challengePermissionToken.address, challengePermissionBalance)
 
         const settingChangedLogs = decodeEventsOfType(receipt, deployer.abi, EVENTS.SETTING_CHANGED)
         assertEvent({ logs: settingChangedLogs }, EVENTS.SETTING_CHANGED, { settingId: 0 })
 
         const permissionChangedLogs = decodeEventsOfType(receipt, deployer.abi, EVENTS.PERMISSION_CHANGED)
-        assertEvent({ logs: permissionChangedLogs }, EVENTS.PERMISSION_CHANGED, { token: permissionToken.address, balance: permissionBalance })
+        assertEvent({ logs: permissionChangedLogs }, EVENTS.PERMISSION_CHANGED, { signToken: signPermissionToken.address, signBalance: signPermissionBalance, challengeToken: challengePermissionToken.address, challengeBalance: challengePermissionBalance })
       })
 
       it('cannot be initialized again', async () => {
-        await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance), ERRORS.ERROR_ALREADY_INITIALIZED)
+        await assertRevert(agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, signPermissionToken.address, signPermissionBalance, challengePermissionToken.address, challengePermissionBalance), ERRORS.ERROR_ALREADY_INITIALIZED)
       })
 
       it('initializes the agreement setting', async () => {
@@ -81,9 +83,11 @@ contract('Agreement', ([_, EOA]) => {
         assertBn(actualCollateralAmount, collateralAmount, 'collateral amount does not match')
         assertBn(actualChallengeCollateral, challengeCollateral, 'challenge collateral does not match')
 
-        const [actualPermissionToken, actualPermissionAmount] = await agreement.getTokenBalancePermission()
-        assert.equal(actualPermissionToken, permissionToken.address, 'permission token does not match')
-        assertBn(actualPermissionAmount, permissionBalance, 'permission balance does not match')
+        const [actualSignPermissionToken, actualSignPermissionBalance, actualChallengePermissionToken, actualChallengePermissionBalance] = await agreement.getTokenBalancePermission()
+        assert.equal(actualSignPermissionToken, signPermissionToken.address, 'sign permission token does not match')
+        assertBn(actualSignPermissionBalance, signPermissionBalance, 'sign permission balance does not match')
+        assert.equal(actualChallengePermissionToken, challengePermissionToken.address, 'challenge permission token does not match')
+        assertBn(actualChallengePermissionBalance, challengePermissionBalance, 'challenge permission balance does not match')
       })
     })
   })

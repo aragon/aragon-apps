@@ -98,18 +98,23 @@ contract('Agreement', ([_, owner, someone]) => {
     let newTokenBalancePermission
 
     beforeEach('deploy token balance permission', async () => {
-      const permissionBalance = bigExp(101, 18)
-      const permissionToken = await deployer.deployToken({ name: 'Permission Token Balance', symbol: 'PTB', decimals: 18 })
-      newTokenBalancePermission = { permissionToken, permissionBalance }
+      const signPermissionBalance = bigExp(101, 18)
+      const challengePermissionBalance = bigExp(202, 18)
+      const signPermissionToken = await deployer.deployToken({ name: 'Sign Permission Token', symbol: 'SPT', decimals: 18 })
+      const challengePermissionToken = await deployer.deployToken({ name: 'Challenge Permission Token', symbol: 'CPT', decimals: 18 })
+      newTokenBalancePermission = { signPermissionToken, signPermissionBalance, challengePermissionBalance, challengePermissionToken }
     })
 
     const assertCurrentTokenBalancePermission = async (actualPermission, expectedPermission) => {
-      assertBn(actualPermission.permissionBalance, expectedPermission.permissionBalance, 'permission balance does not match')
-      assert.equal(actualPermission.permissionToken, expectedPermission.permissionToken.address, 'permission token does not match')
+      assertBn(actualPermission.signPermissionBalance, expectedPermission.signPermissionBalance, 'sign permission balance does not match')
+      assert.equal(actualPermission.signPermissionToken, expectedPermission.signPermissionToken.address, 'sign permission token does not match')
+      assertBn(actualPermission.challengePermissionBalance, expectedPermission.challengePermissionBalance, 'challenge permission balance does not match')
+      assert.equal(actualPermission.challengePermissionToken, expectedPermission.challengePermissionToken.address, 'challenge permission token does not match')
     }
 
     it('starts with the expected initial permission', async () => {
-      const initialPermission = { permissionToken: { address: '0x0000000000000000000000000000000000000000' }, permissionBalance: bn(0) }
+      const nullToken = { address: '0x0000000000000000000000000000000000000000' }
+      const initialPermission = { signPermissionToken: nullToken, signPermissionBalance: bn(0), challengePermissionToken: nullToken, challengePermissionBalance: bn(0) }
       const currentTokenPermission = await agreement.getTokenBalancePermission()
 
       await assertCurrentTokenBalancePermission(currentTokenPermission, initialPermission)
@@ -130,8 +135,10 @@ contract('Agreement', ([_, owner, someone]) => {
 
         assertAmountOfEvents(receipt, EVENTS.PERMISSION_CHANGED, 1)
         assertEvent(receipt, EVENTS.PERMISSION_CHANGED, {
-          balance: newTokenBalancePermission.permissionBalance,
-          token: newTokenBalancePermission.permissionToken.address,
+          signToken: newTokenBalancePermission.signPermissionToken.address,
+          signBalance: newTokenBalancePermission.signPermissionBalance,
+          challengeToken: newTokenBalancePermission.challengePermissionToken.address,
+          challengeBalance: newTokenBalancePermission.challengePermissionBalance,
         })
       })
     })
