@@ -1,10 +1,10 @@
 const ERRORS = require('./helpers/utils/errors')
 const EVENTS = require('./helpers/utils/events')
-const { assertBn } = require('./helpers/lib/assertBn')
+const { assertBn } = require('./helpers/assert/assertBn')
 const { bn, bigExp } = require('./helpers/lib/numbers')
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert } = require('./helpers/assert/assertThrow')
 const { decodeEventsOfType } = require('./helpers/lib/decodeEvent')
-const { assertAmountOfEvents, assertEvent } = require('./helpers/lib/assertEvent')
+const { assertAmountOfEvents, assertEvent } = require('./helpers/assert/assertEvent')
 
 const deployer = require('./helpers/utils/deployer')(web3, artifacts)
 
@@ -297,7 +297,7 @@ contract('Agreement', ([_, someone, signer]) => {
       })
 
       describe('unstake', () => {
-        const initialStake = collateralAmount.mul(2)
+        const initialStake = collateralAmount.mul(bn(2))
 
         context('when the sender has some amount staked before', () => {
           beforeEach('stake', async () => {
@@ -348,7 +348,7 @@ contract('Agreement', ([_, someone, signer]) => {
 
             context('when the requested amount is lower than or equal to the actual available balance', () => {
               context('when the remaining amount is above the collateral amount', () => {
-                const amount = initialStake.sub(collateralAmount).sub(1)
+                const amount = initialStake.sub(collateralAmount).sub(bn(1))
 
                 itUnstakesCollateralProperly(amount)
               })
@@ -360,7 +360,7 @@ contract('Agreement', ([_, someone, signer]) => {
               })
 
               context('when the remaining amount is below the collateral amount', () => {
-                const amount = initialStake.sub(collateralAmount).add(1)
+                const amount = initialStake.sub(collateralAmount).add(bn(1))
 
                 it('reverts', async () => {
                   await assertRevert(agreement.unstake({ signer, amount }), ERRORS.ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL)
@@ -375,7 +375,7 @@ contract('Agreement', ([_, someone, signer]) => {
             })
 
             context('when the requested amount is higher than the actual available balance', () => {
-              const amount = initialStake.add(1)
+              const amount = initialStake.add(bn(1))
 
               it('reverts', async () => {
                 await assertRevert(agreement.unstake({ signer, amount }), ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)

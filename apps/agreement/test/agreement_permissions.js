@@ -45,7 +45,7 @@ contract('Agreement', ([_, owner, someone, signer, challenger]) => {
       })
 
       context('when the signer has less than the requested permission balance', () => {
-        setTokenBalance(signer, signPermissionBalance.div(2))
+        setTokenBalance(signer, signPermissionBalance.div(bn(2)))
 
         it('returns false', async () => {
           assert.isFalse(await agreement.canSign(signer), 'signer can sign')
@@ -188,7 +188,7 @@ contract('Agreement', ([_, owner, someone, signer, challenger]) => {
       })
 
       context('when the challenger has less than the requested permission balance', () => {
-        setTokenBalance(challenger, challengePermissionBalance.div(2))
+        setTokenBalance(challenger, challengePermissionBalance.div(bn(2)))
 
         it('returns false', async () => {
           assert.isFalse(await agreement.canChallenge(challenger), 'challenger can challenge')

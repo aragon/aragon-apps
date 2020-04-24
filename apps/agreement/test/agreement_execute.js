@@ -1,10 +1,10 @@
 const ERRORS = require('./helpers/utils/errors')
 const EVENTS = require('./helpers/utils/events')
-const { assertBn } = require('./helpers/lib/assertBn')
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { assertBn } = require('./helpers/assert/assertBn')
+const { assertRevert } = require('./helpers/assert/assertThrow')
 const { decodeEventsOfType } = require('./helpers/lib/decodeEvent')
 const { ACTIONS_STATE, RULINGS } = require('./helpers/utils/enums')
-const { assertEvent, assertAmountOfEvents } = require('./helpers/lib/assertEvent')
+const { assertEvent, assertAmountOfEvents } = require('./helpers/assert/assertEvent')
 
 const deployer = require('./helpers/utils/deployer')(web3, artifacts)
 

@@ -13,23 +13,27 @@ contract ArbitratorMock is IArbitrator {
         uint256 ruling;
     }
 
-    ERC20 public feeToken;
-    uint256 public feeAmount;
+    struct Fee {
+        ERC20 token;
+        uint256 amount;
+    }
+
+    Fee public fee;
     Dispute[] public disputes;
 
     event NewDispute(uint256 disputeId, uint256 possibleRulings, bytes metadata);
     event EvidencePeriodClosed(uint256 indexed disputeId);
 
     constructor(ERC20 _feeToken, uint256 _feeAmount) public {
-        feeToken = _feeToken;
-        feeAmount = _feeAmount;
+        fee.token = _feeToken;
+        fee.amount = _feeAmount;
     }
 
     function createDispute(uint256 _possibleRulings, bytes _metadata) external returns (uint256) {
         uint256 disputeId = disputes.length++;
         disputes[disputeId].arbitrable = IArbitrable(msg.sender);
 
-        feeToken.transferFrom(msg.sender, address(this), feeAmount);
+        fee.token.transferFrom(msg.sender, address(this), fee.amount);
         emit NewDispute(disputeId, _possibleRulings, _metadata);
         return disputeId;
     }
@@ -50,15 +54,15 @@ contract ArbitratorMock is IArbitrator {
     }
 
     function setFees(ERC20 _feeToken, uint256 _feeAmount) external {
-        feeToken = _feeToken;
-        feeAmount = _feeAmount;
+        fee.token = _feeToken;
+        fee.amount = _feeAmount;
     }
 
-    function getDisputeFees() public view returns (address, ERC20, uint256) {
-        return (address(this), feeToken, feeAmount);
+    function getDisputeFees() public view returns (address recipient, ERC20 feeToken, uint256 feeAmount) {
+        return (address(this), fee.token, fee.amount);
     }
 
     function getSubscriptionFees(address) external view returns (address, ERC20, uint256) {
-        return (address(this), feeToken, 0);
+        return (address(this), fee.token, 0);
     }
 }

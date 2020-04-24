@@ -1,9 +1,9 @@
 const ERRORS = require('./helpers/utils/errors')
 const EVENTS = require('./helpers/utils/events')
-const { bigExp } = require('./helpers/lib/numbers')
-const { assertBn } = require('./helpers/lib/assertBn')
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { assertEvent, assertAmountOfEvents } = require('./helpers/lib/assertEvent')
+const { assertBn } = require('./helpers/assert/assertBn')
+const { bn, bigExp } = require('./helpers/lib/numbers')
+const { assertRevert } = require('./helpers/assert/assertThrow')
+const { assertEvent, assertAmountOfEvents } = require('./helpers/assert/assertEvent')
 const { CHALLENGES_STATE, ACTIONS_STATE, RULINGS } = require('./helpers/utils/enums')
 
 const deployer = require('./helpers/utils/deployer')(web3, artifacts)
@@ -12,7 +12,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
   let agreement, actionId, challengePermissionToken
 
   const collateralAmount = bigExp(100, 18)
-  const settlementOffer = collateralAmount.div(2)
+  const settlementOffer = collateralAmount.div(bn(2))
   const challengeContext = '0x123456'
 
   describe('challenge', () => {
@@ -48,7 +48,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     })
 
                     it('creates a challenge', async () => {
-                      const [, feeToken, feeAmount] = await agreement.arbitrator.getDisputeFees()
+                      const { feeToken, feeAmount } = await agreement.arbitrator.getDisputeFees()
 
                       const currentTimestamp = await agreement.currentTimestamp()
                       await agreement.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitrationFees, stake })
@@ -58,7 +58,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                       assert.equal(challenge.challenger, challenger, 'challenger does not match')
                       assertBn(challenge.settlementOffer, settlementOffer, 'settlement offer does not match')
                       assertBn(challenge.settlementEndDate, currentTimestamp.add(agreement.settlementPeriod), 'settlement end date does not match')
-                      assertBn(challenge.arbitratorFeeAmount, feeAmount.div(2), 'arbitrator amount does not match')
+                      assertBn(challenge.arbitratorFeeAmount, feeAmount.div(bn(2)), 'arbitrator amount does not match')
                       assert.equal(challenge.arbitratorFeeToken, feeToken, 'arbitrator token does not match')
                       assertBn(challenge.state, CHALLENGES_STATE.WAITING, 'challenge state does not match')
                       assertBn(challenge.disputeId, 0, 'challenge dispute ID does not match')
@@ -159,7 +159,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                   context('when the challenger approved less than half of the arbitration fees', () => {
                     beforeEach('approve less than half arbitration fees', async () => {
                       const amount = await agreement.halfArbitrationFees()
-                      await agreement.approveArbitrationFees({ amount: amount.div(2), from: challenger, accumulate: false })
+                      await agreement.approveArbitrationFees({ amount: amount.div(bn(2)), from: challenger, accumulate: false })
                     })
 
                     it('reverts', async () => {
