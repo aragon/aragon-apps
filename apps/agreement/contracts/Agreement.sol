@@ -78,7 +78,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     event ActionScheduled(uint256 indexed actionId, address indexed submitter);
     event ActionChallenged(uint256 indexed actionId, address indexed challenger);
     event ActionSettled(uint256 indexed actionId, uint256 offer);
-    event ActionDisputed(uint256 indexed actionId, IArbitrator indexed arbtirator, uint256 disputeId);
+    event ActionDisputed(uint256 indexed actionId, IArbitrator indexed arbitrator, uint256 disputeId);
     event ActionAccepted(uint256 indexed actionId);
     event ActionVoided(uint256 indexed actionId);
     event ActionRejected(uint256 indexed actionId);
@@ -92,7 +92,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     event BalanceUnchallenged(address indexed signer, uint256 amount);
     event BalanceSlashed(address indexed signer, uint256 amount);
     event SettingChanged(uint256 settingId);
-    event TokenBalancePermissionChanged(ERC20 token, uint256 balance);
+    event TokenBalancePermissionChanged(ERC20 signToken, uint256 signBalance, ERC20 challengeToken, uint256 challengeBalance);
 
     enum ActionState {
         Scheduled,
@@ -124,8 +124,8 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         bytes context;                  // Link to a human-readable text giving context for the challenge
         uint64 settlementEndDate;       // End date of the settlement window where the action submitter can answer the challenge
         address challenger;             // Address that challenged the action
-        uint256 settlementOffer;        // Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
-        uint256 arbitratorFeeAmount;    // Amount of arbitration fees paid by the challenger in advance in case the challenge is raised to the arbitrator
+        uint256 settlementOffer;        // Amount of collateral tokens the challenger would accept without involving the arbitrator
+        uint256 arbitratorFeeAmount;    // Amount of arbitration fees paid by the challenger in advance in case the challenge is disputed
         ERC20 arbitratorFeeToken;       // ERC20 token used for the arbitration fees paid by the challenger in advance
         ChallengeState state;           // Current state of the action challenge
         uint256 disputeId;              // Identification number of the dispute for the arbitrator
@@ -136,7 +136,6 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         uint256 actionId;               // Identification number of the action being queried
         bool submitterFinishedEvidence; // Whether the action submitter has finished submitting evidence for the action dispute
         bool challengerFinishedEvidence;// Whether the action challenger has finished submitting evidence for the action dispute
-
     }
 
     struct Stake {
@@ -154,8 +153,8 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     }
 
     struct TokenBalancePermission {
-        ERC20 token;                    // ERC20 token to be used for custom signing permissions based on token balance
-        uint256 balance;                // Amount of tokens used for custom signing permissions
+        ERC20 token;                    // ERC20 token to be used for custom permissions based on token balance
+        uint256 balance;                // Amount of tokens used for custom permissions
     }
 
     /**
@@ -167,13 +166,22 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         _;
     }
 
+    /**
+    * @dev Auth modifier restricting access only for address that can challenge actions
+    */
+    modifier onlyChallenger() {
+        require(_canChallenge(msg.sender), ERROR_AUTH_FAILED);
+        _;
+    }
+
     string public title;                // Title identifying the Agreement instance
     ERC20 public collateralToken;       // ERC20 token to be used for collateral
     IArbitrator public arbitrator;      // Arbitrator instance that will resolve disputes
 
     Action[] private actions;
     Setting[] private settings;
-    TokenBalancePermission private tokenBalancePermission;
+    TokenBalancePermission private signTokenBalancePermission;
+    TokenBalancePermission private challengeTokenBalancePermission;
     mapping (address => Stake) private stakeBalances;
     mapping (uint256 => Dispute) private disputes;
 
@@ -184,7 +192,8 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @notice - `@transformTime(_delayPeriod)` for the challenge period
     * @notice - `@transformTime(_settlementPeriod)` for the settlement period
     * @notice - `_arbitrator` as the arbitrator for action disputes
-    * @notice - Token balance permission: `_permissionBalance == 0 ? 'None' : @tokenAmount(_permissionToken, _permissionBalance)`
+    * @notice - Sign permission: `_signPermissionBalance == 0 ? 'None' : @tokenAmount(_signPermissionToken, _signPermissionBalance)`
+    * @notice - Challenge per: `_challengePermissionBalance == 0 ? 'None' : @tokenAmount(_challengePermissionToken, _challengePermissionBalance)`
     * @notice - Content `_content`
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
@@ -194,8 +203,10 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
     * @param _delayPeriod Duration in seconds during which an action is delayed before being executable
     * @param _settlementPeriod Duration in seconds during which a challenge can be accepted or rejected
-    * @param _permissionToken ERC20 token to be used for custom signing permissions based on token balance
-    * @param _permissionBalance Amount of `_permissionToken` tokens for custom signing permissions
+    * @param _signPermissionToken ERC20 token to be used for custom signing permissions based on token balance
+    * @param _signPermissionBalance Amount of `_signPermissionBalance` tokens for custom signing permissions
+    * @param _challengePermissionToken ERC20 token to be used for custom challenge permissions based on token balance
+    * @param _challengePermissionBalance Amount of `_challengePermissionBalance` tokens for custom challenge permissions
     */
     function initialize(
         string _title,
@@ -206,8 +217,10 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         IArbitrator _arbitrator,
         uint64 _delayPeriod,
         uint64 _settlementPeriod,
-        ERC20 _permissionToken,
-        uint256 _permissionBalance
+        ERC20 _signPermissionToken,
+        uint256 _signPermissionBalance,
+        ERC20 _challengePermissionToken,
+        uint256 _challengePermissionBalance
     )
         external
     {
@@ -220,7 +233,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         collateralToken = _collateralToken;
 
         _newSetting(_content, _delayPeriod, _settlementPeriod, _collateralAmount, _challengeCollateral);
-        _newTokenBalancePermission(_permissionToken, _permissionBalance);
+        _newTokenBalancePermission(_signPermissionToken, _signPermissionBalance, _challengePermissionToken, _challengePermissionBalance);
     }
 
     /**
@@ -311,9 +324,9 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
     * @param _context Link to a human-readable text giving context for the challenge
     */
-    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bytes _context) external authP(CHALLENGE_ROLE, arr(_actionId)) {
+    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bytes _context) external onlyChallenger {
         (Action storage action, Setting storage setting) = _getActionAndSetting(_actionId);
-        require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
+        require(_canChallengeAction(action), ERROR_CANNOT_CHALLENGE_ACTION);
         require(setting.collateralAmount >= _settlementOffer, ERROR_INVALID_SETTLEMENT_OFFER);
 
         action.state = ActionState.Challenged;
@@ -457,14 +470,21 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
 
     /**
     * @notice Change Agreement custom token balance permission parameters to `@tokenAmount(_permissionToken, _permissionBalance)`
-    * @param _permissionToken ERC20 token to be used for custom signing permissions based on token balance
-    * @param _permissionBalance Amount of `_permissionToken` tokens for custom signing permissions
+    * @param _signPermissionToken ERC20 token to be used for custom signing permissions based on token balance
+    * @param _signPermissionBalance Amount of `_signPermissionBalance` tokens for custom signing permissions
+    * @param _challengePermissionToken ERC20 token to be used for custom challenge permissions based on token balance
+    * @param _challengePermissionBalance Amount of `_challengePermissionBalance` tokens for custom challenge permissions
     */
-    function changeTokenBalancePermission(ERC20 _permissionToken, uint256 _permissionBalance)
+    function changeTokenBalancePermission(
+        ERC20 _signPermissionToken,
+        uint256 _signPermissionBalance,
+        ERC20 _challengePermissionToken,
+        uint256 _challengePermissionBalance
+    )
         external
         auth(CHANGE_TOKEN_BALANCE_PERMISSION_ROLE)
     {
-        _newTokenBalancePermission(_permissionToken, _permissionBalance);
+        _newTokenBalancePermission(_signPermissionToken, _signPermissionBalance, _challengePermissionToken, _challengePermissionBalance);
     }
 
     /**
@@ -613,12 +633,26 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
 
     /**
     * @dev Tell the information related to the custom token balance signing permission
-    * @return permissionToken ERC20 token to be used for custom signing permissions based on token balance
-    * @return permissionBalance Amount of `permissionToken` tokens used for custom signing permissions
+    * @return signPermissionToken ERC20 token to be used for custom signing permissions based on token balance
+    * @return signPermissionBalance Amount of `signPermissionToken` tokens used for custom signing permissions
+    * @return challengePermissionToken ERC20 token to be used for custom challenge permissions based on token balance
+    * @return challengePermissionBalance Amount of `challengePermissionToken` tokens used for custom challenge permissions
     */
-    function getTokenBalancePermission() external view returns (ERC20, uint256) {
-        TokenBalancePermission storage permission = tokenBalancePermission;
-        return (permission.token, permission.balance);
+    function getTokenBalancePermission() external view
+        returns (
+            ERC20 signPermissionToken,
+            uint256 signPermissionBalance,
+            ERC20 challengePermissionToken,
+            uint256 challengePermissionBalance
+        )
+    {
+        TokenBalancePermission storage signPermission = signTokenBalancePermission;
+        signPermissionToken = signPermission.token;
+        signPermissionBalance = signPermission.balance;
+
+        TokenBalancePermission storage challengePermission = challengeTokenBalancePermission;
+        challengePermissionToken = challengePermission.token;
+        challengePermissionBalance = challengePermission.balance;
     }
 
     /**
@@ -647,6 +681,15 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     }
 
     /**
+    * @dev Tell whether an address can challenge actions or not
+    * @param _challenger Address being queried
+    * @return True if the given address can challenge actions, false otherwise
+    */
+    function canChallenge(address _challenger) external view returns (bool) {
+        return _canChallenge(_challenger);
+    }
+
+    /**
     * @dev Tell whether an action can be cancelled or not
     * @param _actionId Identification number of the action to be queried
     * @return True if the action can be cancelled, false otherwise
@@ -661,9 +704,9 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _actionId Identification number of the action to be queried
     * @return True if the action can be challenged, false otherwise
     */
-    function canChallenge(uint256 _actionId) external view returns (bool) {
+    function canChallengeAction(uint256 _actionId) external view returns (bool) {
         Action storage action = _getAction(_actionId);
-        return _canChallenge(action);
+        return _canChallengeAction(action);
     }
 
     /**
@@ -806,6 +849,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         // Create dispute
         address submitter = _action.submitter;
         require(feeToken.safeTransferFrom(submitter, address(this), missingFees), ERROR_ARBITRATOR_FEE_DEPOSIT_FAILED);
+        // We are first setting the allowance to zero in case there are remaining fees in the arbitrator
         _approveArbitratorFeeTokens(feeToken, recipient, 0);
         _approveArbitratorFeeTokens(feeToken, recipient, totalFees);
         uint256 disputeId = arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _setting.content);
@@ -1080,13 +1124,24 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
 
     /**
     * @dev Change Agreement custom token balance permission parameters
-    * @param _permissionToken ERC20 token to be used for custom signing permissions based on token balance
-    * @param _permissionBalance Amount of `_permissionToken` tokens for custom signing permissions
+    * @param _signPermissionToken ERC20 token to be used for custom signing permissions based on token balance
+    * @param _signPermissionBalance Amount of `_signPermissionBalance` tokens for custom signing permissions
+    * @param _challengePermissionToken ERC20 token to be used for custom challenge permissions based on token balance
+    * @param _challengePermissionBalance Amount of `_challengePermissionBalance` tokens for custom challenge permissions
     */
-    function _newTokenBalancePermission(ERC20 _permissionToken, uint256 _permissionBalance) internal {
-        tokenBalancePermission.token = _permissionToken;
-        tokenBalancePermission.balance = _permissionBalance;
-        emit TokenBalancePermissionChanged(_permissionToken, _permissionBalance);
+    function _newTokenBalancePermission(
+        ERC20 _signPermissionToken,
+        uint256 _signPermissionBalance,
+        ERC20 _challengePermissionToken,
+        uint256 _challengePermissionBalance
+    )
+        internal
+    {
+        signTokenBalancePermission.token = _signPermissionToken;
+        signTokenBalancePermission.balance = _signPermissionBalance;
+        challengeTokenBalancePermission.token = _challengePermissionToken;
+        challengeTokenBalancePermission.balance = _challengePermissionBalance;
+        emit TokenBalancePermissionChanged(_signPermissionToken, _signPermissionBalance, _challengePermissionToken, _challengePermissionBalance);
     }
 
     /**
@@ -1095,12 +1150,26 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @return True if the given address can sign the agreement, false otherwise
     */
     function _canSign(address _signer) internal view returns (bool) {
-        TokenBalancePermission storage permission = tokenBalancePermission;
+        TokenBalancePermission storage permission = signTokenBalancePermission;
         ERC20 permissionToken = permission.token;
 
         return isContract(address(permissionToken))
             ? permissionToken.balanceOf(_signer) >= permission.balance
             : canPerform(_signer, SIGN_ROLE, arr(_signer));
+    }
+
+    /**
+    * @dev Tell whether an address can challenge actions or not
+    * @param _challenger Address being queried
+    * @return True if the given address can challenge actions, false otherwise
+    */
+    function _canChallenge(address _challenger) internal view returns (bool) {
+        TokenBalancePermission storage permission = challengeTokenBalancePermission;
+        ERC20 permissionToken = permission.token;
+
+        return isContract(address(permissionToken))
+            ? permissionToken.balanceOf(_challenger) >= permission.balance
+            : canPerform(_challenger, CHALLENGE_ROLE, arr(_challenger));
     }
 
     /**
@@ -1133,7 +1202,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _action Action instance to be queried
     * @return True if the action can be challenged, false otherwise
     */
-    function _canChallenge(Action storage _action) internal view returns (bool) {
+    function _canChallengeAction(Action storage _action) internal view returns (bool) {
         if (_action.state != ActionState.Scheduled) {
             return false;
         }

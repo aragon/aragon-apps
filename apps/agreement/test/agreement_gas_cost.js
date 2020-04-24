@@ -47,7 +47,7 @@ contract('Agreement', ([_, signer]) => {
         ({ actionId } = await agreement.schedule({}))
       })
 
-      itCostsAtMost(353e3, () => agreement.challenge({ actionId }))
+      itCostsAtMost(354e3, () => agreement.challenge({ actionId }))
     })
 
     context('settle', () => {
