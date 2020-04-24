@@ -1,4 +1,5 @@
-const { isBigNumber } = require('./numbers')
+const { isAddress } = require('web3-utils')
+const { isBigNumber } = require('../lib/numbers')
 const { getEventAt, getEvents } = require('@aragon/test-helpers/events')
 
 const assertEvent = (receipt, eventName, expectedArgs = {}, index = 0) => {
@@ -8,9 +9,11 @@ const assertEvent = (receipt, eventName, expectedArgs = {}, index = 0) => {
   for (const arg of Object.keys(expectedArgs)) {
     let foundArg = event.args[arg]
     if (isBigNumber(foundArg)) foundArg = foundArg.toString()
+    else if (isAddress(foundArg)) foundArg = foundArg.toLowerCase()
 
     let expectedArg = expectedArgs[arg]
     if (isBigNumber(expectedArg)) expectedArg = expectedArg.toString()
+    else if (isAddress(expectedArg)) expectedArg = expectedArg.toLowerCase()
 
     assert.equal(foundArg, expectedArg, `${eventName} event ${arg} value does not match`)
   }
