@@ -1,0 +1,29 @@
+{
+  "roles": [
+    {
+      "name": "Sign Agreement",
+      "id": "SIGN_ROLE",
+      "params": [
+        "Signer address"
+      ]
+    },
+    {
+      "name": "Challenge Agreement actions",
+      "id": "CHALLENGE_ROLE",
+      "params": [
+        "Challenger address"
+      ]
+    },
+    {
+      "name": "Change Agreement configuration",
+      "id": "CHANGE_AGREEMENT_ROLE",
+      "params": []
+    },
+    {
+      "name": "Change Agreement custom token balance permissions",
+      "id": "CHANGE_TOKEN_BALANCE_PERMISSION_ROLE",
+      "params": []
+    }
+  ],
+  "path": "contracts/Agreement.sol"
+}
