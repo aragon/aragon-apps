@@ -8,6 +8,7 @@ const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 const DEFAULT_INITIALIZE_OPTIONS = {
+  appId: '0xcafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
   title: 'Sample Agreement',
   content: utf8ToHex('ipfs:QmdLu3XXT9uUYxqDKXXsTYG77qNYNPbhzL27ZYT9kErqcZ'),
   delayPeriod: 5 * DAY,                  // 5 days
@@ -86,7 +87,7 @@ class AgreementDeployer {
   }
 
   get abi() {
-    return this.base.contract.abi
+    return this.base.abi
   }
 
   async deployAndInitializeWrapper(options = {}) {
@@ -95,13 +96,10 @@ class AgreementDeployer {
     const arbitrator = options.arbitrator || this.arbitrator
     const collateralToken = options.collateralToken || this.collateralToken
 
-    const [signToken, signBalance, challengeToken, challengeBalance] = await this.agreement.getTokenBalancePermission()
-    const tokenBalancePermission = { signToken, signBalance, challengeToken, challengeBalance }
-
-    const [content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral] = await this.agreement.getSetting(0)
+    const { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral } = await this.agreement.getSetting(0)
     const initialSetting = { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral }
 
-    return new AgreementHelper(this.artifacts, this.web3, this.agreement, arbitrator, collateralToken, tokenBalancePermission, initialSetting)
+    return new AgreementHelper(this.artifacts, this.web3, this.agreement, arbitrator, collateralToken, initialSetting)
   }
 
   async deployAndInitialize(options = {}) {
@@ -119,7 +117,7 @@ class AgreementDeployer {
     const signPermissionToken = options.signPermissionToken || this.signPermissionToken || { address: ZERO_ADDR }
     const signPermissionBalance = signPermissionToken.address === ZERO_ADDR ? bn(0) : (options.signPermissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance)
 
-    if (signPermissionBalance.gt(0))  {
+    if (signPermissionBalance.gt(bn(0)))  {
       const signers = options.signers || []
       for (const signer of signers) await signPermissionToken.generateTokens(signer, signPermissionBalance)
     }
@@ -127,7 +125,7 @@ class AgreementDeployer {
     const challengePermissionToken = options.challengePermissionToken || this.challengePermissionToken || { address: ZERO_ADDR }
     const challengePermissionBalance = challengePermissionToken.address === ZERO_ADDR ? bn(0) : (options.challengePermissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance)
 
-    if (challengePermissionBalance.gt(0))  {
+    if (challengePermissionBalance.gt(bn(0)))  {
       const challengers = options.challengers || []
       for (const challenger of challengers) await challengePermissionToken.generateTokens(challenger, challengePermissionBalance)
     }
@@ -137,12 +135,13 @@ class AgreementDeployer {
   }
 
   async deploy(options = {}) {
-    const owner = options.owner || this._getSender()
+    const owner = options.owner || await this._getSender()
     if (!this.dao) await this.deployDAO(owner)
     if (!this.base) await this.deployBase()
 
-    const receipt = await this.dao.newAppInstance('0x1234', this.base.address, '0x', false, { from: owner })
-    const agreement = this.base.constructor.at(getNewProxyAddress(receipt))
+    const appId = options.appId || DEFAULT_INITIALIZE_OPTIONS.appId
+    const receipt = await this.dao.newAppInstance(appId, this.base.address, '0x', false, { from: owner })
+    const agreement = await this.base.constructor.at(getNewProxyAddress(receipt))
 
     if (!this.signPermissionToken) {
       const SIGN_ROLE = await agreement.SIGN_ROLE()
@@ -169,7 +168,7 @@ class AgreementDeployer {
     await this.acl.createPermission(owner, agreement.address, CHANGE_TOKEN_BALANCE_PERMISSION_ROLE, owner, { from: owner })
 
     const { currentTimestamp } = { ...DEFAULT_INITIALIZE_OPTIONS, ...options }
-    await agreement.mockSetTimestamp(currentTimestamp)
+    if (currentTimestamp) await agreement.mockSetTimestamp(currentTimestamp)
 
     this.previousDeploy = { ...this.previousDeploy, agreement }
     return agreement
@@ -234,8 +233,8 @@ class AgreementDeployer {
     const daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
 
     const kernelReceipt = await daoFact.newDAO(owner)
-    const dao = Kernel.at(getEventArgument(kernelReceipt, 'DeployDAO', 'dao'))
-    const acl = ACL.at(await dao.acl())
+    const dao = await Kernel.at(getEventArgument(kernelReceipt, 'DeployDAO', 'dao'))
+    const acl = await ACL.at(await dao.acl())
 
     const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     await acl.createPermission(owner, dao.address, APP_MANAGER_ROLE, owner, { from: owner })
@@ -246,15 +245,16 @@ class AgreementDeployer {
 
   async deployToken({ name, decimals, symbol }) {
     const MiniMeToken = this._getContract('MiniMeToken')
-    return MiniMeToken.new('0x0', '0x0', 0, name, decimals, symbol, true)
+    return MiniMeToken.new(ZERO_ADDR, ZERO_ADDR, 0, name, decimals, symbol, true)
   }
 
   _getContract(name) {
     return this.artifacts.require(name)
   }
 
-  _getSender() {
-    return this.web3.eth.accounts[0]
+  async _getSender() {
+    const accounts = await this.web3.eth.getAccounts()
+    return accounts[0]
   }
 }
 

@@ -1,11 +1,11 @@
 const ERRORS = require('./helpers/utils/errors')
 const EVENTS = require('./helpers/utils/events')
 const { NOW } = require('./helpers/lib/time')
-const { assertBn } = require('./helpers/lib/assertBn')
+const { assertBn } = require('./helpers/assert/assertBn')
 const { bn, bigExp } = require('./helpers/lib/numbers')
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert } = require('./helpers/assert/assertThrow')
 const { ACTIONS_STATE } = require('./helpers/utils/enums')
-const { assertAmountOfEvents, assertEvent } = require('./helpers/lib/assertEvent')
+const { assertAmountOfEvents, assertEvent } = require('./helpers/assert/assertEvent')
 
 const deployer = require('./helpers/utils/deployer')(web3, artifacts)
 
@@ -81,10 +81,10 @@ contract('Agreement', ([_, signer]) => {
 
           const actionData = await agreement.getAction(actionId)
           assert.equal(actionData.script, script, 'action script does not match')
-          assert.equal(actionData.context, '0x', 'action context does not match')
+          assert.equal(actionData.context, null, 'action context does not match')
           assert.equal(actionData.state, ACTIONS_STATE.SCHEDULED, 'action state does not match')
           assert.equal(actionData.submitter, from, 'submitter does not match')
-          assertBn(actionData.challengeEndDate, agreement.delayPeriod.add(NOW), 'challenge end date does not match')
+          assertBn(actionData.challengeEndDate, agreement.delayPeriod.add(bn(NOW)), 'challenge end date does not match')
           assertBn(actionData.settingId, 0, 'setting ID does not match')
         })
 

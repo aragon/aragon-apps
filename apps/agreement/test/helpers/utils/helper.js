@@ -4,13 +4,12 @@ const { getEventArgument } = require('@aragon/test-helpers/events')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 
 class AgreementHelper {
-  constructor(artifacts, web3, agreement, arbitrator, collateralToken, tokenBalancePermission, setting = {}) {
+  constructor(artifacts, web3, agreement, arbitrator, collateralToken, setting = {}) {
     this.artifacts = artifacts
     this.web3 = web3
     this.agreement = agreement
     this.arbitrator = arbitrator
     this.collateralToken = collateralToken
-    this.tokenBalancePermission = tokenBalancePermission
     this.setting = setting
   }
 
@@ -39,33 +38,33 @@ class AgreementHelper {
   }
 
   async getBalance(signer) {
-    const [available, locked, challenged] = await this.agreement.getBalance(signer)
+    const { available, locked, challenged } = await this.agreement.getBalance(signer)
     return { available, locked, challenged }
   }
 
   async getAction(actionId) {
-    const [script, context, state, challengeEndDate, submitter, settingId] = await this.agreement.getAction(actionId)
+    const { script, context, state, challengeEndDate, submitter, settingId } = await this.agreement.getAction(actionId)
     return { script, context, state, challengeEndDate, submitter, settingId }
   }
 
   async getChallenge(actionId) {
-    const [context, settlementEndDate, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId] = await this.agreement.getChallenge(actionId)
+    const { context, settlementEndDate, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId } = await this.agreement.getChallenge(actionId)
     return { context, settlementEndDate, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId }
   }
 
   async getDispute(actionId) {
-    const [ruling, submitterFinishedEvidence, challengerFinishedEvidence] = await this.agreement.getDispute(actionId)
+    const { ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await this.agreement.getDispute(actionId)
     return { ruling, submitterFinishedEvidence, challengerFinishedEvidence }
   }
 
   async getSetting(settingId = undefined) {
     if (!settingId) settingId = await this.agreement.getCurrentSettingId()
-    const [content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral] = await this.agreement.getSetting(settingId)
+    const { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral } = await this.agreement.getSetting(settingId)
     return { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral }
   }
 
   async getTokenBalancePermission() {
-    const [signPermissionToken, signPermissionBalance, challengePermissionToken, challengePermissionBalance] = await this.agreement.getTokenBalancePermission()
+    const { signPermissionToken, signPermissionBalance, challengePermissionToken, challengePermissionBalance } = await this.agreement.getTokenBalancePermission()
     return { signPermissionToken, signPermissionBalance, challengePermissionToken, challengePermissionBalance }
   }
 
@@ -85,21 +84,21 @@ class AgreementHelper {
   }
 
   async approve({ amount, from = undefined, accumulate = true }) {
-    if (!from) from = this._getSender()
+    if (!from) from = await this._getSender()
 
     await this.collateralToken.generateTokens(from, amount)
     return this.safeApprove(this.collateralToken, from, this.address, amount, accumulate)
   }
 
   async approveAndCall({ amount, from = undefined, mint = true }) {
-    if (!from) from = this._getSender()
+    if (!from) from = await this._getSender()
 
     if (mint) await this.collateralToken.generateTokens(from, amount)
     return this.collateralToken.approveAndCall(this.address, amount, '0x', { from })
   }
 
   async stake({ signer = undefined, amount = undefined, from = undefined, approve = undefined }) {
-    if (!signer) signer = this._getSender()
+    if (!signer) signer = await this._getSender()
     if (!from) from = signer
     if (amount === undefined) amount = this.collateralAmount
 
@@ -118,7 +117,7 @@ class AgreementHelper {
   }
 
   async forward({ script = undefined, from }) {
-    if (!from) from = this._getSender()
+    if (!from) from = await this._getSender()
     if (!script) script = await this.buildEvmScript()
     const receipt = await this.agreement.forward(script, { from })
     const actionId = getEventArgument(receipt, EVENTS.ACTION_SCHEDULED, 'actionId')
@@ -126,7 +125,7 @@ class AgreementHelper {
   }
 
   async schedule({ actionContext = '0xabcd', script = undefined, submitter = undefined, stake = undefined }) {
-    if (!submitter) submitter = this._getSender()
+    if (!submitter) submitter = await this._getSender()
     if (!script) script = await this.buildEvmScript()
 
     if (stake === undefined) stake = this.collateralAmount
@@ -138,7 +137,7 @@ class AgreementHelper {
   }
 
   async challenge({ actionId, challenger = undefined, settlementOffer = 0, challengeContext = '0xdcba', arbitrationFees = undefined, stake = undefined }) {
-    if (!challenger) challenger = this._getSender()
+    if (!challenger) challenger = await this._getSender()
 
     if (arbitrationFees === undefined) arbitrationFees = await this.halfArbitrationFees()
     if (arbitrationFees) await this.approveArbitrationFees({ amount: arbitrationFees, from: challenger })
@@ -150,7 +149,7 @@ class AgreementHelper {
   }
 
   async execute({ actionId, from = undefined }) {
-    if (!from) from = this._getSender()
+    if (!from) from = await this._getSender()
     return this.agreement.execute(actionId, { from })
   }
 
@@ -186,13 +185,14 @@ class AgreementHelper {
     if (mockRuling) {
       const { disputeId } = await this.getChallenge(actionId)
       const ArbitratorMock = this._getContract('ArbitratorMock')
-      await ArbitratorMock.at(this.arbitrator.address).rule(disputeId, ruling)
+      const arbitrator = await ArbitratorMock.at(this.arbitrator.address)
+      await arbitrator.rule(disputeId, ruling)
     }
     return this.agreement.executeRuling(actionId)
   }
 
   async approveArbitrationFees({ amount = undefined, from = undefined, accumulate = false }) {
-    if (!from) from = this._getSender()
+    if (!from) from = await this._getSender()
     if (amount === undefined) amount = await this.halfArbitrationFees()
 
     const feeToken = await this.arbitratorToken()
@@ -201,9 +201,9 @@ class AgreementHelper {
   }
 
   async arbitratorFees() {
-    const [, feeTokenAddress, feeAmount] = await this.arbitrator.getDisputeFees()
+    const { feeToken: feeTokenAddress, feeAmount } = await this.arbitrator.getDisputeFees()
     const MiniMeToken = this._getContract('MiniMeToken')
-    const feeToken = MiniMeToken.at(feeTokenAddress)
+    const feeToken = await MiniMeToken.at(feeTokenAddress)
     return { feeToken, feeAmount }
   }
 
@@ -214,23 +214,23 @@ class AgreementHelper {
 
   async halfArbitrationFees() {
     const { feeAmount } = await this.arbitratorFees()
-    return feeAmount.div(2)
+    return feeAmount.div(bn(2))
   }
 
   async missingArbitrationFees(actionId) {
-    const [, missingFees] = await this.agreement.getMissingArbitratorFees(actionId)
+    const { missingFees } = await this.agreement.getMissingArbitratorFees(actionId)
     return missingFees
   }
 
   async buildEvmScript() {
     const ExecutionTarget = this._getContract('ExecutionTarget')
     const executionTarget = await ExecutionTarget.new()
-    return encodeCallScript([{ to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }])
+    return encodeCallScript([{ to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }])
   }
 
   async changeSetting(options = {}) {
     const currentSettings = await this.getSetting()
-    const from = options.from || this._getSender()
+    const from = options.from || await this._getSender()
     const content = options.content || currentSettings.content
     const collateralAmount = options.collateralAmount || currentSettings.collateralAmount
     const delayPeriod = options.delayPeriod || currentSettings.delayPeriod
@@ -241,7 +241,7 @@ class AgreementHelper {
   }
 
   async changeTokenBalancePermission(options = {}) {
-    const from = options.from || this._getSender()
+    const from = options.from || await this._getSender()
     const permission = await this.getTokenBalancePermission()
     const signPermissionToken = options.signPermissionToken ? options.signPermissionToken.address : permission.signToken
     const signPermissionBalance = options.signPermissionBalance || permission.signBalance
@@ -264,7 +264,7 @@ class AgreementHelper {
 
   async moveBeforeEndOfChallengePeriod(actionId) {
     const { challengeEndDate } = await this.getAction(actionId)
-    return this.moveTo(challengeEndDate.sub(1))
+    return this.moveTo(challengeEndDate.sub(bn(1)))
   }
 
   async moveToEndOfChallengePeriod(actionId) {
@@ -274,12 +274,12 @@ class AgreementHelper {
 
   async moveAfterChallengePeriod(actionId) {
     const { challengeEndDate } = await this.getAction(actionId)
-    return this.moveTo(challengeEndDate.add(1))
+    return this.moveTo(challengeEndDate.add(bn(1)))
   }
 
   async moveBeforeEndOfSettlementPeriod(actionId) {
     const { settlementEndDate } = await this.getChallenge(actionId)
-    return this.moveTo(settlementEndDate.sub(1))
+    return this.moveTo(settlementEndDate.sub(bn(1)))
   }
 
   async moveToEndOfSettlementPeriod(actionId) {
@@ -289,7 +289,7 @@ class AgreementHelper {
 
   async moveAfterSettlementPeriod(actionId) {
     const { settlementEndDate } = await this.getChallenge(actionId)
-    return this.moveTo(settlementEndDate.add(1))
+    return this.moveTo(settlementEndDate.add(bn(1)))
   }
 
   async moveTo(timestamp) {
@@ -303,8 +303,9 @@ class AgreementHelper {
     return this.artifacts.require(name)
   }
 
-  _getSender() {
-    return this.web3.eth.accounts[0]
+  async _getSender() {
+    const accounts = await this.web3.eth.getAccounts()
+    return accounts[0]
   }
 }
 

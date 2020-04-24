@@ -1,4 +1,4 @@
-const { assertBn } = require('./helpers/lib/assertBn')
+const { assertBn } = require('./helpers/assert/assertBn')
 const { bn, bigExp } = require('./helpers/lib/numbers')
 const { ACTIONS_STATE, CHALLENGES_STATE, RULINGS } = require('./helpers/utils/enums')
 
@@ -17,15 +17,15 @@ contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holde
     { submitter: holder1, actionContext: '0x010B', settlementOffer: collateralAmount, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER },
 
     // holder 2
-    { submitter: holder2, actionContext: '0x020A', settlementOffer: collateralAmount.div(2), settled: true },
+    { submitter: holder2, actionContext: '0x020A', settlementOffer: collateralAmount.div(bn(2)), settled: true },
     { submitter: holder2, actionContext: '0x020B', settlementOffer: bn(0), settled: true },
 
     // holder 3
     { submitter: holder3, actionContext: '0x030A', settlementOffer: bn(0), settled: true },
-    { submitter: holder3, actionContext: '0x030B', settlementOffer: collateralAmount.div(3), ruling: RULINGS.IN_FAVOR_OF_SUBMITTER },
-    { submitter: holder3, actionContext: '0x030C', settlementOffer: collateralAmount.div(5), ruling: RULINGS.IN_FAVOR_OF_CHALLENGER },
+    { submitter: holder3, actionContext: '0x030B', settlementOffer: collateralAmount.div(bn(3)), ruling: RULINGS.IN_FAVOR_OF_SUBMITTER },
+    { submitter: holder3, actionContext: '0x030C', settlementOffer: collateralAmount.div(bn(5)), ruling: RULINGS.IN_FAVOR_OF_CHALLENGER },
     { submitter: holder3, actionContext: '0x030D', cancelled: true },
-    { submitter: holder3, actionContext: '0x030E', settlementOffer: collateralAmount.div(2), ruling: RULINGS.IN_FAVOR_OF_SUBMITTER },
+    { submitter: holder3, actionContext: '0x030E', settlementOffer: collateralAmount.div(bn(2)), ruling: RULINGS.IN_FAVOR_OF_SUBMITTER },
 
     // holder 4
     { submitter: holder4, actionContext: '0x040A', settlementOffer: bn(0), ruling: RULINGS.IN_FAVOR_OF_CHALLENGER },
@@ -129,9 +129,9 @@ contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holde
       const challengeRefusedActions = actions.filter(action => action.ruling === RULINGS.REFUSED).length
       const challengeAcceptedActions = actions.filter(action => action.ruling === RULINGS.IN_FAVOR_OF_CHALLENGER).length
 
-      const wonDisputesTotal = (challengeCollateral.add(collateralAmount)).mul(challengeAcceptedActions)
+      const wonDisputesTotal = (challengeCollateral.add(collateralAmount)).mul(bn(challengeAcceptedActions))
       const settledTotal = actions.filter(action => action.settled).reduce((total, action) => total.add(action.settlementOffer), bn(0))
-      const returnedCollateralTotal = challengeCollateral.mul(challengeSettledActions).add(challengeCollateral.mul(challengeRefusedActions))
+      const returnedCollateralTotal = challengeCollateral.mul(bn(challengeSettledActions)).add(challengeCollateral.mul(bn(challengeRefusedActions)))
 
       const expectedChallengerBalance = wonDisputesTotal.add(settledTotal).add(returnedCollateralTotal)
       assertBn(await collateralToken.balanceOf(challenger), expectedChallengerBalance, 'challenger balance does not match')
@@ -139,9 +139,9 @@ contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holde
 
     it('computes available stake balances properly', async () => {
       const calculateStakedBalance = holderActions => {
-        const notSlashedActions = holderActions.filter(action => (!action.settled && !action.ruling) || action.ruling === RULINGS.IN_FAVOR_OF_SUBMITTER || action.ruling === RULINGS.REFUSED)
+        const notSlashedActions = holderActions.filter(action => (!action.settled && !action.ruling) || action.ruling === RULINGS.IN_FAVOR_OF_SUBMITTER || action.ruling === RULINGS.REFUSED).length
         const settleRemainingTotal = holderActions.filter(action => action.settled).reduce((total, action) => total.add(collateralAmount.sub(action.settlementOffer)), bn(0))
-        return collateralAmount.mul(notSlashedActions.length).add(settleRemainingTotal)
+        return collateralAmount.mul(bn(notSlashedActions)).add(settleRemainingTotal)
       }
 
       const holder1Actions = actions.filter(action => action.submitter === holder1)
@@ -182,7 +182,7 @@ contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holde
     it('transfer the arbitration fees properly', async () => {
       const { feeToken, feeAmount } = await agreement.arbitratorFees()
       const disputedActions = actions.filter(action => !!action.ruling)
-      const totalArbitrationFees = feeAmount.mul(disputedActions.length)
+      const totalArbitrationFees = feeAmount.mul(bn(disputedActions.length))
 
       const arbitratorBalance = await feeToken.balanceOf(agreement.arbitrator.address)
       assertBn(arbitratorBalance, totalArbitrationFees, 'arbitrator arbitration fees balance does not match')

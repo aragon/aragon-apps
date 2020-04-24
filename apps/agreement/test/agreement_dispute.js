@@ -1,12 +1,12 @@
 const ERRORS = require('./helpers/utils/errors')
 const EVENTS = require('./helpers/utils/events')
-const { bigExp } = require('./helpers/lib/numbers')
-const { assertBn } = require('./helpers/lib/assertBn')
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { assertBn } = require('./helpers/assert/assertBn')
+const { bn, bigExp } = require('./helpers/lib/numbers')
+const { assertRevert } = require('./helpers/assert/assertThrow')
 const { getEventArgument } = require('@aragon/test-helpers/events')
 const { decodeEventsOfType } = require('./helpers/lib/decodeEvent')
 const { RULINGS, CHALLENGES_STATE } = require('./helpers/utils/enums')
-const { assertEvent, assertAmountOfEvents } = require('./helpers/lib/assertEvent')
+const { assertEvent, assertAmountOfEvents } = require('./helpers/assert/assertEvent')
 
 const deployer = require('./helpers/utils/deployer')(web3, artifacts)
 
@@ -236,7 +236,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
               context('when the submitter approved less than the missing arbitration fees', () => {
                 beforeEach('approve less than the missing arbitration fees', async () => {
                   const amount = await agreement.missingArbitrationFees(actionId)
-                  await agreement.approveArbitrationFees({ amount: amount.div(2), from: submitter, accumulate: false })
+                  await agreement.approveArbitrationFees({ amount: amount.div(bn(2)), from: submitter, accumulate: false })
                 })
 
                 it('reverts', async () => {

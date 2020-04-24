@@ -1,11 +1,11 @@
 const ERRORS = require('./helpers/utils/errors')
 const EVENTS = require('./helpers/utils/events')
 const { DAY } = require('./helpers/lib/time')
-const { assertBn } = require('./helpers/lib/assertBn')
+const { assertBn } = require('./helpers/assert/assertBn')
 const { bigExp, bn } = require('./helpers/lib/numbers')
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
+const { assertRevert } = require('./helpers/assert/assertThrow')
 const { getEventArgument } = require('@aragon/test-helpers/events')
-const { assertAmountOfEvents, assertEvent } = require('./helpers/lib/assertEvent')
+const { assertAmountOfEvents, assertEvent } = require('./helpers/assert/assertEvent')
 
 const deployer = require('./helpers/utils/deployer')(web3, artifacts)
 
@@ -60,7 +60,7 @@ contract('Agreement', ([_, owner, someone]) => {
         const receipt = await agreement.changeSetting({ ...newSettings, from })
         const newSettingId = getEventArgument(receipt, EVENTS.SETTING_CHANGED, 'settingId')
 
-        const previousSettings = await agreement.getSetting(newSettingId.sub(1))
+        const previousSettings = await agreement.getSetting(newSettingId.sub(bn(1)))
         await assertCurrentSettings(previousSettings, initialSettings)
       })
 

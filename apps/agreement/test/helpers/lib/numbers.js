@@ -1,4 +1,4 @@
-const BN = require('bignumber.js')
+const { BN } = require('web3-utils')
 
 const bn = x => new BN(x)
 const bigExp = (x, y) => bn(x).mul(bn(10).pow(bn(y)))
