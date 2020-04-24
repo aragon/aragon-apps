@@ -5,63 +5,56 @@ const { ACTIONS_STATE, CHALLENGES_STATE, RULINGS } = require('./helpers/utils/en
 const deployer = require('./helpers/utils/deployer')(web3, artifacts)
 
 
-contract('Agreement', ([_, challenger, holder0, holder10, holder20, holder30, holder40, holder50]) => {
-  let agreement, collateralToken, permissionToken
+contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holder4, holder5]) => {
+  let agreement, collateralToken, signPermissionToken
 
   const collateralAmount = bigExp(5, 18)
   const challengeCollateral = bigExp(15, 18)
-  const permissionBalance = bigExp(10, 18)
 
   const actions = [
-    // holder 10
-    { submitter: holder10, actionContext: '0x010A' },
-    // { submitter: holder10, actionContext: '0x010B', settlementOffer: collateralAmount, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER },
+    // holder 1
+    { submitter: holder1, actionContext: '0x010A' },
+    { submitter: holder1, actionContext: '0x010B', settlementOffer: collateralAmount, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER },
 
-    // holder 20
-    { submitter: holder20, actionContext: '0x020A', settlementOffer: collateralAmount.div(2), settled: true },
-    { submitter: holder20, actionContext: '0x020B', settlementOffer: bn(0), settled: true },
+    // holder 2
+    { submitter: holder2, actionContext: '0x020A', settlementOffer: collateralAmount.div(2), settled: true },
+    { submitter: holder2, actionContext: '0x020B', settlementOffer: bn(0), settled: true },
 
-    // holder 30
-    { submitter: holder30, actionContext: '0x030A', settlementOffer: bn(0), settled: true },
-    { submitter: holder30, actionContext: '0x030B', settlementOffer: collateralAmount.div(3), ruling: RULINGS.IN_FAVOR_OF_SUBMITTER },
-    { submitter: holder30, actionContext: '0x030C', settlementOffer: collateralAmount.div(5), ruling: RULINGS.IN_FAVOR_OF_CHALLENGER },
-    { submitter: holder30, actionContext: '0x030D', cancelled: true },
-    { submitter: holder30, actionContext: '0x030E', settlementOffer: collateralAmount.div(2), ruling: RULINGS.IN_FAVOR_OF_SUBMITTER },
+    // holder 3
+    { submitter: holder3, actionContext: '0x030A', settlementOffer: bn(0), settled: true },
+    { submitter: holder3, actionContext: '0x030B', settlementOffer: collateralAmount.div(3), ruling: RULINGS.IN_FAVOR_OF_SUBMITTER },
+    { submitter: holder3, actionContext: '0x030C', settlementOffer: collateralAmount.div(5), ruling: RULINGS.IN_FAVOR_OF_CHALLENGER },
+    { submitter: holder3, actionContext: '0x030D', cancelled: true },
+    { submitter: holder3, actionContext: '0x030E', settlementOffer: collateralAmount.div(2), ruling: RULINGS.IN_FAVOR_OF_SUBMITTER },
 
-    // holder 40
-    { submitter: holder40, actionContext: '0x040A', settlementOffer: bn(0), ruling: RULINGS.IN_FAVOR_OF_CHALLENGER },
-    { submitter: holder40, actionContext: '0x040B', settlementOffer: collateralAmount, ruling: RULINGS.REFUSED },
-    { submitter: holder40, actionContext: '0x040C', cancelled: true },
+    // holder 4
+    { submitter: holder4, actionContext: '0x040A', settlementOffer: bn(0), ruling: RULINGS.IN_FAVOR_OF_CHALLENGER },
+    { submitter: holder4, actionContext: '0x040B', settlementOffer: collateralAmount, ruling: RULINGS.REFUSED },
+    { submitter: holder4, actionContext: '0x040C', cancelled: true },
 
-    // holder 50
-    { submitter: holder50, actionContext: '0x050A' },
-    { submitter: holder50, actionContext: '0x050B' },
-    { submitter: holder50, actionContext: '0x050C' },
+    // holder 5
+    { submitter: holder5, actionContext: '0x050A' },
+    { submitter: holder5, actionContext: '0x050B' },
+    { submitter: holder5, actionContext: '0x050C' },
   ]
 
   before('deploy tokens', async () => {
     collateralToken = await deployer.deployCollateralToken()
-    permissionToken = await deployer.deployPermissionToken()
-
-    await permissionToken.generateTokens(holder10, permissionBalance)
-    await permissionToken.generateTokens(holder20, permissionBalance.mul(2))
-    await permissionToken.generateTokens(holder30, permissionBalance.mul(3))
-    await permissionToken.generateTokens(holder40, permissionBalance.mul(4))
-    await permissionToken.generateTokens(holder50, permissionBalance.mul(5))
+    signPermissionToken = await deployer.deploySignPermissionToken()
   })
 
   before('deploy agreement instance', async () => {
-    agreement = await deployer.deployAndInitializeWrapper({ collateralAmount, challengeCollateral, signers: [holder10, holder20, holder30, holder40, holder50]})
+    agreement = await deployer.deployAndInitializeWrapper({ collateralAmount, challengeCollateral, signers: [holder1, holder2, holder3, holder4, holder5]})
   })
 
   describe('integration', () => {
     it('only holders with more than 10 permission tokens can sign', async () => {
       assert.isFalse(await agreement.canSign(holder0), 'holder 0 can sign')
-      assert.isTrue(await agreement.canSign(holder10), 'holder 10 cannot sign')
-      assert.isTrue(await agreement.canSign(holder20), 'holder 20 cannot sign')
-      assert.isTrue(await agreement.canSign(holder30), 'holder 30 cannot sign')
-      assert.isTrue(await agreement.canSign(holder40), 'holder 40 cannot sign')
-      assert.isTrue(await agreement.canSign(holder50), 'holder 50 cannot sign')
+      assert.isTrue(await agreement.canSign(holder1), 'holder 1 cannot sign')
+      assert.isTrue(await agreement.canSign(holder2), 'holder 2 cannot sign')
+      assert.isTrue(await agreement.canSign(holder3), 'holder 3 cannot sign')
+      assert.isTrue(await agreement.canSign(holder4), 'holder 4 cannot sign')
+      assert.isTrue(await agreement.canSign(holder5), 'holder 5 cannot sign')
     })
 
     it('submits the expected actions', async () => {
@@ -151,38 +144,38 @@ contract('Agreement', ([_, challenger, holder0, holder10, holder20, holder30, ho
         return collateralAmount.mul(notSlashedActions.length).add(settleRemainingTotal)
       }
 
-      const holder10Actions = actions.filter(action => action.submitter === holder10)
-      const { available: holder10Available, locked: holder10Locked, challenged: holder10Challenged } = await agreement.getBalance(holder10)
-      assertBn(calculateStakedBalance(holder10Actions), holder10Available, 'holder 10 available balance does not match')
-      assertBn(holder10Locked, 0, 'holder 10 locked balance does not match')
-      assertBn(holder10Challenged, 0, 'holder 10 challenged balance does not match')
+      const holder1Actions = actions.filter(action => action.submitter === holder1)
+      const { available: holder1Available, locked: holder1Locked, challenged: holder1Challenged } = await agreement.getBalance(holder1)
+      assertBn(calculateStakedBalance(holder1Actions), holder1Available, 'holder 1 available balance does not match')
+      assertBn(holder1Locked, 0, 'holder 1 locked balance does not match')
+      assertBn(holder1Challenged, 0, 'holder 1 challenged balance does not match')
 
-      const holder20Actions = actions.filter(action => action.submitter === holder20)
-      const { available: holder20Available, locked: holder20Locked, challenged: holder20Challenged } = await agreement.getBalance(holder20)
-      assertBn(calculateStakedBalance(holder20Actions), holder20Available, 'holder 20 available balance does not match')
-      assertBn(holder20Locked, 0, 'holder 20 locked balance does not match')
-      assertBn(holder20Challenged, 0, 'holder 20 challenged balance does not match')
+      const holder2Actions = actions.filter(action => action.submitter === holder2)
+      const { available: holder2Available, locked: holder2Locked, challenged: holder2Challenged } = await agreement.getBalance(holder2)
+      assertBn(calculateStakedBalance(holder2Actions), holder2Available, 'holder 2 available balance does not match')
+      assertBn(holder2Locked, 0, 'holder 2 locked balance does not match')
+      assertBn(holder2Challenged, 0, 'holder 2 challenged balance does not match')
 
-      const holder30Actions = actions.filter(action => action.submitter === holder30)
-      const { available: holder30Available, locked: holder30Locked, challenged: holder30Challenged } = await agreement.getBalance(holder30)
-      assertBn(calculateStakedBalance(holder30Actions), holder30Available, 'holder 30 available balance does not match')
-      assertBn(holder30Locked, 0, 'holder 30 locked balance does not match')
-      assertBn(holder30Challenged, 0, 'holder 30 challenged balance does not match')
+      const holder3Actions = actions.filter(action => action.submitter === holder3)
+      const { available: holder3Available, locked: holder3Locked, challenged: holder3Challenged } = await agreement.getBalance(holder3)
+      assertBn(calculateStakedBalance(holder3Actions), holder3Available, 'holder 3 available balance does not match')
+      assertBn(holder3Locked, 0, 'holder 3 locked balance does not match')
+      assertBn(holder3Challenged, 0, 'holder 3 challenged balance does not match')
 
-      const holder40Actions = actions.filter(action => action.submitter === holder40)
-      const { available: holder40Available, locked: holder40Locked, challenged: holder40Challenged } = await agreement.getBalance(holder40)
-      assertBn(calculateStakedBalance(holder40Actions), holder40Available, 'holder 40 available balance does not match')
-      assertBn(holder40Locked, 0, 'holder 40 locked balance does not match')
-      assertBn(holder40Challenged, 0, 'holder 40 challenged balance does not match')
+      const holder4Actions = actions.filter(action => action.submitter === holder4)
+      const { available: holder4Available, locked: holder4Locked, challenged: holder4Challenged } = await agreement.getBalance(holder4)
+      assertBn(calculateStakedBalance(holder4Actions), holder4Available, 'holder 4 available balance does not match')
+      assertBn(holder4Locked, 0, 'holder 4 locked balance does not match')
+      assertBn(holder4Challenged, 0, 'holder 4 challenged balance does not match')
 
-      const holder50Actions = actions.filter(action => action.submitter === holder50)
-      const { available: holder50Available, locked: holder50Locked, challenged: holder50Challenged } = await agreement.getBalance(holder50)
-      assertBn(calculateStakedBalance(holder50Actions), holder50Available, 'holder 50 available balance does not match')
-      assertBn(holder50Locked, 0, 'holder 50 locked balance does not match')
-      assertBn(holder50Challenged, 0, 'holder 50 challenged balance does not match')
+      const holder5Actions = actions.filter(action => action.submitter === holder5)
+      const { available: holder5Available, locked: holder5Locked, challenged: holder5Challenged } = await agreement.getBalance(holder5)
+      assertBn(calculateStakedBalance(holder5Actions), holder5Available, 'holder 5 available balance does not match')
+      assertBn(holder5Locked, 0, 'holder 5 locked balance does not match')
+      assertBn(holder5Challenged, 0, 'holder 5 challenged balance does not match')
 
       const agreementBalance = await collateralToken.balanceOf(agreement.address)
-      const expectedBalance = holder10Available.add(holder20Available).add(holder30Available).add(holder40Available).add(holder50Available)
+      const expectedBalance = holder1Available.add(holder2Available).add(holder3Available).add(holder4Available).add(holder5Available)
       assertBn(agreementBalance, expectedBalance, 'agreement staked balance does not match')
     })
 

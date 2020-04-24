@@ -65,8 +65,8 @@ class AgreementHelper {
   }
 
   async getTokenBalancePermission() {
-    const [permissionToken, permissionBalance] = await this.agreement.getTokenBalancePermission()
-    return { permissionToken, permissionBalance }
+    const [signPermissionToken, signPermissionBalance, challengePermissionToken, challengePermissionBalance] = await this.agreement.getTokenBalancePermission()
+    return { signPermissionToken, signPermissionBalance, challengePermissionToken, challengePermissionBalance }
   }
 
   async canSign(signer) {
@@ -75,7 +75,7 @@ class AgreementHelper {
 
   async getAllowedPaths(actionId) {
     const canCancel = await this.agreement.canCancel(actionId)
-    const canChallenge = await this.agreement.canChallenge(actionId)
+    const canChallenge = await this.agreement.canChallengeAction(actionId)
     const canSettle = await this.agreement.canSettle(actionId)
     const canDispute = await this.agreement.canDispute(actionId)
     const canClaimSettlement = await this.agreement.canClaimSettlement(actionId)
@@ -243,10 +243,12 @@ class AgreementHelper {
   async changeTokenBalancePermission(options = {}) {
     const from = options.from || this._getSender()
     const permission = await this.getTokenBalancePermission()
-    const permissionToken = options.permissionToken ? options.permissionToken.address : permission.permissionToken
-    const permissionBalance = options.permissionBalance || permission.permissionBalance
+    const signPermissionToken = options.signPermissionToken ? options.signPermissionToken.address : permission.signToken
+    const signPermissionBalance = options.signPermissionBalance || permission.signBalance
+    const challengePermissionToken = options.challengePermissionToken ? options.challengePermissionToken.address : permission.challengeToken
+    const challengePermissionBalance = options.challengePermissionBalance || permission.challengeBalance
 
-    return this.agreement.changeTokenBalancePermission(permissionToken, permissionBalance, { from })
+    return this.agreement.changeTokenBalancePermission(signPermissionToken, signPermissionBalance, challengePermissionToken, challengePermissionBalance, { from })
   }
 
   async safeApprove(token, from, to, amount, accumulate = true) {

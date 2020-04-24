@@ -14,7 +14,7 @@ const DEFAULT_INITIALIZE_OPTIONS = {
   settlementPeriod: 2 * DAY,             // 2 days
   currentTimestamp: NOW,                 // fixed timestamp
   collateralAmount: bigExp(100, 18),     // 100 DAI
-  challengeCollateral: bigExp(200, 18),    // 200 DAI
+  challengeCollateral: bigExp(200, 18),  // 200 DAI
   collateralToken: {
     symbol: 'DAI',
     decimals: 18,
@@ -73,8 +73,12 @@ class AgreementDeployer {
     return this.previousDeploy.arbitratorToken
   }
 
-  get permissionToken() {
-    return this.previousDeploy.permissionToken
+  get signPermissionToken() {
+    return this.previousDeploy.signPermissionToken
+  }
+
+  get challengePermissionToken() {
+    return this.previousDeploy.challengePermissionToken
   }
 
   get agreement() {
@@ -91,8 +95,8 @@ class AgreementDeployer {
     const arbitrator = options.arbitrator || this.arbitrator
     const collateralToken = options.collateralToken || this.collateralToken
 
-    const [token, balance] = await this.agreement.getTokenBalancePermission()
-    const tokenBalancePermission = { token, balance }
+    const [signToken, signBalance, challengeToken, challengeBalance] = await this.agreement.getTokenBalancePermission()
+    const tokenBalancePermission = { signToken, signBalance, challengeToken, challengeBalance }
 
     const [content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral] = await this.agreement.getSetting(0)
     const initialSetting = { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral }
@@ -112,15 +116,23 @@ class AgreementDeployer {
     const defaultOptions = { ...DEFAULT_INITIALIZE_OPTIONS, ...options }
     const { title, content, collateralAmount, delayPeriod, settlementPeriod, challengeCollateral } = defaultOptions
 
-    const permissionToken = options.permissionToken || this.permissionToken || { address: ZERO_ADDR }
-    const permissionBalance = permissionToken.address === ZERO_ADDR ? bn(0) : (options.permissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance)
+    const signPermissionToken = options.signPermissionToken || this.signPermissionToken || { address: ZERO_ADDR }
+    const signPermissionBalance = signPermissionToken.address === ZERO_ADDR ? bn(0) : (options.signPermissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance)
 
-    if (permissionBalance.gt(0))  {
+    if (signPermissionBalance.gt(0))  {
       const signers = options.signers || []
-      for (const signer of signers) await permissionToken.generateTokens(signer, permissionBalance)
+      for (const signer of signers) await signPermissionToken.generateTokens(signer, signPermissionBalance)
     }
 
-    await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, permissionToken.address, permissionBalance)
+    const challengePermissionToken = options.challengePermissionToken || this.challengePermissionToken || { address: ZERO_ADDR }
+    const challengePermissionBalance = challengePermissionToken.address === ZERO_ADDR ? bn(0) : (options.challengePermissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance)
+
+    if (challengePermissionBalance.gt(0))  {
+      const challengers = options.challengers || []
+      for (const challenger of challengers) await challengePermissionToken.generateTokens(challenger, challengePermissionBalance)
+    }
+
+    await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, signPermissionToken.address, signPermissionBalance, challengePermissionToken.address, challengePermissionBalance)
     return this.agreement
   }
 
@@ -132,18 +144,22 @@ class AgreementDeployer {
     const receipt = await this.dao.newAppInstance('0x1234', this.base.address, '0x', false, { from: owner })
     const agreement = this.base.constructor.at(getNewProxyAddress(receipt))
 
-    const SIGN_ROLE = await agreement.SIGN_ROLE()
-    const signers = options.signers || [ANY_ADDR]
-    for (const signer of signers) {
-      if (signers.indexOf(signer) === 0) await this.acl.createPermission(signer, agreement.address, SIGN_ROLE, owner, { from: owner })
-      else await this.acl.grantPermission(signer, agreement.address, SIGN_ROLE, { from: owner })
+    if (!this.signPermissionToken) {
+      const SIGN_ROLE = await agreement.SIGN_ROLE()
+      const signers = options.signers || [ANY_ADDR]
+      for (const signer of signers) {
+        if (signers.indexOf(signer) === 0) await this.acl.createPermission(signer, agreement.address, SIGN_ROLE, owner, { from: owner })
+        else await this.acl.grantPermission(signer, agreement.address, SIGN_ROLE, { from: owner })
+      }
     }
 
-    const CHALLENGE_ROLE = await agreement.CHALLENGE_ROLE()
-    const challengers = options.challengers || [ANY_ADDR]
-    for (const challenger of challengers) {
-      if (challengers.indexOf(challenger) === 0) await this.acl.createPermission(challenger, agreement.address, CHALLENGE_ROLE, owner, { from: owner })
-      else await this.acl.grantPermission(challenger, agreement.address, CHALLENGE_ROLE, { from: owner })
+    if (!this.challengePermissionToken) {
+      const CHALLENGE_ROLE = await agreement.CHALLENGE_ROLE()
+      const challengers = options.challengers || [ANY_ADDR]
+      for (const challenger of challengers) {
+        if (challengers.indexOf(challenger) === 0) await this.acl.createPermission(challenger, agreement.address, CHALLENGE_ROLE, owner, { from: owner })
+        else await this.acl.grantPermission(challenger, agreement.address, CHALLENGE_ROLE, { from: owner })
+      }
     }
 
     const CHANGE_AGREEMENT_ROLE = await agreement.CHANGE_AGREEMENT_ROLE()
@@ -166,11 +182,18 @@ class AgreementDeployer {
     return collateralToken
   }
 
-  async deployPermissionToken(options = {}) {
-    const { name, decimals, symbol } = { ...DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.token, ...options.permissionToken }
-    const permissionToken = await this.deployToken({ name, decimals, symbol })
-    this.previousDeploy = { ...this.previousDeploy, permissionToken }
-    return permissionToken
+  async deploySignPermissionToken(options = {}) {
+    const { name, decimals, symbol } = { ...DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.token, ...options.signPermissionToken }
+    const signPermissionToken = await this.deployToken({ name, decimals, symbol })
+    this.previousDeploy = { ...this.previousDeploy, signPermissionToken }
+    return signPermissionToken
+  }
+
+  async deployChallengePermissionToken(options = {}) {
+    const { name, decimals, symbol } = { ...DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.token, ...options.challengePermissionToken }
+    const challengePermissionToken = await this.deployToken({ name, decimals, symbol })
+    this.previousDeploy = { ...this.previousDeploy, challengePermissionToken }
+    return challengePermissionToken
   }
 
   async deployArbitrator(options = {}) {
