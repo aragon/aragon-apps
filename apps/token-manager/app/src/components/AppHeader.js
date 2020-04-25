@@ -14,6 +14,7 @@ import {
 const AppHeader = React.memo(function AppHeader({
   tokenSymbol,
   onAssignHolder,
+  onMoveFrom,
 }) {
   const theme = useTheme()
   const { layoutName } = useLayout()
@@ -48,6 +49,7 @@ const AppHeader = React.memo(function AppHeader({
         </div>
       }
       secondary={
+        <>
         <Button
           mode="strong"
           onClick={onAssignHolder}
@@ -55,12 +57,21 @@ const AppHeader = React.memo(function AppHeader({
           icon={<IconPlus />}
           display={layoutName === 'small' ? 'icon' : 'label'}
         />
+        <Button
+          mode="strong"
+          onClick={onMoveFrom}
+          label="Move tokens"
+          icon={<IconSwap />}
+          display={layoutName === 'small' ? 'icon' : 'label'}
+        />
+        </>
       }
     />
   )
 })
 AppHeader.propTypes = {
   onAssignHolder: PropTypes.func.isRequired,
+  onMoveFrom: PropTypes.func.isRequired,
   tokenSymbol: PropTypes.string,
 }
 

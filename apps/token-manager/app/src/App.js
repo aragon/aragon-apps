@@ -37,7 +37,7 @@ class App extends React.PureComponent {
     )
     return holder ? holder.balance : new BN('0')
   }
-  handleUpdateTokens = ({ amount, holder, mode }) => {
+  handleUpdateTokens = ({ amount, holder, to, mode }) => {
     const { api } = this.props
 
     // Don't care about responses
@@ -46,6 +46,9 @@ class App extends React.PureComponent {
     }
     if (mode === 'remove') {
       api.burn(holder, amount).toPromise()
+    }
+    if (mode === 'move') {
+      api.transfer_from_to(holder, to, amount).toPromise()
     }
 
     this.handleSidepanelClose()
@@ -56,6 +59,15 @@ class App extends React.PureComponent {
   handleLaunchAssignTokens = address => {
     this.setState({
       assignTokensConfig: { mode: 'assign', holderAddress: address },
+      sidepanelOpened: true,
+    })
+  }
+  handleLaunchMoveTokensNoHolder = () => {
+    this.handleLaunchMoveTokens('')
+  }
+  handleLaunchMoveTokens = address => {
+    this.setState({
+      assignTokensConfig: {mode: 'move', holderAddress: address },
       sidepanelOpened: true,
     })
   }
@@ -113,6 +125,7 @@ class App extends React.PureComponent {
           <React.Fragment>
             <AppHeader
               onAssignHolder={this.handleLaunchAssignTokensNoHolder}
+              onMoveFrom={this.handleLaunchMoveTokensNoHolder}
               tokenSymbol={tokenSymbol}
             />
             <Holders

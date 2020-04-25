@@ -37,7 +37,7 @@ function UpdateTokenPanel({
 }) {
   return (
     <SidePanel
-      title={mode === 'assign' ? 'Add tokens' : 'Remove tokens'}
+      title={mode === 'assign' ? 'Add tokens' : mode === 'move' ? 'Move tokens' : 'Remove tokens'}
       opened={opened}
       onClose={onClose}
       onTransitionEnd={onTransitionEnd}
@@ -69,6 +69,12 @@ function usePanelForm({
   const [holderField, setHolderField] = useState({
     error: null,
     value: initialHolder,
+    warning: null,
+  })
+
+  const [receiverField, setReceiverField] = useState({
+    error: null,
+    value: finalHolder
     warning: null,
   })
 
@@ -288,6 +294,7 @@ function TokenPanelContent({
       onUpdateTokens({
         amount: fieldsData.amount,
         holder: fieldsData.holder,
+        to: fieldsData.to,
         mode,
       })
     },
@@ -309,14 +316,30 @@ function TokenPanelContent({
       >
         {mode === 'assign'
           ? 'This action will create tokens and transfer them to the recipient below.'
+          : move === 'move'
+          ? 'This action will move tokens from the first address to the second below.'
           : 'This action will remove tokens from the account below.'}
       </Info>
       <Field
         label={
           mode === 'assign'
             ? 'Recipient (must be a valid Ethereum address)'
+            : mode === 'move'
+            ? 'Holder (must be a valid Ethereum address)'
             : 'Account (must be a valid Ethereum address)'
         }
+      >
+        <LocalIdentitiesAutoComplete
+          ref={holderAddress ? undefined : holderInputRef}
+          value={holderField.value}
+          onChange={updateHolder}
+          wide
+          required
+        />
+      </Field>
+
+      <Field
+        label= 'Receiver (must be a valid Ethereum address)'
       >
         <LocalIdentitiesAutoComplete
           ref={holderAddress ? undefined : holderInputRef}
@@ -331,6 +354,8 @@ function TokenPanelContent({
         label={
           mode === 'assign'
             ? 'Number of tokens to add'
+            : mode === 'move'
+            ? 'Number of tokens to move'
             : 'Number of tokens to remove'
         }
       >
@@ -348,7 +373,7 @@ function TokenPanelContent({
       </Field>
 
       <Button mode="strong" type="submit" disabled={submitDisabled} wide>
-        {mode === 'assign' ? 'Add tokens' : 'Remove tokens'}
+        {mode === 'assign' ? 'Add tokens' : mode === 'move' ? 'Move tokens' : 'Remove tokens'}
       </Button>
 
       <div
