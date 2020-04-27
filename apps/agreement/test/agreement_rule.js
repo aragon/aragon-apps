@@ -178,11 +178,11 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     })
 
                     it('does not affect the locked balance of the submitter', async () => {
-                      const { locked: previousLockedBalance } = await agreement.getBalance(submitter)
+                      const { locked: previousLockedBalance } = await agreement.getSigner(submitter)
 
                       await agreement.executeRuling({ actionId, ruling })
 
-                      const { locked: currentLockedBalance } = await agreement.getBalance(submitter)
+                      const { locked: currentLockedBalance } = await agreement.getSigner(submitter)
                       assertBn(currentLockedBalance, previousLockedBalance, 'locked balance does not match')
                     })
 
@@ -213,11 +213,11 @@ contract('Agreement', ([_, submitter, challenger]) => {
                   itRulesTheActionProperly(ruling, expectedChallengeState)
 
                   it('unblocks the submitter challenged balance', async () => {
-                    const { available: previousAvailableBalance, challenged: previousChallengedBalance } = await agreement.getBalance(submitter)
+                    const { available: previousAvailableBalance, challenged: previousChallengedBalance } = await agreement.getSigner(submitter)
 
                     await agreement.executeRuling({ actionId, ruling })
 
-                    const { available: currentAvailableBalance, challenged: currentChallengedBalance } = await agreement.getBalance(submitter)
+                    const { available: currentAvailableBalance, challenged: currentChallengedBalance } = await agreement.getSigner(submitter)
 
                     assertBn(currentAvailableBalance, previousAvailableBalance.add(agreement.collateralAmount), 'available balance does not match')
                     assertBn(currentChallengedBalance, previousChallengedBalance.sub(agreement.collateralAmount), 'challenged balance does not match')
@@ -269,11 +269,11 @@ contract('Agreement', ([_, submitter, challenger]) => {
                   itRulesTheActionProperly(ruling, expectedChallengeState)
 
                   it('slashes the submitter challenged balance', async () => {
-                    const { available: previousAvailableBalance, challenged: previousChallengedBalance } = await agreement.getBalance(submitter)
+                    const { available: previousAvailableBalance, challenged: previousChallengedBalance } = await agreement.getSigner(submitter)
 
                     await agreement.executeRuling({ actionId, ruling })
 
-                    const { available: currentAvailableBalance, challenged: currentChallengedBalance } = await agreement.getBalance(submitter)
+                    const { available: currentAvailableBalance, challenged: currentChallengedBalance } = await agreement.getSigner(submitter)
 
                     assertBn(currentAvailableBalance, previousAvailableBalance, 'available balance does not match')
                     assertBn(currentChallengedBalance, previousChallengedBalance.sub(agreement.collateralAmount), 'challenged balance does not match')
@@ -326,11 +326,11 @@ contract('Agreement', ([_, submitter, challenger]) => {
                   itRulesTheActionProperly(ruling, expectedChallengeState)
 
                   it('unblocks the submitter challenged balance', async () => {
-                    const { available: previousAvailableBalance, challenged: previousChallengedBalance } = await agreement.getBalance(submitter)
+                    const { available: previousAvailableBalance, challenged: previousChallengedBalance } = await agreement.getSigner(submitter)
 
                     await agreement.executeRuling({ actionId, ruling })
 
-                    const { available: currentAvailableBalance, challenged: currentChallengedBalance } = await agreement.getBalance(submitter)
+                    const { available: currentAvailableBalance, challenged: currentChallengedBalance } = await agreement.getSigner(submitter)
 
                     assertBn(currentAvailableBalance, previousAvailableBalance.add(agreement.collateralAmount), 'available balance does not match')
                     assertBn(currentChallengedBalance, previousChallengedBalance.sub(agreement.collateralAmount), 'challenged balance does not match')

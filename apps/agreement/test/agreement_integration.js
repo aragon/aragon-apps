@@ -145,31 +145,31 @@ contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holde
       }
 
       const holder1Actions = actions.filter(action => action.submitter === holder1)
-      const { available: holder1Available, locked: holder1Locked, challenged: holder1Challenged } = await agreement.getBalance(holder1)
+      const { available: holder1Available, locked: holder1Locked, challenged: holder1Challenged } = await agreement.getSigner(holder1)
       assertBn(calculateStakedBalance(holder1Actions), holder1Available, 'holder 1 available balance does not match')
       assertBn(holder1Locked, 0, 'holder 1 locked balance does not match')
       assertBn(holder1Challenged, 0, 'holder 1 challenged balance does not match')
 
       const holder2Actions = actions.filter(action => action.submitter === holder2)
-      const { available: holder2Available, locked: holder2Locked, challenged: holder2Challenged } = await agreement.getBalance(holder2)
+      const { available: holder2Available, locked: holder2Locked, challenged: holder2Challenged } = await agreement.getSigner(holder2)
       assertBn(calculateStakedBalance(holder2Actions), holder2Available, 'holder 2 available balance does not match')
       assertBn(holder2Locked, 0, 'holder 2 locked balance does not match')
       assertBn(holder2Challenged, 0, 'holder 2 challenged balance does not match')
 
       const holder3Actions = actions.filter(action => action.submitter === holder3)
-      const { available: holder3Available, locked: holder3Locked, challenged: holder3Challenged } = await agreement.getBalance(holder3)
+      const { available: holder3Available, locked: holder3Locked, challenged: holder3Challenged } = await agreement.getSigner(holder3)
       assertBn(calculateStakedBalance(holder3Actions), holder3Available, 'holder 3 available balance does not match')
       assertBn(holder3Locked, 0, 'holder 3 locked balance does not match')
       assertBn(holder3Challenged, 0, 'holder 3 challenged balance does not match')
 
       const holder4Actions = actions.filter(action => action.submitter === holder4)
-      const { available: holder4Available, locked: holder4Locked, challenged: holder4Challenged } = await agreement.getBalance(holder4)
+      const { available: holder4Available, locked: holder4Locked, challenged: holder4Challenged } = await agreement.getSigner(holder4)
       assertBn(calculateStakedBalance(holder4Actions), holder4Available, 'holder 4 available balance does not match')
       assertBn(holder4Locked, 0, 'holder 4 locked balance does not match')
       assertBn(holder4Challenged, 0, 'holder 4 challenged balance does not match')
 
       const holder5Actions = actions.filter(action => action.submitter === holder5)
-      const { available: holder5Available, locked: holder5Locked, challenged: holder5Challenged } = await agreement.getBalance(holder5)
+      const { available: holder5Available, locked: holder5Locked, challenged: holder5Challenged } = await agreement.getSigner(holder5)
       assertBn(calculateStakedBalance(holder5Actions), holder5Available, 'holder 5 available balance does not match')
       assertBn(holder5Locked, 0, 'holder 5 locked balance does not match')
       assertBn(holder5Challenged, 0, 'holder 5 challenged balance does not match')

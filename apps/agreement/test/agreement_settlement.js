@@ -117,11 +117,11 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
               it('slashes the submitter challenged balance', async () => {
                 const { settlementOffer } = await agreement.getChallenge(actionId)
-                const { available: previousAvailableBalance, challenged: previousChallengedBalance } = await agreement.getBalance(submitter)
+                const { available: previousAvailableBalance, challenged: previousChallengedBalance } = await agreement.getSigner(submitter)
 
                 await agreement.settle({ actionId, from })
 
-                const { available: currentAvailableBalance, challenged: currentChallengedBalance } = await agreement.getBalance(submitter)
+                const { available: currentAvailableBalance, challenged: currentChallengedBalance } = await agreement.getSigner(submitter)
 
                 const expectedUnchallengedBalance = agreement.collateralAmount.sub(settlementOffer)
                 assertBn(currentChallengedBalance, previousChallengedBalance.sub(agreement.collateralAmount), 'challenged balance does not match')
@@ -129,11 +129,11 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
               })
 
               it('does not affect the locked balance of the submitter', async () => {
-                const { locked: previousLockedBalance } = await agreement.getBalance(submitter)
+                const { locked: previousLockedBalance } = await agreement.getSigner(submitter)
 
                 await agreement.settle({ actionId, from })
 
-                const { locked: currentLockedBalance } = await agreement.getBalance(submitter)
+                const { locked: currentLockedBalance } = await agreement.getSigner(submitter)
                 assertBn(currentLockedBalance, previousLockedBalance, 'locked balance does not match')
               })
 
