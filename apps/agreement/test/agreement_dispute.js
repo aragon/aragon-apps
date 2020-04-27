@@ -165,11 +165,11 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   })
 
                   it('does not affect the submitter staked balances', async () => {
-                    const previousBalance = await agreement.getBalance(submitter)
+                    const previousBalance = await agreement.getSigner(submitter)
 
                     await agreement.dispute({ actionId, from, arbitrationFees })
 
-                    const currentBalance = await agreement.getBalance(submitter)
+                    const currentBalance = await agreement.getSigner(submitter)
                     assertBn(currentBalance.available, previousBalance.available, 'available balance does not match')
                     assertBn(currentBalance.locked, previousBalance.locked, 'locked balance does not match')
                     assertBn(currentBalance.challenged, previousBalance.challenged, 'challenged balance does not match')

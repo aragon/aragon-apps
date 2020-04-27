@@ -89,21 +89,21 @@ contract('Agreement', ([_, signer]) => {
         })
 
         it('locks the collateral amount', async () => {
-          const { locked: previousLockedBalance, available: previousAvailableBalance } = await agreement.getBalance(from)
+          const { locked: previousLockedBalance, available: previousAvailableBalance } = await agreement.getSigner(from)
 
           await agreement.forward({ script, from })
 
-          const { locked: currentLockedBalance, available: currentAvailableBalance } = await agreement.getBalance(from)
+          const { locked: currentLockedBalance, available: currentAvailableBalance } = await agreement.getSigner(from)
           assertBn(currentLockedBalance, previousLockedBalance.add(agreement.collateralAmount), 'locked balance does not match')
           assertBn(currentAvailableBalance, previousAvailableBalance.sub(agreement.collateralAmount), 'available balance does not match')
         })
 
         it('does not affect the challenged balance', async () => {
-          const { challenged: previousChallengedBalance } = await agreement.getBalance(from)
+          const { challenged: previousChallengedBalance } = await agreement.getSigner(from)
 
           await agreement.forward({ script, from })
 
-          const { challenged: currentChallengedBalance } = await agreement.getBalance(from)
+          const { challenged: currentChallengedBalance } = await agreement.getSigner(from)
           assertBn(currentChallengedBalance, previousChallengedBalance, 'challenged balance does not match')
         })
 

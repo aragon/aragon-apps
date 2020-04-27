@@ -56,30 +56,30 @@ contract('Agreement', ([_, submitter]) => {
         if (unlocksBalance) {
           it('unlocks the collateral amount', async () => {
             const { collateralAmount } = agreement
-            const { locked: previousLockedBalance, available: previousAvailableBalance } = await agreement.getBalance(submitter)
+            const { locked: previousLockedBalance, available: previousAvailableBalance } = await agreement.getSigner(submitter)
 
             await agreement.execute({ actionId })
 
-            const { locked: currentLockedBalance, available: currentAvailableBalance } = await agreement.getBalance(submitter)
+            const { locked: currentLockedBalance, available: currentAvailableBalance } = await agreement.getSigner(submitter)
             assertBn(currentLockedBalance, previousLockedBalance.sub(collateralAmount), 'locked balance does not match')
             assertBn(currentAvailableBalance, previousAvailableBalance.add(collateralAmount), 'available balance does not match')
           })
 
           it('does not affect the challenged balance', async () => {
-            const { challenged: previousChallengedBalance } = await agreement.getBalance(submitter)
+            const { challenged: previousChallengedBalance } = await agreement.getSigner(submitter)
 
             await agreement.execute({ actionId })
 
-            const { challenged: currentChallengedBalance } = await agreement.getBalance(submitter)
+            const { challenged: currentChallengedBalance } = await agreement.getSigner(submitter)
             assertBn(currentChallengedBalance, previousChallengedBalance, 'challenged balance does not match')
           })
         } else {
           it('does not affect the submitter staked balances', async () => {
-            const previousBalance = await agreement.getBalance(submitter)
+            const previousBalance = await agreement.getSigner(submitter)
 
             await agreement.execute({ actionId })
 
-            const currentBalance = await agreement.getBalance(submitter)
+            const currentBalance = await agreement.getSigner(submitter)
             assertBn(currentBalance.available, previousBalance.available, 'available balance does not match')
             assertBn(currentBalance.locked, previousBalance.locked, 'locked balance does not match')
             assertBn(currentBalance.challenged, previousBalance.challenged, 'challenged balance does not match')

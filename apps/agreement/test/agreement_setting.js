@@ -9,7 +9,7 @@ const { assertAmountOfEvents, assertEvent } = require('./helpers/assert/assertEv
 
 const deployer = require('./helpers/utils/deployer')(web3, artifacts)
 
-contract('Agreement', ([_, owner, someone]) => {
+contract('Agreement', ([_, owner, someone, signer]) => {
   let agreement
 
   let initialSettings = {
@@ -82,6 +82,19 @@ contract('Agreement', ([_, owner, someone]) => {
 
         const { settingId: newActionSettingId } = await agreement.getAction(newActionId)
         assertBn(newActionSettingId, 1, 'new action setting ID does not match')
+      })
+
+      it('marks signers to review its content', async () => {
+        assert.isTrue((await agreement.getSigner(signer)).shouldReviewCurrentSetting, 'signer should have to review current setting')
+
+        await agreement.schedule({ submitter: signer })
+        assert.isFalse((await agreement.getSigner(signer)).shouldReviewCurrentSetting, 'signer should not have to review current setting')
+
+        await agreement.changeSetting({ ...newSettings, from })
+        assert.isTrue((await agreement.getSigner(signer)).shouldReviewCurrentSetting, 'signer should have to review current setting')
+
+        await agreement.schedule({ submitter: signer })
+        assert.isFalse((await agreement.getSigner(signer)).shouldReviewCurrentSetting, 'signer should not have to review current setting')
       })
     })
 

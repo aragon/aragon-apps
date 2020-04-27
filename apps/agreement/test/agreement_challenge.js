@@ -80,21 +80,21 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     })
 
                     it('marks the submitter locked balance as challenged', async () => {
-                      const { locked: previousLockedBalance, challenged: previousChallengedBalance } = await agreement.getBalance(submitter)
+                      const { locked: previousLockedBalance, challenged: previousChallengedBalance } = await agreement.getSigner(submitter)
 
                       await agreement.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitrationFees, stake })
 
-                      const { locked: currentLockedBalance, challenged: currentChallengedBalance } = await agreement.getBalance(submitter)
+                      const { locked: currentLockedBalance, challenged: currentChallengedBalance } = await agreement.getSigner(submitter)
                       assertBn(currentLockedBalance, previousLockedBalance.sub(collateralAmount), 'locked balance does not match')
                       assertBn(currentChallengedBalance, previousChallengedBalance.add(collateralAmount), 'challenged balance does not match')
                     })
 
                     it('does not affect the submitter available balance', async () => {
-                      const { available: previousAvailableBalance } = await agreement.getBalance(submitter)
+                      const { available: previousAvailableBalance } = await agreement.getSigner(submitter)
 
                       await agreement.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitrationFees, stake })
 
-                      const { available: currentAvailableBalance } = await agreement.getBalance(submitter)
+                      const { available: currentAvailableBalance } = await agreement.getSigner(submitter)
                       assertBn(currentAvailableBalance, previousAvailableBalance, 'available balance does not match')
                     })
 

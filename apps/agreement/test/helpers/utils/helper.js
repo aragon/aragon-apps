@@ -37,9 +37,9 @@ class AgreementHelper {
     return this.setting.challengeCollateral
   }
 
-  async getBalance(signer) {
-    const { available, locked, challenged } = await this.agreement.getBalance(signer)
-    return { available, locked, challenged }
+  async getSigner(signer) {
+    const { available, locked, challenged, lastActionId, shouldReviewCurrentSetting } = await this.agreement.getSigner(signer)
+    return { available, locked, challenged, lastActionId, shouldReviewCurrentSetting }
   }
 
   async getAction(actionId) {
@@ -111,7 +111,10 @@ class AgreementHelper {
   }
 
   async unstake({ signer, amount = undefined }) {
-    if (amount === undefined) amount = (await this.getBalance(signer)).available
+    if (amount === undefined) {
+      const { available } = await this.getSigner(signer)
+      amount = available
+    }
 
     return this.agreement.unstake(amount, { from: signer })
   }
