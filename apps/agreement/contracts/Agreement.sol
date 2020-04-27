@@ -138,10 +138,11 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         bool challengerFinishedEvidence;// Whether the action challenger has finished submitting evidence for the action dispute
     }
 
-    struct Stake {
+    struct Signer {
         uint256 available;              // Amount of staked tokens that are available to schedule actions
         uint256 locked;                 // Amount of staked tokens that are locked due to a scheduled action
         uint256 challenged;             // Amount of staked tokens that are blocked due to an ongoing challenge
+        uint256 lastActionId;           // Identification number of the last action scheduled by a signer
     }
 
     struct Setting {
@@ -182,7 +183,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     Setting[] private settings;
     TokenBalancePermission private signTokenBalancePermission;
     TokenBalancePermission private challengeTokenBalancePermission;
-    mapping (address => Stake) private stakeBalances;
+    mapping (address => Signer) private signers;
     mapping (uint256 => Dispute) private disputes;
 
     /**
@@ -504,12 +505,30 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @return available Amount of staked tokens that are available to schedule actions
     * @return locked Amount of staked tokens that are locked due to a scheduled action
     * @return challenged Amount of staked tokens that are blocked due to an ongoing challenge
+    * @return lastActionId Identification number of the last action scheduled by the requested signer
+    * @return shouldReviewCurrentSetting Whether or not the requested signer should review the current agreement setting or not
     */
-    function getBalance(address _signer) external view returns (uint256 available, uint256 locked, uint256 challenged) {
-        Stake storage balance = stakeBalances[_signer];
-        available = balance.available;
-        locked = balance.locked;
-        challenged = balance.challenged;
+    function getSigner(address _signer) external view
+        returns (
+            uint256 available,
+            uint256 locked,
+            uint256 challenged,
+            uint256 lastActionId,
+            bool shouldReviewCurrentSetting
+        )
+    {
+        Signer storage signer = signers[_signer];
+        available = signer.available;
+        locked = signer.locked;
+        challenged = signer.challenged;
+        lastActionId = signer.lastActionId;
+
+        if (_existsAction(lastActionId)) {
+            Action storage action = actions[lastActionId];
+            shouldReviewCurrentSetting = action.submitter == _signer ? action.settingId != _getCurrentSettingId() : available == 0;
+        } else {
+            shouldReviewCurrentSetting = available == 0;
+        }
     }
 
     /**
@@ -789,9 +808,9 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     */
     function _createAction(address _submitter, bytes _context, bytes _script) internal {
         (uint256 settingId, Setting storage currentSetting) = _getCurrentSettingWithId();
-        _lockBalance(msg.sender, currentSetting.collateralAmount);
-
         uint256 id = actions.length++;
+        _lockBalance(msg.sender, currentSetting.collateralAmount, id);
+
         Action storage action = actions[id];
         action.submitter = _submitter;
         action.context = _context;
@@ -956,12 +975,12 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _amount Number of collateral tokens to be staked
     */
     function _stakeBalance(address _from, address _signer, uint256 _amount) internal {
-        Stake storage balance = stakeBalances[_signer];
+        Signer storage signer = signers[_signer];
         Setting storage currentSetting = _getCurrentSetting();
-        uint256 newAvailableBalance = balance.available.add(_amount);
+        uint256 newAvailableBalance = signer.available.add(_amount);
         require(newAvailableBalance >= currentSetting.collateralAmount, ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL);
 
-        balance.available = newAvailableBalance;
+        signer.available = newAvailableBalance;
         _transferCollateralTokensFrom(_from, _amount);
         emit BalanceStaked(_signer, _amount);
     }
@@ -970,13 +989,16 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @dev Move a number of available tokens to locked for a signer
     * @param _signer Address of the signer to lock tokens for
     * @param _amount Number of collateral tokens to be locked
+    * @param _lastActionId Identification number of the last action scheduled by the signer
     */
-    function _lockBalance(address _signer, uint256 _amount) internal {
-        Stake storage balance = stakeBalances[_signer];
-        require(balance.available >= _amount, ERROR_NOT_ENOUGH_AVAILABLE_STAKE);
+    function _lockBalance(address _signer, uint256 _amount, uint256 _lastActionId) internal {
+        Signer storage signer = signers[_signer];
+        uint256 availableBalance = signer.available;
+        require(availableBalance >= _amount, ERROR_NOT_ENOUGH_AVAILABLE_STAKE);
 
-        balance.available = balance.available.sub(_amount);
-        balance.locked = balance.locked.add(_amount);
+        signer.available = availableBalance.sub(_amount);
+        signer.locked = signer.locked.add(_amount);
+        signer.lastActionId = _lastActionId;
         emit BalanceLocked(_signer, _amount);
     }
 
@@ -986,9 +1008,9 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _amount Number of collateral tokens to be unlocked
     */
     function _unlockBalance(address _signer, uint256 _amount) internal {
-        Stake storage balance = stakeBalances[_signer];
-        balance.locked = balance.locked.sub(_amount);
-        balance.available = balance.available.add(_amount);
+        Signer storage signer = signers[_signer];
+        signer.locked = signer.locked.sub(_amount);
+        signer.available = signer.available.add(_amount);
         emit BalanceUnlocked(_signer, _amount);
     }
 
@@ -998,9 +1020,9 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _amount Number of collateral tokens to be challenged
     */
     function _challengeBalance(address _signer, uint256 _amount) internal {
-        Stake storage balance = stakeBalances[_signer];
-        balance.locked = balance.locked.sub(_amount);
-        balance.challenged = balance.challenged.add(_amount);
+        Signer storage signer = signers[_signer];
+        signer.locked = signer.locked.sub(_amount);
+        signer.challenged = signer.challenged.add(_amount);
         emit BalanceChallenged(_signer, _amount);
     }
 
@@ -1014,9 +1036,9 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
             return;
         }
 
-        Stake storage balance = stakeBalances[_signer];
-        balance.challenged = balance.challenged.sub(_amount);
-        balance.available = balance.available.add(_amount);
+        Signer storage signer = signers[_signer];
+        signer.challenged = signer.challenged.sub(_amount);
+        signer.available = signer.available.add(_amount);
         emit BalanceUnchallenged(_signer, _amount);
     }
 
@@ -1031,8 +1053,8 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
             return;
         }
 
-        Stake storage balance = stakeBalances[_signer];
-        balance.challenged = balance.challenged.sub(_amount);
+        Signer storage signer = signers[_signer];
+        signer.challenged = signer.challenged.sub(_amount);
         _transferCollateralTokens(_challenger, _amount);
         emit BalanceSlashed(_signer, _amount);
     }
@@ -1043,15 +1065,15 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _amount Number of collateral tokens to be unstaked
     */
     function _unstakeBalance(address _signer, uint256 _amount) internal {
-        Stake storage balance = stakeBalances[_signer];
-        uint256 availableBalance = balance.available;
+        Signer storage signer = signers[_signer];
+        uint256 availableBalance = signer.available;
         require(availableBalance >= _amount, ERROR_NOT_ENOUGH_AVAILABLE_STAKE);
 
         Setting storage currentSetting = _getCurrentSetting();
         uint256 newAvailableBalance = availableBalance.sub(_amount);
         require(newAvailableBalance == 0 || newAvailableBalance >= currentSetting.collateralAmount, ERROR_AVAILABLE_BALANCE_BELOW_COLLATERAL);
 
-        balance.available = newAvailableBalance;
+        signer.available = newAvailableBalance;
         _transferCollateralTokens(_signer, _amount);
         emit BalanceUnstaked(_signer, _amount);
     }
@@ -1178,9 +1200,9 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @return True if the given address can schedule actions, false otherwise
     */
     function _canSchedule(address _signer) internal view returns (bool) {
-        Stake storage balance = stakeBalances[_signer];
+        Signer storage signer = signers[_signer];
         Setting storage currentSetting = _getCurrentSetting();
-        return balance.available >= currentSetting.collateralAmount;
+        return signer.available >= currentSetting.collateralAmount;
     }
 
     /**
@@ -1280,12 +1302,21 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     }
 
     /**
+    * @dev Tells whether an action identification number exists or not
+    * @param _actionId Identification number of the action being queried
+    * @return True if the given identification number belongs to an existing action, false otherwise
+    */
+    function _existsAction(uint256 _actionId) internal view returns (bool) {
+        return _actionId < actions.length;
+    }
+
+    /**
     * @dev Fetch an action instance by identification number
     * @param _actionId Identification number of the action being queried
     * @return Action instance associated to the given identification number
     */
     function _getAction(uint256 _actionId) internal view returns (Action storage) {
-        require(_actionId < actions.length, ERROR_ACTION_DOES_NOT_EXIST);
+        require(_existsAction(_actionId), ERROR_ACTION_DOES_NOT_EXIST);
         return actions[_actionId];
     }
 
