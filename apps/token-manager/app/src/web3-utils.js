@@ -1,4 +1,4 @@
-import { isAddress } from 'web3-utils'
+import { isAddress, fromWei } from 'web3-utils'
 
 // Check address equality
 export function addressesEqual(first, second) {
@@ -11,3 +11,4 @@ export function addressesEqual(first, second) {
 
 // Re-export some web3-utils functions
 export { isAddress } from 'web3-utils'
+export { fromWei } from 'web3-utils'

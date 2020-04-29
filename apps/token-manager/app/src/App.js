@@ -24,6 +24,7 @@ class App extends React.PureComponent {
     appStateReady: false,
     isSyncing: true,
     holders: [],
+    vestings: [],
     groupMode: false,
   }
   state = {
@@ -95,10 +96,10 @@ class App extends React.PureComponent {
       tokenSupply,
       tokenSymbol,
       tokenTransfersEnabled,
+      vestings,
     } = this.props
 
     const { assignTokensConfig, sidepanelOpened } = this.state
-
     return (
       <IdentityProvider
         onResolve={this.handleResolveLocalIdentity}
@@ -117,6 +118,7 @@ class App extends React.PureComponent {
             />
             <Holders
               holders={holders}
+              vestings={vestings}
               groupMode={groupMode}
               maxAccountTokens={maxAccountTokens}
               tokenAddress={tokenAddress}

@@ -15,7 +15,7 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { formatBalance } from '../utils'
-import { addressesEqual } from '../web3-utils'
+import { addressesEqual, fromWei } from '../web3-utils'
 import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from '../components/IdentityManager/IdentityManager'
@@ -33,25 +33,33 @@ function Holders({
   tokenSupply,
   tokenSymbol,
   tokenTransfersEnabled,
+  vestings,
 }) {
   const { layoutName } = useLayout()
   const compact = layoutName === 'small'
   const connectedAccount = useConnectedAccount()
   const mappedEntries = useMemo(
-    () => holders.map(({ address, balance }) => [address, balance]),
-    [holders]
+    () =>
+      holders.map(({ address, balance }) => {
+        const vestingIndex = vestings.findIndex(vesting =>
+          addressesEqual(vesting.receiver, address)
+        )
+        if (vestingIndex === -1) {
+          return [address, balance, []]
+        }
+        return [address, balance, vestings[vestingIndex].vestings]
+      }),
+    [holders, vestings]
   )
-
   return (
     <Split
       primary={
         <DataView
           mode="table"
-          fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
+          fields={groupMode ? ['Owner'] : ['Holder', 'Balance', 'Vesting']}
           entries={mappedEntries}
-          renderEntry={([address, balance]) => {
+          renderEntry={([address, balance, vestings]) => {
             const isCurrentUser = addressesEqual(address, connectedAccount)
-
             const values = [
               <div
                 css={`
@@ -72,9 +80,21 @@ function Holders({
               values.push(formatBalance(balance, tokenDecimalsBase))
             }
 
+            let amount = 0
+
+            if (vestings.length > 0) {
+              amount = vestings
+                .map(function(vesting) {
+                  return fromWei(vesting.amount)
+                })
+                .reduce(
+                  (total, current) => parseFloat(total) + parseFloat(current)
+                )
+            }
+            values.push(amount)
             return values
           }}
-          renderEntryActions={([address, balance]) => (
+          renderEntryActions={([address, balance, vestings]) => (
             <EntryActions
               address={address}
               onAssignTokens={onAssignTokens}
