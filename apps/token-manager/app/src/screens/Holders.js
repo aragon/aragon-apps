@@ -7,6 +7,7 @@ import {
   ContextMenuItem,
   DataView,
   IconAdd,
+  IconInfo,
   IconLabel,
   IconRemove,
   Split,
@@ -33,6 +34,7 @@ function Holders({
   tokenSupply,
   tokenSymbol,
   tokenTransfersEnabled,
+  selectHolder,
   vestings,
 }) {
   const { layoutName } = useLayout()
@@ -99,8 +101,10 @@ function Holders({
               address={address}
               onAssignTokens={onAssignTokens}
               onRemoveTokens={onRemoveTokens}
+              onSelectHolder={selectHolder}
               singleToken={groupMode || balance.eq(tokenDecimalsBase)}
               canAssign={!groupMode && balance.lt(maxAccountTokens)}
+              hasVestings={vestings.length > 0}
             />
           )}
         />
@@ -142,8 +146,10 @@ function EntryActions({
   address,
   onAssignTokens,
   onRemoveTokens,
+  onSelectHolder,
   singleToken,
   canAssign,
+  hasVestings,
 }) {
   const theme = useTheme()
   const [label, showLocalIdentityModal] = useIdentity(address)
@@ -161,7 +167,13 @@ function EntryActions({
     onRemoveTokens,
   ])
 
+  const selectHolder = useCallback(() => onSelectHolder(address), [
+    address,
+    onSelectHolder,
+  ])
+
   const actions = [
+    ...(hasVestings ? [[selectHolder, IconInfo, 'Details']] : []),
     ...(canAssign ? [[assignTokens, IconAdd, 'Add tokens']] : []),
     [removeTokens, IconRemove, `Remove token${singleToken ? '' : 's'}`],
     [editLabel, IconLabel, `${label ? 'Edit' : 'Add'} custom label`],
