@@ -1,7 +1,7 @@
 const EVENTS = require('./events')
 const { bn } = require('../lib/numbers')
-const { getEventArgument } = require('@aragon/test-helpers/events')
-const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
+const { getEventArgument } = require('@aragon/contract-test-helpers/events')
+const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
 
 class AgreementHelper {
   constructor(artifacts, web3, agreement, arbitrator, collateralToken, setting = {}) {

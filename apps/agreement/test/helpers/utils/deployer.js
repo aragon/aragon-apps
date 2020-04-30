@@ -2,7 +2,7 @@ const AgreementHelper = require('./helper')
 const { NOW, DAY } = require('../lib/time')
 const { utf8ToHex } = require('web3-utils')
 const { bigExp, bn } = require('../lib/numbers')
-const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-helpers/events')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
