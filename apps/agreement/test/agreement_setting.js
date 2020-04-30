@@ -4,7 +4,7 @@ const { DAY } = require('./helpers/lib/time')
 const { assertBn } = require('./helpers/assert/assertBn')
 const { bigExp, bn } = require('./helpers/lib/numbers')
 const { assertRevert } = require('./helpers/assert/assertThrow')
-const { getEventArgument } = require('@aragon/test-helpers/events')
+const { getEventArgument } = require('@aragon/contract-test-helpers/events')
 const { assertAmountOfEvents, assertEvent } = require('./helpers/assert/assertEvent')
 
 const deployer = require('./helpers/utils/deployer')(web3, artifacts)

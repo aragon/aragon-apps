@@ -19,6 +19,9 @@ lerna-debug.log
 # Ignore only for first level to select just the contract build directories
 */*/abi
 */*/build
+*/*/dist
+*/*/cache
+*/*/artifacts
 
 # yarn
 yarn-error.log
