@@ -96,7 +96,8 @@ class AgreementDeployer {
     const arbitrator = options.arbitrator || this.arbitrator
     const collateralToken = options.collateralToken || this.collateralToken
 
-    const { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral } = await this.agreement.getSetting(0)
+    const currentSettingId = await this.agreement.getCurrentSettingId()
+    const { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral } = await this.agreement.getSetting(currentSettingId)
     const initialSetting = { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral }
 
     return new AgreementHelper(this.artifacts, this.web3, this.agreement, arbitrator, collateralToken, initialSetting)

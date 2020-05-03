@@ -65,36 +65,38 @@ contract('Agreement', ([_, owner, someone, signer]) => {
       })
 
       it('emits an event', async () => {
+        const currentSettingId = await agreement.getCurrentSettingId()
         const receipt = await agreement.changeSetting({ ...newSettings, from })
 
         assertAmountOfEvents(receipt, EVENTS.SETTING_CHANGED, 1)
-        assertEvent(receipt, EVENTS.SETTING_CHANGED, { settingId: 1 })
+        assertEvent(receipt, EVENTS.SETTING_CHANGED, { settingId: currentSettingId.add(bn(1)) })
       })
 
       it('affects new actions', async () => {
         const { actionId: oldActionId } = await agreement.schedule({})
 
+        const oldSettingId = await agreement.getCurrentSettingId()
         await agreement.changeSetting({ ...newSettings, from })
         const { actionId: newActionId } = await agreement.schedule({})
 
         const { settingId: oldActionSettingId } = await agreement.getAction(oldActionId)
-        assertBn(oldActionSettingId, 0, 'old action setting ID does not match')
+        assertBn(oldActionSettingId, oldSettingId, 'old action setting ID does not match')
 
         const { settingId: newActionSettingId } = await agreement.getAction(newActionId)
-        assertBn(newActionSettingId, 1, 'new action setting ID does not match')
+        assertBn(newActionSettingId, oldActionSettingId.add(bn(1)), 'new action setting ID does not match')
       })
 
-      it('marks signers to review its content', async () => {
-        assert.isTrue((await agreement.getSigner(signer)).shouldReviewCurrentSetting, 'signer should have to review current setting')
+      it('marks signers to re-sign the agreement', async () => {
+        assert.isTrue((await agreement.getSigner(signer)).mustSign, 'signer must sign current setting')
 
         await agreement.schedule({ submitter: signer })
-        assert.isFalse((await agreement.getSigner(signer)).shouldReviewCurrentSetting, 'signer should not have to review current setting')
+        assert.isFalse((await agreement.getSigner(signer)).mustSign, 'signer must not sign current setting')
 
         await agreement.changeSetting({ ...newSettings, from })
-        assert.isTrue((await agreement.getSigner(signer)).shouldReviewCurrentSetting, 'signer should have to review current setting')
+        assert.isTrue((await agreement.getSigner(signer)).mustSign, 'signer must sign current setting')
 
         await agreement.schedule({ submitter: signer })
-        assert.isFalse((await agreement.getSigner(signer)).shouldReviewCurrentSetting, 'signer should not have to review current setting')
+        assert.isFalse((await agreement.getSigner(signer)).mustSign, 'signer must not sign current setting')
       })
     })
 
