@@ -55,8 +55,9 @@ contract('Agreement', ([_, EOA]) => {
       before('initialize agreement DAO', async () => {
         const receipt = await agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, signPermissionToken.address, signPermissionBalance, challengePermissionToken.address, challengePermissionBalance)
 
+        const currentSettingId = await agreement.getCurrentSettingId()
         const settingChangedLogs = decodeEventsOfType(receipt, deployer.abi, EVENTS.SETTING_CHANGED)
-        assertEvent({ logs: settingChangedLogs }, EVENTS.SETTING_CHANGED, { settingId: 0 })
+        assertEvent({ logs: settingChangedLogs }, EVENTS.SETTING_CHANGED, { settingId: currentSettingId })
 
         const permissionChangedLogs = decodeEventsOfType(receipt, deployer.abi, EVENTS.PERMISSION_CHANGED)
         assertEvent({ logs: permissionChangedLogs }, EVENTS.PERMISSION_CHANGED, { signToken: signPermissionToken.address, signBalance: signPermissionBalance, challengeToken: challengePermissionToken.address, challengeBalance: challengePermissionBalance })
@@ -76,7 +77,10 @@ contract('Agreement', ([_, EOA]) => {
         const actualCollateralToken = await agreement.collateralToken()
         assert.equal(actualCollateralToken, collateralToken.address, 'collateral token does not match')
 
-        const actualSettings = await agreement.getSetting(0)
+        const currentSettingId = await agreement.getCurrentSettingId()
+        assertBn(currentSettingId, 1, 'current setting ID does not match')
+
+        const actualSettings = await agreement.getSetting(1)
         assert.equal(actualSettings.content, content, 'content does not match')
         assertBn(actualSettings.delayPeriod, delayPeriod, 'delay period does not match')
         assertBn(actualSettings.settlementPeriod, settlementPeriod, 'settlement period does not match')

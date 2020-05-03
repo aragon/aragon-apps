@@ -32,6 +32,8 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     string internal constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
     string internal constant ERROR_CAN_NOT_FORWARD = "AGR_CAN_NOT_FORWARD";
     string internal constant ERROR_SENDER_NOT_ALLOWED = "AGR_SENDER_NOT_ALLOWED";
+    string internal constant ERROR_SIGNER_ALREADY_SIGNED = "AGR_SIGNER_ALREADY_SIGNED";
+    string internal constant ERROR_SIGNER_MUST_SIGN_SETTING = "AGR_SIGNER_MUST_SIGN_SETTING";
     string internal constant ERROR_INVALID_UNSTAKE_AMOUNT = "AGR_INVALID_UNSTAKE_AMOUNT";
     string internal constant ERROR_INVALID_SETTLEMENT_OFFER = "AGR_INVALID_SETTLEMENT_OFFER";
     string internal constant ERROR_NOT_ENOUGH_AVAILABLE_STAKE = "AGR_NOT_ENOUGH_AVAILABLE_STAKE";
@@ -75,6 +77,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     // bytes32 public constant CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = keccak256("CHANGE_TOKEN_BALANCE_PERMISSION_ROLE");
     bytes32 public constant CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = 0x4413cad936c22452a3bdddec48f42af1848858d1e8a8b62b7c0ba489d6d77286;
 
+    event Signed(address indexed signer, uint256 settingId);
     event ActionScheduled(uint256 indexed actionId, address indexed submitter);
     event ActionChallenged(uint256 indexed actionId, address indexed challenger);
     event ActionSettled(uint256 indexed actionId, uint256 offer);
@@ -142,7 +145,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         uint256 available;              // Amount of staked tokens that are available to schedule actions
         uint256 locked;                 // Amount of staked tokens that are locked due to a scheduled action
         uint256 challenged;             // Amount of staked tokens that are blocked due to an ongoing challenge
-        uint256 lastActionId;           // Identification number of the last action scheduled by a signer
+        uint256 lastSettingIdSigned;    // Identification number of the last setting signed by a signer
     }
 
     struct Setting {
@@ -160,10 +163,9 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
 
     /**
     * @dev Auth modifier restricting access only for address that can sign the Agreement
-    * @param _signer Address being queried
     */
-    modifier onlySigner(address _signer) {
-        require(_canSign(_signer), ERROR_AUTH_FAILED);
+    modifier onlySigner() {
+        require(_canSign(msg.sender), ERROR_AUTH_FAILED);
         _;
     }
 
@@ -233,15 +235,28 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         arbitrator = _arbitrator;
         collateralToken = _collateralToken;
 
+        settings.length++; // Setting ID zero is used for the null setting for further validations
         _newSetting(_content, _delayPeriod, _settlementPeriod, _collateralAmount, _challengeCollateral);
         _newTokenBalancePermission(_signPermissionToken, _signPermissionBalance, _challengePermissionToken, _challengePermissionBalance);
+    }
+
+    /**
+    * @notice Sign the agreement
+    */
+    function sign() external onlySigner {
+        Signer storage signer = signers[msg.sender];
+        uint256 currentSettingId = _getCurrentSettingId();
+        require(signer.lastSettingIdSigned < currentSettingId, ERROR_SIGNER_ALREADY_SIGNED);
+
+        signer.lastSettingIdSigned = currentSettingId;
+        emit Signed(msg.sender, currentSettingId);
     }
 
     /**
     * @notice Stake `@tokenAmount(self.collateralToken(): address, _amount)` tokens for `_signer`
     * @param _amount Number of collateral tokens to be staked by the sender
     */
-    function stake(uint256 _amount) external onlySigner(msg.sender) {
+    function stake(uint256 _amount) external {
         _stakeBalance(msg.sender, msg.sender, _amount);
     }
 
@@ -250,7 +265,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _signer Address staking the tokens for
     * @param _amount Number of collateral tokens to be staked for the signer
     */
-    function stakeFor(address _signer, uint256 _amount) external onlySigner(_signer) {
+    function stakeFor(address _signer, uint256 _amount) external {
         _stakeBalance(msg.sender, _signer, _amount);
     }
 
@@ -260,7 +275,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _amount Amount of tokens to transfer
     * @param _token Address of the token
     */
-    function receiveApproval(address _from, uint256 _amount, address _token, bytes /* _data */) external onlySigner(_from) {
+    function receiveApproval(address _from, uint256 _amount, address _token, bytes /* _data */) external {
         require(msg.sender == _token && _token == address(collateralToken), ERROR_SENDER_NOT_ALLOWED);
         _stakeBalance(_from, _from, _amount);
     }
@@ -279,7 +294,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @param _context Link to a human-readable text giving context for the given action
     * @param _script Action script to be executed
     */
-    function schedule(bytes _context, bytes _script) external onlySigner(msg.sender) {
+    function schedule(bytes _context, bytes _script) external onlySigner {
         _createAction(msg.sender, _context, _script);
     }
 
@@ -505,30 +520,24 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @return available Amount of staked tokens that are available to schedule actions
     * @return locked Amount of staked tokens that are locked due to a scheduled action
     * @return challenged Amount of staked tokens that are blocked due to an ongoing challenge
-    * @return lastActionId Identification number of the last action scheduled by the requested signer
-    * @return shouldReviewCurrentSetting Whether or not the requested signer should review the current agreement setting or not
+    * @return lastSettingIdSigned Identification number of the last agreement setting signed by the signer
+    * @return mustSign Whether or not the requested signer must sign the current agreement setting or not
     */
     function getSigner(address _signer) external view
         returns (
             uint256 available,
             uint256 locked,
             uint256 challenged,
-            uint256 lastActionId,
-            bool shouldReviewCurrentSetting
+            uint256 lastSettingIdSigned,
+            bool mustSign
         )
     {
         Signer storage signer = signers[_signer];
         available = signer.available;
         locked = signer.locked;
         challenged = signer.challenged;
-        lastActionId = signer.lastActionId;
-
-        if (_existsAction(lastActionId)) {
-            Action storage action = actions[lastActionId];
-            shouldReviewCurrentSetting = action.submitter == _signer ? action.settingId != _getCurrentSettingId() : available == 0;
-        } else {
-            shouldReviewCurrentSetting = available == 0;
-        }
+        lastSettingIdSigned = signer.lastSettingIdSigned;
+        mustSign = lastSettingIdSigned < _getCurrentSettingId();
     }
 
     /**
@@ -795,7 +804,7 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @return True if the given address can sign the agreement, false otherwise
     */
     function canForward(address _sender, bytes /* _script */) public view returns (bool) {
-        return _canSchedule(_sender);
+        return _canSign(_sender);
     }
 
     // Internal fns
@@ -808,9 +817,9 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     */
     function _createAction(address _submitter, bytes _context, bytes _script) internal {
         (uint256 settingId, Setting storage currentSetting) = _getCurrentSettingWithId();
-        uint256 id = actions.length++;
-        _lockBalance(msg.sender, currentSetting.collateralAmount, id);
+        _lockBalance(msg.sender, currentSetting.collateralAmount, settingId);
 
+        uint256 id = actions.length++;
         Action storage action = actions[id];
         action.submitter = _submitter;
         action.context = _context;
@@ -989,16 +998,19 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
     * @dev Move a number of available tokens to locked for a signer
     * @param _signer Address of the signer to lock tokens for
     * @param _amount Number of collateral tokens to be locked
-    * @param _lastActionId Identification number of the last action scheduled by the signer
+    * @param _currentSettingId Identification number of the current agreement setting
     */
-    function _lockBalance(address _signer, uint256 _amount, uint256 _lastActionId) internal {
+    function _lockBalance(address _signer, uint256 _amount, uint256 _currentSettingId) internal {
         Signer storage signer = signers[_signer];
+
+        uint256 lastSettingIdSigned = signer.lastSettingIdSigned;
+        require(lastSettingIdSigned >= _currentSettingId, ERROR_SIGNER_MUST_SIGN_SETTING);
+
         uint256 availableBalance = signer.available;
         require(availableBalance >= _amount, ERROR_NOT_ENOUGH_AVAILABLE_STAKE);
 
         signer.available = availableBalance.sub(_amount);
         signer.locked = signer.locked.add(_amount);
-        signer.lastActionId = _lastActionId;
         emit BalanceLocked(_signer, _amount);
     }
 
@@ -1192,17 +1204,6 @@ contract Agreement is IArbitrable, IForwarder, AragonApp {
         return isContract(address(permissionToken))
             ? permissionToken.balanceOf(_challenger) >= permission.balance
             : canPerform(_challenger, CHALLENGE_ROLE, arr(_challenger));
-    }
-
-    /**
-    * @dev Tell whether an address can schedule an action or not
-    * @param _signer Address being queried
-    * @return True if the given address can schedule actions, false otherwise
-    */
-    function _canSchedule(address _signer) internal view returns (bool) {
-        Signer storage signer = signers[_signer];
-        Setting storage currentSetting = _getCurrentSetting();
-        return signer.available >= currentSetting.collateralAmount;
     }
 
     /**

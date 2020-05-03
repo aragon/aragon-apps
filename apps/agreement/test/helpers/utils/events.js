@@ -1,4 +1,5 @@
 module.exports = {
+  SIGNED: 'Signed',
   ACTION_SCHEDULED: 'ActionScheduled',
   ACTION_CHALLENGED: 'ActionChallenged',
   ACTION_SETTLED: 'ActionSettled',

@@ -38,8 +38,8 @@ class AgreementHelper {
   }
 
   async getSigner(signer) {
-    const { available, locked, challenged, lastActionId, shouldReviewCurrentSetting } = await this.agreement.getSigner(signer)
-    return { available, locked, challenged, lastActionId, shouldReviewCurrentSetting }
+    const { available, locked, challenged, lastSettingIdSigned, mustSign } = await this.agreement.getSigner(signer)
+    return { available, locked, challenged, lastSettingIdSigned, mustSign }
   }
 
   async getAction(actionId) {
@@ -57,8 +57,12 @@ class AgreementHelper {
     return { ruling, submitterFinishedEvidence, challengerFinishedEvidence }
   }
 
+  async getCurrentSettingId() {
+    return this.agreement.getCurrentSettingId()
+  }
+
   async getSetting(settingId = undefined) {
-    if (!settingId) settingId = await this.agreement.getCurrentSettingId()
+    if (!settingId) settingId = await this.getCurrentSettingId()
     const { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral } = await this.agreement.getSetting(settingId)
     return { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral }
   }
@@ -127,12 +131,18 @@ class AgreementHelper {
     return { receipt, actionId }
   }
 
-  async schedule({ actionContext = '0xabcd', script = undefined, submitter = undefined, stake = undefined }) {
+  async sign(from = undefined) {
+    if (!from) from = await this._getSender()
+    return this.agreement.sign({ from })
+  }
+
+  async schedule({ actionContext = '0xabcd', script = undefined, submitter = undefined, sign = undefined, stake = undefined }) {
     if (!submitter) submitter = await this._getSender()
     if (!script) script = await this.buildEvmScript()
 
     if (stake === undefined) stake = this.collateralAmount
     if (stake) await this.approveAndCall({ amount: stake, from: submitter })
+    if (sign === undefined && (await this.getSigner(submitter)).mustSign) await this.sign(submitter)
 
     const receipt = await this.agreement.schedule(actionContext, script, { from: submitter })
     const actionId = getEventArgument(receipt, EVENTS.ACTION_SCHEDULED, 'actionId')
