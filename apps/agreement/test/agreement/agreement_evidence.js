@@ -34,29 +34,29 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
       context('when the action was not cancelled', () => {
         context('when the action was not challenged', () => {
-          context('at the beginning of the challenge period', () => {
+          context('at the beginning of the delay period', () => {
             itCannotSubmitEvidenceForNonExistingDispute()
           })
 
           context('in the middle of the challenge period', () => {
-            beforeEach('move before challenge period end date', async () => {
-              await agreement.moveBeforeEndOfChallengePeriod(actionId)
+            beforeEach('move before the delay period end date', async () => {
+              await agreement.moveBeforeEndOfDelayPeriod(actionId)
             })
 
             itCannotSubmitEvidenceForNonExistingDispute()
           })
 
-          context('at the end of the challenge period', () => {
-            beforeEach('move to the challenge period end date', async () => {
-              await agreement.moveToEndOfChallengePeriod(actionId)
+          context('at the end of the delay period', () => {
+            beforeEach('move to the delay period end date', async () => {
+              await agreement.moveToEndOfDelayPeriod(actionId)
             })
 
             itCannotSubmitEvidenceForNonExistingDispute()
           })
 
-          context('after the challenge period', () => {
-            beforeEach('move after the challenge period end date', async () => {
-              await agreement.moveAfterChallengePeriod(actionId)
+          context('after the delay period', () => {
+            beforeEach('move after the delay period end date', async () => {
+              await agreement.moveAfterDelayPeriod(actionId)
             })
 
             context('when the action was not executed', () => {
@@ -95,7 +95,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
             context('in the middle of the answer period', () => {
               beforeEach('move before settlement period end date', async () => {
-                await agreement.moveBeforeEndOfSettlementPeriod(actionId)
+                await agreement.moveBeforeChallengeEndDate(actionId)
               })
 
               itCannotSubmitEvidenceForNonExistingDispute()
@@ -103,7 +103,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
             context('at the end of the answer period', () => {
               beforeEach('move to the settlement period end date', async () => {
-                await agreement.moveToEndOfSettlementPeriod(actionId)
+                await agreement.moveToChallengeEndDate(actionId)
               })
 
               itCannotSubmitEvidenceForNonExistingDispute()
@@ -111,7 +111,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
             context('after the answer period', () => {
               beforeEach('move after the settlement period end date', async () => {
-                await agreement.moveAfterSettlementPeriod(actionId)
+                await agreement.moveAfterChallengeEndDate(actionId)
               })
 
               itCannotSubmitEvidenceForNonExistingDispute()
