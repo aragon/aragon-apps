@@ -14,6 +14,7 @@ const assertEvent = (receipt, eventName, expectedArgs = {}, index = 0) => {
     let expectedArg = expectedArgs[arg]
     if (isBigNumber(expectedArg)) expectedArg = expectedArg.toString()
     else if (isAddress(expectedArg)) expectedArg = expectedArg.toLowerCase()
+    else if (expectedArg && expectedArg.address) expectedArg = expectedArg.address.toLowerCase()
 
     assert.equal(foundArg, expectedArg, `${eventName} event ${arg} value does not match`)
   }

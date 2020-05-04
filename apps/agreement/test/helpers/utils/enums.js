@@ -1,8 +1,15 @@
 const ACTIONS_STATE = {
-  SCHEDULED: 0,
+  SUBMITTED: 0,
   CHALLENGED: 1,
-  EXECUTED: 2,
-  CANCELLED: 3
+  CLOSED: 2
+}
+
+const DELAY_STATE = {
+  SCHEDULED: 0,
+  PAUSED: 1,
+  FAST_FORWARDED: 2,
+  EXECUTED: 3,
+  STOPPED: 4,
 }
 
 const CHALLENGES_STATE = {
@@ -23,6 +30,7 @@ const RULINGS = {
 
 module.exports = {
   RULINGS,
+  DELAY_STATE,
   ACTIONS_STATE,
   CHALLENGES_STATE
 }
