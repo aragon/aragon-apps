@@ -1,5 +1,10 @@
 import React, { useCallback, useMemo } from 'react'
-import { usePath } from '@aragon/api-react'
+import {
+  useAppState,
+  useCurrentApp,
+  useInstalledApps,
+  usePath,
+} from '@aragon/api-react'
 
 const HOLDER_ADDRESS_PATH = /^\/vesting\/0x[a-fA-F0-9]{40}\/?$/
 const NO_HOLDER_ADDRESS = '-1'
@@ -9,11 +14,14 @@ function holderFromPath(path) {
     return NO_HOLDER_ADDRESS
   }
   const matches = path.match(HOLDER_ADDRESS_PATH)
-  return matches ? matches[1] : NO_HOLDER_ADDRESS
+  if (matches) {
+  }
+  return matches ? matches[0].split('/')[2] : NO_HOLDER_ADDRESS
 }
 
 // Get the vestings from the holder currently selected, or null otherwise.
-export function useSelectedHolder(vestings) {
+export function useSelectedHolderVestings() {
+  const { vestings } = useAppState()
   const [path, requestPath] = usePath()
 
   // The memoized holder currently selected.
@@ -45,9 +53,25 @@ export function useSelectedHolder(vestings) {
   return [selectedHolder, selectHolder]
 }
 
+// Decorate the vestings array with more information relevant
+function useDecoratedVestings() {
+  const { vestings, holders } = useAppState()
+  const currentApp = useCurrentApp()
+  const installedApps = useInstalledApps()
+
+  return useMemo(() => {
+    // Make sure we have loaded information about the current app and other installed apps before showing votes
+    if (!(vestings && currentApp && installedApps)) {
+      return [[], []]
+    }
+
+    return vestings
+  }, [vestings])
+}
+
 // Handles the main logic of the app.
 export function useAppLogic() {
-  const [selectedHolder, selectHolder] = useSelectedHolder()
+  const [selectedHolder, selectHolder] = useSelectedHolderVestings()
 
   return {
     selectHolder,
