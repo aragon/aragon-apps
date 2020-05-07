@@ -11,12 +11,12 @@ contract('Delay', ([_, submitter, someone]) => {
   let delay
 
   beforeEach('deploy delay instance', async () => {
-    delay = await deployer.deployAndInitializeWrapperWithExecutor({ delay: true, submitters: [submitter] })
+    delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, submitters: [submitter] })
   })
 
   describe('isForwarder', () => {
     it('returns true', async () => {
-      assert.isTrue(await delay.executor.isForwarder(), 'executor is not a forwarder')
+      assert.isTrue(await delay.disputable.isForwarder(), 'disputable is not a forwarder')
     })
   })
 

@@ -1,4 +1,4 @@
-const ExecutorWrapper = require('./executor')
+const DisputableWrapper = require('./disputable')
 
 const { bn } = require('../lib/numbers')
 const { decodeEventsOfType } = require('../lib/decodeEvent')
@@ -6,32 +6,32 @@ const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
 const { getEventArgument } = require('@aragon/contract-test-helpers/events')
 const { DELAY_EVENTS, AGREEMENT_EVENTS } = require('../utils/events')
 
-class DelayWrapper extends ExecutorWrapper {
+class DelayWrapper extends DisputableWrapper {
   async delayPeriod() {
-    return this.executor.delayPeriod()
+    return this.disputable.delayPeriod()
   }
 
   async canForward(sender, bytes = '0x') {
-    return this.executor.canForward(sender, bytes)
+    return this.disputable.canForward(sender, bytes)
   }
 
   async canChallenge(delayableId, challenger) {
-    return this.executor.canChallenge(delayableId, challenger)
+    return this.disputable.canChallenge(delayableId, challenger)
   }
 
   async getTokenBalancePermission() {
-    const { submitPermissionToken, submitPermissionBalance, challengePermissionToken, challengePermissionBalance } = await this.executor.getTokenBalancePermission()
+    const { submitPermissionToken, submitPermissionBalance, challengePermissionToken, challengePermissionBalance } = await this.disputable.getTokenBalancePermission()
     return { submitPermissionToken, submitPermissionBalance, challengePermissionToken, challengePermissionBalance }
   }
 
   async getDelayable(id) {
-    const { submitter, executableAt, state, actionId, script } = await this.executor.getDelayable(id)
+    const { submitter, executableAt, state, actionId, script } = await this.disputable.getDelayable(id)
     return { submitter, executableAt, state, actionId, script }
   }
 
   async getAllowedPaths(id) {
-    const canStop = await this.executor.canStop(id)
-    const canExecute = await this.executor.canExecute(id)
+    const canStop = await this.disputable.canStop(id)
+    const canExecute = await this.disputable.canExecute(id)
 
     const { actionId } = await this.getDelayable(id)
     const actionAllowedPaths = await super.getAllowedPaths(actionId)
@@ -42,7 +42,7 @@ class DelayWrapper extends ExecutorWrapper {
     if (!from) from = await this._getSender()
     if (!script) script = await this.buildEvmScript()
 
-    const receipt = await this.executor.forward(script, { from })
+    const receipt = await this.disputable.forward(script, { from })
     const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
 
     const actionId = getEventArgument({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 'actionId')
@@ -58,7 +58,7 @@ class DelayWrapper extends ExecutorWrapper {
     if (stake) await this.approveAndCall({ amount: stake, from: submitter })
     if (sign === undefined && (await this.getSigner(submitter)).mustSign) await this.sign(submitter)
 
-    const receipt = await this.executor.schedule(script, actionContext, { from: submitter })
+    const receipt = await this.disputable.schedule(script, actionContext, { from: submitter })
     const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
 
     const actionId = getEventArgument({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 'actionId')
@@ -68,12 +68,12 @@ class DelayWrapper extends ExecutorWrapper {
 
   async execute({ delayableId, from = undefined }) {
     if (!from) from = await this._getSender()
-    return this.executor.execute(delayableId, { from })
+    return this.disputable.execute(delayableId, { from })
   }
 
   async stop({ delayableId, from = undefined }) {
     if (!from) from = (await this.getDelayable(delayableId)).submitter
-    return this.executor.stop(delayableId, { from })
+    return this.disputable.stop(delayableId, { from })
   }
 
   async challenge({ delayableId, challenger = undefined, settlementOffer = 0, challengeContext = '0xdcba', arbitrationFees = undefined, stake = undefined }) {
@@ -120,7 +120,7 @@ class DelayWrapper extends ExecutorWrapper {
     const challengePermissionToken = options.challengePermissionToken ? options.challengePermissionToken.address : permission.challengeToken
     const challengePermissionBalance = options.challengePermissionBalance || permission.challengeBalance
 
-    return this.executor.changeTokenBalancePermission(submitPermissionToken, submitPermissionBalance, challengePermissionToken, challengePermissionBalance, { from })
+    return this.disputable.changeTokenBalancePermission(submitPermissionToken, submitPermissionBalance, challengePermissionToken, challengePermissionBalance, { from })
   }
 
   async buildEvmScript() {

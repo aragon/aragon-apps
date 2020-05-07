@@ -2,7 +2,7 @@ const { usePlugin } = require('@nomiclabs/buidler/config')
 
 usePlugin('@aragon/buidler-aragon')
 usePlugin('buidler-gas-reporter')
-usePlugin('solidity-coverage')
+// usePlugin('solidity-coverage')
 
 module.exports = {
   defaultNetwork: 'localhost',
@@ -21,7 +21,7 @@ module.exports = {
     version: '0.4.24',
     optimizer: {
       enabled: true,
-      runs: 1, // Agreements is hitting size limit with 10k runs
+      runs: 10000, // Agreements is hitting size limit with 10k runs
     },
   },
   gasReporter: {

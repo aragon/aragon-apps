@@ -18,7 +18,7 @@ contract('Delay', ([_, owner, someone]) => {
   }
 
   beforeEach('deploy agreement', async () => {
-    delay = await deployer.deployAndInitializeWrapperWithExecutor({ delay: true, owner, ...initialCollateralRequirements })
+    delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, owner, ...initialCollateralRequirements })
     initialCollateralRequirements.collateralToken = deployer.collateralToken
   })
 

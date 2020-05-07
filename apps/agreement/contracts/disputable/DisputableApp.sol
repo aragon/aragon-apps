@@ -5,20 +5,19 @@
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
-import "@aragon/os/contracts/common/IForwarder.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 
+import "./IDisputable.sol";
 import "../IAgreement.sol";
-import "./IAgreementExecutor.sol";
 
 
-contract BaseAgreementExecutor is IAgreementExecutor, IForwarder, AragonApp {
+contract DisputableApp is IDisputable, AragonApp {
     using SafeERC20 for ERC20;
     using SafeMath64 for uint64;
 
     /* Validation errors */
-    string internal constant ERROR_TOKEN_NOT_CONTRACT = "AGR_EXEC_TOKEN_NOT_CONTRACT";
+    string internal constant ERROR_TOKEN_NOT_CONTRACT = "DISPUTABLE_TOKEN_NOT_CONTRACT";
 
     // bytes32 public constant CANCEL_ROLE = keccak256("CANCEL_ROLE");
     bytes32 public constant CANCEL_ROLE = 0x9f959e00d95122f5cbd677010436cf273ef535b86b056afc172852144b9491d7;
@@ -44,39 +43,39 @@ contract BaseAgreementExecutor is IAgreementExecutor, IForwarder, AragonApp {
         uint64 challengeDuration;   // Duration in seconds of the challenge, during this time window the submitter can answer the challenge
     }
 
-    IAgreement public agreement;                                        // Agreement app associated to the executor
+    IAgreement public agreement;                                        // Agreement app associated to the disputable
     CollateralRequirements private collateralRequirements;              // Current collateral requirements
 
     /**
-    * @notice Cancel executable #`_executableId`
-    * @param _executableId Identification number of the executable to be cancelled
+    * @notice Cancel disputable #`_disputableId`
+    * @param _disputableId Identification number of the disputable to be cancelled
     */
-    function cancel(uint256 _executableId) external auth(CANCEL_ROLE) {
-        _cancel(_executableId);
+    function cancel(uint256 _disputableId) external auth(CANCEL_ROLE) {
+        _cancel(_disputableId);
     }
 
     /**
-    * @notice Pause executable #`_executableId`
-    * @param _executableId Identification number of the executable to be paused
+    * @notice Pause disputable #`_disputableId`
+    * @param _disputableId Identification number of the disputable to be paused
     */
-    function pause(uint256 _executableId) external auth(PAUSE_ROLE) {
-        _pause(_executableId);
+    function pause(uint256 _disputableId) external auth(PAUSE_ROLE) {
+        _pause(_disputableId);
     }
 
     /**
-    * @notice Resume executable #`_executableId`
-    * @param _executableId Identification number of the executable to be resumed
+    * @notice Resume disputable #`_disputableId`
+    * @param _disputableId Identification number of the disputable to be resumed
     */
-    function resume(uint256 _executableId) external auth(RESUME_ROLE) {
-        _resume(_executableId);
+    function resume(uint256 _disputableId) external auth(RESUME_ROLE) {
+        _resume(_disputableId);
     }
 
     /**
-    * @notice Vote executable #`_executableId`
-    * @param _executableId Identification number of the executable to be voided
+    * @notice Vote disputable #`_disputableId`
+    * @param _disputableId Identification number of the disputable to be voided
     */
-    function void(uint256 _executableId) external auth(VOID_ROLE) {
-        _void(_executableId);
+    function void(uint256 _disputableId) external auth(VOID_ROLE) {
+        _void(_disputableId);
     }
 
     /**
@@ -128,12 +127,12 @@ contract BaseAgreementExecutor is IAgreementExecutor, IForwarder, AragonApp {
 
     /**
     * @dev Tell whether an address can challenge actions or not
-    * @param _executableId Identification number of the executable being queried
+    * @param _disputableId Identification number of the disputable being queried
     * @param _challenger Address being queried
     * @return True if the given address can challenge actions, false otherwise
     */
-    function canChallenge(uint256 _executableId, address _challenger) external view returns (bool) {
-        return _canChallenge(_executableId, _challenger);
+    function canChallenge(uint256 _disputableId, address _challenger) external view returns (bool) {
+        return _canChallenge(_disputableId, _challenger);
     }
 
     /**
@@ -152,39 +151,39 @@ contract BaseAgreementExecutor is IAgreementExecutor, IForwarder, AragonApp {
 
     /**
     * @dev Create a new action in the agreement
-    * @param _executableId Identification number of the executable action in the context of the executor
+    * @param _disputableId Identification number of the disputable action in the context of the disputable
     * @param _submitter Address of the user that has submitted the action
     * @param _context Link to a human-readable text giving context for the given action
     * @return Unique identification number for the created action in the context of the agreement
     */
-    function _newAction(uint256 _executableId, address _submitter, bytes _context) internal returns (uint256) {
+    function _newAction(uint256 _disputableId, address _submitter, bytes _context) internal returns (uint256) {
         CollateralRequirements storage collateral = collateralRequirements;
-        return agreement.newAction(_executableId, _submitter, collateral.actionAmount, collateral.token, _context);
+        return agreement.newAction(_disputableId, _submitter, collateral.actionAmount, collateral.token, _context);
     }
 
     /**
-    * @dev Cancel executable
-    * @param _executableId Identification number of the executable to be cancelled
+    * @dev Cancel disputable
+    * @param _disputableId Identification number of the disputable to be cancelled
     */
-    function _cancel(uint256 _executableId) internal;
+    function _cancel(uint256 _disputableId) internal;
 
     /**
-    * @dev Pause executable
-    * @param _executableId Identification number of the executable to be paused
+    * @dev Pause disputable
+    * @param _disputableId Identification number of the disputable to be paused
     */
-    function _pause(uint256 _executableId) internal;
+    function _pause(uint256 _disputableId) internal;
 
     /**
-    * @dev Resume executable
-    * @param _executableId Identification number of the executable to be resumed
+    * @dev Resume disputable
+    * @param _disputableId Identification number of the disputable to be resumed
     */
-    function _resume(uint256 _executableId) internal;
+    function _resume(uint256 _disputableId) internal;
 
     /**
-    * @dev Void executable
-    * @param _executableId Identification number of the executable to be voided
+    * @dev Void disputable
+    * @param _disputableId Identification number of the disputable to be voided
     */
-    function _void(uint256 _executableId) internal;
+    function _void(uint256 _disputableId) internal;
 
     /**
     * @dev Change collateral requirements
@@ -210,11 +209,11 @@ contract BaseAgreementExecutor is IAgreementExecutor, IForwarder, AragonApp {
 
     /**
     * @dev Tell whether an address can challenge actions or not
-    * @param _executableId Identification number of the executable being queried
+    * @param _disputableId Identification number of the disputable being queried
     * @param _challenger Address being queried
     * @return True if the given address can challenge actions, false otherwise
     */
-    function _canChallenge(uint256 _executableId, address _challenger) internal view returns (bool);
+    function _canChallenge(uint256 _disputableId, address _challenger) internal view returns (bool);
 
     /**
     * @dev Tell whether an action can proceed or not based on the agreement

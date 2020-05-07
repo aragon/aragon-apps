@@ -11,7 +11,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
   let agreement, actionId
 
   beforeEach('deploy agreement instance', async () => {
-    agreement = await deployer.deployAndInitializeWrapperWithExecutor()
+    agreement = await deployer.deployAndInitializeWrapperWithDisputable()
   })
 
   describe('settlement', () => {
@@ -62,8 +62,8 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                 const currentActionState = await agreement.getAction(actionId)
                 assertBn(currentActionState.state, previousActionState.state, 'action state does not match')
-                assertBn(currentActionState.executableId, previousActionState.executableId, 'executable ID does not match')
-                assert.equal(currentActionState.executor, previousActionState.executor, 'executor does not match')
+                assertBn(currentActionState.disputableId, previousActionState.disputableId, 'disputable ID does not match')
+                assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                 assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                 assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
                 assert.equal(currentActionState.collateralToken, previousActionState.collateralToken, 'collateral token does not match')

@@ -14,7 +14,7 @@ contract('Delay', ([_, owner, submitter]) => {
   const actionContext = '0x123456'
 
   beforeEach('deploy delay instance', async () => {
-    delay = await deployer.deployAndInitializeWrapperWithExecutor({ delay: true, owner, signers: [submitter] })
+    delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, owner, signers: [submitter] })
     actionCollateral = delay.actionCollateral
   })
 

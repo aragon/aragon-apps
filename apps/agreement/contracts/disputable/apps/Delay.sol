@@ -4,10 +4,10 @@
 
 pragma solidity 0.4.24;
 
-import "../executor/BaseAgreementExecutor.sol";
+import "../DisputableApp.sol";
 
 
-contract Delay is BaseAgreementExecutor {
+contract Delay is DisputableApp {
     /* Validation errors */
     string internal constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
     string internal constant ERROR_CAN_NOT_FORWARD = "DELAY_CAN_NOT_FORWARD";

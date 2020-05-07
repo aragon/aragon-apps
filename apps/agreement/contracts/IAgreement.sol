@@ -13,7 +13,7 @@ contract IAgreement is IArbitrable {
     function sign() external;
 
     function newAction(
-        uint256 _executableId,
+        uint256 _disputableId,
         address _submitter,
         uint256 _collateral,
         ERC20 _collateralToken,

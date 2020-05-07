@@ -12,7 +12,7 @@ contract('Delay', ([_, submitter]) => {
   let delay, delayableId
 
   beforeEach('deploy delay instance', async () => {
-    delay = await deployer.deployAndInitializeWrapperWithExecutor({ delay: true })
+    delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true })
   })
 
   describe('execute', () => {
@@ -29,21 +29,25 @@ contract('Delay', ([_, submitter]) => {
 
       const itExecutesTheActionProperly = unlocksBalance => {
         it('executes the delayable', async () => {
-          const receipt = await delay.execute({ delayableId })
+          const ExecutionTarget = artifacts.require('ExecutionTarget')
 
-          assertAmountOfEvents(receipt, 'Executed', 1)
+          const receipt = await delay.execute({ delayableId })
+          const logs = decodeEventsOfType(receipt, ExecutionTarget.abi, 'TargetExecuted')
+
+          assertAmountOfEvents({ logs }, 'TargetExecuted', 1)
+          assertEvent({ logs }, 'TargetExecuted', { counter: 1 })
         })
 
-        it.only('updates the delayable state only', async () => {
-          const previousDelayableState = await delay.getAction(delayableId)
+        it('updates the delayable state only', async () => {
+          const previousDelayableState = await delay.getDelayable(delayableId)
 
           await delay.execute({ delayableId })
 
-          const currentDelayableState = await delay.getAction(delayableId)
+          const currentDelayableState = await delay.getDelayable(delayableId)
           assertBn(currentDelayableState.state, DELAY_STATE.EXECUTED, 'delayable state does not match')
 
           assert.equal(currentDelayableState.script, previousDelayableState.script, 'delayable script does not match')
-          assertBn(currentDelayableState.executableAt, previousDelayableState.executableAt, 'delayable executable date does not match')
+          assertBn(currentDelayableState.executableAt, previousDelayableState.executableAt, 'delayable disputable date does not match')
           assert.equal(currentDelayableState.submitter, previousDelayableState.submitter, 'submitter does not match')
           assertBn(currentDelayableState.actionId, previousDelayableState.actionId, 'action ID does not match')
         })

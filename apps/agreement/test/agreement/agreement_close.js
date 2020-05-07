@@ -12,7 +12,7 @@ contract('Agreement', ([_, submitter, someone]) => {
   let agreement, actionId
 
   beforeEach('deploy agreement instance', async () => {
-    agreement = await deployer.deployAndInitializeWrapperWithExecutor()
+    agreement = await deployer.deployAndInitializeWrapperWithDisputable()
   })
 
   describe('close', () => {
@@ -22,7 +22,7 @@ contract('Agreement', ([_, submitter, someone]) => {
       })
 
       const itClosesTheActionProperly = unlocksBalance => {
-        context('when the sender is the executor', () => {
+        context('when the sender is the disputable', () => {
           it('updates the action state only', async () => {
             const previousActionState = await agreement.getAction(actionId)
 
@@ -31,8 +31,8 @@ contract('Agreement', ([_, submitter, someone]) => {
             const currentActionState = await agreement.getAction(actionId)
             assertBn(currentActionState.state, ACTIONS_STATE.CLOSED, 'action state does not match')
 
-            assertBn(currentActionState.executableId, previousActionState.executableId, 'executable ID does not match')
-            assert.equal(currentActionState.executor, previousActionState.executor, 'executor does not match')
+            assertBn(currentActionState.disputableId, previousActionState.disputableId, 'disputable ID does not match')
+            assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
             assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
             assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
             assert.equal(currentActionState.collateralToken, previousActionState.collateralToken, 'collateral token does not match')
@@ -96,7 +96,7 @@ contract('Agreement', ([_, submitter, someone]) => {
           })
         })
 
-        context('when the sender is not the executor', () => {
+        context('when the sender is not the disputable', () => {
           const from = someone
 
           it('reverts', async () => {

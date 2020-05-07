@@ -1,12 +1,12 @@
 pragma solidity 0.4.24;
 
 import "../helpers/TimeHelpersMock.sol";
-import "../../../executor/BaseAgreementExecutor.sol";
+import "../../../disputable/DisputableApp.sol";
 
 
-contract AgreementExecutorMock is BaseAgreementExecutor, TimeHelpersMock {
+contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     /* Validation errors */
-    string internal constant ERROR_CAN_NOT_FORWARD = "EXECUTOR_CAN_NOT_FORWARD";
+    string internal constant ERROR_CAN_NOT_FORWARD = "DISPUTABLE_CAN_NOT_FORWARD";
 
     // bytes32 public constant SUBMIT_ROLE = keccak256("SUBMIT_ROLE");
     bytes32 public constant SUBMIT_ROLE = 0x8a8601cc8e9efb544266baca5bffc5cea11aed5de937dc37810fd002b4010eac;

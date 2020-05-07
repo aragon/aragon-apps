@@ -44,7 +44,7 @@ contract('Delay', ([_, challenger, holder0, holder1, holder2, holder3, holder4, 
   })
 
   before('deploy delay instance', async () => {
-    delay = await deployer.deployAndInitializeWrapperWithExecutor({ delay: true, actionCollateral, challengeCollateral, submitters: [holder1, holder2, holder3, holder4, holder5] })
+    delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, actionCollateral, challengeCollateral, submitters: [holder1, holder2, holder3, holder4, holder5] })
   })
 
   describe('integration', () => {
@@ -110,7 +110,7 @@ contract('Delay', ([_, challenger, holder0, holder1, holder2, holder3, holder4, 
       await delay.moveAfterDelayPeriod(delayables[0].id)
       const executedDelayables = delayables.filter(delayable => (!delayable.settlementOffer && !delayable.stopped && !delayable.ruling) || delayable.ruling === RULINGS.IN_FAVOR_OF_SUBMITTER)
       for (const { id } of executedDelayables) {
-        const canExecute = await delay.executor.canExecute(id)
+        const canExecute = await delay.disputable.canExecute(id)
         assert.isTrue(canExecute, `delayable ${id} cannot be executed`)
         await delay.execute({ delayableId: id })
         const { state } = await delay.getDelayable(id)
@@ -119,7 +119,7 @@ contract('Delay', ([_, challenger, holder0, holder1, holder2, holder3, holder4, 
 
       const notExecutedDelayables = delayables.filter(delayable => !executedDelayables.includes(delayable))
       for (const { id } of notExecutedDelayables) {
-        const canExecute = await delay.executor.canExecute(id)
+        const canExecute = await delay.disputable.canExecute(id)
         assert.isFalse(canExecute, `delayable ${id} can be executed`)
       }
     })

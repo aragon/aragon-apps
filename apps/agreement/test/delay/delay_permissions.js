@@ -12,9 +12,9 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
   before('deploy base contracts', async () => {
     await deployer.deployBase()
-    await deployer.deployBaseExecutor()
-    SUBMIT_ROLE = await deployer.baseExecutor.SUBMIT_ROLE()
-    CHALLENGE_ROLE = await deployer.baseExecutor.CHALLENGE_ROLE()
+    await deployer.deployBaseDisputable()
+    SUBMIT_ROLE = await deployer.baseDisputable.SUBMIT_ROLE()
+    CHALLENGE_ROLE = await deployer.baseDisputable.CHALLENGE_ROLE()
   })
 
   describe('canForward', () => {
@@ -64,12 +64,12 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
     context('for ACL permissions', () => {
       beforeEach('deploy delay instance', async () => {
-        delay = await deployer.deployAndInitializeWrapperWithExecutor({ delay: true, owner, submitters: [] })
+        delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, owner, submitters: [] })
       })
 
       context('when the permission is set to a particular address', async () => {
         beforeEach('grant permission', async () => {
-          await deployer.acl.createPermission(submitter, delay.executor.address, SUBMIT_ROLE, owner, { from: owner })
+          await deployer.acl.createPermission(submitter, delay.disputable.address, SUBMIT_ROLE, owner, { from: owner })
         })
 
         context('when the submitter is that address', async () => {
@@ -87,7 +87,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
       context('when the permission is open to any address', async () => {
         beforeEach('grant permission', async () => {
-          await deployer.acl.createPermission(ANY_ADDR, delay.executor.address, SUBMIT_ROLE, owner, { from: owner })
+          await deployer.acl.createPermission(ANY_ADDR, delay.disputable.address, SUBMIT_ROLE, owner, { from: owner })
         })
 
         it('returns true', async () => {
@@ -101,7 +101,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
         })
 
         beforeEach('change to token balance permission', async () => {
-          await delay.executor.changeTokenBalancePermission(submitPermissionToken.address, submitPermissionBalance, ZERO_ADDRESS, bn(0), { from: owner })
+          await delay.disputable.changeTokenBalancePermission(submitPermissionToken.address, submitPermissionBalance, ZERO_ADDRESS, bn(0), { from: owner })
         })
 
         itHandlesTokenBalancePermissionsProperly()
@@ -114,7 +114,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
       })
 
       beforeEach('deploy delay instance', async () => {
-        delay = await deployer.deployAndInitializeWrapperWithExecutor({ owner, submitPermissionBalance, delay: true, submitters: [] })
+        delay = await deployer.deployAndInitializeWrapperWithDisputable({ owner, submitPermissionBalance, delay: true, submitters: [] })
       })
 
       context('when using an embedded configuration', () => {
@@ -124,7 +124,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
         context('when the submitter has submit permissions', () => {
           beforeEach('grant permission', async () => {
-            await deployer.acl.createPermission(submitter, delay.executor.address, SUBMIT_ROLE, owner, { from: owner })
+            await deployer.acl.createPermission(submitter, delay.disputable.address, SUBMIT_ROLE, owner, { from: owner })
           })
 
           itHandlesTokenBalancePermissionsProperly()
@@ -132,7 +132,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
         context('when there is a submit permission open to any address', () => {
           beforeEach('grant permission', async () => {
-            await deployer.acl.createPermission(submitter, delay.executor.address, SUBMIT_ROLE, owner, { from: owner })
+            await deployer.acl.createPermission(submitter, delay.disputable.address, SUBMIT_ROLE, owner, { from: owner })
           })
 
           itHandlesTokenBalancePermissionsProperly()
@@ -143,15 +143,15 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
           beforeEach('unset submit token balance permission', async () => {
             // swap submit permission token as challenge permission token
-            await delay.executor.changeTokenBalancePermission(ZERO_ADDRESS, bn(0), submitPermissionToken.address, submitPermissionBalance, { from: owner })
+            await delay.disputable.changeTokenBalancePermission(ZERO_ADDRESS, bn(0), submitPermissionToken.address, submitPermissionBalance, { from: owner })
             assert.isFalse(await delay.canForward(submitter), 'submitter can forward')
           })
 
           beforeEach('set balance oracle', async () => {
             balanceOracle = await TokenBalanceOracle.new(submitPermissionToken.address, submitPermissionBalance)
             const param = await balanceOracle.getPermissionParam()
-            await deployer.acl.createPermission(ANY_ADDR, delay.executor.address, SUBMIT_ROLE, owner, { from: owner })
-            await deployer.acl.grantPermissionP(ANY_ADDR, delay.executor.address, SUBMIT_ROLE, [param], { from: owner })
+            await deployer.acl.createPermission(ANY_ADDR, delay.disputable.address, SUBMIT_ROLE, owner, { from: owner })
+            await deployer.acl.grantPermissionP(ANY_ADDR, delay.disputable.address, SUBMIT_ROLE, [param], { from: owner })
           })
 
           itHandlesTokenBalancePermissionsProperly()
@@ -207,14 +207,14 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
     context('for ACL permissions', () => {
       beforeEach('deploy delay instance', async () => {
-        delay = await deployer.deployAndInitializeWrapperWithExecutor({ delay: true, owner, challengers: [] })
+        delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, owner, challengers: [] })
         const result = await delay.schedule({ submitter })
         delayableId = result.delayableId
       })
 
       context('when the permission is set to a particular address', async () => {
         beforeEach('grant permission', async () => {
-          await deployer.acl.createPermission(challenger, delay.executor.address, CHALLENGE_ROLE, owner, { from: owner })
+          await deployer.acl.createPermission(challenger, delay.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
         })
 
         context('when the challenger is that address', async () => {
@@ -232,7 +232,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
       context('when the permission is open to any address', async () => {
         beforeEach('grant permission', async () => {
-          await deployer.acl.createPermission(ANY_ADDR, delay.executor.address, CHALLENGE_ROLE, owner, { from: owner })
+          await deployer.acl.createPermission(ANY_ADDR, delay.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
         })
 
         it('returns true', async () => {
@@ -246,7 +246,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
         })
 
         beforeEach('change to token balance permission', async () => {
-          await delay.executor.changeTokenBalancePermission(ZERO_ADDRESS, bn(0), challengePermissionToken.address, challengePermissionBalance, { from: owner })
+          await delay.disputable.changeTokenBalancePermission(ZERO_ADDRESS, bn(0), challengePermissionToken.address, challengePermissionBalance, { from: owner })
         })
 
         itHandlesTokenBalancePermissionsProperly()
@@ -259,7 +259,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
       })
 
       beforeEach('deploy delay instance', async () => {
-        delay = await deployer.deployAndInitializeWrapperWithExecutor({ owner, challengePermissionBalance, delay: true, challengers: [] })
+        delay = await deployer.deployAndInitializeWrapperWithDisputable({ owner, challengePermissionBalance, delay: true, challengers: [] })
         const result = await delay.schedule({ submitter })
         delayableId = result.delayableId
       })
@@ -271,7 +271,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
         context('when the challenger has challenge permissions', () => {
           beforeEach('grant permission', async () => {
-            await deployer.acl.createPermission(challenger, delay.executor.address, CHALLENGE_ROLE, owner, { from: owner })
+            await deployer.acl.createPermission(challenger, delay.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
           })
 
           itHandlesTokenBalancePermissionsProperly()
@@ -279,7 +279,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
         context('when there is a challenge permission open to any address', () => {
           beforeEach('grant permission', async () => {
-            await deployer.acl.createPermission(challenger, delay.executor.address, CHALLENGE_ROLE, owner, { from: owner })
+            await deployer.acl.createPermission(challenger, delay.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
           })
 
           itHandlesTokenBalancePermissionsProperly()
@@ -290,15 +290,15 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
           beforeEach('unset challenge token balance permission', async () => {
             // swap challenge permission token as submit permission token
-            await delay.executor.changeTokenBalancePermission(challengePermissionToken.address, challengePermissionBalance, ZERO_ADDRESS, bn(0), { from: owner })
+            await delay.disputable.changeTokenBalancePermission(challengePermissionToken.address, challengePermissionBalance, ZERO_ADDRESS, bn(0), { from: owner })
             assert.isFalse(await delay.canChallenge(delayableId, challenger), 'challenger can challenge')
           })
 
           beforeEach('set balance oracle', async () => {
             balanceOracle = await TokenBalanceOracle.new(challengePermissionToken.address, challengePermissionBalance)
             const param = await balanceOracle.getPermissionParam()
-            await deployer.acl.createPermission(ANY_ADDR, delay.executor.address, CHALLENGE_ROLE, owner, { from: owner })
-            await deployer.acl.grantPermissionP(ANY_ADDR, delay.executor.address, CHALLENGE_ROLE, [param], { from: owner })
+            await deployer.acl.createPermission(ANY_ADDR, delay.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
+            await deployer.acl.grantPermissionP(ANY_ADDR, delay.disputable.address, CHALLENGE_ROLE, [param], { from: owner })
           })
 
           itHandlesTokenBalancePermissionsProperly()

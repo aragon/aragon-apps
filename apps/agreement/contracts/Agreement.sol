@@ -16,7 +16,7 @@ import "./arbitration/IArbitrator.sol";
 
 import "./Staking.sol";
 import "./IAgreement.sol";
-import "./executor/IAgreementExecutor.sol";
+import "./disputable/IDisputable.sol";
 
 
 contract Agreement is IAgreement, AragonApp, Staking {
@@ -54,8 +54,8 @@ contract Agreement is IAgreement, AragonApp, Staking {
     string internal constant ERROR_ARBITRATOR_FEE_APPROVAL_FAILED = "AGR_ARBITRATOR_FEE_APPROVAL_FAIL";
     string internal constant ERROR_ARBITRATOR_FEE_TRANSFER_FAILED = "AGR_ARBITRATOR_FEE_TRANSFER_FAIL";
 
-    // bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-    bytes32 public constant EXECUTOR_ROLE = 0xd8aa0f3194971a2a116679f7c2090f6939c8d4e01a2a8d7e41d55e5351469e63;
+    // bytes32 public constant DISPUTABLE_ROLE = keccak256("DISPUTABLE_ROLE");
+    bytes32 public constant DISPUTABLE_ROLE = 0x5b327c088dc5201d0d0f365250580b009f4b5940290b5e72d41266abddb16fcd;
 
     // bytes32 public constant CHANGE_CONTENT_ROLE = keccak256("CHANGE_AGREEMENT_ROLE");
     bytes32 public constant CHANGE_CONTENT_ROLE = 0xbc428ed8cb28bb330ec2446f83dabdde5f6fc3c43db55e285b2c7413b4b2acf5;
@@ -87,8 +87,8 @@ contract Agreement is IAgreement, AragonApp, Staking {
     }
 
     struct Action {
-        IAgreementExecutor executor;        // Address of the executor that created the action
-        uint256 executableId;               // Identification number of the executable action in the context of the executor
+        IDisputable disputable;             // Address of the disputable that created the action
+        uint256 disputableId;               // Identification number of the disputable action in the context of the disputable instance
         address submitter;                  // Address that has submitted the action
         bytes context;                      // Link to a human-readable text giving context for the given action
         uint256 collateral;                 // Amount of collateral tokens to be locked per action
@@ -155,7 +155,7 @@ contract Agreement is IAgreement, AragonApp, Staking {
 
     /**
     * @notice Create a new action
-    * @param _executableId Identification number of the executable action in the context of the executor
+    * @param _disputableId Identification number of the disputable action in the context of the disputable instance
     * @param _submitter Address of the user that has submitted the action
     * @param _collateral Amount of collateral tokens to be locked
     * @param _collateralToken ERC20 token to be used for collateral
@@ -163,14 +163,14 @@ contract Agreement is IAgreement, AragonApp, Staking {
     * @return Unique identification number for the created action in the context of the agreement
     */
     function newAction(
-        uint256 _executableId,
+        uint256 _disputableId,
         address _submitter,
         uint256 _collateral,
         ERC20 _collateralToken,
         bytes _context
     )
         external
-        auth(EXECUTOR_ROLE)
+        auth(DISPUTABLE_ROLE)
         returns (uint256)
     {
         uint256 lastContentIdSigned = lastContentSignedBy[_submitter];
@@ -180,8 +180,8 @@ contract Agreement is IAgreement, AragonApp, Staking {
 
         uint256 id = actions.length++;
         Action storage action = actions[id];
-        action.executor = IAgreementExecutor(msg.sender);
-        action.executableId = _executableId;
+        action.disputable = IDisputable(msg.sender);
+        action.disputableId = _disputableId;
         action.submitter = _submitter;
         action.collateral = _collateral;
         action.collateralToken = _collateralToken;
@@ -196,10 +196,10 @@ contract Agreement is IAgreement, AragonApp, Staking {
     * @dev It can only be closed if the action wasn't challenged or if it was disputed but ruled in favor of the submitter
     * @param _actionId Identification number of the action to be closed
     */
-    function close(uint256 _actionId) external auth(EXECUTOR_ROLE) {
+    function close(uint256 _actionId) external auth(DISPUTABLE_ROLE) {
         Action storage action = _getAction(_actionId);
         require(_canProceed(action), ERROR_CANNOT_CLOSE_ACTION);
-        require(action.executor == IAgreementExecutor(msg.sender), ERROR_SENDER_NOT_ALLOWED);
+        require(action.disputable == IDisputable(msg.sender), ERROR_SENDER_NOT_ALLOWED);
 
         if (action.state == ActionState.Submitted) {
             _unlockBalance(action.collateralToken, action.submitter, action.collateral);
@@ -220,15 +220,15 @@ contract Agreement is IAgreement, AragonApp, Staking {
         require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
         require(_settlementOffer <= action.collateral, ERROR_INVALID_SETTLEMENT_OFFER);
 
-        uint256 executableId = action.executableId;
-        IAgreementExecutor executor = action.executor;
-        require(executor.canChallenge(executableId, msg.sender), ERROR_CANNOT_CHALLENGE_ACTION);
+        uint256 disputableId = action.disputableId;
+        IDisputable disputable = action.disputable;
+        require(disputable.canChallenge(disputableId, msg.sender), ERROR_CANNOT_CHALLENGE_ACTION);
 
-        (,, uint256 challengeCollateral, uint64 challengeDuration) = executor.getCollateralRequirements();
+        (,, uint256 challengeCollateral, uint64 challengeDuration) = disputable.getCollateralRequirements();
         uint64 challengeEndDate = getTimestamp64().add(challengeDuration);
         action.state = ActionState.Challenged;
         _createChallenge(action, msg.sender, challengeCollateral, _settlementOffer, challengeEndDate, _context);
-        executor.pause(executableId);
+        disputable.pause(disputableId);
         emit ActionChallenged(_actionId);
     }
 
@@ -365,8 +365,8 @@ contract Agreement is IAgreement, AragonApp, Staking {
     /**
     * @dev Tell the information related to an action
     * @param _actionId Identification number of the action being queried
-    * @return executor Address of the executor that created the action
-    * @return executableId Identification number of the executable action in the context of the executor
+    * @return disputable Address of the disputable that created the action
+    * @return disputableId Identification number of the disputable action in the context of the disputable
     * @return collateral Amount of collateral tokens to be locked per action
     * @return collateralToken ERC20 token to be used for collateral
     * @return context Link to a human-readable text giving context for the given action
@@ -375,8 +375,8 @@ contract Agreement is IAgreement, AragonApp, Staking {
     */
     function getAction(uint256 _actionId) external view
         returns (
-            address executor,
-            uint256 executableId,
+            address disputable,
+            uint256 disputableId,
             uint256 collateral,
             ERC20 collateralToken,
             bytes context,
@@ -385,8 +385,8 @@ contract Agreement is IAgreement, AragonApp, Staking {
         )
     {
         Action storage action = _getAction(_actionId);
-        executor = action.executor;
-        executableId = action.executableId;
+        disputable = action.disputable;
+        disputableId = action.disputableId;
         collateral = action.collateral;
         collateralToken = action.collateralToken;
         context = action.context;
@@ -697,7 +697,7 @@ contract Agreement is IAgreement, AragonApp, Staking {
         _unlockBalance(token, submitter, _action.collateral);
         _transfer(token, submitter, challenge.collateral);
 
-        _action.executor.resume(_action.executableId);
+        _action.disputable.resume(_action.disputableId);
     }
 
     /**
@@ -712,15 +712,15 @@ contract Agreement is IAgreement, AragonApp, Staking {
         _unlockBalance(token, _action.submitter, _action.collateral);
         _transfer(token, challenge.challenger, challenge.collateral);
 
-        _action.executor.void(_action.executableId);
+        _action.disputable.void(_action.disputableId);
     }
 
     /**
-    * @dev Cancel action in the executor
+    * @dev Cancel action in the disputable
     * @param _action Action instance to be cancelled
     */
     function _cancelAction(Action storage _action) internal {
-        _action.executor.cancel(_action.executableId);
+        _action.disputable.cancel(_action.disputableId);
     }
 
     /**
