@@ -19,10 +19,6 @@ rpc_running() {
   nc -z localhost "$ganache_port"
 }
 
-rpc_running() {
-  nc -z localhost "$PORT"
-}
-
 start_ganache() {
   if [ "$SOLIDITY_COVERAGE" = true ]; then
     export RUNNING_COVERAGE=true

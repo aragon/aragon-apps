@@ -1,4 +1,6 @@
 {
+  "appName": "agreements.aragonpm.eth",
+  "path": "contracts/Agreement.sol",
   "environments": {
     "default": {
       "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1",
@@ -12,7 +14,7 @@
     },
     "rinkeby": {
       "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
-      "appName": "agreements.open.aragonpm.eth",
+      "appName": "agreements1234.open.aragonpm.eth",
       "network": "rinkeby"
     },
     "ropsten": {
@@ -51,6 +53,5 @@
       "id": "CHANGE_TOKEN_BALANCE_PERMISSION_ROLE",
       "params": []
     }
-  ],
-  "path": "contracts/Agreement.sol"
+  ]
 }

@@ -10,8 +10,9 @@ module.exports = {
     localhost: {
       url: 'http://localhost:8545',
       accounts: {
-        mnemonic: 'explain tackle mirror kit van hammer degree position ginger unfair soup bonus'
-      }
+        mnemonic:
+          'explain tackle mirror kit van hammer degree position ginger unfair soup bonus',
+      },
     },
     coverage: {
       url: 'http://localhost:8555',
@@ -28,7 +29,6 @@ module.exports = {
     enabled: process.env.GAS_REPORTER ? true : false,
   },
   aragon: {
-    appSrcPath: 'app/',
-    appBuildOutputPath: 'dist/',
+    appSrcPath: 'public/',
   },
 }
