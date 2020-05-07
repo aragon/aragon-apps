@@ -14,7 +14,7 @@
     },
     "rinkeby": {
       "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
-      "appName": "agreements1234.open.aragonpm.eth",
+      "appName": "agreements.open.aragonpm.eth",
       "network": "rinkeby"
     },
     "ropsten": {
