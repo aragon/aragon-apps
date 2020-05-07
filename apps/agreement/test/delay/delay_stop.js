@@ -11,7 +11,7 @@ contract('Delay', ([_, submitter, someone]) => {
   let delay, delayableId
 
   beforeEach('deploy delay instance', async () => {
-    delay = await deployer.deployAndInitializeWrapperWithExecutor({ delay: true })
+    delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true })
   })
 
   describe('stop', () => {

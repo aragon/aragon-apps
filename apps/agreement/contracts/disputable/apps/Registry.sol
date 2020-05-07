@@ -4,10 +4,10 @@
 
 pragma solidity 0.4.24;
 
-import "../executor/BaseAgreementExecutor.sol";
+import "../DisputableApp.sol";
 
 
-contract Registry is BaseAgreementExecutor {
+contract Registry is DisputableApp {
     /* Validation errors */
     string internal constant ERROR_CAN_NOT_FORWARD = "REGISTRY_CAN_NOT_FORWARD";
     string internal constant ERROR_SENDER_NOT_ALLOWED = "REGISTRY_SENDER_NOT_ALLOWED";

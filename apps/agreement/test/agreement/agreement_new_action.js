@@ -14,7 +14,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
   const actionContext = '0x123456'
 
   beforeEach('deploy agreement instance', async () => {
-    agreement = await deployer.deployAndInitializeWrapperWithExecutor({ owner, submitters: [submitter] })
+    agreement = await deployer.deployAndInitializeWrapperWithDisputable({ owner, submitters: [submitter] })
     actionCollateral = agreement.actionCollateral
   })
 
@@ -39,7 +39,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                 const { actionId } = await agreement.newAction({ submitter, actionContext, stake, sign })
 
                 const actionData = await agreement.getAction(actionId)
-                assert.equal(actionData.executor, agreement.executor.address, 'executor does not match')
+                assert.equal(actionData.disputable, agreement.disputable.address, 'disputable does not match')
                 assert.equal(actionData.submitter, submitter, 'submitter does not match')
                 assert.equal(actionData.context, actionContext, 'action context does not match')
                 assert.equal(actionData.state, ACTIONS_STATE.SUBMITTED, 'action state does not match')

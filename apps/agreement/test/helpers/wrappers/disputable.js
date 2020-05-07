@@ -4,10 +4,10 @@ const { AGREEMENT_EVENTS } = require('../utils/events')
 const { decodeEventsOfType } = require('../lib/decodeEvent')
 const { getEventArgument } = require('@aragon/contract-test-helpers/events')
 
-class ExecutorWrapper extends AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator, executor, collateralRequirements = {}) {
+class DisputableWrapper extends AgreementWrapper {
+  constructor(artifacts, web3, agreement, arbitrator, disputable, collateralRequirements = {}) {
     super(artifacts, web3, agreement, arbitrator);
-    this.executor = executor
+    this.disputable = disputable
     this.collateralRequirements = collateralRequirements
   }
 
@@ -28,7 +28,7 @@ class ExecutorWrapper extends AgreementWrapper {
   }
 
   async currentTimestamp() {
-    return this.executor.getTimestampPublic()
+    return this.disputable.getTimestampPublic()
   }
 
   async getBalance(user) {
@@ -36,7 +36,7 @@ class ExecutorWrapper extends AgreementWrapper {
   }
 
   async getCollateralRequirements() {
-    const { collateralToken, actionAmount: actionCollateral, challengeAmount: challengeCollateral, challengeDuration } = await this.executor.getCollateralRequirements()
+    const { collateralToken, actionAmount: actionCollateral, challengeAmount: challengeCollateral, challengeDuration } = await this.disputable.getCollateralRequirements()
     return { collateralToken: await this._getContract('MiniMeToken').at(collateralToken), actionCollateral, challengeCollateral, challengeDuration }
   }
 
@@ -47,7 +47,7 @@ class ExecutorWrapper extends AgreementWrapper {
     if (stake) await this.approveAndCall({ amount: stake, from: submitter })
     if (sign === undefined && (await this.getSigner(submitter)).mustSign) await this.sign(submitter)
 
-    const receipt = await this.executor.forward(actionContext, { from: submitter })
+    const receipt = await this.disputable.forward(actionContext, { from: submitter })
     const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
     const actionId = getEventArgument({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 'actionId')
     return { receipt, actionId }
@@ -60,7 +60,7 @@ class ExecutorWrapper extends AgreementWrapper {
   }
 
   async close({ actionId, from = undefined }) {
-    return from === undefined ? this.executor.close(actionId) : this.agreement.close(actionId)
+    return from === undefined ? this.disputable.close(actionId) : this.agreement.close(actionId)
   }
 
   async changeCollateralRequirements(options = {}) {
@@ -72,14 +72,14 @@ class ExecutorWrapper extends AgreementWrapper {
     const challengeCollateral = options.challengeCollateral || currentRequirements.challengeCollateral
     const challengeDuration = options.challengeDuration || currentRequirements.challengeDuration
 
-    return this.executor.changeCollateralRequirements(collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
+    return this.disputable.changeCollateralRequirements(collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
   }
 
   async moveTo(timestamp) {
     const currentTimestamp = await this.currentTimestamp()
-    if (timestamp.lt(currentTimestamp)) return this.executor.mockSetTimestamp(timestamp)
+    if (timestamp.lt(currentTimestamp)) return this.disputable.mockSetTimestamp(timestamp)
     const timeDiff = timestamp.sub(currentTimestamp)
-    await this.executor.mockIncreaseTime(timeDiff)
+    await this.disputable.mockIncreaseTime(timeDiff)
     return super.moveTo(timestamp)
   }
 
@@ -101,4 +101,4 @@ class ExecutorWrapper extends AgreementWrapper {
   }
 }
 
-module.exports = ExecutorWrapper
+module.exports = DisputableWrapper

@@ -11,7 +11,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
   let agreement, actionId
 
   beforeEach('deploy agreement instance', async () => {
-    agreement = await deployer.deployAndInitializeWrapperWithExecutor()
+    agreement = await deployer.deployAndInitializeWrapperWithDisputable()
   })
 
   describe('evidence', () => {

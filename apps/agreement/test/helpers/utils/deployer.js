@@ -1,5 +1,5 @@
 const DelayWrapper = require('../wrappers/delay')
-const ExecutorWrapper = require('../wrappers/executor')
+const DisputableWrapper = require('../wrappers/disputable')
 const AgreementWrapper = require('../wrappers/agreement')
 
 const { NOW, DAY } = require('../lib/time')
@@ -26,7 +26,7 @@ const DEFAULT_AGREEMENT_INITIALIZATION_PARAMS = {
   },
 }
 
-const DEFAULT_EXECUTOR_INITIALIZATION_PARAMS = {
+const DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS = {
   appId: '0xdead1234dead1234dead1234dead1234dead1234dead1234dead1234dead1234',
   currentTimestamp: NOW,
 
@@ -41,7 +41,7 @@ const DEFAULT_EXECUTOR_INITIALIZATION_PARAMS = {
 }
 
 const DEFAULT_DELAY_INITIALIZATION_PARAMS = {
-  ...DEFAULT_EXECUTOR_INITIALIZATION_PARAMS,
+  ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS,
   appId: '0xfeca7890feca7890feca7890feca7890feca7890feca7890feca7890feca7890',
 
   delayPeriod: 5 * DAY,                  // 5 days
@@ -78,8 +78,8 @@ class AgreementDeployer {
     return this.previousDeploy.base
   }
 
-  get baseExecutor() {
-    return this.previousDeploy.baseExecutor
+  get baseDisputable() {
+    return this.previousDeploy.baseDisputable
   }
 
   get arbitrator() {
@@ -90,8 +90,8 @@ class AgreementDeployer {
     return this.previousDeploy.agreement
   }
 
-  get executor() {
-    return this.previousDeploy.executor
+  get disputable() {
+    return this.previousDeploy.disputable
   }
 
   get collateralToken() {
@@ -110,21 +110,21 @@ class AgreementDeployer {
     return this.base.abi
   }
 
-  async deployAndInitializeWrapperWithExecutor(options = {}) {
+  async deployAndInitializeWrapperWithDisputable(options = {}) {
     await this.deployAndInitialize(options)
 
-    options.executorType = options.delay ? 'DelayMock' : 'AgreementExecutorMock'
-    if (!options.executor) await this.installExecutor(options)
+    options.disputableType = options.delay ? 'DelayMock' : 'DisputableAppMock'
+    if (!options.disputable) await this.installDisputable(options)
 
-    const executor = options.executor || this.executor
+    const disputable = options.disputable || this.disputable
     const arbitrator = options.arbitrator || this.arbitrator
     const collateralToken = options.collateralToken || this.collateralToken
 
-    const { actionAmount, challengeAmount, challengeDuration } = await this.executor.getCollateralRequirements()
+    const { actionAmount, challengeAmount, challengeDuration } = await this.disputable.getCollateralRequirements()
     const collateralRequirements = { collateralToken, actionAmount, challengeAmount, challengeDuration }
 
-    const Wrapper = options.delay ? DelayWrapper : ExecutorWrapper
-    return new Wrapper(this.artifacts, this.web3, this.agreement, arbitrator, executor, collateralRequirements)
+    const Wrapper = options.delay ? DelayWrapper : DisputableWrapper
+    return new Wrapper(this.artifacts, this.web3, this.agreement, arbitrator, disputable, collateralRequirements)
   }
 
   async deployAndInitializeWrapper(options = {}) {
@@ -163,27 +163,27 @@ class AgreementDeployer {
     return agreement
   }
 
-  async installExecutor(options = {}) {
+  async installDisputable(options = {}) {
     const owner = options.owner || await this._getSender()
 
-    const { executorType } = options
-    if (!this.baseExecutor || this.baseExecutor.constructor.contractName !== executorType) await this.deployBaseExecutor(executorType)
+    const { disputableType } = options
+    if (!this.baseDisputable || this.baseDisputable.constructor.contractName !== disputableType) await this.deployBaseDisputable(disputableType)
 
-    const { appId, currentTimestamp } = { ...DEFAULT_EXECUTOR_INITIALIZATION_PARAMS, ...options }
-    const receipt = await this.dao.newAppInstance(appId, this.baseExecutor.address, '0x', false, { from: owner })
-    const executor = await this.baseExecutor.constructor.at(getNewProxyAddress(receipt))
+    const { appId, currentTimestamp } = { ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS, ...options }
+    const receipt = await this.dao.newAppInstance(appId, this.baseDisputable.address, '0x', false, { from: owner })
+    const disputable = await this.baseDisputable.constructor.at(getNewProxyAddress(receipt))
 
-    await this._grantExecutorPermissions(executor, owner)
+    await this._grantDisputablePermissions(disputable, owner)
 
     if (!options.collateralToken && !this.collateralToken) await this.deployCollateralToken(options)
     const collateralToken = options.collateralToken || this.collateralToken
 
     if (options.delay) {
-      const CHANGE_DELAY_PERIOD_ROLE = await executor.CHANGE_DELAY_PERIOD_ROLE()
-      await this.acl.createPermission(owner, executor.address, CHANGE_DELAY_PERIOD_ROLE, owner, { from: owner })
+      const CHANGE_DELAY_PERIOD_ROLE = await disputable.CHANGE_DELAY_PERIOD_ROLE()
+      await this.acl.createPermission(owner, disputable.address, CHANGE_DELAY_PERIOD_ROLE, owner, { from: owner })
 
-      const CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = await executor.CHANGE_TOKEN_BALANCE_PERMISSION_ROLE()
-      await this.acl.createPermission(owner, executor.address, CHANGE_TOKEN_BALANCE_PERMISSION_ROLE, owner, { from: owner })
+      const CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = await disputable.CHANGE_TOKEN_BALANCE_PERMISSION_ROLE()
+      await this.acl.createPermission(owner, disputable.address, CHANGE_TOKEN_BALANCE_PERMISSION_ROLE, owner, { from: owner })
 
       const submitPermissionToken = options.submitPermissionToken || this.submitPermissionToken || { address: ZERO_ADDR }
       const submitPermissionBalance = submitPermissionToken.address === ZERO_ADDR ? bn(0) : (options.submitPermissionBalance || DEFAULT_DELAY_INITIALIZATION_PARAMS.tokenBalancePermission.balance)
@@ -192,8 +192,8 @@ class AgreementDeployer {
         const submitters = options.submitters || []
         for (const submitter of submitters) await submitPermissionToken.generateTokens(submitter, submitPermissionBalance)
       } else {
-        const SUBMIT_ROLE = await executor.SUBMIT_ROLE()
-        await this._grantPermissions(executor, SUBMIT_ROLE, options.submitters, owner)
+        const SUBMIT_ROLE = await disputable.SUBMIT_ROLE()
+        await this._grantPermissions(disputable, SUBMIT_ROLE, options.submitters, owner)
       }
 
       const challengePermissionToken = options.challengePermissionToken || this.challengePermissionToken || { address: ZERO_ADDR }
@@ -203,26 +203,26 @@ class AgreementDeployer {
         const challengers = options.challengers || []
         for (const challenger of challengers) await challengePermissionToken.generateTokens(challenger, challengePermissionBalance)
       } else {
-        const CHALLENGE_ROLE = await executor.CHALLENGE_ROLE()
-        await this._grantPermissions(executor, CHALLENGE_ROLE, options.challengers, owner)
+        const CHALLENGE_ROLE = await disputable.CHALLENGE_ROLE()
+        await this._grantPermissions(disputable, CHALLENGE_ROLE, options.challengers, owner)
       }
 
       const { actionCollateral, challengeCollateral, challengeDuration, delayPeriod } = { ...DEFAULT_DELAY_INITIALIZATION_PARAMS, ...options }
-      await executor.initialize(delayPeriod, this.agreement.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, submitPermissionToken.address, submitPermissionBalance, challengePermissionToken.address, challengePermissionBalance)
+      await disputable.initialize(delayPeriod, this.agreement.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, submitPermissionToken.address, submitPermissionBalance, challengePermissionToken.address, challengePermissionBalance)
     } else {
-      const SUBMIT_ROLE = await executor.SUBMIT_ROLE()
-      await this._grantPermissions(executor, SUBMIT_ROLE, options.submitters, owner)
+      const SUBMIT_ROLE = await disputable.SUBMIT_ROLE()
+      await this._grantPermissions(disputable, SUBMIT_ROLE, options.submitters, owner)
 
-      const CHALLENGE_ROLE = await executor.CHALLENGE_ROLE()
-      await this._grantPermissions(executor, CHALLENGE_ROLE, options.challengers, owner)
+      const CHALLENGE_ROLE = await disputable.CHALLENGE_ROLE()
+      await this._grantPermissions(disputable, CHALLENGE_ROLE, options.challengers, owner)
 
-      const { actionCollateral, challengeCollateral, challengeDuration } = { ...DEFAULT_EXECUTOR_INITIALIZATION_PARAMS, ...options }
-      await executor.initialize(this.agreement.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration)
+      const { actionCollateral, challengeCollateral, challengeDuration } = { ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS, ...options }
+      await disputable.initialize(this.agreement.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration)
     }
 
-    if (currentTimestamp) await executor.mockSetTimestamp(currentTimestamp)
-    this.previousDeploy = { ...this.previousDeploy, executor }
-    return executor
+    if (currentTimestamp) await disputable.mockSetTimestamp(currentTimestamp)
+    this.previousDeploy = { ...this.previousDeploy, disputable }
+    return disputable
   }
 
   async deployArbitrator(options = {}) {
@@ -262,11 +262,11 @@ class AgreementDeployer {
     return base
   }
 
-  async deployBaseExecutor(executorType = 'AgreementExecutorMock') {
-    const Executor = this._getContract(executorType)
-    const baseExecutor = await Executor.new()
-    this.previousDeploy = { ...this.previousDeploy, baseExecutor }
-    return baseExecutor
+  async deployBaseDisputable(disputableType = 'DisputableAppMock') {
+    const Disputable = this._getContract(disputableType)
+    const baseDisputable = await Disputable.new()
+    this.previousDeploy = { ...this.previousDeploy, baseDisputable }
+    return baseDisputable
   }
 
   async deployDAO(owner) {
@@ -298,18 +298,18 @@ class AgreementDeployer {
     return MiniMeToken.new(ZERO_ADDR, ZERO_ADDR, 0, name, decimals, symbol, true)
   }
 
-  async _grantExecutorPermissions(executor, manager) {
-    const EXECUTOR_ROLE = await this.agreement.EXECUTOR_ROLE()
-    await this.acl.createPermission(executor.address, this.agreement.address, EXECUTOR_ROLE, manager, { from: manager })
+  async _grantDisputablePermissions(disputable, manager) {
+    const DISPUTABLE_ROLE = await this.agreement.DISPUTABLE_ROLE()
+    await this.acl.createPermission(disputable.address, this.agreement.address, DISPUTABLE_ROLE, manager, { from: manager })
 
-    const executorPermissions = ['PAUSE_ROLE', 'RESUME_ROLE', 'CANCEL_ROLE', 'VOID_ROLE']
-    for (const permissionName of executorPermissions) {
-      const permission = await executor[permissionName]()
-      await this.acl.createPermission(this.agreement.address, executor.address, permission, manager, { from: manager })
+    const disputablePermissions = ['PAUSE_ROLE', 'RESUME_ROLE', 'CANCEL_ROLE', 'VOID_ROLE']
+    for (const permissionName of disputablePermissions) {
+      const permission = await disputable[permissionName]()
+      await this.acl.createPermission(this.agreement.address, disputable.address, permission, manager, { from: manager })
     }
 
-    const CHANGE_COLLATERAL_REQUIREMENTS_ROLE = await executor.CHANGE_COLLATERAL_REQUIREMENTS_ROLE()
-    await this.acl.createPermission(manager, executor.address, CHANGE_COLLATERAL_REQUIREMENTS_ROLE, manager, { from: manager })
+    const CHANGE_COLLATERAL_REQUIREMENTS_ROLE = await disputable.CHANGE_COLLATERAL_REQUIREMENTS_ROLE()
+    await this.acl.createPermission(manager, disputable.address, CHANGE_COLLATERAL_REQUIREMENTS_ROLE, manager, { from: manager })
   }
 
   async _grantPermissions(app, permission, users, manager) {
