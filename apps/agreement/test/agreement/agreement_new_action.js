@@ -156,7 +156,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
       const submitter = someone
 
       it('reverts', async () => {
-        await assertRevert(agreement.newAction({ submitter }), ARAGON_OS_ERRORS.ERROR_AUTH_FAILED)
+        await assertRevert(agreement.newAction({ submitter }), AGREEMENT_ERRORS.ERROR_CAN_NOT_FORWARD)
       })
     })
   })

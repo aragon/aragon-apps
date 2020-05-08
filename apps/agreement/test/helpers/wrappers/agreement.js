@@ -162,10 +162,12 @@ class AgreementWrapper {
   }
 
   async moveTo(timestamp) {
+    const clockMockAddress = await this.agreement.clockMock()
+    const clockMock = await this._getContract('ClockMock').at(clockMockAddress)
     const currentTimestamp = await this.currentTimestamp()
-    if (timestamp.lt(currentTimestamp)) return this.agreement.mockSetTimestamp(timestamp)
+    if (timestamp.lt(currentTimestamp)) return clockMock.mockSetTimestamp(timestamp)
     const timeDiff = timestamp.sub(currentTimestamp)
-    return this.agreement.mockIncreaseTime(timeDiff)
+    return clockMock.mockIncreaseTime(timeDiff)
   }
 
   async approve({ token, amount, from = undefined, accumulate = true }) {
