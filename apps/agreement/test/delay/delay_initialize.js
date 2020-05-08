@@ -30,11 +30,11 @@ contract('Delay', () => {
       const base = deployer.baseDisputable
 
       assert(await base.isPetrified(), 'base agreement contract should be petrified')
-      await assertRevert(base.initialize(delayPeriod, delay.delay.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, submitPermissionToken.address, submitPermissionBalance, challengePermissionToken.address, challengePermissionBalance), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
+      await assertRevert(base.initialize(delayPeriod, delay.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, submitPermissionToken.address, submitPermissionBalance, challengePermissionToken.address, challengePermissionBalance), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
     })
 
     it('cannot be initialized again', async () => {
-      await assertRevert(delay.disputable.initialize(delayPeriod, delay.delay.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, submitPermissionToken.address, submitPermissionBalance, challengePermissionToken.address, challengePermissionBalance), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
+      await assertRevert(delay.disputable.initialize(delayPeriod, delay.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, submitPermissionToken.address, submitPermissionBalance, challengePermissionToken.address, challengePermissionBalance), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
     })
 
     it('initializes the delay app', async () => {

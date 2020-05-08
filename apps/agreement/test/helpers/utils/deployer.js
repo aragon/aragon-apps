@@ -106,6 +106,10 @@ class AgreementDeployer {
     return this.previousDeploy.challengePermissionToken
   }
 
+  get clockMock() {
+    return this.previousDeploy.clockMock
+  }
+
   get abi() {
     return this.base.abi
   }
@@ -158,7 +162,7 @@ class AgreementDeployer {
     const CHANGE_CONTENT_ROLE = await agreement.CHANGE_CONTENT_ROLE()
     await this.acl.createPermission(owner, agreement.address, CHANGE_CONTENT_ROLE, owner, { from: owner })
 
-    if (currentTimestamp) await agreement.mockSetTimestamp(currentTimestamp)
+    if (currentTimestamp) await this.mockTime(agreement, currentTimestamp)
     this.previousDeploy = { ...this.previousDeploy, agreement }
     return agreement
   }
@@ -220,7 +224,7 @@ class AgreementDeployer {
       await disputable.initialize(this.agreement.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration)
     }
 
-    if (currentTimestamp) await disputable.mockSetTimestamp(currentTimestamp)
+    if (currentTimestamp) await this.mockTime(disputable, currentTimestamp)
     this.previousDeploy = { ...this.previousDeploy, disputable }
     return disputable
   }
@@ -296,6 +300,19 @@ class AgreementDeployer {
   async deployToken({ name = 'My Sample Token', decimals = 18, symbol = 'MST' }) {
     const MiniMeToken = this._getContract('MiniMeToken')
     return MiniMeToken.new(ZERO_ADDR, ZERO_ADDR, 0, name, decimals, symbol, true)
+  }
+
+  async mockTime(timeMockable, timestamp) {
+    if (!this.clockMock) await this.deployClockMock()
+    await timeMockable.setClockMock(this.clockMock.address)
+    return this.clockMock.mockSetTimestamp(timestamp)
+  }
+
+  async deployClockMock() {
+    const ClockMock = this._getContract('ClockMock')
+    const clockMock = await ClockMock.new()
+    this.previousDeploy = { ...this.previousDeploy, clockMock }
+    return clockMock
   }
 
   async _grantDisputablePermissions(disputable, manager) {

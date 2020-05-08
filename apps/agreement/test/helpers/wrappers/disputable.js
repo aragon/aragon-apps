@@ -27,10 +27,6 @@ class DisputableWrapper extends AgreementWrapper {
     return this.collateralRequirements.challengeDuration
   }
 
-  async currentTimestamp() {
-    return this.disputable.getTimestampPublic()
-  }
-
   async getBalance(user) {
     return super.getBalance(this.collateralToken, user)
   }
@@ -73,14 +69,6 @@ class DisputableWrapper extends AgreementWrapper {
     const challengeDuration = options.challengeDuration || currentRequirements.challengeDuration
 
     return this.disputable.changeCollateralRequirements(collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
-  }
-
-  async moveTo(timestamp) {
-    const currentTimestamp = await this.currentTimestamp()
-    if (timestamp.lt(currentTimestamp)) return this.disputable.mockSetTimestamp(timestamp)
-    const timeDiff = timestamp.sub(currentTimestamp)
-    await this.disputable.mockIncreaseTime(timeDiff)
-    return super.moveTo(timestamp)
   }
 
   async approve({ amount, from = undefined, accumulate = true }) {

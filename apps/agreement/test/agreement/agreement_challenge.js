@@ -20,14 +20,14 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
   })
 
   describe('challenge', () => {
-    context('when the challenger has permissions', () => {
-      context('when the given action exists', () => {
+    context('when the given action exists', () => {
+      beforeEach('create action', async () => {
+        ({ actionId } = await agreement.newAction({ submitter }))
+      })
+
+      context('when the challenger has permissions', () => {
         const stake = false // do not stake challenge collateral before creating challenge
         const arbitrationFees = false // do not approve arbitration fees before creating challenge
-
-        beforeEach('create action', async () => {
-          ({ actionId } = await agreement.newAction({ submitter }))
-        })
 
         const itCannotBeChallenged = () => {
           it('reverts', async () => {
@@ -244,7 +244,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
                     context('when the action was closed', () => {
                       beforeEach('close action', async () => {
-                        await agreement.close(actionId)
+                        await agreement.close({ actionId })
                       })
 
                       itCannotBeChallenged()
@@ -274,25 +274,25 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
         context('when the action was closed', () => {
           beforeEach('close action', async () => {
-            await agreement.close(actionId)
+            await agreement.close({ actionId })
           })
 
           itCannotBeChallenged()
         })
       })
 
-      context('when the given action does not exist', () => {
+      context('when the challenger does not have permissions', () => {
+        const challenger = someone
+
         it('reverts', async () => {
-          await assertRevert(agreement.challenge({ actionId: 0, challenger }), AGREEMENT_ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
+          await assertRevert(agreement.challenge({ actionId, challenger }), AGREEMENT_ERRORS.ERROR_CANNOT_CHALLENGE_ACTION)
         })
       })
     })
 
-    context('when the challenger does not have permissions', () => {
-      const challenger = someone
-
+    context('when the given action does not exist', () => {
       it('reverts', async () => {
-        await assertRevert(agreement.challenge({ actionId: 0, challenger }), ARAGON_OS_ERRORS.ERROR_AUTH_FAILED)
+        await assertRevert(agreement.challenge({ actionId: 0, challenger }), AGREEMENT_ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
       })
     })
   })
