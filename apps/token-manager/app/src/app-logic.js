@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
+import { useFromWei } from './web3-utils'
 import {
   useAppState,
   useCurrentApp,
@@ -67,6 +68,45 @@ function useDecoratedVestings() {
 
     return vestings
   }, [vestings])
+}
+
+export function toISODate(seconds) {
+  return new Date(parseInt(seconds, 10) * 1000)
+}
+
+export function vestedTokensInfo(amount, cliff, startDate, endDate) {
+  let vestingInfo = {}
+  const time = parseInt(new Date().getTime() / 1000)
+
+  // Shortcuts for before cliff and after vested cases.
+  if (time >= endDate) {
+    vestingIngo.unlockedTokens = useFromWei(amount)
+  } else if (time < cliff) {
+    vestingInfo.unlockedTokens = 0
+  } else {
+    vestingInfo.unlockedTokens = (
+      (useFromWei(amount) * (time - startDate)) /
+      (endDate - startDate)
+    ).toFixed(2)
+  }
+
+  vestingInfo.lockedTokens = (
+    useFromWei(amount) - parseFloat(vestingInfo.unlockedTokens)
+  ).toFixed(2)
+
+  vestingInfo.lockedPercentage = (
+    (vestingInfo.lockedTokens * 100) /
+    useFromWei(amount)
+  ).toFixed(2)
+
+  vestingInfo.unlockedPercentage = (100 - vestingInfo.lockedPercentage).toFixed(
+    2
+  )
+
+  vestingInfo.cliffPercentage =
+    ((cliff - startDate) * 100) / (endDate - startDate)
+  console.log('delf', vestingInfo)
+  return vestingInfo
 }
 
 // Handles the main logic of the app.

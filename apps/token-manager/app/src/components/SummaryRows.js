@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { GU, textStyle, useTheme } from '@aragon/ui'
 
-function SummaryRows() {
+function SummaryRows({ vestingInfo, tokenSymbol }) {
   const theme = useTheme()
   return (
     <div
@@ -15,14 +15,14 @@ function SummaryRows() {
       <SummaryRow
         color={theme.positive}
         label="Unlocked tokens"
-        pct={30}
-        token={{ amount: 90, symbol: 'ETHI' }}
+        pct={vestingInfo.unlockedPercentage}
+        token={{ amount: vestingInfo.unlockedTokens, symbol: tokenSymbol }}
       />
       <SummaryRow
         color={theme.negative}
         label="Locked tokens"
-        pct={70}
-        token={{ amount: 210, symbol: 'ETHI' }}
+        pct={vestingInfo.lockedPercentage}
+        token={{ amount: vestingInfo.lockedTokens, symbol: tokenSymbol }}
       />
     </div>
   )

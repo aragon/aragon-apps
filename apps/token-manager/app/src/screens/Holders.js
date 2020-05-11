@@ -16,7 +16,7 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { formatBalance } from '../utils'
-import { addressesEqual, fromWei } from '../web3-utils'
+import { addressesEqual, useFromWei } from '../web3-utils'
 import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from '../components/IdentityManager/IdentityManager'
@@ -87,7 +87,7 @@ function Holders({
             if (vestings.length > 0) {
               amount = vestings
                 .map(function(vesting) {
-                  return fromWei(vesting.amount)
+                  return useFromWei(vesting.amount)
                 })
                 .reduce(
                   (total, current) => parseFloat(total) + parseFloat(current)

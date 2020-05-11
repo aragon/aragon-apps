@@ -11,4 +11,7 @@ export function addressesEqual(first, second) {
 
 // Re-export some web3-utils functions
 export { isAddress } from 'web3-utils'
-export { fromWei } from 'web3-utils'
+
+export function useFromWei(number) {
+  return parseFloat(fromWei(number.toString()))
+}

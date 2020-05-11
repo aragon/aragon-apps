@@ -12,11 +12,16 @@ import {
 } from '@aragon/ui'
 import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
-import { useAppLogic } from '../app-logic'
+import { useAppLogic, toISODate, vestedTokensInfo } from '../app-logic'
+import { format, formatDistanceStrict, parseISO } from 'date-fns'
+import { useFromWei } from '../web3-utils'
 
-function Details() {
+const formatDate = date => `${format(date, 'do MMM yyyy, HH:mm O')}`
+
+function Details({ tokenSymbol }) {
   const theme = useTheme()
   const { selectedHolder } = useAppLogic()
+  console.log('delf en detail', selectedHolder)
   return (
     <React.Fragment>
       <Bar></Bar>
@@ -24,36 +29,13 @@ function Details() {
         primary={
           <Box>
             <Accordion
-              items={[
-                [
-                  <VestingContent vestedTokens={'120'} />,
-                  <ExpandableContent vestedTokens={'120'} />,
-                ],
-                [
-                  <VestingContent vestedTokens={'120'} />,
-                  <ExpandableContent vestedTokens={'120'} />,
-                ],
-                [
-                  <VestingContent vestedTokens={'120'} />,
-                  <ExpandableContent vestedTokens={'120'} />,
-                ],
-                [
-                  <VestingContent vestedTokens={'120'} />,
-                  <ExpandableContent vestedTokens={'120'} />,
-                ],
-                [
-                  <VestingContent vestedTokens={'120'} />,
-                  <ExpandableContent vestedTokens={'120'} />,
-                ],
-                [
-                  <VestingContent vestedTokens={'120'} />,
-                  <ExpandableContent vestedTokens={'120'} />,
-                ],
-                [
-                  <VestingContent vestedTokens={'120'} />,
-                  <ExpandableContent vestedTokens={'120'} />,
-                ],
-              ]}
+              items={selectedHolder.vestings.map(vesting => [
+                <VestingContent vesting={vesting} tokenSymbol={tokenSymbol} />,
+                <ExpandableContent
+                  vesting={vesting}
+                  tokenSymbol={tokenSymbol}
+                />,
+              ])}
             />
           </Box>
         }
@@ -109,7 +91,14 @@ function Details() {
   )
 }
 
-function VestingContent({ vestedTokens }) {
+function VestingContent({ vesting, tokenSymbol }) {
+  const vestingInfo = vestedTokensInfo(
+    vesting.amount,
+    vesting.cliff,
+    vesting.start,
+    vesting.vesting
+  )
+
   return (
     <div
       css={`
@@ -127,7 +116,7 @@ function VestingContent({ vestedTokens }) {
           align-items: center;
         `}
       >
-        120 ETHI
+        {useFromWei(vesting.amount)} {tokenSymbol}
       </div>
       <div
         css={`
@@ -135,22 +124,26 @@ function VestingContent({ vestedTokens }) {
         `}
       >
         <SummaryBar
-          lockedPercentage={parseInt(70)}
-          unlockedPercentage={parseInt(30)}
-          requiredSize={parseInt(30)}
+          vestingInfo={vestingInfo}
           css={`
             margin-top: 0;
             margin-bottom: ${2 * GU}px;
           `}
         />
-        <SummaryRows />
+        <SummaryRows vestingInfo={vestingInfo} tokenSymbol={tokenSymbol} />
       </div>
     </div>
   )
 }
 
-function ExpandableContent({ vestedTokens }) {
+function ExpandableContent({ vesting, tokenSymbol }) {
   const theme = useTheme()
+  const vestingInfo = vestedTokensInfo(
+    vesting.amount,
+    vesting.cliff,
+    vesting.start,
+    vesting.vesting
+  )
   return (
     <div
       css={`
@@ -169,7 +162,7 @@ function ExpandableContent({ vestedTokens }) {
           >
             START DAY
           </label>
-          <p>April 14, 2020, 7:03 PM GMT-3</p>
+          <p>{formatDate(toISODate(vesting.start))}</p>
         </ContentBox>
         <ContentBox>
           <label
@@ -179,7 +172,7 @@ function ExpandableContent({ vestedTokens }) {
           >
             END DAY
           </label>
-          <p>April 14, 2021, 7:03 PM GMT-3</p>
+          <p>{formatDate(toISODate(vesting.vesting))}</p>
         </ContentBox>
       </div>
       <div>
@@ -191,7 +184,12 @@ function ExpandableContent({ vestedTokens }) {
           >
             VESTING PERIOD
           </label>
-          <p>12 Month</p>
+          <p>
+            {formatDistanceStrict(
+              toISODate(vesting.vesting),
+              toISODate(vesting.start)
+            )}
+          </p>
         </ContentBox>
         <ContentBox>
           <label
@@ -201,7 +199,12 @@ function ExpandableContent({ vestedTokens }) {
           >
             VESTING CLIFF
           </label>
-          <p>3 Month</p>
+          <p>
+            {formatDistanceStrict(
+              toISODate(vesting.cliff),
+              toISODate(vesting.start)
+            )}
+          </p>
         </ContentBox>
       </div>
       <div>
@@ -213,7 +216,9 @@ function ExpandableContent({ vestedTokens }) {
           >
             AVAILABLE TO TRANSFER
           </label>
-          <p>30 ETHI</p>
+          <p>
+            {vestingInfo.unlockedTokens} {tokenSymbol}
+          </p>
         </ContentBox>
         <ContentBox>
           <Button wide size="small" mode="normal">
