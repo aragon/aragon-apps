@@ -21,7 +21,6 @@ const formatDate = date => `${format(date, 'do MMM yyyy, HH:mm O')}`
 function Details({ tokenSymbol }) {
   const theme = useTheme()
   const { selectedHolder } = useAppLogic()
-  console.log('delf en detail', selectedHolder)
   return (
     <React.Fragment>
       <Bar></Bar>

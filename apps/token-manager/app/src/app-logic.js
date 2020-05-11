@@ -105,7 +105,6 @@ export function vestedTokensInfo(amount, cliff, startDate, endDate) {
 
   vestingInfo.cliffPercentage =
     ((cliff - startDate) * 100) / (endDate - startDate)
-  console.log('delf', vestingInfo)
   return vestingInfo
 }
 
