@@ -169,9 +169,10 @@ contract('Delay', ([_, challenger, holder0, holder1, holder2, holder3, holder4, 
       assertBn(calculateStakedBalance(holder5Delayables), holder5Available, 'holder 5 available balance does not match')
       assertBn(holder5Locked, 0, 'holder 5 locked balance does not match')
 
-      const StakingBalance = await collateralToken.balanceOf(delay.address)
+      const staking = await delay.getStaking()
+      const stakingBalance = await collateralToken.balanceOf(staking.address)
       const expectedBalance = holder1Available.add(holder2Available).add(holder3Available).add(holder4Available).add(holder5Available)
-      assertBn(StakingBalance, expectedBalance, 'agreement staked balance does not match')
+      assertBn(stakingBalance, expectedBalance, 'agreement staked balance does not match')
     })
 
     it('transfer the arbitration fees properly', async () => {

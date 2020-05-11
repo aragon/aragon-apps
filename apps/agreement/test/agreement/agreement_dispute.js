@@ -129,10 +129,12 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   })
 
                   it('does not affect token balances', async () => {
+                    const stakingAddress = await agreement.getStakingAddress()
                     const { collateralToken } = agreement
+
                     const previousSubmitterBalance = await collateralToken.balanceOf(submitter)
                     const previousChallengerBalance = await collateralToken.balanceOf(challenger)
-                    const previousStakingBalance = await collateralToken.balanceOf(agreement.address)
+                    const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
 
                     await agreement.dispute({ actionId, from, arbitrationFees })
 
@@ -142,7 +144,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     const currentChallengerBalance = await collateralToken.balanceOf(challenger)
                     assertBn(currentChallengerBalance, previousChallengerBalance, 'challenger balance does not match')
 
-                    const currentStakingBalance = await collateralToken.balanceOf(agreement.address)
+                    const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
                     assertBn(currentStakingBalance, previousStakingBalance, 'staking balance does not match')
                   })
 
@@ -215,7 +217,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     const missingArbitrationFees = await agreement.missingArbitrationFees(actionId)
 
                     const previousSubmitterBalance = await feeToken.balanceOf(submitter)
-                    const previousStakingBalance = await feeToken.balanceOf(agreement.address)
+                    const previousAgreementBalance = await feeToken.balanceOf(agreement.address)
                     const previousArbitratorBalance = await feeToken.balanceOf(agreement.arbitrator.address)
 
                     await agreement.dispute({ actionId, from: submitter, arbitrationFees })
@@ -223,8 +225,8 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     const currentSubmitterBalance = await feeToken.balanceOf(submitter)
                     assertBn(currentSubmitterBalance, previousSubmitterBalance.sub(missingArbitrationFees), 'submitter balance does not match')
 
-                    const currentStakingBalance = await feeToken.balanceOf(agreement.address)
-                    assertBn(currentStakingBalance, previousStakingBalance.sub(feeAmount.sub(missingArbitrationFees)), 'staking balance does not match')
+                    const currentAgreementBalance = await feeToken.balanceOf(agreement.address)
+                    assertBn(currentAgreementBalance, previousAgreementBalance.sub(feeAmount.sub(missingArbitrationFees)), 'agreement balance does not match')
 
                     const currentArbitratorBalance = await feeToken.balanceOf(agreement.arbitrator.address)
                     assertBn(currentArbitratorBalance, previousArbitratorBalance.add(feeAmount), 'arbitrator balance does not match')
@@ -245,7 +247,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 itDisputesTheChallengeProperly(() => {
                   it('transfers the arbitration fees to the arbitrator', async () => {
                     const previousSubmitterBalance = await newArbitrationFeeToken.balanceOf(submitter)
-                    const previousStakingBalance = await newArbitrationFeeToken.balanceOf(agreement.address)
+                    const previousAgreementBalance = await newArbitrationFeeToken.balanceOf(agreement.address)
                     const previousArbitratorBalance = await newArbitrationFeeToken.balanceOf(agreement.arbitrator.address)
 
                     await agreement.dispute({ actionId, from: submitter, arbitrationFees })
@@ -253,21 +255,21 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     const currentSubmitterBalance = await newArbitrationFeeToken.balanceOf(submitter)
                     assertBn(currentSubmitterBalance, previousSubmitterBalance.sub(newArbitrationFeeAmount), 'submitter balance does not match')
 
-                    const currentStakingBalance = await newArbitrationFeeToken.balanceOf(agreement.address)
-                    assertBn(currentStakingBalance, previousStakingBalance, 'staking balance does not match')
+                    const currentAgreementBalance = await newArbitrationFeeToken.balanceOf(agreement.address)
+                    assertBn(currentAgreementBalance, previousAgreementBalance, 'agreement balance does not match')
 
                     const currentArbitratorBalance = await newArbitrationFeeToken.balanceOf(agreement.arbitrator.address)
                     assertBn(currentArbitratorBalance, previousArbitratorBalance.add(newArbitrationFeeAmount), 'arbitrator balance does not match')
                   })
 
                   it('returns the previous arbitration fees to the challenger', async () => {
-                    const previousStakingBalance = await previousFeeToken.balanceOf(agreement.address)
+                    const previousAgreementBalance = await previousFeeToken.balanceOf(agreement.address)
                     const previousChallengerBalance = await previousFeeToken.balanceOf(challenger)
 
                     await agreement.dispute({ actionId, from: submitter, arbitrationFees })
 
-                    const currentStakingBalance = await previousFeeToken.balanceOf(agreement.address)
-                    assertBn(currentStakingBalance, previousStakingBalance.sub(previousHalfFeeAmount), 'staking balance does not match')
+                    const currentAgreementBalance = await previousFeeToken.balanceOf(agreement.address)
+                    assertBn(currentAgreementBalance, previousAgreementBalance.sub(previousHalfFeeAmount), 'agreement balance does not match')
 
                     const currentChallengerBalance = await previousFeeToken.balanceOf(challenger)
                     assertBn(currentChallengerBalance, previousChallengerBalance.add(previousHalfFeeAmount), 'challenger balance does not match')

@@ -105,9 +105,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       const { disputeId } = await agreement.getChallenge(actionId)
                       const receipt = await agreement.submitEvidence({ actionId, evidence, from, finished })
 
-                      const IArbitrable = artifacts.require('IArbitrable')
-                      const logs = decodeEventsOfType(receipt, IArbitrable.abi, 'EvidenceSubmitted')
-
+                      const logs = decodeEventsOfType(receipt, agreement.abi, 'EvidenceSubmitted')
                       assertAmountOfEvents({ logs }, 'EvidenceSubmitted', 1)
                       assertEvent({ logs }, 'EvidenceSubmitted', { disputeId, submitter: from, evidence, finished })
                     })

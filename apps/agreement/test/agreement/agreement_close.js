@@ -61,17 +61,19 @@ contract('Agreement', ([_, submitter, someone]) => {
             })
           }
 
-          it('does not affect token balances', async () => {
+          it('does not affect staked balances', async () => {
+            const stakingAddress = await agreement.getStakingAddress()
             const { collateralToken } = agreement
+
             const previousSubmitterBalance = await collateralToken.balanceOf(submitter)
-            const previousStakingBalance = await collateralToken.balanceOf(agreement.address)
+            const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
 
             await agreement.close({ actionId })
 
             const currentSubmitterBalance = await collateralToken.balanceOf(submitter)
             assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
 
-            const currentStakingBalance = await collateralToken.balanceOf(agreement.address)
+            const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
             assertBn(currentStakingBalance, previousStakingBalance, 'staking balance does not match')
           })
 

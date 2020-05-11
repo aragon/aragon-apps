@@ -7,7 +7,7 @@ const { AGREEMENT_ERRORS, STAKING_ERRORS } = require('../helpers/utils/errors')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
-contract('Delay', ([_, owner, submitter]) => {
+contract('Delay', ([_, owner, someone, submitter]) => {
   let delay, actionCollateral
 
   const script = '0xabcdef'
@@ -27,12 +27,12 @@ contract('Delay', ([_, owner, submitter]) => {
         await delay.stake({ amount: actionCollateral, user: submitter })
       })
 
-      context('when the signer has enough balance', () => {
-        context('when the signer has already signed the agreement', () => {
-          beforeEach('sign agreement', async () => {
-            await delay.sign(submitter)
-          })
+      context('when the signer has already signed the agreement', () => {
+        beforeEach('sign agreement', async () => {
+          await delay.sign(submitter)
+        })
 
+        context('when the signer has enough balance', () => {
           context('when the agreement settings did not change', () => {
             it('creates a new delayable', async () => {
               const delayPeriod = await delay.delayPeriod()
@@ -105,27 +105,29 @@ contract('Delay', ([_, owner, submitter]) => {
           })
         })
 
-        context('when the signer did not sign the agreement', () => {
+        context('when the signer does not have enough stake', () => {
+          beforeEach('unstake available balance', async () => {
+            await delay.unstake({ user: submitter })
+          })
+
           it('reverts', async () => {
-            await assertRevert(delay.schedule({ submitter, script, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_SIGNER_MUST_SIGN)
+            await assertRevert(delay.schedule({ submitter, script, actionContext, stake, sign }), STAKING_ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
           })
         })
       })
 
-      context('when the signer does not have enough stake', () => {
-        beforeEach('schedule other actions', async () => {
-          await delay.schedule({ submitter, script, actionContext, stake })
-        })
-
+      context('when the signer did not sign the agreement', () => {
         it('reverts', async () => {
-          await assertRevert(delay.schedule({ submitter, script, actionContext, stake, sign }), STAKING_ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
+          await assertRevert(delay.schedule({ submitter, script, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_SIGNER_MUST_SIGN)
         })
       })
     })
 
     context('when the sender does not have an amount staked before', () => {
+      const submitter = someone
+
       context('when the signer has already signed the agreement', () => {
-        beforeEach('sign agreement', async () => {
+        beforeEach('sign agreement and unstake', async () => {
           await delay.sign(submitter)
         })
 

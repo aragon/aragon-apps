@@ -28,12 +28,12 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
           await agreement.stake({ amount: actionCollateral, user: submitter })
         })
 
-        context('when the signer has enough balance', () => {
-          context('when the signer has already signed the agreement', () => {
-            beforeEach('sign agreement', async () => {
-              await agreement.sign(submitter)
-            })
+        context('when the signer has already signed the agreement', () => {
+          beforeEach('sign agreement', async () => {
+            await agreement.sign(submitter)
+          })
 
+          context('when the signer has enough balance', () => {
             context('when the agreement settings did not change', () => {
               it('creates a new scheduled action', async () => {
                 const currentCollateralId = await agreement.getCurrentCollateralRequirementId()
@@ -58,16 +58,18 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
               })
 
               it('does not affect token balances', async () => {
+                const stakingAddress = await agreement.getStakingAddress()
                 const { collateralToken } = agreement
+
                 const previousSubmitterBalance = await collateralToken.balanceOf(submitter)
-                const previousStakingBalance = await collateralToken.balanceOf(agreement.address)
+                const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
 
                 await agreement.newAction({ submitter, actionContext, stake, sign })
 
                 const currentSubmitterBalance = await collateralToken.balanceOf(submitter)
                 assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
 
-                const currentStakingBalance = await collateralToken.balanceOf(agreement.address)
+                const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
                 assertBn(currentStakingBalance, previousStakingBalance, 'staking balance does not match')
               })
 
@@ -107,40 +109,23 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
               })
 
               it('can unstake the available balance', async () => {
-                await agreement.unstake({ user: submitter, amount: actionCollateral })
+                const { available: previousAvailableBalance } = await agreement.getBalance(submitter)
+                await agreement.unstake({ user: submitter, amount: previousAvailableBalance })
 
-                const { available } = await agreement.getBalance(submitter)
-                assertBn(available, 0, 'submitter available balance does not match')
+                const { available: currentAvailableBalance } = await agreement.getBalance(submitter)
+                assertBn(currentAvailableBalance, 0, 'submitter available balance does not match')
               })
             })
           })
 
-          context('when the signer did not sign the agreement', () => {
-            it('reverts', async () => {
-              await assertRevert(agreement.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_SIGNER_MUST_SIGN)
+          context('when the signer does not have enough stake', () => {
+            beforeEach('unstake available balance', async () => {
+              await agreement.unstake({ user: submitter })
             })
-          })
-        })
 
-        context('when the signer does not have enough stake', () => {
-          beforeEach('schedule other actions', async () => {
-            await agreement.newAction({ submitter, actionContext, stake })
-          })
-
-          it('reverts', async () => {
-            await assertRevert(agreement.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
-          })
-        })
-      })
-
-      context('when the sender does not have an amount staked before', () => {
-        context('when the signer has already signed the agreement', () => {
-          beforeEach('sign agreement', async () => {
-            await agreement.sign(submitter)
-          })
-
-          it('reverts', async () => {
-            await assertRevert(agreement.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
+            it('reverts', async () => {
+              await assertRevert(agreement.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
+            })
           })
         })
 
@@ -148,6 +133,14 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
           it('reverts', async () => {
             await assertRevert(agreement.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_SIGNER_MUST_SIGN)
           })
+        })
+      })
+
+      context('when the sender does not have an amount staked before', () => {
+        const submitter = someone
+
+        it('reverts', async () => {
+          await assertRevert(agreement.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
         })
       })
     })

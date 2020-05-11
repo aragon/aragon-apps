@@ -5,8 +5,8 @@ const { decodeEventsOfType } = require('../lib/decodeEvent')
 const { getEventArgument } = require('@aragon/contract-test-helpers/events')
 
 class DisputableWrapper extends AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator, disputable, collateralRequirement = {}) {
-    super(artifacts, web3, agreement, arbitrator);
+  constructor(artifacts, web3, agreement, arbitrator, stakingFactory, disputable, collateralRequirement = {}) {
+    super(artifacts, web3, agreement, arbitrator, stakingFactory)
     this.disputable = disputable
     this.collateralRequirement = collateralRequirement
   }
@@ -40,6 +40,14 @@ class DisputableWrapper extends AgreementWrapper {
     const MiniMeToken = this._getContract('MiniMeToken')
     const { collateralToken, actionAmount: actionCollateral, challengeAmount: challengeCollateral, challengeDuration } = await this.disputable.getCollateralRequirement(0, id)
     return { collateralToken: await MiniMeToken.at(collateralToken), actionCollateral, challengeCollateral, challengeDuration }
+  }
+
+  async getStakingAddress() {
+    return super.getStakingAddress(this.collateralToken)
+  }
+
+  async getStaking() {
+    return super.getStaking(this.collateralToken)
   }
 
   async newAction({ submitter = undefined, actionContext = '0x1234', sign = undefined, stake = undefined }) {
@@ -77,12 +85,12 @@ class DisputableWrapper extends AgreementWrapper {
     return this.disputable.changeCollateralRequirement(collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
   }
 
-  async approve({ amount, from = undefined, accumulate = true }) {
-    return super.approve({ token: this.collateralToken, amount, from, accumulate })
+  async approve({ amount, to = undefined, from = undefined, accumulate = true }) {
+    return super.approve({ token: this.collateralToken, amount, to, from, accumulate })
   }
 
-  async approveAndCall({ amount, from = undefined, mint = true }) {
-    return super.approveAndCall({ token: this.collateralToken, amount, from, mint })
+  async approveAndCall({ amount, to = undefined, from = undefined, mint = true }) {
+    return super.approveAndCall({ token: this.collateralToken, amount, to, from, mint })
   }
 
   async stake({ amount = undefined, user = undefined, from = undefined, approve = undefined }) {

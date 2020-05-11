@@ -90,6 +90,10 @@ class AgreementDeployer {
     return this.previousDeploy.agreement
   }
 
+  get stakingFactory() {
+    return this.previousDeploy.stakingFactory
+  }
+
   get disputable() {
     return this.previousDeploy.disputable
   }
@@ -122,19 +126,21 @@ class AgreementDeployer {
 
     const disputable = options.disputable || this.disputable
     const arbitrator = options.arbitrator || this.arbitrator
+    const stakingFactory = options.stakingFactory || this.stakingFactory
     const collateralToken = options.collateralToken || this.collateralToken
 
     const { actionAmount, challengeAmount, challengeDuration } = await this.disputable.getCollateralRequirement(0, 0)
     const collateralRequirement = { collateralToken, actionAmount, challengeAmount, challengeDuration }
 
     const Wrapper = options.delay ? DelayWrapper : DisputableWrapper
-    return new Wrapper(this.artifacts, this.web3, this.agreement, arbitrator, disputable, collateralRequirement)
+    return new Wrapper(this.artifacts, this.web3, this.agreement, arbitrator, stakingFactory, disputable, collateralRequirement)
   }
 
   async deployAndInitializeWrapper(options = {}) {
     await this.deployAndInitialize(options)
     const arbitrator = options.arbitrator || this.arbitrator
-    return new AgreementWrapper(this.artifacts, this.web3, this.agreement, arbitrator)
+    const stakingFactory = options.stakingFactory || this.stakingFactory
+    return new AgreementWrapper(this.artifacts, this.web3, this.agreement, arbitrator, stakingFactory)
   }
 
   async deployAndInitialize(options = {}) {
@@ -143,10 +149,13 @@ class AgreementDeployer {
     if (!options.arbitrator && !this.arbitrator) await this.deployArbitrator(options)
     const arbitrator = options.arbitrator || this.arbitrator
 
+    if (!options.stakingFactory && !this.stakingFactory) await this.deployStakingFactory()
+    const stakingFactory = options.stakingFactory || this.stakingFactory
+
     const defaultOptions = { ...DEFAULT_AGREEMENT_INITIALIZATION_PARAMS, ...options }
     const { title, content } = defaultOptions
 
-    await this.agreement.initialize(title, content, arbitrator.address)
+    await this.agreement.initialize(title, content, arbitrator.address, stakingFactory.address)
     return this.agreement
   }
 
@@ -237,6 +246,24 @@ class AgreementDeployer {
     const arbitrator = await Arbitrator.new(feeToken.address, feeAmount)
     this.previousDeploy = { ...this.previousDeploy, arbitrator }
     return arbitrator
+  }
+
+  async deployStakingFactory() {
+    const StakingFactory = this._getContract('StakingFactory')
+    const stakingFactory = await StakingFactory.new()
+    this.previousDeploy = { ...this.previousDeploy, stakingFactory }
+    return stakingFactory
+  }
+
+  async deployStakingInstance(token) {
+    if (!this.stakingFactory) await this.deployStakingFactory()
+    let stakingAddress = await this.stakingFactory.getInstance(token.address)
+    if (stakingAddress === ZERO_ADDR) {
+      const receipt = await this.stakingFactory.getOrCreateInstance(token.address)
+      stakingAddress = getEventArgument(receipt, 'NewStaking', 'instance')
+    }
+    const Staking = artifacts.require('Staking')
+    return Staking.at(stakingAddress)
   }
 
   async deployCollateralToken(options = {}) {

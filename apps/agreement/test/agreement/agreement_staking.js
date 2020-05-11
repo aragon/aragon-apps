@@ -9,10 +9,11 @@ const { STAKING_ERRORS } = require('../helpers/utils/errors')
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 contract('Agreement', ([_, someone, user]) => {
-  let token, agreement
+  let token, staking, agreement
 
   beforeEach('deploy agreement instance', async () => {
     token = await deployer.deployToken({})
+    staking = await deployer.deployStakingInstance(token)
     agreement = await deployer.deployAndInitializeWrapper()
   })
 
@@ -24,7 +25,7 @@ contract('Agreement', ([_, someone, user]) => {
 
       context('when the user has approved the requested amount', () => {
         beforeEach('approve tokens', async () => {
-          await agreement.approve({ token, amount, from: user })
+          await agreement.approve({ token, amount, from: user, to: staking.address })
         })
 
         it('increases the user available balance', async () => {
@@ -47,14 +48,14 @@ contract('Agreement', ([_, someone, user]) => {
 
         it('transfers the staked tokens to the contract', async () => {
           const previousUserBalance = await token.balanceOf(user)
-          const previousStakingBalance = await token.balanceOf(agreement.address)
+          const previousStakingBalance = await token.balanceOf(staking.address)
 
           await agreement.stake({ token, amount, user, approve })
 
           const currentUserBalance = await token.balanceOf(user)
           assertBn(currentUserBalance, previousUserBalance.sub(amount), 'user balance does not match')
 
-          const currentStakingBalance = await token.balanceOf(agreement.address)
+          const currentStakingBalance = await token.balanceOf(staking.address)
           assertBn(currentStakingBalance, previousStakingBalance.add(amount), 'staking balance does not match')
         })
 
@@ -62,7 +63,7 @@ contract('Agreement', ([_, someone, user]) => {
           const receipt = await agreement.stake({ token, amount, user, approve })
 
           assertAmountOfEvents(receipt, STAKING_EVENTS.BALANCE_STAKED, 1)
-          assertEvent(receipt, STAKING_EVENTS.BALANCE_STAKED, { token, user, amount })
+          assertEvent(receipt, STAKING_EVENTS.BALANCE_STAKED, { user, amount })
         })
       })
 
@@ -91,7 +92,8 @@ contract('Agreement', ([_, someone, user]) => {
 
       context('when the user has approved the requested amount', () => {
         beforeEach('approve tokens', async () => {
-          await agreement.approve({ token, amount, from })
+          const staking = await agreement.getStaking(token)
+          await agreement.approve({ token, amount, from, to: staking.address })
         })
 
         it('increases the user available balance', async () => {
@@ -114,14 +116,14 @@ contract('Agreement', ([_, someone, user]) => {
 
         it('transfers the staked tokens to the contract', async () => {
           const previousUserBalance = await token.balanceOf(from)
-          const previousStakingBalance = await token.balanceOf(agreement.address)
+          const previousStakingBalance = await token.balanceOf(staking.address)
 
           await agreement.stake({ token, user, amount, from, approve })
 
           const currentUserBalance = await token.balanceOf(from)
           assertBn(currentUserBalance, previousUserBalance.sub(amount), 'user balance does not match')
 
-          const currentStakingBalance = await token.balanceOf(agreement.address)
+          const currentStakingBalance = await token.balanceOf(staking.address)
           assertBn(currentStakingBalance, previousStakingBalance.add(amount), 'staking balance does not match')
         })
 
@@ -129,7 +131,7 @@ contract('Agreement', ([_, someone, user]) => {
           const receipt = await agreement.stake({ token, user, amount, from, approve })
 
           assertAmountOfEvents(receipt, STAKING_EVENTS.BALANCE_STAKED, 1)
-          assertEvent(receipt, STAKING_EVENTS.BALANCE_STAKED, { token, user, amount })
+          assertEvent(receipt, STAKING_EVENTS.BALANCE_STAKED, { user, amount })
         })
       })
 
@@ -162,7 +164,7 @@ contract('Agreement', ([_, someone, user]) => {
       it('increases the user available balance', async () => {
         const { available: previousAvailableBalance } = await agreement.getBalance(token, user)
 
-        await agreement.approveAndCall({ token, amount, from, mint: false })
+        await agreement.approveAndCall({ token, amount, from, to: staking.address, mint: false })
 
         const { available: currentAvailableBalance } = await agreement.getBalance(token, user)
         assertBn(currentAvailableBalance, previousAvailableBalance.add(amount), 'available balance does not match')
@@ -171,7 +173,7 @@ contract('Agreement', ([_, someone, user]) => {
       it('does not affect the locked balance of the user', async () => {
         const { locked: previousLockedBalance } = await agreement.getBalance(token, user)
 
-        await agreement.approveAndCall({ token, amount, from, mint: false })
+        await agreement.approveAndCall({ token, amount, from, to: staking.address, mint: false })
 
         const { locked: currentLockedBalance } = await agreement.getBalance(token, user)
         assertBn(currentLockedBalance, previousLockedBalance, 'locked balance does not match')
@@ -179,23 +181,24 @@ contract('Agreement', ([_, someone, user]) => {
 
       it('transfers the staked tokens to the contract', async () => {
         const previousUserBalance = await token.balanceOf(user)
-        const previousStakingBalance = await token.balanceOf(agreement.address)
+        const previousStakingBalance = await token.balanceOf(staking.address)
 
-        await agreement.approveAndCall({ token, amount, from, mint: false })
+        await agreement.approveAndCall({ token, amount, from, to: staking.address, mint: false })
 
         const currentUserBalance = await token.balanceOf(user)
         assertBn(currentUserBalance, previousUserBalance.sub(amount), 'user balance does not match')
 
-        const currentStakingBalance = await token.balanceOf(agreement.address)
+        const currentStakingBalance = await token.balanceOf(staking.address)
         assertBn(currentStakingBalance, previousStakingBalance.add(amount), 'staking balance does not match')
       })
 
       it('emits an event', async () => {
-        const receipt = await agreement.approveAndCall({ token, amount, from, mint: false })
-        const logs = decodeEventsOfType(receipt, deployer.abi, STAKING_EVENTS.BALANCE_STAKED)
+        const Staking = artifacts.require('Staking')
+        const receipt = await agreement.approveAndCall({ token, amount, from, to: staking.address, mint: false })
+        const logs = decodeEventsOfType(receipt, Staking.abi, STAKING_EVENTS.BALANCE_STAKED)
 
         assertAmountOfEvents({ logs }, STAKING_EVENTS.BALANCE_STAKED, 1)
-        assertEvent({ logs }, STAKING_EVENTS.BALANCE_STAKED, { token, user, amount })
+        assertEvent({ logs }, STAKING_EVENTS.BALANCE_STAKED, { user, amount })
       })
     })
 
@@ -203,7 +206,7 @@ contract('Agreement', ([_, someone, user]) => {
       const amount = 0
 
       it('reverts', async () => {
-        await assertRevert(agreement.approveAndCall({ token, amount, from, mint: false }), STAKING_ERRORS.ERROR_INVALID_STAKE_AMOUNT)
+        await assertRevert(agreement.approveAndCall({ token, amount, from, to: staking.address, mint: false }), STAKING_ERRORS.ERROR_INVALID_STAKE_AMOUNT)
       })
     })
   })
@@ -216,7 +219,7 @@ contract('Agreement', ([_, someone, user]) => {
         await agreement.stake({ token, user, amount: initialStake })
       })
 
-      context('when the requested amount greater than zero', () => {
+      context('when the requested amount is greater than zero', () => {
         const itUnstakesCollateralProperly = amount => {
           it('reduces the user available balance', async () => {
             const { available: previousAvailableBalance } = await agreement.getBalance(token, user)
@@ -238,14 +241,14 @@ contract('Agreement', ([_, someone, user]) => {
 
           it('transfers the staked tokens to the user', async () => {
             const previousUserBalance = await token.balanceOf(user)
-            const previousStakingBalance = await token.balanceOf(agreement.address)
+            const previousStakingBalance = await token.balanceOf(staking.address)
 
             await agreement.unstake({ token, user, amount })
 
             const currentUserBalance = await token.balanceOf(user)
             assertBn(currentUserBalance, previousUserBalance.add(amount), 'user balance does not match')
 
-            const currentStakingBalance = await token.balanceOf(agreement.address)
+            const currentStakingBalance = await token.balanceOf(staking.address)
             assertBn(currentStakingBalance, previousStakingBalance.sub(amount), 'staking balance does not match')
           })
 
@@ -253,7 +256,7 @@ contract('Agreement', ([_, someone, user]) => {
             const receipt = await agreement.unstake({ token, user, amount })
 
             assertAmountOfEvents(receipt, STAKING_EVENTS.BALANCE_UNSTAKED, 1)
-            assertEvent(receipt, STAKING_EVENTS.BALANCE_UNSTAKED, { token, user, amount })
+            assertEvent(receipt, STAKING_EVENTS.BALANCE_UNSTAKED, { user, amount })
           })
         }
 
@@ -287,7 +290,7 @@ contract('Agreement', ([_, someone, user]) => {
     })
 
     context('when the sender does not have an amount staked before', () => {
-      context('when the requested amount greater than zero', () => {
+      context('when the requested amount is greater than zero', () => {
         const amount = bigExp(200, 18)
 
         it('reverts', async () => {
