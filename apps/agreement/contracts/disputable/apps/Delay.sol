@@ -290,10 +290,10 @@ contract Delay is DisputableApp {
     }
 
     /**
-    * @dev Pause a delayable
-    * @param _id Identification number of the delayable to be paused
+    * @dev Challenge a delayable
+    * @param _id Identification number of the delayable to be challenged
     */
-    function _pause(uint256 _id) internal {
+    function _onDisputableChallenged(uint256 _id) internal {
         Delayable storage delayable = _getDelayable(_id);
         require(_canPause(delayable), ERROR_CANNOT_PAUSE_DELAYABLE);
 
@@ -302,15 +302,31 @@ contract Delay is DisputableApp {
     }
 
     /**
-    * @dev Resume a delayable
-    * @param _id Identification number of the delayable to be cancelled
+    * @dev Allow a delayable
+    * @param _id Identification number of the delayable to be allowed
     */
-    function _resume(uint256 _id) internal {
+    function _onDisputableAllowed(uint256 _id) internal {
         Delayable storage delayable = _getDelayable(_id);
         require(_canFastForward(delayable), ERROR_CANNOT_FAST_FORWARD_DELAYABLE);
 
         delayable.state = DelayableState.FastForwarded;
         emit FastForwarded(_id);
+    }
+
+    /**
+    * @dev Reject a delayable
+    * @param _id Identification number of the delayable to be rejected
+    */
+    function _onDisputableRejected(uint256 _id) internal {
+        _stopByAgreement(_id);
+    }
+
+    /**
+    * @dev Void a delayable
+    * @param _id Identification number of the delayable to be voided
+    */
+    function _onDisputableVoided(uint256 _id) internal {
+        _stopByAgreement(_id);
     }
 
     /**
@@ -323,22 +339,6 @@ contract Delay is DisputableApp {
 
         delayable.state = DelayableState.Stopped;
         emit Stopped(_id);
-    }
-
-    /**
-    * @dev Cancel a delayable
-    * @param _id Identification number of the delayable to be cancelled
-    */
-    function _cancel(uint256 _id) internal {
-        _stopByAgreement(_id);
-    }
-
-    /**
-    * @dev Void a delayable
-    * @param _id Identification number of the delayable to be cancelled
-    */
-    function _void(uint256 _id) internal {
-        _stopByAgreement(_id);
     }
 
     /**

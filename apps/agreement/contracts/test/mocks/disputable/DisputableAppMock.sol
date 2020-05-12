@@ -14,10 +14,10 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
 
-    event Paused(uint256 indexed id);
-    event Resumed(uint256 indexed id);
-    event Voided(uint256 indexed id);
-    event Cancelled(uint256 indexed id);
+    event DisputableChallenged(uint256 indexed id);
+    event DisputableAllowed(uint256 indexed id);
+    event DisputableRejected(uint256 indexed id);
+    event DisputableVoided(uint256 indexed id);
 
     uint256[] private actionsByEntryId;
 
@@ -76,35 +76,35 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     }
 
     /**
-    * @dev Pause a entry
-    * @param _id Identification number of the entry to be paused
+    * @dev Challenge an entry
+    * @param _id Identification number of the entry to be challenged
     */
-    function _pause(uint256 _id) internal {
-        emit Paused(_id);
+    function _onDisputableChallenged(uint256 _id) internal {
+        emit DisputableChallenged(_id);
     }
 
     /**
-    * @dev Resume a entry
-    * @param _id Identification number of the entry to be cancelled
+    * @dev Allow an entry
+    * @param _id Identification number of the entry to be allowed
     */
-    function _resume(uint256 _id) internal {
-        emit Resumed(_id);
+    function _onDisputableAllowed(uint256 _id) internal {
+        emit DisputableAllowed(_id);
     }
 
     /**
-    * @dev Cancel a entry
-    * @param _id Identification number of the entry to be cancelled
+    * @dev Reject an entry
+    * @param _id Identification number of the entry to be rejected
     */
-    function _cancel(uint256 _id) internal {
-        emit Cancelled(_id);
+    function _onDisputableRejected(uint256 _id) internal {
+        emit DisputableRejected(_id);
     }
 
     /**
-    * @dev Void a entry
-    * @param _id Identification number of the entry to be cancelled
+    * @dev Void an entry
+    * @param _id Identification number of the entry to be voided
     */
-    function _void(uint256 _id) internal {
-        emit Voided(_id);
+    function _onDisputableVoided(uint256 _id) internal {
+        emit DisputableVoided(_id);
     }
 
     /**

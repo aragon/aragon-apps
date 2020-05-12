@@ -346,7 +346,7 @@ class AgreementDeployer {
     const DISPUTABLE_ROLE = await this.agreement.DISPUTABLE_ROLE()
     await this.acl.createPermission(disputable.address, this.agreement.address, DISPUTABLE_ROLE, manager, { from: manager })
 
-    const disputablePermissions = ['PAUSE_ROLE', 'RESUME_ROLE', 'CANCEL_ROLE', 'VOID_ROLE']
+    const disputablePermissions = ['DISPUTABLE_CHALLENGED_ROLE', 'DISPUTABLE_ALLOWED_ROLE', 'DISPUTABLE_REJECTED_ROLE', 'DISPUTABLE_VOIDED_ROLE']
     for (const permissionName of disputablePermissions) {
       const permission = await disputable[permissionName]()
       await this.acl.createPermission(this.agreement.address, disputable.address, permission, manager, { from: manager })

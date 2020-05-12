@@ -228,7 +228,7 @@ contract Agreement is IAgreement, AragonApp {
 
         action.state = ActionState.Challenged;
         _createChallenge(action, msg.sender, collateralToken, challengeCollateral, _settlementOffer, challengeDuration, _context);
-        disputable.pause(disputableId);
+        disputable.onDisputableChallenged(disputableId);
         emit ActionChallenged(_actionId);
     }
 
@@ -265,7 +265,7 @@ contract Agreement is IAgreement, AragonApp {
         _transfer(challenge.arbitratorFeeToken, challenge.challenger, challenge.arbitratorFeeAmount);
 
         challenge.state = ChallengeState.Settled;
-        action.disputable.cancel(disputableId);
+        action.disputable.onDisputableRejected(disputableId);
         emit ActionSettled(_actionId);
     }
 
@@ -683,7 +683,7 @@ contract Agreement is IAgreement, AragonApp {
         address challenger = challenge.challenger;
         _slashBalance(collateralToken, _action.submitter, challenger, actionCollateral);
         _transfer(collateralToken, challenger, challengeCollateral);
-        disputable.cancel(disputableId);
+        disputable.onDisputableRejected(disputableId);
     }
 
     /**
@@ -703,7 +703,7 @@ contract Agreement is IAgreement, AragonApp {
         address submitter = _action.submitter;
         _unlockBalance(collateralToken, submitter, actionCollateral);
         _transfer(collateralToken, submitter, challengeCollateral);
-        disputable.resume(disputableId);
+        disputable.onDisputableAllowed(disputableId);
     }
 
     /**
@@ -722,7 +722,7 @@ contract Agreement is IAgreement, AragonApp {
 
         _unlockBalance(collateralToken, _action.submitter, actionCollateral);
         _transfer(collateralToken, challenge.challenger, challengeCollateral);
-        disputable.void(disputableId);
+        disputable.onDisputableVoided(disputableId);
     }
 
     /**

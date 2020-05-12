@@ -12,7 +12,7 @@ contract Registry is DisputableApp {
     string internal constant ERROR_CAN_NOT_FORWARD = "REGISTRY_CAN_NOT_FORWARD";
     string internal constant ERROR_SENDER_NOT_ALLOWED = "REGISTRY_SENDER_NOT_ALLOWED";
     string internal constant ERROR_ENTRY_DOES_NOT_EXIST = "REGISTRY_ENTRY_DOES_NOT_EXIST";
-    string internal constant ERROR_ENTRY_PAUSED = "REGISTRY_ENTRY_PAUSED";
+    string internal constant ERROR_ENTRY_CHALLENGED = "REGISTRY_ENTRY_CHALLENGED";
     string internal constant ERROR_ENTRY_ALREADY_REGISTERED = "REGISTRY_ENTRY_ALREADY_REGISTER";
     string internal constant ERROR_CANNOT_DECODE_DATA = "REGISTRY_CANNOT_DECODE_DATA";
 
@@ -24,13 +24,13 @@ contract Registry is DisputableApp {
 
     event Registered(bytes32 indexed id);
     event Unregistered(bytes32 indexed id);
-    event Paused(bytes32 indexed id);
-    event Resumed(bytes32 indexed id);
+    event EntryChallenged(bytes32 indexed id);
+    event EntryAllowed(bytes32 indexed id);
 
     struct Entry {
         bytes value;
         address submitter;
-        bool paused;
+        bool challenged;
         uint256 actionId;
     }
 
@@ -79,7 +79,7 @@ contract Registry is DisputableApp {
     */
     function unregister(bytes32 _id) external {
         Entry storage entry = entries[_id];
-        require(!entry.paused, ERROR_ENTRY_PAUSED);
+        require(!entry.challenged, ERROR_ENTRY_CHALLENGED);
         require(entry.submitter == msg.sender, ERROR_SENDER_NOT_ALLOWED);
 
         agreement.close(entry.actionId);
@@ -91,14 +91,14 @@ contract Registry is DisputableApp {
     * @param _id Entry identification number being queried
     * @return submitter Address that has registered the entry
     * @return value Value associated to the given entry
-    * @return paused Whether or not the entry is paused
+    * @return challenged Whether or not the entry is challenged
     * @return actionId Identification number of the given entry in the context of the agreement
     */
-    function getEntry(bytes32 _id) external view returns (address submitter, bytes value, bool paused, uint256 actionId) {
+    function getEntry(bytes32 _id) external view returns (address submitter, bytes value, bool challenged, uint256 actionId) {
         Entry storage entry = _getEntry(_id);
         submitter = entry.submitter;
         value = entry.value;
-        paused = entry.paused;
+        challenged = entry.challenged;
         actionId = entry.actionId;
     }
 
@@ -126,41 +126,41 @@ contract Registry is DisputableApp {
     }
 
     /**
-    * @dev Pause a entry
-    * @param _id Identification number of the entry to be paused
+    * @dev Challenge an entry
+    * @param _id Identification number of the entry to be challenged
     */
-    function _pause(uint256 _id) internal {
+    function _onDisputableChallenged(uint256 _id) internal {
         bytes32 id = bytes32(_id);
         Entry storage entry = _getEntry(id);
-        entry.paused = true;
-        emit Paused(id);
+        entry.challenged = true;
+        emit EntryChallenged(id);
     }
 
     /**
-    * @dev Resume a entry
-    * @param _id Identification number of the entry to be cancelled
+    * @dev Allow an entry
+    * @param _id Identification number of the entry to be allowed
     */
-    function _resume(uint256 _id) internal {
+    function _onDisputableAllowed(uint256 _id) internal {
         bytes32 id = bytes32(_id);
         Entry storage entry = _getEntry(id);
-        entry.paused = false;
-        emit Resumed(id);
+        entry.challenged = false;
+        emit EntryAllowed(id);
     }
 
     /**
-    * @dev Cancel a entry
-    * @param _id Identification number of the entry to be cancelled
+    * @dev Reject an entry
+    * @param _id Identification number of the entry to be rejected
     */
-    function _cancel(uint256 _id) internal {
+    function _onDisputableRejected(uint256 _id) internal {
         bytes32 id = bytes32(_id);
         _unregister(id, _getEntry(id));
     }
 
     /**
-    * @dev Void a entry
-    * @param _id Identification number of the entry to be cancelled
+    * @dev Void an entry
+    * @param _id Identification number of the entry to be voided
     */
-    function _void(uint256 _id) internal {
+    function _onDisputableVoided(uint256 _id) internal {
         bytes32 id = bytes32(_id);
         _unregister(id, _getEntry(id));
     }
@@ -189,7 +189,7 @@ contract Registry is DisputableApp {
     */
     function _unregister(bytes32 _id, Entry storage _entry) internal {
         _entry.actionId = 0;
-        _entry.paused = false;
+        _entry.challenged = false;
         _entry.submitter = address(0);
         _entry.value = new bytes(0);
         emit Unregistered(_id);
@@ -205,13 +205,19 @@ contract Registry is DisputableApp {
     }
 
     /**
-    * @dev Tell whether an address can challenge entries or not
+    * @dev Tell whether an address can challenge an entry or not
     * @param _id Identification number of the entry being queried
     * @param _challenger Address being queried
-    * @return True if the given address can challenge actions, false otherwise
+    * @return True if the given address can challenge actions and the given entry is not challenged, false otherwise
     */
     function _canChallenge(uint256 _id, address _challenger) internal view returns (bool) {
-        return canPerform(_challenger, DISPUTE_ENTRY_ROLE, arr(_challenger, _id));
+        if (!canPerform(_challenger, DISPUTE_ENTRY_ROLE, arr(_challenger, _id))) {
+            return false;
+        }
+
+        bytes32 id = bytes32(_id);
+        Entry storage entry = _getEntry(id);
+        return !entry.challenged;
     }
 
     /**

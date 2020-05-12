@@ -19,7 +19,7 @@ contract('Delay', ([_, user]) => {
     }
 
     context('stake', () => {
-      itCostsAtMost(140e3, () => delay.stake({ user }))
+      itCostsAtMost(130e3, () => delay.stake({ user }))
     })
 
     context('unstake', () => {
@@ -27,11 +27,11 @@ contract('Delay', ([_, user]) => {
         await delay.stake({ user })
       })
 
-      itCostsAtMost(110e3, () => delay.unstake({ user }))
+      itCostsAtMost(100e3, () => delay.unstake({ user }))
     })
 
     context('schedule', () => {
-      itCostsAtMost(344e3, async () => (await delay.schedule({})).receipt)
+      itCostsAtMost(318e3, async () => (await delay.schedule({})).receipt)
     })
 
     context('stop', () => {
@@ -39,7 +39,7 @@ contract('Delay', ([_, user]) => {
         ({ delayableId } = await delay.schedule({}))
       })
 
-      itCostsAtMost(139e3, () => delay.stop({ delayableId }))
+      itCostsAtMost(159e3, () => delay.stop({ delayableId }))
     })
 
     context('challenge', () => {
@@ -47,7 +47,7 @@ contract('Delay', ([_, user]) => {
         ({ delayableId } = await delay.schedule({}))
       })
 
-      itCostsAtMost(436e3, () => delay.challenge({ delayableId }))
+      itCostsAtMost(431e3, () => delay.challenge({ delayableId }))
     })
 
     context('settle', () => {
@@ -56,7 +56,7 @@ contract('Delay', ([_, user]) => {
         await delay.challenge({ delayableId })
       })
 
-      itCostsAtMost(294e3, () => delay.settle({ delayableId }))
+      itCostsAtMost(303e3, () => delay.settle({ delayableId }))
     })
 
     context('dispute', () => {
@@ -76,15 +76,15 @@ contract('Delay', ([_, user]) => {
       })
 
       context('in favor of the submitter', () => {
-        itCostsAtMost(252e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER }))
+        itCostsAtMost(258e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER }))
       })
 
       context('in favor of the challenger', () => {
-        itCostsAtMost(265e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
+        itCostsAtMost(312e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
       })
 
       context('refused', () => {
-        itCostsAtMost(254e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.REFUSED }))
+        itCostsAtMost(260e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.REFUSED }))
       })
     })
   })

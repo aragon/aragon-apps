@@ -20,17 +20,17 @@ contract DisputableApp is IDisputable, AragonApp {
     string internal constant ERROR_TOKEN_NOT_CONTRACT = "DISPUTABLE_TOKEN_NOT_CONTRACT";
     string internal constant ERROR_MISSING_COLLATERAL_REQUIREMENT = "DISPUTABLE_MISSING_COLLATER_REQ";
 
-    // bytes32 public constant CANCEL_ROLE = keccak256("CANCEL_ROLE");
-    bytes32 public constant CANCEL_ROLE = 0x9f959e00d95122f5cbd677010436cf273ef535b86b056afc172852144b9491d7;
+    // bytes32 public constant DISPUTABLE_REJECTED_ROLE = keccak256("DISPUTABLE_REJECTED_ROLE");
+    bytes32 public constant DISPUTABLE_REJECTED_ROLE = 0x59ddf03a96238fd076e91284fa7f96c10f6071441134d2b0c7edb8b0a6077d1c;
 
-    // bytes32 public constant PAUSE_ROLE = keccak256("PAUSE_ROLE");
-    bytes32 public constant PAUSE_ROLE = 0x139c2898040ef16910dc9f44dc697df79363da767d8bc92f2e310312b816e46d;
+    // bytes32 public constant DISPUTABLE_CHALLENGED_ROLE = keccak256("DISPUTABLE_CHALLENGED_ROLE");
+    bytes32 public constant DISPUTABLE_CHALLENGED_ROLE = 0xb4f78b62cb29310440f642306412fc1ed42ab054accadd4853544ffaaea1c4ca;
 
-    // bytes32 public constant RESUME_ROLE = keccak256("RESUME_ROLE");
-    bytes32 public constant RESUME_ROLE = 0x2fc10cc8ae19568712f7a176fb4978616a610650813c9d05326c34abb62749c7;
+    // bytes32 public constant DISPUTABLE_ALLOWED_ROLE = keccak256("DISPUTABLE_ALLOWED_ROLE");
+    bytes32 public constant DISPUTABLE_ALLOWED_ROLE = 0x127b75e771b93d274dc1af8f33ea214c94ec9cd597c1609ae2aa0f4c6c013b0d;
 
-    // bytes32 public constant VOID_ROLE = keccak256("VOID_ROLE");
-    bytes32 public constant VOID_ROLE = 0xb74efb1331f2ac159f6a86c8c3fad56a75c3c91bdefeba4af6441cd313e03d46;
+    // bytes32 public constant DISPUTABLE_VOIDED_ROLE = keccak256("DISPUTABLE_VOIDED_ROLE");
+    bytes32 public constant DISPUTABLE_VOIDED_ROLE = 0x3c4df9ad03966cf31c4edc1700cbda26c9ae87ff88b98aa9bf29fc84989031de;
 
     // bytes32 public constant CHANGE_COLLATERAL_REQUIREMENTS_ROLE = keccak256("CHANGE_COLLATERAL_REQUIREMENTS_ROLE");
     bytes32 public constant CHANGE_COLLATERAL_REQUIREMENTS_ROLE = 0xf8e1e0f3a5d2cfcc5046b79ce871218ff466f2f37c782b9923261b92e20a1496;
@@ -48,35 +48,35 @@ contract DisputableApp is IDisputable, AragonApp {
     CollateralRequirement[] private collateralRequirements;            // Current collateral requirements
 
     /**
-    * @notice Cancel disputable #`_disputableId`
-    * @param _disputableId Identification number of the disputable to be cancelled
-    */
-    function cancel(uint256 _disputableId) external auth(CANCEL_ROLE) {
-        _cancel(_disputableId);
-    }
-
-    /**
-    * @notice Pause disputable #`_disputableId`
+    * @notice Challenge disputable #`_disputableId`
     * @param _disputableId Identification number of the disputable to be paused
     */
-    function pause(uint256 _disputableId) external auth(PAUSE_ROLE) {
-        _pause(_disputableId);
+    function onDisputableChallenged(uint256 _disputableId) external auth(DISPUTABLE_CHALLENGED_ROLE) {
+        _onDisputableChallenged(_disputableId);
     }
 
     /**
-    * @notice Resume disputable #`_disputableId`
+    * @notice Allow disputable #`_disputableId`
     * @param _disputableId Identification number of the disputable to be resumed
     */
-    function resume(uint256 _disputableId) external auth(RESUME_ROLE) {
-        _resume(_disputableId);
+    function onDisputableAllowed(uint256 _disputableId) external auth(DISPUTABLE_ALLOWED_ROLE) {
+        _onDisputableAllowed(_disputableId);
     }
 
     /**
-    * @notice Vote disputable #`_disputableId`
+    * @notice Reject disputable #`_disputableId`
+    * @param _disputableId Identification number of the disputable to be cancelled
+    */
+    function onDisputableRejected(uint256 _disputableId) external auth(DISPUTABLE_REJECTED_ROLE) {
+        _onDisputableRejected(_disputableId);
+    }
+
+    /**
+    * @notice Void disputable #`_disputableId`
     * @param _disputableId Identification number of the disputable to be voided
     */
-    function void(uint256 _disputableId) external auth(VOID_ROLE) {
-        _void(_disputableId);
+    function onDisputableVoided(uint256 _disputableId) external auth(DISPUTABLE_VOIDED_ROLE) {
+        _onDisputableVoided(_disputableId);
     }
 
     /**
@@ -172,28 +172,28 @@ contract DisputableApp is IDisputable, AragonApp {
     }
 
     /**
-    * @dev Cancel disputable
-    * @param _disputableId Identification number of the disputable to be cancelled
+    * @dev Reject disputable
+    * @param _disputableId Identification number of the disputable to be rejected
     */
-    function _cancel(uint256 _disputableId) internal;
+    function _onDisputableRejected(uint256 _disputableId) internal;
 
     /**
-    * @dev Pause disputable
-    * @param _disputableId Identification number of the disputable to be paused
+    * @dev Challenge disputable
+    * @param _disputableId Identification number of the disputable to be challenged
     */
-    function _pause(uint256 _disputableId) internal;
+    function _onDisputableChallenged(uint256 _disputableId) internal;
 
     /**
-    * @dev Resume disputable
-    * @param _disputableId Identification number of the disputable to be resumed
+    * @dev Allow disputable
+    * @param _disputableId Identification number of the disputable to be allowed
     */
-    function _resume(uint256 _disputableId) internal;
+    function _onDisputableAllowed(uint256 _disputableId) internal;
 
     /**
     * @dev Void disputable
     * @param _disputableId Identification number of the disputable to be voided
     */
-    function _void(uint256 _disputableId) internal;
+    function _onDisputableVoided(uint256 _disputableId) internal;
 
     /**
     * @dev Change collateral requirements
