@@ -60,7 +60,7 @@ contract Registry is DisputableApp {
 
         agreement = _agreement;
 
-        _newCollateralRequirements(_collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
+        _newCollateralRequirement(_collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
     }
 
     /**

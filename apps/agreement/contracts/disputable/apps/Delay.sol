@@ -110,7 +110,7 @@ contract Delay is DisputableApp {
         agreement = _agreement;
 
         _newDelayPeriod(_delayPeriod);
-        _newCollateralRequirements(_collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
+        _newCollateralRequirement(_collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
         _newTokenBalancePermission(_submitPermissionToken, _submitPermissionBalance, _challengePermissionToken, _challengePermissionBalance);
     }
 

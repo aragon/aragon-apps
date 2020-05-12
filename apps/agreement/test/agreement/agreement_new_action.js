@@ -36,6 +36,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
             context('when the agreement settings did not change', () => {
               it('creates a new scheduled action', async () => {
+                const currentCollateralId = await agreement.getCurrentCollateralRequirementId()
                 const { actionId } = await agreement.newAction({ submitter, actionContext, stake, sign })
 
                 const actionData = await agreement.getAction(actionId)
@@ -43,8 +44,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                 assert.equal(actionData.submitter, submitter, 'submitter does not match')
                 assert.equal(actionData.context, actionContext, 'action context does not match')
                 assert.equal(actionData.state, ACTIONS_STATE.SUBMITTED, 'action state does not match')
-                assert.equal(actionData.collateralToken, agreement.collateralToken.address, 'collateral token does not match')
-                assertBn(actionData.collateral, agreement.actionCollateral, 'action collateral does not match')
+                assertBn(actionData.collateralId, currentCollateralId, 'action collateral ID does not match')
               })
 
               it('locks the collateral amount', async () => {

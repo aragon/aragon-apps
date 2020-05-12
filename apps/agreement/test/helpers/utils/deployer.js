@@ -124,11 +124,11 @@ class AgreementDeployer {
     const arbitrator = options.arbitrator || this.arbitrator
     const collateralToken = options.collateralToken || this.collateralToken
 
-    const { actionAmount, challengeAmount, challengeDuration } = await this.disputable.getCollateralRequirements()
-    const collateralRequirements = { collateralToken, actionAmount, challengeAmount, challengeDuration }
+    const { actionAmount, challengeAmount, challengeDuration } = await this.disputable.getCollateralRequirement(0, 0)
+    const collateralRequirement = { collateralToken, actionAmount, challengeAmount, challengeDuration }
 
     const Wrapper = options.delay ? DelayWrapper : DisputableWrapper
-    return new Wrapper(this.artifacts, this.web3, this.agreement, arbitrator, disputable, collateralRequirements)
+    return new Wrapper(this.artifacts, this.web3, this.agreement, arbitrator, disputable, collateralRequirement)
   }
 
   async deployAndInitializeWrapper(options = {}) {

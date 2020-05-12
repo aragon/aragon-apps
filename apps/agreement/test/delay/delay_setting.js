@@ -11,57 +11,66 @@ const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 contract('Delay', ([_, owner, someone]) => {
   let delay
 
-  let initialCollateralRequirements = {
+  let initialCollateralRequirement = {
     actionCollateral: bigExp(200, 18),
     challengeCollateral: bigExp(100, 18),
     challengeDuration: 3 * DAY,
   }
 
   beforeEach('deploy agreement', async () => {
-    delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, owner, ...initialCollateralRequirements })
-    initialCollateralRequirements.collateralToken = deployer.collateralToken
+    delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, owner, ...initialCollateralRequirement })
+    initialCollateralRequirement.collateralToken = deployer.collateralToken
   })
 
-  describe('changeCollateralRequirements', () => {
-    let newCollateralRequirements = {
+  describe('changeCollateralRequirement', () => {
+    let newCollateralRequirement = {
       challengeDuration: 10 * DAY,
       actionCollateral: bigExp(100, 18),
       challengeCollateral: bigExp(50, 18),
     }
 
     beforeEach('deploy new collateral token', async () => {
-      newCollateralRequirements.collateralToken = await deployer.deployToken({})
+      newCollateralRequirement.collateralToken = await deployer.deployToken({})
     })
 
-    const assertCurrentCollateralRequirements = async (actualCollateralRequirements, expectedCollateralRequirements) => {
-      assert.equal(actualCollateralRequirements.collateralToken.address, expectedCollateralRequirements.collateralToken.address, 'collateral token does not match')
-      assertBn(actualCollateralRequirements.actionCollateral, expectedCollateralRequirements.actionCollateral, 'action collateral does not match')
-      assertBn(actualCollateralRequirements.challengeCollateral, expectedCollateralRequirements.challengeCollateral, 'challenge collateral does not match')
-      assertBn(actualCollateralRequirements.challengeDuration, expectedCollateralRequirements.challengeDuration, 'challenge duration does not match')
+    const assertCurrentCollateralRequirement = async (actualCollateralRequirement, expectedCollateralRequirement) => {
+      assert.equal(actualCollateralRequirement.collateralToken.address, expectedCollateralRequirement.collateralToken.address, 'collateral token does not match')
+      assertBn(actualCollateralRequirement.actionCollateral, expectedCollateralRequirement.actionCollateral, 'action collateral does not match')
+      assertBn(actualCollateralRequirement.challengeCollateral, expectedCollateralRequirement.challengeCollateral, 'challenge collateral does not match')
+      assertBn(actualCollateralRequirement.challengeDuration, expectedCollateralRequirement.challengeDuration, 'challenge duration does not match')
     }
 
-    it('starts with expected initial settings', async () => {
-      const currentCollateralRequirements = await delay.getCollateralRequirements()
-      await assertCurrentCollateralRequirements(currentCollateralRequirements, initialCollateralRequirements)
+    it('starts with expected initial collateral requirements', async () => {
+      const currentCollateralRequirement = await delay.getCollateralRequirement()
+      await assertCurrentCollateralRequirement(currentCollateralRequirement, initialCollateralRequirement)
     })
 
     context('when the sender has permissions', () => {
       const from = owner
 
-      it('changes the settings', async () => {
-        await delay.changeCollateralRequirements({ ...newCollateralRequirements, from })
+      it('changes the collateral requirements', async () => {
+        await delay.changeCollateralRequirement({ ...newCollateralRequirement, from })
 
-        const currentCollateralRequirements = await delay.getCollateralRequirements()
-        await assertCurrentCollateralRequirements(currentCollateralRequirements, newCollateralRequirements)
+        const currentCollateralRequirement = await delay.getCollateralRequirement()
+        await assertCurrentCollateralRequirement(currentCollateralRequirement, newCollateralRequirement)
+      })
+
+      it('keeps the previous collateral requirements', async () => {
+        const currentId = await delay.getCurrentCollateralRequirementId()
+        await delay.changeCollateralRequirement({ ...newCollateralRequirement, from })
+
+        const previousCollateralRequirement = await delay.getCollateralRequirement(currentId)
+        await assertCurrentCollateralRequirement(previousCollateralRequirement, initialCollateralRequirement)
       })
 
       it('emits an event', async () => {
-        const receipt = await delay.changeCollateralRequirements({ ...newCollateralRequirements, from })
+        const currentId = await delay.getCurrentCollateralRequirementId()
+        const receipt = await delay.changeCollateralRequirement({ ...newCollateralRequirement, from })
 
         assertAmountOfEvents(receipt, DELAY_EVENTS.COLLATERAL_CHANGED, 1)
 
-        const { collateralToken, actionCollateral, challengeCollateral, challengeDuration } = newCollateralRequirements
-        assertEvent(receipt, DELAY_EVENTS.COLLATERAL_CHANGED, { token: collateralToken, actionAmount: actionCollateral, challengeAmount: challengeCollateral, challengeDuration })
+        const { collateralToken, actionCollateral, challengeCollateral, challengeDuration } = newCollateralRequirement
+        assertEvent(receipt, DELAY_EVENTS.COLLATERAL_CHANGED, { id: currentId.add(bn(1)), token: collateralToken, actionAmount: actionCollateral, challengeAmount: challengeCollateral, challengeDuration })
       })
     })
 
@@ -69,7 +78,7 @@ contract('Delay', ([_, owner, someone]) => {
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(delay.changeCollateralRequirements({ ...newCollateralRequirements, from }), DELAY_ERRORS.ERROR_AUTH_FAILED)
+        await assertRevert(delay.changeCollateralRequirement({ ...newCollateralRequirement, from }), DELAY_ERRORS.ERROR_AUTH_FAILED)
       })
     })
   })

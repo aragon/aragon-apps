@@ -39,7 +39,7 @@ contract('Delay', ([_, user]) => {
         ({ delayableId } = await delay.schedule({}))
       })
 
-      itCostsAtMost(107e3, () => delay.stop({ delayableId }))
+      itCostsAtMost(139e3, () => delay.stop({ delayableId }))
     })
 
     context('challenge', () => {
@@ -56,7 +56,7 @@ contract('Delay', ([_, user]) => {
         await delay.challenge({ delayableId })
       })
 
-      itCostsAtMost(279e3, () => delay.settle({ delayableId }))
+      itCostsAtMost(294e3, () => delay.settle({ delayableId }))
     })
 
     context('dispute', () => {
@@ -76,15 +76,15 @@ contract('Delay', ([_, user]) => {
       })
 
       context('in favor of the submitter', () => {
-        itCostsAtMost(239e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER }))
+        itCostsAtMost(252e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER }))
       })
 
       context('in favor of the challenger', () => {
-        itCostsAtMost(251e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
+        itCostsAtMost(265e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
       })
 
       context('refused', () => {
-        itCostsAtMost(240e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.REFUSED }))
+        itCostsAtMost(254e3, () => delay.executeRuling({ delayableId, ruling: RULINGS.REFUSED }))
       })
     })
   })

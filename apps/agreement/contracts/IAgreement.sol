@@ -12,15 +12,7 @@ import "./arbitration/IArbitrable.sol";
 contract IAgreement is IArbitrable {
     function sign() external;
 
-    function newAction(
-        uint256 _disputableId,
-        address _submitter,
-        uint256 _collateral,
-        ERC20 _collateralToken,
-        bytes _context
-    )
-        external
-        returns (uint256);
+    function newAction(uint256 _disputableId, uint256 _collateralId, address _submitter, bytes _context) external returns (uint256);
 
     function close(uint256 _actionId) external;
 

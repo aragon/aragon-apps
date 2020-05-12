@@ -87,8 +87,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                     assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                     assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
-                    assert.equal(currentActionState.collateralToken, previousActionState.collateralToken, 'collateral token does not match')
-                    assertBn(currentActionState.collateral, previousActionState.collateral, 'action collateral does not match')
+                    assertBn(currentActionState.collateralId, previousActionState.collateralId, 'collateral ID does not match')
                   })
 
                   it('creates a dispute', async () => {
@@ -193,7 +192,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(agreement.dispute({ actionId, arbitrationFees }), AGREEMENT_ERRORS.ERROR_ARBITRATOR_FEE_DEPOSIT_FAILED)
+                  await assertRevert(agreement.dispute({ actionId, arbitrationFees }), AGREEMENT_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
                 })
               })
 
@@ -203,7 +202,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(agreement.dispute({ actionId, arbitrationFees }), AGREEMENT_ERRORS.ERROR_ARBITRATOR_FEE_DEPOSIT_FAILED)
+                  await assertRevert(agreement.dispute({ actionId, arbitrationFees }), AGREEMENT_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
                 })
               })
             }

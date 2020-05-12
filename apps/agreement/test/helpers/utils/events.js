@@ -25,7 +25,7 @@ const DELAY_EVENTS = {
   FAST_FORWARDED: 'FastForwarded',
   STOPPED: 'Stopped',
   EXECUTED: 'Executed',
-  COLLATERAL_CHANGED: 'CollateralRequirementsChanged',
+  COLLATERAL_CHANGED: 'CollateralRequirementChanged',
   PERMISSION_CHANGED: 'TokenBalancePermissionChanged',
 }
 
