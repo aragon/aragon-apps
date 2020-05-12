@@ -45,7 +45,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
 
         agreement = _agreement;
 
-        _newCollateralRequirements(_collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
+        _newCollateralRequirement(_collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
     }
 
     /**

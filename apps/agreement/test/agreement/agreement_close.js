@@ -35,8 +35,7 @@ contract('Agreement', ([_, submitter, someone]) => {
             assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
             assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
             assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
-            assert.equal(currentActionState.collateralToken, previousActionState.collateralToken, 'collateral token does not match')
-            assertBn(currentActionState.collateral, previousActionState.collateral, 'action collateral does not match')
+            assertBn(currentActionState.collateralId, previousActionState.collateralId, 'collateral ID does not match')
           })
 
           if (unlocksBalance) {

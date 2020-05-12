@@ -5,35 +5,41 @@ const { decodeEventsOfType } = require('../lib/decodeEvent')
 const { getEventArgument } = require('@aragon/contract-test-helpers/events')
 
 class DisputableWrapper extends AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator, disputable, collateralRequirements = {}) {
+  constructor(artifacts, web3, agreement, arbitrator, disputable, collateralRequirement = {}) {
     super(artifacts, web3, agreement, arbitrator);
     this.disputable = disputable
-    this.collateralRequirements = collateralRequirements
+    this.collateralRequirement = collateralRequirement
   }
 
   get collateralToken() {
-    return this.collateralRequirements.collateralToken
+    return this.collateralRequirement.collateralToken
   }
 
   get actionCollateral() {
-    return this.collateralRequirements.actionAmount
+    return this.collateralRequirement.actionAmount
   }
 
   get challengeCollateral() {
-    return this.collateralRequirements.challengeAmount
+    return this.collateralRequirement.challengeAmount
   }
 
   get challengeDuration() {
-    return this.collateralRequirements.challengeDuration
+    return this.collateralRequirement.challengeDuration
   }
 
   async getBalance(user) {
     return super.getBalance(this.collateralToken, user)
   }
 
-  async getCollateralRequirements() {
-    const { collateralToken, actionAmount: actionCollateral, challengeAmount: challengeCollateral, challengeDuration } = await this.disputable.getCollateralRequirements()
-    return { collateralToken: await this._getContract('MiniMeToken').at(collateralToken), actionCollateral, challengeCollateral, challengeDuration }
+  async getCurrentCollateralRequirementId() {
+    return this.disputable.getCurrentCollateralRequirementId()
+  }
+
+  async getCollateralRequirement(id = undefined) {
+    if (!id) id = await this.getCurrentCollateralRequirementId()
+    const MiniMeToken = this._getContract('MiniMeToken')
+    const { collateralToken, actionAmount: actionCollateral, challengeAmount: challengeCollateral, challengeDuration } = await this.disputable.getCollateralRequirement(0, id)
+    return { collateralToken: await MiniMeToken.at(collateralToken), actionCollateral, challengeCollateral, challengeDuration }
   }
 
   async newAction({ submitter = undefined, actionContext = '0x1234', sign = undefined, stake = undefined }) {
@@ -59,8 +65,8 @@ class DisputableWrapper extends AgreementWrapper {
     return from === undefined ? this.disputable.close(actionId) : this.agreement.close(actionId)
   }
 
-  async changeCollateralRequirements(options = {}) {
-    const currentRequirements = await this.getCollateralRequirements()
+  async changeCollateralRequirement(options = {}) {
+    const currentRequirements = await this.getCollateralRequirement()
     const from = options.from || await this._getSender()
 
     const collateralToken = options.collateralToken || currentRequirements.collateralToken
@@ -68,7 +74,7 @@ class DisputableWrapper extends AgreementWrapper {
     const challengeCollateral = options.challengeCollateral || currentRequirements.challengeCollateral
     const challengeDuration = options.challengeDuration || currentRequirements.challengeDuration
 
-    return this.disputable.changeCollateralRequirements(collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
+    return this.disputable.changeCollateralRequirement(collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
   }
 
   async approve({ amount, from = undefined, accumulate = true }) {

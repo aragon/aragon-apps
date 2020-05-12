@@ -41,11 +41,11 @@ contract('Delay', () => {
       const actualDelayPeriod = await delay.delayPeriod()
       assert.equal(actualDelayPeriod, delayPeriod, 'delay period does not match')
 
-      const actualCollateralRequirements = await delay.getCollateralRequirements()
-      assert.equal(actualCollateralRequirements.collateralToken.address, collateralToken.address, 'collateral token does not match')
-      assertBn(actualCollateralRequirements.actionCollateral, actionCollateral, 'action collateral does not match')
-      assertBn(actualCollateralRequirements.challengeCollateral, challengeCollateral, 'challenge collateral does not match')
-      assertBn(actualCollateralRequirements.challengeDuration, challengeDuration, 'challenge duration does not match')
+      const actualCollateralRequirement = await delay.getCollateralRequirement()
+      assert.equal(actualCollateralRequirement.collateralToken.address, collateralToken.address, 'collateral token does not match')
+      assertBn(actualCollateralRequirement.actionCollateral, actionCollateral, 'action collateral does not match')
+      assertBn(actualCollateralRequirement.challengeCollateral, challengeCollateral, 'challenge collateral does not match')
+      assertBn(actualCollateralRequirement.challengeDuration, challengeDuration, 'challenge duration does not match')
 
       const actualTokenBalancePermission = await delay.getTokenBalancePermission()
       assert.equal(actualTokenBalancePermission.submitPermissionToken, submitPermissionToken.address, 'submit permission token does not match')

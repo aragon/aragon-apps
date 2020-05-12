@@ -36,6 +36,8 @@ contract Agreement is IAgreement, AragonApp, Staking {
     string internal constant ERROR_INVALID_SETTLEMENT_OFFER = "AGR_INVALID_SETTLEMENT_OFFER";
     string internal constant ERROR_ACTION_DOES_NOT_EXIST = "AGR_ACTION_DOES_NOT_EXIST";
     string internal constant ERROR_DISPUTE_DOES_NOT_EXIST = "AGR_DISPUTE_DOES_NOT_EXIST";
+    string internal constant ERROR_ARBITRATOR_NOT_CONTRACT = "AGR_ARBITRATOR_NOT_CONTRACT";
+    string internal constant ERROR_ARBITRATOR_FEE_APPROVAL_FAILED = "AGR_ARBITRATOR_FEE_APPROVAL_FAIL";
 
     /* Action related errors */
     string internal constant ERROR_CANNOT_CLOSE_ACTION = "AGR_CANNOT_CLOSE_ACTION";
@@ -46,13 +48,6 @@ contract Agreement is IAgreement, AragonApp, Staking {
     string internal constant ERROR_CANNOT_SUBMIT_EVIDENCE = "AGR_CANNOT_SUBMIT_EVIDENCE";
     string internal constant ERROR_SUBMITTER_FINISHED_EVIDENCE = "AGR_SUBMITTER_FINISHED_EVIDENCE";
     string internal constant ERROR_CHALLENGER_FINISHED_EVIDENCE = "AGR_CHALLENGER_FINISHED_EVIDENCE";
-
-    /* Arbitrator related errors */
-    string internal constant ERROR_ARBITRATOR_NOT_CONTRACT = "AGR_ARBITRATOR_NOT_CONTRACT";
-    string internal constant ERROR_ARBITRATOR_FEE_RETURN_FAILED = "AGR_ARBITRATOR_FEE_RETURN_FAIL";
-    string internal constant ERROR_ARBITRATOR_FEE_DEPOSIT_FAILED = "AGR_ARBITRATOR_FEE_DEPOSIT_FAIL";
-    string internal constant ERROR_ARBITRATOR_FEE_APPROVAL_FAILED = "AGR_ARBITRATOR_FEE_APPROVAL_FAIL";
-    string internal constant ERROR_ARBITRATOR_FEE_TRANSFER_FAILED = "AGR_ARBITRATOR_FEE_TRANSFER_FAIL";
 
     // bytes32 public constant DISPUTABLE_ROLE = keccak256("DISPUTABLE_ROLE");
     bytes32 public constant DISPUTABLE_ROLE = 0x5b327c088dc5201d0d0f365250580b009f4b5940290b5e72d41266abddb16fcd;
@@ -89,10 +84,9 @@ contract Agreement is IAgreement, AragonApp, Staking {
     struct Action {
         IDisputable disputable;             // Address of the disputable that created the action
         uint256 disputableId;               // Identification number of the disputable action in the context of the disputable instance
+        uint256 collateralId;               // Identification number of the collateral requirements for the given action
         address submitter;                  // Address that has submitted the action
         bytes context;                      // Link to a human-readable text giving context for the given action
-        uint256 collateral;                 // Amount of collateral tokens to be locked per action
-        ERC20 collateralToken;              // ERC20 token to be used for collateral
         ActionState state;                  // Current state of the action
         Challenge challenge;                // Associated challenge instance
     }
@@ -101,7 +95,6 @@ contract Agreement is IAgreement, AragonApp, Staking {
         address challenger;                 // Address that challenged the action
         uint64 endDate;                     // End date of the challenge, after that date is when the action submitter can answer the challenge
         bytes context;                      // Link to a human-readable text giving context for the challenge
-        uint256 collateral;                 // Amount of collateral tokens to be locked per challenge
         uint256 settlementOffer;            // Amount of collateral tokens the challenger would accept without involving the arbitrator
         uint256 arbitratorFeeAmount;        // Amount of arbitration fees paid by the challenger in advance in case the challenge is disputed
         ERC20 arbitratorFeeToken;           // ERC20 token used for the arbitration fees paid by the challenger in advance
@@ -157,18 +150,11 @@ contract Agreement is IAgreement, AragonApp, Staking {
     * @notice Create a new action
     * @param _disputableId Identification number of the disputable action in the context of the disputable instance
     * @param _submitter Address of the user that has submitted the action
-    * @param _collateral Amount of collateral tokens to be locked
-    * @param _collateralToken ERC20 token to be used for collateral
+    * @param _collateralId Identification number of the collateral requirements for the given action
     * @param _context Link to a human-readable text giving context for the given action
     * @return Unique identification number for the created action in the context of the agreement
     */
-    function newAction(
-        uint256 _disputableId,
-        address _submitter,
-        uint256 _collateral,
-        ERC20 _collateralToken,
-        bytes _context
-    )
+    function newAction(uint256 _disputableId, uint256 _collateralId, address _submitter, bytes _context)
         external
         auth(DISPUTABLE_ROLE)
         returns (uint256)
@@ -176,15 +162,15 @@ contract Agreement is IAgreement, AragonApp, Staking {
         uint256 lastContentIdSigned = lastContentSignedBy[_submitter];
         require(lastContentIdSigned >= _getCurrentContentId(), ERROR_SIGNER_MUST_SIGN);
 
-        _lockBalance(_collateralToken, _submitter, _collateral);
+        IDisputable disputable = IDisputable(msg.sender);
+        (ERC20 collateralToken, uint256 actionCollateral,,) = disputable.getCollateralRequirement(_disputableId, _collateralId);
+        _lockBalance(collateralToken, _submitter, actionCollateral);
 
         uint256 id = actions.length++;
         Action storage action = actions[id];
         action.disputable = IDisputable(msg.sender);
         action.disputableId = _disputableId;
         action.submitter = _submitter;
-        action.collateral = _collateral;
-        action.collateralToken = _collateralToken;
         action.context = _context;
 
         emit ActionSubmitted(id);
@@ -199,10 +185,13 @@ contract Agreement is IAgreement, AragonApp, Staking {
     function close(uint256 _actionId) external auth(DISPUTABLE_ROLE) {
         Action storage action = _getAction(_actionId);
         require(_canProceed(action), ERROR_CANNOT_CLOSE_ACTION);
-        require(action.disputable == IDisputable(msg.sender), ERROR_SENDER_NOT_ALLOWED);
+
+        IDisputable disputable = action.disputable;
+        require(disputable == IDisputable(msg.sender), ERROR_SENDER_NOT_ALLOWED);
 
         if (action.state == ActionState.Submitted) {
-            _unlockBalance(action.collateralToken, action.submitter, action.collateral);
+            (ERC20 collateralToken, uint256 actionCollateral,,) = disputable.getCollateralRequirement(action.disputableId, action.collateralId);
+            _unlockBalance(collateralToken, action.submitter, actionCollateral);
         }
 
         action.state = ActionState.Closed;
@@ -218,16 +207,19 @@ contract Agreement is IAgreement, AragonApp, Staking {
     function challengeAction(uint256 _actionId, uint256 _settlementOffer, bytes _context) external {
         Action storage action = _getAction(_actionId);
         require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
-        require(_settlementOffer <= action.collateral, ERROR_INVALID_SETTLEMENT_OFFER);
 
-        uint256 disputableId = action.disputableId;
         IDisputable disputable = action.disputable;
+        uint256 disputableId = action.disputableId;
+        (ERC20 collateralToken,
+        uint256 actionCollateral,
+        uint256 challengeCollateral,
+        uint64 challengeDuration) = disputable.getCollateralRequirement(disputableId, action.collateralId);
+
+        require(_settlementOffer <= actionCollateral, ERROR_INVALID_SETTLEMENT_OFFER);
         require(disputable.canChallenge(disputableId, msg.sender), ERROR_CANNOT_CHALLENGE_ACTION);
 
-        (,, uint256 challengeCollateral, uint64 challengeDuration) = disputable.getCollateralRequirements();
-        uint64 challengeEndDate = getTimestamp64().add(challengeDuration);
         action.state = ActionState.Challenged;
-        _createChallenge(action, msg.sender, challengeCollateral, _settlementOffer, challengeEndDate, _context);
+        _createChallenge(action, msg.sender, collateralToken, challengeCollateral, _settlementOffer, challengeDuration, _context);
         disputable.pause(disputableId);
         emit ActionChallenged(_actionId);
     }
@@ -249,21 +241,23 @@ contract Agreement is IAgreement, AragonApp, Staking {
         }
 
         uint256 settlementOffer = challenge.settlementOffer;
-        uint256 actionCollateral = action.collateral;
+        uint256 disputableId = action.disputableId;
+        (ERC20 collateralToken,
+        uint256 actionCollateral,
+        uint256 challengeCollateral,) = action.disputable.getCollateralRequirement(disputableId, action.collateralId);
 
         // The settlement offer was already checked to be up-to the collateral amount
         // However, we cap it to collateral amount to double check
         uint256 unlockedAmount = settlementOffer >= actionCollateral ? actionCollateral : (actionCollateral - settlementOffer);
         uint256 slashedAmount = actionCollateral - unlockedAmount;
 
-        ERC20 token = action.collateralToken;
-        _unlockBalance(token, submitter, unlockedAmount);
-        _slashBalance(token, submitter, challenger, slashedAmount);
-        _transfer(token, challenger, challenge.collateral);
-        _returnArbitratorFees(challenge);
+        _unlockBalance(collateralToken, submitter, unlockedAmount);
+        _slashBalance(collateralToken, submitter, challenger, slashedAmount);
+        _transfer(collateralToken, challenger, challengeCollateral);
+        _transfer(challenge.arbitratorFeeToken, challenge.challenger, challenge.arbitratorFeeAmount);
 
         challenge.state = ChallengeState.Settled;
-        _cancelAction(action);
+        action.disputable.cancel(disputableId);
         emit ActionSettled(_actionId);
     }
 
@@ -367,8 +361,7 @@ contract Agreement is IAgreement, AragonApp, Staking {
     * @param _actionId Identification number of the action being queried
     * @return disputable Address of the disputable that created the action
     * @return disputableId Identification number of the disputable action in the context of the disputable
-    * @return collateral Amount of collateral tokens to be locked per action
-    * @return collateralToken ERC20 token to be used for collateral
+    * @return collateralId Identification number of the collateral requirements for the given action
     * @return context Link to a human-readable text giving context for the given action
     * @return state Current state of the action
     * @return submitter Address that has submitted the action
@@ -377,8 +370,7 @@ contract Agreement is IAgreement, AragonApp, Staking {
         returns (
             address disputable,
             uint256 disputableId,
-            uint256 collateral,
-            ERC20 collateralToken,
+            uint256 collateralId,
             bytes context,
             ActionState state,
             address submitter
@@ -387,8 +379,7 @@ contract Agreement is IAgreement, AragonApp, Staking {
         Action storage action = _getAction(_actionId);
         disputable = action.disputable;
         disputableId = action.disputableId;
-        collateral = action.collateral;
-        collateralToken = action.collateralToken;
+        collateralId = action.collateralId;
         context = action.context;
         state = action.state;
         submitter = action.submitter;
@@ -400,7 +391,6 @@ contract Agreement is IAgreement, AragonApp, Staking {
     * @return context Link to a human-readable text giving context for the challenge
     * @return challenger Address that challenged the action
     * @return endDate Datetime until when the action submitter can answer the challenge
-    * @return collateral Amount of collateral tokens to be locked per challenge
     * @return settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
     * @return arbitratorFeeAmount Amount of arbitration fees paid by the challenger in advance in case the challenge is raised to the arbitrator
     * @return arbitratorFeeToken ERC20 token used for the arbitration fees paid by the challenger in advance
@@ -412,7 +402,6 @@ contract Agreement is IAgreement, AragonApp, Staking {
             bytes context,
             address challenger,
             uint64 endDate,
-            uint256 collateral,
             uint256 settlementOffer,
             uint256 arbitratorFeeAmount,
             ERC20 arbitratorFeeToken,
@@ -426,7 +415,6 @@ contract Agreement is IAgreement, AragonApp, Staking {
         context = challenge.context;
         challenger = challenge.challenger;
         endDate = challenge.endDate;
-        collateral = challenge.collateral;
         settlementOffer = challenge.settlementOffer;
         arbitratorFeeAmount = challenge.arbitratorFeeAmount;
         arbitratorFeeToken = challenge.arbitratorFeeToken;
@@ -556,17 +544,19 @@ contract Agreement is IAgreement, AragonApp, Staking {
     * @dev Challenge an action
     * @param _action Action instance to be challenged
     * @param _challenger Address challenging the action
-    * @param _collateral Amount of collateral tokens to be locked
+    * @param _collateralToken ERC20 token to be used for collateral
+    * @param _challengeCollateral Amount of collateral tokens to be locked
     * @param _settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
-    * @param _endDate Datetime until when the action submitter will be allowed to answer the challenge
+    * @param _duration Challenge duration in seconds
     * @param _context Link to a human-readable text giving context for the challenge
     */
     function _createChallenge(
         Action storage _action,
         address _challenger,
-        uint256 _collateral,
+        ERC20 _collateralToken,
+        uint256 _challengeCollateral,
         uint256 _settlementOffer,
-        uint64 _endDate,
+        uint64 _duration,
         bytes _context
     )
         internal
@@ -575,19 +565,18 @@ contract Agreement is IAgreement, AragonApp, Staking {
         Challenge storage challenge = _action.challenge;
         challenge.challenger = _challenger;
         challenge.context = _context;
-        challenge.collateral = _collateral;
         challenge.settlementOffer = _settlementOffer;
-        challenge.endDate = _endDate;
+        challenge.endDate = getTimestamp64().add(_duration);
 
         // Transfer challenge collateral
-        _transferFrom(_action.collateralToken, _challenger, _collateral);
+        _transferFrom(_collateralToken, _challenger, _challengeCollateral);
 
         // Transfer half of the Arbitrator fees
         (, ERC20 feeToken, uint256 feeAmount) = arbitrator.getDisputeFees();
         uint256 arbitratorFees = feeAmount.div(2);
         challenge.arbitratorFeeToken = feeToken;
         challenge.arbitratorFeeAmount = arbitratorFees;
-        require(feeToken.safeTransferFrom(_challenger, address(this), arbitratorFees), ERROR_ARBITRATOR_FEE_TRANSFER_FAILED);
+        _transferFrom(feeToken, _challenger, arbitratorFees);
     }
 
     /**
@@ -607,7 +596,7 @@ contract Agreement is IAgreement, AragonApp, Staking {
 
         // Create dispute
         address submitter = _action.submitter;
-        require(feeToken.safeTransferFrom(submitter, address(this), missingFees), ERROR_ARBITRATOR_FEE_DEPOSIT_FAILED);
+        _transferFrom(feeToken, submitter, missingFees);
         // We are first setting the allowance to zero in case there are remaining fees in the arbitrator
         _approveArbitratorFeeTokens(feeToken, recipient, 0);
         _approveArbitratorFeeTokens(feeToken, recipient, totalFees);
@@ -620,7 +609,7 @@ contract Agreement is IAgreement, AragonApp, Staking {
 
         // Return arbitrator fees to challenger if necessary
         if (challenge.arbitratorFeeToken != feeToken) {
-            require(challengerFeeToken.safeTransfer(challenger, challengerFeeAmount), ERROR_ARBITRATOR_FEE_RETURN_FAILED);
+            _transfer(challengerFeeToken, challenger, challengerFeeAmount);
         }
         return disputeId;
     }
@@ -677,11 +666,16 @@ contract Agreement is IAgreement, AragonApp, Staking {
         Challenge storage challenge = _action.challenge;
         challenge.state = ChallengeState.Accepted;
 
-        ERC20 token = _action.collateralToken;
+        uint256 disputableId = _action.disputableId;
+        IDisputable disputable = _action.disputable;
+        (ERC20 collateralToken,
+        uint256 actionCollateral,
+        uint256 challengeCollateral,) = disputable.getCollateralRequirement(disputableId, _action.collateralId);
+
         address challenger = challenge.challenger;
-        _slashBalance(token, _action.submitter, challenger, _action.collateral);
-        _transfer(token, challenger, challenge.collateral);
-        _cancelAction(_action);
+        _slashBalance(collateralToken, _action.submitter, challenger, actionCollateral);
+        _transfer(collateralToken, challenger, challengeCollateral);
+        disputable.cancel(disputableId);
     }
 
     /**
@@ -692,12 +686,16 @@ contract Agreement is IAgreement, AragonApp, Staking {
         Challenge storage challenge = _action.challenge;
         challenge.state = ChallengeState.Rejected;
 
-        ERC20 token = _action.collateralToken;
-        address submitter = _action.submitter;
-        _unlockBalance(token, submitter, _action.collateral);
-        _transfer(token, submitter, challenge.collateral);
+        uint256 disputableId = _action.disputableId;
+        IDisputable disputable = _action.disputable;
+        (ERC20 collateralToken,
+        uint256 actionCollateral,
+        uint256 challengeCollateral,) = disputable.getCollateralRequirement(disputableId, _action.collateralId);
 
-        _action.disputable.resume(_action.disputableId);
+        address submitter = _action.submitter;
+        _unlockBalance(collateralToken, submitter, actionCollateral);
+        _transfer(collateralToken, submitter, challengeCollateral);
+        disputable.resume(disputableId);
     }
 
     /**
@@ -708,19 +706,15 @@ contract Agreement is IAgreement, AragonApp, Staking {
         Challenge storage challenge = _action.challenge;
         challenge.state = ChallengeState.Voided;
 
-        ERC20 token = _action.collateralToken;
-        _unlockBalance(token, _action.submitter, _action.collateral);
-        _transfer(token, challenge.challenger, challenge.collateral);
+        uint256 disputableId = _action.disputableId;
+        IDisputable disputable = _action.disputable;
+        (ERC20 collateralToken,
+        uint256 actionCollateral,
+        uint256 challengeCollateral,) = disputable.getCollateralRequirement(disputableId, _action.collateralId);
 
-        _action.disputable.void(_action.disputableId);
-    }
-
-    /**
-    * @dev Cancel action in the disputable
-    * @param _action Action instance to be cancelled
-    */
-    function _cancelAction(Action storage _action) internal {
-        _action.disputable.cancel(_action.disputableId);
+        _unlockBalance(collateralToken, _action.submitter, actionCollateral);
+        _transfer(collateralToken, challenge.challenger, challengeCollateral);
+        disputable.void(disputableId);
     }
 
     /**
@@ -731,17 +725,6 @@ contract Agreement is IAgreement, AragonApp, Staking {
     */
     function _approveArbitratorFeeTokens(ERC20 _token, address _to, uint256 _amount) internal {
         require(_token.safeApprove(_to, _amount), ERROR_ARBITRATOR_FEE_APPROVAL_FAILED);
-    }
-
-    /**
-    * @dev Return arbitration fee tokens paid in advance for a challenge
-    * @param _challenge Challenge instance to return its arbitration fees paid in advance
-    */
-    function _returnArbitratorFees(Challenge storage _challenge) internal {
-        uint256 amount = _challenge.arbitratorFeeAmount;
-        if (amount > 0) {
-            require(_challenge.arbitratorFeeToken.safeTransfer(_challenge.challenger, amount), ERROR_ARBITRATOR_FEE_RETURN_FAILED);
-        }
     }
 
     /**

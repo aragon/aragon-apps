@@ -19,7 +19,7 @@ contract IDisputable is IForwarder {
 
     function canChallenge(uint256 _disputableId, address _challenger) external view returns (bool);
 
-    function getCollateralRequirements() external view
+    function getCollateralRequirement(uint256 _disputableId, uint256 _collateralId) external view
         returns (
             ERC20 collateralToken,
             uint256 actionCollateral,
