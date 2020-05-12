@@ -100,11 +100,12 @@ contract('Delay', ([_, submitter, someone]) => {
               assertBn(currentStakingBalance, previousStakingBalance, 'staking balance does not match')
             })
 
-            it('can be stopped, challenged or proceed', async () => {
+            it('can be stopped, paused, challenged or proceed', async () => {
               const { delayableId } = await delay.forward({ script, from })
 
-              const { canStop, canExecute, canProceed, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute } = await delay.getAllowedPaths(delayableId)
+              const { canStop, canPause, canExecute, canProceed, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute } = await delay.getAllowedPaths(delayableId)
               assert.isTrue(canStop, 'delayable cannot be stopped')
+              assert.isTrue(canPause, 'delayable cannot be paused')
               assert.isFalse(canExecute, 'delayable can be executed')
 
               assert.isTrue(canProceed, 'action cannot proceed')
@@ -145,7 +146,7 @@ contract('Delay', ([_, submitter, someone]) => {
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(delay.forward({ script, from }), DELAY_ERRORS.ERROR_CAN_NOT_FORWARD)
+        await assertRevert(delay.forward({ script, from }), DELAY_ERRORS.ERROR_CANNOT_FORWARD)
       })
     })
   })

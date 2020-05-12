@@ -222,13 +222,11 @@ contract Agreement is IAgreement, AragonApp {
         uint256 actionCollateral,
         uint256 challengeCollateral,
         uint64 challengeDuration) = disputable.getCollateralRequirement(disputableId, action.collateralId);
-
         require(_settlementOffer <= actionCollateral, ERROR_INVALID_SETTLEMENT_OFFER);
-        require(disputable.canChallenge(disputableId, msg.sender), ERROR_CANNOT_CHALLENGE_ACTION);
 
         action.state = ActionState.Challenged;
         _createChallenge(action, msg.sender, collateralToken, challengeCollateral, _settlementOffer, challengeDuration, _context);
-        disputable.onDisputableChallenged(disputableId);
+        disputable.onDisputableChallenged(disputableId, msg.sender);
         emit ActionChallenged(_actionId);
     }
 

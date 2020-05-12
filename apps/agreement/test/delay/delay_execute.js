@@ -99,8 +99,9 @@ contract('Delay', ([_, submitter]) => {
         it('there are no more paths allowed', async () => {
           await delay.execute({ delayableId })
 
-          const { canStop, canExecute, canProceed, canChallenge, canSettle, canDispute, canRuleDispute } = await delay.getAllowedPaths(delayableId)
+          const { canStop, canPause, canExecute, canProceed, canChallenge, canSettle, canDispute, canRuleDispute } = await delay.getAllowedPaths(delayableId)
           assert.isFalse(canStop, 'delayable can be stopped')
+          assert.isFalse(canPause, 'delayable can be paused')
           assert.isFalse(canExecute, 'delayable can be executed')
 
           assert.isFalse(canProceed, 'action can proceed')

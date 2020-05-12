@@ -149,7 +149,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
       const submitter = someone
 
       it('reverts', async () => {
-        await assertRevert(agreement.newAction({ submitter }), AGREEMENT_ERRORS.ERROR_CAN_NOT_FORWARD)
+        await assertRevert(agreement.newAction({ submitter }), AGREEMENT_ERRORS.ERROR_CANNOT_FORWARD)
       })
     })
   })

@@ -31,11 +31,12 @@ class DelayWrapper extends DisputableWrapper {
 
   async getAllowedPaths(id) {
     const canStop = await this.disputable.canStop(id)
+    const canPause = await this.disputable.canPause(id)
     const canExecute = await this.disputable.canExecute(id)
 
     const { actionId } = await this.getDelayable(id)
     const actionAllowedPaths = await super.getAllowedPaths(actionId)
-    return { canExecute, canStop, ...actionAllowedPaths }
+    return { canExecute, canPause, canStop, ...actionAllowedPaths }
   }
 
   async forward({ script = undefined, from }) {

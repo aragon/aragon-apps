@@ -6,7 +6,8 @@ import "../../../disputable/DisputableApp.sol";
 
 contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     /* Validation errors */
-    string internal constant ERROR_CAN_NOT_FORWARD = "DISPUTABLE_CAN_NOT_FORWARD";
+    string internal constant ERROR_CANNOT_FORWARD = "DISPUTABLE_CANNOT_FORWARD";
+    string internal constant ERROR_CANNOT_CHALLENGE = "DISPUTABLE_CANNOT_CHALLENGE";
 
     // bytes32 public constant SUBMIT_ROLE = keccak256("SUBMIT_ROLE");
     bytes32 public constant SUBMIT_ROLE = 0x8a8601cc8e9efb544266baca5bffc5cea11aed5de937dc37810fd002b4010eac;
@@ -58,7 +59,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     * @dev IForwarder interface conformance
     */
     function forward(bytes memory data) public {
-        require(canForward(msg.sender, data), ERROR_CAN_NOT_FORWARD);
+        require(canForward(msg.sender, data), ERROR_CANNOT_FORWARD);
 
         uint256 id = actionsByEntryId.length++;
         actionsByEntryId[id] = _newAction(id, msg.sender, data);
@@ -77,8 +78,10 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     /**
     * @dev Challenge an entry
     * @param _id Identification number of the entry to be challenged
+    * @param _challenger Address challenging the disputable
     */
-    function _onDisputableChallenged(uint256 _id) internal {
+    function _onDisputableChallenged(uint256 _id, address _challenger) internal {
+        require(_canChallenge(_id, _challenger), ERROR_CANNOT_CHALLENGE);
         emit DisputableChallenged(_id);
     }
 
@@ -107,10 +110,10 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     }
 
     /**
-    * @dev Tell whether an address can challenge entries or not
+    * @dev Tell whether an entry can be challenged by an address or not
     * @param _id Identification number of the entry being queried
-    * @param _challenger Address being queried
-    * @return True if the given address can challenge actions, false otherwise
+    * @param _challenger Address challenging the disputable
+    * @return True if the given entry can be challenged by the given address, false otherwise
     */
     function _canChallenge(uint256 _id, address _challenger) internal view returns (bool) {
         return canPerform(_challenger, CHALLENGE_ROLE, arr(_challenger, _id));

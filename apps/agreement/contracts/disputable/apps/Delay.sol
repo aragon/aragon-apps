@@ -10,11 +10,11 @@ import "../DisputableApp.sol";
 contract Delay is DisputableApp {
     /* Validation errors */
     string internal constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
-    string internal constant ERROR_CAN_NOT_FORWARD = "DELAY_CAN_NOT_FORWARD";
     string internal constant ERROR_SENDER_NOT_ALLOWED = "DELAY_SENDER_NOT_ALLOWED";
     string internal constant ERROR_DELAYABLE_DOES_NOT_EXIST = "DELAY_DELAYABLE_DOES_NOT_EXIST";
-    string internal constant ERROR_CANNOT_STOP_DELAYABLE = "DELAY_CANNOT_STOP_DELAYABLE";
+    string internal constant ERROR_CANNOT_FORWARD = "DELAY_CANNOT_FORWARD";
     string internal constant ERROR_CANNOT_PAUSE_DELAYABLE = "DELAY_CANNOT_PAUSE_DELAYABLE";
+    string internal constant ERROR_CANNOT_STOP_DELAYABLE = "DELAY_CANNOT_STOP_DELAYABLE";
     string internal constant ERROR_CANNOT_FAST_FORWARD_DELAYABLE = "DELAY_CANNOT_FAST_FORWARD";
     string internal constant ERROR_CANNOT_EXECUTE_DELAYABLE = "DELAY_CANNOT_EXECUTE_DELAYABLE";
 
@@ -57,14 +57,6 @@ contract Delay is DisputableApp {
     struct TokenBalancePermission {
         ERC20 token;                    // ERC20 token to be used for custom permissions based on token balance
         uint256 balance;                // Amount of tokens used for custom permissions
-    }
-
-    /**
-    * @dev Auth modifier restricting access only for addresses that can submit actions
-    */
-    modifier onlySubmitter() {
-        require(_canSubmit(msg.sender), ERROR_AUTH_FAILED);
-        _;
     }
 
     uint64 public delayPeriod;
@@ -118,7 +110,8 @@ contract Delay is DisputableApp {
     * @param _script Action script to be executed
     * @param _context Link to a human-readable text giving context for the given action
     */
-    function schedule(bytes _script, bytes _context) external onlySubmitter {
+    function schedule(bytes _script, bytes _context) external {
+        require(_canSubmit(msg.sender), ERROR_AUTH_FAILED);
         _schedule(msg.sender, _script, _context);
     }
 
@@ -240,6 +233,16 @@ contract Delay is DisputableApp {
     }
 
     /**
+    * @dev Tell whether a delayable can be paused or not
+    * @param _id Identification number of the delayable being queried
+    * @return True if the delayable can be paused, false otherwise
+    */
+    function canPause(uint256 _id) public view returns (bool) {
+        Delayable storage delayable = _getDelayable(_id);
+        return _canPause(delayable);
+    }
+
+    /**
     * @dev Tell whether a delayable can be stopped or not
     * @param _id Identification number of the delayable being queried
     * @return True if the delayable can be stopped, false otherwise
@@ -255,7 +258,7 @@ contract Delay is DisputableApp {
     * @param _script Action script to be executed
     */
     function forward(bytes _script) public {
-        require(canForward(msg.sender, _script), ERROR_CAN_NOT_FORWARD);
+        require(canForward(msg.sender, _script), ERROR_CANNOT_FORWARD);
         _schedule(msg.sender, _script, new bytes(0));
     }
 
@@ -291,11 +294,12 @@ contract Delay is DisputableApp {
     /**
     * @dev Challenge a delayable
     * @param _id Identification number of the delayable to be challenged
+    * @param _challenger Address challenging the disputable
     */
-    function _onDisputableChallenged(uint256 _id) internal {
-        Delayable storage delayable = _getDelayable(_id);
-        require(_canPause(delayable), ERROR_CANNOT_PAUSE_DELAYABLE);
+    function _onDisputableChallenged(uint256 _id, address _challenger) internal {
+        require(_canChallenge(_id, _challenger), ERROR_CANNOT_PAUSE_DELAYABLE);
 
+        Delayable storage delayable = _getDelayable(_id);
         delayable.state = DelayableState.Paused;
         emit Paused(_id);
     }
@@ -379,14 +383,14 @@ contract Delay is DisputableApp {
     }
 
     /**
-    * @dev Tell whether an address can challenge actions or not
-    * @param _id Identification number of the delayable being queried
-    * @param _challenger Address being queried
-    * @return True if the given address can challenge actions, false otherwise
+    * @dev Tell whether a delayable can be challenged by an address or not
+    * @param _id Identification number of the delayable instance being queried
+    * @param _challenger Address challenging the delayable
+    * @return True if the delayable can be challenged by the given address, false otherwise
     */
     function _canChallenge(uint256 _id, address _challenger) internal view returns (bool) {
         Delayable storage delayable = _getDelayable(_id);
-        if (_canExecute(delayable)) {
+        if (!_canPause(delayable)) {
             return false;
         }
 
@@ -396,6 +400,15 @@ contract Delay is DisputableApp {
         return isContract(address(permissionToken))
             ? permissionToken.balanceOf(_challenger) >= permission.balance
             : canPerform(_challenger, CHALLENGE_ROLE, arr(_challenger, _id));
+    }
+
+    /**
+    * @dev Tell whether a delayable can be paused or not
+    * @param _delayable Delayable instance being queried
+    * @return True if the delayable can be paused, false otherwise
+    */
+    function _canPause(Delayable storage _delayable) internal view returns (bool) {
+        return _delayable.state == DelayableState.Scheduled && getTimestamp64() < _delayable.executableAt;
     }
 
     /**
@@ -416,15 +429,6 @@ contract Delay is DisputableApp {
     function _canStop(Delayable storage _delayable) internal view returns (bool) {
         DelayableState state = _delayable.state;
         return state == DelayableState.FastForwarded || state == DelayableState.Scheduled;
-    }
-
-    /**
-    * @dev Tell whether a delayable can be paused or not
-    * @param _delayable Delayable instance being queried
-    * @return True if the delayable can be paused, false otherwise
-    */
-    function _canPause(Delayable storage _delayable) internal view returns (bool) {
-        return _delayable.state == DelayableState.Scheduled;
     }
 
     /**

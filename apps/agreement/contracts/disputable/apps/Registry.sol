@@ -9,18 +9,20 @@ import "../DisputableApp.sol";
 
 contract Registry is DisputableApp {
     /* Validation errors */
-    string internal constant ERROR_CAN_NOT_FORWARD = "REGISTRY_CAN_NOT_FORWARD";
+    string internal constant ERROR_CANNOT_FORWARD = "REGISTRY_CANNOT_FORWARD";
+    string internal constant ERROR_CANNOT_CHALLENGE = "REGISTRY_CANNOT_CHALLENGE";
     string internal constant ERROR_SENDER_NOT_ALLOWED = "REGISTRY_SENDER_NOT_ALLOWED";
     string internal constant ERROR_ENTRY_DOES_NOT_EXIST = "REGISTRY_ENTRY_DOES_NOT_EXIST";
     string internal constant ERROR_ENTRY_CHALLENGED = "REGISTRY_ENTRY_CHALLENGED";
+    string internal constant ERROR_ENTRY_NOT_CHALLENGED = "REGISTRY_ENTRY_NOT_CHALLENGED";
     string internal constant ERROR_ENTRY_ALREADY_REGISTERED = "REGISTRY_ENTRY_ALREADY_REGISTER";
     string internal constant ERROR_CANNOT_DECODE_DATA = "REGISTRY_CANNOT_DECODE_DATA";
 
     // bytes32 public constant REGISTER_ENTRY_ROLE = keccak256("REGISTER_ENTRY_ROLE");
     bytes32 public constant REGISTER_ENTRY_ROLE = 0xd4d229f2cb59999331811228070dfa5d130949390a1b656eaacab6fb006f5b11;
 
-    // bytes32 public constant DISPUTE_ENTRY_ROLE = keccak256("DISPUTE_ENTRY_ROLE");
-    bytes32 public constant DISPUTE_ENTRY_ROLE = 0x267b57a6766d11cbded92ee4646aff2b492cdcf8f54007af1e39cd624e152d2c;
+    // bytes32 public constant CHALLENGE_ENTRY_ROLE = keccak256("CHALLENGE_ENTRY_ROLE");
+    bytes32 public constant CHALLENGE_ENTRY_ROLE = 0x54e9463a913763fc4f271aa2e56f5c265b93d86a2eb145443943b191e86668c7;
 
     event Registered(bytes32 indexed id);
     event Unregistered(bytes32 indexed id);
@@ -107,7 +109,7 @@ contract Registry is DisputableApp {
     * @param _data Data requested to be registered
     */
     function forward(bytes memory _data) public {
-        require(canForward(msg.sender, _data), ERROR_CAN_NOT_FORWARD);
+        require(canForward(msg.sender, _data), ERROR_CANNOT_FORWARD);
 
         (bytes32 id, bytes memory value) = _decodeData(_data);
         _register(msg.sender, id, value, new bytes(0));
@@ -128,7 +130,9 @@ contract Registry is DisputableApp {
     * @dev Challenge an entry
     * @param _id Identification number of the entry to be challenged
     */
-    function _onDisputableChallenged(uint256 _id) internal {
+    function _onDisputableChallenged(uint256 _id, address _challenger) internal {
+        require(_canChallenge(_id, _challenger), ERROR_CANNOT_CHALLENGE);
+
         bytes32 id = bytes32(_id);
         Entry storage entry = _getEntry(id);
         entry.challenged = true;
@@ -142,6 +146,8 @@ contract Registry is DisputableApp {
     function _onDisputableAllowed(uint256 _id) internal {
         bytes32 id = bytes32(_id);
         Entry storage entry = _getEntry(id);
+        require(entry.challenged, ERROR_ENTRY_NOT_CHALLENGED);
+
         entry.challenged = false;
         emit EntryAllowed(id);
     }
@@ -152,7 +158,10 @@ contract Registry is DisputableApp {
     */
     function _onDisputableRejected(uint256 _id) internal {
         bytes32 id = bytes32(_id);
-        _unregister(id, _getEntry(id));
+        Entry storage entry = entries[id];
+        require(entry.challenged, ERROR_ENTRY_NOT_CHALLENGED);
+
+        _unregister(id, entry);
     }
 
     /**
@@ -161,7 +170,10 @@ contract Registry is DisputableApp {
     */
     function _onDisputableVoided(uint256 _id) internal {
         bytes32 id = bytes32(_id);
-        _unregister(id, _getEntry(id));
+        Entry storage entry = entries[id];
+        require(entry.challenged, ERROR_ENTRY_NOT_CHALLENGED);
+
+        _unregister(id, entry);
     }
 
     /**
@@ -210,13 +222,9 @@ contract Registry is DisputableApp {
     * @return True if the given address can challenge actions and the given entry is not challenged, false otherwise
     */
     function _canChallenge(uint256 _id, address _challenger) internal view returns (bool) {
-        if (!canPerform(_challenger, DISPUTE_ENTRY_ROLE, arr(_challenger, _id))) {
-            return false;
-        }
-
         bytes32 id = bytes32(_id);
         Entry storage entry = _getEntry(id);
-        return !entry.challenged;
+        return !entry.challenged && canPerform(_challenger, CHALLENGE_ENTRY_ROLE, arr(_challenger, _id));
     }
 
     /**

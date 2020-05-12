@@ -11,7 +11,7 @@ import "../IAgreement.sol";
 
 
 contract IDisputable is IForwarder {
-    function onDisputableChallenged(uint256 _disputableId) external;
+    function onDisputableChallenged(uint256 _disputableId, address _challenger) external;
 
     function onDisputableAllowed(uint256 _disputableId) external;
 

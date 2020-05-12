@@ -55,15 +55,16 @@ contract DisputableApp is IDisputable, AragonApp {
 
     /**
     * @notice Challenge disputable #`_disputableId`
-    * @param _disputableId Identification number of the disputable to be paused
+    * @param _disputableId Identification number of the disputable to be challenged
+    * @param _challenger Address challenging the disputable
     */
-    function onDisputableChallenged(uint256 _disputableId) external auth(DISPUTABLE_CHALLENGED_ROLE) {
-        _onDisputableChallenged(_disputableId);
+    function onDisputableChallenged(uint256 _disputableId, address _challenger) external auth(DISPUTABLE_CHALLENGED_ROLE) {
+        _onDisputableChallenged(_disputableId, _challenger);
     }
 
     /**
     * @notice Allow disputable #`_disputableId`
-    * @param _disputableId Identification number of the disputable to be resumed
+    * @param _disputableId Identification number of the disputable to be allowed
     */
     function onDisputableAllowed(uint256 _disputableId) external auth(DISPUTABLE_ALLOWED_ROLE) {
         _onDisputableAllowed(_disputableId);
@@ -71,7 +72,7 @@ contract DisputableApp is IDisputable, AragonApp {
 
     /**
     * @notice Reject disputable #`_disputableId`
-    * @param _disputableId Identification number of the disputable to be cancelled
+    * @param _disputableId Identification number of the disputable to be rejected
     */
     function onDisputableRejected(uint256 _disputableId) external auth(DISPUTABLE_REJECTED_ROLE) {
         _onDisputableRejected(_disputableId);
@@ -158,10 +159,10 @@ contract DisputableApp is IDisputable, AragonApp {
     }
 
     /**
-    * @dev Tell whether an address can challenge actions or not
+    * @dev Tell whether a disputable can be challenged by an address or not
     * @param _disputableId Identification number of the disputable being queried
-    * @param _challenger Address being queried
-    * @return True if the given address can challenge actions, false otherwise
+    * @param _challenger Address challenging the disputable
+    * @return True if the given disputable can be challenged by the given address, false otherwise
     */
     function canChallenge(uint256 _disputableId, address _challenger) external view returns (bool) {
         return _canChallenge(_disputableId, _challenger);
@@ -210,8 +211,9 @@ contract DisputableApp is IDisputable, AragonApp {
     /**
     * @dev Challenge disputable
     * @param _disputableId Identification number of the disputable to be challenged
+    * @param _challenger Address challenging the disputable
     */
-    function _onDisputableChallenged(uint256 _disputableId) internal;
+    function _onDisputableChallenged(uint256 _disputableId, address _challenger) internal;
 
     /**
     * @dev Allow disputable
@@ -260,11 +262,12 @@ contract DisputableApp is IDisputable, AragonApp {
         emit CollateralRequirementChanged(id, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
     }
 
+
     /**
-    * @dev Tell whether an address can challenge actions or not
+    * @dev Tell whether a disputable can be challenged by an address or not
     * @param _disputableId Identification number of the disputable being queried
-    * @param _challenger Address being queried
-    * @return True if the given address can challenge actions, false otherwise
+    * @param _challenger Address challenging the disputable
+    * @return True if the given disputable can be challenged by the given address, false otherwise
     */
     function _canChallenge(uint256 _disputableId, address _challenger) internal view returns (bool);
 

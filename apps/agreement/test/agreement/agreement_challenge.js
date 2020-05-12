@@ -4,7 +4,7 @@ const { assertRevert } = require('../helpers/assert/assertThrow')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { CHALLENGES_STATE, ACTIONS_STATE, RULINGS } = require('../helpers/utils/enums')
-const { STAKING_ERRORS, ARAGON_OS_ERRORS, AGREEMENT_ERRORS } = require('../helpers/utils/errors')
+const { DISPUTABLE_ERRORS, AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -284,7 +284,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
         const challenger = someone
 
         it('reverts', async () => {
-          await assertRevert(agreement.challenge({ actionId, challenger }), AGREEMENT_ERRORS.ERROR_CANNOT_CHALLENGE_ACTION)
+          await assertRevert(agreement.challenge({ actionId, challenger }), DISPUTABLE_ERRORS.ERROR_CANNOT_CHALLENGE)
         })
       })
     })
