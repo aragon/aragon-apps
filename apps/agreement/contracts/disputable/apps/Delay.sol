@@ -107,8 +107,7 @@ contract Delay is DisputableApp {
     {
         initialized();
 
-        agreement = _agreement;
-
+        _setAgreement(_agreement);
         _newDelayPeriod(_delayPeriod);
         _newCollateralRequirement(_collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
         _newTokenBalancePermission(_submitPermissionToken, _submitPermissionBalance, _challengePermissionToken, _challengePermissionBalance);
@@ -131,13 +130,13 @@ contract Delay is DisputableApp {
         Delayable storage delayable = _getDelayable(_id);
         require(_canExecute(delayable), ERROR_CANNOT_EXECUTE_DELAYABLE);
 
-        agreement.close(delayable.actionId);
+        _closeAction(delayable.actionId);
         delayable.state = DelayableState.Executed;
         emit Executed(_id);
 
         // Add the agreement to the blacklist to disallow a user holder from executing actions on it
         address[] memory blacklist = new address[](1);
-        blacklist[0] = address(agreement);
+        blacklist[0] = address(_getAgreement());
         runScript(delayable.script, new bytes(0), blacklist);
     }
 
@@ -151,7 +150,7 @@ contract Delay is DisputableApp {
         require(msg.sender == submitter, ERROR_SENDER_NOT_ALLOWED);
         require(_canStop(delayable), ERROR_CANNOT_STOP_DELAYABLE);
 
-        agreement.close(delayable.actionId);
+        _closeAction(delayable.actionId);
         delayable.state = DelayableState.Stopped;
         emit Stopped(_id);
     }

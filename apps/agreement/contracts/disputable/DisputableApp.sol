@@ -18,6 +18,8 @@ contract DisputableApp is IDisputable, AragonApp {
 
     /* Validation errors */
     string internal constant ERROR_TOKEN_NOT_CONTRACT = "DISPUTABLE_TOKEN_NOT_CONTRACT";
+    string internal constant ERROR_AGREEMENT_ALREADY_SET = "DISPUTABLE_AGREEMENT_ALREADY_SET";
+    string internal constant ERROR_AGREEMENT_NOT_CONTRACT = "DISPUTABLE_AGREEMENT_NOT_CONTRACT";
     string internal constant ERROR_MISSING_COLLATERAL_REQUIREMENT = "DISPUTABLE_MISSING_COLLATER_REQ";
 
     // bytes32 public constant DISPUTABLE_REJECTED_ROLE = keccak256("DISPUTABLE_REJECTED_ROLE");
@@ -32,9 +34,13 @@ contract DisputableApp is IDisputable, AragonApp {
     // bytes32 public constant DISPUTABLE_VOIDED_ROLE = keccak256("DISPUTABLE_VOIDED_ROLE");
     bytes32 public constant DISPUTABLE_VOIDED_ROLE = 0x3c4df9ad03966cf31c4edc1700cbda26c9ae87ff88b98aa9bf29fc84989031de;
 
+    // bytes32 public constant SET_AGREEMENT_ROLE = keccak256("SET_AGREEMENT_ROLE");
+    bytes32 public constant SET_AGREEMENT_ROLE = 0x8dad640ab1b088990c972676ada708447affc660890ec9fc9a5483241c49f036;
+
     // bytes32 public constant CHANGE_COLLATERAL_REQUIREMENTS_ROLE = keccak256("CHANGE_COLLATERAL_REQUIREMENTS_ROLE");
     bytes32 public constant CHANGE_COLLATERAL_REQUIREMENTS_ROLE = 0xf8e1e0f3a5d2cfcc5046b79ce871218ff466f2f37c782b9923261b92e20a1496;
 
+    event AgreementSet(IAgreement indexed agreement);
     event CollateralRequirementChanged(uint256 id, ERC20 token, uint256 actionAmount, uint256 challengeAmount, uint64 challengeDuration);
 
     struct CollateralRequirement {
@@ -44,7 +50,7 @@ contract DisputableApp is IDisputable, AragonApp {
         uint64 challengeDuration;   // Duration in seconds of the challenge, during this time window the submitter can answer the challenge
     }
 
-    IAgreement public agreement;                                        // Agreement app associated to the disputable
+    IAgreement private agreement;                                      // Agreement app associated to the disputable
     CollateralRequirement[] private collateralRequirements;            // Current collateral requirements
 
     /**
@@ -80,6 +86,14 @@ contract DisputableApp is IDisputable, AragonApp {
     }
 
     /**
+    * @notice Set disputable agreements to `_agreement`
+    * @param _agreement Agreement instance to be linked
+    */
+    function setAgreement(IAgreement _agreement) external auth(SET_AGREEMENT_ROLE) {
+        _setAgreement(_agreement);
+    }
+
+    /**
     * @notice Change collateral requirements to:
     * @notice - `@tokenAmount(_collateralToken: address, _actionAmount)` for submitting collateral
     * @notice - `@tokenAmount(_collateralToken: address, _challengeAmount)` for challenging collateral
@@ -102,6 +116,14 @@ contract DisputableApp is IDisputable, AragonApp {
     */
     function isForwarder() external pure returns (bool) {
         return true;
+    }
+
+    /**
+    * @dev Tell the agreement linked to the disputable instance
+    * @return Agreement linked to the disputable instance
+    */
+    function getAgreement() external view returns (IAgreement) {
+        return _getAgreement();
     }
 
     /**
@@ -172,6 +194,14 @@ contract DisputableApp is IDisputable, AragonApp {
     }
 
     /**
+    * @dev Close action in the agreement
+    * @param _actionId Identification number of the disputable action in the context of the agreement
+    */
+    function _closeAction(uint256 _actionId) internal {
+        agreement.closeAction(_actionId);
+    }
+
+    /**
     * @dev Reject disputable
     * @param _disputableId Identification number of the disputable to be rejected
     */
@@ -194,6 +224,18 @@ contract DisputableApp is IDisputable, AragonApp {
     * @param _disputableId Identification number of the disputable to be voided
     */
     function _onDisputableVoided(uint256 _disputableId) internal;
+
+    /**
+    * @dev Set disputable agreements
+    * @param _agreement Agreement instance to be linked
+    */
+    function _setAgreement(IAgreement _agreement) internal {
+        require(isContract(address(_agreement)), ERROR_AGREEMENT_NOT_CONTRACT);
+        require(address(agreement) == address(0), ERROR_AGREEMENT_ALREADY_SET);
+
+        agreement = _agreement;
+        emit AgreementSet(_agreement);
+    }
 
     /**
     * @dev Change collateral requirements
@@ -233,6 +275,14 @@ contract DisputableApp is IDisputable, AragonApp {
     */
     function _canProceed(uint256 _actionId) internal view returns (bool) {
         return agreement.canProceed(_actionId);
+    }
+
+    /**
+    * @dev Tell the agreement linked to the disputable instance
+    * @return Agreement linked to the disputable instance
+    */
+    function _getAgreement() internal view returns (IAgreement) {
+        return agreement;
     }
 
     /**

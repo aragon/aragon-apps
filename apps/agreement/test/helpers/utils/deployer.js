@@ -352,6 +352,9 @@ class AgreementDeployer {
       await this.acl.createPermission(this.agreement.address, disputable.address, permission, manager, { from: manager })
     }
 
+    const SET_AGREEMENT_ROLE = await disputable.SET_AGREEMENT_ROLE()
+    await this.acl.createPermission(manager, disputable.address, SET_AGREEMENT_ROLE, manager, { from: manager })
+
     const CHANGE_COLLATERAL_REQUIREMENTS_ROLE = await disputable.CHANGE_COLLATERAL_REQUIREMENTS_ROLE()
     await this.acl.createPermission(manager, disputable.address, CHANGE_COLLATERAL_REQUIREMENTS_ROLE, manager, { from: manager })
   }

@@ -70,7 +70,7 @@ class DisputableWrapper extends AgreementWrapper {
   }
 
   async close({ actionId, from = undefined }) {
-    return from === undefined ? this.disputable.close(actionId) : this.agreement.close(actionId)
+    return from === undefined ? this.disputable.closeAction(actionId) : this.agreement.closeAction(actionId, { from })
   }
 
   async changeCollateralRequirement(options = {}) {

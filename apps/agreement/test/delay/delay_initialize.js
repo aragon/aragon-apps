@@ -2,7 +2,7 @@ const { DAY } = require('../helpers/lib/time')
 const { bigExp } = require('../helpers/lib/numbers')
 const { assertBn } = require('../helpers/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
-const { ARAGON_OS_ERRORS } = require('../helpers/utils/errors')
+const { ARAGON_OS_ERRORS, DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -35,6 +35,10 @@ contract('Delay', () => {
 
     it('cannot be initialized again', async () => {
       await assertRevert(delay.disputable.initialize(delayPeriod, delay.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, submitPermissionToken.address, submitPermissionBalance, challengePermissionToken.address, challengePermissionBalance), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
+    })
+
+    it('cannot set the agreement', async () => {
+      await assertRevert(delay.disputable.setAgreement(delay.address), DISPUTABLE_ERRORS.ERROR_AGREEMENT_ALREADY_SET)
     })
 
     it('initializes the delay app', async () => {

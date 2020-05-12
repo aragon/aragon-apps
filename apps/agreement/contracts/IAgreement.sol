@@ -14,7 +14,7 @@ contract IAgreement is IArbitrable {
 
     function newAction(uint256 _disputableId, uint256 _collateralId, address _submitter, bytes _context) external returns (uint256);
 
-    function close(uint256 _actionId) external;
+    function closeAction(uint256 _actionId) external;
 
     function challengeAction(uint256 _actionId, uint256 _settlementOffer, bytes _context) external;
 

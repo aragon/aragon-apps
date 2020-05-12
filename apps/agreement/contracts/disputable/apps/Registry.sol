@@ -58,8 +58,7 @@ contract Registry is DisputableApp {
     {
         initialized();
 
-        agreement = _agreement;
-
+        _setAgreement(_agreement);
         _newCollateralRequirement(_collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
     }
 
@@ -82,7 +81,7 @@ contract Registry is DisputableApp {
         require(!entry.challenged, ERROR_ENTRY_CHALLENGED);
         require(entry.submitter == msg.sender, ERROR_SENDER_NOT_ALLOWED);
 
-        agreement.close(entry.actionId);
+        _closeAction(entry.actionId);
         _unregister(_id, entry);
     }
 

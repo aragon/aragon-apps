@@ -190,7 +190,7 @@ contract Agreement is IAgreement, AragonApp {
     * @dev It can only be closed if the action wasn't challenged or if it was disputed but ruled in favor of the submitter
     * @param _actionId Identification number of the action to be closed
     */
-    function close(uint256 _actionId) external auth(DISPUTABLE_ROLE) {
+    function closeAction(uint256 _actionId) external auth(DISPUTABLE_ROLE) {
         Action storage action = _getAction(_actionId);
         require(_canProceed(action), ERROR_CANNOT_CLOSE_ACTION);
 

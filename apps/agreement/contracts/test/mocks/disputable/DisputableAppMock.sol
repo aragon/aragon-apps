@@ -43,16 +43,15 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     {
         initialized();
 
-        agreement = _agreement;
-
+        _setAgreement(_agreement);
         _newCollateralRequirement(_collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
     }
 
     /**
     * @dev Close action
     */
-    function close(uint256 _actionId) public {
-        agreement.close(_actionId);
+    function closeAction(uint256 _actionId) public {
+        _closeAction(_actionId);
     }
 
     /**

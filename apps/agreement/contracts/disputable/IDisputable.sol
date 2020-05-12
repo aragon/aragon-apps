@@ -7,6 +7,8 @@ pragma solidity 0.4.24;
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
 
+import "../IAgreement.sol";
+
 
 contract IDisputable is IForwarder {
     function onDisputableChallenged(uint256 _disputableId) external;
@@ -18,6 +20,8 @@ contract IDisputable is IForwarder {
     function onDisputableVoided(uint256 _disputableId) external;
 
     function canChallenge(uint256 _disputableId, address _challenger) external view returns (bool);
+
+    function getAgreement() external view returns (IAgreement);
 
     function getCollateralRequirement(uint256 _disputableId, uint256 _collateralId) external view
         returns (
