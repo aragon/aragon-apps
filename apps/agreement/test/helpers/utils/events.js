@@ -12,11 +12,11 @@ const AGREEMENT_EVENTS = {
 }
 
 const STAKING_EVENTS = {
-  BALANCE_STAKED: 'BalanceStaked',
-  BALANCE_UNSTAKED: 'BalanceUnstaked',
-  BALANCE_LOCKED: 'BalanceLocked',
-  BALANCE_UNLOCKED: 'BalanceUnlocked',
-  BALANCE_SLAHED: 'BalanceSlashed',
+  BALANCE_STAKED: 'Staked',
+  BALANCE_UNSTAKED: 'Unstaked',
+  BALANCE_LOCKED: 'Locked',
+  BALANCE_UNLOCKED: 'Unlocked',
+  BALANCE_SLAHED: 'Slashed',
 }
 
 const DELAY_EVENTS = {

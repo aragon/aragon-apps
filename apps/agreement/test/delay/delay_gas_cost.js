@@ -31,7 +31,7 @@ contract('Delay', ([_, user]) => {
     })
 
     context('schedule', () => {
-      itCostsAtMost(339e3, async () => (await delay.schedule({})).receipt)
+      itCostsAtMost(344e3, async () => (await delay.schedule({})).receipt)
     })
 
     context('stop', () => {
@@ -47,7 +47,7 @@ contract('Delay', ([_, user]) => {
         ({ delayableId } = await delay.schedule({}))
       })
 
-      itCostsAtMost(428e3, () => delay.challenge({ delayableId }))
+      itCostsAtMost(436e3, () => delay.challenge({ delayableId }))
     })
 
     context('settle', () => {

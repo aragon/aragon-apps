@@ -14,12 +14,13 @@ import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "./arbitration/IArbitrable.sol";
 import "./arbitration/IArbitrator.sol";
 
-import "./Staking.sol";
 import "./IAgreement.sol";
+import "./staking/Staking.sol";
+import "./staking/StakingFactory.sol";
 import "./disputable/IDisputable.sol";
 
 
-contract Agreement is IAgreement, AragonApp, Staking {
+contract Agreement is IAgreement, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
@@ -36,8 +37,11 @@ contract Agreement is IAgreement, AragonApp, Staking {
     string internal constant ERROR_INVALID_SETTLEMENT_OFFER = "AGR_INVALID_SETTLEMENT_OFFER";
     string internal constant ERROR_ACTION_DOES_NOT_EXIST = "AGR_ACTION_DOES_NOT_EXIST";
     string internal constant ERROR_DISPUTE_DOES_NOT_EXIST = "AGR_DISPUTE_DOES_NOT_EXIST";
+    string internal constant ERROR_TOKEN_DEPOSIT_FAILED = "AGR_TOKEN_DEPOSIT_FAILED";
+    string internal constant ERROR_TOKEN_TRANSFER_FAILED = "AGR_TOKEN_TRANSFER_FAILED";
+    string internal constant ERROR_TOKEN_APPROVAL_FAILED = "AGR_TOKEN_APPROVAL_FAILED";
     string internal constant ERROR_ARBITRATOR_NOT_CONTRACT = "AGR_ARBITRATOR_NOT_CONTRACT";
-    string internal constant ERROR_ARBITRATOR_FEE_APPROVAL_FAILED = "AGR_ARBITRATOR_FEE_APPROVAL_FAIL";
+    string internal constant ERROR_STAKING_FACTORY_NOT_CONTRACT = "AGR_STAKING_FACTORY_NOT_CONTRACT";
 
     /* Action related errors */
     string internal constant ERROR_CANNOT_CLOSE_ACTION = "AGR_CANNOT_CLOSE_ACTION";
@@ -111,6 +115,7 @@ contract Agreement is IAgreement, AragonApp, Staking {
 
     string public title;                    // Title identifying the Agreement instance
     IArbitrator public arbitrator;          // Arbitrator instance that will resolve disputes
+    StakingFactory public stakingFactory;   // Staking factory to be used for the collateral staking pools
 
     bytes[] private contents;                                   // List of historic contents indexed by ID
     Action[] private actions;                                   // List of actions indexed by ID
@@ -118,17 +123,20 @@ contract Agreement is IAgreement, AragonApp, Staking {
     mapping (address => uint256) private lastContentSignedBy;   // List of last contents signed by user
 
     /**
-    * @notice Initialize Agreement app for `_title` and content `_content` with arbitrator `_arbitrator`
+    * @notice Initialize Agreement app for `_title` and content `_content`, with arbitrator `_arbitrator` and staking factory `_factory`
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @param _stakingFactory Staking factory to be used for the collateral staking pools
     */
-    function initialize(string _title, bytes _content, IArbitrator _arbitrator) external {
+    function initialize(string _title, bytes _content, IArbitrator _arbitrator, StakingFactory _stakingFactory) external {
         initialized();
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
+        require(isContract(address(_stakingFactory)), ERROR_STAKING_FACTORY_NOT_CONTRACT);
 
         title = _title;
         arbitrator = _arbitrator;
+        stakingFactory = _stakingFactory;
 
         contents.length++; // Content zero is considered the null content for further validations
         _newContent(_content);
@@ -251,8 +259,8 @@ contract Agreement is IAgreement, AragonApp, Staking {
         uint256 unlockedAmount = settlementOffer >= actionCollateral ? actionCollateral : (actionCollateral - settlementOffer);
         uint256 slashedAmount = actionCollateral - unlockedAmount;
 
-        _unlockBalance(collateralToken, submitter, unlockedAmount);
-        _slashBalance(collateralToken, submitter, challenger, slashedAmount);
+        Staking staking = stakingFactory.getOrCreateInstance(collateralToken);
+        staking.unlockAndSlash(submitter, unlockedAmount, challenger, slashedAmount);
         _transfer(collateralToken, challenger, challengeCollateral);
         _transfer(challenge.arbitratorFeeToken, challenge.challenger, challenge.arbitratorFeeAmount);
 
@@ -718,13 +726,83 @@ contract Agreement is IAgreement, AragonApp, Staking {
     }
 
     /**
+    * @dev Lock a number of available tokens for a user
+    * @param _token ERC20 token to be locked
+    * @param _user Address of the user to lock tokens for
+    * @param _amount Number of collateral tokens to be locked
+    */
+    function _lockBalance(ERC20 _token, address _user, uint256 _amount) internal {
+        if (_amount == 0) {
+            return;
+        }
+
+        Staking staking = stakingFactory.getOrCreateInstance(_token);
+        staking.lock(_user, _amount);
+    }
+
+    /**
+    * @dev Unlock a number of locked tokens for a user
+    * @param _token ERC20 token to be unlocked
+    * @param _user Address of the user to unlock tokens for
+    * @param _amount Number of collateral tokens to be unlocked
+    */
+    function _unlockBalance(ERC20 _token, address _user, uint256 _amount) internal {
+        if (_amount == 0) {
+            return;
+        }
+
+        Staking staking = stakingFactory.getOrCreateInstance(_token);
+        staking.unlock(_user, _amount);
+    }
+
+    /**
+    * @dev Slash a number of staked tokens for a user
+    * @param _token ERC20 token to be slashed
+    * @param _user Address of the user to be slashed
+    * @param _challenger Address receiving the slashed tokens
+    * @param _amount Number of collateral tokens to be slashed
+    */
+    function _slashBalance(ERC20 _token, address _user, address _challenger, uint256 _amount) internal {
+        if (_amount == 0) {
+            return;
+        }
+
+        Staking staking = stakingFactory.getOrCreateInstance(_token);
+        staking.slash(_user, _challenger, _amount);
+    }
+
+    /**
+    * @dev Transfer tokens to an address
+    * @param _token ERC20 token to be transferred
+    * @param _to Address receiving the tokens being transferred
+    * @param _amount Number of tokens to be transferred
+    */
+    function _transfer(ERC20 _token, address _to, uint256 _amount) internal {
+        if (_amount > 0) {
+            require(_token.safeTransfer(_to, _amount), ERROR_TOKEN_TRANSFER_FAILED);
+        }
+    }
+
+    /**
+    * @dev Transfer tokens from an address to the Staking instance
+    * @param _token ERC20 token to be transferred from
+    * @param _from Address transferring the tokens from
+    * @param _amount Number of tokens to be transferred
+    */
+    function _transferFrom(ERC20 _token, address _from, uint256 _amount) internal {
+        if (_amount > 0) {
+            require(_token.safeTransferFrom(_from, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
+        }
+    }
+
+    /**
     * @dev Approve arbitration fee tokens to an address
     * @param _token ERC20 token used for the arbitration fees
     * @param _to Address to be approved to transfer the arbitration fees
     * @param _amount Number of `_arbitrationFeeToken` tokens to be approved
     */
     function _approveArbitratorFeeTokens(ERC20 _token, address _to, uint256 _amount) internal {
-        require(_token.safeApprove(_to, _amount), ERROR_ARBITRATOR_FEE_APPROVAL_FAILED);
+        require(_token.safeApprove(_to, _amount), ERROR_TOKEN_APPROVAL_FAILED);
     }
 
     /**

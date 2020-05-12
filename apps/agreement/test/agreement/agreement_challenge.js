@@ -94,13 +94,13 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
                   it('transfers the challenge collateral to the contract', async () => {
                     const { collateralToken, challengeCollateral } = agreement
-                    const previousStakingBalance = await collateralToken.balanceOf(agreement.address)
+                    const previousAgreementBalance = await collateralToken.balanceOf(agreement.address)
                     const previousChallengerBalance = await collateralToken.balanceOf(challenger)
 
                     await agreement.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitrationFees, stake })
 
-                    const currentStakingBalance = await collateralToken.balanceOf(agreement.address)
-                    assertBn(currentStakingBalance, previousStakingBalance.add(challengeCollateral), 'staking balance does not match')
+                    const currentAgreementBalance = await collateralToken.balanceOf(agreement.address)
+                    assertBn(currentAgreementBalance, previousAgreementBalance.add(challengeCollateral), 'agreement balance does not match')
 
                     const currentChallengerBalance = await collateralToken.balanceOf(challenger)
                     assertBn(currentChallengerBalance, previousChallengerBalance.sub(challengeCollateral), 'challenger balance does not match')
@@ -110,13 +110,13 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     const arbitratorToken = await agreement.arbitratorToken()
                     const halfArbitrationFees = await agreement.halfArbitrationFees()
 
-                    const previousStakingBalance = await arbitratorToken.balanceOf(agreement.address)
+                    const previousAgreementBalance = await arbitratorToken.balanceOf(agreement.address)
                     const previousChallengerBalance = await arbitratorToken.balanceOf(challenger)
 
                     await agreement.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitrationFees, stake })
 
-                    const currentStakingBalance = await arbitratorToken.balanceOf(agreement.address)
-                    assertBn(currentStakingBalance, previousStakingBalance.add(halfArbitrationFees), 'staking balance does not match')
+                    const currentAgreementBalance = await arbitratorToken.balanceOf(agreement.address)
+                    assertBn(currentAgreementBalance, previousAgreementBalance.add(halfArbitrationFees), 'agreement balance does not match')
 
                     const currentChallengerBalance = await arbitratorToken.balanceOf(challenger)
                     assertBn(currentChallengerBalance, previousChallengerBalance.sub(halfArbitrationFees), 'challenger balance does not match')
@@ -170,7 +170,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(agreement.challenge({ actionId, challenger, stake, arbitrationFees }), STAKING_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
+                  await assertRevert(agreement.challenge({ actionId, challenger, stake, arbitrationFees }), AGREEMENT_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
                 })
               })
             }

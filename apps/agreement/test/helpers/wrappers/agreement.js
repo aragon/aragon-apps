@@ -1,11 +1,15 @@
 const { bn } = require('../lib/numbers')
+const { getEventArgument } = require('@aragon/contract-test-helpers/events')
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 class AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator) {
+  constructor(artifacts, web3, agreement, arbitrator, stakingFactory) {
     this.artifacts = artifacts
     this.web3 = web3
     this.agreement = agreement
     this.arbitrator = arbitrator
+    this.stakingFactory = stakingFactory
   }
 
   get abi() {
@@ -45,8 +49,22 @@ class AgreementWrapper {
   }
 
   async getBalance(token, user) {
-    const { available, locked } = await this.agreement.getBalance(token.address, user)
+    const staking = await this.getStaking(token)
+    const { available, locked } = await staking.getBalance(user)
     return { available, locked }
+  }
+
+  async getStakingAddress(token) {
+    const stakingAddress = await this.stakingFactory.getInstance(token.address)
+    if (stakingAddress !== ZERO_ADDRESS) return stakingAddress
+    const receipt = await this.stakingFactory.getOrCreateInstance(token.address)
+    return getEventArgument(receipt, 'NewStaking', 'instance')
+  }
+
+  async getStaking(token) {
+    const stakingAddress = await this.getStakingAddress(token)
+    const Staking = this._getContract('Staking')
+    return Staking.at(stakingAddress)
   }
 
   async getAllowedPaths(actionId) {
@@ -170,35 +188,39 @@ class AgreementWrapper {
     return clockMock.mockIncreaseTime(timeDiff)
   }
 
-  async approve({ token, amount, from = undefined, accumulate = true }) {
+  async approve({ token, amount, to = undefined, from = undefined, accumulate = true }) {
+    if (!to) to = this.address
     if (!from) from = await this._getSender()
 
     await token.generateTokens(from, amount)
-    return this.safeApprove(token, from, this.address, amount, accumulate)
+    return this.safeApprove(token, from, to, amount, accumulate)
   }
 
-  async approveAndCall({ token, amount, from = undefined, mint = true }) {
+  async approveAndCall({ token, amount, to = undefined, from = undefined, mint = true }) {
+    if (!to) to = await this.getStakingAddress(token)
     if (!from) from = await this._getSender()
 
     if (mint) await token.generateTokens(from, amount)
-    return token.approveAndCall(this.address, amount, '0x', { from })
+    return token.approveAndCall(to, amount, '0x', { from })
   }
 
   async stake({ token, amount, user = undefined, from = undefined, approve = undefined }) {
     if (!user) user = await this._getSender()
     if (!from) from = user
 
+    const staking = await this.getStaking(token)
     if (approve === undefined) approve = amount
-    if (approve) await this.approve({ token, amount: approve, from })
+    if (approve) await this.approve({ token, amount: approve, to: staking.address, from })
 
     return (user === from)
-      ? this.agreement.stake(token.address, amount, { from: user })
-      : this.agreement.stakeFor(token.address, user, amount, { from })
+      ? staking.stake(amount, { from: user })
+      : staking.stakeFor(user, amount, { from })
   }
 
   async unstake({ token, user, amount = undefined }) {
     if (amount === undefined) amount = (await this.getBalance(user)).available
-    return this.agreement.unstake(token.address, amount, { from: user })
+    const staking = await this.getStaking(token)
+    return staking.unstake(amount, { from: user })
   }
 
   async safeApprove(token, from, to, amount, accumulate = true) {
