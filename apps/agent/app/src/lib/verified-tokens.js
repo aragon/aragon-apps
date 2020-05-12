@@ -6,7 +6,6 @@
  */
 /* eslint-disable */
 const MYCRYPTO_VERIFIED_TOKENS = [
-  [
   ['$FFC', '0x4e84e9e5fb0a972628cf4568c403167ef1d40431'],
   ['$FXY', '0xa024e8057eec474a9b2356833707dd0579e26ef3'],
   ['$HUR', '0xcdb7ecfd3403eef3882c65b761ef9b5054890a47'],
