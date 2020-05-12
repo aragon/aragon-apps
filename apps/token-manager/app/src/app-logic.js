@@ -1,5 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
+import BN from 'bn.js'
 import { useFromWei } from './web3-utils'
+import useNow from './useNow.js'
 import {
   useAppState,
   useCurrentApp,
@@ -74,38 +76,54 @@ export function toISODate(seconds) {
   return new Date(parseInt(seconds, 10) * 1000)
 }
 
-export function vestedTokensInfo(amount, cliff, startDate, endDate) {
-  let vestingInfo = {}
-  const time = parseInt(new Date().getTime() / 1000)
-
-  // Shortcuts for before cliff and after vested cases.
-  if (time >= endDate) {
-    vestingIngo.unlockedTokens = useFromWei(amount)
-  } else if (time < cliff) {
-    vestingInfo.unlockedTokens = 0
-  } else {
-    vestingInfo.unlockedTokens = (
-      (useFromWei(amount) * (time - startDate)) /
-      (endDate - startDate)
-    ).toFixed(2)
+function getVestingUnlockedTokens(now, { start, end, amount, cliff }) {
+  if (now >= end) {
+    return amount
   }
 
-  vestingInfo.lockedTokens = (
-    useFromWei(amount) - parseFloat(vestingInfo.unlockedTokens)
-  ).toFixed(2)
+  if (now < cliff) {
+    return '0'
+  }
 
-  vestingInfo.lockedPercentage = (
-    (vestingInfo.lockedTokens * 100) /
-    useFromWei(amount)
-  ).toFixed(2)
+  return String(new BN(amount).mul(now - start).div(end - start))
+}
 
-  vestingInfo.unlockedPercentage = (100 - vestingInfo.lockedPercentage).toFixed(
-    2
-  )
+export function useVestedTokensInfo(vesting) {
+  const nowDate = useNow()
+  const now = parseInt(nowDate.getTime() / 1000, 10)
 
-  vestingInfo.cliffPercentage =
-    ((cliff - startDate) * 100) / (endDate - startDate)
-  return vestingInfo
+  const { amount, cliff, vesting: end, start } = vesting
+
+  return useMemo(() => {
+    // Shortcuts for before cliff and after vested cases.
+    const unlockedTokens = getVestingUnlockedTokens(now, {
+      amount,
+      cliff,
+      end,
+      start,
+    })
+
+    const lockedTokens = (
+      useFromWei(amount) - parseFloat(unlockedTokens)
+    ).toFixed(2)
+
+    const lockedPercentage = (
+      (lockedTokens * 100) /
+      useFromWei(amount)
+    ).toFixed(2)
+
+    const unlockedPercentage = (100 - lockedPercentage).toFixed(2)
+
+    const cliffPercentage = ((cliff - start) * 100) / (end - start)
+
+    return {
+      cliffPercentage,
+      lockedPercentage,
+      lockedTokens,
+      unlockedPercentage,
+      unlockedTokens,
+    }
+  }, [amount, cliff, end, now, start])
 }
 
 // Handles the main logic of the app.

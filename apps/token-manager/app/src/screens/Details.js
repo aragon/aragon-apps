@@ -12,7 +12,7 @@ import {
 } from '@aragon/ui'
 import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
-import { useAppLogic, toISODate, vestedTokensInfo } from '../app-logic'
+import { useAppLogic, toISODate, useVestedTokensInfo } from '../app-logic'
 import { format, formatDistanceStrict, parseISO } from 'date-fns'
 import { useFromWei } from '../web3-utils'
 
@@ -91,12 +91,7 @@ function Details({ tokenSymbol }) {
 }
 
 function VestingContent({ vesting, tokenSymbol }) {
-  const vestingInfo = vestedTokensInfo(
-    vesting.amount,
-    vesting.cliff,
-    vesting.start,
-    vesting.vesting
-  )
+  const vestingInfo = useVestedTokensInfo(vesting)
 
   return (
     <div
@@ -137,12 +132,8 @@ function VestingContent({ vesting, tokenSymbol }) {
 
 function ExpandableContent({ vesting, tokenSymbol }) {
   const theme = useTheme()
-  const vestingInfo = vestedTokensInfo(
-    vesting.amount,
-    vesting.cliff,
-    vesting.start,
-    vesting.vesting
-  )
+  const vestingInfo = useVestedTokensInfo(vesting)
+
   return (
     <div
       css={`

@@ -40,6 +40,7 @@ function Holders({
   const { layoutName } = useLayout()
   const compact = layoutName === 'small'
   const connectedAccount = useConnectedAccount()
+
   const mappedEntries = useMemo(
     () =>
       holders.map(({ address, balance }) => {
@@ -53,11 +54,11 @@ function Holders({
       }),
     [holders, vestings]
   )
+
   return (
     <Split
       primary={
         <DataView
-          mode="table"
           fields={groupMode ? ['Owner'] : ['Holder', 'Balance', 'Vesting']}
           entries={mappedEntries}
           renderEntry={([address, balance, vestings]) => {

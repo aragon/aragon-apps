@@ -174,7 +174,7 @@ async function transfer(token, state, { _from, _to }) {
 
 async function getVesting(state, receiver, vestingId) {
   const vestingInfo = await app
-    .call("getVesting", receiver, vestingId)
+    .call('getVesting', receiver, vestingId)
     .toPromise()
 
   return updateVestingState(state, receiver, vestingId, vestingInfo)
@@ -219,8 +219,8 @@ function updateVestingState(state, receiver, vestingId, vestingInfo) {
 
   return {
     ...state,
-    vestings: updateVestings(vestings, receiver, vesting)
-  };
+    vestings: updateVestings(vestings, receiver, vesting),
+  }
 }
 
 function updateVestings(vestings, receiver, changed) {
@@ -233,7 +233,9 @@ function updateVestings(vestings, receiver, changed) {
     return vestings.concat({ receiver: receiver, vestings: [changed] })
   } else {
     const nextVestings = Array.from(vestings)
-    nextVestings[receiverIndex].vestings = nextVestings[receiverIndex].vestings.concat(changed)
+    nextVestings[receiverIndex].vestings = nextVestings[
+      receiverIndex
+    ].vestings.concat(changed)
     return nextVestings
   }
 }
