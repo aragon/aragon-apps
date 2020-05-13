@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import styled from 'styled-components'
 import {
   Accordion,
   Bar,
+  BackButton,
   Box,
   Button,
   GU,
@@ -18,12 +19,16 @@ import { format, formatDistanceStrict, parseISO } from 'date-fns'
 
 const formatDate = date => `${format(date, 'do MMM yyyy, HH:mm O')}`
 
-function Details({ tokenSymbol }) {
+function Details({ tokenSymbol, selectHolder }) {
   const theme = useTheme()
   const { selectedHolder } = useAppLogic()
+
+  const handleBack = useCallback(() => selectHolder(-1), [selectHolder])
   return (
     <React.Fragment>
-      <Bar></Bar>
+      <Bar>
+        <BackButton onClick={handleBack} />
+      </Bar>
       <Split
         primary={
           <Box>
@@ -133,7 +138,6 @@ function VestingContent({ vesting, tokenSymbol }) {
 function ExpandableContent({ vesting, tokenSymbol }) {
   const theme = useTheme()
   const vestingInfo = useVestedTokensInfo(vesting)
-  console.log('delf', vestingInfo)
   return (
     <div
       css={`

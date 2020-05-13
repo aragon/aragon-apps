@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
 import { Main, SyncIndicator } from '@aragon/ui'
@@ -53,6 +53,7 @@ class App extends React.PureComponent {
 
     this.handleSidepanelClose()
   }
+
   handleLaunchAssignTokensNoHolder = () => {
     this.handleLaunchAssignTokens('')
   }
@@ -84,6 +85,7 @@ class App extends React.PureComponent {
       .requestAddressIdentityModification(address)
       .toPromise()
   }
+
   render() {
     const {
       appStateReady,
@@ -122,7 +124,7 @@ class App extends React.PureComponent {
               tokenSymbol={tokenSymbol}
             />
             {selectedHolder ? (
-              <Details tokenSymbol={tokenSymbol} />
+              <Details tokenSymbol={tokenSymbol} selectHolder={selectHolder} />
             ) : (
               <Holders
                 holders={holders}
