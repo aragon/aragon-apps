@@ -1,11 +1,10 @@
 import React from 'react'
-import { GU, textStyle, useTheme } from '@aragon/ui'
+import { GU, formatNumber, textStyle, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { tokenIconUrl } from '../lib/icon-utils'
-import { formatTokenAmount } from '../lib/utils'
 
 const splitAmount = amount => {
-  const [integer, fractional] = formatTokenAmount(amount).split('.')
+  const [integer, fractional] = formatNumber(amount).split('.')
   return (
     <span>
       <span>{integer}</span>
@@ -74,7 +73,7 @@ const BalanceToken = ({
           `}
         >
           {convertedAmount >= 0
-            ? `$${formatTokenAmount(convertedAmount.toFixed(2))}`
+            ? `$${formatNumber(convertedAmount.toFixed(2))}`
             : '−'}
         </div>
       </div>
