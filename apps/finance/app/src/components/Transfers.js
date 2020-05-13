@@ -6,6 +6,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   DataView,
+  formatTokenAmount,
   GU,
   IconLabel,
   IconExternal,
@@ -24,7 +25,6 @@ import {
 } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
-import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
 import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
@@ -37,17 +37,18 @@ const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
     transfers.map(
       async ({ date, amount, reference, isIncoming, entity, token }) => {
         const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
-        const formattedAmount = formatTokenAmount(
-          amount,
-          isIncoming,
-          decimals,
-          true,
-          { rounding: 5 }
-        )
+
+        const signedAmount = isIncoming ? amount : `-${amount}`
+        const formattedAmount = formatTokenAmount(signedAmount, decimals, {
+          digits: 5,
+          displaySign: true,
+          symbol,
+        })
+
         const { name = '' } = (await resolveAddress(entity)) || {}
         return `${formatDate(
           date
-        )},${name},${entity},${reference},${`"${formattedAmount} ${symbol}"`}`
+        )},${name},${entity},${reference},${`"${formattedAmount}"`}`
       }
     )
   )
@@ -216,13 +217,13 @@ const Transfers = React.memo(({ tokens, transactions }) => {
       }) => {
         const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
         const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
-        const formattedAmount = formatTokenAmount(
-          amount,
-          isIncoming,
-          decimals,
-          true,
-          { rounding: 5 }
-        )
+
+        const signedAmount = isIncoming ? amount : `-${amount}`
+        const formattedAmount = formatTokenAmount(signedAmount, decimals, {
+          digits: 5,
+          displaySign: true,
+          symbol,
+        })
 
         return [
           <time dateTime={formattedDate} title={formattedDate}>
@@ -257,7 +258,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
               color: ${isIncoming ? theme.positive : theme.negative};
             `}
           >
-            {formattedAmount} {symbol}
+            {formattedAmount}
           </span>,
         ]
       }}
