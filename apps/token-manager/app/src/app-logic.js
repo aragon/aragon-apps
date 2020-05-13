@@ -1,6 +1,5 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState, useEffect } from 'react'
 import BN from 'bn.js'
-import useNow from './useNow.js'
 import {
   useAppState,
   useCurrentApp,
@@ -77,6 +76,7 @@ export function toISODate(seconds) {
 
 function getTimeProgress(time, start, end) {
   const progress = Math.max(0, Math.min(1, (time - start) / (end - start)))
+  return progress
 }
 
 function getVestingUnlockedTokens(now, { start, end, amount, cliff }) {
@@ -93,6 +93,20 @@ function getVestingUnlockedTokens(now, { start, end, amount, cliff }) {
   // Vesting progress: 0 => 1
   const progress = getTimeProgress(now, start, end)
   return new BN(amountBn).div(new BN(10000)).mul(new BN(progress * 10000))
+}
+
+// Update `now` at a given interval.
+export function useNow(updateEvery = 1000) {
+  const [now, setNow] = useState(new Date())
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date())
+    }, updateEvery)
+    return () => {
+      clearInterval(timer)
+    }
+  }, [updateEvery])
+  return now
 }
 
 export function useVestedTokensInfo(vesting) {
@@ -121,8 +135,9 @@ export function useVestedTokensInfo(vesting) {
         .div(amountBn)
         .toNumber() / 100
 
-    const unlockedPercentage =
-      new BN(10000).sub(new BN(lockedPercentage)).toNumber() / 100
+    const unlockedPercentage = new BN(100)
+      .sub(new BN(lockedPercentage))
+      .toNumber()
 
     const cliffProgress = getTimeProgress(cliff, start, end)
 

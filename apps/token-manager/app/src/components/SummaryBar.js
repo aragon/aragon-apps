@@ -5,7 +5,7 @@ import { Spring, animated } from 'react-spring'
 
 function SummaryBar({ vestingInfo, ...props }) {
   const theme = useTheme()
-
+  console.log('delf', vestingInfo)
   return (
     <Spring
       from={{ progress: 0 }}

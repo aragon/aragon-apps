@@ -133,7 +133,7 @@ function VestingContent({ vesting, tokenSymbol }) {
 function ExpandableContent({ vesting, tokenSymbol }) {
   const theme = useTheme()
   const vestingInfo = useVestedTokensInfo(vesting)
-
+  console.log('delf', vestingInfo)
   return (
     <div
       css={`
