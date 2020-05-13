@@ -60,11 +60,12 @@ class Balances extends React.Component {
             ? adjustedAmount / convertRates[symbol]
             : -1
         return {
+          amount,
           address,
+          convertedAmount: round(convertedAmount, 5),
+          decimals,
           symbol,
           verified,
-          amount: round(adjustedAmount, 5),
-          convertedAmount: round(convertedAmount, 5),
         }
       }
     )
@@ -114,7 +115,14 @@ class Balances extends React.Component {
               `}
             >
               {balanceItems.map(
-                ({ address, amount, convertedAmount, symbol, verified }) => (
+                ({
+                  address,
+                  amount,
+                  convertedAmount,
+                  decimals,
+                  symbol,
+                  verified,
+                }) => (
                   <li
                     key={address}
                     css={`
@@ -131,6 +139,7 @@ class Balances extends React.Component {
                       address={address}
                       amount={amount}
                       compact={compactMode}
+                      decimals={decimals}
                       convertedAmount={convertedAmount}
                       symbol={symbol}
                       verified={verified}
