@@ -5,8 +5,9 @@ import {
   Bar,
   Box,
   Button,
-  Split,
   GU,
+  Split,
+  formatTokenAmount,
   textStyle,
   useTheme,
 } from '@aragon/ui'
@@ -14,7 +15,6 @@ import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
 import { useAppLogic, toISODate, useVestedTokensInfo } from '../app-logic'
 import { format, formatDistanceStrict, parseISO } from 'date-fns'
-import { useFromWei } from '../web3-utils'
 
 const formatDate = date => `${format(date, 'do MMM yyyy, HH:mm O')}`
 
@@ -110,7 +110,7 @@ function VestingContent({ vesting, tokenSymbol }) {
           align-items: center;
         `}
       >
-        {useFromWei(vesting.amount)} {tokenSymbol}
+        {formatTokenAmount(vesting.amount, 18, { symbol: tokenSymbol })}
       </div>
       <div
         css={`
@@ -207,7 +207,9 @@ function ExpandableContent({ vesting, tokenSymbol }) {
             AVAILABLE TO TRANSFER
           </label>
           <p>
-            {vestingInfo.unlockedTokens} {tokenSymbol}
+            {formatTokenAmount(vestingInfo.unlockedTokens, 18, {
+              symbol: tokenSymbol,
+            })}
           </p>
         </ContentBox>
         <ContentBox>

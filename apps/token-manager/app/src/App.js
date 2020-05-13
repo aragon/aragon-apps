@@ -93,6 +93,7 @@ class App extends React.PureComponent {
       maxAccountTokens,
       numData,
       tokenAddress,
+      tokenDecimals,
       tokenDecimalsBase,
       tokenName,
       tokenSupply,
@@ -129,6 +130,7 @@ class App extends React.PureComponent {
                 groupMode={groupMode}
                 maxAccountTokens={maxAccountTokens}
                 tokenAddress={tokenAddress}
+                tokenDecimals={tokenDecimals}
                 tokenDecimalsBase={tokenDecimalsBase}
                 tokenName={tokenName}
                 tokenSupply={tokenSupply}

@@ -6,17 +6,17 @@ import {
   ContextMenu,
   ContextMenuItem,
   DataView,
+  GU,
   IconAdd,
   IconInfo,
   IconLabel,
   IconRemove,
   Split,
-  GU,
+  formatTokenAmount,
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { formatBalance } from '../utils'
-import { addressesEqual, useFromWei } from '../web3-utils'
+import { addressesEqual } from '../web3-utils'
 import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from '../components/IdentityManager/IdentityManager'
@@ -29,6 +29,7 @@ function Holders({
   onAssignTokens,
   onRemoveTokens,
   tokenAddress,
+  tokenDecimals,
   tokenDecimalsBase,
   tokenName,
   tokenSupply,
@@ -80,22 +81,14 @@ function Holders({
             ]
 
             if (!groupMode) {
-              values.push(formatBalance(balance, tokenDecimalsBase))
+              values.push(formatTokenAmount(balance, tokenDecimals))
             }
 
-            let amount = 0
+            const amount = vestings.reduce((total, vesting) => {
+              return total.add(new BN(vesting.amount))
+            }, new BN(0))
 
-            if (vestings.length > 0) {
-              amount = vestings
-                .map(function(vesting) {
-                  return useFromWei(vesting.amount)
-                })
-                .reduce(
-                  (total, current) => parseFloat(total) + parseFloat(current)
-                )
-            }
-            values.push(amount)
-            return values
+            return [...values, formatTokenAmount(amount, tokenDecimals)]
           }}
           renderEntryActions={([address, balance, vestings]) => (
             <EntryActions
@@ -132,6 +125,7 @@ Holders.propTypes = {
   onAssignTokens: PropTypes.func.isRequired,
   onRemoveTokens: PropTypes.func.isRequired,
   tokenAddress: PropTypes.string,
+  tokenDecimals: PropTypes.instanceOf(BN),
   tokenDecimalsBase: PropTypes.instanceOf(BN),
   tokenName: PropTypes.string,
   tokenSupply: PropTypes.instanceOf(BN),

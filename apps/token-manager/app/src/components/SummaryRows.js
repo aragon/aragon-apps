@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU, textStyle, useTheme } from '@aragon/ui'
+import { GU, formatTokenAmount, textStyle, useTheme } from '@aragon/ui'
 
 function SummaryRows({ vestingInfo, tokenSymbol }) {
   const theme = useTheme()
@@ -16,19 +16,21 @@ function SummaryRows({ vestingInfo, tokenSymbol }) {
         color={theme.positive}
         label="Unlocked tokens"
         pct={vestingInfo.unlockedPercentage}
-        token={{ amount: vestingInfo.unlockedTokens, symbol: tokenSymbol }}
+        tokenAmount={vestingInfo.unlockedTokens}
+        tokenSymbol={tokenSymbol}
       />
       <SummaryRow
         color={theme.negative}
         label="Locked tokens"
         pct={vestingInfo.lockedPercentage}
-        token={{ amount: vestingInfo.lockedTokens, symbol: tokenSymbol }}
+        tokenAmount={vestingInfo.lockedTokens}
+        tokenSymbol={tokenSymbol}
       />
     </div>
   )
 }
 
-function SummaryRow({ color, label, pct, token }) {
+function SummaryRow({ color, label, pct, tokenAmount, tokenSymbol }) {
   const theme = useTheme()
   return (
     <div
@@ -64,7 +66,7 @@ function SummaryRow({ color, label, pct, token }) {
           margin-left: ${2 * GU}px;
         `}
       >
-        {token.amount} {token.symbol}
+        {formatTokenAmount(tokenAmount, 18, { symbol: tokenSymbol })}
       </div>
     </div>
   )

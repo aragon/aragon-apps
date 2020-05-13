@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
 import BN from 'bn.js'
-import { useFromWei } from './web3-utils'
 import useNow from './useNow.js'
 import {
   useAppState,
@@ -76,16 +75,24 @@ export function toISODate(seconds) {
   return new Date(parseInt(seconds, 10) * 1000)
 }
 
+function getTimeProgress(time, start, end) {
+  const progress = Math.max(0, Math.min(1, (time - start) / (end - start)))
+}
+
 function getVestingUnlockedTokens(now, { start, end, amount, cliff }) {
+  const amountBn = new BN(amount)
+
   if (now >= end) {
-    return amount
+    return amountBn
   }
 
   if (now < cliff) {
-    return '0'
+    return new BN(0)
   }
 
-  return String(new BN(amount).mul(now - start).div(end - start))
+  // Vesting progress: 0 => 1
+  const progress = getTimeProgress(now, start, end)
+  return new BN(amountBn).div(new BN(10000)).mul(new BN(progress * 10000))
 }
 
 export function useVestedTokensInfo(vesting) {
@@ -93,6 +100,7 @@ export function useVestedTokensInfo(vesting) {
   const now = parseInt(nowDate.getTime() / 1000, 10)
 
   const { amount, cliff, vesting: end, start } = vesting
+  const amountBn = new BN(amount)
 
   return useMemo(() => {
     // Shortcuts for before cliff and after vested cases.
@@ -103,21 +111,23 @@ export function useVestedTokensInfo(vesting) {
       start,
     })
 
-    const lockedTokens = (
-      useFromWei(amount) - parseFloat(unlockedTokens)
-    ).toFixed(2)
+    const lockedTokens = amountBn.sub(unlockedTokens)
 
-    const lockedPercentage = (
-      (lockedTokens * 100) /
-      useFromWei(amount)
-    ).toFixed(2)
+    // We keep two more digits in the percentages
+    // for display purposes (10000 rather than 100).
+    const lockedPercentage =
+      lockedTokens
+        .mul(new BN(10000))
+        .div(amountBn)
+        .toNumber() / 100
 
-    const unlockedPercentage = (100 - lockedPercentage).toFixed(2)
+    const unlockedPercentage =
+      new BN(10000).sub(new BN(lockedPercentage)).toNumber() / 100
 
-    const cliffPercentage = ((cliff - start) * 100) / (end - start)
+    const cliffProgress = getTimeProgress(cliff, start, end)
 
     return {
-      cliffPercentage,
+      cliffProgress,
       lockedPercentage,
       lockedTokens,
       unlockedPercentage,

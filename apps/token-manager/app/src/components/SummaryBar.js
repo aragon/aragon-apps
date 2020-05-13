@@ -5,6 +5,7 @@ import { Spring, animated } from 'react-spring'
 
 function SummaryBar({ vestingInfo, ...props }) {
   const theme = useTheme()
+
   return (
     <Spring
       from={{ progress: 0 }}
@@ -28,8 +29,8 @@ function SummaryBar({ vestingInfo, ...props }) {
                 backgroundColor: theme.negative,
                 transform: progress.interpolate(
                   v => `
-                      translate3d(${vestingInfo.unlockedPercentage * v}%, 0, 0)
-                      scale3d(${vestingInfo.lockedPercentage * v}, 1, 1)
+                    translate3d(${vestingInfo.unlockedPercentage * v}%, 0, 0)
+                    scale3d(${vestingInfo.lockedPercentage * v}, 1, 1)
                     `
                 ),
               }}
@@ -40,7 +41,7 @@ function SummaryBar({ vestingInfo, ...props }) {
               style={{
                 transform: progress.interpolate(
                   v => `
-                    translate3d(${vestingInfo.cliffPercentage * v}%, 0, 0)
+                    translate3d(${v * vestingInfo.cliffProgress * 100}%, 0, 0)
                     scale3d(1, ${v}, 1)
                   `
                 ),
@@ -58,12 +59,6 @@ function SummaryBar({ vestingInfo, ...props }) {
       )}
     </Spring>
   )
-}
-
-SummaryBar.defaultProps = {
-  unlockedTokens: 0,
-  lockedTokens: 0,
-  today: 0,
 }
 
 const Main = styled.div`
