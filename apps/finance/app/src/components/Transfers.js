@@ -7,10 +7,11 @@ import {
   ContextMenuItem,
   DataView,
   GU,
-  IconLabel,
   IconExternal,
+  IconLabel,
   IconToken,
   blockExplorerUrl,
+  formatTokenAmount,
   textStyle,
   useLayout,
   useTheme,
@@ -24,7 +25,6 @@ import {
 } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
-import { formatTokenAmount } from '../lib/utils'
 import TransfersFilters from './TransfersFilters'
 import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
@@ -35,26 +35,20 @@ const formatDate = date => format(date, 'dd/MM/yy')
 const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
   const mappedData = await Promise.all(
     transfers.map(
-      async ({
-        date,
-        numData: { amount },
-        reference,
-        isIncoming,
-        entity,
-        token,
-      }) => {
-        const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
-        const formattedAmount = formatTokenAmount(
-          amount,
-          isIncoming,
-          decimals,
-          true,
-          { rounding: 5 }
-        )
+      async ({ date, amount, reference, isIncoming, entity, token }) => {
         const { name = '' } = (await resolveAddress(entity)) || {}
-        return `${formatDate(
-          date
-        )},${name},${entity},${reference},${`"${formattedAmount} ${symbol}"`}`
+
+        const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
+
+        const formattedAmount = formatTokenAmount(
+          isIncoming ? amount : amount.neg(),
+          decimals,
+          { displaySign: true, digits: 5, symbol }
+        )
+
+        return [formatDate(date), name, entity, reference, formattedAmount]
+          .map(value => `"${value}"`)
+          .join(',')
       }
     )
   )
@@ -213,22 +207,14 @@ const Transfers = React.memo(({ tokens, transactions }) => {
         { label: 'Amount', priority: 2 },
       ]}
       entries={sortedTransfers}
-      renderEntry={({
-        date,
-        entity,
-        reference,
-        isIncoming,
-        numData: { amount },
-        token,
-      }) => {
+      renderEntry={({ amount, date, entity, isIncoming, reference, token }) => {
         const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
         const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
+
         const formattedAmount = formatTokenAmount(
-          amount,
-          isIncoming,
+          isIncoming ? amount : amount.neg(),
           decimals,
-          true,
-          { rounding: 5 }
+          { displaySign: true, digits: 5, symbol }
         )
 
         return [
@@ -264,7 +250,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
               color: ${isIncoming ? theme.positive : theme.negative};
             `}
           >
-            {formattedAmount} {symbol}
+            {formattedAmount}
           </span>,
         ]
       }}

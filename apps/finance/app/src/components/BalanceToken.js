@@ -1,52 +1,31 @@
 import React from 'react'
-import { GU, Help, textStyle, useTheme } from '@aragon/ui'
+import BN from 'bn.js'
+import PropTypes from 'prop-types'
+import { GU, Help, formatTokenAmount, textStyle, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { tokenIconUrl } from '../lib/icon-utils'
-import { formatTokenAmount } from '../lib/utils'
 
-const splitAmount = (integer, fractional) => {
-  return (
-    <span>
-      <span>{integer}</span>
-      {fractional && (
-        <span
-          css={`
-            ${textStyle('body3')}
-          `}
-        >
-          .{fractional}
-        </span>
-      )}
-    </span>
-  )
-}
-
-const BalanceToken = ({
+function BalanceToken({
   address,
   amount,
   compact,
+  convertedAmount,
+  decimals,
   symbol,
   verified,
-  convertedAmount = -1,
-}) => {
+}) {
   const theme = useTheme()
   const network = useNetwork()
 
-  const [integerAmount, fractionalAmount] = formatTokenAmount(
-    amount.toFixed(3)
-  ).split('.')
+  const amountFormatted = formatTokenAmount(amount, decimals, {
+    digits: decimals,
+  })
 
-  const [_, notRoundedFractionalAmount] = formatTokenAmount(
-    amount,
-    false,
-    0,
-    false,
-    {
-      rounding: 18,
-    }
-  ).split('.')
+  const amountFormattedRounded = formatTokenAmount(amount, decimals, {
+    digits: 3,
+  })
 
-  const amountWasRounded = fractionalAmount !== notRoundedFractionalAmount
+  const amountWasRounded = amountFormatted !== amountFormattedRounded
 
   return (
     <div css="display: inline-block">
@@ -81,7 +60,7 @@ const BalanceToken = ({
             display:flex;
           `}
         >
-          {splitAmount(integerAmount, fractionalAmount)}
+          <SplitAmount amountFormatted={amountFormattedRounded} />
           {amountWasRounded && (
             <div
               css={`
@@ -90,8 +69,8 @@ const BalanceToken = ({
                 margin-left: ${GU}px;
               `}
             >
-              <Help hint={'This is an approximation, see the complete amount'}>
-                {amount}
+              <Help hint="This is an approximation, see the complete amount">
+                {amountFormatted}
               </Help>
             </div>
           )}
@@ -102,12 +81,44 @@ const BalanceToken = ({
             ${textStyle('body2')}
           `}
         >
-          {convertedAmount >= 0
-            ? `$${formatTokenAmount(convertedAmount.toFixed(2))}`
-            : '−'}
+          {convertedAmount.isNeg()
+            ? '−'
+            : `$${formatTokenAmount(convertedAmount, decimals)}`}
         </div>
       </div>
     </div>
+  )
+}
+
+BalanceToken.defaultProps = {
+  convertedAmount: -1,
+}
+
+BalanceToken.propTypes = {
+  address: PropTypes.string.isRequired,
+  amount: PropTypes.instanceOf(BN),
+  compact: PropTypes.bool.isRequired,
+  convertedAmount: PropTypes.instanceOf(BN),
+  decimals: PropTypes.instanceOf(BN),
+  symbol: PropTypes.string.isRequired,
+  verified: PropTypes.bool.isRequired,
+}
+
+function SplitAmount({ amountFormatted }) {
+  const [integer, fractional] = amountFormatted.split('.')
+  return (
+    <span>
+      <span>{integer}</span>
+      {fractional && (
+        <span
+          css={`
+            ${textStyle('body3')}
+          `}
+        >
+          .{fractional}
+        </span>
+      )}
+    </span>
   )
 }
 
