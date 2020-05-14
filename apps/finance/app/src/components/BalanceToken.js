@@ -60,6 +60,7 @@ function BalanceToken({
             display:flex;
           `}
         >
+          {amountWasRounded && '~'}
           <SplitAmount amountFormatted={amountFormattedRounded} />
           {amountWasRounded && (
             <div
@@ -70,7 +71,7 @@ function BalanceToken({
               `}
             >
               <Help hint="This is an approximation, see the complete amount">
-                {amountFormatted}
+                Total: {amountFormatted} {symbol}
               </Help>
             </div>
           )}
