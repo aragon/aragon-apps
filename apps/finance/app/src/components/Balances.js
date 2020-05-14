@@ -1,152 +1,170 @@
-import React from 'react'
-import throttle from 'lodash.throttle'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import BN from 'bn.js'
 import { Box, GU, textStyle, useTheme } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
-import { round } from '../lib/math-utils'
 
-const CONVERT_API_BASE = 'https://min-api.cryptocompare.com/data'
-const CONVERT_THROTTLE_TIME = 5000
+const CONVERT_API_RETRY_DELAY = 2000
 
-const convertApiUrl = symbols =>
-  `${CONVERT_API_BASE}/price?fsym=USD&tsyms=${symbols.join(',')}`
-
-const keyFromBalances = balances =>
-  balances
-    .filter(({ verified }) => verified)
-    .sort(({ addressA, addressB }) => addressA - addressB)
-    .map(({ address, numData: { amount } }) => `${address}:${amount}`)
-    .join(',')
-
-const areSameBalances = (balancesA, balancesB) => {
-  const keyA = keyFromBalances(balancesA)
-  const keyB = keyFromBalances(balancesB)
-  return keyA === keyB
+function convertRatesUrl(symbolsQuery) {
+  return `https://min-api.cryptocompare.com/data/price?fsym=USD&tsyms=${symbolsQuery}`
 }
 
-class Balances extends React.Component {
-  state = {
-    convertRates: {},
-  }
-  componentDidMount() {
-    this.updateConvertedRates(this.props)
-  }
-  componentDidUpdate(prevProps) {
-    if (!areSameBalances(prevProps.balances, this.props.balances)) {
-      this.updateConvertedRates(this.props)
-    }
-  }
-  updateConvertedRates = throttle(async ({ balances }) => {
-    const verifiedSymbols = balances
-      .filter(({ verified }) => verified)
-      .map(({ symbol }) => symbol)
+function useConvertRates(symbols) {
+  const [rates, setRates] = useState({})
 
-    if (!verifiedSymbols.length) {
-      return
-    }
+  const symbolsQuery = symbols.join(',')
 
-    const res = await fetch(convertApiUrl(verifiedSymbols))
-    const convertRates = await res.json()
-    this.setState({ convertRates })
-  }, CONVERT_THROTTLE_TIME)
+  useEffect(() => {
+    let cancelled = false
+    let retryTimer = null
 
-  render() {
-    const { compactMode, balances, theme } = this.props
-    const { convertRates } = this.state
-    const balanceItems = balances.map(
-      ({ address, numData: { amount, decimals }, symbol, verified }) => {
-        const adjustedAmount = amount / Math.pow(10, decimals)
-        const convertedAmount =
-          verified && convertRates[symbol]
-            ? adjustedAmount / convertRates[symbol]
-            : -1
-        return {
-          address,
-          symbol,
-          verified,
-          amount: adjustedAmount,
-          convertedAmount: round(convertedAmount, 5),
+    const update = async () => {
+      if (!symbolsQuery) {
+        setRates({})
+        return
+      }
+
+      try {
+        const response = await fetch(convertRatesUrl(symbolsQuery))
+        const rates = await response.json()
+        if (!cancelled) {
+          setRates(rates)
+        }
+      } catch (err) {
+        // The !cancelled check is needed in case:
+        //  1. The fetch() request is ongoing.
+        //  2. The component gets unmounted.
+        //  3. An error gets thrown.
+        //
+        //  Assuming the fetch() request keeps throwing, it would create new
+        //  requests even though the useEffect() got cancelled.
+        if (!cancelled) {
+          retryTimer = setTimeout(update, CONVERT_API_RETRY_DELAY)
         }
       }
-    )
-    const noBalances = balanceItems.length === 0
+    }
+    update()
 
-    return (
-      <Box heading="Token Balances">
-        <div
-          css={`
-            /*
+    return () => {
+      cancelled = true
+      clearTimeout(retryTimer)
+    }
+  }, [symbolsQuery])
+
+  return rates
+}
+
+// Prepare the balances for the BalanceToken component
+function useBalanceItems(balances) {
+  const verifiedSymbols = balances
+    .filter(({ verified }) => verified)
+    .map(({ symbol }) => symbol)
+
+  const convertRates = useConvertRates(verifiedSymbols)
+
+  const balanceItems = useMemo(() => {
+    return balances.map(({ address, amount, decimals, symbol, verified }) => ({
+      address,
+      amount,
+      convertedAmount: convertRates[symbol]
+        ? amount.divn(convertRates[symbol])
+        : new BN(-1),
+      decimals,
+      symbol,
+      verified,
+    }))
+  }, [balances, convertRates])
+
+  return balanceItems
+}
+
+function Balances({ balances, compactMode }) {
+  const theme = useTheme()
+  const balanceItems = useBalanceItems(balances)
+
+  return (
+    <Box heading="Token Balances">
+      <div
+        css={`
+          /*
             * translate3d() fixes an issue on recent Firefox versions where the
             * scrollbar would briefly appear on top of everything (including the
             * sidepanel overlay).
             */
-            min-height: 112px;
-            transform: translate3d(0, 0, 0);
-            overflow-x: auto;
-            ${noBalances
-              ? `
+          min-height: 112px;
+          transform: translate3d(0, 0, 0);
+          overflow-x: auto;
+          ${balanceItems.length === 0
+            ? `
                 display: flex;
                 justify-content: center;
                 align-items: center;
               `
-              : ''}
-          `}
-        >
-          {noBalances ? (
-            <div
-              css={`
-                ${textStyle('body1')};
-                color: ${theme.content};
-              `}
-            >
-              No token balances yet.
-            </div>
-          ) : (
-            <ul
-              css={`
-                list-style: none;
-                display: flex;
-                ${compactMode
-                  ? `
+            : ''}
+        `}
+      >
+        {balanceItems.length === 0 ? (
+          <div
+            css={`
+              ${textStyle('body1')};
+              color: ${theme.content};
+            `}
+          >
+            No token balances yet.
+          </div>
+        ) : (
+          <ul
+            css={`
+              list-style: none;
+              display: flex;
+              ${compactMode
+                ? `
                     flex-direction: column;
                     padding: ${1 * GU}px 0;
                   `
-                  : ''}
-              `}
-            >
-              {balanceItems.map(
-                ({ address, amount, convertedAmount, symbol, verified }) => (
-                  <li
-                    key={address}
-                    css={`
-                      display: block;
-                      min-width: ${20 * GU}px;
-                      ${compactMode ? `margin-bottom: ${3 * GU}px;` : ''}
-                      &:last-of-type {
-                        min-width: unset;
-                        margin-bottom: 0;
-                      }
-                    `}
-                  >
-                    <BalanceToken
-                      address={address}
-                      amount={amount}
-                      compact={compactMode}
-                      convertedAmount={convertedAmount}
-                      symbol={symbol}
-                      verified={verified}
-                    />
-                  </li>
-                )
-              )}
-            </ul>
-          )}
-        </div>
-      </Box>
-    )
-  }
+                : ''}
+            `}
+          >
+            {balanceItems.map(
+              ({
+                address,
+                amount,
+                convertedAmount,
+                decimals,
+                symbol,
+                verified,
+              }) => (
+                <li
+                  key={address}
+                  css={`
+                    flex-shrink: 0;
+                    display: block;
+                    min-width: ${20 * GU}px;
+                    padding-right: ${3 * GU}px;
+                    ${compactMode ? `margin-bottom: ${3 * GU}px;` : ''}
+                    &:last-of-type {
+                      min-width: unset;
+                      margin-bottom: 0;
+                    }
+                  `}
+                >
+                  <BalanceToken
+                    address={address}
+                    amount={amount}
+                    compact={compactMode}
+                    convertedAmount={convertedAmount}
+                    decimals={decimals}
+                    symbol={symbol}
+                    verified={verified}
+                  />
+                </li>
+              )
+            )}
+          </ul>
+        )}
+      </div>
+    </Box>
+  )
 }
 
-export default props => {
-  const theme = useTheme()
-  return <Balances {...props} theme={theme} />
-}
+export default Balances
