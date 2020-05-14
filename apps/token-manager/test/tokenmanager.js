@@ -246,7 +246,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
                 await assertRevert(tokenManager.assign(holder, 51), errors.TM_ASSIGN_TRANSFER_FROM_REVERTED)
             })
 
-            it('allows token holders to forwards actions', async () => {
+            it('allows tokenholders to forwards actions', async () => {
                 const executionTarget = await ExecutionTarget.new()
                 await tokenManager.mint(holder, 100)
 
@@ -257,7 +257,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
                 assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
             })
 
-            it('disallows non-token holders from forwarding actions', async () => {
+            it('disallows non-tokenholders from forwarding actions', async () => {
                 const executionTarget = await ExecutionTarget.new()
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 const script = encodeCallScript([action])

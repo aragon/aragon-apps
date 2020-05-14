@@ -13,14 +13,14 @@ const EmptyState = React.memo(function NoVotes({ onAssignHolder }) {
       `}
     >
       <EmptyStateCard
-        text="There are no token holders yet!"
+        text="There are no tokenholders yet!"
         action={
           <Button wide mode="strong" onClick={onAssignHolder}>
             Add tokens to an address
           </Button>
         }
         illustration={
-          <img css="margin: auto;" src={emptyIcon} alt="No token holders" />
+          <img css="margin: auto;" src={emptyIcon} alt="No tokenholders" />
         }
       />
     </div>

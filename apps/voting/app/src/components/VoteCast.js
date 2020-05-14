@@ -4,7 +4,7 @@ import { useAppState } from '@aragon/api-react'
 import useExtendedVoteData from '../hooks/useExtendedVoteData'
 import { VOTE_YEA } from '../vote-types'
 
-function VoteCasted({ vote }) {
+function VoteCast({ vote }) {
   const { connectedAccountVote } = vote
   const { userBalance } = useExtendedVoteData(vote)
   const { tokenSymbol } = useAppState()
@@ -86,4 +86,4 @@ function VoteCasted({ vote }) {
   )
 }
 
-export default VoteCasted
+export default VoteCast
