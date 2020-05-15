@@ -14,15 +14,15 @@ import {
 } from '@aragon/ui'
 import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
+import VestingInfoBoxes from '../components/VestingInfoBoxes'
 import { useAppLogic, toISODate, useVestedTokensInfo } from '../app-logic'
 import { format, formatDistanceStrict, parseISO } from 'date-fns'
 
 const formatDate = date => `${format(date, 'do MMM yyyy, HH:mm O')}`
 
-function Details({ tokenSymbol, selectHolder }) {
+function Details({ tokenSymbol, selectHolder, vestings }) {
   const theme = useTheme()
   const { selectedHolder } = useAppLogic()
-
   const handleBack = useCallback(() => selectHolder(-1), [selectHolder])
   return (
     <React.Fragment>
@@ -44,50 +44,11 @@ function Details({ tokenSymbol, selectHolder }) {
           </Box>
         }
         secondary={
-          <React.Fragment>
-            <Box heading="Vestings Info">
-              <ul>
-                {[
-                  ['Total supply', <strong>0</strong>],
-                  ['Vested', <strong>0</strong>],
-                  ['Locked', <strong>0</strong>],
-                  ['Unlocked', <strong>0</strong>],
-                ].map(([label, content], index) => (
-                  <li
-                    key={index}
-                    css={`
-                      display: flex;
-                      justify-content: space-between;
-                      list-style: none;
-                      color: ${theme.surfaceContent};
-
-                      & + & {
-                        margin-top: ${2 * GU}px;
-                      }
-
-                      > span:nth-child(1) {
-                        color: ${theme.surfaceContentSecondary};
-                      }
-                      > span:nth-child(2) {
-                        opacity: 0;
-                        width: 10px;
-                      }
-                      > span:nth-child(3) {
-                        flex-shrink: 1;
-                      }
-                      > strong {
-                        text-transform: uppercase;
-                      }
-                    `}
-                  >
-                    <span>{label}</span>
-                    <span>:</span>
-                    {content}
-                  </li>
-                ))}
-              </ul>
-            </Box>
-          </React.Fragment>
+          <VestingInfoBoxes
+            selectedHolder={selectedHolder}
+            tokenSymbol={tokenSymbol}
+            vestings={vestings}
+          />
         }
         invert="horizontal"
       />
@@ -215,11 +176,6 @@ function ExpandableContent({ vesting, tokenSymbol }) {
               symbol: tokenSymbol,
             })}
           </p>
-        </ContentBox>
-        <ContentBox>
-          <Button wide size="small" mode="normal">
-            Transfer
-          </Button>
         </ContentBox>
       </div>
     </div>

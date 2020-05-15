@@ -6,6 +6,7 @@ import {
   useInstalledApps,
   usePath,
 } from '@aragon/api-react'
+import { addressesEqual } from './web3-utils'
 
 const HOLDER_ADDRESS_PATH = /^\/vesting\/0x[a-fA-F0-9]{40}\/?$/
 const NO_HOLDER_ADDRESS = '-1'
@@ -22,8 +23,9 @@ function holderFromPath(path) {
 
 // Get the vestings from the holder currently selected, or null otherwise.
 export function useSelectedHolderVestings() {
-  const { vestings } = useAppState()
+  const { vestings, holders } = useAppState()
   const [path, requestPath] = usePath()
+  let holderVestingInfo = {}
 
   // The memoized holder currently selected.
   const selectedHolder = useMemo(() => {
@@ -32,12 +34,18 @@ export function useSelectedHolderVestings() {
     if (holderAddress === NO_HOLDER_ADDRESS) {
       return null
     }
+
     if (vestings) {
-      return (
-        vestings.find(vesting => vesting.receiver === holderAddress) || null
+      holderVestingInfo = vestings.find(
+        vesting => vesting.receiver === holderAddress
       )
     }
-    return []
+    if (holders) {
+      holderVestingInfo.holderBalance = holders.find(
+        holder => holder.address === holderAddress
+      )
+    }
+    return holderVestingInfo
   }, [path, vestings])
 
   const selectHolder = useCallback(
@@ -149,6 +157,24 @@ export function useVestedTokensInfo(vesting) {
       unlockedTokens,
     }
   }, [amount, cliff, end, now, start])
+}
+
+export function useTotalVestedTokensInfo(vestings) {
+  const totalInfo = {}
+
+  totalInfo.totalAmount = vestings.reduce((total, vesting) => {
+    return total.add(new BN(vesting.amount))
+  }, new BN(0))
+
+  totalInfo.totalLocked = vestings.reduce((total, vesting) => {
+    return total.add(useVestedTokensInfo(vesting).lockedTokens)
+  }, new BN(0))
+
+  totalInfo.totalUnlocked = vestings.reduce((total, vesting) => {
+    return total.add(useVestedTokensInfo(vesting).unlockedTokens)
+  }, new BN(0))
+
+  return totalInfo
 }
 
 // Handles the main logic of the app.
