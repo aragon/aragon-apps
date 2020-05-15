@@ -53,7 +53,7 @@ const Balances = React.memo(function Balances({ balances }) {
           address,
           symbol,
           verified,
-          amount: adjustedAmount,
+          amount: round(adjustedAmount, 5),
           convertedAmount: round(convertedAmount, 5),
         }
       }
