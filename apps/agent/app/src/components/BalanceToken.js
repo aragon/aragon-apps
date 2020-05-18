@@ -1,5 +1,5 @@
 import React from 'react'
-import { textStyle, useTheme } from '@aragon/ui'
+import { GU, Help, textStyle, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { tokenIconUrl } from '../lib/icon-utils'
 import { formatTokenAmount } from '../lib/utils'
@@ -13,6 +13,23 @@ function BalanceToken({
 }) {
   const theme = useTheme()
   const network = useNetwork()
+
+  const [integerAmount, fractionalAmount] = formatTokenAmount(
+    amount.toFixed(3)
+  ).split('.')
+
+  const [_, notRoundedFractionalAmount] = formatTokenAmount(
+    amount,
+    false,
+    0,
+    false,
+    {
+      rounding: 18,
+    }
+  ).split('.')
+
+  const amountWasRounded = fractionalAmount !== notRoundedFractionalAmount
+  
   return (
     <React.Fragment>
       <div
@@ -42,9 +59,23 @@ function BalanceToken({
         <div
           css={`
             ${textStyle('title2')}
+            display:flex;
           `}
         >
-          <SplitAmount amount={amount.toFixed(3)} />
+          <SplitAmount integer={integerAmount} fractional={fractionalAmount} />
+          {amountWasRounded && (
+            <div
+              css={`
+                display: flex;
+                align-items: center;
+                margin-left: ${GU}px;
+              `}
+            >
+              <Help hint={'This is an approximation, see the complete amount'}>
+                {amount}
+              </Help>
+            </div>
+          )}
         </div>
         <div
           css={`
@@ -61,8 +92,7 @@ function BalanceToken({
   )
 }
 
-function SplitAmount({ amount }) {
-  const [integer, fractional] = formatTokenAmount(amount).split('.')
+function SplitAmount({ integer, fractional }) {
   return (
     <span>
       <span>{integer}</span>
