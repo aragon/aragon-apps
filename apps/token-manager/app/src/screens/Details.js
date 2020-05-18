@@ -9,6 +9,7 @@ import {
   Split,
   formatTokenAmount,
   textStyle,
+  useLayout,
   useTheme,
 } from '@aragon/ui'
 import SummaryBar from '../components/SummaryBar'
@@ -56,6 +57,8 @@ function Details({ tokenSymbol, selectHolder, vestings }) {
 }
 
 function VestingContent({ vesting, tokenSymbol }) {
+  const { layoutName } = useLayout()
+  const compact = layoutName === 'small'
   const vestingInfo = useVestedTokensInfo(vesting)
 
   return (
@@ -64,6 +67,7 @@ function VestingContent({ vesting, tokenSymbol }) {
         display: flex;
         padding: ${3 * GU}px 0;
         width: 100%;
+        flex-direction: ${compact ? 'column' : 'row'};
       `}
     >
       <div
