@@ -20,6 +20,10 @@ class AgreementWrapper {
     return this.agreement.address
   }
 
+  async canPerform(who, where, what, how) {
+    return this.agreement.canPerform(who, where, what, how)
+  }
+
   async getCurrentContentId() {
     return this.agreement.getCurrentContentId()
   }

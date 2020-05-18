@@ -1,3 +1,4 @@
+const { bigExp } = require('../helpers/lib/numbers')
 const { assertBn } = require('../helpers/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
@@ -9,6 +10,8 @@ const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 contract('Agreement', ([_, signer]) => {
   let agreement
 
+  const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
+
   beforeEach('deploy agreement instance', async () => {
     agreement = await deployer.deployAndInitializeWrapper()
   })
@@ -17,7 +20,17 @@ contract('Agreement', ([_, signer]) => {
     const from = signer
 
     const itSignsTheAgreementProperly = () => {
-      it('signs the agreement', async () => {
+      it('must sign the agreement', async () => {
+        const { mustSign } = await agreement.getSigner(from)
+
+        assert.isTrue(mustSign, 'signer must not sign')
+      })
+
+      it('is not allowed through ACL oracle', async () => {
+        assert.isFalse(await agreement.canPerform(ANY_ADDR, ANY_ADDR, '0x', [from]), 'signer can perform through ACL')
+      })
+
+      it('can sign the agreement', async () => {
         const currentContentId = await agreement.getCurrentContentId()
 
         await agreement.sign(from)
@@ -25,6 +38,12 @@ contract('Agreement', ([_, signer]) => {
         const { lastContentIdSigned, mustSign } = await agreement.getSigner(from)
         assert.isFalse(mustSign, 'signer must sign')
         assertBn(lastContentIdSigned, currentContentId, 'signer last content signed does not match')
+      })
+
+      it('is allowed through ACL oracle after signing the agreement', async () => {
+        await agreement.sign(from)
+
+        assert.isTrue(await agreement.canPerform(ANY_ADDR, ANY_ADDR, '0x', [from]), 'signer cannot perform through ACL')
       })
 
       it('emits an event', async () => {
@@ -59,6 +78,16 @@ contract('Agreement', ([_, signer]) => {
 
         itSignsTheAgreementProperly()
       })
+    })
+  })
+
+  describe('canPerform', () => {
+    it('reverts when the signer is missing', async () => {
+      await assertRevert(agreement.canPerform(ANY_ADDR, ANY_ADDR, '0x', []), AGREEMENT_ERRORS.ERROR_ACL_SIGNER_MISSING)
+    })
+
+    it('reverts when an invalid signer is given', async () => {
+      await assertRevert(agreement.canPerform(ANY_ADDR, ANY_ADDR, '0x', [bigExp(2, 161)]), AGREEMENT_ERRORS.ERROR_ACL_SIGNER_NOT_ADDRESS)
     })
   })
 })

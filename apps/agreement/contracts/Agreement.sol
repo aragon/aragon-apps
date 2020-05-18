@@ -42,6 +42,8 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_TOKEN_APPROVAL_FAILED = "AGR_TOKEN_APPROVAL_FAILED";
     string internal constant ERROR_ARBITRATOR_NOT_CONTRACT = "AGR_ARBITRATOR_NOT_CONTRACT";
     string internal constant ERROR_STAKING_FACTORY_NOT_CONTRACT = "AGR_STAKING_FACTORY_NOT_CONTRACT";
+    string internal constant ERROR_ACL_SIGNER_MISSING = "AGR_ACL_ORACLE_SIGNER_MISSING";
+    string internal constant ERROR_ACL_SIGNER_NOT_ADDRESS = "AGR_ACL_ORACLE_SIGNER_NOT_ADDR";
 
     /* Action related errors */
     string internal constant ERROR_CANNOT_CLOSE_ACTION = "AGR_CANNOT_CLOSE_ACTION";
@@ -361,8 +363,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return mustSign Whether or not the requested signer must sign the current agreement content or not
     */
     function getSigner(address _signer) external view returns (uint256 lastContentIdSigned, bool mustSign) {
-        lastContentIdSigned = lastContentSignedBy[_signer];
-        mustSign = lastContentIdSigned < _getCurrentContentId();
+        (lastContentIdSigned, mustSign) = _getSigner(_signer);
     }
 
     /**
@@ -485,6 +486,19 @@ contract Agreement is IAgreement, AragonApp {
         uint256 challengerFeeAmount = challenge.arbitratorFeeAmount;
 
         (, feeToken, missingFees, totalFees) = _getMissingArbitratorFees(challengerFeeToken, challengerFeeAmount);
+    }
+
+    /**
+    * @dev ACL oracle interface - Tells whether an address has already signed the Agreement
+    * @return True if a parameterized address does not need to sign the Agreement, false otherwise
+    */
+    function canPerform(address, address, bytes32, uint256[] _how) external view returns (bool) {
+        require(_how.length > 0, ERROR_ACL_SIGNER_MISSING);
+        require(_how[0] < 2**160, ERROR_ACL_SIGNER_NOT_ADDRESS);
+
+        address signer = address(_how[0]);
+        (, bool mustSign) = _getSigner(signer);
+        return !mustSign;
     }
 
     /**
@@ -937,6 +951,17 @@ contract Agreement is IAgreement, AragonApp {
     */
     function _getCurrentContentId() internal view returns (uint256) {
         return contents.length - 1;
+    }
+
+    /**
+    * @dev Tell the information related to a signer
+    * @param _signer Address being queried
+    * @return lastContentIdSigned Identification number of the last agreement content signed by the signer
+    * @return mustSign Whether or not the requested signer must sign the current agreement content or not
+    */
+    function _getSigner(address _signer) internal view returns (uint256 lastContentIdSigned, bool mustSign) {
+        lastContentIdSigned = lastContentSignedBy[_signer];
+        mustSign = lastContentIdSigned < _getCurrentContentId();
     }
 
     /**

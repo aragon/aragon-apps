@@ -4,12 +4,13 @@
 
 pragma solidity 0.4.24;
 
+import "@aragon/os/contracts/acl/IACLOracle.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 
 import "./arbitration/IArbitrable.sol";
 
 
-contract IAgreement is IArbitrable {
+contract IAgreement is IArbitrable, IACLOracle {
     function sign() external;
 
     function newAction(uint256 _disputableId, uint256 _collateralId, address _submitter, bytes _context) external returns (uint256);
