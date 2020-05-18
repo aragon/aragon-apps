@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react'
-import styled from 'styled-components'
 import {
   Accordion,
   Bar,
@@ -132,13 +131,7 @@ function ExpandableContent({ vesting, tokenSymbol }) {
       </div>
       <div>
         <ContentBox>
-          <label
-            css={`
-              color: ${theme.surfaceContentSecondary};
-            `}
-          >
-            VESTING PERIOD
-          </label>
+          <label>VESTING PERIOD</label>
           <p>
             {formatDistanceStrict(
               toISODate(vesting.vesting),
@@ -147,13 +140,7 @@ function ExpandableContent({ vesting, tokenSymbol }) {
           </p>
         </ContentBox>
         <ContentBox>
-          <label
-            css={`
-              color: ${theme.surfaceContentSecondary};
-            `}
-          >
-            VESTING CLIFF
-          </label>
+          <label>VESTING CLIFF</label>
           <p>
             {formatDistanceStrict(
               toISODate(vesting.cliff),
@@ -164,13 +151,7 @@ function ExpandableContent({ vesting, tokenSymbol }) {
       </div>
       <div>
         <ContentBox>
-          <label
-            css={`
-              color: ${theme.surfaceContentSecondary};
-            `}
-          >
-            AVAILABLE TO TRANSFER
-          </label>
+          <label>AVAILABLE TO TRANSFER</label>
           <p>
             {formatTokenAmount(vestingInfo.unlockedTokens, 18, {
               symbol: tokenSymbol,
@@ -182,16 +163,27 @@ function ExpandableContent({ vesting, tokenSymbol }) {
   )
 }
 
-const ContentBox = styled.div`
-  padding: ${1 * GU}px 0;
-  label {
-    ${textStyle('label2')};
-  }
-  p {
-    ${textStyle('body4')};
-  }
-  button {
-    margin-top: ${1 * GU}px;
-  }
-`
+function ContentBox({ props, children }) {
+  const theme = useTheme()
+  return (
+    <div
+      css={`
+        padding: ${1 * GU}px 0;
+        label {
+          color: ${theme.surfaceContentSecondary};
+          ${textStyle('label2')};
+        }
+        p {
+          ${textStyle('body4')};
+        }
+        button {
+          margin-top: ${1 * GU}px;
+        }
+      `}
+    >
+      {children}
+    </div>
+  )
+}
+
 export default Details
