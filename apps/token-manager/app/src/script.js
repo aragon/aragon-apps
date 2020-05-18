@@ -97,7 +97,7 @@ async function initialize(tokenAddress) {
     // Token Manager event
     switch (event) {
       case 'NewVesting':
-        return getVesting(
+        return newVesting(
           nextState,
           returnValues.receiver,
           returnValues.vestingId
@@ -172,7 +172,7 @@ async function transfer(token, state, { _from, _to }) {
   )
 }
 
-async function getVesting(state, receiver, vestingId) {
+async function newVesting(state, receiver, vestingId) {
   const vestingInfo = await app
     .call('getVesting', receiver, vestingId)
     .toPromise()
@@ -232,10 +232,11 @@ function updateVestings(vestings, receiver, changed) {
     // If we can't find it, concat
     return vestings.concat({ receiver: receiver, vestings: [changed] })
   } else {
-    const nextVestings = Array.from(vestings)
-    nextVestings[receiverIndex].vestings = nextVestings[
-      receiverIndex
-    ].vestings.concat(changed)
+    const nextVestings = [...vestings]
+    nextVestings[receiverIndex].vestings = [
+      ...nextVestings[receiverIndex].vestings,
+      ...changed,
+    ]
     return nextVestings
   }
 }
