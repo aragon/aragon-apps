@@ -235,7 +235,7 @@ function updateVestings(vestings, receiver, changed) {
     const nextVestings = [...vestings]
     nextVestings[receiverIndex].vestings = [
       ...nextVestings[receiverIndex].vestings,
-      ...changed,
+      changed,
     ]
     return nextVestings
   }
