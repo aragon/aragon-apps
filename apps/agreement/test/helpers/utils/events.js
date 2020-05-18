@@ -26,7 +26,6 @@ const DELAY_EVENTS = {
   STOPPED: 'Stopped',
   EXECUTED: 'Executed',
   COLLATERAL_CHANGED: 'CollateralRequirementChanged',
-  PERMISSION_CHANGED: 'TokenBalancePermissionChanged',
 }
 
 module.exports = {

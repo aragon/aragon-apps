@@ -38,12 +38,8 @@ contract('Delay', ([_, challenger, holder0, holder1, holder2, holder3, holder4, 
     { submitter: holder5, actionContext: '0x050C' },
   ]
 
-  before('deploy tokens', async () => {
-    collateralToken = await deployer.deployCollateralToken()
-    submitPermissionToken = await deployer.deploySubmitPermissionToken()
-  })
-
   before('deploy delay instance', async () => {
+    collateralToken = await deployer.deployCollateralToken()
     delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, actionCollateral, challengeCollateral, submitters: [holder1, holder2, holder3, holder4, holder5] })
   })
 

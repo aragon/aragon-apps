@@ -43,16 +43,7 @@ const DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS = {
 const DEFAULT_DELAY_INITIALIZATION_PARAMS = {
   ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS,
   appId: '0xfeca7890feca7890feca7890feca7890feca7890feca7890feca7890feca7890',
-
   delayPeriod: 5 * DAY,                  // 5 days
-  tokenBalancePermission: {
-    balance: bigExp(58, 18),             // 58 ANT
-    token: {
-      symbol: 'ANT',
-      decimals: 18,
-      name: 'Sample ANT'
-    },
-  }
 }
 
 class AgreementDeployer {
@@ -191,43 +182,19 @@ class AgreementDeployer {
     if (!options.collateralToken && !this.collateralToken) await this.deployCollateralToken(options)
     const collateralToken = options.collateralToken || this.collateralToken
 
+    const SUBMIT_ROLE = await disputable.SUBMIT_ROLE()
+    await this._grantPermissions(disputable, SUBMIT_ROLE, options.submitters, owner)
+
+    const CHALLENGE_ROLE = await disputable.CHALLENGE_ROLE()
+    await this._grantPermissions(disputable, CHALLENGE_ROLE, options.challengers, owner)
+
     if (options.delay) {
       const CHANGE_DELAY_PERIOD_ROLE = await disputable.CHANGE_DELAY_PERIOD_ROLE()
       await this.acl.createPermission(owner, disputable.address, CHANGE_DELAY_PERIOD_ROLE, owner, { from: owner })
 
-      const CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = await disputable.CHANGE_TOKEN_BALANCE_PERMISSION_ROLE()
-      await this.acl.createPermission(owner, disputable.address, CHANGE_TOKEN_BALANCE_PERMISSION_ROLE, owner, { from: owner })
-
-      const submitPermissionToken = options.submitPermissionToken || this.submitPermissionToken || { address: ZERO_ADDR }
-      const submitPermissionBalance = submitPermissionToken.address === ZERO_ADDR ? bn(0) : (options.submitPermissionBalance || DEFAULT_DELAY_INITIALIZATION_PARAMS.tokenBalancePermission.balance)
-
-      if (submitPermissionBalance.gt(bn(0)))  {
-        const submitters = options.submitters || []
-        for (const submitter of submitters) await submitPermissionToken.generateTokens(submitter, submitPermissionBalance)
-      } else {
-        const SUBMIT_ROLE = await disputable.SUBMIT_ROLE()
-        await this._grantPermissions(disputable, SUBMIT_ROLE, options.submitters, owner)
-      }
-
-      const challengePermissionToken = options.challengePermissionToken || this.challengePermissionToken || { address: ZERO_ADDR }
-      const challengePermissionBalance = challengePermissionToken.address === ZERO_ADDR ? bn(0) : (options.challengePermissionBalance || DEFAULT_DELAY_INITIALIZATION_PARAMS.tokenBalancePermission.balance)
-
-      if (challengePermissionBalance.gt(bn(0))) {
-        const challengers = options.challengers || []
-        for (const challenger of challengers) await challengePermissionToken.generateTokens(challenger, challengePermissionBalance)
-      } else {
-        const CHALLENGE_ROLE = await disputable.CHALLENGE_ROLE()
-        await this._grantPermissions(disputable, CHALLENGE_ROLE, options.challengers, owner)
-      }
-
       const { actionCollateral, challengeCollateral, challengeDuration, delayPeriod } = { ...DEFAULT_DELAY_INITIALIZATION_PARAMS, ...options }
-      await disputable.initialize(delayPeriod, this.agreement.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, submitPermissionToken.address, submitPermissionBalance, challengePermissionToken.address, challengePermissionBalance)
+      await disputable.initialize(delayPeriod, this.agreement.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration)
     } else {
-      const SUBMIT_ROLE = await disputable.SUBMIT_ROLE()
-      await this._grantPermissions(disputable, SUBMIT_ROLE, options.submitters, owner)
-
-      const CHALLENGE_ROLE = await disputable.CHALLENGE_ROLE()
-      await this._grantPermissions(disputable, CHALLENGE_ROLE, options.challengers, owner)
 
       const { actionCollateral, challengeCollateral, challengeDuration } = { ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS, ...options }
       await disputable.initialize(this.agreement.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration)
@@ -270,20 +237,6 @@ class AgreementDeployer {
     const collateralToken = await this.deployToken(options)
     this.previousDeploy = { ...this.previousDeploy, collateralToken }
     return collateralToken
-  }
-
-  async deploySubmitPermissionToken(options = {}) {
-    const { name, decimals, symbol } = { ...DEFAULT_DELAY_INITIALIZATION_PARAMS.tokenBalancePermission.token, ...options.submitPermissionToken }
-    const submitPermissionToken = await this.deployToken({ name, decimals, symbol })
-    this.previousDeploy = { ...this.previousDeploy, submitPermissionToken }
-    return submitPermissionToken
-  }
-
-  async deployChallengePermissionToken(options = {}) {
-    const { name, decimals, symbol } = { ...DEFAULT_DELAY_INITIALIZATION_PARAMS.tokenBalancePermission.token, ...options.challengePermissionToken }
-    const challengePermissionToken = await this.deployToken({ name, decimals, symbol })
-    this.previousDeploy = { ...this.previousDeploy, challengePermissionToken }
-    return challengePermissionToken
   }
 
   async deployBase() {

@@ -56,6 +56,9 @@ contract Agreement is IAgreement, AragonApp {
     // bytes32 public constant DISPUTABLE_ROLE = keccak256("DISPUTABLE_ROLE");
     bytes32 public constant DISPUTABLE_ROLE = 0x5b327c088dc5201d0d0f365250580b009f4b5940290b5e72d41266abddb16fcd;
 
+    // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
+    bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
+
     // bytes32 public constant CHANGE_CONTENT_ROLE = keccak256("CHANGE_AGREEMENT_ROLE");
     bytes32 public constant CHANGE_CONTENT_ROLE = 0xbc428ed8cb28bb330ec2446f83dabdde5f6fc3c43db55e285b2c7413b4b2acf5;
 
@@ -260,7 +263,7 @@ contract Agreement is IAgreement, AragonApp {
         Staking staking = stakingFactory.getOrCreateInstance(collateralToken);
         staking.unlockAndSlash(submitter, unlockedAmount, challenger, slashedAmount);
         _transfer(collateralToken, challenger, challengeCollateral);
-        _transfer(challenge.arbitratorFeeToken, challenge.challenger, challenge.arbitratorFeeAmount);
+        _transfer(challenge.arbitratorFeeToken, challenger, challenge.arbitratorFeeAmount);
 
         challenge.state = ChallengeState.Settled;
         action.disputable.onDisputableRejected(disputableId);
@@ -492,6 +495,16 @@ contract Agreement is IAgreement, AragonApp {
     function canProceed(uint256 _actionId) external view returns (bool) {
         Action storage action = _getAction(_actionId);
         return _canProceed(action);
+    }
+
+    /**
+    * @dev Tell whether an action can be challenged or not
+    * @param _actionId Identification number of the action to be queried
+    * @return True if the action can be challenged, false otherwise
+    */
+    function canChallenge(uint256 _actionId, address _challenger) external view returns (bool) {
+        Action storage action = _getAction(_actionId);
+        return _canChallenge(action);
     }
 
     /**

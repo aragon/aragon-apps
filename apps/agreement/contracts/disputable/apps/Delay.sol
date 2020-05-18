@@ -27,16 +27,12 @@ contract Delay is DisputableApp {
     // bytes32 public constant CHANGE_DELAY_PERIOD_ROLE = keccak256("CHANGE_DELAY_PERIOD_ROLE");
     bytes32 public constant CHANGE_DELAY_PERIOD_ROLE = 0x239c4d8b23f1a84eb03655788406e459ac72157a65732b57fa0f2785d693bb0d;
 
-    // bytes32 public constant CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = keccak256("CHANGE_TOKEN_BALANCE_PERMISSION_ROLE");
-    bytes32 public constant CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = 0x4413cad936c22452a3bdddec48f42af1848858d1e8a8b62b7c0ba489d6d77286;
-
     event Scheduled(uint256 indexed id);
     event Paused(uint256 indexed id);
     event FastForwarded(uint256 indexed id);
     event Executed(uint256 indexed id);
     event Stopped(uint256 indexed id);
     event DelayPeriodChanged(uint64 delayPeriod);
-    event TokenBalancePermissionChanged(ERC20 submitToken, uint256 submitBalance, ERC20 challengeToken, uint256 challengeBalance);
 
     enum DelayableState {
         Scheduled,
@@ -54,34 +50,20 @@ contract Delay is DisputableApp {
         bytes script;                   // Action script to be executed
     }
 
-    struct TokenBalancePermission {
-        ERC20 token;                    // ERC20 token to be used for custom permissions based on token balance
-        uint256 balance;                // Amount of tokens used for custom permissions
-    }
-
     uint64 public delayPeriod;
     Delayable[] private delayables;
-
-    TokenBalancePermission private submitTokenBalancePermission;
-    TokenBalancePermission private challengeTokenBalancePermission;
 
     /**
     * @notice Initialize Delay app with `@transformTime(_delayPeriod)`, linked to the Agreement `_agreement` with the following requirements:
     * @notice - `@tokenAmount(_collateralToken, _actionCollateral)` collateral for submitting actions
     * @notice - `@tokenAmount(_collateralToken, _challengeCollateral)` collateral for challenging actions
     * @notice - `@transformTime(_challengeDuration)` for the challenge duration
-    * @notice - Submit permission: `_submitPermissionToken == 0 ? 'None' : @tokenAmount(_submitPermissionToken, _submitPermissionBalance)`
-    * @notice - Challenge per: `_challengePermissionBalance == 0 ? 'None' : @tokenAmount(_challengePermissionToken, _challengePermissionBalance)`
     * @param _delayPeriod Duration in seconds during which an action is delayed before being executed
     * @param _agreement Agreement instance to be linked
     * @param _collateralToken Address of the ERC20 token to be used for collateral
     * @param _actionCollateral Amount of collateral tokens that will be locked every time an delayable is submitted
     * @param _challengeCollateral Amount of collateral tokens that will be locked every time an delayable is challenged
     * @param _challengeDuration Duration in seconds of the challenge, during this time window the submitter can answer the challenge
-    * @param _submitPermissionToken ERC20 token to be used for custom submitting permissions based on token balance
-    * @param _submitPermissionBalance Amount of `_submitPermissionToken` tokens for custom signing permissions
-    * @param _challengePermissionToken ERC20 token to be used for custom challenge permissions based on token balance
-    * @param _challengePermissionBalance Amount of `_challengePermissionBalance` tokens for custom challenge permissions
     */
     function initialize(
         uint64 _delayPeriod,
@@ -89,11 +71,7 @@ contract Delay is DisputableApp {
         ERC20 _collateralToken,
         uint256 _actionCollateral,
         uint256 _challengeCollateral,
-        uint64 _challengeDuration,
-        ERC20 _submitPermissionToken,
-        uint256 _submitPermissionBalance,
-        ERC20 _challengePermissionToken,
-        uint256 _challengePermissionBalance
+        uint64 _challengeDuration
     )
         external
     {
@@ -102,7 +80,6 @@ contract Delay is DisputableApp {
         _setAgreement(_agreement);
         _newDelayPeriod(_delayPeriod);
         _newCollateralRequirement(_collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
-        _newTokenBalancePermission(_submitPermissionToken, _submitPermissionBalance, _challengePermissionToken, _challengePermissionBalance);
     }
 
     /**
@@ -157,22 +134,6 @@ contract Delay is DisputableApp {
     }
 
     /**
-    * @notice Change Agreement custom token balance permission parameters to:
-    * @notice - `@tokenAmount(_submitToken, _submitBalance)` for submitting permissions
-    * @notice - `@tokenAmount(_challengeToken, _challengeBalance)` for challenging permissions
-    * @param _submitToken ERC20 token to be used for custom submitting permissions based on token balance
-    * @param _submitBalance Amount of `_submitBalance` tokens for custom signing permissions
-    * @param _challengeToken ERC20 token to be used for custom challenge permissions based on token balance
-    * @param _challengeBalance Amount of `_challengeBalance` tokens for custom challenge permissions
-    */
-    function changeTokenBalancePermission(ERC20 _submitToken, uint256 _submitBalance, ERC20 _challengeToken, uint256 _challengeBalance)
-        external
-        auth(CHANGE_TOKEN_BALANCE_PERMISSION_ROLE)
-    {
-        _newTokenBalancePermission(_submitToken, _submitBalance, _challengeToken, _challengeBalance);
-    }
-
-    /**
     * @dev Tell delayable related information
     * @param _id Identification number of the delayable being queried
     * @return submitter Address of the delayable submitter
@@ -196,30 +157,6 @@ contract Delay is DisputableApp {
         state = delayable.state;
         actionId = delayable.actionId;
         script = delayable.script;
-    }
-
-    /**
-    * @dev Tell the information related to the custom token balance submitting permission
-    * @return submitPermissionToken ERC20 token to be used for custom submitting permissions based on token balance
-    * @return submitPermissionBalance Amount of `submitPermissionToken` tokens used for custom submitting permissions
-    * @return challengePermissionToken ERC20 token to be used for custom challenge permissions based on token balance
-    * @return challengePermissionBalance Amount of `challengePermissionToken` tokens used for custom challenge permissions
-    */
-    function getTokenBalancePermission() external view
-        returns (
-            ERC20 submitPermissionToken,
-            uint256 submitPermissionBalance,
-            ERC20 challengePermissionToken,
-            uint256 challengePermissionBalance
-        )
-    {
-        TokenBalancePermission storage submitPermission = submitTokenBalancePermission;
-        submitPermissionToken = submitPermission.token;
-        submitPermissionBalance = submitPermission.balance;
-
-        TokenBalancePermission storage challengePermission = challengeTokenBalancePermission;
-        challengePermissionToken = challengePermission.token;
-        challengePermissionBalance = challengePermission.balance;
     }
 
     /**
@@ -354,32 +291,12 @@ contract Delay is DisputableApp {
     }
 
     /**
-    * @dev Change Agreement custom token balance permission parameters
-    * @param _submitToken ERC20 token to be used for custom submitting permissions based on token balance
-    * @param _submitBalance Amount of `_submitBalance` tokens for custom submitting permissions
-    * @param _challengeToken ERC20 token to be used for custom challenge permissions based on token balance
-    * @param _challengeBalance Amount of `_challengeBalance` tokens for custom challenge permissions
-    */
-    function _newTokenBalancePermission(ERC20 _submitToken, uint256 _submitBalance, ERC20 _challengeToken, uint256 _challengeBalance) internal {
-        submitTokenBalancePermission.token = _submitToken;
-        submitTokenBalancePermission.balance = _submitBalance;
-        challengeTokenBalancePermission.token = _challengeToken;
-        challengeTokenBalancePermission.balance = _challengeBalance;
-        emit TokenBalancePermissionChanged(_submitToken, _submitBalance, _challengeToken, _challengeBalance);
-    }
-
-    /**
     * @dev Tell whether an address can submit actions or not
     * @param _submitter Address being queried
     * @return True if the given address can submit actions, false otherwise
     */
     function _canSubmit(address _submitter) internal view returns (bool) {
-        TokenBalancePermission storage permission = submitTokenBalancePermission;
-        ERC20 permissionToken = permission.token;
-
-        return isContract(address(permissionToken))
-            ? permissionToken.balanceOf(_submitter) >= permission.balance
-            : canPerform(_submitter, SUBMIT_ROLE, arr(_submitter));
+        return canPerform(_submitter, SUBMIT_ROLE, arr(_submitter));
     }
 
     /**
@@ -390,16 +307,7 @@ contract Delay is DisputableApp {
     */
     function _canChallenge(uint256 _id, address _challenger) internal view returns (bool) {
         Delayable storage delayable = _getDelayable(_id);
-        if (!_canPause(delayable)) {
-            return false;
-        }
-
-        TokenBalancePermission storage permission = challengeTokenBalancePermission;
-        ERC20 permissionToken = permission.token;
-
-        return isContract(address(permissionToken))
-            ? permissionToken.balanceOf(_challenger) >= permission.balance
-            : canPerform(_challenger, CHALLENGE_ROLE, arr(_challenger, _id));
+        return _canPause(delayable) && canPerform(_challenger, CHALLENGE_ROLE, arr(_challenger, _id));
     }
 
     /**

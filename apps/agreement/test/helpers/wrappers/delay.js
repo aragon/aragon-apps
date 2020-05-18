@@ -19,11 +19,6 @@ class DelayWrapper extends DisputableWrapper {
     return this.disputable.canChallenge(delayableId, challenger)
   }
 
-  async getTokenBalancePermission() {
-    const { submitPermissionToken, submitPermissionBalance, challengePermissionToken, challengePermissionBalance } = await this.disputable.getTokenBalancePermission()
-    return { submitPermissionToken, submitPermissionBalance, challengePermissionToken, challengePermissionBalance }
-  }
-
   async getDelayable(id) {
     const { submitter, executableAt, state, actionId, script } = await this.disputable.getDelayable(id)
     return { submitter, executableAt, state, actionId, script }
@@ -110,18 +105,6 @@ class DelayWrapper extends DisputableWrapper {
   async moveAfterDelayPeriod(delayableId) {
     const { executableAt } = await this.getDelayable(delayableId)
     return super.moveTo(executableAt.add(bn(1)))
-  }
-
-  async changeTokenBalancePermission(options = {}) {
-    const from = options.from || await this._getSender()
-    const permission = await this.getTokenBalancePermission()
-
-    const submitPermissionToken = options.submitPermissionToken ? options.submitPermissionToken.address : permission.submitToken
-    const submitPermissionBalance = options.submitPermissionBalance || permission.submitBalance
-    const challengePermissionToken = options.challengePermissionToken ? options.challengePermissionToken.address : permission.challengeToken
-    const challengePermissionBalance = options.challengePermissionBalance || permission.challengeBalance
-
-    return this.disputable.changeTokenBalancePermission(submitPermissionToken, submitPermissionBalance, challengePermissionToken, challengePermissionBalance, { from })
   }
 
   async buildEvmScript() {
