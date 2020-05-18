@@ -18,21 +18,35 @@ function VestingInfoBoxes({ selectedHolder, tokenSymbol }) {
   const totalInfo = useTotalVestedTokensInfo(selectedHolder.vestings)
   return (
     <React.Fragment>
-      <Box
-        heading={
+      <Box padding={0}>
+        <div
+          css={`
+            padding: ${4 * GU}px;
+            border-bottom: 1px solid ${theme.border};
+          `}
+        >
           <LocalIdentityBadge
             entity={selectedHolder.receiver}
             connectedAccount={isCurrentUser}
           />
-        }
-      >
-        <InfoBoxHeader
-          icon={<TokenIcon />}
-          label={'Total Tokens'}
-          content={formatTokenAmount(selectedHolder.holderBalance.balance, 18, {
-            symbol: tokenSymbol,
-          })}
-        />
+        </div>
+        <div
+          css={`
+            padding: ${3 * GU}px;
+          `}
+        >
+          <InfoBoxHeader
+            icon={<TokenIcon />}
+            label={'Total Tokens'}
+            content={formatTokenAmount(
+              selectedHolder.holderBalance.balance,
+              18,
+              {
+                symbol: tokenSymbol,
+              }
+            )}
+          />
+        </div>
       </Box>
       <Box>
         <InfoBoxHeader
@@ -44,7 +58,7 @@ function VestingInfoBoxes({ selectedHolder, tokenSymbol }) {
         />
         <ul
           css={`
-            margin-top: 32px;
+            margin-top: ${4 * GU}px;
           `}
         >
           {[
