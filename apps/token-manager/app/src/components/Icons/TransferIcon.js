@@ -1,8 +1,8 @@
 import React from 'react'
 import { useAragonApi } from '@aragon/api-react'
 import { GU } from '@aragon/ui'
-import icon from '../../assets/transfer-token.png'
-import iconDark from '../../assets/transfer-token-dark.png'
+import icon from '../../assets/transfer-token.svg'
+import iconDark from '../../assets/transfer-token-dark.svg'
 
 const TransferTokenIcon = React.memo(function TransferTokenIcon({}) {
   const { guiStyle } = useAragonApi()
@@ -14,7 +14,7 @@ const TransferTokenIcon = React.memo(function TransferTokenIcon({}) {
         margin-right: ${2 * GU}px;
       `}
       src={guiStyle.appearance === 'light' ? icon : iconDark}
-      alt="Token"
+      alt=""
     />
   )
 })

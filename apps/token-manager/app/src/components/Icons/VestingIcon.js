@@ -1,8 +1,8 @@
 import React from 'react'
 import { useAragonApi } from '@aragon/api-react'
 import { GU } from '@aragon/ui'
-import icon from '../../assets/vested-token.png'
-import iconDark from '../../assets/vested-token-dark.png'
+import icon from '../../assets/vested-token.svg'
+import iconDark from '../../assets/vested-token-dark.svg'
 
 const VestingTokenIcon = React.memo(function VestingTokenIcon({}) {
   const { guiStyle } = useAragonApi()
@@ -14,7 +14,7 @@ const VestingTokenIcon = React.memo(function VestingTokenIcon({}) {
         margin-right: ${2 * GU}px;
       `}
       src={guiStyle.appearance === 'light' ? icon : iconDark}
-      alt="Token"
+      alt=""
     />
   )
 })
