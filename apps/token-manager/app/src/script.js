@@ -94,16 +94,13 @@ async function initialize(tokenAddress) {
       }
     }
 
-    // Token Manager event
+    // Token Manager events
     switch (event) {
       case 'NewVesting':
-        return newVesting(
-          nextState,
-          returnValues.receiver,
-          returnValues.vestingId
-        )
+        return newVesting(nextState, returnValues)
         return nextState
       default:
+        // TODO: add handlers for the other vesting events
         return nextState
     }
   }
@@ -172,12 +169,17 @@ async function transfer(token, state, { _from, _to }) {
   )
 }
 
-async function newVesting(state, receiver, vestingId) {
+async function newVesting(state, vesting) {
   const vestingInfo = await app
-    .call('getVesting', receiver, vestingId)
+    .call('getVesting', vesting.receiver, vesting.vestingId)
     .toPromise()
 
-  return updateVestingState(state, receiver, vestingId, vestingInfo)
+  return updateVestingState(
+    state,
+    vesting.receiver,
+    vesting.vestingId,
+    vestingInfo
+  )
 }
 
 /***********************
@@ -214,12 +216,10 @@ function updateHolders(holders, changed) {
 
 function updateVestingState(state, receiver, vestingId, vestingInfo) {
   const { vestings = [] } = state
-  let vesting = vestingInfo
-  vesting.vestingId = vestingId
 
   return {
     ...state,
-    vestings: updateVestings(vestings, receiver, vesting),
+    vestings: updateVestings(vestings, receiver, { ...vestingInfo, vestingId }),
   }
 }
 
