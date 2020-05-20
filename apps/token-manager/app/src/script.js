@@ -219,7 +219,13 @@ function updateVestingState(state, receiver, vestingId, vestingInfo) {
 
   return {
     ...state,
-    vestings: updateVestings(vestings, receiver, { ...vestingInfo, vestingId }),
+    vestings: updateVestings(vestings, receiver, {
+      cliff: marshallDate(vestingInfo.cliff),
+      start: marshallDate(vestingInfo.start),
+      vesting: marshallDate(vestingInfo.vesting),
+      rebokable: vestingInfo.rebokable,
+      vestingId: vestingId,
+    }),
   }
 }
 
@@ -276,4 +282,10 @@ function loadTokenSettings(token) {
       // Return an empty object to try again later
       return {}
     })
+}
+
+function marshallDate(date) {
+  // Represent dates as real numbers, as it's very unlikely they'll hit the limit...
+  // Adjust for js time (in ms vs s)
+  return parseInt(date, 10) * 1000
 }

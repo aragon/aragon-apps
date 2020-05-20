@@ -81,7 +81,7 @@ function ExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
           >
             START DAY
           </label>
-          <p>{formatDate(toISODate(vesting.start))}</p>
+          <p>{formatDate(new Date(parseInt(vesting.start)))}</p>
         </ContentBox>
         <ContentBox>
           <label
@@ -91,7 +91,7 @@ function ExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
           >
             END DAY
           </label>
-          <p>{formatDate(toISODate(vesting.vesting))}</p>
+          <p>{formatDate(new Date(parseInt(vesting.vesting)))}</p>
         </ContentBox>
       </div>
       <div>
@@ -99,8 +99,8 @@ function ExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
           <label>VESTING PERIOD</label>
           <p>
             {formatDistanceStrict(
-              toISODate(vesting.vesting),
-              toISODate(vesting.start)
+              new Date(parseInt(vesting.vesting)),
+              new Date(parseInt(vesting.start))
             )}
           </p>
         </ContentBox>
@@ -108,8 +108,8 @@ function ExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
           <label>VESTING CLIFF</label>
           <p>
             {formatDistanceStrict(
-              toISODate(vesting.cliff),
-              toISODate(vesting.start)
+              new Date(parseInt(vesting.cliff)),
+              new Date(parseInt(vesting.start))
             )}
           </p>
         </ContentBox>

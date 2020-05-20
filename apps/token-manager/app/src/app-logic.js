@@ -48,10 +48,6 @@ export function useSelectedHolderVestings() {
   return [selectedHolder, selectHolder]
 }
 
-export function toISODate(seconds) {
-  return new Date(parseInt(seconds, 10) * 1000)
-}
-
 function getTimeProgress(time, start, end) {
   const progress = Math.max(0, Math.min(1, (time - start) / (end - start)))
   return progress
