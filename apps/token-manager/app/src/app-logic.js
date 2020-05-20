@@ -7,19 +7,7 @@ import {
   usePath,
 } from '@aragon/api-react'
 import { addressesEqual } from './web3-utils'
-
-const HOLDER_ADDRESS_PATH = /^\/vesting\/0x[a-fA-F0-9]{40}\/?$/
-const NO_HOLDER_ADDRESS = '-1'
-
-function holderFromPath(path) {
-  if (!path) {
-    return NO_HOLDER_ADDRESS
-  }
-  const matches = path.match(HOLDER_ADDRESS_PATH)
-  if (matches) {
-  }
-  return matches ? matches[0].split('/')[2] : NO_HOLDER_ADDRESS
-}
+import { holderFromPath } from './routing'
 
 // Get the vestings from the holder currently selected, or null otherwise.
 export function useSelectedHolderVestings() {
@@ -31,7 +19,7 @@ export function useSelectedHolderVestings() {
   const selectedHolder = useMemo(() => {
     const holderAddress = holderFromPath(path)
 
-    if (holderAddress === NO_HOLDER_ADDRESS) {
+    if (holderAddress === null) {
       return null
     }
 
@@ -51,31 +39,13 @@ export function useSelectedHolderVestings() {
   const selectHolder = useCallback(
     holderAddress => {
       requestPath(
-        String(holderAddress) === NO_HOLDER_ADDRESS
-          ? ''
-          : `/vesting/${holderAddress}/`
+        String(holderAddress) === null ? '' : `/vesting/${holderAddress}/`
       )
     },
     [requestPath]
   )
 
   return [selectedHolder, selectHolder]
-}
-
-// Decorate the vestings array with more information relevant
-function useDecoratedVestings() {
-  const { vestings, holders } = useAppState()
-  const currentApp = useCurrentApp()
-  const installedApps = useInstalledApps()
-
-  return useMemo(() => {
-    // Make sure we have loaded information about the current app and other installed apps before showing votes
-    if (!(vestings && currentApp && installedApps)) {
-      return [[], []]
-    }
-
-    return vestings
-  }, [vestings])
 }
 
 export function toISODate(seconds) {
