@@ -13,6 +13,7 @@ import {
   IconRemove,
   Split,
   formatTokenAmount,
+  textStyle,
   useLayout,
   useTheme,
 } from '@aragon/ui'
@@ -21,6 +22,7 @@ import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from '../components/IdentityManager/IdentityManager'
 import You from '../components/You'
+import { useTotalVestedTokensInfo } from '../app-logic'
 
 function Holders({
   groupMode,
@@ -45,13 +47,12 @@ function Holders({
   const mappedEntries = useMemo(
     () =>
       holders.map(({ address, balance }) => {
-        const vestingIndex = vestings.findIndex(vesting =>
+        const holderVestings = vestings.find(vesting =>
           addressesEqual(vesting.receiver, address)
         )
-        if (vestingIndex === -1) {
-          return [address, balance, []]
-        }
-        return [address, balance, vestings[vestingIndex].vestings]
+        const vestingInfo = holderVestings ? holderVestings.vestings : []
+
+        return [address, balance, vestingInfo]
       }),
     [holders, vestings]
   )
@@ -60,10 +61,11 @@ function Holders({
     <Split
       primary={
         <DataView
-          fields={groupMode ? ['Owner'] : ['Holder', 'Balance', 'Vesting']}
+          fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
           entries={mappedEntries}
           renderEntry={([address, balance, vestings]) => {
             const isCurrentUser = addressesEqual(address, connectedAccount)
+            const theme = useTheme()
             const values = [
               <div
                 css={`
@@ -81,16 +83,35 @@ function Holders({
             ]
 
             if (!groupMode) {
-              values.push(formatTokenAmount(balance, tokenDecimals))
+              values.push(
+                <div
+                  css={`
+                    display: flex;
+                    align-items: center;
+                  `}
+                >
+                  ${formatTokenAmount(balance, tokenDecimals)}
+                  <div
+                    css={`
+                      padding-left: ${1 * GU}px;
+                      ${textStyle('label1')};
+                      color: ${theme.surfaceContentSecondary};
+                    `}
+                  >
+                    (
+                    {formatTokenAmount(
+                      useTotalVestedTokensInfo(vestings).totalLocked,
+                      tokenDecimals
+                    )}{' '}
+                    locked)
+                  </div>
+                </div>
+              )
             }
 
-            const amount = vestings.reduce((total, vesting) => {
-              return total.add(new BN(vesting.amount))
-            }, new BN(0))
-
-            return [...values, formatTokenAmount(amount, tokenDecimals)]
+            return values
           }}
-          renderEntryActions={([address, balance, vestings]) => (
+          renderEntryActions={([address, balance]) => (
             <EntryActions
               address={address}
               onAssignTokens={onAssignTokens}
