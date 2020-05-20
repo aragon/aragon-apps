@@ -146,7 +146,7 @@ contract Agreement is IAgreement, AragonApp {
         uint256 actionAmount;               // Amount of collateral token that will be locked every time an action is created
         uint256 challengeAmount;            // Amount of collateral token that will be locked every time an action is challenged
         ERC20 token;                        // ERC20 token to be used for collateral
-        uint64 challengeDuration;           // Duration in seconds of the challenge, during this time window the submitter can answer the challenge
+        uint64 challengeDuration;           // Challenge duration in seconds, during this time window the submitter can answer the challenge
     }
 
     struct DisputableInfo {
@@ -401,7 +401,13 @@ contract Agreement is IAgreement, AragonApp {
     * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
     * @param _challengeDuration Duration in seconds of the challenge, during this time window the submitter can answer the challenge
     */
-    function register(IDisputable _disputable, ERC20 _collateralToken, uint256 _actionAmount, uint256 _challengeAmount, uint64 _challengeDuration)
+    function register(
+        IDisputable _disputable,
+        ERC20 _collateralToken,
+        uint256 _actionAmount,
+        uint256 _challengeAmount,
+        uint64 _challengeDuration
+    )
         external
         authP(REGISTER_DISPUTABLE_ROLE, arr(_disputable))
     {
