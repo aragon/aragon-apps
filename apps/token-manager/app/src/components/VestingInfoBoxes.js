@@ -8,7 +8,7 @@ import TokenIcon from './Icons/TokenIcon'
 import VestingIcon from './Icons/VestingIcon'
 import TransferIcon from './Icons/TransferIcon'
 
-function VestingInfoBoxes({ selectedHolder, tokenSymbol }) {
+function VestingInfoBoxes({ selectedHolder, tokenDecimals, tokenSymbol }) {
   const theme = useTheme()
   const connectedAccount = useConnectedAccount()
   const isCurrentUser = addressesEqual(
@@ -40,7 +40,7 @@ function VestingInfoBoxes({ selectedHolder, tokenSymbol }) {
             label={'Total Tokens'}
             content={formatTokenAmount(
               selectedHolder.holderBalance.balance,
-              18,
+              tokenDecimals,
               {
                 symbol: tokenSymbol,
               }
@@ -52,7 +52,7 @@ function VestingInfoBoxes({ selectedHolder, tokenSymbol }) {
         <InfoBoxHeader
           icon={<VestingIcon />}
           label={'Vested Tokens'}
-          content={formatTokenAmount(totalInfo.totalAmount, 18, {
+          content={formatTokenAmount(totalInfo.totalAmount, tokenDecimals, {
             symbol: tokenSymbol,
           })}
         />
@@ -65,7 +65,7 @@ function VestingInfoBoxes({ selectedHolder, tokenSymbol }) {
             [
               'Unlocked',
               <strong>
-                {formatTokenAmount(totalInfo.totalUnlocked, 18, {
+                {formatTokenAmount(totalInfo.totalUnlocked, tokenDecimals, {
                   symbol: tokenSymbol,
                 })}
               </strong>,
@@ -73,7 +73,7 @@ function VestingInfoBoxes({ selectedHolder, tokenSymbol }) {
             [
               'Locked',
               <strong>
-                {formatTokenAmount(totalInfo.totalLocked, 18, {
+                {formatTokenAmount(totalInfo.totalLocked, tokenDecimals, {
                   symbol: tokenSymbol,
                 })}
               </strong>,
@@ -115,7 +115,7 @@ function VestingInfoBoxes({ selectedHolder, tokenSymbol }) {
           <InfoBoxHeader
             icon={<TransferIcon />}
             label={'Available to transfer'}
-            content={formatTokenAmount(totalInfo.totalUnlocked, 18, {
+            content={formatTokenAmount(totalInfo.totalUnlocked, tokenDecimals, {
               symbol: tokenSymbol,
             })}
           />

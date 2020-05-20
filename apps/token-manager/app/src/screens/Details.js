@@ -50,8 +50,8 @@ function Details({ tokenSymbol, tokenDecimals, selectHolder, vestings }) {
         secondary={
           <VestingInfoBoxes
             selectedHolder={selectedHolder}
+            tokenDecimals={tokenDecimals}
             tokenSymbol={tokenSymbol}
-            vestings={vestings}
           />
         }
         invert="horizontal"
