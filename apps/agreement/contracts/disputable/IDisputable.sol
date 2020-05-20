@@ -11,6 +11,8 @@ import "../IAgreement.sol";
 
 
 contract IDisputable is IForwarder {
+    function setAgreement(IAgreement _agreement) external;
+
     function onDisputableChallenged(uint256 _disputableId, address _challenger) external;
 
     function onDisputableAllowed(uint256 _disputableId) external;
@@ -19,15 +21,5 @@ contract IDisputable is IForwarder {
 
     function onDisputableVoided(uint256 _disputableId) external;
 
-    function canChallenge(uint256 _disputableId, address _challenger) external view returns (bool);
-
     function getAgreement() external view returns (IAgreement);
-
-    function getCollateralRequirement(uint256 _disputableId, uint256 _collateralId) external view
-        returns (
-            ERC20 collateralToken,
-            uint256 actionCollateral,
-            uint256 challengeCollateral,
-            uint64 challengeDuration
-        );
 }

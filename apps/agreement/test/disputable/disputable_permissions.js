@@ -4,8 +4,8 @@ const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 const TokenBalanceOracle = artifacts.require('TokenBalanceOracle')
 
-contract('Delay', ([_, owner, someone, submitter, challenger]) => {
-  let delay
+contract('DisputableApp', ([_, owner, someone, submitter, challenger]) => {
+  let disputable
 
   const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 
@@ -21,35 +21,35 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
       SUBMIT_ROLE = await deployer.baseDisputable.SUBMIT_ROLE()
     })
 
-    beforeEach('deploy delay instance', async () => {
-      delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, owner, submitters: [] })
+    beforeEach('deploy disputable instance', async () => {
+      disputable = await deployer.deployAndInitializeWrapperWithDisputable({ owner, submitters: [] })
     })
 
     context('when the permission is set to a particular address', async () => {
       beforeEach('grant permission', async () => {
-        await deployer.acl.createPermission(submitter, delay.disputable.address, SUBMIT_ROLE, owner, { from: owner })
+        await deployer.acl.createPermission(submitter, disputable.disputable.address, SUBMIT_ROLE, owner, { from: owner })
       })
 
       context('when the submitter is that address', async () => {
         it('returns true', async () => {
-          assert.isTrue(await delay.canForward(submitter), 'submitter cannot forward')
+          assert.isTrue(await disputable.canForward(submitter), 'submitter cannot forward')
         })
       })
 
       context('when the submitter is not that address', async () => {
         it('returns false', async () => {
-          assert.isFalse(await delay.canForward(someone), 'submitter can forward')
+          assert.isFalse(await disputable.canForward(someone), 'submitter can forward')
         })
       })
     })
 
     context('when the permission is open to any address', async () => {
       beforeEach('grant permission', async () => {
-        await deployer.acl.createPermission(ANY_ADDR, delay.disputable.address, SUBMIT_ROLE, owner, { from: owner })
+        await deployer.acl.createPermission(ANY_ADDR, disputable.disputable.address, SUBMIT_ROLE, owner, { from: owner })
       })
 
       it('returns true', async () => {
-        assert.isTrue(await delay.canForward(someone), 'submitter cannot forward')
+        assert.isTrue(await disputable.canForward(someone), 'submitter cannot forward')
       })
     })
 
@@ -64,8 +64,8 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
       beforeEach('set balance oracle', async () => {
         const param = await balanceOracle.getPermissionParam()
-        await deployer.acl.createPermission(ANY_ADDR, delay.disputable.address, SUBMIT_ROLE, owner, { from: owner })
-        await deployer.acl.grantPermissionP(ANY_ADDR, delay.disputable.address, SUBMIT_ROLE, [param], { from: owner })
+        await deployer.acl.createPermission(ANY_ADDR, disputable.disputable.address, SUBMIT_ROLE, owner, { from: owner })
+        await deployer.acl.grantPermissionP(ANY_ADDR, disputable.disputable.address, SUBMIT_ROLE, [param], { from: owner })
       })
 
       const setTokenBalance = (holder, balance) => {
@@ -87,7 +87,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
         setTokenBalance(submitter, bn(0))
 
         it('returns false', async () => {
-          assert.isFalse(await delay.canForward(submitter), 'submitter can forward')
+          assert.isFalse(await disputable.canForward(submitter), 'submitter can forward')
         })
       })
 
@@ -95,7 +95,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
         setTokenBalance(submitter, submitPermissionBalance.div(bn(2)))
 
         it('returns false', async () => {
-          assert.isFalse(await delay.canForward(submitter), 'submitter can forward')
+          assert.isFalse(await disputable.canForward(submitter), 'submitter can forward')
         })
       })
 
@@ -103,50 +103,50 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
         setTokenBalance(submitter, submitPermissionBalance)
 
         it('returns true', async () => {
-          assert.isTrue(await delay.canForward(submitter), 'submitter cannot forward')
+          assert.isTrue(await disputable.canForward(submitter), 'submitter cannot forward')
         })
       })
     })
   })
 
   describe('canChallenge', () => {
-    let CHALLENGE_ROLE, delayableId
+    let CHALLENGE_ROLE, actionId
 
     before('load role', async () => {
-      CHALLENGE_ROLE = await deployer.baseDisputable.CHALLENGE_ROLE()
+      CHALLENGE_ROLE = await deployer.base.CHALLENGE_ROLE()
     })
 
-    beforeEach('deploy delay instance', async () => {
-      delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, owner, challengers: [] })
-      const result = await delay.schedule({ submitter })
-      delayableId = result.delayableId
+    beforeEach('deploy disputable instance', async () => {
+      disputable = await deployer.deployAndInitializeWrapperWithDisputable({ owner, challengers: [] })
+      const result = await disputable.newAction({ submitter })
+      actionId = result.actionId
     })
 
     context('when the permission is set to a particular address', async () => {
       beforeEach('grant permission', async () => {
-        await deployer.acl.createPermission(challenger, delay.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
+        await deployer.acl.createPermission(challenger, disputable.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
       })
 
       context('when the challenger is that address', async () => {
         it('returns true', async () => {
-          assert.isTrue(await delay.canChallenge(delayableId, challenger), 'challenger cannot challenge')
+          assert.isTrue(await disputable.canChallenge(actionId, challenger), 'challenger cannot challenge')
         })
       })
 
       context('when the challenger is not that address', async () => {
         it('returns false', async () => {
-          assert.isFalse(await delay.canChallenge(delayableId, someone), 'challenger can challenge')
+          assert.isFalse(await disputable.canChallenge(actionId, someone), 'challenger can challenge')
         })
       })
     })
 
     context('when the permission is open to any address', async () => {
       beforeEach('grant permission', async () => {
-        await deployer.acl.createPermission(ANY_ADDR, delay.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
+        await deployer.acl.createPermission(ANY_ADDR, disputable.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
       })
 
       it('returns true', async () => {
-        assert.isTrue(await delay.canChallenge(delayableId, someone), 'challenger cannot challenge')
+        assert.isTrue(await disputable.canChallenge(actionId, someone), 'challenger cannot challenge')
       })
     })
 
@@ -161,8 +161,8 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
 
       beforeEach('set balance oracle', async () => {
         const param = await balanceOracle.getPermissionParam()
-        await deployer.acl.createPermission(ANY_ADDR, delay.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
-        await deployer.acl.grantPermissionP(ANY_ADDR, delay.disputable.address, CHALLENGE_ROLE, [param], { from: owner })
+        await deployer.acl.createPermission(ANY_ADDR, disputable.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
+        await deployer.acl.grantPermissionP(ANY_ADDR, disputable.disputable.address, CHALLENGE_ROLE, [param], { from: owner })
       })
 
       const setTokenBalance = (holder, balance) => {
@@ -184,7 +184,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
         setTokenBalance(challenger, bn(0))
 
         it('returns false', async () => {
-          assert.isFalse(await delay.canChallenge(delayableId, challenger), 'challenger can challenge')
+          assert.isFalse(await disputable.canChallenge(actionId, challenger), 'challenger can challenge')
         })
       })
 
@@ -192,7 +192,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
         setTokenBalance(challenger, challengePermissionBalance.div(bn(2)))
 
         it('returns false', async () => {
-          assert.isFalse(await delay.canChallenge(delayableId, challenger), 'challenger can challenge')
+          assert.isFalse(await disputable.canChallenge(actionId, challenger), 'challenger can challenge')
         })
       })
 
@@ -200,7 +200,7 @@ contract('Delay', ([_, owner, someone, submitter, challenger]) => {
         setTokenBalance(challenger, challengePermissionBalance)
 
         it('returns true', async () => {
-          assert.isTrue(await delay.canChallenge(delayableId, challenger), 'challenger cannot challenge')
+          assert.isTrue(await disputable.canChallenge(actionId, challenger), 'challenger cannot challenge')
         })
       })
     })

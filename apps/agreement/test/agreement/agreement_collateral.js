@@ -3,28 +3,28 @@ const { assertBn } = require('../helpers/assert/assertBn')
 const { bigExp, bn } = require('../helpers/lib/numbers')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
-const { DELAY_ERRORS } = require('../helpers/utils/errors')
-const { DELAY_EVENTS } = require('../helpers/utils/events')
+const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
+const { DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
-contract('Delay', ([_, owner, someone]) => {
-  let delay
+contract('Agreement', ([_, owner, someone]) => {
+  let agreement
 
   let initialCollateralRequirement = {
     actionCollateral: bigExp(200, 18),
     challengeCollateral: bigExp(100, 18),
-    challengeDuration: 3 * DAY,
+    challengeDuration: bn(3 * DAY),
   }
 
   beforeEach('deploy agreement', async () => {
-    delay = await deployer.deployAndInitializeWrapperWithDisputable({ delay: true, owner, ...initialCollateralRequirement })
+    agreement = await deployer.deployAndInitializeWrapperWithDisputable({ owner, ...initialCollateralRequirement })
     initialCollateralRequirement.collateralToken = deployer.collateralToken
   })
 
   describe('changeCollateralRequirement', () => {
     let newCollateralRequirement = {
-      challengeDuration: 10 * DAY,
+      challengeDuration: bn(10 * DAY),
       actionCollateral: bigExp(100, 18),
       challengeCollateral: bigExp(50, 18),
     }
@@ -41,7 +41,7 @@ contract('Delay', ([_, owner, someone]) => {
     }
 
     it('starts with expected initial collateral requirements', async () => {
-      const currentCollateralRequirement = await delay.getCollateralRequirement()
+      const currentCollateralRequirement = await agreement.getCollateralRequirement()
       await assertCurrentCollateralRequirement(currentCollateralRequirement, initialCollateralRequirement)
     })
 
@@ -49,28 +49,26 @@ contract('Delay', ([_, owner, someone]) => {
       const from = owner
 
       it('changes the collateral requirements', async () => {
-        await delay.changeCollateralRequirement({ ...newCollateralRequirement, from })
+        await agreement.changeCollateralRequirement({ ...newCollateralRequirement, from })
 
-        const currentCollateralRequirement = await delay.getCollateralRequirement()
+        const currentCollateralRequirement = await agreement.getCollateralRequirement()
         await assertCurrentCollateralRequirement(currentCollateralRequirement, newCollateralRequirement)
       })
 
       it('keeps the previous collateral requirements', async () => {
-        const currentId = await delay.getCurrentCollateralRequirementId()
-        await delay.changeCollateralRequirement({ ...newCollateralRequirement, from })
+        const currentId = await agreement.getCurrentCollateralRequirementId()
+        await agreement.changeCollateralRequirement({ ...newCollateralRequirement, from })
 
-        const previousCollateralRequirement = await delay.getCollateralRequirement(currentId)
+        const previousCollateralRequirement = await agreement.getCollateralRequirement(currentId)
         await assertCurrentCollateralRequirement(previousCollateralRequirement, initialCollateralRequirement)
       })
 
       it('emits an event', async () => {
-        const currentId = await delay.getCurrentCollateralRequirementId()
-        const receipt = await delay.changeCollateralRequirement({ ...newCollateralRequirement, from })
+        const currentId = await agreement.getCurrentCollateralRequirementId()
+        const receipt = await agreement.changeCollateralRequirement({ ...newCollateralRequirement, from })
 
-        assertAmountOfEvents(receipt, DELAY_EVENTS.COLLATERAL_CHANGED, 1)
-
-        const { collateralToken, actionCollateral, challengeCollateral, challengeDuration } = newCollateralRequirement
-        assertEvent(receipt, DELAY_EVENTS.COLLATERAL_CHANGED, { id: currentId.add(bn(1)), token: collateralToken, actionAmount: actionCollateral, challengeAmount: challengeCollateral, challengeDuration })
+        assertAmountOfEvents(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, 1)
+        assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { id: currentId.add(bn(1)), disputable: agreement.disputable.address })
       })
     })
 
@@ -78,7 +76,7 @@ contract('Delay', ([_, owner, someone]) => {
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(delay.changeCollateralRequirement({ ...newCollateralRequirement, from }), DELAY_ERRORS.ERROR_AUTH_FAILED)
+        await assertRevert(agreement.changeCollateralRequirement({ ...newCollateralRequirement, from }), DISPUTABLE_ERRORS.ERROR_AUTH_FAILED)
       })
     })
   })

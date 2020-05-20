@@ -10,6 +10,7 @@ import "@aragon/os/contracts/common/SafeERC20.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
+import "@aragon/os/contracts/common/ConversionHelpers.sol";
 
 import "./arbitration/IArbitrable.sol";
 import "./arbitration/IArbitrator.sol";
@@ -40,10 +41,17 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_TOKEN_DEPOSIT_FAILED = "AGR_TOKEN_DEPOSIT_FAILED";
     string internal constant ERROR_TOKEN_TRANSFER_FAILED = "AGR_TOKEN_TRANSFER_FAILED";
     string internal constant ERROR_TOKEN_APPROVAL_FAILED = "AGR_TOKEN_APPROVAL_FAILED";
+    string internal constant ERROR_TOKEN_NOT_CONTRACT = "AGR_TOKEN_NOT_CONTRACT";
     string internal constant ERROR_ARBITRATOR_NOT_CONTRACT = "AGR_ARBITRATOR_NOT_CONTRACT";
     string internal constant ERROR_STAKING_FACTORY_NOT_CONTRACT = "AGR_STAKING_FACTORY_NOT_CONTRACT";
     string internal constant ERROR_ACL_SIGNER_MISSING = "AGR_ACL_ORACLE_SIGNER_MISSING";
     string internal constant ERROR_ACL_SIGNER_NOT_ADDRESS = "AGR_ACL_ORACLE_SIGNER_NOT_ADDR";
+
+    /* Disputable related errors */
+    string internal constant ERROR_SENDER_CANNOT_CHALLENGE_ACTION = "AGR_SENDER_CANT_CHALLENGE_ACTION";
+    string internal constant ERROR_MISSING_COLLATERAL_REQUIREMENT = "AGR_MISSING_COLLATERAL_REQ";
+    string internal constant ERROR_DISPUTABLE_APP_NOT_REGISTERED = "AGR_DISPUTABLE_NOT_REGISTERED";
+    string internal constant ERROR_DISPUTABLE_APP_ALREADY_EXISTS = "AGR_DISPUTABLE_ALREADY_EXISTS";
 
     /* Action related errors */
     string internal constant ERROR_CANNOT_CLOSE_ACTION = "AGR_CANNOT_CLOSE_ACTION";
@@ -55,14 +63,20 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_SUBMITTER_FINISHED_EVIDENCE = "AGR_SUBMITTER_FINISHED_EVIDENCE";
     string internal constant ERROR_CHALLENGER_FINISHED_EVIDENCE = "AGR_CHALLENGER_FINISHED_EVIDENCE";
 
-    // bytes32 public constant DISPUTABLE_ROLE = keccak256("DISPUTABLE_ROLE");
-    bytes32 public constant DISPUTABLE_ROLE = 0x5b327c088dc5201d0d0f365250580b009f4b5940290b5e72d41266abddb16fcd;
-
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
 
     // bytes32 public constant CHANGE_CONTENT_ROLE = keccak256("CHANGE_AGREEMENT_ROLE");
     bytes32 public constant CHANGE_CONTENT_ROLE = 0xbc428ed8cb28bb330ec2446f83dabdde5f6fc3c43db55e285b2c7413b4b2acf5;
+
+    // bytes32 public constant CHANGE_COLLATERAL_REQUIREMENTS_ROLE = keccak256("CHANGE_COLLATERAL_REQUIREMENTS_ROLE");
+    bytes32 public constant CHANGE_COLLATERAL_REQUIREMENTS_ROLE = 0xf8e1e0f3a5d2cfcc5046b79ce871218ff466f2f37c782b9923261b92e20a1496;
+
+    // bytes32 public constant REGISTER_DISPUTABLE_ROLE = keccak256("REGISTER_DISPUTABLE_ROLE");
+    bytes32 public constant REGISTER_DISPUTABLE_ROLE = 0x226f767553a5c420616d5a7a0dfc1ece7a8a6c634c65ae72f1be8e9b03139988;
+
+    // bytes32 public constant UNREGISTER_DISPUTABLE_ROLE = keccak256("UNREGISTER_DISPUTABLE_ROLE");
+    bytes32 public constant UNREGISTER_DISPUTABLE_ROLE = 0xe9057b86d53721ee5a85588a8240dd8fb48e0c9848fac8bc14c8b95a1ddc67a7;
 
     event Signed(address indexed signer, uint256 contentId);
     event ContentChanged(uint256 contentId);
@@ -74,6 +88,10 @@ contract Agreement is IAgreement, AragonApp {
     event ActionVoided(uint256 indexed actionId);
     event ActionRejected(uint256 indexed actionId);
     event ActionClosed(uint256 indexed actionId);
+    event DisputableAppRegistered(IDisputable indexed disputable);
+    event DisputableAppUnregistering(IDisputable indexed disputable);
+    event DisputableAppUnregistered(IDisputable indexed disputable);
+    event CollateralRequirementChanged(IDisputable indexed disputable, uint256 id);
 
     enum ActionState {
         Submitted,
@@ -88,6 +106,12 @@ contract Agreement is IAgreement, AragonApp {
         Rejected,
         Accepted,
         Voided
+    }
+
+    enum DisputableState {
+        Unregistered,
+        Registered,
+        Unregistering
     }
 
     struct Action {
@@ -118,6 +142,19 @@ contract Agreement is IAgreement, AragonApp {
         bool challengerFinishedEvidence;    // Whether the action challenger has finished submitting evidence for the action dispute
     }
 
+    struct CollateralRequirement {
+        uint256 actionAmount;               // Amount of collateral token that will be locked every time an action is created
+        uint256 challengeAmount;            // Amount of collateral token that will be locked every time an action is challenged
+        ERC20 token;                        // ERC20 token to be used for collateral
+        uint64 challengeDuration;           // Duration in seconds of the challenge, during this time window the submitter can answer the challenge
+    }
+
+    struct DisputableInfo {
+        uint256 ongoingActions;             // Number of actions on going for a disputable
+        DisputableState state;           // Disputable app state, whether it is registered, unregistered or unregistering
+        CollateralRequirement[] collateralRequirements; // List of collateral requirements indexed by id
+    }
+
     string public title;                    // Title identifying the Agreement instance
     IArbitrator public arbitrator;          // Arbitrator instance that will resolve disputes
     StakingFactory public stakingFactory;   // Staking factory to be used for the collateral staking pools
@@ -126,6 +163,7 @@ contract Agreement is IAgreement, AragonApp {
     Action[] private actions;                                   // List of actions indexed by ID
     mapping (uint256 => Dispute) private disputes;              // List of disputes indexed by dispute ID
     mapping (address => uint256) private lastContentSignedBy;   // List of last contents signed by user
+    mapping (address => DisputableInfo) private disputableInfos;// List of disputable infos indexed by disputable address
 
     /**
     * @notice Initialize Agreement app for `_title` and content `_content`, with arbitrator `_arbitrator` and staking factory `_factory`
@@ -163,29 +201,29 @@ contract Agreement is IAgreement, AragonApp {
     * @notice Create a new action
     * @param _disputableId Identification number of the disputable action in the context of the disputable instance
     * @param _submitter Address of the user that has submitted the action
-    * @param _collateralId Identification number of the collateral requirements for the given action
     * @param _context Link to a human-readable text giving context for the given action
     * @return Unique identification number for the created action in the context of the agreement
     */
-    function newAction(uint256 _disputableId, uint256 _collateralId, address _submitter, bytes _context)
-        external
-        auth(DISPUTABLE_ROLE)
-        returns (uint256)
-    {
+    function newAction(uint256 _disputableId, address _submitter, bytes _context) external returns (uint256) {
         uint256 lastContentIdSigned = lastContentSignedBy[_submitter];
         require(lastContentIdSigned >= _getCurrentContentId(), ERROR_SIGNER_MUST_SIGN);
 
-        IDisputable disputable = IDisputable(msg.sender);
-        (ERC20 collateralToken, uint256 actionCollateral,,) = disputable.getCollateralRequirement(_disputableId, _collateralId);
-        _lockBalance(collateralToken, _submitter, actionCollateral);
+        DisputableInfo storage disputableInfo = disputableInfos[msg.sender];
+        require(disputableInfo.state == DisputableState.Registered, ERROR_DISPUTABLE_APP_NOT_REGISTERED);
+
+        uint256 currentCollateralRequirementId = _getCurrentCollateralRequirementId(disputableInfo);
+        CollateralRequirement storage requirement = disputableInfo.collateralRequirements[currentCollateralRequirementId];
+        _lockBalance(requirement.token, _submitter, requirement.actionAmount);
 
         uint256 id = actions.length++;
         Action storage action = actions[id];
         action.disputable = IDisputable(msg.sender);
+        action.collateralId = currentCollateralRequirementId;
         action.disputableId = _disputableId;
         action.submitter = _submitter;
         action.context = _context;
 
+        disputableInfo.ongoingActions++;
         emit ActionSubmitted(id);
         return id;
     }
@@ -195,20 +233,23 @@ contract Agreement is IAgreement, AragonApp {
     * @dev It can only be closed if the action wasn't challenged or if it was disputed but ruled in favor of the submitter
     * @param _actionId Identification number of the action to be closed
     */
-    function closeAction(uint256 _actionId) external auth(DISPUTABLE_ROLE) {
+    function closeAction(uint256 _actionId) external {
         Action storage action = _getAction(_actionId);
         require(_canProceed(action), ERROR_CANNOT_CLOSE_ACTION);
 
-        IDisputable disputable = action.disputable;
+        (IDisputable disputable, DisputableInfo storage disputableInfo, CollateralRequirement storage requirement) = _getDisputableFor(action);
         require(disputable == IDisputable(msg.sender), ERROR_SENDER_NOT_ALLOWED);
+        require(disputableInfo.state != DisputableState.Unregistered, ERROR_DISPUTABLE_APP_NOT_REGISTERED);
 
         if (action.state == ActionState.Submitted) {
-            (ERC20 collateralToken, uint256 actionCollateral,,) = disputable.getCollateralRequirement(action.disputableId, action.collateralId);
-            _unlockBalance(collateralToken, action.submitter, actionCollateral);
+            _unlockBalance(requirement.token, action.submitter, requirement.actionAmount);
+            disputableInfo.ongoingActions--;
         }
 
         action.state = ActionState.Closed;
         emit ActionClosed(_actionId);
+
+        _tryUnregisterDisputable(disputable, disputableInfo);
     }
 
     /**
@@ -221,17 +262,13 @@ contract Agreement is IAgreement, AragonApp {
         Action storage action = _getAction(_actionId);
         require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
 
-        IDisputable disputable = action.disputable;
-        uint256 disputableId = action.disputableId;
-        (ERC20 collateralToken,
-        uint256 actionCollateral,
-        uint256 challengeCollateral,
-        uint64 challengeDuration) = disputable.getCollateralRequirement(disputableId, action.collateralId);
-        require(_settlementOffer <= actionCollateral, ERROR_INVALID_SETTLEMENT_OFFER);
+        (IDisputable disputable, , CollateralRequirement storage requirement) = _getDisputableFor(action);
+        require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
+        require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
 
         action.state = ActionState.Challenged;
-        _createChallenge(action, msg.sender, collateralToken, challengeCollateral, _settlementOffer, challengeDuration, _context);
-        disputable.onDisputableChallenged(disputableId, msg.sender);
+        _createChallenge(action, msg.sender, requirement, _settlementOffer, _context);
+        disputable.onDisputableChallenged(action.disputableId, msg.sender);
         emit ActionChallenged(_actionId);
     }
 
@@ -251,25 +288,25 @@ contract Agreement is IAgreement, AragonApp {
             require(_canClaimSettlement(action), ERROR_CANNOT_SETTLE_ACTION);
         }
 
+        (IDisputable disputable, DisputableInfo storage disputableInfo, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        ERC20 collateralToken = requirement.token;
+        uint256 actionCollateral = requirement.actionAmount;
         uint256 settlementOffer = challenge.settlementOffer;
-        uint256 disputableId = action.disputableId;
-        (ERC20 collateralToken,
-        uint256 actionCollateral,
-        uint256 challengeCollateral,) = action.disputable.getCollateralRequirement(disputableId, action.collateralId);
 
         // The settlement offer was already checked to be up-to the collateral amount
         // However, we cap it to collateral amount to double check
         uint256 unlockedAmount = settlementOffer >= actionCollateral ? actionCollateral : (actionCollateral - settlementOffer);
         uint256 slashedAmount = actionCollateral - unlockedAmount;
 
-        Staking staking = stakingFactory.getOrCreateInstance(collateralToken);
-        staking.unlockAndSlash(submitter, unlockedAmount, challenger, slashedAmount);
-        _transfer(collateralToken, challenger, challengeCollateral);
+        _unlockAndSlashBalance(collateralToken, submitter, unlockedAmount, challenger, slashedAmount);
+        _transfer(collateralToken, challenger, requirement.challengeAmount);
         _transfer(challenge.arbitratorFeeToken, challenger, challenge.arbitratorFeeAmount);
 
         challenge.state = ChallengeState.Settled;
-        action.disputable.onDisputableRejected(disputableId);
+        disputable.onDisputableRejected(action.disputableId);
         emit ActionSettled(_actionId);
+
+        _solveActionAndTryUnregisterDisputable(disputable, disputableInfo);
     }
 
     /**
@@ -352,6 +389,75 @@ contract Agreement is IAgreement, AragonApp {
     */
     function changeContent(bytes _content) external auth(CHANGE_CONTENT_ROLE) {
         _newContent(_content);
+    }
+
+    /**
+    * @notice Register disputable app `_disputable` setting its collateral requirements to:
+    * @notice - `@tokenAmount(_collateralToken: address, _actionAmount)` for submitting collateral
+    * @notice - `@tokenAmount(_collateralToken: address, _challengeAmount)` for challenging collateral
+    * @param _disputable Address of the disputable app
+    * @param _collateralToken Address of the ERC20 token to be used for collateral
+    * @param _actionAmount Amount of collateral tokens that will be locked every time an action is submitted
+    * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
+    * @param _challengeDuration Duration in seconds of the challenge, during this time window the submitter can answer the challenge
+    */
+    function register(IDisputable _disputable, ERC20 _collateralToken, uint256 _actionAmount, uint256 _challengeAmount, uint64 _challengeDuration)
+        external
+        authP(REGISTER_DISPUTABLE_ROLE, arr(_disputable))
+    {
+        DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
+        DisputableState disputableState = disputableInfo.state;
+
+        if (disputableState == DisputableState.Unregistered) {
+            IDisputable(_disputable).setAgreement(IAgreement(this));
+        } else if (disputableState != DisputableState.Unregistering) {
+            revert(ERROR_DISPUTABLE_APP_ALREADY_EXISTS);
+        }
+
+        disputableInfo.state = DisputableState.Registered;
+        emit DisputableAppRegistered(_disputable);
+
+        _changeCollateralRequirement(_disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
+    }
+
+    /**
+    * @notice Enqueues the app `_disputable` to be unregistered and tries to unregister it if possible
+    * @param _disputable Address of the disputable app to be unregistered
+    */
+    function unregister(IDisputable _disputable) external authP(UNREGISTER_DISPUTABLE_ROLE, arr(_disputable)) {
+        DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
+        require(disputableInfo.state == DisputableState.Registered, ERROR_DISPUTABLE_APP_NOT_REGISTERED);
+
+        disputableInfo.state = DisputableState.Unregistering;
+        emit DisputableAppUnregistering(_disputable);
+
+        _tryUnregisterDisputable(_disputable, disputableInfo);
+    }
+
+    /**
+    * @notice Change `_disputable`'s collateral requirements to:
+    * @notice - `@tokenAmount(_collateralToken: address, _actionAmount)` for submitting collateral
+    * @notice - `@tokenAmount(_collateralToken: address, _challengeAmount)` for challenging collateral
+    * @param _disputable Disputable app
+    * @param _collateralToken Address of the ERC20 token to be used for collateral
+    * @param _actionAmount Amount of collateral tokens that will be locked every time an action is submitted
+    * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
+    * @param _challengeDuration Duration in seconds of the challenge, during this time window the submitter can answer the challenge
+    */
+    function changeCollateralRequirement(
+        IDisputable _disputable,
+        ERC20 _collateralToken,
+        uint256 _actionAmount,
+        uint256 _challengeAmount,
+        uint64 _challengeDuration
+    )
+        external
+        authP(CHANGE_COLLATERAL_REQUIREMENTS_ROLE, arr(address(_disputable)))
+    {
+        DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
+        require(disputableInfo.state == DisputableState.Registered, ERROR_DISPUTABLE_APP_NOT_REGISTERED);
+
+        _changeCollateralRequirement(_disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
     }
 
     // Getter fns
@@ -473,6 +579,50 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
+    * @dev Tell the information related to a disputable app
+    * @param _disputable Address of the disputable app being queried
+    * @return state State of the disputable app
+    * @return ongoingActions Number of ongoing actions for the disputable app
+    * @return currentCollateralRequirementId Identification number of the current collateral requirement
+    */
+    function getDisputableInfo(address _disputable) external view
+        returns (
+            DisputableState state,
+            uint256 ongoingActions,
+            uint256 currentCollateralRequirementId
+        )
+    {
+        DisputableInfo storage disputableInfo = disputableInfos[_disputable];
+        state = disputableInfo.state;
+        ongoingActions = disputableInfo.ongoingActions;
+        currentCollateralRequirementId = _getCurrentCollateralRequirementId(disputableInfo);
+    }
+
+    /**
+    * @dev Tell the information related to a collateral requirement of a disputable app
+    * @param _disputable Address of the disputable app querying the collateral requirements of
+    * @param _collateralId Identification number of the collateral being queried
+    * @return collateralToken Address of the ERC20 token to be used for collateral
+    * @return actionAmount Amount of collateral tokens that will be locked every time an action is created
+    * @return challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
+    * @return challengeDuration Duration in seconds of the challenge, during this time window the submitter can answer the challenge
+    */
+    function getCollateralRequirement(IDisputable _disputable, uint256 _collateralId) external view
+        returns (
+            ERC20 collateralToken,
+            uint256 actionAmount,
+            uint256 challengeAmount,
+            uint64 challengeDuration
+        )
+    {
+        CollateralRequirement storage collateral = _getCollateralRequirement(_disputable, _collateralId);
+        collateralToken = collateral.token;
+        actionAmount = collateral.actionAmount;
+        challengeAmount = collateral.challengeAmount;
+        challengeDuration = collateral.challengeDuration;
+    }
+
+    /**
     * @dev Tell the missing part of arbitration fees in order to dispute an action raising it to the arbitrator
     * @param _actionId Identification number of the address being queried
     * @return feeToken ERC20 token to be used for the arbitration fees
@@ -502,6 +652,17 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
+    * @dev Tell whether an address can challenge an action or not
+    * @param _actionId Identification number of the action to be queried
+    * @param _challenger Address of the challenger willing to challenge the action
+    * @return True if the challenger can be challenge the action, false otherwise
+    */
+    function canPerformChallenge(uint256 _actionId, address _challenger) external view returns (bool) {
+        Action storage action = _getAction(_actionId);
+        return _canPerformChallenge(action.disputable, _challenger);
+    }
+
+    /**
     * @dev Tell whether an action can proceed or not, i.e. if its not being challenged or disputed
     * @param _actionId Identification number of the action to be queried
     * @return True if the action can proceed, false otherwise
@@ -509,16 +670,6 @@ contract Agreement is IAgreement, AragonApp {
     function canProceed(uint256 _actionId) external view returns (bool) {
         Action storage action = _getAction(_actionId);
         return _canProceed(action);
-    }
-
-    /**
-    * @dev Tell whether an action can be challenged or not
-    * @param _actionId Identification number of the action to be queried
-    * @return True if the action can be challenged, false otherwise
-    */
-    function canChallenge(uint256 _actionId, address _challenger) external view returns (bool) {
-        Action storage action = _getAction(_actionId);
-        return _canChallenge(action);
     }
 
     /**
@@ -577,19 +728,15 @@ contract Agreement is IAgreement, AragonApp {
     * @dev Challenge an action
     * @param _action Action instance to be challenged
     * @param _challenger Address challenging the action
-    * @param _collateralToken ERC20 token to be used for collateral
-    * @param _challengeCollateral Amount of collateral tokens to be locked
+    * @param _requirement Collateral requirement to be used for the challenge
     * @param _settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
-    * @param _duration Challenge duration in seconds
     * @param _context Link to a human-readable text giving context for the challenge
     */
     function _createChallenge(
         Action storage _action,
         address _challenger,
-        ERC20 _collateralToken,
-        uint256 _challengeCollateral,
+        CollateralRequirement storage _requirement,
         uint256 _settlementOffer,
-        uint64 _duration,
         bytes _context
     )
         internal
@@ -599,10 +746,10 @@ contract Agreement is IAgreement, AragonApp {
         challenge.challenger = _challenger;
         challenge.context = _context;
         challenge.settlementOffer = _settlementOffer;
-        challenge.endDate = getTimestamp64().add(_duration);
+        challenge.endDate = getTimestamp64().add(_requirement.challengeDuration);
 
         // Transfer challenge collateral
-        _transferFrom(_collateralToken, _challenger, _challengeCollateral);
+        _transferFrom(_requirement.token, _challenger, _requirement.challengeAmount);
 
         // Transfer half of the Arbitrator fees
         (, ERC20 feeToken, uint256 feeAmount) = arbitrator.getDisputeFees();
@@ -699,16 +846,15 @@ contract Agreement is IAgreement, AragonApp {
         Challenge storage challenge = _action.challenge;
         challenge.state = ChallengeState.Accepted;
 
-        uint256 disputableId = _action.disputableId;
-        IDisputable disputable = _action.disputable;
-        (ERC20 collateralToken,
-        uint256 actionCollateral,
-        uint256 challengeCollateral,) = disputable.getCollateralRequirement(disputableId, _action.collateralId);
+        (IDisputable disputable, DisputableInfo storage info, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        ERC20 collateralToken = requirement.token;
 
         address challenger = challenge.challenger;
-        _slashBalance(collateralToken, _action.submitter, challenger, actionCollateral);
-        _transfer(collateralToken, challenger, challengeCollateral);
-        disputable.onDisputableRejected(disputableId);
+        _slashBalance(collateralToken, _action.submitter, challenger, requirement.actionAmount);
+        _transfer(collateralToken, challenger, requirement.challengeAmount);
+        disputable.onDisputableRejected(_action.disputableId);
+
+        _solveActionAndTryUnregisterDisputable(disputable, info);
     }
 
     /**
@@ -719,16 +865,15 @@ contract Agreement is IAgreement, AragonApp {
         Challenge storage challenge = _action.challenge;
         challenge.state = ChallengeState.Rejected;
 
-        uint256 disputableId = _action.disputableId;
-        IDisputable disputable = _action.disputable;
-        (ERC20 collateralToken,
-        uint256 actionCollateral,
-        uint256 challengeCollateral,) = disputable.getCollateralRequirement(disputableId, _action.collateralId);
+        (IDisputable disputable, DisputableInfo storage info, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        ERC20 collateralToken = requirement.token;
 
         address submitter = _action.submitter;
-        _unlockBalance(collateralToken, submitter, actionCollateral);
-        _transfer(collateralToken, submitter, challengeCollateral);
-        disputable.onDisputableAllowed(disputableId);
+        _unlockBalance(collateralToken, submitter, requirement.actionAmount);
+        _transfer(collateralToken, submitter, requirement.challengeAmount);
+        disputable.onDisputableAllowed(_action.disputableId);
+
+        _solveActionAndTryUnregisterDisputable(disputable, info);
     }
 
     /**
@@ -739,15 +884,14 @@ contract Agreement is IAgreement, AragonApp {
         Challenge storage challenge = _action.challenge;
         challenge.state = ChallengeState.Voided;
 
-        uint256 disputableId = _action.disputableId;
-        IDisputable disputable = _action.disputable;
-        (ERC20 collateralToken,
-        uint256 actionCollateral,
-        uint256 challengeCollateral,) = disputable.getCollateralRequirement(disputableId, _action.collateralId);
+        (IDisputable disputable, DisputableInfo storage disputableInfo, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        ERC20 collateralToken = requirement.token;
 
-        _unlockBalance(collateralToken, _action.submitter, actionCollateral);
-        _transfer(collateralToken, challenge.challenger, challengeCollateral);
-        disputable.onDisputableVoided(disputableId);
+        _unlockBalance(collateralToken, _action.submitter, requirement.actionAmount);
+        _transfer(collateralToken, challenge.challenger, requirement.challengeAmount);
+        disputable.onDisputableVoided(_action.disputableId);
+
+        _solveActionAndTryUnregisterDisputable(disputable, disputableInfo);
     }
 
     /**
@@ -797,6 +941,29 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
+    * @dev Unlock and slash a number of staked tokens for a user in favor of a challenger
+    * @param _token ERC20 token to be slashed
+    * @param _user Address of the user to be slashed
+    * @param _unlockAmount Number of collateral tokens to be locked
+    * @param _challenger Address receiving the slashed tokens
+    * @param _slashAmount Number of collateral tokens to be slashed
+    */
+    function _unlockAndSlashBalance(ERC20 _token, address _user, uint256 _unlockAmount, address _challenger, uint256 _slashAmount) internal {
+        if (_unlockAmount == 0 && _slashAmount == 0) {
+            return;
+        }
+
+        Staking staking = stakingFactory.getOrCreateInstance(_token);
+        if (_unlockAmount != 0 && _slashAmount != 0) {
+            staking.unlockAndSlash(_user, _unlockAmount, _challenger, _slashAmount);
+        } else if (_unlockAmount != 0) {
+            staking.unlock(_user, _unlockAmount);
+        } else {
+            staking.slash(_user, _challenger, _slashAmount);
+        }
+    }
+
+    /**
     * @dev Transfer tokens to an address
     * @param _token ERC20 token to be transferred
     * @param _to Address receiving the tokens being transferred
@@ -838,6 +1005,79 @@ contract Agreement is IAgreement, AragonApp {
         uint256 id = contents.length++;
         contents[id] = _content;
         emit ContentChanged(id);
+    }
+
+    /**
+    * @dev Reduces in one unit the ongoing actions for a disputable and tries to unregister if it has no more ongoing actions
+    * @param _disputableInfo Disputable info instance to be unregistered
+    */
+    function _solveActionAndTryUnregisterDisputable(IDisputable _disputable, DisputableInfo storage _disputableInfo) internal {
+        _disputableInfo.ongoingActions--;
+        _tryUnregisterDisputable(_disputable, _disputableInfo);
+    }
+
+    /**
+    * @dev Tries to unregister a disputable app if it has no more ongoing actions
+    * @param _disputableInfo Disputable info instance to be unregistered
+    */
+    function _tryUnregisterDisputable(IDisputable _disputable, DisputableInfo storage _disputableInfo) internal {
+        if (_disputableInfo.ongoingActions == 0 && _disputableInfo.state == DisputableState.Unregistering) {
+            _disputableInfo.state = DisputableState.Unregistered;
+            IDisputable(_disputable).setAgreement(IAgreement(0));
+            emit DisputableAppUnregistered(_disputable);
+        }
+    }
+
+    /**
+    * @dev Change the challenge collateral of a disputable app
+    * @param _disputable Disputable app
+    * @param _disputableInfo Disputable info instance to change its collateral requirements
+    * @param _collateralToken Address of the ERC20 token to be used for collateral
+    * @param _actionAmount Amount of collateral tokens that will be locked every time an action is submitted
+    * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
+    * @param _challengeDuration Duration in seconds of the challenge, during this time window the submitter can answer the challenge
+    */
+    function _changeCollateralRequirement(
+        IDisputable _disputable,
+        DisputableInfo storage _disputableInfo,
+        ERC20 _collateralToken,
+        uint256 _actionAmount,
+        uint256 _challengeAmount,
+        uint64 _challengeDuration
+    )
+        internal
+    {
+        require(isContract(address(_collateralToken)), ERROR_TOKEN_NOT_CONTRACT);
+
+        uint256 id = _disputableInfo.collateralRequirements.length++;
+        _disputableInfo.collateralRequirements[id] = CollateralRequirement({
+            token: _collateralToken,
+            actionAmount: _actionAmount,
+            challengeAmount: _challengeAmount,
+            challengeDuration: _challengeDuration
+        });
+
+        emit CollateralRequirementChanged(_disputable, id);
+    }
+
+    /**
+    * @dev Tell whether an address can challenge an action for a disputable app or not
+    * @param _disputable Disputable being queried
+    * @param _challenger Address of the challenger willing to challenge an action
+    * @return True if the challenger can be challenge actions on the disputable app, false otherwise
+    */
+    function _canPerformChallenge(IDisputable _disputable, address _challenger) internal view returns (bool) {
+        if (!hasInitialized()) {
+            return false;
+        }
+
+        IKernel linkedKernel = kernel();
+        if (address(linkedKernel) == address(0)) {
+            return false;
+        }
+
+        bytes memory params = ConversionHelpers.dangerouslyCastUintArrayToBytes(arr(_challenger));
+        return linkedKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, params);
     }
 
     /**
@@ -962,6 +1202,49 @@ contract Agreement is IAgreement, AragonApp {
     function _getSigner(address _signer) internal view returns (uint256 lastContentIdSigned, bool mustSign) {
         lastContentIdSigned = lastContentSignedBy[_signer];
         mustSign = lastContentIdSigned < _getCurrentContentId();
+    }
+
+    /**
+    * @dev Tell the identification number of the current collateral requirement instance of a disputable app
+    * @param _disputableInfo Disputable info of the app querying its current collateral requirement
+    * @return Identification number of the current collateral requirement of a disputable
+    */
+    function _getCurrentCollateralRequirementId(DisputableInfo storage _disputableInfo) internal view returns (uint256) {
+        return _disputableInfo.collateralRequirements.length - 1;
+    }
+
+    /**
+    * @dev Tell the collateral requirement instance of a disputable by its identification number
+    * @param _disputable Disputable app querying the collateral requirements of
+    * @param _collateralId Identification number of the collateral being queried
+    * @return Collateral requirement instance associated to the given identification number for the given disputable
+    */
+    function _getCollateralRequirement(IDisputable _disputable, uint256 _collateralId) internal view returns (CollateralRequirement storage) {
+        DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
+        require(_collateralId <= _getCurrentCollateralRequirementId(disputableInfo), ERROR_MISSING_COLLATERAL_REQUIREMENT);
+        return disputableInfo.collateralRequirements[_collateralId];
+    }
+
+    /**
+    * @dev Tell the disputable-related information about a disputable action
+    * @param _action Action instance being queried
+    * @return disputable Disputable instance associated to the action
+    * @return app Disputable app associated to the action
+    * @return requirement Collateral requirements of the disputable app associated to the action
+    */
+    function _getDisputableFor(Action storage _action) internal view
+        returns (
+            IDisputable disputable,
+            DisputableInfo storage disputableInfo,
+            CollateralRequirement storage requirement
+        )
+    {
+        disputable = _action.disputable;
+        disputableInfo = disputableInfos[address(disputable)];
+
+        uint256 collateralId = _action.collateralId;
+        require(collateralId <= _getCurrentCollateralRequirementId(disputableInfo), ERROR_MISSING_COLLATERAL_REQUIREMENT);
+        requirement = disputableInfo.collateralRequirements[collateralId];
     }
 
     /**

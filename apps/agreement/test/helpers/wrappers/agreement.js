@@ -71,6 +71,21 @@ class AgreementWrapper {
     return Staking.at(stakingAddress)
   }
 
+  async getDisputableInfo(disputable) {
+    const { state, ongoingActions, currentCollateralRequirementId } = await this.agreement.getDisputableInfo(disputable.address)
+    return { state, ongoingActions, currentCollateralRequirementId }
+  }
+
+  async getCollateralRequirement(disputable, collateralId) {
+    const MiniMeToken = this._getContract('MiniMeToken')
+    const { collateralToken, actionAmount, challengeAmount, challengeDuration } = await this.agreement.getCollateralRequirement(disputable.address, collateralId)
+    return { collateralToken: await MiniMeToken.at(collateralToken), actionCollateral: actionAmount, challengeCollateral: challengeAmount, challengeDuration }
+  }
+
+  async canChallenge(actionId, challenger) {
+    return this.agreement.canPerformChallenge(actionId, challenger)
+  }
+
   async getAllowedPaths(actionId) {
     const canProceed = await this.agreement.canProceed(actionId)
     const canChallenge = await this.agreement.canChallenge(actionId)
@@ -79,11 +94,6 @@ class AgreementWrapper {
     const canClaimSettlement = await this.agreement.canClaimSettlement(actionId)
     const canRuleDispute = await this.agreement.canRuleDispute(actionId)
     return { canProceed, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute }
-  }
-
-  async changeContent({ content = '0x1234', from = undefined }) {
-    if (!from) from = await this._getSender()
-    return this.agreement.changeContent(content, { from })
   }
 
   async sign(from) {
@@ -131,6 +141,33 @@ class AgreementWrapper {
       await arbitrator.rule(disputeId, ruling)
     }
     return this.agreement.executeRuling(actionId)
+  }
+
+  async register({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, from = undefined }) {
+    if (!from) from = await this._getSender()
+    return this.agreement.register(disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
+  }
+
+  async unregister({ disputable, from = undefined }) {
+    if (!from) from = await this._getSender()
+    return this.agreement.unregister(disputable.address, { from })
+  }
+
+  async changeCollateralRequirement(options = {}) {
+    const currentRequirements = await this.getCollateralRequirement()
+    const from = options.from || await this._getSender()
+
+    const collateralToken = options.collateralToken || currentRequirements.collateralToken
+    const actionCollateral = options.actionCollateral || currentRequirements.actionCollateral
+    const challengeCollateral = options.challengeCollateral || currentRequirements.challengeCollateral
+    const challengeDuration = options.challengeDuration || currentRequirements.challengeDuration
+
+    return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
+  }
+
+  async changeContent({ content = '0x1234', from = undefined }) {
+    if (!from) from = await this._getSender()
+    return this.agreement.changeContent(content, { from })
   }
 
   async approveArbitrationFees({ amount = undefined, from = undefined, accumulate = false }) {

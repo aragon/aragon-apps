@@ -9,6 +9,10 @@ const AGREEMENT_EVENTS = {
   ACTION_VOIDED: 'ActionVoided',
   ACTION_REJECTED: 'ActionRejected',
   ACTION_CLOSED: 'ActionClosed',
+  DISPUTABLE_REGISTERED: 'DisputableAppRegistered',
+  DISPUTABLE_UNREGISTERING: 'DisputableAppUnregistering',
+  DISPUTABLE_UNREGISTERED: 'DisputableAppUnregistered',
+  COLLATERAL_REQUIREMENT_CHANGED: 'CollateralRequirementChanged'
 }
 
 const STAKING_EVENTS = {
@@ -19,17 +23,17 @@ const STAKING_EVENTS = {
   BALANCE_SLAHED: 'Slashed',
 }
 
-const DELAY_EVENTS = {
-  SCHEDULED: 'Scheduled',
-  PAUSED: 'Paused',
-  FAST_FORWARDED: 'FastForwarded',
-  STOPPED: 'Stopped',
-  EXECUTED: 'Executed',
-  COLLATERAL_CHANGED: 'CollateralRequirementChanged',
+const DISPUTABLE_EVENTS = {
+  SUBMITTED: 'DisputableSubmitted',
+  CHALLENGED: 'DisputableChallenged',
+  ALLOWED: 'DisputableAllowed',
+  REJECTED: 'DisputableRejected',
+  VOIDED: 'DisputableVoided',
+  AGREEMENT_SET: 'AgreementSet'
 }
 
 module.exports = {
-  AGREEMENT_EVENTS,
   STAKING_EVENTS,
-  DELAY_EVENTS
+  AGREEMENT_EVENTS,
+  DISPUTABLE_EVENTS
 }
