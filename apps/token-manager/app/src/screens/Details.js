@@ -12,15 +12,14 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import SummaryBar from '../components/SummaryBar'
-import SummaryRows from '../components/SummaryRows'
+import VestingContent from '../components/VestingContent'
 import VestingInfoBoxes from '../components/VestingInfoBoxes'
 import { useAppLogic, toISODate, useVestedTokensInfo } from '../app-logic'
 import { format, formatDistanceStrict, parseISO } from 'date-fns'
 
 const formatDate = date => `${format(date, 'do MMM yyyy, HH:mm O')}`
 
-function Details({ tokenSymbol, selectHolder, vestings }) {
+function Details({ tokenSymbol, tokenDecimals, selectHolder, vestings }) {
   const theme = useTheme()
   const { selectedHolder } = useAppLogic()
   const handleBack = useCallback(() => selectHolder(-1), [selectHolder])
@@ -34,10 +33,15 @@ function Details({ tokenSymbol, selectHolder, vestings }) {
           <Box>
             <Accordion
               items={selectedHolder.vestings.map(vesting => [
-                <VestingContent vesting={vesting} tokenSymbol={tokenSymbol} />,
-                <ExpandableContent
-                  vesting={vesting}
+                <VestingContent
+                  tokenDecimals={tokenDecimals}
                   tokenSymbol={tokenSymbol}
+                  vesting={vesting}
+                />,
+                <ExpandableContent
+                  tokenDecimals={tokenDecimals}
+                  tokenSymbol={tokenSymbol}
+                  vesting={vesting}
                 />,
               ])}
             />
@@ -56,50 +60,7 @@ function Details({ tokenSymbol, selectHolder, vestings }) {
   )
 }
 
-function VestingContent({ vesting, tokenSymbol }) {
-  const { layoutName } = useLayout()
-  const compact = layoutName === 'small'
-  const vestingInfo = useVestedTokensInfo(vesting)
-
-  return (
-    <div
-      css={`
-        display: flex;
-        padding: ${3 * GU}px 0;
-        width: 100%;
-        flex-direction: ${compact ? 'column' : 'row'};
-      `}
-    >
-      <div
-        css={`
-          flex-shrink: 0;
-          flex-grow: 0;
-          width: ${33 * GU}px;
-          display: flex;
-          align-items: center;
-        `}
-      >
-        {formatTokenAmount(vesting.amount, 18, { symbol: tokenSymbol })}
-      </div>
-      <div
-        css={`
-          flex-grow: 1;
-        `}
-      >
-        <SummaryBar
-          vestingInfo={vestingInfo}
-          css={`
-            margin-top: 0;
-            margin-bottom: ${2 * GU}px;
-          `}
-        />
-        <SummaryRows vestingInfo={vestingInfo} tokenSymbol={tokenSymbol} />
-      </div>
-    </div>
-  )
-}
-
-function ExpandableContent({ vesting, tokenSymbol }) {
+function ExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
   const theme = useTheme()
   const vestingInfo = useVestedTokensInfo(vesting)
   return (
@@ -157,7 +118,7 @@ function ExpandableContent({ vesting, tokenSymbol }) {
         <ContentBox>
           <label>AVAILABLE TO TRANSFER</label>
           <p>
-            {formatTokenAmount(vestingInfo.unlockedTokens, 18, {
+            {formatTokenAmount(vestingInfo.unlockedTokens, tokenDecimals, {
               symbol: tokenSymbol,
             })}
           </p>

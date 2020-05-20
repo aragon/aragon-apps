@@ -1,36 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU, formatTokenAmount, textStyle, useTheme } from '@aragon/ui'
+import { GU, useTheme } from '@aragon/ui'
 
-function SummaryRows({ vestingInfo, tokenSymbol }) {
-  const theme = useTheme()
-  return (
-    <div
-      css={`
-        ${textStyle('body2')};
-        display: inline-block;
-        width: 100%;
-      `}
-    >
-      <SummaryRow
-        color={theme.positive}
-        label="Unlocked tokens"
-        pct={vestingInfo.unlockedPercentage}
-        tokenAmount={vestingInfo.unlockedTokens}
-        tokenSymbol={tokenSymbol}
-      />
-      <SummaryRow
-        color={theme.negative}
-        label="Locked tokens"
-        pct={vestingInfo.lockedPercentage}
-        tokenAmount={vestingInfo.lockedTokens}
-        tokenSymbol={tokenSymbol}
-      />
-    </div>
-  )
-}
-
-function SummaryRow({ color, label, pct, tokenAmount, tokenSymbol }) {
+function SummaryRow({ color, label, pct, content }) {
   const theme = useTheme()
   return (
     <div
@@ -66,7 +38,7 @@ function SummaryRow({ color, label, pct, tokenAmount, tokenSymbol }) {
           margin-left: ${2 * GU}px;
         `}
       >
-        {formatTokenAmount(tokenAmount, 18, { symbol: tokenSymbol })}
+        {content}
       </div>
     </div>
   )
@@ -82,4 +54,4 @@ const Bullet = styled.div`
   background: ${({ color }) => color};
 `
 
-export default React.memo(SummaryRows)
+export default SummaryRow

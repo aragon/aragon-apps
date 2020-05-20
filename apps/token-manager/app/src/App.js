@@ -126,6 +126,7 @@ class App extends React.PureComponent {
             {selectedHolder ? (
               <Details
                 tokenSymbol={tokenSymbol}
+                tokenDecimals={tokenDecimals}
                 selectHolder={selectHolder}
                 vestings={vestings}
               />
