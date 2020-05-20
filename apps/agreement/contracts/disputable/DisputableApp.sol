@@ -164,4 +164,14 @@ contract DisputableApp is IDisputable, AragonApp {
     function _getAgreement() internal view returns (IAgreement) {
         return IAgreement(AGREEMENT_POSITION.getStorageAddress());
     }
+
+    /**
+    * @dev Tell whether an action can proceed or not, i.e. if its not being challenged or disputed
+    * @param _actionId Identification number of the action being queried in the context of the Agreement app
+    * @return True if the action can proceed, false otherwise
+    */
+    function _canProceed(uint256 _actionId) internal view returns (bool) {
+        IAgreement agreement = _getAgreement();
+        return agreement.canProceed(_actionId);
+    }
 }
