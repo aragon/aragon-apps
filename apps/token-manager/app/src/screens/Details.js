@@ -73,80 +73,124 @@ function ExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
       `}
     >
       <div>
-        <ContentBox>
+        <div
+          css={`
+            padding: ${1 * GU}px 0;
+          `}
+        >
           <label
             css={`
               color: ${theme.surfaceContentSecondary};
+              ${textStyle('label2')};
             `}
           >
-            START DAY
+            Start day
           </label>
-          <p>{formatDate(new Date(parseInt(vesting.start)))}</p>
-        </ContentBox>
-        <ContentBox>
+          <p
+            css={`
+              ${textStyle('body4')};
+            `}
+          >
+            {formatDate(new Date(parseInt(vesting.start)))}
+          </p>
+        </div>
+        <div
+          css={`
+            padding: ${1 * GU}px 0;
+          `}
+        >
           <label
             css={`
               color: ${theme.surfaceContentSecondary};
+              ${textStyle('label2')};
             `}
           >
-            END DAY
+            End day
           </label>
-          <p>{formatDate(new Date(parseInt(vesting.vesting)))}</p>
-        </ContentBox>
+          <p
+            css={`
+              ${textStyle('body4')};
+            `}
+          >
+            {formatDate(new Date(parseInt(vesting.vesting)))}
+          </p>
+        </div>
       </div>
       <div>
-        <ContentBox>
-          <label>VESTING PERIOD</label>
-          <p>
+        <div
+          css={`
+            padding: ${1 * GU}px 0;
+          `}
+        >
+          <label
+            css={`
+              color: ${theme.surfaceContentSecondary};
+              ${textStyle('label2')};
+            `}
+          >
+            Vesting period
+          </label>
+          <p
+            css={`
+              ${textStyle('body4')};
+            `}
+          >
             {formatDistanceStrict(
               new Date(parseInt(vesting.vesting)),
               new Date(parseInt(vesting.start))
             )}
           </p>
-        </ContentBox>
-        <ContentBox>
-          <label>VESTING CLIFF</label>
-          <p>
+        </div>
+        <div
+          css={`
+            padding: ${1 * GU}px 0;
+          `}
+        >
+          <label
+            css={`
+              color: ${theme.surfaceContentSecondary};
+              ${textStyle('label2')};
+            `}
+          >
+            Vesting cliff
+          </label>
+          <p
+            css={`
+              ${textStyle('body4')};
+            `}
+          >
             {formatDistanceStrict(
               new Date(parseInt(vesting.cliff)),
               new Date(parseInt(vesting.start))
             )}
           </p>
-        </ContentBox>
+        </div>
       </div>
       <div>
-        <ContentBox>
-          <label>AVAILABLE TO TRANSFER</label>
-          <p>
+        <div
+          css={`
+            padding: ${1 * GU}px 0;
+          `}
+        >
+          <label
+            css={`
+              color: ${theme.surfaceContentSecondary};
+              ${textStyle('label2')};
+            `}
+          >
+            Available to transfer
+          </label>
+          <p
+            css={`
+              ${textStyle('body4')};
+            `}
+          >
             {formatTokenAmount(vestingInfo.unlockedTokens, tokenDecimals, {
               symbol: tokenSymbol,
             })}
           </p>
-        </ContentBox>
+        </div>
       </div>
-    </div>
-  )
-}
-
-function ContentBox({ props, children }) {
-  const theme = useTheme()
-  return (
-    <div
-      css={`
-        padding: ${1 * GU}px 0;
-        label {
-          color: ${theme.surfaceContentSecondary};
-          ${textStyle('label2')};
-        }
-        p {
-          ${textStyle('body4')};
-        }
-        button {
-          margin-top: ${1 * GU}px;
-        }
-      `}
-    >
-      {children}
     </div>
   )
 }
