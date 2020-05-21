@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
-import "./ERC165.sol";
 import "./IArbitrator.sol";
+import "../standards/ERC165.sol";
 
 
 contract IArbitrable is ERC165 {

@@ -5,6 +5,9 @@ import "../../../disputable/DisputableApp.sol";
 
 
 contract DisputableAppMock is DisputableApp, TimeHelpersMock {
+    bytes4 public constant ERC165_INTERFACE = ERC165_INTERFACE_ID;
+    bytes4 public constant DISPUTABLE_INTERFACE = DISPUTABLE_INTERFACE_ID;
+
     /* Validation errors */
     string internal constant ERROR_CANNOT_SUBMIT = "DISPUTABLE_CANNOT_SUBMIT";
 
@@ -18,6 +21,19 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     event DisputableVoided(uint256 indexed id);
 
     uint256[] private actionsByEntryId;
+
+    /**
+    * @notice Compute Disputable interface ID
+    */
+    function interfaceId() external pure returns (bytes4) {
+        IDisputable iDisputable;
+        return iDisputable.setAgreement.selector ^
+               iDisputable.onDisputableChallenged.selector ^
+               iDisputable.onDisputableAllowed.selector ^
+               iDisputable.onDisputableRejected.selector ^
+               iDisputable.onDisputableVoided.selector ^
+               iDisputable.getAgreement.selector;
+    }
 
     /**
     * @notice Initialize app
