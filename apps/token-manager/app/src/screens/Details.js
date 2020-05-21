@@ -19,9 +19,9 @@ import { format, formatDistanceStrict, parseISO } from 'date-fns'
 
 const formatDate = date => `${format(date, 'do MMM yyyy, HH:mm O')}`
 
-function Details({ tokenSymbol, tokenDecimals, selectHolder, vestings }) {
+function Details({ tokenSymbol, tokenDecimals, vestings }) {
   const theme = useTheme()
-  const { selectedHolder } = useAppLogic()
+  const { selectedHolder, selectHolder } = useAppLogic()
   const handleBack = useCallback(() => selectHolder(-1), [selectHolder])
   return (
     <React.Fragment>

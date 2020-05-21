@@ -19,24 +19,34 @@ function VestingInfoBoxes({ selectedHolder, tokenDecimals, tokenSymbol }) {
   return (
     <React.Fragment>
       <Box padding={0}>
-        <div
-          css={`
-            padding: ${4 * GU}px;
-            border-bottom: 1px solid ${theme.border};
-          `}
-        >
-          <LocalIdentityBadge
-            entity={selectedHolder.receiver}
-            connectedAccount={isCurrentUser}
-          />
-        </div>
+        {!isCurrentUser && (
+          <div
+            css={`
+              padding: ${4 * GU}px;
+              border-bottom: 1px solid ${theme.border};
+            `}
+          >
+            <LocalIdentityBadge
+              entity={selectedHolder.receiver}
+              connectedAccount={isCurrentUser}
+            />
+          </div>
+        )}
         <div
           css={`
             padding: ${3 * GU}px;
           `}
         >
           <InfoBoxHeader
-            icon={<TokenIcon />}
+            icon={
+              <TokenIcon
+                css={`
+                  max-height: ${6 * GU}px;
+                  margin-left: ${3 * GU}px;
+                  margin-right: ${2 * GU}px;
+                `}
+              />
+            }
             label={'Total Tokens'}
             content={formatTokenAmount(
               selectedHolder.holderBalance.balance,
@@ -50,7 +60,15 @@ function VestingInfoBoxes({ selectedHolder, tokenDecimals, tokenSymbol }) {
       </Box>
       <Box>
         <InfoBoxHeader
-          icon={<VestingIcon />}
+          icon={
+            <VestingIcon
+              css={`
+                max-height: ${6 * GU}px;
+                margin-left: ${3 * GU}px;
+                margin-right: ${2 * GU}px;
+              `}
+            />
+          }
           label={'Vested Tokens'}
           content={formatTokenAmount(totalInfo.totalAmount, tokenDecimals, {
             symbol: tokenSymbol,
@@ -113,7 +131,15 @@ function VestingInfoBoxes({ selectedHolder, tokenDecimals, tokenSymbol }) {
       {isCurrentUser && (
         <Box>
           <InfoBoxHeader
-            icon={<TransferIcon />}
+            icon={
+              <TransferIcon
+                css={`
+                  max-height: ${6 * GU}px;
+                  margin-left: ${3 * GU}px;
+                  margin-right: ${2 * GU}px;
+                `}
+              />
+            }
             label={'Available to transfer'}
             content={formatTokenAmount(totalInfo.totalUnlocked, tokenDecimals, {
               symbol: tokenSymbol,

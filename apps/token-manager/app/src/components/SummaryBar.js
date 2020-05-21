@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { RADIUS, springs, useTheme } from '@aragon/ui'
+import { GU, RADIUS, springs, useTheme } from '@aragon/ui'
 import { Spring, animated } from 'react-spring'
 
 function SummaryBar({ vestingInfo, ...props }) {
@@ -65,6 +65,7 @@ const Main = styled.div`
   display: flex;
   align-items: center;
   height: 25px;
+  margin-bottom: ${2 * GU}px;
 `
 
 const CombinedBar = props => {

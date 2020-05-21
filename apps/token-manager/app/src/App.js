@@ -94,6 +94,8 @@ class App extends React.PureComponent {
       isSyncing,
       maxAccountTokens,
       numData,
+      selectedHolder,
+      selectHolder,
       tokenAddress,
       tokenDecimals,
       tokenDecimalsBase,
@@ -102,8 +104,6 @@ class App extends React.PureComponent {
       tokenSymbol,
       tokenTransfersEnabled,
       vestings,
-      selectHolder,
-      selectedHolder,
     } = this.props
 
     const { assignTokensConfig, sidepanelOpened } = this.state
@@ -127,7 +127,6 @@ class App extends React.PureComponent {
               <Details
                 tokenSymbol={tokenSymbol}
                 tokenDecimals={tokenDecimals}
-                selectHolder={selectHolder}
                 vestings={vestings}
               />
             ) : (

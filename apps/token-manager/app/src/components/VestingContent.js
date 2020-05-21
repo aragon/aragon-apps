@@ -43,13 +43,7 @@ function VestingContent({ tokenDecimals, tokenSymbol, vesting }) {
           flex-grow: 1;
         `}
       >
-        <SummaryBar
-          vestingInfo={vestingInfo}
-          css={`
-            margin-top: 0;
-            margin-bottom: ${2 * GU}px;
-          `}
-        />
+        <SummaryBar vestingInfo={vestingInfo} />
         <div
           css={`
             ${textStyle('body2')};
