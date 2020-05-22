@@ -109,9 +109,7 @@ export function useVestedTokensInfo(vesting) {
         .div(amountBn)
         .toNumber() / 100
 
-    const unlockedPercentage = new BN(100)
-      .sub(new BN(lockedPercentage))
-      .toNumber()
+    const unlockedPercentage = 100 - lockedPercentage
 
     const cliffProgress = getTimeProgress(cliff, start, end)
 
