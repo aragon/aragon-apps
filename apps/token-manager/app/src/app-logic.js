@@ -88,54 +88,61 @@ export function useVestedTokensInfo(vesting) {
   const now = nowDate.getTime()
 
   const { amount, cliff, vesting: end, start } = vesting
-  const amountBn = new BN(amount)
 
   return useMemo(() => {
-    // Shortcuts for before cliff and after vested cases.
-    const unlockedTokens = getVestingUnlockedTokens(now, {
-      amount,
-      cliff,
-      end,
-      start,
-    })
-
-    const lockedTokens = amountBn.sub(unlockedTokens)
-
-    // We keep two more digits in the percentages
-    // for display purposes (10000 rather than 100).
-    const lockedPercentage =
-      lockedTokens
-        .mul(new BN(10000))
-        .div(amountBn)
-        .toNumber() / 100
-
-    const unlockedPercentage = 100 - lockedPercentage
-
-    const cliffProgress = getTimeProgress(cliff, start, end)
-
-    return {
-      cliffProgress,
-      lockedPercentage,
-      lockedTokens,
-      unlockedPercentage,
-      unlockedTokens,
-    }
+    return getVestedTokensInfo(now, { amount, cliff, vesting: end, start })
   }, [amount, cliff, end, now, start])
+}
+
+export function getVestedTokensInfo(now, vesting) {
+  const { amount, cliff, vesting: end, start } = vesting
+  const amountBn = new BN(amount)
+
+  // Shortcuts for before cliff and after vested cases.
+  const unlockedTokens = getVestingUnlockedTokens(now, {
+    amount,
+    cliff,
+    end,
+    start,
+  })
+
+  const lockedTokens = amountBn.sub(unlockedTokens)
+
+  // We keep two more digits in the percentages
+  // for display purposes (10000 rather than 100).
+  const lockedPercentage =
+    lockedTokens
+      .mul(new BN(10000))
+      .div(amountBn)
+      .toNumber() / 100
+
+  const unlockedPercentage = 100 - lockedPercentage
+
+  const cliffProgress = getTimeProgress(cliff, start, end)
+
+  return {
+    cliffProgress,
+    lockedPercentage,
+    lockedTokens,
+    unlockedPercentage,
+    unlockedTokens,
+  }
 }
 
 export function useTotalVestedTokensInfo(vestings) {
   const totalInfo = {}
+  const now = useNow().getTime()
 
   totalInfo.totalAmount = vestings.reduce((total, vesting) => {
     return total.add(new BN(vesting.amount))
   }, new BN(0))
 
   totalInfo.totalLocked = vestings.reduce((total, vesting) => {
-    return total.add(useVestedTokensInfo(vesting).lockedTokens)
+    return total.add(getVestedTokensInfo(now, vesting).lockedTokens)
   }, new BN(0))
 
   totalInfo.totalUnlocked = vestings.reduce((total, vesting) => {
-    return total.add(useVestedTokensInfo(vesting).unlockedTokens)
+    return total.add(getVestedTokensInfo(now, vesting).unlockedTokens)
   }, new BN(0))
 
   return totalInfo
