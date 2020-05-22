@@ -220,6 +220,7 @@ function updateVestingState(state, receiver, vestingId, vestingInfo) {
   return {
     ...state,
     vestings: updateVestings(vestings, receiver, {
+      amount: vestingInfo.amount,
       cliff: marshallDate(vestingInfo.cliff),
       start: marshallDate(vestingInfo.start),
       vesting: marshallDate(vestingInfo.vesting),
