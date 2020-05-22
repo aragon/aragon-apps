@@ -85,7 +85,7 @@ export function useNow(updateEvery = 1000) {
 
 export function useVestedTokensInfo(vesting) {
   const nowDate = useNow()
-  const now = parseInt(nowDate.getTime(), 10)
+  const now = nowDate.getTime()
 
   const { amount, cliff, vesting: end, start } = vesting
   const amountBn = new BN(amount)
