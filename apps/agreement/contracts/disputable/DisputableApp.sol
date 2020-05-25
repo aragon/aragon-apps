@@ -96,20 +96,6 @@ contract DisputableApp is IDisputable, AragonApp {
     }
 
     /**
-    * @notice Create a new action
-    * @dev IForwarder interface conformance
-    */
-    function forward(bytes) public;
-
-    /**
-    * @notice Tells whether `_sender` can forward actions or not
-    * @dev IForwarder interface conformance
-    * @param _sender Address of the account intending to forward an action
-    * @return True if the given address can submit actions, false otherwise
-    */
-    function canForward(address _sender, bytes) public view returns (bool);
-
-    /**
     * @dev Create a new action in the agreement
     * @param _disputableId Identification number of the disputable action in the context of the disputable
     * @param _submitter Address of the user that has submitted the action

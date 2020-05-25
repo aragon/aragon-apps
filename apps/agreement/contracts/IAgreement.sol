@@ -24,8 +24,6 @@ contract IAgreement is IArbitrable, IACLOracle {
 
     function disputeAction(uint256 _actionId) external;
 
-    function executeRuling(uint256 _actionId) external;
-
     function register(
         IDisputable _disputable,
         ERC20 _collateralToken,

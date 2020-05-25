@@ -198,7 +198,9 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @notice Create a new action
+    * @notice Register a new action for disputable `msg.sender` #`_disputableId` for submitter `_submitter` with context `_context`
+    * @dev This function should be called from the disputable app registered on the Agreement every time a new disputable is created in the app.this
+    *      Each disputable ID must be registered only once, this is how the Agreements notices about each disputable action.
     * @param _disputableId Identification number of the disputable action in the context of the disputable instance
     * @param _submitter Address of the user that has submitted the action
     * @param _context Link to a human-readable text giving context for the given action
@@ -223,14 +225,16 @@ contract Agreement is IAgreement, AragonApp {
         action.submitter = _submitter;
         action.context = _context;
 
-        disputableInfo.ongoingActions++;
+        disputableInfo.ongoingActions = disputableInfo.ongoingActions.add(1);
         emit ActionSubmitted(id);
         return id;
     }
 
     /**
     * @notice Mark action #`_actionId` as closed
-    * @dev It can only be closed if the action wasn't challenged or if it was disputed but ruled in favor of the submitter
+    * @dev This function can only be called by disputable apps that have registered a disputable action previously. These apps will be able to
+    *      close their registered actions if these are not challenged or ruled in favor of the submitter. To detect if that's possible before
+    *      hand, users can rely on `canProceed`.
     * @param _actionId Identification number of the action to be closed
     */
     function closeAction(uint256 _actionId) external {
@@ -243,7 +247,7 @@ contract Agreement is IAgreement, AragonApp {
 
         if (action.state == ActionState.Submitted) {
             _unlockBalance(requirement.token, action.submitter, requirement.actionAmount);
-            disputableInfo.ongoingActions--;
+            disputableInfo.ongoingActions = disputableInfo.ongoingActions.sub(1);
         }
 
         action.state = ActionState.Closed;
@@ -295,8 +299,8 @@ contract Agreement is IAgreement, AragonApp {
 
         // The settlement offer was already checked to be up-to the collateral amount
         // However, we cap it to collateral amount to double check
-        uint256 unlockedAmount = settlementOffer >= actionCollateral ? actionCollateral : (actionCollateral - settlementOffer);
-        uint256 slashedAmount = actionCollateral - unlockedAmount;
+        uint256 slashedAmount = settlementOffer >= actionCollateral ? actionCollateral : settlementOffer;
+        uint256 unlockedAmount = actionCollateral - slashedAmount;
 
         _unlockAndSlashBalance(collateralToken, submitter, unlockedAmount, challenger, slashedAmount);
         _transfer(collateralToken, challenger, requirement.challengeAmount);
@@ -328,18 +332,6 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @notice Execute ruling for action #`_actionId`
-    * @param _actionId Identification number of the action to be ruled
-    */
-    function executeRuling(uint256 _actionId) external {
-        Action storage action = _getAction(_actionId);
-        require(_canRuleDispute(action), ERROR_CANNOT_RULE_ACTION);
-
-        uint256 disputeId = action.challenge.disputeId;
-        arbitrator.executeRuling(disputeId);
-    }
-
-    /**
     * @notice Submit evidence for the action associated to dispute #`_disputeId`
     * @param _disputeId Identification number of the dispute for the arbitrator
     * @param _evidence Data submitted for the evidence related to the dispute
@@ -347,7 +339,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function submitEvidence(uint256 _disputeId, bytes _evidence, bool _finished) external {
         (Action storage action, Dispute storage dispute) = _getActionAndDispute(_disputeId);
-        require(_canRuleDispute(action), ERROR_CANNOT_SUBMIT_EVIDENCE);
+        require(_isDisputed(action), ERROR_CANNOT_SUBMIT_EVIDENCE);
 
         bool finished = _registerEvidence(action, dispute, msg.sender, _finished);
         _submitEvidence(_disputeId, msg.sender, _evidence, _finished);
@@ -363,13 +355,13 @@ contract Agreement is IAgreement, AragonApp {
     */
     function rule(uint256 _disputeId, uint256 _ruling) external {
         (Action storage action, Dispute storage dispute) = _getActionAndDispute(_disputeId);
-        require(_canRuleDispute(action), ERROR_CANNOT_RULE_ACTION);
+        require(_isDisputed(action), ERROR_CANNOT_RULE_ACTION);
 
-        address arbitratorAddress = address(arbitrator);
-        require(msg.sender == arbitratorAddress, ERROR_SENDER_NOT_ALLOWED);
+        IArbitrator currentArbitrator = arbitrator;
+        require(currentArbitrator == IArbitrator(msg.sender), ERROR_SENDER_NOT_ALLOWED);
 
         dispute.ruling = _ruling;
-        emit Ruled(IArbitrator(arbitratorAddress), _disputeId, _ruling);
+        emit Ruled(currentArbitrator, _disputeId, _ruling);
 
         if (_ruling == DISPUTES_RULING_SUBMITTER) {
             _rejectChallenge(action);
@@ -413,11 +405,11 @@ contract Agreement is IAgreement, AragonApp {
     {
         DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
         DisputableState disputableState = disputableInfo.state;
+        require(disputableState != DisputableState.Registered, ERROR_DISPUTABLE_APP_ALREADY_EXISTS);
 
+        // Set the agreement only if the app was "Unregistered". There is no need to do that if it was "Unregistering".
         if (disputableState == DisputableState.Unregistered) {
             IDisputable(_disputable).setAgreement(IAgreement(this));
-        } else if (disputableState != DisputableState.Unregistering) {
-            revert(ERROR_DISPUTABLE_APP_ALREADY_EXISTS);
         }
 
         disputableInfo.state = DisputableState.Registered;
@@ -725,7 +717,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function canRuleDispute(uint256 _actionId) external view returns (bool) {
         Action storage action = _getAction(_actionId);
-        return _canRuleDispute(action);
+        return _isDisputed(action);
     }
 
     // Internal fns
@@ -759,7 +751,7 @@ contract Agreement is IAgreement, AragonApp {
 
         // Transfer half of the Arbitrator fees
         (, ERC20 feeToken, uint256 feeAmount) = arbitrator.getDisputeFees();
-        uint256 arbitratorFees = feeAmount.div(2);
+        uint256 arbitratorFees = feeAmount / 2;
         challenge.arbitratorFeeToken = feeToken;
         challenge.arbitratorFeeAmount = arbitratorFees;
         _transferFrom(feeToken, _challenger, arbitratorFees);
@@ -801,11 +793,11 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Register evidence for an action, it will try to close the evidence submission period if both parties agree
+    * @dev Register evidence for an action
     * @param _action Action instance to submit evidence for
     * @param _dispute Dispute instance associated to the given action
     * @param _submitter Address of submitting the evidence
-    * @param _finished Whether the evidence submitter has finished submitting evidence or not
+    * @param _finished Whether both parties have finished submitting evidence or not
     */
     function _registerEvidence(Action storage _action, Dispute storage _dispute, address _submitter, bool _finished) internal returns (bool) {
         Challenge storage challenge = _action.challenge;
@@ -1018,7 +1010,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _disputableInfo Disputable info instance to be unregistered
     */
     function _solveActionAndTryUnregisterDisputable(IDisputable _disputable, DisputableInfo storage _disputableInfo) internal {
-        _disputableInfo.ongoingActions--;
+        _disputableInfo.ongoingActions = _disputableInfo.ongoingActions.sub(1);
         _tryUnregisterDisputable(_disputable, _disputableInfo);
     }
 
@@ -1141,16 +1133,16 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell whether an action dispute can be ruled or not
+    * @dev Tell whether an action is disputed or not
     * @param _action Action instance to be queried
-    * @return True if the action dispute can be ruled, false otherwise
+    * @return True if the action is disputed, false otherwise
     */
-    function _canRuleDispute(Action storage _action) internal view returns (bool) {
+    function _isDisputed(Action storage _action) internal view returns (bool) {
         return _action.state == ActionState.Challenged && _action.challenge.state == ChallengeState.Disputed;
     }
 
     /**
-    * @dev Tell whether a certain action was disputed or not
+    * @dev Tell whether an action was disputed or not
     * @param _action Action instance being queried
     * @return True if the action was disputed, false otherwise
     */
@@ -1196,7 +1188,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return Identification number of the current Agreement content
     */
     function _getCurrentContentId() internal view returns (uint256) {
-        return contents.length - 1;
+        return contents.length - 1; // an initial content is created during initialization, thus length will be always greater than 0
     }
 
     /**
@@ -1216,7 +1208,8 @@ contract Agreement is IAgreement, AragonApp {
     * @return Identification number of the current collateral requirement of a disputable
     */
     function _getCurrentCollateralRequirementId(DisputableInfo storage _disputableInfo) internal view returns (uint256) {
-        return _disputableInfo.collateralRequirements.length - 1;
+        uint256 length = _disputableInfo.collateralRequirements.length;
+        return length == 0 ? 0 : length - 1;
     }
 
     /**
