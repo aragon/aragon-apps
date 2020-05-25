@@ -3,7 +3,12 @@ import styled from 'styled-components'
 import { GU, RADIUS, springs, useTheme } from '@aragon/ui'
 import { Spring, animated } from 'react-spring'
 
-function SummaryBar({ vestingInfo, ...props }) {
+function SummaryBar({
+  positivePercentage,
+  negativePercentage,
+  separator,
+  ...props
+}) {
   const theme = useTheme()
   return (
     <Spring
@@ -19,7 +24,7 @@ function SummaryBar({ vestingInfo, ...props }) {
               style={{
                 backgroundColor: theme.positive,
                 transform: progress.interpolate(
-                  v => `scale3d(${vestingInfo.unlockedPercentage * v}, 1, 1)`
+                  v => `scale3d(${positivePercentage * v}, 1, 1)`
                 ),
               }}
             />
@@ -28,8 +33,8 @@ function SummaryBar({ vestingInfo, ...props }) {
                 backgroundColor: theme.negative,
                 transform: progress.interpolate(
                   v => `
-                    translate3d(${vestingInfo.unlockedPercentage * v}%, 0, 0)
-                    scale3d(${vestingInfo.lockedPercentage * v}, 1, 1)
+                    translate3d(${positivePercentage * v}%, 0, 0)
+                    scale3d(${negativePercentage * v}, 1, 1)
                     `
                 ),
               }}
@@ -40,7 +45,7 @@ function SummaryBar({ vestingInfo, ...props }) {
               style={{
                 transform: progress.interpolate(
                   v => `
-                    translate3d(${v * vestingInfo.cliffProgress * 100}%, 0, 0)
+                    translate3d(${v * separator * 100}%, 0, 0)
                     scale3d(1, ${v}, 1)
                   `
                 ),

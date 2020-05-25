@@ -43,7 +43,11 @@ function VestingContent({ tokenDecimals, tokenSymbol, vesting }) {
           flex-grow: 1;
         `}
       >
-        <SummaryBar vestingInfo={vestingInfo} />
+        <SummaryBar
+          negativePercentage={vestingInfo.lockedPercentage}
+          positivePercentage={vestingInfo.unlockedPercentage}
+          separator={vestingInfo.cliffProgress}
+        />
         <div
           css={`
             ${textStyle('body2')};
