@@ -13,27 +13,26 @@ import { holderFromPath } from './routing'
 export function useSelectedHolderVestings() {
   const { vestings, holders } = useAppState()
   const [path, requestPath] = usePath()
-  let holderVestingInfo = {}
 
   // The memoized holder currently selected.
   const selectedHolder = useMemo(() => {
+    let holder = {}
+    let vesting = {}
     const holderAddress = holderFromPath(path)
 
     if (holderAddress === null) {
       return null
     }
 
-    if (vestings) {
-      holderVestingInfo = vestings.find(
-        vesting => vesting.receiver === holderAddress
-      )
-    }
     if (holders) {
-      holderVestingInfo.holderBalance = holders.find(
-        holder => holder.address === holderAddress
-      )
+      holder = holders.find(holder => holder.address === holderAddress)
     }
-    return holderVestingInfo
+
+    if (vestings) {
+      vesting = vestings.find(vesting => vesting.receiver === holderAddress)
+    }
+
+    return { ...holder, ...vesting }
   }, [path, vestings])
 
   const selectHolder = useCallback(
@@ -133,6 +132,13 @@ export function useTotalVestedTokensInfo(vestings) {
   const totalInfo = {}
   const now = useNow().getTime()
 
+  if (!vestings) {
+    return {
+      totalAmount: new BN(0),
+      totalLocked: new BN(0),
+      totalUnlocked: new BN(0),
+    }
+  }
   totalInfo.totalAmount = vestings.reduce((total, vesting) => {
     return total.add(new BN(vesting.amount))
   }, new BN(0))

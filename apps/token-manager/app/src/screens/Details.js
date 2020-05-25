@@ -12,17 +12,18 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import VestingContent from '../components/VestingContent'
-import VestingInfoBoxes from '../components/VestingInfoBoxes'
-import { useAppLogic, toISODate, useVestedTokensInfo } from '../app-logic'
 import { format, formatDistanceStrict, parseISO } from 'date-fns'
+import EmptyVestings from '../components/Vestings/EmptyVestings'
+import ExpandableContent from '../components/Vestings/VestingExpandableContent'
+import VestingContent from '../components/Vestings/VestingContent'
+import VestingInfoBoxes from '../components/Vestings/VestingInfoBoxes'
+import { useAppLogic, toISODate, useVestedTokensInfo } from '../app-logic'
 
-const formatDate = date => `${format(date, 'do MMM yyyy, HH:mm O')}`
-
-function Details({ tokenSymbol, tokenDecimals, vestings }) {
+function Details({ tokenSymbol, tokenDecimals }) {
   const theme = useTheme()
   const { selectedHolder, selectHolder } = useAppLogic()
   const handleBack = useCallback(() => selectHolder(-1), [selectHolder])
+
   return (
     <React.Fragment>
       <Bar>
@@ -30,22 +31,28 @@ function Details({ tokenSymbol, tokenDecimals, vestings }) {
       </Bar>
       <Split
         primary={
-          <Box>
-            <Accordion
-              items={selectedHolder.vestings.map(vesting => [
-                <VestingContent
-                  tokenDecimals={tokenDecimals}
-                  tokenSymbol={tokenSymbol}
-                  vesting={vesting}
-                />,
-                <ExpandableContent
-                  tokenDecimals={tokenDecimals}
-                  tokenSymbol={tokenSymbol}
-                  vesting={vesting}
-                />,
-              ])}
-            />
-          </Box>
+          selectedHolder.vestings ? (
+            <Box>
+              <Accordion
+                items={selectedHolder.vestings.map(vesting => [
+                  <VestingContent
+                    tokenDecimals={tokenDecimals}
+                    tokenSymbol={tokenSymbol}
+                    vesting={vesting}
+                  />,
+                  <ExpandableContent
+                    tokenDecimals={tokenDecimals}
+                    tokenSymbol={tokenSymbol}
+                    vesting={vesting}
+                  />,
+                ])}
+              />
+            </Box>
+          ) : (
+            <Box>
+              <EmptyVestings />
+            </Box>
+          )
         }
         secondary={
           <VestingInfoBoxes
@@ -57,141 +64,6 @@ function Details({ tokenSymbol, tokenDecimals, vestings }) {
         invert="horizontal"
       />
     </React.Fragment>
-  )
-}
-
-function ExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
-  const theme = useTheme()
-  const vestingInfo = useVestedTokensInfo(vesting)
-  return (
-    <div
-      css={`
-        display: flex;
-        padding: ${3 * GU}px ${4 * GU}px;
-        width: 100%;
-        justify-content: space-between;
-      `}
-    >
-      <div>
-        <div
-          css={`
-            padding: ${1 * GU}px 0;
-          `}
-        >
-          <label
-            css={`
-              color: ${theme.surfaceContentSecondary};
-              ${textStyle('label2')};
-            `}
-          >
-            Start day
-          </label>
-          <p
-            css={`
-              ${textStyle('body4')};
-            `}
-          >
-            {formatDate(new Date(parseInt(vesting.start)))}
-          </p>
-        </div>
-        <div
-          css={`
-            padding: ${1 * GU}px 0;
-          `}
-        >
-          <label
-            css={`
-              color: ${theme.surfaceContentSecondary};
-              ${textStyle('label2')};
-            `}
-          >
-            End day
-          </label>
-          <p
-            css={`
-              ${textStyle('body4')};
-            `}
-          >
-            {formatDate(new Date(parseInt(vesting.vesting)))}
-          </p>
-        </div>
-      </div>
-      <div>
-        <div
-          css={`
-            padding: ${1 * GU}px 0;
-          `}
-        >
-          <label
-            css={`
-              color: ${theme.surfaceContentSecondary};
-              ${textStyle('label2')};
-            `}
-          >
-            Vesting period
-          </label>
-          <p
-            css={`
-              ${textStyle('body4')};
-            `}
-          >
-            {formatDistanceStrict(
-              new Date(parseInt(vesting.vesting)),
-              new Date(parseInt(vesting.start))
-            )}
-          </p>
-        </div>
-        <div
-          css={`
-            padding: ${1 * GU}px 0;
-          `}
-        >
-          <label
-            css={`
-              color: ${theme.surfaceContentSecondary};
-              ${textStyle('label2')};
-            `}
-          >
-            Vesting cliff
-          </label>
-          <p
-            css={`
-              ${textStyle('body4')};
-            `}
-          >
-            {formatDistanceStrict(
-              new Date(parseInt(vesting.cliff)),
-              new Date(parseInt(vesting.start))
-            )}
-          </p>
-        </div>
-      </div>
-      <div>
-        <div
-          css={`
-            padding: ${1 * GU}px 0;
-          `}
-        >
-          <label
-            css={`
-              color: ${theme.surfaceContentSecondary};
-              ${textStyle('label2')};
-            `}
-          >
-            Available to transfer
-          </label>
-          <p
-            css={`
-              ${textStyle('body4')};
-            `}
-          >
-            {formatTokenAmount(vestingInfo.unlockedTokens, tokenDecimals, {
-              symbol: tokenSymbol,
-            })}
-          </p>
-        </div>
-      </div>
-    </div>
   )
 }
 

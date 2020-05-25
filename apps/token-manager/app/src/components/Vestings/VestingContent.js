@@ -6,9 +6,9 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import SummaryBar from '../components/SummaryBar'
-import SummaryRow from '../components/SummaryRow'
-import { useVestedTokensInfo } from '../app-logic'
+import SummaryBar from '../SummaryBar'
+import SummaryRow from '../SummaryRow'
+import { useVestedTokensInfo } from '../../app-logic'
 
 function VestingContent({ tokenDecimals, tokenSymbol, vesting }) {
   const theme = useTheme()

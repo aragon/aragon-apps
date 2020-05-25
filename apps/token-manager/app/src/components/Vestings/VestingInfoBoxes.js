@@ -1,20 +1,17 @@
 import React, { useMemo } from 'react'
 import { useConnectedAccount } from '@aragon/api-react'
 import { Box, formatTokenAmount, GU, textStyle, useTheme } from '@aragon/ui'
-import { addressesEqual } from '../web3-utils'
-import { useTotalVestedTokensInfo } from '../app-logic'
-import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
-import TokenIcon from './Icons/TokenIcon'
-import VestingIcon from './Icons/VestingIcon'
-import TransferIcon from './Icons/TransferIcon'
+import { addressesEqual } from '../../web3-utils'
+import { useTotalVestedTokensInfo } from '../../app-logic'
+import LocalIdentityBadge from '../LocalIdentityBadge/LocalIdentityBadge'
+import TokenIcon from '../Icons/TokenIcon'
+import VestingIcon from '../Icons/VestingIcon'
+import TransferIcon from '../Icons/TransferIcon'
 
 function VestingInfoBoxes({ selectedHolder, tokenDecimals, tokenSymbol }) {
   const theme = useTheme()
   const connectedAccount = useConnectedAccount()
-  const isCurrentUser = addressesEqual(
-    selectedHolder.receiver,
-    connectedAccount
-  )
+  const isCurrentUser = addressesEqual(selectedHolder.address, connectedAccount)
   const totalInfo = useTotalVestedTokensInfo(selectedHolder.vestings)
   return (
     <React.Fragment>
@@ -27,7 +24,7 @@ function VestingInfoBoxes({ selectedHolder, tokenDecimals, tokenSymbol }) {
             `}
           >
             <LocalIdentityBadge
-              entity={selectedHolder.receiver}
+              entity={selectedHolder.address}
               connectedAccount={isCurrentUser}
             />
           </div>
@@ -48,13 +45,9 @@ function VestingInfoBoxes({ selectedHolder, tokenDecimals, tokenSymbol }) {
               />
             }
             label={'Total Tokens'}
-            content={formatTokenAmount(
-              selectedHolder.holderBalance.balance,
-              tokenDecimals,
-              {
-                symbol: tokenSymbol,
-              }
-            )}
+            content={formatTokenAmount(selectedHolder.balance, tokenDecimals, {
+              symbol: tokenSymbol,
+            })}
           />
         </div>
       </Box>

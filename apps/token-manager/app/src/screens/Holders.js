@@ -111,7 +111,7 @@ function Holders({
 
             return values
           }}
-          renderEntryActions={([address, balance]) => (
+          renderEntryActions={([address, balance, vestings]) => (
             <EntryActions
               address={address}
               onAssignTokens={onAssignTokens}
@@ -187,7 +187,6 @@ function EntryActions({
     address,
     onSelectHolder,
   ])
-
   const actions = [
     ...(hasVestings ? [[selectHolder, IconInfo, 'Details']] : []),
     ...(canAssign ? [[assignTokens, IconAdd, 'Add tokens']] : []),
