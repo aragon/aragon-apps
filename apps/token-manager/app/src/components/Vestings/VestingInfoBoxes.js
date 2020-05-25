@@ -106,9 +106,6 @@ function VestingInfoBoxes({ selectedHolder, tokenDecimals, tokenSymbol }) {
                   opacity: 0;
                   width: 10px;
                 }
-                > span:nth-child(3) {
-                  flex-shrink: 1;
-                }
                 > strong {
                   text-transform: uppercase;
                 }
@@ -153,11 +150,7 @@ function InfoBoxHeader({ icon, label, content }) {
       `}
     >
       {icon}
-      <div
-        css={`
-          display: inline-grid;
-        `}
-      >
+      <div>
         <label
           css={`
             ${textStyle('body3')};
@@ -166,7 +159,7 @@ function InfoBoxHeader({ icon, label, content }) {
         >
           {label}
         </label>
-        {content}
+        <div>{content}</div>
       </div>
     </div>
   )

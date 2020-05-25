@@ -90,7 +90,7 @@ function Holders({
                     align-items: center;
                   `}
                 >
-                  ${formatTokenAmount(balance, tokenDecimals)}
+                  {formatTokenAmount(balance, tokenDecimals)}
                   <div
                     css={`
                       padding-left: ${1 * GU}px;
