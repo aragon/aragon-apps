@@ -30,7 +30,7 @@ import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { addressesEqual } from '../web3-utils'
 
-const formatDate = date => `${format(date, 'do MMM yy, HH:mm')} UTC`
+const formatDate = date => `${format(date, 'do MMM yy, HH:mm')}`
 
 const DEFAULT_DESCRIPTION =
   'No additional description has been provided for this proposal.'
