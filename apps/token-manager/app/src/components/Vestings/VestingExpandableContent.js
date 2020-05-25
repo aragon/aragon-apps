@@ -8,8 +8,7 @@ import {
 } from '@aragon/ui'
 import { format, formatDistanceStrict, parseISO } from 'date-fns'
 import { useVestedTokensInfo } from '../../app-logic'
-
-const formatDate = date => `${format(date, 'do MMM yyyy, HH:mm O')}`
+import { formatDate } from '../../date-utils'
 
 function VestingExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
   const theme = useTheme()

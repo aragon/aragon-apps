@@ -6,8 +6,9 @@ import {
   useInstalledApps,
   usePath,
 } from '@aragon/api-react'
-import { addressesEqual } from './web3-utils'
+import { useNow } from './date-utils'
 import { holderFromPath } from './routing'
+import { addressesEqual } from './web3-utils'
 
 // Get the vestings from the holder currently selected, or null otherwise.
 export function useSelectedHolderVestings() {
@@ -69,20 +70,6 @@ function getVestingUnlockedTokens(now, { start, end, amount, cliff }) {
   // Vesting progress: 0 => 1
   const progress = getTimeProgress(now, start, end)
   return new BN(amountBn).div(new BN(10000)).mul(new BN(progress * 10000))
-}
-
-// Update `now` at a given interval.
-export function useNow(updateEvery = 1000) {
-  const [now, setNow] = useState(new Date())
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(new Date())
-    }, updateEvery)
-    return () => {
-      clearInterval(timer)
-    }
-  }, [updateEvery])
-  return now
 }
 
 export function useVestedTokensInfo(vesting) {
