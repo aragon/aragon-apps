@@ -7,7 +7,6 @@ import {
   GU,
   Info,
   SidePanel,
-  TextInput,
   useSidePanelFocusOnReady,
 } from '@aragon/ui'
 import { isAddress } from '../../web3-utils'
@@ -18,6 +17,7 @@ import {
   splitDecimalNumber,
 } from '../../utils'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
+import AmountInput from '../AmountInput'
 
 // Any more and the number input field starts to put numbers in scientific notation
 const MAX_INPUT_DECIMAL_BASE = 6
@@ -334,15 +334,16 @@ function TokenPanelContent({
             : 'Number of tokens to remove'
         }
       >
-        <TextInput
-          type="number"
+        <AmountInput
           ref={holderAddress ? amountInputRef : undefined}
-          value={amountField.value}
-          onChange={handleAmountChange}
-          min={tokenStep}
           max={amountField.max}
+          min={tokenStep}
+          onChange={handleAmountChange}
+          onMaxClick={() => updateAmount(amountField.max)}
           step={tokenStep}
+          value={amountField.value}
           required
+          showMax
           wide
         />
       </Field>
