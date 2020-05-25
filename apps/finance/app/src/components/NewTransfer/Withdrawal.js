@@ -10,11 +10,11 @@ import {
   GU,
   textStyle,
   useTheme,
-  ButtonBase,
 } from '@aragon/ui'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
 import { toDecimals, fromDecimals } from '../../lib/math-utils'
 import { addressPattern, isAddress } from '../../lib/web3-utils'
+import AmountInput from '../AmountInput'
 
 const NO_ERROR = Symbol('NO_ERROR')
 const RECEIPIENT_NOT_ADDRESS_ERROR = Symbol('RECEIPIENT_NOT_ADDRESS_ERROR')
@@ -168,27 +168,15 @@ class Withdrawal extends React.Component {
         </Field>
         <Field label="Amount" required>
           <CombinedInput>
-            <TextInput
-              value={amount.value}
+            <AmountInput
               onChange={this.handleAmountUpdate}
-              min={0}
-              step="any"
+              onMaxClick={this.setMaxUserBalance}
+              showMax={isVisibleMaxButton}
+              value={amount.value}
               required
               wide
-              adornment={
-                isVisibleMaxButton && (
-                  <ButtonBase
-                    css={`
-                      margin-right: ${1 * GU}px;
-                    `}
-                    onClick={this.setMaxUserBalance}
-                  >
-                    MAX
-                  </ButtonBase>
-                )
-              }
-              adornmentPosition="end"
             />
+
             <DropDown
               header="Token"
               placeholder="Token"

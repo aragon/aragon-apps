@@ -3,7 +3,6 @@ import styled from 'styled-components'
 import BN from 'bn.js'
 import {
   Button,
-  ButtonBase,
   Field,
   IconCross,
   IdentityBadge,
@@ -27,6 +26,7 @@ import {
   getTokenSymbol,
 } from '../../lib/token-utils'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
+import AmountInput from '../AmountInput'
 import ToggleContent from '../ToggleContent'
 import TokenSelector from './TokenSelector'
 
@@ -287,26 +287,13 @@ class Deposit extends React.Component {
         />
         <SelectedTokenBalance network={network} selectedToken={selectedToken} />
         <Field label="Amount">
-          <TextInput
-            value={amount.value}
+          <AmountInput
             onChange={this.handleAmountUpdate}
-            min={0}
-            step="any"
+            onMaxClick={this.setMaxUserBalance}
+            showMax={isMaxButtonVisible}
+            value={amount.value}
             required
             wide
-            adornment={
-              isMaxButtonVisible && (
-                <ButtonBase
-                  css={`
-                    margin-right: ${1 * GU}px;
-                  `}
-                  onClick={this.setMaxUserBalance}
-                >
-                  MAX
-                </ButtonBase>
-              )
-            }
-            adornmentPosition="end"
           />
         </Field>
         <Field label="Reference (optional)">
