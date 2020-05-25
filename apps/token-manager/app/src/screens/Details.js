@@ -21,8 +21,8 @@ import { useAppLogic, toISODate, useVestedTokensInfo } from '../app-logic'
 
 function Details({ tokenSymbol, tokenDecimals }) {
   const theme = useTheme()
-  const { selectedHolder, selectHolder } = useAppLogic()
-  const handleBack = useCallback(() => selectHolder(-1), [selectHolder])
+  const { selectedHolder, selectHolder, unselectHolder } = useAppLogic()
+  const handleBack = useCallback(() => unselectHolder(), [unselectHolder])
 
   return (
     <React.Fragment>

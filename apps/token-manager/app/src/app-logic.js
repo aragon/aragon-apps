@@ -43,8 +43,11 @@ export function useSelectedHolderVestings() {
     },
     [requestPath]
   )
+  const unselectHolder = useCallback(() => {
+    requestPath('')
+  }, [requestPath])
 
-  return [selectedHolder, selectHolder]
+  return [selectedHolder, selectHolder, unselectHolder]
 }
 
 function getTimeProgress(time, start, end) {
@@ -156,10 +159,15 @@ export function useTotalVestedTokensInfo(vestings) {
 
 // Handles the main logic of the app.
 export function useAppLogic() {
-  const [selectedHolder, selectHolder] = useSelectedHolderVestings()
+  const [
+    selectedHolder,
+    selectHolder,
+    unselectHolder,
+  ] = useSelectedHolderVestings()
 
   return {
     selectHolder,
     selectedHolder,
+    unselectHolder,
   }
 }
