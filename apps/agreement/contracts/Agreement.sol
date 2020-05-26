@@ -13,10 +13,10 @@ import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/common/ConversionHelpers.sol";
 import "@aragon/os/contracts/apps/disputable/IAgreement.sol";
 import "@aragon/os/contracts/apps/disputable/IDisputable.sol";
+import "@aragon/staking/contracts/Staking.sol";
+import "@aragon/staking/contracts/StakingFactory.sol";
 
 import "./lib/BytesHelper.sol";
-import "./staking/Staking.sol";
-import "./staking/StakingFactory.sol";
 
 
 contract Agreement is IAgreement, AragonApp {
@@ -882,7 +882,7 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        _staking.lock(_user, _amount);
+        _staking.increaseLockAmount(_user, address(this), _amount);
     }
 
     /**
@@ -896,7 +896,7 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        _staking.unlock(_user, _amount);
+        _staking.decreaseLockAmount(_user, address(this), _amount);
     }
 
     /**
@@ -911,7 +911,7 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        _staking.slash(_user, _challenger, _amount);
+        _staking.transferFromLockAndUnstake(_user, _challenger, _amount);
     }
 
     /**
@@ -924,7 +924,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function _unlockAndSlashBalance(Staking _staking, address _user, uint256 _unlockAmount, address _challenger, uint256 _slashAmount) internal {
         if (_unlockAmount != 0 && _slashAmount != 0) {
-            _staking.unlockAndSlash(_user, _unlockAmount, _challenger, _slashAmount);
+            _staking.decreaseAndTransferFromLock(_user, _challenger, _unlockAmount, _slashAmount);
         } else {
             _unlockBalance(_staking, _user, _unlockAmount);
             _slashBalance(_staking, _user, _challenger, _slashAmount);

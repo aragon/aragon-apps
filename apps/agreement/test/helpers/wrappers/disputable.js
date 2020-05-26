@@ -5,6 +5,8 @@ const { decodeEventsOfType } = require('../lib/decodeEvent')
 const { getEventArgument } = require('@aragon/contract-test-helpers/events')
 const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
 
+const EMPTY_DATA = '0x'
+
 class DisputableWrapper extends AgreementWrapper {
   constructor(artifacts, web3, agreement, arbitrator, stakingFactory, disputable, collateralRequirement = {}) {
     super(artifacts, web3, agreement, arbitrator, stakingFactory)
@@ -34,6 +36,10 @@ class DisputableWrapper extends AgreementWrapper {
 
   async getBalance(user) {
     return super.getBalance(this.collateralToken, user)
+  }
+
+  async getTotalAvailableBalance(user) {
+    return super.getTotalAvailableBalance(this.collateralToken, user)
   }
 
   async getDisputableInfo() {
@@ -73,8 +79,21 @@ class DisputableWrapper extends AgreementWrapper {
     return super.unregister({ disputable: this.disputable, ...options })
   }
 
+  async allowManager({ owner, amount}) {
+    // allow lock manager if needed
+    const staking = await this.getStaking()
+    const lock = await staking.getLock(owner, this.agreement.address)
+    if (lock._allowance.eq(bn(0))) {
+      await staking.allowNewLockManager(this.agreement.address, amount, EMPTY_DATA, { from: owner })
+    } else if (lock._allowance.sub(lock._amount).lt(amount)) {
+      await staking.increaseLockAllowance(this.agreement.address, amount, { from: owner })
+    }
+  }
+
   async forward({ script = '0x', from = undefined }) {
     if (!from) from = await this._getSender()
+
+    await this.allowManager({ owner: from, amount: this.actionCollateral })
 
     const receipt = await this.disputable.forward(script, { from })
     const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
@@ -88,7 +107,11 @@ class DisputableWrapper extends AgreementWrapper {
     if (!submitter) submitter = await this._getSender()
 
     if (stake === undefined) stake = this.actionCollateral
-    if (stake) await this.approveAndCall({ amount: stake, from: submitter })
+    if (stake) {
+      await this.approveAndCall({ amount: stake, from: submitter })
+    } else {
+      stake = this.actionCollateral
+    }
     if (sign === undefined && (await this.getSigner(submitter)).mustSign) await this.sign(submitter)
 
     return this.forward({ script: actionContext, from: submitter })
