@@ -19,6 +19,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     event DisputableAllowed(uint256 indexed id);
     event DisputableRejected(uint256 indexed id);
     event DisputableVoided(uint256 indexed id);
+    event DisputableClosed(uint256 indexed id);
 
     uint256[] private actionsByEntryId;
 
@@ -45,8 +46,9 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     /**
     * @dev Close action
     */
-    function closeAction(uint256 _actionId) public {
-        _closeAction(_actionId);
+    function closeAction(uint256 _id) public {
+        _closeAction(actionsByEntryId[_id]);
+        emit DisputableClosed(_id);
     }
 
     /**

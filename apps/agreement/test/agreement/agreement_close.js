@@ -2,8 +2,8 @@ const { assertBn } = require('../helpers/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
-const { AGREEMENT_ERRORS, DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
+const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
+const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
 const { RULINGS, ACTIONS_STATE, DISPUTABLE_STATE } = require('../helpers/utils/enums')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
@@ -37,7 +37,7 @@ contract('Agreement', ([_, submitter, someone]) => {
               assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
               assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
               assertBn(currentActionState.collateralId, previousActionState.collateralId, 'collateral ID does not match')
-          })
+            })
 
             if (unlocksBalance) {
               it('unlocks the collateral amount', async () => {
@@ -120,9 +120,11 @@ contract('Agreement', ([_, submitter, someone]) => {
           })
         }
 
-        const itCannotCloseUnsetAgreement = () => {
-          it('cannot close action due to agreement unset', async () => {
-            await assertRevert(agreement.close({ actionId }), DISPUTABLE_ERRORS.ERROR_AGREEMENT_NOT_SET)
+        const itClosesUnsetAgreement = () => {
+          it('closes the action for the disputable app', async () => {
+            const receipt = await agreement.close({ actionId })
+
+            assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.CLOSED, 1)
           })
         }
 
@@ -174,7 +176,7 @@ contract('Agreement', ([_, submitter, someone]) => {
                   await agreement.settle({ actionId })
                 })
 
-                shouldUnregister ? itCannotCloseUnsetAgreement() : itCannotBeClosed()
+                shouldUnregister ? itClosesUnsetAgreement() : itCannotBeClosed()
               })
 
               context('when the challenge was disputed', () => {
@@ -198,13 +200,13 @@ contract('Agreement', ([_, submitter, someone]) => {
                         if (state.toNumber() !== DISPUTABLE_STATE.UNREGISTERED) await agreement.close({ actionId })
                       })
 
-                      shouldUnregister ? itCannotCloseUnsetAgreement() : itCannotBeClosed()
+                      shouldUnregister ? itClosesUnsetAgreement() : itCannotBeClosed()
                     })
 
                     context('when the action was not closed', () => {
                       const unlocksBalance = false
 
-                      shouldUnregister ? itCannotCloseUnsetAgreement() : itClosesTheActionProperly(unlocksBalance)
+                      shouldUnregister ? itClosesUnsetAgreement() : itClosesTheActionProperly(unlocksBalance)
                     })
                   })
 
@@ -213,7 +215,7 @@ contract('Agreement', ([_, submitter, someone]) => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
                     })
 
-                    shouldUnregister ? itCannotCloseUnsetAgreement() : itCannotBeClosed()
+                    shouldUnregister ? itClosesUnsetAgreement() : itCannotBeClosed()
                   })
 
                   context('when the dispute was refused', () => {
@@ -221,7 +223,7 @@ contract('Agreement', ([_, submitter, someone]) => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
                     })
 
-                    shouldUnregister ? itCannotCloseUnsetAgreement() : itCannotBeClosed()
+                    shouldUnregister ? itClosesUnsetAgreement() : itCannotBeClosed()
                   })
                 })
               })
@@ -234,7 +236,7 @@ contract('Agreement', ([_, submitter, someone]) => {
             await agreement.close({ actionId })
           })
 
-          shouldUnregister ? itCannotCloseUnsetAgreement() : itCannotBeClosed()
+          shouldUnregister ? itClosesUnsetAgreement() : itCannotBeClosed()
         })
       }
 

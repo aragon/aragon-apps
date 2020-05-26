@@ -76,7 +76,7 @@ class DisputableWrapper extends AgreementWrapper {
 
     const receipt = await this.disputable.forward(script, { from })
     const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
-    const actionId = getEventArgument({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 'actionId')
+    const actionId = logs.length > 0 ? getEventArgument({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 'actionId') : undefined
 
     const disputableId = getEventArgument(receipt, DISPUTABLE_EVENTS.SUBMITTED, 'id')
     return { receipt, actionId, disputableId }

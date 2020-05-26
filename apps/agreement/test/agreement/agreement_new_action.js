@@ -3,8 +3,8 @@ const { assertRevert } = require('../helpers/assert/assertThrow')
 const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
 const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
 const { ACTIONS_STATE } = require('../helpers/utils/enums')
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
-const { AGREEMENT_ERRORS, DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
+const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
+const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -164,8 +164,42 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
       })
 
       context('when the app was unregistered', () => {
-        it('reverts', async () => {
-          await assertRevert(agreement.newAction({ submitter, actionContext, stake, sign }), DISPUTABLE_ERRORS.ERROR_AGREEMENT_NOT_SET)
+        it('creates a new action in the disputable app without registering it in the Agreement', async () => {
+          const { actionId } = await agreement.newAction({ submitter, actionContext, stake, sign })
+
+          assert.equal(actionId, undefined, 'action ID does not match')
+        })
+
+        it('does not lock the collateral amount', async () => {
+          const { locked: previousLockedBalance, available: previousAvailableBalance } = await agreement.getBalance(submitter)
+
+          await agreement.newAction({ submitter, actionContext, stake, sign })
+
+          const { locked: currentLockedBalance, available: currentAvailableBalance } = await agreement.getBalance(submitter)
+          assertBn(currentLockedBalance, previousLockedBalance, 'locked balance does not match')
+          assertBn(currentAvailableBalance, previousAvailableBalance, 'available balance does not match')
+        })
+
+        it('does not affect token balances', async () => {
+          const stakingAddress = await agreement.getStakingAddress()
+          const { collateralToken } = agreement
+
+          const previousSubmitterBalance = await collateralToken.balanceOf(submitter)
+          const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
+
+          await agreement.newAction({ submitter, actionContext, stake, sign })
+
+          const currentSubmitterBalance = await collateralToken.balanceOf(submitter)
+          assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
+
+          const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
+          assertBn(currentStakingBalance, previousStakingBalance, 'staking balance does not match')
+        })
+
+        it('emits an event', async () => {
+          const { receipt } = await agreement.newAction({ submitter, actionContext, stake, sign })
+
+          assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.SUBMITTED, 1)
         })
       })
     })

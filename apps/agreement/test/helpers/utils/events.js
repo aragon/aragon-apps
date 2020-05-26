@@ -24,12 +24,13 @@ const STAKING_EVENTS = {
 }
 
 const DISPUTABLE_EVENTS = {
+  AGREEMENT_SET: 'AgreementSet',
   SUBMITTED: 'DisputableSubmitted',
   CHALLENGED: 'DisputableChallenged',
   ALLOWED: 'DisputableAllowed',
   REJECTED: 'DisputableRejected',
   VOIDED: 'DisputableVoided',
-  AGREEMENT_SET: 'AgreementSet'
+  CLOSED: 'DisputableClosed',
 }
 
 module.exports = {

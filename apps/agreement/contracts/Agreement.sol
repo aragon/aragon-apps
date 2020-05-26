@@ -211,7 +211,7 @@ contract Agreement is IAgreement, AragonApp {
         require(lastContentIdSigned >= _getCurrentContentId(), ERROR_SIGNER_MUST_SIGN);
 
         DisputableInfo storage disputableInfo = disputableInfos[msg.sender];
-        require(disputableInfo.state == DisputableState.Registered, ERROR_DISPUTABLE_APP_NOT_REGISTERED);
+        _ensureRegisteredDisputable(disputableInfo);
 
         uint256 currentCollateralRequirementId = _getCurrentCollateralRequirementId(disputableInfo);
         CollateralRequirement storage requirement = disputableInfo.collateralRequirements[currentCollateralRequirementId];
@@ -243,7 +243,7 @@ contract Agreement is IAgreement, AragonApp {
 
         (IDisputable disputable, DisputableInfo storage disputableInfo, CollateralRequirement storage requirement) = _getDisputableFor(action);
         require(disputable == IDisputable(msg.sender), ERROR_SENDER_NOT_ALLOWED);
-        require(disputableInfo.state != DisputableState.Unregistered, ERROR_DISPUTABLE_APP_NOT_REGISTERED);
+        require(!_isUnregistered(disputableInfo), ERROR_DISPUTABLE_APP_NOT_REGISTERED);
 
         if (action.state == ActionState.Submitted) {
             _unlockBalance(requirement.token, action.submitter, requirement.actionAmount);
@@ -404,12 +404,11 @@ contract Agreement is IAgreement, AragonApp {
         authP(REGISTER_DISPUTABLE_ROLE, arr(_disputable))
     {
         DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
-        DisputableState disputableState = disputableInfo.state;
-        require(disputableState != DisputableState.Registered, ERROR_DISPUTABLE_APP_ALREADY_EXISTS);
+        require(!_isRegistered(disputableInfo), ERROR_DISPUTABLE_APP_ALREADY_EXISTS);
 
         // Set the agreement only if the app was "Unregistered". There is no need to do that if it was "Unregistering".
-        if (disputableState == DisputableState.Unregistered) {
-            IDisputable(_disputable).setAgreement(IAgreement(this));
+        if (_isUnregistered(disputableInfo)) {
+            _disputable.setAgreement(IAgreement(this));
         }
 
         disputableInfo.state = DisputableState.Registered;
@@ -424,7 +423,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function unregister(IDisputable _disputable) external authP(UNREGISTER_DISPUTABLE_ROLE, arr(_disputable)) {
         DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
-        require(disputableInfo.state == DisputableState.Registered, ERROR_DISPUTABLE_APP_NOT_REGISTERED);
+        _ensureRegisteredDisputable(disputableInfo);
 
         disputableInfo.state = DisputableState.Unregistering;
         emit DisputableAppUnregistering(_disputable);
@@ -453,7 +452,7 @@ contract Agreement is IAgreement, AragonApp {
         authP(CHANGE_COLLATERAL_REQUIREMENTS_ROLE, arr(address(_disputable)))
     {
         DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
-        require(disputableInfo.state == DisputableState.Registered, ERROR_DISPUTABLE_APP_NOT_REGISTERED);
+        _ensureRegisteredDisputable(disputableInfo);
 
         _changeCollateralRequirement(_disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
     }
@@ -1228,7 +1227,7 @@ contract Agreement is IAgreement, AragonApp {
     * @dev Tell the disputable-related information about a disputable action
     * @param _action Action instance being queried
     * @return disputable Disputable instance associated to the action
-    * @return app Disputable app associated to the action
+    * @return disputableInfo Disputable info of the app associated to the action
     * @return requirement Collateral requirements of the disputable app associated to the action
     */
     function _getDisputableFor(Action storage _action) internal view
@@ -1244,6 +1243,32 @@ contract Agreement is IAgreement, AragonApp {
         uint256 collateralId = _action.collateralId;
         require(collateralId <= _getCurrentCollateralRequirementId(disputableInfo), ERROR_MISSING_COLLATERAL_REQUIREMENT);
         requirement = disputableInfo.collateralRequirements[collateralId];
+    }
+
+    /**
+    * @dev Ensure a disputable entity is registered
+    * @param _disputableInfo Disputable info of the app being queried
+    */
+    function _ensureRegisteredDisputable(DisputableInfo storage _disputableInfo) internal view {
+        require(_isRegistered(_disputableInfo), ERROR_DISPUTABLE_APP_NOT_REGISTERED);
+    }
+
+    /**
+    * @dev Tell whether a disputable app is registered
+    * @param _disputableInfo Disputable info of the app being queried
+    * @return True if the disputable app is registered, false otherwise
+    */
+    function _isRegistered(DisputableInfo storage _disputableInfo) internal view returns (bool) {
+        return _disputableInfo.state == DisputableState.Registered;
+    }
+
+    /**
+    * @dev Tell whether a disputable app is unregistered
+    * @param _disputableInfo Disputable info of the app being queried
+    * @return True if the disputable app is unregistered, false otherwise
+    */
+    function _isUnregistered(DisputableInfo storage _disputableInfo) internal view returns (bool) {
+        return _disputableInfo.state == DisputableState.Unregistered;
     }
 
     /**

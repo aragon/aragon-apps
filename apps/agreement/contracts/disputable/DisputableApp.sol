@@ -15,7 +15,6 @@ import "../IAgreement.sol";
 contract DisputableApp is IDisputable, AragonApp {
     /* Validation errors */
     string internal constant ERROR_SENDER_NOT_AGREEMENT = "DISPUTABLE_SENDER_NOT_AGREEMENT";
-    string internal constant ERROR_AGREEMENT_NOT_SET = "DISPUTABLE_AGREEMENT_NOT_SET";
     string internal constant ERROR_AGREEMENT_ALREADY_SET = "DISPUTABLE_AGREEMENT_ALREADY_SET";
 
     // bytes32 public constant SET_AGREEMENT_ROLE = keccak256("SET_AGREEMENT_ROLE");
@@ -103,9 +102,8 @@ contract DisputableApp is IDisputable, AragonApp {
     * @return Unique identification number for the created action in the context of the agreement
     */
     function _newAction(uint256 _disputableId, address _submitter, bytes _context) internal returns (uint256) {
-        IAgreement agreementApp = _getAgreement();
-        require(agreementApp != IAgreement(0), ERROR_AGREEMENT_NOT_SET);
-        return agreementApp.newAction(_disputableId, _submitter, _context);
+        IAgreement agreement = _getAgreement();
+        return (agreement != IAgreement(0)) ? agreement.newAction(_disputableId, _submitter, _context) : 0;
     }
 
     /**
@@ -113,9 +111,10 @@ contract DisputableApp is IDisputable, AragonApp {
     * @param _actionId Identification number of the disputable action in the context of the agreement
     */
     function _closeAction(uint256 _actionId) internal {
-        IAgreement agreementApp = _getAgreement();
-        require(agreementApp != IAgreement(0), ERROR_AGREEMENT_NOT_SET);
-        agreementApp.closeAction(_actionId);
+        IAgreement agreement = _getAgreement();
+        if (agreement != IAgreement(0)) {
+            agreement.closeAction(_actionId);
+        }
     }
 
     /**
@@ -158,6 +157,6 @@ contract DisputableApp is IDisputable, AragonApp {
     */
     function _canProceed(uint256 _actionId) internal view returns (bool) {
         IAgreement agreement = _getAgreement();
-        return agreement.canProceed(_actionId);
+        return (agreement != IAgreement(0)) ? agreement.canProceed(_actionId) : true;
     }
 }
