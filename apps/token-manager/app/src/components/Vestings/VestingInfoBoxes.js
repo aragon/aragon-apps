@@ -1,8 +1,17 @@
 import React, { useMemo } from 'react'
 import { useConnectedAccount } from '@aragon/api-react'
-import { Box, formatTokenAmount, GU, textStyle, useTheme } from '@aragon/ui'
+import {
+  Box,
+  EthIdenticon,
+  formatTokenAmount,
+  GU,
+  textStyle,
+  useTheme,
+} from '@aragon/ui'
 import { addressesEqual } from '../../web3-utils'
+import { shortenAddress } from '../../utils'
 import { useTotalVestedTokensInfo } from '../../app-logic'
+import { useIdentity } from '../IdentityManager/IdentityManager'
 import LocalIdentityBadge from '../LocalIdentityBadge/LocalIdentityBadge'
 import TokenIcon from '../Icons/TokenIcon'
 import VestingIcon from '../Icons/VestingIcon'
@@ -13,22 +22,36 @@ function VestingInfoBoxes({ selectedHolder, tokenDecimals, tokenSymbol }) {
   const connectedAccount = useConnectedAccount()
   const isCurrentUser = addressesEqual(selectedHolder.address, connectedAccount)
   const totalInfo = useTotalVestedTokensInfo(selectedHolder.vestings)
+  const [label] = useIdentity(selectedHolder.address)
+
   return (
     <React.Fragment>
       <Box padding={0}>
-        {!isCurrentUser && (
-          <div
+        <div
+          css={`
+            padding: ${2 * GU}px ${6 * GU}px;
+            border-bottom: 1px solid ${theme.border};
+            display: flex;
+            align-items: center;
+          `}
+        >
+          <EthIdenticon
+            address={selectedHolder.address}
+            radius={100}
+            scale={1.5}
             css={`
-              padding: ${4 * GU}px;
-              border-bottom: 1px solid ${theme.border};
+              margin-right: ${1.5 * GU}px;
+            `}
+          />
+          <span
+            css={`
+              ${textStyle('body2')};
             `}
           >
-            <LocalIdentityBadge
-              entity={selectedHolder.address}
-              connectedAccount={isCurrentUser}
-            />
-          </div>
-        )}
+            {label ? label : shortenAddress(selectedHolder.address)}
+          </span>
+        </div>
+
         <div
           css={`
             padding: ${3 * GU}px;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { format } from 'date-fns'
+import { format, formatDistanceStrict } from 'date-fns'
 
 // Update `now` at a given interval.
 export function useNow(updateEvery = 1000) {
@@ -15,6 +15,9 @@ export function useNow(updateEvery = 1000) {
   return now
 }
 
+export function timePeriod(fromDate, toDate) {
+  return formatDistanceStrict(fromDate, toDate)
+}
 export function formatDate(date) {
   return format(date, 'do MMM yyyy, HH:mm O')
 }

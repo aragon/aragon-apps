@@ -12,7 +12,6 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { format, formatDistanceStrict, parseISO } from 'date-fns'
 import { useAppState } from '@aragon/api-react'
 import EmptyVestings from '../components/Vestings/EmptyVestings'
 import ExpandableContent from '../components/Vestings/VestingExpandableContent'

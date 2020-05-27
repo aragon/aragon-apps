@@ -216,9 +216,10 @@ function updateHolders(holders, changed) {
 
 function updateVestingState(state, receiver, vestingId, vestingInfo) {
   const { vestings = {} } = state
+  const address = receiver.toLowerCase()
   return {
     ...state,
-    vestings: updateVestings(vestings, receiver, {
+    vestings: updateVestings(vestings, address, {
       amount: vestingInfo.amount,
       cliff: marshallDate(vestingInfo.cliff),
       start: marshallDate(vestingInfo.start),

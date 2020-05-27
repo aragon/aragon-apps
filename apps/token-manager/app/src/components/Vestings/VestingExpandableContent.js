@@ -6,9 +6,8 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { format, formatDistanceStrict, parseISO } from 'date-fns'
 import { useVestedTokensInfo } from '../../app-logic'
-import { formatDate } from '../../date-utils'
+import { formatDate, timePeriod } from '../../date-utils'
 
 function VestingExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
   const theme = useTheme()
@@ -85,7 +84,7 @@ function VestingExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
               ${textStyle('body4')};
             `}
           >
-            {formatDistanceStrict(
+            {timePeriod(
               new Date(parseInt(vesting.vesting)),
               new Date(parseInt(vesting.start))
             )}
@@ -109,7 +108,7 @@ function VestingExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
               ${textStyle('body4')};
             `}
           >
-            {formatDistanceStrict(
+            {timePeriod(
               new Date(parseInt(vesting.cliff)),
               new Date(parseInt(vesting.start))
             )}
