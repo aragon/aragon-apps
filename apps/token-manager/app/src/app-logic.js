@@ -17,8 +17,6 @@ export function useSelectedHolderVestings() {
 
   // The memoized holder currently selected.
   const selectedHolder = useMemo(() => {
-    let holder = {}
-    let vesting = {}
     const holderAddress = holderFromPath(path)
 
     if (holderAddress === null) {
@@ -27,9 +25,11 @@ export function useSelectedHolderVestings() {
 
     const holderInfo = { address: holderAddress }
     if (holders) {
-      holderInfo.balance = holders.find(
-        holder => holder.address === holderAddress
-      ).balance
+      const holder = holders.find(holder => holder.address === holderAddress)
+      if (!holder) {
+        return null
+      }
+      holderInfo.balance = holder.balance
     }
 
     if (vestings && vestings[holderAddress]) {
