@@ -21,7 +21,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
         ({ actionId } = await agreement.newAction({ submitter }))
       })
 
-      const itCanRuleActions = shouldUnregister => {
+      const itCanRuleActions = () => {
         const itCannotRuleAction = () => {
           it('reverts', async () => {
             await assertRevert(agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED, mockRuling: false }), AGREEMENT_ERRORS.ERROR_CANNOT_RULE_ACTION)
@@ -140,13 +140,6 @@ contract('Agreement', ([_, submitter, challenger]) => {
 
                         assertAmountOfEvents({ logs }, 'Ruled', 1)
                         assertEvent({ logs }, 'Ruled', { arbitrator: agreement.arbitrator.address, disputeId, ruling })
-                      })
-
-                      it(`${shouldUnregister ? 'unregisters' : 'does not unregister'} the app`, async () => {
-                        const receipt = await agreement.executeRuling({ actionId, ruling })
-
-                        const logs = decodeEventsOfType(receipt, agreement.abi, AGREEMENT_EVENTS.DISPUTABLE_UNREGISTERED)
-                        assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.DISPUTABLE_UNREGISTERED, shouldUnregister ? 1 : 0)
                       })
                     })
 
@@ -344,19 +337,15 @@ contract('Agreement', ([_, submitter, challenger]) => {
       }
 
       context('when the app was registered', () => {
-        const shouldUnregister = false
-
-        itCanRuleActions(shouldUnregister)
+        itCanRuleActions()
       })
 
-      context('when the app was unregistering', () => {
-        const shouldUnregister = true
-
-        beforeEach('mark app as unregistering', async () => {
+      context('when the app was unregistered', () => {
+        beforeEach('mark app as unregistered', async () => {
           await agreement.unregister()
         })
 
-        itCanRuleActions(shouldUnregister)
+        itCanRuleActions()
       })
     })
 

@@ -35,13 +35,13 @@ contract DisputableApp is IDisputable, AragonApp {
     * @param _agreement Agreement instance to be linked
     */
     function setAgreement(IAgreement _agreement) external auth(SET_AGREEMENT_ROLE) {
-        IAgreement currentAgreement = _getAgreement();
-        bool settingNewAgreement = currentAgreement == IAgreement(0) && _agreement != IAgreement(0);
-        bool unsettingAgreement = currentAgreement != IAgreement(0) && _agreement == IAgreement(0);
-        require(settingNewAgreement || unsettingAgreement, ERROR_AGREEMENT_ALREADY_SET);
+        IAgreement agreement = _getAgreement();
+        if (_agreement != agreement) {
+            require(agreement == IAgreement(0), ERROR_AGREEMENT_ALREADY_SET);
 
-        AGREEMENT_POSITION.setStorageAddress(address(_agreement));
-        emit AgreementSet(_agreement);
+            AGREEMENT_POSITION.setStorageAddress(address(_agreement));
+            emit AgreementSet(_agreement);
+        }
     }
 
     /**

@@ -41,8 +41,10 @@ contract('DisputableApp', ([_, owner, someone]) => {
         context('when trying to unset the agreement', () => {
           const agreement = ZERO_ADDRESS
 
-          it('reverts', async () => {
-            await assertRevert(disputable.setAgreement({ agreement, from }), DISPUTABLE_ERRORS.ERROR_AGREEMENT_ALREADY_SET)
+          it('ignores the request', async () => {
+            const receipt = await disputable.setAgreement({ agreement, from })
+
+            assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.AGREEMENT_SET, 0)
           })
         })
       })
@@ -52,27 +54,25 @@ contract('DisputableApp', ([_, owner, someone]) => {
           await disputable.setAgreement({ from })
         })
 
-        context('when trying to set a new the agreement', () => {
+        context('when trying to re-set the agreement', () => {
+          it('ignores the request', async () => {
+            const receipt = await disputable.setAgreement({ from })
+
+            assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.AGREEMENT_SET, 0)
+          })
+        })
+
+        context('when trying to set a new agreement', () => {
           it('reverts', async () => {
-            await assertRevert(disputable.setAgreement({ from }), DISPUTABLE_ERRORS.ERROR_AGREEMENT_ALREADY_SET)
+            await assertRevert(disputable.setAgreement({ agreement: deployer.base.address, from }), DISPUTABLE_ERRORS.ERROR_AGREEMENT_ALREADY_SET)
           })
         })
 
         context('when trying to unset the agreement', () => {
           const agreement = ZERO_ADDRESS
 
-          it('unsets the agreement', async () => {
-            await disputable.setAgreement({ agreement, from })
-
-            const currentAgreement = await disputable.disputable.getAgreement()
-            assert.equal(currentAgreement, agreement, 'disputable agreement does not match')
-          })
-
-          it('emits an event', async () => {
-            const receipt = await disputable.setAgreement({ agreement, from })
-
-            assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.AGREEMENT_SET)
-            assertEvent(receipt, DISPUTABLE_EVENTS.AGREEMENT_SET, { agreement })
+          it('reverts', async () => {
+            await assertRevert(disputable.setAgreement({ agreement, from }), DISPUTABLE_ERRORS.ERROR_AGREEMENT_ALREADY_SET)
           })
         })
       })

@@ -4,7 +4,7 @@ const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
-const { RULINGS, ACTIONS_STATE, DISPUTABLE_STATE } = require('../helpers/utils/enums')
+const { RULINGS, ACTIONS_STATE } = require('../helpers/utils/enums')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -21,7 +21,7 @@ contract('Agreement', ([_, submitter, someone]) => {
         ({ actionId } = await agreement.newAction({ submitter }))
       })
 
-      const itCanCloseActions = shouldUnregister => {
+      const itCanCloseActions = () => {
         const itClosesTheActionProperly = unlocksBalance => {
           context('when the sender is the disputable', () => {
             it('updates the action state only', async () => {
@@ -96,13 +96,6 @@ contract('Agreement', ([_, submitter, someone]) => {
               assert.isFalse(canDispute, 'action can be disputed')
               assert.isFalse(canRuleDispute, 'action dispute can be ruled')
             })
-
-            it(`${shouldUnregister ? 'unregisters' : 'does not unregister'} the app`, async () => {
-              const receipt = await agreement.close({ actionId })
-
-              const logs = decodeEventsOfType(receipt, agreement.abi, AGREEMENT_EVENTS.DISPUTABLE_UNREGISTERED)
-              assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.DISPUTABLE_UNREGISTERED, shouldUnregister ? 1 : 0)
-            })
           })
 
           context('when the sender is not the disputable', () => {
@@ -117,14 +110,6 @@ contract('Agreement', ([_, submitter, someone]) => {
         const itCannotBeClosed = () => {
           it('reverts', async () => {
             await assertRevert(agreement.close({ actionId }), AGREEMENT_ERRORS.ERROR_CANNOT_CLOSE_ACTION)
-          })
-        }
-
-        const itClosesUnsetAgreement = () => {
-          it('closes the action for the disputable app', async () => {
-            const receipt = await agreement.close({ actionId })
-
-            assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.CLOSED, 1)
           })
         }
 
@@ -176,7 +161,7 @@ contract('Agreement', ([_, submitter, someone]) => {
                   await agreement.settle({ actionId })
                 })
 
-                shouldUnregister ? itClosesUnsetAgreement() : itCannotBeClosed()
+                itCannotBeClosed()
               })
 
               context('when the challenge was disputed', () => {
@@ -196,17 +181,16 @@ contract('Agreement', ([_, submitter, someone]) => {
 
                     context('when the action was closed', () => {
                       beforeEach('close action', async () => {
-                        const { state } = await agreement.getDisputableInfo()
-                        if (state.toNumber() !== DISPUTABLE_STATE.UNREGISTERED) await agreement.close({ actionId })
+                        await agreement.close({ actionId })
                       })
 
-                      shouldUnregister ? itClosesUnsetAgreement() : itCannotBeClosed()
+                      itCannotBeClosed()
                     })
 
                     context('when the action was not closed', () => {
                       const unlocksBalance = false
 
-                      shouldUnregister ? itClosesUnsetAgreement() : itClosesTheActionProperly(unlocksBalance)
+                      itClosesTheActionProperly(unlocksBalance)
                     })
                   })
 
@@ -215,7 +199,7 @@ contract('Agreement', ([_, submitter, someone]) => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
                     })
 
-                    shouldUnregister ? itClosesUnsetAgreement() : itCannotBeClosed()
+                    itCannotBeClosed()
                   })
 
                   context('when the dispute was refused', () => {
@@ -223,7 +207,7 @@ contract('Agreement', ([_, submitter, someone]) => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
                     })
 
-                    shouldUnregister ? itClosesUnsetAgreement() : itCannotBeClosed()
+                    itCannotBeClosed()
                   })
                 })
               })
@@ -236,24 +220,20 @@ contract('Agreement', ([_, submitter, someone]) => {
             await agreement.close({ actionId })
           })
 
-          shouldUnregister ? itClosesUnsetAgreement() : itCannotBeClosed()
+          itCannotBeClosed()
         })
       }
 
       context('when the app was registered', () => {
-        const shouldUnregister = false
-
-        itCanCloseActions(shouldUnregister)
+        itCanCloseActions()
       })
 
-      context('when the app was unregistering', () => {
-        const shouldUnregister = true
-
-        beforeEach('mark app as unregistering', async () => {
+      context('when the app was unregistered', () => {
+        beforeEach('mark app as unregistered', async () => {
           await agreement.unregister()
         })
 
-        itCanCloseActions(shouldUnregister)
+        itCanCloseActions()
       })
     })
 

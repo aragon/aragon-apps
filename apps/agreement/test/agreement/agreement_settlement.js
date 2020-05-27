@@ -4,7 +4,7 @@ const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
-const { CHALLENGES_STATE, DISPUTABLE_STATE, RULINGS } = require('../helpers/utils/enums')
+const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -21,7 +21,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
         ({ actionId } = await agreement.newAction({ submitter }))
       })
 
-      const itCanSettleActions = shouldUnregister => {
+      const itCanSettleActions = () => {
         const itCannotSettleAction = () => {
           it('reverts', async () => {
             await assertRevert(agreement.settle({ actionId }), AGREEMENT_ERRORS.ERROR_CANNOT_SETTLE_ACTION)
@@ -139,13 +139,6 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
                   assert.isFalse(canRuleDispute, 'action dispute can be ruled')
                 })
-
-                it(`${shouldUnregister ? 'unregisters' : 'does not unregister'} the app`, async () => {
-                  const receipt = await agreement.settle({ actionId, from })
-
-                  const logs = decodeEventsOfType(receipt, agreement.abi, AGREEMENT_EVENTS.DISPUTABLE_UNREGISTERED)
-                  assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.DISPUTABLE_UNREGISTERED, shouldUnregister ? 1 : 0)
-                })
               }
 
               const itCanOnlyBeSettledByTheSubmitter = () => {
@@ -251,8 +244,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                     context('when the action was closed', () => {
                       beforeEach('close action', async () => {
-                        const { state } = await agreement.getDisputableInfo()
-                        if (state.toNumber() !== DISPUTABLE_STATE.UNREGISTERED) await agreement.close({ actionId })
+                        await agreement.close({ actionId })
                       })
 
                       itCannotSettleAction()
@@ -290,19 +282,15 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
       }
 
       context('when the app was registered', () => {
-        const shouldUnregister = false
-
-        itCanSettleActions(shouldUnregister)
+        itCanSettleActions()
       })
 
-      context('when the app was unregistering', () => {
-        const shouldUnregister = true
-
-        beforeEach('mark app as unregistering', async () => {
+      context('when the app was unregistered', () => {
+        beforeEach('mark app as unregistered', async () => {
           await agreement.unregister()
         })
 
-        itCanSettleActions(shouldUnregister)
+        itCanSettleActions()
       })
     })
 

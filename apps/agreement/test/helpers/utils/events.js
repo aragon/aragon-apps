@@ -10,7 +10,6 @@ const AGREEMENT_EVENTS = {
   ACTION_REJECTED: 'ActionRejected',
   ACTION_CLOSED: 'ActionClosed',
   DISPUTABLE_REGISTERED: 'DisputableAppRegistered',
-  DISPUTABLE_UNREGISTERING: 'DisputableAppUnregistering',
   DISPUTABLE_UNREGISTERED: 'DisputableAppUnregistered',
   COLLATERAL_REQUIREMENT_CHANGED: 'CollateralRequirementChanged'
 }

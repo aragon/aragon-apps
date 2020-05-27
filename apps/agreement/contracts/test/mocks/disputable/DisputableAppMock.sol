@@ -21,7 +21,8 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     event DisputableVoided(uint256 indexed id);
     event DisputableClosed(uint256 indexed id);
 
-    uint256[] private actionsByEntryId;
+    uint256 private entriesLength;
+    mapping (uint256 => uint256) private actionsByEntryId;
 
     /**
     * @notice Compute Disputable interface ID
@@ -57,7 +58,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     function forward(bytes memory data) public {
         require(canForward(msg.sender, data), ERROR_CANNOT_SUBMIT);
 
-        uint256 id = actionsByEntryId.length++;
+        uint256 id = entriesLength++;
         actionsByEntryId[id] = _newAction(id, msg.sender, data);
         emit DisputableSubmitted(id);
     }

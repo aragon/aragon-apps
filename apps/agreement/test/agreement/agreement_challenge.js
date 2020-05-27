@@ -4,7 +4,7 @@ const { assertRevert } = require('../helpers/assert/assertThrow')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
-const { CHALLENGES_STATE, ACTIONS_STATE, DISPUTABLE_STATE, RULINGS } = require('../helpers/utils/enums')
+const { CHALLENGES_STATE, ACTIONS_STATE, RULINGS } = require('../helpers/utils/enums')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -244,8 +244,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
                       context('when the action was closed', () => {
                         beforeEach('close action', async () => {
-                          const { state } = await agreement.getDisputableInfo()
-                          if (state.toNumber() !== DISPUTABLE_STATE.UNREGISTERED) await agreement.close({ actionId })
+                          await agreement.close({ actionId })
                         })
 
                         itCannotBeChallenged()
@@ -295,8 +294,8 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
         itCanChallengeActions()
       })
 
-      context('when the app was unregistering', () => {
-        beforeEach('mark app as unregistering', async () => {
+      context('when the app was unregistered', () => {
+        beforeEach('mark app as unregistered', async () => {
           await agreement.unregister()
         })
 

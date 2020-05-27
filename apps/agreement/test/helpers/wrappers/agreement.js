@@ -72,8 +72,8 @@ class AgreementWrapper {
   }
 
   async getDisputableInfo(disputable) {
-    const { state, ongoingActions, currentCollateralRequirementId } = await this.agreement.getDisputableInfo(disputable.address)
-    return { state, ongoingActions, currentCollateralRequirementId }
+    const { registered, currentCollateralRequirementId } = await this.agreement.getDisputableInfo(disputable.address)
+    return { registered, currentCollateralRequirementId }
   }
 
   async getCollateralRequirement(disputable, collateralId) {
