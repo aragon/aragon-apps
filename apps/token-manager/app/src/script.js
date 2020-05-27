@@ -234,8 +234,17 @@ function updateVestings(vestings, receiver, changed) {
     // If we can't find it, concat
     vestings[receiver] = [changed]
   } else {
-    vestings[receiver].push(changed)
+    const vestingIndex = vestings[receiver].findIndex(
+      vesting => vesting.id === changed.id
+    )
+    if (vestingIndex === -1) {
+      vestings[receiver].push(changed)
+    } else {
+      // update existing vesting
+      vestings[receiver][vestingIndex] = changed
+    }
   }
+
   return vestings
 }
 
