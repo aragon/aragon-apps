@@ -215,8 +215,7 @@ function updateHolders(holders, changed) {
 }
 
 function updateVestingState(state, receiver, vestingId, vestingInfo) {
-  const { vestings = [] } = state
-
+  const { vestings = {} } = state
   return {
     ...state,
     vestings: updateVestings(vestings, receiver, {
@@ -231,21 +230,13 @@ function updateVestingState(state, receiver, vestingId, vestingInfo) {
 }
 
 function updateVestings(vestings, receiver, changed) {
-  const receiverIndex = vestings.findIndex(vesting =>
-    addressesEqual(vesting.receiver, receiver)
-  )
-
-  if (receiverIndex === -1) {
+  if (!vestings[receiver]) {
     // If we can't find it, concat
-    return vestings.concat({ receiver: receiver, vestings: [changed] })
+    vestings[receiver] = [changed]
   } else {
-    const nextVestings = [...vestings]
-    nextVestings[receiverIndex].vestings = [
-      ...nextVestings[receiverIndex].vestings,
-      changed,
-    ]
-    return nextVestings
+    vestings[receiver].push(changed)
   }
+  return vestings
 }
 
 function loadNewBalances(token, ...addresses) {

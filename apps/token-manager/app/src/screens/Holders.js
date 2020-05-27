@@ -47,12 +47,11 @@ function Holders({
   const mappedEntries = useMemo(
     () =>
       holders.map(({ address, balance }) => {
-        const holderVestings = vestings.find(vesting =>
-          addressesEqual(vesting.receiver, address)
-        )
-        const vestingInfo = holderVestings ? holderVestings.vestings : []
+        if (vestings[address]) {
+          return [address, balance, vestings[address]]
+        }
 
-        return [address, balance, vestingInfo]
+        return [address, balance, []]
       }),
     [holders, vestings]
   )

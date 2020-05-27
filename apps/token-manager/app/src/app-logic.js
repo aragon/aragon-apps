@@ -25,15 +25,18 @@ export function useSelectedHolderVestings() {
       return null
     }
 
+    const holderInfo = { address: holderAddress }
     if (holders) {
-      holder = holders.find(holder => holder.address === holderAddress)
+      holderInfo.balance = holders.find(
+        holder => holder.address === holderAddress
+      ).balance
     }
 
-    if (vestings) {
-      vesting = vestings.find(vesting => vesting.receiver === holderAddress)
+    if (vestings && vestings[holderAddress]) {
+      holderInfo.vestings = vestings[holderAddress]
     }
 
-    return { ...holder, ...vesting }
+    return holderInfo
   }, [path, vestings])
 
   const selectHolder = useCallback(
