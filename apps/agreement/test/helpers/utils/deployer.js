@@ -1,4 +1,6 @@
-const AgreementHelper = require('./helper')
+const AgreementWrapper = require('../wrappers/agreement')
+const DisputableWrapper = require('../wrappers/disputable')
+
 const { NOW, DAY } = require('../lib/time')
 const { utf8ToHex } = require('web3-utils')
 const { bigExp, bn } = require('../lib/numbers')
@@ -7,20 +9,12 @@ const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
-const DEFAULT_INITIALIZE_OPTIONS = {
+const DEFAULT_AGREEMENT_INITIALIZATION_PARAMS = {
   appId: '0xcafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
+  currentTimestamp: NOW,
+
   title: 'Sample Agreement',
   content: utf8ToHex('ipfs:QmdLu3XXT9uUYxqDKXXsTYG77qNYNPbhzL27ZYT9kErqcZ'),
-  delayPeriod: 5 * DAY,                  // 5 days
-  settlementPeriod: 2 * DAY,             // 2 days
-  currentTimestamp: NOW,                 // fixed timestamp
-  collateralAmount: bigExp(100, 18),     // 100 DAI
-  challengeCollateral: bigExp(200, 18),  // 200 DAI
-  collateralToken: {
-    symbol: 'DAI',
-    decimals: 18,
-    name: 'Sample DAI'
-  },
   arbitrator: {
     feeAmount: bigExp(5, 18),            // 5 AFT
     feeToken: {
@@ -29,14 +23,20 @@ const DEFAULT_INITIALIZE_OPTIONS = {
       name: 'Arbitrator Fee Token'
     }
   },
-  tokenBalancePermission: {
-    balance: bigExp(58, 18),            // 58 ANT
-    token: {
-      symbol: 'ANT',
-      decimals: 18,
-      name: 'Sample ANT'
-    },
-  }
+}
+
+const DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS = {
+  appId: '0xdead1234dead1234dead1234dead1234dead1234dead1234dead1234dead1234',
+  currentTimestamp: NOW,
+
+  challengeDuration: bn(2 * DAY),        // 2 days
+  actionCollateral: bigExp(100, 18),     // 100 DAI
+  challengeCollateral: bigExp(200, 18),  // 200 DAI
+  collateralToken: {
+    symbol: 'DAI',
+    decimals: 18,
+    name: 'Sample DAI'
+  },
 }
 
 class AgreementDeployer {
@@ -44,6 +44,10 @@ class AgreementDeployer {
     this.web3 = web3
     this.artifacts = artifacts
     this.previousDeploy = {}
+  }
+
+  get owner() {
+    return this.previousDeploy.owner
   }
 
   get dao() {
@@ -58,79 +62,72 @@ class AgreementDeployer {
     return this.previousDeploy.base
   }
 
-  get owner() {
-    return this.previousDeploy.owner
-  }
-
-  get collateralToken() {
-    return this.previousDeploy.collateralToken
+  get baseDisputable() {
+    return this.previousDeploy.baseDisputable
   }
 
   get arbitrator() {
     return this.previousDeploy.arbitrator
   }
 
-  get arbitratorToken() {
-    return this.previousDeploy.arbitratorToken
-  }
-
-  get signPermissionToken() {
-    return this.previousDeploy.signPermissionToken
-  }
-
-  get challengePermissionToken() {
-    return this.previousDeploy.challengePermissionToken
-  }
-
   get agreement() {
     return this.previousDeploy.agreement
+  }
+
+  get stakingFactory() {
+    return this.previousDeploy.stakingFactory
+  }
+
+  get disputable() {
+    return this.previousDeploy.disputable
+  }
+
+  get collateralToken() {
+    return this.previousDeploy.collateralToken
+  }
+
+  get clockMock() {
+    return this.previousDeploy.clockMock
   }
 
   get abi() {
     return this.base.abi
   }
 
+  async deployAndInitializeWrapperWithDisputable(options = {}) {
+    await this.deployAndInitialize(options)
+    await this.deployDisputable(options)
+
+    const disputable = options.disputable || this.disputable
+    const arbitrator = options.arbitrator || this.arbitrator
+    const stakingFactory = options.stakingFactory || this.stakingFactory
+    const collateralToken = options.collateralToken || this.collateralToken
+    const { actionCollateral, challengeCollateral, challengeDuration } = { ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS, ...options }
+
+    const collateralRequirement = { collateralToken, actionCollateral, challengeCollateral, challengeDuration }
+    return new DisputableWrapper(this.artifacts, this.web3, this.agreement, arbitrator, stakingFactory, disputable, collateralRequirement)
+  }
+
   async deployAndInitializeWrapper(options = {}) {
     await this.deployAndInitialize(options)
-
     const arbitrator = options.arbitrator || this.arbitrator
-    const collateralToken = options.collateralToken || this.collateralToken
-
-    const { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral } = await this.agreement.getSetting(0)
-    const initialSetting = { content, delayPeriod, settlementPeriod, collateralAmount, challengeCollateral }
-
-    return new AgreementHelper(this.artifacts, this.web3, this.agreement, arbitrator, collateralToken, initialSetting)
+    const stakingFactory = options.stakingFactory || this.stakingFactory
+    return new AgreementWrapper(this.artifacts, this.web3, this.agreement, arbitrator, stakingFactory)
   }
 
   async deployAndInitialize(options = {}) {
     await this.deploy(options)
 
-    if (!options.collateralToken && !this.collateralToken) await this.deployCollateralToken(options)
-    const collateralToken = options.collateralToken || this.collateralToken
-
     if (!options.arbitrator && !this.arbitrator) await this.deployArbitrator(options)
     const arbitrator = options.arbitrator || this.arbitrator
 
-    const defaultOptions = { ...DEFAULT_INITIALIZE_OPTIONS, ...options }
-    const { title, content, collateralAmount, delayPeriod, settlementPeriod, challengeCollateral } = defaultOptions
+    if (!options.stakingFactory && !this.stakingFactory) await this.deployStakingFactory()
+    const stakingFactory = options.stakingFactory || this.stakingFactory
 
-    const signPermissionToken = options.signPermissionToken || this.signPermissionToken || { address: ZERO_ADDR }
-    const signPermissionBalance = signPermissionToken.address === ZERO_ADDR ? bn(0) : (options.signPermissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance)
+    const defaultOptions = { ...DEFAULT_AGREEMENT_INITIALIZATION_PARAMS, ...options }
+    const { title, content } = defaultOptions
 
-    if (signPermissionBalance.gt(bn(0)))  {
-      const signers = options.signers || []
-      for (const signer of signers) await signPermissionToken.generateTokens(signer, signPermissionBalance)
-    }
-
-    const challengePermissionToken = options.challengePermissionToken || this.challengePermissionToken || { address: ZERO_ADDR }
-    const challengePermissionBalance = challengePermissionToken.address === ZERO_ADDR ? bn(0) : (options.challengePermissionBalance || DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.balance)
-
-    if (challengePermissionBalance.gt(bn(0)))  {
-      const challengers = options.challengers || []
-      for (const challenger of challengers) await challengePermissionToken.generateTokens(challenger, challengePermissionBalance)
-    }
-
-    await this.agreement.initialize(title, content, collateralToken.address, collateralAmount, challengeCollateral, arbitrator.address, delayPeriod, settlementPeriod, signPermissionToken.address, signPermissionBalance, challengePermissionToken.address, challengePermissionBalance)
+    await this.agreement.initialize(title, content, arbitrator.address, stakingFactory.address)
     return this.agreement
   }
 
@@ -139,65 +136,52 @@ class AgreementDeployer {
     if (!this.dao) await this.deployDAO(owner)
     if (!this.base) await this.deployBase()
 
-    const appId = options.appId || DEFAULT_INITIALIZE_OPTIONS.appId
+    const { appId, currentTimestamp } = { ...DEFAULT_AGREEMENT_INITIALIZATION_PARAMS, ...options }
     const receipt = await this.dao.newAppInstance(appId, this.base.address, '0x', false, { from: owner })
     const agreement = await this.base.constructor.at(getNewProxyAddress(receipt))
 
-    if (!this.signPermissionToken) {
-      const SIGN_ROLE = await agreement.SIGN_ROLE()
-      const signers = options.signers || [ANY_ADDR]
-      for (const signer of signers) {
-        if (signers.indexOf(signer) === 0) await this.acl.createPermission(signer, agreement.address, SIGN_ROLE, owner, { from: owner })
-        else await this.acl.grantPermission(signer, agreement.address, SIGN_ROLE, { from: owner })
-      }
-    }
+    const permissions = ['CHANGE_CONTENT_ROLE', 'CHANGE_COLLATERAL_REQUIREMENTS_ROLE', 'REGISTER_DISPUTABLE_ROLE', 'UNREGISTER_DISPUTABLE_ROLE']
+    await this._createPermissions(agreement, permissions, owner)
 
-    if (!this.challengePermissionToken) {
-      const CHALLENGE_ROLE = await agreement.CHALLENGE_ROLE()
-      const challengers = options.challengers || [ANY_ADDR]
-      for (const challenger of challengers) {
-        if (challengers.indexOf(challenger) === 0) await this.acl.createPermission(challenger, agreement.address, CHALLENGE_ROLE, owner, { from: owner })
-        else await this.acl.grantPermission(challenger, agreement.address, CHALLENGE_ROLE, { from: owner })
-      }
-    }
-
-    const CHANGE_AGREEMENT_ROLE = await agreement.CHANGE_AGREEMENT_ROLE()
-    await this.acl.createPermission(owner, agreement.address, CHANGE_AGREEMENT_ROLE, owner, { from: owner })
-
-    const CHANGE_TOKEN_BALANCE_PERMISSION_ROLE = await agreement.CHANGE_TOKEN_BALANCE_PERMISSION_ROLE()
-    await this.acl.createPermission(owner, agreement.address, CHANGE_TOKEN_BALANCE_PERMISSION_ROLE, owner, { from: owner })
-
-    const { currentTimestamp } = { ...DEFAULT_INITIALIZE_OPTIONS, ...options }
-    if (currentTimestamp) await agreement.mockSetTimestamp(currentTimestamp)
-
+    if (currentTimestamp) await this.mockTime(agreement, currentTimestamp)
     this.previousDeploy = { ...this.previousDeploy, agreement }
     return agreement
   }
 
-  async deployCollateralToken(options = {}) {
-    const { name, decimals, symbol } = { ...DEFAULT_INITIALIZE_OPTIONS.collateralToken, ...options.collateralToken }
-    const collateralToken = await this.deployToken({ name, decimals, symbol })
-    this.previousDeploy = { ...this.previousDeploy, collateralToken }
-    return collateralToken
-  }
+  async deployDisputable(options = {}) {
+    const owner = options.owner || await this._getSender()
+    if (!this.baseDisputable) await this.deployBaseDisputable()
 
-  async deploySignPermissionToken(options = {}) {
-    const { name, decimals, symbol } = { ...DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.token, ...options.signPermissionToken }
-    const signPermissionToken = await this.deployToken({ name, decimals, symbol })
-    this.previousDeploy = { ...this.previousDeploy, signPermissionToken }
-    return signPermissionToken
-  }
+    const { appId, currentTimestamp } = { ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS, ...options }
+    const receipt = await this.dao.newAppInstance(appId, this.baseDisputable.address, '0x', false, { from: owner })
+    const disputable = await this.baseDisputable.constructor.at(getNewProxyAddress(receipt))
 
-  async deployChallengePermissionToken(options = {}) {
-    const { name, decimals, symbol } = { ...DEFAULT_INITIALIZE_OPTIONS.tokenBalancePermission.token, ...options.challengePermissionToken }
-    const challengePermissionToken = await this.deployToken({ name, decimals, symbol })
-    this.previousDeploy = { ...this.previousDeploy, challengePermissionToken }
-    return challengePermissionToken
+    const SET_AGREEMENT_ROLE = await disputable.SET_AGREEMENT_ROLE()
+    await this.acl.createPermission(this.agreement.address, disputable.address, SET_AGREEMENT_ROLE, owner, { from: owner })
+
+    const SUBMIT_ROLE = await disputable.SUBMIT_ROLE()
+    await this._grantPermissions(disputable, SUBMIT_ROLE, options.submitters, owner)
+
+    const CHALLENGE_ROLE = await this.agreement.CHALLENGE_ROLE()
+    await this._grantPermissions(disputable, CHALLENGE_ROLE, options.challengers, owner)
+
+    if (!options.collateralToken && !this.collateralToken) await this.deployCollateralToken(options)
+    await disputable.initialize()
+
+    if (options.register || options.register === undefined) {
+      const collateralToken = options.collateralToken || this.collateralToken
+      const { actionCollateral, challengeCollateral, challengeDuration } = { ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS, ...options }
+      await this.agreement.register(disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from: owner })
+    }
+
+    if (currentTimestamp) await this.mockTime(disputable, currentTimestamp)
+    this.previousDeploy = { ...this.previousDeploy, disputable }
+    return disputable
   }
 
   async deployArbitrator(options = {}) {
-    let { feeToken, feeAmount } = { ...DEFAULT_INITIALIZE_OPTIONS.arbitrator, ...options }
-    if (!feeToken.address) feeToken = this.arbitratorToken || (await this.deployArbitratorToken(feeToken))
+    let { feeToken, feeAmount } = { ...DEFAULT_AGREEMENT_INITIALIZATION_PARAMS.arbitrator, ...options }
+    if (!feeToken.address) feeToken = await this.deployToken(feeToken)
 
     const Arbitrator = this._getContract('ArbitratorMock')
     const arbitrator = await Arbitrator.new(feeToken.address, feeAmount)
@@ -205,11 +189,28 @@ class AgreementDeployer {
     return arbitrator
   }
 
-  async deployArbitratorToken(options = {}) {
-    const { name, decimals, symbol } = { ...DEFAULT_INITIALIZE_OPTIONS.arbitrator.feeToken, ...options }
-    const arbitratorToken = await this.deployToken({ name, decimals, symbol })
-    this.previousDeploy = { ...this.previousDeploy, arbitratorToken }
-    return arbitratorToken
+  async deployStakingFactory() {
+    const StakingFactory = this._getContract('StakingFactory')
+    const stakingFactory = await StakingFactory.new()
+    this.previousDeploy = { ...this.previousDeploy, stakingFactory }
+    return stakingFactory
+  }
+
+  async deployStakingInstance(token) {
+    if (!this.stakingFactory) await this.deployStakingFactory()
+    let stakingAddress = await this.stakingFactory.getInstance(token.address)
+    if (stakingAddress === ZERO_ADDR) {
+      const receipt = await this.stakingFactory.getOrCreateInstance(token.address)
+      stakingAddress = getEventArgument(receipt, 'NewStaking', 'instance')
+    }
+    const Staking = artifacts.require('Staking')
+    return Staking.at(stakingAddress)
+  }
+
+  async deployCollateralToken(options = {}) {
+    const collateralToken = await this.deployToken(options)
+    this.previousDeploy = { ...this.previousDeploy, collateralToken }
+    return collateralToken
   }
 
   async deployBase() {
@@ -217,6 +218,13 @@ class AgreementDeployer {
     const base = await Agreement.new()
     this.previousDeploy = { ...this.previousDeploy, base }
     return base
+  }
+
+  async deployBaseDisputable() {
+    const Disputable = this._getContract('DisputableAppMock')
+    const baseDisputable = await Disputable.new()
+    this.previousDeploy = { ...this.previousDeploy, baseDisputable }
+    return baseDisputable
   }
 
   async deployDAO(owner) {
@@ -243,9 +251,37 @@ class AgreementDeployer {
     return dao
   }
 
-  async deployToken({ name, decimals, symbol }) {
+  async deployToken({ name = 'My Sample Token', decimals = 18, symbol = 'MST' }) {
     const MiniMeToken = this._getContract('MiniMeToken')
     return MiniMeToken.new(ZERO_ADDR, ZERO_ADDR, 0, name, decimals, symbol, true)
+  }
+
+  async mockTime(timeMockable, timestamp) {
+    if (!this.clockMock) await this.deployClockMock()
+    await timeMockable.setClockMock(this.clockMock.address)
+    return this.clockMock.mockSetTimestamp(timestamp)
+  }
+
+  async deployClockMock() {
+    const ClockMock = this._getContract('ClockMock')
+    const clockMock = await ClockMock.new()
+    this.previousDeploy = { ...this.previousDeploy, clockMock }
+    return clockMock
+  }
+
+  async _createPermissions(app, permissions, to, manager = to) {
+    for (const permission of permissions) {
+      const ROLE = await app[permission]()
+      await this.acl.createPermission(to, app.address, ROLE, manager, { from: manager })
+    }
+  }
+
+  async _grantPermissions(app, permission, users, manager) {
+    if (!users) users = [ANY_ADDR]
+    for (const user of users) {
+      if (users.indexOf(user) === 0) await this.acl.createPermission(user, app.address, permission, manager, { from: manager })
+      else await this.acl.grantPermission(user, app.address, permission, { from: manager })
+    }
   }
 
   _getContract(name) {

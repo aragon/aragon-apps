@@ -1,20 +1,40 @@
-module.exports = {
-  ACTION_SCHEDULED: 'ActionScheduled',
+const AGREEMENT_EVENTS = {
+  SIGNED: 'Signed',
+  CONTENT_CHANGED: 'ContentChanged',
+  ACTION_SUBMITTED: 'ActionSubmitted',
   ACTION_CHALLENGED: 'ActionChallenged',
   ACTION_SETTLED: 'ActionSettled',
   ACTION_DISPUTED: 'ActionDisputed',
   ACTION_ACCEPTED: 'ActionAccepted',
   ACTION_VOIDED: 'ActionVoided',
   ACTION_REJECTED: 'ActionRejected',
-  ACTION_CANCELLED: 'ActionCancelled',
-  ACTION_EXECUTED: 'ActionExecuted',
-  BALANCE_STAKED: 'BalanceStaked',
-  BALANCE_UNSTAKED: 'BalanceUnstaked',
-  BALANCE_LOCKED: 'BalanceLocked',
-  BALANCE_UNLOCKED: 'BalanceUnlocked',
-  BALANCE_CHALLENGED: 'BalanceChallenged',
-  BALANCE_UNCHALLENGED: 'BalanceUnchallenged',
-  BALANCE_SLAHED: 'BalanceSlashed',
-  SETTING_CHANGED: 'SettingChanged',
-  PERMISSION_CHANGED: 'TokenBalancePermissionChanged',
+  ACTION_CLOSED: 'ActionClosed',
+  DISPUTABLE_REGISTERED: 'DisputableAppRegistered',
+  DISPUTABLE_UNREGISTERING: 'DisputableAppUnregistering',
+  DISPUTABLE_UNREGISTERED: 'DisputableAppUnregistered',
+  COLLATERAL_REQUIREMENT_CHANGED: 'CollateralRequirementChanged'
+}
+
+const STAKING_EVENTS = {
+  BALANCE_STAKED: 'Staked',
+  BALANCE_UNSTAKED: 'Unstaked',
+  BALANCE_LOCKED: 'Locked',
+  BALANCE_UNLOCKED: 'Unlocked',
+  BALANCE_SLAHED: 'Slashed',
+}
+
+const DISPUTABLE_EVENTS = {
+  AGREEMENT_SET: 'AgreementSet',
+  SUBMITTED: 'DisputableSubmitted',
+  CHALLENGED: 'DisputableChallenged',
+  ALLOWED: 'DisputableAllowed',
+  REJECTED: 'DisputableRejected',
+  VOIDED: 'DisputableVoided',
+  CLOSED: 'DisputableClosed',
+}
+
+module.exports = {
+  STAKING_EVENTS,
+  AGREEMENT_EVENTS,
+  DISPUTABLE_EVENTS
 }

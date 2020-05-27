@@ -7,52 +7,60 @@ set -o errexit
 trap cleanup EXIT
 
 cleanup() {
-  # Kill the ganache instance that we started (if we started one and if it's still running).
+  # Kill the RPC instance that we started (if we started one and if it's still running).
   if [ -n "$rpc_pid" ] && ps -p $rpc_pid > /dev/null; then
     kill -9 $rpc_pid
   fi
 }
 
-ganache_port=8545
-
-rpc_running() {
-  nc -z localhost "$ganache_port"
+setup_coverage_variables() {
+  PORT=${PORT-8555}
+  BALANCE=${BALANCE-100000}
+  GAS_LIMIT=${GAS_LIMIT-0xfffffffffff}
+  NETWORK_ID=${NETWORK_ID-16}
+  ACCOUNTS=${ACCOUNTS-200}
 }
 
-rpc_running() {
-  nc -z localhost "$PORT"
+setup_testing_variables() {
+  PORT=${PORT-8545}
+  BALANCE=${BALANCE-100000}
+  GAS_LIMIT=${GAS_LIMIT-8000000}
+  NETWORK_ID=${NETWORK_ID-15}
+  ACCOUNTS=${ACCOUNTS-200}
 }
 
 start_ganache() {
-  if [ "$SOLIDITY_COVERAGE" = true ]; then
-    export RUNNING_COVERAGE=true
-  else
-    echo "Starting our own ganache instance"
-
-    node_modules/.bin/ganache-cli -l 8000000 --port "$ganache_port" -m "explain tackle mirror kit van hammer degree position ginger unfair soup bonus" > /dev/null &
-
-    rpc_pid=$!
-
-    echo "Waiting for ganache to launch on port "$ganache_port"..."
-
-    while ! rpc_running; do
-      sleep 0.1 # wait for 1/10 of the second before check again
-    done
-
-    echo "Ganache launched!"
-  fi
+  echo "Starting ganache-cli..."
+  npx ganache-cli -i ${NETWORK_ID} -l ${GAS_LIMIT} -a ${ACCOUNTS} -e ${BALANCE} -p ${PORT} > /dev/null &
+  rpc_pid=$!
+  sleep 3
+  echo "Running ganache-cli with pid ${rpc_pid} in port ${PORT}"
 }
 
-if rpc_running; then
-  echo "Using existing ganache instance"
-else
-  start_ganache
-fi
+start_testrpc() {
+  echo "Starting testrpc-sc..."
+  npx testrpc-sc -i ${NETWORK_ID} -l ${GAS_LIMIT} -a ${ACCOUNTS} -e ${BALANCE} -p ${PORT} > /dev/null &
+  rpc_pid=$!
+  sleep 3
+  echo "Running testrpc-sc with pid ${rpc_pid} in port ${PORT}"
+}
 
-echo "Buidler version $(npx buidler --version)"
+measure_coverage() {
+  echo "Measuring coverage $@..."
+  npx solidity-coverage $@
+}
+
+run_tests() {
+  echo "Running tests $@..."
+  npx truffle test --network rpc $@
+}
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
-  node_modules/.bin/buidler coverage --network coverage "$@"
+  setup_coverage_variables
+  start_testrpc
+  measure_coverage $@
 else
-  node_modules/.bin/buidler test "$@"
+  setup_testing_variables
+  start_ganache
+  run_tests $@
 fi
