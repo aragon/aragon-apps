@@ -125,7 +125,7 @@ export function useTotalVestedTokensInfo(vestings) {
   const totalInfo = {}
   const now = useNow().getTime()
 
-  if (!vestings) {
+  if (!vestings || vestings.length === 0) {
     return {
       totalAmount: new BN(0),
       totalLocked: new BN(0),

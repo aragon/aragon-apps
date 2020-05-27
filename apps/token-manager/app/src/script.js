@@ -223,7 +223,7 @@ function updateVestingState(state, receiver, vestingId, vestingInfo) {
       cliff: marshallDate(vestingInfo.cliff),
       start: marshallDate(vestingInfo.start),
       vesting: marshallDate(vestingInfo.vesting),
-      rebokable: vestingInfo.rebokable,
+      revokable: vestingInfo.revokable,
       vestingId: vestingId,
     }),
   }

@@ -107,6 +107,7 @@ class App extends React.PureComponent {
     } = this.props
 
     const { assignTokensConfig, sidepanelOpened } = this.state
+
     return (
       <IdentityProvider
         onResolve={this.handleResolveLocalIdentity}
@@ -117,7 +118,7 @@ class App extends React.PureComponent {
         {!isSyncing && appStateReady && holders.length === 0 && (
           <EmptyState onAssignHolder={this.handleLaunchAssignTokensNoHolder} />
         )}
-        {appStateReady && holders.length !== 0 && (
+        {!isSyncing && appStateReady && holders.length !== 0 && (
           <React.Fragment>
             <AppHeader
               onAssignHolder={this.handleLaunchAssignTokensNoHolder}
