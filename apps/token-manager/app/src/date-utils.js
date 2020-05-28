@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { format, formatDistanceStrict } from 'date-fns'
+import dayjs from 'dayjs'
+import duration from 'dayjs/plugin/duration'
+import relativeTime from 'dayjs/plugin/relativeTime'
+
+// dayjs plugins
+dayjs.extend(relativeTime)
+dayjs.extend(duration)
 
 // Update `now` at a given interval.
 export function useNow(updateEvery = 1000) {
@@ -16,8 +22,10 @@ export function useNow(updateEvery = 1000) {
 }
 
 export function timePeriod(fromDate, toDate) {
-  return formatDistanceStrict(fromDate, toDate)
+  const diff = dayjs(fromDate).diff(dayjs(toDate))
+  return dayjs.duration(diff).humanize()
 }
+
 export function formatDate(date) {
-  return format(date, 'do MMM yyyy, HH:mm O')
+  return dayjs(date).format('YYYY-MM-DD, HH:mm')
 }
