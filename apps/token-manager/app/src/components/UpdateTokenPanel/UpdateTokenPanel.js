@@ -343,7 +343,7 @@ function TokenPanelContent({
           step={tokenStep}
           value={amountField.value}
           required
-          showMax
+          showMax={mode === 'remove'}
           wide
         />
       </Field>
