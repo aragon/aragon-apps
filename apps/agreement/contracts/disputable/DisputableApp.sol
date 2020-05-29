@@ -96,15 +96,27 @@ contract DisputableApp is IDisputable, AragonApp {
     }
 
     /**
-    * @dev Create a new action in the agreement
+    * @dev Create a new action in the agreement without lifetime set
     * @param _disputableId Identification number of the disputable action in the context of the disputable
     * @param _submitter Address of the user that has submitted the action
     * @param _context Link to a human-readable text giving context for the given action
     * @return Unique identification number for the created action in the context of the agreement
     */
     function _newAction(uint256 _disputableId, address _submitter, bytes _context) internal returns (uint256) {
+        return _newAction(_disputableId, 0, _submitter, _context);
+    }
+
+    /**
+    * @dev Create a new action in the agreement
+    * @param _disputableId Identification number of the disputable action in the context of the disputable
+    * @param _lifetime Lifetime duration in seconds of the disputable action, it can be set to zero to specify infinite
+    * @param _submitter Address of the user that has submitted the action
+    * @param _context Link to a human-readable text giving context for the given action
+    * @return Unique identification number for the created action in the context of the agreement
+    */
+    function _newAction(uint256 _disputableId, uint64 _lifetime, address _submitter, bytes _context) internal returns (uint256) {
         IAgreement agreement = _getAgreement();
-        return (agreement != IAgreement(0)) ? agreement.newAction(_disputableId, _submitter, _context) : 0;
+        return (agreement != IAgreement(0)) ? agreement.newAction(_disputableId, _lifetime, _submitter, _context) : 0;
     }
 
     /**

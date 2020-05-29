@@ -66,7 +66,7 @@ contract('DisputableApp', ([_, challenger, holder0, holder1, holder2, holder3, h
       const challengedActions = actions.filter(action => !!action.settlementOffer)
       for (const action of challengedActions) {
         const { id, settlementOffer } = action
-        const { challengeId } = await disputable.challenge({ actionId: id, settlementOffer, challenger })
+        const { challengeId } = await disputable.challenge({ actionId: id, settlementOffer, challenger, challengeDuration: 10 })
         action.challengeId = challengeId
         const { state } = await disputable.getAction(id)
         assert.equal(state, ACTIONS_STATE.CHALLENGED, `action ${id} is not challenged`)

@@ -85,6 +85,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                       const currentActionState = await agreement.getAction(actionId)
                       assertBn(currentActionState.state, previousActionState.state, 'action state does not match')
+                      assertBn(currentActionState.endDate, previousActionState.endDate, 'action end date does not match')
                       assertBn(currentActionState.disputableId, previousActionState.disputableId, 'disputable ID does not match')
                       assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                       assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
@@ -294,7 +295,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   await agreement.moveToChallengeEndDate(challengeId)
                 })
 
-                itDisputesTheChallengeProperlyDespiteArbitrationFees()
+                itCannotBeDisputed()
               })
 
               context('after the answer period', () => {

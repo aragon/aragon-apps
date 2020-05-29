@@ -26,6 +26,8 @@ contract Agreement is IAgreement, AragonApp {
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
 
+    uint64 internal constant MAX_UINT64 = uint64(-1);
+
     /* Arbitrator outcomes constants */
     uint256 internal constant DISPUTES_POSSIBLE_OUTCOMES = 2;
     uint256 internal constant DISPUTES_RULING_SUBMITTER = 3;
@@ -105,6 +107,7 @@ contract Agreement is IAgreement, AragonApp {
         IDisputable disputable;             // Address of the disputable that created the action
         uint256 disputableId;               // Identification number of the disputable action in the context of the disputable instance
         uint256 collateralId;               // Identification number of the collateral requirements for the given action
+        uint64 endDate;                     // Timestamp when the disputable action ends unless it's closed beforehand
         address submitter;                  // Address that has submitted the action
         ActionState state;                  // Current state of the action
         bytes context;                      // Link to a human-readable text giving context for the given action
@@ -269,11 +272,12 @@ contract Agreement is IAgreement, AragonApp {
     * @dev This function should be called from the disputable app registered on the Agreement every time a new disputable is created in the app.this
     *      Each disputable ID must be registered only once, this is how the Agreements notices about each disputable action.
     * @param _disputableId Identification number of the disputable action in the context of the disputable instance
+    * @param _lifetime Lifetime duration in seconds of the disputable action, it can be set to zero to specify infinite
     * @param _submitter Address of the user that has submitted the action
     * @param _context Link to a human-readable text giving context for the given action
     * @return Unique identification number for the created action in the context of the agreement
     */
-    function newAction(uint256 _disputableId, address _submitter, bytes _context) external returns (uint256) {
+    function newAction(uint256 _disputableId, uint64 _lifetime, address _submitter, bytes _context) external returns (uint256) {
         uint256 lastContentIdSigned = lastContentSignedBy[_submitter];
         require(lastContentIdSigned >= _getCurrentContentId(), ERROR_SIGNER_MUST_SIGN);
 
@@ -289,6 +293,7 @@ contract Agreement is IAgreement, AragonApp {
         action.disputable = IDisputable(msg.sender);
         action.collateralId = currentCollateralRequirementId;
         action.disputableId = _disputableId;
+        action.endDate = _lifetime == 0 ? MAX_UINT64 : getTimestamp64().add(_lifetime);
         action.submitter = _submitter;
         action.context = _context;
 
@@ -356,6 +361,7 @@ contract Agreement is IAgreement, AragonApp {
         }
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        _addChallengeDuration(action, challenge, requirement);
         uint256 actionCollateral = requirement.actionAmount;
         uint256 settlementOffer = challenge.settlementOffer;
 
@@ -455,6 +461,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return disputable Address of the disputable that created the action
     * @return disputableId Identification number of the disputable action in the context of the disputable
     * @return collateralId Identification number of the collateral requirements for the given action
+    * @return endDate Timestamp when the disputable action ends unless it's closed beforehand
     * @return state Current state of the action
     * @return submitter Address that has submitted the action
     * @return context Link to a human-readable text giving context for the given action
@@ -465,6 +472,7 @@ contract Agreement is IAgreement, AragonApp {
             address disputable,
             uint256 disputableId,
             uint256 collateralId,
+            uint64 endDate,
             ActionState state,
             address submitter,
             bytes context,
@@ -476,6 +484,7 @@ contract Agreement is IAgreement, AragonApp {
         disputable = action.disputable;
         disputableId = action.disputableId;
         collateralId = action.collateralId;
+        endDate = action.endDate;
         state = action.state;
         submitter = action.submitter;
         context = action.context;
@@ -820,6 +829,8 @@ contract Agreement is IAgreement, AragonApp {
         _challenge.state = ChallengeState.Accepted;
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        _addChallengeDuration(_action, _challenge, requirement);
+
         address challenger = _challenge.challenger;
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
         _transfer(requirement.token, challenger, requirement.challengeAmount);
@@ -836,6 +847,8 @@ contract Agreement is IAgreement, AragonApp {
         _challenge.state = ChallengeState.Rejected;
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        _addChallengeDuration(_action, _challenge, requirement);
+
         address submitter = _action.submitter;
         _unlockBalance(requirement.staking, submitter, requirement.actionAmount);
         _transfer(requirement.token, submitter, requirement.challengeAmount);
@@ -852,9 +865,28 @@ contract Agreement is IAgreement, AragonApp {
         _challenge.state = ChallengeState.Voided;
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        _addChallengeDuration(_action, _challenge, requirement);
+
         _unlockBalance(requirement.staking, _action.submitter, requirement.actionAmount);
         _transfer(requirement.token, _challenge.challenger, requirement.challengeAmount);
         disputable.onDisputableVoided(_action.disputableId);
+    }
+
+    /**
+    * @dev Add the total challenge duration of an action
+    * @param _action Action instance to consider its challenge duration
+    * @param _challenge Challenge associated to the given action to be added
+    * @param _requirement Collateral requirement used for the given challenge
+    */
+    function _addChallengeDuration(Action storage _action, Challenge storage _challenge, CollateralRequirement storage _requirement) internal {
+        uint64 challengeStartedAt = _challenge.endDate.sub(_requirement.challengeDuration);
+        uint64 challengeDuration = getTimestamp64().sub(challengeStartedAt);
+
+        uint64 currentEndDate = _action.endDate;
+        uint64 newEndDate = currentEndDate + challengeDuration;
+
+        // Cap action endDate to MAX_UINT64 to handle infinite action lifetimes
+        _action.endDate = (newEndDate >= currentEndDate) ? newEndDate : MAX_UINT64;
     }
 
     /**
@@ -1030,7 +1062,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action can be challenged, false otherwise
     */
     function _canChallenge(Action storage _action) internal view returns (bool) {
-        return _isSubmitted(_action);
+        return _isSubmitted(_action) && _action.endDate > getTimestamp64();
     }
 
     /**
@@ -1056,7 +1088,7 @@ contract Agreement is IAgreement, AragonApp {
             return false;
         }
 
-        return _challenge.endDate >= getTimestamp64();
+        return _challenge.endDate > getTimestamp64();
     }
 
     /**
@@ -1071,7 +1103,7 @@ contract Agreement is IAgreement, AragonApp {
             return false;
         }
 
-        return getTimestamp64() > _challenge.endDate;
+        return getTimestamp64() >= _challenge.endDate;
     }
 
     /**

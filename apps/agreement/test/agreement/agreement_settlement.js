@@ -1,3 +1,4 @@
+const { bn } = require('../helpers/lib/numbers')
 const { assertBn } = require('../helpers/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
@@ -10,6 +11,8 @@ const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 contract('Agreement', ([_, someone, submitter, challenger]) => {
   let agreement, actionId
 
+  const actionLifetime = 60
+
   beforeEach('deploy agreement instance', async () => {
     agreement = await deployer.deployAndInitializeWrapperWithDisputable()
   })
@@ -17,7 +20,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
   describe('settlement', () => {
     context('when the given action exists', () => {
       beforeEach('create action', async () => {
-        ({ actionId } = await agreement.newAction({ submitter }))
+        ({ actionId } = await agreement.newAction({ submitter, lifetime: actionLifetime }))
       })
 
       const itCanSettleActions = () => {
@@ -33,10 +36,12 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
           })
 
           context('when the action was challenged', () => {
-            let challengeId
+            let challengeId, challengeStartTime
 
             beforeEach('challenge action', async () => {
-              ({ challengeId } = await agreement.challenge({ actionId, challenger }))
+              challengeStartTime = await agreement.currentTimestamp()
+              const result = await agreement.challenge({ actionId, challenger })
+              challengeId = result.challengeId
             })
 
             context('when the challenge was not answered', () => {
@@ -58,12 +63,16 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   assertBn(currentChallengeState.disputeId, previousChallengeState.disputeId, 'challenge dispute ID does not match')
                 })
 
-                it('does not alter the action', async () => {
+                it('updates the action end date only', async () => {
                   const previousActionState = await agreement.getAction(actionId)
 
                   await agreement.settle({ actionId, from })
 
+                  const currentTimestamp = await agreement.currentTimestamp()
+                  const challengeDuration = currentTimestamp.sub(challengeStartTime)
                   const currentActionState = await agreement.getAction(actionId)
+                  assertBn(currentActionState.endDate, previousActionState.endDate.add(challengeDuration), 'action end date does not match')
+
                   assertBn(currentActionState.state, previousActionState.state, 'action state does not match')
                   assertBn(currentActionState.disputableId, previousActionState.disputableId, 'disputable ID does not match')
                   assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
@@ -204,7 +213,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   await agreement.moveToChallengeEndDate(challengeId)
                 })
 
-                itCanOnlyBeSettledByTheSubmitter()
+                itCanBeSettledByAnyone()
               })
 
               context('after the answer period', () => {

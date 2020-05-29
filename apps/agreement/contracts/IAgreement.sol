@@ -14,7 +14,7 @@ import "./arbitration/IArbitrable.sol";
 contract IAgreement is IArbitrable, IACLOracle {
     function sign() external;
 
-    function newAction(uint256 _disputableId, address _submitter, bytes _context) external returns (uint256);
+    function newAction(uint256 _disputableId, uint64 _lifetime, address _submitter, bytes _context) external returns (uint256);
 
     function closeAction(uint256 _actionId) external;
 

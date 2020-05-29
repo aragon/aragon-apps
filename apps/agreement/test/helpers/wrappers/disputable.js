@@ -1,5 +1,6 @@
 const AgreementWrapper = require('./agreement')
 
+const { bn } = require('../lib/numbers')
 const { decodeEventsOfType } = require('../lib/decodeEvent')
 const { getEventArgument } = require('@aragon/contract-test-helpers/events')
 const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
@@ -82,18 +83,19 @@ class DisputableWrapper extends AgreementWrapper {
     return { receipt, actionId, disputableId }
   }
 
-  async newAction({ submitter = undefined, actionContext = '0x1234', sign = undefined, stake = undefined }) {
+  async newAction({ submitter = undefined, actionContext = '0x1234', lifetime = undefined, sign = undefined, stake = undefined }) {
     if (!submitter) submitter = await this._getSender()
 
     if (stake === undefined) stake = this.actionCollateral
     if (stake) await this.approveAndCall({ amount: stake, from: submitter })
     if (sign === undefined && (await this.getSigner(submitter)).mustSign) await this.sign(submitter)
+    if (lifetime) await this.disputable.setLifetime(lifetime)
 
-    const { receipt, actionId } = await this.forward({ script: actionContext, from: submitter })
-    return { receipt, actionId }
+    return this.forward({ script: actionContext, from: submitter })
   }
 
   async challenge(options = {}) {
+    if (options.challengeDuration === undefined) options.challengeDuration = this.challengeDuration.div(bn(2))
     if (options.stake === undefined) options.stake = this.challengeCollateral
     if (options.stake) await this.approve({ amount: options.stake, from: options.challenger })
     return super.challenge(options)

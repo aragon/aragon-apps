@@ -21,6 +21,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     event DisputableVoided(uint256 indexed id);
     event DisputableClosed(uint256 indexed id);
 
+    uint64 public entryLifetime;
     uint256 private entriesLength;
     mapping (uint256 => uint256) private actionsByEntryId;
 
@@ -38,10 +39,17 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     }
 
     /**
-    * @notice Initialize app
+    * @dev Initialize app
     */
     function initialize() external {
         initialized();
+    }
+
+    /**
+    * @dev Set entry lifetime duration
+    */
+    function setLifetime(uint64 _lifetime) external {
+        entryLifetime = _lifetime;
     }
 
     /**
@@ -59,7 +67,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
         require(canForward(msg.sender, data), ERROR_CANNOT_SUBMIT);
 
         uint256 id = entriesLength++;
-        actionsByEntryId[id] = _newAction(id, msg.sender, data);
+        actionsByEntryId[id] = _newAction(id, entryLifetime, msg.sender, data);
         emit DisputableSubmitted(id);
     }
 

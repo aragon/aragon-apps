@@ -142,8 +142,7 @@ contract Registry is DisputableApp {
         Entry storage entry = _getEntry(id);
         require(_isChallenged(entry), ERROR_ENTRY_NOT_CHALLENGED);
 
-        entry.challenged = false;
-        emit Allowed(id);
+        _allowed(id, entry);
     }
 
     /**
@@ -163,11 +162,7 @@ contract Registry is DisputableApp {
     * @param _id Identification number of the entry to be voided
     */
     function _onDisputableVoided(uint256 _id) internal {
-        bytes32 id = bytes32(_id);
-        Entry storage entry = entries[id];
-        require(_isChallenged(entry), ERROR_ENTRY_NOT_CHALLENGED);
-
-        _unregister(id, entry);
+        _onDisputableAllowed(_id);
     }
 
     /**
@@ -185,6 +180,16 @@ contract Registry is DisputableApp {
         entry.submitter = _submitter;
         entry.value = _value;
         emit Registered(_id);
+    }
+
+    /**
+    * @dev Allow an entry
+    * @param _id Identification number of the entry to be allowed
+    * @param _entry Entry instance associated to the given identification number
+    */
+    function _allowed(bytes32 _id, Entry storage _entry) internal {
+        _entry.challenged = false;
+        emit Allowed(_id);
     }
 
     /**

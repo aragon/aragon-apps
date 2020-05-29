@@ -35,8 +35,8 @@ class AgreementWrapper {
   }
 
   async getAction(actionId) {
-    const { disputable, disputableId, context, state, submitter, collateralId, currentChallengeId } = await this.agreement.getAction(actionId)
-    return { disputable, disputableId, context, state, submitter, collateralId, currentChallengeId }
+    const { disputable, disputableId, context, state, endDate, submitter, collateralId, currentChallengeId } = await this.agreement.getAction(actionId)
+    return { disputable, disputableId, context, state, endDate, submitter, collateralId, currentChallengeId }
   }
 
   async getChallenge(challengeId) {
@@ -98,7 +98,7 @@ class AgreementWrapper {
     return this.agreement.sign({ from })
   }
 
-  async challenge({ actionId, challenger = undefined, settlementOffer = 0, challengeContext = '0xdcba', finishedSubmittingEvidence = false, arbitrationFees = undefined }) {
+  async challenge({ actionId, challenger = undefined, settlementOffer = 0, challengeDuration = undefined, challengeContext = '0xdcba', finishedSubmittingEvidence = false, arbitrationFees = undefined }) {
     if (!challenger) challenger = await this._getSender()
 
     if (arbitrationFees === undefined) arbitrationFees = await this.halfArbitrationFees()
@@ -106,6 +106,7 @@ class AgreementWrapper {
 
     const receipt = await this.agreement.challengeAction(actionId, settlementOffer, finishedSubmittingEvidence, challengeContext, { from: challenger })
     const challengeId = getEventArgument(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, 'challengeId')
+    if (challengeDuration) await this.increaseTime(challengeDuration)
     return { receipt, challengeId }
   }
 
@@ -210,28 +211,49 @@ class AgreementWrapper {
     return this.agreement.getTimestampPublic()
   }
 
+  async moveBeforeActionEndDate(actionId) {
+    const { endDate } = await this.getAction(actionId)
+    return this.moveToTimestamp(endDate.sub(bn(1)))
+  }
+
+  async moveToActionEndDate(actionId) {
+    const { endDate } = await this.getAction(actionId)
+    return this.moveToTimestamp(endDate)
+  }
+
+  async moveAfterActionEndDate(actionId) {
+    const { endDate } = await this.getAction(actionId)
+    return this.moveToTimestamp(endDate.add(bn(1)))
+  }
+
   async moveBeforeChallengeEndDate(challengeId) {
     const { endDate } = await this.getChallenge(challengeId)
-    return this.moveTo(endDate.sub(bn(1)))
+    return this.moveToTimestamp(endDate.sub(bn(1)))
   }
 
   async moveToChallengeEndDate(challengeId) {
     const { endDate } = await this.getChallenge(challengeId)
-    return this.moveTo(endDate)
+    return this.moveToTimestamp(endDate)
   }
 
   async moveAfterChallengeEndDate(challengeId) {
     const { endDate } = await this.getChallenge(challengeId)
-    return this.moveTo(endDate.add(bn(1)))
+    return this.moveToTimestamp(endDate.add(bn(1)))
   }
 
-  async moveTo(timestamp) {
+  async moveToTimestamp(timestamp) {
     const clockMockAddress = await this.agreement.clockMock()
     const clockMock = await this._getContract('ClockMock').at(clockMockAddress)
     const currentTimestamp = await this.currentTimestamp()
     if (timestamp.lt(currentTimestamp)) return clockMock.mockSetTimestamp(timestamp)
     const timeDiff = timestamp.sub(currentTimestamp)
     return clockMock.mockIncreaseTime(timeDiff)
+  }
+
+  async increaseTime(seconds) {
+    const clockMockAddress = await this.agreement.clockMock()
+    const clockMock = await this._getContract('ClockMock').at(clockMockAddress)
+    return clockMock.mockIncreaseTime(seconds)
   }
 
   async approve({ token, amount, to = undefined, from = undefined, accumulate = true }) {
