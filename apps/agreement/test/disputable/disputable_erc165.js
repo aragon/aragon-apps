@@ -12,8 +12,8 @@ contract('DisputableApp', () => {
   })
 
   it('supports IDisputable', async () => {
-    assert.equal(await disputable.interfaceId(), '0x5fca5d80')
-    assert.isTrue(await disputable.supportsInterface('0x5fca5d80'), 'does not support IDisputable')
+    assert.equal(await disputable.interfaceId(), '0xa9c298dc')
+    assert.isTrue(await disputable.supportsInterface('0xa9c298dc'), 'does not support IDisputable')
   })
 
   it('does not support 0xffffffff', async () => {

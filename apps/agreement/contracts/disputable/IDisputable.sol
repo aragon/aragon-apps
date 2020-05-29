@@ -13,11 +13,11 @@ import "../standards/ERC165.sol";
 
 contract IDisputable is IForwarder, ERC165 {
     bytes4 internal constant ERC165_INTERFACE_ID = bytes4(0x01ffc9a7);
-    bytes4 internal constant DISPUTABLE_INTERFACE_ID = bytes4(0x5fca5d80);
+    bytes4 internal constant DISPUTABLE_INTERFACE_ID = bytes4(0xa9c298dc);
 
     function setAgreement(IAgreement _agreement) external;
 
-    function onDisputableChallenged(uint256 _disputableId, address _challenger) external;
+    function onDisputableChallenged(uint256 _disputableId, uint256 _challengeId, address _challenger) external;
 
     function onDisputableAllowed(uint256 _disputableId) external;
 

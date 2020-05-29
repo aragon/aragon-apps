@@ -18,11 +18,11 @@ contract IAgreement is IArbitrable, IACLOracle {
 
     function closeAction(uint256 _actionId) external;
 
-    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bytes _context) external;
+    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bool _finishedSubmittingEvidence, bytes _context) external;
 
     function settle(uint256 _actionId) external;
 
-    function disputeAction(uint256 _actionId) external;
+    function disputeAction(uint256 _actionId, bool _finishedSubmittingEvidence) external;
 
     function register(
         IDisputable _disputable,

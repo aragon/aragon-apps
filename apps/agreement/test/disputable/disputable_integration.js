@@ -64,8 +64,10 @@ contract('DisputableApp', ([_, challenger, holder0, holder1, holder2, holder3, h
 
     it('challenges the expected actions', async () => {
       const challengedActions = actions.filter(action => !!action.settlementOffer)
-      for (const { id, settlementOffer } of challengedActions) {
-        await disputable.challenge({ actionId: id, settlementOffer, challenger })
+      for (const action of challengedActions) {
+        const { id, settlementOffer } = action
+        const { challengeId } = await disputable.challenge({ actionId: id, settlementOffer, challenger })
+        action.challengeId = challengeId
         const { state } = await disputable.getAction(id)
         assert.equal(state, ACTIONS_STATE.CHALLENGED, `action ${id} is not challenged`)
       }
@@ -73,22 +75,22 @@ contract('DisputableApp', ([_, challenger, holder0, holder1, holder2, holder3, h
 
     it('settles the expected actions', async () => {
       const settledActions = actions.filter(action => action.settled)
-      for (const { id } of settledActions) {
+      for (const { id, challengeId } of settledActions) {
         await disputable.settle({ actionId: id })
-        const { state } = await disputable.getChallenge(id)
+        const { state } = await disputable.getChallenge(challengeId)
         assert.equal(state, CHALLENGES_STATE.SETTLED, `action ${id} is not settled`)
       }
     })
 
-    it('disputes the expected actions', async () => {
+    it('disputes and rules the expected actions', async () => {
       const disputedActions = actions.filter(action => !!action.ruling)
-      for (const { id, ruling } of disputedActions) {
+      for (const { id, challengeId, ruling } of disputedActions) {
         await disputable.dispute({ actionId: id })
-        const { state } = await disputable.getChallenge(id)
+        const { state } = await disputable.getChallenge(challengeId)
         assert.equal(state, CHALLENGES_STATE.DISPUTED, `action ${id} is not disputed`)
 
         await disputable.executeRuling({ actionId: id, ruling })
-        const { ruling: actualRuling } = await disputable.getDispute(id)
+        const { ruling: actualRuling } = await disputable.getChallenge(challengeId)
         assertBn(actualRuling, ruling, `action ${id} is not ruled`)
       }
     })
@@ -102,11 +104,12 @@ contract('DisputableApp', ([_, challenger, holder0, holder1, holder2, holder3, h
       }
     })
 
-    it('closes not challenged or challenge-rejected actions', async () => {
-      const closedActions = actions.filter(action => (!action.settlementOffer && !action.closed && !action.ruling) || action.ruling === RULINGS.IN_FAVOR_OF_SUBMITTER)
+    it('closes not challenged or challenge-accepted actions', async () => {
+      const closedActions = actions.filter(action => (!action.settlementOffer && !action.closed && !action.ruling) || action.ruling === RULINGS.REFUSED || action.ruling === RULINGS.IN_FAVOR_OF_SUBMITTER)
       for (const { id } of closedActions) {
         const canProceed = await disputable.agreement.canProceed(id)
         assert.isTrue(canProceed, `action ${id} cannot proceed`)
+
         await disputable.close({ actionId: id })
         const { state } = await disputable.getAction(id)
         assert.equal(state, ACTIONS_STATE.CLOSED, `action ${id} is not closed`)

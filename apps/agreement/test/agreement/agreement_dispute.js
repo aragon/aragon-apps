@@ -39,10 +39,11 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
           })
 
           context('when the action was challenged', () => {
+            let challengeId
             const challengeContext = '0x123456'
 
             beforeEach('challenge action', async () => {
-              await agreement.challenge({ actionId, challenger, challengeContext })
+              ({ challengeId } = await agreement.challenge({ actionId, challenger, challengeContext }))
             })
 
             context('when the challenge was not answered', () => {
@@ -57,7 +58,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     const from = submitter
 
                     it('updates the challenge state only and its associated dispute', async () => {
-                      const previousChallengeState = await agreement.getChallenge(actionId)
+                      const previousChallengeState = await agreement.getChallenge(challengeId)
 
                       const receipt = await agreement.dispute({ actionId, from, arbitrationFees })
 
@@ -65,7 +66,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       const logs = decodeEventsOfType(receipt, IArbitrator.abi, 'NewDispute')
                       const disputeId = getEventArgument({ logs }, 'NewDispute', 'disputeId');
 
-                      const currentChallengeState = await agreement.getChallenge(actionId)
+                      const currentChallengeState = await agreement.getChallenge(challengeId)
                       assertBn(currentChallengeState.disputeId, disputeId, 'challenge dispute ID does not match')
                       assertBn(currentChallengeState.state, CHALLENGES_STATE.DISPUTED, 'challenge state does not match')
 
@@ -93,27 +94,23 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                     it('creates a dispute', async () => {
                       const receipt = await agreement.dispute({ actionId, from, arbitrationFees })
+                      const { disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await agreement.getChallenge(challengeId)
 
-                      const IArbitrator = artifacts.require('ArbitratorMock')
-                      const logs = decodeEventsOfType(receipt, IArbitrator.abi, 'NewDispute')
-                      const { disputeId } = await agreement.getChallenge(actionId)
-
-                      assertAmountOfEvents({ logs }, 'NewDispute', 1)
-                      assertEvent({ logs }, 'NewDispute', { disputeId, possibleRulings: 2, metadata: await agreement.getCurrentContent() })
-
-                      const { ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await agreement.getDispute(actionId)
                       assertBn(ruling, RULINGS.MISSING, 'ruling does not match')
                       assert.isFalse(submitterFinishedEvidence, 'submitter finished evidence')
                       assert.isFalse(challengerFinishedEvidence, 'challenger finished evidence')
+
+                      const IArbitrator = artifacts.require('ArbitratorMock')
+                      const logs = decodeEventsOfType(receipt, IArbitrator.abi, 'NewDispute')
+                      assertAmountOfEvents({ logs }, 'NewDispute', 1)
+                      assertEvent({ logs }, 'NewDispute', { disputeId, possibleRulings: 2, metadata: await agreement.getCurrentContent() })
                     })
 
                     it('submits both parties context as evidence', async () => {
                       const receipt = await agreement.dispute({ actionId, from, arbitrationFees })
+                      const { disputeId } = await agreement.getChallenge(challengeId)
 
-                      const IArbitrable = artifacts.require('IArbitrable')
-                      const logs = decodeEventsOfType(receipt, IArbitrable.abi, 'EvidenceSubmitted')
-                      const { disputeId } = await agreement.getChallenge(actionId)
-
+                      const logs = decodeEventsOfType(receipt, agreement.abi, 'EvidenceSubmitted')
                       assertAmountOfEvents({ logs }, 'EvidenceSubmitted', 2)
                       assertEvent({ logs }, 'EvidenceSubmitted', { disputeId, submitter: submitter, evidence: actionContext, finished: false }, 0)
                       assertEvent({ logs }, 'EvidenceSubmitted', { disputeId, submitter: challenger, evidence: challengeContext, finished: false }, 1)
@@ -150,10 +147,11 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     })
 
                     it('emits an event', async () => {
+                      const { currentChallengeId } = await agreement.getAction(actionId)
                       const receipt = await agreement.dispute({ actionId, from, arbitrationFees })
 
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, 1)
-                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, { actionId })
+                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, { actionId, challengeId: currentChallengeId })
                     })
 
                     it('can only be ruled or submit evidence', async () => {
@@ -285,7 +283,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
               context('in the middle of the answer period', () => {
                 beforeEach('move before settlement period end date', async () => {
-                  await agreement.moveBeforeChallengeEndDate(actionId)
+                  await agreement.moveBeforeChallengeEndDate(challengeId)
                 })
 
                 itDisputesTheChallengeProperlyDespiteArbitrationFees()
@@ -293,7 +291,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
               context('at the end of the answer period', () => {
                 beforeEach('move to the settlement period end date', async () => {
-                  await agreement.moveToChallengeEndDate(actionId)
+                  await agreement.moveToChallengeEndDate(challengeId)
                 })
 
                 itDisputesTheChallengeProperlyDespiteArbitrationFees()
@@ -301,7 +299,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
               context('after the answer period', () => {
                 beforeEach('move after the settlement period end date', async () => {
-                  await agreement.moveAfterChallengeEndDate(actionId)
+                  await agreement.moveAfterChallengeEndDate(challengeId)
                 })
 
                 itCannotBeDisputed()
@@ -327,6 +325,24 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 context('when the dispute was ruled', () => {
+                  context('when the dispute was refused', () => {
+                    beforeEach('rule action', async () => {
+                      await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
+                    })
+
+                    context('when the action was not closed', () => {
+                      itCannotBeDisputed()
+                    })
+
+                    context('when the action was closed', () => {
+                      beforeEach('close action', async () => {
+                        await agreement.close({ actionId })
+                      })
+
+                      itCannotBeDisputed()
+                    })
+                  })
+
                   context('when the dispute was ruled in favor the submitter', () => {
                     beforeEach('rule action', async () => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
@@ -348,14 +364,6 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   context('when the dispute was ruled in favor the challenger', () => {
                     beforeEach('rule action', async () => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
-                    })
-
-                    itCannotBeDisputed()
-                  })
-
-                  context('when the dispute was refused', () => {
-                    beforeEach('rule action', async () => {
-                      await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
                     })
 
                     itCannotBeDisputed()

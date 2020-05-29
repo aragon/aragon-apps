@@ -1,6 +1,5 @@
 const { assertBn } = require('../helpers/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
@@ -34,18 +33,20 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
           })
 
           context('when the action was challenged', () => {
+            let challengeId
+
             beforeEach('challenge action', async () => {
-              await agreement.challenge({ actionId, challenger })
+              ({ challengeId } = await agreement.challenge({ actionId, challenger }))
             })
 
             context('when the challenge was not answered', () => {
               const itSettlesTheChallengeProperly = from => {
                 it('updates the challenge state only', async () => {
-                  const previousChallengeState = await agreement.getChallenge(actionId)
+                  const previousChallengeState = await agreement.getChallenge(challengeId)
 
                   await agreement.settle({ actionId, from })
 
-                  const currentChallengeState = await agreement.getChallenge(actionId)
+                  const currentChallengeState = await agreement.getChallenge(challengeId)
                   assertBn(currentChallengeState.state, CHALLENGES_STATE.SETTLED, 'challenge state does not match')
 
                   assert.equal(currentChallengeState.context, previousChallengeState.context, 'challenge context does not match')
@@ -72,7 +73,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 it('slashes the submitter challenged balance', async () => {
-                  const { settlementOffer } = await agreement.getChallenge(actionId)
+                  const { settlementOffer } = await agreement.getChallenge(challengeId)
                   const { available: previousAvailableBalance, locked: previousLockedBalance } = await agreement.getBalance(submitter)
 
                   await agreement.settle({ actionId, from })
@@ -87,7 +88,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 it('transfers the settlement offer and the collateral to the challenger', async () => {
                   const stakingAddress = await agreement.getStakingAddress()
                   const { collateralToken, challengeCollateral } = agreement
-                  const { settlementOffer } = await agreement.getChallenge(actionId)
+                  const { settlementOffer } = await agreement.getChallenge(challengeId)
 
                   const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
                   const previousAgreementBalance = await collateralToken.balanceOf(agreement.address)
@@ -122,10 +123,11 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 it('emits an event', async () => {
+                  const { currentChallengeId } = await agreement.getAction(actionId)
                   const receipt = await agreement.settle({ actionId, from })
 
                   assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, 1)
-                  assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, { actionId })
+                  assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, { actionId, challengeId: currentChallengeId })
                 })
 
                 it('there are no more paths allowed', async () => {
@@ -191,7 +193,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
               context('in the middle of the answer period', () => {
                 beforeEach('move before settlement period end date', async () => {
-                  await agreement.moveBeforeChallengeEndDate(actionId)
+                  await agreement.moveBeforeChallengeEndDate(challengeId)
                 })
 
                 itCanOnlyBeSettledByTheSubmitter()
@@ -199,7 +201,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
               context('at the end of the answer period', () => {
                 beforeEach('move to the settlement period end date', async () => {
-                  await agreement.moveToChallengeEndDate(actionId)
+                  await agreement.moveToChallengeEndDate(challengeId)
                 })
 
                 itCanOnlyBeSettledByTheSubmitter()
@@ -207,7 +209,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
               context('after the answer period', () => {
                 beforeEach('move after the settlement period end date', async () => {
-                  await agreement.moveAfterChallengeEndDate(actionId)
+                  await agreement.moveAfterChallengeEndDate(challengeId)
                 })
 
                 itCanBeSettledByAnyone()
@@ -233,6 +235,24 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 context('when the dispute was ruled', () => {
+                  context('when the dispute was refused', () => {
+                    beforeEach('rule action', async () => {
+                      await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
+                    })
+
+                    context('when the action was not closed', () => {
+                      itCannotSettleAction()
+                    })
+
+                    context('when the action was closed', () => {
+                      beforeEach('close action', async () => {
+                        await agreement.close({ actionId })
+                      })
+
+                      itCannotSettleAction()
+                    })
+                  })
+
                   context('when the dispute was ruled in favor the submitter', () => {
                     beforeEach('rule action', async () => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
@@ -254,14 +274,6 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   context('when the dispute was ruled in favor the challenger', () => {
                     beforeEach('rule action', async () => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
-                    })
-
-                    itCannotSettleAction()
-                  })
-
-                  context('when the dispute was refused', () => {
-                    beforeEach('rule action', async () => {
-                      await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
                     })
 
                     itCannotSettleAction()

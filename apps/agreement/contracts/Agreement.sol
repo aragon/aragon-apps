@@ -75,13 +75,13 @@ contract Agreement is IAgreement, AragonApp {
     event Signed(address indexed signer, uint256 contentId);
     event ContentChanged(uint256 contentId);
     event ActionSubmitted(uint256 indexed actionId);
-    event ActionChallenged(uint256 indexed actionId);
-    event ActionSettled(uint256 indexed actionId);
-    event ActionDisputed(uint256 indexed actionId);
-    event ActionAccepted(uint256 indexed actionId);
-    event ActionVoided(uint256 indexed actionId);
-    event ActionRejected(uint256 indexed actionId);
     event ActionClosed(uint256 indexed actionId);
+    event ActionChallenged(uint256 indexed actionId, uint256 indexed challengeId);
+    event ActionSettled(uint256 indexed actionId, uint256 indexed challengeId);
+    event ActionDisputed(uint256 indexed actionId, uint256 indexed challengeId);
+    event ActionAccepted(uint256 indexed actionId, uint256 indexed challengeId);
+    event ActionVoided(uint256 indexed actionId, uint256 indexed challengeId);
+    event ActionRejected(uint256 indexed actionId, uint256 indexed challengeId);
     event DisputableAppRegistered(IDisputable indexed disputable);
     event DisputableAppUnregistered(IDisputable indexed disputable);
     event CollateralRequirementChanged(IDisputable indexed disputable, uint256 id);
@@ -106,27 +106,24 @@ contract Agreement is IAgreement, AragonApp {
         uint256 disputableId;               // Identification number of the disputable action in the context of the disputable instance
         uint256 collateralId;               // Identification number of the collateral requirements for the given action
         address submitter;                  // Address that has submitted the action
-        bytes context;                      // Link to a human-readable text giving context for the given action
         ActionState state;                  // Current state of the action
-        Challenge challenge;                // Associated challenge instance
+        bytes context;                      // Link to a human-readable text giving context for the given action
+        uint256 currentChallengeId;         // Total number of challenges of the action
     }
 
     struct Challenge {
+        uint256 actionId;                   // Identification number of the action associated to the challenge
         address challenger;                 // Address that challenged the action
-        uint64 endDate;                     // End date of the challenge, after that date is when the action submitter can answer the challenge
+        uint64 endDate;                     // End date of the challenge until when the submitter can answer the challenge
         bytes context;                      // Link to a human-readable text giving context for the challenge
         uint256 settlementOffer;            // Amount of collateral tokens the challenger would accept without involving the arbitrator
-        uint256 arbitratorFeeAmount;        // Amount of arbitration fees paid by the challenger in advance in case the challenge is disputed
+        uint256 arbitratorFeeAmount;        // Amount of arbitration fees paid by the challenger in advance
         ERC20 arbitratorFeeToken;           // ERC20 token used for the arbitration fees paid by the challenger in advance
         ChallengeState state;               // Current state of the action challenge
-        uint256 disputeId;                  // Identification number of the dispute for the arbitrator
-    }
-
-    struct Dispute {
-        uint256 ruling;                     // Ruling given for the action dispute
-        uint256 actionId;                   // Identification number of the action being queried
         bool submitterFinishedEvidence;     // Whether the action submitter has finished submitting evidence for the action dispute
         bool challengerFinishedEvidence;    // Whether the action challenger has finished submitting evidence for the action dispute
+        uint256 disputeId;                  // Identification number of the dispute for the arbitrator
+        uint256 ruling;                     // Ruling given for the action dispute
     }
 
     struct CollateralRequirement {
@@ -138,23 +135,26 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     struct DisputableInfo {
-        bool registered;                    // Whether a Disputable app is registered or not
-        uint256 requirementsLength;         // Number of collateral requirements existing for a disputable app
-        mapping (uint256 => CollateralRequirement) collateralRequirements; // List of collateral requirements indexed by id
+        bool registered;                                                    // Whether a Disputable app is registered or not
+        uint256 collateralRequirementsLength;                               // Identification number of the next collateral requirement instance
+        mapping (uint256 => CollateralRequirement) collateralRequirements;  // List of collateral requirements indexed by id
     }
 
     string public title;                    // Title identifying the Agreement instance
     IArbitrator public arbitrator;          // Arbitrator instance that will resolve disputes
     StakingFactory public stakingFactory;   // Staking factory to be used for the collateral staking pools
 
-    uint256 private actionsLength;
     uint256 private contentsLength;
+    mapping (uint256 => bytes) private contents;                    // List of historic contents indexed by ID
+    mapping (address => uint256) private lastContentSignedBy;       // List of last contents signed by user
 
-    mapping (uint256 => bytes) private contents;                // List of historic contents indexed by ID
-    mapping (uint256 => Action) private actions;                // List of actions indexed by ID
-    mapping (uint256 => Dispute) private disputes;              // List of disputes indexed by dispute ID
-    mapping (address => uint256) private lastContentSignedBy;   // List of last contents signed by user
-    mapping (address => DisputableInfo) private disputableInfos;// List of disputable infos indexed by disputable address
+    uint256 private actionsLength;
+    mapping (uint256 => Action) private actions;                    // List of actions indexed by ID
+    mapping (address => DisputableInfo) private disputableInfos;    // List of disputable infos indexed by disputable address
+
+    uint256 private challengesLength;
+    mapping (uint256 => Challenge) private challenges;              // List of challenges indexed by ID
+    mapping (uint256 => uint256) private challengeByDispute;        // List of challenge IDs indexed by dispute ID
 
     /**
     * @notice Initialize Agreement app for `_title` and content `_content`, with arbitrator `_arbitrator` and staking factory `_factory`
@@ -173,196 +173,6 @@ contract Agreement is IAgreement, AragonApp {
         stakingFactory = _stakingFactory;
 
         contentsLength++; // Content zero is considered the null content for further validations
-        _newContent(_content);
-    }
-
-    /**
-    * @notice Sign the agreement
-    */
-    function sign() external {
-        uint256 lastContentIdSigned = lastContentSignedBy[msg.sender];
-        uint256 currentContentId = _getCurrentContentId();
-        require(lastContentIdSigned < currentContentId, ERROR_SIGNER_ALREADY_SIGNED);
-
-        lastContentSignedBy[msg.sender] = currentContentId;
-        emit Signed(msg.sender, currentContentId);
-    }
-
-    /**
-    * @notice Register a new action for disputable `msg.sender` #`_disputableId` for submitter `_submitter` with context `_context`
-    * @dev This function should be called from the disputable app registered on the Agreement every time a new disputable is created in the app.this
-    *      Each disputable ID must be registered only once, this is how the Agreements notices about each disputable action.
-    * @param _disputableId Identification number of the disputable action in the context of the disputable instance
-    * @param _submitter Address of the user that has submitted the action
-    * @param _context Link to a human-readable text giving context for the given action
-    * @return Unique identification number for the created action in the context of the agreement
-    */
-    function newAction(uint256 _disputableId, address _submitter, bytes _context) external returns (uint256) {
-        uint256 lastContentIdSigned = lastContentSignedBy[_submitter];
-        require(lastContentIdSigned >= _getCurrentContentId(), ERROR_SIGNER_MUST_SIGN);
-
-        DisputableInfo storage disputableInfo = disputableInfos[msg.sender];
-        _ensureRegisteredDisputable(disputableInfo);
-
-        uint256 currentCollateralRequirementId = _getCurrentCollateralRequirementId(disputableInfo);
-        CollateralRequirement storage requirement = disputableInfo.collateralRequirements[currentCollateralRequirementId];
-        _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
-
-        uint256 id = actionsLength++;
-        Action storage action = actions[id];
-        action.disputable = IDisputable(msg.sender);
-        action.collateralId = currentCollateralRequirementId;
-        action.disputableId = _disputableId;
-        action.submitter = _submitter;
-        action.context = _context;
-
-        emit ActionSubmitted(id);
-        return id;
-    }
-
-    /**
-    * @notice Mark action #`_actionId` as closed
-    * @dev This function can only be called by disputable apps that have registered a disputable action previously. These apps will be able to
-    *      close their registered actions if these are not challenged or ruled in favor of the submitter. To detect if that's possible before
-    *      hand, users can rely on `canProceed`.
-    * @param _actionId Identification number of the action to be closed
-    */
-    function closeAction(uint256 _actionId) external {
-        Action storage action = _getAction(_actionId);
-        require(_canProceed(action), ERROR_CANNOT_CLOSE_ACTION);
-
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
-        require(disputable == IDisputable(msg.sender), ERROR_SENDER_NOT_ALLOWED);
-
-        if (action.state == ActionState.Submitted) {
-            _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
-        }
-
-        action.state = ActionState.Closed;
-        emit ActionClosed(_actionId);
-    }
-
-    /**
-    * @notice Challenge action #`_actionId`
-    * @param _actionId Identification number of the action to be challenged
-    * @param _settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
-    * @param _context Link to a human-readable text giving context for the challenge
-    */
-    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bytes _context) external {
-        Action storage action = _getAction(_actionId);
-        require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
-
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
-        require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
-        require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
-
-        action.state = ActionState.Challenged;
-        _createChallenge(action, msg.sender, requirement, _settlementOffer, _context);
-        disputable.onDisputableChallenged(action.disputableId, msg.sender);
-        emit ActionChallenged(_actionId);
-    }
-
-    /**
-    * @notice Settle challenged action #`_actionId` accepting the settlement offer
-    * @param _actionId Identification number of the action to be settled
-    */
-    function settle(uint256 _actionId) external {
-        Action storage action = _getAction(_actionId);
-        Challenge storage challenge = action.challenge;
-        address submitter = action.submitter;
-        address challenger = challenge.challenger;
-
-        if (msg.sender == submitter) {
-            require(_canSettle(action), ERROR_CANNOT_SETTLE_ACTION);
-        } else {
-            require(_canClaimSettlement(action), ERROR_CANNOT_SETTLE_ACTION);
-        }
-
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
-        uint256 actionCollateral = requirement.actionAmount;
-        uint256 settlementOffer = challenge.settlementOffer;
-
-        // The settlement offer was already checked to be up-to the collateral amount
-        // However, we cap it to collateral amount to double check
-        uint256 slashedAmount = settlementOffer >= actionCollateral ? actionCollateral : settlementOffer;
-        uint256 unlockedAmount = actionCollateral - slashedAmount;
-
-        _unlockAndSlashBalance(requirement.staking, submitter, unlockedAmount, challenger, slashedAmount);
-        _transfer(requirement.token, challenger, requirement.challengeAmount);
-        _transfer(challenge.arbitratorFeeToken, challenger, challenge.arbitratorFeeAmount);
-
-        challenge.state = ChallengeState.Settled;
-        disputable.onDisputableRejected(action.disputableId);
-        emit ActionSettled(_actionId);
-    }
-
-    /**
-    * @notice Dispute challenged action #`_actionId` raising it to the arbitrator
-    * @dev It can only be disputed if the action was previously challenged
-    * @param _actionId Identification number of the action to be disputed
-    */
-    function disputeAction(uint256 _actionId) external {
-        Action storage action = _getAction(_actionId);
-        require(_canDispute(action), ERROR_CANNOT_DISPUTE_ACTION);
-        require(msg.sender == action.submitter, ERROR_SENDER_NOT_ALLOWED);
-
-        Challenge storage challenge = action.challenge;
-        uint256 disputeId = _createDispute(action);
-        challenge.state = ChallengeState.Disputed;
-        challenge.disputeId = disputeId;
-        disputes[disputeId].actionId = _actionId;
-        emit ActionDisputed(_actionId);
-    }
-
-    /**
-    * @notice Submit evidence for the action associated to dispute #`_disputeId`
-    * @param _disputeId Identification number of the dispute for the arbitrator
-    * @param _evidence Data submitted for the evidence related to the dispute
-    * @param _finished Whether or not the submitter has finished submitting evidence
-    */
-    function submitEvidence(uint256 _disputeId, bytes _evidence, bool _finished) external {
-        (Action storage action, Dispute storage dispute) = _getActionAndDispute(_disputeId);
-        require(_isDisputed(action), ERROR_CANNOT_SUBMIT_EVIDENCE);
-
-        bool finished = _registerEvidence(action, dispute, msg.sender, _finished);
-        _submitEvidence(_disputeId, msg.sender, _evidence, _finished);
-        if (finished) {
-            arbitrator.closeEvidencePeriod(_disputeId);
-        }
-    }
-
-    /**
-    * @notice Rule action associated to dispute #`_disputeId` with ruling `_ruling`
-    * @param _disputeId Identification number of the dispute for the arbitrator
-    * @param _ruling Ruling given by the arbitrator
-    */
-    function rule(uint256 _disputeId, uint256 _ruling) external {
-        (Action storage action, Dispute storage dispute) = _getActionAndDispute(_disputeId);
-        require(_isDisputed(action), ERROR_CANNOT_RULE_ACTION);
-
-        IArbitrator currentArbitrator = arbitrator;
-        require(currentArbitrator == IArbitrator(msg.sender), ERROR_SENDER_NOT_ALLOWED);
-
-        dispute.ruling = _ruling;
-        emit Ruled(currentArbitrator, _disputeId, _ruling);
-
-        if (_ruling == DISPUTES_RULING_SUBMITTER) {
-            _rejectChallenge(action);
-            emit ActionAccepted(dispute.actionId);
-        } else if (_ruling == DISPUTES_RULING_CHALLENGER) {
-            _acceptChallenge(action);
-            emit ActionRejected(dispute.actionId);
-        } else {
-            _voidChallenge(action);
-            emit ActionVoided(dispute.actionId);
-        }
-    }
-
-    /**
-    * @notice Change Agreement content to `_content`
-    * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
-    */
-    function changeContent(bytes _content) external auth(CHANGE_CONTENT_ROLE) {
         _newContent(_content);
     }
 
@@ -434,6 +244,199 @@ contract Agreement is IAgreement, AragonApp {
         _changeCollateralRequirement(_disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
     }
 
+    /**
+    * @notice Change Agreement content to `_content`
+    * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
+    */
+    function changeContent(bytes _content) external auth(CHANGE_CONTENT_ROLE) {
+        _newContent(_content);
+    }
+
+    /**
+    * @notice Sign the agreement
+    */
+    function sign() external {
+        uint256 currentContentId = _getCurrentContentId();
+        uint256 lastContentIdSigned = lastContentSignedBy[msg.sender];
+        require(lastContentIdSigned < currentContentId, ERROR_SIGNER_ALREADY_SIGNED);
+
+        lastContentSignedBy[msg.sender] = currentContentId;
+        emit Signed(msg.sender, currentContentId);
+    }
+
+    /**
+    * @notice Register a new action for disputable `msg.sender` #`_disputableId` for submitter `_submitter` with context `_context`
+    * @dev This function should be called from the disputable app registered on the Agreement every time a new disputable is created in the app.this
+    *      Each disputable ID must be registered only once, this is how the Agreements notices about each disputable action.
+    * @param _disputableId Identification number of the disputable action in the context of the disputable instance
+    * @param _submitter Address of the user that has submitted the action
+    * @param _context Link to a human-readable text giving context for the given action
+    * @return Unique identification number for the created action in the context of the agreement
+    */
+    function newAction(uint256 _disputableId, address _submitter, bytes _context) external returns (uint256) {
+        uint256 lastContentIdSigned = lastContentSignedBy[_submitter];
+        require(lastContentIdSigned >= _getCurrentContentId(), ERROR_SIGNER_MUST_SIGN);
+
+        DisputableInfo storage disputableInfo = disputableInfos[msg.sender];
+        _ensureRegisteredDisputable(disputableInfo);
+
+        uint256 currentCollateralRequirementId = disputableInfo.collateralRequirementsLength.sub(1);
+        CollateralRequirement storage requirement = disputableInfo.collateralRequirements[currentCollateralRequirementId];
+        _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
+
+        uint256 id = actionsLength++;
+        Action storage action = actions[id];
+        action.disputable = IDisputable(msg.sender);
+        action.collateralId = currentCollateralRequirementId;
+        action.disputableId = _disputableId;
+        action.submitter = _submitter;
+        action.context = _context;
+
+        emit ActionSubmitted(id);
+        return id;
+    }
+
+    /**
+    * @notice Mark action #`_actionId` as closed
+    * @dev This function can only be called by disputable apps that have registered a disputable action previously. These apps will be able to
+    *      close their registered actions if these are not challenged or ruled in favor of the submitter. To detect if that's possible before
+    *      hand, users can rely on `canProceed`.
+    * @param _actionId Identification number of the action to be closed
+    */
+    function closeAction(uint256 _actionId) external {
+        (Action storage action, Challenge storage challenge, ) = _getChallengedAction(_actionId);
+        require(_canProceed(action), ERROR_CANNOT_CLOSE_ACTION);
+
+        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        require(disputable == IDisputable(msg.sender), ERROR_SENDER_NOT_ALLOWED);
+
+        // Unlock balance if there was no challenge, we already checked the action is submitted (can proceed)
+        if (_wasNotChallenged(_actionId, challenge)) {
+            _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
+        }
+
+        action.state = ActionState.Closed;
+        emit ActionClosed(_actionId);
+    }
+
+    /**
+    * @notice Challenge action #`_actionId`
+    * @param _actionId Identification number of the action to be challenged
+    * @param _settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
+    * @param _finishedSubmittingEvidence Whether or not the challenger has finished submitting evidence
+    * @param _context Link to a human-readable text giving context for the challenge
+    */
+    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bool _finishedSubmittingEvidence, bytes _context) external {
+        Action storage action = _getAction(_actionId);
+        require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
+
+        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
+        require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
+
+        uint256 challengeId = _createChallenge(_actionId, msg.sender, requirement, _settlementOffer, _finishedSubmittingEvidence, _context);
+        action.state = ActionState.Challenged;
+        action.currentChallengeId = challengeId;
+        disputable.onDisputableChallenged(action.disputableId, challengeId, msg.sender);
+        emit ActionChallenged(_actionId, challengeId);
+    }
+
+    /**
+    * @notice Settle challenged action #`_actionId` accepting the settlement offer
+    * @param _actionId Identification number of the action to be settled
+    */
+    function settle(uint256 _actionId) external {
+        (Action storage action, Challenge storage challenge, uint256 challengeId) = _getChallengedAction(_actionId);
+        address submitter = action.submitter;
+
+        if (msg.sender == submitter) {
+            require(_canSettle(_actionId, action, challenge), ERROR_CANNOT_SETTLE_ACTION);
+        } else {
+            require(_canClaimSettlement(_actionId, action, challenge), ERROR_CANNOT_SETTLE_ACTION);
+        }
+
+        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        uint256 actionCollateral = requirement.actionAmount;
+        uint256 settlementOffer = challenge.settlementOffer;
+
+        // The settlement offer was already checked to be up-to the collateral amount
+        // However, we cap it to collateral amount to double check
+        uint256 slashedAmount = settlementOffer >= actionCollateral ? actionCollateral : settlementOffer;
+        uint256 unlockedAmount = actionCollateral - slashedAmount;
+
+        address challenger = challenge.challenger;
+        _unlockAndSlashBalance(requirement.staking, submitter, unlockedAmount, challenger, slashedAmount);
+        _transfer(requirement.token, challenger, requirement.challengeAmount);
+        _transfer(challenge.arbitratorFeeToken, challenger, challenge.arbitratorFeeAmount);
+
+        challenge.state = ChallengeState.Settled;
+        disputable.onDisputableRejected(action.disputableId);
+        emit ActionSettled(_actionId, challengeId);
+    }
+
+    /**
+    * @notice Dispute challenged action #`_actionId` raising it to the arbitrator
+    * @dev It can only be disputed if the action was previously challenged
+    * @param _actionId Identification number of the action to be disputed
+    * @param _submitterFinishedEvidence Whether or not the submitter finished submitting evidence
+    */
+    function disputeAction(uint256 _actionId, bool _submitterFinishedEvidence) external {
+        (Action storage action, Challenge storage challenge, uint256 challengeId) = _getChallengedAction(_actionId);
+        require(_canDispute(_actionId, action, challenge), ERROR_CANNOT_DISPUTE_ACTION);
+        require(msg.sender == action.submitter, ERROR_SENDER_NOT_ALLOWED);
+
+        uint256 disputeId = _createDispute(action, challenge, _submitterFinishedEvidence);
+        challenge.state = ChallengeState.Disputed;
+        challenge.disputeId = disputeId;
+        challenge.submitterFinishedEvidence = _submitterFinishedEvidence;
+        challengeByDispute[disputeId] = challengeId;
+        emit ActionDisputed(_actionId, challengeId);
+    }
+
+    /**
+    * @notice Submit evidence for the action associated to dispute #`_disputeId`
+    * @param _disputeId Identification number of the dispute for the arbitrator
+    * @param _evidence Data submitted for the evidence related to the dispute
+    * @param _finished Whether or not the submitter has finished submitting evidence
+    */
+    function submitEvidence(uint256 _disputeId, bytes _evidence, bool _finished) external {
+        (uint256 _actionId, Action storage action, , Challenge storage challenge) = _getDisputedAction(_disputeId);
+        require(_isDisputed(_actionId, action, challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
+
+        bool finished = _registerEvidence(action, challenge, msg.sender, _finished);
+        _submitEvidence(_disputeId, msg.sender, _evidence, _finished);
+        if (finished) {
+            arbitrator.closeEvidencePeriod(_disputeId);
+        }
+    }
+
+    /**
+    * @notice Rule action associated to dispute #`_disputeId` with ruling `_ruling`
+    * @param _disputeId Identification number of the dispute for the arbitrator
+    * @param _ruling Ruling given by the arbitrator
+    */
+    function rule(uint256 _disputeId, uint256 _ruling) external {
+        (uint256 actionId, Action storage action, uint256 challengeId, Challenge storage challenge) = _getDisputedAction(_disputeId);
+        require(_canRuleDispute(actionId, action, challenge), ERROR_CANNOT_RULE_ACTION);
+
+        IArbitrator currentArbitrator = arbitrator;
+        require(currentArbitrator == IArbitrator(msg.sender), ERROR_SENDER_NOT_ALLOWED);
+
+        challenge.ruling = _ruling;
+        emit Ruled(currentArbitrator, _disputeId, _ruling);
+
+        if (_ruling == DISPUTES_RULING_SUBMITTER) {
+            _rejectChallenge(action, challenge);
+            emit ActionAccepted(actionId, challengeId);
+        } else if (_ruling == DISPUTES_RULING_CHALLENGER) {
+            _acceptChallenge(action, challenge);
+            emit ActionRejected(actionId, challengeId);
+        } else {
+            _voidChallenge(action, challenge);
+            emit ActionVoided(actionId, challengeId);
+        }
+    }
+
     // Getter fns
 
     /**
@@ -452,87 +455,79 @@ contract Agreement is IAgreement, AragonApp {
     * @return disputable Address of the disputable that created the action
     * @return disputableId Identification number of the disputable action in the context of the disputable
     * @return collateralId Identification number of the collateral requirements for the given action
-    * @return context Link to a human-readable text giving context for the given action
     * @return state Current state of the action
     * @return submitter Address that has submitted the action
+    * @return context Link to a human-readable text giving context for the given action
+    * @return currentChallengeId Identification number of the current challenge associated to the queried action
     */
     function getAction(uint256 _actionId) external view
         returns (
             address disputable,
             uint256 disputableId,
             uint256 collateralId,
-            bytes context,
             ActionState state,
-            address submitter
+            address submitter,
+            bytes context,
+            uint256 currentChallengeId
         )
     {
         Action storage action = _getAction(_actionId);
+
         disputable = action.disputable;
         disputableId = action.disputableId;
         collateralId = action.collateralId;
-        context = action.context;
         state = action.state;
         submitter = action.submitter;
+        context = action.context;
+        currentChallengeId = action.currentChallengeId;
     }
 
     /**
     * @dev Tell the information related to an action challenge
-    * @param _actionId Identification number of the action being queried
-    * @return context Link to a human-readable text giving context for the challenge
+    * @param _challengeId Identification number of the challenge being queried
+    * @return actionId Identification number of the action associated to the challenge
     * @return challenger Address that challenged the action
     * @return endDate Datetime until when the action submitter can answer the challenge
+    * @return context Link to a human-readable text giving context for the challenge
     * @return settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
     * @return arbitratorFeeAmount Amount of arbitration fees paid by the challenger in advance in case the challenge is raised to the arbitrator
     * @return arbitratorFeeToken ERC20 token used for the arbitration fees paid by the challenger in advance
     * @return state Current state of the action challenge
+    * @return submitterFinishedEvidence Whether the action submitter has finished submitting evidence for the action dispute
+    * @return challengerFinishedEvidence Whether the action challenger has finished submitting evidence for the action dispute
     * @return disputeId Identification number of the dispute for the arbitrator
+    * @return ruling Ruling given for the action dispute
     */
-    function getChallenge(uint256 _actionId) external view
+    function getChallenge(uint256 _challengeId) external view
         returns (
-            bytes context,
+            uint256 actionId,
             address challenger,
             uint64 endDate,
+            bytes context,
             uint256 settlementOffer,
             uint256 arbitratorFeeAmount,
             ERC20 arbitratorFeeToken,
             ChallengeState state,
-            uint256 disputeId
+            bool submitterFinishedEvidence,
+            bool challengerFinishedEvidence,
+            uint256 disputeId,
+            uint256 ruling
         )
     {
-        Action storage action = _getAction(_actionId);
-        Challenge storage challenge = action.challenge;
+        Challenge storage challenge = challenges[_challengeId];
 
-        context = challenge.context;
+        actionId = challenge.actionId;
         challenger = challenge.challenger;
         endDate = challenge.endDate;
+        context = challenge.context;
         settlementOffer = challenge.settlementOffer;
         arbitratorFeeAmount = challenge.arbitratorFeeAmount;
         arbitratorFeeToken = challenge.arbitratorFeeToken;
         state = challenge.state;
+        submitterFinishedEvidence = challenge.submitterFinishedEvidence;
+        challengerFinishedEvidence = challenge.challengerFinishedEvidence;
         disputeId = challenge.disputeId;
-    }
-
-    /**
-    * @dev Tell the information related to an action dispute
-    * @param _actionId Identification number of the action being queried
-    * @return ruling Ruling given for the action dispute
-    * @return submitterFinishedEvidence Whether the action submitter has finished submitting evidence for the action dispute
-    * @return challengerFinishedEvidence Whether the action challenger has finished submitting evidence for the action dispute
-    */
-    function getDispute(uint256 _actionId) external view
-        returns (
-            uint256 ruling,
-            bool submitterFinishedEvidence,
-            bool challengerFinishedEvidence
-        )
-    {
-        Action storage action = _getAction(_actionId);
-        Challenge storage challenge = action.challenge;
-        Dispute storage dispute = disputes[challenge.disputeId];
-
-        ruling = dispute.ruling;
-        submitterFinishedEvidence = dispute.submitterFinishedEvidence;
-        challengerFinishedEvidence = dispute.challengerFinishedEvidence;
+        ruling = challenge.ruling;
     }
 
     /**
@@ -561,7 +556,8 @@ contract Agreement is IAgreement, AragonApp {
     function getDisputableInfo(address _disputable) external view returns (bool registered, uint256 currentCollateralRequirementId) {
         DisputableInfo storage disputableInfo = disputableInfos[_disputable];
         registered = disputableInfo.registered;
-        currentCollateralRequirementId = _getCurrentCollateralRequirementId(disputableInfo);
+        uint256 length = disputableInfo.collateralRequirementsLength;
+        currentCollateralRequirementId = length == 0 ? 0 : length - 1;
     }
 
     /**
@@ -581,7 +577,8 @@ contract Agreement is IAgreement, AragonApp {
             uint64 challengeDuration
         )
     {
-        CollateralRequirement storage collateral = _getCollateralRequirement(_disputable, _collateralId);
+        DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
+        CollateralRequirement storage collateral = disputableInfo.collateralRequirements[_collateralId];
         collateralToken = collateral.token;
         actionAmount = collateral.actionAmount;
         challengeAmount = collateral.challengeAmount;
@@ -597,7 +594,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function getMissingArbitratorFees(uint256 _actionId) external view returns (ERC20 feeToken, uint256 missingFees, uint256 totalFees) {
         Action storage action = _getAction(_actionId);
-        Challenge storage challenge = action.challenge;
+        Challenge storage challenge = challenges[action.currentChallengeId];
         ERC20 challengerFeeToken = challenge.arbitratorFeeToken;
         uint256 challengerFeeAmount = challenge.arbitratorFeeAmount;
 
@@ -654,8 +651,8 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action can be settled, false otherwise
     */
     function canSettle(uint256 _actionId) external view returns (bool) {
-        Action storage action = _getAction(_actionId);
-        return _canSettle(action);
+        (Action storage action, Challenge storage challenge, ) = _getChallengedAction(_actionId);
+        return _canSettle(_actionId, action, challenge);
     }
 
     /**
@@ -664,8 +661,8 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action can be disputed, false otherwise
     */
     function canDispute(uint256 _actionId) external view returns (bool) {
-        Action storage action = _getAction(_actionId);
-        return _canDispute(action);
+        (Action storage action, Challenge storage challenge, ) = _getChallengedAction(_actionId);
+        return _canDispute(_actionId, action, challenge);
     }
 
     /**
@@ -674,8 +671,8 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action settlement can be claimed, false otherwise
     */
     function canClaimSettlement(uint256 _actionId) external view returns (bool) {
-        Action storage action = _getAction(_actionId);
-        return _canClaimSettlement(action);
+        (Action storage action, Challenge storage challenge, ) = _getChallengedAction(_actionId);
+        return _canClaimSettlement(_actionId, action, challenge);
     }
 
     /**
@@ -684,35 +681,42 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action dispute can be ruled, false otherwise
     */
     function canRuleDispute(uint256 _actionId) external view returns (bool) {
-        Action storage action = _getAction(_actionId);
-        return _isDisputed(action);
+        (Action storage action, Challenge storage challenge, ) = _getChallengedAction(_actionId);
+        return _canRuleDispute(_actionId, action, challenge);
     }
 
     // Internal fns
 
     /**
     * @dev Challenge an action
-    * @param _action Action instance to be challenged
+    * @param _actionId Identification number of the action being challenged
     * @param _challenger Address challenging the action
     * @param _requirement Collateral requirement to be used for the challenge
     * @param _settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
+    * @param _finishedSubmittingEvidence Whether or not the challenger has finished submitting evidence
     * @param _context Link to a human-readable text giving context for the challenge
+    * @return Identification number for the created challenge
     */
     function _createChallenge(
-        Action storage _action,
+        uint256 _actionId,
         address _challenger,
         CollateralRequirement storage _requirement,
         uint256 _settlementOffer,
+        bool _finishedSubmittingEvidence,
         bytes _context
     )
         internal
+        returns (uint256)
     {
         // Store challenge
-        Challenge storage challenge = _action.challenge;
+        uint256 challengeId = challengesLength++;
+        Challenge storage challenge = challenges[challengeId];
+        challenge.actionId = _actionId;
         challenge.challenger = _challenger;
         challenge.context = _context;
         challenge.settlementOffer = _settlementOffer;
         challenge.endDate = getTimestamp64().add(_requirement.challengeDuration);
+        challenge.challengerFinishedEvidence = _finishedSubmittingEvidence;
 
         // Transfer challenge collateral
         _transferFrom(_requirement.token, _challenger, _requirement.challengeAmount);
@@ -723,18 +727,19 @@ contract Agreement is IAgreement, AragonApp {
         challenge.arbitratorFeeToken = feeToken;
         challenge.arbitratorFeeAmount = arbitratorFees;
         _transferFrom(feeToken, _challenger, arbitratorFees);
+        return challengeId;
     }
 
     /**
     * @dev Dispute an action
     * @param _action Action instance to be disputed
+    * @param _submitterFinishedEvidence Whether or not the submitter finished submitting evidence
     * @return Identification number of the dispute created in the arbitrator
     */
-    function _createDispute(Action storage _action) internal returns (uint256) {
+    function _createDispute(Action storage _action, Challenge storage _challenge, bool _submitterFinishedEvidence) internal returns (uint256) {
         // Compute missing fees for dispute
-        Challenge storage challenge = _action.challenge;
-        ERC20 challengerFeeToken = challenge.arbitratorFeeToken;
-        uint256 challengerFeeAmount = challenge.arbitratorFeeAmount;
+        ERC20 challengerFeeToken = _challenge.arbitratorFeeToken;
+        uint256 challengerFeeAmount = _challenge.arbitratorFeeAmount;
         (address recipient, ERC20 feeToken, uint256 missingFees, uint256 totalFees) = _getMissingArbitratorFees(
             challengerFeeToken,
             challengerFeeAmount
@@ -749,40 +754,42 @@ contract Agreement is IAgreement, AragonApp {
         uint256 disputeId = arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _getCurrentContent());
 
         // Update action and submit evidences
-        address challenger = challenge.challenger;
-        _submitEvidence(disputeId, submitter, _action.context, false);
-        _submitEvidence(disputeId, challenger, challenge.context, false);
+        address challenger = _challenge.challenger;
+        _submitEvidence(disputeId, submitter, _action.context, _submitterFinishedEvidence);
+        _submitEvidence(disputeId, challenger, _challenge.context, _challenge.challengerFinishedEvidence);
 
         // Return arbitrator fees to challenger if necessary
-        if (challenge.arbitratorFeeToken != feeToken) {
+        if (challengerFeeToken != feeToken) {
             _transfer(challengerFeeToken, challenger, challengerFeeAmount);
         }
         return disputeId;
     }
 
     /**
-    * @dev Register evidence for an action
+    * @dev Register evidence for a disputed action
     * @param _action Action instance to submit evidence for
-    * @param _dispute Dispute instance associated to the given action
+    * @param _challenge Current challenge associated to the given action
     * @param _submitter Address of submitting the evidence
     * @param _finished Whether both parties have finished submitting evidence or not
     */
-    function _registerEvidence(Action storage _action, Dispute storage _dispute, address _submitter, bool _finished) internal returns (bool) {
-        Challenge storage challenge = _action.challenge;
-        bool submitterFinishedEvidence = _dispute.submitterFinishedEvidence;
-        bool challengerFinishedEvidence = _dispute.challengerFinishedEvidence;
+    function _registerEvidence(Action storage _action, Challenge storage _challenge, address _submitter, bool _finished)
+        internal
+        returns (bool)
+    {
+        bool submitterFinishedEvidence = _challenge.submitterFinishedEvidence;
+        bool challengerFinishedEvidence = _challenge.challengerFinishedEvidence;
 
         if (_submitter == _action.submitter) {
             require(!submitterFinishedEvidence, ERROR_SUBMITTER_FINISHED_EVIDENCE);
             if (_finished) {
                 submitterFinishedEvidence = _finished;
-                _dispute.submitterFinishedEvidence = _finished;
+                _challenge.submitterFinishedEvidence = _finished;
             }
-        } else if (_submitter == challenge.challenger) {
+        } else if (_submitter == _challenge.challenger) {
             require(!challengerFinishedEvidence, ERROR_CHALLENGER_FINISHED_EVIDENCE);
             if (_finished) {
                 submitterFinishedEvidence = _finished;
-                _dispute.challengerFinishedEvidence = _finished;
+                _challenge.challengerFinishedEvidence = _finished;
             }
         } else {
             revert(ERROR_SENDER_NOT_ALLOWED);
@@ -807,13 +814,13 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Accept a challenge proposed against an action
     * @param _action Action instance to be rejected
+    * @param _challenge Current challenge associated to the given action
     */
-    function _acceptChallenge(Action storage _action) internal {
-        Challenge storage challenge = _action.challenge;
-        challenge.state = ChallengeState.Accepted;
+    function _acceptChallenge(Action storage _action, Challenge storage _challenge) internal {
+        _challenge.state = ChallengeState.Accepted;
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
-        address challenger = challenge.challenger;
+        address challenger = _challenge.challenger;
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
         _transfer(requirement.token, challenger, requirement.challengeAmount);
         disputable.onDisputableRejected(_action.disputableId);
@@ -822,10 +829,11 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Reject a challenge proposed against an action
     * @param _action Action instance to be accepted
+    * @param _challenge Current challenge associated to the given action
     */
-    function _rejectChallenge(Action storage _action) internal {
-        Challenge storage challenge = _action.challenge;
-        challenge.state = ChallengeState.Rejected;
+    function _rejectChallenge(Action storage _action, Challenge storage _challenge) internal {
+        _action.state = ActionState.Submitted;
+        _challenge.state = ChallengeState.Rejected;
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         address submitter = _action.submitter;
@@ -837,14 +845,15 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Void a challenge proposed against an action
     * @param _action Action instance to be voided
+    * @param _challenge Current challenge associated to the given action
     */
-    function _voidChallenge(Action storage _action) internal {
-        Challenge storage challenge = _action.challenge;
-        challenge.state = ChallengeState.Voided;
+    function _voidChallenge(Action storage _action, Challenge storage _challenge) internal {
+        _action.state = ActionState.Submitted;
+        _challenge.state = ChallengeState.Voided;
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _unlockBalance(requirement.staking, _action.submitter, requirement.actionAmount);
-        _transfer(requirement.token, challenge.challenger, requirement.challengeAmount);
+        _transfer(requirement.token, _challenge.challenger, requirement.challengeAmount);
         disputable.onDisputableVoided(_action.disputableId);
     }
 
@@ -974,7 +983,7 @@ contract Agreement is IAgreement, AragonApp {
         require(isContract(address(_collateralToken)), ERROR_TOKEN_NOT_CONTRACT);
 
         Staking staking = stakingFactory.getOrCreateInstance(_collateralToken);
-        uint256 id = _disputableInfo.requirementsLength++;
+        uint256 id = _disputableInfo.collateralRequirementsLength++;
         _disputableInfo.collateralRequirements[id] = CollateralRequirement({
             token: _collateralToken,
             staking: staking,
@@ -1012,8 +1021,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action can proceed, false otherwise
     */
     function _canProceed(Action storage _action) internal view returns (bool) {
-        ActionState state = _action.state;
-        return state == ActionState.Submitted || (state == ActionState.Challenged && _action.challenge.state == ChallengeState.Rejected);
+        return _isSubmitted(_action);
     }
 
     /**
@@ -1022,61 +1030,120 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action can be challenged, false otherwise
     */
     function _canChallenge(Action storage _action) internal view returns (bool) {
-        return _action.state == ActionState.Submitted;
+        return _isSubmitted(_action);
     }
 
     /**
     * @dev Tell whether an action can be settled or not
+    * @param _actionId Identification number of the action to be queried
     * @param _action Action instance to be queried
+    * @param _challenge Current challenge instance associated to the action being queried
     * @return True if the action can be settled, false otherwise
     */
-    function _canSettle(Action storage _action) internal view returns (bool) {
-        return _action.state == ActionState.Challenged && _action.challenge.state == ChallengeState.Waiting;
+    function _canSettle(uint256 _actionId, Action storage _action, Challenge storage _challenge) internal view returns (bool) {
+        return _isWaitingChallengeAnswer(_actionId, _action, _challenge);
     }
 
     /**
     * @dev Tell whether an action can be disputed or not
+    * @param _actionId Identification number of the action to be queried
     * @param _action Action instance to be queried
+    * @param _challenge Current challenge instance associated to the action being queried
     * @return True if the action can be disputed, false otherwise
     */
-    function _canDispute(Action storage _action) internal view returns (bool) {
-        if (!_canSettle(_action)) {
+    function _canDispute(uint256 _actionId, Action storage _action, Challenge storage _challenge) internal view returns (bool) {
+        if (!_isWaitingChallengeAnswer(_actionId, _action, _challenge)) {
             return false;
         }
 
-        return _action.challenge.endDate >= getTimestamp64();
+        return _challenge.endDate >= getTimestamp64();
     }
 
     /**
     * @dev Tell whether an action settlement can be claimed or not
+    * @param _actionId Identification number of the action to be queried
     * @param _action Action instance to be queried
+    * @param _challenge Current challenge instance associated to the action being queried
     * @return True if the action settlement can be claimed, false otherwise
     */
-    function _canClaimSettlement(Action storage _action) internal view returns (bool) {
-        if (!_canSettle(_action)) {
+    function _canClaimSettlement(uint256 _actionId, Action storage _action, Challenge storage _challenge) internal view returns (bool) {
+        if (!_isWaitingChallengeAnswer(_actionId, _action, _challenge)) {
             return false;
         }
 
-        return getTimestamp64() > _action.challenge.endDate;
+        return getTimestamp64() > _challenge.endDate;
+    }
+
+    /**
+    * @dev Tell whether an action dispute can be ruled or not
+    * @param _actionId Identification number of the action to be queried
+    * @param _action Action instance to be queried
+    * @param _challenge Current challenge instance associated to the action being queried
+    * @return True if the action dispute can be ruled, false otherwise
+    */
+    function _canRuleDispute(uint256 _actionId, Action storage _action, Challenge storage _challenge) internal view returns (bool) {
+        return _isDisputed(_actionId, _action, _challenge);
+    }
+
+    /**
+    * @dev Tell whether an action is submitted or not
+    * @param _action Action instance to be queried
+    * @return True if the action is submitted, false otherwise
+    */
+    function _isSubmitted(Action storage _action) internal view returns (bool) {
+        return _action.state == ActionState.Submitted;
+    }
+
+    /**
+    * @dev Tell whether an action is challenged by a given challenge instance or not
+    * @param _actionId Identification number of the action to be queried
+    * @param _action Action instance to be queried
+    * @param _challenge Challenge instance to be queried
+    * @return True if the action is challenged by the given challenge instance, false otherwise
+    */
+    function _isChallenged(uint256 _actionId, Action storage _action, Challenge storage _challenge) internal view returns (bool) {
+        return _action.state == ActionState.Challenged && _actionId == _challenge.actionId;
+    }
+
+    /**
+    * @dev Tell whether an action wasn't challenged by a given challenge instance or not
+    * @param _actionId Identification number of the action to be queried
+    * @param _challenge Challenge instance to be queried
+    * @return True if the action wasn't challenged by the given challenge instance, false otherwise
+    */
+    function _wasNotChallenged(uint256 _actionId, Challenge storage _challenge) internal view returns (bool) {
+        return _actionId != _challenge.actionId || _challenge.state == ChallengeState.Waiting;
+    }
+
+    /**
+    * @dev Tell whether an action is challenged and it's waiting to be answered or not
+    * @param _actionId Identification number of the action to be queried
+    * @param _action Action instance to be queried
+    * @param _challenge Current challenge instance associated to the action being queried
+    * @return True if the action is challenged and it's waiting to be answered, false otherwise
+    */
+    function _isWaitingChallengeAnswer(uint256 _actionId, Action storage _action, Challenge storage _challenge) internal view returns (bool) {
+        return _isChallenged(_actionId, _action, _challenge) && _challenge.state == ChallengeState.Waiting;
     }
 
     /**
     * @dev Tell whether an action is disputed or not
+    * @param _actionId Identification number of the action to be queried
     * @param _action Action instance to be queried
+    * @param _challenge Current challenge instance associated to the action being queried
     * @return True if the action is disputed, false otherwise
     */
-    function _isDisputed(Action storage _action) internal view returns (bool) {
-        return _action.state == ActionState.Challenged && _action.challenge.state == ChallengeState.Disputed;
+    function _isDisputed(uint256 _actionId, Action storage _action, Challenge storage _challenge) internal view returns (bool) {
+        return _isChallenged(_actionId, _action, _challenge) && _challenge.state == ChallengeState.Disputed;
     }
 
     /**
-    * @dev Tell whether an action was disputed or not
-    * @param _action Action instance being queried
-    * @return True if the action was disputed, false otherwise
+    * @dev Tell whether a challenge was disputed or not
+    * @param _challenge Challenge instance being queried
+    * @return True if the challenge was disputed, false otherwise
     */
-    function _wasDisputed(Action storage _action) internal view returns (bool) {
-        Challenge storage challenge = _action.challenge;
-        ChallengeState state = challenge.state;
+    function _wasDisputed(Challenge storage _challenge) internal view returns (bool) {
+        ChallengeState state = _challenge.state;
         return state != ChallengeState.Waiting && state != ChallengeState.Settled;
     }
 
@@ -1091,16 +1158,45 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Fetch an action instance along with its associated dispute by a dispute identification number
-    * @param _disputeId Identification number of the dispute for the arbitrator
-    * @return Action instance associated to the resulting dispute instance
-    * @return Dispute instance associated to the given identification number
+    * @dev Fetch an action instance along with its current challenge by identification number
+    * @param _actionId Identification number of the action being queried
+    * @return action Action instance associated to the given identification number
+    * @return challenge Current challenge instance associated to the given action
+    * @return challengeId Identification number of the challenge associated to the given action
     */
-    function _getActionAndDispute(uint256 _disputeId) internal view returns (Action storage, Dispute storage) {
-        Dispute storage dispute = disputes[_disputeId];
-        Action storage action = _getAction(dispute.actionId);
-        require(_wasDisputed(action), ERROR_DISPUTE_DOES_NOT_EXIST);
-        return (action, dispute);
+    function _getChallengedAction(uint256 _actionId) internal view
+        returns (
+            Action storage action,
+            Challenge storage challenge,
+            uint256 challengeId
+        )
+    {
+        action = _getAction(_actionId);
+        challengeId = action.currentChallengeId;
+        challenge = challenges[challengeId];
+    }
+
+    /**
+    * @dev Fetch an action instance along with its current challenge by a dispute identification number
+    * @param _disputeId Identification number of the dispute for the arbitrator
+    * @return actionId Identification number of the action associated to the given dispute identification number
+    * @return action Action instance associated to the given dispute identification number
+    * @return challengeId Identification number of the challenge associated to the given dispute identification number
+    * @return challenge Current challenge instance associated to the given dispute identification number
+    */
+    function _getDisputedAction(uint256 _disputeId) internal view
+        returns (
+            uint256 actionId,
+            Action storage action,
+            uint256 challengeId,
+            Challenge storage challenge
+        )
+    {
+        challengeId = challengeByDispute[_disputeId];
+        challenge = challenges[challengeId];
+        actionId = challenge.actionId;
+        action = _getAction(actionId);
+        require(_wasDisputed(challenge) && action.currentChallengeId == challengeId, ERROR_DISPUTE_DOES_NOT_EXIST);
     }
 
     /**
@@ -1131,36 +1227,22 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell the identification number of the current collateral requirement instance of a disputable app
-    * @param _disputableInfo Disputable info of the app querying its current collateral requirement
-    * @return Identification number of the current collateral requirement of a disputable
-    */
-    function _getCurrentCollateralRequirementId(DisputableInfo storage _disputableInfo) internal view returns (uint256) {
-        uint256 length = _disputableInfo.requirementsLength;
-        return length == 0 ? 0 : length - 1;
-    }
-
-    /**
-    * @dev Tell the collateral requirement instance of a disputable by its identification number
-    * @param _disputable Disputable app querying the collateral requirements of
-    * @param _collateralId Identification number of the collateral being queried
-    * @return Collateral requirement instance associated to the given identification number for the given disputable
-    */
-    function _getCollateralRequirement(IDisputable _disputable, uint256 _collateralId) internal view returns (CollateralRequirement storage) {
-        DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
-        require(_collateralId <= _getCurrentCollateralRequirementId(disputableInfo), ERROR_MISSING_COLLATERAL_REQUIREMENT);
-        return disputableInfo.collateralRequirements[_collateralId];
-    }
-
-    /**
     * @dev Tell the disputable-related information about a disputable action
     * @param _action Action instance being queried
     * @return disputable Disputable instance associated to the action
     * @return requirement Collateral requirements of the disputable app associated to the action
     */
-    function _getDisputableFor(Action storage _action) internal view returns (IDisputable disputable, CollateralRequirement storage requirement){
+    function _getDisputableFor(Action storage _action) internal view
+        returns (
+            IDisputable disputable,
+            CollateralRequirement storage requirement
+        )
+    {
         disputable = _action.disputable;
-        requirement = _getCollateralRequirement(disputable, _action.collateralId);
+        uint256 collateralId = _action.collateralId;
+        DisputableInfo storage disputableInfo = disputableInfos[address(disputable)];
+        requirement = disputableInfo.collateralRequirements[collateralId];
+        require(collateralId < disputableInfo.collateralRequirementsLength, ERROR_MISSING_COLLATERAL_REQUIREMENT);
     }
 
     /**

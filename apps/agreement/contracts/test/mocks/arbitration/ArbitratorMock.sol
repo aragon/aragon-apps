@@ -19,7 +19,8 @@ contract ArbitratorMock is IArbitrator {
     }
 
     Fee public fee;
-    Dispute[] public disputes;
+    uint256 public disputesLength;
+    mapping (uint256 => Dispute) public disputes;
 
     event NewDispute(uint256 disputeId, uint256 possibleRulings, bytes metadata);
     event EvidencePeriodClosed(uint256 indexed disputeId);
@@ -30,7 +31,7 @@ contract ArbitratorMock is IArbitrator {
     }
 
     function createDispute(uint256 _possibleRulings, bytes _metadata) external returns (uint256) {
-        uint256 disputeId = disputes.length++;
+        uint256 disputeId = disputesLength++;
         disputes[disputeId].arbitrable = IArbitrable(msg.sender);
 
         fee.token.transferFrom(msg.sender, address(this), fee.amount);

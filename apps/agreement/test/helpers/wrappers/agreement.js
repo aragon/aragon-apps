@@ -1,4 +1,6 @@
 const { bn } = require('../lib/numbers')
+const { CHALLENGES_STATE } = require('../utils/enums')
+const { AGREEMENT_EVENTS } = require('../utils/events')
 const { getEventArgument } = require('@aragon/contract-test-helpers/events')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -33,18 +35,13 @@ class AgreementWrapper {
   }
 
   async getAction(actionId) {
-    const { disputable, disputableId, context, state, submitter, collateralId } = await this.agreement.getAction(actionId)
-    return { disputable, disputableId, context, state, submitter, collateralId }
+    const { disputable, disputableId, context, state, submitter, collateralId, currentChallengeId } = await this.agreement.getAction(actionId)
+    return { disputable, disputableId, context, state, submitter, collateralId, currentChallengeId }
   }
 
-  async getChallenge(actionId) {
-    const { context, endDate, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId } = await this.agreement.getChallenge(actionId)
-    return { context, endDate, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId }
-  }
-
-  async getDispute(actionId) {
-    const { ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await this.agreement.getDispute(actionId)
-    return { ruling, submitterFinishedEvidence, challengerFinishedEvidence }
+  async getChallenge(challengeId) {
+    const { actionId, context, endDate, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await this.agreement.getChallenge(challengeId)
+    return { actionId, context, endDate, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence }
   }
 
   async getSigner(signer) {
@@ -101,13 +98,15 @@ class AgreementWrapper {
     return this.agreement.sign({ from })
   }
 
-  async challenge({ actionId, challenger = undefined, settlementOffer = 0, challengeContext = '0xdcba', arbitrationFees = undefined }) {
+  async challenge({ actionId, challenger = undefined, settlementOffer = 0, challengeContext = '0xdcba', finishedSubmittingEvidence = false, arbitrationFees = undefined }) {
     if (!challenger) challenger = await this._getSender()
 
     if (arbitrationFees === undefined) arbitrationFees = await this.halfArbitrationFees()
     if (arbitrationFees) await this.approveArbitrationFees({ amount: arbitrationFees, from: challenger })
 
-    return this.agreement.challengeAction(actionId, settlementOffer, challengeContext, { from: challenger })
+    const receipt = await this.agreement.challengeAction(actionId, settlementOffer, finishedSubmittingEvidence, challengeContext, { from: challenger })
+    const challengeId = getEventArgument(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, 'challengeId')
+    return { receipt, challengeId }
   }
 
   async settle({ actionId, from = undefined }) {
@@ -115,17 +114,18 @@ class AgreementWrapper {
     return this.agreement.settle(actionId, { from })
   }
 
-  async dispute({ actionId, from = undefined, arbitrationFees = undefined }) {
+  async dispute({ actionId, from = undefined, finishedSubmittingEvidence = false, arbitrationFees = undefined }) {
     if (!from) from = (await this.getAction(actionId)).submitter
 
     if (arbitrationFees === undefined) arbitrationFees = await this.missingArbitrationFees(actionId)
     if (arbitrationFees) await this.approveArbitrationFees({ amount: arbitrationFees, from })
 
-    return this.agreement.disputeAction(actionId, { from })
+    return this.agreement.disputeAction(actionId, finishedSubmittingEvidence, { from })
   }
 
   async submitEvidence({ actionId, from, evidence = '0x1234567890abcdef', finished = false }) {
-    const { disputeId } = await this.getChallenge(actionId)
+    const { currentChallengeId } = await this.getAction(actionId)
+    const { disputeId } = await this.getChallenge(currentChallengeId)
     return this.agreement.submitEvidence(disputeId, evidence, finished, { from })
   }
 
@@ -134,13 +134,18 @@ class AgreementWrapper {
   }
 
   async executeRuling({ actionId, ruling, mockRuling = true }) {
+    const { currentChallengeId } = await this.getAction(actionId)
+    const { state, disputeId } = await this.getChallenge(currentChallengeId)
+
     if (mockRuling) {
-      const { disputeId } = await this.getChallenge(actionId)
       const ArbitratorMock = this._getContract('ArbitratorMock')
       const arbitrator = await ArbitratorMock.at(this.arbitrator.address)
       await arbitrator.rule(disputeId, ruling)
     }
-    return this.agreement.executeRuling(actionId)
+
+    return (state.toString() != CHALLENGES_STATE.WAITING && state.toString() != CHALLENGES_STATE.SETTLED)
+      ? this.arbitrator.executeRuling(disputeId)
+      : this.agreement.rule(disputeId, ruling)
   }
 
   async register({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, from = undefined }) {
@@ -205,18 +210,18 @@ class AgreementWrapper {
     return this.agreement.getTimestampPublic()
   }
 
-  async moveBeforeChallengeEndDate(actionId) {
-    const { endDate } = await this.getChallenge(actionId)
+  async moveBeforeChallengeEndDate(challengeId) {
+    const { endDate } = await this.getChallenge(challengeId)
     return this.moveTo(endDate.sub(bn(1)))
   }
 
-  async moveToChallengeEndDate(actionId) {
-    const { endDate } = await this.getChallenge(actionId)
+  async moveToChallengeEndDate(challengeId) {
+    const { endDate } = await this.getChallenge(challengeId)
     return this.moveTo(endDate)
   }
 
-  async moveAfterChallengeEndDate(actionId) {
-    const { endDate } = await this.getChallenge(actionId)
+  async moveAfterChallengeEndDate(challengeId) {
+    const { endDate } = await this.getChallenge(challengeId)
     return this.moveTo(endDate.add(bn(1)))
   }
 

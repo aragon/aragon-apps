@@ -19,7 +19,7 @@ const STAKING_EVENTS = {
   BALANCE_UNSTAKED: 'Unstaked',
   BALANCE_LOCKED: 'Locked',
   BALANCE_UNLOCKED: 'Unlocked',
-  BALANCE_SLAHED: 'Slashed',
+  BALANCE_SLASHED: 'Slashed',
 }
 
 const DISPUTABLE_EVENTS = {

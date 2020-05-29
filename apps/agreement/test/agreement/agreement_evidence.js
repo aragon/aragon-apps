@@ -39,8 +39,10 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
           })
 
           context('when the action was challenged', () => {
+            let challengeId
+
             beforeEach('challenge action', async () => {
-              await agreement.challenge({ actionId, challenger })
+              ({ challengeId } = await agreement.challenge({ actionId, challenger }))
             })
 
             context('when the challenge was not answered', () => {
@@ -50,7 +52,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
               context('in the middle of the answer period', () => {
                 beforeEach('move before settlement period end date', async () => {
-                  await agreement.moveBeforeChallengeEndDate(actionId)
+                  await agreement.moveBeforeChallengeEndDate(challengeId)
                 })
 
                 itCannotSubmitEvidenceForNonExistingDispute()
@@ -58,7 +60,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
               context('at the end of the answer period', () => {
                 beforeEach('move to the settlement period end date', async () => {
-                  await agreement.moveToChallengeEndDate(actionId)
+                  await agreement.moveToChallengeEndDate(challengeId)
                 })
 
                 itCannotSubmitEvidenceForNonExistingDispute()
@@ -66,7 +68,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
               context('after the answer period', () => {
                 beforeEach('move after the settlement period end date', async () => {
-                  await agreement.moveAfterChallengeEndDate(actionId)
+                  await agreement.moveAfterChallengeEndDate(challengeId)
                 })
 
                 itCannotSubmitEvidenceForNonExistingDispute()
@@ -95,7 +97,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       it(`${finished ? 'updates' : 'does not update'} the dispute`, async () => {
                         await agreement.submitEvidence({ actionId, evidence, from, finished })
 
-                        const { ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await agreement.getDispute(actionId)
+                        const { ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await agreement.getChallenge(challengeId)
 
                         assertBn(ruling, RULINGS.MISSING, 'ruling does not match')
                         assert.equal(submitterFinishedEvidence, from === submitter ? finished : false, 'submitter finished does not match')
@@ -103,7 +105,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       })
 
                       it('submits the given evidence', async () => {
-                        const { disputeId } = await agreement.getChallenge(actionId)
+                        const { disputeId } = await agreement.getChallenge(challengeId)
                         const receipt = await agreement.submitEvidence({ actionId, evidence, from, finished })
 
                         const logs = decodeEventsOfType(receipt, agreement.abi, 'EvidenceSubmitted')
@@ -179,6 +181,24 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 context('when the dispute was ruled', () => {
+                  context('when the dispute was refused', () => {
+                    beforeEach('rule action', async () => {
+                      await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
+                    })
+
+                    context('when the action was not closed', () => {
+                      itCannotSubmitEvidence()
+                    })
+
+                    context('when the action was closed', () => {
+                      beforeEach('close action', async () => {
+                        await agreement.close({ actionId })
+                      })
+
+                      itCannotSubmitEvidence()
+                    })
+                  })
+
                   context('when the dispute was ruled in favor the submitter', () => {
                     beforeEach('rule action', async () => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
@@ -200,14 +220,6 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   context('when the dispute was ruled in favor the challenger', () => {
                     beforeEach('rule action', async () => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
-                    })
-
-                    itCannotSubmitEvidence()
-                  })
-
-                  context('when the dispute was refused', () => {
-                    beforeEach('rule action', async () => {
-                      await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
                     })
 
                     itCannotSubmitEvidence()

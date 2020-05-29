@@ -121,8 +121,10 @@ contract('Agreement', ([_, submitter, someone]) => {
           })
 
           context('when the action was challenged', () => {
+            let challengeId
+
             beforeEach('challenge action', async () => {
-              await agreement.challenge({ actionId })
+              ({ challengeId } = await agreement.challenge({ actionId }))
             })
 
             context('when the challenge was not answered', () => {
@@ -132,7 +134,7 @@ contract('Agreement', ([_, submitter, someone]) => {
 
               context('in the middle of the answer period', () => {
                 beforeEach('move before settlement period end date', async () => {
-                  await agreement.moveBeforeChallengeEndDate(actionId)
+                  await agreement.moveBeforeChallengeEndDate(challengeId)
                 })
 
                 itCannotBeClosed()
@@ -140,7 +142,7 @@ contract('Agreement', ([_, submitter, someone]) => {
 
               context('at the end of the answer period', () => {
                 beforeEach('move to the settlement period end date', async () => {
-                  await agreement.moveToChallengeEndDate(actionId)
+                  await agreement.moveToChallengeEndDate(challengeId)
                 })
 
                 itCannotBeClosed()
@@ -148,7 +150,7 @@ contract('Agreement', ([_, submitter, someone]) => {
 
               context('after the answer period', () => {
                 beforeEach('move after the settlement period end date', async () => {
-                  await agreement.moveAfterChallengeEndDate(actionId)
+                  await agreement.moveAfterChallengeEndDate(challengeId)
                 })
 
                 itCannotBeClosed()
@@ -174,6 +176,26 @@ contract('Agreement', ([_, submitter, someone]) => {
                 })
 
                 context('when the dispute was ruled', () => {
+                  context('when the dispute was refused', () => {
+                    beforeEach('rule action', async () => {
+                      await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
+                    })
+
+                    context('when the action was closed', () => {
+                      beforeEach('close action', async () => {
+                        await agreement.close({ actionId })
+                      })
+
+                      itCannotBeClosed()
+                    })
+
+                    context('when the action was not closed', () => {
+                      const unlocksBalance = false
+
+                      itClosesTheActionProperly(unlocksBalance)
+                    })
+                  })
+
                   context('when the dispute was ruled in favor the submitter', () => {
                     beforeEach('rule action', async () => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
@@ -197,14 +219,6 @@ contract('Agreement', ([_, submitter, someone]) => {
                   context('when the dispute was ruled in favor the challenger', () => {
                     beforeEach('rule action', async () => {
                       await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
-                    })
-
-                    itCannotBeClosed()
-                  })
-
-                  context('when the dispute was refused', () => {
-                    beforeEach('rule action', async () => {
-                      await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
                     })
 
                     itCannotBeClosed()

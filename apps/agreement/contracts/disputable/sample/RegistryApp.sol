@@ -124,7 +124,7 @@ contract Registry is DisputableApp {
     * @dev Challenge an entry
     * @param _id Identification number of the entry to be challenged
     */
-    function _onDisputableChallenged(uint256 _id, address /* _challenger */) internal {
+    function _onDisputableChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal {
         bytes32 id = bytes32(_id);
         Entry storage entry = _getEntry(id);
         require(!_isChallenged(entry), ERROR_ENTRY_CHALLENGED);

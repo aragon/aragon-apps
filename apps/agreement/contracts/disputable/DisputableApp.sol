@@ -47,10 +47,11 @@ contract DisputableApp is IDisputable, AragonApp {
     /**
     * @notice Challenge disputable #`_disputableId`
     * @param _disputableId Identification number of the disputable to be challenged
+    * @param _challengeId Identification number of the challenge in the context of the Agreement
     * @param _challenger Address challenging the disputable
     */
-    function onDisputableChallenged(uint256 _disputableId, address _challenger) external onlyAgreement {
-        _onDisputableChallenged(_disputableId, _challenger);
+    function onDisputableChallenged(uint256 _disputableId, uint256 _challengeId, address _challenger) external onlyAgreement {
+        _onDisputableChallenged(_disputableId, _challengeId, _challenger);
     }
 
     /**
@@ -126,9 +127,10 @@ contract DisputableApp is IDisputable, AragonApp {
     /**
     * @dev Challenge disputable
     * @param _disputableId Identification number of the disputable to be challenged
+    * @param _challengeId Identification number of the challenge in the context of the Agreement
     * @param _challenger Address challenging the disputable
     */
-    function _onDisputableChallenged(uint256 _disputableId, address _challenger) internal;
+    function _onDisputableChallenged(uint256 _disputableId, uint256 _challengeId, address _challenger) internal;
 
     /**
     * @dev Allow disputable
