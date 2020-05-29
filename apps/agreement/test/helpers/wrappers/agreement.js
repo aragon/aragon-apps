@@ -35,8 +35,8 @@ class AgreementWrapper {
   }
 
   async getAction(actionId) {
-    const { disputable, disputableId, context, state, endDate, submitter, collateralId, currentChallengeId } = await this.agreement.getAction(actionId)
-    return { disputable, disputableId, context, state, endDate, submitter, collateralId, currentChallengeId }
+    const { disputable, disputableActionId, context, state, endDate, submitter, collateralId, currentChallengeId } = await this.agreement.getAction(actionId)
+    return { disputable, disputableActionId, context, state, endDate, submitter, collateralId, currentChallengeId }
   }
 
   async getChallenge(challengeId) {

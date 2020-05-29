@@ -17,6 +17,10 @@ contract DisputableApp is IDisputable, AragonApp {
     string internal constant ERROR_SENDER_NOT_AGREEMENT = "DISPUTABLE_SENDER_NOT_AGREEMENT";
     string internal constant ERROR_AGREEMENT_ALREADY_SET = "DISPUTABLE_AGREEMENT_ALREADY_SET";
 
+    // This role is not required to be validated in the Disputable app, the Agreement app is already doing the check
+    // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
+    bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
+
     // bytes32 public constant SET_AGREEMENT_ROLE = keccak256("SET_AGREEMENT_ROLE");
     bytes32 public constant SET_AGREEMENT_ROLE = 0x8dad640ab1b088990c972676ada708447affc660890ec9fc9a5483241c49f036;
 
@@ -45,37 +49,37 @@ contract DisputableApp is IDisputable, AragonApp {
     }
 
     /**
-    * @notice Challenge disputable #`_disputableId`
-    * @param _disputableId Identification number of the disputable to be challenged
+    * @notice Challenge disputable action #`_disputableActionId`
+    * @param _disputableActionId Identification number of the disputable action to be challenged
     * @param _challengeId Identification number of the challenge in the context of the Agreement
     * @param _challenger Address challenging the disputable
     */
-    function onDisputableChallenged(uint256 _disputableId, uint256 _challengeId, address _challenger) external onlyAgreement {
-        _onDisputableChallenged(_disputableId, _challengeId, _challenger);
+    function onDisputableActionChallenged(uint256 _disputableActionId, uint256 _challengeId, address _challenger) external onlyAgreement {
+        _onDisputableActionChallenged(_disputableActionId, _challengeId, _challenger);
     }
 
     /**
-    * @notice Allow disputable #`_disputableId`
-    * @param _disputableId Identification number of the disputable to be allowed
+    * @notice Allow disputable action #`_disputableActionId`
+    * @param _disputableActionId Identification number of the disputable action to be allowed
     */
-    function onDisputableAllowed(uint256 _disputableId) external onlyAgreement {
-        _onDisputableAllowed(_disputableId);
+    function onDisputableActionAllowed(uint256 _disputableActionId) external onlyAgreement {
+        _onDisputableActionAllowed(_disputableActionId);
     }
 
     /**
-    * @notice Reject disputable #`_disputableId`
-    * @param _disputableId Identification number of the disputable to be rejected
+    * @notice Reject disputable action #`_disputableActionId`
+    * @param _disputableActionId Identification number of the disputable action to be rejected
     */
-    function onDisputableRejected(uint256 _disputableId) external onlyAgreement {
-        _onDisputableRejected(_disputableId);
+    function onDisputableActionRejected(uint256 _disputableActionId) external onlyAgreement {
+        _onDisputableActionRejected(_disputableActionId);
     }
 
     /**
-    * @notice Void disputable #`_disputableId`
-    * @param _disputableId Identification number of the disputable to be voided
+    * @notice Void disputable action #`_disputableActionId`
+    * @param _disputableActionId Identification number of the disputable action to be voided
     */
-    function onDisputableVoided(uint256 _disputableId) external onlyAgreement {
-        _onDisputableVoided(_disputableId);
+    function onDisputableActionVoided(uint256 _disputableActionId) external onlyAgreement {
+        _onDisputableActionVoided(_disputableActionId);
     }
 
     /**
@@ -97,33 +101,33 @@ contract DisputableApp is IDisputable, AragonApp {
 
     /**
     * @dev Create a new action in the agreement without lifetime set
-    * @param _disputableId Identification number of the disputable action in the context of the disputable
+    * @param _disputableActionId Identification number of the disputable action in the context of the disputable
     * @param _submitter Address of the user that has submitted the action
     * @param _context Link to a human-readable text giving context for the given action
     * @return Unique identification number for the created action in the context of the agreement
     */
-    function _newAction(uint256 _disputableId, address _submitter, bytes _context) internal returns (uint256) {
-        return _newAction(_disputableId, 0, _submitter, _context);
+    function _newAgreementAction(uint256 _disputableActionId, address _submitter, bytes _context) internal returns (uint256) {
+        return _newAgreementAction(_disputableActionId, 0, _submitter, _context);
     }
 
     /**
     * @dev Create a new action in the agreement
-    * @param _disputableId Identification number of the disputable action in the context of the disputable
+    * @param _disputableActionId Identification number of the disputable action in the context of the disputable
     * @param _lifetime Lifetime duration in seconds of the disputable action, it can be set to zero to specify infinite
     * @param _submitter Address of the user that has submitted the action
     * @param _context Link to a human-readable text giving context for the given action
     * @return Unique identification number for the created action in the context of the agreement
     */
-    function _newAction(uint256 _disputableId, uint64 _lifetime, address _submitter, bytes _context) internal returns (uint256) {
+    function _newAgreementAction(uint256 _disputableActionId, uint64 _lifetime, address _submitter, bytes _context) internal returns (uint256) {
         IAgreement agreement = _getAgreement();
-        return (agreement != IAgreement(0)) ? agreement.newAction(_disputableId, _lifetime, _submitter, _context) : 0;
+        return (agreement != IAgreement(0)) ? agreement.newAction(_disputableActionId, _lifetime, _submitter, _context) : 0;
     }
 
     /**
     * @dev Close action in the agreement
     * @param _actionId Identification number of the disputable action in the context of the agreement
     */
-    function _closeAction(uint256 _actionId) internal {
+    function _closeAgreementAction(uint256 _actionId) internal {
         IAgreement agreement = _getAgreement();
         if (agreement != IAgreement(0)) {
             agreement.closeAction(_actionId);
@@ -131,30 +135,30 @@ contract DisputableApp is IDisputable, AragonApp {
     }
 
     /**
-    * @dev Reject disputable
-    * @param _disputableId Identification number of the disputable to be rejected
+    * @dev Reject disputable action
+    * @param _disputableActionId Identification number of the disputable action to be rejected
     */
-    function _onDisputableRejected(uint256 _disputableId) internal;
+    function _onDisputableActionRejected(uint256 _disputableActionId) internal;
 
     /**
-    * @dev Challenge disputable
-    * @param _disputableId Identification number of the disputable to be challenged
+    * @dev Challenge disputable action
+    * @param _disputableActionId Identification number of the disputable action to be challenged
     * @param _challengeId Identification number of the challenge in the context of the Agreement
     * @param _challenger Address challenging the disputable
     */
-    function _onDisputableChallenged(uint256 _disputableId, uint256 _challengeId, address _challenger) internal;
+    function _onDisputableActionChallenged(uint256 _disputableActionId, uint256 _challengeId, address _challenger) internal;
 
     /**
-    * @dev Allow disputable
-    * @param _disputableId Identification number of the disputable to be allowed
+    * @dev Allow disputable action
+    * @param _disputableActionId Identification number of the disputable action to be allowed
     */
-    function _onDisputableAllowed(uint256 _disputableId) internal;
+    function _onDisputableActionAllowed(uint256 _disputableActionId) internal;
 
     /**
-    * @dev Void disputable
-    * @param _disputableId Identification number of the disputable to be voided
+    * @dev Void disputable action
+    * @param _disputableActionId Identification number of the disputable action to be voided
     */
-    function _onDisputableVoided(uint256 _disputableId) internal;
+    function _onDisputableActionVoided(uint256 _disputableActionId) internal;
 
     /**
     * @dev Tell the agreement linked to the disputable instance
@@ -169,7 +173,7 @@ contract DisputableApp is IDisputable, AragonApp {
     * @param _actionId Identification number of the action being queried in the context of the Agreement app
     * @return True if the action can proceed, false otherwise
     */
-    function _canProceed(uint256 _actionId) internal view returns (bool) {
+    function _canProceedAgreementAction(uint256 _actionId) internal view returns (bool) {
         IAgreement agreement = _getAgreement();
         return (agreement != IAgreement(0)) ? agreement.canProceed(_actionId) : true;
     }

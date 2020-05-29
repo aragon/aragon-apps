@@ -79,8 +79,8 @@ class DisputableWrapper extends AgreementWrapper {
     const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
     const actionId = logs.length > 0 ? getEventArgument({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 'actionId') : undefined
 
-    const disputableId = getEventArgument(receipt, DISPUTABLE_EVENTS.SUBMITTED, 'id')
-    return { receipt, actionId, disputableId }
+    const disputableActionId = getEventArgument(receipt, DISPUTABLE_EVENTS.SUBMITTED, 'id')
+    return { receipt, actionId, disputableActionId }
   }
 
   async newAction({ submitter = undefined, actionContext = '0x1234', lifetime = undefined, sign = undefined, stake = undefined }) {

@@ -80,7 +80,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     const currentActionState = await agreement.getAction(actionId)
                     assertBn(currentActionState.state, ACTIONS_STATE.CHALLENGED, 'action state does not match')
 
-                    assertBn(currentActionState.disputableId, previousActionState.disputableId, 'disputable ID does not match')
+                    assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                     assertBn(currentActionState.endDate, previousActionState.endDate, 'action end date does not match')
                     assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                     assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')

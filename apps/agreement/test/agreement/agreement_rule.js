@@ -155,7 +155,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       const currentActionState = await agreement.getAction(actionId)
                       assertBn(currentActionState.state, ACTIONS_STATE.SUBMITTED, 'action state does not match')
 
-                      assertBn(currentActionState.disputableId, previousActionState.disputableId, 'disputable ID does not match')
+                      assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                       assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                       assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                       assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
@@ -227,7 +227,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       const currentActionState = await agreement.getAction(actionId)
                       assertBn(currentActionState.state, previousActionState.state, 'action state does not match')
                       assertBn(currentActionState.endDate, previousActionState.endDate, 'action end date does not match')
-                      assertBn(currentActionState.disputableId, previousActionState.disputableId, 'disputable ID does not match')
+                      assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                       assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                       assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                       assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
@@ -305,7 +305,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       const currentActionState = await agreement.getAction(actionId)
                       assertBn(currentActionState.state, ACTIONS_STATE.SUBMITTED, 'action state does not match')
 
-                      assertBn(currentActionState.disputableId, previousActionState.disputableId, 'disputable ID does not match')
+                      assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                       assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                       assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                       assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')

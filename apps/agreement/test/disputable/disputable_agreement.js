@@ -87,8 +87,8 @@ contract('DisputableApp', ([_, owner, someone]) => {
     })
   })
 
-  describe('onDisputableChallenged', () => {
-    const disputableId = 0, challengeId = 0, challenger = owner
+  describe('onDisputableActionChallenged', () => {
+    const disputableActionId = 0, challengeId = 0, challenger = owner
 
     context('when the agreement was already set', () => {
       const agreement = someone
@@ -101,7 +101,7 @@ contract('DisputableApp', ([_, owner, someone]) => {
         const from = agreement
 
         it('does not fails', async () => {
-          const receipt = await disputable.disputable.onDisputableChallenged(disputableId, challengeId, challenger, { from })
+          const receipt = await disputable.disputable.onDisputableActionChallenged(disputableActionId, challengeId, challenger, { from })
 
           assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.CHALLENGED)
         })
@@ -111,20 +111,20 @@ contract('DisputableApp', ([_, owner, someone]) => {
         const from = owner
 
         it('reverts', async () => {
-          await assertRevert(disputable.disputable.onDisputableChallenged(disputableId, challengeId, challenger, { from }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
+          await assertRevert(disputable.disputable.onDisputableActionChallenged(disputableActionId, challengeId, challenger, { from }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
         })
       })
     })
 
     context('when the agreement was not set', () => {
       it('reverts', async () => {
-        await assertRevert(disputable.disputable.onDisputableChallenged(disputableId, challengeId, challenger, { from: someone }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
+        await assertRevert(disputable.disputable.onDisputableActionChallenged(disputableActionId, challengeId, challenger, { from: someone }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
       })
     })
   })
 
-  describe('onDisputableAllowed', () => {
-    const disputableId = 0
+  describe('onDisputableActionAllowed', () => {
+    const disputableActionId = 0
 
     context('when the agreement was already set', () => {
       const agreement = someone
@@ -137,7 +137,7 @@ contract('DisputableApp', ([_, owner, someone]) => {
         const from = agreement
 
         it('does not fails', async () => {
-          const receipt = await disputable.disputable.onDisputableAllowed(disputableId, { from })
+          const receipt = await disputable.disputable.onDisputableActionAllowed(disputableActionId, { from })
 
           assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.ALLOWED)
         })
@@ -147,20 +147,20 @@ contract('DisputableApp', ([_, owner, someone]) => {
         const from = owner
 
         it('reverts', async () => {
-          await assertRevert(disputable.disputable.onDisputableAllowed(disputableId, { from }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
+          await assertRevert(disputable.disputable.onDisputableActionAllowed(disputableActionId, { from }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
         })
       })
     })
 
     context('when the agreement was not set', () => {
       it('reverts', async () => {
-        await assertRevert(disputable.disputable.onDisputableAllowed(disputableId, { from: someone }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
+        await assertRevert(disputable.disputable.onDisputableActionAllowed(disputableActionId, { from: someone }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
       })
     })
   })
 
-  describe('onDisputableRejected', () => {
-    const disputableId = 0
+  describe('onDisputableActionRejected', () => {
+    const disputableActionId = 0
 
     context('when the agreement was already set', () => {
       const agreement = someone
@@ -173,7 +173,7 @@ contract('DisputableApp', ([_, owner, someone]) => {
         const from = agreement
 
         it('does not fails', async () => {
-          const receipt = await disputable.disputable.onDisputableRejected(disputableId, { from })
+          const receipt = await disputable.disputable.onDisputableActionRejected(disputableActionId, { from })
 
           assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.REJECTED)
         })
@@ -183,20 +183,20 @@ contract('DisputableApp', ([_, owner, someone]) => {
         const from = owner
 
         it('reverts', async () => {
-          await assertRevert(disputable.disputable.onDisputableRejected(disputableId, { from }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
+          await assertRevert(disputable.disputable.onDisputableActionRejected(disputableActionId, { from }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
         })
       })
     })
 
     context('when the agreement was not set', () => {
       it('reverts', async () => {
-        await assertRevert(disputable.disputable.onDisputableRejected(disputableId, { from: someone }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
+        await assertRevert(disputable.disputable.onDisputableActionRejected(disputableActionId, { from: someone }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
       })
     })
   })
 
-  describe('onDisputableVoided', () => {
-    const disputableId = 0
+  describe('onDisputableActionVoided', () => {
+    const disputableActionId = 0
 
     context('when the agreement was already set', () => {
       const agreement = someone
@@ -209,7 +209,7 @@ contract('DisputableApp', ([_, owner, someone]) => {
         const from = agreement
 
         it('does not fails', async () => {
-          const receipt = await disputable.disputable.onDisputableVoided(disputableId, { from })
+          const receipt = await disputable.disputable.onDisputableActionVoided(disputableActionId, { from })
 
           assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.VOIDED)
         })
@@ -219,14 +219,14 @@ contract('DisputableApp', ([_, owner, someone]) => {
         const from = owner
 
         it('reverts', async () => {
-          await assertRevert(disputable.disputable.onDisputableVoided(disputableId, { from }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
+          await assertRevert(disputable.disputable.onDisputableActionVoided(disputableActionId, { from }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
         })
       })
     })
 
     context('when the agreement was not set', () => {
       it('reverts', async () => {
-        await assertRevert(disputable.disputable.onDisputableVoided(disputableId, { from: someone }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
+        await assertRevert(disputable.disputable.onDisputableActionVoided(disputableActionId, { from: someone }), DISPUTABLE_ERRORS.ERROR_SENDER_NOT_AGREEMENT)
       })
     })
   })

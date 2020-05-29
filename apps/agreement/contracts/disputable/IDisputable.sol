@@ -17,13 +17,13 @@ contract IDisputable is IForwarder, ERC165 {
 
     function setAgreement(IAgreement _agreement) external;
 
-    function onDisputableChallenged(uint256 _disputableId, uint256 _challengeId, address _challenger) external;
+    function onDisputableActionChallenged(uint256 _disputableActionId, uint256 _challengeId, address _challenger) external;
 
-    function onDisputableAllowed(uint256 _disputableId) external;
+    function onDisputableActionAllowed(uint256 _disputableActionId) external;
 
-    function onDisputableRejected(uint256 _disputableId) external;
+    function onDisputableActionRejected(uint256 _disputableActionId) external;
 
-    function onDisputableVoided(uint256 _disputableId) external;
+    function onDisputableActionVoided(uint256 _disputableActionId) external;
 
     function getAgreement() external view returns (IAgreement);
 

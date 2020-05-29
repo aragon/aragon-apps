@@ -44,11 +44,11 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                 context('when the agreement settings did not change', () => {
                   it('creates a new scheduled action', async () => {
                     const currentCollateralId = await agreement.getCurrentCollateralRequirementId()
-                    const { actionId, disputableId } = await agreement.newAction({ submitter, actionContext, stake, sign })
+                    const { actionId, disputableActionId } = await agreement.newAction({ submitter, actionContext, stake, sign })
 
                     const actionData = await agreement.getAction(actionId)
                     assert.equal(actionData.disputable, agreement.disputable.address, 'disputable does not match')
-                    assertBn(actionData.disputableId, disputableId, 'disputable ID does not match')
+                    assertBn(actionData.disputableActionId, disputableActionId, 'disputable action ID does not match')
                     assertBn(actionData.endDate, maxUint(64), 'action end date does not match')
                     assert.equal(actionData.submitter, submitter, 'submitter does not match')
                     assert.equal(actionData.context, actionContext, 'action context does not match')

@@ -31,10 +31,10 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     function interfaceId() external pure returns (bytes4) {
         IDisputable iDisputable;
         return iDisputable.setAgreement.selector ^
-               iDisputable.onDisputableChallenged.selector ^
-               iDisputable.onDisputableAllowed.selector ^
-               iDisputable.onDisputableRejected.selector ^
-               iDisputable.onDisputableVoided.selector ^
+               iDisputable.onDisputableActionChallenged.selector ^
+               iDisputable.onDisputableActionAllowed.selector ^
+               iDisputable.onDisputableActionRejected.selector ^
+               iDisputable.onDisputableActionVoided.selector ^
                iDisputable.getAgreement.selector;
     }
 
@@ -56,7 +56,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     * @dev Close action
     */
     function closeAction(uint256 _id) public {
-        _closeAction(actionsByEntryId[_id]);
+        _closeAgreementAction(actionsByEntryId[_id]);
         emit DisputableClosed(_id);
     }
 
@@ -67,7 +67,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
         require(canForward(msg.sender, data), ERROR_CANNOT_SUBMIT);
 
         uint256 id = entriesLength++;
-        actionsByEntryId[id] = _newAction(id, entryLifetime, msg.sender, data);
+        actionsByEntryId[id] = _newAgreementAction(id, entryLifetime, msg.sender, data);
         emit DisputableSubmitted(id);
     }
 
@@ -85,7 +85,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     * @dev Challenge an entry
     * @param _id Identification number of the entry to be challenged
     */
-    function _onDisputableChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal {
+    function _onDisputableActionChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal {
         emit DisputableChallenged(_id);
     }
 
@@ -93,7 +93,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     * @dev Allow an entry
     * @param _id Identification number of the entry to be allowed
     */
-    function _onDisputableAllowed(uint256 _id) internal {
+    function _onDisputableActionAllowed(uint256 _id) internal {
         emit DisputableAllowed(_id);
     }
 
@@ -101,7 +101,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     * @dev Reject an entry
     * @param _id Identification number of the entry to be rejected
     */
-    function _onDisputableRejected(uint256 _id) internal {
+    function _onDisputableActionRejected(uint256 _id) internal {
         emit DisputableRejected(_id);
     }
 
@@ -109,7 +109,7 @@ contract DisputableAppMock is DisputableApp, TimeHelpersMock {
     * @dev Void an entry
     * @param _id Identification number of the entry to be voided
     */
-    function _onDisputableVoided(uint256 _id) internal {
+    function _onDisputableActionVoided(uint256 _id) internal {
         emit DisputableVoided(_id);
     }
 }

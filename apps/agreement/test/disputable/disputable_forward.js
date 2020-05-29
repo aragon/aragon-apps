@@ -54,20 +54,20 @@ contract('DisputableApp', ([_, submitter, someone]) => {
 
           context('when the signer has enough balance', () => {
             it('submits a new action', async () => {
-              const { disputableId, actionId } = await disputable.forward({ from })
+              const { disputableActionId, actionId } = await disputable.forward({ from })
 
               const actionData = await disputable.getAction(actionId)
 
               assert.equal(actionData.submitter, submitter, 'action submitter does not match')
-              assertBn(actionData.disputableId, disputableId, 'action ID does not match')
+              assertBn(actionData.disputableActionId, disputableActionId, 'disputable action ID does not match')
               assertBn(actionData.state, ACTIONS_STATE.SUBMITTED, 'action state does not match')
             })
 
             it('emits an event', async () => {
-              const { receipt, disputableId } = await disputable.forward({ from })
+              const { receipt, disputableActionId } = await disputable.forward({ from })
 
               assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.SUBMITTED, 1)
-              assertEvent(receipt, DISPUTABLE_EVENTS.SUBMITTED, { id: disputableId })
+              assertEvent(receipt, DISPUTABLE_EVENTS.SUBMITTED, { id: disputableActionId })
             })
 
             it('locks the collateral amount', async () => {

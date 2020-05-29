@@ -77,7 +77,7 @@ contract Registry is DisputableApp {
         require(!_isChallenged(entry), ERROR_ENTRY_CHALLENGED);
         require(entry.submitter == msg.sender, ERROR_SENDER_NOT_ALLOWED);
 
-        _closeAction(entry.actionId);
+        _closeAgreementAction(entry.actionId);
         _unregister(_id, entry);
     }
 
@@ -124,7 +124,7 @@ contract Registry is DisputableApp {
     * @dev Challenge an entry
     * @param _id Identification number of the entry to be challenged
     */
-    function _onDisputableChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal {
+    function _onDisputableActionChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal {
         bytes32 id = bytes32(_id);
         Entry storage entry = _getEntry(id);
         require(!_isChallenged(entry), ERROR_ENTRY_CHALLENGED);
@@ -137,7 +137,7 @@ contract Registry is DisputableApp {
     * @dev Allow an entry
     * @param _id Identification number of the entry to be allowed
     */
-    function _onDisputableAllowed(uint256 _id) internal {
+    function _onDisputableActionAllowed(uint256 _id) internal {
         bytes32 id = bytes32(_id);
         Entry storage entry = _getEntry(id);
         require(_isChallenged(entry), ERROR_ENTRY_NOT_CHALLENGED);
@@ -149,7 +149,7 @@ contract Registry is DisputableApp {
     * @dev Reject an entry
     * @param _id Identification number of the entry to be rejected
     */
-    function _onDisputableRejected(uint256 _id) internal {
+    function _onDisputableActionRejected(uint256 _id) internal {
         bytes32 id = bytes32(_id);
         Entry storage entry = entries[id];
         require(_isChallenged(entry), ERROR_ENTRY_NOT_CHALLENGED);
@@ -161,8 +161,8 @@ contract Registry is DisputableApp {
     * @dev Void an entry
     * @param _id Identification number of the entry to be voided
     */
-    function _onDisputableVoided(uint256 _id) internal {
-        _onDisputableAllowed(_id);
+    function _onDisputableActionVoided(uint256 _id) internal {
+        _onDisputableActionAllowed(_id);
     }
 
     /**
@@ -176,7 +176,7 @@ contract Registry is DisputableApp {
         Entry storage entry = entries[_id];
         require(!_isRegistered(entry), ERROR_ENTRY_ALREADY_REGISTERED);
 
-        entry.actionId = _newAction(uint256(_id), _submitter, _context);
+        entry.actionId = _newAgreementAction(uint256(_id), _submitter, _context);
         entry.submitter = _submitter;
         entry.value = _value;
         emit Registered(_id);
