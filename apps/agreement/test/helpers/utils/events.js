@@ -1,6 +1,6 @@
 const AGREEMENT_EVENTS = {
   SIGNED: 'Signed',
-  CONTENT_CHANGED: 'ContentChanged',
+  SETTING_CHANGED: 'SettingChanged',
   ACTION_SUBMITTED: 'ActionSubmitted',
   ACTION_CHALLENGED: 'ActionChallenged',
   ACTION_SETTLED: 'ActionSettled',

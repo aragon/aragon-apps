@@ -53,12 +53,12 @@ contract('Agreement', ([_, EOA]) => {
       })
 
       it('initializes the first content', async () => {
-        const currentContentId = await agreement.getCurrentContentId()
+        const currentSettingId = await agreement.getCurrentSettingId()
 
-        assertBn(currentContentId, 1, 'current content ID does not match')
+        assertBn(currentSettingId, 1, 'current content ID does not match')
 
-        const logs = decodeEventsOfType(receipt, deployer.abi, AGREEMENT_EVENTS.CONTENT_CHANGED)
-        assertEvent({ logs }, AGREEMENT_EVENTS.CONTENT_CHANGED, { contentId: currentContentId })
+        const logs = decodeEventsOfType(receipt, deployer.abi, AGREEMENT_EVENTS.SETTING_CHANGED)
+        assertEvent({ logs }, AGREEMENT_EVENTS.SETTING_CHANGED, { settingId: currentSettingId })
       })
 
       it('initializes the title', async () => {

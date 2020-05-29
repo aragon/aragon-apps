@@ -18,12 +18,13 @@ contract IArbitrable is ERC165 {
 
     /**
     * @dev Emitted when new evidence is submitted for the IArbitrable instance's dispute
+    * @param arbitrator IArbitrator submitting the evidence for
     * @param disputeId Identification number of the dispute receiving new evidence
     * @param submitter Address of the account submitting the evidence
     * @param evidence Data submitted for the evidence of the dispute
     * @param finished Whether or not the submitter has finished submitting evidence
     */
-    event EvidenceSubmitted(uint256 indexed disputeId, address indexed submitter, bytes evidence, bool finished);
+    event EvidenceSubmitted(IArbitrator indexed arbitrator, uint256 indexed disputeId, address indexed submitter, bytes evidence, bool finished);
 
     /**
     * @dev Submit evidence for a dispute

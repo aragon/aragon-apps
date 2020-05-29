@@ -105,7 +105,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                 context('when the agreement content changed', () => {
                   beforeEach('change agreement content', async () => {
-                    await agreement.changeContent({ content: '0xabcd', from: owner })
+                    await agreement.changeSetting({ content: '0xabcd', from: owner })
                   })
 
                   it('still have available balance', async () => {

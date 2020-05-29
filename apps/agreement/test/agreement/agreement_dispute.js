@@ -104,7 +104,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       const IArbitrator = artifacts.require('ArbitratorMock')
                       const logs = decodeEventsOfType(receipt, IArbitrator.abi, 'NewDispute')
                       assertAmountOfEvents({ logs }, 'NewDispute', 1)
-                      assertEvent({ logs }, 'NewDispute', { disputeId, possibleRulings: 2, metadata: await agreement.getCurrentContent() })
+                      assertEvent({ logs }, 'NewDispute', { disputeId, possibleRulings: 2, metadata: (await agreement.getCurrentSetting()).content })
                     })
 
                     it('submits both parties context as evidence', async () => {

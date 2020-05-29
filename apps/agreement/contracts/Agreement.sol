@@ -44,6 +44,7 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_TOKEN_TRANSFER_FAILED = "AGR_TOKEN_TRANSFER_FAILED";
     string internal constant ERROR_TOKEN_APPROVAL_FAILED = "AGR_TOKEN_APPROVAL_FAILED";
     string internal constant ERROR_TOKEN_NOT_CONTRACT = "AGR_TOKEN_NOT_CONTRACT";
+    string internal constant ERROR_MISSING_AGREEMENT_SETTING = "AGR_MISSING_AGREEMENT_SETTING";
     string internal constant ERROR_ARBITRATOR_NOT_CONTRACT = "AGR_ARBITRATOR_NOT_CONTRACT";
     string internal constant ERROR_STAKING_FACTORY_NOT_CONTRACT = "AGR_STAKING_FACTORY_NOT_CONTRACT";
     string internal constant ERROR_ACL_SIGNER_MISSING = "AGR_ACL_ORACLE_SIGNER_MISSING";
@@ -68,14 +69,14 @@ contract Agreement is IAgreement, AragonApp {
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
 
-    // bytes32 public constant CHANGE_CONTENT_ROLE = keccak256("CHANGE_AGREEMENT_ROLE");
-    bytes32 public constant CHANGE_CONTENT_ROLE = 0xbc428ed8cb28bb330ec2446f83dabdde5f6fc3c43db55e285b2c7413b4b2acf5;
+    // bytes32 public constant CHANGE_AGREEMENT_ROLE = keccak256("CHANGE_AGREEMENT_ROLE");
+    bytes32 public constant CHANGE_AGREEMENT_ROLE = 0x07813bca4905795fa22783885acd0167950db28f2d7a40b70f666f429e19f1d9;
 
     // bytes32 public constant MANAGE_DISPUTABLE_ROLE = keccak256("MANAGE_DISPUTABLE_ROLE");
     bytes32 public constant MANAGE_DISPUTABLE_ROLE = 0x2309a8cbbd5c3f18649f3b7ac47a0e7b99756c2ac146dda1ffc80d3f80827be6;
 
-    event Signed(address indexed signer, uint256 contentId);
-    event ContentChanged(uint256 contentId);
+    event Signed(address indexed signer, uint256 settingId);
+    event SettingChanged(uint256 settingId);
     event ActionSubmitted(uint256 indexed actionId);
     event ActionClosed(uint256 indexed actionId);
     event ActionChallenged(uint256 indexed actionId, uint256 indexed challengeId);
@@ -103,10 +104,17 @@ contract Agreement is IAgreement, AragonApp {
         Voided
     }
 
+    struct Setting {
+        string title;
+        bytes content;
+        IArbitrator arbitrator;
+    }
+
     struct Action {
         IDisputable disputable;             // Address of the disputable that created the action
         uint256 disputableId;               // Identification number of the disputable action in the context of the disputable instance
         uint256 collateralId;               // Identification number of the collateral requirements for the given action
+        uint256 settingId;                  // Identification number of the agreement setting for the given action
         uint64 endDate;                     // Timestamp when the disputable action ends unless it's closed beforehand
         address submitter;                  // Address that has submitted the action
         ActionState state;                  // Current state of the action
@@ -143,13 +151,11 @@ contract Agreement is IAgreement, AragonApp {
         mapping (uint256 => CollateralRequirement) collateralRequirements;  // List of collateral requirements indexed by id
     }
 
-    string public title;                    // Title identifying the Agreement instance
-    IArbitrator public arbitrator;          // Arbitrator instance that will resolve disputes
-    StakingFactory public stakingFactory;   // Staking factory to be used for the collateral staking pools
+    StakingFactory public stakingFactory;                           // Staking factory to be used for the collateral staking pools
 
-    uint256 private contentsLength;
-    mapping (uint256 => bytes) private contents;                    // List of historic contents indexed by ID
-    mapping (address => uint256) private lastContentSignedBy;       // List of last contents signed by user
+    uint256 private settingsLength;
+    mapping (uint256 => Setting) private settings;                  // List of historic settings indexed by ID
+    mapping (address => uint256) private lastSettingSignedBy;       // List of last setting signed by user
 
     uint256 private actionsLength;
     mapping (uint256 => Action) private actions;                    // List of actions indexed by ID
@@ -168,15 +174,12 @@ contract Agreement is IAgreement, AragonApp {
     */
     function initialize(string _title, bytes _content, IArbitrator _arbitrator, StakingFactory _stakingFactory) external {
         initialized();
-        require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
         require(isContract(address(_stakingFactory)), ERROR_STAKING_FACTORY_NOT_CONTRACT);
 
-        title = _title;
-        arbitrator = _arbitrator;
         stakingFactory = _stakingFactory;
 
-        contentsLength++; // Content zero is considered the null content for further validations
-        _newContent(_content);
+        settingsLength++; // Setting ID zero is considered the null setting for further validations
+        _newSetting(_title, _content, _arbitrator);
     }
 
     /**
@@ -248,23 +251,25 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @notice Change Agreement content to `_content`
+    * @notice Change Agreement to title `_title`, content `_content`, and arbitrator `_arbitrator`
+    * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
+    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
     */
-    function changeContent(bytes _content) external auth(CHANGE_CONTENT_ROLE) {
-        _newContent(_content);
+    function changeSetting(string _title, bytes _content, IArbitrator _arbitrator) external auth(CHANGE_AGREEMENT_ROLE) {
+        _newSetting(_title, _content, _arbitrator);
     }
 
     /**
     * @notice Sign the agreement
     */
     function sign() external {
-        uint256 currentContentId = _getCurrentContentId();
-        uint256 lastContentIdSigned = lastContentSignedBy[msg.sender];
-        require(lastContentIdSigned < currentContentId, ERROR_SIGNER_ALREADY_SIGNED);
+        uint256 currentSettingId = _getCurrentSettingId();
+        uint256 lastSettingIdSigned = lastSettingSignedBy[msg.sender];
+        require(lastSettingIdSigned < currentSettingId, ERROR_SIGNER_ALREADY_SIGNED);
 
-        lastContentSignedBy[msg.sender] = currentContentId;
-        emit Signed(msg.sender, currentContentId);
+        lastSettingSignedBy[msg.sender] = currentSettingId;
+        emit Signed(msg.sender, currentSettingId);
     }
 
     /**
@@ -278,8 +283,8 @@ contract Agreement is IAgreement, AragonApp {
     * @return Unique identification number for the created action in the context of the agreement
     */
     function newAction(uint256 _disputableId, uint64 _lifetime, address _submitter, bytes _context) external returns (uint256) {
-        uint256 lastContentIdSigned = lastContentSignedBy[_submitter];
-        require(lastContentIdSigned >= _getCurrentContentId(), ERROR_SIGNER_MUST_SIGN);
+        uint256 lastSettingIdSigned = lastSettingSignedBy[_submitter];
+        require(lastSettingIdSigned >= _getCurrentSettingId(), ERROR_SIGNER_MUST_SIGN);
 
         DisputableInfo storage disputableInfo = disputableInfos[msg.sender];
         _ensureRegisteredDisputable(disputableInfo);
@@ -296,6 +301,7 @@ contract Agreement is IAgreement, AragonApp {
         action.endDate = _lifetime == 0 ? MAX_UINT64 : getTimestamp64().add(_lifetime);
         action.submitter = _submitter;
         action.context = _context;
+        action.settingId = _getCurrentSettingId();
 
         emit ActionSubmitted(id);
         return id;
@@ -328,10 +334,10 @@ contract Agreement is IAgreement, AragonApp {
     * @notice Challenge action #`_actionId`
     * @param _actionId Identification number of the action to be challenged
     * @param _settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
-    * @param _finishedSubmittingEvidence Whether or not the challenger has finished submitting evidence
+    * @param _finishedEvidence Whether or not the challenger has finished submitting evidence
     * @param _context Link to a human-readable text giving context for the challenge
     */
-    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bool _finishedSubmittingEvidence, bytes _context) external {
+    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bool _finishedEvidence, bytes _context) external {
         Action storage action = _getAction(_actionId);
         require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
 
@@ -339,7 +345,7 @@ contract Agreement is IAgreement, AragonApp {
         require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
         require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
 
-        uint256 challengeId = _createChallenge(_actionId, msg.sender, requirement, _settlementOffer, _finishedSubmittingEvidence, _context);
+        uint256 challengeId = _createChallenge(_actionId, action, msg.sender, requirement, _settlementOffer, _finishedEvidence, _context);
         action.state = ActionState.Challenged;
         action.currentChallengeId = challengeId;
         disputable.onDisputableChallenged(action.disputableId, challengeId, msg.sender);
@@ -389,9 +395,15 @@ contract Agreement is IAgreement, AragonApp {
     function disputeAction(uint256 _actionId, bool _submitterFinishedEvidence) external {
         (Action storage action, Challenge storage challenge, uint256 challengeId) = _getChallengedAction(_actionId);
         require(_canDispute(_actionId, action, challenge), ERROR_CANNOT_DISPUTE_ACTION);
-        require(msg.sender == action.submitter, ERROR_SENDER_NOT_ALLOWED);
 
-        uint256 disputeId = _createDispute(action, challenge, _submitterFinishedEvidence);
+        address submitter = action.submitter;
+        require(msg.sender == submitter, ERROR_SENDER_NOT_ALLOWED);
+
+        (, bytes memory content, IArbitrator arbitrator) = _getSettingFor(action);
+        uint256 disputeId = _createDispute(action, challenge, arbitrator, content);
+        _submitEvidence(arbitrator, disputeId, submitter, action.context, _submitterFinishedEvidence);
+        _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challenge.challengerFinishedEvidence);
+
         challenge.state = ChallengeState.Disputed;
         challenge.disputeId = disputeId;
         challenge.submitterFinishedEvidence = _submitterFinishedEvidence;
@@ -409,8 +421,10 @@ contract Agreement is IAgreement, AragonApp {
         (uint256 _actionId, Action storage action, , Challenge storage challenge) = _getDisputedAction(_disputeId);
         require(_isDisputed(_actionId, action, challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
 
+        (, , IArbitrator arbitrator) = _getSettingFor(action);
         bool finished = _registerEvidence(action, challenge, msg.sender, _finished);
-        _submitEvidence(_disputeId, msg.sender, _evidence, _finished);
+        _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, _finished);
+
         if (finished) {
             arbitrator.closeEvidencePeriod(_disputeId);
         }
@@ -425,11 +439,11 @@ contract Agreement is IAgreement, AragonApp {
         (uint256 actionId, Action storage action, uint256 challengeId, Challenge storage challenge) = _getDisputedAction(_disputeId);
         require(_canRuleDispute(actionId, action, challenge), ERROR_CANNOT_RULE_ACTION);
 
-        IArbitrator currentArbitrator = arbitrator;
-        require(currentArbitrator == IArbitrator(msg.sender), ERROR_SENDER_NOT_ALLOWED);
+        (, , IArbitrator arbitrator) = _getSettingFor(action);
+        require(arbitrator == IArbitrator(msg.sender), ERROR_SENDER_NOT_ALLOWED);
 
         challenge.ruling = _ruling;
-        emit Ruled(currentArbitrator, _disputeId, _ruling);
+        emit Ruled(arbitrator, _disputeId, _ruling);
 
         if (_ruling == DISPUTES_RULING_SUBMITTER) {
             _rejectChallenge(action, challenge);
@@ -448,11 +462,11 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Tell the information related to a signer
     * @param _signer Address being queried
-    * @return lastContentIdSigned Identification number of the last agreement content signed by the signer
-    * @return mustSign Whether or not the requested signer must sign the current agreement content or not
+    * @return lastSettingIdSigned Identification number of the last agreement setting signed by the signer
+    * @return mustSign Whether or not the requested signer must sign the current agreement setting or not
     */
-    function getSigner(address _signer) external view returns (uint256 lastContentIdSigned, bool mustSign) {
-        (lastContentIdSigned, mustSign) = _getSigner(_signer);
+    function getSigner(address _signer) external view returns (uint256 lastSettingIdSigned, bool mustSign) {
+        (lastSettingIdSigned, mustSign) = _getSigner(_signer);
     }
 
     /**
@@ -479,7 +493,7 @@ contract Agreement is IAgreement, AragonApp {
             uint256 currentChallengeId
         )
     {
-        Action storage action = _getAction(_actionId);
+        Action storage action = actions[_actionId];
 
         disputable = action.disputable;
         disputableId = action.disputableId;
@@ -540,20 +554,25 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell the current content identification number
-    * @return Identification number of the current Agreement content
+    * @dev Tell the current setting identification number
+    * @return Identification number of the current Agreement setting
     */
-    function getCurrentContentId() external view returns (uint256) {
-        return _getCurrentContentId();
+    function getCurrentSettingId() external view returns (uint256) {
+        return _getCurrentSettingId();
     }
 
     /**
-    * @dev Tell the information related to a content
-    * @param _contentId Identification number of the content being queried
+    * @dev Tell the information related to a setting
+    * @param _settingId Identification number of the setting being queried
+    * @return title String indicating a short description
     * @return content Link to a human-readable text that describes the initial rules for the Agreements instance
+    * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
     */
-    function getContent(uint256 _contentId) external view returns (bytes) {
-        return contents[_contentId];
+    function getSetting(uint256 _settingId) external view returns (string title, bytes content, IArbitrator arbitrator) {
+        Setting storage setting = settings[_settingId];
+        title = setting.title;
+        content = setting.content;
+        arbitrator = setting.arbitrator;
     }
 
     /**
@@ -603,11 +622,12 @@ contract Agreement is IAgreement, AragonApp {
     */
     function getMissingArbitratorFees(uint256 _actionId) external view returns (ERC20 feeToken, uint256 missingFees, uint256 totalFees) {
         Action storage action = _getAction(_actionId);
+        (, , IArbitrator arbitrator) = _getSettingFor(action);
         Challenge storage challenge = challenges[action.currentChallengeId];
         ERC20 challengerFeeToken = challenge.arbitratorFeeToken;
         uint256 challengerFeeAmount = challenge.arbitratorFeeAmount;
 
-        (, feeToken, missingFees, totalFees) = _getMissingArbitratorFees(challengerFeeToken, challengerFeeAmount);
+        (, feeToken, missingFees, totalFees) = _getMissingArbitratorFees(arbitrator, challengerFeeToken, challengerFeeAmount);
     }
 
     /**
@@ -699,6 +719,7 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Challenge an action
     * @param _actionId Identification number of the action being challenged
+    * @param _action Action instance being challenged
     * @param _challenger Address challenging the action
     * @param _requirement Collateral requirement to be used for the challenge
     * @param _settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
@@ -708,6 +729,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function _createChallenge(
         uint256 _actionId,
+        Action storage _action,
         address _challenger,
         CollateralRequirement storage _requirement,
         uint256 _settlementOffer,
@@ -731,6 +753,7 @@ contract Agreement is IAgreement, AragonApp {
         _transferFrom(_requirement.token, _challenger, _requirement.challengeAmount);
 
         // Transfer half of the Arbitrator fees
+        (, , IArbitrator arbitrator) = _getSettingFor(_action);
         (, ERC20 feeToken, uint256 feeAmount) = arbitrator.getDisputeFees();
         uint256 arbitratorFees = feeAmount / 2;
         challenge.arbitratorFeeToken = feeToken;
@@ -742,35 +765,38 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Dispute an action
     * @param _action Action instance to be disputed
-    * @param _submitterFinishedEvidence Whether or not the submitter finished submitting evidence
+    * @param _challenge Challenge instance being disputed
+    * @return _arbitrator Address of the IArbitrator associated to the disputed action
+    * @return _content Link to a human-readable text that describes the initial rules for the Agreements instance associated to the action
     * @return Identification number of the dispute created in the arbitrator
     */
-    function _createDispute(Action storage _action, Challenge storage _challenge, bool _submitterFinishedEvidence) internal returns (uint256) {
+    function _createDispute(Action storage _action, Challenge storage _challenge, IArbitrator _arbitrator, bytes memory _content)
+        internal
+        returns (uint256)
+    {
         // Compute missing fees for dispute
         ERC20 challengerFeeToken = _challenge.arbitratorFeeToken;
         uint256 challengerFeeAmount = _challenge.arbitratorFeeAmount;
         (address recipient, ERC20 feeToken, uint256 missingFees, uint256 totalFees) = _getMissingArbitratorFees(
+            _arbitrator,
             challengerFeeToken,
             challengerFeeAmount
         );
 
-        // Create dispute
+        // Transfer submitter arbitration fees
         address submitter = _action.submitter;
         _transferFrom(feeToken, submitter, missingFees);
-        // We are first setting the allowance to zero in case there are remaining fees in the arbitrator
+
+        // Create dispute. We are first setting the allowance to zero in case there are remaining fees in the arbitrator.
         _approveArbitratorFeeTokens(feeToken, recipient, 0);
         _approveArbitratorFeeTokens(feeToken, recipient, totalFees);
-        uint256 disputeId = arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _getCurrentContent());
-
-        // Update action and submit evidences
-        address challenger = _challenge.challenger;
-        _submitEvidence(disputeId, submitter, _action.context, _submitterFinishedEvidence);
-        _submitEvidence(disputeId, challenger, _challenge.context, _challenge.challengerFinishedEvidence);
+        uint256 disputeId = _arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _content);
 
         // Return arbitrator fees to challenger if necessary
         if (challengerFeeToken != feeToken) {
-            _transfer(challengerFeeToken, challenger, challengerFeeAmount);
+            _transfer(challengerFeeToken, _challenge.challenger, challengerFeeAmount);
         }
+
         return disputeId;
     }
 
@@ -809,14 +835,15 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @dev Log an evidence for an action
+    * @param _arbitrator IArbitrator submitting the evidence for
     * @param _disputeId Identification number of the dispute for the arbitrator
     * @param _submitter Address of submitting the evidence
     * @param _evidence Evidence to be logged
     * @param _finished Whether the evidence submitter has finished submitting evidence or not
     */
-    function _submitEvidence(uint256 _disputeId, address _submitter, bytes _evidence, bool _finished) internal {
+    function _submitEvidence(IArbitrator _arbitrator, uint256 _disputeId, address _submitter, bytes _evidence, bool _finished) internal {
         if (_evidence.length > 0) {
-            emit EvidenceSubmitted(_disputeId, _submitter, _evidence, _finished);
+            emit EvidenceSubmitted(_arbitrator, _disputeId, _submitter, _evidence, _finished);
         }
     }
 
@@ -984,13 +1011,17 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Change Agreement content
+    * @dev Change Agreement settings
+    * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
+    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
     */
-    function _newContent(bytes _content) internal {
-        uint256 id = contentsLength++;
-        contents[id] = _content;
-        emit ContentChanged(id);
+    function _newSetting(string _title, bytes _content, IArbitrator _arbitrator) internal {
+        require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
+
+        uint256 id = settingsLength++;
+        settings[id] = Setting({ title: _title, content: _content, arbitrator: _arbitrator });
+        emit SettingChanged(id);
     }
 
     /**
@@ -1232,30 +1263,39 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell the current content
-    * @return Current Agreement content
+    * @dev Tell the current Agreement setting identification number
+    * @return Identification number of the current Agreement setting
     */
-    function _getCurrentContent() internal view returns (bytes memory) {
-        return contents[_getCurrentContentId()];
-    }
-
-    /**
-    * @dev Tell the current content identification number
-    * @return Identification number of the current Agreement content
-    */
-    function _getCurrentContentId() internal view returns (uint256) {
-        return contentsLength - 1; // an initial content is created during initialization, thus length will be always greater than 0
+    function _getCurrentSettingId() internal view returns (uint256) {
+        return settingsLength - 1; // an initial setting is created during initialization, thus length will be always greater than 0
     }
 
     /**
     * @dev Tell the information related to a signer
     * @param _signer Address being queried
-    * @return lastContentIdSigned Identification number of the last agreement content signed by the signer
-    * @return mustSign Whether or not the requested signer must sign the current agreement content or not
+    * @return lastSettingIdSigned Identification number of the last agreement setting signed by the signer
+    * @return mustSign Whether or not the requested signer must sign the current agreement setting or not
     */
-    function _getSigner(address _signer) internal view returns (uint256 lastContentIdSigned, bool mustSign) {
-        lastContentIdSigned = lastContentSignedBy[_signer];
-        mustSign = lastContentIdSigned < _getCurrentContentId();
+    function _getSigner(address _signer) internal view returns (uint256 lastSettingIdSigned, bool mustSign) {
+        lastSettingIdSigned = lastSettingSignedBy[_signer];
+        mustSign = lastSettingIdSigned < _getCurrentSettingId();
+    }
+
+    /**
+    * @dev Tell the information related to a setting
+    * @param _action Action instance querying the Agreement setting of
+    * @return title String indicating a short description
+    * @return content Link to a human-readable text that describes the initial rules for the Agreements instance
+    * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
+    */
+    function _getSettingFor(Action storage _action) internal view returns (string title, bytes content, IArbitrator arbitrator) {
+        uint256 settingId = _action.settingId;
+        require(settingId < settingsLength, ERROR_MISSING_AGREEMENT_SETTING);
+
+        Setting storage setting = settings[settingId];
+        title = setting.title;
+        content = setting.content;
+        arbitrator = setting.arbitrator;
     }
 
     /**
@@ -1295,17 +1335,18 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @dev Tell the missing part of arbitration fees in order to dispute an action raising it to the arbitrator
-    * @return _challengerFeeToken ERC20 token used for the arbitration fees paid by the challenger in advance
-    * @return _challengerFeeAmount Amount of arbitration fees paid by the challenger in advance in case the challenge is raised to the arbitrator
+    * @param _arbitrator Arbitrator querying the missing fees of
+    * @param _challengerFeeToken ERC20 token used for the arbitration fees paid by the challenger in advance
+    * @param _challengerFeeAmount Amount of arbitration fees paid by the challenger in advance in case the challenge is raised to the arbitrator
     * @return Address where the arbitration fees must be transferred to
     * @return ERC20 token to be used for the arbitration fees
     * @return Amount of arbitration fees missing to be able to dispute the action
     * @return Total amount of arbitration fees to be paid to be able to dispute the action
     */
-    function _getMissingArbitratorFees(ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) internal view
+    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) internal view
         returns (address, ERC20, uint256, uint256)
     {
-        (address recipient, ERC20 feeToken, uint256 disputeFees) = arbitrator.getDisputeFees();
+        (address recipient, ERC20 feeToken, uint256 disputeFees) = _arbitrator.getDisputeFees();
 
         uint256 missingFees;
         if (_challengerFeeToken == feeToken) {

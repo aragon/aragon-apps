@@ -31,13 +31,13 @@ contract('Agreement', ([_, signer]) => {
       })
 
       it('can sign the agreement', async () => {
-        const currentContentId = await agreement.getCurrentContentId()
+        const currentSettingId = await agreement.getCurrentSettingId()
 
         await agreement.sign(from)
 
-        const { lastContentIdSigned, mustSign } = await agreement.getSigner(from)
+        const { lastSettingIdSigned, mustSign } = await agreement.getSigner(from)
         assert.isFalse(mustSign, 'signer must sign')
-        assertBn(lastContentIdSigned, currentContentId, 'signer last content signed does not match')
+        assertBn(lastSettingIdSigned, currentSettingId, 'last setting signed does not match')
       })
 
       it('is allowed through ACL oracle after signing the agreement', async () => {
@@ -47,12 +47,12 @@ contract('Agreement', ([_, signer]) => {
       })
 
       it('emits an event', async () => {
-        const currentContentId = await agreement.getCurrentContentId()
+        const currentSettingId = await agreement.getCurrentSettingId()
 
         const receipt = await agreement.sign(from)
 
         assertAmountOfEvents(receipt, AGREEMENT_EVENTS.SIGNED, 1)
-        assertEvent(receipt, AGREEMENT_EVENTS.SIGNED, { signer: from, contentId: currentContentId })
+        assertEvent(receipt, AGREEMENT_EVENTS.SIGNED, { signer: from, settingId: currentSettingId })
       })
     }
 
@@ -73,7 +73,7 @@ contract('Agreement', ([_, signer]) => {
 
       context('when the agreement has changed', () => {
         beforeEach('change agreement', async () => {
-          await agreement.changeContent('0xabcd')
+          await agreement.changeSetting({ content: '0xabcd' })
         })
 
         itSignsTheAgreementProperly()

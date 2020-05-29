@@ -140,7 +140,7 @@ class AgreementDeployer {
     const receipt = await this.dao.newAppInstance(appId, this.base.address, '0x', false, { from: owner })
     const agreement = await this.base.constructor.at(getNewProxyAddress(receipt))
 
-    const permissions = ['CHANGE_CONTENT_ROLE', 'MANAGE_DISPUTABLE_ROLE']
+    const permissions = ['CHANGE_AGREEMENT_ROLE', 'MANAGE_DISPUTABLE_ROLE']
     await this._createPermissions(agreement, permissions, owner)
 
     if (currentTimestamp) await this.mockTime(agreement, currentTimestamp)

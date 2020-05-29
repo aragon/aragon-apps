@@ -26,12 +26,12 @@ class AgreementWrapper {
     return this.agreement.canPerform(who, where, what, how)
   }
 
-  async getCurrentContentId() {
-    return this.agreement.getCurrentContentId()
+  async getCurrentSettingId() {
+    return this.agreement.getCurrentSettingId()
   }
 
-  async getCurrentContent() {
-    return this.agreement.getContent(await this.getCurrentContentId())
+  async getCurrentSetting() {
+    return this.agreement.getSetting(await this.getCurrentSettingId())
   }
 
   async getAction(actionId) {
@@ -45,8 +45,8 @@ class AgreementWrapper {
   }
 
   async getSigner(signer) {
-    const { lastContentIdSigned, mustSign } = await this.agreement.getSigner(signer)
-    return { lastContentIdSigned, mustSign }
+    const { lastSettingIdSigned, mustSign } = await this.agreement.getSigner(signer)
+    return { lastSettingIdSigned, mustSign }
   }
 
   async getBalance(token, user) {
@@ -171,9 +171,10 @@ class AgreementWrapper {
     return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
   }
 
-  async changeContent({ content = '0x1234', from = undefined }) {
+  async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, from = undefined }) {
     if (!from) from = await this._getSender()
-    return this.agreement.changeContent(content, { from })
+    if (!arbitrator) arbitrator = this.arbitrator
+    return this.agreement.changeSetting(title, content, arbitrator.address, { from })
   }
 
   async approveArbitrationFees({ amount = undefined, from = undefined, accumulate = false }) {
