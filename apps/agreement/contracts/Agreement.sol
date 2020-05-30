@@ -16,6 +16,7 @@ import "./arbitration/IArbitrable.sol";
 import "./arbitration/IArbitrator.sol";
 
 import "./IAgreement.sol";
+import "./lib/BytesHelper.sol";
 import "./staking/Staking.sol";
 import "./staking/StakingFactory.sol";
 import "./disputable/IDisputable.sol";
@@ -25,6 +26,7 @@ contract Agreement is IAgreement, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
+    using BytesHelper for bytes;
 
     uint64 internal constant MAX_UINT64 = uint64(-1);
 
@@ -400,7 +402,8 @@ contract Agreement is IAgreement, AragonApp {
         require(msg.sender == submitter, ERROR_SENDER_NOT_ALLOWED);
 
         (, bytes memory content, IArbitrator arbitrator) = _getSettingFor(action);
-        uint256 disputeId = _createDispute(action, challenge, arbitrator, content);
+        bytes memory metadata = _buildDisputeMetadata(action, content);
+        uint256 disputeId = _createDispute(action, challenge, arbitrator, metadata);
         _submitEvidence(arbitrator, disputeId, submitter, action.context, _submitterFinishedEvidence);
         _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challenge.challengerFinishedEvidence);
 
@@ -767,10 +770,10 @@ contract Agreement is IAgreement, AragonApp {
     * @param _action Action instance to be disputed
     * @param _challenge Challenge instance being disputed
     * @return _arbitrator Address of the IArbitrator associated to the disputed action
-    * @return _content Link to a human-readable text that describes the initial rules for the Agreements instance associated to the action
+    * @return _metadata Metadata content to be used for the dispute
     * @return Identification number of the dispute created in the arbitrator
     */
-    function _createDispute(Action storage _action, Challenge storage _challenge, IArbitrator _arbitrator, bytes memory _content)
+    function _createDispute(Action storage _action, Challenge storage _challenge, IArbitrator _arbitrator, bytes memory _metadata)
         internal
         returns (uint256)
     {
@@ -790,7 +793,7 @@ contract Agreement is IAgreement, AragonApp {
         // Create dispute. We are first setting the allowance to zero in case there are remaining fees in the arbitrator.
         _approveArbitratorFeeTokens(feeToken, recipient, 0);
         _approveArbitratorFeeTokens(feeToken, recipient, totalFees);
-        uint256 disputeId = _arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _content);
+        uint256 disputeId = _arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _metadata);
 
         // Return arbitrator fees to challenger if necessary
         if (challengerFeeToken != feeToken) {
@@ -1356,5 +1359,15 @@ contract Agreement is IAgreement, AragonApp {
         }
 
         return (recipient, feeToken, missingFees, disputeFees);
+    }
+
+    function _buildDisputeMetadata(Action storage _action, bytes memory _content) internal view returns (bytes memory) {
+        bytes memory metadata = new bytes(10);
+        assembly { mstore(add(metadata, 32), 0x61677265656d656e747300000000000000000000000000000000000000000000) }
+
+        return metadata
+                .pipe(address(_action.disputable))
+                .pipe(_action.disputableActionId)
+                .pipe(_content);
     }
 }

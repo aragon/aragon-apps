@@ -1,3 +1,4 @@
+const { utf8ToHex, padLeft } = require('web3-utils')
 const { assertBn } = require('../helpers/assert/assertBn')
 const { bn, bigExp } = require('../helpers/lib/numbers')
 const { assertRevert } = require('../helpers/assert/assertThrow')
@@ -101,10 +102,18 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       assert.isFalse(submitterFinishedEvidence, 'submitter finished evidence')
                       assert.isFalse(challengerFinishedEvidence, 'challenger finished evidence')
 
+                      const pipe = utf8ToHex('|').slice(2)
+                      const identifier = utf8ToHex('agreements').slice(2)
+                      const disputableAddress = agreement.disputable.address.toLowerCase().slice(2)
+                      const disputableActionId = padLeft((await agreement.getAction(actionId)).disputableActionId, 64)
+                      const content = (await agreement.getCurrentSetting()).content.slice(2)
+                      const expectedMetadata = `0x${identifier}${pipe}${disputableAddress}${pipe}${disputableActionId}${pipe}${content}`
+
                       const IArbitrator = artifacts.require('ArbitratorMock')
                       const logs = decodeEventsOfType(receipt, IArbitrator.abi, 'NewDispute')
                       assertAmountOfEvents({ logs }, 'NewDispute', 1)
-                      assertEvent({ logs }, 'NewDispute', { disputeId, possibleRulings: 2, metadata: (await agreement.getCurrentSetting()).content })
+
+                      assertEvent({ logs }, 'NewDispute', { disputeId, possibleRulings: 2, metadata: expectedMetadata })
                     })
 
                     it('submits both parties context as evidence', async () => {
@@ -113,8 +122,8 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                       const logs = decodeEventsOfType(receipt, agreement.abi, 'EvidenceSubmitted')
                       assertAmountOfEvents({ logs }, 'EvidenceSubmitted', 2)
-                      assertEvent({ logs }, 'EvidenceSubmitted', { disputeId, submitter: submitter, evidence: actionContext, finished: false }, 0)
-                      assertEvent({ logs }, 'EvidenceSubmitted', { disputeId, submitter: challenger, evidence: challengeContext, finished: false }, 1)
+                      assertEvent({ logs }, 'EvidenceSubmitted', { arbitrator: agreement.arbitrator, disputeId, submitter: submitter, evidence: actionContext, finished: false }, 0)
+                      assertEvent({ logs }, 'EvidenceSubmitted', { arbitrator: agreement.arbitrator, disputeId, submitter: challenger, evidence: challengeContext, finished: false }, 1)
                     })
 
                     it('does not affect the submitter staked balances', async () => {
