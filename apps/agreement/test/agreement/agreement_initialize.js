@@ -52,7 +52,7 @@ contract('Agreement', ([_, EOA]) => {
         await assertRevert(agreement.initialize(title, content, arbitrator.address, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
       })
 
-      it('initializes the first content', async () => {
+      it('initializes the first setting', async () => {
         const currentSettingId = await agreement.getCurrentSettingId()
 
         assertBn(currentSettingId, 1, 'current content ID does not match')
@@ -61,14 +61,12 @@ contract('Agreement', ([_, EOA]) => {
         assertEvent({ logs }, AGREEMENT_EVENTS.SETTING_CHANGED, { settingId: currentSettingId })
       })
 
-      it('initializes the title', async () => {
-        const actualTitle = await agreement.title()
-        assert.equal(actualTitle, title, 'title does not match')
-      })
+      it('initializes the first setting with the given title, content and arbitrator', async () => {
+        const setting = await agreement.getSetting(1)
 
-      it('initializes the arbitrator', async () => {
-        const actualArbitrator = await agreement.arbitrator()
-        assert.equal(actualArbitrator, arbitrator.address, 'arbitrator does not match')
+        assert.equal(setting.title, title, 'title does not match')
+        assert.equal(setting.content, content, 'content does not match')
+        assert.equal(setting.arbitrator, arbitrator.address, 'arbitrator does not match')
       })
     })
   })

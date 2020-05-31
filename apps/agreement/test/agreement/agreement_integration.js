@@ -5,7 +5,7 @@ const { ACTIONS_STATE, CHALLENGES_STATE, RULINGS } = require('../helpers/utils/e
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 
-contract('DisputableApp', ([_, challenger, holder0, holder1, holder2, holder3, holder4, holder5]) => {
+contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holder4, holder5]) => {
   let disputable, collateralToken
 
   const actionCollateral = bigExp(5, 18)

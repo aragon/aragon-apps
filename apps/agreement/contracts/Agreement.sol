@@ -11,15 +11,12 @@ import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/common/ConversionHelpers.sol";
+import "@aragon/os/contracts/apps/disputable/IAgreement.sol";
+import "@aragon/os/contracts/apps/disputable/IDisputable.sol";
 
-import "./arbitration/IArbitrable.sol";
-import "./arbitration/IArbitrator.sol";
-
-import "./IAgreement.sol";
 import "./lib/BytesHelper.sol";
 import "./staking/Staking.sol";
 import "./staking/StakingFactory.sol";
-import "./disputable/IDisputable.sol";
 
 
 contract Agreement is IAgreement, AragonApp {
@@ -210,8 +207,10 @@ contract Agreement is IAgreement, AragonApp {
         disputableInfo.registered = true;
         emit DisputableAppRegistered(_disputable);
 
-        _disputable.setAgreement(IAgreement(this));
         _changeCollateralRequirement(_disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
+        if (_disputable.getAgreement() != IAgreement(this)) {
+            _disputable.setAgreement(IAgreement(this));
+        }
     }
 
     /**

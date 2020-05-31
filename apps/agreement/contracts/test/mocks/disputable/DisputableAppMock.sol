@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
+import "@aragon/os/contracts/apps/disputable/DisputableApp.sol";
 import "../helpers/TimeHelpersMock.sol";
-import "../../../disputable/DisputableApp.sol";
 
 
 contract DisputableAppMock is DisputableApp, TimeHelpersMock {

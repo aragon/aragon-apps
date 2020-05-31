@@ -4,7 +4,7 @@ const { bigExp, bn } = require('../helpers/lib/numbers')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
-const { DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
+const { ARAGON_OS_ERRORS } = require('../helpers/utils/errors')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -76,7 +76,7 @@ contract('Agreement', ([_, owner, someone]) => {
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(agreement.changeCollateralRequirement({ ...newCollateralRequirement, from }), DISPUTABLE_ERRORS.ERROR_AUTH_FAILED)
+        await assertRevert(agreement.changeCollateralRequirement({ ...newCollateralRequirement, from }), ARAGON_OS_ERRORS.ERROR_AUTH_FAILED)
       })
     })
   })

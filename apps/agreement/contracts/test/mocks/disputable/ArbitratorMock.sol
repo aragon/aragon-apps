@@ -1,8 +1,8 @@
 pragma solidity 0.4.24;
 
-import "../../../arbitration/IArbitrable.sol";
-import "../../../arbitration/IArbitrator.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
+import "@aragon/os/contracts/apps/disputable/IArbitrable.sol";
+import "@aragon/os/contracts/apps/disputable/IArbitrator.sol";
 
 
 contract ArbitratorMock is IArbitrator {

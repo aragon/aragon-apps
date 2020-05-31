@@ -4,7 +4,7 @@ const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 const TokenBalanceOracle = artifacts.require('TokenBalanceOracle')
 
-contract('DisputableApp', ([_, owner, someone, submitter, challenger]) => {
+contract('Agreement', ([_, owner, someone, submitter, challenger]) => {
   let disputable
 
   const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'

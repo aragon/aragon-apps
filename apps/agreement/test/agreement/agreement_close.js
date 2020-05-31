@@ -3,7 +3,7 @@ const { assertRevert } = require('../helpers/assert/assertThrow')
 const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
-const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
+const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { RULINGS, ACTIONS_STATE } = require('../helpers/utils/enums')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
