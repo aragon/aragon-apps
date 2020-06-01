@@ -254,7 +254,7 @@ contract DisputableVoting is DisputableApp {
     */
     function canExecute(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
-        return _canExecute(vote_) && _canProceedAgreementAction(vote_.actionId);
+        return _canExecute(vote_);
     }
 
     /**
@@ -265,7 +265,7 @@ contract DisputableVoting is DisputableApp {
     */
     function canVote(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
-        return _canVote(vote_, _voter) && _canProceedAgreementAction(vote_.actionId);
+        return _canVote(vote_, _voter);
     }
 
     /**
@@ -277,7 +277,6 @@ contract DisputableVoting is DisputableApp {
     function canVoteOnBehalfOf(uint256 _voteId, address _voter, address _representative) public view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
         return _canVote(vote_, _voter) &&
-            _canProceedAgreementAction(vote_.actionId) &&
             _isRepresentativeOf(_voter, _representative) &&
             _hasNotVotedYet(vote_, _voter) &&
             !_withinOverruleWindow(vote_);
@@ -582,6 +581,11 @@ contract DisputableVoting is DisputableApp {
             return false;
         }
 
+        // If the vote cannot proceed due to an Agreement dispute, it cannot be executed
+        if (!_canProceedAgreementAction(vote_.actionId)) {
+            return false;
+        }
+
         // If non of the above conditions are met, it can be executed
         return true;
     }
@@ -591,7 +595,7 @@ contract DisputableVoting is DisputableApp {
     * @return True if the given voter can participate a certain vote, false otherwise
     */
     function _canVote(Vote storage vote_, address _voter) internal view returns (bool) {
-        return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
+        return _isVoteOpen(vote_) && _canProceedAgreementAction(vote_.actionId) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
     }
 
     /**
