@@ -22,13 +22,6 @@ function appStateReducer(state) {
       ...balance,
       amount: new BN(balance.amount),
       decimals: new BN(balance.decimals),
-
-      // Note that numbers in `numData` are not safe for accurate
-      // computations (but are useful for making divisions easier).
-      numData: {
-        amount: parseInt(balance.amount, 10),
-        decimals: parseInt(balance.decimals, 10),
-      },
     }))
     .sort(compareBalancesByEthAndSymbol)
 
@@ -42,16 +35,13 @@ function appStateReducer(state) {
   return {
     ...state,
 
-    tokens: balancesBn.map(
-      ({ address, name, symbol, numData: { amount, decimals }, verified }) => ({
-        address,
-        amount,
-        decimals,
-        name,
-        symbol,
-        verified,
-      })
-    ),
+    tokens: balancesBn.map(({ address, decimals, name, symbol, verified }) => ({
+      address,
+      decimals: decimals.toNumber(),
+      name,
+      symbol,
+      verified,
+    })),
 
     // Filter out empty balances
     balances: balancesBn.filter(balance => !balance.amount.isZero()),

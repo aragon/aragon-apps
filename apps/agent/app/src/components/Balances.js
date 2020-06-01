@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
+import BN from 'bn.js'
 import { Box, GU, useLayout } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
-import { round } from '../lib/math-utils'
 
 const CONVERT_API_BASE = 'https://min-api.cryptocompare.com/data'
 
@@ -42,19 +42,16 @@ const Balances = React.memo(function Balances({ balances }) {
 
   useEffect(() => {
     const balanceItems = balances.map(
-      ({ address, numData: { amount, decimals }, symbol, verified }) => {
-        const adjustedAmount = amount / Math.pow(10, decimals)
-        const convertedAmount =
-          verified && convertRates[symbol]
-            ? adjustedAmount / convertRates[symbol]
-            : -1
-
+      ({ address, amount, decimals, symbol, verified }) => {
         return {
           address,
+          amount,
+          convertedAmount: convertRates[symbol]
+            ? amount.divn(convertRates[symbol])
+            : new BN(-1),
+          decimals,
           symbol,
-          verified,
-          amount: adjustedAmount,
-          convertedAmount: round(convertedAmount, 5),
+          verified
         }
       }
     )
@@ -79,7 +76,7 @@ const Balances = React.memo(function Balances({ balances }) {
           `}
         >
           {balanceItems.map(
-            ({ address, amount, convertedAmount, symbol, verified }) => (
+            ({ address, amount, convertedAmount, decimals, symbol, verified }) => (
               <li
                 key={address}
                 css={`
@@ -92,6 +89,7 @@ const Balances = React.memo(function Balances({ balances }) {
                     address={address}
                     amount={amount}
                     convertedAmount={convertedAmount}
+                    decimals={decimals}
                     symbol={symbol}
                     verified={verified}
                   />
