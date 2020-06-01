@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { useTheme } from '@aragon/ui'
 import { transformAddresses } from '../web3-utils'
 import AutoLink from '../components/AutoLink'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
@@ -8,12 +9,11 @@ import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBa
 // Usually vote.data.metadata and vote.data.description.
 const VoteText = React.memo(
   function VoteText({ disabled, text, prefix, ...props }) {
+    const theme = useTheme()
     // If there is no text, the component doesn’t render anything.
-    if (!text.trim()) {
+    if (!text) {
       return null
     }
-
-    const TextComponent = disabled ? 'span' : AutoLink
 
     return (
       <div
@@ -28,24 +28,13 @@ const VoteText = React.memo(
         `}
       >
         {prefix}
-        <TextComponent>
-          {text.split('\n').map((line, i) => (
-            <React.Fragment key={i}>
-              {i > 0 && <br />}
-              {transformAddresses(line, (part, isAddress, index) =>
-                isAddress ? (
-                  <LocalIdentityBadge
-                    badgeOnly={disabled}
-                    compact
-                    entity={part}
-                  />
-                ) : (
-                  <span key={index}>{part}</span>
-                )
-              )}
-            </React.Fragment>
-          ))}
-        </TextComponent>
+        {disabled ? (
+          <span>{text}</span>
+        ) : (
+          <AutoLink>
+            <span>{text}</span>
+          </AutoLink>
+        )}
       </div>
     )
   },
@@ -54,7 +43,7 @@ const VoteText = React.memo(
 
 VoteText.propTypes = {
   disabled: PropTypes.bool,
-  text: PropTypes.string,
+  text: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   prefix: PropTypes.node,
 }
 

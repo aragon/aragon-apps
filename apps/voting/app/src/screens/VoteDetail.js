@@ -27,6 +27,7 @@ import VoteStatus from '../components/VoteStatus'
 import VoteText from '../components/VoteText'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
+import { renderDescription } from '../vote-description-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { addressesEqual } from '../web3-utils'
 
@@ -71,6 +72,10 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
   const handleExecute = useCallback(() => {
     onExecute(voteId)
   }, [onExecute, voteId])
+
+  const descriptionText = vote.data.path
+    ? renderDescription(vote.data.path)
+    : vote.description
 
   return (
     <React.Fragment>
@@ -133,7 +138,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     Description
                   </h2>
                   <VoteText
-                    text={description || metadata || DEFAULT_DESCRIPTION}
+                    text={descriptionText || metadata || DEFAULT_DESCRIPTION}
                     css={`
                       ${textStyle('body2')};
                     `}

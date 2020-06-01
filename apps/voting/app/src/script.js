@@ -304,12 +304,13 @@ async function loadVoteDescription(vote) {
 
     // Get unique list of targets
     vote.executionTargets = [...new Set(path.map(({ to }) => to))]
+    vote.path = path ? path : null
     vote.description = path
       ? path
           .map(step => {
             const identifier = step.identifier ? ` (${step.identifier})` : ''
             const app = step.name ? `${step.name}${identifier}` : `${step.to}`
-
+            const description = step.description
             return `${app}: ${step.description || 'No description'}`
           })
           .join('\n')
