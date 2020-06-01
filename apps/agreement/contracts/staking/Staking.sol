@@ -1,14 +1,10 @@
 pragma solidity 0.4.24;
 
-import "../Agreement.sol";
-
-import "@aragon/os/contracts/common/Autopetrified.sol";
-import "@aragon/os/contracts/common/IsContract.sol";
 import "@aragon/os/contracts/common/SafeERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 
 
-contract Staking is IsContract {
+contract Staking {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 

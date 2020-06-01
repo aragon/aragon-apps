@@ -185,14 +185,14 @@ contract Agreement is IAgreement, AragonApp {
     * @notice Register disputable app `_disputable` setting its collateral requirements to:
     * @notice - `@tokenAmount(_collateralToken: address, _actionAmount)` for submitting collateral
     * @notice - `@tokenAmount(_collateralToken: address, _challengeAmount)` for challenging collateral
-    * @param _disputable Address of the disputable app
+    * @param _disputableAddress Address of the disputable app
     * @param _collateralToken Address of the ERC20 token to be used for collateral
     * @param _actionAmount Amount of collateral tokens that will be locked every time an action is submitted
     * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
     * @param _challengeDuration Duration in seconds of the challenge, during this time window the submitter can answer the challenge
     */
     function register(
-        IDisputable _disputable,
+        address _disputableAddress,
         ERC20 _collateralToken,
         uint256 _actionAmount,
         uint256 _challengeAmount,
@@ -201,28 +201,29 @@ contract Agreement is IAgreement, AragonApp {
         external
         auth(MANAGE_DISPUTABLE_ROLE)
     {
-        DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
+        DisputableInfo storage disputableInfo = disputableInfos[_disputableAddress];
         _ensureUnregisteredDisputable(disputableInfo);
 
+        IDisputable disputable = IDisputable(_disputableAddress);
         disputableInfo.registered = true;
-        emit DisputableAppRegistered(_disputable);
+        emit DisputableAppRegistered(disputable);
 
-        _changeCollateralRequirement(_disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
-        if (_disputable.getAgreement() != IAgreement(this)) {
-            _disputable.setAgreement(IAgreement(this));
+        _changeCollateralRequirement(disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
+        if (disputable.getAgreement() != IAgreement(this)) {
+            disputable.setAgreement(IAgreement(this));
         }
     }
 
     /**
     * @notice Enqueues the app `_disputable` to be unregistered and tries to unregister it if possible
-    * @param _disputable Address of the disputable app to be unregistered
+    * @param _disputableAddress of the disputable app to be unregistered
     */
-    function unregister(IDisputable _disputable) external auth(MANAGE_DISPUTABLE_ROLE) {
-        DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
+    function unregister(address _disputableAddress) external auth(MANAGE_DISPUTABLE_ROLE) {
+        DisputableInfo storage disputableInfo = disputableInfos[_disputableAddress];
         _ensureRegisteredDisputable(disputableInfo);
 
         disputableInfo.registered = false;
-        emit DisputableAppUnregistered(_disputable);
+        emit DisputableAppUnregistered(IDisputable(_disputableAddress));
     }
 
     /**
