@@ -15,7 +15,7 @@
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "ganache-cli:test": "./scripts/ganache-cli.sh",
+    "ganache-cli:test": "./node_modules/@aragon/contract-test-helpers/ganache-cli.sh",
     "abi:extract": "truffle-extract --output abi/ --keys abi",
     "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile",
     "apm:prepublish": "npm run compile",
