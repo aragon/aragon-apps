@@ -310,7 +310,6 @@ async function loadVoteDescription(vote) {
           .map(step => {
             const identifier = step.identifier ? ` (${step.identifier})` : ''
             const app = step.name ? `${step.name}${identifier}` : `${step.to}`
-            const description = step.description
             return `${app}: ${step.description || 'No description'}`
           })
           .join('\n')
