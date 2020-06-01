@@ -2,27 +2,27 @@
   "environments": {
     "default": {
       "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1",
-      "appName": "agreements.aragonpm.eth",
+      "appName": "agreement.aragonpm.eth",
       "network": "rpc"
     },
     "mainnet": {
       "registry": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
-      "appName": "agreements.open.aragonpm.eth",
+      "appName": "agreement.open.aragonpm.eth",
       "network": "mainnet"
     },
     "rinkeby": {
       "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
-      "appName": "agreements.open.aragonpm.eth",
+      "appName": "agreement.open.aragonpm.eth",
       "network": "rinkeby"
     },
     "ropsten": {
       "registry": "0x6afe2cacee211ea9179992f89dc61ff25c61e923",
-      "appName": "agreements.open.aragonpm.eth",
+      "appName": "agreement.open.aragonpm.eth",
       "network": "ropsten"
     },
     "staging": {
       "registry": "0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939",
-      "appName": "agreements.open.aragonpm.eth",
+      "appName": "agreement.open.aragonpm.eth",
       "network": "rinkeby"
     }
   },
@@ -47,8 +47,8 @@
       "params": []
     },
     {
-      "name": "Change Agreement custom token balance permissions",
-      "id": "CHANGE_TOKEN_BALANCE_PERMISSION_ROLE",
+      "name": "Manage Agreement disputable apps",
+      "id": "MANAGE_DISPUTABLE_ROLE",
       "params": []
     }
   ],
