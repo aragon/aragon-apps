@@ -24,7 +24,7 @@ import SummaryRows from '../components/SummaryRows'
 import VoteActions from '../components/VoteActions'
 import VoteCast from '../components/VoteCast'
 import VoteStatus from '../components/VoteStatus'
-import VoteText from '../components/VoteText'
+import VoteDescription from '../components/VoteDescription'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { renderDescription } from '../vote-description-utils'
@@ -137,8 +137,10 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   >
                     Description
                   </h2>
-                  <VoteText
-                    text={descriptionText || metadata || DEFAULT_DESCRIPTION}
+                  <VoteDescription
+                    description={
+                      descriptionText || metadata || DEFAULT_DESCRIPTION
+                    }
                     css={`
                       ${textStyle('body2')};
                     `}

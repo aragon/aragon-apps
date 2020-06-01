@@ -4,12 +4,12 @@ import { transformAddresses } from '../web3-utils'
 import AutoLink from '../components/AutoLink'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 
-// Render a text associated to a vote.
+// Render a description associated to a vote.
 // Usually vote.data.metadata and vote.data.description.
-const VoteText = React.memo(
-  function VoteText({ disabled, text, prefix, ...props }) {
-    // If there is no text, the component doesn’t render anything.
-    if (!text) {
+const VoteDescription = React.memo(
+  function VoteDescription({ disabled, description, prefix, ...props }) {
+    // If there is no description, the component doesn’t render anything.
+    if (!description) {
       return null
     }
 
@@ -27,26 +27,26 @@ const VoteText = React.memo(
       >
         {prefix}
         {disabled ? (
-          <span>{text}</span>
+          <span>{description}</span>
         ) : (
           <AutoLink>
-            <span>{text}</span>
+            <span>{description}</span>
           </AutoLink>
         )}
       </div>
     )
   },
-  (prevProps, nextProps) => prevProps.text === nextProps.text
+  (prevProps, nextProps) => prevProps.description === nextProps.description
 )
 
-VoteText.propTypes = {
+VoteDescription.propTypes = {
   disabled: PropTypes.bool,
-  text: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   prefix: PropTypes.node,
 }
 
-VoteText.defaultProps = {
-  text: '',
+VoteDescription.defaultProps = {
+  description: '',
 }
 
-export default VoteText
+export default VoteDescription
