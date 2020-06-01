@@ -1,6 +1,5 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { useTheme } from '@aragon/ui'
 import { transformAddresses } from '../web3-utils'
 import AutoLink from '../components/AutoLink'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
@@ -9,7 +8,6 @@ import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBa
 // Usually vote.data.metadata and vote.data.description.
 const VoteText = React.memo(
   function VoteText({ disabled, text, prefix, ...props }) {
-    const theme = useTheme()
     // If there is no text, the component doesn’t render anything.
     if (!text) {
       return null
