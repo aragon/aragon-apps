@@ -10,7 +10,7 @@ contract DisputableVotingMock is DisputableVoting, TimeHelpersMock {
         token.generateTokens(_holder, _tokenAmount);
 
         bytes memory noScript = new bytes(0);
-        return _newVote(noScript, _metadata, false);
+        return _newVote(noScript, _metadata);
     }
 
     // _isValuePct public wrapper

@@ -63,24 +63,19 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     await agreement.register({ disputable: voting, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: ONE_DAY, from: owner })
   })
 
-  const createVote = async ({ voter, cast = false, execute = false }) => {
+  const createVote = async voter => {
     executionTarget = await ExecutionTarget.new()
     script = encodeCallScript([{ to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }])
 
-    const receipt = await voting.newVote(script, 'metadata', cast, { from: voter })
+    const receipt = await voting.newVote(script, 'metadata', { from: voter })
     const logs = decodeEventsOfType(receipt, Voting.abi, 'StartVote')
-
-    if (execute) {
-      await voting.mockIncreaseTime(VOTING_DURATION)
-      await voting.executeVote(voteId)
-    }
 
     voteId = getEventArgument({ logs }, 'StartVote', 'voteId')
     actionId = (await voting.getDisputableInfo(voteId))[0]
   }
 
   describe('newVote', () => {
-    beforeEach(async () => await createVote({ voter: voter51, cast: false }))
+    beforeEach(async () => await createVote(voter51))
 
     it('saves the agreement action data', async () => {
       const { pausedAt, pauseDuration, status } = await voting.getDisputableInfo(voteId)
@@ -104,7 +99,12 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
   })
 
   describe('execute', () => {
-    beforeEach(async () => await createVote({ voter: voter51, cast: true, execute: true }))
+    beforeEach(async () => {
+      await createVote(voter51)
+      await voting.vote(voteId, true, { from: voter51 })
+      await voting.mockIncreaseTime(VOTING_DURATION)
+      await voting.executeVote(voteId)
+    })
 
     it('changes the disputable state to closed', async () => {
       const { actionId: voteActionId, pausedAt, pauseDuration, status } = await voting.getDisputableInfo(voteId)
@@ -133,7 +133,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     let currentTimestamp
 
     beforeEach(async () => {
-      await createVote({ voter: voter51, cast: false })
+      await createVote(voter51)
       currentTimestamp = await voting.getTimestampPublic()
       await agreement.challenge({ actionId })
     })
@@ -150,17 +150,17 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     it('does not allow a voter to vote', async () => {
       assert.isFalse(await voting.canVote(voteId, voter49), 'voter can vote')
 
-      await assertRevert(voting.vote(voteId, false, { from: voter49 }), 'VOTING_CAN_NOT_VOTE')
+      await assertRevert(voting.vote(voteId, false, { from: voter49 }), 'VOTING_CANNOT_VOTE')
     })
 
     it('does not allow to execute the vote', async () => {
       assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
-      await assertRevert(voting.executeVote(voteId), 'VOTING_CAN_NOT_EXECUTE')
+      await assertRevert(voting.executeVote(voteId), 'VOTING_CANNOT_EXECUTE')
 
       await voting.mockIncreaseTime(VOTING_DURATION)
 
       assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
-      await assertRevert(voting.executeVote(voteId), 'VOTING_CAN_NOT_EXECUTE')
+      await assertRevert(voting.executeVote(voteId), 'VOTING_CANNOT_EXECUTE')
     })
 
     it('marks the vote as closed', async () => {
@@ -175,7 +175,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     let pauseTimestamp, currentTimestamp
 
     beforeEach('create vote and challenge', async () => {
-      await createVote({ voter: voter51, cast: false })
+      await createVote(voter51)
       pauseTimestamp = await voting.getTimestampPublic()
       await agreement.challenge({ actionId })
 
@@ -256,7 +256,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     let pauseTimestamp, currentTimestamp
 
     beforeEach('create vote and challenge', async () => {
-      await createVote({ voter: voter51, cast: false })
+      await createVote(voter51)
       pauseTimestamp = await voting.getTimestampPublic()
       await agreement.challenge({ actionId })
 
@@ -277,13 +277,13 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
       it('does not allow a voter to vote', async () => {
         assert.isFalse(await voting.canVote(voteId, voter49), 'voter can vote')
 
-        await assertRevert(voting.vote(voteId, false, { from: voter49 }), 'VOTING_CAN_NOT_VOTE')
+        await assertRevert(voting.vote(voteId, false, { from: voter49 }), 'VOTING_CANNOT_VOTE')
       })
 
       it('does not allow to execute the vote', async () => {
         assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
 
-        await assertRevert(voting.executeVote(voteId), 'VOTING_CAN_NOT_EXECUTE')
+        await assertRevert(voting.executeVote(voteId), 'VOTING_CANNOT_EXECUTE')
       })
 
       it('marks the vote as closed', async () => {

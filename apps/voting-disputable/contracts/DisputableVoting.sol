@@ -8,11 +8,12 @@ import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
-import "@aragon/os/contracts/apps/disputable/DisputableApp.sol";
+import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/minime/contracts/MiniMeToken.sol";
+import "../../agreement/contracts/Agreement.sol";
 
 
-contract DisputableVoting is DisputableApp {
+contract DisputableVoting is DisputableAragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
@@ -24,26 +25,38 @@ contract DisputableVoting is DisputableApp {
     uint64 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
     uint256 public constant MAX_VOTES_DELEGATION_SET_LENGTH = 70;
 
+    // Validation errors
     string private constant ERROR_NO_VOTE = "VOTING_NO_VOTE";
     string private constant ERROR_INIT_PCTS = "VOTING_INIT_PCTS";
-    string private constant ERROR_CHANGE_SUPPORT_PCTS = "VOTING_CHANGE_SUPPORT_PCTS";
+    string private constant ERROR_VOTE_TIME_ZERO = "VOTING_VOTE_TIME_ZERO";
+    string private constant ERROR_TOKEN_NOT_CONTRACT = "VOTING_TOKEN_NOT_CONTRACT";
     string private constant ERROR_CHANGE_QUORUM_PCTS = "VOTING_CHANGE_QUORUM_PCTS";
+    string private constant ERROR_CHANGE_SUPPORT_PCTS = "VOTING_CHANGE_SUPPORT_PCTS";
     string private constant ERROR_INIT_SUPPORT_TOO_BIG = "VOTING_INIT_SUPPORT_TOO_BIG";
     string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPP_TOO_BIG";
-    string private constant ERROR_CAN_NOT_VOTE = "VOTING_CAN_NOT_VOTE";
-    string private constant ERROR_NOT_REPRESENTATIVE = "VOTING_NOT_REPRESENTATIVE";
-    string private constant ERROR_CAN_NOT_EXECUTE = "VOTING_CAN_NOT_EXECUTE";
-    string private constant ERROR_CAN_NOT_FORWARD = "VOTING_CAN_NOT_FORWARD";
-    string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
-    string private constant ERROR_WITHIN_OVERRULE_WINDOW = "VOTING_WITHIN_OVERRULE_WINDOW";
     string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
     string private constant ERROR_DELEGATES_EXCEEDS_MAX_LEN = "VOTING_DELEGATES_EXCEEDS_MAX_LEN";
     string private constant ERROR_INVALID_DELEGATES_INPUT_LEN = "VOTING_INVALID_DELEGATES_INPUT_LEN";
+
+    // Workflow errors
+    string private constant ERROR_CANNOT_VOTE = "VOTING_CANNOT_VOTE";
+    string private constant ERROR_CANNOT_EXECUTE = "VOTING_CANNOT_EXECUTE";
+    string private constant ERROR_CANNOT_FORWARD = "VOTING_CANNOT_FORWARD";
     string private constant ERROR_CANNOT_PAUSE_VOTE = "VOTING_CANNOT_PAUSE_VOTE";
+    string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
     string private constant ERROR_VOTE_NOT_PAUSED = "VOTING_VOTE_NOT_PAUSED";
+    string private constant ERROR_NOT_REPRESENTATIVE = "VOTING_NOT_REPRESENTATIVE";
+    string private constant ERROR_WITHIN_OVERRULE_WINDOW = "VOTING_WITHIN_OVERRULE_WINDOW";
 
     enum VoterState { Absent, Yea, Nay }
 
+    /**
+    * These statuses are used only for caching purposes to avoid querying the Agreement app every time
+    * we need to check if a vote is being challenged. Note that this is not mandatory, we could check
+    * every time against the Agreement app but in order to save some gas, we are using this cache for
+    * cases when there is not a huge risk in case the cache gets outdated. Although the cache is carefully
+    * updated only within the disputable app callbacks, edge cases like an Agreement app upgrade could occur.
+    */
     enum DisputableStatus {
         Active,                         // A vote that has been reported to the Agreement
         Paused,                         // A vote that is being challenged
@@ -112,6 +125,8 @@ contract DisputableVoting is DisputableApp {
     function initialize(MiniMeToken _token, uint64 _supportRequiredPct, uint64 _minAcceptQuorumPct, uint64 _voteTime) external onlyInit {
         initialized();
 
+        require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
+        require(_voteTime > 0, ERROR_VOTE_TIME_ZERO);
         require(_minAcceptQuorumPct <= _supportRequiredPct, ERROR_INIT_PCTS);
         require(_supportRequiredPct < PCT_BASE, ERROR_INIT_SUPPORT_TOO_BIG);
 
@@ -174,15 +189,10 @@ contract DisputableVoting is DisputableApp {
     * @notice Create a new vote about "`_metadata`"
     * @param _executionScript EVM script to be executed on approval
     * @param _metadata Vote metadata
-    * @param _castVote Whether to also cast newly created vote
     * @return voteId id for newly created vote
     */
-    function newVote(bytes _executionScript, string _metadata, bool _castVote)
-        external
-        authP(CREATE_VOTES_ROLE, arr(msg.sender))
-        returns (uint256 voteId)
-    {
-        return _newVote(_executionScript, _metadata, _castVote);
+    function newVote(bytes _executionScript, string _metadata) external authP(CREATE_VOTES_ROLE, arr(msg.sender)) returns (uint256 voteId) {
+        return _newVote(_executionScript, _metadata);
     }
 
     /**
@@ -193,7 +203,7 @@ contract DisputableVoting is DisputableApp {
     * @param _supports Whether voter supports the vote
     */
     function vote(uint256 _voteId, bool _supports) external voteExists(_voteId) {
-        require(_canVote(votes[_voteId], msg.sender), ERROR_CAN_NOT_VOTE);
+        require(_canVote(votes[_voteId], msg.sender), ERROR_CANNOT_VOTE);
         _vote(_voteId, _supports, msg.sender);
     }
 
@@ -217,31 +227,18 @@ contract DisputableVoting is DisputableApp {
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external voteExists(_voteId) {
-        _executeVote(_voteId);
-    }
+        Vote storage vote_ = votes[_voteId];
+        require(_canExecute(vote_), ERROR_CANNOT_EXECUTE);
 
-    // Forwarding fns
+        vote_.executed = true;
+        vote_.disputableStatus = DisputableStatus.Closed;
+        _closeAgreementAction(vote_.actionId);
 
-    /**
-    * @notice Creates a vote to execute the desired action, and casts a support vote if possible
-    * @dev IForwarder interface conformance
-    *      Disputable apps are required to be the initial step in the forwarding chain
-    * @param _evmScript EVM script to be executed on approval
-    */
-    function forward(bytes _evmScript) public {
-        require(canForward(msg.sender, _evmScript), ERROR_CAN_NOT_FORWARD);
-        _newVote(_evmScript, "", true);
-    }
-
-    /**
-    * @notice Tells whether `_sender` can forward actions or not
-    * @dev IForwarder interface conformance
-    * @param _sender Address of the account intending to forward an action
-    * @return True if the given address can create votes, false otherwise
-    */
-    function canForward(address _sender, bytes) public view returns (bool) {
-        // Note that `canPerform()` implicitly does an initialization check itself
-        return canPerform(_sender, CREATE_VOTES_ROLE, arr(_sender));
+        bytes memory input = new bytes(0); // TODO: Consider input for voting scripts
+        address[] memory blacklist = new address[](1);
+        blacklist[0] = address(_getAgreement());
+        runScript(vote_.executionScript, input, blacklist);
+        emit ExecuteVote(_voteId);
     }
 
     // Getter fns
@@ -252,9 +249,13 @@ contract DisputableVoting is DisputableApp {
     *      created via `newVote()`, which requires initialization
     * @return True if the given vote can be executed, false otherwise
     */
-    function canExecute(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
+    function canExecute(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
-        return _canExecute(vote_);
+        // Since we are relying on the vote's disputable state cache in `_canExecute`,
+        // here we are manually checking against the Agreement app as well to double check.
+        // Note that even in a super edge case where the cache gets outdated, the execution
+        // will fail since it also tries to close the Agreement action through `_closeAgreementAction`.
+        return _canExecute(vote_) && _canProceedAgreementAction(vote_.actionId);
     }
 
     /**
@@ -263,7 +264,7 @@ contract DisputableVoting is DisputableApp {
     *      created via `newVote()`, which requires initialization
     * @return True if the given voter can participate a certain vote, false otherwise
     */
-    function canVote(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (bool) {
+    function canVote(uint256 _voteId, address _voter) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
         return _canVote(vote_, _voter);
     }
@@ -274,7 +275,7 @@ contract DisputableVoting is DisputableApp {
     *      created via `newVote()`, which requires initialization
     * @return True if the given representative can vote on behalf of the given voter in a certain vote, false otherwise
     */
-    function canVoteOnBehalfOf(uint256 _voteId, address _voter, address _representative) public view voteExists(_voteId) returns (bool) {
+    function canVoteOnBehalfOf(uint256 _voteId, address _voter, address _representative) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
         return _canVote(vote_, _voter) &&
             _isRepresentativeOf(_voter, _representative) &&
@@ -297,7 +298,7 @@ contract DisputableVoting is DisputableApp {
     * @return Vote script
     */
     function getVote(uint256 _voteId)
-        public
+        external
         view
         voteExists(_voteId)
         returns (
@@ -338,6 +339,7 @@ contract DisputableVoting is DisputableApp {
     function getDisputableInfo(uint256 _voteId)
         external
         view
+        voteExists(_voteId)
         returns (
             uint256 actionId,
             uint64 pausedAt,
@@ -359,7 +361,7 @@ contract DisputableVoting is DisputableApp {
     * @param _voteId Id for vote
     * @return True if the vote is still open, false otherwise
     */
-    function isVoteOpen(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
+    function isVoteOpen(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         return _isVoteOpen(votes[_voteId]);
     }
 
@@ -369,7 +371,7 @@ contract DisputableVoting is DisputableApp {
     * @param _voter Address of the voter
     * @return VoterState of the requested voter for a certain vote
     */
-    function getVoterState(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (VoterState) {
+    function getVoterState(uint256 _voteId, address _voter) external view voteExists(_voteId) returns (VoterState) {
         return _voterState(votes[_voteId], _voter);
     }
 
@@ -379,7 +381,7 @@ contract DisputableVoting is DisputableApp {
     * @param _voter Address of the voter
     * @return Address of the caster of the voter's vote
     */
-    function getVoteCaster(uint256 _voteId, address _voter) public view voteExists(_voteId) returns (address) {
+    function getVoteCaster(uint256 _voteId, address _voter) external view voteExists(_voteId) returns (address) {
         return _voteCaster(votes[_voteId], _voter);
     }
 
@@ -387,7 +389,7 @@ contract DisputableVoting is DisputableApp {
     * @notice Tells whether `_representative` is `_voter`'s representative or not
     * @return True if the given representative was allowed by a certain voter, false otherwise
     */
-    function isRepresentativeOf(address _voter, address _representative) public view isInitialized returns (bool) {
+    function isRepresentativeOf(address _voter, address _representative) external view isInitialized returns (bool) {
         return _isRepresentativeOf(_voter, _representative);
     }
 
@@ -397,111 +399,36 @@ contract DisputableVoting is DisputableApp {
     *      created via `newVote(),` which requires initialization
     * @return True if the requested vote is within the overrule window for delegated votes, false otherwise
     */
-    function withinOverruleWindow(uint256 _voteId) public view voteExists(_voteId) returns (bool) {
+    function withinOverruleWindow(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
         return _isVoteOpen(vote_) && _withinOverruleWindow(vote_);
     }
 
-    // Internal fns
+    // Forwarding fns
 
     /**
-    * @dev Internal function to create a new vote
-    * @return voteId id for newly created vote
+    * @notice Creates a vote to execute the desired action, and casts a support vote if possible
+    * @dev IForwarder interface conformance
+    *      Disputable apps are required to be the initial step in the forwarding chain
+    * @param _evmScript EVM script to be executed on approval
     */
-    function _newVote(bytes _executionScript, string _metadata, bool _castVote) internal returns (uint256 voteId) {
-        uint64 snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
-        uint256 votingPower = token.totalSupplyAt(snapshotBlock);
-        require(votingPower > 0, ERROR_NO_VOTING_POWER);
-
-        voteId = votesLength++;
-
-        Vote storage vote_ = votes[voteId];
-        vote_.startDate = getTimestamp64();
-        vote_.snapshotBlock = snapshotBlock;
-        vote_.overruleWindow = overruleWindow;
-        vote_.supportRequiredPct = supportRequiredPct;
-        vote_.minAcceptQuorumPct = minAcceptQuorumPct;
-        vote_.votingPower = votingPower;
-        vote_.executionScript = _executionScript;
-        vote_.actionId = _newAgreementAction(voteId, msg.sender, bytes(_metadata));
-        vote_.disputableStatus = DisputableStatus.Active;
-
-        emit StartVote(voteId, msg.sender, _metadata);
-
-        if (_castVote && _canVote(vote_, msg.sender)) {
-            _vote(voteId, true, msg.sender);
-        }
+    function forward(bytes _evmScript) public {
+        require(canForward(msg.sender, _evmScript), ERROR_CANNOT_FORWARD);
+        _newVote(_evmScript, "");
     }
 
     /**
-    * @dev Internal function to cast a vote. It assumes the queried vote exists.
+    * @notice Tells whether `_sender` can forward actions or not
+    * @dev IForwarder interface conformance
+    * @param _sender Address of the account intending to forward an action
+    * @return True if the given address can create votes, false otherwise
     */
-    function _vote(uint256 _voteId, bool _supports, address _voter) internal {
-        // This could re-enter, though we can assume the governance token is not malicious
-        Vote storage vote_ = votes[_voteId];
-        _castVote(vote_, _voteId, _supports, _voter);
-        _overwriteCasterIfNecessary(vote_, _voter);
-
-        if (_canExecute(vote_)) {
-            // We've already checked if the vote can be executed with `_canExecute()`
-            _unsafeExecuteVote(_voteId);
-        }
+    function canForward(address _sender, bytes) public view returns (bool) {
+        // Note that `canPerform()` implicitly does an initialization check itself
+        return canPerform(_sender, CREATE_VOTES_ROLE, arr(_sender));
     }
 
-    /**
-    * @dev Internal function for a representative to cast a vote on behalf of many voters. It assumes the queried vote exists.
-    */
-    function _voteOnBehalfOf(address[] _voters, uint256 _voteId, bool _supports) internal {
-        Vote storage vote_ = votes[_voteId];
-        for (uint256 i = 0; i < _voters.length; i++) {
-            address voter = _voters[i];
-            require(_canVote(vote_, voter), ERROR_CAN_NOT_VOTE);
-            require(!_withinOverruleWindow(vote_), ERROR_WITHIN_OVERRULE_WINDOW);
-            require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
-
-            if (_hasNotVotedYet(vote_, voter)) {
-                _voteOnBehalfOf(_voteId, _supports, voter, msg.sender);
-            } else {
-                emit ProxyVoteFailure(_voteId, voter, msg.sender);
-            }
-        }
-    }
-
-    /**
-    * @dev Internal function for a representative to cast a vote on behalf of a voter. It assumes the queried vote exists.
-    */
-    function _voteOnBehalfOf(uint256 _voteId, bool _supports, address _voter, address _representative) internal {
-        Vote storage vote_ = votes[_voteId];
-        _castVote(vote_, _voteId, _supports, _voter);
-        vote_.casters[_voter] = _representative;
-
-        emit ProxyVoteSuccess(_voteId, _voter, _representative, _supports);
-    }
-
-    /**
-    * @dev Internal function to execute a vote. It assumes the queried vote exists.
-    */
-    function _executeVote(uint256 _voteId) internal {
-        require(_canExecute(votes[_voteId]), ERROR_CAN_NOT_EXECUTE);
-        _unsafeExecuteVote(_voteId);
-    }
-
-    /**
-    * @dev Internal unsafe version of _executeVote that assumes you have already checked if the vote can be executed and exists
-    */
-    function _unsafeExecuteVote(uint256 _voteId) internal {
-        Vote storage vote_ = votes[_voteId];
-
-        vote_.executed = true;
-        vote_.disputableStatus = DisputableStatus.Closed;
-        _closeAgreementAction(vote_.actionId);
-
-        bytes memory input = new bytes(0); // TODO: Consider input for voting scripts
-        address[] memory blacklist = new address[](1);
-        blacklist[0] = address(_getAgreement());
-        runScript(vote_.executionScript, input, blacklist);
-        emit ExecuteVote(_voteId);
-    }
+    // Disputable app callbacks
 
     /**
     * @dev Challenge a vote
@@ -543,11 +470,74 @@ contract DisputableVoting is DisputableApp {
     }
 
     /**
-    * @dev Void an entry
+    * @dev Void a vote
     * @param _voteId Identification number of the entry to be voided
     */
     function _onDisputableActionVoided(uint256 _voteId) internal {
+        // When a vote that has been challenged gets voided, it is considered allowed for the current implementation.
+        // This could be the case for challenges where the arbitrator refuses to rule.
         _onDisputableActionAllowed(_voteId);
+    }
+
+    // Internal fns
+
+    /**
+    * @dev Internal function to create a new vote
+    * @return voteId id for newly created vote
+    */
+    function _newVote(bytes _executionScript, string _metadata) internal returns (uint256 voteId) {
+        uint64 snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
+        uint256 votingPower = token.totalSupplyAt(snapshotBlock);
+        require(votingPower > 0, ERROR_NO_VOTING_POWER);
+
+        voteId = votesLength++;
+
+        Vote storage vote_ = votes[voteId];
+        vote_.startDate = getTimestamp64();
+        vote_.snapshotBlock = snapshotBlock;
+        vote_.overruleWindow = overruleWindow;
+        vote_.supportRequiredPct = supportRequiredPct;
+        vote_.minAcceptQuorumPct = minAcceptQuorumPct;
+        vote_.votingPower = votingPower;
+        vote_.executionScript = _executionScript;
+        vote_.disputableStatus = DisputableStatus.Active;
+
+        // Notify the Agreement app tied to the current voting app about the vote created.
+        // This is mandatory to make votes disputable, we then store its reference on the Agreement app.
+        vote_.actionId = _newAgreementAction(voteId, msg.sender, bytes(_metadata));
+
+        emit StartVote(voteId, msg.sender, _metadata);
+    }
+
+    /**
+    * @dev Internal function to cast a vote. It assumes the queried vote exists.
+    */
+    function _vote(uint256 _voteId, bool _supports, address _voter) internal {
+        // This could re-enter, though we can assume the governance token is not malicious
+        Vote storage vote_ = votes[_voteId];
+        _castVote(vote_, _voteId, _supports, _voter);
+        _overwriteCasterIfNecessary(vote_, _voter);
+    }
+
+    /**
+    * @dev Internal function for a representative to cast a vote on behalf of many voters. It assumes the queried vote exists.
+    */
+    function _voteOnBehalfOf(address[] _voters, uint256 _voteId, bool _supports) internal {
+        Vote storage vote_ = votes[_voteId];
+        for (uint256 i = 0; i < _voters.length; i++) {
+            address voter = _voters[i];
+            require(_canVote(vote_, voter), ERROR_CANNOT_VOTE);
+            require(!_withinOverruleWindow(vote_), ERROR_WITHIN_OVERRULE_WINDOW);
+            require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
+
+            if (_hasNotVotedYet(vote_, voter)) {
+                _castVote(vote_, _voteId, _supports, voter);
+                vote_.casters[voter] = msg.sender;
+                emit ProxyVoteSuccess(_voteId, voter, msg.sender, _supports);
+            } else {
+                emit ProxyVoteFailure(_voteId, voter, msg.sender);
+            }
+        }
     }
 
     /**
@@ -557,11 +547,6 @@ contract DisputableVoting is DisputableApp {
     function _canExecute(Vote storage vote_) internal view returns (bool) {
         // If vote is already executed, it cannot be executed again
         if (vote_.executed) {
-            return false;
-        }
-
-        // If the vote is paused or cancelled, it cannot be executed
-        if (_isPausedOrCancelled(vote_)) {
             return false;
         }
 
@@ -581,12 +566,10 @@ contract DisputableVoting is DisputableApp {
             return false;
         }
 
-        // If the vote cannot proceed due to an Agreement dispute, it cannot be executed
-        if (!_canProceedAgreementAction(vote_.actionId)) {
-            return false;
-        }
-
-        // If none of the above conditions are met, it can be executed
+        // If none of the above conditions are met, it can be executed.
+        // We are not checking if the vote can proceed against the Agreement app since it will
+        // be tried to be closed when executed. This means the close call will fail in the Agreement
+        // side if the vote's status cache on the voting app was outdated for some weird reason.
         return true;
     }
 
@@ -595,7 +578,13 @@ contract DisputableVoting is DisputableApp {
     * @return True if the given voter can participate a certain vote, false otherwise
     */
     function _canVote(Vote storage vote_, address _voter) internal view returns (bool) {
-        return _isVoteOpen(vote_) && _canProceedAgreementAction(vote_.actionId) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
+        // WARNING! Note that here we are relying entirely on the vote's disputable state cache.
+        // This means that in case the cache gets outdated we will be allowing people to vote on
+        // a vote being challenged. We are deciding not to consider this as a security risk based on
+        // the probability of occurrence and the impact it can have. For instance, early execution is
+        // not allowed in this app and users can change their vote withing the voting period. We prefer
+        // prioritizing the gas costs for the rest of 99% of the cases.
+        return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
     }
 
     /**

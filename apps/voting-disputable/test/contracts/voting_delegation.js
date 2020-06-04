@@ -42,7 +42,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
 
     // Voting errors
     VOTING_NO_VOTE: 'VOTING_NO_VOTE',
-    VOTING_CAN_NOT_VOTE: 'VOTING_CAN_NOT_VOTE',
+    VOTING_CANNOT_VOTE: 'VOTING_CANNOT_VOTE',
     VOTING_NOT_REPRESENTATIVE: 'VOTING_NOT_REPRESENTATIVE',
     VOTING_WITHIN_OVERRULE_WINDOW: 'VOTING_WITHIN_OVERRULE_WINDOW',
     VOTING_INVALID_OVERRULE_WINDOW: 'VOTING_INVALID_OVERRULE_WINDOW',
@@ -93,7 +93,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
     executionTarget = await ExecutionTarget.new()
     script = encodeCallScript([{ to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }])
 
-    const receipt = await voting.newVote(script, 'metadata', false, { from })
+    const receipt = await voting.newVote(script, 'metadata', { from })
     const events = decodeEventsOfType(receipt, Voting.abi, 'StartVote')
     assert.equal(events.length, 1, 'number of StartVote emitted events does not match')
     const startVoteEvent = events[0].args
@@ -367,7 +367,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
           })
 
           it('reverts', async () => {
-            await assertRevert(voting.voteOnBehalfOf([invalidVoter], voteId, true, { from }), ERRORS.VOTING_CAN_NOT_VOTE)
+            await assertRevert(voting.voteOnBehalfOf([invalidVoter], voteId, true, { from }), ERRORS.VOTING_CANNOT_VOTE)
           })
         })
       })
