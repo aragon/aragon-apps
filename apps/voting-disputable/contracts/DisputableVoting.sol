@@ -105,7 +105,7 @@ contract DisputableVoting is DisputableApp {
     /**
     * @notice Initialize Voting app with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, and a voting duration of `@transformTime(_voteTime)`
     * @param _token MiniMeToken Address that will be used as governance token
-    * @param _supportRequiredPct Percentage of yeas in casted votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
+    * @param _supportRequiredPct Percentage of yeas in cast votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
     * @param _minAcceptQuorumPct Percentage of yeas in total possible votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
     * @param _voteTime Seconds that a vote will be open for token holders to vote (unless enough yeas or nays have been cast to make an early decision)
     */
@@ -225,8 +225,8 @@ contract DisputableVoting is DisputableApp {
     /**
     * @notice Creates a vote to execute the desired action, and casts a support vote if possible
     * @dev IForwarder interface conformance
-    *      Disputable apps require to be the initial step in the forwarding chain
-    * @param _evmScript Start vote with script
+    *      Disputable apps are required to be the initial step in the forwarding chain
+    * @param _evmScript EVM script to be executed on approval
     */
     function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript), ERROR_CAN_NOT_FORWARD);
@@ -586,7 +586,7 @@ contract DisputableVoting is DisputableApp {
             return false;
         }
 
-        // If non of the above conditions are met, it can be executed
+        // If none of the above conditions are met, it can be executed
         return true;
     }
 
