@@ -84,7 +84,7 @@ class DisputableWrapper extends AgreementWrapper {
     const staking = await this.getStaking()
     const lock = await staking.getLock(owner, this.agreement.address)
     if (lock._allowance.eq(bn(0))) {
-      await staking.allowNewLockManager(this.agreement.address, amount, EMPTY_DATA, { from: owner })
+      await staking.allowManager(this.agreement.address, amount, EMPTY_DATA, { from: owner })
     } else if (lock._allowance.sub(lock._amount).lt(amount)) {
       await staking.increaseLockAllowance(this.agreement.address, amount, { from: owner })
     }

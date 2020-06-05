@@ -882,7 +882,7 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        _staking.increaseLockAmount(_user, address(this), _amount);
+        _staking.lock(_user, address(this), _amount);
     }
 
     /**
@@ -896,7 +896,7 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        _staking.decreaseLockAmount(_user, address(this), _amount);
+        _staking.unlock(_user, address(this), _amount);
     }
 
     /**
@@ -911,7 +911,7 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        _staking.transferFromLockAndUnstake(_user, _challenger, _amount);
+        _staking.slashAndUnstake(_user, _challenger, _amount);
     }
 
     /**
@@ -924,7 +924,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function _unlockAndSlashBalance(Staking _staking, address _user, uint256 _unlockAmount, address _challenger, uint256 _slashAmount) internal {
         if (_unlockAmount != 0 && _slashAmount != 0) {
-            _staking.decreaseAndTransferFromLock(_user, _challenger, _unlockAmount, _slashAmount);
+            _staking.slashAndUnlock(_user, _challenger, _unlockAmount, _slashAmount);
         } else {
             _unlockBalance(_staking, _user, _unlockAmount);
             _slashBalance(_staking, _user, _challenger, _slashAmount);

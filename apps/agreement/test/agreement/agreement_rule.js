@@ -283,15 +283,15 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       const currentSubmitterBalance = await collateralToken.balanceOf(submitter)
                       assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
 
-                      const currentChallengerBalance = await agreement.getTotalAvailableBalance(collateralToken, challenger)
-                      const challengerAvailable = (await agreement.getBalance(agreement.collateralToken.address, challenger)).available
+                      const currentChallengerBalance = await disputable.getTotalAvailableBalance(challenger)
+                      const challengerAvailable = (await disputable.getBalance(disputable.collateralToken.address, challenger)).available
                       assertBn(currentChallengerBalance, previousChallengerBalance.add(actionCollateral).add(challengeCollateral), 'challenger balance does not match')
 
                       const currentAgreementBalance = await collateralToken.balanceOf(disputable.address)
                       assertBn(currentAgreementBalance, previousAgreementBalance.sub(challengeCollateral), 'agreement balance does not match')
 
                       const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
-                      assertBn(currentStakingBalance, previousStakingBalance, 'staking balance does not match')
+                      assertBn(currentStakingBalance, previousStakingBalance.sub(actionCollateral), 'staking balance does not match')
                     })
 
                     it('emits an event', async () => {

@@ -4,7 +4,7 @@ const { assertRevert } = require('../helpers/assert/assertThrow')
 const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
 const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
 const { STAKING_EVENTS } = require('../helpers/utils/events')
-const { SAFE_MATH_ERRORS, STAKING_ERRORS } = require('../helpers/utils/errors')
+const { STAKING_ERRORS } = require('../helpers/utils/errors')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -69,7 +69,7 @@ contract('Agreement', ([_, someone, user]) => {
 
       context('when the user has not approved the requested amount', () => {
         it('reverts', async () => {
-          await assertRevert(agreement.stake({ token, amount, user, approve }), STAKING_ERRORS.ERROR_TOKEN_TRANSFER_FAILED)
+          await assertRevert(agreement.stake({ token, amount, user, approve }), STAKING_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
         })
       })
     })
@@ -137,7 +137,7 @@ contract('Agreement', ([_, someone, user]) => {
 
       context('when the user has not approved the requested amount', () => {
         it('reverts', async () => {
-          await assertRevert(agreement.stake({ token, user, amount, from, approve }), STAKING_ERRORS.ERROR_TOKEN_TRANSFER_FAILED)
+          await assertRevert(agreement.stake({ token, user, amount, from, approve }), STAKING_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
         })
       })
     })
@@ -275,7 +275,7 @@ contract('Agreement', ([_, someone, user]) => {
           const amount = initialStake.add(bn(1))
 
           it('reverts', async () => {
-            await assertRevert(agreement.unstake({ token, user, amount }), SAFE_MATH_ERRORS.ERROR_SUB_UNDERFLOW)
+            await assertRevert(agreement.unstake({ token, user, amount }), STAKING_ERRORS.STAKING_NOT_ENOUGH_BALANCE)
           })
         })
       })
@@ -294,7 +294,7 @@ contract('Agreement', ([_, someone, user]) => {
         const amount = bigExp(200, 18)
 
         it('reverts', async () => {
-          await assertRevert(agreement.unstake({ token, user, amount }), SAFE_MATH_ERRORS.ERROR_SUB_UNDERFLOW)
+          await assertRevert(agreement.unstake({ token, user, amount }), STAKING_ERRORS.STAKING_NOT_ENOUGH_BALANCE)
         })
       })
 
