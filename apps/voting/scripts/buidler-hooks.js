@@ -1,6 +1,6 @@
 let pct16
 
-let tokens, accounts
+let accounts, minime, tokens
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -16,7 +16,7 @@ module.exports = {
     accounts = await bre.web3.eth.getAccounts()
 
     // Deploy a minime token an generate tokens to root account
-    const minime = await _deployMinimeToken(bre)
+    minime = await _deployMinimeToken(bre)
     await minime.generateTokens(accounts[1], pct16(100))
     log(`> Minime token deployed: ${minime.address}`)
 
@@ -32,7 +32,7 @@ module.exports = {
 
   getInitParams: async function({}, bre) {
     return [
-      tokens.address,
+      minime.address,
       pct16(50), // support 50%
       pct16(25), // quorum 15%
       604800, // 7 days
